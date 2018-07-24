@@ -64,7 +64,6 @@ CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", true);
 // extra padding to add to prox obstacle
 CONSOLE_VAR(float, kObsPadding_x_mm, "ProxSensorComponent", 6.f);
 CONSOLE_VAR(float, kObsPadding_y_mm, "ProxSensorComponent", 0.f);
-CONSOLE_VAR(float, kClearHalfWidth_mm, "ProxSensorComponent", 1.5f);
 
 // distance range for registering an object detected as an obstacle
 CONSOLE_VAR(u16, kMinObsThreshold_mm, "ProxSensorComponent", 30);
@@ -74,7 +73,7 @@ CONSOLE_VAR(u16, kMaxObsThreshold_mm, "ProxSensorComponent", 400);
 CONSOLE_VAR(float, kMaxForwardTilt_rad, "ProxSensorComponent", -.08);
 
 // Minimum sensor reading strength before trying to use sensor data
-CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.05f);
+CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.01f);
 
 // angle for calculating obstacle width, ~tan(22.5)
 CONSOLE_VAR(float, kSensorAperture, "ProxSensorComponent", 0.4f);
@@ -267,19 +266,19 @@ void ProxSensorComponent::UpdateNavMap()
 
     // we would like to clear the whole sensor cone as defined by the aperture, but it creates really large
     // obstacles if it detects something far away. To prevent planning failures, we would like to clamp
-    // the max obstacle width to the robot width, but that can result in stretching the of the clear region
+    // the max obstacle width to one half robot width, but that can result in stretching the of the clear region
     // cone, which causes some map artifacts. To get around this, define the clear region as the intersection
     // of the sensor cone and a straight beam with obstacle width (which is clamped to robot width).
 
-    //                                ,,,,------------------p1--p4
-    //           +-------+    ....''''                       |xx|
-    //           | robot |::::                               |xx| (obstacle)
-    //           +-------+    ''''....                       |xx|
-    //                                ''''------------------p2--p3
+    //           +-------------+
+    //           |             |    ....-----------------------p1--p4
+    //           |    robot    |::::                            |xx| (obstacle)
+    //           |             |    ''''-----------------------p2--p3
+    //           +-------------+
 
     // sensor points
     const float sensorBeamHalfWidth_mm = offsetx_mm.x() * kSensorAperture *.5f;
-    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.5);
+    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.25);
 
     // use a slightly larger padding for clear than for obstacle to clean up floating point rounding errors
     const Vec3f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5, 0);   
