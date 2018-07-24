@@ -44,11 +44,11 @@ function parse_file()
   result=0; resultCnt=0; lineCnt=0;
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
     lineCnt=$(($lineCnt+1));
-    if echo "$line" | grep -q "RESULT:"; then
+    #if echo "$line" | grep -q "RESULT:"; then
       result=$(echo "$line" | grep -oP 'RESULT:\K[0-9]+');
       resultCnt=$((resultCnt+1));
-    fi
-  done < "$infile"
+    #fi
+  done < <(cat "$infile" | grep "RESULT:") # < "$infile"
   
   gFileCnt=$(($gFileCnt+1))
   gLineCnt=$(($gLineCnt+$lineCnt))
@@ -67,7 +67,7 @@ function parse_file()
   fi
   
   Tfileend=$(($(date +%s%N)/1000000))
-  #echo ".$(($Tfileend-$Tfilestart))ms, $((($Tfileend-$Tfilestart)/$lineCnt))ms per line"
+  #echo ".$(($Tfileend-$Tfilestart))ms" #, $((($Tfileend-$Tfilestart)/$lineCnt))ms per line"
 }
 
 #parse logfiles (*.log or *.txt formats)
@@ -79,7 +79,7 @@ Tproc=$(($Tend-$Tstart))
 
 #print results
 show_tally
-echo processed $gFileCnt files $gLineCnt lines in $(($Tproc))ms. avg $(($Tproc/$gLineCnt))ms per line
+echo processed $gFileCnt files in $(($Tproc))ms #$gLineCnt lines in $(($Tproc))ms. avg $(($Tproc/$gLineCnt))ms per line
 
 exit 0
 
