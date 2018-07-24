@@ -149,11 +149,10 @@ namespace Anki {
         // Update all cliff values
         for (int i=0 ; i < _nCliffSensors ; i++) {
           u16 rawVal = HAL::GetRawCliffData(static_cast<HAL::CliffID>(i));
-          if (rawVal == 0) {
-            // VIC-537: Cliff sensors sometimes return spurious readings
-            //          like 0 (which is too low to be valid) or some crazy high numbers in the 10000s.
-            //          Intercepting only 0s here and leaving previous reading as is
-            //          so that we don't stop in reaction to a false cliff.
+          if (rawVal == 0 && !IMUFilter::IsPickedUp()) {
+            // Note: Warning can appear falsely if placed on an edge
+            //       with one or two cliff sensors hanging over it.
+            //       Otherwise, it may be indicative of spine/syscon issues.
             AnkiWarn("ProxSensors.UpdateCliff.BadZeroCliffValue", "Index %d", i);
           } else {
             _cliffVals[i] = rawVal;
