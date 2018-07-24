@@ -71,13 +71,18 @@ namespace { // "Private members"
   static const int NUM_CALM_MODE_SKIP_FRAMES = 12;  // Every 60ms
   int calmModeSkipFrameCount_ = 0;
 
+  static const f32 kBatteryScale = 2.8f / 2048.f;
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
   BodyToHead BootBodyData_ = { //dummy data for boot stub frames
-    .framecounter = 0
+    .framecounter         = 0,
+    .flags                = RUNNING_FLAGS_SENSORS_VALID,  // emulate active power mode
+    .battery.flags        = POWER_ON_CHARGER,
+    .battery.main_voltage = (int16_t)(5.0/kBatteryScale),
+    .battery.charger      = (int16_t)(5.0/kBatteryScale),
   };
-  static const f32 kBatteryScale = 2.8f / 2048.f;
+  
 } // "private" namespace
 
 // Forward Declarations
@@ -158,6 +163,17 @@ ssize_t robot_io(spine_ctx_t spine)
   return r;
 }
 
+// Populate bodyData when there's no app
+void populate_boot_body_data(const struct SpineMessageHeader* hdr)
+{
+  if (!haveValidSyscon_) {
+    //extract button data from stub packet and put in fake full packet
+    uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
+    BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+    bodyData_ = &BootBodyData_;
+  }
+}
+
 Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 {
   TimeStamp_t startWait_ms = HAL::GetTimeStamp();
@@ -203,14 +219,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
         AnkiWarn("HAL.SpineWaitForFirstFrame.InvalidSyscon","");
 
         initialized = true;
-        //extract button data from stub packet and put in fake full packet
-        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
-        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
-        BootBodyData_.battery.flags = POWER_ON_CHARGER;
-
-        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
-        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
-        bodyData_ = &BootBodyData_;
+        populate_boot_body_data(hdr);
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
@@ -336,14 +345,7 @@ Result spine_get_frame() {
         record_body_version( (VersionInfo*)(hdr+1) );
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
-        //extract button data from stub packet and put in fake full packet
-        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
-        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
-        BootBodyData_.battery.flags = POWER_ON_CHARGER;
-
-        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
-        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
-        bodyData_ = &BootBodyData_;
+        populate_boot_body_data(hdr);
         result = RESULT_OK;
       }
       else {
