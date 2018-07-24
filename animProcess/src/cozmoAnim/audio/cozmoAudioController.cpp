@@ -220,9 +220,16 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.defaultLEMemoryPoolSize    = ( 6 * 1024 * 1024 );  //  6 MB
     config.ioMemorySize               = ( 2 * 1024 * 1024 );  //  2 MB
 #endif
-    config.defaultMaxNumPools         = 30;
-    config.enableGameSyncPreparation  = true;
+
+    // Performance
+    config.sampleRate         = 32000;
+    config.bufferSize         = 1024;
+    config.defaultMaxNumPools = 30;
+    
+    // Systems
+    config.enableGameSyncPreparation  = false;
     config.enableStreamCache          = true;
+    config.enableMusicEngine          = false; // Not using music system
 
     // Start your Engines!!!
     InitializeAudioEngine( config );
