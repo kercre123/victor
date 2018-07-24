@@ -127,6 +127,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
 
   const auto& robotState = robot->GetRobotState();
 
+  ss << EnumToString(robot->GetOffTreadsState()) << '\n';
   ss << std::fixed << std::setprecision(1) << RAD_TO_DEG(robotState.poseAngle_rad) << '\n';
   ss << std::fixed << std::setprecision(1) << RAD_TO_DEG(robotState.posePitch_rad) << '\n';
   ss << std::fixed << std::setprecision(1) << RAD_TO_DEG(robotState.headAngle_rad) << '\n';
