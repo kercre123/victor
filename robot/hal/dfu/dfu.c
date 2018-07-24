@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "../spine/spine_hal.h"
 #include "schema/messages.h"
@@ -173,17 +174,17 @@ int main(int argc, const char* argv[])
 
   hal_send_frame(PAYLOAD_VERSION, NULL, 0);
 
-  const char* version_ptr = NULL;
+  const uint8_t* version_ptr = NULL;
   const struct SpineMessageHeader* hdr;
   do {
      hdr = hal_read_frame();
      if (hdr && hdr->payload_type == PAYLOAD_ACK) {
         if (!IsGoodAck((struct AckMessage*)(hdr + 1))) {
-           version_ptr = "-----Erased-----";
+          version_ptr = (const uint8_t*)"-----Erased-----";
         }
      }
      else if (hdr && hdr->payload_type == PAYLOAD_VERSION) {
-        version_ptr = ((struct VersionInfo*)(hdr + 1))->app_version;
+       version_ptr = ((struct VersionInfo*)(hdr + 1))->app_version;
      }
   } while (!version_ptr);
 

@@ -63,6 +63,9 @@ simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 simulator/controllers/webotsCtrlNeuralNets/webotsCtrlNeuralNets
 simulator/controllers/webotsCtrlNeuralNets/resources
 #
+simulator/controllers/webotsCtrlGateway/webotsCtrlGateway
+simulator/controllers/webotsCtrlGateway/vic-gateway
+#
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
 simulator/worlds/__GENERATED_FOR_*__.wbt

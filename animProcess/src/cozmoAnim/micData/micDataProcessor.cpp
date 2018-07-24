@@ -148,7 +148,7 @@ MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::stri
   _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
 }
 
-void MicDataProcessor::Init(const RobotDataLoader& dataLoader)
+void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Locale& locale)
 {
   _micTriggerConfig->Init(dataLoader.GetMicTriggerConfig());
 
@@ -165,8 +165,7 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader)
   }
 #endif // ANKI_DEVELOPER_CODE
 
-  // Use this as default until set otherwise
-  UpdateTriggerForLocale(Util::Locale("en","US"));
+  UpdateTriggerForLocale(locale);
 }
 
 void MicDataProcessor::InitVAD()
@@ -691,6 +690,7 @@ void MicDataProcessor::ProcessTriggerLoop()
     {
       _triggerModelTypeIndex = kMicData_NextTriggerIndex;
       const auto& newTypeData = kTriggerModelDataList[kMicData_NextTriggerIndex];
+      _micDataSystem->SetLocaleDevOnly(newTypeData.locale);
       UpdateTriggerForLocale(newTypeData.locale, newTypeData.modelType, newTypeData.searchFileIndex);
     }
 #endif // ANKI_DEV_CHEATS

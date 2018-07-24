@@ -150,7 +150,10 @@ enum WiFiAuth : uint8_t {
 // for reconnection
 - (bool) HasSavedPublicKey;
 - (bool) HasSavedSession: (NSString*)key;
+- (bool) HasSessionForName: (NSString*)key;
+- (void) SaveName: (NSString*)key;
 - (NSData*) GetPublicKey;
+- (NSData*) GetPrivateKey;
 - (NSArray*) GetSession: (NSString*)key;
 - (void)resetDefaults;
 - (void)setVerbose:(bool)enabled;

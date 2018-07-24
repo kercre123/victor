@@ -82,7 +82,7 @@ enum uint_8 BehaviorClass {
   LiftLoadTest,
   PlannerTest,
   PowerSaveTest,
-  TurnTowardsPerson,
+  ReactToBody,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,
@@ -218,9 +218,13 @@ enum uint_8 BehaviorClass {
   TimerUtilityCoordinator,
   WallTimeCoordinator,
 
+  // userDefinedBehaviorTree
+  UserDefinedBehaviorTreeRouter,
+
   // victor
   ComeHere,
   ConfirmObject,
+  PoweringRobotOff,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
   TrackCube,

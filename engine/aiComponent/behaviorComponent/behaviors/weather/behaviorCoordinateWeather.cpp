@@ -14,11 +14,16 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
 
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "clad/types/featureGateTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -145,8 +150,22 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
   }else{
     auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
 
+    ///////
+    /// PR DEMO HACK - want a city where it always rains, so if it's the PRDemo the WeatherIntentParser may lie
+    /// about the weather condition based on the location returned by the cloud intent
+    ///////
+    const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+    const bool isForPRDemo = (featureGate != nullptr) ? 
+                                  featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo) :
+                                  false;
+
     const auto condition = WeatherIntentParser::GetCondition(dataAccessorComp.GetWeatherResponseMap(), 
-                                                             weatherResponse);
+                                                             weatherResponse,
+                                                             isForPRDemo);
+    ///////
+    /// END PR DEMO HACK
+    ///////
+
     const auto iter = _iConfig.weatherBehaviorMap.find(condition);
     if((iter != _iConfig.weatherBehaviorMap.end()) &&
        iter->second->WantsToBeActivated()){

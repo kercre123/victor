@@ -78,7 +78,9 @@ namespace Anki
       void CameraSetParameters(u16 exposure_ms, f32 gain);
       void CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain);
       void CameraSetCaptureFormat(ImageEncoding format);
-      
+
+      void CameraSetCaptureSnapshot(bool start);
+        
       // Points provided frame to a buffer of image data if available.
       // Returns true if image available.
       // If this method results in acquiring a frame, the frame is locked, ensuring

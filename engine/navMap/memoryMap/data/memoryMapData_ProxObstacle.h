@@ -36,6 +36,12 @@ public:
   // create a copy of self (of appropriate subclass) and return it
   virtual MemoryMapDataPtr Clone() const override;
   
+  // return true if this type collides with the robot
+  virtual bool IsCollisionType() const override { return _collidable; }
+
+  // disable collisions with this prox obstacle (eg, if in the habitat)
+  void SetCollidable(bool enable) { _collidable = enable; }
+
   // compare to IMemoryMapData and return bool if the data stored is the same
   virtual bool Equals(const MemoryMapData* other) const override;
   
@@ -69,9 +75,10 @@ public:
   // these params when flood filling from EXPLORED to NOT_EXPLORED, although that's not ideal. todo: fix this (FillBorder)
 private:
 
-  Pose2d       _pose;     // assumed obstacle pose (based off robot pose when detected)
-  ExploredType _explored; // has Victor visited this node?
-  u8           _belief;   // our confidence that there really is an obstacle here
+  Pose2d       _pose;       // assumed obstacle pose (based off robot pose when detected)
+  ExploredType _explored;   // has Victor visited this node?
+  u8           _belief;     // our confidence that there really is an obstacle here
+  bool         _collidable; // if the robot should consider this object as a collision type
 };
  
 } // namespace

@@ -307,7 +307,9 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* wakeWordEnd = new external_interface::WakeWordEnd;
-    const bool intentHeard = (_dVars.intentStatus != EIntentStatus::NoIntentHeard);
+    const bool intentHeard = ( (_dVars.intentStatus != EIntentStatus::NoIntentHeard) &&
+                               (_dVars.intentStatus != EIntentStatus::SilenceTimeout) &&
+                               (_dVars.intentStatus != EIntentStatus::Error) );
     wakeWordEnd->set_intent_heard( intentHeard );
     if( intentHeard ) {
       UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();

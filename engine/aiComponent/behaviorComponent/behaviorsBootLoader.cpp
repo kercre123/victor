@@ -57,10 +57,12 @@ BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
     };
     _behaviors.onboardingBehavior = setFromJSON("onboardingBehavior");
     _behaviors.normalBaseBehavior = setFromJSON("normalBaseBehavior");
+    _behaviors.postOnboardingBehavior = setFromJSON("postOnboardingBehavior");
     _behaviors.devBaseBehavior = setFromJSON("devBaseBehavior");
   } else {
     _behaviors.onboardingBehavior = BEHAVIOR_ID(Wait);
     _behaviors.normalBaseBehavior = BEHAVIOR_ID(Wait);
+    _behaviors.postOnboardingBehavior = BEHAVIOR_ID(Wait);
     _behaviors.devBaseBehavior = BEHAVIOR_ID(Wait);
   }
 }
@@ -117,7 +119,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
       if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
         SetNewBehavior( _behaviors.onboardingBehavior );
       } else if( newState == OnboardingStages::Complete ) {
-        SetNewBehavior( _behaviors.normalBaseBehavior );
+        SetNewBehavior( _behaviors.postOnboardingBehavior );
       } else if( newState == OnboardingStages::DevDoNothing ) {
         SetNewBehavior( _behaviors.devBaseBehavior );
       }

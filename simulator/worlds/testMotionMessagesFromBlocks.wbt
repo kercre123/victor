@@ -33,6 +33,7 @@ DEF cube LightCube {
 }
 %COZMOBOT% {
   name "CozmoBot_1"
+  rotation 0 0 1 3.141592644
 }
 BuildServerTestController {
   controllerArgs "%COZMO_SIM_TEST%"

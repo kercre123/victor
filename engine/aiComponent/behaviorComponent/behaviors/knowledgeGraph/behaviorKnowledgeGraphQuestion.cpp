@@ -403,7 +403,13 @@ void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
   // delegate to our tts behavior
   if ( _iVars.ttsBehavior->WantsToBeActivated() )
   {
-    DelegateIfInControl( _iVars.ttsBehavior.get() );
+    auto callback = [this]()
+    {
+      // play our "woot woot" animation
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSuccessReaction ) );
+    };
+
+    DelegateIfInControl( _iVars.ttsBehavior.get(), callback );
   }
 
   // ... annnnnd we're done

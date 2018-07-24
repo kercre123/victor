@@ -117,12 +117,27 @@ bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType
         salientPoint.salientType = type;
 
         // Random image coordinates
-        salientPoint.y_img = float(_robot->GetContext()->GetRandom()->RandDbl());
-        salientPoint.x_img = float(_robot->GetContext()->GetRandom()->RandDbl());
+        Util::RandomGenerator *rng = _robot->GetContext()->GetRandom();
+        salientPoint.y_img = float(rng->RandDbl());
+        salientPoint.x_img = float(rng->RandDbl());
 
         // Random size and score
-        salientPoint.area_fraction =  float(_robot->GetContext()->GetRandom()->RandDbl());
-        salientPoint.score =  float(_robot->GetContext()->GetRandom()->RandDbl());
+        salientPoint.area_fraction =  float(rng->RandDbl());
+        salientPoint.score =  float(rng->RandDbl());
+        
+        // Random shape, 4 points
+        {
+          const float minX = std::max(float(salientPoint.x_img - rng->RandDbl()), 0.0f);
+          const float maxX = std::min(float(salientPoint.x_img + rng->RandDbl()), 1.0f);
+          const float minY = std::max(float(salientPoint.y_img - rng->RandDbl()), 0.0f);
+          const float maxY = std::min(float(salientPoint.y_img + rng->RandDbl()), 1.0f);
+
+          salientPoint.shape = { CladPoint2d(minX, minY),
+                                 CladPoint2d(maxX, minY),
+                                 CladPoint2d(minX, maxY),
+                                 CladPoint2d(maxX, maxY)};
+
+        }
 
         pointsToAdd.push_back(std::move(salientPoint));
       };

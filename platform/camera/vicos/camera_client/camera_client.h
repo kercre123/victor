@@ -86,6 +86,7 @@ typedef enum {
   ANKI_CAMERA_MSG_C2S_PARAMS_ID_EXP,
   ANKI_CAMERA_MSG_C2S_PARAMS_ID_AWB,
   ANKI_CAMERA_MSG_C2S_PARAMS_ID_FORMAT,
+  ANKI_CAMERA_MSG_C2S_PARAMS_ID_SNAPSHOT,
 } anki_camera_params_id_t;
 
 typedef struct {
@@ -106,6 +107,7 @@ typedef enum {
 struct anki_camera_handle {
   int client_handle;
   uint32_t current_frame_id;
+  uint32_t last_frame_slot;
 };
 
 // Initializes the camera & starts thread for communicating with daemon
@@ -133,7 +135,11 @@ int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms,
 int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain, float b_gain);
 
 int camera_set_capture_format(struct anki_camera_handle* camera, anki_camera_pixel_format_t format);
-  
+
+
+int camera_set_capture_snapshot(struct anki_camera_handle* camera,
+                                uint8_t start);
+ 
 // Get current status of camera system
 anki_camera_status_t camera_status(struct anki_camera_handle* camera);
 

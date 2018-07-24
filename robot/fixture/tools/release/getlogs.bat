@@ -14,3 +14,11 @@ if %ERRORLEVEL% NEQ 0 (
 
 rd /S /Q logs
 adb pull data/local/fixture/logs
+if %ERRORLEVEL% == 0 (
+  echo deleting logs from the fixture
+  adb shell "rm -rf /data/local/fixture/logs && sync"
+  adb reboot
+) else (
+  echo -----FAILED TO GET FIXTURE LOGS-------
+)
+

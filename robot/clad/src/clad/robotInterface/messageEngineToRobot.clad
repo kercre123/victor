@@ -223,6 +223,11 @@ message RollActionParams
    float_32 backupDist_mm,
 }
 
+message PlaypenStart 
+{
+
+}
+
 message SetMotionModelParams
 {
   float_32 slipFactor,
@@ -295,6 +300,7 @@ message ChargerDockingStripeColor
 message PlayAnim
 {
   uint_32 numLoops = 1,
+  uint_32 startAt_ms = 0, // time to start the animation playback at
   uint_8  tag,
   string animName,
 }
@@ -358,9 +364,9 @@ message RemoveSquint
 }
 
 
-message LockAnimTracks
+message SetFullAnimTrackLockState
 {
-  uint_8 whichTracks    // See AnimTrackFlags
+  uint_8 trackLockState    // See AnimTrackFlags
 }
 
 message AddAnim
@@ -589,7 +595,7 @@ message AlterStreamingAnimationAtTime {
   uint_32 relativeStreamTime_ms,
   bool    applyBeforeTick = 1,
   uint_8  internalTag, // Indicates which message below is set
-  LockAnimTracks lockAnimTracks,
+  SetFullAnimTrackLockState setFullAnimTrackLockState,
   uint_8 padding[1],
   AudioEngine::Multiplexer::PostAudioEvent postAudioEvent
 }
@@ -644,6 +650,7 @@ union EngineToRobot
   ControllerGains               setControllerGains          = 0x0B,
   SetMotionModelParams          setMotionModelParams        = 0x0C,
   RollActionParams              rollActionParams            = 0x0D,
+  PlaypenStart                  playpenStart                = 0x0E,
 
   // Motor control
   DriveWheels                   drive                       = 0x10,
@@ -705,7 +712,7 @@ union EngineToRobot
 
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
-  LockAnimTracks                lockAnimTracks              = 0x51,
+  SetFullAnimTrackLockState     setFullAnimTrackLockState   = 0x51,
   AddAnim                       addAnim                     = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
   SetLocale                     setLocale                   = 0x54,

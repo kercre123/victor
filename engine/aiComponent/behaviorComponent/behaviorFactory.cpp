@@ -59,7 +59,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPlannerTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveTest.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorTurnTowardsPerson.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToBody.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
@@ -146,8 +146,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/userDefinedBehaviorTree/behaviorUserDefinedBehaviorTreeRouter.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPoweringRobotOff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackCube.h"
@@ -474,9 +476,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::TurnTowardsPerson:
+    case BehaviorClass::ReactToBody:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorTurnTowardsPerson(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBody(config));
       break;
     }
     
@@ -996,6 +998,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::UserDefinedBehaviorTreeRouter:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorUserDefinedBehaviorTreeRouter(config));
+      break;
+    }
+    
     case BehaviorClass::ComeHere:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorComeHere(config));
@@ -1005,6 +1013,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ConfirmObject:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorConfirmObject(config));
+      break;
+    }
+    
+    case BehaviorClass::PoweringRobotOff:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPoweringRobotOff(config));
       break;
     }
     
@@ -1044,6 +1058,10 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+  }
+
+  if( ANKI_DEVELOPER_CODE ) {
+    newBehavior->CheckJson(config);
   }
     
   return newBehavior;

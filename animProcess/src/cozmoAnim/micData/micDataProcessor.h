@@ -62,7 +62,7 @@ public:
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
 
-  void Init(const RobotDataLoader& dataLoader);
+  void Init(const RobotDataLoader& dataLoader, const Util::Locale& locale);
 
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);

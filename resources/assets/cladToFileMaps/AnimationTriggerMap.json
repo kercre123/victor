@@ -129,23 +129,23 @@
   },
   {
     "CladEvent": "ConnectToCubeFailure",
-    "AnimName":  "ag_majorfail" 
+    "AnimName":  "ag_cubeconnection_connectionfailure" 
   },
   {
     "CladEvent": "ConnectToCubeGetIn",
-    "AnimName":  "ag_texttospeech_getin_01"
+    "AnimName":  "ag_cubeconnection_getin"
   },
   {
     "CladEvent": "ConnectToCubeLoop",
-    "AnimName":  "ag_texttospeech_loop_01"
+    "AnimName":  "ag_cubeconnection_loop"
   },
   {
     "CladEvent": "ConnectToCubeLostConnection",
-    "AnimName":  "ag_majorfail"
+    "AnimName":  "ag_cubeconnection_connectionlost"
   },
   {
     "CladEvent": "ConnectToCubeSuccess",
-    "AnimName":  "ag_majorwin"
+    "AnimName":  "ag_cubeconnection_connectionsuccess"
   },
   {
     "CladEvent": "DEPRECATED_PatternGuessNewIdea",
@@ -233,7 +233,7 @@
   },
   {
     "CladEvent": "ConnectWakeUp",
-    "AnimName": "ag_connectwakeup"
+    "AnimName": "ag_gotosleep_wakeup"
   },
   {	
     "CladEvent": "DEPRECATED_ComeHere_SearchForFace",	
@@ -404,6 +404,14 @@
     "AnimName": "ag_driving01_drivingloop"
   },
   {
+    "CladEvent": "DriveOffChargerFarLeft",
+    "AnimName": "ag_chargerdocking_comeoff_left_02"
+  },
+  {
+    "CladEvent": "DriveOffChargerFarRight",
+    "AnimName": "ag_chargerdocking_comeoff_right_02"
+  },
+  {
     "CladEvent": "DriveOffChargerLeft",
     "AnimName": "ag_chargerdocking_comeoff_left"
   },
@@ -430,6 +438,10 @@
   {
     "CladEvent": "DriveStartLaunch",
     "AnimName": "ag_driving01_startdriving"
+  },
+  {
+    "CladEvent": "EyeContactLookLoop",
+    "AnimName": "ag_eyecontact_lookloop"
   },
   {
     "CladEvent": "ExploringHuhClose",
@@ -964,6 +976,18 @@
     "AnimName": "ag_reacttocharger"
   },
   {
+    "CladEvent": "PlanningGetIn",
+    "AnimName" : "ag_planning_getin"
+  },
+  {
+    "CladEvent": "PlanningLoop",
+    "AnimName" : "ag_planning"
+  },
+  {
+    "CladEvent": "PlanningGetOut",
+    "AnimName" : "ag_planning_getout"
+  },
+  {
     "CladEvent": "PopAWheelieInitial",
     "AnimName": "ag_rollcube_initial"
   },
@@ -1322,7 +1346,7 @@
   },
   {
     "CladEvent": "TimerRingGetIn",
-    "AnimName": "ag_timer_is_up_getin"
+    "AnimName": "ag_timer_big_beep"
   },
   {
     "CladEvent": "TimerRing",
@@ -1845,6 +1869,10 @@
     "AnimName": "ag_knowledgegraph_getout_01"
   },
   {
+    "CladEvent": "KnowledgeGraphSuccessReaction",
+    "AnimName": "ag_knowledgegraph_success_01"
+  },
+  {
     "CladEvent": "ShutUp",
     "AnimName": "ag_vc_shutup"
   },
@@ -1871,6 +1899,19 @@
   {
     "CladEvent": "GreetAfterLongTime",
     "AnimName" : "ag_greeting_happy"
+  },
+  {
+    "CladEvent": "ComeHereStart",
+    "AnimName": "ag_vc_comehere_first_reaction"
+  },
+  {
+    "CladEvent": "ComeHereSuccess",
+    "AnimName": "ag_comehere_greeting"
+  },
+  {
+    "CladEvent": "PRDemoGreeting",
+    "AnimName": "ag_greeting_big_hello"
   }
+ 
 
 ]

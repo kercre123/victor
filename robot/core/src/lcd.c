@@ -17,7 +17,6 @@
 #define TRUE (!FALSE)
 
 
-static const int DAT_CLOCK = 17500000;
 static const int MAX_TRANSFER = 0x1000;
 
 static int lcd_use_fb; // use /dev/fb0?

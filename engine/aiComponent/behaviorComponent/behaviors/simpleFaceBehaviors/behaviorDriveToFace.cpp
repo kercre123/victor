@@ -4,7 +4,7 @@
 * Author: Kevin M. Karol
 * Created: 2017-06-05
 *
-* Description: Behavior that drives to a face
+* Description: Behavior that drives to a face from voice command
 *
 * Copyright: Anki, Inc. 2017
 *
@@ -13,9 +13,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/faceWorld.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -35,7 +39,18 @@ const char* const kTrackFaceOnceKnownKey         = "trackFaceOnceKnown";
 const char* const kAnimTooCloseKey               = "animTooClose";
 const char* const kAnimDriveOverrideKey          = "animDriveOverride";
 const char* const kMotionProfileKey              = "motionProfile";
+const char* const kInitialAnimKey                = "initialAnimation";
+const char* const kSuccessAnimKey                = "animationAfterDrive";
+const char* const kFindFaceBehaviorKey           = "findFaceBehavior"; // must be a BehaviorFindFaceAndThen
+const char* const kResumeAnimKey                 = "resumeAnimation";
+const char* const kMaxNumResumesKey              = "maxNumResumes";
 const char* const kDebugName = "BehaviorDriveToFace";
+
+static constexpr const float kMaxTimeToTrackWithoutFace_s = 1.0f;
+  
+const UserIntentTag kUserIntentTag = USER_INTENT(imperative_come);
+const int kMaxTicksAllowResume = 3;
+
 }
 
 
@@ -51,12 +66,14 @@ BehaviorDriveToFace::DynamicVariables::DynamicVariables()
 {
   trackEndTime_s         = 0;
   currentState           = State::Invalid;
+  numResumesRemaining    = 0;
+  interruptionEndTick    = 0;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
-  : ISimpleFaceBehavior(config)
+  : ICozmoBehavior(config)
 {
   _iConfig.minDriveToFaceDistance_mm = JsonTools::ParseFloat( config, kMinDriveToFaceDistanceKey, kDebugName );
   
@@ -64,11 +81,44 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
   if( _iConfig.trackFaceOnceKnown ) {
     _iConfig.timeUntilCancelTracking_s = JsonTools::ParseFloat( config, kTimeUntilCancelFaceTrackKey, kDebugName );
   }
+  else if( config.isMember(kTimeUntilCancelFaceTrackKey) ) {
+    PRINT_NAMED_WARNING("BehaviorDriveToFace.InvalidConfig.UselessKey",
+                        "%s: Key '%s' specified, but no tracking ('%s' not true). Will be ignored",
+                        GetDebugLabel().c_str(),
+                        kTimeUntilCancelFaceTrackKey,
+                        kTrackFaceOnceKnownKey);
+  }
   
   JsonTools::GetCladEnumFromJSON(config, kAnimTooCloseKey, _iConfig.animTooClose, kDebugName);
   _iConfig.animDriveOverride = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimDriveOverrideKey, _iConfig.animDriveOverride, kDebugName, false);
+  _iConfig.initialAnim = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kInitialAnimKey, _iConfig.initialAnim, kDebugName, false);
+  _iConfig.successAnim = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kSuccessAnimKey, _iConfig.successAnim, kDebugName, false);
+  _iConfig.resumeAnim = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kResumeAnimKey, _iConfig.resumeAnim, kDebugName, false);
+
+  _iConfig.maxNumResumes = config.get( kMaxNumResumesKey, 0 ).asInt();
+  ANKI_VERIFY( (_iConfig.maxNumResumes == 0) == (_iConfig.resumeAnim == AnimationTrigger::Count),
+               "BehaviorDriveToFace.Ctor.ResumeAnimWithoutCount",
+               "maxNumResumes OR resumeAnimation was provided, but expecting both or neither" );
+
   
+  _iConfig.findFaceBehaviorStr = JsonTools::ParseString(config, kFindFaceBehaviorKey, kDebugName);
+
+  if( _iConfig.animDriveOverride != AnimationTrigger::Count &&
+      ( _iConfig.initialAnim != AnimationTrigger::Count ||
+        _iConfig.successAnim != AnimationTrigger::Count ) ) {
+    PRINT_NAMED_WARNING("BehaviorDriveToFace.InvalidConfig.AnimConflict",
+                        "Behavior '%s' specified json key '%s' and at least one of '%s' or '%s', which won't have effect",
+                        GetDebugLabel().c_str(),
+                        kAnimDriveOverrideKey,
+                        kInitialAnimKey,
+                        kSuccessAnimKey);
+  }
+
+
   if( !config[kMotionProfileKey].isNull() ) {
     _iConfig.customMotionProfile = std::make_unique<PathMotionProfile>();
     _iConfig.customMotionProfile->SetFromJSON( config[kMotionProfileKey] );
@@ -95,35 +145,73 @@ void BehaviorDriveToFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
     kAnimTooCloseKey,
     kAnimDriveOverrideKey,
     kMotionProfileKey,
+    kInitialAnimKey,
+    kSuccessAnimKey,
+    kFindFaceBehaviorKey,
+    kMaxNumResumesKey,
+    kResumeAnimKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  if( _iConfig.findFaceBehavior != nullptr ) {
+    delegates.insert( _iConfig.findFaceBehavior.get() );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::InitBehavior()
+{
+  auto behavior = FindBehavior( _iConfig.findFaceBehaviorStr );
+  _iConfig.findFaceBehavior = std::dynamic_pointer_cast<BehaviorFindFaceAndThen>( behavior );
+  ANKI_VERIFY( _iConfig.findFaceBehavior != nullptr,
+               "BehaviorDriveToFace.InitBehavior.InvalidClass",
+               "Behavior '%s' is not a BehaviorFindFaceAndThen",
+               _iConfig.findFaceBehaviorStr.c_str() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveToFace::WantsToBeActivatedBehavior() const
 {
-  return GetTargetFace().IsValid();
+  const auto& uic = GetBehaviorComp<UserIntentComponent>();
+  const bool isVoiceCommand = uic.IsUserIntentPending( kUserIntentTag );
+  
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  const bool recentTick = (_dVars.interruptionEndTick != 0)
+                          && (currTick < _dVars.interruptionEndTick + kMaxTicksAllowResume);
+  const bool shouldResume = recentTick
+                            && (_dVars.numResumesRemaining > 0)
+                            && (_iConfig.resumeAnim != AnimationTrigger::Count);
+  return (_iConfig.findFaceBehavior != nullptr) && (isVoiceCommand || shouldResume);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::OnBehaviorActivated()
 {
+  auto numResumes = _dVars.numResumesRemaining;
+  //reset
   _dVars = DynamicVariables();
   
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( GetTargetFace() );
-  if(facePtr != nullptr){
-    Vision::FaceID_t faceID = facePtr->GetID();
-    if( IsRobotAlreadyCloseEnoughToFace( faceID ) ) {
-      TransitionToAlreadyCloseEnough();
-    } else {
-      TransitionToDrivingToFace();
-    }
-  } else {
-    TransitionToAlreadyCloseEnough();
+  const auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if( uic.IsUserIntentPending( kUserIntentTag ) ) {
+    _dVars.numResumesRemaining = 0;
+    numResumes = 0;
+    SmartActivateUserIntent( kUserIntentTag );
   }
   
   if( _iConfig.customMotionProfile != nullptr ) {
     SmartSetMotionProfile( *_iConfig.customMotionProfile );
+  }
+  
+  if( numResumes > 0 ) {
+    _dVars.numResumesRemaining = numResumes - 1;
+    TransitionToResumeAnimation();
+    return;
+  } else {
+    TransitionToFindingFace();
   }
 }
 
@@ -147,8 +235,11 @@ void BehaviorDriveToFace::BehaviorUpdate()
     }
       break;
     case State::Invalid:
+    case State::FindingFace:
     case State::DriveToFace:
+    case State::FinalAnim:
     case State::AlreadyCloseEnough:
+    case State::ResumeAnim:
       // nothing to do, or waiting for action/behavior callback
       break;
   }
@@ -158,34 +249,61 @@ void BehaviorDriveToFace::BehaviorUpdate()
 void BehaviorDriveToFace::TransitionToDrivingToFace()
 {
   SET_STATE(DriveToFace);
+
   float distToHead;
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( GetTargetFace() );
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
   if(facePtr != nullptr &&
      CalculateDistanceToFace(facePtr->GetID(), distToHead) &&
      _iConfig.animDriveOverride == AnimationTrigger::Count )
   {
+
+    auto* action = new CompoundActionSequential;
+
+    if( _iConfig.initialAnim != AnimationTrigger::Count ) {
+      action->AddAction(new TriggerAnimationAction( _iConfig.initialAnim));
+    }
+    
+    if( _iConfig.maxNumResumes > 0 ) {
+      // if the behavior gets interrupted during this action, flag that we want to restart the behavior
+      // with a resume animation
+      _dVars.numResumesRemaining = _iConfig.maxNumResumes;
+    }
+
+    // set pose now (rather than when anim finishes) in case the anim turns the robot
     Pose3d pose = GetBEI().GetRobotInfo().GetPose();
     pose.TranslateForward( distToHead - _iConfig.minDriveToFaceDistance_mm );
-    auto* driveAction = new DriveToPoseAction( pose, true );
+    action->AddAction(new DriveToPoseAction( pose, true ));
     CancelDelegates(false);
-    DelegateIfInControl(driveAction, [this]() {
-      if( _iConfig.trackFaceOnceKnown ) {
-        TransitionToTrackingFace();
+    DelegateIfInControl(action, [this](ActionResult res) {
+      if( res == ActionResult::SUCCESS ) {
+        _dVars.numResumesRemaining = 0;
+        TransitionToPlayingFinalAnim();
       }
+      // else let the behavior end now
     });
+
   } else if( _iConfig.animDriveOverride != AnimationTrigger::Count ) {
     auto* action = new TriggerAnimationAction( _iConfig.animDriveOverride );
     CancelDelegates(false);
-    DelegateIfInControl(action, [this]() {
-      if( _iConfig.trackFaceOnceKnown ) {
-        TransitionToTrackingFace();
-      }
-    });
+    DelegateIfInControl(action, &BehaviorDriveToFace::TransitionToTrackingFace);
   } else {
     TransitionToAlreadyCloseEnough();
   }
 }
 
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::TransitionToPlayingFinalAnim()
+{
+  SET_STATE(FinalAnim);
+
+  if( _iConfig.successAnim != AnimationTrigger::Count ) {
+    DelegateIfInControl(new TriggerAnimationAction(_iConfig.successAnim), &BehaviorDriveToFace::TransitionToTrackingFace);
+  }
+  else {
+    TransitionToTrackingFace();
+  }
+}
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::TransitionToAlreadyCloseEnough()
@@ -200,21 +318,62 @@ void BehaviorDriveToFace::TransitionToAlreadyCloseEnough()
   });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::TransitionToFindingFace()
+{
+  ANKI_VERIFY( _iConfig.findFaceBehavior->WantsToBeActivated(),
+               "BehaviorDriveToFace.TransitionToFindingFace.FindFaceDWTBA",
+               "The find face behavior %s Doesn't Want To Be Activated",
+               _iConfig.findFaceBehaviorStr.c_str() );
+  DelegateIfInControl( _iConfig.findFaceBehavior.get(), [this]() {
+    _dVars.targetFace = _iConfig.findFaceBehavior->GetFoundFace();
+    if( !_dVars.targetFace.IsValid() ) {
+      return; // and the behavior ends
+    }
+    const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
+    if(facePtr != nullptr){
+      Vision::FaceID_t faceID = facePtr->GetID();
+      if( IsRobotAlreadyCloseEnoughToFace( faceID ) ) {
+        TransitionToAlreadyCloseEnough();
+      } else {
+        TransitionToDrivingToFace();
+      }
+    } else {
+      TransitionToAlreadyCloseEnough();
+    }
+  });
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::TransitionToTrackingFace()
 {
+
+  if( !_iConfig.trackFaceOnceKnown ) {
+    // no tracking requested, just stop now
+    return;
+  }
+
   SET_STATE(TrackFace);
+
   _dVars.trackEndTime_s = 0;
-  // Runs forever - the behavior will be stopped in the Update loop when the
-  // timeout for face tracking is hit
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( GetTargetFace() );
+
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
   if(facePtr != nullptr){
-    _dVars.trackEndTime_s = _iConfig.timeUntilCancelTracking_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _dVars.trackEndTime_s = _iConfig.timeUntilCancelTracking_s + currTime_s;
     const Vision::FaceID_t faceID = facePtr->GetID();
     CancelDelegates(false);
-    DelegateIfInControl(new TrackFaceAction(faceID));
+    auto* trackAction = new TrackFaceAction(faceID);
+    trackAction->SetUpdateTimeout(kMaxTimeToTrackWithoutFace_s);
+    DelegateIfInControl(trackAction);
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::TransitionToResumeAnimation()
+{
+  SET_STATE(ResumeAnim);
+  DelegateIfInControl( new TriggerAnimationAction{ _iConfig.resumeAnim } ); // and then the behavior ends
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -239,7 +398,7 @@ bool BehaviorDriveToFace::IsRobotAlreadyCloseEnoughToFace(Vision::FaceID_t faceI
 bool BehaviorDriveToFace::CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance)
 {
   // Get the distance between the robot and the head's pose on the X/Y plane
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( GetTargetFace() );
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
   if(facePtr != nullptr){
     const auto& robotInfo = GetBEI().GetRobotInfo();
 
@@ -252,6 +411,12 @@ bool BehaviorDriveToFace::CalculateDistanceToFace(Vision::FaceID_t faceID, float
   }
   
   return false;
+}
+  
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::SetInterruptionEndTick( size_t tick )
+{
+  _dVars.interruptionEndTick = tick;
 }
 
 }

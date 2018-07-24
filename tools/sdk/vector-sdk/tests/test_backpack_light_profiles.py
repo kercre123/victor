@@ -15,7 +15,7 @@ def main():
 
     print("------ begin testing backpack light profiles ------")
 
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
 
         # Set backpack to White Lights using the max brightness profile for 4 seconds
         robot.backpack.set_all_backpack_lights(vector.lights.white_light, vector.lights.MAX_COLOR_PROFILE)

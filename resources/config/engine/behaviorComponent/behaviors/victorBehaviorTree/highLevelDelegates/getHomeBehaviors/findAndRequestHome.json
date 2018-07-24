@@ -8,6 +8,10 @@
       "conditionType": "OnCharger"
     }
   },
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OnCharger"
+  },
 
   "behaviors": [
     "FindHome",

@@ -16,6 +16,7 @@
 
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -38,6 +39,7 @@ namespace{
 const char* kAnticConfigKey   = "anticConfig";
 const char* kMinValidTimerKey = "minValidTimer_s";
 const char* kMaxValidTimerKey = "maxValidTimer_s";
+const char* kTimerRingingBehaviorKey = "timerRingingBehaviorID";
 
 // antic keys
 const char* kRecurIntervalMinKey = "recurIntervalMin_s";
@@ -245,6 +247,7 @@ void BehaviorTimerUtilityCoordinator::DevAdvanceAnticBySeconds(int seconds)
 BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
   shouldForceAntic = false;
+  tickToSuppressAnticFor = 0;
 }
 
 
@@ -257,6 +260,10 @@ BehaviorTimerUtilityCoordinator::BehaviorTimerUtilityCoordinator(const Json::Val
   }else{
     Json::Value empty;
     _iParams.anticTracker = std::make_unique<AnticTracker>(empty);
+  }
+
+  if(config.isMember(kTimerRingingBehaviorKey)){
+    _iParams.timerRingingBehaviorStr = config[kTimerRingingBehaviorKey].asString();
   }
   
   std::string debugStr = "BehaviorTimerUtilityCoordinator.Constructor.MissingConfig.";
@@ -285,6 +292,7 @@ void BehaviorTimerUtilityCoordinator::GetBehaviorJsonKeys(std::set<const char*>&
     kAnticConfigKey,
     kMinValidTimerKey,
     kMaxValidTimerKey,
+    kTimerRingingBehaviorKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -306,13 +314,19 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
                                  BEHAVIOR_CLASS(ProceduralClock),
                                  _iParams.timerCheckTimeBehavior);
 
-  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerRinging),
-                                 BEHAVIOR_CLASS(AnimGetInLoop),
-                                 _iParams.timerRingingBehavior);
-
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonCancelTimer),
                                  BEHAVIOR_CLASS(AdvanceClock),
                                  _iParams.cancelTimerBehavior);
+
+  auto ringingID = BEHAVIOR_ID(SingletonTimerRinging);
+  if(!_iParams.timerRingingBehaviorStr.empty()){
+    ringingID = BehaviorTypesWrapper::BehaviorIDFromString(_iParams.timerRingingBehaviorStr);
+  }
+  _iParams.timerRingingBehavior = BC.FindBehaviorByID(ringingID);
+  DEV_ASSERT_MSG(_iParams.timerRingingBehavior != nullptr, 
+                 "BehaviorTimerUtilityCoordinator.InitBehavior.InvalidRingingBehavior", 
+                 "Unable to find behavior %s for timerRinging",
+                 BehaviorTypesWrapper::BehaviorIDToString(ringingID));
 
   _iParams.timerAlreadySetBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonTimerAlreadySet));
   _iParams.iCantDoThatBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
@@ -349,6 +363,17 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
     int maxTimeTillAntic_s = INT_MAX;
     timeToRunAntic = _iParams.anticTracker->GetMaxTimeTillNextAntic(GetBEI(), handle, maxTimeTillAntic_s);
     timeToRunAntic &= (maxTimeTillAntic_s == 0);
+  }
+  
+  // Override all antics if it's been suppressed
+  const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
+  if(_lParams.tickToSuppressAnticFor == tickCount){
+    timeToRunAntic = false;
+  }
+
+  // Antic should not play if a user intent is pending
+  if(uic.IsAnyUserIntentPending()){
+    timeToRunAntic = false;
   }
 
 
@@ -571,6 +596,13 @@ bool BehaviorTimerUtilityCoordinator::IsTimerRinging()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::SuppressAnticThisTick(unsigned long tickCount)
+{
+  _lParams.tickToSuppressAnticFor = tickCount;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
 {
   return GetBEI().GetAIComponent().GetComponent<TimerUtility>();
@@ -609,8 +641,8 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
   return [&timerUtility](const int offset){
     std::map<Vision::SpriteBoxName, int> outMap;
     if(auto timerHandle = timerUtility.GetTimerHandle()){
-      const bool displayingHoursOnScreen = timerHandle->GetDisplayHoursRemaining() > 0;
       const int timeRemaining_s = timerHandle->GetTimeRemaining_s() - offset;
+      const bool displayingHoursOnScreen = timerHandle->SecondsToDisplayHours(timeRemaining_s) > 0;
       
       const int hoursRemaining = TimerHandle::SecondsToDisplayHours(timeRemaining_s);
       const int minsRemaining = TimerHandle::SecondsToDisplayMinutes(timeRemaining_s);
@@ -620,7 +652,8 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
       {
         int tensDigit = 0;
         if(displayingHoursOnScreen){
-          tensDigit =  hoursRemaining/10;
+          // display as minutes
+          tensDigit = (hoursRemaining * 60)/10;
         }else{
           tensDigit = minsRemaining/10;
         }
@@ -631,7 +664,8 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
       {
         int onesDigit = 0;
         if(displayingHoursOnScreen){
-          onesDigit = hoursRemaining % 10;
+          // display as minutes
+          onesDigit = (hoursRemaining * 60) % 10;
         }else{
           onesDigit = minsRemaining % 10;
         }

@@ -104,8 +104,9 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     _offlineIsPulsing = true;
   }
 
-  
-  if(_robot->GetBatteryComponent().IsBatteryLow())
+  const auto& batteryComponent = _robot->GetBatteryComponent();
+  if(batteryComponent.IsBatteryLow() &&
+     !batteryComponent.IsCharging())
   {
     // Both charger out of spec and low battery backpack lights are the same
     // so instead of duplicating a lightPattern in json just use what we've already got
@@ -132,9 +133,9 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     trigger = BackpackAnimationTrigger::Streaming;
   }
   // If we are on the charger and charging
-  else if(_robot->GetBatteryComponent().IsOnChargerContacts() &&
-          _robot->GetBatteryComponent().IsCharging() && 
-          !_robot->GetBatteryComponent().IsBatteryFull())
+  else if(batteryComponent.IsOnChargerContacts() &&
+          batteryComponent.IsCharging() &&
+          !batteryComponent.IsBatteryFull())
   {
     trigger = BackpackAnimationTrigger::Charging;
   }

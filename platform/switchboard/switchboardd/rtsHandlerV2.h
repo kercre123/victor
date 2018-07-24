@@ -62,7 +62,7 @@ private:
   void SendCancelPairing();
   void SendChallengeSuccess();
   void SendWifiScanResult();
-  void SendWifiConnectResult(ConnectWifiResult result);
+  void SendWifiConnectResult(Wifi::ConnectWifiResult result);
   void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
   void SendStatusResponse();
   void SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes);
@@ -87,8 +87,6 @@ private:
   std::shared_ptr<EngineMessagingClient> _engineClient;
   std::unique_ptr<TaskExecutor> _taskExecutor;
   std::unique_ptr<ExternalCommsCladHandlerV2> _cladHandler;
-  bool _isPairing;
-  bool _isOtaUpdating;
 
   const uint8_t kMaxMatchAttempts = 5;
   const uint8_t kMaxPairingAttempts = 3;

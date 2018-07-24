@@ -17,6 +17,7 @@ enum uint_8 AnimEvent {
   DANCE_BEAT_SYNC,
   CUBE_LIGHT_TOGGLE,
   TTS_BEGIN,
+  CHANGE_EYE_COLOR,
 
   Count
 }

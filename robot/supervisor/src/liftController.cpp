@@ -175,9 +175,9 @@ namespace Anki {
         const u32 REENABLE_TIMEOUT_MS = 2000;
 
         // Bracing for impact
-        // Lowers lift quickly and then disables
-        // Prevents any new heights from being commanded
+        // Lowers lift quickly during which time it ignores any new height commands
         bool bracing_ = false;
+        const f32 BRACING_POWER = -0.8;
 
         // Checking for cube on lift by lowering power and seeing if there's lift movement
         bool checkForLoadWhenInPosition_ = false;
@@ -615,7 +615,7 @@ namespace Anki {
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
 
-        if (fabsf(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH || bracing_) {
+        if (fabsf(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH) {
           potentialBurnoutStartTime_ms_ = 0;
           return false;
         }
@@ -640,18 +640,20 @@ namespace Anki {
       }
 
       void Brace() {
-        EnableInternal();
-        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2);
+        AnkiInfo("LiftController.Brace", "");
+        HAL::MotorSetPower(MotorID::MOTOR_LIFT, BRACING_POWER);
         bracing_ = true;
       }
 
       void Unbrace() {
+        AnkiInfo("LiftController.Unbrace", "");
+        HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0.f);
+        ResetAnglePosition(currentAngle_.ToFloat());
         bracing_ = false;
-        if (enabledExternally_) {
-          EnableInternal();
-        } else {
-          DisableInternal();
-        }
+      }
+
+      bool IsBracing() {
+        return bracing_;
       }
 
       Result Update()
@@ -699,12 +701,7 @@ namespace Anki {
           }
         }
 
-        if (MotorBurnoutProtection()) {
-          return RESULT_OK;
-        }
-
-        if (bracing_ && IsInPosition()) {
-          DisableInternal();
+        if (bracing_ || MotorBurnoutProtection()) {
           return RESULT_OK;
         }
 

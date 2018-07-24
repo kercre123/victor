@@ -28,6 +28,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
+#include "engine/aiComponent/behaviorComponent/userDefinedBehaviorTreeComponent/userDefinedBehaviorTreeComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -182,6 +183,12 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent<BEIRobotInfo>()){
     entity->AddDependentComponent(BCComponentID::RobotInfo,
                                   new BEIRobotInfo(robot));
+  }
+
+  // Robot Info
+  if(!entity->HasComponent<UserDefinedBehaviorTreeComponent>()){
+    entity->AddDependentComponent(BCComponentID::UserDefinedBehaviorTreeComponent,
+                                  new UserDefinedBehaviorTreeComponent());
   }
 
   if(!entity->HasComponent<ActiveFeatureComponent>()) {

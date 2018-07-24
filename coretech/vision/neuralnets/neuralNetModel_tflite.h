@@ -33,7 +33,7 @@ class NeuralNetModel : public INeuralNetModel
 {
 public:
   
-  NeuralNetModel();
+  explicit NeuralNetModel(const std::string& cachePath);
   ~NeuralNetModel();
 
   // ObjectDetector expects LoadModel and Run to exist

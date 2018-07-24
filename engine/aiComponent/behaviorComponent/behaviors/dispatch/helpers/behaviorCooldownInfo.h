@@ -46,6 +46,7 @@ private:
   // members
   float _onCooldownUntil_s = -1.0f;
   
+  // Whether or not to ignore the dev-only time-speeder-upper (kTimeMultiplier)
   bool _ignoreFastForward = false;
 };
 

@@ -41,21 +41,6 @@ using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequenti
 namespace {
   
 //const AudioMetaData::GameObjectType kMusicGameObject = AudioMetaData::GameObjectType::Default;
- 
-// Mapping from integral index to 'Gameplay_Round'
-const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundMap = {{
-  Gameplay_Round::Round_00,
-  Gameplay_Round::Round_01,
-  Gameplay_Round::Round_02,
-  Gameplay_Round::Round_03,
-  Gameplay_Round::Round_04,
-  Gameplay_Round::Round_05,
-  Gameplay_Round::Round_06,
-  Gameplay_Round::Round_07,
-  Gameplay_Round::Round_08,
-  Gameplay_Round::Round_09,
-  Gameplay_Round::Round_10
-}};
 
 // Mapping from ActivityId to FreeplayMood for music states
 // 'buildPyramid'    - when Cozmo is building a pyramid (manages its own music states)
@@ -157,36 +142,6 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAudioComponent::UpdateBehaviorRound(const UnlockId behaviorUnlockId, const int round)
-{
-  if (_activeSparkMusicID != behaviorUnlockId) {
-    return false;
-  }
-  
-  _round = round;
-  
-  // Determine Round State audio enum
-  Gameplay_Round roundState = Gameplay_Round::Invalid;
-  if (_round < kGameplayRoundMap.size()) {
-    roundState = kGameplayRoundMap[_round];
-  }
-  else {
-    DEV_ASSERT_MSG(false,
-                   "BehaviorAudioComponent.SetBehaviorStateLevel.InvalidRound",
-                   "round: %d", round);
-  }
-  
-  // Update audio engine
-//  if (_isActive && roundState != Gameplay_Round::Invalid) {
-//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-//                                                  static_cast<GenericSwitch>(roundState),
-//                                                  kMusicGameObject);
-//  }
-  return true;
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioComponent::UpdateActivityMusicState(BehaviorID activityID)
@@ -217,44 +172,6 @@ void BehaviorAudioComponent::UpdateActivityMusicState(BehaviorID activityID)
   
 // Protected Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAudioComponent::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
-                                               const AudioMetaData::GameState::Music musicState,
-                                               const AudioMetaData::SwitchState::Sparked sparkedState,
-                                               const int round)
-{
-//  _activeSparkMusicID = behaviorUnlockId;
-//
-//  if (_activeSparkMusicID == UnlockId::Invalid) {
-//    _isActive = false;
-//    return false;
-//  }
-//
-//  _isActive = true;
-//  UpdateBehaviorRound(_activeSparkMusicID, round);
-//
-//  // Post Switch state for Sparked Behavior
-//  if (sparkedState != Sparked::Invalid) {
-//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Sparked,
-//                                                  static_cast<GenericSwitch>(sparkedState),
-//                                                  kMusicGameObject);
-//  }
-//  
-//  // Post Music state for Sparked Behavior
-//  if (musicState != AudioMetaData::GameState::Music::Invalid) {
-//    _robot.GetRobotAudioClient()->PostMusicState(static_cast<AudioMetaData::GameState::GenericState>(musicState));
-//  }
-  return true;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioComponent::DeactivateSparkedMusic()
-{
-  _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
-  _isActive = false;
-  _activeSparkMusicID = UnlockId::Count;
-  SetDefaultBehaviorRound();
-}
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

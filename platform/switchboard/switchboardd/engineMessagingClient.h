@@ -6,7 +6,7 @@
  *
  * Description: Communication point for message coming from / 
  *              going to the engine process. Currently this is
- *              using a tcp connection where engine acts as the
+ *              using a udp connection where engine acts as the
  *              server, and this is the client.
  *
  * Copyright: Anki, Inc. 2018
@@ -20,7 +20,6 @@
 #include <signals/simpleSignal.hpp>
 #include "ev++.h"
 #include "coretech/messaging/shared/socketConstants.h"
-#include "coretech/messaging/shared/TcpClient.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -38,6 +37,7 @@ public:
   void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
   void ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus status);
+  void HandleWifiScanRequest();
   EngineMessageSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;
   }
@@ -46,7 +46,9 @@ public:
   }
   static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 
+
 private:
+
   LocalUdpClient _client;
   EngineMessageSignal _pairingStatusSignal;
   EngineMessageSignal _engineMessageSignal;

@@ -1,13 +1,12 @@
 package main
 
 import (
-	"anki/cloudproc"
 	"anki/robot"
 )
 
 func init() {
 	checkDataFunc = checkCloudDataFiles
-	platformOpts = append(platformOpts, cloudproc.WithRequireToken())
+	//platformOpts = append(platformOpts, cloudproc.WithVoiceOptions(voice.WithRequireToken()))
 }
 
 func checkCloudDataFiles() error {

@@ -25,7 +25,6 @@
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/inventoryTypes.clad"
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
@@ -44,7 +43,6 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/uiConnectionTypes.clad"
-#include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/memoryMap.clad"
@@ -179,9 +177,6 @@ message RobotState {
 }
 
 message RobotDelocalized {
-}
-
-message RobotPoked {
 }
 
 message RobotStopped {
@@ -585,7 +580,7 @@ message ObjectAvailable
 
 // Indicates that a cube has connected or disconnected
 message ObjectConnectionState
-{  
+{
   uint_32 objectID,
   string factoryID,
   ObjectType  object_type,
@@ -651,35 +646,6 @@ message MoodState {
   float_32 emotionValues[uint_8]
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Progression Unlocks
-///////////////////////////////////////////////////////////////////////////////
-
-message RequestSetUnlockResult {
-  UnlockId unlockID,
-  bool unlocked
-}
-
-message UnlockStatus {
-  UnlockId unlocks[uint_8],
-  bool fromBackup = 0
-}
-
-// Only called the first time so UI can show correct "new" badges on default unlocks
-message UnlockedDefaults {
-  UnlockId defaultUnlocks[uint_8]
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Inventory
-///////////////////////////////////////////////////////////////////////////////
-
-message InventoryStatus {
-  InventoryList allInventory
-}
-
-message RequestDefaultSparks {
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debug / Console
@@ -821,22 +787,6 @@ message FirmwareUpdateComplete {
 //////////////////////////////////  GAME  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// The behavior wants the UI to pop up a game request
-message RequestGameStart {
-  UnlockId gameRequested
-}
-
-// Game asked for a random trick; respond with which trick started
-// to update UI
-message HardSparkStartedByEngine {
-  UnlockId sparkStarted
-}
-
-// Spark was ended by Engine (due to success or timeout)
-message HardSparkEndedByEngine {
-  bool success
-}
-
 message SdkConnectionStatus
 {
   string   sdkBuildVersion,
@@ -872,7 +822,7 @@ message BehaviorTransition{
 }
 
 message RespondAllBehaviorsList{
-  //BehaviorID behaviors[uint_8]
+  //BehaviorID behaviors[uint_16]
 }
 
 
@@ -954,7 +904,7 @@ enum uint_8 BehaviorStackState {
 } 
 message AudioBehaviorStackUpdate {
   BehaviorStackState state,
-  BehaviorID branchPath[uint_8],
+  BehaviorID branchPath[uint_16],
 }
 
 message ResponseLocale {
@@ -1009,6 +959,13 @@ autounion MessageEngineToGame
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   AnimationAvailable                AnimationAvailable                 = 0x09,
   EndOfMessage                      EndOfMessage                       = 0x0A,
+  ObjectConnectionState             ObjectConnectionState              = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectMoved                       ObjectMoved                        = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectStoppedMoving               ObjectStoppedMoving                = 0x0D, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectUpAxisChanged               ObjectUpAxisChanged                = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectTapped                      ObjectTapped                       = 0x0F, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectAccel                       ObjectAccel                        = 0x10, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
+  RobotObservedObject               RobotObservedObject                = 0x11, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // namespace ExternalInterface

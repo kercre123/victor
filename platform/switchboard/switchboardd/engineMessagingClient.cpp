@@ -17,6 +17,7 @@
 #include <chrono>
 #include <thread>
 #include "anki-ble/common/log.h"
+#include "anki-wifi/wifi.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -36,8 +37,8 @@ EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop)
 {}
 
 bool EngineMessagingClient::Init() {
-  ev_timer_init(&_handleEngineMessageTimer.timer, 
-                &EngineMessagingClient::sEvEngineMessageHandler, 
+  ev_timer_init(&_handleEngineMessageTimer.timer,
+                &EngineMessagingClient::sEvEngineMessageHandler,
                 kEngineMessageFrequency_s, 
                 kEngineMessageFrequency_s);
   _handleEngineMessageTimer.client = &_client;
@@ -88,11 +89,33 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
       continue;
     } 
 
-    if (messageTag == EMessageTag::EnterPairing || messageTag == EMessageTag::ExitPairing) {
-      // Emit signal for message
-      wData->signal->emit(message);
+    switch(messageTag) {
+      case EMessageTag::EnterPairing:
+      case EMessageTag::ExitPairing:
+      case EMessageTag::WifiScanRequest:
+      {
+        // Emit signal for message
+        wData->signal->emit(message);
+      }
+        break;
+      default:
+        break;
     }
   }
+}
+
+void EngineMessagingClient::HandleWifiScanRequest() {
+  std::vector<Wifi::WiFiScanResult> wifiResults;
+  Wifi::WifiScanErrorCode code = Wifi::ScanForWiFiAccessPoints(wifiResults);
+
+  const uint8_t statusCode = (uint8_t)code;
+
+  Anki::Cozmo::SwitchboardInterface::WifiScanResponse rsp;
+  rsp.status_code = statusCode;
+  rsp.ssid_count = wifiResults.size();
+
+  Log::Write("Sending wifi scan results.");
+  SendMessage(GMessage::CreateWifiScanResponse(std::move(rsp)));
 }
 
 void EngineMessagingClient::SendMessage(const GMessage& message) {

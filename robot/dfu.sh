@@ -137,9 +137,9 @@ while [ $NUM_RETRIES -ge 0 ]; do
         spawn ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST}
         expect "~ #"
         send "${STAGING_DIR}/${DFU_PROGRAM_BASENAME} ${STAGING_DIR}/${DFU_PAYLOAD_BASENAME}\n"
-        set timeout 5
+        set timeout 8
         expect {
-            "requesting validation" {
+            "Success!" {
                 send_user "DFU_SUCCESS"
             }
             timeout {

@@ -11,6 +11,8 @@
   var dumpInput = false; // print all input the engine sends
   var showFakeDataUponDisconnect = false; 
 
+  var kArbitraryXAxis = 5000; // mm
+
   // helper classes
   function Vector( x, y, z ) {
     this.x = 1.0*x;
@@ -86,9 +88,9 @@
   var canvasContainer;
   var legendContainer;
   var noteDiv;
-  var autoUpdate = false;
+  var autoUpdate = true;
   var waitingOnData = false;
-  var is3D = true;
+  var is3D = false;
 
   function callUpdate() {
     waitingOnData = true;
@@ -195,7 +197,7 @@
   var vizDirty = false;
   var shouldDrawRobot = true;
   var shouldDrawCubes = true;
-  var shouldDrawFaces = true;
+  var shouldDrawFaces = false;
   var kKnownTypes = ['Unknown','ClearOfObstacle','ClearOfCliff','ObstacleCube','ObstacleCharger','ObstacleProx','ObstacleProxExplored','ObstacleUnrecognized','Cliff','InterestingEdge','NotInterestingEdge'];
   
   var sketch = function( p ) {
@@ -397,17 +399,20 @@
       var x = scaleFactor2D*(0.001*robotPosition.x - xOffset2D);
       var y = scaleFactor2D*(0.001*robotPosition.y - yOffset2D);
       var euler = calcEuler( robotPosition.qW, robotPosition.qX, robotPosition.qY, robotPosition.qZ );
-      var robotLength = 30.0*scaleFactor2D/scaleFactor2D0; // in pixels
-      var robotWidth = 20.0*scaleFactor2D/scaleFactor2D0;
-      p.translate( x - 0.75*robotLength, y - 0.5*robotWidth );
-      p.rotate( euler.z );
-      p.image(robotImg, 0,0, robotLength, robotWidth,0,0);
+      var robotLength = 50.0*scaleFactor2D0/780;
+      var robotWidth = 26.0*scaleFactor2D0/780;
+      p.translate( x, y );
+      p.imageMode( p.CENTER ); // todo: this should be on drive center
+      p.rotate( -euler.z );
+      p.scale( scaleFactor2D/scaleFactor2D0 );
+      p.image(robotImg, 0, 0, robotLength, robotWidth);
       p.pop();
     }
     function drawCubes2D() {
       if( typeof cubeData === 'undefined' ) {
         return;
       }
+      // todo: this need to match how faces are done
       for( var idx=0; idx<cubeData.length; ++idx ) {
         var cubePos = cubeData[idx];
         p.push();
@@ -415,7 +420,7 @@
         var y = scaleFactor2D*(0.001*cubePos.y - yOffset2D);
         var cubeSide = 15.0*scaleFactor2D/scaleFactor2D0; // in pixels
         p.translate( x - 0.5*cubeSide, y - 0.5*cubeSide );
-        p.rotate( cubePos.angle );
+        p.rotate( -cubePos.angle );
         p.image( cubeImg, 0, 0, cubeSide, cubeSide, 0, 0 );
         p.pop();
       }
@@ -610,15 +615,20 @@
           delta = Math.min( Math.max( delta, -100 ), 100 );
           var v = camera.getLookVector().makeUnitLength();
           camera.move( v.scale( delta ) );
+          vizDirty = true;
         } else {
           var delta = 0.5*event.delta; // this is max(deltaX,deltaY)
           var prevScaleFactor = scaleFactor2D;
-          scaleFactor2D *= (100 - delta)/100; // todo: exponential?
-          // change offset so it keep the point under the mouse stationary
-          xOffset2D += p.mouseX * (1.0/prevScaleFactor - 1.0/scaleFactor2D);
-          yOffset2D += p.mouseY * (1.0/prevScaleFactor - 1.0/scaleFactor2D);
+          var newFactor = scaleFactor2D*(100 - delta)/100; // todo: exponential?
+          if( newFactor/scaleFactor2D0 > .05 && newFactor/scaleFactor2D0 < 50 ) {
+            scaleFactor2D = newFactor;
+
+            // change offset so it keep the point under the mouse stationary
+            xOffset2D += p.mouseX * (1.0/prevScaleFactor - 1.0/scaleFactor2D);
+            yOffset2D += p.mouseY * (1.0/prevScaleFactor - 1.0/scaleFactor2D);
+            vizDirty = true;
+          }
         }
-        vizDirty = true;
         return false;
       } else {
         // forward the mouse wheel call
@@ -638,17 +648,17 @@
       }
       callUpdate();
     });
-    updateBtn.appendTo( elem );
+    updateBtn.appendTo( elem ).prop('disabled', autoUpdate);
 
-    var chkAuto = $('<input />', { type: 'checkbox', id: 'chkAuto'}).appendTo( elem );
+    var chkAuto = $('<input />', { type: 'checkbox', id: 'chkAuto'}).appendTo( elem ).prop('checked', autoUpdate);
     $('<label />', { for: 'chkAuto', text: 'Auto-update' }).appendTo( elem );
-    var chk3D = $('<input />', { type: 'checkbox', id: 'chk3D'}).appendTo(elem).prop('checked', true);
+    var chk3D = $('<input />', { type: 'checkbox', id: 'chk3D'}).appendTo(elem).prop('checked', is3D);
     $('<label />', { for: 'chk3D', text: '3D' }).appendTo( elem );
-    var chkRobot = $('<input />', { type: 'checkbox', id: 'chkRobot'}).appendTo(elem).prop('checked', true);
+    var chkRobot = $('<input />', { type: 'checkbox', id: 'chkRobot'}).appendTo(elem).prop('checked', shouldDrawRobot);
     $('<label />', { for: 'chkRobot', text: 'Show robot' }).appendTo( elem );
-    var chkCubes = $('<input />', { type: 'checkbox', id: 'chkCubes'}).appendTo(elem).prop('checked', true);
+    var chkCubes = $('<input />', { type: 'checkbox', id: 'chkCubes'}).appendTo(elem).prop('checked', shouldDrawCubes);
     $('<label />', { for: 'chkCubes', text: 'Show cubes' }).appendTo( elem );
-    var chkFaces = $('<input />', { type: 'checkbox', id: 'chkFaces'}).appendTo(elem).prop('checked', true);
+    var chkFaces = $('<input />', { type: 'checkbox', id: 'chkFaces'}).appendTo(elem).prop('checked', shouldDrawFaces);
     $('<label />', { for: 'chkFaces', text: 'Show faces' }).appendTo( elem );
     chkAuto.change( function() {
       autoUpdate = $(this).is(':checked');
@@ -699,8 +709,9 @@
         }
       }
     })
-    // todo: remove when fixed
-    noteDiv = $('<div>NOTE: the y axis is flipped (e.g., when the robot turns right it will look like it turned left here), and face poses aren\'t correct yet</div>').appendTo( elem );
+    // this is fixed in 2D for the robot, but I haven't checked cubes or faces, or anything in 3D. Leaving as a comment until PR demo is done.
+    // // todo: remove when fixed
+    // noteDiv = $('<div>NOTE: the y axis is flipped (e.g., when the robot turns right it will look like it turned left here), and face poses aren\'t correct yet</div>').appendTo( elem );
 
     callUpdate();
   };
@@ -772,21 +783,35 @@
 
       robotPosition = data["robot"];
 
+      // flip (quads are in mm already)
+      quadTreeQuads.forEach(function(quad){
+        quad.center.y = 0.001*kArbitraryXAxis - quad.center.y;
+      });
+      var tmpMaxY = dataExtentsInfo.maxY;
+      dataExtentsInfo.maxY = 0.001*kArbitraryXAxis - dataExtentsInfo.minY;
+      dataExtentsInfo.minY = 0.001*kArbitraryXAxis - tmpMaxY;
+      robotPosition.y = kArbitraryXAxis - robotPosition.y;
+
       vizDirty = true;
       updateBtn.prop('disabled', autoUpdate);
       waitingOnData = false;
     } 
     else if( type == "MemoryMapCubes" ) {
       var newCubeData = data["cubes"];
-      if( typeof cubeData === 'undefined' || (newCubeData.length != cubeData.length) ) {
-        cubeData = newCubeData;
+      if( typeof newCubeData === 'undefined' ) {
+        return;
       }
+      // todo: only update if position changed, instead of timestamp
+      cubeData = newCubeData;
+      cubeData.forEach(function(cube) {
+        cube.y = kArbitraryXAxis - cube.y;
+      });
     } 
     else if( type == "MemoryMapFace" ) {
       var id = data["faceID"];
-      if( typeof faceData[id] === 'undefined' ) {
-        faceData[id] = data;
-      }
+      data["pose"].y = kArbitraryXAxis - data["pose"].y;
+      // todo: only update if position changed, instead of timestamp
+      faceData[id] = data;
     }
     else if( type == "RobotDeletedFace" ) {
       var id = data["faceID"];
@@ -796,7 +821,7 @@
     }
   };
 
-  var kAutoUpdatePeriod_s = 5.0; 
+  var kAutoUpdatePeriod_s = 1.0; 
   var timeTilAutoUpdate = kAutoUpdatePeriod_s;
   myMethods.update = function( dt, elem ) {
     timeTilAutoUpdate -= dt;

@@ -32,6 +32,7 @@ enum class RobotComponentID{
   AIComponent,
   ActionList,
   Animation,
+  AppCubeConnectionSubscriber,
   Battery,
   BeatDetector,
   BlockTapFilter,
@@ -52,7 +53,6 @@ enum class RobotComponentID{
   FullRobotPose,
   GyroDriftDetector,
   HabitatDetector,
-  Inventory,
   Map,
   MicComponent,
   MoodManager,
@@ -64,7 +64,6 @@ enum class RobotComponentID{
   PetWorld,
   PhotographyManager,
   PowerStateManager,
-  ProgressionUnlock,
   ProxSensor,
   PublicStateBroadcaster,
   SDK,
@@ -79,6 +78,7 @@ enum class RobotComponentID{
   VariableSnapshotComponent,
   Vision,
   VisionScheduleMediator,
+  RobotExternalRequestComponent,
   Count
 };
 

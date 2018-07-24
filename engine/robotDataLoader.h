@@ -108,12 +108,22 @@ public:
   
   const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
 
+  // all clips that are allowed to move the body while on the charger
+  const std::set<std::string>& GetAllWhitelistedChargerAnimationClips() const {
+    return _allWhitelistedChargerAnimationClips;
+  }
+
+  // get _just_ the ones that are supposed to be safe to stay on the charger (a subset of
+  // GetWhitelistedChargerAnimationClips)
+  const std::set<std::string>& GetWhitelistedChargerSafeAnimationClips() const {
+    return _whitelistedChargerSafeAnimationClips;
+  }
+
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const              { return _robotMoodConfig; }
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
   const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
-  const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
@@ -188,6 +198,8 @@ private:
   
   void LoadCubeSpinnerConfig();
 
+  void LoadAnimationWhitelist();
+
   // Outputs a map of file name (no path or extensions) to the full file path
   // Useful for clad mappings/lookups
   std::map<std::string, std::string> CreateFileNameToFullPathMap(const std::vector<const char*> & srcDirs, const std::string& fileExtensions) const;
@@ -229,7 +241,6 @@ private:
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
   Json::Value _visionScheduleMediatorConfig;
-  Json::Value _inventoryConfig;
   Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
   Json::Value _userIntentsConfig;
@@ -257,6 +268,9 @@ private:
   std::atomic<bool>     _abortLoad{false};
   
   std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
+
+  std::set<std::string> _allWhitelistedChargerAnimationClips;
+  std::set<std::string> _whitelistedChargerSafeAnimationClips;
 };
 
 }

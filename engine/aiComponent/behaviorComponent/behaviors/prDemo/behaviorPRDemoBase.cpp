@@ -101,6 +101,9 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
   // also disable face keep-alive
   GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kPRDemoDisableLockName);
   
+  // Reset so the trick of entering and exiting pairing truly resets the demo
+  _iConfig.demoBehavior->Reset();
+  
   if( _iConfig.sleepingBehavior->WantsToBeActivated() ) {
     DelegateIfInControl(_iConfig.sleepingBehavior.get(), [this]() {
         GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( true );

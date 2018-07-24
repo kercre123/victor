@@ -19,6 +19,7 @@
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -117,7 +118,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncRobotAck,                   &RobotToEngineImplMessaging::HandleSyncRobotAck);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotPoked,                     &RobotToEngineImplMessaging::HandleRobotPoked);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetHeadID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                &RobotToEngineImplMessaging::HandleFirmwareVersion);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorCalibration,               &RobotToEngineImplMessaging::HandleMotorCalibration);
@@ -676,20 +676,25 @@ void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterfa
   // Move the head up when we sync time so that the customer can see the face easily
   if(FACTORY_TEST && Factory::GetEMR()->fields.PACKED_OUT_FLAG)
   {
+    // Move head up
     const f32 kLookUpSpeed_radps = 2;
-    robot->GetMoveComponent().MoveHeadToAngle(MAX_HEAD_ANGLE,
-                                              kLookUpSpeed_radps,
-                                              MAX_HEAD_ACCEL_RAD_PER_S2);
+    auto moveHeadUpAction = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
+    moveHeadUpAction->SetMaxSpeed(kLookUpSpeed_radps);
+    moveHeadUpAction->SetAccel(MAX_HEAD_ACCEL_RAD_PER_S2);
+
+    // Set calm mode
+    auto setCalmFunc = [](Robot& robot) {
+      robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(true, false)));
+      return true;
+    };
+    auto setCalmModeAction = new WaitForLambdaAction(setCalmFunc);
+
+    // Command sequential action
+    auto moveHeadThenCalm = new CompoundActionSequential();
+    moveHeadThenCalm->AddAction(moveHeadUpAction);
+    moveHeadThenCalm->AddAction(setCalmModeAction);
+    robot->GetActionList().QueueAction(QueueActionPosition::NOW, moveHeadThenCalm);
   }
-}
-
-void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleRobotPoked");
-
-  // Forward on with EngineToGame event
-  LOG_INFO("Robot.HandleRobotPoked","");
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
 }
 
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

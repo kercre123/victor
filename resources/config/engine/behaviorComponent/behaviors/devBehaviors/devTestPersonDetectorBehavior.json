@@ -5,7 +5,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "TurnTowardsPerson",
+    "ReactToBody",
     "Wait"
   ]
 }

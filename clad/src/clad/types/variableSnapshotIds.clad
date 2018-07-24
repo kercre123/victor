@@ -21,6 +21,10 @@ enum uint_32 VariableSnapshotId {
 
   // other snapshot variables
   BehaviorGreetAfterLongTime_LastSeenTimes,
+
+  UserDefinedBehaviorTreeComp_CondToBehaviorMappings,
+  
+  Count
 }
 
 } // namespace Cozmo

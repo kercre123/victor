@@ -135,8 +135,11 @@ public:
   // what you want??
   void RemoveAllProxObstacles();
   
-  void SetUseProxObstaclesInPlanning(bool enable) { _enableProxCollisions = enable; }
+  void SetUseProxObstaclesInPlanning(bool enable);
   bool GetUseProxObstaclesInPlanning() const { return _enableProxCollisions; }
+  
+  // marks observable object as unobserved
+  void MarkObjectUnobserved(const ObservableObject& object);
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors

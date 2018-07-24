@@ -47,12 +47,6 @@ namespace Anki {
     CozmoSimTestController::~CozmoSimTestController()
     { }
     
-  void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
-  {    
-    SendMessage(ExternalInterface::MessageGameToEngine(
-      ExternalInterface::AllowedToHandleActions(true)));
-  }
-    
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
                                                      const char* condAsString,
                                                      double start_time,
@@ -157,9 +151,6 @@ namespace Anki {
 
     void CozmoSimTestController::ExitTest()
     {
-      SendMessage(ExternalInterface::MessageGameToEngine(
-        ExternalInterface::AllowedToHandleActions(false)));
-
       if (_quitWebotsAfterTest) {
         QuitWebots(_result); // Terminate the Webots process
       } else {

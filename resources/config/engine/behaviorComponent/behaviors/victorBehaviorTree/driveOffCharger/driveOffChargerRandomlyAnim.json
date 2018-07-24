@@ -28,20 +28,17 @@
     {
       "behaviorName": "DriveOffChargerLeftInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["DriveOffChargerLeft"],
-      "playOnChargerWithBody": true
+      "animTriggers": ["DriveOffChargerLeft"]
     },
     {
       "behaviorName": "DriveOffChargerStraightInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["DriveOffChargerStraight"],
-      "playOnChargerWithBody": true
+      "animTriggers": ["DriveOffChargerStraight"]
     },
     {
       "behaviorName": "DriveOffChargerRightInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["DriveOffChargerRight"],
-      "playOnChargerWithBody": true
+      "animTriggers": ["DriveOffChargerRight"]
     }
   ]
 

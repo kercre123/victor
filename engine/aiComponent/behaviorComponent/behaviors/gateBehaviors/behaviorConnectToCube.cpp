@@ -177,17 +177,17 @@ void BehaviorConnectToCube::TransitionToConnectionLost()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorConnectToCube::ConnectedInteractableCallback()
+void BehaviorConnectToCube::ConnectedCallback(ECubeConnectionType connectionType)
 {
-  _dVars.connectedOnLastUpdate = true;
+  if(ECubeConnectionType::Interactable == connectionType){
+    _dVars.connectedOnLastUpdate = true;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorConnectToCube::ConnectionFailedCallback()
 {
-  if(EState::Connecting == _dVars.state){
-    TransitionToConnectionFailed();
-  }
+  _dVars.connectionFailedOnLastUpdate = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -5,16 +5,17 @@ import (
 	"io"
 
 	"anki/cloudproc"
+	"anki/voice"
 )
 
 type Harness interface {
-	cloudproc.MsgIO
+	voice.MsgIO
 	io.Closer
 	ReadMessage() (*cloud.Message, error)
 }
 
 type memHarness struct {
-	cloudproc.MsgIO
+	voice.MsgIO
 	kill   chan struct{}
 	intent chan *cloud.Message
 }
@@ -33,12 +34,15 @@ func CreateMemProcess(options ...cloudproc.Option) (Harness, error) {
 
 	intentResult := make(chan *cloud.Message)
 
-	io, receiver := cloudproc.NewMemPipe()
-	process := &cloudproc.Process{}
+	io, receiver := voice.NewMemPipe()
+	process := &voice.Process{}
 	process.AddReceiver(receiver)
-	process.AddIntentWriter(&cloudproc.ChanMsgSender{Ch: intentResult})
+	process.AddIntentWriter(&voice.ChanMsgSender{Ch: intentResult})
 
-	go process.Run(append(options, cloudproc.WithStopChannel(kill))...)
+	options = append(options, cloudproc.WithStopChannel(kill))
+	options = append(options, cloudproc.WithVoice(process))
+
+	go cloudproc.Run(options...)
 
 	return &memHarness{
 		MsgIO:  io,

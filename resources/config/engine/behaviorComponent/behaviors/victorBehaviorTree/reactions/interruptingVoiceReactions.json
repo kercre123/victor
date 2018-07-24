@@ -12,6 +12,7 @@
     "KeepawayVoiceCommand",
     "BlackJackVoiceCommand",
     "ReactToGreeting", // must come somewhere after blackjack since they share the affirmative intent
+    "PRDemoComeHere",
     "ComeHereVoiceCommand",
     "LookAtMeVoiceCommand",
     "WhatsMyNameVoiceCommand",

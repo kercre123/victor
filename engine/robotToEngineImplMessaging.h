@@ -69,7 +69,6 @@ public:
   void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleSyncRobotAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);

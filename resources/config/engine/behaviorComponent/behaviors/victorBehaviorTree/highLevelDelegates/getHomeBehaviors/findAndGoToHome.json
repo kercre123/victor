@@ -7,6 +7,13 @@
   "interruptActiveBehavior" : true,
   "linkScope": true,
 
+  "wantsToBeActivatedCondition" : {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OnCharger"
+    }
+  },
+
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
     "not": {

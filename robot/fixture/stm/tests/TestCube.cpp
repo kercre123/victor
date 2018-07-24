@@ -20,7 +20,7 @@
 #include "timer.h"
 
 #define TESTCUBE_DEBUG 1
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
+static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_PVT;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
@@ -211,7 +211,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
           
           uint32_t crc_current = cubebootSignature();
           uint32_t expected_model = g_fixmode == FIXMODE_CUBE2 ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_CUBE1;
-          if( info.hwrev != CURRENT_HW_REV || info.model != expected_model || info.crc != crc_current ) {
+          if( info.hwrev != CURRENT_CUBE_HW_REV || info.model != expected_model || info.crc != crc_current ) {
             if( info.crc != crc_current )
               ConsolePrintf("CRC mismatch != %08x\n", crc_current);
             throw ERROR_CUBE_FW_MISMATCH;
@@ -294,10 +294,10 @@ bool TestCubeDetect(void)
   TestCubeCleanup();
   
   //weakly pulled-up - it will detect as grounded when the board is attached
-  DUT_TX::init(MODE_INPUT, PULL_UP);
+  DUT_SWC::init(MODE_INPUT, PULL_UP);
   Timer::wait(100);
-  bool detected = !DUT_TX::read(); //true if pin is pulled down by the board
-  DUT_TX::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
+  bool detected = !DUT_SWC::read(); //true if pin is pulled down by the board
+  DUT_SWC::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
   
   return detected;
 }
@@ -323,25 +323,26 @@ static void ShortCircuitTest(void)
 //led test array
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED", 0x1111, 12, 0, 10, 4, ERROR_CUBE_LED    },
-  {(char*)"All.GRN", 0x2222, 12, 0, 10, 4, ERROR_CUBE_LED    },
-  {(char*)"All.BLU", 0x4444, 12, 0,  9, 4, ERROR_CUBE_LED    },
-  {(char*)"D1.RED",  0x0001,  1, 0, 27, 5, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.GRN",  0x0002,  1, 0, 28, 6, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.BLU",  0x0004,  1, 0, 26, 5, ERROR_CUBE_LED_D1 },
-  {(char*)"D2.RED",  0x0010,  1, 0, 27, 5, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.GRN",  0x0020,  1, 0, 28, 6, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.BLU",  0x0040,  1, 0, 26, 5, ERROR_CUBE_LED_D2 },
-  {(char*)"D3.RED",  0x0100,  1, 0, 27, 5, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.GRN",  0x0200,  1, 0, 28, 6, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.BLU",  0x0400,  1, 0, 26, 5, ERROR_CUBE_LED_D3 },
-  {(char*)"D4.RED",  0x1000,  1, 0, 27, 5, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.GRN",  0x2000,  1, 0, 28, 6, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.BLU",  0x4000,  1, 0, 26, 5, ERROR_CUBE_LED_D4 }
+  {(char*)"All.RED", 0x1111, 12, 0, 10,  4, ERROR_CUBE_LED    },
+  {(char*)"All.GRN", 0x2222, 12, 0, 10,  4, ERROR_CUBE_LED    },
+  {(char*)"All.BLU", 0x4444, 12, 0,  9,  4, ERROR_CUBE_LED    },
+  {(char*)"D1.RED",  0x0001,  1, 0, 27,  5, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.GRN",  0x0002,  1, 0, 28,  8, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.BLU",  0x0004,  1, 0, 28,  8, ERROR_CUBE_LED_D1 },
+  {(char*)"D2.RED",  0x0010,  1, 0, 27,  5, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.GRN",  0x0020,  1, 0, 28,  8, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.BLU",  0x0040,  1, 0, 28,  8, ERROR_CUBE_LED_D2 },
+  {(char*)"D3.RED",  0x0100,  1, 0, 27,  5, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.GRN",  0x0200,  1, 0, 28,  8, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.BLU",  0x0400,  1, 0, 28,  8, ERROR_CUBE_LED_D3 },
+  {(char*)"D4.RED",  0x1000,  1, 0, 27,  5, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.GRN",  0x2000,  1, 0, 28,  8, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.BLU",  0x4000,  1, 0, 28,  8, ERROR_CUBE_LED_D4 }
 };
 
 static inline bool ledtest_pass(led_test_t *ptest, int i_test) {
-  return ( i_test >= ptest->i_nominal - ptest->i_variance && i_test <= ptest->i_nominal + ptest->i_variance );
+  return ( i_test >= ptest->i_nominal - ptest->i_variance && 
+           i_test <= ptest->i_nominal + ptest->i_variance );
 }
 
 static void CubeTest(void)
@@ -353,7 +354,7 @@ static void CubeTest(void)
   DUT_UART::init(57600);
   
   //DEBUG:
-  if( g_fixmode == FIXMODE_CUBE0 ) {
+  if( g_fixmode <= FIXMODE_CUBE0 ) {
     TestCommon::consoleBridge(TO_DUT_UART,3000);
   }
   
@@ -434,23 +435,17 @@ static void OTPbootloader(void)
   
   cmdSend(CMD_IO_DUT_UART, "getvers");
   
-  //only burn OTP for valid cube types (0/debug bail out here)
-  if( g_fixmode != FIXMODE_CUBE1 && g_fixmode != FIXMODE_CUBE2 ) {
-    throw ERROR_UNKNOWN_MODE;
-    //return;
-  }
-  
   //Generate bd address
   bdaddr_t bdaddr;
   bdaddr_generate(&bdaddr, GetRandom ); //use RNG peripheral for proper randomness
   
   //prepare hwardware ids
   cubeid.esn = CUBEID_ESN_INVALID;
-  cubeid.hwrev = CURRENT_HW_REV;
+  cubeid.hwrev = CURRENT_CUBE_HW_REV;
   cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
   
-  //pull a new s/n for release builds only (limited supply, don't waste during debug)
-  //if( g_isReleaseBuild )
+  //pull a new s/n for valid modes only (allow debug on all fixtures)
+  if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 )
     cubeid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
   
   uint32_t crc = cubebootSignature();
@@ -460,8 +455,18 @@ static void OTPbootloader(void)
   Board::powerOn(PWR_DUTPROG);
   {
     char *cmd = snformat(b,bz,"otp write %s %08x %u %u %08x", bdaddr2str(&bdaddr), cubeid.esn, cubeid.hwrev, cubeid.model, crc);
-    cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
-    write_result = cmdStatus();
+    
+    //only burn OTP for valid cube types
+    if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 ) {
+      cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+      write_result = cmdStatus();
+    } else {
+      ConsolePrintf("skipping OTP write:\n");
+      ConsolePrintf("XXX: %s\n", b);
+      write_result = 0;
+      //throw ERROR_UNKNOWN_MODE;
+      //return;
+    }
   }
   Board::powerOff(PWR_DUTPROG);
   
@@ -498,16 +503,10 @@ void CubeBootDebug(void)
 
 static void CubeFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x HWRev %u Model %u\n", cubeid.esn, cubeid.hwrev, cubeid.model);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
-  
   int bootSize;
   uint32_t crc = cubebootSignature(0,&bootSize);
-  snformat(b,bz,"<flex> BootSize %i CRC %08x\n", bootSize, crc);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x HWRev %u Model %u </flex>\n", cubeid.esn, cubeid.hwrev, cubeid.model);
+  FLEXFLOW::printf("<flex> BootSize %i CRC %08x </flex>\n", bootSize, crc);
 }
 
 TestFunction* TestCubeFccGetTests(void) {
@@ -545,6 +544,10 @@ TestFunction* TestCube1GetTests(void) {
 TestFunction* TestCube2GetTests(void) {
   //CUBE2 needs to be same as CUBE1. cube id changes based on g_fixmode (1->2)
   return TestCube1GetTests();
+}
+
+TestFunction* TestCubeOLGetTests(void) {
+  return TestCube1GetTests(); //OTP write disabled in OL mode
 }
 
 //-----------------------------------------------------------------------------

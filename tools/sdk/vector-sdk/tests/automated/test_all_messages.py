@@ -7,6 +7,7 @@ Calls specific messages on the robot, with expected results and verifies that th
 '''
 
 import asyncio
+import logging
 import os
 import sys
 
@@ -65,9 +66,11 @@ class TestResultMatches:
 
         elif len(expected_fields) != len(target_fields):
             errors.append(
-                'TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}'.format(
+                'TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}.  Recieved contents [{2}] while [{3}] expected.'.format(
                     target_type,
-                    expected_type))
+                    expected_type,
+                    target_fields,
+                    expected_fields))
 
         else:
             # This does not perform a deep comparison, which is difficult to
@@ -270,6 +273,64 @@ MESSAGES_TO_TEST = [
                                      off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
      TestResultMatches(protocol.SetBackpackLEDsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
+    # ConnectCube message
+    (client.ExternalInterfaceServicer.ConnectCube,
+     protocol.ConnectCubeRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+                                             protocol.ResultStatus(description="Response recieved from engine"),
+                                             ["success", "object_id", "factory_id"])),
+
+    # DisconnectCube message
+    (client.ExternalInterfaceServicer.DisconnectCube,
+     protocol.DisconnectCubeRequest(),
+     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # FlashCubeLights message
+    (client.ExternalInterfaceServicer.FlashCubeLights,
+     protocol.FlashCubeLightsRequest(),
+     TestResultMatches(protocol.FlashCubeLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # SetPreferredCube message
+    (client.ExternalInterfaceServicer.SetPreferredCube,
+     protocol.SetPreferredCubeRequest(factory_id="11:11:11:11:11:11"),
+     TestResultMatches(protocol.SetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # ForgetPreferredCube message
+    (client.ExternalInterfaceServicer.ForgetPreferredCube,
+     protocol.ForgetPreferredCubeRequest(),
+     TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # TODO: Enable testcase once issue described below is resolved
+    # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to
+    # to check the number of fields retrieved does not account for default fields and thus causes a mismatch.
+    # # BatteryState message
+    # (client.ExternalInterfaceServicer.BatteryState,
+    #  protocol.BatteryStateRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.BatteryStateResponse,
+    #                                          protocol.ResultStatus(description="Message sent to engine"),
+    #                                          ["battery_level", "battery_volts", "is_charging", "is_on_charger_platform"])),
+
+    # VersionState message
+    (client.ExternalInterfaceServicer.VersionState,
+     protocol.VersionStateRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.VersionStateResponse,
+                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             ["os_version", "engine_build_id"])),
+
+    # NetworkState message
+    (client.ExternalInterfaceServicer.NetworkState,
+     protocol.NetworkStateRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.NetworkStateResponse,
+                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             ["network_stats"])),
+
+    # SayText message
+    (client.ExternalInterfaceServicer.SayText,
+     protocol.SayTextRequest(text="hello", use_vector_voice=True),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
+                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             ["state"])),
+
     # NOTE: Add additional messages here
 ]
 
@@ -366,7 +427,15 @@ def main():
     '''main execution'''
     args = utilities.parse_args()
 
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    logger = logging.getLogger('vector')
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('robot_messages_debug.log')
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()

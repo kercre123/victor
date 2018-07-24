@@ -224,12 +224,12 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
   
   // Update located instance (if there is one)
   auto* locatedObject = _robot->GetBlockWorld().GetLocatedObjectByID(objectId);
+  const bool isCarryingObject = _robot->GetCarryingComponent().IsCarryingObject(objectId);
   if (locatedObject != nullptr) {
     // We expect carried objects to move, so don't mark them as dirty/inaccurate.
     // Their pose state should remain accurate/known because they are attached to
     // the lift. I'm leaving this a separate check from the decision about broadcasting
     // the movement, in case we want to easily remove the checks above but keep this one.
-    const bool isCarryingObject = _robot->GetCarryingComponent().IsCarryingObject(objectId);
     if (locatedObject->IsPoseStateKnown() && !isCarryingObject)
     {
       // Once an object moves, we can no longer use it for localization because
@@ -245,36 +245,37 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
       // Set moving state of object (in any frame)
       locatedObject->SetIsMoving(isMoving, timestamp);
     }
-
-    // Don't notify game about objects being carried that have moved, since we expect
-    // them to move when the robot does.
-    // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
-    //
-    // Don't notify game about moving objects that are being docked with, because
-    // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
-    // below because they have in fact moved and we wouldn't want to localize with them.
-    //
-    // TODO: Consider not filtering these out and letting game ignore them somehow
-    //       - Option 1: give game access to dockingID so it can do this same filtering
-    //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
-    //       - Option 3: add a new ObjectMovedWhileDocking message
-    //
-    const bool isDockingObject = (connectedObj->GetID() == _robot->GetDockingComponent().GetDockObject());
-
-    if (!isDockingObject && !isCarryingObject) {
-      if (isMoving) {
-        using namespace ExternalInterface;
-        ObjectMoved objectMoved;
-        objectMoved.objectID = objectId;
-        objectMoved.timestamp = timestamp;
-        _robot->Broadcast(MessageEngineToGame(std::move(objectMoved)));
-      } else {
-        using namespace ExternalInterface;
-        ObjectStoppedMoving objectStopped;
-        objectStopped.objectID = objectId;
-        objectStopped.timestamp = timestamp;
-        _robot->Broadcast(MessageEngineToGame(std::move(objectStopped)));
-      }
+  }
+  
+  // Don't notify game about objects being carried that have moved, since we expect
+  // them to move when the robot does.
+  // TODO: Consider broadcasting carried object movement if the robot is _not_ moving
+  //
+  // Don't notify game about moving objects that are being docked with, because
+  // we expect those to move if/when we bump them. But we still mark them as dirty/inaccurate
+  // below because they have in fact moved and we wouldn't want to localize with them.
+  //
+  // TODO: Consider not filtering these out and letting game ignore them somehow
+  //       - Option 1: give game access to dockingID so it can do this same filtering
+  //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
+  //       - Option 3: add a new ObjectMovedWhileDocking message
+  //
+  
+  const bool isDockingObject = (connectedObj->GetID() == _robot->GetDockingComponent().GetDockObject());
+  
+  if (!isDockingObject && !isCarryingObject) {
+    if (isMoving) {
+      using namespace ExternalInterface;
+      ObjectMoved objectMoved;
+      objectMoved.objectID = objectId;
+      objectMoved.timestamp = timestamp;
+      _robot->Broadcast(MessageEngineToGame(std::move(objectMoved)));
+    } else {
+      using namespace ExternalInterface;
+      ObjectStoppedMoving objectStopped;
+      objectStopped.objectID = objectId;
+      objectStopped.timestamp = timestamp;
+      _robot->Broadcast(MessageEngineToGame(std::move(objectStopped)));
     }
   }
 }

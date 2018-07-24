@@ -600,6 +600,10 @@
     "SpriteName" : "face_clouds_mist"
   },
   {
+    "CladEvent" : "Face_Flashing_Zeros",
+    "SpriteName" : "face_flashing_zeros"
+  },
+  {
     "CladEvent" : "Face_Knowledgegraph_Answer",
     "SpriteName" : "face_knowledgegraph_answer"
   },
@@ -762,5 +766,9 @@
   {
     "CladEvent" : "Face_Timersup_Getin_02",
     "SpriteName" : "face_timersup_getin_02"
+  },
+  {
+    "CladEvent" : "Face_Windy01",
+    "SpriteName" : "face_windy01"
   }
 ]

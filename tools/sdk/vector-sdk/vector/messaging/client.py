@@ -4,6 +4,7 @@
 Protobuf messages exposed to the Vector Python SDK
 '''
 
+from .cube_pb2_grpc import *
 from .messages_pb2_grpc import *
 from .settings_pb2_grpc import *
 from .shared_pb2_grpc import *

@@ -21,6 +21,8 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/shared/radians.h"
+
+#include "engine/actions/animActions.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -657,6 +659,22 @@ namespace Cozmo {
       }
     }
 
+    // Update anim focus (for keep face alive) with eye contact
+    static const std::string kKeepFaceAliveEyeContactName = "EyeContact";
+    const bool currentEyeContact = IsMakingEyeContact(0);
+    if (_previousEyeContact != currentEyeContact)
+    {
+      if (currentEyeContact)
+      {
+        _robot->GetAnimationComponent().AddKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+      }
+      else
+      {
+        _robot->GetAnimationComponent().RemoveKeepFaceAliveFocus(kKeepFaceAliveEyeContactName);
+      }
+      _previousEyeContact = currentEyeContact;
+    }
+
     return RESULT_OK;
   } // Update()
 
@@ -672,9 +690,12 @@ namespace Cozmo {
         if(isFaceValid &&
            (relativeRobotAngleTolerence_rad != kDontCheckRelativeAngle)){
           const Pose3d& robotPose = _robot->GetPose();
-          auto poseDiff = robotPose.GetRotationAngle() - faceEntry.face.GetHeadPose().GetRotationAngle();
-          if(!poseDiff.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerence_rad)){
-            isFaceValid = false;
+          Pose3d relPose;
+          if( faceEntry.face.GetHeadPose().GetWithRespectTo( robotPose, relPose ) ) {
+            Radians angle{ atan2f(relPose.GetTranslation().y(), relPose.GetTranslation().x()) };
+            if(!angle.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerence_rad)){
+              isFaceValid = false;
+            }
           }
         }
         return isFaceValid;
@@ -809,7 +830,11 @@ namespace Cozmo {
                      "Entry keyed with ID:%d but face has ID:%d",
                      faceEntryIter->first, faceEntryIter->second.face.GetID());
 
-      if(ShouldReturnFace(faceEntryIter->second, seenSinceTime_ms, includeRecognizableOnly))
+      if(ShouldReturnFace(faceEntryIter->second,
+                          seenSinceTime_ms,
+                          includeRecognizableOnly,
+                          relativeRobotAngleTolerence_rad,
+                          angleRelativeRobot_rad))
       {
         faceIDs.insert(faceEntryIter->first);
       }
@@ -952,6 +977,8 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::Enroll(Vision::FaceID_t faceID)
   {
+    SetFaceEnrollmentComplete(false);
+    
     // If starting session enrollment, then set the num enrollments to -1 to get "ongoing"
     // enrollment. Otherwise, use the max we can store.
     const bool sessionOnly = (Vision::UnknownFaceID == faceID);

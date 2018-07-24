@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector PR demo Engine iFrame</title>
+  <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="jquery-1.12.4.js"></script>
+  <script src="jquery-ui.js"></script>
+
+  <script>
+    var hostname = "";  // (Effectively, the robot IP)
+    var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
+
+    $(document).ready(function() {
+        $('#btn_erase_all_faces').click(ButtonHandler_EraseAllFaces);
+        $('#btn_show_photos').click(ButtonHandler_ShowPhotos);
+        $('#btn_erase_all_photos').click(ButtonHandler_EraseAllPhotos);
+        InitConfirmDialog();
+
+        // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
+        var urlObject = new URL(document.URL);
+        host = urlObject.host;
+        hostname = urlObject.hostname;
+        console.log('host is: ' + host);
+        console.log('hostname is: ' + hostname);
+    });
+    $(function() {
+        $("button").click(function(event) {
+            event.preventDefault();
+        });
+        $("input[type='submit']").click(function(event) {
+          $.post("/"+event.target.value, function(data) {
+            $("#content").html(data);
+            $("#content").show();
+            InitConfirmDialog();
+          });
+          event.preventDefault();
+        });
+        $('#EyeColor').selectmenu({
+          create: function(event, ui) {
+            $.post('consolevarget?key=EyeColor', function(result) {
+              var value = parseInt(result);
+              $('#EyeColor').prop("selectedIndex", value).selectmenu('refresh');
+            });
+          },
+          change: function(event, data) {
+            $.post("consolevarset", {key: "EyeColor", value: data.item.index}, function(result) {
+              $.post("consolefunccall", {func: "DebugSetEyeColor", args: ""}, function(result) {});
+            });
+          }
+        });
+        $('#MasterVolumeLevel').selectmenu({
+          create: function(event, ui) {
+            $.post('consolevarget?key=MasterVolumeLevel', function(result) {
+              var value = parseInt(result);
+              $('#MasterVolumeLevel').prop("selectedIndex", value).selectmenu('refresh');
+            });
+          },
+          change: function(event, data) {
+            $.post("consolevarset", {key: "MasterVolumeLevel", value: data.item.index}, function(result) {
+              $.post("consolefunccall", {func: "DebugSetMasterVolume", args: ""}, function(result) {});
+            });
+          }
+        });
+        $('#Locale').selectmenu({
+          create: function(event, ui) {
+            $.post('consolevarget?key=DebugDemoLocaleIndex', function(result) {
+              var value = parseInt(result);
+              $('#Locale').prop("selectedIndex", value).selectmenu('refresh');
+            });
+          },
+          change: function(event, data) {
+            var index = data.item.index;
+            console.log('Setting locale index to: ' + index);
+            $.post("consolefunccall", {func: "DebugDemoSetLocaleIndex", args: index}, function(result) {
+            });
+          }
+        });
+    });
+
+    function InitConfirmDialog() {
+      $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+        draggable: true,
+        width: 'auto',
+        buttons: {
+          "OK": function() {
+            $("#confirm_dialog").dialog("close");
+            if (dialogOKFunction !== undefined) {
+              dialogOKFunction();
+              dialogOKFunction = undefined;
+            }
+          },
+          "Cancel": function () {
+            $("#confirm_dialog").dialog("close");
+            dialogOKFunction = undefined;
+          }
+        } });
+    }
+
+    function StartConfirmDialog(title, body, okfunction) {
+      dialogOKFunction = okfunction;
+      $("#confirm_dialog_body").html(body);
+      var d = $("#confirm_dialog");
+      d.dialog("option", "title", title);
+      d.dialog("open");
+    }
+
+    function ButtonHandler_EraseAllFaces() {
+      StartConfirmDialog("", "Erase all faces:", function() {
+        var url = "/consolefunccall?func=DebugEraseAllEnrolledFaces";
+        console.log("calling: " + url);
+        $.post(url, function(data) {});
+      });
+    }
+
+    function ButtonHandler_ShowPhotos() {
+      var url = 'http://' + host + '/photos.html';
+      var win = window.open(url, '_blank');
+      if (win) {
+        win.focus();
+      } else {
+        alert('Please allow popups for this website');
+      }
+    }
+
+    function ButtonHandler_EraseAllPhotos() {
+      StartConfirmDialog("", "Erase all photos:", function() {
+        $.post('/deleteallphotos', function(data) {});
+      });
+    }
+
+  </script>
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+  <div>
+    <div>
+      <select name="EyeColor" id='EyeColor' class='listbox'>
+        <option>Teal</option>
+        <option>Orange</option>
+        <option>Yellow</option>
+        <option>Lime Green</option>
+        <option>Azure Blue</option>
+        <option>Purple</option>
+        <option>Matrix Green</option>
+      </select>
+      <label for="EyeColor-button">Eye Color</label>
+    </div>
+    <br>
+    <div>
+      <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
+        <option>Mute</option>
+        <option>Low</option>
+        <option>Medium Low</option>
+        <option>Medium</option>
+        <option>Medium High</option>
+        <option>High</option>
+      </select>
+      <label for="MasterVolumeLevel-button">Master Volume</label>
+    </div>
+    <br>
+    <div>
+      <select name="Locale" id='Locale' class='listbox'>
+        <option>US</option>
+        <option>UK</option>
+        <option>AUS</option>
+        <option>CAN</option>
+      </select>
+      <label for="Locale-button">Locale</label>
+    </div>
+    <br>
+    <button id='btn_erase_all_faces' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Erase all enrolled faces</button>
+    <br>
+    <br>
+    <button id='btn_show_photos' class='ui-button ui-corner-all ui-widget'>Show photos</button>
+    <button id='btn_erase_all_photos' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Erase all photos</button>
+    <br>
+  </div>
+  <div id="confirm_dialog" title="">
+    <p id='confirm_dialog_body'></p>
+    <p>Are you sure?</p>
+  </div>
+</body>
+
+</html>

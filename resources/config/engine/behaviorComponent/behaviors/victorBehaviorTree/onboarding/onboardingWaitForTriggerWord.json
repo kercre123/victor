@@ -1,6 +1,5 @@
 {
   "behaviorID": "OnboardingWaitForTriggerWord",
   "behaviorClass": "AnimSequence",
-  "animTriggers": ["OnboardingLookDown"],
-  "playOnChargerWithoutBody": true
+  "animTriggers": ["OnboardingLookDown"]
 }

@@ -847,6 +847,9 @@ Result PathComponent::ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
       Abort();
     } else {
       // it's already executing this plan.
+      if( !_plannerActive && IsPlanReady() && _startFollowingPath ) {
+        TryCompletingPath();
+      }
       return RESULT_OK;
     }
   }
@@ -992,6 +995,7 @@ void PathComponent::RestartPlannerIfNeeded()
             // the robot already drove the extent of the valid path, so force stop
             PRINT_NAMED_INFO("PathComponent.RestartPlannerIfNeeded", "Replanning and current Path invalid. ESTOP Robot");
             ClearPath();
+            _hasStoppedBeforeExecuting = true;
           } else {
             if( _pdo->GetLastDoledIdx() >= validSubPath.GetNumSegments() ) {
               // we already sent the extent of the valid path, so trim it before it's executed
@@ -1049,6 +1053,15 @@ Result PathComponent::TrimRobotPathToLength( uint8_t length )
   }
   
   return result;
+}
+
+bool PathComponent::IsPlanReady() const
+{
+  bool ready = false;
+  if( _selectedPathPlanner != nullptr ) {
+    ready = (_selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::CompleteWithPlan);
+  }
+  return ready;
 }
 
 bool PathComponent::IsActive() const
@@ -1123,7 +1136,11 @@ Result PathComponent::ExecuteCustomPath(const Planning::Path& path)
   if(_plannerActive) {
     _selectedPathPlanner->StopPlanning();
   }
+  // reset state
   _plannerActive = false;
+  _isReplanning = false;
+  _waitingToMatchReplanOrigin = false;
+  _hasStoppedBeforeExecuting = false;
   _selectedPathPlanner.reset();
 
   return ExecutePath(path);
@@ -1202,6 +1219,15 @@ void PathComponent::SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue)
                   ERobotDriveToPoseStatusToString(newValue));
 
     _driveToPoseStatus = newValue;
+  }
+}
+  
+void PathComponent::SetStartPath(bool autoStart)
+{
+  const bool needsRestarting = (autoStart && !_startFollowingPath && IsPlanReady() && HasPathToFollow());
+  _startFollowingPath = autoStart;
+  if( needsRestarting ) {
+    TryCompletingPath();
   }
 }
 

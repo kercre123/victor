@@ -191,6 +191,8 @@ private:
   f32      _clampSmallAnglesMinPeriod_s = -1.0f;
   f32      _clampSmallAnglesMaxPeriod_s = -1.0f;
   f32      _nextTimeToClampSmallAngles_s = -1.0f;
+
+  const std::string _kKeepFaceAliveITrackActionName = "ITrackAction";
   
   struct {
     Radians panTol              = 0.f;

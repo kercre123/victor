@@ -72,6 +72,37 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
       LOG_ERROR("SettingsManager.InitDependent.FailedLoadingSettingsFile", "Error loading settings file");
       settingsDirty = true;
     }
+    else
+    {
+      // Fix-up code:  Some robots had a settings file where I was saving bools as strings ("true" instead of true)
+      // This is code that can be removed at some future date.  A workaround is to just delete your settings file.
+      // But this code fixes the settings file.
+      {
+        const std::string& keyString = EnumToString(RobotSetting::clock_24_hour);
+        if (_currentSettings.isMember(keyString) && _currentSettings[keyString].isString())
+        {
+          _currentSettings[keyString] = _currentSettings[keyString] == "true" ? true : false;
+          settingsDirty = true;
+        }
+      }
+      {
+        const std::string& keyString = EnumToString(RobotSetting::dist_is_metric);
+        if (_currentSettings.isMember(keyString) && _currentSettings[keyString].isString())
+        {
+          _currentSettings[keyString] = _currentSettings[keyString] == "true" ? true : false;
+          settingsDirty = true;
+        }
+      }
+      {
+        const std::string& keyString = EnumToString(RobotSetting::temp_is_fahrenheit);
+        if (_currentSettings.isMember(keyString) && _currentSettings[keyString].isString())
+        {
+          _currentSettings[keyString] = _currentSettings[keyString] == "true" ? true : false;
+          settingsDirty = true;
+        }
+      }
+      // End fix-up code
+    }
   }
   else
   {

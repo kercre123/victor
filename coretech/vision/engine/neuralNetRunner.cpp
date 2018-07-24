@@ -116,6 +116,20 @@ Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& ca
   _profiler.SetPrintFrequency(config.get("ProfilingPrintFrequency_ms", 10000).asUInt());
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
 
+  // Clear the cache of any stale images/results:
+  Util::FileUtils::RemoveDirectory(_cachePath);
+  Util::FileUtils::CreateDirectory(_cachePath);
+
+  // Note: right now we should assume that we only will be running
+  // one model. This is definitely going to change but unitl
+  // we know how we want to handle a bit more let's not worry about it.
+  _visualizationDirectory = config.get("visualizationDirectory", "").asString();
+  if (_visualizationDirectory != "") {
+    Util::FileUtils::CreateDirectory(Util::FileUtils::FullFilePath(
+                                     {_cachePath, _visualizationDirectory}));
+  }
+
+
   _isInitialized = true;
   return result;
 }

@@ -114,6 +114,7 @@ namespace HeadController {
       // Bracing for impact
       // Lowers head quickly during which time it ignores any new commands
       bool bracing_ = false;
+      const f32 BRACING_POWER = -0.65;
 
     } // "private" members
 
@@ -520,7 +521,7 @@ namespace HeadController {
     // Returns true if a protection action was triggered.
     bool MotorBurnoutProtection() {
 
-      if (ABS(power_) < BURNOUT_POWER_THRESH || bracing_) {
+      if (ABS(power_) < BURNOUT_POWER_THRESH) {
         potentialBurnoutStartTime_ms_ = 0;
         return false;
       }
@@ -543,12 +544,19 @@ namespace HeadController {
     }
 
     void Brace() {
-      SetDesiredAngle(MIN_HEAD_ANGLE, MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
+      AnkiInfo("HeadController.Brace", "");
+      HAL::MotorSetPower(MotorID::MOTOR_HEAD, BRACING_POWER);
       bracing_ = true;
     }
 
     void Unbrace() {
+      AnkiInfo("HeadController.Unbrace", "");
+      HAL::MotorSetPower(MotorID::MOTOR_HEAD, 0.f);
       bracing_ = false;
+    }
+
+    bool IsBracing() {
+      return bracing_;
     }
 
     Result Update()
@@ -576,7 +584,7 @@ namespace HeadController {
       }
 
 
-      if (!IsCalibrated() || MotorBurnoutProtection()) {
+      if (!IsCalibrated() || bracing_ || MotorBurnoutProtection()) {
         return RESULT_OK;
       }
 

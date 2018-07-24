@@ -4,7 +4,6 @@
 // Copyright: Anki, inc. 2017
 
 #include "clad/types/behaviorComponent/behaviorStages.clad"
-#include "clad/types/unlockTypes.clad"
 
 namespace Anki {
 namespace Cozmo {

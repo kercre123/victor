@@ -60,6 +60,7 @@ namespace Switchboard {
       const std::string kUpdateEngineDataPath = "/run/update-engine";
       const std::string kUpdateEngineDonePath = "/run/update-engine/done";
       const std::string kUpdateEngineErrorPath = "/run/update-engine/error";
+      const std::string kUpdateEngineExitCodePath = "/run/update-engine/exit_code";
       const std::string kUpdateEngineExecPath = "/anki/bin/update-engine";
       const std::string kUpdateEngineServicePath = "/lib/systemd/system/update-engine.service";
 

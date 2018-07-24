@@ -18,6 +18,7 @@
 #include "clad/types/beatDetectorTypes.h"
 #include "coretech/common/shared/types.h"
 #include "util/global/globalDefinitions.h"
+#include "util/environment/locale.h"
 
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -78,6 +79,7 @@ public:
 
 #if ANKI_DEV_CHEATS
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
+  void SetLocaleDevOnly(const Util::Locale& locale) { _locale = locale; }
 #endif
 
   void ResetMicListenDirection();
@@ -116,6 +118,7 @@ private:
   bool _fakeStreamingState = false;
 #endif
   size_t _streamingAudioIndex = 0;
+  Util::Locale _locale = {"en", "US"};
 
   std::unique_ptr<MicDataProcessor> _micDataProcessor;
   std::unique_ptr<LocalUdpServer> _udpServer;

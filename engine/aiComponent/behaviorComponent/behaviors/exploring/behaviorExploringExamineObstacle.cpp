@@ -35,6 +35,11 @@
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
+// todo: remove
+#include "clad/types/featureGateTypes.h"
+#include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -53,6 +58,7 @@ namespace {
   CONSOLE_VAR_RANGED( float, kMinObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(10.0f), 0.0f, M_PI_F);
   CONSOLE_VAR_RANGED( float, kMaxObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(80.0f), 0.0f, M_TWO_PI_F);
   const float kProbBumpNominalObject = 0.8f;
+  const float kProbReferenceBeforeBump = 0.5f;
   
   const float kMinDistForFarReaction_mm = 80.0f;
   
@@ -89,6 +95,7 @@ BehaviorExploringExamineObstacle::DynamicVariables::DynamicVariables()
   firstTurnDirectionIsLeft = false;
   initialPoseAngle_rad = 0.0f;
   totalObjectAngle_rad = 0.0f;
+  playingScanSound = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,12 +131,14 @@ void BehaviorExploringExamineObstacle::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.bumpBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringBumpObject) );
+  _iConfig.referenceHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringReferenceHuman) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert( _iConfig.bumpBehavior.get() );
+  delegates.insert( _iConfig.referenceHumanBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -182,7 +191,17 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
   
 }
   
-//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploringExamineObstacle::OnBehaviorDeactivated()
+{
+  if( _dVars.playingScanSound ) {
+    // behavior was likely interrupted. make sure the scan sound stops
+    const auto event = AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Vic_Sfx__Planning_Loop_Stop;
+    GetBEI().GetRobotAudioClient().PostEvent( event, AudioMetaData::GameObjectType::Behavior );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::TransitionToNextAction()
 {
   if( _dVars.state == State::Initial ) {
@@ -191,6 +210,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
       DevTakePhoto();
     }
   }
+  
+  using GE = AudioMetaData::GameEvent::GenericEvent;
+  using GO = AudioMetaData::GameObjectType;
   
   const bool canVisitObstacle = (_dVars.state == State::Initial);
   if( canVisitObstacle ) {
@@ -220,21 +242,47 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
                                 : AnimationTrigger::ExploringScanToRight;
     action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
     
-  } else if( (_dVars.state == State::FirstTurn) || (_dVars.state == State::SecondTurn) ) {
+    // we manually trigger the audio since the looping scan animation doesn't always precede a
+    // followup animation that could be used to stop the audio
+    const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
+    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+    _dVars.playingScanSound = true;
     
-    _dVars.state = (_dVars.state == State::SecondTurn) ? State::ReturnToCenterEnd : State::ReturnToCenter;
+  } else if( (_dVars.state == State::FirstTurn)
+             || (_dVars.state == State::SecondTurn)
+             || (_dVars.state == State::ReferenceHuman) )
+  {
     
-    const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
-    _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
+    const auto event = GE::Stop__Robot_Vic_Sfx__Planning_Loop_Stop;
+    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+    _dVars.playingScanSound = false;
     
-    if( _dVars.state == State::ReturnToCenterEnd ) {
+    // todo: clean this up. too many cases here, not enough time to separate them
+    // logic is: after the first turn it should return to center. after the second turn it should either
+    // exit, or return to center and bump the object, or reference a human then return to center then
+    // bump the object
+    
+    if( _dVars.state == State::SecondTurn ) {
+      
+      float minObjectWidth_rad = kMinObjectWidthToBump_rad;
+      float maxObjectWidth_rad = kMaxObjectWidthToBump_rad;
+      float probBumpNomination = kProbBumpNominalObject;
+      
+      const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+      const bool prDemo = (featureGate != nullptr) && featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+      if( prDemo ) {
+        // boris asked for it to bump everything regardless of size
+        maxObjectWidth_rad = 1000;
+        probBumpNomination = 0.5f;
+      }
+      
       // decide whether to bump or not
       bool shouldBump = false;
-      if( (_dVars.totalObjectAngle_rad >= kMinObjectWidthToBump_rad)
-          && (_dVars.totalObjectAngle_rad <= kMaxObjectWidthToBump_rad) )
+      if( (_dVars.totalObjectAngle_rad >= minObjectWidth_rad)
+          && (_dVars.totalObjectAngle_rad <= maxObjectWidth_rad) )
       {
         // object is of a size that we should bump
-        if( GetRNG().RandDbl() <= kProbBumpNominalObject ) {
+        if( GetRNG().RandDbl() <= probBumpNomination ) {
           shouldBump = true;
         }
       }
@@ -245,31 +293,56 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
         CancelSelf();
         return;
       }
-      // otherwise, return to center, and bump in the next stage
+      
+      const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
+      _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
+      
+      const bool refBehaviorWantsToBeActivated = _iConfig.referenceHumanBehavior->WantsToBeActivated();
+      if( refBehaviorWantsToBeActivated && (GetRNG().RandDbl() < kProbReferenceBeforeBump) ) {
+        _dVars.state = State::ReferenceHuman;
+      } else {
+        _dVars.state = State::ReturnToCenterEnd;
+      }
+    } else if( _dVars.state == State::FirstTurn ) {
+      
+      const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
+      _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
+      
+      _dVars.state = State::ReturnToCenter;
+      
+    } else if( _dVars.state == State::ReferenceHuman ) {
+      _dVars.state = State::ReturnToCenterEnd;
     }
     
-    
-    auto* parallelAction = new CompoundActionParallel();
-    
-    AnimationTrigger turnAnim;
-    if( _dVars.firstTurnDirectionIsLeft ) {
-      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromLeft : AnimationTrigger::ExploringScanCenterFromRight;
+      
+    if( _dVars.state != State::ReferenceHuman ) {
+      auto* parallelAction = new CompoundActionParallel();
+      
+      AnimationTrigger turnAnim;
+      if( _dVars.firstTurnDirectionIsLeft ) {
+        turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromLeft : AnimationTrigger::ExploringScanCenterFromRight;
+      } else {
+        turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromRight : AnimationTrigger::ExploringScanCenterFromLeft;
+      }
+      auto* animAction = new TriggerLiftSafeAnimationAction{ turnAnim };
+      
+      const float angle = _dVars.initialPoseAngle_rad;
+      const bool isAbsAngle = true;
+      auto* turnToCenterAction = new TurnInPlaceAction(angle, isAbsAngle);
+      turnToCenterAction->SetMaxSpeed( DEG_TO_RAD(kReturnToCenterSpeed_deg_s) );
+      
+      // keep a weakptr to the turn action, so that the whole parallel action can be aborted the moment this one
+      // ends
+      _dVars.scanCenterAction = parallelAction->AddAction( turnToCenterAction );
+      parallelAction->AddAction( animAction );
+      
+      action->AddAction( parallelAction );
     } else {
-      turnAnim = (_dVars.state == State::ReturnToCenter) ? AnimationTrigger::ExploringScanCenterFromRight : AnimationTrigger::ExploringScanCenterFromLeft;
+      DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), [this](){
+        TransitionToNextAction();
+      });
+      return;
     }
-    auto* animAction = new TriggerLiftSafeAnimationAction{ turnAnim };
-    
-    const float angle = _dVars.initialPoseAngle_rad;
-    const bool isAbsAngle = true;
-    auto* turnToCenterAction = new TurnInPlaceAction(angle, isAbsAngle);
-    turnToCenterAction->SetMaxSpeed( DEG_TO_RAD(kReturnToCenterSpeed_deg_s) );
-    
-    // keep a weakptr to the turn action, so that the whole parallel action can be aborted the moment this one
-    // ends
-    _dVars.scanCenterAction = parallelAction->AddAction( turnToCenterAction );
-    parallelAction->AddAction( animAction );
-    
-    action->AddAction( parallelAction );
    
   } else if( _dVars.state == State::ReturnToCenter ) {
     
@@ -280,6 +353,10 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
                                 ? AnimationTrigger::ExploringScanToRight
                                 : AnimationTrigger::ExploringScanToLeft;
     action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
+    
+    const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
+    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+    _dVars.playingScanSound = true;
     
   } else if( _dVars.state == State::ReturnToCenterEnd ) {
     SET_STATE( Bumping );

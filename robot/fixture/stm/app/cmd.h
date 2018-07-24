@@ -37,21 +37,26 @@ typedef enum cmd_io_e cmd_io;
 #define CMD_OPTS_LOG_ASYNC            0x0080  //print-log async line (:async)
 #define CMD_OPTS_LOG_OTHER            0x0100  //print-log 'other' rx'd line (informational,uncategorized)
 #define CMD_OPTS_LOG_ERRORS           0x0200  //print-log extra error info
+#define CMD_OPTS_LOG_RAW_RX_DBG       0x0400  //print-log raw rx stream (DEBUG)
 #define CMD_OPTS_LOG_ALL              0x03F0  //print-log all
 #define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //debug: print function entry with parsed params
 #define CMD_OPTS_DBG_PRINT_RX_PARTIAL 0x2000  //debug: print any unexpected chars, partial line left in rx buffer at cmd end
+#define CMD_OPTS_DBG_SYSCON_OVF_ERR   0x4000  //debug: throw error if syscon tx overflow detected
 #define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_LOG_ALL | CMD_OPTS_DBG_PRINT_RX_PARTIAL)
+
+typedef struct { char *p; int size; int wlen; } cmd_dbuf_t;
 
 //Send a command and return response string
 //@return response (NULL if timeout)
 //e.g. send(IO_DUT, snformat(x,x,"lcdshow %u %s /"Victor DVT/"", solo=0, color="ib"), timeout=100 );
-//@param err_lvl: -1 throws exceptions. 0+ prints errors instead, indicates verbosity
-char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT, int opts = CMD_OPTS_DEFAULT, void(*async_handler)(char*) = 0 );
+//@param async_handler: user handler, any line beginning with ASYNC_PREFIX
+//@param dbuf: if provided, rx dat between cmd and response lines will be copied here (raw char stream, not null terminated)
+char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT, int opts = CMD_OPTS_DEFAULT, void(*async_handler)(char*) = 0, cmd_dbuf_t *dbuf = 0 );
 int cmdStatus(); //parsed rsp status of most recent cmdSend(). status=1st arg, INT_MIN if !exist or bad format
 uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish
 
-//during cmdSend() exectuion, callback at the given interval while waiting for response. ONLY for next cmdSend() call; cleared on exit.
-void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) );
+//DEBUG:
+int cmdSysconOvfCnt(); //get syscon tx overflow cnt from most recent cmdSend(CMD_IO_CONTACTS) [reported by syscon debug builds]
 
 //-----------------------------------------------------------------------------
 //                  Line Parsing

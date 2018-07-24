@@ -95,10 +95,6 @@ protected:
   
   PathMotionProfile _defaultTestMotionProfile;
   
-  // register to receive when the robot is connected, so that we can kindly ask to not play damn
-  // pick up animations that mess up with CST timings
-  virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg) final override;
-  
   bool IsTrueBeforeTimeout(bool cond,
                            const char* condAsString,
                            double start_time,

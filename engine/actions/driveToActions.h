@@ -74,6 +74,12 @@ namespace Anki {
       // If true and if multiple goals were provided, only the originally-selected goal will be used
       void SetMustContinueToOriginalGoal(bool mustUse) { _mustUseOriginalGoal = mustUse; }
 
+      // If shouldPlay, the robot will play planning animations while it computes a plan or replans,
+      // for any planner that doesn't return a path immediately.
+      // If !shouldPlay, the robot will plan and start driving in one fell swoop, without any logic for planning animations.
+      // Default is true.
+      void SetUsePlanningAnims(bool shouldPlay) { _precompute = shouldPlay; }
+
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual f32 GetTimeoutInSeconds() const override;
@@ -81,8 +87,13 @@ namespace Anki {
       virtual ActionResult CheckIfDone() override;
       
     private:
+      
+      ActionResult HandleComputingPath();
+      ActionResult HandleFollowingPath();
+      
       bool     _isGoalSet;
       bool     _driveWithHeadDown;
+      bool     _precompute = true;
       
       std::vector<Pose3d> _goalPoses;
       std::shared_ptr<Planning::GoalID> _selectedGoalIndex;
@@ -100,8 +111,6 @@ namespace Anki {
       bool _useObjectPose = false;
       
       bool _mustUseOriginalGoal = false;
-      
-      int _debugPrintCtr = 0;
       
     }; // class DriveToPoseAction
 

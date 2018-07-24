@@ -35,115 +35,115 @@
 #endif
 
 namespace Anki {
- 
+
 template<class PoseNd, class TransformNd>
 class PoseBase<PoseNd,TransformNd>::PoseTreeNode
 {
 public:
   PoseTreeNode(const TransformNd& tform, const std::shared_ptr<PoseTreeNode>& parent, const std::string& name);
   PoseTreeNode(const PoseTreeNode& other);
-  
+
   ~PoseTreeNode();
-  
+
   PoseTreeNode& operator=(const PoseTreeNode& other);
-  
+
   PoseTreeNode(PoseTreeNode&&) = delete;
   PoseTreeNode& operator=(PoseTreeNode&&) = delete;
-  
+
   // Check various node or tree relationships
   bool IsRoot() const;
   bool HasParent() const { return !IsRoot(); }
-  
+
   bool IsChildOf(const PoseTreeNode& otherNode) const;
   bool IsParentOf(const PoseTreeNode& otherNode) const;
-  
+
   bool HasSameParentAs(const PoseTreeNode& other) const;
   bool HasSameRootAs(const PoseTreeNode& other) const;
-  
+
   PoseID_t GetRootID() const;
-  
+
   std::string GetNamedPathToRoot(bool showTranslations) const;
   std::shared_ptr<PoseTreeNode> FindRoot() const;
-  
+
   unsigned int GetTreeDepth() const;
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   TransformNd&          GetTransform()       { return _transform; }
   const TransformNd&    GetTransform() const { return _transform; }
-  
+
   // Just get parent's transform without mucking with shared pointers
   const TransformNd&    GetParentTransform() const { return _parentPtr->GetTransform(); }
-  
+
   const std::shared_ptr<PoseTreeNode>& GetParent() const;
   void                                 SetParent(const std::shared_ptr<PoseTreeNode>& parent);
   const PoseTreeNode*                  GetRawParentPtr() const;
-  
+
   const std::string&    GetName() const { return _name; }
   void                  SetName(const std::string& name) { _name = name; }
-  
+
   // Set the pose ID. IDs are not copied with poses.
   void                  SetID(PoseID_t newID) { _id = newID; }
-  
+
   // Get the ID assigned to this pose. Initial (unset) ID is zero.
   PoseID_t              GetID() const { return _id; }
-  
+
   // Register/unregister as an "owner" of this node: i.e. that this node is "wrapped" by one or more
   // PoseBase objects (as opposed to simply having a shared_ptr hanging on to it somewhere)
   void      AddOwner()            { ++_ownerCount; }
   void      RemoveOwner();
   bool      IsOwned()       const { return (_ownerCount > 0); }
   uint32_t  GetOwnerCount() const { return _ownerCount; }
-  
+
 private:
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Variables
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   TransformNd                     _transform;
   std::shared_ptr<PoseTreeNode>   _parentPtr;
   std::string                     _name;
   PoseID_t                        _id = 0;
   uint32_t                        _ownerCount = 0;
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Dev methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   // asserts that the parent is valid and that the child is a current valid child of the parent
   static void Dev_AssertIsValidParentPointer(const PoseTreeNode* parent, const PoseTreeNode* childBasePointer);
-  
-  // updates children bookkeping variables for old and new parents
+
+  // updates children bookkeeping variables for old and new parents
   static void Dev_SwitchParent(const PoseTreeNode* oldParent, const PoseTreeNode* newParent, const PoseTreeNode* childBasePointer);
   // note I'm not alive anymore, I can't be asked about parents
   static void Dev_PoseDestroyed(const PoseTreeNode* basePointer);
   // note I'm alive, and people can ask me about my children
   static void Dev_PoseCreated(const PoseTreeNode* basePointer);
-  
+
   // funny note: because plugins create PoseNds on load/creation, we can't rely on static variables being initialized,
   // so we need all static variables here to be created on demand, which should be guaranteed by using static local
   // variables returned from a method. I say funny because now it's funny, but believe it was not funny before.
-  
+
   // static set of valid poses
   using PoseCPtrSet = std::set<const PoseTreeNode*>;
   static PoseCPtrSet& Dev_GetValidPoses() {
     static PoseCPtrSet sDev_ValidPoses;
     return sDev_ValidPoses;
   }
-  
+
   // mutex because we create poses like bunnies from different threads
   static std::mutex& Dev_GetMutex() {
     static std::mutex sDev_Mutex;
     return sDev_Mutex;
   }
-  
+
   // bookkeeping variables to ensure parent pointer validity. They should be empty in release.
   // During debug, however, parents keep track of their children so that we can validate proper parenthood
   mutable PoseCPtrSet _devChildrenPtrs; // my current valid children
-  
+
 }; // class PoseTreeNode
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,7 +174,7 @@ template<class PoseNd, class TransformNd>
 PoseBase<PoseNd,TransformNd>::PoseTreeNode::~PoseTreeNode()
 {
   SetParent(nullptr);
-  
+
   Dev_PoseDestroyed(this);
 }
 
@@ -208,7 +208,7 @@ bool PoseBase<PoseNd,TransformNd>::PoseTreeNode::IsChildOf(const PoseTreeNode& o
   {
     return false;
   }
-  
+
   const bool isChildOfOther = (_parentPtr.get() == &otherNode);
   if(DO_DEV_POSE_CHECKS && isChildOfOther)
   {
@@ -225,7 +225,7 @@ bool PoseBase<PoseNd,TransformNd>::PoseTreeNode::IsParentOf(const PoseTreeNode& 
   {
     return false;
   }
-  
+
   const bool isParentOfOther = (otherNode._parentPtr.get() == this);
   if(DO_DEV_POSE_CHECKS && isParentOfOther)
   {
@@ -243,13 +243,13 @@ bool PoseBase<PoseNd,TransformNd>::PoseTreeNode::HasSameParentAs(const PoseTreeN
   {
     return true;
   }
-  
+
   // Otherwise, a root cannot have the same parent as anything else, by definition
   if(IsRoot() || other.IsRoot())
   {
     return false;
   }
-  
+
   const bool areParentsSame = (_parentPtr == other._parentPtr);
   return areParentsSame;
 }
@@ -264,14 +264,14 @@ bool PoseBase<PoseNd,TransformNd>::PoseTreeNode::HasSameRootAs(const PoseTreeNod
   {
     thisRootPtr = thisRootPtr->_parentPtr.get();
   }
-  
+
   // Traverse parents up to root of "other"
   const PoseTreeNode* otherRootPtr = &other;
   BOUNDED_WHILE(1000, otherRootPtr->HasParent())
   {
     otherRootPtr = otherRootPtr->_parentPtr.get();
   }
-  
+
   const bool areRootsSame = (thisRootPtr == otherRootPtr);
   return areRootsSame;
 }
@@ -320,16 +320,16 @@ std::shared_ptr<typename PoseBase<PoseNd,TransformNd>::PoseTreeNode> PoseBase<Po
 {
   // Callers must check for this case and handle it specially!
   DEV_ASSERT(!this->IsRoot(), "PoseBase.PoseTreeNode.FindRoot.ThisIsRoot");
-  
+
   std::shared_ptr<PoseTreeNode> root = _parentPtr;
   BOUNDED_WHILE(1000, (!root->IsRoot()))
-  {  
+  {
     // The only way the current root's _parent is null is if it is a
     // root, which means we should have already exited the while loop.
     DEV_ASSERT(root->_parentPtr != nullptr, "PoseBase.PoseTreeNode.FindRoot.RootHasNullParent");
     root = root->GetParent();
   }
-  
+
   return root;
 }
 
@@ -340,7 +340,7 @@ std::string PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetNamedPathToRoot(bool 
   std::string str;
 
   const PoseCPtrSet* validPoses = (ANKI_DEV_CHEATS ? &Dev_GetValidPoses() : nullptr);
-  
+
   const PoseTreeNode* current = this;
 
   // NOTE: Not using any methods like GetParent() or IsRoot() here because those
@@ -357,29 +357,29 @@ std::string PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetNamedPathToRoot(bool 
         return str;
       }
     }
-    
+
     const std::string& name = current->_name;
     if(name.empty()) {
       str += "(UNNAMED)";
     } else {
       str += name;
     }
-    
+
     if(showTranslations) {
       str += current->_transform.GetTranslation().ToString();
     }
-    
+
     current = current->_parentPtr.get();
-    
+
     if(nullptr == current)
     {
       // Reached root (or end of the road anyway)
       break;
     }
-    
+
     str += " -> ";
   }
-  
+
   return str;
 }
 
@@ -388,14 +388,14 @@ template<class PoseNd, class TransformNd>
 unsigned int PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetTreeDepth() const
 {
   unsigned int treeDepth = 1;
-  
+
   const PoseTreeNode* current = this;
   BOUNDED_WHILE(1000, (current->_parentPtr != nullptr))
   {
     ++treeDepth;
     current = current->_parentPtr.get();
   }
-  
+
   return treeDepth;
 }
 
@@ -408,9 +408,9 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_SwitchParent(const PoseTree
   if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-    
+
     PoseCPtrSet& validPoses = Dev_GetValidPoses();
-  
+
     // if there's an old parent, we have to tell it we are not a child anymore
     if ( oldParent )
     {
@@ -423,7 +423,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_SwitchParent(const PoseTree
         oldParent->_devChildrenPtrs.erase(child);
       }
     }
-  
+
     // if we have a new parent, add ourselves as a child
     if ( newParent )
     {
@@ -441,7 +441,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_SwitchParent(const PoseTree
                     oldParent,
                     oldParent == nullptr ? "(none)" : oldParent->GetNamedPathToRoot(true).c_str(),
                     newParent->GetName().c_str(), newParent, newParent->GetNamedPathToRoot(true).c_str());
-        
+
         // add now
         newParent->_devChildrenPtrs.insert(child);
       }
@@ -477,7 +477,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
       }
     }
   }
-  
+
   if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
@@ -506,7 +506,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
         Anki::Util::sLogFlush();
         Anki::Util::sAbort();
       }
-      
+
       // c) we are a current child of it
       if( !ANKI_VERIFY(parent->_devChildrenPtrs.find(child) != parent->_devChildrenPtrs.end(),
                   "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent",
@@ -518,7 +518,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
         Anki::Util::sLogFlush();
         Anki::Util::sAbort();
       }
-      
+
       // Note on c): If you crash on c), it means that the child is pointing at this parent, and this parent
       // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
       // Create pose A
@@ -542,7 +542,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseDestroyed(const PoseTre
   if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-  
+
     // nonsense to ask for nullptr
     assert( nullptr != nodePtr );
 
@@ -563,10 +563,10 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseCreated(const PoseTreeN
   if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-  
+
     // nonsense to ask for nullptr
     assert( nullptr != nodePtr );
-   
+
     PoseCPtrSet& validPoses = Dev_GetValidPoses();
     const auto insertRetInfo = validPoses.insert(nodePtr);
     ANKI_VERIFY(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer",
@@ -575,7 +575,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseCreated(const PoseTreeN
                 nodePtr->GetNamedPathToRoot(true).c_str());
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class PoseNd, class TransformNd>
 inline void PoseBase<PoseNd,TransformNd>::PoseTreeNode::RemoveOwner()
@@ -583,7 +583,7 @@ inline void PoseBase<PoseNd,TransformNd>::PoseTreeNode::RemoveOwner()
   if(ANKI_VERIFY(_ownerCount > 0, "PoseBase.PoseTreeNode.RemoveOwner.ZeroOwners", ""))
   {
     --_ownerCount;
-    
+
     // COZMO-10891: We can probably remove this once this ticket is figured out.
     // In our usage, only PoseOrigins in the PoseOriginList have IDs and are named OriginNN.
     // Those origins should never get deleted, so they should always be owned. Flag if this is not the case.
@@ -597,9 +597,6 @@ inline void PoseBase<PoseNd,TransformNd>::PoseTreeNode::RemoveOwner()
   }
 }
 
-  
 } // namespace Anki
-
-#undef DO_DEV_POSE_CHECKS
 
 #endif /* __Anki_Common_Math_PoseTreeNode_H__ */

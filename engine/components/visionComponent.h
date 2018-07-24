@@ -300,7 +300,8 @@ struct DockingErrorSignal;
                                 const int8_t onRobotQuality,
                                 const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full,
                                 const bool removeRadialDistortion = false,
-                                const f32 thumbnailScaleFraction = 0.f);
+                                const f32 thumbnailScaleFraction = 0.f,
+                                const f32 saveScaleFraction = 1.f);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);
@@ -336,6 +337,8 @@ struct DockingErrorSignal;
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
+
+    void EnableSensorRes(bool sensorRes);
     
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
@@ -362,9 +365,13 @@ struct DockingErrorSignal;
     std::unique_ptr<Vision::Camera> _camera;
     bool                      _enabled = false;
     
-    bool   _isSynchronous = false;
-    bool   _running = false;
-    bool   _paused  = false;
+    bool    _isSynchronous = false;
+    
+    // variables which are updated in the main (engine) thread but checked on the worker thread
+    // must be volatile to avoid potential caching issues
+    volatile bool _running = false;
+    volatile bool _paused  = false;
+
     bool   _drawImagesToScreen = false;
 
     std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
@@ -405,7 +412,9 @@ struct DockingErrorSignal;
     bool             _visionWhileMovingFastEnabled = false;
 
     ImageEncoding _desiredImageFormat = ImageEncoding::NoneImageEncoding;
-    ImageEncoding _currentImageFormat = ImageEncoding::RawRGB;
+    ImageEncoding _currentImageFormat = ImageEncoding::NoneImageEncoding;
+
+    bool _shouldDownsampleBayer = true;
     
     // State machine to make sure nothing is using the shared memory from the camera system
     // before we request a different camera capture format as well as to wait
@@ -421,8 +430,8 @@ struct DockingErrorSignal;
 
     TimeStamp_t _lastImageCaptureTime_ms = 0;
 
-    // Future used for async YUV to RGB conversion
-    std::future<Vision::ImageRGB> _cvtYUV2RGBFuture;
+    // Future used for async image conversions
+    std::future<Vision::ImageRGB> _cvtFuture;
     
     std::string _faceAlbumName;
     
@@ -467,6 +476,9 @@ struct DockingErrorSignal;
     bool _doFactoryDotTest = false;
     bool _enableAutoExposure = true;
     bool _enableWhiteBalance = true;
+
+    bool _formatChangeAutoExposure = false;
+    bool _formatChangeWhiteBalance = false;
     
     // Threading for OpenCV
     int _openCvNumThreads = 1;

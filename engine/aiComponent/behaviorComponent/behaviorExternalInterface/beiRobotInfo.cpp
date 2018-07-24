@@ -237,6 +237,12 @@ bool BEIRobotInfo::IsPowerButtonPressed() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TimeStamp_t BEIRobotInfo::GetTimeSincePowerButtonPressed_ms() const
+{
+  return _robot.GetTimeSincePowerButtonPressed_ms();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::HasExternalInterface() const
 {
   return _robot.HasExternalInterface();

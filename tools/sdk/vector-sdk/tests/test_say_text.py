@@ -4,15 +4,27 @@
 Test say text
 '''
 
-# import os
+import os
 import sys
-# sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-# import vector
+import time
+import utilities
 
-sys.exit('Error: test_say_text not yet implemented')
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import vector  # pylint: disable=wrong-import-position
 
-# async def main(robot):
-# await robot.say_text( "Hello World" )
 
-# if __name__ == "__main__":
-# vector.robot.run_program(main, sys.argv[1] if len(sys.argv) > 1 else None)
+def main():
+    args = utilities.parse_args()
+
+    print("------ begin testing text-to-speech ------")
+
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+        robot.say_text("hello", use_vector_voice=True)
+        time.sleep(1)  # Avoid overlapping messages
+        robot.say_text("hello", use_vector_voice=False)
+
+    print("------ end testing text-to-speech ------")
+
+
+if __name__ == "__main__":
+    main()

@@ -124,7 +124,9 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
     // not to interrupt while user is trying to look at something.
     auto setConnectionStatusCallback = [this, &bContainer, &bsm](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_SetConnectionStatus();
-      if (msg.status == SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN) {
+      if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
+          msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
+          msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING) {
         OnEnterInfoFace( bContainer, bsm );
       }
     };
@@ -189,9 +191,16 @@ void BehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm )
 {
-  PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.OnInfoFaceStarted.EnterPairing", "");
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.OnInfoFaceStarted", "");
   ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
   ANKI_VERIFY(waitBehavior != nullptr, "BehaviorComponentMessageHandler.OnEnterInfoFace.NoWait", "Could not find wait behavior");
+
+  // Return early if already in wait behavior
+  if (bsm.GetBaseBehavior() == waitBehavior.get()) {
+    PRINT_CH_DEBUG("BehaviorSystem", "BehaviorComponentMessageHandler.OnEnterInfoFace.AlreadyInWait", "");
+    return;
+  }
+
   bsm.ResetBehaviorStack(waitBehavior.get());
   
   // Disable neutral eyes while in the dev screens, because symmetry with another call to
@@ -336,7 +345,7 @@ void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterfac
         // also send them the list of behaviorIDs that can be created
         Json::Value allBehaviors;
         auto& list = allBehaviors["list"];
-        for( uint8_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
+        for( uint16_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
           list.append( EnumToString( static_cast<BehaviorID>(i) ) );
         }
         sendToClient( list );

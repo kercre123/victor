@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -36,13 +37,19 @@ namespace Anki {
 
   namespace Cozmo {
 
+    namespace {
+      static constexpr const char* kManualBodyTrackLockName = "PlayAnimationOnChargerSpecialLock";
+    }
+
     #pragma mark ---- PlayAnimationAction ----
 
     PlayAnimationAction::PlayAnimationAction(const std::string& animName,
                                              u32 numLoops,
                                              bool interruptRunning,
                                              u8 tracksToLock,
-                                             float timeout_sec)
+                                             float timeout_sec,
+                                             TimeStamp_t startAtTime_ms,
+                                             AnimationComponent::AnimationCompleteCallback callback)
     : IAction("PlayAnimation" + animName,
               RobotActionType::PLAY_ANIMATION,
               tracksToLock)
@@ -50,6 +57,8 @@ namespace Anki {
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     , _timeout_sec(timeout_sec)
+    , _startAtTime_ms(startAtTime_ms)
+    , _passedInCallback(callback)
     {
       // If an animation is supposed to loop infinitely, it should have a
       // much longer default timeout
@@ -66,31 +75,82 @@ namespace Anki {
         PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
                          "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
                          _animName.c_str());
-        GetRobot().GetAnimationComponent().StopAnimByName(_animName);
+        if (HasRobot()) {
+          GetRobot().GetAnimationComponent().StopAnimByName(_animName);          
+        } else {
+          // This shouldn't happen if HasStarted()...
+          PRINT_NAMED_WARNING("PlayAnimationAction.Dtor.NoRobot", "");
+        }
+      }
+
+      if (HasStarted() && _bodyTrackManuallyLocked ) {
+        GetRobot().GetMoveComponent().UnlockTracks( (u8) AnimTrackFlag::BODY_TRACK, kManualBodyTrackLockName );
+        _bodyTrackManuallyLocked = false;
       }
     }
 
+    void PlayAnimationAction::OnRobotSet()
+    {
+      OnRobotSetInternalAnim();
+    }
+
+    void PlayAnimationAction::InitTrackLockingForCharger()
+    {
+      if( _bodyTrackManuallyLocked ) {
+        // already locked, nothing to do
+        return;
+      }
+
+      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() ) {
+        // default here is now to LOCK the body track, but first check the whitelist
+
+        auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
+        const auto& whitelist = dataLoader->GetAllWhitelistedChargerAnimationClips();
+        if( whitelist.find(_animName) == whitelist.end() ) {
+
+          // time to lock the body track. Unfortunately, the action has already been Init'd, so it's tracks
+          // are already locked. Therefore we have to manually lock the body to make this work
+          GetRobot().GetMoveComponent().LockTracks( (u8) AnimTrackFlag::BODY_TRACK,
+                                                        kManualBodyTrackLockName,
+                                                        "PlayAnimationAction.LockBodyOnCharger" );
+          _bodyTrackManuallyLocked = true;
+
+          PRINT_CH_DEBUG("Animations", "PlayAnimationAction.LockingBodyOnCharger",
+                         "anim '%s' is not in the whitelist, locking the body track",
+                         _animName.c_str());
+        }
+      }
+    }
+  
     ActionResult PlayAnimationAction::Init()
     {
+
+      InitTrackLockingForCharger();
+
       _stoppedPlaying = false;
       _wasAborted = false;
 
-      auto callback = [this](const AnimationComponent::AnimResult res) {
+      auto callback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded) {
         _stoppedPlaying = true;
         if (res != AnimationComponent::AnimResult::Completed) {
           _wasAborted = true;
         }
       };
 
-      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, _interruptRunning, callback, GetTag(), _timeout_sec);
+      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, 
+                                                                     _interruptRunning, callback, GetTag(), 
+                                                                     _timeout_sec, _startAtTime_ms);
 
       if(res != RESULT_OK) {
         _stoppedPlaying = true;
         _wasAborted = true;
         return ActionResult::ANIM_ABORTED;
+      }else if(_passedInCallback != nullptr){
+        const bool callEvenIfAnimCanceled = true;
+        GetRobot().GetAnimationComponent().AddAdditionalAnimationCallback(_animName, _passedInCallback, callEvenIfAnimCanceled);
       }
 
-      GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
+      GetRobot().GetComponent<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::AnimationPlayed);
 
       return ActionResult::SUCCESS;
     }
@@ -130,7 +190,7 @@ namespace Anki {
       // will FAILURE_ABORT on Init if not an event
     }
 
-    void TriggerAnimationAction::OnRobotSet()
+    void TriggerAnimationAction::OnRobotSetInternalAnim()
     {
       SetAnimGroupFromTrigger(_animTrigger);
       OnRobotSetInternalTrigger();

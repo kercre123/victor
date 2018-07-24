@@ -109,6 +109,7 @@ struct client_ctx {
 struct anki_camera_handle_private {
   int client_handle;
   uint32_t current_frame_id;
+  uint32_t last_frame_slot;
 
   // private
   struct client_ctx camera_client;
@@ -549,6 +550,7 @@ static int process_one_message(struct client_ctx *ctx, struct anki_camera_msg *m
     }
 
     s_camera_handle.current_frame_id = UINT32_MAX;
+    s_camera_handle.last_frame_slot = UINT32_MAX;
     
     // payload contains len
     uint32_t buffer_size;
@@ -780,6 +782,7 @@ int camera_init(struct anki_camera_handle **camera)
 
   client->is_running = 1;
   s_camera_handle.current_frame_id = UINT32_MAX;
+  s_camera_handle.last_frame_slot = UINT32_MAX;
   *camera = (struct anki_camera_handle *)&s_camera_handle;
 
   return 0;
@@ -819,7 +822,12 @@ int camera_release(struct anki_camera_handle *camera)
 // Attempt (lock) the last available frame for reading
 int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t **out_frame)
 {
-  assert(camera != NULL);
+  //assert(camera != NULL);
+  if(camera == NULL)
+  {
+    loge("%s: camera is null", __func__);
+    return -1;
+  }
 
   int rc = 0;
   struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
@@ -834,6 +842,10 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   if(slot >= ANKI_CAMERA_MAX_FRAME_COUNT)
   {
     loge("%s: invalid write_idx %u", __func__, slot);
+    return -1;
+  }
+  else if(slot == CAMERA_HANDLE_P(camera)->last_frame_slot)
+  {
     return -1;
   }
   
@@ -877,7 +889,8 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   }
 
   CAMERA_HANDLE_P(camera)->current_frame_id = frame->frame_id;
-
+  CAMERA_HANDLE_P(camera)->last_frame_slot = slot;
+  
   add_locked_slot(client, slot, frame->frame_id);
   if (out_frame != NULL) {
     *out_frame = frame;
@@ -984,3 +997,16 @@ int camera_set_capture_format(struct anki_camera_handle* camera, anki_camera_pix
   return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
                                       ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
 }
+
+int camera_set_capture_snapshot(struct anki_camera_handle* camera,
+                                uint8_t start)
+{
+  anki_camera_msg_params_payload_t payload;
+  payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_SNAPSHOT;
+  memcpy(payload.data, &start, sizeof(start));
+
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+                                      ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
+}
+
+

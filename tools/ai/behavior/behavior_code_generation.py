@@ -41,6 +41,10 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
   {
 $factory_case_statements
   }
+
+  if( ANKI_DEVELOPER_CODE ) {
+    newBehavior->CheckJson(config);
+  }
     
   return newBehavior;
 }
@@ -129,7 +133,7 @@ namespace Cozmo {
 // BehaviorID is a unique identifier for each instance of a behavior
 // so that they can be referenced by other parts of the behavior system
 
-enum uint_8 BehaviorID {
+enum uint_16 BehaviorID {
 
   // required (not based on config)
   Anonymous,

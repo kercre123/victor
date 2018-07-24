@@ -19,8 +19,7 @@
       "behaviorClass": "AnimSequence",
       "behaviorName": "ObservingOnChargerGetInInternal",
 
-      "animTriggers" : ["ObservingOnChargerGetIn"],
-      "playOnChargerWithoutBody": true
+      "animTriggers" : ["ObservingOnChargerGetIn"]
     }
   ]
 }

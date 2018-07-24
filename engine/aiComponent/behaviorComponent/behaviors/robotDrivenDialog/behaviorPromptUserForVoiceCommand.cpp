@@ -40,6 +40,7 @@ namespace {
   const char* kEarConBegin                        = "earConAudioEventBegin";
   const char* kEarConSuccess                      = "earConAudioEventSuccess";
   const char* kEarConFail                         = "earConAudioEventNeutral";
+  // TODO:(str) Currently not in use. Rework this to use a smarter TurnToFace structure, perhaps LookAtFaceInFront
   const char* kShouldTurnToFaceKey                = "shouldTurnToFaceBeforePrompting";
   const char* kTextToSpeechBehaviorKey            = "textToSpeechBehaviorID";
   const char* kVocalPromptKey                     = "vocalPromptString";
@@ -74,7 +75,7 @@ BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 , listenAnimOverrideTrigger(AnimationTrigger::Count)
 , listenGetOutOverrideTrigger(AnimationTrigger::Count)
 , maxNumReprompts(0)
-, shouldTurnToFace(true)
+, shouldTurnToFace(false)
 , stopListeningOnIntents(true)
 , backpackLights(true)
 , playListeningGetIn(true)
@@ -320,19 +321,49 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
     blc.StartLoopingBackpackAnimation(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
   }
 
-  //Trip the earcon
+  namespace AEM = Anki::AudioEngine::Multiplexer;
   if(AudioMetaData::GameEvent::GenericEvent::Invalid != _iConfig.earConBegin){
-    GetBEI().GetRobotAudioClient().PostEvent(_iConfig.earConBegin, AudioMetaData::GameObjectType::Behavior);
+    //Trip the earcon. Wait for the earcon to finish playing before we start streaming
+    auto earconCallback = [this](const AEM::AudioCallback& audioCallback)
+    {
+      switch(audioCallback.GetType()){
+        case AEM::CallbackType::Invalid:
+        case AEM::CallbackType::Error:
+        {
+          // Note the error, then fall-through to start streaming anyway
+          PRINT_NAMED_ERROR("PromptUserForVoiceCommand.PlayEarconError",
+                            "Earcon failed to play or errored while playing.");
+        }
+        case AEM::CallbackType::Complete:
+        {
+          GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
+          _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          break;
+        }
+        default:
+        {
+          // Do nothing for AEM::CallbackType::Duration or AEM::CallbackType::Marker
+          break;
+        }
+      }
+    };
+    GetBEI().GetRobotAudioClient().PostEvent(_iConfig.earConBegin, AudioMetaData::GameObjectType::Behavior, earconCallback);
+    _dVars.streamingBeginTime = 0.0f;
+  } else {
+    // If there's no earcon set, just start streaming
+    GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
+    _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
-
-  GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
-  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   SET_STATE(Listening);
 
   // Start the getIn animation, then go straight into the listening loop from the callback
   auto callback = [this](){
-    const float elapsed = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _dVars.streamingBeginTime;
+    ANKI_VERIFY(_dVars.streamingBeginTime != 0.0f,
+                "BehaviorPromptUserForVoiceCommand.StartedStreamingAnimBeforeStreaming",
+                "ListeningGetInAnim is shorter than earcon, streaming anim loop will end before streaming stops");
+    const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float elapsed = (_dVars.streamingBeginTime == 0.0f) ? 0.0f : currentTime_s - _dVars.streamingBeginTime;
     const float timeout = kMaxRecordTime_s - elapsed;
 
     AnimationTrigger listenTrigger = (AnimationTrigger::Count != _iConfig.listenAnimOverrideTrigger) ?

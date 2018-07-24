@@ -53,7 +53,9 @@ private:
   void HandleDriveOffChargerComplete();
   void HandleDriveOnChargerComplete();
 
-  void SetAllowedToRunActions(bool allowedtoRunActions);
+  // Use this to prevent (or allow) raw movement commands from the SDK. We only want to allow these when the SDK
+  // behavior is activated and _not_ delegating to another behavior.
+  void SetAllowExternalMovementCommands(const bool allow);
 
   struct InstanceConfig {
     InstanceConfig();

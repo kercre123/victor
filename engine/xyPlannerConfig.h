@@ -43,14 +43,20 @@ namespace {
   const float kPlanningPadding_mm           = 3.f;
 
   const size_t kEscapeObstacleMaxExpansions = 10000;
-  const size_t kPlanPathMaxExpansions       = 100000;
+  const size_t kPlanPathMaxExpansions       = 50000;
 
-  const std::vector<Point2f> fourConnectedGrid = { 
+  const std::vector<Point2f> connectedGrid = { 
     { kPlanningResolution_mm, 0.f},
     {-kPlanningResolution_mm, 0.f},
     { 0.f, -kPlanningResolution_mm},
     { 0.f,  kPlanningResolution_mm}
   };
+  
+  // snap to planning grid via (float->int->float) cast
+  inline Point2f GetNearestGridPoint(const Point2f& p) {
+    Point2f gridPt = p * kOneOverPlanningResolution;
+    return Point2f(roundf(gridPt.x()), roundf(gridPt.y())) * kPlanningResolution_mm;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,12 +74,12 @@ public:
     Successor     operator*()                          { return {_state, kPlanningResolution_mm}; }
     SuccessorIter operator++()                         { ++_idx; UpdateState(); return *this; }
     SuccessorIter begin()                              { return SuccessorIter(_parent, _map); }
-    SuccessorIter end()                                { return SuccessorIter(_parent, _map, fourConnectedGrid.size()); }
+    SuccessorIter end()                                { return SuccessorIter(_parent, _map, connectedGrid.size()); }
 
   private:
     inline void UpdateState() {
-      if (_idx >= fourConnectedGrid.size()) { return; }
-      _state = _parent + fourConnectedGrid[_idx];
+      if (_idx >= connectedGrid.size()) { return; }
+      _state = _parent + connectedGrid[_idx];
       if ( _map.CheckForCollisions( Ball2f(_state, kRobotRadius_mm + kPlanningPadding_mm) ) ) { ++(*this); }
     }
 
@@ -99,10 +105,6 @@ public:
   }
 
 private:
-  // snap to planning grid via (float->int->float) cast
-  inline Point2f GetNearestGridPoint(const Point2f& p) const {
-    return (p * kOneOverPlanningResolution).CastTo<int>().CastTo<float>() * kPlanningResolution_mm;
-  }
 
   const MapComponent&  _map;
   const volatile bool& _abort;
@@ -125,12 +127,14 @@ public:
 
   inline std::array<Successor, 4> GetSuccessors(const Point2f& p) const { 
     std::array<Successor, 4> retv;
-    std::transform(fourConnectedGrid.begin(), fourConnectedGrid.end(), retv.begin(), 
-      [&p](const auto& dir) { return Successor{p + dir, kPlanningResolution_mm}; });
+    const Point2f gridP = GetNearestGridPoint(p);
+    std::transform(connectedGrid.begin(), connectedGrid.end(), retv.begin(), 
+      [&gridP](const auto& dir) { return Successor{gridP + dir, dir.Length()}; });
     return retv;
   };
 
 private:
+
   const MapComponent&  _map;
   const volatile bool& _abort;
   size_t               _numExpansions = 0;

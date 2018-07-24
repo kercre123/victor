@@ -18,7 +18,7 @@
     {
       "behaviorName": "BigGreetingInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["ReactToGreeting"]
+      "animTriggers": ["PRDemoGreeting"]
     },
     {
       "behaviorName": "BigGreetingDriveOffCharger",

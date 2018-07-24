@@ -69,6 +69,7 @@ class DataPlatform;
 namespace Cozmo {
 
 // Forward declarations:
+class AppCubeConnectionSubscriber;
 class AIComponent;
 class ActionList;
 class BehaviorFactory;
@@ -86,7 +87,6 @@ enum class EngineErrorCode : uint8_t;
 class FaceWorld;
 class IExternalInterface;
 class IGatewayInterface;
-class InventoryComponent;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
@@ -95,7 +95,6 @@ class ObjectPoseConfirmer;
 enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
-class ProgressionUnlockComponent;
 class RobotEventHandler;
 class RobotGyroDriftDetector;
 class RobotIdleTimeoutComponent;
@@ -206,7 +205,8 @@ public:
   template<typename T>
   T* GetComponentPtr() {return _components->GetComponentPtr<T>();}
 
-
+  inline AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() {return GetComponent<AppCubeConnectionSubscriber>();}
+  inline const AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() const {return GetComponent<AppCubeConnectionSubscriber>();}
 
   inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>();}
   inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>();}
@@ -252,12 +252,6 @@ public:
 
   inline const DataAccessorComponent& GetDataAccessorComponent() const { return GetComponent<DataAccessorComponent>(); }
   inline       DataAccessorComponent& GetDataAccessorComponent()       { return GetComponent<DataAccessorComponent>(); }
-
-  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponent<ProgressionUnlockComponent>();}
-  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {return GetComponent<ProgressionUnlockComponent>();}
-
-  inline const InventoryComponent& GetInventoryComponent() const {return GetComponent<InventoryComponent>();}
-  inline InventoryComponent& GetInventoryComponent() {return GetComponent<InventoryComponent>();}
 
   inline const NVStorageComponent& GetNVStorageComponent() const {return GetComponent<NVStorageComponent>();}
   inline NVStorageComponent& GetNVStorageComponent() {return GetComponent<NVStorageComponent>();}
@@ -553,6 +547,7 @@ public:
   // ======== Power button ========
 
   bool IsPowerButtonPressed() const { return _powerButtonPressed; }
+  TimeStamp_t GetTimeSincePowerButtonPressed_ms() const;
 
   // Abort everything the robot is doing, including path following, actions,
   // animations, and docking. This is like the big red E-stop button.
@@ -705,13 +700,14 @@ protected:
   ObjectID         _chargerID;
 
   // State
-  ImageSendMode    _imageSendMode            = ImageSendMode::Off;
-  u32              _lastSentImageID          = 0;
-  bool             _powerButtonPressed       = false;
-  bool             _isPickedUp               = false;
-  bool             _isCliffReactionDisabled  = false;
+  ImageSendMode    _imageSendMode             = ImageSendMode::Off;
+  u32              _lastSentImageID           = 0;
+  bool             _powerButtonPressed        = false;
+  TimeStamp_t      _timePowerButtonPressed_ms = 0;
+  bool             _isPickedUp                = false;
+  bool             _isCliffReactionDisabled   = false;
   bool             _gotStateMsgAfterRobotSync = false;
-  u32              _lastStatusFlags          = 0;
+  u32              _lastStatusFlags           = 0;
 
   OffTreadsState   _offTreadsState;
   OffTreadsState   _awaitingConfirmationTreadState;

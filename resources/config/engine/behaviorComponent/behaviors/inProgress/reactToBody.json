@@ -1,0 +1,17 @@
+{
+  "behaviorID" :   "ReactToBody",
+  "behaviorClass": "ReactToBody",
+
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+  "shouldDriveStraightIfNotOnCharger": true,
+  "drivingForwadDistance_mm": 50,
+
+  "wantsToBeActivatedCondition": {
+    "conditionType":      "TimedDedup",
+    "dedupInterval_ms":    5000,
+    "subCondition":        {
+      "conditionType": "SalientPointDetected",
+      "targetSalientPoint": "Person"
+    }
+  }
+}

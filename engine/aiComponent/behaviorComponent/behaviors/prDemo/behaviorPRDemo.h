@@ -31,6 +31,8 @@ public:
   // let this behavior know about things it needs for the demo
   void InformOfVoiceIntent( const UserIntentTag& intentTag );
   void InformTimerIsRinging();
+  
+  void Reset();
 
 protected:
 

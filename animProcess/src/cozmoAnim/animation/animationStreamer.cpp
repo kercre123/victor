@@ -389,6 +389,9 @@ namespace Cozmo {
 #endif // ANKI_DEV_CHEATS
 
   CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
+    
+  // Disable streaming of backpack lights keyframes by default
+  CONSOLE_VAR(bool, kEnableBackpackLightsTrack, "AnimationStreamer", false);
 
   } // namespace
 
@@ -476,8 +479,8 @@ namespace Cozmo {
     FaceDisplay::removeInstance();
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning,
-                                                  bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms, 
+                                                  bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -491,11 +494,12 @@ namespace Cozmo {
       return RESULT_OK;
     }
     auto* anim = _context->GetDataLoader()->GetCannedAnimation(name);
-    return SetStreamingAnimation(anim, tag, numLoops, interruptRunning,
+    return SetStreamingAnimation(anim, tag, numLoops, startAt_ms, interruptRunning,
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, false);
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning,
+  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, u32 startAt_ms, 
+                                                  bool interruptRunning,
                                                   bool shouldOverrideEyeHue, bool shouldRenderInEyeHue,
                                                   bool isInternalAnim, bool shouldClearProceduralAnim)
   {
@@ -541,8 +545,7 @@ namespace Cozmo {
     _loopCtr = 0;
     _numLoops = numLoops;
     // Get the animation ready to play
-    InitStreamingAnimation(tag, shouldOverrideEyeHue, shouldRenderInEyeHue);
-    
+    InitStreamingAnimation(tag, startAt_ms, shouldOverrideEyeHue, shouldRenderInEyeHue);
 
     _playingInternalAnim = isInternalAnim;
     
@@ -812,6 +815,7 @@ namespace Cozmo {
   void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
   {
     const u32 numLoops = 1;
+    const u32 startAtTime_ms = 0;
     const bool interruptRunning = true;
     const bool shouldOverrideEyeHue = true;
     const bool shouldRenderInEyeHue = false;
@@ -822,8 +826,10 @@ namespace Cozmo {
     // undefined behavior
     _streamingAnimation = _neutralFaceAnimation;
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
-    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning,
+    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, startAtTime_ms, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+    
+    _expectingCompositeImage = true;
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -881,6 +887,7 @@ namespace Cozmo {
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
                                               u32 duration_ms)
   {
+    _expectingCompositeImage = false;
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     // If procedural animation is streaming set the streaming animation to nullptr 
     // without clearing it out so that the animation can be restarted with the composite image data
@@ -888,12 +895,13 @@ namespace Cozmo {
     if(_streamingAnimation == _proceduralAnimation){
       preserveTag = _tag;
       const u32 numLoops = 1;
+      const u32 startTime_ms = 0;
       const bool interruptRunning = true;
       const bool shouldOverrideEyeHue = false;
       const bool shouldRenderInEyeHue = false;
       const bool isInternalAnim = true;
       const bool shouldClearProceduralAnim = false;
-      SetStreamingAnimation(nullptr, 0, numLoops, interruptRunning,
+      SetStreamingAnimation(nullptr, 0, numLoops, startTime_ms, interruptRunning,
                             shouldOverrideEyeHue, shouldRenderInEyeHue,
                             isInternalAnim, shouldClearProceduralAnim);
     }
@@ -915,10 +923,11 @@ namespace Cozmo {
     }
     
     const u32 numLoops = 1;
+    const u32 startTime_ms = 0;
     const bool interruptRunning = true;
     const bool shouldOverrideEyeHue = false;
     const bool isInternalAnim = false;
-    return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, interruptRunning,
+    return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, startTime_ms, interruptRunning,
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
   }
 
@@ -990,11 +999,14 @@ namespace Cozmo {
       // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
       _wasAnimationInterruptedWithNothing = true;
     }
+    _relativeStreamTime_ms = 0;
+    _expectingCompositeImage = false;
   } // Abort()
 
   
   
-  Result AnimationStreamer::InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+  Result AnimationStreamer::InitStreamingAnimation(Tag withTag, u32 startAt_ms, 
+                                                   bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
     kCurrentManualFrameNumber = 0;
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
@@ -1013,7 +1025,7 @@ namespace Cozmo {
       _tag = withTag;
       
       _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      _relativeStreamTime_ms = 0;
+      _relativeStreamTime_ms = startAt_ms;
 
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
@@ -1050,10 +1062,15 @@ namespace Cozmo {
     if(msg != nullptr) {
       if (!IsTrackLocked(_lockedTracks, (u8)track)) {
         switch(track) {
+          case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
+          {
+            if (!kEnableBackpackLightsTrack) {
+              break;
+            } // else fall through
+          }
           case AnimTrackFlag::HEAD_TRACK:
           case AnimTrackFlag::LIFT_TRACK:
           case AnimTrackFlag::BODY_TRACK:
-          case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
             res = AnimProcessMessages::SendAnimToRobot(*msg);
             _tracksInUse |= (u8)track;
             break;
@@ -1581,6 +1598,12 @@ namespace Cozmo {
     {
       return RESULT_OK;
     }
+
+    // TEMP (Kevin K.): We're waiting on messages that have been delayed - don't start
+    // the animation yet
+    if(_expectingCompositeImage){
+      return RESULT_OK;
+    }    
 
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();

@@ -1,0 +1,225 @@
+/**
+ * File: BehaviorPoweringRobotOff.cpp
+ *
+ * Author: Kevin M. Karol
+ * Created: 2018-07-18
+ *
+ * Description: Behavior which plays power on/off animations in response to the power button being held down
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
+
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPoweringRobotOff.h"
+
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "engine/actions/animActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimePowerButtonPressed.h"
+#include "engine/components/dataAccessorComponent.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+namespace{
+const char* kStartPowerOffKey   = "startPowerOffEyes_ms";
+const char* kPowerOnAnimName    = "powerOnAnimName";
+const char* kPowerOffAnimName   = "powerOffAnimName";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPoweringRobotOff::InstanceConfig::InstanceConfig(const Json::Value& config)
+{
+  const std::string debugName = "BehaviorPoweringRobotOff.InstanceConfig.MissingKey. ";
+  powerOnAnimName    = JsonTools::ParseString(config, kPowerOnAnimName, debugName + kPowerOnAnimName);
+  powerOffAnimName   = JsonTools::ParseString(config, kPowerOffAnimName, debugName + kPowerOffAnimName);
+
+  const auto timeStartPowerOff = JsonTools::ParseUInt32(config, kStartPowerOffKey, debugName + kStartPowerOffKey);
+  powerButtonHeldCondition = std::shared_ptr<IBEICondition>(new ConditionTimePowerButtonPressed(timeStartPowerOff, "BehaviorPoweringRobotOff"));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPoweringRobotOff::DynamicVariables::DynamicVariables()
+: timeLastPowerAnimStopped_ms(0)
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPoweringRobotOff::BehaviorPoweringRobotOff(const Json::Value& config)
+: ICozmoBehavior(config)
+, _iConfig(config)
+{
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPoweringRobotOff::~BehaviorPoweringRobotOff()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::InitBehavior()
+{
+  _iConfig.powerButtonHeldCondition->Init(GetBEI());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorPoweringRobotOff::WantsToBeActivatedBehavior() const
+{
+  return _iConfig.powerButtonHeldCondition->AreConditionsMet(GetBEI());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+  modifiers.behaviorAlwaysDelegates = false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kPowerOnAnimName,
+    kPowerOffAnimName,
+    kStartPowerOffKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::OnBehaviorEnteredActivatableScope()
+{
+  _iConfig.powerButtonHeldCondition->SetActive(GetBEI(), true);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::OnBehaviorActivated() 
+{
+  // reset dynamic variables
+  _dVars = DynamicVariables();
+
+  TransitionToPoweringOff();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::BehaviorUpdate() 
+{
+  if( !IsActivated() || _dVars.waitingForAnimationCallback ) {
+    return;
+  }
+
+
+  const auto shouldBePoweringOff = _iConfig.powerButtonHeldCondition->AreConditionsMet(GetBEI());
+  const bool wasPowerOffLastAnimPlayed = _dVars.lastAnimPlayedName == _iConfig.powerOffAnimName;
+  const bool wasPowerOnLastAnimPlayed = _dVars.lastAnimPlayedName == _iConfig.powerOnAnimName;
+
+  if(shouldBePoweringOff && wasPowerOnLastAnimPlayed){
+    if(IsControlDelegated()){
+      CancelDelegates(false);
+      _dVars.waitingForAnimationCallback = true;
+    }else{
+      TransitionToPoweringOff();
+    }
+  }else if(!shouldBePoweringOff && wasPowerOffLastAnimPlayed){
+    if(IsControlDelegated()){
+      CancelDelegates(false);
+      _dVars.waitingForAnimationCallback = true;
+    }else{
+      TransitionToPoweringOn();
+    }
+  }
+  
+  // If user released power button see if eyes are restored and normal behavior should continue
+  if(!IsControlDelegated() &&
+     !shouldBePoweringOff &&
+     wasPowerOnLastAnimPlayed){
+    CancelSelf();
+  }
+  
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::OnBehaviorLeftActivatableScope()
+{
+  _iConfig.powerButtonHeldCondition->SetActive(GetBEI(), false);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::TransitionToPoweringOff()
+{
+  const bool havePlayedAnyAnim = _dVars.timeLastPowerAnimStopped_ms > 0;
+  const auto startTime_ms = havePlayedAnyAnim ? GetLengthOfAnimation_ms(_iConfig.powerOffAnimName) - _dVars.timeLastPowerAnimStopped_ms : 0;
+  
+  StartAnimation(_iConfig.powerOffAnimName, startTime_ms);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::TransitionToPoweringOn()
+{
+  const bool havePlayedAnyAnim = _dVars.timeLastPowerAnimStopped_ms > 0;
+  const auto startTime_ms = havePlayedAnyAnim ? GetLengthOfAnimation_ms(_iConfig.powerOnAnimName) - _dVars.timeLastPowerAnimStopped_ms : 0;
+  
+  StartAnimation(_iConfig.powerOnAnimName, startTime_ms);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::StartAnimation(const std::string& animName, const TimeStamp_t startTime_ms)
+{
+  _dVars.lastAnimPlayedName = animName;
+  const u32 numLoops = 1;
+  const bool interruptRunning = true;
+  const u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS;
+  const float timeout_sec = PlayAnimationAction::GetDefaultTimeoutInSeconds();
+  
+  auto callback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded) {
+    _dVars.waitingForAnimationCallback = false;
+    if(res == AnimationComponent::AnimResult::Completed){
+      _dVars.timeLastPowerAnimStopped_ms = 0;
+    }else{
+      _dVars.timeLastPowerAnimStopped_ms = streamTimeAnimEnded;
+    }
+  };
+  DelegateIfInControl(new PlayAnimationAction(animName, numLoops, interruptRunning, 
+                                              tracksToLock, timeout_sec, startTime_ms, callback));
+
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TimeStamp_t BehaviorPoweringRobotOff::GetLengthOfAnimation_ms(const std::string& animName)
+{
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
+  const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
+  auto length_ms = 0;
+  if((animContainer != nullptr) && !_iConfig.powerOffAnimName.empty()){
+    auto animPtr = animContainer->GetAnimation(_iConfig.powerOffAnimName);
+    if(animPtr != nullptr){
+      length_ms = animPtr->GetLastKeyFrameEndTime_ms();
+    }else{
+      PRINT_NAMED_ERROR("BehaviorPoweringRobotOff.GetLengthOfAnimation_ms.MissingAnimation", 
+                        "Animation named %s is not accessible in engine", animName.c_str());
+    }
+  }
+  
+  return length_ms;
+}
+
+
+}
+}

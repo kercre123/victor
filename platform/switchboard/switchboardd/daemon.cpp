@@ -35,7 +35,13 @@
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
+#include "util/logging/logging.h"
+#include "util/logging/victorLogger.h"
 #include "switchboardd/daemon.h"
+
+#define LOG_PROCNAME "vic-switchboard"
 
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
@@ -70,6 +76,9 @@ void Daemon::Start() {
   _pairingTimer.signal = &_pairingPreConnectionSignal;
   _pairingPreConnectionSignal.SubscribeForever(std::bind(&Daemon::HandlePairingTimeout, this));
   ev_timer_init(&_pairingTimer.timer, &Daemon::sEvTimerHandler, kPairingPreConnectionTimeout_s, 0);
+
+  // Initialize wifi listeners
+  Anki::Wifi::Initialize();
 }
 
 void Daemon::Stop() {
@@ -93,8 +102,9 @@ void Daemon::Christen() {
   RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
   bool hasName = false;
 
-  if((savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) || 
-    (savedSession.keys.version == V2)) {
+  // Check to see if an error occured when 
+  // loading RtsKeys (err if version = -1)
+  if(savedSession.keys.version != -1) {
     // if saved session file is valid, retrieve saved hasName field
     hasName = savedSession.keys.id.hasName;
     Log::Write("[Chr] Valid version.");
@@ -250,6 +260,11 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     Log::Write("Done task");
   });
   Log::Write("Done OnConnected");
+
+  DASMSG(ble_connection_status, "ble.connection",
+          "BLE connection status has changed.");
+  DASMSG_SET(s1, "connected", "Connection status");
+  DASMSG_SEND();
 }
 
 void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
@@ -269,6 +284,11 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   }
 
   UpdateAdvertisement(false);
+
+  DASMSG(ble_connection_status, "ble.connection",
+          "BLE connection status has changed.");
+  DASMSG_SET(s1, "disconnected", "Connection status");
+  DASMSG_SEND();
 }
 
 void Daemon::OnBleIpcDisconnected() {
@@ -341,6 +361,13 @@ void Daemon::HandleOtaUpdateProgress() {
       }
       if (access(kUpdateEngineErrorPath.c_str(), F_OK) != -1) {
         rc = -1;
+        std::string exitCodeString = Anki::Util::FileUtils::ReadFile(kUpdateEngineExitCodePath);
+        if (!exitCodeString.empty()) {
+          int exitCode = std::atoi(exitCodeString.c_str());
+          if (exitCode) {
+            rc = exitCode;
+          }
+        }
       }
       HandleOtaUpdateExit(rc);
     }
@@ -554,6 +581,10 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
       break;
     }
+    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::WifiScanRequest: {
+      _engineMessagingClient->HandleWifiScanRequest();
+      break;
+    }
     default: {
       printf("Unknown Tag: %hhu\n", tag);
       break;
@@ -589,10 +620,12 @@ void Daemon::HandleReboot() {
 
   // trigger reboot
   sync(); sync(); sync();
-  int status = reboot(LINUX_REBOOT_CMD_RESTART);
+  int status = ExecCommand({"/sbin/reboot"});
 
-  if(status == -1) {
+
+  if (!status) {
     Log::Write("Error while restarting: [%d]", status);
+    (void) reboot(LINUX_REBOOT_CMD_RESTART);
   }
 }
 
@@ -617,7 +650,12 @@ std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
 
 static void ExitHandler(int status = 0) {
   // todo: smoothly handle termination
+
+  Anki::Util::gLoggerProvider = nullptr;
+  Anki::Util::gEventProvider = nullptr;
+
   Anki::Victor::UninstallCrashReporter();
+
   _exit(status);
 }
 
@@ -639,8 +677,17 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 }
 
 int SwitchboardMain() {
-  static char const* filenamePrefix = "switchboard";
-  Anki::Victor::InstallCrashReporter(filenamePrefix);
+
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+
+  Anki::Util::VictorLogger logger(LOG_PROCNAME);
+  Anki::Util::gLoggerProvider = &logger;
+  Anki::Util::gEventProvider = &logger;
+
+  DASMSG(switchboard_hello, "switchboard.hello", "Switchboard service start");
+  DASMSG_SET(s1, "hello", "Test string");
+  DASMSG_SET(i1, getpid(), "Test value");
+  DASMSG_SEND();
 
   sLoop = ev_default_loop(0);
 

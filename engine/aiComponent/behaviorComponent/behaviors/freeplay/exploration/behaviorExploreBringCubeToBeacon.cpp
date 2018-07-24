@@ -21,7 +21,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/viz/vizManager.h"
@@ -659,17 +658,6 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   const ObservableObject* object,
   const AIBeacon* beacon) const
 {
-  // here we would check if stacking is (un)locked
-  const bool forFreeplay = true;
-  if(GetBEI().HasProgressionUnlockComponent()){
-    auto& progressionUnlockComp = GetBEI().GetProgressionUnlockComponent();
-    const bool canStackCubes = progressionUnlockComp.IsUnlocked(UnlockId::StackTwoCubes, forFreeplay);
-    if ( !canStackCubes ) {
-      return nullptr;
-    }
-  }
-
-
   // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
   BlockWorldFilter filter;
   filter.SetAllowedFamilies({{ ObjectFamily::Block, ObjectFamily::LightCube }});

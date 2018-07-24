@@ -37,6 +37,7 @@
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/cubes/appCubeConnectionSubscriber.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
@@ -44,7 +45,6 @@
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
-#include "engine/components/inventoryComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
@@ -52,7 +52,6 @@
 #include "engine/components/pathComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/powerStateManager.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
@@ -96,6 +95,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
@@ -278,6 +278,15 @@ static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-80.f);
 static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
+// Too long in-air condition
+static const TimeStamp_t kInAirTooLongTimeReportTime_ms = 60000;
+
+// As long as robot's orientation doesn't change by more than
+// this amount, we assume it's not being held by a person.
+// Note that if he's placed on a platform that's vibrating so
+// much that his orientation changes by more than this amount, 
+// we would not be able to differentiate this from being held.
+static const float kRobotAngleChangedThresh_rad = DEG_TO_RAD(1);
 
 Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 : _context(context)
@@ -296,6 +305,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   // create all components
   {
     _components = std::make_unique<EntityType>();
+    _components->AddDependentComponent(RobotComponentID::AppCubeConnectionSubscriber,new AppCubeConnectionSubscriber());
     _components->AddDependentComponent(RobotComponentID::CozmoContextWrapper,        new ContextWrapper(context));
     _components->AddDependentComponent(RobotComponentID::BlockWorld,                 new BlockWorld());
     _components->AddDependentComponent(RobotComponentID::FaceWorld,                  new FaceWorld());
@@ -328,8 +338,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
     _components->AddDependentComponent(RobotComponentID::MoodManager,                new MoodManager());
     _components->AddDependentComponent(RobotComponentID::StimulationFaceDisplay,     new StimulationFaceDisplay());
-    _components->AddDependentComponent(RobotComponentID::Inventory,                  new InventoryComponent());
-    _components->AddDependentComponent(RobotComponentID::ProgressionUnlock,          new ProgressionUnlockComponent());
     _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
     _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
@@ -580,6 +588,44 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 
     offTreadsStateChanged = true;
   }
+
+  //////////////////////////////////
+  // Too long InAir DAS message
+  //////////////////////////////////
+  // Check if robot is stuck in-air for a long time, but is likely not being held.
+  // Might be indicative of a vibrating surface or overly sensitive conditions 
+  // for staying in the picked up state.
+  static bool        reportedInAirTooLong      = false;
+  static TimeStamp_t inAirTooLongReportTime_ms = 0;
+  static Radians     lastStableRobotAngle_rad  = msg.pose.angle;
+
+  if (!reportedInAirTooLong) {
+
+    // Schedule reporting of DAS message when InAir, but reset
+    // timer if robot orientation changes indicating that it's probably
+    // still being held.
+    const bool robotAngleChanged = (lastStableRobotAngle_rad - msg.pose.angle).getAbsoluteVal().ToFloat() > kRobotAngleChangedThresh_rad;
+    if ((_offTreadsState == OffTreadsState::InAir) && robotAngleChanged) {
+      inAirTooLongReportTime_ms = currentTimestamp + kInAirTooLongTimeReportTime_ms;
+      lastStableRobotAngle_rad = msg.pose.angle;
+    }    
+
+    if ((inAirTooLongReportTime_ms > 0) && 
+        (inAirTooLongReportTime_ms < currentTimestamp)) {
+      DASMSG(robot_too_long_in_air, "robot.too_long_in_air",
+            "Robot has been in InAir picked up state for too long. Vibrating surface?");
+      DASMSG_SEND();
+      reportedInAirTooLong = true;
+    }
+  }
+
+  // Reset reporting flag when no longer picked up
+  const bool cliffDetected = GetCliffSensorComponent().IsCliffDetected();
+  if (_offTreadsState == OffTreadsState::OnTreads || cliffDetected) {
+    reportedInAirTooLong = false;
+    inAirTooLongReportTime_ms = 0;
+  }
+
 
   // Send viz message with current treads states
   const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
@@ -1107,7 +1153,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
-    GetAnimationComponent().GetAnimState_LockedTracks(),
+    GetMoveComponent().GetLockedTracks(),
     GetAnimationComponent().GetAnimState_TracksInUse(),
     _robotImuTemperature_degC,
     GetCliffSensorComponent().GetCliffDetectThresholds(),
@@ -1244,6 +1290,14 @@ Result Robot::Update()
   if (kChargerStripeIsBlack != wasChargerStripeIsBlack) {
     SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
     wasChargerStripeIsBlack = kChargerStripeIsBlack;
+  }
+ 
+  const bool trackingPowerButtonPress = (_timePowerButtonPressed_ms != 0);
+  // Keep track of how long the power button has been pressed
+  if(!trackingPowerButtonPress && _powerButtonPressed){
+    _timePowerButtonPressed_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }else if(trackingPowerButtonPress && !_powerButtonPressed){
+    _timePowerButtonPressed_ms = 0;
   }
 
 #if(0)
@@ -1509,6 +1563,10 @@ bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
   return GetComponent<BlockTapFilterComponent>().ShouldIgnoreMovementDueToDoubleTap(objectID);
 }
 
+TimeStamp_t Robot::GetTimeSincePowerButtonPressed_ms() const { 
+  return _timePowerButtonPressed_ms == 0 ? 0 : 
+          BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timePowerButtonPressed_ms; 
+}
 
 Result Robot::SyncRobot()
 {
@@ -2752,6 +2810,24 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
+
+        #if FACTORY_TEST
+        // Manually init AnimationComponent
+        // Normally it would init when we receive syncTime from robot process
+        // but since there might not be a body (robot process won't init)
+        // we need to do it here
+        GetAnimationComponent().Init();
+        
+        // Once we have gotten a frame from the camera play a sound to indicate 
+        // a "successful" boot
+        static bool playedSound = false;
+        if(!playedSound)
+        {
+          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
+          playedSound = true;
+        }
+        #endif
       }
     }
   }

@@ -16,9 +16,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/attentionTransfer/behaviorAttentionTransferIfNeeded.h"
 
+#include "clad/types/featureGateTypes.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/attentionTransferComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 namespace Anki {
@@ -84,6 +88,14 @@ void BehaviorAttentionTransferIfNeeded::GetBehaviorJsonKeys(std::set<const char*
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
   RecentOccurrenceTracker::GetConfigJsonKeys(expectedKeys);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorAttentionTransferIfNeeded::WantsToBeActivatedBehavior() const
+{
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::AttentionTransfer);
+  return featureEnabled;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

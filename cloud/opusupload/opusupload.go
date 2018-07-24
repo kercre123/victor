@@ -1,7 +1,7 @@
 package main
 
 import (
-	"anki/cloudproc"
+	"anki/voice"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Connecting")
-	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret,
+	conn, err := chipper.NewConn(voice.ChipperURL, voice.ChipperSecret,
 		chipper.WithSessionID(uuid.New().String()[:16]))
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)

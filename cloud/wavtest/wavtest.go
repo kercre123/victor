@@ -1,7 +1,9 @@
 package main
 
 import (
+	"anki/cloudproc"
 	"anki/ipc"
+	"anki/voice"
 	"flag"
 	"fmt"
 	"io"
@@ -9,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"anki/cloudproc"
 	"anki/cloudproc/harness"
 	"clad/cloud"
 
@@ -41,7 +42,7 @@ func main() {
 		fmt.Println("Error getting format:", err)
 		return
 	}
-	if format.BitsPerSample != cloudproc.SampleBits || format.NumChannels != 1 || format.SampleRate != cloudproc.SampleRate {
+	if format.BitsPerSample != voice.SampleBits || format.NumChannels != 1 || format.SampleRate != voice.SampleRate {
 		fmt.Println("Unexpected format, expected 16 bits, 1 channel, 16000 sample rate, got:",
 			format.BitsPerSample, format.NumChannels, format.SampleRate)
 		return
@@ -62,16 +63,16 @@ func main() {
 	}
 	fmt.Println("Read", len(data), "samples")
 
-	var msgIO cloudproc.MsgIO
+	var msgIO voice.MsgIO
 	if *makeproc {
-		cloudproc.SetVerbose(*verbose)
-		options := []cloudproc.Option{cloudproc.WithCompression(*compress)}
+		voice.SetVerbose(*verbose)
+		options := []voice.Option{voice.WithCompression(*compress)}
 		if *ms {
-			options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
+			options = append(options, voice.WithHandler(voice.HandlerMicrosoft))
 		} else if *lex {
-			options = append(options, cloudproc.WithHandler(cloudproc.HandlerAmazon))
+			options = append(options, voice.WithHandler(voice.HandlerAmazon))
 		}
-		proc, err := harness.CreateMemProcess(options...)
+		proc, err := harness.CreateMemProcess(cloudproc.WithVoiceOptions(options...))
 		if err != nil {
 			fmt.Println("Couldn't create test cloud process:", err)
 			return
@@ -83,8 +84,11 @@ func main() {
 		go func() {
 			wg.Add(1)
 			defer wg.Done()
-			intent, _ := proc.ReadMessage()
-			fmt.Println("Got AI response:", intent)
+			var msg *cloud.Message
+			for msg == nil || msg.Tag() != cloud.MessageTag_Result {
+				msg, _ = proc.ReadMessage()
+			}
+			fmt.Println("Got AI response:", msg)
 		}()
 		defer wg.Wait()
 	} else {
@@ -94,7 +98,7 @@ func main() {
 			return
 		}
 		defer conn.Close()
-		msgIO = cloudproc.NewIpcIO(conn)
+		msgIO = voice.NewIpcIO(conn)
 	}
 
 	// simulate real-time recording and delay between each send

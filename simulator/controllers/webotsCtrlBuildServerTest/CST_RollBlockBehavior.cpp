@@ -76,13 +76,6 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       StartMovieConditional("RollBlockBehavior");
       // TakeScreenshotsAtInterval("RollBlockBehavior", 1.f);
       
-      // make sure rolling is unlocked
-      UnlockId unlock = UnlockIdFromString("RollCube");
-      CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
-      SendMessage( ExternalInterface::MessageGameToEngine(
-                     ExternalInterface::RequestSetUnlock(unlock, true)));
-      
-      _moveHeadToAngleResult = ActionResult::RUNNING;
       SendMoveHeadToAngle(0, 100, 100);
       SET_TEST_STATE(VerifyObject)
       break;

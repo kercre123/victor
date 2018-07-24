@@ -24,7 +24,7 @@ def main():
     '''main execution'''
     args = utilities.parse_args()
 
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("------ begin testing oled ------")
 
         for _ in range(4):

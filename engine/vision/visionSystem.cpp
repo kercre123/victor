@@ -452,10 +452,11 @@ void VisionSystem::SetSaveParameters(const ImageSendMode saveMode,
                                      const int8_t quality,
                                      const Vision::ImageCache::Size& saveSize,
                                      const bool removeRadialDistortion,
-                                     const f32 thumbnailScaleFraction)
+                                     const f32 thumbnailScaleFraction,
+                                     const f32 saveScaleFraction)
 {
   const Result result = _imageSaver->SetParams( ImageSaver::Params{
-    path, basename, saveMode, quality, saveSize, thumbnailScaleFraction, removeRadialDistortion
+    path, basename, saveMode, quality, saveSize, thumbnailScaleFraction, saveScaleFraction, removeRadialDistortion
   });
   
   if(RESULT_OK != result)

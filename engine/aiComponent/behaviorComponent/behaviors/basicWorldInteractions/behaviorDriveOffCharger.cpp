@@ -43,6 +43,8 @@ static const char* const kMaxCubeAgeKey = "maxCubeAge_s";
   
 const float kDefaultExtraDist_mm = 60.0f;
   
+const AnimationTrigger kAnimFarLeft = AnimationTrigger::DriveOffChargerFarLeft;
+const AnimationTrigger kAnimFarRight = AnimationTrigger::DriveOffChargerFarRight;
 const AnimationTrigger kAnimLeft = AnimationTrigger::DriveOffChargerLeft;
 const AnimationTrigger kAnimRight = AnimationTrigger::DriveOffChargerRight;
 const AnimationTrigger kAnimStraight = AnimationTrigger::DriveOffChargerStraight;
@@ -271,7 +273,7 @@ void BehaviorDriveOffCharger::SelectAndDrive()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::TransitionToDrivingStraightProcedural()
 {
-  
+  PRINT_CH_INFO( "Behaviors", "BehaviorDriveOffCharger.TransitionToDrivingStraightProcedural", "Driving straight" );
   DriveStraightAction* action = new DriveStraightAction(_iConfig.proceduralDistToDrive_mm);
   DelegateIfInControl( action );
   // the Update function will transition back to this or another direction, or end the behavior, as appropriate
@@ -292,6 +294,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingRandomly()
                    "BehaviorDriveOffCharger.TransitionToDrivingRandomly.DWTA",
                    "Random driving behavior doesn't want to activate" ) )
   {
+    PRINT_CH_INFO( "Behaviors", "BehaviorDriveOffCharger.TransitionToDrivingRandomly", "Driving randomly" );
     DelegateIfInControl( _iConfig.driveRandomlyBehavior.get() );
     // the Update function will transition back to this or another direction, or end the behavior, as appropriate
   }
@@ -307,6 +310,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingFace()
     Pose3d faceWrtRobot;
     const bool poseSuccess = facePose.GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), faceWrtRobot);
     if( poseSuccess ) {
+      PRINT_CH_INFO( "Behaviors", "BehaviorDriveOffCharger.TransitionToDrivingFace", "Driving toward face" );
       DriveToPose( faceWrtRobot );
     }
   }
@@ -328,6 +332,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingCube()
       Pose3d cubeWrtRobot;
       const bool poseSuccess = obj->GetPose().GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), cubeWrtRobot);
       if( poseSuccess ) {
+        PRINT_CH_INFO( "Behaviors", "BehaviorDriveOffCharger.TransitionToDrivingCube", "Driving toward cube" );
         DriveToPose( cubeWrtRobot );
       }
     }
@@ -339,14 +344,21 @@ void BehaviorDriveOffCharger::TransitionToDrivingMicDirection()
 {
   const MicDirectionIndex direction = GetDirectionFromMicHistory();
   // direction ranges from 0 (12 oclock) to 11 (11 oclock), and then invalid/unknown
-  if( direction <= 11 ) {
+  const bool directionKnown = (direction <= 11);
+  PRINT_CH_INFO( "Behaviors",
+                 "BehaviorDriveOffCharger.TransitionToDrivingMicDirection.Direction", "Direction = [%d] (%s)",
+                 (int)direction, directionKnown ? "known" : "unknown" );
+  if( directionKnown ) {
     AnimationTrigger directionAnim;
-    // drive straight for 11-12-1 oclocks, or left/right for outside of that range
-    if( direction >=2 && direction <= 6 ) { // tie breaker: 6 oclock drives right
+    if( direction == 2 ) { // 2
       directionAnim = kAnimRight;
-    } else if( direction > 6 && direction <= 10 ) {
+    } else if( direction > 2 && direction <= 6 ) { // 3-6 (tie breaker: 6 oclock drives right)
+      directionAnim = kAnimFarRight;
+    } else if( direction > 6 && direction <= 9 ) { // 7-9
+      directionAnim = kAnimFarLeft;
+    } else if( direction == 10 ) { // 10
       directionAnim = kAnimLeft;
-    } else {
+    } else { // 11, 12, 1
       directionAnim = kAnimStraight;
     }
     auto* action = new TriggerLiftSafeAnimationAction{ directionAnim };

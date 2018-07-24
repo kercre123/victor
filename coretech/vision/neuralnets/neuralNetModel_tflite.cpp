@@ -51,7 +51,8 @@ TFLiteLogReporter gLogReporter;
 } // anonymous namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-NeuralNetModel::NeuralNetModel()
+NeuralNetModel::NeuralNetModel(const std::string& cachePath)
+: INeuralNetModel(cachePath)
 { 
 
 }

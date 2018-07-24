@@ -4,8 +4,6 @@
 
   "associatedActiveFeature": "Sleeping",
   
-  "playOnChargerWithoutBody": true,
-  
   "animTriggers": [
     "ConnectWakeUp"
   ]

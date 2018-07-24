@@ -4,7 +4,7 @@
 * Author: Kevin M. Karol
 * Created: 2017-06-05
 *
-* Description: Behavior that drives to a face.
+* Description: Behavior that drives to a face from voice command
 *
 * Copyright: Anki, Inc. 2017
 *
@@ -13,15 +13,19 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDriveToFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDriveToFace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/iSimpleFaceBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Cozmo {
   
+class BehaviorFindFaceAndThen;
 struct PathMotionProfile;
 
-class BehaviorDriveToFace : public ISimpleFaceBehavior
+class BehaviorDriveToFace : public ICozmoBehavior
 {
+public:
+  void SetInterruptionEndTick( size_t tick );
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -29,7 +33,9 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   
@@ -39,9 +45,12 @@ private:
   
   enum class State {
     Invalid=0,
+    FindingFace,
     DriveToFace,
+    FinalAnim,
     AlreadyCloseEnough,
-    TrackFace
+    TrackFace,
+    ResumeAnim,
   };
   
   struct InstanceConfig {
@@ -55,6 +64,14 @@ private:
     
     AnimationTrigger animTooClose;
     AnimationTrigger animDriveOverride;
+    AnimationTrigger initialAnim;
+    AnimationTrigger successAnim;
+    AnimationTrigger resumeAnim;
+    
+    int maxNumResumes;
+    
+    std::string findFaceBehaviorStr;
+    std::shared_ptr<BehaviorFindFaceAndThen> findFaceBehavior;
     
     std::unique_ptr<PathMotionProfile> customMotionProfile;
   };
@@ -64,14 +81,24 @@ private:
     State currentState;
     
     float trackEndTime_s;
+    
+    int numResumesRemaining;
+    
+    SmartFaceID targetFace;
+    
+    size_t interruptionEndTick;
   };
 
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
-  
-  void TransitionToDrivingToFace();
+
   void TransitionToAlreadyCloseEnough();
+  
+  void TransitionToFindingFace();
+  void TransitionToDrivingToFace();
+  void TransitionToPlayingFinalAnim();
   void TransitionToTrackingFace();
+  void TransitionToResumeAnimation();
   
   // Returns true if able to calculate distance to face - false otherwise
   bool CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance);

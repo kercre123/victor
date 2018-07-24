@@ -14,20 +14,22 @@
 
 #include "engine/components/habitatDetectorComponent.h"
 
-#include "engine/components/sensors/cliffSensorComponent.h"
-#include "engine/components/sensors/proxSensorComponent.h"
-#include "engine/components/batteryComponent.h"
-#include "engine/components/visionComponent.h"
-#include "engine/cozmoContext.h"
-#include "engine/components/habitatDetectorComponent.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/components/batteryComponent.h"
+#include "engine/components/habitatDetectorComponent.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "engine/robot.h"
 #include "engine/ankiEventUtil.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/featureGateTypes.h"
 
 #include "util/bitFlags/bitFlags.h"
 #include "util/fileUtils/fileUtils.h"
@@ -105,8 +107,12 @@ template<>
 void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
 {
   if(msg.treadsState==OffTreadsState::OnTreads) {
-    _habitatBelief = HabitatBeliefState::Unknown;
-    _detectedWhiteFromCliffs = false;
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+    if(!inPRDemo) {
+      _habitatBelief = HabitatBeliefState::Unknown;
+      _detectedWhiteFromCliffs = false;
+    }
   }
 }
 
@@ -134,6 +140,17 @@ bool HabitatDetectorComponent::IsProxObservingHabitatWall() const
 
 void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<RobotComponentID>& dependentComps)
 {
+
+  const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+  const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+  if(inPRDemo) {
+    if( _habitatBelief != HabitatBeliefState::NotInHabitat ) {
+      _habitatBelief = HabitatBeliefState::NotInHabitat;
+    }
+    
+    return;
+  }
+  
   auto& cliffSensor = dependentComps.GetComponent<CliffSensorComponent>();
   
   // habitat confirmation (or disconfirmation) can occur if we are in the unknown state

@@ -3,6 +3,5 @@
   "behaviorID": "ObservingOnChargerGetOut",
 
   "animTriggers" : ["ObservingOnChargerGetOut"],
-  "playOnChargerWithoutBody": true,
   "associatedActiveFeature": "ObservingOnCharger"
 }

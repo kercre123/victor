@@ -2,14 +2,9 @@
   "behaviorID": "ExploringReferenceHuman",
   "behaviorClass": "AnimSequenceWithFace",
 
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "TimerInRange",
-    "begin_s": 60.0 // not bothering to randomize this since it only runs when exploring gets to certain locations
-  },
-
   "requireFaceForActivation": true,
   "requireFaceConfirmation": true,
-  "returnToOriginalPose": true,
+  "returnToOriginalPose": false,
 
   "animTriggers" : ["ExploringLookAtHuman"],
 

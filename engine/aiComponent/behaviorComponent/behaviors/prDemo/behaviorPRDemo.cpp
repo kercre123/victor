@@ -29,6 +29,12 @@ BehaviorPRDemo::BehaviorPRDemo(const Json::Value& config)
 BehaviorPRDemo::~BehaviorPRDemo()
 {
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPRDemo::Reset()
+{
+  _resumeOverride = InternalStatesBehavior::InvalidStateID;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPRDemo::OverrideResumeState( StateID& resumeState )

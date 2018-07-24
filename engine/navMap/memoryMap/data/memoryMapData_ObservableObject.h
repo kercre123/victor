@@ -33,6 +33,12 @@ public:
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapDataPtr Clone() const override;
   
+  // return true if this type collides with the robot
+  virtual bool IsCollisionType() const override { return _poseIsVerified; }
+
+  // if we should have seen the object with the camera, but did not
+  void MarkUnobserved() { _poseIsVerified = false; }
+  
   // compare to IMemoryMapData and return bool if the data stored is the same
   bool Equals(const MemoryMapData* other) const override;
   
@@ -48,6 +54,9 @@ public:
   static bool HandlesType(EContentType otherType) {
     return otherType == EContentType::ObstacleObservable;
   }
+
+private: 
+  bool _poseIsVerified;
 };
  
 } // namespace

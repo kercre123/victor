@@ -44,6 +44,7 @@ class Animation;
 class AnimationGroupContainer;
 class CozmoContext;
 class DataAccessorComponent;
+class MovementComponent;
 class Robot;
 namespace RobotInterface{
 class EngineToRobot;
@@ -76,6 +77,7 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::DataAccessor);
+    dependencies.insert(RobotComponentID::Movement);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
@@ -99,7 +101,7 @@ public:
   // Returns true when the list of available animations has been received from animation process
   bool IsInitialized() { return _isInitialized; }
 
-  using AnimationCompleteCallback = std::function<void(const AnimResult res)>;
+  using AnimationCompleteCallback = std::function<void(const AnimResult res, u32 streamTimeAnimEnded)>;
   
   // Set strictCooldown = true when we do NOT want to simply choose the animation closest
   // to being off cooldown when all animations in the group are on cooldown
@@ -112,7 +114,8 @@ public:
                         bool interruptRunning = true,
                         AnimationCompleteCallback callback = nullptr,
                         const u32 actionTag = 0,
-                        float timeout_sec = _kDefaultTimeout_sec);
+                        float timeout_sec = _kDefaultTimeout_sec,
+                        u32 startAt_ms = 0);
 
   // Tell animation process to render the specified animation
   // to the Procedural_Eyes layer of the specified composite image
@@ -134,7 +137,9 @@ public:
   // When applyBeforeTick is true the alteration is displayed to the user that tick (e.g. display a new image)
   // When false, the alteration is applied after the keyframe's processed (e.g. lock face track on frame 6 after drawing 
   //   an image, but the animation is only 6 frames long so locking can't be applied at the start of the next tick) 
-  void AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, TimeStamp_t relativeStreamTime_ms, bool applyBeforeTick = true);
+  void AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, 
+                                     TimeStamp_t relativeStreamTime_ms, bool applyBeforeTick = true,
+                                     MovementComponent* devSafetyCheck = nullptr);
 
 
   // If you want to play multiple frames in sequence, duration_ms should be a multiple of ANIM_TIME_STEP_MS.
@@ -221,17 +226,6 @@ public:
 
   // set saturation to a given level (default 1.0);
   Result SetFaceSaturation(float level);
-
-  // Enables only the specified tracks. 
-  // Status of other tracks remain unchanged.
-  void UnlockTracks(u8 tracks);
-  void UnlockAllTracks();
-
-  // Disables only the specified tracks. 
-  // Status of other tracks remain unchanged.
-  void LockTracks(u8 tracks);
-
-  u8   GetLockedTracks() const {return _lockedTracks; }
   
   bool                IsAnimating()        const { return _isAnimating;  }
   const std::string&  GetPlayingAnimName() const { return _currAnimName; }
@@ -239,7 +233,6 @@ public:
 
   // Accessors for latest animState values
   u32 GetAnimState_NumProcAnimFaceKeyframes() const { return _animState.numProcAnimFaceKeyframes; }   
-  u8  GetAnimState_LockedTracks()             const { return _animState.lockedTracks;             }
   u8  GetAnimState_TracksInUse()              const { return _animState.tracksInUse;              }
 
   // Event/Message handling
@@ -252,6 +245,17 @@ public:
   void HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
+
+  // Set eye focus
+  void AddKeepFaceAliveFocus(const std::string& name);
+  void RemoveKeepFaceAliveFocus(const std::string& name);
+  
+  // Should only be called if a callback was passed into the component by an action
+  // and therefore there should already be a callback in the callback map that matches this
+  // animation name
+  void AddAdditionalAnimationCallback(const std::string& name,
+                                      AnimationComponent::AnimationCompleteCallback callback,
+                                      bool callEvenIfAnimCanceled = false);
 
 private:
   
@@ -269,7 +273,8 @@ private:
                             const u32 currTag,
                             const u32 actionTag,
                             int numLoops,
-                            float timeout_sec);
+                            float timeout_sec,
+                            bool callbackStillValidEvenIfTagIsNot = false);
 
   Result SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0);
   
@@ -280,6 +285,7 @@ private:
   
   Robot* _robot = nullptr;
   DataAccessorComponent* _dataAccessor = nullptr;
+  MovementComponent* _movementComponent = nullptr;
 
   struct AnimationGroupWrapper{
     AnimationGroupWrapper(AnimationGroupContainer&  container)
@@ -299,8 +305,6 @@ private:
   std::unordered_set<std::string> _activeEyeShiftLayers;
   std::unordered_set<std::string> _activeEyeSquintLayers;  
   
-  u8 _lockedTracks;
-  std::map<uint32_t, u8> _delayedTracksToLock;
 
   // For tracking whether or not an animation is playing based on
   // AnimStarted and AnimEnded messages
@@ -325,21 +329,23 @@ private:
     AnimCallbackInfo(const std::string animName,
                      const AnimationCompleteCallback& callback,
                      const u32 actionTag,
-                     const float abortTime_sec)
+                     const float abortTime_sec,
+                     const bool callbackStillValidEvenIfTagIsNot = false)
     : animName(animName)
     , callback(callback)
     , actionTag(actionTag)
     , abortTime_sec(abortTime_sec)
+    , callbackStillValidEvenIfTagIsNot(callbackStillValidEvenIfTagIsNot)
     {}
     
-    void ExecuteCallback(AnimResult res)
+    void ExecuteCallback(AnimResult res, u32 streamTimeAnimEnded)
     {
       // Execute callback as long as it's non-null and
       // 1) No actionTag (i.e. actionTag == 0) was associated with it
       // 2) Or the valid calling action is still active
       if ((callback != nullptr) &&
-          ((actionTag == 0) || IActionRunner::IsTagInUse(actionTag))) {
-        callback(res);
+          ((actionTag == 0) || callbackStillValidEvenIfTagIsNot || IActionRunner::IsTagInUse(actionTag))) {
+        callback(res, streamTimeAnimEnded);
       }
     }
     
@@ -347,12 +353,15 @@ private:
     const AnimationCompleteCallback callback;
     const u32 actionTag;
     const float abortTime_sec;
+    const bool callbackStillValidEvenIfTagIsNot;
   };
 
   // Map of animation tags to info needed for handling callbacks when the animation completes
-  std::unordered_map<Tag, AnimCallbackInfo> _callbackMap;
+  std::unordered_multimap<Tag, AnimCallbackInfo> _callbackMap;
 
   int _compositeImageID;
+
+  std::set<std::string> _focusRequests;
   
 };
 

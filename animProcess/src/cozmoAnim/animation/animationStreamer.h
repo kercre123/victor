@@ -85,6 +85,7 @@ namespace Cozmo {
     Result SetStreamingAnimation(const std::string& name,
                                  Tag tag,
                                  u32 numLoops = 1,
+                                 u32 startAt_ms = 0,
                                  bool interruptRunning = true,
                                  bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true);
@@ -216,6 +217,13 @@ namespace Cozmo {
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
     
+    // TEMP (Kevin K.): To minimize changes to the animation streamer legacy messages/functions
+    // were used when introducing composite image functionality. Unfortunately if these messages
+    // don't come in on the same tick it can create lots of strange issues. This temp hack
+    // may cause the animation not to play for a few additional ticks, but it's the safest change
+    // to make that solves synchronization issues
+    bool _expectingCompositeImage = false;
+    
     bool _wasAnimationInterruptedWithNothing = false;
     
     bool _backpackAnimationLayerEnabled = false;
@@ -314,6 +322,7 @@ namespace Cozmo {
     Result SetStreamingAnimation(Animation* anim,
                                  Tag tag,
                                  u32 numLoops = 1,
+                                 u32 startAt_ms = 0,
                                  bool interruptRunning = true,
                                  bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true,
@@ -324,7 +333,7 @@ namespace Cozmo {
     // (This will call anim->Init())
     // if shouldOverrideEyeHue is set to true the value of shouldRenderInEyeHue will be applied
     // to all sprites in the animation's SpriteSequenceTrack
-    Result InitStreamingAnimation(Tag withTag, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
+    Result InitStreamingAnimation(Tag withTag, u32 startAt_ms = 0, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
     
     // Update Stream of either the streaming animation or procedural tracks
     Result ExtractAnimationMessages(AnimationMessageWrapper& stateToSend);

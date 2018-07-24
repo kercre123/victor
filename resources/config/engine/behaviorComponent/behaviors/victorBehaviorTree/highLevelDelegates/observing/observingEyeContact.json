@@ -6,7 +6,7 @@
     "conditionType" : "EyeContact"
   },
 
-  "animTriggers" : ["HikingSquintStart"],
+  "animTriggers" : ["EyeContactLookLoop"],
 
   "faceSelectionPenalties": [
     {

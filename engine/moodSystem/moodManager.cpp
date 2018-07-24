@@ -28,6 +28,7 @@
 #include "engine/moodSystem/emotionEvent.h"
 #include "engine/moodSystem/staticMoodData.h"
 #include "engine/robot.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -483,6 +484,17 @@ void MoodManager::SendEmotionsToGame()
 
 void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient)
 {
+  _lastAudioSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // disabled for PR demo (let audio use it's own custom settings here)
+  if( nullptr != _robot ) {
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    const bool isPrDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+    if(isPrDemo) {
+      return;
+    }
+  }
+
   if( !_audioParameterMap.empty() ) {
     for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
     {
@@ -504,8 +516,6 @@ void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient
       audioClient.PostParameter( _simpleMoodAudioParameter, val );
     }
   }  
-
-  _lastAudioSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 // updates the most recent time this event was triggered, and returns how long it's been since the event was last seen

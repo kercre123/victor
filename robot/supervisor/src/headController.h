@@ -83,6 +83,7 @@ namespace Anki {
       
       void Brace();
       void Unbrace();
+      bool IsBracing();
       
       // Stop nodding or any movement immediately
       void Stop();

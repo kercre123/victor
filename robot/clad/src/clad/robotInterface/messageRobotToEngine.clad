@@ -34,10 +34,6 @@ message PrepForShutdown
 {
 }
 
-message RobotPoked
-{
-}
-
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
@@ -187,7 +183,7 @@ union RobotToEngine {
   CliffEvent                 cliffEvent             = 0xC5,
   PotentialCliff             potentialCliff         = 0xC6,
   FallingEvent               fallingEvent           = 0xC7,
-  RobotPoked                 robotPoked             = 0xC8,
+  // FREE SLOT                                      = 0xC8,
 
   // TODO: Can probably get rid of these eventually since engine
   //       can access most of this info directly now.

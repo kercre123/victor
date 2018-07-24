@@ -39,7 +39,10 @@ namespace Anki {
                           u32 numLoops = 1,
                           bool interruptRunning = true,
                           u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
-                          float timeout_sec = _kDefaultTimeout_sec);
+                          float timeout_sec = _kDefaultTimeout_sec,
+                          TimeStamp_t startAtTime_ms = 0,
+                          // this callback will contain the time the animation ended
+                          AnimationComponent::AnimationCompleteCallback callback = {});
       
       virtual ~PlayAnimationAction();
       
@@ -53,16 +56,26 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      
+
+      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalAnim() {};
+
       std::string               _animName;
       u32                       _numLoopsRemaining;
       bool                      _stoppedPlaying;
       bool                      _wasAborted;
       bool                      _interruptRunning;
       float                     _timeout_sec = _kDefaultTimeout_sec;
+      bool                      _bodyTrackManuallyLocked = false;
+      TimeStamp_t               _startAtTime_ms = 0;
+      AnimationComponent::AnimationCompleteCallback _passedInCallback = nullptr;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;
       static constexpr float _kDefaultTimeoutForInfiniteLoops_sec = std::numeric_limits<f32>::max();
+
+    private:
+
+      void InitTrackLockingForCharger();
 
     }; // class PlayAnimationAction
 
@@ -85,7 +98,7 @@ namespace Anki {
       void SetAnimGroupFromTrigger(AnimationTrigger animTrigger);
 
       bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
-      virtual void OnRobotSet() override final;
+      virtual void OnRobotSetInternalAnim() override final;
       virtual void OnRobotSetInternalTrigger() {};
 
 

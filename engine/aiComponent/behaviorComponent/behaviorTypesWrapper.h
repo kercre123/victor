@@ -30,7 +30,7 @@
 // forward declare behavior id rather than include
 namespace Anki {
 namespace Cozmo {
-enum class BehaviorID : uint8_t;
+enum class BehaviorID : uint16_t;
 enum class BehaviorClass : uint8_t;
 enum class ExecutableBehaviorType : uint8_t;
 const char* EnumToString( const BehaviorID id );
@@ -63,9 +63,9 @@ const char* BehaviorClassToString(const BehaviorClass in);
 const char* BehaviorClassToString(const ExecutableBehaviorType in);
   
 #if BEHAVIOR_ID_DEV_MODE
-uint8_t GetBehaviorIDNumEntries();
+uint16_t GetBehaviorIDNumEntries();
 #else
-constexpr uint8_t GetBehaviorIDNumEntries() { return BehaviorIDNumEntries; }
+constexpr uint16_t GetBehaviorIDNumEntries() { return BehaviorIDNumEntries; }
 #endif
 
 ExecutableBehaviorType GetDefaultExecutableBehaviorType();

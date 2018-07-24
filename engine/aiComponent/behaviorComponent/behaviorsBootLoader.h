@@ -87,6 +87,7 @@ private:
     BehaviorID factoryBehavior; // when in factory
     BehaviorID onboardingBehavior; // onboarding
     BehaviorID normalBaseBehavior; // normal use behavior tree
+    BehaviorID postOnboardingBehavior; // normal use behavior tree, but doesn't wake up
     BehaviorID devBaseBehavior; // for people who want it to turn on, eyes too, but not go anywhere
     BehaviorID prDemoBehavior; // for the pr demo
   };

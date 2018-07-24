@@ -5,7 +5,6 @@
   "objectType" : "Charger_Basic",
   "animTriggers" : ["ChargerReaction"],
   "num_loops" : 1,
-  "playOnChargerWithoutBody" : true,
   
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
@@ -19,6 +18,12 @@
         "conditionType": "Compound",
         "not": {
           "conditionType": "CarryingCube"
+        }
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OnChargerPlatform"
         }
       }
     ]

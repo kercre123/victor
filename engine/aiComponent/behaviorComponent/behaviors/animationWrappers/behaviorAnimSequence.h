@@ -44,7 +44,10 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
-    modifiers.wantsToBeActivatedWhenOnCharger = _iConfig.activatableOnCharger;
+
+    // always runs on the charger, but the animation itself might lock the body tracks if it's not in the
+    // whitelist
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
   
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
@@ -64,8 +67,6 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig();
-    bool activatableOnCharger;
-    bool lockBodyOnCharger;
     int  numLoops;
     u8 tracksToLock;
     // Class supports playing a series of animation triggers OR a series of animations by name

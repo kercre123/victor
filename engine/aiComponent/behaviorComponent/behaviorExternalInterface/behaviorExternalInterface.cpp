@@ -18,7 +18,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/mics/micComponent.h"
-#include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/cozmoContext.h"
@@ -83,7 +82,6 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        robot->GetComponentPtr<ObjectPoseConfirmer>(),
        robot->GetComponentPtr<PetWorld>(),
        robot->GetComponentPtr<PhotographyManager>(),
-       robot->GetComponentPtr<ProgressionUnlockComponent>(),
        robot->GetComponentPtr<ProxSensorComponent>(),
        robot->GetComponentPtr<PublicStateBroadcaster>(),
        robot->GetComponentPtr<SDKComponent>(),
@@ -123,7 +121,6 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      ObjectPoseConfirmer*           objectPoseConfirmer,
                                      PetWorld*                      petWorld,
                                      PhotographyManager*            photographyManager,
-                                     ProgressionUnlockComponent*    progressionUnlockComponent,
                                      ProxSensorComponent*           proxSensor,
                                      PublicStateBroadcaster*        publicStateBroadcaster,
                                      SDKComponent*                  sdkComponent,
@@ -160,7 +157,6 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      objectPoseConfirmer,
                                                      petWorld,
                                                      photographyManager,
-                                                     progressionUnlockComponent,
                                                      proxSensor,
                                                      publicStateBroadcaster,
                                                      sdkComponent,
@@ -211,7 +207,6 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               ObjectPoseConfirmer*           objectPoseConfirmer,
                                                               PetWorld*                      petWorld,
                                                               PhotographyManager*            photographyManager,
-                                                              ProgressionUnlockComponent*    progressionUnlockComponent,
                                                               ProxSensorComponent*           proxSensor,
                                                               PublicStateBroadcaster*        publicStateBroadcaster,
                                                               SDKComponent*                  sdkComponent,
@@ -249,7 +244,6 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::ObjectPoseConfirmer,       BEIComponentWrapper(objectPoseConfirmer)},
     {BEIComponentID::PetWorld,                  BEIComponentWrapper(petWorld)},
     {BEIComponentID::PhotographyManager,        BEIComponentWrapper(photographyManager)},
-    {BEIComponentID::ProgressionUnlock,         BEIComponentWrapper(progressionUnlockComponent)},
     {BEIComponentID::ProxSensor,                BEIComponentWrapper(proxSensor)},
     {BEIComponentID::PublicStateBroadcaster,    BEIComponentWrapper(publicStateBroadcaster)},
     {BEIComponentID::SDK,                       BEIComponentWrapper(sdkComponent)},

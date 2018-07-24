@@ -441,6 +441,34 @@ symlink_target(
 )
 
 #
+# webotsCtrlGateway
+#
+
+webots_build_cxx_executable(webotsCtrlGateway ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlGateway "ANKI")
+
+target_link_libraries(webotsCtrlGateway
+  PRIVATE
+  webotsCtrlCommon
+)
+
+target_compile_definitions(webotsCtrlGateway
+  PRIVATE
+  SIMULATOR
+)
+
+symlink_target(
+  TARGET webotsCtrlGateway
+  DST "${CONTROLLERS_DIR}/webotsCtrlGateway/"
+)
+
+symlink_target(
+  TARGET webotsCtrlGateway
+  SRC ${CMAKE_BINARY_DIR}/bin/vic-gateway
+  DST "${CONTROLLERS_DIR}/webotsCtrlGateway/"
+)
+
+#
 # webotsCtrlNeuralNets
 #
 #

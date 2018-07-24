@@ -331,16 +331,13 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
         //      PlayBlissLoop | bliss animation cannot requeue because getout requested
         //                    |
         //      Update()      | Update() no animation playing, getout plays
-        if(!IsControlDelegated()) {
-          const auto animIdx = _currBlissLevel-1; // bliss levels are +1 wrt animation indexes
-          CancelAndPlayAnimation(_animPettingGetout[animIdx]);
-          
-          
-          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
-          
-          // ensures we wait for the getout to finish before ending the behavior
-          _currResponseState = Done;
-        }
+        const auto animIdx = _currBlissLevel-1; // bliss levels are +1 wrt animation indexes
+        CancelAndPlayAnimation(_animPettingGetout[animIdx]);
+        
+        GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
+        
+        // ensures we wait for the getout to finish before ending the behavior
+        _currResponseState = Done;
       }
       break;
     }

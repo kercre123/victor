@@ -8,8 +8,11 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 ActiveFeatureType {
-  // system features like SDK that don't fit elsewhere
+
+  // system features that don't fit elsewhere
   System,
+
+  Onboarding,
 
   SDK,
 
@@ -19,11 +22,8 @@ enum uint_8 ActiveFeatureType {
   // sleep
   Sleep,
 
-  // relaxed behaviors, not a lot of loud movement or animations
-  Relax,
-
-  // behaviors that involve more motion or acting (e.g. exploring)
-  Active,
+  // self-direted activities the robots do
+  Autonomous,
 
   // features that attempt to interact with humans
   Social,
@@ -87,49 +87,48 @@ enum uint_32 ActiveFeature {
 enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   NoFeature = verbatim ActiveFeatureType::System,
   
-  BeQuiet = verbatim ActiveFeatureType::Relax,
-  Blackjack = verbatim ActiveFeatureType::Play,
-  CantDoThat = verbatim ActiveFeatureType::Failure,
-  Clock = verbatim ActiveFeatureType::Utility,
-  ComeHere = verbatim ActiveFeatureType::Social,
-  CubeSpinner = verbatim ActiveFeatureType::Play,
-  DanceToTheBeat = verbatim ActiveFeatureType::Active,
-  Exploring = verbatim ActiveFeatureType::Active,
-  FistBump = verbatim ActiveFeatureType::Social,
-  Frustrated = verbatim ActiveFeatureType::Failure,
-  GoHome = verbatim ActiveFeatureType::Active,
-  InTheAir = verbatim ActiveFeatureType::Relax,
-  InteractWithFaces = verbatim ActiveFeatureType::Social,
-  Keepaway = verbatim ActiveFeatureType::Play,
-  KnowledgeGraph = verbatim ActiveFeatureType::Utility,
-  LookAtMe = verbatim ActiveFeatureType::Social,
-  MeetVictor = verbatim ActiveFeatureType::Social,
-  Observing = verbatim ActiveFeatureType::Relax,
-  ObservingOnCharger = verbatim ActiveFeatureType::Relax,
-  Onboarding = verbatim ActiveFeatureType::Active,
-  Petting = verbatim ActiveFeatureType::Social,
-  PlayingMessage = verbatim ActiveFeatureType::Utility,
-  PopAWheelie = verbatim ActiveFeatureType::Active,
-  ReactToCliff = verbatim ActiveFeatureType::Active,
-  ReactToRobotOnSide = verbatim ActiveFeatureType::Active,
-  RecordingMessage = verbatim ActiveFeatureType::Utility,
-  RequestCharger = verbatim ActiveFeatureType::Active,
-  RollBlock = verbatim ActiveFeatureType::Active,
-  SDK = verbatim ActiveFeatureType::SDK,
-  Sleeping = verbatim ActiveFeatureType::Sleep,
-  ShutUp = verbatim ActiveFeatureType::Relax,
-  StuckOnEdge = verbatim ActiveFeatureType::Failure,
-  TakeAPhoto = verbatim ActiveFeatureType::Utility,
-  TimerCanceled = verbatim ActiveFeatureType::Utility,
-  TimerChecked = verbatim ActiveFeatureType::Utility,
-  TimerReminder = verbatim ActiveFeatureType::Utility,
-  TimerRinging = verbatim ActiveFeatureType::Utility,
-  TimerSet = verbatim ActiveFeatureType::Utility,
-  UnmatchedVoiceIntent = verbatim ActiveFeatureType::Failure,
-  VC_Greeting = verbatim ActiveFeatureType::Social,
-  Weather = verbatim ActiveFeatureType::Utility,
-  WhatsMyName = verbatim ActiveFeatureType::Social
-
+  BeQuiet                 = verbatim ActiveFeatureType::Autonomous,
+  Blackjack               = verbatim ActiveFeatureType::Play,
+  CantDoThat              = verbatim ActiveFeatureType::Failure,
+  Clock                   = verbatim ActiveFeatureType::Utility,
+  ComeHere                = verbatim ActiveFeatureType::Social,
+  CubeSpinner             = verbatim ActiveFeatureType::Play,
+  DanceToTheBeat          = verbatim ActiveFeatureType::Autonomous,
+  Exploring               = verbatim ActiveFeatureType::Autonomous,
+  FistBump                = verbatim ActiveFeatureType::Social,
+  Frustrated              = verbatim ActiveFeatureType::Failure,
+  GoHome                  = verbatim ActiveFeatureType::Autonomous,
+  InTheAir                = verbatim ActiveFeatureType::Social,
+  InteractWithFaces       = verbatim ActiveFeatureType::Social,
+  Keepaway                = verbatim ActiveFeatureType::Play,
+  KnowledgeGraph          = verbatim ActiveFeatureType::Utility,
+  LookAtMe                = verbatim ActiveFeatureType::Social,
+  MeetVictor              = verbatim ActiveFeatureType::Social,
+  Observing               = verbatim ActiveFeatureType::Autonomous,
+  ObservingOnCharger      = verbatim ActiveFeatureType::Autonomous,
+  Onboarding              = verbatim ActiveFeatureType::Onboarding,
+  Petting                 = verbatim ActiveFeatureType::Social,
+  PlayingMessage          = verbatim ActiveFeatureType::Utility,
+  PopAWheelie             = verbatim ActiveFeatureType::Autonomous,
+  ReactToCliff            = verbatim ActiveFeatureType::Autonomous,
+  ReactToRobotOnSide      = verbatim ActiveFeatureType::Autonomous,
+  RecordingMessage        = verbatim ActiveFeatureType::Utility,
+  RequestCharger          = verbatim ActiveFeatureType::Failure,
+  RollBlock               = verbatim ActiveFeatureType::Autonomous,
+  SDK                     = verbatim ActiveFeatureType::SDK,
+  Sleeping                = verbatim ActiveFeatureType::Sleep,
+  ShutUp                  = verbatim ActiveFeatureType::Autonomous,
+  StuckOnEdge             = verbatim ActiveFeatureType::Failure,
+  TakeAPhoto              = verbatim ActiveFeatureType::Utility,
+  TimerCanceled           = verbatim ActiveFeatureType::Utility,
+  TimerChecked            = verbatim ActiveFeatureType::Utility,
+  TimerReminder           = verbatim ActiveFeatureType::Utility,
+  TimerRinging            = verbatim ActiveFeatureType::Utility,
+  TimerSet                = verbatim ActiveFeatureType::Utility,
+  UnmatchedVoiceIntent    = verbatim ActiveFeatureType::Failure,
+  VC_Greeting             = verbatim ActiveFeatureType::Social,
+  Weather                 = verbatim ActiveFeatureType::Utility,
+  WhatsMyName             = verbatim ActiveFeatureType::Social
 }
 
 } // namespace Cozmo

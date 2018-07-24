@@ -1,0 +1,10 @@
+{
+  "behaviorClass" : "UserDefinedBehaviorTreeRouter",
+  "behaviorID"    : "UserDefinedBehaviorTreeRouter",
+
+  "associatedActiveFeature": "NoFeature",
+
+  "allowedBEIConditions": [
+    "CliffDetected"
+  ]
+}

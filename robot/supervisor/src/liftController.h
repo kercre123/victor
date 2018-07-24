@@ -83,6 +83,7 @@ namespace Anki {
       // Momentarily enables motor even if it was disabled
       void Brace();
       void Unbrace();
+      bool IsBracing();
       
       // Stops any nodding or movement at all.
       void Stop();

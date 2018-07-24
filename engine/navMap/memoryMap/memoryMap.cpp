@@ -244,7 +244,7 @@ bool MemoryMap::AnyOf(const BoundedConvexSet2f& r, NodePredicate f) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MemoryMap::GetCollisionArea(const BoundedConvexSet2f& region, NodePredicate pred) const
+float MemoryMap::GetArea(const BoundedConvexSet2f& region, NodePredicate pred) const
 {
   float retv = 0.f;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);

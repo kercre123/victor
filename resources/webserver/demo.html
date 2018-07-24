@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector Demo</title>
+  <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="jquery-1.12.4.js"></script>
+  <script src="jquery-ui.js"></script>
+
+  <script>
+    var hostname = "";  // (Effectively, the robot IP)
+    var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
+    var STANDALONE_PORT = "8887";
+    var ENGINE_PORT = "8888";
+    var ANIM_PORT = "8889";
+
+
+    $(document).ready(function() {
+        $('#btn_vector_stop').click(ButtonHandler_StopVector);
+        $('#btn_vector_restart').click(ButtonHandler_RestartVector);
+        $('#btn_vector_restart_robot').click(ButtonHandler_RestartRobot);
+        $('#disp_stop_message').hide();
+        $('#btn_webviz_mic_data').click(ButtonHandler_WebVizMicData);
+        $('#btn_webviz_nav_map').click(ButtonHandler_WebVizNavMap);
+        $('#btn_webviz_stim_level').click(ButtonHandler_WebVizStimLevel);
+        $('#btn_webviz_behavior').click(ButtonHandler_WebVizBehavior);
+        $('#btn_clear_webviz').click(ButtonHandler_ClearWebViz);
+        InitConfirmDialog();
+
+        // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
+        var urlObject = new URL(document.URL);
+        host = urlObject.host;
+        hostname = urlObject.hostname;
+        console.log('host is: ' + host);
+        console.log('hostname is: ' + hostname);
+
+        // To attempt to force a re-load of the cache of these two iframes, we add a random number to the URL
+        $('#iViewEngine').prop('src', 'http://' + hostname + ':' + ENGINE_PORT + '/demoEngine.html?' + ExtraURLToForceReload());
+        //$('#iViewAnim')  .prop('src', 'http://' + hostname + ':' + ANIM_PORT +   '/demoAnim.html?'   + ExtraURLToForceReload());
+    });
+    $(function() {
+        $("button").click(function(event) {
+            var name = event.target.name;
+            if (name.startsWith('page_')) {
+                SetPage(name);
+                event.preventDefault();
+                return;
+            }
+            event.preventDefault();
+        });
+        $("input[type='submit']").click(function(event) {
+            $.post("/"+event.target.value, function(data) {
+                $("#content").html(data);
+                $("#content").show();
+                InitConfirmDialog();
+            });
+            event.preventDefault();
+        });
+    });
+
+    function ExtraURLToForceReload()
+    {
+      var rand = Math.floor((Math.random() * 1000000) + 1);
+      var extra = 'uid=' + rand;
+      return extra;
+    }
+
+    function InitConfirmDialog() {
+      $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+        draggable: true,
+        width: 'auto',
+        buttons: {
+          "OK": function() {
+            $("#confirm_dialog").dialog("close");
+            if (dialogOKFunction !== undefined) {
+              dialogOKFunction();
+              dialogOKFunction = undefined;
+            }
+          },
+          "Cancel": function () {
+            $("#confirm_dialog").dialog("close");
+            dialogOKFunction = undefined;
+          }
+        } });
+    }
+
+    function StartConfirmDialog(title, body, okfunction) {
+      dialogOKFunction = okfunction;
+      $("#confirm_dialog_body").html(body);
+      var d = $("#confirm_dialog");
+      d.dialog("option", "title", title);
+      d.dialog("open");
+    }
+
+    function GoingAwayNow() {
+      $('#iViewEngine').remove();
+      //$('#iViewAnim').remove();
+      ButtonHandler_ClearWebViz();
+      $('#btn_vector_stop').hide();
+      $('#btn_vector_restart').hide();
+      $('#btn_vector_restart_robot').hide();
+      $('#btn_webviz_mic_data').hide();
+      $('#btn_webviz_nav_map').hide();
+      $('#btn_webviz_stim_level').hide();
+      $('#btn_webviz_behavior').hide();
+      $('#btn_clear_webviz').hide();
+    }
+
+    function ButtonHandler_StopVector() {
+      StartConfirmDialog("", "Stop Vector:", function() {
+        var msg = 'Shutting Vector down; this webpage will no longer be active. You must physically restart Vector, then refresh this page after a few seconds.';
+        $('#disp_stop_message').html(msg);
+        $('#disp_stop_message').show();
+        GoingAwayNow();
+        $.post('/systemctl?proc=anki-robot.target&stop', function(data) {});
+      });
+    }
+
+    function ButtonHandler_RestartVector() {
+      StartConfirmDialog("", "Restart Vector:", function() {
+        var msg = 'Restarting Vector processes.  After a few seconds, refresh this page.';
+        $('#disp_stop_message').html(msg);
+        $('#disp_stop_message').show();
+        GoingAwayNow();
+        $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
+      });
+    }
+
+    function ButtonHandler_RestartRobot() {
+      StartConfirmDialog("", "Restart Robot:", function() {
+        var msg = 'Restarting robot.  After several seconds, place robot on charger, and after several more seconds, refresh this page.';
+        $('#disp_stop_message').html(msg);
+        $('#disp_stop_message').show();
+        GoingAwayNow();
+        $.post('/systemctl?proc=&reboot', function(data) {});
+      });
+    }
+
+    function ActivateWebVizIFrame(url, port) {
+      var delim = (url === "") ? '?' : '&';
+      var fullUrl = 'http://' + hostname + ':' + port + '/webViz.html' + url + delim + ExtraURLToForceReload();
+      $('#iViewWebViz').prop('src', fullUrl);
+    }
+
+    function ButtonHandler_WebVizMicData() {
+      ActivateWebVizIFrame("?tab=micdata", ANIM_PORT);
+    }
+
+    function ButtonHandler_WebVizNavMap() {
+      ActivateWebVizIFrame("?tab=navmap", ENGINE_PORT);
+    }
+
+    function ButtonHandler_WebVizStimLevel() {
+      ActivateWebVizIFrame("?tab=mood", ENGINE_PORT);
+    }
+
+    function ButtonHandler_WebVizBehavior() {
+      ActivateWebVizIFrame("?tab=behaviors", ENGINE_PORT);
+    }
+
+    function ButtonHandler_ClearWebViz() {
+      $('#iViewWebViz').prop('src', 'about:blank'); // To clear the iframe
+    }
+
+  </script>
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+  <div>
+    <img src='images/logo_vectortitle.png' style='display:block;margin-left:auto;margin-right:auto;width:25%;height:25%'>
+    <br>
+    <div id="id_title0" style="color:blue; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
+    <hr>
+    <div id='main_section'>
+    <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
+<!--       <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
+ -->
+      <button id='btn_webviz_mic_data' class='ui-button ui-corner-all ui-widget'>Mic data viz</button>
+      <button id='btn_webviz_nav_map' class='ui-button ui-corner-all ui-widget'>Navigation map viz</button>
+      <button id='btn_webviz_stim_level' class='ui-button ui-corner-all ui-widget'>Stimulation level viz</button>
+      <button id='btn_webviz_behavior' class='ui-button ui-corner-all ui-widget'>Behavior viz</button>
+      <button id='btn_clear_webviz' class='ui-button ui-corner-all ui-widget'>Clear webviz panel</button>
+      <br>
+      <iframe src="" id="iViewWebViz" style="width:100%;height:800px;border:none" frameborder="0"></iframe>
+      <hr>
+      <br>
+      <button id='btn_vector_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Vector</button>
+      <button id='btn_vector_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Vector Processes</button>
+      <button id='btn_vector_restart_robot' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Robot</button>
+      <br><br>
+      <div id='disp_stop_message' style='color:darksalmon;'></div>
+    </div>
+
+    <div id="confirm_dialog" title="">
+      <p id='confirm_dialog_body'></p>
+      <p>Are you sure?</p>
+    </div>
+
+  </div>
+</body>
+
+</html>

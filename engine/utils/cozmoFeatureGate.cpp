@@ -144,6 +144,8 @@ static const char* kFeatureEnumString =
   "KnowledgeGraph,"
   "Dancing,"
   "CubeBehaviors,"
+  "GreetAfterLongTime,"
+  "AttentionTransfer,"
   "PRDemo";
 
 CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );

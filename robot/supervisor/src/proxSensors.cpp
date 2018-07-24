@@ -51,12 +51,13 @@ namespace Anki {
         // detecting white (> MIN_CLIFF_STOP_ON_WHITE_VAL)
         uint8_t _whiteDetectedFlags = 0;
 
-        bool _enableCliffDetect = true;
-        bool _stopOnCliff = true;
+        bool _enableCliffDetect   = true;
+        bool _stopOnCliff         = true;
         bool _wasAnyCliffDetected = false;
-        bool _stopOnWhite = false;
+        bool _stopOnWhite         = false;
         bool _wasAnyWhiteDetected = false;
-        bool _wasPickedup      = false;
+        bool _wasPickedup         = false;
+        bool _putdownOnCliff      = false;
 
         u16 _cliffDetectThresh[4] = {CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT};
 
@@ -205,8 +206,16 @@ namespace Anki {
         const bool possibleCliffStop = (IsAnyCliffDetected() && !_wasAnyCliffDetected) || sideCliffsDetected;
         const bool possibleWhiteStop = (IsAnyWhiteDetected() && !_wasAnyWhiteDetected);
 
+        // Don't allow stopping if it was putdown on a cliff.
+        // Need to be able to drive away from it!
+        if (!IMUFilter::IsPickedUp() && _wasPickedup) {
+          _putdownOnCliff = IsAnyCliffDetected();
+        } else if (!IsAnyCliffDetected()) {
+          _putdownOnCliff = false;
+        }
+
         if (_enableCliffDetect &&
-            !IMUFilter::IsPickedUp() &&
+            !IMUFilter::IsPickedUp() && !_putdownOnCliff &&
             isDriving && !alreadyStopping &&
             (possibleCliffStop || possibleWhiteStop)) {
 

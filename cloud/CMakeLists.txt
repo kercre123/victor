@@ -47,7 +47,7 @@ endif()
 
 set(chipper_flags "")
 file(READ "${ANKI_EXTERNAL_DIR}/chipper_key" chipper_flags)
-set(chipper_flags "-X \\\\\'anki/cloudproc.ChipperSecret=${chipper_flags}\\\\\'")
+set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
 
 if(VICOS)
   set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)
@@ -196,3 +196,23 @@ add_custom_command(
 
 _build_cloud_executable(vic-gateway)
 _add_chipper_flags(vic-gateway)
+
+# Install certs for mac build of vic-gateway
+if (MACOSX)
+  set(GATEWAY_MAC_CERTS
+    "/tmp/anki/gateway/trust.cert"
+    "/tmp/anki/gateway/trust.key"
+  )
+  
+  add_custom_target(
+    GenerateGatewayMacCerts ALL
+    DEPENDS ${GATEWAY_MAC_CERTS}
+  )
+
+  add_custom_command(
+    OUTPUT ${GATEWAY_MAC_CERTS}
+    COMMAND make create_certs_mac
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tools/sdk/grpc_tools"
+    COMMENT "Creating mac certs for vic-gateway"
+  )
+endif()

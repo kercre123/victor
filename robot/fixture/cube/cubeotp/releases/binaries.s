@@ -10,7 +10,6 @@
   EXPORT g_CubeBootEnd
 g_CubeBoot
   INCBIN releases\\cubeboot.bin
-  ;INCBIN releases\\cubefcc.bin
 g_CubeBootEnd
   
   END

@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
@@ -127,11 +128,22 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
+  _iConfig.weatherCoordinatorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(WeatherResponses));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
   
   _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AddBehavior(BC, BEHAVIOR_CLASS(BumpObject));
   _iConfig.reactToUnexpectedMovementBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToUnexpectedMovement));
+  
+  _iConfig.reactToCliffBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToCliff));
+  std::set<ICozmoBehaviorPtr> driveToFaceBehaviors = BC.FindBehaviorsByClass(BEHAVIOR_CLASS(DriveToFace));
+  _iConfig.driveToFaceBehaviors.reserve( driveToFaceBehaviors.size() );
+  for( const auto& ptr : driveToFaceBehaviors ) {
+    auto beh = std::dynamic_pointer_cast<BehaviorDriveToFace>(ptr);
+    if( beh != nullptr ) {
+      _iConfig.driveToFaceBehaviors.push_back( beh );
+    }
+  }
 }
 
 
@@ -232,6 +244,12 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
 
+  // Suppress timer antics if weather is running
+  if(_iConfig.weatherCoordinatorBehavior->IsActivated()){
+    const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
+    _iConfig.timerCoordBehavior->SuppressAnticThisTick(tickCount);
+  }
+
   // this will suppress the streaming POST-wakeword pending
   // the "do a fist bump" part of "hey victor"
   const bool shouldSuppressStreaming = shouldSuppressTriggerWord;
@@ -271,6 +289,16 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   {
     if( _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AreBehaviorsActivated() ) {
       _iConfig.reactToUnexpectedMovementBehavior->SetDontActivateThisTick(GetDebugLabel());
+    }
+  }
+  
+  // tell BehaviorDriveToFace whenever a cliff interruption behavior is active, so that it knows when
+  // it is reasonable to resume-i-mean-wants-to-be-activated-sorry-kevin
+  {
+    if( _iConfig.reactToCliffBehavior->IsActivated() ) {
+      for( const auto& driveToFaceBehavior : _iConfig.driveToFaceBehaviors ) {
+        driveToFaceBehavior->SetInterruptionEndTick( BaseStationTimer::getInstance()->GetTickCount() );
+      }
     }
   }
 }

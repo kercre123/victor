@@ -29,12 +29,12 @@ def main():
         print(f"Subscriber called for: {event_type} = {event}")
 
     print("------ Synchronous Robot using with ------")
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.events.subscribe('robot_state', test_subscriber)
         robot.anim.play_animation("anim_poked_giggle")
 
     print("------ Synchronous Robot using with ------")
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.events.subscribe('test1', test_subscriber)
         robot.anim.play_animation("anim_poked_giggle")
         robot.events.unsubscribe('test1', test_subscriber)
@@ -44,7 +44,7 @@ def main():
     time.sleep(2)
 
     print("------ Synchronous Robot using try finally ------")
-    robot = vector.Robot(args.ip, str(args.cert), port=args.port)
+    robot = vector.Robot(args.name, args.ip, str(args.cert), port=args.port)
     robot.events.subscribe('test1', test_subscriber)
     try:
         robot.connect()
@@ -56,7 +56,7 @@ def main():
     time.sleep(2)
 
     print("------ Asynchronous Robot using with ------")
-    with vector.AsyncRobot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.events.subscribe('robot_state', test_subscriber)
         robot.anim.play_animation("anim_poked_giggle").wait_for_completed()
         robot.motors.set_wheel_motors(-100.0, 100.0).wait_for_completed()
@@ -64,7 +64,7 @@ def main():
     time.sleep(2)
 
     print("------ Asynchronous Robot using try finally ------")
-    robot = vector.AsyncRobot(args.ip, str(args.cert), port=args.port)
+    robot = vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port)
     robot.events.subscribe('robot_state', test_subscriber)
     try:
         robot.connect()

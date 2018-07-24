@@ -26,19 +26,12 @@ namespace{
 static const char* kAnimTriggerKey = "animTriggers";
 static const char* kAnimNamesKey   = "animNames";
 static const char* kLoopsKey       = "num_loops";
-
-static const char* kSupportChargerWithoutBody = "playOnChargerWithoutBody";
-static const char* kSupportChargerWithBody = "playOnChargerWithBody";
-// TODO:(bn) replace this with continuity component or action level anim whitelisting
-
 static const char* kTracksToLock   = "tracksToLock";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAnimSequence::InstanceConfig::InstanceConfig() {
-  activatableOnCharger = false;
-  lockBodyOnCharger = false;
   numLoops = 0;
 }
 
@@ -57,11 +50,17 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
   for (const auto& trigger : config[kAnimTriggerKey])
   {
     // make sure each trigger is valid
-    const AnimationTrigger animTrigger = AnimationTriggerFromString(trigger.asString().c_str());
-    DEV_ASSERT_MSG(animTrigger != AnimationTrigger::Count, "BehaviorAnimSequence.InvalidTriggerString",
-                  "'%s'", trigger.asString().c_str());
-    if (animTrigger != AnimationTrigger::Count) {
+    AnimationTrigger animTrigger;
+    if( AnimationTriggerFromString( trigger.asString(), animTrigger ) ) 
+    {
       _iConfig.animTriggers.emplace_back( animTrigger );
+    }
+    else 
+    {
+      PRINT_NAMED_ERROR("BehaviorAnimSequence.InvalidTriggerString",
+                        "Behavior '%s' config specified an invalid animation trigger: '%s'",
+                        GetDebugLabel().c_str(),
+                        trigger.asCString() );
     }
   }
 
@@ -81,11 +80,6 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
 
   // load loop count
   _iConfig.numLoops = config.get(kLoopsKey, 1).asInt();
-
-  const bool supportChargerWithoutBody = config.get(kSupportChargerWithoutBody, false).asBool();
-  const bool supportChargerWithBody = config.get(kSupportChargerWithBody, false).asBool();
-  _iConfig.activatableOnCharger = supportChargerWithoutBody || supportChargerWithBody;
-  _iConfig.lockBodyOnCharger = supportChargerWithoutBody;  
   
   _iConfig.tracksToLock = (u8)AnimTrackFlag::NO_TRACKS;
   if( !config[kTracksToLock].isNull() ) {
@@ -112,8 +106,6 @@ void BehaviorAnimSequence::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kAnimTriggerKey,
     kAnimNamesKey,
     kLoopsKey,
-    kSupportChargerWithoutBody,
-    kSupportChargerWithBody,
     kTracksToLock,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
@@ -237,14 +229,6 @@ void BehaviorAnimSequence::CallToListeners()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 u8 BehaviorAnimSequence::GetTracksToLock() const
 {
-  if( _iConfig.lockBodyOnCharger ) {
-    const auto& robotInfo = GetBEI().GetRobotInfo();
-    if( robotInfo.IsOnChargerPlatform() ) {
-      // we are supporting the charger and are on it, so lock out the body
-      return (u8)AnimTrackFlag::BODY_TRACK | _iConfig.tracksToLock;
-    }
-  }
-
   // otherwise whatever was specified in config
   return _iConfig.tracksToLock;
 }

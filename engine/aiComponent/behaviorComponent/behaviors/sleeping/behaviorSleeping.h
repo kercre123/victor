@@ -25,7 +25,7 @@ protected:
   friend class BehaviorFactory;  
   BehaviorSleeping(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual bool CanBeGentlyInterruptedNow() const override;
@@ -50,6 +50,7 @@ private:
   struct InstanceConfig {
     bool shouldEnterPowerSave = true;
     bool shouldPlayEmergencyGetOut = true;
+    bool canActivateOffTreads = false;
   };
 
   struct DynamicVariables {

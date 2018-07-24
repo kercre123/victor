@@ -44,6 +44,7 @@ public:
     int8_t                    quality = -1;             // -1 for .png, [0,100] for .jpg quality
     Vision::ImageCache::Size  size = Vision::ImageCache::Size::Full;
     float                     thumbnailScale = 0.f;     // in range [0,1], as fraction of size, 0 to disable
+    float                     saveScale = 1.f;          // > 0, as fraction of size
     bool                      removeDistortion = false;
   };
   

@@ -18,7 +18,7 @@ def main():
     '''main execution'''
     args = utilities.parse_args()
 
-    with vector.Robot(args.ip, str(args.cert), args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), args.port) as robot:
         print("------ use low level motor controls to drive the robot ------")
         robot.motors.set_wheel_motors(100.0, 100.0, 100.0, 100.0)
         time.sleep(5.0)

@@ -945,17 +945,16 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
     TimeStamp_t timeStamp = _robot->GetLastImageTimeStamp();
 
     // for Cubes, we can lookup by ID
-    NodeTransformFunction transform = [id, removalType, timeStamp](MemoryMapDataPtr data)
+    auto clearData = MemoryMapData(removalType, timeStamp).Clone();
+    NodeTransformFunction transform = [id, &clearData](MemoryMapDataPtr data)
     {
       if (data->type == EContentType::ObstacleObservable)
       {
         // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
         // however, we have no mechanism for merging data, so for now we are just completely replacing
         // the NodeContent if the ID matches.
-        const auto currentCubeData = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>(data);
-        if (currentCubeData->id == id)
-        {
-          return MemoryMapData(removalType, timeStamp).Clone();
+        if (MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>(data)->id == id) {
+          return clearData;
         }
       }
       return data;
@@ -967,6 +966,25 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
     DEV_ASSERT(matchPair == _navMaps.end(), "MapComponent.RemoveObservableObject.NoMapForOrigin");
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::MarkObjectUnobserved(const ObservableObject& object) { 
+  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  if (currentNavMemoryMap) {
+    const ObjectID id = object.GetID();
+    PRINT_CH_INFO("MapComponent", "MapComponent.MarkObjectUnobserved", "Marking observable object %d as unobserved", (int) id );
+
+    NodeTransformFunction transform = [id] (MemoryMapDataPtr data) {
+      if (data->type == EContentType::ObstacleObservable) {
+        auto objectData = MemoryMapData::MemoryMapDataCast<MemoryMapData_ObservableObject>(data);
+        if (objectData->id == id) { objectData->MarkUnobserved(); }
+      }
+      return data;
+    };
+
+    UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(transform));
+  }
+} 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOriginID_t relocalizedOriginID)
@@ -1119,6 +1137,9 @@ void MapComponent::AddProxData(const BoundedConvexSet2f& region, const MemoryMap
   if (currentMap)
   {
     MemoryMapDataPtr newData = data.Clone();
+    // Make sure we enable collision types before inserting
+    MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>(newData)->SetCollidable(_enableProxCollisions);
+
     NodeTransformFunction trfm = [&newData] (MemoryMapDataPtr currentData) {
 
       if (currentData->type == EContentType::ObstacleProx) {
@@ -1153,6 +1174,26 @@ void MapComponent::RemoveAllProxObstacles()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::SetUseProxObstaclesInPlanning(bool enable)
+{
+  _enableProxCollisions = enable;
+
+  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  if (currentNavMemoryMap) {
+    PRINT_CH_INFO("MapComponent", "MapComponent.SetUseProxObstaclesInPlanning", "Setting prox obstacles as %s collidable", enable ? "" : "NOT" );
+    NodeTransformFunction enableProx = [enable] (MemoryMapDataPtr data) {
+      if (EContentType::ObstacleProx == data->type) {
+        MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>(data)->SetCollidable(enable);
+      }
+      return data;
+    };
+    
+    UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(enableProx
+    ));
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& data)
 {
@@ -1167,15 +1208,8 @@ void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& 
 bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
 {
   const INavMap* currentMap = GetCurrentMemoryMap();
-  if (currentMap)
-  {
-    return currentMap->AnyOf( region, [this] (const auto& data) {
-        const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions) ||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
-                          (data->type == MemoryMapTypes::EContentType::Cliff);
-        return retv;
-      });
+  if (currentMap) {
+    return currentMap->AnyOf( region, [] (const auto& data) { return data->IsCollisionType(); });
   }
   return false;
 }
@@ -1184,15 +1218,8 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
 float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
 {
   const INavMap* currentMap = GetCurrentMemoryMap();
-  if (currentMap)
-  {
-    return currentMap->GetCollisionArea( region, [this] (const auto& data) {
-        const bool retv = (data->type == MemoryMapTypes::EContentType::ObstacleObservable)   ||
-                          ((data->type == MemoryMapTypes::EContentType::ObstacleProx) && _enableProxCollisions )||
-                          (data->type == MemoryMapTypes::EContentType::ObstacleUnrecognized) ||
-                          (data->type == MemoryMapTypes::EContentType::Cliff);
-        return retv;
-      });
+  if (currentMap) {
+    return currentMap->GetArea( region, [] (const auto& data) { return data->IsCollisionType(); });
   }
   return 0.f;
 }

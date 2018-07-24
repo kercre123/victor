@@ -12,7 +12,6 @@
     {
       "behaviorName"     : "QuietGetInInternal",
       "behaviorClass"    : "AnimSequence",
-      "playOnChargerWithoutBody": true,
       "animTriggers"     : ["BeQuiet"]
     },
     {

@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/components/robotExternalRequestComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/messaging/shared/socketConstants.h"
@@ -65,11 +66,24 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
 
   // We'll use this callback for simple events we care about
   auto commonCallback = std::bind(&ProtoMessageHandler::HandleEvents, this, std::placeholders::_1);
-  
+
+  RobotExternalRequestComponent* externalRequestComponent = new RobotExternalRequestComponent();
+  externalRequestComponent->Init(_context);
+
+  auto versionStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetVersionState, externalRequestComponent, std::placeholders::_1);
+  auto networkStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetNetworkState, externalRequestComponent, std::placeholders::_1);
+  auto batteryStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetBatteryState, externalRequestComponent, std::placeholders::_1);
+  auto sayTextCallback = std::bind(&RobotExternalRequestComponent::SayText, externalRequestComponent, std::placeholders::_1);
+
   // Subscribe to desired simple events
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once more examples are written
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBing, commonCallback)); // TODO: remove this once more examples are written
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBatteryStateRequest, batteryStateRequestCallback));
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kVersionStateRequest, versionStateRequestCallback));
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
 
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, sayTextCallback));
+  
   return RESULT_OK;
 }
 
@@ -90,7 +104,6 @@ void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
   wrapper.set_allocated_bong(bong);
   DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
 }
-
 
 void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
   switch(event.GetData().GetTag())

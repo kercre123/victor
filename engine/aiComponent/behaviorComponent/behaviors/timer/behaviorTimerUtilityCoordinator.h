@@ -36,6 +36,8 @@ public:
 
   bool IsTimerRinging();
 
+  void SuppressAnticThisTick(unsigned long tickCount);
+
   #if ANKI_DEV_CHEATS
   void DevSetForceAntic() { _lParams.shouldForceAntic = true; };
 
@@ -61,10 +63,11 @@ protected:
 
 private:
   struct InstanceParams{
+    std::string timerRingingBehaviorStr;
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerCheckTimeBehavior;
-    std::shared_ptr<BehaviorAnimGetInLoop>   timerRingingBehavior;
+    ICozmoBehaviorPtr                        timerRingingBehavior;
     ICozmoBehaviorPtr                        timerAlreadySetBehavior;
     ICozmoBehaviorPtr                        iCantDoThatBehavior;
     std::shared_ptr<BehaviorAdvanceClock>    cancelTimerBehavior;
@@ -76,6 +79,7 @@ private:
   struct LifetimeParams{
     LifetimeParams();
     bool shouldForceAntic;
+    unsigned long tickToSuppressAnticFor;
   };
 
   InstanceParams _iParams;

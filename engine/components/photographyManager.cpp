@@ -15,10 +15,13 @@
 #include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/utils/cozmoFeatureGate.h"
+#include "webServerProcess/src/webService.h"
 
 #include "proto/external_interface/shared.pb.h"
 
@@ -38,6 +41,28 @@ CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
 // If true, requires OS version that supports camera format change
 CONSOLE_VAR(bool, kTakePhoto_UseSensorResolution, "Photography", true);
     
+
+static int DeleteAllPhotosWebServerImpl(WebService::WebService::Request* request)
+{
+  auto* photographyManager = static_cast<PhotographyManager*>(request->_cbdata);
+  photographyManager->DeleteAllPhotos();
+  
+  return 1;
+}
+
+
+// Note that this can be called at any arbitrary time, from a webservice thread
+static int DeleteAllPhotosWebServerHandler(struct mg_connection *conn, void *cbdata)
+{
+  auto* photographyManager = static_cast<PhotographyManager*>(cbdata);
+  
+  auto ws = photographyManager->GetRobot()->GetContext()->GetWebService();
+  const int returnCode = ws->ProcessRequestExternal(conn, cbdata, DeleteAllPhotosWebServerImpl);
+  
+  return returnCode;
+}
+
+
 namespace
 {
   const std::string kPhotoManagerFolder = "photos";
@@ -70,6 +95,7 @@ PhotographyManager::PhotographyManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
 {
+  _robot = robot;
   _visionComponent = robot->GetComponentPtr<VisionComponent>();
   _gatewayInterface = robot->GetGatewayInterface();
 
@@ -114,6 +140,9 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
     LOG_WARNING("PhotographyManager.InitDependent.NoPhotosFile", "Photos file not found; creating new one");
     SavePhotosFile();
   }
+
+  const auto& webService = robot->GetContext()->GetWebService();
+  webService->RegisterRequestHandler("/deleteallphotos", DeleteAllPhotosWebServerHandler, this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,7 +189,7 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     LOG_INFO("PhotographyManager.UpdateDependent.DisablingPhotoMode",
              "Disable was queued. Doing now.");
-    _visionComponent->SetCameraCaptureFormat(ImageEncoding::RawRGB);
+    _visionComponent->EnableSensorRes(false);
     _state = State::WaitingForPhotoModeDisable;
     _disableWhenPossible = false;
   }
@@ -170,7 +199,7 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result PhotographyManager::EnablePhotoMode(bool enable)
 {
-  if(!kTakePhoto_UseSensorResolution)
+  if(!UseSensorResolution())
   {
     // No format change: immediately in photo mode
     _state = State::InPhotoMode;
@@ -197,12 +226,11 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
     return RESULT_FAIL;
   }
 
-  const ImageEncoding format = (enable ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
-  _visionComponent->SetCameraCaptureFormat(format);
+  _visionComponent->EnableSensorRes(enable);
   _state = (enable ? State::WaitingForPhotoModeEnable : State::WaitingForPhotoModeDisable);
   
   LOG_INFO("PhotographyManager.EnablePhotoMode.FormatChange",
-           "Requesting format: %s, New State: %s", EnumToString(format), GetStateString().c_str());
+           "%s full resolution", (enable ? "Enabling" : "Disabling"));
 
   return RESULT_OK;
 }
@@ -243,7 +271,14 @@ std::string PhotographyManager::GetBasename(int photoID) const
   return "photo_" + ss.str();
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::UseSensorResolution() const
+{
+  // NOTE: using half-res (aka "Full") for PRDemo until VIC-4077 is fixed
+  return (kTakePhoto_UseSensorResolution
+          && !_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo));
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 {
@@ -255,9 +290,13 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
     return 0;
   }
 
-  const auto photoSize = (kTakePhoto_UseSensorResolution ?
+  const bool useSensorRes = UseSensorResolution();
+  const auto photoSize = (useSensorRes ?
                           Vision::ImageCache::Size::Sensor :
                           Vision::ImageCache::Size::Full);
+  
+  // Upsampling half-res to full scale for PRDemo until VIC-4077 is fixed
+  const float saveScale = (_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo) ? 2.f : 1.f);
     
   _visionComponent->SetSaveImageParameters(ImageSendMode::SingleShot,
                                            GetSavePath(),
@@ -265,14 +304,15 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
                                            kSaveQuality,
                                            photoSize,
                                            kRemoveDistortion,
-                                           kThumbnailScale);
+                                           kThumbnailScale,
+                                           saveScale);
 
   _lastRequestedPhotoHandle = _visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
   
   LOG_INFO("PhotographyManager.TakePhoto.SetSaveParams",
            "Resolution: %s, RequestedHandle: %zu",
-           (kTakePhoto_UseSensorResolution ? "Sensor" : "Full"),
+           (useSensorRes ? "Sensor" : "Full"),
            _lastRequestedPhotoHandle);
   
   return _lastRequestedPhotoHandle;
@@ -394,6 +434,25 @@ void PhotographyManager::SavePhotosFile() const
   if (!_platform->writeAsJson(_fullPathPhotoInfoFile, data))
   {
     LOG_ERROR("PhotographyManager.SavePhotosFile.Failed", "Failed to write photos info file");
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::DeleteAllPhotos()
+{
+  LOG_INFO("PhotographyManager.DeleteAllPhotos", "Deleting all photos");
+  bool dirty = false;
+  static const bool kSavePhotosFile = false;
+  while (!_photoInfos.empty())
+  {
+    DeletePhotoByID(_photoInfos[0]._id, kSavePhotosFile);
+    dirty = true;
+  }
+
+  if (dirty)
+  {
+    SavePhotosFile();
   }
 }
 

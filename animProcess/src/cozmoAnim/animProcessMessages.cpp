@@ -133,9 +133,28 @@ namespace {
     }
   }
 
+  static void ShowCurrentAnimation(ConsoleFunctionContextRef context)
+  {
+    const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("</html>\n");
+  }
+
+  static void AbortCurrentAnimation(ConsoleFunctionContextRef context)
+  {
+    const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
+    _animStreamer -> Abort();
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("</html>\n");
+  }
+
   CONSOLE_FUNC(ListAnimations, "Animations");
   CONSOLE_FUNC(PlayAnimation, "Animations", const char* name, optional int numLoops);
   CONSOLE_FUNC(AddAnimation, "Animations", const char* path);
+  CONSOLE_FUNC(ShowCurrentAnimation, "Animations");
+  CONSOLE_FUNC(AbortCurrentAnimation, "Animations");
 
   void RecordMicDataClip(ConsoleFunctionContextRef context)
   {
@@ -155,10 +174,10 @@ namespace Cozmo {
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
-void Process_lockAnimTracks(const Anki::Cozmo::RobotInterface::LockAnimTracks& msg)
+void Process_setFullAnimTrackLockState(const Anki::Cozmo::RobotInterface::SetFullAnimTrackLockState& msg)
 {
-  //LOG_DEBUG("AnimProcessMessages.Process_lockAnimTracks", "0x%x", msg.whichTracks);
-  _animStreamer->SetLockedTracks(msg.whichTracks);
+  //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);
+  _animStreamer->SetLockedTracks(msg.trackLockState);
 }
 
 void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)
@@ -179,7 +198,7 @@ void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
            "Anim: %s, Tag: %d",
            animName.c_str(), msg.tag);
 
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops);
+  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms);
 }
 
 void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)

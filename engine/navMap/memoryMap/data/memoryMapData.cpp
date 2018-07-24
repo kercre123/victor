@@ -38,7 +38,8 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
     // ClearOfCliff is currently a superset of Clear of Obstacle, so trust ClearOfCliff flags.
     const bool isTotalClear = ( dataType != EContentType::Cliff ) &&
                               ( dataType != EContentType::ClearOfCliff ) &&
-                              ( dataType != EContentType::ObstacleUnrecognized );
+                              ( dataType != EContentType::ObstacleUnrecognized )&&
+                              ( dataType != EContentType::ObstacleObservable );
     return isTotalClear;
   }
   else if ( newContentType == EContentType::InterestingEdge )

@@ -76,7 +76,6 @@ void BehaviorTakeAPhotoCoordinator::GetBehaviorOperationModifiers(BehaviorOperat
 void BehaviorTakeAPhotoCoordinator::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.frameFacesBehavior.get());
-  delegates.insert(_iConfig.takePhotoAnimationsBehavior.get());
   delegates.insert(_iConfig.storageIsFullBehavior.get());
 }
 
@@ -90,7 +89,6 @@ void BehaviorTakeAPhotoCoordinator::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.frameFacesBehavior          = BC.FindBehaviorByID(BEHAVIOR_ID(FrameFaces));
-  _iConfig.takePhotoAnimationsBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(TakingPhotoAnimation));
   _iConfig.storageIsFullBehavior       = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
 
 }
@@ -111,7 +109,7 @@ void BehaviorTakeAPhotoCoordinator::OnBehaviorActivated()
     if(isASelfie){
       TransitionToFrameFaces();
     }else{
-      TransitionToTakeAPhotoAnimations();
+      TransitionToFocusingAnimation();
     }
   }else{
     PRINT_NAMED_ERROR("BehaviorTakeAPhotoCoordinator.OnBehaviorActivated.NullIntentData",
@@ -155,7 +153,7 @@ void BehaviorTakeAPhotoCoordinator::TransitionToFrameFaces()
                       [this, imageTimestampWhenStarted] () {
                         const bool sawAnyFaces = GetBEI().GetFaceWorld().HasAnyFaces(imageTimestampWhenStarted);
                         if (sawAnyFaces) {
-                          TransitionToTakeAPhotoAnimations();
+                          TransitionToFocusingAnimation();
                         } else {
                           PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.TransitionToFrameFaces.NoFacesFound",
                                         "Did not see any faces - playing \"I don't know\" animation");
@@ -164,14 +162,10 @@ void BehaviorTakeAPhotoCoordinator::TransitionToFrameFaces()
                       });
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTakeAPhotoCoordinator::TransitionToTakeAPhotoAnimations()
+void BehaviorTakeAPhotoCoordinator::TransitionToFocusingAnimation()
 {
-  ANKI_VERIFY(_iConfig.takePhotoAnimationsBehavior->WantsToBeActivated(), 
-              "BehaviorTakeAPhotoCoordinator.TransitionToTakeAPhotoAnimations.DoesNotWantToBeActivated", 
-              "");
-  DelegateIfInControl(_iConfig.takePhotoAnimationsBehavior.get(), 
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::TakeAPictureFocusing),
                       &BehaviorTakeAPhotoCoordinator::TransitionToTakePhoto);
 }
 
@@ -206,19 +200,23 @@ void BehaviorTakeAPhotoCoordinator::TransitionToTakePhoto()
     DelegateIfInControl(waitAction, transition);
   }
 }
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTakeAPhotoCoordinator::CaptureCurrentImage()
 {
   auto photoHandle = GetBEI().GetPhotographyManager().TakePhoto();
-  
+
   // Wait for photo to be taken before continuing
-  WaitForLambdaAction* waitAction = new WaitForLambdaAction([photoHandle](Robot& robot) {
+  auto waitLambda = [photoHandle](Robot& robot) {
     return robot.GetPhotographyManager().WasPhotoTaken(photoHandle);
-  }, kTakingPhotoTimeout_sec);
+  };
   
-  DelegateIfInControl(waitAction, [this, photoHandle](ActionResult result) {
+  CompoundActionSequential* action = new CompoundActionSequential({
+    new TriggerAnimationAction(AnimationTrigger::TakeAPictureCapture),
+    new WaitForLambdaAction(waitLambda, kTakingPhotoTimeout_sec),
+  });
+  
+  DelegateIfInControl(action, [this, photoHandle](ActionResult result) {
     if(ActionResult::SUCCESS == result) {
       PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.CaptureCurrentImage.PhotoWasTaken",
                     "Handle: %zu", photoHandle);

@@ -196,7 +196,7 @@ typedef enum
  * @return Mechanical buttons return 0 or 1. Capacitive buttons return an analog value
  */
 u16 GetButtonState(const ButtonID button_id);
-
+ 
 /************************************************************************
  * \section Battery
  */
@@ -265,6 +265,10 @@ void PowerSetDesiredMode(const PowerState state);
 /** Get last desired syscon mode that was commanded
  */
 PowerState PowerGetDesiredMode();
+
+/** Get syscon's current power state
+ */
+PowerState PowerGetMode();
 
 /** Get syscon's current power state
  */

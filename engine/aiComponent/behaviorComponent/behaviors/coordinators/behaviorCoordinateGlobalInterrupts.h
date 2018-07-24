@@ -22,6 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 // forward declarations
+class BehaviorDriveToFace;
 class BehaviorHighLevelAI;
 class BehaviorReactToVoiceCommand;
 class BehaviorTimerUtilityCoordinator;
@@ -54,7 +55,8 @@ private:
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     std::shared_ptr<BehaviorReactToVoiceCommand> reactToVoiceCommandBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
-    
+    ICozmoBehaviorPtr weatherCoordinatorBehavior;
+
     ICozmoBehaviorPtr meetVictorBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;
     
@@ -63,6 +65,9 @@ private:
     
     AreBehaviorsActivatedHelper behaviorsThatShouldntReactToUnexpectedMovement;
     ICozmoBehaviorPtr reactToUnexpectedMovementBehavior;
+    
+    ICozmoBehaviorPtr reactToCliffBehavior;
+    std::vector<std::shared_ptr<BehaviorDriveToFace>> driveToFaceBehaviors;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };

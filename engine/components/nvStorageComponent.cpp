@@ -599,6 +599,8 @@ bool NVStorageComponent::WriteEntryToFile(u32 tag)
     return false;
   }
 
+  sync();
+
   #endif // if !defined(ANKI_PLATFORM_OSX)
   return true;
 }
@@ -1039,6 +1041,8 @@ bool NVStorageComponent::WriteCameraCalibFile(const TagDataMap::iterator& iter)
                       "%d", errno);
     ret = false;
   }
+
+  sync();
 
   return ret;
 }

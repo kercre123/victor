@@ -14,15 +14,24 @@
 
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/activeObject.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotComponents_fwd.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
-#define CONNECTION_DEBUG_LIGHTS 1
+#include "webServerProcess/src/webService.h"
+
+#define SET_STATE(s) do { \
+                          SetState(ECoordinatorState::s); \
+                          _debugStateString = #s; \
+                        } while(0);
 
 // Local constants
 namespace{
@@ -35,69 +44,23 @@ const float kBackgroundConnectionTimeout_s = 15.0f;
 // How long should the CubeCommsComponent hold the connection after disconnect is requested
 const float kDisconnectGracePeriodSec = 0.0f;
 
+// Webviz
+const std::string kWebVizModuleNameCubes = "cubes";
+const float kUpdateWebVizPeriod_s = 1.0f;
+const float kDebugTempSubscriptionTimeout_s = 10.0f;
+
 // Console test constants
 #if ANKI_DEV_CHEATS
 static Anki::Cozmo::CubeConnectionCoordinator* sThis = nullptr;
 static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber1(1);
 static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber2(2);
 static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber3(3);
+static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber4(4);
 #endif
 }
 
 namespace Anki{
 namespace Cozmo{
-
-#if ANKI_DEV_CHEATS
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BackgroundSubscribe(ConsoleFunctionContextRef context)
-{
-  if(nullptr != sThis){
-    bool connectInBackground = true;
-    sThis->SubscribeToCubeConnection(&sStaticTestSubscriber1, connectInBackground);
-  }
-}
-CONSOLE_FUNC(BackgroundSubscribe, "CubeConnectionCoordinator.TestSubscriptions");
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BackgroundUnsubscribe(ConsoleFunctionContextRef context)
-{
-  if(nullptr != sThis){
-    sThis->UnsubscribeFromCubeConnection(&sStaticTestSubscriber1);
-  }
-}
-CONSOLE_FUNC(BackgroundUnsubscribe, "CubeConnectionCoordinator.TestSubscriptions");
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InteractableSubscribe(ConsoleFunctionContextRef context)
-{
-  if(nullptr != sThis){
-    bool connectInBackground = false;
-    sThis->SubscribeToCubeConnection(&sStaticTestSubscriber2, connectInBackground);
-  }
-}
-CONSOLE_FUNC(InteractableSubscribe, "CubeConnectionCoordinator.TestSubscriptions");
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InteractableUnsubscribe(ConsoleFunctionContextRef context)
-{
-  if(nullptr != sThis){
-    sThis->UnsubscribeFromCubeConnection(&sStaticTestSubscriber2);
-  }
-}
-CONSOLE_FUNC(InteractableUnsubscribe, "CubeConnectionCoordinator.TestSubscriptions");
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TempInteractableSubscribe(ConsoleFunctionContextRef context)
-{
-  if(nullptr != sThis){
-    bool connectInBackground = false;
-    float expireIn_s = 5.0f;
-    sThis->SubscribeToCubeConnection(&sStaticTestSubscriber3, connectInBackground, expireIn_s);
-  }
-}
-CONSOLE_FUNC(TempInteractableSubscribe, "CubeConnectionCoordinator.TestSubscriptions");
-#endif // ANKI_DEV_CHEATS
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CubeConnectionCoordinator::SubscriberRecord::SubscriberRecord(ICubeConnectionSubscriber* const subscriberPtr,
@@ -130,8 +93,18 @@ CubeConnectionCoordinator::~CubeConnectionCoordinator()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CubeConnectionCoordinator::InitDependent( Robot* robot, const RobotCompMap& dependentComps )
+{
+  _context = robot->GetContext();
+#if ANKI_DEV_CHEATS
+  SubscribeToWebViz();
+#endif // ANKI_DEV_CHEATS
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::GetUpdateDependencies(RobotCompIDSet& dependencies) const
 {
+  dependencies.insert(RobotComponentID::BlockWorld);
   dependencies.insert(RobotComponentID::CubeComms);
   dependencies.insert(RobotComponentID::CubeLights);
 }
@@ -206,6 +179,13 @@ void CubeConnectionCoordinator::UpdateDependent(const RobotCompMap& dependentCom
       break;
     }
   }
+
+#if ANKI_DEV_CHEATS
+  if(currentTime_s >= _timeToUpdateWebViz_s){
+    SendDataToWebViz();
+    _timeToUpdateWebViz_s = currentTime_s + kUpdateWebVizPeriod_s; 
+  }
+#endif //ANKI_DEV_CHEATS
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -232,6 +212,17 @@ void CubeConnectionCoordinator::SubscribeToCubeConnection(ICubeConnectionSubscri
     ++_nonBackgroundSubscriberCount;
     _timeToEndStandby_s = 0;
   }
+
+  // If we're already connected, invoke appropriate callbacks now since they won't be invoked by state transitions
+  if(ECoordinatorState::ConnectedBackground == _coordinatorState){
+    subscriber->ConnectedCallback(ECubeConnectionType::Background);
+  } else if(ECoordinatorState::ConnectedInteractable == _coordinatorState){
+    subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
+  }
+
+#if ANKI_DEV_CHEATS
+  SendDataToWebViz();
+#endif // ANKI_DEV_CHEATS
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -269,6 +260,11 @@ bool CubeConnectionCoordinator::UnsubscribeFromCubeConnection(ICubeConnectionSub
     // when to disconnect if already in ConnectedBackground state when our last subscriber drops
     _timeToDisconnect_s = currentTime_s + kBackgroundConnectionTimeout_s;
   }
+
+#if ANKI_DEV_CHEATS
+  SendDataToWebViz();
+#endif // ANKI_DEV_CHEATS
+
   return true;
 }
 
@@ -297,7 +293,7 @@ void CubeConnectionCoordinator::CheckForConnectionLoss(const RobotCompMap& depen
     // Set Status lights back to default state
     dependentComps.GetComponent<CubeLightComponent>().EnableStatusAnims(false);
 
-    SetState(ECoordinatorState::UnConnected);
+    SET_STATE(UnConnected);
   }
 }
 
@@ -319,29 +315,34 @@ void CubeConnectionCoordinator::PruneExpiredSubscriptions()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCompMap& dependentComps)
 {
-  SetState(ECoordinatorState::ConnectedInteractable);
+  SET_STATE(ConnectedInteractable);
 
   // Play connection light animation
-  ObjectID connectedCube = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId(); 
+  ActiveID activeID = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId(); 
+  ActiveObject* object = dependentComps.GetComponent<BlockWorld>().GetConnectedActiveObjectByActiveID(activeID);
 
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
   cubeLights.EnableStatusAnims(true);
-  cubeLights.PlayConnectionLights(connectedCube);
+
+  if(ANKI_VERIFY(nullptr != object,
+                 "CubeConnectionCoordinator.NoObjectFoundForActiveID",
+                 "Block world did not have a connected active object for CubeComms connected cube activeID")){
+    cubeLights.PlayConnectionLights(object->GetID());
+  }
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedInteractableCallback();
+    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCompMap& dependentComps)
 {
-  SetState(ECoordinatorState::ConnectedSwitchingToBackground);
+  SET_STATE(ConnectedSwitchingToBackground);
   _timeToSwitchToBackground_s = 0;
 
   // Play disconnect light animation
-  ObjectID connectedCube = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId();
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
   auto animCompletedCallback = [this, &cubeLights]()
   { 
@@ -356,14 +357,27 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
       cubeLights.EnableStatusAnims(false);
     }
   };
-  cubeLights.PlayDisconnectionLights(connectedCube, animCompletedCallback);
+
+  ActiveID activeID = dependentComps.GetComponent<CubeCommsComponent>().GetConnectedCubeActiveId(); 
+  ActiveObject* object = dependentComps.GetComponent<BlockWorld>().GetConnectedActiveObjectByActiveID(activeID);
+  if(ANKI_VERIFY(nullptr != object,
+                 "CubeConnectionCoordinator.NoObjectFoundForActiveID",
+                 "Block world did not have a connected active object for CubeComms connected cube activeID")){
+    // If the lights didn't play, the callback will never come from the light component. Invoke it now.
+    if(!cubeLights.PlayDisconnectionLights(object->GetID(), animCompletedCallback)){
+      animCompletedCallback();
+    }
+  } else {
+    // We don't have a valid object to play lights on, the callback will never come, invoke it now
+    animCompletedCallback();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::CancelSwitchToBackground(const RobotCompMap& dependentComps)
 {
   // Don't play connection lights or notify subscribers, since the cube connection is still live
-  SetState(ECoordinatorState::ConnectedInteractable);
+  SET_STATE(ConnectedInteractable);
   // Do re-enable status lights though, since they are disabled at the start of the postLights grace period
   dependentComps.GetComponent<CubeLightComponent>().EnableStatusAnims(true);
 }
@@ -371,7 +385,7 @@ void CubeConnectionCoordinator::CancelSwitchToBackground(const RobotCompMap& dep
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::TransitionToConnectedBackground(const RobotCompMap& dependentComps)
 {
-  SetState(ECoordinatorState::ConnectedBackground);
+  SET_STATE(ConnectedBackground);
 
   if(_subscriptionRecords.empty()){
     // Reset the timeout in case the last unsubscribe was a while ago. This ensures a minimum Background time of 
@@ -381,14 +395,14 @@ void CubeConnectionCoordinator::TransitionToConnectedBackground(const RobotCompM
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedBackgroundCallback();
+    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Background);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::RequestConnection(const RobotCompMap& dependentComps)
 {
-  SetState(ECoordinatorState::Connecting);
+  SET_STATE(Connecting);
 
   _connectionAttemptFinished = false;
   _connectionAttemptSucceeded = false;
@@ -411,7 +425,7 @@ void CubeConnectionCoordinator::RequestConnection(const RobotCompMap& dependentC
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::RequestDisconnect(const RobotCompMap& dependentComps)
 {
-  SetState(ECoordinatorState::Disconnecting);
+  SET_STATE(Disconnecting);
 
   if(!_subscriptionRecords.empty()){
     PRINT_NAMED_ERROR("CubeConnectionCoordinator.DisconnectedWithSubscribers",
@@ -421,7 +435,7 @@ void CubeConnectionCoordinator::RequestDisconnect(const RobotCompMap& dependentC
   auto& cubeComms = dependentComps.GetComponent<CubeCommsComponent>();
   auto disconnectCallback = [this](bool success)
   {
-    SetState(ECoordinatorState::UnConnected);
+    SET_STATE(UnConnected);
   };
   cubeComms.RequestDisconnectFromCube(kDisconnectGracePeriodSec, disconnectCallback);
 }
@@ -432,7 +446,7 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
   if(!_connectionAttemptSucceeded){
     PRINT_NAMED_WARNING("CubeConnectionCoordinator.ConnectionFailed",
                         "CubeCommsComponent failed to establish a cube connection.");
-    SetState(ECoordinatorState::UnConnected);
+    SET_STATE(UnConnected);
     for(auto& subscriberRecord : _subscriptionRecords){
       subscriberRecord.subscriber->ConnectionFailedCallback();
     }
@@ -450,6 +464,9 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
 void CubeConnectionCoordinator::SetState(ECoordinatorState newState)
 {
   _coordinatorState = newState;
+#if ANKI_DEV_CHEATS
+  SendDataToWebViz();
+#endif // ANKI_DEV_CHEATS
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -464,6 +481,92 @@ bool CubeConnectionCoordinator::FindRecordBySubscriber(ICubeConnectionSubscriber
     ++iterator;
   }
   return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CubeConnectionCoordinator::SubscribeToWebViz()
+{
+  if(nullptr != _context){
+    auto* webService = _context->GetWebService();
+    if(nullptr != webService){
+      auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+
+        const auto& subscribeInteractable = data["subscribeInteractable"];
+        if(subscribeInteractable.isBool()){
+          if(subscribeInteractable.asBool()){
+            SubscribeToCubeConnection(&sStaticTestSubscriber1, false);
+          } else {
+            UnsubscribeFromCubeConnection(&sStaticTestSubscriber1);
+          }
+        }
+
+        const auto& subscribeTempInteractable = data["subscribeTempInteractable"];
+        if(subscribeTempInteractable.isBool()){
+            SubscribeToCubeConnection(&sStaticTestSubscriber2, false, kDebugTempSubscriptionTimeout_s);
+        }
+
+        const auto& subscribeBackground = data["subscribeBackground"];
+        if(subscribeBackground.isBool()){
+          if(subscribeBackground.asBool()){
+            SubscribeToCubeConnection(&sStaticTestSubscriber3, true);
+          } else {
+            UnsubscribeFromCubeConnection(&sStaticTestSubscriber3);
+          }
+        }
+
+        const auto& subscribeTempBackground = data["subscribeTempBackground"];
+        if(subscribeTempBackground.isBool()){
+            SubscribeToCubeConnection(&sStaticTestSubscriber4, true, kDebugTempSubscriptionTimeout_s);
+        }
+
+      };
+
+      _signalHandles.emplace_back(webService->OnWebVizData(kWebVizModuleNameCubes).ScopedSubscribe(onData));
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CubeConnectionCoordinator::SendDataToWebViz()
+{
+  if(nullptr != _context){
+    auto* webService = _context->GetWebService();
+    if(nullptr != webService){
+      Json::Value toSend = Json::objectValue;
+      Json::Value cccInfo = Json::objectValue;
+
+      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+      // Display Status Info
+      cccInfo["connectionState"] = _debugStateString;
+      Json::Value stateCountdown = Json::arrayValue;
+      if( (ECoordinatorState::ConnectedInteractable == _coordinatorState) && (_timeToEndStandby_s != 0) ){
+        Json::Value blob;
+        blob["SwitchingToBackgroundIn"] = (int)(_timeToEndStandby_s - currentTime_s);
+        stateCountdown.append(blob);
+      } else if ( (ECoordinatorState::ConnectedBackground == _coordinatorState) && (_timeToDisconnect_s != 0) ){
+        Json::Value blob;
+        blob["DisconnectingIn"] = (int)(_timeToDisconnect_s - currentTime_s);
+        stateCountdown.append(blob);
+      }
+      cccInfo["stateCountdown"] = stateCountdown;
+      
+      // Display current subscribers
+      Json::Value subscriberData = Json::arrayValue;
+      for(auto& record : _subscriptionRecords){
+        Json::Value subscriberDatum;
+        subscriberDatum["SubscriberName"] = record.subscriber->GetCubeConnectionDebugName();
+        subscriberDatum["SubscriptionType"] = record.isBackgroundConnection ? "Background" : "Interactable";
+        if(record.expirationTime_s >= 0.0f){
+          subscriberDatum["ExpiresIn"] = (int)(record.expirationTime_s - currentTime_s);
+        }
+        subscriberData.append(subscriberDatum);
+      }
+      cccInfo["subscriberData"] = subscriberData;
+      toSend["cccInfo"] = cccInfo;
+      webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
+    }
+  }
 }
 
 } // namespace Cozmo

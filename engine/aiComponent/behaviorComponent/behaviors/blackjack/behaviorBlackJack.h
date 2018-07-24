@@ -23,6 +23,7 @@ namespace Cozmo {
 // Fwd Declarations
 class BehaviorPromptUserForVoiceCommand;
 class BehaviorTextToSpeechLoop;
+class BehaviorLookAtFaceInFront;
 
 class BehaviorBlackJack : public ICozmoBehavior
 {
@@ -97,6 +98,7 @@ private:
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> hitOrStandPromptBehavior;
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> playAgainPromptBehavior;
     std::shared_ptr<BehaviorTextToSpeechLoop>          ttsBehavior;
+    std::shared_ptr<BehaviorLookAtFaceInFront>         lookAtFaceInFrontBehavior;
   };
 
   struct DynamicVariables {

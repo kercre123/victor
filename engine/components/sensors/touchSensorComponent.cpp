@@ -13,18 +13,23 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "osState/osState.h"
+#include "webServerProcess/src/webService.h"
 
 namespace Anki {
 namespace Cozmo {
   
 namespace {
   const std::string kLogDirectory = "touchSensor";
+  
+  const std::string kWebVizTouchSensorModuleName = "touch";
 
   // CONSTANTS
   const float kMaxTouchIntensityInvalid = 800;      
@@ -61,6 +66,10 @@ namespace {
   const int kMinPostTouchSamples = 100; // 100 * 30ms = 3 sec
   
   const int kMaxDevLogBufferSize = 2000;// 60 seconds / 30ms = 2000 samples
+  
+  const f32 kSendWebVizDataPeriod_sec = 0.5f;
+  f32 _nextSendWebVizDataTime_sec = 0.0f;
+  size_t _touchCountForWebviz = 0;
   
 } // end anonymous namespace
   
@@ -108,21 +117,85 @@ TouchSensorComponent::TouchSensorComponent()
 , _devLogBufferSaved()
 , _devLogSampleCount(0)
 {
+  static const std::set<u32> exceptionESNWithPVThardware = {
+    0x00e10017,
+    0x00e10074,
+    0x00e10034,
+    0x00e10057,
+    0x00e1006d,
+    0x00e10008,
+    0x00e1005c,
+    0x00e10062,
+    0x00e1001f,
+    0x00e10032,
+    0x00e10064,
+    0x00e1006c,
+    0x00e10069,
+    0x00e10014,
+    0x00e10009,
+    0x00e1006e,
+    0x00e1001d,
+  };
+  
   // backwards compatibility check for robot hardware versions
   auto* osstate = OSState::getInstance();
   u32 esn = osstate->GetSerialNumber();
-  const bool isDVTrobot = (esn >= 0x00e00000 && esn <= 0x00e10000);
-  if(isDVTrobot) {
+  const bool isDVThardware = (esn >= 0x00e00000 && esn <= 0x00e1ffff) &&
+                              exceptionESNWithPVThardware.find(esn)==exceptionESNWithPVThardware.end();
+  if(isDVThardware) {
     _filterParams = _kFilterParamsForDVT;
   } else {
     _filterParams = _kFilterParamsForProd;
   }
-  _useFilterLogicForDVT = isDVTrobot;
+  _useFilterLogicForDVT = isDVThardware;
 }
   
 TouchSensorComponent::~TouchSensorComponent()
 {
   DevLogTouchSensorData();
+}
+  
+void TouchSensorComponent::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
+{
+  InitBase(robot);
+  
+  // webviz subscription to control the touch sensor config
+  if (ANKI_DEV_CHEATS) {
+    const auto* context = robot->GetContext();
+    if (context != nullptr) {
+      auto* webService = context->GetWebService();
+      if (webService != nullptr) {
+        // set up handler for incoming payload from WebViz
+        auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+          const std::string& configStr = JsonTools::ParseString(data, "filterConfig", "TouchSensorComponent.WebVizJsonCallback");
+          if(configStr.compare("DVT")==0) {
+            _filterParams = _kFilterParamsForDVT;
+            _useFilterLogicForDVT = true;
+          } else {
+            _filterParams = _kFilterParamsForProd;
+            _useFilterLogicForDVT = false;
+          }
+          
+          // recalibrate and re-init the boxfilter
+          _numConsecCalibReadings = 0;
+          _baselineTouch = kBaselineInitial;
+          _boxFilterTouch = BoxFilter(_filterParams.boxFilterSize);
+          
+          // ack the mode change
+          const auto* context = _robot->GetContext();
+          if (context != nullptr) {
+            auto* webService = context->GetWebService();
+            if (webService != nullptr) {
+              Json::Value toSend = Json::objectValue;
+              toSend["mode"] = _useFilterLogicForDVT ? "DVT" : "Prod";
+              webService->SendToWebViz(kWebVizTouchSensorModuleName, toSend);
+            }
+          }
+        };
+        _signalHandles.emplace_back(webService->OnWebVizData(kWebVizTouchSensorModuleName).ScopedSubscribe(onData));
+      }
+    }
+  }
 }
   
 void TouchSensorComponent::DevLogTouchSensorData() const
@@ -151,6 +224,24 @@ void TouchSensorComponent::DevLogTouchSensorData() const
 
 void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
+  // send the information for webviz once
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if (now_sec > _nextSendWebVizDataTime_sec) {
+    const auto* context = _robot->GetContext();
+    if(context != nullptr) {
+      auto* webService = context->GetWebService();
+      if(webService != nullptr) {
+        Json::Value toSend = Json::objectValue;
+        auto* osstate = OSState::getInstance();
+        toSend["esn"] = osstate->GetSerialNumberAsString();
+        toSend["mode"] = _useFilterLogicForDVT ? "DVT" : "Prod";
+        toSend["count"] = (int)_touchCountForWebviz;
+        webService->SendToWebViz(kWebVizTouchSensorModuleName, toSend);
+        _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
+      }
+    }
+  }
+  
   if(!devEnableTouchSensor) {
     return;
   }
@@ -224,6 +315,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
           ExternalInterface::TouchButtonEvent(GetIsPressed())));
       if(GetIsPressed()) {
         _touchPressTime = now;
+        _touchCountForWebviz++;
       }
     }
     // require seeing a minimum number of untouched cycles before

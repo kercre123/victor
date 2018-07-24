@@ -11,6 +11,10 @@
     }
   },
   
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OnCharger"
+  },
+  
   "normal" : {
     "numRequests"         : 1,
     "requestAnimTrigger"  : "ChargerDockingRequest",

@@ -57,6 +57,7 @@ namespace {
   const float kMaxDistToProxPose_mm = 750.0f;
   const float kMinDistToProxPose_mm = 100.0f;
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
+  const float kProbReferenceHuman = 0.5f;
 
   static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
   
@@ -478,7 +479,18 @@ void BehaviorExploring::TransitionToDriving()
       // examine something midway, then when trying to start again, there is no path to the selected
       // goal. try a couple more times (maybe this needs more precise ActionResult types?)
       if( _dVars.numDriveAttemps <= 4 ) {
-        SampleAndDrive();
+        if( res == ActionResult::PATH_PLANNING_FAILED_ABORT ) {
+          // it's possible noise from the prox sensor is causing a legitimate planner failure (timeout), so
+          // do a quick point turn to hopefully find an escape before continuing
+          const float angle = (GetRNG().RandDbl() > 0.5f) ? M_PI_2_F : -M_PI_2_F;
+          const bool isAbsolute = false;
+          auto* action = new TurnInPlaceAction{ angle, isAbsolute };
+          DelegateIfInControl( action, [this](ActionResult res) {
+            SampleAndDrive();
+          });
+        } else {
+          SampleAndDrive();
+        }
       } else {
         PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath",
                          "Could not plan a path after %d attempts",
@@ -526,7 +538,7 @@ void BehaviorExploring::TransitionToArrived()
     });
   };
   
-  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() ) {
+  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() && (GetRNG().RandDbl() < kProbReferenceHuman) ) {
     DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), callback );
   } else {
     callback();

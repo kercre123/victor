@@ -37,17 +37,29 @@ namespace Anki {
     : IDependencyManagedComponent(this, RobotComponentID::DrivingAnimationHandler)
     , _moodBasedDrivingAnims( { { SimpleMoodType::Default,    { AnimationTrigger::DriveStartDefault,
                                                                 AnimationTrigger::DriveLoopDefault,
-                                                                AnimationTrigger::DriveEndDefault}},
+                                                                AnimationTrigger::DriveEndDefault,
+                                                                AnimationTrigger::PlanningGetIn,
+                                                                AnimationTrigger::PlanningLoop,
+                                                                AnimationTrigger::PlanningGetOut }},
                                 { SimpleMoodType::HighStim,   { AnimationTrigger::DriveStartHappy,
                                                                 AnimationTrigger::DriveLoopHappy,
-                                                                AnimationTrigger::DriveEndHappy}},
+                                                                AnimationTrigger::DriveEndHappy,
+                                                                AnimationTrigger::PlanningGetIn,
+                                                                AnimationTrigger::PlanningLoop,
+                                                                AnimationTrigger::PlanningGetOut }},
                                 { SimpleMoodType::Frustrated, { AnimationTrigger::DriveStartAngry,
                                                                 AnimationTrigger::DriveLoopAngry,
-                                                                AnimationTrigger::DriveEndAngry}} })
+                                                                AnimationTrigger::DriveEndAngry,
+                                                                AnimationTrigger::PlanningGetIn,
+                                                                AnimationTrigger::PlanningLoop,
+                                                                AnimationTrigger::PlanningGetOut }} })
     , _tracksToUnlock( (u8)AnimTrackFlag::NO_TRACKS )
-    , _drivingStartAnimTag( ActionConstants::INVALID_TAG )
-    , _drivingLoopAnimTag(  ActionConstants::INVALID_TAG )
-    , _drivingEndAnimTag(   ActionConstants::INVALID_TAG )
+    , _drivingStartAnimTag(  ActionConstants::INVALID_TAG )
+    , _drivingLoopAnimTag(   ActionConstants::INVALID_TAG )
+    , _drivingEndAnimTag(    ActionConstants::INVALID_TAG )
+    , _planningStartAnimTag( ActionConstants::INVALID_TAG )
+    , _planningLoopAnimTag(  ActionConstants::INVALID_TAG )
+    , _planningEndAnimTag(   ActionConstants::INVALID_TAG )
     {
       _currDrivingAnimations = _moodBasedDrivingAnims.at(SimpleMoodType::Default);
     }
@@ -189,12 +201,41 @@ namespace Anki {
           _robot->GetMoveComponent().LockTracks(_tracksToUnlock, _actionTag, "DrivingAnimations");
         }
       }
+      else if(msg.idTag == _planningStartAnimTag && msg.result == ActionResult::SUCCESS)
+      {
+        const bool playLooping = !pathComponent.IsPlanReady();
+        if(playLooping && _currDrivingAnimations.planningLoopAnim != AnimationTrigger::Count)
+        {
+          PlayPlanningLoopAnim();
+        } else {
+          PlayPlanningEndAnim();
+        }
+      }
+      else if(msg.idTag == _planningLoopAnimTag)
+      {
+        const bool keepLooping = !pathComponent.IsPlanReady();
+        if(keepLooping && msg.result == ActionResult::SUCCESS)
+        {
+          PlayPlanningLoopAnim();
+        }
+        else
+        {
+          EndPlanningAnim();
+        }
+      }
+      else if(msg.idTag == _planningEndAnimTag)
+      {
+        _state = AnimState::FinishedPlanning;
+      }
     }
     
     void DrivingAnimationHandler::ActionIsBeingDestroyed()
     {
       _state = AnimState::ActionDestroyed;
       
+      _robot->GetActionList().Cancel(_planningStartAnimTag);
+      _robot->GetActionList().Cancel(_planningLoopAnimTag);
+      _robot->GetActionList().Cancel(_planningEndAnimTag);
       _robot->GetActionList().Cancel(_drivingStartAnimTag);
       _robot->GetActionList().Cancel(_drivingLoopAnimTag);
       _robot->GetActionList().Cancel(_drivingEndAnimTag);
@@ -211,10 +252,62 @@ namespace Anki {
       _drivingStartAnimTag = ActionConstants::INVALID_TAG;
       _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
       _drivingEndAnimTag = ActionConstants::INVALID_TAG;
+      _planningStartAnimTag = ActionConstants::INVALID_TAG;
+      _planningLoopAnimTag = ActionConstants::INVALID_TAG;
+      _planningEndAnimTag = ActionConstants::INVALID_TAG;
       _tracksToUnlock = tracksToUnlock;
       _actionTag = tag;
       _isActionLockingTracks = !isActionSuppressingLockingTracks;
       _keepLoopingWithoutPath = keepLoopingWithoutPath;
+    }
+    
+    void DrivingAnimationHandler::StartPlanningAnim()
+    {
+      if (!kEnableDrivingAnimations) {
+        return;
+      }
+      
+      // Don't do anything until Init is called, or until the previous driving animation has stopped
+      // (this can happen during replanning)
+      if( (_state != AnimState::Waiting) && (_state != AnimState::FinishedDriving) )
+      {
+        return;
+      }
+      
+      if(_currDrivingAnimations.planningStartAnim != AnimationTrigger::Count)
+      {
+        PlayPlanningStartAnim();
+      }
+      else if(_currDrivingAnimations.planningLoopAnim != AnimationTrigger::Count)
+      {
+        PlayPlanningLoopAnim();
+      }
+      
+    }
+    
+    bool DrivingAnimationHandler::EndPlanningAnim()
+    {
+      if (!kEnableDrivingAnimations) {
+        return false;
+      }
+      
+      // The end anim can interrupt the start and loop animations
+      // If we are currently playing the end anim or have already completed it don't play it again
+      if( _state == AnimState::PlanningEnd || _state == AnimState::FinishedPlanning ) {
+        return false;
+      }
+      
+      _robot->GetActionList().Cancel(_planningStartAnimTag);
+      _robot->GetActionList().Cancel(_planningLoopAnimTag);
+      
+      if(_currDrivingAnimations.planningEndAnim != AnimationTrigger::Count)
+      {
+        PlayPlanningEndAnim();
+        return true;
+      } else {
+        _state = AnimState::FinishedPlanning;
+        return false;
+      }
     }
     
     void DrivingAnimationHandler::StartDrivingAnim()
@@ -223,8 +316,8 @@ namespace Anki {
         return;
       }
       
-      // Don't do anything until Init is called, or it finished the last driving animation
-      if(_state != AnimState::Waiting && _state != AnimState::FinishedDriving)
+      // Don't do anything until Init is called, or it finished the last driving animation, or the planning animation ends
+      if(_state != AnimState::Waiting && _state != AnimState::FinishedDriving && _state != AnimState::FinishedPlanning)
       {
         return;
       }
@@ -304,6 +397,52 @@ namespace Anki {
                                                                      1, true);
       _drivingEndAnimTag = animAction->GetTag();
       _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+    }
+    
+    void DrivingAnimationHandler::PlayPlanningStartAnim()
+    {
+      _state = AnimState::PlanningStart;
+      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.planningStartAnim,
+                                                                     1, true);
+      _planningStartAnimTag = animAction->GetTag();
+      _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+    }
+    
+    void DrivingAnimationHandler::PlayPlanningLoopAnim()
+    {
+      _state = AnimState::PlanningLoop;
+      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.planningLoopAnim,
+                                                                     1, true);
+      _planningLoopAnimTag = animAction->GetTag();
+      _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+    }
+    
+    void DrivingAnimationHandler::PlayPlanningEndAnim()
+    {
+      _state = AnimState::PlanningEnd;
+      IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_currDrivingAnimations.planningEndAnim,
+                                                                     1, true);
+      _planningEndAnimTag = animAction->GetTag();
+      _robot->GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+      
+      // TODO: We may consider combining the planning getout animation and the drive getin animation
+      // if the planner search was successful to reduce the overall time spent animating
+    }
+    
+    bool DrivingAnimationHandler::InDrivingAnimsState() const {
+      const bool playing = (_state == AnimState::DrivingStart) ||
+                           (_state == AnimState::DrivingLoop)  ||
+                           (_state == AnimState::DrivingEnd)   ||
+                           (_state == AnimState::FinishedDriving);
+      return playing;
+    }
+    
+    bool DrivingAnimationHandler::InPlanningAnimsState() const {
+      const bool playing = (_state == AnimState::PlanningStart) ||
+                           (_state == AnimState::PlanningLoop)  ||
+                           (_state == AnimState::PlanningEnd)   ||
+                           (_state == AnimState::FinishedPlanning);
+      return playing;
     }
     
   }

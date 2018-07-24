@@ -45,7 +45,7 @@ namespace
                                                            Json::Value(volumeSettingValue));
   }
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
-  
+
   // NOTE: Need to keep kEyeColors in sync with EyeColor in robotSettings.clad
   constexpr const char* kEyeColors = "Teal,Orange,Yellow,LimeGreen,AzureBlue,Purple,MatrixGreen";
   CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
@@ -99,11 +99,38 @@ namespace
   }
   CONSOLE_FUNC(DebugToggleDistIsMetric, kConsoleGroup);
 
+  // For PR demo, this extra console var is used to initialize the 'locale' menu,
+  // which is not one-to-one with locale...
+  CONSOLE_VAR(s32, kDebugDemoLocaleIndex, kConsoleGroup, 0);
+
+  // This is really a convenience function for the PR demo; also, otherwise we'd have to
+  // implement bool console vars for the bool settings and then poll them for changes
+  void DebugDemoSetLocaleIndex(ConsoleFunctionContextRef context)
+  {
+    const int localeIndex = ConsoleArg_Get_Int(context, "localeIndex");
+    LOG_INFO("SettingsCommManager.DebugDemoSetLocaleIndex", "Demo Locale index set to %i", localeIndex);
+
+    static const size_t kNumLocales = 4;
+    // Note below: the last item is for Canada but we use en-US for locale
+    static const std::string locales[kNumLocales] = {"en-US", "en-GB", "en-AU", "en-US"};
+    const std::string localeValue = locales[localeIndex];
+    LOG_INFO("SettingsCommManager.DebugDemoSetLocaleIndex", "Demo Locale set to %s", localeValue.c_str());
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::locale,
+                                                           Json::Value(localeValue));
+
+    static const bool isFahrenheitFlags[kNumLocales] = {true, false, false, false};
+    const bool isFahrenheit = isFahrenheitFlags[localeIndex];
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
+                                                           Json::Value(isFahrenheit));
+    kDebugDemoLocaleIndex = localeIndex;
+  }
+  CONSOLE_FUNC(DebugDemoSetLocaleIndex, kConsoleGroup, int localeIndex);
+
 #endif
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsCommManager::SettingsCommManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsCommManager)
 {
@@ -125,6 +152,31 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPushSettingsRequest,   commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest, commonCallback));
   }
+
+#if REMOTE_CONSOLE_ENABLED
+  // HACK:  Fill in a special debug console var used in the PR demo (related to locale and temperature units)
+  const auto& localeSetting = _settingsManager->GetRobotSettingAsString(RobotSetting::locale);
+  const auto& isFahrenheitSetting = _settingsManager->GetRobotSettingAsBool(RobotSetting::temp_is_fahrenheit);
+  if (localeSetting == "en-US")
+  {
+    // Set US or Canada based on fahrenheit setting
+    kDebugDemoLocaleIndex = isFahrenheitSetting ? 0 : 3;
+  }
+  else if (localeSetting == "en-GB")
+  {
+    kDebugDemoLocaleIndex = 1;
+  }
+  else if (localeSetting == "en-AU")
+  {
+    kDebugDemoLocaleIndex = 2;
+  }
+  else
+  {
+    LOG_WARNING("SettingsCommManager.InitDependent.SetSpecialLocaleIndexForDemo",
+                "Unsupported locale setting %s", localeSetting.c_str());
+  }
+#endif
+
 }
 
 
@@ -217,9 +269,9 @@ void SettingsCommManager::OnRequestPushSettings(const external_interface::PushSe
 {
   // TODO
   LOG_INFO("SettingsCommManager.OnRequestPushSettings", "Push settings request");
-  
+
   auto* pushSettingsResp = new external_interface::PushSettingsResponse();
-  
+
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushSettingsResp));
 }
 
@@ -229,7 +281,7 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 {
   LOG_INFO("SettingsCommManager.OnRequestUpdateSettings", "Update settings request");
   const auto& settings = updateSettingsRequest.settings();
-  
+
   if (settings.oneof_clock_24_hour_case() == external_interface::RobotSettingsConfig::OneofClock24HourCase::kClock24Hour)
   {
     HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,

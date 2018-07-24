@@ -2,8 +2,6 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToAffirmative",
 
-  "playOnChargerWithoutBody": true,
-
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
   "animTriggers": ["ReactToAffirmative"],

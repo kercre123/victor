@@ -117,7 +117,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
-  _micDataProcessor->Init(dataLoader);
+  _micDataProcessor->Init(dataLoader, _locale);
 }
 
 MicDataSystem::~MicDataSystem()
@@ -357,7 +357,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamingAudioIndex = 0;
   
         // Send out the message announcing the trigger word has been detected
-        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal};
+        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString()};
         if (_currentStreamingJob != nullptr) {
           hw.mode = _currentStreamingJob->_type;
         }
@@ -463,6 +463,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
   // only need to actually call into the plugin once (or until we get a
   // nonzero latency), since the latency does not change during runtime.
+#ifndef SIMULATOR
   if (_speakerLatency_ms == 0) {
     if (_context != nullptr) {
       const auto* audioController = _context->GetAudioController();
@@ -477,6 +478,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
     }
   }
+#endif
 }
 
 void MicDataSystem::ClearCurrentStreamingJob()
@@ -597,6 +599,7 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 
 void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
 {
+  _locale = newLocale;
   _micDataProcessor->UpdateTriggerForLocale(newLocale);
 }
   

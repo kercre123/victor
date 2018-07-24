@@ -888,9 +888,6 @@ using FullActionMessageHandlerArray = Util::FullEnumToValueArrayChecker::FullEnu
 RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 : _context(context)
 {
-  // If false, low level motion commands only run when an instance of BehaviorSDKInterface is activated.
-  _isAllowedToHandleActions = false;
-  
   auto externalInterface = _context->GetExternalInterface();
 
   if (externalInterface != nullptr)
@@ -1000,7 +997,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // GameToEngine: (in alphabetical order)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::AllowedToHandleActions>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelActionByIdTag>();
@@ -1018,7 +1014,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::LogRawProxData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RollActionParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
@@ -1037,9 +1032,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 
 } // RobotEventHandler Constructor
 
-void RobotEventHandler::SetAllowedToHandleActions(bool allowedToHandleActions) {
-  _isAllowedToHandleActions = allowedToHandleActions;
-}
 
 // =====================================================================================================================
 #pragma mark -
@@ -1057,12 +1049,6 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
   auto const& msg = event.GetData();
-  if (!_isAllowedToHandleActions) {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.ActionsNotAllowedUntilSDKBehaviorActivated",
-                      "Tag: %s", ExternalInterface::MessageGameToEngineTagToString(msg.GetTag()));
-    return;
-  }
-
   Robot* robot = _context->GetRobotManager()->GetRobot();
 
   // If we don't have a valid robot there's nothing to do
@@ -1248,13 +1234,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff
     PRINT_NAMED_INFO("RobotEventHandler.HandleMessage.EnableStopOnCliff","Setting to %s", msg.enable ? "true" : "false");
     robot->SendRobotMessage<RobotInterface::EnableStopOnCliff>(msg.enable);
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::AllowedToHandleActions& msg)
-{
-  _isAllowedToHandleActions = msg.allowedToHandleActions;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1672,13 +1651,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   {
     robot->AbortAll();
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
-{
-  PRINT_NAMED_WARNING("RobotEventHandler.HandleRequestUnlockDataFromBackup.UnsupportedForCozmo2", "Restoring from backup belongs in Unity in Cozmo 2.0");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

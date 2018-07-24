@@ -1219,34 +1219,6 @@ namespace Cozmo {
     SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
   }
 
-
-
-  void WebotsKeyboardController::DenyGameStart()
-  {
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
-  }
-  
-  void WebotsKeyboardController::FillNeedsMeters()
-  {
-    ExternalInterface::RunDebugConsoleFuncMessage msg;
-    msg.funcName = "DebugFillNeedMeters";
-    msg.funcArgs = "";
-    SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-  }
-
-  void WebotsKeyboardController::SetUnlock()
-  {
-    std::string unlockName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "unlockName", unlockName)) {
-      return;
-    }
-    
-    UnlockId unlock = UnlockIdFromString(unlockName.c_str());
-    bool val = !_shiftKeyPressed;
-    printf("%s %s\n", (val ? "Unlocking" : "Locking"), unlockName.c_str());
-    SendMessage( ExternalInterface::MessageGameToEngine(ExternalInterface::RequestSetUnlock(unlock, val)));
-  }
-
   void WebotsKeyboardController::ToggleImageStreaming()
   {
     using namespace ExternalInterface;
@@ -1553,6 +1525,13 @@ namespace Cozmo {
   }
   
   
+  void WebotsKeyboardController::StartFreeplayMode()
+  {
+    using namespace ExternalInterface;
+    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("DevDispatchAfterShake", "1")));
+  }
+  
+  
   void WebotsKeyboardController::SetRollActionParams()
   {
     SendRollActionParams(root_->getField("rollLiftHeight_mm")->getSFFloat(),
@@ -1643,9 +1622,6 @@ namespace Cozmo {
   
   void WebotsKeyboardController::QuitKeyboardController()
   {
-    SendMessage(ExternalInterface::MessageGameToEngine(
-      ExternalInterface::AllowedToHandleActions(false)));
-
     _shouldQuit = true;
   }
   
@@ -1960,7 +1936,7 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN(',', MOD_ALT,       , "");
     REGISTER_KEY_FCN('.', MOD_NONE,      SendSelectNextObject,   "Select next object");
 //      REGISTER_KEY_FCN('.', MOD_ALT,      , "");
-//      REGISTER_KEY_FCN('/', MOD_NONE,      , "");
+    REGISTER_KEY_FCN('/', MOD_NONE,      StartFreeplayMode,      "Start 'freeplay' mode (as if robot was shaken)");
 //      REGISTER_KEY_FCN('/', MOD_ALT,       , "");
     
     REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationTrigger,              "Play animation trigger specified in 'animationToSendName'");
@@ -2020,7 +1996,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('C', MOD_NONE,      LogCliffSensorData,    "Request cliff sensor log");
     REGISTER_KEY_FCN('C', MOD_SHIFT,     ExecuteBehavior,       "Execute behavior in 'behaviorName'");
     REGISTER_KEY_FCN('C', MOD_ALT,       ToggleCameraCaptureFormat, "Toggle camera capture format between RGB and YUV");
-//      REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, ToggleBayerImageResFormat, "Toggle bayer image resolution (640x360 / 1280x720)");
     
     REGISTER_KEY_FCN('D', MOD_NONE,      ToggleVizDisplay,      "Toggle viz display");
     REGISTER_KEY_FCN('D', MOD_SHIFT,     LogRawProxData,        "Request prox sensor log");
@@ -2071,10 +2047,10 @@ namespace Cozmo {
     REGISTER_KEY_FCN('M', MOD_ALT,       NVStorage_ReadTag,   "Read NVStorage data at 'nvTag'");
     REGISTER_KEY_FCN('M', MOD_ALT_SHIFT, NVStorage_EraseTag,  "Erase NVStorage data at 'nvTag'");
     
-    REGISTER_KEY_FCN('N', MOD_NONE,      SetUnlock,       "Unlock progression 'unlockName'");
-    REGISTER_KEY_FCN('N', MOD_SHIFT,     SetUnlock,       "Lock progression 'unlockName'");
-    REGISTER_KEY_FCN('N', MOD_ALT,       DenyGameStart,   "Respond 'no' to game request");
-    REGISTER_KEY_FCN('N', MOD_ALT_SHIFT, FillNeedsMeters, "Fill needs meters");
+//    REGISTER_KEY_FCN('N', MOD_NONE,      ,  );
+//    REGISTER_KEY_FCN('N', MOD_SHIFT,     ,  );
+//    REGISTER_KEY_FCN('N', MOD_ALT,       ,  );
+//    REGISTER_KEY_FCN('N', MOD_ALT_SHIFT, ,  );
     
     REGISTER_KEY_FCN('O', MOD_NONE,      RequestIMUData,    "Request IMU data log");
     REGISTER_KEY_FCN('O', MOD_SHIFT,     TurnTowardsObject, "Turn torwards selected object");
@@ -2539,6 +2515,24 @@ namespace Cozmo {
     msgWrapper.Set_SetCameraCaptureFormat(msg);
     SendMessage(msgWrapper);
   }
+
+  void WebotsKeyboardController::ToggleBayerImageResFormat()
+  {
+    ExternalInterface::SetCameraCaptureFormat msg;
+    msg.format = ImageEncoding::BAYER;
+
+    static bool enableSensorRes = true;
+    msg.enableSensorRes = enableSensorRes;
+    enableSensorRes = !enableSensorRes;
+
+    LOG_INFO("ToggleBayerImageResFormat",
+             "%s sensor res",
+             (msg.enableSensorRes ? "Enabling" : "Disabling"));
+    
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetCameraCaptureFormat(msg);
+    SendMessage(msgWrapper);
+  }
     
   s32 WebotsKeyboardController::UpdateInternal()
   {
@@ -2567,8 +2561,10 @@ namespace Cozmo {
   void WebotsKeyboardController::HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg)
   {
     // Things to do on robot connect
-    SendMessage(ExternalInterface::MessageGameToEngine(
-      ExternalInterface::AllowedToHandleActions(true)));
+    if (root_->getField("startFreeplayModeImmediately")->getSFBool()) {
+      StartFreeplayMode();
+    }
+    
     SendSetRobotVolume(0);
   }
 

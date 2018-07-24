@@ -66,6 +66,8 @@ public:
   bool Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg);
   bool Append(const std::map<std::string, std::vector<FactoryTestResultCode>>& results);
   bool Append(const std::string& dataTypeName, const TouchSensorValues& data);
+  bool Append(const std::string& name, const TouchSensorFilt& data);
+  
   
   // DistanceSensorData is added to an json array of data called "name". Separate data entries are
   // labelled as "seq_*". Call with an existing name to add to that array

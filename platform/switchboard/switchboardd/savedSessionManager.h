@@ -61,6 +61,7 @@ private:
   static const uint8_t kMaxNumberClients;
   static const char* kPrefix;
   static const uint32_t kNativeBufferSize;
+  static const uint8_t kMagicVersionNumber;
 };
 
 } // Switchboard

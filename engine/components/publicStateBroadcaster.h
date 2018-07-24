@@ -72,8 +72,6 @@ public:
     dependencies.insert(RobotComponentID::TouchSensor);
     dependencies.insert(RobotComponentID::StateHistory);
     dependencies.insert(RobotComponentID::MoodManager);
-    dependencies.insert(RobotComponentID::Inventory);
-    dependencies.insert(RobotComponentID::ProgressionUnlock);
     dependencies.insert(RobotComponentID::BlockTapFilter);
     dependencies.insert(RobotComponentID::RobotToEngineImplMessaging);
     dependencies.insert(RobotComponentID::RobotIdleTimeout);

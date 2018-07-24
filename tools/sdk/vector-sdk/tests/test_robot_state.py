@@ -17,7 +17,7 @@ def main():
     args = utilities.parse_args()
 
     print("------ Fetch robot state from robot's properties ------")
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         # Add some operation before testing properties to permit enough time
         # for the stream to be setup
         robot.anim.play_animation("anim_poked_giggle")

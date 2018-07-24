@@ -22,6 +22,8 @@ namespace Anki {
       
       void EnableActiveMode(bool enable, bool calibOnEnable);
       void Update();
+
+      bool IsActiveModeEnabled();
       
     } // namespace PowerModeManager
   } // namespace Cozmo

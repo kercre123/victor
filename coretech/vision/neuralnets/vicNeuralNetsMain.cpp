@@ -235,7 +235,7 @@ int main(int argc, char **argv)
   const std::string jsonFilename = Util::FileUtils::FullFilePath({cachePath, "neuralNetResults.json"});
 
   // Initialize the detector
-  Vision::NeuralNetModel neuralNet;
+  Vision::NeuralNetModel neuralNet(cachePath);
   {
     auto ticToc = TicToc("LoadModel");
     result = neuralNet.LoadModel(modelPath, config);

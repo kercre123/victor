@@ -190,20 +190,22 @@ namespace Anki {
     
     void UiGameController::HandleUiDeviceConnectedBase(const ExternalInterface::UiDeviceConnected& msg)
     {
-      // Redirect Viz
-      webots::Field* redirectVizField = _root->getField("redirectViz");
-      if (nullptr != redirectVizField) {
-        if (redirectVizField->getSFBool()) {
-          ExternalInterface::RedirectViz vizMsg;
-          vizMsg.ipAddr = Util::UDPTransport::GetLocalIpAddress();
-          ExternalInterface::MessageGameToEngine message;
-          message.Set_RedirectViz(vizMsg);
-          SendMessage(message);
-          
-          const uint8_t* ipBytes = (const uint8_t*)&vizMsg.ipAddr;
-          PRINT_NAMED_INFO("UiGameController.Init.RedirectingViz",
-                           "%u.%u.%u.%u",
-                           ipBytes[0], ipBytes[1], ipBytes[2], ipBytes[3]);
+      if (msg.connectionType == UiConnectionType::UI) {
+        // Redirect Viz when connecting with Webots (which is a UI controller)
+        webots::Field* redirectVizField = _root->getField("redirectViz");
+        if (nullptr != redirectVizField) {
+          if (redirectVizField->getSFBool()) {
+            ExternalInterface::RedirectViz vizMsg;
+            vizMsg.ipAddr = Util::UDPTransport::GetLocalIpAddress();
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_RedirectViz(vizMsg);
+            SendMessage(message);
+            
+            const uint8_t* ipBytes = (const uint8_t*)&vizMsg.ipAddr;
+            PRINT_NAMED_INFO("UiGameController.Init.RedirectingViz",
+                             "%u.%u.%u.%u",
+                             ipBytes[0], ipBytes[1], ipBytes[2], ipBytes[3]);
+          }
         }
       }
       

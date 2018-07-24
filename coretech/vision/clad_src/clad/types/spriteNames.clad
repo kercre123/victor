@@ -156,6 +156,7 @@ enum uint_8 SpriteName
   Face_Cloud03,
   Face_Cloud04,
   Face_Clouds_Mist,
+  Face_Flashing_Zeros,
   Face_Knowledgegraph_Answer,
   Face_Knowledgegraph_Fail,
   Face_Knowledgegraph_Getin,
@@ -197,6 +198,7 @@ enum uint_8 SpriteName
   Face_Timerset_Getin_02,
   Face_Timerset_Getout_01,
   Face_Timersup_Getin_02,
+  Face_Windy01,
   Count
 }
 
@@ -351,6 +353,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Cloud03 = 1,
   Face_Cloud04 = 1,
   Face_Clouds_Mist = 1,
+  Face_Flashing_Zeros = 1,
   Face_Knowledgegraph_Answer = 1,
   Face_Knowledgegraph_Fail = 1,
   Face_Knowledgegraph_Getin = 1,
@@ -392,6 +395,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Timerset_Getin_02 = 1,
   Face_Timerset_Getout_01 = 1,
   Face_Timersup_Getin_02 = 1,
+  Face_Windy01 = 1,
   Count = 0
 }
 

@@ -8,11 +8,22 @@ enum uint_8 StreamType {
 	KnowledgeGraph
 }
 
+enum uint_8 ErrorType {
+	Server,
+	Timeout,
+	Json,
+	InvalidConfig,
+	Connecting,
+	NewStream,
+	Token
+}
+
 structure Void {
 }
 
 structure Hotword {
-	StreamType mode
+	StreamType mode,
+	string locale
 }
 
 structure Filename {
@@ -30,7 +41,7 @@ structure IntentResult {
 }
 
 structure IntentError {
-	string error,
+	ErrorType error,
 	string extra
 }
 

@@ -28,14 +28,6 @@ BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(const Json::Value& config)
 
 Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal()
 {
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = GetBEI().GetRobotInfo()._robot;
-
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsRaw(PlaypenConfig::kDurationOfAudioToRecord_ms,
-                                                                                     false,
-                                                                                     GetLogger().GetLogName()+"head_lift")));
-
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
   MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleForDriftCheck);

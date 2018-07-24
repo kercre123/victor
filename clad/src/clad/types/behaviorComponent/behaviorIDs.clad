@@ -8,7 +8,7 @@ namespace Cozmo {
 // BehaviorID is a unique identifier for each instance of a behavior
 // so that they can be referenced by other parts of the behavior system
 
-enum uint_8 BehaviorID {
+enum uint_16 BehaviorID {
 
   // required (not based on config)
   Anonymous,
@@ -57,7 +57,6 @@ enum uint_8 BehaviorID {
   // devBehaviors
   PowerSaveTest,
   TestStackMonitors,
-  TurnTowardsPerson,
 
   // examples
   ExampleAnimGetInLoop,
@@ -85,6 +84,9 @@ enum uint_8 BehaviorID {
   Hiking_ThinkAboutBeacons,
   Hiking_VisitInterestingEdge,
 
+  // inProgress
+  ReactToBody,
+
   // puzzles
   PuzzleMaze,
 
@@ -92,6 +94,7 @@ enum uint_8 BehaviorID {
   BlackJack,
   BlackJackHandleRTPResponses,
   BlackJackHitOrStandPrompt,
+  BlackJackLookAtFaceInFront,
   BlackJackRequestToPlay,
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
@@ -247,6 +250,7 @@ enum uint_8 BehaviorID {
   InitialPickupAnimation,
   WhileInAirDispatcher,
   WhileInAirResponses,
+  WhileInAirResponsesPRDemo,
 
   // victorBehaviorTree
   InitNormalOperation,
@@ -279,6 +283,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,
+  PRDemoComeHere,
   PRDemoExploring,
   PRDemoObserving,
   PRDemoSleeping,
@@ -329,24 +334,27 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   SingletonICantDoThat,
+  SingletonPoweringRobotOff,
 
   // victorBehaviorTree/takeAPhoto
   FindFacesPhoto,
   FrameFaces,
   TakeAPhotoCoordinator,
-  TakingPhotoAnimation,
 
   // victorBehaviorTree/timer
+  DemoTimerUtilityCoordinator,
   SingletonCancelTimer,
   SingletonTimerAlreadySet,
   SingletonTimerAntic,
   SingletonTimerCheckTime,
   SingletonTimerRinging,
   SingletonTimerSet,
+  TimerRingingPRDemo,
   TimerUtilityCoordinator,
 
   // victorBehaviorTree
   TriggerWordDetected,
+  UserDefinedBehaviorTreeRouter,
   Wait,
 
   // victorBehaviorTree/weather/genericResponses

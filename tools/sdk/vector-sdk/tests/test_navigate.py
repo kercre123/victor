@@ -20,7 +20,7 @@ def main():
     print("------ begin testing go to pose ------")
 
     # The robot should go to given pose
-    with vector.Robot(args.ip, str(args.cert), port=args.port) as robot:
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
 
         pose = vector.util.Pose(x=50, y=0, z=0, angle_z=vector.util.Angle(degrees=0))
         robot.behavior.go_to_pose(pose)

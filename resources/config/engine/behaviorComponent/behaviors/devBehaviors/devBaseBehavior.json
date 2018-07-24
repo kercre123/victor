@@ -11,8 +11,7 @@
     {
       "behaviorName": "EyesInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["NeutralFace"],
-      "playOnChargerWithoutBody": true
+      "animTriggers": ["NeutralFace"]
     },
     {
       "behaviorName" : "DevBaseBehaviorInternal",

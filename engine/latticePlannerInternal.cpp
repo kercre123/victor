@@ -81,7 +81,7 @@ namespace Anki {
 namespace Cozmo {
   
 // option to add a small delay for planning to mimic the robot
-CONSOLE_VAR_RANGED( int, kArtificialPlanningTime_ms, "Planner", 0, 0, 3900 );
+CONSOLE_VAR_RANGED( int, kArtificialPlanningDelay_ms, "Planner", 0, 0, 3900 );
 
 LatticePlannerInternal::LatticePlannerInternal(Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
   : _robot(robot)
@@ -163,7 +163,7 @@ void LatticePlannerInternal::DoPlanning()
   }
 
   if( _msToBlock == 0 ) {
-    _msToBlock = kArtificialPlanningTime_ms;
+    _msToBlock = kArtificialPlanningDelay_ms;
   }
   
   if( _msToBlock > 0 ) {

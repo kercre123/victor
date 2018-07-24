@@ -487,6 +487,13 @@ namespace Cozmo {
       
       // VisionMode indicates the vision mode(s) that this action wants to wait for, for numFrames instances. VisionMode::Count means any
       WaitForImagesAction(u32 numFrames, VisionMode visionMode = VisionMode::Count, TimeStamp_t afterTimeStamp = 0);
+
+      struct UseDefaultNumImages_t {};
+      static constexpr UseDefaultNumImages_t UseDefaultNumImages = UseDefaultNumImages_t{};
+      
+      // use a default number of images to give the robot a good chance to see something with the given vision modes
+      WaitForImagesAction(UseDefaultNumImages_t, VisionMode visionMode);
+      
       virtual ~WaitForImagesAction() { }
       
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }

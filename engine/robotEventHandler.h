@@ -50,8 +50,6 @@ public:
   using ActionUnionFcn  = IActionRunner* (*)(Robot& robot, const ExternalInterface::RobotActionUnion& actionUnion);
   using GameToEngineFcn = IActionRunner* (*)(Robot& robot, const ExternalInterface::MessageGameToEngine& msg);
   
-  void SetAllowedToHandleActions(bool allowedToHandleActions);
-
 protected:
   const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
@@ -69,7 +67,6 @@ private:
 
   static u32 _gameActionTagCounter;
 
-  bool _isAllowedToHandleActions;
 };
 
   

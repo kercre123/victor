@@ -19,7 +19,6 @@
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/objectTypes.clad"
@@ -30,7 +29,6 @@
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/uiConnectionTypes.clad"
-#include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/switchboardToRobot.clad"
 #include "util/ankiLab/ankiLabDef.clad"
@@ -225,11 +223,6 @@ message SetRobotAudioOutputSource
 message ForceDelocalizeRobot {
 }
 
-// Controls whether low level motor commands and actions are allowed to run
-message AllowedToHandleActions {
-  bool allowedToHandleActions
-}
-
 // Will restore the currently connected robot with either an automatically determined
 // backup file or from the specified one
 message RestoreRobotFromBackup {
@@ -244,10 +237,6 @@ message RequestRobotRestoreData {
 
 // Wipes all game data on the robot
 message WipeRobotGameData {
-
-}
-
-message RequestUnlockDataFromBackup {
 
 }
 
@@ -527,7 +516,8 @@ message LoadFaceAlbumFromFile {
 }
 
 message SetCameraCaptureFormat {
-  ImageEncoding format
+  ImageEncoding format,
+  bool enableSensorRes=0
 }
 
 message SetMemoryMapRenderEnabled {
@@ -572,21 +562,6 @@ message ExecuteBehaviorByID {
 // Send this message before sending ExecuteBehaviorByName("LiftLoadTest")
 message SetLiftLoadTestAsActivatable {
 }
-
-
-// Enable/Disable Cozmo's ability to request a game
-message CanCozmoRequestGame {
-  bool canRequest
-}
-
-message SetOverrideGameRequestWeights {
-  bool useDefaults,
-  UnlockId unlockIDs[uint_8],
-  int_32 weights[uint_8],
-  bool resetDefaultsOnNextRequest = 0 // Allow the GameRequestSelector to reset defaults without
-                                      // waiting for another override message
-}
-
 
 // AbortPath
 message AbortPath {
@@ -908,34 +883,6 @@ message MoodMessage {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
-
-// Progression unlocks
-message RequestSetUnlock {
-  UnlockId unlockID,
-  bool unlocked
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Inventory
-///////////////////////////////////////////////////////////////////////////////
-
-message InventoryRequestAdd {
-  InventoryType inventoryType,
-  int_32 delta
-}
-
-message InventoryRequestSet {
-  InventoryType inventoryType,
-  int_32 total
-}
-
-message InventoryRequestGet {
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 
 // Request engine to send data like device id, app run id, etc
 message RequestDeviceData {
@@ -1217,8 +1164,8 @@ autounion MessageGameToEngine
   EraseAllEnrolledFaces          EraseAllEnrolledFaces          = 0x0E,
   SetFaceToEnroll                SetFaceToEnroll                = 0x0F,
   EnableVisionMode               EnableVisionMode               = 0x10,
-  RequestAvailableAnimations     RequestAvailableAnimations     = 0x11,  
-  GotoPose                       GotoPose                       = 0x12,  
+  RequestAvailableAnimations     RequestAvailableAnimations     = 0x11,
+  GotoPose                       GotoPose                       = 0x12,
   DriveStraight                  DriveStraight                  = 0x13,
   TurnInPlace                    TurnInPlace                    = 0x14,
   SetHeadAngle                   SetHeadAngle                   = 0x15,

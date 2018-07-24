@@ -60,7 +60,6 @@ class MovementComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
 class PhotographyManager;
-class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
 class SDKComponent;
@@ -150,7 +149,6 @@ public:
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             PhotographyManager*            photographyManager,
-            ProgressionUnlockComponent*    progressionUnlockComponent,
             ProxSensorComponent*           proxSensor,
             PublicStateBroadcaster*        publicStateBroadcaster,
             SDKComponent*                  sdkComponent,
@@ -197,9 +195,6 @@ public:
 
   inline bool HasPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).IsComponentValid();}
   PublicStateBroadcaster& GetRobotPublicStateBroadcaster() const { return GetComponentWrapper(BEIComponentID::PublicStateBroadcaster).GetComponent<PublicStateBroadcaster>();}
-  
-  inline bool HasProgressionUnlockComponent() const { return GetComponentWrapper(BEIComponentID::ProgressionUnlock).IsComponentValid();}
-  ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponentWrapper(BEIComponentID::ProgressionUnlock).GetComponent<ProgressionUnlockComponent>();}
   
   inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsComponentValid();}
   MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetComponent<MoodManager>();}
@@ -297,7 +292,6 @@ private:
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        PhotographyManager*            photographyManager,
-                       ProgressionUnlockComponent*    progressionUnlockComponent,
                        ProxSensorComponent*           proxSensor,
                        PublicStateBroadcaster*        publicStateBroadcaster,
                        SDKComponent*                  sdkComponent,
@@ -306,7 +300,7 @@ private:
                        DataAccessorComponent*         dataAccessor,
                        TextToSpeechCoordinator*       textToSpeechCoordinator,
                        TouchSensorComponent*          touchSensorComponent,
-                       VariableSnapshotComponent*      variableSnapshotComponent,
+                       VariableSnapshotComponent*     variableSnapshotComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator,
                        SettingsManager*               settingsManager);

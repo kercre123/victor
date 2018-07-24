@@ -21,9 +21,13 @@
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 
 namespace Anki{
 namespace Cozmo{
+
+// Fwd Delarations
+class CozmoContext;
 
 class CubeConnectionCoordinator : public IDependencyManagedComponent<RobotComponentID>, public Anki::Util::noncopyable
 {
@@ -33,7 +37,7 @@ public:
 
   // Dependency Managed Component Methods
   virtual void GetInitDependencies(RobotCompIDSet& dependencies ) const override {}
-  virtual void InitDependent( Robot* robot, const RobotCompMap& dependentComps ) override {}
+  virtual void InitDependent( Robot* robot, const RobotCompMap& dependentComps ) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies ) const override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   // Dependency Managed Component Methods
@@ -61,6 +65,9 @@ private:
   void RequestConnection(const RobotCompMap& dependentComps);
   void RequestDisconnect(const RobotCompMap& dependentComps);
   void HandleConnectionAttemptResult(const RobotCompMap& dependentComps);
+
+  void SubscribeToWebViz();
+  void SendDataToWebViz();
 
   struct SubscriberRecord{
     static constexpr float kDontExpire = -1.0f; 
@@ -112,6 +119,12 @@ private:
   float _timeToEndStandby_s = 0.0f;
   float _timeToSwitchToBackground_s = 0.0f;
   float _timeToDisconnect_s = 0.0f;
+
+  // for webviz
+  const CozmoContext* _context = nullptr;
+  float _timeToUpdateWebViz_s = 0.0f;
+  std::vector<Signal::SmartHandle> _signalHandles;
+  std::string _debugStateString = "Unconnected";
 };
 
 } // namespace Cozmo

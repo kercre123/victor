@@ -44,7 +44,7 @@ namespace { // "Private members"
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
-  u16 lastValidTouchIntensity_;
+  u16 lastValidTouchIntensity_ = 0;
 
   HAL::PowerState desiredPowerMode_;
 
@@ -57,9 +57,9 @@ namespace { // "Private members"
   // Last time a HeadToBody frame was sent
   TimeStamp_t lastH2BSendTime_ms_ = 0;
 
-  // The maximum time expected to elapse before we're sure that 
+  // The maximum time expected to elapse before we're sure that
   // syscon should have changed to the desired power mode,
-  // indexed by desired power mode. 
+  // indexed by desired power mode.
   static const TimeStamp_t MAX_POWER_MODE_SWITCH_TIME_MS[2] = {100,          // Calm->Active timeout
                                                                1000 + 100};  // Active->Calm timeout
 
@@ -190,6 +190,17 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         record_body_version( (VersionInfo*)(hdr+1) );
+      }
+      else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+        initialized = true;
+        //extract button data from stub packet and put in fake full packet
+        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
+        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+        BootBodyData_.battery.flags = POWER_ON_CHARGER;
+
+        BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
+        bodyData_ = &BootBodyData_;
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
@@ -323,6 +334,7 @@ Result spine_get_frame() {
         BootBodyData_.battery.main_voltage = (int16_t)(5.0/kBatteryScale);
         BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
         bodyData_ = &BootBodyData_;
+        result = RESULT_OK;
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
@@ -375,7 +387,7 @@ Result HAL::Step(void)
 
     EventStart(EventType::WRITE_SPINE);
     const TimeStamp_t now_ms = GetTimeStamp();
-    if (desiredPowerMode_ == POWER_MODE_CALM) {
+    if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
       if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
         spine_set_lights(&spine_, &(h2bp->lightState));
         calmModeSkipFrameCount_ = 0;
@@ -616,6 +628,10 @@ HAL::PowerState HAL::PowerGetDesiredMode()
 
 HAL::PowerState HAL::PowerGetMode()
 {
+  if(bodyData_ == nullptr)
+  {
+    return POWER_MODE_ACTIVE;
+  }
   return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
 }
 

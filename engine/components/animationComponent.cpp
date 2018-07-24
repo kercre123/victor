@@ -15,6 +15,7 @@
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -45,6 +46,7 @@ namespace {
   static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
 }
   
+CONSOLE_VAR(f32, kEyeDartFocusValue_pix, "Animation", 1.0f);
   
 AnimationComponent::AnimationComponent()
 : IDependencyManagedComponent(this, RobotComponentID::Animation)
@@ -53,7 +55,6 @@ AnimationComponent::AnimationComponent()
 , _isDolingAnims(false)
 , _nextAnimToDole("")
 , _currPlayingAnim("")
-, _lockedTracks(0)
 , _isAnimating(false)
 , _currAnimName("")
 , _currAnimTag(0)
@@ -67,6 +68,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   _dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
+  _movementComponent = dependentComps.GetComponentPtr<MovementComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
   if (context) {
@@ -111,6 +113,12 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 
 void AnimationComponent::Init()
 {
+  if(_isInitialized)
+  {
+    PRINT_NAMED_INFO("AnimationComponent.Init.AlreadyInited","");
+    return;
+  }
+  
   // Open manifest file
   static const std::string manifestFile = "assets/anim_manifest.json";
   Json::Value jsonManifest;
@@ -142,6 +150,19 @@ void AnimationComponent::Init()
   }
   PRINT_CH_INFO(kLogChannelName, "AnimationComponent.Init.ManifestRead", "%zu animations loaded", _availableAnims.size());
 
+  if( ANKI_DEVELOPER_CODE ) {
+    // now that we loaded the animations, go check the animation whitelist and make sure everything in there is
+    // a valid animation
+    const auto& whitelist = _robot->GetContext()->GetDataLoader()->GetAllWhitelistedChargerAnimationClips();
+    for( const auto& anim : whitelist ) {
+      if( _availableAnims.find(anim) == _availableAnims.end() ) {
+        PRINT_NAMED_WARNING("AnimationComponent.AnimWhitelistInvalid",
+                            "Anim whitelist in RobotDataLoader contains animation '%s' which isn't a valid clip name",
+                            anim.c_str());
+      }
+    }
+  }
+
   _isInitialized = true;
   
 }
@@ -160,7 +181,7 @@ void AnimationComponent::UpdateDependent(const RobotCompMap& dependentComps)
     if (it->second.abortTime_sec != 0 && currTime_sec >= it->second.abortTime_sec) {
       PRINT_NAMED_WARNING("AnimationComponent.Update.AnimTimedOut", "Anim: %s", it->second.animName.c_str());
       _robot->SendRobotMessage<RobotInterface::AbortAnimation>(it->first);
-      it->second.ExecuteCallback(AnimResult::Timedout);
+      it->second.ExecuteCallback(AnimResult::Timedout, static_cast<u32>(it->second.abortTime_sec));
       it = _callbackMap.erase(it);
     }
     else {
@@ -229,7 +250,8 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           bool interruptRunning,
                                           AnimationCompleteCallback callback,
                                           const u32 actionTag,
-                                          float timeout_sec)
+                                          float timeout_sec,
+                                          u32 startAt_ms)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
@@ -259,7 +281,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   }
 
   const Tag currTag = GetNextTag();
-  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
+  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, startAt_ms, currTag, animName) == RESULT_OK) {
     SetAnimationCallback(animName, callback, currTag, actionTag, numLoops, timeout_sec);
   }
   
@@ -361,17 +383,19 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
 
 void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToRobot&& msg, 
                                                        TimeStamp_t relativeStreamTime_ms,  
-                                                       bool applyBeforeTick)
+                                                       bool applyBeforeTick,
+                                                       MovementComponent* devSafetyCheck)
 {
   RobotInterface::AlterStreamingAnimationAtTime alterMsg;
   alterMsg.relativeStreamTime_ms = relativeStreamTime_ms;
   alterMsg.applyBeforeTick = applyBeforeTick;
   alterMsg.internalTag = static_cast<uint8_t>(msg.GetTag());
   switch(msg.GetTag()){
-    case RobotInterface::EngineToRobotTag::lockAnimTracks:
+    case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      alterMsg.lockAnimTracks = std::move(msg.Get_lockAnimTracks());
-      _delayedTracksToLock.emplace(relativeStreamTime_ms, alterMsg.lockAnimTracks.whichTracks);
+      DEV_ASSERT(devSafetyCheck == _movementComponent, 
+        "AnimationComponent.AlterStreamingAnimationAtTime.DirectlyQueueingMessageThatMustGoThroughMovementComponent");
+      alterMsg.setFullAnimTrackLockState = std::move(msg.Get_setFullAnimTrackLockState());
       break;
     }
     case RobotInterface::EngineToRobotTag::postAudioEvent:
@@ -390,47 +414,6 @@ void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToR
   
   RobotInterface::EngineToRobot wrapper(std::move(alterMsg));
   _robot->SendMessage(wrapper);
-}
-
-
-  
-// Enables only the specified tracks. 
-// Status of other tracks remain unchanged.
-void AnimationComponent::UnlockTracks(u8 tracks)
-{
-  if(!_delayedTracksToLock.empty()){
-    PRINT_NAMED_ERROR("AnimationComponent.UnlockTracks.DelayedTrackLocksPending",
-                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
-  }
-
-  _lockedTracks &= ~tracks;
-  _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
-}
-
-void AnimationComponent::UnlockAllTracks()
-{
-  if(!_delayedTracksToLock.empty()){
-    PRINT_NAMED_ERROR("AnimationComponent.UnlockAllTracks.DelayedTrackLocksPending",
-                      "Unlocking tracks while delayed tracks to lock results in undefined behavior");
-  }
-
-  if (_lockedTracks != 0) {
-    _lockedTracks = 0;
-    _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
-  }
-}
-
-// Disables only the specified tracks. 
-// Status of other tracks remain unchanged.
-void AnimationComponent::LockTracks(u8 tracks)
-{
-  if(!_delayedTracksToLock.empty()){
-    PRINT_NAMED_ERROR("AnimationComponent.LockTracks.DelayedTrackLocksPending",
-                      "Locking tracks while delayed tracks to lock results in undefined behavior");
-  }
-
-  _lockedTracks |= tracks;
-  _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
 
@@ -568,22 +551,13 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
                                               const u32 currTag,
                                               const u32 actionTag,
                                               int numLoops,
-                                              float timeout_sec)
+                                              float timeout_sec,
+                                              bool callbackStillValidEvenIfTagIsNot)
 {
-  // Check if tag already exists in callback map.
-  // If so, trigger callback with Stale
-  {
-    auto it = _callbackMap.find(currTag);
-    if (it != _callbackMap.end()) {
-      PRINT_NAMED_WARNING("AnimationComponent.SetAnimationCallback.StaleTag", "%d", currTag);
-      it->second.ExecuteCallback(AnimResult::Stale);
-      _callbackMap.erase(it);
-    }
-  }
   const float abortTime_sec = (numLoops > 0 ? BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeout_sec : 0);
   _callbackMap.emplace(std::piecewise_construct,
                         std::forward_as_tuple(currTag),
-                        std::forward_as_tuple(animName, callback, actionTag, abortTime_sec));
+                        std::forward_as_tuple(animName, callback, actionTag, abortTime_sec, callbackStillValidEvenIfTagIsNot));
 }
 
 
@@ -921,25 +895,24 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
 {
   const auto & payload = message.GetData().Get_animEnded();
 
-  if(!_delayedTracksToLock.empty()){
-    const auto& endTime = payload.streamTimeAnimEnded;
-    for(const auto& pair: _delayedTracksToLock){
-      if(pair.first < endTime){
-        _lockedTracks |= pair.second;
-      }else{
-        break;
-      }
-    }
-    _delayedTracksToLock.clear();
-  }
+  _movementComponent->ApplyUpdatesForStreamTime(payload.streamTimeAnimEnded);
   
   // Verify that expected animation completed and execute callback
-  auto it = _callbackMap.find(payload.tag);
-  if (it != _callbackMap.end()) {
-    PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
-    it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed);
-    _callbackMap.erase(it);
-  } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM) ) {
+  bool atLeastOneCallback = false;
+  const auto upperBound = _callbackMap.size() + 1;
+  BOUNDED_WHILE(upperBound, _callbackMap.find(payload.tag) != _callbackMap.end()){
+    auto it = _callbackMap.find(payload.tag);
+    if (it != _callbackMap.end()) {
+      atLeastOneCallback = true;
+      PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+      it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed,
+                                 payload.streamTimeAnimEnded);
+      _callbackMap.erase(it);
+    }
+  }
+    
+  if (!atLeastOneCallback &&
+      (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM))) {
     PRINT_NAMED_WARNING("AnimationComponent.AnimEnded.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
   }
@@ -971,7 +944,55 @@ void AnimationComponent::HandleAnimState(const AnkiEvent<RobotInterface::RobotTo
 {
   _animState = message.GetData().Get_animState();
 }
+
+void AnimationComponent::AddKeepFaceAliveFocus(const std::string& name)
+{
+  if (_focusRequests.empty())
+  {
+    SetKeepFaceAliveParameter(KeepFaceAliveParameter::EyeDartMaxDistance_pix,
+                              kEyeDartFocusValue_pix);
+  }
+  _focusRequests.insert(name);
+}
+
+void AnimationComponent::RemoveKeepFaceAliveFocus(const std::string& name)
+{
+  _focusRequests.erase(name);
+  if (_focusRequests.empty())
+  {
+    SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix); 
+  }
+}
+
+void AnimationComponent::AddAdditionalAnimationCallback(const std::string& name,
+                                                        AnimationComponent::AnimationCompleteCallback callback,
+                                                        bool callEvenIfAnimCanceled)
+{
+  // If we should only call the callback while the anim is active we need to look
+  // up the action tag, otherwise just leave it as zero
+  u32 actionTag = 0;
+  u32 currTag = 0;
+  for(const auto& entry: _callbackMap){
+    if(entry.second.animName == name){
+      currTag = entry.first;
+      actionTag = entry.second.actionTag;
+      break;
+    }
+  }
   
-  
+  if(actionTag == 0){
+    PRINT_NAMED_ERROR("AnimationComponent.AddAdditionalAnimationCallback.NoActionTagFound", 
+                      "Attempting to add an additional callback to animation %s, but it was not found in the callback map",
+                      name.c_str());
+    return;
+  }
+
+  // Timeouts will be handled by the existing callback
+  const u32 numLoops = 0;
+  const float timeout_sec = 0;
+  SetAnimationCallback(name, callback, currTag, actionTag, numLoops, timeout_sec, callEvenIfAnimCanceled);
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

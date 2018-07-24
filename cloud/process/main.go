@@ -5,10 +5,14 @@ import (
 	"anki/ipc"
 	"anki/log"
 	"anki/token"
+	"anki/voice"
 	"bytes"
 	"clad/cloud"
 	"flag"
-	"sync"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -29,7 +33,7 @@ func getSocketWithRetry(name string, client string) ipc.Conn {
 	}
 }
 
-func testReader(serv ipc.Server, send cloudproc.MsgSender) {
+func testReader(serv ipc.Server, send voice.MsgSender) {
 	for conn := range serv.NewConns() {
 		go func(conn ipc.Conn) {
 			for {
@@ -65,6 +69,8 @@ func main() {
 		}
 	}
 
+	signalHandler()
+
 	// don't yet have control over process startup on DVT2, set these as default
 	verbose = true
 	test := true
@@ -88,7 +94,7 @@ func main() {
 	}
 
 	// set up test channel if flags say we should
-	var testRecv *cloudproc.Receiver
+	var testRecv *voice.Receiver
 	if test {
 		testSock, err := ipc.NewUnixgramServer(ipc.GetSocketPath("cp_test"))
 		if err != nil {
@@ -96,49 +102,48 @@ func main() {
 		}
 		defer testSock.Close()
 
-		var testSend cloudproc.MsgIO
-		testSend, testRecv = cloudproc.NewMemPipe()
+		var testSend voice.MsgIO
+		testSend, testRecv = voice.NewMemPipe()
 		go testReader(testSock, testSend)
 		log.Println("Test channel created")
 	}
 	log.Println("Sockets successfully created")
 
-	cloudproc.SetVerbose(verbose)
-	receiver := cloudproc.NewIpcReceiver(micSock, nil)
+	voice.SetVerbose(verbose)
+	receiver := voice.NewIpcReceiver(micSock, nil)
 
-	process := &cloudproc.Process{}
+	process := &voice.Process{}
 	process.AddReceiver(receiver)
 	if testRecv != nil {
 		process.AddTestReceiver(testRecv)
 	}
-	process.AddIntentWriter(&cloudproc.IPCMsgSender{Conn: aiSock})
-	options := []cloudproc.Option{cloudproc.WithChunkMs(120), cloudproc.WithSaveAudio(true)}
-	if platformOpts != nil && len(platformOpts) > 0 {
-		options = append(options, platformOpts...)
-	}
-	//options = append(options, WithCompression(true))
+	process.AddIntentWriter(&voice.IPCMsgSender{Conn: aiSock})
+	voiceOpts := []voice.Option{voice.WithChunkMs(120), voice.WithSaveAudio(true)}
+	var options []cloudproc.Option
+	options = append(options, platformOpts...)
+	voiceOpts = append(voiceOpts, voice.WithCompression(true))
 	if *ms {
-		options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
+		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerMicrosoft))
 	} else if *lex {
-		options = append(options, cloudproc.WithHandler(cloudproc.HandlerAmazon))
+		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerAmazon))
 	}
 
-	launchProcess(func() {
-		process.Run(options...)
-	})
-	launchProcess(func() {
-		token.Run()
-	})
-	wg.Wait()
+	options = append(options, cloudproc.WithVoice(process))
+	options = append(options, cloudproc.WithVoiceOptions(voiceOpts...))
+	tokenOpts := []token.Option{token.WithServer()}
+	options = append(options, cloudproc.WithTokenOptions(tokenOpts...))
+
+	cloudproc.Run(options...)
+
 	log.Println("All processes exited, shutting down")
 }
 
-var wg sync.WaitGroup
-
-func launchProcess(launcher func()) {
-	wg.Add(1)
+func signalHandler() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		launcher()
-		wg.Done()
+		<-ch
+		fmt.Println("Received SIGTERM, shutting down immediately")
+		os.Exit(0)
 	}()
 }

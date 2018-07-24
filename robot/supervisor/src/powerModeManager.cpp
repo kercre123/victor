@@ -23,13 +23,18 @@ void EnableActiveMode(bool enable, bool calibOnEnable)
   calibOnEnable_ = calibOnEnable;
 }
 
+bool IsActiveModeEnabled()
+{
+  return enable_;
+}
+
 void Update() 
 {
   // Check if any of the motors are being commanded
   // If so, active mode must be temporarily re-enabled (if it's currently disabled)
   const bool wheelsMoving = WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving();
-  const bool headMoving   = !HeadController::IsInPosition() || HeadController::IsMoving();
-  const bool liftMoving   = !LiftController::IsInPosition() || LiftController::IsMoving();
+  const bool headMoving   = !HeadController::IsInPosition() || HeadController::IsMoving() || HeadController::IsBracing();
+  const bool liftMoving   = !LiftController::IsInPosition() || LiftController::IsMoving() || LiftController::IsBracing();
   const bool shouldEnableInternally = wheelsMoving || headMoving || liftMoving;
 
   const bool isHALActiveModeEnabled = HAL::PowerGetDesiredMode() == HAL::POWER_MODE_ACTIVE;

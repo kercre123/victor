@@ -34,7 +34,7 @@ Supervisor {
 
   children [  
     CozmoCamera {
-      translation 0.01752 0 -0.008 # Matches engine definitions
+      translation 0.01884 0 -0.00796 # Matches engine definitions
       rotation    0.563430001007340  -0.563430001007340  -0.604229482837223 2.054545429548061 # 4-degree look-down
       #rotation    0.57735 -0.57735 -0.57735 2.0944 # look straight ahead
     }

@@ -11,7 +11,8 @@ import logging
 
 from . import (animation, backpack, behavior, connection,
                events, exceptions, faces, motors,
-               oled_face, photos, util, world)
+               oled_face, photos, sync, util, world)
+from .messaging import protocol
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ MAX_HEAD_ANGLE = util.degrees(45)
 
 
 class Robot:
-    def __init__(self, ip, cert_file, port="443",
+    def __init__(self, name, ip, cert_file, port="443",
                  loop=None, default_logging=True, behavior_timeout=10):
         if default_logging:
             util.setup_basic_logging()
@@ -34,7 +35,7 @@ class Robot:
         self.is_loop_owner = False
         self._original_loop = None
         self.loop = loop
-        self.conn = connection.Connection(self, ':'.join([ip, port]), cert_file)
+        self.conn = connection.Connection(self, name, ':'.join([ip, port]), cert_file)
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim = None
@@ -44,9 +45,9 @@ class Robot:
         self._motors = None
         self._oled = None
         self._photos = None
+        self._world = None
 
         self.behavior_timeout = behavior_timeout
-        self._world = world.World()
         # Robot state/sensor data
         self._pose: util.Pose = None
         self._pose_angle_rad: float = None
@@ -113,6 +114,8 @@ class Robot:
 
     @property
     def world(self):
+        if self._world is None:
+            raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
         return self._world
 
     @property
@@ -240,9 +243,11 @@ class Robot:
         self._motors = motors.MotorComponent(self)
         self._oled = oled_face.OledComponent(self)
         self._photos = photos.PhotographComponent(self)
+        self._world = world.World(self)
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self.faces.enable_vision_mode(enable=True)
+        self._faces.enable_vision_mode(enable=True)
+
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe("robot_state", self._unpack_robot_state)
         # Subscribe to a callback that updates the world view
@@ -251,6 +256,27 @@ class Robot:
         # Subscribe to a callback that updates a face's id
         self.events.subscribe("robot_changed_observed_face_id",
                               self.world.update_face_id)
+
+        # @TODO: these events subscriptions should be moved to objects.py rather than living on the robot
+
+        # Subscribe to callbacks that is triggered when an object connects or disconnects
+        self.events.subscribe("object_connection_state",
+                              self.world.object_connection_state)
+        # Subscribe to callbacks that is triggered when an object is in motion
+        self.events.subscribe("object_moved",
+                              self.world.object_moved)
+        # Subscribe to callbacks that is triggered when an object stops moving
+        self.events.subscribe("object_stopped_moving",
+                              self.world.object_stopped_moving)
+        # Subscribe to callbacks that is triggered when an object is rotated toward a new up axis
+        self.events.subscribe("object_up_axis_changed",
+                              self.world.object_up_axis_changed)
+        # Subscribe to callbacks that is triggered when an object is tapped
+        self.events.subscribe("object_tapped",
+                              self.world.object_tapped)
+        # Subscribe to callbacks that is triggered when the robot observes an object
+        self.events.subscribe("robot_observed_object",
+                              self.world.robot_observed_object)
 
     def disconnect(self, wait_for_tasks=True):
         if self.is_async and wait_for_tasks:
@@ -273,6 +299,41 @@ class Robot:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
+
+    @sync.Synchronizer.wrap
+    async def get_battery_state(self):
+        get_battery_state_request = protocol.BatteryStateRequest()
+        return await self.conn.interface.BatteryState(get_battery_state_request)
+
+    @sync.Synchronizer.wrap
+    async def get_version_state(self):
+        get_version_state_request = protocol.VersionStateRequest()
+        return await self.conn.interface.VersionState(get_version_state_request)
+
+    @sync.Synchronizer.wrap
+    async def get_network_state(self):
+        get_network_state_request = protocol.NetworkStateRequest()
+        return await self.conn.interface.NetworkState(get_network_state_request)
+
+    @sync.Synchronizer.wrap
+    async def say_text(self, text, use_vector_voice=True, duration_scalar=1.0):
+        '''Have Vector say text!
+
+        Args:
+            text (string): The words for Vector to say.
+            use_vector_voice (bool): Whether to use Vector's robot voice
+                (otherwise, he uses a generic human male voice).
+            duration_scalar (float): Adjust the relative duration of the
+                generated text to speech audio.
+
+        Returns:
+            A :class:`vector.messaging.messages_pb2.SayTextResponse` object that
+            provides the status and utterance state
+        '''
+        say_text_request = protocol.SayTextRequest(text=text,
+                                                   use_vector_voice=use_vector_voice,
+                                                   duration_scalar=duration_scalar)
+        return await self.conn.interface.SayText(say_text_request)
 
 
 class AsyncRobot(Robot):

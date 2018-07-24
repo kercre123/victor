@@ -25,6 +25,7 @@ const std::ios_base::openmode SavedSessionManager::kWriteMode = std::ios_base::b
 const std::ios_base::openmode SavedSessionManager::kReadMode = std::ios_base::binary | std::ios_base::in;
 const uint8_t SavedSessionManager::kMaxNumberClients = (uint8_t)255;
 const uint32_t SavedSessionManager::kNativeBufferSize = 262144; // 256 * 1024 bytes -- (256kb)
+const uint8_t SavedSessionManager::kMagicVersionNumber = 2; // MAGIC number that can't change
 const char* SavedSessionManager::kPrefix = "ANKIBITS";
 
 RtsKeys SavedSessionManager::LoadRtsKeys() {
@@ -81,13 +82,6 @@ RtsKeys SavedSessionManager::LoadRtsKeys() {
     return savedData;
   }
 
-  if((savedData.keys.version != SB_PAIRING_PROTOCOL_VERSION) && 
-    (savedData.keys.version != PairingProtocolVersion::V2)) {
-    Log::Error("Old version of RTS keys.");
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
   return savedData;
 }
 
@@ -104,10 +98,16 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
 
   // Update saveData values
   memcpy((char*)&saveData.keys.magic, kPrefix, strlen(kPrefix)); 
-  saveData.keys.version = SB_PAIRING_PROTOCOL_VERSION;
+  saveData.keys.version = kMagicVersionNumber;
   saveData.keys.numKnownClients = saveData.clients.size();
 
   fout.write((char*)&(saveData.keys), sizeof(saveData.keys));
+
+  // If somehow we hit max clients, start removing from the beginning
+  if(saveData.clients.size() > kMaxNumberClients) {
+    saveData.clients.erase(saveData.clients.begin(), 
+      saveData.clients.begin() + (saveData.clients.size() - kMaxNumberClients));
+  }
 
   for(int i = 0; i < saveData.clients.size(); i++) {
     // Write each client session

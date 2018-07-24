@@ -21,6 +21,7 @@ namespace Audio{
 class EngineRobotAudioClient;
 }
 
+class AppCubeConnectionSubscriber;
 class ContextWrapper;
 class BlockWorld;
 class FaceWorld;
@@ -51,8 +52,6 @@ class AnimationComponent;
 class RobotStateHistory;
 class MoodManager;
 class StimulationFaceDisplay;
-class InventoryComponent;
-class ProgressionUnlockComponent;
 class BlockTapFilterComponent;
 class RobotToEngineImplMessaging;
 class RobotIdleTimeoutComponent;
@@ -70,10 +69,12 @@ class SettingsCommManager;
 class SettingsManager;
 class VariableSnapshotComponent;
 class PowerStateManager;
+class RobotExternalRequestComponent;
 
 } // namespace Cozmo
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
+LINK_COMPONENT_TYPE_TO_ENUM(AppCubeConnectionSubscriber,   RobotComponentID, AppCubeConnectionSubscriber)
 LINK_COMPONENT_TYPE_TO_ENUM(ContextWrapper,                RobotComponentID, CozmoContextWrapper)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                    RobotComponentID, BlockWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                     RobotComponentID, FaceWorld)
@@ -106,8 +107,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Ani
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStateHistory,             RobotComponentID, StateHistory)
 LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                   RobotComponentID, MoodManager)
 LINK_COMPONENT_TYPE_TO_ENUM(StimulationFaceDisplay,        RobotComponentID, StimulationFaceDisplay)
-LINK_COMPONENT_TYPE_TO_ENUM(InventoryComponent,            RobotComponentID, Inventory)
-LINK_COMPONENT_TYPE_TO_ENUM(ProgressionUnlockComponent,    RobotComponentID, ProgressionUnlock)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotToEngineImplMessaging,    RobotComponentID, RobotToEngineImplMessaging)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, RobotIdleTimeout)
@@ -124,6 +123,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(SettingsManager,               RobotComponentID, Set
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
+LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent,   RobotComponentID, RobotExternalRequestComponent)
 
 // Translate entity into string
 template<>
@@ -133,57 +133,57 @@ template<>
 std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotComponentID enumID)
 {
   switch(enumID){
-    case Cozmo::RobotComponentID::AIComponent:                { return "AIComponent";}
-    case Cozmo::RobotComponentID::ActionList:                 { return "ActionList";}
-    case Cozmo::RobotComponentID::Animation:                  { return "Animation";}
-    case Cozmo::RobotComponentID::Battery:                    { return "Battery";}
-    case Cozmo::RobotComponentID::BeatDetector:               { return "BeatDetector";}
-    case Cozmo::RobotComponentID::BlockTapFilter:             { return "BlockTapFilter";}
-    case Cozmo::RobotComponentID::BlockWorld:                 { return "BlockWorld";}
-    case Cozmo::RobotComponentID::BackpackLights:             { return "BackpackLights";}
-    case Cozmo::RobotComponentID::Carrying:                   { return "Carrying";}
-    case Cozmo::RobotComponentID::CliffSensor:                { return "CliffSensor";}
-    case Cozmo::RobotComponentID::CozmoContextWrapper:        { return "CozmoContextWrapper";}
-    case Cozmo::RobotComponentID::CubeAccel:                  { return "CubeAccel";}
-    case Cozmo::RobotComponentID::CubeComms:                  { return "CubeComms";}
-    case Cozmo::RobotComponentID::CubeConnectionCoordinator:  { return "CubeConnectionCoordinator";}
-    case Cozmo::RobotComponentID::CubeLights:                 { return "CubeLights";}
-    case Cozmo::RobotComponentID::DataAccessor:               { return "DataAccessor";}
-    case Cozmo::RobotComponentID::Docking:                    { return "Docking";}
-    case Cozmo::RobotComponentID::DrivingAnimationHandler:    { return "DrivingAnimationHandler";}
-    case Cozmo::RobotComponentID::EngineAudioClient:          { return "EngineAudioClient";}
-    case Cozmo::RobotComponentID::FaceWorld:                  { return "FaceWorld";}
-    case Cozmo::RobotComponentID::GyroDriftDetector:          { return "GyroDriftDetector";}
-    case Cozmo::RobotComponentID::HabitatDetector:            { return "HabitatDetector";}
-    case Cozmo::RobotComponentID::Inventory:                  { return "Inventory";}
-    case Cozmo::RobotComponentID::Map:                        { return "Map";}
-    case Cozmo::RobotComponentID::MicComponent:               { return "MicComponent"; }
-    case Cozmo::RobotComponentID::MoodManager:                { return "MoodManager";}
-    case Cozmo::RobotComponentID::StimulationFaceDisplay:     { return "StimulationFaceDisplay";}
-    case Cozmo::RobotComponentID::Movement:                   { return "Movement";}
-    case Cozmo::RobotComponentID::NVStorage:                  { return "NVStorage";}
-    case Cozmo::RobotComponentID::ObjectPoseConfirmer:        { return "ObjectPoseConfirmer";}
-    case Cozmo::RobotComponentID::PathPlanning:               { return "PathPlanning";}
-    case Cozmo::RobotComponentID::PetWorld:                   { return "PetWorld";}
-    case Cozmo::RobotComponentID::PhotographyManager:         { return "PhotographyManager";}
-    case Cozmo::RobotComponentID::ProgressionUnlock:          { return "ProgressionUnlock";}
-    case Cozmo::RobotComponentID::ProxSensor:                 { return "ProxSensor";}
-    case Cozmo::RobotComponentID::PublicStateBroadcaster:     { return "PublicStateBroadcaster";}
-    case Cozmo::RobotComponentID::SDK:                        { return "SDK";}
-    case Cozmo::RobotComponentID::SettingsCommManager:        { return "SettingsCommManager";}
-    case Cozmo::RobotComponentID::SettingsManager:            { return "SettingsManager";}
-    case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
-    case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
-    case Cozmo::RobotComponentID::RobotStatsTracker:          { return "RobotStatsTracker";}      
-    case Cozmo::RobotComponentID::RobotToEngineImplMessaging: { return "RobotToEngineImplMessaging";}
-    case Cozmo::RobotComponentID::StateHistory:               { return "StateHistory";}
-    case Cozmo::RobotComponentID::TextToSpeechCoordinator:    { return "TextToSpeechCoordinator";}
-    case Cozmo::RobotComponentID::TouchSensor:                { return "TouchSensor";}
-    case Cozmo::RobotComponentID::VariableSnapshotComponent:  { return "VariableSnapshotComponent"; }
-    case Cozmo::RobotComponentID::Vision:                     { return "Vision";}
-    case Cozmo::RobotComponentID::VisionScheduleMediator:     { return "VisionScheduleMediator";}
-    case Cozmo::RobotComponentID::PowerStateManager:          { return "PowerStateManager";}
-    case Cozmo::RobotComponentID::Count:                      { return "Count";}
+    case Cozmo::RobotComponentID::AIComponent:                  { return "AIComponent";}
+    case Cozmo::RobotComponentID::ActionList:                   { return "ActionList";}
+    case Cozmo::RobotComponentID::Animation:                    { return "Animation";}
+    case Cozmo::RobotComponentID::AppCubeConnectionSubscriber:  { return "AppCubeConnectionSubscriber";}
+    case Cozmo::RobotComponentID::Battery:                      { return "Battery";}
+    case Cozmo::RobotComponentID::BeatDetector:                 { return "BeatDetector";}
+    case Cozmo::RobotComponentID::BlockTapFilter:               { return "BlockTapFilter";}
+    case Cozmo::RobotComponentID::BlockWorld:                   { return "BlockWorld";}
+    case Cozmo::RobotComponentID::BackpackLights:               { return "BackpackLights";}
+    case Cozmo::RobotComponentID::Carrying:                     { return "Carrying";}
+    case Cozmo::RobotComponentID::CliffSensor:                  { return "CliffSensor";}
+    case Cozmo::RobotComponentID::CozmoContextWrapper:          { return "CozmoContextWrapper";}
+    case Cozmo::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
+    case Cozmo::RobotComponentID::CubeComms:                    { return "CubeComms";}
+    case Cozmo::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
+    case Cozmo::RobotComponentID::CubeLights:                   { return "CubeLights";}
+    case Cozmo::RobotComponentID::DataAccessor:                 { return "DataAccessor";}
+    case Cozmo::RobotComponentID::Docking:                      { return "Docking";}
+    case Cozmo::RobotComponentID::DrivingAnimationHandler:      { return "DrivingAnimationHandler";}
+    case Cozmo::RobotComponentID::EngineAudioClient:            { return "EngineAudioClient";}
+    case Cozmo::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
+    case Cozmo::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
+    case Cozmo::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
+    case Cozmo::RobotComponentID::Map:                          { return "Map";}
+    case Cozmo::RobotComponentID::MicComponent:                 { return "MicComponent"; }
+    case Cozmo::RobotComponentID::MoodManager:                  { return "MoodManager";}
+    case Cozmo::RobotComponentID::StimulationFaceDisplay:       { return "StimulationFaceDisplay";}
+    case Cozmo::RobotComponentID::Movement:                     { return "Movement";}
+    case Cozmo::RobotComponentID::NVStorage:                    { return "NVStorage";}
+    case Cozmo::RobotComponentID::ObjectPoseConfirmer:          { return "ObjectPoseConfirmer";}
+    case Cozmo::RobotComponentID::PathPlanning:                 { return "PathPlanning";}
+    case Cozmo::RobotComponentID::PetWorld:                     { return "PetWorld";}
+    case Cozmo::RobotComponentID::PhotographyManager:           { return "PhotographyManager";}
+    case Cozmo::RobotComponentID::ProxSensor:                   { return "ProxSensor";}
+    case Cozmo::RobotComponentID::PublicStateBroadcaster:       { return "PublicStateBroadcaster";}
+    case Cozmo::RobotComponentID::SDK:                          { return "SDK";}
+    case Cozmo::RobotComponentID::SettingsCommManager:          { return "SettingsCommManager";}
+    case Cozmo::RobotComponentID::SettingsManager:              { return "SettingsManager";}
+    case Cozmo::RobotComponentID::FullRobotPose:                { return "FullRobotPose";}
+    case Cozmo::RobotComponentID::RobotIdleTimeout:             { return "RobotIdleTimeout";}
+    case Cozmo::RobotComponentID::RobotStatsTracker:            { return "RobotStatsTracker";}      
+    case Cozmo::RobotComponentID::RobotToEngineImplMessaging:   { return "RobotToEngineImplMessaging";}
+    case Cozmo::RobotComponentID::StateHistory:                 { return "StateHistory";}
+    case Cozmo::RobotComponentID::TextToSpeechCoordinator:      { return "TextToSpeechCoordinator";}
+    case Cozmo::RobotComponentID::TouchSensor:                  { return "TouchSensor";}
+    case Cozmo::RobotComponentID::VariableSnapshotComponent:    { return "VariableSnapshotComponent"; }
+    case Cozmo::RobotComponentID::Vision:                       { return "Vision";}
+    case Cozmo::RobotComponentID::VisionScheduleMediator:       { return "VisionScheduleMediator";}
+    case Cozmo::RobotComponentID::PowerStateManager:            { return "PowerStateManager";}
+    case Cozmo::RobotComponentID::RobotExternalRequestComponent:{ return "RobotExternalRequestComponent";}
+    case Cozmo::RobotComponentID::Count:                        { return "Count";}
   }
 }
 

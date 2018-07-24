@@ -80,7 +80,7 @@ public:
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const = 0;
   
   // returns the accumulated area of cells that satisfy the predicate
-  virtual float GetCollisionArea(const BoundedConvexSet2f& region, NodePredicate func) const = 0;
+  virtual float GetArea(const BoundedConvexSet2f& region, NodePredicate func) const = 0;
   
   // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
   // returns true if any node that intersects with the provided regions evaluates `func` as true.

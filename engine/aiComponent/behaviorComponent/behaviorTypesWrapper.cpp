@@ -72,7 +72,7 @@ const char* ExecutableBehaviorTypeToString(const ExecutableBehaviorType in)
 }
   
 #if BEHAVIOR_ID_DEV_MODE
-uint8_t GetBehaviorIDNumEntries()
+uint16_t GetBehaviorIDNumEntries()
 {
   return BehaviorIDNumEntries;
 }

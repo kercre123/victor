@@ -45,7 +45,6 @@ private:
   struct InstanceConfig {
     InstanceConfig();
     ICozmoBehaviorPtr frameFacesBehavior;
-    ICozmoBehaviorPtr takePhotoAnimationsBehavior;
     ICozmoBehaviorPtr storageIsFullBehavior;
   };
 
@@ -58,7 +57,7 @@ private:
 
   void TransitionToStorageIsFull();
   void TransitionToFrameFaces();
-  void TransitionToTakeAPhotoAnimations();
+  void TransitionToFocusingAnimation();
   void TransitionToTakePhoto();
   void CaptureCurrentImage();
   
