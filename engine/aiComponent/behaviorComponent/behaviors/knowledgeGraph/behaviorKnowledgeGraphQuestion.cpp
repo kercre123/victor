@@ -23,7 +23,6 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -503,24 +502,10 @@ void BehaviorKnowledgeGraphQuestion::PlayStreamingCues( bool onBegin )
 {
   using namespace AudioMetaData::GameEvent;
 
-  static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
-  {
-    .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
-    .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
-    .onPeriod_ms            = {{0,0,0}},
-    .offPeriod_ms           = {{0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
-
   BehaviorExternalInterface& bei = GetBEI();
 
   if ( onBegin )
   {
-    BackpackLightComponent& blc = bei.GetBackpackLightComponent();
-    blc.StartLoopingBackpackAnimation( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
-
     if ( GenericEvent::Invalid != _iVars.earConBegin )
     {
       // Play earcon begin audio
@@ -530,12 +515,6 @@ void BehaviorKnowledgeGraphQuestion::PlayStreamingCues( bool onBegin )
   }
   else
   {
-    if ( _dVars.lightsHandle.IsValid() )
-    {
-      BackpackLightComponent& blc = bei.GetBackpackLightComponent();
-      blc.StopLoopingBackpackAnimation( _dVars.lightsHandle );
-    }
-
     if ( GenericEvent::Invalid != _iVars.earConEnd )
     {
       // Play earcon end audio

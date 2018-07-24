@@ -139,13 +139,6 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   {
     trigger = BackpackAnimationTrigger::Charging;
   }
-  // If we have low batter
-#if FACTORY_TEST
-  else
-  {
-    trigger = BackpackAnimationTrigger::Idle_09;
-  }
-#endif
 
   if(trigger != _internalChargeLightsTrigger)
   {
@@ -160,6 +153,10 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
       return;
     }
 
+    PRINT_CH_INFO("BackpackLightComponent",
+                  "BackpackLightComponent.UpdateCriticalLightConfig",
+                  "%s", EnumToString(trigger));
+          
     // All of the backpack lights set by the above checks (except for Off)
     // take precedence over all other backpack lights so play them
     // under the "critical" backpack light source
@@ -167,11 +164,11 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     {
       StartLoopingBackpackAnimationInternal(*anim,
                                             Util::EnumToUnderlying(BackpackLightSourcePrivate::Critical),
-                                            _sharedLightConfig);
+                                            _criticalLightConfig);
     }
     else
     {
-      SetBackpackAnimation(*anim);
+      StopLoopingBackpackAnimation(_criticalLightConfig);
     }
   }
 }

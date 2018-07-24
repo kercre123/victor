@@ -12,7 +12,7 @@
   "vocalRepromptString"                 : "Try again",
   "maxNumberOfReprompts"                : 1,
   "stopListeningOnIntents"              : true,
-  "backpackLights"                      : true,
+  "backpackLights"                      : false,
   "playListeningGetIn"                  : true,
   "playListeningGetOut"                 : true
 }

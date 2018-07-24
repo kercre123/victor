@@ -12,7 +12,7 @@
   "vocalPromptString"                   : "Hit or Stand?",
   "maxNumberOfReprompts"                : 2,
   "stopListeningOnIntents"              : true,
-  "backpackLights"                      : true,
+  "backpackLights"                      : false,
   "playListeningGetIn"                  : false,
   "playListeningGetOut"                 : false
 }

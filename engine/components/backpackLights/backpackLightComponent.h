@@ -103,6 +103,7 @@ private:
   
   // Locator handle for the shared light configuration associated with SetBackpackLightAnimation above
   BackpackLightDataLocator        _sharedLightConfig{};
+  BackpackLightDataLocator        _criticalLightConfig{};
   
   // Note: this variable does NOT track the current trigger playing, it tracks internal state for 
   // UpdateChargingLightConfig and should not be used for any other decision making
