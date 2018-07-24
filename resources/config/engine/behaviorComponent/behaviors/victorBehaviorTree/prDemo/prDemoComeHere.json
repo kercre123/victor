@@ -15,7 +15,7 @@
   "timeUntilCancelFaceTrack_s": 5.0,
   "minDriveToFaceDistanceKey_mm": 200,
   "initialAnimation": "ComeHereStart",
-  // "animationAfterDrive": "ComeHereSuccess",
+  "animationAfterDrive": "ComeHereSuccess",
   "resumeAnimation": "ComeHereSuccess",
 
   "maxNumResumes": 1,
