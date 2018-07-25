@@ -39,7 +39,7 @@ namespace Anki {
     {
       static const std::map<ObjectType, Point3f> Sizes = {
         {ObjectType::ProxObstacle,      {10.f, 10.f, 50.f}},
-        {ObjectType::CliffDetection,    {10.f, 150.f, 50.f}},
+        {ObjectType::CliffDetection,    {10.f, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z}},
         {ObjectType::CollisionObstacle, {20.f, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z}},
       };
     

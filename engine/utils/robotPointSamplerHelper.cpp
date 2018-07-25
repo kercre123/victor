@@ -112,8 +112,9 @@ bool RejectIfWouldCrossCliff::operator()( const Point2f& sampledPos )
     const bool intersects = lineRobotToSample.IntersectsAt( cliffLine, intersectionPoint );
     if( intersects ) {
       // confirm intersection point lies on cliff edge
-      DEV_ASSERT( AreVectorsAligned( (intersectionPoint - cliffPos), cliffEdgeDirection, 0.001f ),
-                  "RejectIfWouldCrossCliff.CallOperator.BadIntersection" );
+      if (!AreVectorsAligned( (intersectionPoint - cliffPos), cliffEdgeDirection, 0.001f )) {
+        PRINT_NAMED_WARNING("RejectIfWouldCrossCliff.CallOperator.BadIntersection", "vectors not aligned" );
+      }
       // if the intersection pos is close to the cliff pos, reject. If it's far, accept. interpolate in between.
       const float distFromCliffSq = (intersectionPoint - cliffPos).LengthSq();
       if( distFromCliffSq < _minCliffDistSq ) {
