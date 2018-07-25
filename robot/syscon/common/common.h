@@ -41,10 +41,6 @@ enum GPIO_TYPE {
     bank->MODER = (bank->MODER & ~(0x3U << ps)) | (mode << ps); \
     __enable_irq(); \
   } \
-  static inline void modenoirq(GPIO_MODE mode) { \
-    const uint32_t ps = pin * 2; \
-    bank->MODER = (bank->MODER & ~(0x3U << ps)) | (mode << ps); \
-  } \
   static inline void type(GPIO_TYPE type) { \
     __disable_irq(); \
     bank->OTYPER = (bank->OTYPER & ~mask) | (type << pin); \

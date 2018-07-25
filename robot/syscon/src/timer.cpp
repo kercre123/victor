@@ -4,6 +4,7 @@
 #include "timer.h"
 #include "vectors.h"
 #include "flash.h"
+#include "touch.h"
 
 extern void Main_Execution(void);
 
@@ -39,7 +40,9 @@ extern "C" void TIM14_IRQHandler(void) {
     Main_Execution();
   } else {
     // Capture mode
+    Touch::Pause();
     Timer::LightHandler();
+    Touch::Resume();
   }
 
   TIM14->SR = 0;

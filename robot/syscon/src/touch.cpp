@@ -6,10 +6,10 @@
 #include "touch.h"
 
 static volatile uint32_t sumandcount;   // Eternally accumulating SUM and COUNT
-const int SAMPLE_INTERVAL = 18481;      // ~13x oversample, prime to 245600 cyc/tick
+const int SAMPLE_INTERVAL = 9973;       // ~24x oversample, prime to 245600 cyc/tick
 
 const int BOXCAR_WIDTH = 39;  // 50&60Hz integer divisor: 15625/80/39 = 5.008Hz (good enough)
-const int COUNT_BITS = 10;    // 2^x max number of readings in boxcar (in bits)
+const int COUNT_BITS = 11;    // 2^x max number of readings in boxcar (in bits)
 const int GAIN_BITS = 3;      // 2^x gain (in bits)
 
 void Touch::init(void) {
@@ -44,18 +44,25 @@ void Touch::init(void) {
 }
 
 extern "C" void TIM16_IRQHandler(void) {
-  if (TIM16->SR & TIM_SR_CC1IF) sumandcount += ((TIM16->CCR1<<COUNT_BITS) | 1);
-  TIM16->SR = 0;
-
+  uint32_t altmode = CAPI::bank->MODER;
+  uint32_t outmode = altmode - (MODE_ALTERNATE << (CAPI::pin * 2)) + (MODE_OUTPUT << (CAPI::pin * 2));
+  
   __disable_irq();
-  CAPI::modenoirq(MODE_OUTPUT);
-  CAPI::modenoirq(MODE_OUTPUT); // ~10 cycles (100:1 discharge:charge, 1000 worst case TIM16 discharge)
+  CAPI::bank->MODER = outmode; // CAPI=out for exactly 12 cycles, thus max reading = 12*100 (vs observed ~800)
+
+  TIM16->SR = 0;
   TIM16->CR1 = 0
     | TIM_CR1_OPM               // One pulse mode
     | TIM_CR1_CEN               // Enabled
     ;
-  CAPI::modenoirq(MODE_ALTERNATE);
+  
+  uint32_t reading = ((TIM16->CCR1<<COUNT_BITS) | 1);  
+
+  CAPI::bank->MODER = altmode;  // CAPI=alt (input)
   __enable_irq();
+  
+  if (!(reading >> (32-COUNT_BITS))) // Drop readings that risk overflow
+    sumandcount += reading;
 }
 
 void Touch::transmit(uint16_t* data) {
