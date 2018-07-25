@@ -36,15 +36,17 @@
 #define LOG_DEBUG(name, format, ...)   {}
 #endif
 
+constexpr const char LocalUdpServer::kConnectionPacket[];
+
 static std::string to_string(const struct sockaddr_un & saddr, socklen_t saddrlen)
 {
   return std::string(saddr.sun_path, saddrlen - (sizeof(saddr) - sizeof(saddr.sun_path)));
 }
 
 LocalUdpServer::LocalUdpServer()
+: _socketfd(-1)
+, _bindClients(true)
 {
-  _bindClients = true;
-  _socketfd = -1;
 }
 
 LocalUdpServer::~LocalUdpServer()
@@ -200,11 +202,17 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
 
   // Connect to new client?
   if (!HasClient() || !_bindClients) {
-    if (AddClient(saddr, saddrlen) && bytes_received == 1) {
-      // If client was newly added, the first datagram (as long as it's only 1 byte long)
-      // is assumed to be a "connection packet".
-      return 0;
+    if (AddClient(saddr, saddrlen)) {
+      LOG_DEBUG("LocalUdpServer.Recv.NewClient", "");
     }
+  }
+
+  // Check if this is a connection packet
+  
+  if (bytes_received == sizeof(kConnectionPacket) && 
+      strncmp(data, kConnectionPacket, sizeof(kConnectionPacket)) == 0)  {
+    LOG_DEBUG("LocalUdpServer.Recv.ReceivedConnectionPacket", "");
+    return 0;
   }
 
   return bytes_received;

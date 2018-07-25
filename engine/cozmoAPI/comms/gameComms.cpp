@@ -42,7 +42,8 @@ namespace Cozmo {
   //const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
   
   GameComms::GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
-  : isInitialized_(false)
+  : server_("gameComms")
+  , isInitialized_(false)
   , deviceID_(deviceID)
   , serverListenPort_(serverListenPort)
   , advertisementRegIP_(advertisementRegIP)

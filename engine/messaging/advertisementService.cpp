@@ -31,6 +31,8 @@ namespace Anki {
   namespace Comms {
 
     AdvertisementService::AdvertisementService(const char* serviceName, RegMsgTag regMsgTag)
+    : regServer_("regServer")
+    , advertisingServer_("advertisingServer")
     {
       if (regMsgTag == kInvalidRegMsgTag)
       {

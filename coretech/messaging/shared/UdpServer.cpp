@@ -1,9 +1,9 @@
 #include "coretech/messaging/shared/UdpServer.h"
+#include "coretech/common/shared/logging.h"
 
 #include <unistd.h>
 #include <iostream>
 #include <sys/types.h>
-#include <cstring>      // Needed for memset
 #include <sys/socket.h> // Needed for the socket functions
 #include <netdb.h>      // Needed for the socket functions
 #include <fcntl.h>
@@ -11,9 +11,27 @@
 #include <assert.h>
 #include <errno.h>
 
-UdpServer::UdpServer()
+// Define this to enable logs
+#define LOG_CHANNEL                    "UdpServer"
+
+#ifdef  LOG_CHANNEL
+#define LOG_ERROR(name, format, ...)   CORETECH_LOG_ERROR(name, format, ##__VA_ARGS__)
+#define LOG_WARNING(name, format, ...) CORETECH_LOG_WARNING(name, format, ##__VA_ARGS__)
+#define LOG_INFO(name, format, ...)    CORETECH_LOG_INFO(LOG_CHANNEL, name, format, ##__VA_ARGS__)
+#define LOG_DEBUG(name, format, ...)   CORETECH_LOG_DEBUG(LOG_CHANNEL, name, format, ##__VA_ARGS__)
+#else
+#define LOG_ERROR(name, format, ...)   {}
+#define LOG_WARNING(name, format, ...) {}
+#define LOG_INFO(name, format, ...)    {}
+#define LOG_DEBUG(name, format, ...)   {}
+#endif
+
+constexpr const char UdpServer::kConnectionPacket[];
+
+UdpServer::UdpServer(const std::string& name)
+: _name(name)
+, socketfd(-1)
 {
-  socketfd = -1;
 }
 
 UdpServer::~UdpServer()
@@ -34,7 +52,7 @@ bool UdpServer::StartListening(const unsigned short port)
 {
     bool res = false;
     if (socketfd >= 0) {
-      DEBUG_UDP_SERVER("WARNING (UdpServer): Already listening");
+      LOG_WARNING("UdpServer.StartListening.AlreadyListening", "");
       return res;
     }
 
@@ -59,29 +77,29 @@ bool UdpServer::StartListening(const unsigned short port)
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
     if (status != 0) {
-     std::cerr << "getaddrinfo error" << gai_strerror(status) ;
+     LOG_ERROR("UdpServer.StartListening.GetAddrInfoFailed", "%s", gai_strerror(status));
      freeaddrinfo(host_info_list);
      return res;
     }
 
-    DEBUG_UDP_SERVER("UdpServer: Creating a socket on port " << portStr);
+    LOG_DEBUG("UdpServer.StartListening.CreatingSocketOnPort", "Port: %d", port);
 
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);
     if (socketfd == -1) {
-      std::cerr << "socket error\n" ;
+      LOG_ERROR("UdpServer.StartListening.SocketError", "");
       freeaddrinfo(host_info_list);
       return res;
     }
 
-    DEBUG_UDP_SERVER("UdpServer: Binding socket...");
+    LOG_DEBUG("UdpServer.StartListening.BindingSocket", "");
 
     // we use to make the setsockopt() function to make sure the port is not in use
     // by a previous execution of our code. (see man page for more information)
     int yes = 1;
     status = setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
     if (status == -1) {
-      DEBUG_UDP_SERVER("UdpServer: Failed to set socket options (status=" << status << ")");
+      LOG_WARNING("UdpServer.StartListening.SetSockOptFailed", "%d", status);
     }
 
     set_nonblock(socketfd);
@@ -89,9 +107,9 @@ bool UdpServer::StartListening(const unsigned short port)
     
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
-      std::cerr << "**** ERROR: bind error on port " << port << " (You might have orphaned processes running) ****\n";
+      LOG_ERROR("UdpServer.StartListening.BindError", "Port: %d (You might have orphaned processes running)", port);
     } else {
-      DEBUG_UDP_SERVER("UdpServer: Port is open");
+      LOG_DEBUG("UdpServer.StartListening.PortOpen", "");
       res = true;
     }
 
@@ -103,16 +121,14 @@ void UdpServer::StopListening()
 {
   client_list.clear();
   if (socketfd >= 0) {
-    DEBUG_UDP_SERVER("UdpServer: Stopping server listening on socket " << socketfd);
+    LOG_DEBUG("UdpServer.StopListening.ClosingSocket", "");
     
-
     close(socketfd);
     socketfd = -1;
     return;
   }
 
-  DEBUG_UDP_SERVER("UdpServer: Server already stopped");
-
+  LOG_WARNING("UdpServer.StopListening.AlreadyStopped", "");
 }
 
 
@@ -121,67 +137,53 @@ ssize_t UdpServer::Send(const char* data, int size)
   if (size <= 0) return 0;
 
   if (!HasClient()) {
-    //DEBUG_UDP_SERVER("UdpServer: Send() failed because no client connected");
+    LOG_WARNING("UdpServer.Send.NoClient", "");
     return -1;
   }
 
-  DEBUG_UDP_SERVER("UdpServer: sending   " << data);
-
   ssize_t bytes_sent = 0;
   for (client_list_it it = client_list.begin(); it != client_list.end(); it++ ) {
-    DEBUG_UDP_SERVER("Sending to client ");
+    //LOG_DEBUG("UdpServer.Send.Sending", "%d bytes", size);
     bytes_sent = sendto(socketfd, data, size, 0, (struct sockaddr *)&(*it), sizeof(*it));
     if(bytes_sent != size) {
-      std::cerr << "*** ERROR: UdpServer reported sending " << bytes_sent << " bytes instead of " << size << "! ***\n";
+      LOG_ERROR("UdpServer.Send.SendFailed", "%zd of %d bytes sent", bytes_sent, size);
     }
   }
 
-  if(bytes_sent > std::numeric_limits<int>::max()) {
-    DEBUG_UDP_SERVER("UdpServer warning: bytes sent larger than max int.\n");
-  }
-  
-  return static_cast<int>(bytes_sent);
+  return bytes_sent;
 }
 
 ssize_t UdpServer::Recv(char* data, int maxSize)
 {
   socklen_t cliLen = sizeof(cliaddr);
-  ssize_t bytes_received;
-  bytes_received = recvfrom(socketfd, data, maxSize, 0, (struct sockaddr *)&cliaddr,&cliLen);
+  ssize_t bytes_received = recvfrom(socketfd, data, maxSize, 0, (struct sockaddr *)&cliaddr,&cliLen);
   
   if (bytes_received <= 0) {
     if (errno != EWOULDBLOCK)
     {
-      DEBUG_UDP_SERVER("receive error! " << errno);
+      LOG_ERROR("UdpServer.Recv.RecvError", "");
     } else {
       bytes_received = 0;
     }
   } else {
-    DEBUG_UDP_SERVER("UdpServer: " << bytes_received << " bytes received : " << data);
+    //LOG_DEBUG("UdpServer.Recv", " %zd bytes received", bytes_received);
 
     // Add client to list
-    if (AddClient(cliaddr) && bytes_received == 1) {
-      // If client was newly added, the first datagram (as long as it's only 1 byte long)
-      // is assumed to be a "connection packet".
+    if (AddClient(cliaddr)) {
+      LOG_DEBUG("UdpServer.Recv.NewClient", "[%s]", _name.c_str());
+    }
+
+    // Check if this is a connection packet
+    if (bytes_received == sizeof(kConnectionPacket) && 
+        strncmp(data, kConnectionPacket, sizeof(kConnectionPacket)) == 0)  {
+      LOG_DEBUG("UdpServer.Recv.ReceivedConnectionPacket", "[%s]", _name.c_str());
       return 0;
     }
-  }
 
-  if(bytes_received > std::numeric_limits<int>::max()) {
-    DEBUG_UDP_SERVER("UdpServer warning: bytes received larger than max int.\n");
   }
   
-  return static_cast<int>(bytes_received);
+  return bytes_received;
 }
-/*
-int UdpServer::GetNumBytesAvailable()
-{
-  int bytes_avail = 0;
-  ioctl(socketfd, FIONREAD, &bytes_avail);
-  return bytes_avail;
-}
-*/
-
 
 bool UdpServer::AddClient(struct sockaddr_in &c)
 {
@@ -190,7 +192,7 @@ bool UdpServer::AddClient(struct sockaddr_in &c)
       return false;
   }
 
-  DEBUG_UDP_SERVER("UdpServer: Adding client\n");
+  LOG_DEBUG("UdpServer.AddClient.AddingClient", "");
   client_list.push_back(c);
   return true;
 }
@@ -211,7 +213,7 @@ int UdpServer::GetNumClients()
   const ssize_t numClients = client_list.size();
   
   if(numClients > std::numeric_limits<int>::max()) {
-    DEBUG_UDP_SERVER("UdpServer warning: number of clients larger than max int.\n");
+    LOG_WARNING("UdpServer.GetNumClients.TooManyClients", "More than MAX_INT clients");
   }
   
   return static_cast<int>(numClients);

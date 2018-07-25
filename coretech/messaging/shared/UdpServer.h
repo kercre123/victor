@@ -5,14 +5,14 @@
 #define UDP_SERVER_H
 
 #include <netinet/in.h>
+#include <string>
 #include <vector>
-
-#define DEBUG_UDP_SERVER(__expr__)
-//#define DEBUG_UDP_SERVER(__expr__) (std::cout << __expr__ << std::endl)
 
 class UdpServer {
 public:
-  UdpServer();
+  static constexpr const char kConnectionPacket[] = {'A', 'N', 'K', 'I', 'C', 'O', 'N', 'N'};
+
+  UdpServer(const std::string& name = "");
   ~UdpServer();
 
   bool StartListening(const unsigned short port);
@@ -25,9 +25,11 @@ public:
 
   ssize_t Send(const char* data, int size);
   ssize_t Recv(char* data, int maxSize);
-  //int GetNumBytesAvailable();
   
 private:
+
+  std::string _name;
+
   //struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
   struct sockaddr_in cliaddr;
 

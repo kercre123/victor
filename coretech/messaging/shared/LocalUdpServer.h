@@ -23,6 +23,8 @@
 
 class LocalUdpServer {
 public:
+  static constexpr const char kConnectionPacket[] = {'A', 'N', 'K', 'I', 'C', 'O', 'N', 'N'};
+
   LocalUdpServer();
   ~LocalUdpServer();
 

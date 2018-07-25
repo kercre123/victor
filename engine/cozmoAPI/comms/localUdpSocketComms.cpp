@@ -138,14 +138,6 @@ bool LocalUdpSocketComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer) {
     return false;
   }
 
-  if (!IsConnected() && dataLen != 1) {
-    // We aren't connected yet, and we received a non-connection message.
-    return false;
-  } else if(dataLen == 1) {
-    _hasClient = _udpServer->HasClient();
-    return true;
-  }
-
   if (dataLen < 0) {
     // Something went wrong
     PRINT_NAMED_WARNING("LocalUdpSocketComms", "Shutting down server. Received dataLen < 0");

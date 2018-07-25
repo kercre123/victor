@@ -1,15 +1,12 @@
 #ifndef UDP_CLIENT_H
 #define UDP_CLIENT_H
 
+#include <string>
 #include <sys/types.h> // ssize_t
-
-#define DEBUG_UDP_CLIENT(__expr__)
-//#define DEBUG_UDP_CLIENT(__expr__) (std::cout << __expr__ << std::endl)
-
 
 class UdpClient {
 public:
-  UdpClient();
+  UdpClient(const std::string& name = "");
   ~UdpClient();
 
   bool Connect(const char *host_address, const unsigned short port);
@@ -21,6 +18,8 @@ public:
   int GetSocketFd() const { return socketfd; }
 
 private:
+  std::string _name;
+
   struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
   void set_nonblock(int socket);

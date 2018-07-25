@@ -19,6 +19,10 @@ type packetListener struct {
 	closer     *util.DoOnce
 }
 
+// Common string to indicate connection handshake shared by C++ code
+// Defined in LocalUdpServer.cpp/UdpServer.cpp
+const connPacket = "ANKICONN"
+
 func (p *packetListener) Accept() (io.ReadWriteCloser, error) {
 	select {
 	case conn := <-p.newClients:
@@ -64,13 +68,12 @@ func (c *packetClient) Write(buf []byte) (int, error) {
 func newDatagramClient(conn net.Conn) (Conn, error) {
 	client := newBaseConn(conn)
 
-	// Send one byte to server so it marks us as connected
-	// (behavior defined by UdpClient.cpp)
-	n, err := conn.Write(make([]byte, 1))
+	packet := []byte(connPacket)
+	n, err := conn.Write(packet)
 	if err != nil {
 		return nil, err
-	} else if n != 1 {
-		return nil, errors.New(fmt.Sprint("unexpected write size", n))
+	} else if n != len(connPacket) {
+		return nil, errors.New(fmt.Sprint("unexpected write size: ", n))
 	}
 
 	return client, nil
@@ -97,16 +100,22 @@ func newDatagramServer(conn net.PacketConn) (Server, error) {
 			if n == len(buf) {
 				fmt.Println("Maxed buffer")
 			}
+
+			isConnPacket := n == len(connPacket) && string(buf[:n]) == connPacket
 			addr := address.String()
 			if client, ok := listener.clients[addr]; ok {
-				sendbuf := make([]byte, n)
-				copy(sendbuf, buf)
-				select {
-				case client.read <- sendbuf:
-				case <-kill:
-					return
+				if isConnPacket {
+					// ignore; they're trying to reconnect
+				} else {
+					sendbuf := make([]byte, n)
+					copy(sendbuf, buf)
+					select {
+					case client.read <- sendbuf:
+					case <-kill:
+						return
+					}
 				}
-			} else if n == 1 {
+			} else if isConnPacket {
 				client = &packetClient{conn, address, make(chan []byte), kill}
 				listener.clients[addr] = client
 				select {

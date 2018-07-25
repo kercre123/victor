@@ -8,6 +8,7 @@
  */
 
 #include "coretech/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/LocalUdpServer.h" // for kConnectionPacket
 #include "coretech/messaging/shared/SocketUtils.h"
 #include "coretech/common/shared/logging.h"
 
@@ -40,8 +41,8 @@
 #define LOG_DEBUG(name, format, ...)   {}
 #endif
 
-LocalUdpClient::LocalUdpClient() :
-  _socketfd(-1)
+LocalUdpClient::LocalUdpClient()
+: _socketfd(-1)
 {
 }
 
@@ -130,8 +131,7 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   }
 
   // Send connection packet (i.e. something so that the server adds us to the client list)
-  const char zero = 0;
-  Send(&zero, 1);
+  Send(LocalUdpServer::kConnectionPacket, (int)sizeof(LocalUdpServer::kConnectionPacket));
 
   return true;
 }

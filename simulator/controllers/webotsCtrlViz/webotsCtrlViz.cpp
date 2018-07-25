@@ -41,7 +41,7 @@ int main(int argc, char **argv)
   ssize_t numBytesRecvd;
   
   // Setup server to listen for commands
-  UdpServer server;
+  UdpServer server("webotsCtrlViz");
   server.StartListening((uint16_t)VizConstants::VIZ_SERVER_PORT);
   
   // Setup client to forward relevant commands to cozmo_physics plugin

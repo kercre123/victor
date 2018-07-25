@@ -53,10 +53,6 @@ bool Anki::Switchboard::EngineMessagingClient::Connect() {
     ev_timer_start(loop_, &_handleEngineMessageTimer.timer);
   }
 
-  // Send connection message
-  static uint8_t connectionByte = 0;
-  _client.Send((char*)(&connectionByte), sizeof(connectionByte));
-
   return connected;
 }
 
