@@ -34,7 +34,7 @@ namespace {
  static constexpr f32 kReadyToTakePhotoTimeout_sec = 3.f;
  static constexpr f32 kTakingPhotoTimeout_sec      = 6.f;
 
- CONSOLE_VAR(f32, kHeadAngleDeg, "TakeAPhoto", 15.0);
+ CONSOLE_VAR(f32, kHeadAngleDeg, "TakeAPhoto", 25.0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
