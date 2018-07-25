@@ -25,7 +25,19 @@
   "behaviors": [
     "InitialPickupAnimation",
     "WhileInAirResponses",
-    "WhileInAirResponsesPRDemo"
+    "WhileInAirResponsesPRDemo",
+    "WaitForPutDown"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "WaitForPutDown",
+      "behaviorClass": "Wait",
+      "wantsToCancelSelfCondition": {
+        "conditionType": "TimerInRange",
+        "begin_s": 1.0
+      }
+    }
   ]
 
 }
