@@ -285,12 +285,20 @@ void Analog::tick(void) {
   bool emergency_shutoff = temperature >= 70;    // Will immediately cause a reboot
   if (temperature >= 60) disable_vmain = true;
 
+  static int disable_countdown = 0;
+
+  if (allow_power) {
+    disable_countdown = 200 * 5; // 5 seconds before the robot will actually turn off
+  } else if (disable_countdown > 0) {
+    disable_countdown--;
+  }
+
   if (emergency_shutoff) {
     nCHG_PWR::set();
     POWER_EN::reset();
     POWER_EN::mode(MODE_OUTPUT);
     POWER_EN::pull(PULL_NONE);
-  } else if (!allow_power) {
+  } else if (!allow_power && disable_countdown <= 0) {
     NVIC_DisableIRQ(ADC1_IRQn);
 
     if (on_charger) {
@@ -430,7 +438,6 @@ void Analog::tick(void) {
       BODY_TX::set();
       BODY_TX::mode(MODE_INPUT);
 
-      Analog::setPower(false);
       Power::setMode(POWER_STOP);
     } else {
       Power::setMode(POWER_ACTIVE);
