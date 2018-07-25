@@ -158,15 +158,15 @@ namespace Cozmo {
     bool IsMakingEyeContact(const u32 withinLast_ms) const;
 
 
-    // Get the wall times that the given face ID has been observed. This implementation returns at most 2
-    // entries with front() being the wall time that was recorded first. On loading time, this will populate
-    // with wall times from enrolled face entries (even if those faces haven't been seen since boot). It will
-    // be updated whenever the face is observed. If it returns 2 entries, then the difference between them can
-    // be used as the delta between when we most recently saw the face and the time before that, e.g. to
-    // determine when we see someone how long it's been since the last time we saw them.  If the face is
-    // unknown, an empty queue will be returned. The queue may contain a single element in the case that it's
-    // an enrolled face loaded from storage, or in the case that the face has only been seen once. Tracking
-    // only (negative) face IDs are not returned here.
+    // Get the wall times that the given face ID has been observed for named faces. This implementation
+    // returns at most 2 entries with front() being the wall time that was recorded first. On loading time,
+    // this will populate with wall times from enrolled face entries (even if those faces haven't been seen
+    // since boot). It will be updated whenever the face is observed. If it returns 2 entries, then the
+    // difference between them can be used as the delta between when we most recently saw the face and the
+    // time before that, e.g. to determine when we see someone how long it's been since the last time we saw
+    // them.  If the face is unknown, an empty queue will be returned. The queue may contain a single element
+    // in the case that it's an enrolled face loaded from storage, or in the case that the face has only been
+    // seen once. Tracking only (negative) face IDs are not returned here.
     // 
     // Note: times are only updated here if wall time is accurate (synced with NTP). Inaccurate times (e.g. if
     // we're off wifi) won't get added here at all (although times loaded from disk will)

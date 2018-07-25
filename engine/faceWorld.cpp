@@ -424,40 +424,33 @@ namespace Cozmo {
         faceEntry->face = face;
       }
 
-      // update the observation time. Note that this is using current wall time, which is slightly different
-      // from the actual image timestamp when the face was observed, but should be close enough. Only store if
-      // time is accurate
-      WallTime::TimePoint_t wallTime;
-      if( WallTime::getInstance()->GetTime( wallTime ) ) {
-        auto it = _wallTimesObserved.find(face.GetID());
-        if( it != _wallTimesObserved.end() ) {
-          // update existing entry
-          it->second.push_back(wallTime);
-          while(it->second.size() > 2) {
-            it->second.pop_front();
-          }
+      // update the observation time if this is a named face. Note that this is using current wall time, which
+      // is slightly different from the actual image timestamp when the face was observed, but should be close
+      // enough. Only store if time is accurate.
+      if( face.HasName() ) {
+        WallTime::TimePoint_t wallTime;
+        if( WallTime::getInstance()->GetTime( wallTime ) ) {
+          auto it = _wallTimesObserved.find(face.GetID());
+          if( it != _wallTimesObserved.end() ) {
+            // update existing entry
+            it->second.push_back(wallTime);
+            while(it->second.size() > 2) {
+              it->second.pop_front();
+            }
 
-          // if the new sighting is in a different day than the last one, we need to update robot stats
-          const auto lastSeen = it->second.front();
-          if( !WallTime::AreTimePointsInSameDay(lastSeen, wallTime) ) {
-            PRINT_NAMED_INFO("FaceWorld.UpdateFace.FaceSeenOnNewDay",
-                             "face %d %s name seen on new day",
-                             face.GetID(),
-                             face.HasName() ? "with" : "without");
-            if( face.HasName() ) {
-              // NOTE: for now only count named faces. Unnamed faces wall times don't get saved to disk, so
-              // this won't really work across boots except for named (aka enrolled) faces
+            // if the new sighting is in a different day than the last one, we need to update robot stats
+            const auto lastSeen = it->second.front();
+            if( !WallTime::AreTimePointsInSameDay(lastSeen, wallTime) ) {
+              PRINT_NAMED_INFO("FaceWorld.UpdateFace.FaceSeenOnNewDay",
+                               "face %d seen on new day",
+                               face.GetID());
               _robot->GetComponent<RobotStatsTracker>().IncrementNamedFacesPerDay();
             }
           }
+          else {
+            // new entry
+            _wallTimesObserved.emplace( face.GetID(), ObservationTimeHistory{{wallTime}} );
 
-        }
-        else {
-          // new entry
-          _wallTimesObserved.emplace( face.GetID(), ObservationTimeHistory{{wallTime}} );
-
-          // if this is an enrolled face and it's the first time we're seeing it, count it
-          if( face.HasName() ) {
             PRINT_NAMED_INFO("FaceWorld.UpdateFace.NamedFaceFirstDaySeen",
                              "face %d has been seen for the first time",
                              face.GetID());
@@ -1087,9 +1080,19 @@ namespace Cozmo {
       const auto epoch = WallTime::getInstance()->GetEpochTime();
       const auto sinceEpoch = std::chrono::seconds(loadedFace.lastSeenSecondsSinceEpoch);
       const auto wallTime = epoch + sinceEpoch;
-      
-      _wallTimesObserved.emplace( loadedFace.faceID, ObservationTimeHistory{{wallTime}} );
-    }    
+
+      if( ANKI_VERIFY(!loadedFace.name.empty(),
+                      "FaceWorld.InitLoadedKnownFaces.NoName",
+                      "Face id %d loaded from disk but doesn't have name",
+                      loadedFace.faceID) ) {
+        _wallTimesObserved.emplace( loadedFace.faceID, ObservationTimeHistory{{wallTime}} );
+
+        PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.InitLoadedKnownFaces.InitFace",
+                      "Loaded face %d, last observed at time (since epoch): %llu",
+                      loadedFace.faceID,
+                      wallTime.time_since_epoch().count());
+      }
+    }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
