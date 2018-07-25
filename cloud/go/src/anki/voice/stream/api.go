@@ -3,21 +3,23 @@ package stream
 import (
 	"anki/util"
 	"bytes"
+	"context"
 	"encoding/binary"
 )
 
-func NewStreamer(receiver Receiver, streamSize int, opts ...Option) *Streamer {
+func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ...Option) *Streamer {
 	strm := &Streamer{
 		conn:        nil,
 		stream:      nil,
 		byteChan:    make(chan []byte),
 		audioStream: make(chan []byte, 10),
-		done:        make(chan struct{}),
 		receiver:    receiver}
 
 	for _, o := range opts {
 		o(&strm.opts)
 	}
+
+	strm.ctx, strm.cancel = context.WithCancel(ctx)
 
 	go strm.init(streamSize)
 	return strm
@@ -35,7 +37,7 @@ func (strm *Streamer) AddBytes(bytes []byte) {
 
 func (strm *Streamer) Close() error {
 	strm.closed = true
-	close(strm.done)
+	strm.cancel()
 	var err util.Errors
 	if strm.stream != nil {
 		err.Append(strm.stream.Close())

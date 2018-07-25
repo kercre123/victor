@@ -15,10 +15,10 @@ type Streamer struct {
 	audioStream chan []byte
 	respOnce    sync.Once
 	closed      bool
-	done        chan struct{}
 	opts        options
 	receiver    Receiver
 	ctx         context.Context
+	cancel      func()
 }
 
 type Receiver interface {

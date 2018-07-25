@@ -52,7 +52,7 @@ func (strm *Streamer) bufferRoutine(streamSize int) {
 			audioBuf = audioBuf[streamSize:]
 		case buf := <-strm.byteChan:
 			audioBuf = append(audioBuf, buf...)
-		case <-strm.done:
+		case <-strm.ctx.Done():
 			return
 		}
 	}

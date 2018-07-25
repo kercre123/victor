@@ -53,7 +53,7 @@ func (strm *Streamer) openStream(jwtToken string, sessionID string) (*chipper.Co
 		opts = append(opts, chipper.WithAccessToken(jwtToken))
 	}
 	opts = append(opts, chipper.WithSessionID(sessionID))
-	conn, err := chipper.NewConn(strm.opts.url, strm.opts.secret, opts...)
+	conn, err := chipper.NewConn(strm.ctx, strm.opts.url, strm.opts.secret, opts...)
 	if err != nil {
 		log.Println("Error getting chipper connection:", err)
 		strm.receiver.OnError(cloud.ErrorType_Connecting, err)
@@ -61,9 +61,9 @@ func (strm *Streamer) openStream(jwtToken string, sessionID string) (*chipper.Co
 	}
 	var stream chipper.Stream
 	if strm.opts.mode == cloud.StreamType_KnowledgeGraph {
-		stream, err = conn.NewKGStream(strm.opts.streamOpts.StreamOpts)
+		stream, err = conn.NewKGStream(strm.ctx, strm.opts.streamOpts.StreamOpts)
 	} else {
-		stream, err = conn.NewIntentStream(strm.opts.streamOpts)
+		stream, err = conn.NewIntentStream(strm.ctx, strm.opts.streamOpts)
 	}
 	if err != nil {
 		strm.receiver.OnError(cloud.ErrorType_NewStream, err)

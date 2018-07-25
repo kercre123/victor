@@ -2,6 +2,7 @@ package main
 
 import (
 	"anki/voice"
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +18,8 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Connecting")
-	conn, err := chipper.NewConn(voice.ChipperURL, voice.ChipperSecret,
+	ctx := context.Background()
+	conn, err := chipper.NewConn(ctx, voice.ChipperURL, voice.ChipperSecret,
 		chipper.WithSessionID(uuid.New().String()[:16]))
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
@@ -33,7 +35,7 @@ func main() {
 	if *ms {
 		opts.Handler = pb.IntentService_BING_LUIS
 	}
-	stream, err := conn.NewIntentStream(opts)
+	stream, err := conn.NewIntentStream(ctx, opts)
 	if err != nil {
 		fmt.Println("Error creating stream:", err)
 		return

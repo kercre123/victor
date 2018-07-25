@@ -5,14 +5,15 @@ import (
 	"anki/token/jwt"
 	"anki/util"
 	"clad/cloud"
+	"context"
 	"time"
 )
 
-func initRefresher(done <-chan struct{}) {
-	go refreshRoutine(done)
+func initRefresher(ctx context.Context) {
+	go refreshRoutine(ctx)
 }
 
-func refreshRoutine(done <-chan struct{}) {
+func refreshRoutine(ctx context.Context) {
 	for {
 		const tokSleep = 5 * time.Minute
 		const ntpSleep = 20 * time.Second
@@ -25,7 +26,7 @@ func refreshRoutine(done <-chan struct{}) {
 		// 	if tok != nil {
 		// 		break
 		// 	}
-		// 	if util.SleepSelect(tokSleep, done) {
+		// 	if util.SleepSelect(tokSleep, ctx.Done()) {
 		// 		return
 		// 	}
 		// }
@@ -47,7 +48,7 @@ func refreshRoutine(done <-chan struct{}) {
 			}
 			log.Println("token refresh: failed fake init, errors:", msg.err, msg.resp.GetAuth().Error)
 			log.Println("waiting", tokSleep, "to try again")
-			if util.SleepSelect(tokSleep, done) {
+			if util.SleepSelect(tokSleep, ctx.Done()) {
 				return
 			}
 		}
@@ -55,7 +56,7 @@ func refreshRoutine(done <-chan struct{}) {
 		// if robot thinks the token was issued in the future, we have the wrong time and
 		// should wait for NTP to figure things out
 		for time.Now().Before(tok.IssuedAt()) {
-			if util.SleepSelect(ntpSleep, done) {
+			if util.SleepSelect(ntpSleep, ctx.Done()) {
 				return
 			}
 		}
@@ -73,12 +74,12 @@ func refreshRoutine(done <-chan struct{}) {
 				log.Println("Refresh routine error:", msg.err)
 			}
 			log.Println("token refresh: refresh done, sleeping", tokSleep)
-			if util.SleepSelect(tokSleep, done) {
+			if util.SleepSelect(tokSleep, ctx.Done()) {
 				return
 			}
 		} else {
 			log.Println("token refresh: waiting for", refreshDuration)
-			if util.SleepSelect(refreshDuration, done) {
+			if util.SleepSelect(refreshDuration, ctx.Done()) {
 				return
 			}
 		}

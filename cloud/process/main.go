@@ -8,6 +8,7 @@ import (
 	"anki/voice"
 	"bytes"
 	"clad/cloud"
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -133,7 +134,7 @@ func main() {
 	tokenOpts := []token.Option{token.WithServer()}
 	options = append(options, cloudproc.WithTokenOptions(tokenOpts...))
 
-	cloudproc.Run(options...)
+	cloudproc.Run(context.Background(), options...)
 
 	log.Println("All processes exited, shutting down")
 }

@@ -11,13 +11,6 @@ type options struct {
 	voice     *voice.Process
 	voiceOpts []voice.Option
 	tokenOpts []token.Option
-	stop      <-chan struct{}
-}
-
-func WithStopChannel(stop <-chan struct{}) Option {
-	return func(o *options) {
-		o.stop = stop
-	}
 }
 
 func WithVoice(process *voice.Process) Option {

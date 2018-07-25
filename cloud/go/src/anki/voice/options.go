@@ -26,7 +26,6 @@ type options struct {
 	compress     bool
 	chunkMs      uint
 	handler      Handler
-	stop         <-chan struct{}
 	saveAudio    bool
 	requireToken bool
 }
@@ -52,13 +51,6 @@ func WithChunkMs(value uint) Option {
 func WithHandler(value Handler) Option {
 	return func(o *options) {
 		o.handler = value
-	}
-}
-
-// WithStopChannel sets a channel that can be triggered to kill the process
-func WithStopChannel(value <-chan struct{}) Option {
-	return func(o *options) {
-		o.stop = value
 	}
 }
 

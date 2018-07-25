@@ -6,12 +6,13 @@ import (
 	"anki/token/jwt"
 	"bytes"
 	"clad/cloud"
+	"context"
 	"fmt"
 )
 
 // Run starts the token service for other code/processes to connect to and
 // request tokens
-func Run(optionValues ...Option) {
+func Run(ctx context.Context, optionValues ...Option) {
 	var opts options
 	for _, o := range optionValues {
 		o(&opts)
@@ -27,10 +28,10 @@ func Run(optionValues ...Option) {
 		return
 	}
 
-	initRefresher(opts.stop)
+	initRefresher(ctx)
 
 	if opts.server {
-		serv, err := initServer(opts.stop)
+		serv, err := initServer(ctx)
 		if err != nil {
 			log.Println("Error creating token server:", err)
 			return
@@ -86,19 +87,17 @@ func handleRequest(m *cloud.TokenRequest) (*cloud.TokenResponse, error) {
 	return resp.resp, resp.err
 }
 
-func initServer(stop <-chan struct{}) (ipc.Server, error) {
+func initServer(ctx context.Context) (ipc.Server, error) {
 	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("token_server"))
 	if err != nil {
 		return nil, err
 	}
 
-	if stop != nil {
-		go func() {
-			<-stop
-			if err := serv.Close(); err != nil {
-				log.Println("error closing token server:", err)
-			}
-		}()
-	}
+	go func() {
+		<-ctx.Done()
+		if err := serv.Close(); err != nil {
+			log.Println("error closing token server:", err)
+		}
+	}()
 	return serv, nil
 }

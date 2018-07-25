@@ -4,6 +4,7 @@ import (
 	"anki/cloudproc"
 	"anki/ipc"
 	"anki/voice"
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -72,12 +73,13 @@ func main() {
 		} else if *lex {
 			options = append(options, voice.WithHandler(voice.HandlerAmazon))
 		}
-		proc, err := harness.CreateMemProcess(cloudproc.WithVoiceOptions(options...))
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		proc, err := harness.CreateMemProcess(ctx, cloudproc.WithVoiceOptions(options...))
 		if err != nil {
 			fmt.Println("Couldn't create test cloud process:", err)
 			return
 		}
-		defer proc.Close()
 		msgIO = proc
 
 		wg := sync.WaitGroup{}

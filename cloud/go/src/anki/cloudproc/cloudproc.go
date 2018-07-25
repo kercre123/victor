@@ -2,10 +2,11 @@ package cloudproc
 
 import (
 	"anki/token"
+	"context"
 	"sync"
 )
 
-func Run(procOptions ...Option) {
+func Run(ctx context.Context, procOptions ...Option) {
 	var opts options
 	for _, o := range procOptions {
 		o(&opts)
@@ -13,11 +14,11 @@ func Run(procOptions ...Option) {
 
 	var wg sync.WaitGroup
 	launchProcess(&wg, func() {
-		token.Run(opts.tokenOpts...)
+		token.Run(ctx, opts.tokenOpts...)
 	})
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
-			opts.voice.Run(opts.voiceOpts...)
+			opts.voice.Run(ctx, opts.voiceOpts...)
 		})
 	}
 	wg.Wait()

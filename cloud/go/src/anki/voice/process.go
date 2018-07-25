@@ -5,6 +5,7 @@ import (
 	"anki/token"
 	"anki/voice/stream"
 	"clad/cloud"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -100,26 +101,26 @@ func (p *Process) AddIntentWriter(s MsgSender) {
 	p.intents = append(p.intents, s)
 }
 
-type ctxReceiver struct {
+type strmReceiver struct {
 	intent chan *cloud.IntentResult
 	err    chan cloudError
 	open   chan struct{}
 }
 
-func (c *ctxReceiver) OnIntent(r *cloud.IntentResult) {
+func (c *strmReceiver) OnIntent(r *cloud.IntentResult) {
 	c.intent <- r
 }
 
-func (c *ctxReceiver) OnError(kind cloud.ErrorType, err error) {
+func (c *strmReceiver) OnError(kind cloud.ErrorType, err error) {
 	c.err <- cloudError{kind, err}
 }
 
-func (c *ctxReceiver) OnStreamOpen() {
+func (c *strmReceiver) OnStreamOpen() {
 	c.open <- struct{}{}
 }
 
 // Run starts the cloud process, which will run until stopped on the given channel
-func (p *Process) Run(options ...Option) {
+func (p *Process) Run(ctx context.Context, options ...Option) {
 	if verbose {
 		log.Println("Verbose logging enabled")
 	}
@@ -129,13 +130,13 @@ func (p *Process) Run(options ...Option) {
 		opt(&p.opts)
 	}
 
-	cloudChans := &ctxReceiver{
+	cloudChans := &strmReceiver{
 		intent: make(chan *cloud.IntentResult),
 		err:    make(chan cloudError),
 		open:   make(chan struct{}),
 	}
 
-	var ctx *stream.Streamer
+	var strm *stream.Streamer
 procloop:
 	for {
 		// the cases in this select should NOT block! if messages that others send us
@@ -145,9 +146,9 @@ procloop:
 			switch msg.msg.Tag() {
 			case cloud.MessageTag_Hotword:
 				// hotword = get ready to stream data
-				if ctx != nil {
+				if strm != nil {
 					log.Println("Got hotword event while already streaming, weird...")
-					if err := ctx.Close(); err != nil {
+					if err := strm.Close(); err != nil {
 						log.Println("Error closing context:")
 					}
 				}
@@ -170,8 +171,8 @@ procloop:
 					continue
 				}
 
-				var ctxopts []stream.Option
-				ctxopts = append(ctxopts, stream.WithTokener(p.getToken, p.opts.requireToken),
+				var strmopts []stream.Option
+				strmopts = append(strmopts, stream.WithTokener(p.getToken, p.opts.requireToken),
 					stream.WithChipperURL(ChipperURL),
 					stream.WithChipperSecret(ChipperSecret))
 
@@ -186,16 +187,16 @@ procloop:
 					Language:  language,
 				}
 				if mode == cloud.StreamType_KnowledgeGraph {
-					ctxopts = append(ctxopts, stream.WithKnowledgeGraphOptions(streamOpts))
+					strmopts = append(strmopts, stream.WithKnowledgeGraphOptions(streamOpts))
 				} else {
-					ctxopts = append(ctxopts, stream.WithIntentOptions(chipper.IntentOpts{
+					strmopts = append(strmopts, stream.WithIntentOptions(chipper.IntentOpts{
 						StreamOpts: streamOpts,
 						Handler:    p.opts.handler,
 						Mode:       serverMode,
 					}, mode))
 				}
 				logVerbose("Got hotword event", serverMode)
-				ctx = stream.NewStreamer(cloudChans, p.StreamSize(), ctxopts...)
+				strm = stream.NewStreamer(ctx, cloudChans, p.StreamSize(), strmopts...)
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
@@ -203,8 +204,8 @@ procloop:
 			case cloud.MessageTag_Audio:
 				// add samples to our buffer
 				buf := msg.msg.GetAudio().Data
-				if ctx != nil {
-					ctx.AddSamples(buf)
+				if strm != nil {
+					strm.AddSamples(buf)
 				} else {
 					logVerbose("No active context, discarding", len(buf), "samples")
 				}
@@ -219,24 +220,24 @@ procloop:
 			p.writeResponse(cloud.NewMessageWithResult(intent))
 
 			// stop streaming until we get another hotword event
-			if err := ctx.Close(); err != nil {
+			if err := strm.Close(); err != nil {
 				log.Println("Error closing context:")
 			}
-			ctx = nil
+			strm = nil
 
 		case err := <-cloudChans.err:
 			logVerbose("Received error from cloud:", err)
 			p.signalMicStop()
 			p.writeError(err.kind, err.err)
-			if err := ctx.Close(); err != nil {
+			if err := strm.Close(); err != nil {
 				log.Println("Error closing context:")
 			}
-			ctx = nil
+			strm = nil
 
 		case <-cloudChans.open:
 			p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
 
-		case <-p.opts.stop:
+		case <-ctx.Done():
 			logVerbose("Received stop notification")
 			if p.kill != nil {
 				close(p.kill)
