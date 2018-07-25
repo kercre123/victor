@@ -471,9 +471,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const auto* pluginInterface = audioController->GetPluginInterface();
         if (pluginInterface != nullptr) {
           _speakerLatency_ms = pluginInterface->AkAlsaSinkGetSpeakerLatency_ms();
-          PRINT_NAMED_INFO("MicDataSystem.Update.SpeakerLatency",
-                           "AkAlsaSink plugin reporting a max speaker latency of %u",
-                           (uint32_t) _speakerLatency_ms);
+          if (_speakerLatency_ms != 0) {
+            PRINT_NAMED_INFO("MicDataSystem.Update.SpeakerLatency",
+                             "AkAlsaSink plugin reporting a max speaker latency of %u",
+                             (uint32_t) _speakerLatency_ms);
+          }
         }
       }
     }
