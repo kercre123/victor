@@ -390,11 +390,11 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
 
 */
 
-void QuadTreeNode::Fold(FoldFunctor accumulator, const BoundedConvexSet2f& region, FoldDirection dir)
+void QuadTreeNode::Fold(FoldFunctor accumulator, const FoldableRegion& region, FoldDirection dir)
 {
-  if ( region.Intersects(_boundingBox) )  {    
+  if ( region.IntersectsQuad(_boundingBox) )  {    
     // check if we can stop doing overlap checks
-    if ( region.ContainsAll(_boundingBox.GetVertices()) ) {
+    if ( region.ContainsQuad(_boundingBox) ) {
       Fold(accumulator, dir);
     } else {
       if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
@@ -403,7 +403,7 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, const BoundedConvexSet2f& regio
       if ( IsSubdivided() ) {      
         u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
 
-        const AxisAlignedQuad& aabb = region.GetAxisAlignedBoundingBox();
+        const AxisAlignedQuad& aabb = region.GetBoundingBox();
         if ( aabb.GetMinVertex().x() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
         if ( aabb.GetMaxVertex().x() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
         if ( aabb.GetMinVertex().y() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
@@ -426,11 +426,11 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, const BoundedConvexSet2f& regio
   }
 }
 
-void QuadTreeNode::Fold(FoldFunctorConst accumulator, const BoundedConvexSet2f& region, FoldDirection dir) const
+void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FoldableRegion& region, FoldDirection dir) const
 {
-  if ( region.Intersects(_boundingBox) ) {    
+  if ( region.IntersectsQuad(_boundingBox) ) {    
     // check if we can stop doing overlap checks
-    if ( region.ContainsAll(_boundingBox.GetVertices()) ) {
+    if ( region.ContainsQuad(_boundingBox) ) {
       Fold(accumulator, dir);
     } else {
       if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
@@ -439,7 +439,7 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, const BoundedConvexSet2f& 
       if ( IsSubdivided() ) {      
         u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
         
-        const AxisAlignedQuad& aabb = region.GetAxisAlignedBoundingBox();
+        const AxisAlignedQuad& aabb = region.GetBoundingBox();
         if ( aabb.GetMinVertex().x() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
         if ( aabb.GetMaxVertex().x() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
         if ( aabb.GetMinVertex().y() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes

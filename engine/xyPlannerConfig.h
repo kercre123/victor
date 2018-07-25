@@ -52,6 +52,19 @@ namespace {
     { 0.f,  kPlanningResolution_mm}
   };
   
+  // NOTE: the escape grid resolution needs to be the same as the planner Resolution, otherwise it will
+  //       generate invalid goal positions 
+  const std::vector<Point2f> escapeGrid = { 
+    { kPlanningResolution_mm, 0.f},
+    {-kPlanningResolution_mm, 0.f},
+    { 0.f, -kPlanningResolution_mm},
+    { 0.f,  kPlanningResolution_mm},
+    { kPlanningResolution_mm,  kPlanningResolution_mm},
+    {-kPlanningResolution_mm,  kPlanningResolution_mm},
+    { kPlanningResolution_mm, -kPlanningResolution_mm},
+    {-kPlanningResolution_mm, -kPlanningResolution_mm}
+  };
+  
   // snap to planning grid via (float->int->float) cast
   inline Point2f GetNearestGridPoint(const Point2f& p) {
     Point2f gridPt = p * kOneOverPlanningResolution;
@@ -125,10 +138,10 @@ public:
   inline bool   StopPlanning()                    { return _abort || (++_numExpansions > kEscapeObstacleMaxExpansions); }
   inline bool   IsGoal(const Point2f& p)    const { return !_map.CheckForCollisions( Ball2f(p, kRobotRadius_mm + kPlanningPadding_mm) ); }
 
-  inline std::array<Successor, 4> GetSuccessors(const Point2f& p) const { 
-    std::array<Successor, 4> retv;
+  inline std::array<Successor, 8> GetSuccessors(const Point2f& p) const { 
+    std::array<Successor, 8> retv;
     const Point2f gridP = GetNearestGridPoint(p);
-    std::transform(connectedGrid.begin(), connectedGrid.end(), retv.begin(), 
+    std::transform(escapeGrid.begin(), escapeGrid.end(), retv.begin(), 
       [&gridP](const auto& dir) { return Successor{gridP + dir, dir.Length()}; });
     return retv;
   };

@@ -91,7 +91,7 @@ public:
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
   void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
-  void Fold(FoldFunctorConst accumulator, const BoundedConvexSet2f& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(FoldFunctorConst accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -157,7 +157,7 @@ private:
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
   void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
-  void Fold(FoldFunctor accumulator, const BoundedConvexSet2f& region, FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration

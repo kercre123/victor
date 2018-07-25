@@ -12,11 +12,11 @@
 #ifndef ANKI_COZMO_MEMORY_MAP_TYPES_H
 #define ANKI_COZMO_MEMORY_MAP_TYPES_H
 
-#include "coretech/common/engine/math/point.h"
+#include "engine/navMap/quadTree/quadTreeTypes.h"
+
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/types/memoryMap.h"
-#include "engine/navMap/memoryMap/data/memoryMapDataWrapper.h"
 
 #include <cstdint>
 #include <vector>
@@ -101,6 +101,8 @@ struct MemoryMapDataHasher
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Common Aliases
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+using MemoryMapRegion        = QuadTreeTypes::FoldableRegion;
 
 using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
 using MemoryMapDataConstPtr  = MemoryMapDataWrapper<const MemoryMapData>;

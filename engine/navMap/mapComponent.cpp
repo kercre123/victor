@@ -144,6 +144,17 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 
 const char* const kWebVizModuleName = "navmap";
 
+// points for calculating the collision area of a charger, which is different from the physical bounding box
+//    (x := marker normal, y := marker horizontal)
+const Vec3f kInteriorChargerOffsetBR = {-12.f, -12.f, 0.f};
+const Vec3f kInteriorChargerOffsetBL = {-12.f,  12.f, 0.f};
+const Vec3f kInteriorChargerOffsetFL = { 26.f,  12.f, 0.f};
+const Vec3f kInteriorChargerOffsetFR = { 26.f, -12.f, 0.f};
+const Vec3f kExteriorChargerOffsetBR = {  0.f,   0.f, 0.f};
+const Vec3f kExteriorChargerOffsetBL = {  0.f,   0.f, 0.f};
+const Vec3f kExteriorChargerOffsetFL = { 26.f,   0.f, 0.f};
+const Vec3f kExteriorChargerOffsetFR = { 26.f,   0.f, 0.f};
+
 };
 
 using namespace MemoryMapTypes;
@@ -869,21 +880,67 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
         const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
-        switch (addType) {
-          case MemoryMapTypes::EContentType::ObstacleObservable:
+        Poly2f boundingPoly(object.GetBoundingQuadXY(newPoseWrtOrigin));
+        switch(objectFam)
+        {
+          case ObjectFamily::Charger:
+          {
+            // grab the cannonical corners and then apply the transformation. If we use `GetBoundingQuadXY`, 
+            // we no longer know where the "back" is. Unfortunately, order matters here, and for corners
+            // on the ground plane, the order is (from charger.cpp): 
+            //    {BackLeft, FrontLeft, FrontRight, BackLeft, ...top corners...}
+            //
+            //            eBL----------------------eBR
+            //             |  \       back       /  |               +x
+            //             |    iBL----------iBR    |               ^
+            //             |     |            |     |               |
+            //             |  l  |            |  r  |               |
+            //             |  e  |            |  i  |               +-----> +y               
+            //             |  f  |            |  g  |
+            //             |  t  |            |  h  |
+            //             |     |            |  t  |
+            //             |     |            |     |
+            //            eFL---iFL          iFR---eFR
+            //
+            
+            const std::vector<Point3f>& corners = object.GetCanonicalCorners();
+
+            const Point2f exteriorBL = newPoseWrtOrigin * (corners[0] + kExteriorChargerOffsetBL);
+            const Point2f exteriorFL = newPoseWrtOrigin * (corners[1] + kExteriorChargerOffsetFL);
+            const Point2f exteriorFR = newPoseWrtOrigin * (corners[2] + kExteriorChargerOffsetFR);
+            const Point2f exteriorBR = newPoseWrtOrigin * (corners[3] + kExteriorChargerOffsetBR);
+            const Point2f interiorBL = newPoseWrtOrigin * (corners[0] + kInteriorChargerOffsetBL);
+            const Point2f interiorFL = newPoseWrtOrigin * (corners[1] + kInteriorChargerOffsetFL);
+            const Point2f interiorFR = newPoseWrtOrigin * (corners[2] + kInteriorChargerOffsetFR);
+            const Point2f interiorBR = newPoseWrtOrigin * (corners[3] + kInteriorChargerOffsetBR);
+
+
+            // only want to flag the back and sides of the charger, so define each side as a separate trapezoid
+            // as seen in the diagram above
+            auto region = MakeUnion2f(
+              FastPolygon({ exteriorBL, interiorBL, interiorBR, exteriorBR }),  // back
+              FastPolygon({ exteriorBL, exteriorFL, interiorFL, interiorBL }),  // left
+              FastPolygon({ interiorBR, interiorFR, exteriorFR, exteriorBR})    // right
+            );
+
+            MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
+            InsertData(region, data);
+            break;
+          }
+          case ObjectFamily::Block:
+          case ObjectFamily::LightCube:
+          case ObjectFamily::CustomObject:
           {
             // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
             // however, we have no mechanism for merging data, so for now we just replace with the new id
-            Poly2f boundingPoly;
-            boundingPoly.ImportQuad2d(newQuad);
             MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
-            InsertData(Poly2f(newQuad), data);
+            InsertData(boundingPoly, data);
             break;
           }
           default:
             PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedNonObservableType",
                                 "AddObservableObject was called to add a non observable object");
-            InsertData(Poly2f(newQuad), MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
+            InsertData(boundingPoly, MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
             break;
         }
 
@@ -1197,10 +1254,16 @@ void MapComponent::SetUseProxObstaclesInPlanning(bool enable)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& data)
 {
+  return InsertData( MemoryMapTypes::MemoryMapRegion( FastPolygon(polyWRTOrigin) ), data );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::InsertData(const MemoryMapTypes::MemoryMapRegion& region, const MemoryMapData& data)
+{
   INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
-    UpdateBroadcastFlags(currentMap->Insert(polyWRTOrigin, data));
+    UpdateBroadcastFlags(currentMap->Insert(region, data));
   }
 }
 

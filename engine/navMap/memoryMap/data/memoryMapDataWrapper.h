@@ -15,6 +15,7 @@
 
 #include <type_traits>
 #include <memory>
+#include <assert.h>
 
 namespace Anki {
 namespace Cozmo {

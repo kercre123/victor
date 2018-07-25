@@ -25,8 +25,9 @@ class MemoryMap : public INavMap
 {
 public:
 
-  using EContentType = MemoryMapTypes::EContentType;
+  using EContentType     = MemoryMapTypes::EContentType;
   using FullContentArray = MemoryMapTypes::FullContentArray;
+  using MemoryMapRegion  = MemoryMapTypes::MemoryMapRegion;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
@@ -39,9 +40,9 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
   
   // add data to the memory map defined by poly
-  virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) override;
-  virtual bool Insert(const BoundedConvexSet2f& r, const MemoryMapData& data) override;
-  virtual bool Insert(const BoundedConvexSet2f& r, NodeTransformFunction transform) override;
+  virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) override { return Insert(MemoryMapRegion( FastPolygon(poly) ), data); }
+  virtual bool Insert(const MemoryMapRegion& r, const MemoryMapData& data) override;
+  virtual bool Insert(const MemoryMapRegion& r, NodeTransformFunction transform) override;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
@@ -60,14 +61,14 @@ public:
   virtual bool TransformContent(NodeTransformFunction transform) override;
   
   // attempt to apply a transformation function to any node intersecting the poly
-  virtual bool TransformContent(const BoundedConvexSet2f& poly, NodeTransformFunction transform) override;
+  virtual bool TransformContent(const MemoryMapRegion& poly, NodeTransformFunction transform) override;
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
   
   // populate a list of all data that matches the predicate inside poly
   virtual void FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
-  virtual void FindContentIf(const BoundedConvexSet2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
+  virtual void FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
 
   
   // return the size of the area currently explored
@@ -94,10 +95,10 @@ public:
   
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
   virtual bool AnyOf(const Poly2f& p, NodePredicate f)             const override;
-  virtual bool AnyOf(const BoundedConvexSet2f& p, NodePredicate f) const override;
+  virtual bool AnyOf(const MemoryMapRegion& p, NodePredicate f) const override;
 
   // returns the accumulated area of cells that satisfy the predicate
-  virtual float GetArea(const BoundedConvexSet2f& p, NodePredicate f) const override;
+  virtual float GetArea(const MemoryMapRegion& p, NodePredicate f) const override;
 
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;

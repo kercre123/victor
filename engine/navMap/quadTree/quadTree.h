@@ -52,11 +52,11 @@ public:
 
   // notify the QT that the given region has the specified content. If a NodeTransformFunction is specified instead of 
   // data, that node will subdivide as necessary and then apply the transform to the default leaf data
-  bool Insert(const BoundedConvexSet2f& region, NodeTransformFunction transform);
+  bool Insert(const FoldableRegion& region, NodeTransformFunction transform);
   
   // modify content bounded by region. Note that if the region extends outside the current size of the root node,
   // it will not expand the root node
-  bool Transform(const BoundedConvexSet2f& region, NodeTransformFunction transform);
+  bool Transform(const FoldableRegion& region, NodeTransformFunction transform);
   bool Transform(NodeTransformFunction transform);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform

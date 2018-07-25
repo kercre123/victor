@@ -63,10 +63,10 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Insert(const BoundedConvexSet2f& region, NodeTransformFunction transform)
+bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transform)
 {
   // if the root does not contain the region, expand
-  const AxisAlignedQuad aabb = region.GetAxisAlignedBoundingBox();
+  const AxisAlignedQuad aabb = region.GetBoundingBox();
   if ( !_boundingBox.Contains( aabb ) )
   {
     ExpandToFit( aabb );
@@ -82,7 +82,7 @@ bool QuadTree::Insert(const BoundedConvexSet2f& region, NodeTransformFunction tr
     node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
 
     // split node if we are unsure if the incoming region will fill the entire area
-    if ( !region.ContainsAll(node.GetBoundingBox().GetVertices()) )
+    if ( !region.ContainsQuad(node.GetBoundingBox()) )
     {
       node.Subdivide( _processor );
     }
@@ -105,7 +105,7 @@ bool QuadTree::Insert(const BoundedConvexSet2f& region, NodeTransformFunction tr
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Transform(const BoundedConvexSet2f& region, NodeTransformFunction transform)
+bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction transform)
 {
   // run the transform
   bool contentChanged = false;

@@ -157,7 +157,7 @@ bool MemoryMap::TransformContent(NodeTransformFunction transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::TransformContent(const BoundedConvexSet2f& poly, NodeTransformFunction transform)
+bool MemoryMap::TransformContent(const MemoryMapRegion& poly, NodeTransformFunction transform)
 {
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
   return MONITOR_PERFORMANCE( _quadTree.Transform(poly, transform) );
@@ -217,7 +217,7 @@ bool MemoryMap::HasCollisionWithTypes(const FastPolygon& poly, const FullContent
 {
   // convert type to quadtree node content and to flag (since processor takes in flags)
   const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
-  const BoundedConvexSet2f& region = poly;
+  const MemoryMapRegion& region = poly;
 
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   return AnyOf( region, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
@@ -235,7 +235,7 @@ bool MemoryMap::AnyOf(const Poly2f& p, NodePredicate f) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::AnyOf(const BoundedConvexSet2f& r, NodePredicate f) const
+bool MemoryMap::AnyOf(const MemoryMapRegion& r, NodePredicate f) const
 {
   bool retv = false;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
@@ -244,7 +244,7 @@ bool MemoryMap::AnyOf(const BoundedConvexSet2f& r, NodePredicate f) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MemoryMap::GetArea(const BoundedConvexSet2f& region, NodePredicate pred) const
+float MemoryMap::GetArea(const MemoryMapRegion& region, NodePredicate pred) const
 {
   float retv = 0.f;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
@@ -262,16 +262,7 @@ bool MemoryMap::HasContentType(EContentType type) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
-{
-  // clone data to make into a shared pointer.
-  const auto& dataPtr = data.Clone();
-  std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.Insert(FastPolygon(poly), [&dataPtr] (auto _) { return dataPtr; }) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::Insert(const BoundedConvexSet2f& r, const MemoryMapData& data)
+bool MemoryMap::Insert(const MemoryMapRegion& r, const MemoryMapData& data)
 {
   // clone data to make into a shared pointer.
   const auto& dataPtr = data.Clone();
@@ -280,7 +271,7 @@ bool MemoryMap::Insert(const BoundedConvexSet2f& r, const MemoryMapData& data)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::Insert(const BoundedConvexSet2f& r, NodeTransformFunction transform)
+bool MemoryMap::Insert(const MemoryMapRegion& r, NodeTransformFunction transform)
 {
   // clone data to make into a shared pointer.
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
@@ -354,7 +345,7 @@ void MemoryMap::FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapD
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(const BoundedConvexSet2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const
+void MemoryMap::FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, MemoryMapDataConstList& output) const
 {
   QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
     MemoryMapDataPtr data = node.GetData();

@@ -12,8 +12,8 @@
 #ifndef ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 #define ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 
-#include "coretech/common/engine/math/point.h"
-#include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "engine/navMap/memoryMap/data/memoryMapDataWrapper.h"
+#include "coretech/common/engine/math/pointSetUnion.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -30,20 +30,66 @@ namespace QuadTreeTypes {
 // Types
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
+
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
   explicit NodeContent(const MemoryMapData& m);
-  explicit NodeContent(MemoryMapTypes::MemoryMapDataPtr m);
+  explicit NodeContent(MemoryMapDataPtr m);
   
   // comparison operators
   bool operator==(const NodeContent& other) const;
   bool operator!=(const NodeContent& other) const;
   
-  MemoryMapTypes::MemoryMapDataPtr data;
+  MemoryMapDataPtr data;
 };
+
 
 using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
 using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
+
+// wrapper class for specifying the interface between QT actions and geometry methods
+class FoldableRegion {
+public:
+  FoldableRegion(const BoundedConvexSet2f& set) 
+  {
+    using std::placeholders::_1;
+
+    // NOTE: lambda incurs some ~5% perforamnce overhead from the std::function interface, 
+    //       so use std::bind where possible to reduce function deref overhead. lambda implementations
+    //       are included in comments for clarity on what the bind method should evaluate to
+
+    Contains       = std::bind( &BoundedConvexSet2f::Contains, &set, _1 );
+                // ~ [&set](const Point2f& p) { return set.Contains(p); };
+    ContainsQuad   = std::bind( &BoundedConvexSet2f::ContainsAll, &set, std::bind(&AxisAlignedQuad::GetVertices, _1) );
+                // ~ [&set](const AxisAlignedQuad& q) { return set.ContainsAll(q.GetVertices()); };
+    IntersectsQuad = std::bind( &BoundedConvexSet2f::Intersects, &set, _1 );
+                // ~ [&set](const AxisAlignedQuad& q) { return set.Intersects(q); };
+    GetBoundingBox = std::bind( &BoundedConvexSet2f::GetAxisAlignedBoundingBox, &set );
+                // ~ [&set]() { return set.GetAxisAlignedBoundingBox(); };
+  }
+
+  // allow Union types
+  template <typename T, typename U>
+  FoldableRegion(const PointSetUnion2f<T,U>& set) 
+  {
+    using std::placeholders::_1;
+
+    Contains       = std::bind( &PointSetUnion2f<T,U>::Contains, &set, _1 );
+                // ~ [&set](const Point2f& p) { return set.Contains(p); };
+    ContainsQuad   = std::bind( &PointSetUnion2f<T,U>::ContainsHyperCube, &set, _1 );
+                // ~ [&set](const AxisAlignedQuad& q) { return set.ContainsHyperCube(q); };
+    IntersectsQuad = std::bind( &PointSetUnion2f<T,U>::Intersects, &set, _1 );
+                // ~ [&set](const AxisAlignedQuad& q) { return set.Intersects(q); };
+    GetBoundingBox = std::bind( &PointSetUnion2f<T,U>::GetAxisAlignedBoundingBox, &set );
+                // ~ [&set]() { return set.GetAxisAlignedBoundingBox(); };
+  }
+
+  std::function<bool(const Point2f&)>         Contains;
+  std::function<bool(const AxisAlignedQuad&)> ContainsQuad;
+  std::function<bool(const AxisAlignedQuad&)> IntersectsQuad;
+  std::function<AxisAlignedQuad()>            GetBoundingBox;
+};
 
 enum class FoldDirection { DepthFirst, BreadthFirst };
 

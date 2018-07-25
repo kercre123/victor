@@ -302,6 +302,10 @@ namespace Anki {
       bool IsPoseTooHigh(const Pose3d& poseWrtRobot, float heightMultiplier,
                          float heightTol, float offsetFraction) const;
       
+      // Canonical corners are properties of each derived class and define the
+      // objects' shape, in a canonical (unrotated, untranslated) state.
+      virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
+      
     private:
       // NOTE: Declaring pose _first_ because markers use it as a parent and
       //       therefore it needs to be destroyed _after_ the markers whose
@@ -317,9 +321,6 @@ namespace Anki {
       
     protected:
       
-      // Canonical corners are properties of each derived class and define the
-      // objects' shape, in a canonical (unrotated, untranslated) state.
-      virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime = 0;

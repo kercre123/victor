@@ -28,8 +28,8 @@ namespace Anki {
     // === Charger predock pose params ===
     // {angle, x, y}
     // angle: angle about z-axis (which runs vertically along marker)
-    //     x: distance along marker horizontal
-    //     y: distance along marker normal
+    //     x: distance along marker normal
+    //     y: distance along marker horizontal
     const Pose2d kChargerPreDockPoseOffset = {0, 0, 130.f};
     
     const std::vector<Point3f>& Charger::GetCanonicalCorners() const {
