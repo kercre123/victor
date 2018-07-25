@@ -109,7 +109,7 @@ structure SpriteRenderConfig{
   uint_8 hue = 0,
   uint_8 saturation = 0,
   SpriteRenderMethod renderMethod,
-  uint_8 padding[1]
+  uint_8 padding = 0,
 }
 
 // Structures for serializing CompositeImages as clad
@@ -121,7 +121,12 @@ structure SerializedSpriteBox
   int_16 height,
   SpriteRenderConfig renderConfig,
   SpriteBoxName name,
-  uint_8 padding[3]
+  // For unit tests we compare sprite boxes - if padding values are uninitialized
+  // then the comparison sometimes fails erroneously
+  // Seperated the padding out into three ints that are initialized to fix this problem
+  uint_8 padding_1 = 0,
+  uint_8 padding_2 = 0,
+  uint_8 padding_3 = 0,
 }
 
 // Structures for serializing CompositeImages as clad
