@@ -349,8 +349,9 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                             DelegateIfInControl(new TurnInPlaceAction(angle, isAbsolute), [this](ActionResult res) {
                               TransitionToDriveToCharger();
                             });
+                          } else {
+                            TransitionToDriveToCharger();
                           }
-                          TransitionToDriveToCharger();
                         } else {
                           // Either out of retries or we got another failure type
                           ActionFailure();
