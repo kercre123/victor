@@ -214,7 +214,7 @@ test_curl: .require_ip
 	$(curl_command)/v1/list_animations -d '{}'
 	@echo
 
-	curl --cacert trust.cert -X POST https://$(ANKI_ROBOT_HOST)/v1/go_to_pose \
+	$(curl_command)/v1/go_to_pose \
 	-d '{"x_mm":100.0, "y_mm":100.0, "rad":0.0, \
 		"motion_prof":{"speed_mmps":110.0, \
 				"accel_mmps2":200.0, \
@@ -286,7 +286,7 @@ test_photos: .require_ip
 
 test_attention_transfer: .require_ip
 	$(curl_command)/v1/get_latest_attention_transfer -d '{}'
-	@echo
+	@echo 
 
 test_settings: .require_ip
 	$(curl_command)/v1/push_settings -d '{}'

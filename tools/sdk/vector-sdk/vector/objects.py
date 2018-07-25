@@ -44,7 +44,7 @@ __all__ = ['LightCube1Type',
 import math
 import time
 
-from . import util
+from . import lights, sync, util
 
 from .messaging import protocol
 
@@ -148,6 +148,45 @@ class LightCube(util.Component):
 
         return '<%s%s is_visible=%s>' % (self.__class__.__name__,
                                          extra, self.is_visible)
+
+    #### Public Methods ####
+
+    @sync.Synchronizer.wrap
+    async def set_light_corners(self, light1, light2, light3, light4, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
+        '''Set the light for each corner
+
+        Args:
+            light1 (:class:`vector.lights.Light`): The settings for the first light.
+            light2 (:class:`vector.lights.Light`): The settings for the second light.
+            light3 (:class:`vector.lights.Light`): The settings for the third light.
+            light4 (:class:`vector.lights.Light`): The settings for the fourth light.
+            color_profile (:class:`vector.lights.ColorProfile`): The profile to be used for the cube lights
+        '''
+        params = lights.package_request_params((light1, light2, light3, light4), color_profile)
+        print(params)
+        req = protocol.SetCubeLightsRequest(
+            object_id=self._object_id,
+            on_color=params['on_color'],
+            off_color=params['off_color'],
+            on_period_ms=params['on_period_ms'],
+            off_period_ms=params['off_period_ms'],
+            transition_on_period_ms=params['transition_on_period_ms'],
+            transition_off_period_ms=params['transition_off_period_ms'],
+            offset=[0, 0, 0, 0],
+            relative_to_x=0.0,
+            relative_to_y=0.0,
+            rotate=False,
+            make_relative=protocol.SetCubeLightsRequest.OFF)  # pylint: disable=no-member
+        return await self.interface.SetCubeLights(req)
+
+    def set_lights(self, light, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
+        '''Set all lights on the cube
+
+        Args:
+            light (:class:`vector.lights.Light`): The settings for the lights.
+            color_profile (:class:`vector.lights.ColorProfile`): The profile to be used for the cube lights
+        '''
+        return self.set_light_corners(light, light, light, light, color_profile)
 
     #### Private Methods ####
 

@@ -107,12 +107,13 @@ message GatewayWrapper {
     RobotHistoryResult            robot_history_result = 81;
 
     // ------------ cube connections --------------------
-    ConnectCubeRequest            connect_cube_request           = 100;
-    ConnectCubeResponse           connect_cube_response          = 101;
-    DisconnectCubeRequest         disconnect_cube_request        = 102;
-    FlashCubeLightsRequest        flash_cube_lights_request      = 103;
-    ForgetPreferredCubeRequest    forget_preferred_cube_request  = 104;
-    SetPreferredCubeRequest       set_preferred_cube_request     = 105;
+    ConnectCubeRequest            connect_cube_request          = 100;
+    ConnectCubeResponse           connect_cube_response         = 101;
+    DisconnectCubeRequest         disconnect_cube_request       = 102;
+    FlashCubeLightsRequest        flash_cube_lights_request     = 103;
+    ForgetPreferredCubeRequest    forget_preferred_cube_request = 104;
+    SetPreferredCubeRequest       set_preferred_cube_request    = 105;
+    SetCubeLightsRequest          set_cube_lights_request       = 106;
 
     // ------------ robot stats --------------------
     BatteryStateRequest             battery_state_request = 110;

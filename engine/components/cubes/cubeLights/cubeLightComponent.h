@@ -29,6 +29,7 @@
 #include "clad/types/ledTypes.h"
 #include "clad/types/poseStructs.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h" // some useful typedefs
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/robotComponents_fwd.h"
@@ -51,8 +52,8 @@ class ActiveObject;
 class CozmoContext;
 class CubeAnimation;
 class CubeLightAnimationContainer;
+class IGatewayInterface;
 class Robot;
-
 
 class CubeLightComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -249,6 +250,9 @@ private:
   std::map<ObjectID, ObjectInfo> _objectInfo;
   
   std::list<Signal::SmartHandle> _eventHandles;
+
+  IGatewayInterface* _gi = nullptr;
+  std::set<AppToEngineTag> _appToEngineTags;
   
   // Whether or not we should send CubeLightsStateTransition messages to game when object lights
   // change
@@ -373,6 +377,7 @@ private:
   // Applies white balancing to a color
   ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;
   
+  void HandleAppRequest(const AppToEngineEvent& event);
 };
 
 }

@@ -220,7 +220,7 @@ func SliceToArray(msg []uint32) [3]uint32 {
 	return arr
 }
 
-func ProtoSetBackpackLEDsToClad(msg *extint.SetBackpackLEDsRequest) *gw_clad.MessageExternalToRobot {
+func ProtoSetBackpackLightsToClad(msg *extint.SetBackpackLightsRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithSetBackpackLEDs(&gw_clad.SetBackpackLEDs{
 		OnColor:               SliceToArray(msg.OnColor),
 		OffColor:              SliceToArray(msg.OffColor),
@@ -1243,6 +1243,23 @@ func (m *rpcService) SetPreferredCube(ctx context.Context, in *extint.SetPreferr
 	}, nil
 }
 
+func (m *rpcService) SetCubeLights(ctx context.Context, in *extint.SetCubeLightsRequest) (*extint.SetCubeLightsResponse, error) {
+	log.Println("Received rpc request SetCubeLights(", in, ")")
+	_, err := engineProtoManager.WriteToEngine(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetCubeLightsRequest{
+			SetCubeLightsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetCubeLightsResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
 func (m *rpcService) PushSettings(ctx context.Context, in *extint.PushSettingsRequest) (*extint.PushSettingsResponse, error) {
 	log.Println("Received rpc request PushSettings(", in, ")")
 
@@ -1414,13 +1431,13 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 	return response, nil
 }
 
-func (m *rpcService) SetBackpackLEDs(ctx context.Context, in *extint.SetBackpackLEDsRequest) (*extint.SetBackpackLEDsResponse, error) {
-	log.Println("Received rpc request SetBackpackLEDs(", in, ")")
-	_, err := engineCladManager.WriteToEngine(ProtoSetBackpackLEDsToClad(in))
+func (m *rpcService) SetBackpackLights(ctx context.Context, in *extint.SetBackpackLightsRequest) (*extint.SetBackpackLightsResponse, error) {
+	log.Println("Received rpc request SetBackpackLights(", in, ")")
+	_, err := engineCladManager.WriteToEngine(ProtoSetBackpackLightsToClad(in))
 	if err != nil {
 		return nil, err
 	}
-	return &extint.SetBackpackLEDsResponse{
+	return &extint.SetBackpackLightsResponse{
 		Status: &extint.ResultStatus{
 			Description: "Message sent to engine",
 		},

@@ -69,5 +69,5 @@ yellow = Color(name="yellow", int_color=0xffff00ff)
 #: :class:`Color`: White color instance.
 white = Color(name="white", int_color=0xffffffff)
 
-#: :class:`Color`: instance representing no color (LEDs off).
+#: :class:`Color`: instance representing no color (Lights off).
 off = Color(name="off")

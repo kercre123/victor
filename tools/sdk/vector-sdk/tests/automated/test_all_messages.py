@@ -267,11 +267,11 @@ MESSAGES_TO_TEST = [
                                    duration_sec=0.0),
      TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
 
-    # SetBackpackLEDs message
-    (client.ExternalInterfaceServicer.SetBackpackLEDs,
-     protocol.SetBackpackLEDsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
-                                     off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
-     TestResultMatches(protocol.SetBackpackLEDsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+    # SetBackpackLights message
+    (client.ExternalInterfaceServicer.SetBackpackLights,
+     protocol.SetBackpackLightsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
+                                       off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
+     TestResultMatches(protocol.SetBackpackLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
     # ConnectCube message
     (client.ExternalInterfaceServicer.ConnectCube,
@@ -299,6 +299,24 @@ MESSAGES_TO_TEST = [
     (client.ExternalInterfaceServicer.ForgetPreferredCube,
      protocol.ForgetPreferredCubeRequest(),
      TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # SetCubeLights message
+    # Note: We don't have the proper object id from the ConnectCube response, but we can test that the message is properly sent
+    (client.ExternalInterfaceServicer.SetCubeLights,
+     protocol.SetCubeLightsRequest(
+         object_id=1,
+         on_color=[vector.color.green.int_color] * 4,
+         off_color=[vector.color.blue.int_color] * 4,
+         on_period_ms=[1000] * 4,
+         off_period_ms=[1000] * 4,
+         transition_on_period_ms=[1000] * 4,
+         transition_off_period_ms=[1000] * 4,
+         offset=[0, 0, 0, 0],
+         relative_to_x=0.0,
+         relative_to_y=0.0,
+         rotate=False,
+         make_relative=protocol.SetCubeLightsRequest.OFF),  # pylint: disable=no-member
+     TestResultMatches(protocol.SetCubeLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
 
     # TODO: Enable testcase once issue described below is resolved
     # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to

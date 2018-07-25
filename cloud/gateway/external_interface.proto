@@ -270,9 +270,9 @@ service ExternalInterface {
     };
   }
 
-  rpc SetBackpackLEDs(SetBackpackLEDsRequest) returns (SetBackpackLEDsResponse) {
+  rpc SetBackpackLights(SetBackpackLightsRequest) returns (SetBackpackLightsResponse) {
     option (google.api.http) = {
-      post: "/v1/set_backpack_led",
+      post: "/v1/set_backpack_lights",
       body: "*"
     };
   }
@@ -357,4 +357,8 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // Set each the lights on the currently connected cube based on two
+  // rgb values each and timing data for how to transition between them.
+  rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
 }

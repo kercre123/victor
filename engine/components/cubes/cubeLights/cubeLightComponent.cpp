@@ -16,6 +16,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
+
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 
 #include "engine/activeCube.h"
@@ -32,6 +33,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
@@ -39,6 +41,9 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+
+#include "proto/external_interface/messages.pb.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -90,6 +95,8 @@ void CubeLightComponent::SaveLightsToDisk(const std::string& fileName,
 CubeLightComponent::CubeLightComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeLights)
 {
+  _appToEngineTags.insert(AppToEngineTag::kSetCubeLightsRequest);
+
   static_assert(AnimLayerEnum::User < AnimLayerEnum::Engine &&
                 AnimLayerEnum::Engine < AnimLayerEnum::State,
                 "CubeLightComponent.LayersInUnexpectedOrder");
@@ -116,6 +123,16 @@ void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeSleep>();
+  }
+
+  if( robot->HasGatewayInterface() ) {
+    _gi = robot->GetGatewayInterface();
+
+    // Subscribe to app->engine tags
+    for (const auto& tag : _appToEngineTags) {
+      _eventHandles.push_back(_gi->Subscribe(tag, std::bind(&CubeLightComponent::HandleAppRequest,
+                                                            this, std::placeholders::_1)));
+    }
   }
 }
 
@@ -1358,6 +1375,71 @@ ColorRGBA CubeLightComponent::WhiteBalanceColor(const ColorRGBA& origColor) cons
     color.SetG( kWhiteBalanceScale * color.GetG());
   }
   return color;
+}
+
+void CubeLightComponent::HandleAppRequest(const AppToEngineEvent& event)
+{
+  using namespace external_interface;
+
+  switch(event.GetData().GetTag()) {
+    case GatewayWrapperTag::kSetCubeLightsRequest:
+    {
+      PRINT_NAMED_INFO("CubeLightComponent.HandleAppRequest.SetCubeLightsRequest",
+                       "Received a request from gateway to set cube lights colors.");
+
+      const auto& request = event.GetData().set_cube_lights_request();
+
+      std::array<unsigned int, 4> onColor;
+      std::copy(request.on_color().begin(), request.on_color().end(), onColor.begin());
+
+      std::array<unsigned int, 4> offColor;
+      std::copy(request.off_color().begin(), request.off_color().end(), offColor.begin());
+
+      std::array<unsigned int, 4> onPeriodMs;
+      std::copy(request.on_period_ms().begin(), request.on_period_ms().end(), onPeriodMs.begin());
+
+      std::array<unsigned int, 4> offPeriodMs;
+      std::copy(request.off_period_ms().begin(), request.off_period_ms().end(), offPeriodMs.begin());
+
+      std::array<unsigned int, 4> transitionOnPeriodMs;
+      std::copy(request.transition_on_period_ms().begin(), request.transition_on_period_ms().end(), transitionOnPeriodMs.begin());
+
+      std::array<unsigned int, 4> transitionOffPeriodMs;
+      std::copy(request.transition_off_period_ms().begin(), request.transition_off_period_ms().end(), transitionOffPeriodMs.begin());
+
+      std::array<int, 4> offset;
+      std::copy(request.offset().begin(), request.offset().end(), offset.begin());
+
+      if( request.make_relative() == 0 )
+      {
+        PRINT_NAMED_WARNING("CubeLightComponent.HandleAppRequest.SetCubeLightsRequest",
+                            "Got relative mode 0 (Unknown) from gateway, ignoring call");
+      }
+      else
+      {
+        const CubeLightAnimation::ObjectLights lights {
+          .onColors               = onColor,
+          .offColors              = offColor,
+          .onPeriod_ms            = onPeriodMs,
+          .offPeriod_ms           = offPeriodMs,
+          .transitionOnPeriod_ms  = transitionOnPeriodMs,
+          .transitionOffPeriod_ms = transitionOffPeriodMs,
+          .offset                 = offset,
+          .rotate                 = request.rotate(),
+          .makeRelative           = (Anki::Cozmo::MakeRelativeMode)((int)request.make_relative()-1),
+          .relativePoint          = {request.relative_to_x(),request.relative_to_y()}
+        };
+
+        // TODO: Fully integrate these light calls with the sdk behavior VIC-4872
+        SetCubeLightAnimation(request.object_id(), lights);
+      }
+      break;
+    }
+
+    default:
+      DEV_ASSERT(false, "CubeLightComponent.HandleAppRequest.UnhandledTag");
+      break;
+  }
 }
 
 }

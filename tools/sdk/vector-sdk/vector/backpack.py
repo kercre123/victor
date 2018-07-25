@@ -26,9 +26,9 @@ class BackpackComponent(util.Component):
             light3 (:class:`vector.lights.Light`): The rear backpack light
         '''
         params = lights.package_request_params((light1, light2, light3), backpack_color_profile)
-        set_backpack_lights_request = protocol.SetBackpackLEDsRequest(**params)
+        set_backpack_lights_request = protocol.SetBackpackLightsRequest(**params)
 
-        return await self.interface.SetBackpackLEDs(set_backpack_lights_request)
+        return await self.interface.SetBackpackLights(set_backpack_lights_request)
 
     def set_all_backpack_lights(self, light, color_profile=lights.WHITE_BALANCED_BACKPACK_PROFILE):
         '''Set the lights on Vector's backpack to the same color.
