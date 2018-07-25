@@ -20,7 +20,10 @@
   {
     "en":
     {
-      "voice": "Ryan22k_CO"
+      "voice": "colibri-ben_enu",
+      "speed": 90,
+      "pitch": 100,
+      "shaping": 115
     },
     "fr":
     {
