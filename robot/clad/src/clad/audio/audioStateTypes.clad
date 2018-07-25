@@ -102,6 +102,13 @@ enum uint_32 Robot_Vic_External_Processing
   Robot_Vic_External_Unprocessed = 3289079812,
 }
 
+enum uint_32 Robot_Vic_Low_Power_Mode
+{
+  Invalid = 0,
+  Low_Power_Mode_Off = 3340184725,
+  Low_Power_Mode_On = 1712112425,
+}
+
 enum uint_32 Robot_Vic_Petting_Level
 {
   Invalid = 0,
@@ -153,6 +160,7 @@ enum uint_32 StateGroupType
   Music_Dimmer = 920031443,
   Robot_Vic_External_Language = 2984487667,
   Robot_Vic_External_Processing = 475135532,
+  Robot_Vic_Low_Power_Mode = 1633231277,
   Robot_Vic_Petting_Level = 3399985269,
   Robot_Vic_Quiet = 3765614597,
   Robot_Vic_System_Tests = 1822792682,
