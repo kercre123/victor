@@ -61,6 +61,7 @@ enum uint_32 ActionResult {
   UNKNOWN_TOOL_CODE,
   UPDATE_DERIVED_FAILED,
   VISUAL_OBSERVATION_FAILED,
+  SHOULDNT_DRIVE_ON_CHARGER,
 
 
   RETRY                               = verbatim ActionResultCategory::RETRY * ARCBitShift::SHIFT,

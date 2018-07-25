@@ -175,6 +175,10 @@ namespace Cozmo {
       virtual ~DriveStraightAction();
 
       void SetShouldPlayAnimation(bool shouldPlay) { _shouldPlayDrivingAnimation = shouldPlay; }
+
+      // By default, this action cannot move while on the charger (platform). This function can be used to
+      // override this setting, and must be called before the action has started
+      void SetCanMoveOnCharger(bool canMove);
       
       void SetAccel(f32 accel_mmps2);
       void SetDecel(f32 decel_mmps2);
@@ -197,6 +201,8 @@ namespace Cozmo {
       bool _hasStarted = false;
       
       bool _shouldPlayDrivingAnimation = true;
+
+      bool _canMoveOnCharger = false;
       
     }; // class DriveStraightAction
     

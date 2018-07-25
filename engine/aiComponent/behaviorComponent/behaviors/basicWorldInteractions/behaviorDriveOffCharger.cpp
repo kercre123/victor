@@ -275,6 +275,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingStraightProcedural()
 {
   PRINT_CH_INFO( "Behaviors", "BehaviorDriveOffCharger.TransitionToDrivingStraightProcedural", "Driving straight" );
   DriveStraightAction* action = new DriveStraightAction(_iConfig.proceduralDistToDrive_mm);
+  action->SetCanMoveOnCharger(true);
   DelegateIfInControl( action );
   // the Update function will transition back to this or another direction, or end the behavior, as appropriate
 }

@@ -174,9 +174,11 @@ ActionResult MountChargerAction::ConfigureDriveForRetryAction()
   DEV_ASSERT(_driveForRetryAction == nullptr, "MountChargerAction.ConfigureDriveForRetryAction.AlreadyConfigured");
   const float distanceToDriveForward_mm = 120.f;
   const float driveForwardSpeed_mmps = 100.f;
-  _driveForRetryAction.reset(new DriveStraightAction(distanceToDriveForward_mm,
-                                                     driveForwardSpeed_mmps,
-                                                     false));
+  auto* driveAction = new DriveStraightAction(distanceToDriveForward_mm,
+                                              driveForwardSpeed_mmps,
+                                              false);
+  driveAction->SetCanMoveOnCharger(true);
+  _driveForRetryAction.reset(driveAction);
   _driveForRetryAction->ShouldSuppressTrackLocking(true);
   _driveForRetryAction->SetRobot(&GetRobot());
 

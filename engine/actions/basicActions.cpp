@@ -10,11 +10,11 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "engine/actions/basicActions.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/sayTextAction.h"
@@ -22,6 +22,7 @@
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
@@ -174,6 +175,11 @@ namespace Anki {
       // Ensure that the OffTreadsState is valid
       if (!IsOffTreadsStateValid()) {
         return ActionResult::INVALID_OFF_TREADS_STATE;
+      }
+
+      // Don't turn on the charger platform
+      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() ) {
+        return ActionResult::SHOULDNT_DRIVE_ON_CHARGER;
       }
       
       // Grab the robot's current heading and PoseFrameId (which
@@ -652,6 +658,12 @@ namespace Anki {
       _motionProfileManuallySet = true;
     }
 
+    void DriveStraightAction::SetCanMoveOnCharger(bool canMove)
+    {
+      ANKI_VERIFY(!HasStarted(), "DriveStraightAction.SetCanMoveOnCharger.ActionAlreadyStarted", "[%d]", GetTag());
+      _canMoveOnCharger = canMove;
+    }
+
     bool DriveStraightAction::SetMotionProfile(const PathMotionProfile& profile)
     {
       if( _motionProfileManuallySet ) {
@@ -675,7 +687,11 @@ namespace Anki {
         _hasStarted = true;
         return ActionResult::SUCCESS;
       }
-      
+
+      if(!_canMoveOnCharger && GetRobot().GetBatteryComponent().IsOnChargerPlatform() ) {
+        return ActionResult::SHOULDNT_DRIVE_ON_CHARGER;
+      }
+
       const Radians heading = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
       
       const Vec3f& T = GetRobot().GetDriveCenterPose().GetTranslation();
@@ -1354,7 +1370,12 @@ namespace Anki {
         action->SetMaxSpeed(_maxPanSpeed_radPerSec);
         action->SetAccel(_panAccel_radPerSec2);
       }
-      _compoundAction.AddAction(action);
+      ICompoundAction::ShouldIgnoreFailureFcn ignoreFailure = [](ActionResult result, const IActionRunner* action) {
+        // ignore failures if they failed because we are on the charger. In that case, the head should still move
+        const bool failureOK = (result == ActionResult::SHOULDNT_DRIVE_ON_CHARGER);
+        return failureOK;
+      };
+      _compoundAction.AddAction(action, ignoreFailure);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : GetRobot().GetComponent<FullRobotPose>().GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);

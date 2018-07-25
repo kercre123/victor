@@ -133,6 +133,7 @@ void BehaviorWiggleOntoChargerContacts::TransitionToBackingUp()
 
   const bool playAnimation = false;
   auto* action = new DriveStraightAction(-kWiggle_BackupDist_mm, kWiggle_BackupSpeed_mmps, playAnimation);
+  action->SetCanMoveOnCharger(true);
 
   // if we hit the contacts during the option, the update will stop us for verification
   DelegateIfInControl(action, &BehaviorWiggleOntoChargerContacts::TransitionToMovingForward);
@@ -145,6 +146,7 @@ void BehaviorWiggleOntoChargerContacts::TransitionToMovingForward()
 
   const bool playAnimation = false;
   auto* action = new DriveStraightAction(kWiggle_ForwardDist_mm, kWiggle_ForwardSpeed_mmps, playAnimation);
+  action->SetCanMoveOnCharger(true);
 
   // after moving forward, if we don't get interrupted because of the contacts, try looping the state machine
   // again
