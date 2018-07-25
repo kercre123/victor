@@ -1524,10 +1524,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
   // entirely or for this frame.
   lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
-  if(RESULT_OK != lastResult) {
-    PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-    return lastResult;
-  }
+  ANKI_VERIFY(RESULT_OK == lastResult, "VisionSystem.Update.FailedCLAHE", "ApplyCLAHE supposedly has no failure mode");
   
   if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
   {
@@ -1539,6 +1536,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   std::vector<Anki::Rectangle<s32>> detectionRects;
 
+  bool anyModeFailures = false;
+  
   if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
     // Marker detection uses rolling shutter compensation
     UpdateRollingShutter(poseData, imageCache);
@@ -1547,9 +1546,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
     Toc("TotalDetectingMarkers");
   }
   
@@ -1560,9 +1560,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     // UpdateRollingShutter(poseData, imageCache);
     if((lastResult = DetectFaces(imageCache, detectionRects)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
     Toc("TotalDetectingFaces");
   }
   
@@ -1570,9 +1571,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Tic("TotalDetectingPets");
     if((lastResult = DetectPets(imageCache, detectionRects)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
     Toc("TotalDetectingPets");
   }
   
@@ -1581,9 +1583,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Tic("TotalDetectingMotion");
     if((lastResult = DetectMotion(imageCache)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
     Toc("TotalDetectingMotion");
   }
 
@@ -1594,9 +1597,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       lastResult = UpdateOverheadMap(imageCache);
       Toc("UpdateOverheadMap");
       if (lastResult != RESULT_OK) {
-        return lastResult;
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
       }
-      visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
     }
     else {
       PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process overhead map. No color image!");
@@ -1610,9 +1614,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       lastResult = UpdateGroundPlaneClassifier(imageCache);
       Toc("DetectVisualObstacles");
       if (lastResult != RESULT_OK) {
-        return lastResult;
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
       }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
     }
     else {
       PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process visual obstacles. No color image!");
@@ -1627,9 +1632,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
     Toc("TotalDetectingOverheadEdges");
   }
   
@@ -1660,9 +1666,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
   }
   
   if(ShouldProcessVisionMode(VisionMode::DetectingLaserPoints))
@@ -1674,9 +1681,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       Tic("TotalDetectingLaserPoints");
       if((lastResult = DetectLaserPoints(imageCache)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
-        return lastResult;
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
       }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
       Toc("TotalDetectingLaserPoints");
     }
   }
@@ -1704,9 +1712,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Toc("DetectingIllumination");
     if (lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectIlluminationFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingIllumination, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::DetectingIllumination, true);
   }
 
   // NOTE: This should come after any detectors that add things to "detectionRects"
@@ -1719,9 +1728,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
-      return lastResult;
+      anyModeFailures = true;
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
     }
-    visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
   }
 
   if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))
@@ -1733,9 +1743,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
-        return lastResult;
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
       }
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
     }
     else {
       PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not check white balance. No color image!" );
@@ -1751,8 +1762,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     if(RESULT_OK != benchMarkResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
       // Continue processing, since this should be independent of other modes
-    }
-    else {
+    } else {
       visionModesProcessed.SetBitFlag(VisionMode::Benchmarking, true);
     }
   }
@@ -1788,7 +1798,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   _results.push(_currentResult);
   _mutex.unlock();
   
-  return lastResult;
+  return (anyModeFailures ? RESULT_FAIL : RESULT_OK);
 } // Update()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
