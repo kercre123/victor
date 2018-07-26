@@ -113,22 +113,22 @@ namespace Anki {
       const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
       uint8_t buffer[MAX_MESSAGE_SIZE];
 
-      const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
+      const size_t numPacked = message.Pack(buffer, MAX_MESSAGE_SIZE);
       
       {
         
         ANKI_CPU_PROFILE("VizClient.Send");
-        if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
-          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+        if (_vizClient.Send((const char*)buffer, numPacked) <= 0) {
+          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zu failed", VizInterface::MessageVizTagToString(message.GetTag()), numPacked);
         }
       }
 
       #if VIZ_TO_UNITY
       {
         ANKI_CPU_PROFILE("UnityVizClient.SendToUnity")
-        if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
+        if (_unityVizClient.Send((const char*)buffer, numPacked) <= 0) {
           if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
-            PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+            PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zu to Unity failed", VizInterface::MessageVizTagToString(message.GetTag()), numPacked);
           }
         }
       }

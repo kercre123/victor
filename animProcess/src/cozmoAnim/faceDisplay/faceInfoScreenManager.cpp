@@ -243,10 +243,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   auto facEnterFcn = [this]() {
     DrawFAC();
   };
-
   SET_ENTER_ACTION(FAC, facEnterFcn);
-  
-  // FAC screen
   DISABLE_TIMEOUT(FAC);
 
 

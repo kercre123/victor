@@ -14,6 +14,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animComms.h"
 #include "cozmoAnim/animContext.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -25,6 +26,7 @@
 #include "coretech/vision/engine/image_impl.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
@@ -191,6 +193,15 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
   if (isPairing) {
     animStreamer->Abort();
     animStreamer->EnableKeepFaceAlive(false, 0);
+
+    // Always look up since we're displaying something that user will want to see
+    RobotInterface::SetHeadAngle msg;
+    msg.angle_rad             = MAX_HEAD_ANGLE;
+    msg.max_speed_rad_per_sec = DEG_TO_RAD(60);
+    msg.accel_rad_per_sec2    = DEG_TO_RAD(360);
+    msg.duration_sec          = 0;
+    msg.actionID              = 0;
+    SendAnimToRobot(std::move(msg));
   }
 
 

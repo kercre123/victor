@@ -184,7 +184,7 @@ void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)
 {
   const std::string path(msg.animPath, msg.animPath_length);
 
-  LOG_INFO("AnimProcessMessages.Process_playAnim",
+  LOG_INFO("AnimProcessMessages.Process_addAnim",
            "Animation File: %s", path.c_str());
 
   _context->GetDataLoader()->LoadAnimationFile(path);
