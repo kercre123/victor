@@ -12,7 +12,7 @@ TIM6  Byte counter (uart DMA)
 TIM14 Main-exec / Backpack
 TIM15 SPI Master clock
 TIM16 Touch Sense 1
-TIM17
+TIM17 Backpack LEDs
 */
 
 //#define DEBUG
@@ -28,6 +28,7 @@ enum IRQ_Priority {
   PRIORITY_ADC = 0,
   PRIORITY_ENCODERS = 1,
   PRIORITY_TOUCH_SENSE = 1,
+  PRIORITY_LIGHTS = 1,
   PRIORITY_MAIN_EXEC = 2,
   PRIORITY_I2C_TRANSMIT = 2,
   PRIORITY_SPINE_COMMS = 2,

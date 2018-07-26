@@ -21,11 +21,8 @@ static const int AUDIO_DECIMATION = 96;
 static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
 static const uint16_t MAIN_EXEC_OVERFLOW = AUDIO_SAMPLES_PER_FRAME * AUDIO_DECIMATION * 2 * AUDIO_PRESCALE / MAIN_EXEC_PRESCALE;
 
-typedef void (*void_funct)(void);
-
 namespace Timer {
   extern uint32_t clock;
-  extern void_funct LightHandler;
   void init();
 
   static inline uint32_t getTime(void) {

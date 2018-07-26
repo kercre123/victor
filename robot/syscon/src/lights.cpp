@@ -13,6 +13,9 @@ static inline void kick_off();
 
 static void darkness();
 
+typedef void (*void_funct)(void);
+static void_funct light_handler;
+
 static const void_funct function_table[4][8] = {
   { darkness, led_1x2,  led_2x2, led_3x2, led_4x2, led_5x2, led_6x2, led_7x2 },
   { darkness, led_1x1,  led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
@@ -30,12 +33,12 @@ struct LightWorkspace {
   uint8_t   mask;
 };
 
-static const int LIGHT_MINIMUM    = 32;
 static const int LIGHT_CHANNELS   = 4;
 static const int LIGHT_COLORS     = 3;
+static const int LIGHT_MINIMUM    = 128;
+static const int LIGHT_SHIFT      = 17;
 
-static const int LIGHT_SHIFT      = 17 + 2; // 2 is to account for prescalar
-static const uint8_t DARK_OFFSET  = 200; // 245 = 0% dark
+static const uint8_t DARK_OFFSET  = 220; // 245 = 0% dark
 
 static const uint8_t default_value[LIGHT_CHANNELS][LIGHT_COLORS] = {
   { 0xFF, 0xFF, 0xFF },
@@ -50,8 +53,26 @@ static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
+  TIM17->CR1 = 0;
+
+  // Prep our light structs
   receive((const uint8_t*)&default_value);
+  light_handler = leds_off;
+
   enable();
+
+  // Configure the timer
+  TIM17->CR2 = 0;
+  TIM17->PSC = 0;
+  TIM17->DIER = TIM_DIER_UIE;
+
+  NVIC_SetPriority(TIM17_IRQn, PRIORITY_LIGHTS);
+  NVIC_EnableIRQ(TIM17_IRQn);
+}
+
+extern "C" void TIM17_IRQHandler(void) {
+  TIM17->SR = 0;
+  light_handler();
 }
 
 void Lights::receive(const uint8_t* data) {
@@ -69,8 +90,9 @@ void Lights::disable(void) {
 }
 
 static void kick_off(void) {
-  TIM14->CCR1 = TIM14->CNT + current_light->time;
-  Timer::LightHandler = (++current_light)->funct;
+  TIM17->ARR = current_light->time;
+  light_handler = (++current_light)->funct;
+  TIM17->CR1 = TIM_CR1_CEN | TIM_CR1_OPM;
 }
 
 static void darkness() {
