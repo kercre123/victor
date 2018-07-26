@@ -4,6 +4,13 @@
 Calls specific messages on the robot, with expected results and verifies that the robot's responses match up
  - Exceptions will be raised if a response is of the wrong type, or has the wrong data
  - Exceptions will be raised if the interface defines a message that is neither on the test list or ignore list
+
+Note that the following messages are intentionally not in here because they are unreliable due to environmental
+factors (e.g., there is no cube, robot fails to drive onto the charger, robot might not be able to move to the
+requested pose due to a wall, etc.):
+ - ConnectCube
+ - DriveOnCharger/DriveOffCharger
+ - GoToPose
 '''
 
 import asyncio
@@ -66,7 +73,7 @@ class TestResultMatches:
 
         elif len(expected_fields) != len(target_fields):
             errors.append(
-                'TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}.  Recieved contents [{2}] while [{3}] expected.'.format(
+                'TypeError: received output that appears to be a different type or contains different contents {0} than the expected output type {1}.  received contents [{2}] while [{3}] expected.'.format(
                     target_type,
                     expected_type,
                     target_fields,
@@ -78,7 +85,7 @@ class TestResultMatches:
             for idx, expected in enumerate(expected_fields):
                 if target_fields[idx] != expected:
                     errors.append(
-                        'ValueError: recieved output with incorrect response {0}, was expecting {1}, failure occurred with field "{2}"'.format(
+                        'ValueError: received output with incorrect response {0}, was expecting {1}, failure occurred with field "{2}"'.format(
                             str(target_fields), str(expected_fields), str(
                                 target_fields[idx])))
         return errors
@@ -129,7 +136,7 @@ class TestResultIsTypeWithStatusAndFieldNames:
             for field in self._field_names:
                 if field not in target_field_names:
                     errors.append(
-                        'ValueError: recieved output with without the expected field "{0}"'.format(field))
+                        'ValueError: received output with without the expected field "{0}"'.format(field))
         return errors
 
 
@@ -208,32 +215,6 @@ MESSAGES_TO_TEST = [
      protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value(
          "VISION_MODE_DETECTING_FACES"), enable=True),
      TestResultMatches(protocol.EnableVisionModeResult(status=protocol.ResultStatus(description="Message sent to engine")))),
-    (client.ExternalInterfaceServicer.GoToPose,
-     protocol.GoToPoseRequest(x_mm=100.0,
-                              y_mm=100.0,
-                              rad=0.0,
-                              motion_prof=protocol.PathMotionProfile(speed_mmps=100.0,
-                                                                     accel_mmps2=200.0,
-                                                                     decel_mmps2=500.0,
-                                                                     point_turn_speed_rad_per_sec=2.0,
-                                                                     point_turn_accel_rad_per_sec2=10.0,
-                                                                     point_turn_decel_rad_per_sec2=10.0,
-                                                                     dock_speed_mmps=60.0,
-                                                                     dock_accel_mmps2=200.0,
-                                                                     dock_decel_mmps2=500.0,
-                                                                     reverse_speed_mmps=80.0,
-                                                                     is_custom=0)),
-     TestResultMatches(protocol.GoToPoseResponse(result=protocol.ActionResult.Value("ACTION_RESULT_SUCCESS")))),
-    # DriveOnCharger message. Expected result is 1 or
-    # BehaviorResults.BEHAVIOR_COMPLETE_STATE.
-    (Interface.DriveOnCharger,
-     protocol.DriveOnChargerRequest(),
-     TestResultMatches(protocol.DriveOnChargerResult(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
-    # DriveOffCharger message. Assuming robot starts off charger, expected
-    # result is 2 or BehaviorResults.BEHAVIOR_WONT_ACTIVATE_STATE.
-    (Interface.DriveOffCharger,
-     protocol.DriveOffChargerRequest(),
-     TestResultMatches(protocol.DriveOffChargerResult(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
 
     # DriveStraight message
     (client.ExternalInterfaceServicer.DriveStraight,
@@ -272,13 +253,6 @@ MESSAGES_TO_TEST = [
      protocol.SetBackpackLightsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
                                        off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
      TestResultMatches(protocol.SetBackpackLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
-
-    # ConnectCube message
-    (client.ExternalInterfaceServicer.ConnectCube,
-     protocol.ConnectCubeRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
-                                             protocol.ResultStatus(description="Response recieved from engine"),
-                                             ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
     (client.ExternalInterfaceServicer.DisconnectCube,
@@ -385,20 +359,20 @@ async def run_message_test(robot, message, expected_test_list, errors):
     message_name = message_call.__name__
     # make sure we are using the correct input class for this message
     expected_input_type = expected_test_list[message_name]['input'].name
-    recieved_input_type = type(input_data).__name__
-    if recieved_input_type != expected_input_type:
+    received_input_type = type(input_data).__name__
+    if received_input_type != expected_input_type:
         errors.append('InputData: A test for a message of type {0} expects input data of the type {1}, but {2} was supplied'.format(message_name,
                                                                                                                                     expected_input_type,
-                                                                                                                                    recieved_input_type))
+                                                                                                                                    received_input_type))
         return
 
     # make sure we are using the correct output class for this message
     expected_output_type = expected_test_list[message_name]['output'].name
-    recieved_output_type = target_type.__name__
-    if recieved_output_type != expected_output_type:
+    received_output_type = target_type.__name__
+    if received_output_type != expected_output_type:
         errors.append('OutputData: A test for a message of type {0} expects output data of the type {1}, but {2} was supplied'.format(message_name,
                                                                                                                                       expected_output_type,
-                                                                                                                                      recieved_output_type))
+                                                                                                                                      received_output_type))
         return
 
     print("testing {}".format(message_name))
