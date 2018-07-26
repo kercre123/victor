@@ -62,6 +62,7 @@ void Daemon::Start() {
   Christen();
 
   InitializeEngineComms();
+  InitializeGatewayComms();
   Log::Write("Finished Starting");
 
   // Initialize Ble Ipc Timer
@@ -156,6 +157,11 @@ void Daemon::InitializeEngineComms() {
   _engineTimer.data = this;
   ev_timer_init(&_engineTimer, HandleEngineTimer, kRetryInterval_s, kRetryInterval_s);
   ev_timer_start(_loop, &_engineTimer);
+}
+
+void Daemon::InitializeGatewayComms() {
+  _gatewayMessagingServer = std::make_shared<GatewayMessagingServer>(_loop);
+  _gatewayMessagingServer->Init();
 }
 
 bool Daemon::TryConnectToEngineServer() {

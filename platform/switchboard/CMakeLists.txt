@@ -24,6 +24,7 @@ PRIVATE
   ${PLATFORM_LIBS}
   sdk_clad_cpp
   robot_clad_cpplite
+  cti_common
   cti_messaging
   engine_clad
   ${SODIUM_LIBS}

@@ -25,6 +25,7 @@
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/engineMessagingClient.h"
+#include "switchboardd/gatewayMessagingServer.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -47,6 +48,7 @@ namespace Switchboard {
         _bleClient(nullptr),
         _securePairing(nullptr),
         _engineMessagingClient(nullptr),
+        _gatewayMessagingServer(nullptr),
         _isUpdateEngineServiceRunning(false)
       {}
 
@@ -73,6 +75,7 @@ namespace Switchboard {
 
       void Christen();
       void InitializeEngineComms();
+      void InitializeGatewayComms();
       void InitializeBleComms();
       void OnConnected(int connId, INetworkStream* stream);
       void OnDisconnected(int connId, INetworkStream* stream);
@@ -131,6 +134,7 @@ namespace Switchboard {
       std::unique_ptr<BleClient> _bleClient;
       std::unique_ptr<RtsComms> _securePairing;
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
+      std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
       bool _isUpdateEngineServiceRunning;
   };
 }

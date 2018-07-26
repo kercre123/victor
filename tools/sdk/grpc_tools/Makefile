@@ -194,7 +194,10 @@ test_wifi: .require_ip
 	@echo
 
 test_user_authentication: .require_ip
-	$(curl_command)/v1/user_authentication -d '{}'
+	# Temporarily curl with "this is a test" base64 encoded until VIC-3490 gets done
+	# Then the user_session_id will be the login token that the user received from
+	# the Accounts service when logging in.
+	$(curl_command)/v1/user_authentication -d '{ "user_session_id" : "dGhpcyBpcyBhIHRlc3Q=" }'
 	@echo
 
 test_list_animations: .require_ip

@@ -6,6 +6,9 @@ Copyright (c) 2018 Anki, Inc.
 
 from enum import Enum
 
+import inspect
+import sys
+
 import aiogrpc
 
 from . import exceptions, sync, util
@@ -56,6 +59,10 @@ class Connection:
         self.channel = aiogrpc.secure_channel(self.host, credentials,
                                               options=(("grpc.ssl_target_name_override", self.name,),))
         self._interface = client.ExternalInterfaceStub(self.channel)
+
+        # # TODO: do this after getting the token (or the token should be available externally already)
+        # interface_fns = [x[0] for x in inspect.getmembers(self._interface) if not x[0].startswith("__")]
+        # print(interface_fns)
 
         control = self.request_control(timeout=timeout)
         if isinstance(control, sync.Synchronizer):

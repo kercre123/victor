@@ -46,7 +46,7 @@ type EngineProtoIpcManager struct {
 	ManagedChannels map[string]([]chan<- extint.GatewayWrapper)
 }
 
-func (manager *EngineProtoIpcManager) WriteToEngine(msg proto.Message) (int, error) {
+func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 	var err error
 	var buf bytes.Buffer
 	if msg == nil {
@@ -99,7 +99,7 @@ func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels
 
 func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper, bool) {
 	reflectedType := reflect.TypeOf(tag).String()
-	if _, ok := engineProtoManager.ManagedChannels[reflectedType]; ok {
+	if _, ok := manager.ManagedChannels[reflectedType]; ok {
 		return nil, nil, false
 	}
 
@@ -154,10 +154,101 @@ func (manager *EngineProtoIpcManager) ProcessMessages() {
 
 type SwitchboardIpcManager struct {
 	IpcManager
+	ManagedChannels map[gw_clad.SwitchboardResponseTag]([]chan<- gw_clad.SwitchboardResponse)
 }
 
 func (manager *SwitchboardIpcManager) ProcessMessages() {
+	var msg gw_clad.SwitchboardResponse
+	var b, block []byte
+	var buf bytes.Buffer
+	for {
+		buf.Reset()
+		block = manager.Conn.ReadBlock()
+		if block == nil {
+			log.Println("Error: switchboard socket returned empty message")
+			continue
+		} else if len(block) < 2 {
+			log.Println("Error: switchboard socket message too small")
+			continue
+		}
+		b = block[2:]
+		buf.Write(b)
+		if err := msg.Unpack(&buf); err != nil {
+			// Intentionally ignoring errors for unknown messages
+			// TODO: treat this as an error condition once VIC-3186 is completed
+			continue
+		}
 
+		manager.SendToListeners(msg)
+	}
+}
+
+func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (int, error) {
+	var err error
+	var buf bytes.Buffer
+	if msg == nil {
+		return -1, status.Errorf(codes.InvalidArgument, "Unable to parse request")
+	}
+	if err = binary.Write(&buf, binary.LittleEndian, uint16(msg.Size())); err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	if err = msg.Pack(&buf); err != nil {
+		return -1, status.Errorf(codes.Internal, err.Error())
+	}
+	return manager.Conn.Write(buf.Bytes())
+}
+
+// TODO: make this generic (via interfaces). Comparison failed when not specific.
+func (manager *SwitchboardIpcManager) deleteFromMap(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) func() {
+	return func() {
+		chanSlice := manager.ManagedChannels[tag]
+		for idx, v := range chanSlice {
+			if v == listener {
+				chanSlice[idx] = chanSlice[len(chanSlice)-1]
+				manager.ManagedChannels[tag] = chanSlice[:len(chanSlice)-1]
+				break
+			}
+			if len(chanSlice)-1 == idx {
+				log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
+			}
+		}
+		if len(manager.ManagedChannels[tag]) == 0 {
+			delete(manager.ManagedChannels, tag)
+		}
+	}
+}
+
+func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardResponseTag, numChannels int) (func(), chan gw_clad.SwitchboardResponse) {
+	result := make(chan gw_clad.SwitchboardResponse, numChannels)
+	log.Printf("Listening for %+v", tag)
+	slice := manager.ManagedChannels[tag]
+	if slice == nil {
+		slice = make([]chan<- gw_clad.SwitchboardResponse, 0)
+	}
+	manager.ManagedChannels[tag] = append(slice, result)
+	return manager.deleteFromMap(result, tag), result
+}
+
+func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardResponse) {
+	tag := msg.Tag()
+	if chanList, ok := manager.ManagedChannels[tag]; ok {
+		log.Println("Sending", tag, "to listener")
+		var wg sync.WaitGroup
+		for idx, listener := range chanList {
+			wg.Add(1)
+			go func(idx int, listener chan<- gw_clad.SwitchboardResponse, msg gw_clad.SwitchboardResponse) {
+				select {
+				case listener <- msg:
+					log.Printf("Sent %d:%s\n", idx, tag)
+				case <-time.After(100 * time.Millisecond):
+					log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				}
+				wg.Done()
+			}(idx, listener, msg)
+		}
+		wg.Wait()
+		runtime.Gosched()
+	}
 }
 
 // TODO: Remove CLAD manager once it's no longer needed
@@ -167,7 +258,7 @@ type EngineCladIpcManager struct {
 	ManagedChannels map[gw_clad.MessageRobotToExternalTag]([]chan<- gw_clad.MessageRobotToExternal)
 }
 
-func (manager *EngineCladIpcManager) WriteToEngine(msg *gw_clad.MessageExternalToRobot) (int, error) {
+func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) (int, error) {
 	var err error
 	var buf bytes.Buffer
 	if msg == nil {
@@ -251,7 +342,7 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 	var buf bytes.Buffer
 	for {
 		buf.Reset()
-		block = engineCladManager.Conn.ReadBlock()
+		block = manager.Conn.ReadBlock()
 		if block == nil {
 			log.Println("Error: engine socket returned empty message")
 			continue

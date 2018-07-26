@@ -116,11 +116,11 @@ func main() {
 	closeEngineProto := engineProtoManager.Connect(SocketPath, protoDomainSocket)
 	defer closeEngineProto()
 
-	// if IsSwitchboardAvailable {
-	// 	engineProtoManager.ManagedChannels = make(map[string]([]chan<- gw_clad.MessageSwitchboardGateway))
-	// 	closeSwitchboardClad := engineCladManager.Connect(SocketPath, switchboardDomainSocket)
-	// 	defer closeSwitchboardClad()
-	// }
+	if IsSwitchboardAvailable {
+		switchboardManager.ManagedChannels = make(map[gw_clad.SwitchboardResponseTag]([]chan<- gw_clad.SwitchboardResponse))
+		closeSwitchboardClad := switchboardManager.Connect(SocketPath, switchboardDomainSocket)
+		defer closeSwitchboardClad()
+	}
 
 	log.Println("Sockets successfully created")
 

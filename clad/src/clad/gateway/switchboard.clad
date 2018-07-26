@@ -1,0 +1,24 @@
+
+#include "clad/cloud/token.clad"
+
+namespace Anki {
+namespace Switchboard {
+
+message SwitchboardError {
+    
+}
+
+union SwitchboardRequest {
+    SwitchboardError         SwitchboardError     = 0x01,
+    Anki::Cozmo::AuthRequest AuthRequest          = 0x02,
+    Anki::Cozmo::JwtRequest  JwtRequest           = 0x03,
+}
+
+union SwitchboardResponse {
+    SwitchboardError          SwitchboardError      = 0x01,
+    Anki::Cozmo::AuthResponse AuthResponse          = 0x02,
+    Anki::Cozmo::JwtResponse  JwtResponse           = 0x03,
+}
+
+} // namespace Switchboard
+} // namespace Anki
