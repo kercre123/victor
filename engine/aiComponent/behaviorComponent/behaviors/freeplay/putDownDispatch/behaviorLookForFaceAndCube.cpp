@@ -331,7 +331,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
     // need to handle that here. We never kill the behavior on a tracking only face
 
     if( _iConfig.stopBehaviorOnAnyFace ) {
-      PRINT_CH_INFO("Behavior", (GetDebugLabel() + ".SawFace.End").c_str(),
+      PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".SawFace.End").c_str(),
                     "Stopping behavior because we saw (any) face id %d",
                     observedID);
         
@@ -350,7 +350,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
                       observedID) ) {
         
         if( facePtr->HasName() ) {
-          PRINT_CH_INFO("Behavior", (GetDebugLabel() + ".SawFace.End").c_str(),
+          PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".SawFace.End").c_str(),
                         "Stopping behavior because we saw (any) face id %d",
                         observedID);
         

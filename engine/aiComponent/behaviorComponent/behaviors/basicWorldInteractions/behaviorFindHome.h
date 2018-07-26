@@ -62,7 +62,8 @@ private:
     InstanceConfig(const Json::Value& config, const std::string& debugName);
     float       minSearchAngleSweep_deg = 0.f;
     int         maxSearchTurns = 0;
-    int         numSearches = 0;
+    int         maxNumRecentSearches = 0;
+    float       recentSearchWindow_sec = 0.f;
     float       minDrivingDist_mm = 0.f;
     float       maxDrivingDist_mm = 0.f;
     

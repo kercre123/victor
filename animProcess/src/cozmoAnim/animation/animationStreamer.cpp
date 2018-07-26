@@ -523,10 +523,11 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
-                          "Animation %s is interrupting animation %s",
-                          anim != nullptr ? anim->GetName().c_str() : "NULL",
-                          _streamingAnimation->GetName().c_str());
+      PRINT_CH_INFO(kLogChannelName,
+                    "AnimationStreamer.SetStreamingAnimation.Aborting",
+                    "Animation %s is interrupting animation %s",
+                    anim != nullptr ? anim->GetName().c_str() : "NULL",
+                    _streamingAnimation->GetName().c_str());
 
       Abort(kNotAnimatingTag, shouldClearProceduralAnim);
     }

@@ -38,9 +38,15 @@
   // to another location to search.
   "maxSearchTurns" : 12,
   
-  // How many 'searches' to complete before giving up. One 'search'
+  // Rolling window of time for keeping track of how many searches have been performed
+  // recently. Also for keeping track of the locations of recent searches. If we've
+  // searched at a location within this amount of time, we will _not_ search at that
+  // location again.
+  "recentSearchWindow_sec" : 240.0,
+  
+  // How many 'searches' to attempt in a short time window before giving up. One 'search'
   // means spinning around in place and looking for the charger.
-  "numSearches" : 6,
+  "maxNumRecentSearches" : 4,
   
   "minDrivingDist_mm" : 150,
   "maxDrivingDist_mm" : 400

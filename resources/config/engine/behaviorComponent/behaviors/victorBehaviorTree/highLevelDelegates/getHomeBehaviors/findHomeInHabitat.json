@@ -38,9 +38,15 @@
   // to another location to search.
   "maxSearchTurns" : 15,
   
-  // How many 'searches' to complete before giving up. One 'search'
+  // Rolling window of time for keeping track of how many searches have been performed
+  // recently. Also for keeping track of the locations of recent searches. If we've
+  // searched at a location within this amount of time, we will _not_ search at that
+  // location again.
+  "recentSearchWindow_sec" : 3600.0, // Only want to allow one search
+  
+  // How many 'searches' to attempt in a short time window before giving up. One 'search'
   // means spinning around in place and looking for the charger.
-  "numSearches" : 1,
+  "maxNumRecentSearches" : 1,
   
   // these values are irrelevant in the habitat environment (we will not drive
   // around looking for the charger, only spin in place)

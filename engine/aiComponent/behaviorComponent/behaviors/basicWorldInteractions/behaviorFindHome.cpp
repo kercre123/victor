@@ -46,7 +46,8 @@ namespace {
   const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
   const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
   const char* kMaxSearchTurnsKey                 = "maxSearchTurns";
-  const char* kNumSearchesKey                    = "numSearches";
+  const char* kRecentSearchWindowKey             = "recentSearchWindow_sec";
+  const char* kMaxNumRecentSearchesKey           = "maxNumRecentSearches";
   const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
   const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
 
@@ -56,10 +57,6 @@ namespace {
   // When generating new locations from which to search for the charger, new
   // locations should be at least this far from previously-searched locations.
   const float kMinDistFromPreviousSearch_mm = 200.f;
-  
-  // After this amount of time since visiting a search location, do not check
-  // if we have previously visited it already.
-  const float kPreviousLocationSearchTimeout_sec = 4*60.f;
   
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {
@@ -84,7 +81,8 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnEndAnimKey, searchTurnEndAnimTrigger, debugName);
   minSearchAngleSweep_deg = JsonTools::ParseFloat(config, kMinSearchAngleSweepKey, debugName);
   maxSearchTurns          = JsonTools::ParseUint8(config, kMaxSearchTurnsKey, debugName);
-  numSearches             = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
+  recentSearchWindow_sec  = JsonTools::ParseFloat(config, kRecentSearchWindowKey, debugName);
+  maxNumRecentSearches    = JsonTools::ParseUint8(config, kMaxNumRecentSearchesKey, debugName);
   minDrivingDist_mm       = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
   maxDrivingDist_mm       = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
   homeFilter              = std::make_unique<BlockWorldFilter>();
@@ -121,7 +119,8 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kSearchTurnEndAnimKey,
     kMinSearchAngleSweepKey,
     kMaxSearchTurnsKey,
-    kNumSearchesKey,
+    kRecentSearchWindowKey,
+    kMaxNumRecentSearchesKey,
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
   };
@@ -222,8 +221,8 @@ void BehaviorFindHome::TransitionToStartSearch()
   _iConfig.condHandleNearPrevSearch->SetOtherPositions(GetRecentlySearchedLocations());
   const bool nearPreviousSearch = !_iConfig.condHandleNearPrevSearch->operator()(robotPosition);
   if (nearPreviousSearch) {
-    PRINT_NAMED_INFO("BehaviorFindHome.TransitionToStartSearch.TooCloseToPreviousSearch",
-                     "We are too close to a previously-searched location, so driving to a new search pose");
+    PRINT_CH_INFO("Behaviors", "BehaviorFindHome.TransitionToStartSearch.TooCloseToPreviousSearch",
+                  "We are too close to a previously-searched location, so driving to a new search pose");
     TransitionToRandomDrive();
   } else {
     TransitionToSearchTurn();
@@ -240,12 +239,12 @@ void BehaviorFindHome::TransitionToSearchTurn()
   const bool exceededMaxTurns = (_dVars.numTurnsCompleted >= _iConfig.maxSearchTurns);
   
   if (sweptEnough || exceededMaxTurns) {
-    PRINT_NAMED_INFO("BehaviorFindHome.TransitionToSearchTurn.CompletedSearch",
-                     "We have completed a full search. Played %d turn animations (max is %d), and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
-                     _dVars.numTurnsCompleted,
-                     _iConfig.maxSearchTurns,
-                     _dVars.angleSwept_deg,
-                     _iConfig.minSearchAngleSweep_deg);
+    PRINT_CH_INFO("Behaviors", "BehaviorFindHome.TransitionToSearchTurn.CompletedSearch",
+                  "We have completed a full search. Played %d turn animations (max is %d), and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
+                  _dVars.numTurnsCompleted,
+                  _iConfig.maxSearchTurns,
+                  _dVars.angleSwept_deg,
+                  _iConfig.minSearchAngleSweep_deg);
     ++_dVars.numSearchesCompleted;
     // Record this as a 'searched' location
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -308,11 +307,17 @@ void BehaviorFindHome::TransitionToRandomDrive()
   _dVars.angleSwept_deg = 0.f;
   _dVars.numTurnsCompleted = 0;
   
-  // Have we already completed the required number of searches?
-  if (_dVars.numSearchesCompleted >= _iConfig.numSearches) {
-    PRINT_NAMED_WARNING("BehaviorFindHome.TransitionToRandomDrive.DidNotFindCharger",
-                        "Did not find the charger after %d searches - behavior ending.",
-                        _dVars.numSearchesCompleted);
+  // Have we searched too many times recently? If so, we should exit (which will allow the next behavior to run, which
+  // is likely "RequestHome"). It's possible that this behavior is continually being interrupted for some reason, and
+  // if that's the case we don't want to just keep searching endlessly, so we need a persistent stopping condition.
+  const auto& recentlySearchedLocations = GetRecentlySearchedLocations();
+  if (recentlySearchedLocations.size() >= _iConfig.maxNumRecentSearches) {
+    PRINT_NAMED_WARNING("BehaviorFindHome.TransitionToRandomDrive.TooManyRecentSearches",
+                        "We have performed too many (%zu) searches in the past %.1f seconds - ending behavior",
+                        recentlySearchedLocations.size(), _iConfig.recentSearchWindow_sec);
+    // Clear our recent searches so we can start fresh next time
+    _dVars.persistent.searchedLocations.clear();
+    CancelSelf();
     return;
   }
   
@@ -343,7 +348,7 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const auto* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
   if ((charger != nullptr) &&
-      (now_sec > _dVars.persistent.lastVisitedOldChargerTime + kPreviousLocationSearchTimeout_sec)) {
+      (now_sec > _dVars.persistent.lastVisitedOldChargerTime + _iConfig.recentSearchWindow_sec)) {
     Pose3d inFrontOfCharger(0.f, Z_AXIS_3D(), {-150.f,0.f,0.f});
     inFrontOfCharger.SetParent(charger->GetPose());
     outPoses.push_back(std::move(inFrontOfCharger));
@@ -416,8 +421,8 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
-      PRINT_NAMED_INFO("BehaviorFindHome.GenerateSearchPoses.Completed",
-                       "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
+      PRINT_CH_INFO("Behaviors", "BehaviorFindHome.GenerateSearchPoses.Completed",
+                    "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }
   }
@@ -454,7 +459,7 @@ std::vector<Point2f> BehaviorFindHome::GetRecentlySearchedLocations()
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto& prevSearchMap = _dVars.persistent.searchedLocations;
   prevSearchMap.erase(prevSearchMap.begin(),
-                      prevSearchMap.lower_bound(now_sec - kPreviousLocationSearchTimeout_sec));
+                      prevSearchMap.lower_bound(now_sec - _iConfig.recentSearchWindow_sec));
   std::vector<Point2f> prevSearchPositions;
   prevSearchPositions.reserve(prevSearchMap.size());
   std::transform(prevSearchMap.begin(), prevSearchMap.end(), std::back_inserter(prevSearchPositions),
