@@ -981,15 +981,15 @@
   },
   {
     "CladEvent": "PlanningGetIn",
-    "AnimName" : "ag_planning_getin"
+    "AnimName" : "ag_explorer_planning_getin"
   },
   {
     "CladEvent": "PlanningLoop",
-    "AnimName" : "ag_planning"
+    "AnimName" : "ag_explorer_planning"
   },
   {
     "CladEvent": "PlanningGetOut",
-    "AnimName" : "ag_planning_getout"
+    "AnimName" : "ag_explorer_planning_getout"
   },
   {
     "CladEvent": "PopAWheelieInitial",
