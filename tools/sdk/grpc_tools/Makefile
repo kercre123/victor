@@ -49,19 +49,24 @@ go_vet: .PHONY
 	@echo "> Running go vet"
 	@GOPATH=$(GIT_ROOT)/cloud/go/:$(GIT_ROOT)/generated/go/:$(GIT_ROOT)/generated/cladgo/:$(GIT_ROOT)/tools/message-buffers/support/go go vet $(GATEWAY_GO_FILES)
 
-pylint: pylint_tests pylint_main
+pylint: pylint_tests pylint_examples pylint_main
 
 autopep: .PHONY
 	python3 -m pip install autopep8
-	python3 -m autopep8 --ignore E501,E402 --in-place ../vector-sdk/tests/*.py ../vector-sdk/tests/automated/*.py ../vector-sdk/vector/*.py
+	python3 -m autopep8 --ignore E501,E402 --in-place $(shell find ../vector-sdk/examples -type f -name "*.py") ../vector-sdk/tests/*.py ../vector-sdk/tests/automated/*.py ../vector-sdk/vector/*.py
 
 pylint_main: autopep
 	@echo "> Running pylint on vector module"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1 | grep .py) || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1 -name "*.py") || exit 0
 
 pylint_tests: autopep
 	@echo "> Running pylint on test files"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 | grep .py) || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 -name "*.py") || exit 0
+
+pylint_examples: autopep
+	@echo "> Running pylint on vector examples"
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/examples -type f -name "*.py") || exit 0
+
 
 # Unused flatbuffers target. Keeping this for posterity
 flat: .PHONY

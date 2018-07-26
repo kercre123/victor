@@ -21,11 +21,11 @@ This is an example of integrating Vector with an ipython-based command line inte
 
 import argparse
 from pathlib import Path
+import os
 import sys
 
 try:
     from IPython.terminal.embed import InteractiveShellEmbed
-    from IPython.terminal.prompts import Prompts, Token
 except ImportError:
     sys.exit('Cannot import from ipython: Do `pip3 install ipython` to install')
 
@@ -41,17 +41,19 @@ usage = ('This is an IPython interactive shell for Vector.\n'
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("ip")
-parser.add_argument("cert_file")
-parser.add_argument("--port", default="443")
+parser.add_argument("-n", "--name", nargs='?', default=os.environ.get('VECTOR_ROBOT_NAME', None))
+parser.add_argument("-i", "--ip", nargs='?', default=os.environ.get('VECTOR_ROBOT_IP', None))
+parser.add_argument("-c", "--cert_file", nargs='?', default=os.environ.get('VECTOR_ROBOT_CERT', None))
+parser.add_argument("--port", nargs='?', default="443")
 args = parser.parse_args()
 
-cert_path = Path(args.cert_file)
-cert = cert_path.resolve()
+cert = Path(args.cert_file)
+args.cert = cert.resolve()
 
 ipyshell = InteractiveShellEmbed(banner1='\nWelcome to the Vector Shell!',
                                  exit_msg='Goodbye\n')
 
-with vector.Robot(args.ip, str(cert), port=args.port) as robot:
-    '''Invoke the ipython shell while connected to vector'''
+
+with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    # Invoke the ipython shell while connected to vector
     ipyshell(usage)
