@@ -138,6 +138,7 @@ static void enterBootloader(void) {
 }
 
 void Power::wakeUp() {
+  // Only wake up if we are in a low power state, not sleeping
   if (desiredState == POWER_CALM) {
     desiredState = POWER_ACTIVE;
   }
@@ -145,11 +146,23 @@ void Power::wakeUp() {
 
 void Power::setMode(PowerMode set) {
   desiredState = set;
+}
 
-  // Alter power to the head immediately
-  if (set == POWER_STOP) {
+void Power::adjustHead(void) {
+  static bool headPowered = false;  // head has power, but devices are not setup
+  bool wantPower = desiredState != POWER_STOP;
+
+  if (headPowered == wantPower) {
+    return ;
+  }
+
+  if (wantPower) {
+    enableHead();
+  } else {
     disableHead();
   }
+
+  headPowered = wantPower;
 }
 
 void Power::tick(void) {
@@ -166,10 +179,6 @@ void Power::tick(void) {
       Opto::start();
       Mics::reduce(false);
     } 
-    
-    if (currentState == POWER_STOP) {
-      enableHead();
-    }
 
     if (desired == POWER_ERASE) {
       markForErase();

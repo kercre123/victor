@@ -97,7 +97,6 @@ void Mics::init(void) {
   reduced = false;
 
   start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
-  start();
 }
 
 void Mics::start(void) {

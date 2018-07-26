@@ -50,7 +50,7 @@ static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS];
 
 static LightChannel light[LIGHT_CHANNELS * LIGHT_COLORS + 1];
 static LightChannel *current_light;
-static bool disabled;
+static bool enabled = false;
 
 void Lights::init(void) {
   TIM17->CR1 = 0;
@@ -58,8 +58,6 @@ void Lights::init(void) {
   // Prep our light structs
   receive((const uint8_t*)&default_value);
   light_handler = leds_off;
-
-  enable();
 
   // Configure the timer
   TIM17->CR2 = 0;
@@ -80,13 +78,13 @@ void Lights::receive(const uint8_t* data) {
 }
 
 void Lights::enable() {
-  disabled = false;
+  enabled = true;
   leds_off();
 }
 
 void Lights::disable(void) {
   receive((const uint8_t*)default_value);
-  disabled = true;
+  enabled = false;
 }
 
 static void kick_off(void) {
@@ -104,47 +102,49 @@ void Lights::tick(void) {
   // End of list
   LightChannel* target = current_light = &light[0];
 
-  for (int ch = 0; !disabled && ch < LIGHT_CHANNELS; ch++) {
-    // Create light channels
-    LightWorkspace light[LIGHT_COLORS];
-    LightWorkspace* sorted[LIGHT_COLORS];
-    int slots = LIGHT_COLORS;
+  if (enabled) {
+    for (int ch = 0; ch < LIGHT_CHANNELS; ch++) {
+      // Create light channels
+      LightWorkspace light[LIGHT_COLORS];
+      LightWorkspace* sorted[LIGHT_COLORS];
+      int slots = LIGHT_COLORS;
 
-    // Stub cells
-    for (int x = 0; x < LIGHT_COLORS; x++) {
-      uint32_t intensity = DARK_OFFSET * (uint32_t)value[ch][x];
+      // Stub cells
+      for (int x = 0; x < LIGHT_COLORS; x++) {
+        uint32_t intensity = DARK_OFFSET * (uint32_t)value[ch][x];
 
-      light[x].time = (intensity * intensity) >> LIGHT_SHIFT;
-      light[x].mask = 1 << x;
-      sorted[x] = &light[x];
-    }
-
-    // Sort light channels
-    for (int x = 0; x < LIGHT_COLORS - 1; x++) {
-      for (int y = x + 1; y < LIGHT_COLORS; y++) {
-        if (sorted[x]->time <= sorted[y]->time) continue ;
-  
-        LightWorkspace* t = sorted[y]; 
-        sorted[y] = sorted[x]; 
-        sorted[x] = t;
+        light[x].time = (intensity * intensity) >> LIGHT_SHIFT;
+        light[x].mask = 1 << x;
+        sorted[x] = &light[x];
       }
-    }
+
+      // Sort light channels
+      for (int x = 0; x < LIGHT_COLORS - 1; x++) {
+        for (int y = x + 1; y < LIGHT_COLORS; y++) {
+          if (sorted[x]->time <= sorted[y]->time) continue ;
     
-    // Merge channels
-    int prev_time = 0;
-    int mask = 0x7;
-    
-    for (int x = 0; x < slots; x++) {
-      int delta = sorted[x]->time - prev_time;
+          LightWorkspace* t = sorted[y]; 
+          sorted[y] = sorted[x]; 
+          sorted[x] = t;
+        }
+      }
+      
+      // Merge channels
+      int prev_time = 0;
+      int mask = 0x7;
+      
+      for (int x = 0; x < slots; x++) {
+        int delta = sorted[x]->time - prev_time;
 
-      target->funct = function_table[ch][mask];
-      target->time = delta;
+        target->funct = function_table[ch][mask];
+        target->time = delta;
 
-      mask ^= sorted[x]->mask;
+        mask ^= sorted[x]->mask;
 
-      if (delta >= LIGHT_MINIMUM) {
-        target++;
-        prev_time = sorted[x]->time;
+        if (delta >= LIGHT_MINIMUM) {
+          target++;
+          prev_time = sorted[x]->time;
+        }
       }
     }
   }

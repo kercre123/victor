@@ -13,6 +13,7 @@ namespace Power {
   void init(void);
   void tick(void);
   void wakeUp(void);
+  void adjustHead(void);
   void setMode(PowerMode);
 }
 
