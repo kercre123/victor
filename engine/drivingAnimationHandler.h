@@ -58,12 +58,12 @@ public:
   // Container for the various driving animations
   struct DrivingAnimations
   {
-    AnimationTrigger drivingStartAnim;
-    AnimationTrigger drivingLoopAnim;
-    AnimationTrigger drivingEndAnim;
-    AnimationTrigger planningStartAnim;
-    AnimationTrigger planningLoopAnim;
-    AnimationTrigger planningEndAnim;
+    AnimationTrigger drivingStartAnim  = AnimationTrigger::Count;
+    AnimationTrigger drivingLoopAnim   = AnimationTrigger::Count;
+    AnimationTrigger drivingEndAnim    = AnimationTrigger::Count;
+    AnimationTrigger planningStartAnim = AnimationTrigger::Count;
+    AnimationTrigger planningLoopAnim  = AnimationTrigger::Count;
+    AnimationTrigger planningEndAnim   = AnimationTrigger::Count;
   };
       
   // Sets the driving animations
