@@ -163,6 +163,9 @@ void BehaviorOnboarding::GetBehaviorOperationModifiers(BehaviorOperationModifier
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
   
+  modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
+  modifiers.connectToCubeInBackground = true;
+  
   // always look for faces, even during the initial stages, so come here has a higher chance of success
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Med });
 }
