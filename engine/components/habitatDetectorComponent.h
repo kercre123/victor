@@ -87,9 +87,16 @@ public:
   
   bool IsProxObservingHabitatWall() const;
   
+  void ForceSetHabitatBeliefState(HabitatBeliefState belief);
+  
 protected:
   
   void SendDataToWebViz() const;
+  
+  // adds valid prox readings to a buffer
+  // - used to average readings to counteract noise
+  // - returns true when enough readings are collected
+  bool UpdateProxObservations();
 
 private:
   
@@ -114,6 +121,13 @@ private:
   bool _detectedWhiteFromCliffs = false;
   
   f32 _nextSendWebVizDataTime_sec = 0.0f;
+  
+  // readings aggregated from the prox sensor while the front two cliffs are positioned
+  // on top of the white line of the habitat, used to compute an average distance
+  std::vector<u16> _proxReadingBuffer = {};
+  
+  // counter for the number of ticks the robot has been collecting readings from prox
+  u16 _numTicksWaitingForProx = 0;
 };
 
 } // end Cozmo

@@ -201,9 +201,12 @@ namespace Anki {
         // because this is a precarious situation.
         const bool sideCliffsDetected = (_cliffDetectedFlags == ((1 << HAL::CLIFF_FL) | (1 << HAL::CLIFF_BL))) ||
                                         (_cliffDetectedFlags == ((1 << HAL::CLIFF_FR) | (1 << HAL::CLIFF_BR)));
+        
+        const bool frontCliffsDetectingWhite = ProxSensors::IsWhiteDetected(HAL::CLIFF_FL) ||
+                                              ProxSensors::IsWhiteDetected(HAL::CLIFF_FR);
 
         const bool possibleCliffStop = (IsAnyCliffDetected() && !_wasAnyCliffDetected) || sideCliffsDetected;
-        const bool possibleWhiteStop = (IsAnyWhiteDetected() && !_wasAnyWhiteDetected);
+        const bool possibleWhiteStop = frontCliffsDetectingWhite && !_wasAnyWhiteDetected;
 
         // Don't allow stopping if it was putdown on a cliff.
         // Need to be able to drive away from it!
@@ -266,8 +269,8 @@ namespace Anki {
           QueueUncliffEvent();
           _wasAnyCliffDetected = false;
         }
-
-        if (!IsAnyWhiteDetected() && _wasAnyWhiteDetected) {
+        
+        if (!frontCliffsDetectingWhite && _wasAnyWhiteDetected) {
           _wasAnyWhiteDetected = false;
         }
 

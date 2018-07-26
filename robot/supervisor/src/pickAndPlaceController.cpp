@@ -16,6 +16,7 @@
 #include "clad/types/dockingSignals.h"
 #include "speedController.h"
 #include "steeringController.h"
+#include "wheelController.h"
 #include "pathFollower.h"
 
 
@@ -167,12 +168,16 @@ namespace Anki {
           ALIGNED
         } CliffAlignState;
 
-        CliffAlignState cliffAlignState_        = INIT;
-        bool            cliffAlignCW_           = false;
-        Radians         cliffAlignStartAngle_   = 0.f;
-
-        const u32       CLIFF_ALIGN_TIMEOUT_MS  = 4000; 
-        u32             cliffAlignStartTime_ms_ = 0;
+        CliffAlignState cliffAlignState_          = INIT;
+        bool            cliffAlignCW_             = false;
+        Radians         cliffAlignStartAngle_     = 0.f;
+        u32             cliffAlignStartTime_ms_   = 0;
+        u32             cliffAlignNearZeroGyroCount_ = 0;
+        
+        const u32       CLIFF_ALIGN_TIMEOUT_MS      = 4000;
+        const f32       CLIFF_ALIGN_MAX_ANGLE_RAD   = DEG_TO_RAD(120);
+        const f32       CLIFF_ALIGN_ZERO_GYRO_TOL   = DEG_TO_RAD(10);
+        const u32       CLIFF_ALIGN_MAX_COUNT_ZERO_GYRO = 300; // ~1.5 seconds of no turning
 
       } // "private" namespace
 
@@ -240,12 +245,12 @@ namespace Anki {
         }
       }
 
-      void SendCliffAlignCompleteMessage(const bool success)
+      void SendCliffAlignCompleteMessage(const CliffAlignResult result)
       {
-        AnkiInfo("PAP.SendCliffAlignCompleteMessage.Result", "%d", success);
+        AnkiInfo("PAP.SendCliffAlignCompleteMessage.Result", "%s", EnumToString(result));
         CliffAlignComplete msg;
         msg.timestamp = HAL::GetTimeStamp();
-        msg.didSucceed = success;
+        msg.result = result;
         if(!RobotInterface::SendMessage(msg)) {
           AnkiWarn("PAP.SendCliffAlignCompleteMessage.SendFailed", "");
         }
@@ -841,6 +846,7 @@ namespace Anki {
               {
                 cliffAlignStartAngle_ = Localization::GetCurrPose_angle();
                 cliffAlignStartTime_ms_ = HAL::GetTimeStamp();
+                cliffAlignNearZeroGyroCount_ = 0;
 
                 // Check that at least one of the front cliff sensors is detecting white    
                 if (white_l && white_r) {
@@ -849,7 +855,7 @@ namespace Anki {
                   cliffAlignState_ = ALIGNING;
                   cliffAlignCW_ = white_r;
                 } else {
-                  SendCliffAlignCompleteMessage(false);
+                  SendCliffAlignCompleteMessage(CliffAlignResult::CLIFF_ALIGN_FAILURE_NO_WHITE);
                   Reset();
                 }
                 break;
@@ -861,18 +867,31 @@ namespace Anki {
                 // than the max rotation that is physically possibly in the
                 // habitat from a pose where one front cliff sensor is
                 // detecting white to a pose where both are.
-                if (fabsf((cliffAlignStartAngle_ - Localization::GetCurrPose_angle()).ToFloat()) > DEG_TO_RAD(120)) {
+                if (fabsf((cliffAlignStartAngle_ - Localization::GetCurrPose_angle()).ToFloat()) > CLIFF_ALIGN_MAX_ANGLE_RAD) {
                   AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.TurnedTooMuch", "");
-                  SendCliffAlignCompleteMessage(false);
+                  SendCliffAlignCompleteMessage(CliffAlignResult::CLIFF_ALIGN_FAILURE_OVER_TURNING);
                   Reset();
                   break;
                 }
 
                 if (HAL::GetTimeStamp() - cliffAlignStartTime_ms_ > CLIFF_ALIGN_TIMEOUT_MS) {
                   AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.Timeout", "");
-                  SendCliffAlignCompleteMessage(false);
+                  SendCliffAlignCompleteMessage(CliffAlignResult::CLIFF_ALIGN_FAILURE_TIMEOUT);
                   Reset();
                   break;
+                }
+                
+                f32 gyroZ_radps = IMUFilter::GetBiasCorrectedGyroData()[2];
+                if(NEAR(gyroZ_radps, 0, CLIFF_ALIGN_ZERO_GYRO_TOL)) {
+                  cliffAlignNearZeroGyroCount_++;
+                  if(cliffAlignNearZeroGyroCount_ > CLIFF_ALIGN_MAX_COUNT_ZERO_GYRO) {
+                    AnkiInfo("PAP.CLIFF_ALIGN_TO_WHITE.NoGyroMovement", "");
+                    SendCliffAlignCompleteMessage(CliffAlignResult::CLIFF_ALIGN_FAILURE_NO_TURNING);
+                    Reset();
+                    break;
+                  }
+                } else {
+                  cliffAlignNearZeroGyroCount_ = 0;
                 }
 
                 // Update wheel speeds for alignment
@@ -900,7 +919,7 @@ namespace Anki {
               }
               case ALIGNED:
               {
-                SendCliffAlignCompleteMessage(true);
+                SendCliffAlignCompleteMessage(CliffAlignResult::CLIFF_ALIGN_SUCCESS);
                 Reset();
                 break;
               }
@@ -1004,7 +1023,7 @@ namespace Anki {
       void StopCliffAlignToWhite()
       {
         if (mode_ != IDLE && action_ == DockAction::DA_CLIFF_ALIGN_TO_WHITE) {
-          SendCliffAlignCompleteMessage(false);
+          SendCliffAlignCompleteMessage(CliffAlignResult::CLIFF_ALIGN_FAILURE_STOPPED);
           Reset();
         }
       }

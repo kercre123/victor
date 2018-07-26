@@ -73,6 +73,19 @@ namespace
   static const uint8_t kFR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
   static const uint8_t kBL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
   static const uint8_t kBR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
+  
+  // the minimum number of readings to accumulate to
+  // use to check for very close obstacles
+  const int kMinReadingsForObstacleCheck = 6;
+  
+  // distance below which we treat the prox sensor as seeing
+  // a too-close obstacle
+  const f32 kObstacleIsCloseThreshold_mm = 24.0f;
+  
+  // number of ticks to wait for valid prox readings when
+  // averaging the values to determine if a nearby obstacle
+  // is too close that we need to backup away from
+  const u32 kMaxTicksToWaitForProx = 10;
 }
 
 BehaviorConfirmHabitat::InstanceConfig::InstanceConfig()
@@ -250,10 +263,31 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
     return;
   }
 
-
-
   switch(_dVars._phase) {
-    case ConfirmHabitatPhase::Initial:
+    case ConfirmHabitatPhase::InitialCheckObstacle:
+    {
+      // when we first start this behavior, we may be very close
+      // to the walls or other obstacles in the habitat. So our
+      // first actions are to:
+      // * observe the prox sensor data
+      // * if there is an obstacle too close, backup and turn away
+      // * otherwise continue with the rest of the behavior
+      if(UpdateProxSensorFilter()) {
+        if(CheckIsCloseToObstacle()) {
+          // from all starting positions, where the cliff sensor is past
+          // the white line, moving backwards by 2cm will get the front
+          // cliff sensors to be now behind the line (excepting the case
+          // where it is moving parallel to the white line).
+          // in the moving-parallel case, turning in a random direction
+          // will introduce a new bearing which MAY perturb the robot
+          // in a direction where it will encounter the white line head on
+          TransitionToBackupTurnForward(-20, RandomSign()*DEG_TO_RAD(30.0f), 0);
+        }
+        _dVars._phase = ConfirmHabitatPhase::InitialCheckCharger;
+      }
+      break;
+    }
+    case ConfirmHabitatPhase::InitialCheckCharger:
     {
       // if the robot stopped on white, play the animation first
       if(_dVars._robotStoppedOnWhite) {
@@ -304,7 +338,7 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
     {
       if(_dVars._randomWalkTooCloseObstacle) {
         // respond to unexpected movement
-        TransitionToBackupAndTurn(M_PI_4_F);
+        TransitionToBackupTurnForward(-20, RandomSign()*M_PI_4_F, 0);
         _dVars._randomWalkTooCloseObstacle = false;
       } else if(habitatDetector.GetHabitatLineRelPose() == HabitatLineRelPose::Invalid ||
                 habitatDetector.GetHabitatLineRelPose() == HabitatLineRelPose::AllGrey) {
@@ -401,10 +435,24 @@ void BehaviorConfirmHabitat::DelegateActionHelper(IActionRunner* action, RobotCo
 void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToReactToHabitat","");
-  TriggerAnimationAction* action = new TriggerAnimationAction(AnimationTrigger::ReactToHabitat, 1, true);
+
+  CompoundActionSequential* action = new CompoundActionSequential();
+
+  action->AddAction(
+    new WaitForLambdaAction([](Robot& robot)->bool {
+      robot.GetComponentPtr<CliffSensorComponent>()->EnableStopOnWhite(false);
+      return true;
+    },0.1f));
+
+  action->AddAction(new TriggerAnimationAction(AnimationTrigger::ReactToHabitat, 1, true));
+
+  // sometimes after playing an animation, the lift heigh is blocking the prox
+  action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
+
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
     this->CancelSelf();
   };
+
   DelegateActionHelper(action, std::move(callback));
 }
 
@@ -416,6 +464,7 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
     if(GetChargerIfObserved() != nullptr) {
       PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerFound","");
       _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
+      TransitionToSeekLineFromCharger();
     } else {
       PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerNotFound","");
       _dVars._phase = ConfirmHabitatPhase::RandomWalk;
@@ -435,7 +484,21 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
     switch(msg.result) {
       case ActionResult::SUCCESS: { break; }
-      case ActionResult::CLIFF_ALIGN_FAILED:
+      case ActionResult::CLIFF_ALIGN_FAILED_TIMEOUT:
+      case ActionResult::CLIFF_ALIGN_FAILED_OVER_TURNING: // deliberate fall through
+      {
+        // this is probably indicative that we are not in the habitat
+        // => force set the habitat detection state as NotInHabitat
+        GetBEI().GetHabitatDetectorComponent().ForceSetHabitatBeliefState(HabitatBeliefState::NotInHabitat);
+        break;
+      }
+      case ActionResult::CLIFF_ALIGN_FAILED_STOPPED:
+      case ActionResult::CLIFF_ALIGN_FAILED_NO_WHITE: // deliberate fall through
+      {
+        PRINT_NAMED_WARNING("ConfirmHabitat.TransitionToCliffAlignWhite.Failed", "%s", EnumToString(msg.result));
+        break;
+      }
+      case ActionResult::CLIFF_ALIGN_FAILED_NO_TURNING:
       {
         PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite.Failed","");
 
@@ -444,7 +507,7 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
         switch(linePose) {
           case HabitatLineRelPose::AllGrey:
           {
-            TransitionToTurnBackupForward(0.0f, -20, 30);
+            TransitionToBackupTurnForward(-30, RandomSign()*DEG_TO_RAD(30.0f), 30);
             break;
           }
           case HabitatLineRelPose::WhiteFL:
@@ -452,7 +515,7 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
           case HabitatLineRelPose::WhiteBL:
           case HabitatLineRelPose::WhiteBR:
           {
-            TransitionToBackupAndTurn(0); // no turn requested here
+            TransitionToBackupTurnForward(-20, 0.0f, 0); // no turn requested here
             break;
           }
           default:
@@ -539,6 +602,9 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
     }
     action->AddAction(new TriggerLiftSafeAnimationAction(animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK));
 
+    // sometimes after playing an animation, the lift heigh is blocking the prox
+    action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
+
     _dVars._nextWhiteReactionAnimTime_sec = currTime_sec + kReactToWhiteAnimCooldown_sec;
   }
 
@@ -554,24 +620,36 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
   DelegateActionHelper(action, nullptr);
 }
 
-void BehaviorConfirmHabitat::TransitionToBackupAndTurn(f32 angle)
+void BehaviorConfirmHabitat::TransitionToBackupTurnForward(int backDist_mm, f32 angle, int forwardDist_mm)
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToBackupAndTurn","");
-  IActionRunner* action = new CompoundActionSequential(std::list<IActionRunner*>{
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToBackupTurnForward","%d %4.2f %d", backDist_mm, angle, forwardDist_mm);
+  CompoundActionSequential* action = new CompoundActionSequential(std::list<IActionRunner*>{
     // note: temporarily disable stop on white
     // this allows the robot to get out of tight spots
     // by allowing it to drive a little over the white
     new WaitForLambdaAction([](Robot& robot)->bool {
       robot.GetComponentPtr<CliffSensorComponent>()->EnableStopOnWhite(false);
       return true;
-    },0.1f),
-    new DriveStraightAction(-20,  75),
-    new WaitForLambdaAction([](Robot& robot)->bool {
-      robot.GetComponentPtr<CliffSensorComponent>()->EnableStopOnWhite(true);
-      return true;
-    },0.1f),
-    new TurnInPlaceAction(angle, false),
+    },0.1f)
   });
+  
+  if(backDist_mm != 0) {
+    action->AddAction(new DriveStraightAction(backDist_mm, 100));
+  }
+  
+  if(!FLT_NEAR(angle, 0.0f)) {
+    action->AddAction(new TurnInPlaceAction(angle, false));
+  }
+  
+  action->AddAction(new WaitForLambdaAction([](Robot& robot)->bool {
+    robot.GetComponentPtr<CliffSensorComponent>()->EnableStopOnWhite(true);
+    return true;
+  }));
+  
+  if(forwardDist_mm != 0) {
+    action->AddAction(new DriveStraightAction(forwardDist_mm,  50));
+  }
+  
   DelegateActionHelper(action, nullptr);
 }
 
@@ -749,6 +827,36 @@ void BehaviorConfirmHabitat::AlwaysHandleInScope(const EngineToGameEvent& event)
       break;
     }
   }
+}
+  
+bool BehaviorConfirmHabitat::UpdateProxSensorFilter()
+{
+  auto proxData = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>().GetLatestProxData();
+  // ignore the normal range spec since we are trying to perceive
+  // very close obstacles and react to them
+  const bool reliable = !proxData.isLiftInFOV &&
+                        !proxData.isTooPitched &&
+                        proxData.isValidSignalQuality;
+  
+  if(reliable) {
+    _dVars._validProxDistances.push_back(proxData.distance_mm);
+    // don't reset numTicksWaitingForProx here, we want the timeout to be hard
+  }
+  _dVars._numTicksWaitingForProx++;
+  
+  // whether enough readings are collected
+  return (_dVars._numTicksWaitingForProx > kMaxTicksToWaitForProx)  ||
+         (_dVars._validProxDistances.size() > kMinReadingsForObstacleCheck);
+}
+  
+bool BehaviorConfirmHabitat::CheckIsCloseToObstacle() const
+{
+  u32 sum = 0;
+  for(auto& reading : _dVars._validProxDistances) {
+    sum += reading;
+  }
+  float averageDistance_mm = float(sum)/_dVars._validProxDistances.size();
+  return averageDistance_mm < kObstacleIsCloseThreshold_mm;
 }
 
 }

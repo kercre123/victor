@@ -778,7 +778,11 @@ namespace Cozmo {
       enum class State : u8 {
         Waiting,
         Success,
-        Fail
+        FailedTimeout,
+        FailedNoTurning,
+        FailedOverturning,
+        FailedNoWhite,
+        FailedStopped,
       };
 
       State _state = State::Waiting;

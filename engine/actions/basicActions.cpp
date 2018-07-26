@@ -2377,9 +2377,16 @@ namespace Anki {
       {
         const auto& payload = event.GetData().Get_cliffAlignComplete();
         PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.Init.CliffAlignComplete",
-                      "[%d] Success: %d",
-                      GetTag(), payload.didSucceed);
-        _state = payload.didSucceed ? State::Success : State::Fail;
+                      "[%d] Success: %s",
+                      GetTag(), EnumToString(payload.result));
+        switch(payload.result) {
+          case CliffAlignResult::CLIFF_ALIGN_SUCCESS:               { _state = State::Success;           break; }
+          case CliffAlignResult::CLIFF_ALIGN_FAILURE_TIMEOUT:       { _state = State::FailedTimeout;     break; }
+          case CliffAlignResult::CLIFF_ALIGN_FAILURE_NO_TURNING:    { _state = State::FailedNoTurning;  break; }
+          case CliffAlignResult::CLIFF_ALIGN_FAILURE_OVER_TURNING:  { _state = State::FailedOverturning; break; }
+          case CliffAlignResult::CLIFF_ALIGN_FAILURE_NO_WHITE:      { _state = State::FailedNoWhite;     break; }
+          case CliffAlignResult::CLIFF_ALIGN_FAILURE_STOPPED:       { _state = State::FailedStopped;     break; }
+        }
       };
       
       _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::cliffAlignComplete,
@@ -2409,9 +2416,21 @@ namespace Anki {
         case State::Success:
           PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Success", "");
           return ActionResult::SUCCESS;
-        case State::Fail:
+        case State::FailedTimeout:
           PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
-          return ActionResult::CLIFF_ALIGN_FAILED;
+          return ActionResult::CLIFF_ALIGN_FAILED_TIMEOUT;
+        case State::FailedNoTurning:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
+          return ActionResult::CLIFF_ALIGN_FAILED_NO_TURNING;
+        case State::FailedOverturning:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
+          return ActionResult::CLIFF_ALIGN_FAILED_OVER_TURNING;
+        case State::FailedNoWhite:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
+          return ActionResult::CLIFF_ALIGN_FAILED_NO_WHITE;
+        case State::FailedStopped:
+          PRINT_CH_INFO("Actions", "CliffAlignToWhiteAction.CheckIfDone.Fail", "");
+          return ActionResult::CLIFF_ALIGN_FAILED_STOPPED;
         default:
           break;
       } 

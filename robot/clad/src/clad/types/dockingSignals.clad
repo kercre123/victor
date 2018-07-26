@@ -113,12 +113,22 @@ message ChargerMountComplete
   bool didSucceed,
 }
 
+enum int_8 CliffAlignResult
+{
+  CLIFF_ALIGN_SUCCESS,
+  CLIFF_ALIGN_FAILURE_TIMEOUT,
+  CLIFF_ALIGN_FAILURE_NO_TURNING,
+  CLIFF_ALIGN_FAILURE_OVER_TURNING,
+  CLIFF_ALIGN_FAILURE_NO_WHITE,
+  CLIFF_ALIGN_FAILURE_STOPPED
+}
+
 // Not really a docking action in the sense that it doesn't
 // care about a visual marker. Uses cliff sensors only.
 message CliffAlignComplete
 {		
   uint_32  timestamp,
-  bool didSucceed,
+  CliffAlignResult result
 }
 
 structure GoalPose

@@ -73,16 +73,30 @@ protected:
   
   // helper motions to reposition the robot from certain line positions
   void TransitionToCliffAlignWhite();
-  void TransitionToBackupAndTurn(f32 angle);
+  void TransitionToBackupTurnForward(int backDist_mm, f32 angle, int forwardDist_mm);
   void TransitionToTurnBackupForward(f32 angle, int backDist_mm, int forwardDist_mm);
   
   // returns nullptr if there is no charger seen
   const ObservableObject* GetChargerIfObserved() const;
   
+  // Accumulate readings from ProxSensor when trying to check for close obstacles
+  // returns whether there are enough readings to call CheckIsCloseToObstacle()
+  bool UpdateProxSensorFilter();
+  
+  // perceive whether an object is very close to the robot
+  // => this triggers a backup reaction to unstick us from tight situations
+  bool CheckIsCloseToObstacle() const;
+  
+  int RandomSign() const
+  {
+    return (GetRNG().RandInt(2)==1) ? 1 : -1;
+  }
+  
   // steps in the process of confirming habitat
   enum class ConfirmHabitatPhase
   {
-    Initial,
+    InitialCheckObstacle,
+    InitialCheckCharger,
     LocalizeCharger,
     SeekLineFromCharger,
     RandomWalk,
@@ -92,7 +106,7 @@ protected:
   struct DynamicVariables
   {
     // the current step or phase of habitat confirmation procedure
-    ConfirmHabitatPhase _phase = ConfirmHabitatPhase::Initial;
+    ConfirmHabitatPhase _phase = ConfirmHabitatPhase::InitialCheckObstacle;
     
     // flag set if the random walk detects a nearby obstacle
     // this will gate choosing certain drive actions, or
@@ -106,6 +120,12 @@ protected:
     
     // time of last reaction animation, for cooldown purposes
     float _nextWhiteReactionAnimTime_sec = 0.0;
+    
+    // buffer of prox sensor readings to accumulate in order to
+    // check for a too-close obstacle in front of the robot
+    std::vector<u16> _validProxDistances = {};
+    
+    u32 _numTicksWaitingForProx = 0;
 
     explicit DynamicVariables() = default;
   };

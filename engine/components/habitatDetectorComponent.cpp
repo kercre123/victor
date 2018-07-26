@@ -52,10 +52,19 @@ namespace {
   const int kCliffGreyMaxHabitat = 200;
   
   // when the robot is positioned such that its front two cliff
-  // sensors see the white line of the habitat, then these two
-  // constants are the min and max range of values for the sensor
-  const int kConfirmationConfigProxMinReading = 17;
-  const int kConfirmationConfigProxMaxReading = 36;
+  // sensors see the white line of the habitat, then this is
+  // the max expected of values for the sensor seeing the wall
+  const int kConfirmationConfigProxMaxReading = 39;
+  
+  // number of consecutive readings while the front two cliff
+  // sensors are positioned on the white line to average over
+  // to make a determination if we're looking at a habitat wall
+  const int kMinProxReadingsRequired = 7;
+  
+  // maximum number of ticks to wait for valid readings from the
+  // prox sensor while the robot is positioned on the white-line
+  // of the habitat (in order to detect the wall, if present)
+  const int kMaxTicksToWaitForProx = 15;
   
   const f32 kMinTravelDistanceWithoutSeeingWhite_mm = 260; // length of largest diagonal in habitat
   
@@ -68,6 +77,10 @@ HabitatDetectorComponent::HabitatDetectorComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::HabitatDetector)
 , _habitatBelief(HabitatBeliefState::Unknown)
 , _habitatLineRelPose(HabitatLineRelPose::Invalid)
+, _detectedWhiteFromCliffs(false)
+, _nextSendWebVizDataTime_sec(0.0f)
+, _proxReadingBuffer()
+, _numTicksWaitingForProx(0)
 {
 }
   
@@ -112,6 +125,8 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTr
     if(!inPRDemo) {
       _habitatBelief = HabitatBeliefState::Unknown;
       _detectedWhiteFromCliffs = false;
+      _proxReadingBuffer.clear();
+      _numTicksWaitingForProx = 0;
     }
   }
 }
@@ -127,15 +142,41 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotStopp
 
 bool HabitatDetectorComponent::IsProxObservingHabitatWall() const
 {
+  if(_proxReadingBuffer.size() < kMinProxReadingsRequired) {
+    // we timed out while waiting for
+    // enough prox sensor readings
+    return false;
+  }
+  u32 sum = 0;
+  for(auto& reading : _proxReadingBuffer) {
+    sum += reading;
+  }
+  float distance_mm = float(sum)/_proxReadingBuffer.size();
+  return distance_mm <= kConfirmationConfigProxMaxReading;
+}
+  
+bool HabitatDetectorComponent::UpdateProxObservations()
+{
   auto proxData = _robot->GetProxSensorComponent().GetLatestProxData();
   // ignore the normal range spec, since we need to be very close to the wall
   // in order to be observing it
   const bool reliable = !proxData.isLiftInFOV &&
                         !proxData.isTooPitched &&
                         proxData.isValidSignalQuality;
-  return reliable &&
-         proxData.distance_mm <= kConfirmationConfigProxMaxReading &&
-         proxData.distance_mm >= kConfirmationConfigProxMinReading;
+  
+  if(reliable && _proxReadingBuffer.size() < kMinProxReadingsRequired) {
+    _proxReadingBuffer.push_back(proxData.distance_mm);
+  }
+  _numTicksWaitingForProx++;
+  
+  // whether enough readings are collected
+  return _proxReadingBuffer.size() >= kMinProxReadingsRequired ||
+         _numTicksWaitingForProx > kMaxTicksToWaitForProx;
+}
+  
+void HabitatDetectorComponent::ForceSetHabitatBeliefState(HabitatBeliefState belief)
+{
+  _habitatBelief = belief;
 }
 
 void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<RobotComponentID>& dependentComps)
@@ -215,13 +256,19 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       }
       
       if(_habitatLineRelPose == HabitatLineRelPose::WhiteFLFR) {
-        if(IsProxObservingHabitatWall()) {
-          _habitatBelief = HabitatBeliefState::InHabitat;
-          PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.InHabitat","");
-        } else {
-          _habitatBelief = HabitatBeliefState::NotInHabitat;
-          PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.NotInHabitat","");
+        const bool hasEnoughReadings = UpdateProxObservations();
+        if(hasEnoughReadings) {
+          if(IsProxObservingHabitatWall()) {
+            _habitatBelief = HabitatBeliefState::InHabitat;
+            PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.InHabitat","");
+          } else {
+            _habitatBelief = HabitatBeliefState::NotInHabitat;
+            PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.NotInHabitat","");
+          }
         }
+      } else {
+        // not positioned on the white line => clear the buffer for the next time we are aligned
+        _proxReadingBuffer.clear();
       }
     }
   } // end(if Unknown)

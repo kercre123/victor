@@ -192,7 +192,7 @@ namespace Cozmo {
   // The minimum value expected of cliff sensor when
   // it's detecting a white line in the habitat
   // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold? 
-  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL = 500;
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL = 450;
 
   // Amount below MIN_CLIFF_STOP_ON_WHITE_VAL at which a white
   // value is undetected
