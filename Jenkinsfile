@@ -11,34 +11,54 @@ def getListOfOnlineNodesForLabel(label) {
   return nodes
 }
 
-node('victor-slaves') {
-    withEnv(['CONFIGURATION=release']) {
-        def victorBuildImage = docker.image('victor-build-img:99')
-        victorBuildImage.inside("-v /etc/passwd:/etc/passwd -v ${env.HOME}/.ssh:${env.HOME}/.ssh") {
-            checkout([
-                $class: 'GitSCM',
-                branches: scm.branches,
-                doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-                extensions: scm.extensions,
-                userRemoteConfigs: scm.userRemoteConfigs
-            ])
-            stage('Update submodules') {
-                sh 'git submodule update --init --recursive'
-                sh 'git submodule update --recursive'
+stage('Parallel Build') {
+    parallel docker: {
+        node('victor-slaves') {
+            stage('Build Docker Image') {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: scm.branches,
+                    doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                    extensions: scm.extensions,
+                    userRemoteConfigs: scm.userRemoteConfigs
+                ])
+                docker.build('victor-build-img:latest')
             }
-            stage('json lint') {
-                sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'
-            }
-            withEnv(["HOME=${env.WORKSPACE}"]) {
-                stage('Build') {
-                    sh './project/victor/build-victor.sh -c Release'
+            stage('Build Victor Engine') {
+                def victorBuildImage = docker.image('victor-build-img:latest')
+                victorBuildImage.inside("-v /etc/passwd:/etc/passwd -v ${env.HOME}/.ssh:${env.HOME}/.ssh") {
+                    stage('Update submodules') {
+                        sh 'git submodule update --init --recursive'
+                        sh 'git submodule update --recursive'
+                    }
+                    stage('json lint') {
+                        sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'
+                    }
+                    withEnv(["HOME=${env.WORKSPACE}"]) {
+                        stage('Build Engine') {
+                            sh './project/victor/build-victor.sh -c Release -O2 -j8'
+                        }
+                    }
                 }
             }
+            withEnv(['PLATFORM=vicos', 'CONFIGURATION=release']) {
+                stage("Build Vicos ${CONFIGURATION}") {
+                    sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
+                }
+            }
+            stage('Zip Deployables') {
+                sh './project/buildServer/steps/zipDeployables.sh'
+            }
+            stage('Collecting VicOS artifacts') {
+                archiveArtifacts artifacts: '_build/**', onlyIfSuccessful: true, caseSensitive: true
+            }
         }
+    },
+    macosx: {
         def macBuildAgentsList = getListOfOnlineNodesForLabel('mac-slaves')
         if (!macBuildAgentsList.isEmpty()) {
             node('mac-slaves') {
-                withEnv(['PLATFORM=mac']) {
+                withEnv(['PLATFORM=mac', 'CONFIGURATION=release']) {
                     stage("Build MacOS ${CONFIGURATION}") {
                         checkout scm
                         sh 'git submodule update --init --recursive'
@@ -61,22 +81,14 @@ node('victor-slaves') {
                 }
             }
         }
-        withEnv(['PLATFORM=vicos']) {
-            stage("Build Vicos ${CONFIGURATION}") {
-                sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
-            }
-        }
-        stage('Zip Deployables') {
-            sh './project/buildServer/steps/zipDeployables.sh'
-        }
-        stage('Collecting VicOS artifacts') {
-            archiveArtifacts artifacts: '_build/**', onlyIfSuccessful: true, caseSensitive: true
-        }
-        stage('Cleaning workspace') {
+    }
+}
+
+node('victor-slaves') {
+    stage('Cleaning workspace') {
+        cleanWs()
+        node('mac-slaves') {
             cleanWs()
-            node('mac-slaves') {
-                cleanWs()
-            }
         }
     }
 }
