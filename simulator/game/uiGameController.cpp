@@ -2217,7 +2217,7 @@ namespace Anki {
       u8 buf[message.Size()];
       message.Set_ApplyForce(msg);
       size_t numBytes = message.Pack(buf, message.Size());
-      _physicsControllerClient.Send((char*)buf, (int)numBytes);
+      _physicsControllerClient.Send((char*)buf, numBytes);
     }
   } // namespace Cozmo
 } // namespace Anki

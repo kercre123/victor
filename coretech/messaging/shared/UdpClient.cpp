@@ -113,7 +113,7 @@ bool UdpClient::Connect(const char *host_address, const unsigned short port)
   }
   // Send connection packet (i.e. something so that the server adds us to the client list)
   LOG_INFO("UdpClient.Connect.SendConnectionPacket","%s (%zu)", _name.c_str(), sizeof(UdpServer::kConnectionPacket));
-  Send(UdpServer::kConnectionPacket, (int)sizeof(UdpServer::kConnectionPacket));
+  Send(UdpServer::kConnectionPacket, sizeof(UdpServer::kConnectionPacket));
   
   return true;
 }
@@ -129,7 +129,7 @@ bool UdpClient::Disconnect()
   return true;
 }
 
-ssize_t UdpClient::Send(const char* data, int size)
+ssize_t UdpClient::Send(const char* data, size_t size)
 {
   if (socketfd < 0) {
     LOG_WARNING("UdpClient.Send.NoSocket", "");
@@ -153,7 +153,7 @@ ssize_t UdpClient::Send(const char* data, int size)
   return bytes_sent;
 }
 
-ssize_t UdpClient::Recv(char* data, int maxSize)
+ssize_t UdpClient::Recv(char* data, size_t maxSize)
 {
   if (socketfd < 0) {
     LOG_WARNING("UdpClient.Recv.NoSocket", "");

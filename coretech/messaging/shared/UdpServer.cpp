@@ -132,7 +132,7 @@ void UdpServer::StopListening()
 }
 
 
-ssize_t UdpServer::Send(const char* data, int size)
+ssize_t UdpServer::Send(const char* data, size_t size)
 {
   if (size <= 0) return 0;
 
@@ -146,14 +146,14 @@ ssize_t UdpServer::Send(const char* data, int size)
     //LOG_DEBUG("UdpServer.Send.Sending", "%d bytes", size);
     bytes_sent = sendto(socketfd, data, size, 0, (struct sockaddr *)&(*it), sizeof(*it));
     if(bytes_sent != size) {
-      LOG_ERROR("UdpServer.Send.SendFailed", "%zd of %d bytes sent", bytes_sent, size);
+      LOG_ERROR("UdpServer.Send.SendFailed", "%zd of %zu bytes sent", bytes_sent, size);
     }
   }
 
   return bytes_sent;
 }
 
-ssize_t UdpServer::Recv(char* data, int maxSize)
+ssize_t UdpServer::Recv(char* data, size_t maxSize)
 {
   socklen_t cliLen = sizeof(cliaddr);
   ssize_t bytes_received = recvfrom(socketfd, data, maxSize, 0, (struct sockaddr *)&cliaddr,&cliLen);

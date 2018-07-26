@@ -292,7 +292,7 @@ u32 RadioGetNextPacket(u8* buffer);
  * @param length [in] The number of bytes to be sent
  * @return true if the packet was queued for transmission, false if it couldn't be queued.
  */
-bool RadioSendPacket(const void *buffer, const u32 length);
+bool RadioSendPacket(const void *buffer, const size_t length);
 
 /** Wrapper method for sending messages NOT PACKETS
  * @param msgID The ID (tag) of the message to be sent

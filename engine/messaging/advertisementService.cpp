@@ -164,7 +164,7 @@ namespace Anki {
             uint8_t messageData[64];
             size_t bytesPacked = message.Pack(messageData, sizeof(messageData));
             
-            advertisingServer_.Send((char*)messageData, (int)bytesPacked);
+            advertisingServer_.Send((char*)messageData, bytesPacked);
           }
         }
         

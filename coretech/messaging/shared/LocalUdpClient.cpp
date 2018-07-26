@@ -131,7 +131,7 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   }
 
   // Send connection packet (i.e. something so that the server adds us to the client list)
-  Send(LocalUdpServer::kConnectionPacket, (int)sizeof(LocalUdpServer::kConnectionPacket));
+  Send(LocalUdpServer::kConnectionPacket, sizeof(LocalUdpServer::kConnectionPacket));
 
   return true;
 }
@@ -147,14 +147,14 @@ bool LocalUdpClient::Disconnect()
   return true;
 }
 
-ssize_t LocalUdpClient::Send(const char* data, int size)
+ssize_t LocalUdpClient::Send(const char* data, size_t size)
 {
   if (_socketfd < 0) {
     LOG_ERROR("LocalUdpClient.Send", "Socket undefined, skipping send");
     return 0;
   }
 
-  //LOG_DEBUG("LocalUdpClient.Send", "Sending %d bytes", size);
+  //LOG_DEBUG("LocalUdpClient.Send", "Sending %zu bytes", size);
 
   const ssize_t bytes_sent = send(_socketfd, data, size, 0);
 
@@ -167,7 +167,7 @@ ssize_t LocalUdpClient::Send(const char* data, int size)
   return bytes_sent;
 }
 
-ssize_t LocalUdpClient::Recv(char* data, int maxSize)
+ssize_t LocalUdpClient::Recv(char* data, size_t maxSize)
 {
   assert(data != NULL);
 
@@ -189,6 +189,6 @@ ssize_t LocalUdpClient::Recv(char* data, int maxSize)
     }
   }
 
-  //LOG_DEBUG("LocalUdpClient.Recv", "Received %d bytes", bytes_received);
+  //LOG_DEBUG("LocalUdpClient.Recv", "Received %zd bytes", bytes_received);
   return bytes_received;
 }

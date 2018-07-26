@@ -38,8 +38,8 @@ public:
   void SetBindClients(bool value) { _bindClients = value; }
 
   // Client transport
-  ssize_t Send(const char* data, int size);
-  ssize_t Recv(char* data, int maxSize);
+  ssize_t Send(const char* data, size_t size);
+  ssize_t Recv(char* data, size_t maxSize);
 
 private:
 

@@ -72,12 +72,12 @@ namespace Anki {
       recvBufSize_ = 0;
     }
 
-    bool HAL::RadioSendPacket(const void *buffer, const u32 length)
+    bool HAL::RadioSendPacket(const void *buffer, const size_t length)
     {
       if (server.HasClient()) {
         const ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < (ssize_t) length) {
-          AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%zd/%u sent)", bytesSent, length);
+          AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%zd/%zu sent)", bytesSent, length);
           DisconnectRadio(false);
           return false;
         }

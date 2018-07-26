@@ -150,7 +150,7 @@ void LocalUdpServer::StopListening()
 }
 
 
-ssize_t LocalUdpServer::Send(const char* data, int size)
+ssize_t LocalUdpServer::Send(const char* data, size_t size)
 {
   if (size <= 0) {
     return 0;
@@ -161,7 +161,7 @@ ssize_t LocalUdpServer::Send(const char* data, int size)
     return -1;
   }
 
-  //LOG_DEBUG("LocalUdpServer.Send", "Sending %d bytes to %s", size, _peername.c_str());
+  //LOG_DEBUG("LocalUdpServer.Send", "Sending %zu bytes to %s", size, _peername.c_str());
   ssize_t bytes_sent = 0;
   if (_bindClients) {
     bytes_sent = send(_socketfd, data, size, 0);
@@ -174,14 +174,14 @@ ssize_t LocalUdpServer::Send(const char* data, int size)
   if (bytes_sent != size) {
     // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
     // some appropriate interval.
-    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %d (%s)", bytes_sent, size, strerror(errno));
+    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %zu (%s)", bytes_sent, size, strerror(errno));
   }
 
   return bytes_sent;
 
 }
 
-ssize_t LocalUdpServer::Recv(char* data, int maxSize)
+ssize_t LocalUdpServer::Recv(char* data, size_t maxSize)
 {
   struct sockaddr_un saddr;
   socklen_t saddrlen = sizeof(saddr);

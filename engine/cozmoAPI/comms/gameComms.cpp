@@ -75,7 +75,7 @@ namespace Cozmo {
       // Wrap message in header/footer
       // TODO: Include timestamp too?
       char sendBuf[Comms::MsgPacket::MAX_SIZE];
-      int sendBufLen = 0;
+      size_t sendBufLen = 0;
 
       assert(p.dataLen < sizeof(sendBuf));
       memcpy(sendBuf, p.data, p.dataLen);
@@ -219,7 +219,7 @@ namespace Cozmo {
     uint8_t messageBuffer[64];
     const size_t bytesPacked = outMessage.Pack(messageBuffer, sizeof(messageBuffer));
     
-    regClient_.Send((const char*)messageBuffer, (int)bytesPacked);
+    regClient_.Send((const char*)messageBuffer, bytesPacked);
   }
   
   

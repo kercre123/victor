@@ -709,7 +709,7 @@ namespace Anki {
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
         //Stuff msgID up front
-        int newSize = size + 1;
+        size_t newSize = size + 1;
         u8 buf[newSize];
 
         memcpy(buf, &msgID, 1);

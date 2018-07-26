@@ -255,7 +255,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   _fftResultData->_fftResultMutex.unlock();
 
   bool receivedStopMessage = false;
-  static constexpr int kMaxReceiveBytes = 2000;
+  static constexpr size_t kMaxReceiveBytes = 2000;
   uint8_t receiveArray[kMaxReceiveBytes];
   
   const ssize_t bytesReceived = _udpServer->Recv((char*)receiveArray, kMaxReceiveBytes);
@@ -596,7 +596,7 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 {
   std::vector<uint8_t> buf(msg.Size());
   msg.Pack(buf.data(), buf.size());
-  _udpServer->Send((const char*)buf.data(), (int)buf.size());
+  _udpServer->Send((const char*)buf.data(), buf.size());
 }
 
 void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)

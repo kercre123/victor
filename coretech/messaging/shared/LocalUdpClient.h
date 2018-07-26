@@ -24,8 +24,8 @@ public:
   bool IsConnected() const { return _socketfd >= 0; }
   bool Disconnect();
 
-  ssize_t Send(const char* data, int size);
-  ssize_t Recv(char* data, int maxSize);
+  ssize_t Send(const char* data, size_t size);
+  ssize_t Recv(char* data, size_t maxSize);
   
 private:
 

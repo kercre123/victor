@@ -328,7 +328,7 @@ namespace Cozmo {
   
   void MultiClientComms::ReadAllMsgPackets()
   {
-    static const int kMaxRecvBufSize = 2048;
+    static const size_t kMaxRecvBufSize = 2048;
     u8 recvBuf[kMaxRecvBufSize];
     
     // Read from all connected clients.
@@ -364,7 +364,7 @@ namespace Cozmo {
         {
           if (bytes_recvd >= kMaxRecvBufSize) // == indicated truncation
           {
-            PRINT_NAMED_ERROR("MultiClientComms.ReadTruncated", "Read %zd, buffer size only %d", bytes_recvd, kMaxRecvBufSize);
+            PRINT_NAMED_ERROR("MultiClientComms.ReadTruncated", "Read %zd, buffer size only %zu", bytes_recvd, kMaxRecvBufSize);
           }
           
           receivedAnything = true;

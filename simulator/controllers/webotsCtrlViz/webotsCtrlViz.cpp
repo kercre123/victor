@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   {
     // Any messages received?
     while ((numBytesRecvd = server.Recv((char*)data, maxPacketSize)) > 0) {
-      physicsClient.Send((char*)data, (int)numBytesRecvd);
+      physicsClient.Send((char*)data, numBytesRecvd);
       vizController.ProcessMessage(VizInterface::MessageViz(data, numBytesRecvd));
     } // while server.Recv
     

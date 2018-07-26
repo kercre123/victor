@@ -12,8 +12,8 @@ public:
   bool Connect(const char *host_address, const unsigned short port);
   bool Disconnect();
   bool IsConnected() const { return socketfd >= 0; }
-  ssize_t Send(const char* data, int size);
-  ssize_t Recv(char* data, int maxSize);
+  ssize_t Send(const char* data, size_t size);
+  ssize_t Recv(char* data, size_t maxSize);
   
   int GetSocketFd() const { return socketfd; }
 
