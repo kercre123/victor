@@ -132,7 +132,7 @@ namespace Cozmo {
     static bool ConvertColorspace(const ProceduralFace& faceData, Vision::ImageRGB565& output, bool dirty);
 
 #if PROCEDURALFACE_NOISE_FEATURE
-    static const Array2d<f32>& GetNoiseImage(const Util::RandomGenerator& rng);
+    static const Array2d<u8>& GetNoiseImage(const Util::RandomGenerator& rng);
 #endif
 
 #if PROCEDURALFACE_SCANLINE_FEATURE

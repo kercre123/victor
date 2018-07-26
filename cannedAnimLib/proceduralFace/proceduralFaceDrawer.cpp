@@ -155,22 +155,25 @@ namespace Cozmo {
   }
 
 #if PROCEDURALFACE_NOISE_FEATURE
-  inline Array2d<f32> CreateNoiseImage(const Util::RandomGenerator& rng)
+  inline Array2d<u8> CreateNoiseImage(const Util::RandomGenerator& rng)
   {
-    Array2d<f32> noiseImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-    f32* noiseImg_i = noiseImg.GetRow(0);
+    Array2d<u8> noiseImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    u8* noiseImg_i = noiseImg.GetRow(0);
     for(s32 j=0; j<noiseImg.GetNumElements(); ++j)
     {
-      noiseImg_i[j] = rng.RandDblInRange(kProcFace_NoiseMinLightness, kProcFace_NoiseMaxLightness);
+      // Storing noise in the range [0 255] instead of [0 2.0] both to reduce memory usage as well
+      // as improving NEON performance by not having to convert between float and u8 
+      noiseImg_i[j] = Util::numeric_cast_clamped<u8>(rng.RandDblInRange(kProcFace_NoiseMinLightness,
+                                                                        kProcFace_NoiseMaxLightness) * 128);
     }
     return noiseImg;
   }
 
-  const Array2d<f32>& ProceduralFaceDrawer::GetNoiseImage(const Util::RandomGenerator& rng)
+  const Array2d<u8>& ProceduralFaceDrawer::GetNoiseImage(const Util::RandomGenerator& rng)
   {
     // NOTE: Since this is called separately for each eye, this looks better if we use an odd number of images
     static_assert(kNumNoiseImages % 2 == 1, "Use odd number of noise images");
-    static std::array<Array2d<f32>, kNumNoiseImages> kNoiseImages{{
+    static std::array<Array2d<u8>, kNumNoiseImages> kNoiseImages{{
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
@@ -189,7 +192,7 @@ namespace Cozmo {
     static f32 kProcFace_NoiseMaxLightness_old = kProcFace_NoiseMaxLightness;
     if(kProcFace_NoiseMinLightness_old != kProcFace_NoiseMinLightness || kProcFace_NoiseMaxLightness_old != kProcFace_NoiseMaxLightness) {
       for(auto& currentNoiseImage : kNoiseImages) {
-        Array2d<f32> noiseImg = CreateNoiseImage(rng);
+        Array2d<u8> noiseImg = CreateNoiseImage(rng);
         std::swap(currentNoiseImage, noiseImg);
       }
 
@@ -854,14 +857,15 @@ namespace Cozmo {
       // If the eyes haven't changed, the face hasn't changed and no-scanline distorter
       // then there is no work to do until the noise stage
 
-      // TODO: https://ankiinc.atlassian.net/browse/VIC-3646 NEON-ise noise function
-
       // TODO: https://ankiinc.atlassian.net/browse/VIC-3647 Apply noise to eyes individually rather than entire face
-
-      const Array2d<f32>& noiseImg = GetNoiseImage(rng);
+      // ^ might not be desirable with the neon version. May incur cache penalty when pulling images from memory twice
+      // instead of just once...
+      
+      const Array2d<u8>& noiseImg = GetNoiseImage(rng);
 
       for(s32 i=_faceRowMin; i<=_faceRowMax; ++i) {
-        const f32* noiseImg_i = noiseImg.GetRow(i);
+
+        const u8* noiseImg_i = noiseImg.GetRow(i);
         const u8* eyeShape_i = _faceCache.img8[_faceCache.distortedFace].GetRow(i);
         u8* faceImg_i = _faceCache.img8[_faceCache.finalFace].GetRow(i);
 
@@ -869,8 +873,33 @@ namespace Cozmo {
         eyeShape_i += _faceColMin;
         faceImg_i += _faceColMin;
 
-        for(s32 j=_faceColMin; j<=_faceColMax; ++j) {
-          *faceImg_i = Util::numeric_cast_clamped<u8>(static_cast<f32>(*eyeShape_i) * (*noiseImg_i));
+        s32 j = 0;
+#ifdef __ARM_NEON__
+        const u32 kNumElementsProcessed = 16;
+        for(; j <= _faceColMax-(kNumElementsProcessed-1); j += kNumElementsProcessed)
+        {
+          uint8x16_t eye = vld1q_u8(eyeShape_i);
+          eyeShape_i += kNumElementsProcessed;
+
+          uint8x16_t noise = vld1q_u8(noiseImg_i);
+          noiseImg_i += kNumElementsProcessed;
+
+          // Multiply eye values by noise and expand to u16
+          uint16x8_t value1 = vmull_u8(vget_low_u8(eye), vget_low_u8(noise));
+          uint16x8_t value2 = vmull_u8(vget_high_u8(eye), vget_high_u8(noise));
+          // Saturating narrowing right shift by 7 (divide by 128)
+          uint8x8_t output1 = vqshrn_n_u16(value1, 7);
+          uint8x8_t output2 = vqshrn_n_u16(value2, 7);
+          // Combine back into u8x16
+          uint8x16_t output = vcombine_u8(output1, output2);
+
+          vst1q_u8(faceImg_i, output);
+          faceImg_i += kNumElementsProcessed;
+        }
+#endif
+     
+        for(; j<=_faceColMax; ++j) {
+          *faceImg_i = Util::numeric_cast_clamped<u8>((static_cast<u16>(*eyeShape_i) * static_cast<u16>(*noiseImg_i)) >> 7);
           ++noiseImg_i;
           ++eyeShape_i;
           ++faceImg_i;
