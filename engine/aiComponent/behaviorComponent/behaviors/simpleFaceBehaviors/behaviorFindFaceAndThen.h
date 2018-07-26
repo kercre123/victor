@@ -49,6 +49,7 @@ private:
   enum class State {
     Invalid=0,
     DriveOffCharger,
+    LiftingHead,
     LookForFaceInMicDirection,
     TurnTowardsPreviousFace,
     FindFaceInCurrentDirection,

@@ -45,6 +45,8 @@ const char* const kBehaviorIsSimpleFaceKey       = "callSetFaceOnBehavior";
 const char* const kExitOnceFoundKey              = "exitOnceFound";
   
 const char* const kDebugName = "BehaviorFindFaceAndThen";
+
+const float kInitialHeadAngle_rad = 0.8f*MAX_HEAD_ANGLE;
   
 CONSOLE_VAR_RANGED(float, kMinTimeLookInMicDirection_s, "Behaviors.FindFaceAndThen", 0.5f, 0.0f, 2.0f);
 }
@@ -263,6 +265,7 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
     case State::Invalid:
     case State::DriveOffCharger:
     case State::TurnTowardsPreviousFace:
+    case State::LiftingHead:
       // nothing to do, or waiting for action/behavior callback
       break;
   }
@@ -299,11 +302,15 @@ void BehaviorFindFaceAndThen::TransitionToDrivingOffCharger()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::TransitionToLookingInMicDirection()
 {
-  // not doing anything here, just waiting for a face or timeout
-  SET_STATE(LookForFaceInMicDirection);
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _dVars.stateEndTime_s = currTime_s + _iConfig.timeUntilCancelFaceLooking_s;
-  _dVars.stateMinTime_s = currTime_s + kMinTimeLookInMicDirection_s;
+  SET_STATE(LiftingHead);
+  auto* action = new MoveHeadToAngleAction{ kInitialHeadAngle_rad };
+  DelegateIfInControl( action, [this](const ActionResult& res){
+    // not doing anything here, just waiting for a face or timeout
+    SET_STATE(LookForFaceInMicDirection);
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _dVars.stateEndTime_s = currTime_s + _iConfig.timeUntilCancelFaceLooking_s;
+    _dVars.stateMinTime_s = currTime_s + kMinTimeLookInMicDirection_s;
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -330,10 +337,14 @@ void BehaviorFindFaceAndThen::TransitionToTurningTowardsFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::TransitionToFindingFaceInCurrentDirection()
 {
-  // not doing anything here, just waiting for a face or timeout
-  SET_STATE( FindFaceInCurrentDirection );
-  _dVars.stateEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.timeUntilCancelFaceLooking_s;
-  _dVars.stateMinTime_s = 0.0f;
+  SET_STATE(LiftingHead);
+  auto* action = new MoveHeadToAngleAction{ kInitialHeadAngle_rad };
+  DelegateIfInControl( action, [this](const ActionResult& res){
+    // not doing anything here, just waiting for a face or timeout
+    SET_STATE( FindFaceInCurrentDirection );
+    _dVars.stateEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.timeUntilCancelFaceLooking_s;
+    _dVars.stateMinTime_s = 0.0f;
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
