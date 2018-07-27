@@ -260,22 +260,15 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.withinTolSince_sec = -1.f;
 }
 
-void ITrackAction::SetTimeStopCriteria(const f32 stopTime_sec)
+void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 allowedLookAwayTime_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
   _stopCriteria.duration_sec = stopTime_sec;
+  _stopCriteria.allowedLookAwayTime_sec = allowedLookAwayTime_sec;
 
   _stopCriteria.withinTolSince_sec = -1.f;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ITrackAction::SetContinueCriteria(const f32 allowedLookAwayTime_sec)
-{
-  // TODO dev assert that tracking hasn't stop yet ... not sure if this would
-  // be helpful or not 
-  _continueCriteria.allowedLookAwayTime_sec = allowedLookAwayTime_sec;
-}
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMode(Mode newMode)
 {
@@ -665,7 +658,6 @@ ActionResult ITrackAction::CheckIfDone()
       // Can't meet stop criteria based on predicted updates (as opposed to actual observations)
       if(updateResult != UpdateResult::PredictedInfo)
       {
-        PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop", "About to make this call");
         const bool shouldStop = TimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
         if(shouldStop)
         {
@@ -781,32 +773,24 @@ bool ITrackAction::UpdateSmallAngleClamping()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
 {
-  if (HaveContinueCriteria())
+  if (Util::IsFltGTZero(_stopCriteria.allowedLookAwayTime_sec))
   {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.HaveContinueCriteria", "True");
     // TODO 100 ms "slop" factor is that what we want
     const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(100);
     if (eyeContact)
     {
-      _continueCriteria.timeOfLastEyeContact_sec = currentTime_sec;
-      PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.MakingEyeContact", "");
+      _stopCriteria.timeOfLastEyeContact_sec = currentTime_sec;
       return true;
     }
     else
     {
-      // TODO remain this, can't think of a good name now
-      const f32 timeDiff = currentTime_sec - _continueCriteria.timeOfLastEyeContact_sec;
-      PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.TimeDiff", "%.3f", timeDiff);
-      const bool shouldContinue = timeDiff <= _continueCriteria.allowedLookAwayTime_sec;
+      const f32 timeDiff = currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec;
+      const bool shouldContinue = timeDiff <= _stopCriteria.allowedLookAwayTime_sec;
       if (shouldContinue)
       {
         return true;
       }
     }
-  }
-  else
-  {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.HaveContinueCriteria", "False");
   }
   return false;
 }
@@ -818,23 +802,6 @@ bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_
   const bool stopCriteriaMet = StopCriteriaMet(relPanAngle_rad, relTiltAngle_rad,
                                                distance_mm, currentTime_sec);
   const bool continueCriteriaMet = ContinueCriteriaMet(currentTime_sec);
-  // TODO remove these before PR
-  if (stopCriteriaMet)
-  {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.StopCriteria", "True");
-  }
-  else
-  {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.StopCriteria", "False");
-  }
-  if (continueCriteriaMet)
-  {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.ContinueCriteria", "True");
-  }
-  else
-  {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.ContinueCriteria", "False");
-  }
   return (stopCriteriaMet && !continueCriteriaMet);
 }
 
@@ -881,22 +848,15 @@ bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltA
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
   {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.HaveStopCriteria", "True");
     const bool isWithinTol = IsWithinTolerances(relPanAngle_rad, relTiltAngle_rad, distance_mm,
                                                 currentTime_sec);
-    
     if(isWithinTol)
     {
-      PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.IsWithinTolerances", "True");
       const bool wasWithinTol = (_stopCriteria.withinTolSince_sec >= 0.f);
-      
       if(wasWithinTol)
       {
         // Been within tolerance for long enough to stop yet?
         const f32 timeDiff = currentTime_sec - _stopCriteria.withinTolSince_sec;
-        PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.TimeDiff", "%.3f", timeDiff);
-        PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.StopCriteriaDuration", "%.3f",
-                      _stopCriteria.duration_sec);
         if( timeDiff > _stopCriteria.duration_sec)
         {
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
@@ -926,13 +886,8 @@ bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltA
     else
     {
       // Not within tolerances, reset
-      PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.IsWithinTolerances", "False");
       _stopCriteria.withinTolSince_sec = -1.f;
     }
-  }
-  else
-  {
-    PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.HaveStopCriteria", "False");
   }
   
   return false;

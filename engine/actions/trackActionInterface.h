@@ -62,9 +62,7 @@ public:
   // Set time to 0 to disable (default).
   void SetStopCriteria(const Radians& panTol, const Radians& tiltTol, f32 minDist_mm, f32 maxDist_mm, f32 time_sec,
                        bool interruptDrivingAnim = false);
-  void SetTimeStopCriteria(const f32 stopTime_sec);
-
-  void SetContinueCriteria(const f32 allowedLookAwayTime_sec);
+  void SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 allowedLookAwayTime_sec);
   
   // Set how long the tracker will run without seeing whatever it is trying to track.
   // Set to 0 to disable timeout (default).
@@ -214,18 +212,11 @@ private:
     f32     duration_sec        =  0.f; // _stopCriteria is ignored if this is 0
     f32     withinTolSince_sec  =  0.f;
     bool    interruptDrivingAnim = false;
-  } _stopCriteria;
-
-  // TODO per andrew's comment let's move this into the stopping
-  // criteria above, and add a method that sets ... eye contact
-  // or something
-  struct {
     f32     allowedLookAwayTime_sec  = 0.f; 
     f32     timeOfLastEyeContact_sec = 0.f;
-  } _continueCriteria;
-  
+  } _stopCriteria;
+
   bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }
-  bool HaveContinueCriteria() const { return Util::IsFltGTZero(_continueCriteria.allowedLookAwayTime_sec); }
   
   // Helper for storing the return result if we are using driving animations and just
   // returning result immediately if not

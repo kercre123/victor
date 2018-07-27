@@ -374,8 +374,8 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
 {
   DEBUG_SET_STATE(TrackingFace);
 
-  const float randomTimeToTrack_s = 4.f; // Util::numeric_cast<float>(
-    //GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
+  const float randomTimeToTrack_s = Util::numeric_cast<float>(
+    GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
 
 
@@ -388,8 +388,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     trackAction->SetUpdateTimeout(kTrackingTimeout_s);
-    trackAction->SetTimeStopCriteria(randomTimeToTrack_s);
-    trackAction->SetContinueCriteria(kAllowedLookAwayTime_s);
+    trackAction->SetStopCriteriaWithEyeContactOverride(randomTimeToTrack_s, kAllowedLookAwayTime_s);
     action->AddAction(trackAction);
   }
   
