@@ -495,7 +495,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // Enable/Disable lift
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
-  msg.enable = !currScreenIsDebug;
+  msg.enable = !currScreenIsDebug || GetCurrScreenName() == ScreenName::CameraMotorTest;
   SendAnimToRobot(std::move(msg));
 #endif
 
