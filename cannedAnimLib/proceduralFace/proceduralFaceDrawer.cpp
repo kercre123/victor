@@ -873,7 +873,7 @@ namespace Cozmo {
         eyeShape_i += _faceColMin;
         faceImg_i += _faceColMin;
 
-        s32 j = 0;
+        s32 j = _faceColMin;
 #ifdef __ARM_NEON__
         const u32 kNumElementsProcessed = 16;
         for(; j <= _faceColMax-(kNumElementsProcessed-1); j += kNumElementsProcessed)

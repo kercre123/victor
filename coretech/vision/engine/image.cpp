@@ -982,7 +982,7 @@ namespace Vision {
       const u8* row = reinterpret_cast<u8*>(GetRow(r));
       u16* out = reinterpret_cast<u16*>(output.GetRow(r));
 
-      u32 c = 0;        
+      s32 c = 0;        
 
 #ifdef __ARM_NEON__
       for(; c < numCols - (kNumElementsProcessedPerLoop - 1); c += kNumElementsProcessedPerLoop)
