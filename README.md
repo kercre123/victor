@@ -10,7 +10,7 @@ For more information about the system architecture, components, organization at 
 
 ## Getting Started
 
-If you are new to Anki, please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page.
+If you are new to Anki, please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/spaces/VD/pages/189333545) page.
 
 More documentation related to development, building, and running is available under [docs](/docs). See also the [Frequently Asked Questions](/docs/FAQ.md) page.
 
