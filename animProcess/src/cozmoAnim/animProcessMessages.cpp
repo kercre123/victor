@@ -642,11 +642,11 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
 {
   // If nonzero, we are scheduled to display a NO_ENGINE_PROCESS fault code
   static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
-  
+
   // Amount of time for which we must be disconnected from the engine in order
   // to display the NO_ENGINE_PROCESS fault code
-  static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
-  
+  static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(10.f);
+
   // Check for changes in connection state to engine and send RobotAvailable and
   // FirmwareVersion messages when engine connects
   static bool wasConnected = false;
@@ -674,27 +674,29 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
 
     // Clear any scheduled fault code display
     displayFaultCodeTime_nanosec = 0;
-    
+
     wasConnected = true;
   } else if (wasConnected && !isConnected) {
     // We've just become unconnected. Start a timer to display the fault
     // code on the face at the desired time.
     displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_nanosec;
-    
+
     PRINT_NAMED_WARNING("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine",
                         "We have become disconnected from engine process. Displaying a fault code in %.1f seconds.",
                         Util::NanoSecToSec(kDisconnectedTimeout_nanosec));
-    
+
     wasConnected = false;
   }
-  
+
   // Display fault code if necessary
   if ((displayFaultCodeTime_nanosec > 0) &&
       (currTime_nanosec > displayFaultCodeTime_nanosec)) {
-    displayFaultCodeTime_nanosec = 0;
-    FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
+    // VIC-4938: Exit with error instead of displaying fault code
+    LOG_ERROR("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine", "Aborting now (NO_ENGINE_PROCESS)");
+    Anki::Util::sLogFlush();
+    Anki::Util::sAbort();
   }
-  
+
   return RESULT_OK;
 }
 
@@ -723,9 +725,10 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   if (!AnimComms::IsConnectedToRobot()) {
     static bool faultCodeDisplayed = false;
     if (!faultCodeDisplayed) {
-      LOG_WARNING("AnimProcessMessages.Update.NoConnectionToRobot", "");
-      FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
-      faultCodeDisplayed = true;
+      // VIC-4938: Exit with error instead of showing fault code
+      LOG_ERROR("AnimProcessMessages.Update.NoConnectionToRobot", "Aborting now (NO_ROBOT_PROCESS)");
+      Anki::Util::sLogFlush();
+      Anki::Util::sAbort();
     }
   } else if ((_pendingRobotDisconnectTime_sec > 0.f) &&
       (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _pendingRobotDisconnectTime_sec)) {
