@@ -19,6 +19,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/faceWorld.h"
 #include "engine/robot.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
@@ -258,6 +259,22 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   
   _stopCriteria.withinTolSince_sec = -1.f;
 }
+
+void ITrackAction::SetTimeStopCriteria(const f32 stopTime_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
+  _stopCriteria.duration_sec = stopTime_sec;
+
+  _stopCriteria.withinTolSince_sec = -1.f;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ITrackAction::SetContinueCriteria(const f32 allowedLookAwayTime_sec)
+{
+  // TODO dev assert that tracking hasn't stop yet ... not sure if this would
+  // be helpful or not 
+  _continueCriteria.allowedLookAwayTime_sec = allowedLookAwayTime_sec;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMode(Mode newMode)
@@ -428,6 +445,8 @@ ActionResult ITrackAction::CheckIfDone()
     case UpdateResult::NewInfo:
     case UpdateResult::PredictedInfo:
     {
+      
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.UpdateResult.PredictedInfo", "");
       if( absTiltAngle > _maxHeadAngle ) {
         absTiltAngle = _maxHeadAngle;
       }
@@ -646,7 +665,8 @@ ActionResult ITrackAction::CheckIfDone()
       // Can't meet stop criteria based on predicted updates (as opposed to actual observations)
       if(updateResult != UpdateResult::PredictedInfo)
       {
-        const bool shouldStop = StopCriteriaMetAndTimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop", "About to make this call");
+        const bool shouldStop = TimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
         if(shouldStop)
         {
           return CheckIfDoneReturnHelper(ActionResult::SUCCESS, true);
@@ -757,41 +777,127 @@ bool ITrackAction::UpdateSmallAngleClamping()
     return false;
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32 relTiltAngle,
-                                                const f32 distance_mm, const f32 currentTime)
+bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
 {
-  const bool haveStopCriteria = HaveStopCriteria();
-  if(haveStopCriteria)
+  if (HaveContinueCriteria())
   {
-    const bool isWithinPanTol  = Util::IsFltLE(std::abs(relPanAngle), _stopCriteria.panTol.ToFloat());
-    const bool isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle), _stopCriteria.tiltTol.ToFloat());
-    const bool isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
-    
-    const bool isWithinTol = (isWithinPanTol && isWithinTiltTol && isWithinDistTol);
-    
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.HaveContinueCriteria", "True");
+    // TODO 100 ms "slop" factor is that what we want
+    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(100);
+    if (eyeContact)
+    {
+      _continueCriteria.timeOfLastEyeContact_sec = currentTime_sec;
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.MakingEyeContact", "");
+      return true;
+    }
+    else
+    {
+      // TODO remain this, can't think of a good name now
+      const f32 timeDiff = currentTime_sec - _continueCriteria.timeOfLastEyeContact_sec;
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.TimeDiff", "%.3f", timeDiff);
+      const bool shouldContinue = timeDiff <= _continueCriteria.allowedLookAwayTime_sec;
+      if (shouldContinue)
+      {
+        return true;
+      }
+    }
+  }
+  else
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.ContinueCriteriaMet.HaveContinueCriteria", "False");
+  }
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                              const f32 distance_mm, const f32 currentTime_sec)
+{
+  const bool stopCriteriaMet = StopCriteriaMet(relPanAngle_rad, relTiltAngle_rad,
+                                               distance_mm, currentTime_sec);
+  const bool continueCriteriaMet = ContinueCriteriaMet(currentTime_sec);
+  // TODO remove these before PR
+  if (stopCriteriaMet)
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.StopCriteria", "True");
+  }
+  else
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.StopCriteria", "False");
+  }
+  if (continueCriteriaMet)
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.ContinueCriteria", "True");
+  }
+  else
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.TimeToStop.ContinueCriteria", "False");
+  }
+  return (stopCriteriaMet && !continueCriteriaMet);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                                      const f32 distance_mm, const f32 currentTime_sec)
+{
+    bool isWithinPanTol  = Util::IsFltLE(std::abs(relPanAngle_rad), _stopCriteria.panTol.ToFloat());
+    if (Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f))
+    {
+      isWithinPanTol = true;
+    }
+    bool isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle_rad), _stopCriteria.tiltTol.ToFloat());
+    if (Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f))
+    {
+      isWithinTiltTol = true;
+    }
+    bool isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
+    if (Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && Util::IsFltNear(_stopCriteria.minDist_mm, -1.f))
+    {
+      isWithinDistTol = true;
+    }
+
     if(DEBUG_TRACKING_ACTIONS)
     {
       PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.CheckingStopCriteria",
                     "[%d] Pan:%.1fdeg vs %.1f (%c), Tilt:%.1fdeg vs %.1f (%c), Dist:%.1fmm vs (%.1f,%.1f) (%c)",
                     GetTag(), 
-                    std::abs(RAD_TO_DEG(relPanAngle)), _stopCriteria.panTol.getDegrees(),
+                    std::abs(RAD_TO_DEG(relPanAngle_rad)), _stopCriteria.panTol.getDegrees(),
                     isWithinPanTol ? 'Y' : 'N',
-                    std::abs(RAD_TO_DEG(relTiltAngle)), _stopCriteria.tiltTol.getDegrees(),
+                    std::abs(RAD_TO_DEG(relTiltAngle_rad)), _stopCriteria.tiltTol.getDegrees(),
                     isWithinTiltTol ? 'Y' : 'N',
                     distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm,
                     isWithinDistTol ? 'Y' : 'N');
     }
     
+    return (isWithinPanTol && isWithinTiltTol && isWithinDistTol);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                                   const f32 distance_mm, const f32 currentTime_sec)
+{
+  const bool haveStopCriteria = HaveStopCriteria();
+  if(haveStopCriteria)
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.HaveStopCriteria", "True");
+    const bool isWithinTol = IsWithinTolerances(relPanAngle_rad, relTiltAngle_rad, distance_mm,
+                                                currentTime_sec);
+    
     if(isWithinTol)
     {
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.IsWithinTolerances", "True");
       const bool wasWithinTol = (_stopCriteria.withinTolSince_sec >= 0.f);
       
       if(wasWithinTol)
       {
         // Been within tolerance for long enough to stop yet?
-        if( (currentTime - _stopCriteria.withinTolSince_sec) > _stopCriteria.duration_sec)
+        const f32 timeDiff = currentTime_sec - _stopCriteria.withinTolSince_sec;
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.TimeDiff", "%.3f", timeDiff);
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.StopCriteriaDuration", "%.3f",
+                      _stopCriteria.duration_sec);
+        if( timeDiff > _stopCriteria.duration_sec)
         {
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
                         "Within tolerances for > %.1fsec (panTol=%.1fdeg tiltTol=%.1fdeg distTol=[%.1f,%.1f]",
@@ -799,7 +905,7 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
                         _stopCriteria.panTol.getDegrees(),
                         _stopCriteria.tiltTol.getDegrees(),
                         _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
-          
+
           return true;
         }
       }
@@ -810,18 +916,23 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
                         "[%d] Setting start of stop criteria being met to t=%.1fsec",
                         GetTag(),
-                        currentTime);
+                        currentTime_sec);
         }
         
         // Just got (back) into tolerance, set "since" time
-        _stopCriteria.withinTolSince_sec = currentTime;
+        _stopCriteria.withinTolSince_sec = currentTime_sec;
       }
     }
     else
     {
       // Not within tolerances, reset
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.IsWithinTolerances", "False");
       _stopCriteria.withinTolSince_sec = -1.f;
     }
+  }
+  else
+  {
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopCriteriaMet.HaveStopCriteria", "False");
   }
   
   return false;

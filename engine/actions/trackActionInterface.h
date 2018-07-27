@@ -62,6 +62,9 @@ public:
   // Set time to 0 to disable (default).
   void SetStopCriteria(const Radians& panTol, const Radians& tiltTol, f32 minDist_mm, f32 maxDist_mm, f32 time_sec,
                        bool interruptDrivingAnim = false);
+  void SetTimeStopCriteria(const f32 stopTime_sec);
+
+  void SetContinueCriteria(const f32 allowedLookAwayTime_sec);
   
   // Set how long the tracker will run without seeing whatever it is trying to track.
   // Set to 0 to disable timeout (default).
@@ -152,7 +155,14 @@ private:
   // sets internal values to track clamping small angles. Returns true if we should clamp, false otherwise
   bool UpdateSmallAngleClamping();
   
-  bool StopCriteriaMetAndTimeToStop(f32 relPanAngle_rad, f32 relTiltAngle_rad, f32 dist_mm, f32 currentTime_sec);
+  bool StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                       const f32 dist_mm, const f32 currentTime_sec);
+  // TODO make a const method?
+  bool IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                          const f32 dist_mm, const f32 currentTime_sec);
+  bool ContinueCriteriaMet(const f32 currentTime_sec);
+  bool TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                  const f32 dist_mm, const f32 currentTime_sec);
   
   Mode     _mode = Mode::HeadAndBody;
   float    _updateTimeout_sec = 0.0f;
@@ -193,18 +203,29 @@ private:
   f32      _nextTimeToClampSmallAngles_s = -1.0f;
 
   const std::string _kKeepFaceAliveITrackActionName = "ITrackAction";
-  
+
+  // TODO I am defaulting some of these to negative one to 
+  // indicate they are not enabled
   struct {
-    Radians panTol              = 0.f;
-    Radians tiltTol             = 0.f;
-    f32     minDist_mm          = 0.f;
-    f32     maxDist_mm          = 0.f;
-    f32     duration_sec        = 0.f; // _stopCriteria is ignored if this is 0
-    f32     withinTolSince_sec  = 0.f;
+    Radians panTol              = -1.f;
+    Radians tiltTol             = -1.f;
+    f32     minDist_mm          = -1.f;
+    f32     maxDist_mm          = -1.f;
+    f32     duration_sec        =  0.f; // _stopCriteria is ignored if this is 0
+    f32     withinTolSince_sec  =  0.f;
     bool    interruptDrivingAnim = false;
   } _stopCriteria;
+
+  // TODO per andrew's comment let's move this into the stopping
+  // criteria above, and add a method that sets ... eye contact
+  // or something
+  struct {
+    f32     allowedLookAwayTime_sec  = 0.f; 
+    f32     timeOfLastEyeContact_sec = 0.f;
+  } _continueCriteria;
   
   bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }
+  bool HaveContinueCriteria() const { return Util::IsFltGTZero(_continueCriteria.allowedLookAwayTime_sec); }
   
   // Helper for storing the return result if we are using driving animations and just
   // returning result immediately if not

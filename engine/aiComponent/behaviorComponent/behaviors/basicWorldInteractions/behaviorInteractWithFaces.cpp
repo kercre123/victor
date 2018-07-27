@@ -94,6 +94,7 @@ const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
 
 static const float kTrackingTimeout_s = 2.5f;
+static const float kAllowedLookAwayTime_s = 3.f;
 
 }
 
@@ -113,7 +114,6 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
 BehaviorInteractWithFaces::DynamicVariables::DynamicVariables()
 {
   lastImageTimestampWhileRunning = 0;
-  trackFaceUntilTime_s           = -1.0f;
 }
 
 
@@ -177,7 +177,6 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 void BehaviorInteractWithFaces::OnBehaviorActivated()
 {
   // reset the time to stop tracking (in the tracking state)
-  _dVars.trackFaceUntilTime_s = -1.0f;
 
   if( _dVars.targetFace.IsValid() ) {
     TransitionToInitialReaction();
@@ -194,14 +193,6 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
-
-  if( _dVars.trackFaceUntilTime_s >= 0.0f ) {
-    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if( currTime_s >= _dVars.trackFaceUntilTime_s ) {
-      BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
-      CancelDelegates();
-    }
-  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -383,10 +374,9 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
 {
   DEBUG_SET_STATE(TrackingFace);
 
-  const float randomTimeToTrack_s = Util::numeric_cast<float>(
-    GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
+  const float randomTimeToTrack_s = 4.f; // Util::numeric_cast<float>(
+    //GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
-  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
 
   CompoundActionParallel* action = new CompoundActionParallel();
@@ -398,6 +388,8 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     trackAction->SetUpdateTimeout(kTrackingTimeout_s);
+    trackAction->SetTimeStopCriteria(randomTimeToTrack_s);
+    trackAction->SetContinueCriteria(kAllowedLookAwayTime_s);
     action->AddAction(trackAction);
   }
   
