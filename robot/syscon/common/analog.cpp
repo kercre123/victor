@@ -288,7 +288,7 @@ void Analog::tick(void) {
   static int disable_countdown = 0;
 
   if (allow_power) {
-    disable_countdown = 200 * 5; // 5 seconds before the robot will actually turn off
+    disable_countdown = 100; // 0.5 seconds before the robot will actually turn off
   } else if (disable_countdown > 0) {
     disable_countdown--;
   }
