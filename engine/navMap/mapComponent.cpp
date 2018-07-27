@@ -536,8 +536,7 @@ bool MapComponent::FlagProxObstaclesTouchingExplored()
       auto castOutside = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( outside );
       return (castOutside->IsExplored());
     } else {
-      // if it is touching an observable obstacle, also mark it as explored
-      return ( outside->type == EContentType::ObstacleObservable );
+      return false;
     }
   };
   MemoryMapData_ProxObstacle toAdd( MemoryMapData_ProxObstacle::EXPLORED, {0.0f, 0.0f, 0.0f}, _robot->GetLastImageTimeStamp());
