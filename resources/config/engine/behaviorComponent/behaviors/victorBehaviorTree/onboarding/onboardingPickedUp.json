@@ -2,6 +2,8 @@
   "behaviorID": "OnboardingPickedUp",
   "behaviorClass": "OnboardingInterruptionHead",
 
+  "animWhenGroggy": "OnboardingLookDown",
+
   // todo: match InitialPickupAnimation once that contains something other than stubs
   
   "wantsToBeActivatedCondition": {

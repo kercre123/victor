@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "proto/external_interface/onboardingSteps.pb.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -67,14 +68,18 @@ public:
     DebugTransition("Waiting for OnboardingConnectionComplete to wake up");
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
   {
+    bool accepted = false;
     if( _step == Step::Asleep ) {
-      TransitionToWakingUp();
+      accepted = (stepNum == external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP);
+      if( accepted ) {
+        TransitionToWakingUp();
+      }
     } else if( _step == Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageWakeUp.UnexpectedOnContinue");
     }
-    return true;
+    return accepted;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
@@ -102,6 +107,7 @@ public:
       } else {
         _stepAfterResumeFromCharger = _step;
       }
+      SetTriggerWordEnabled( false );
       _step = Step::DriveOffCharger;
       _currentBehavior = driveOffCharger;
     } else if( justGotTrigger ) {
@@ -123,6 +129,7 @@ public:
     } else if( _step == Step::WakingUp ) {
       // if on the charger, drive off
       _currentBehavior = _behaviors[Step::DriveOffCharger];
+      SetTriggerWordEnabled( false );
       if( _currentBehavior->WantsToBeActivated() ) {
         DebugTransition("Driving off charger");
         _step = Step::DriveOffCharger;
@@ -162,12 +169,26 @@ public:
     }
   }
   
-  virtual OnboardingSteps GetExpectedStep() const override
+  virtual int GetExpectedStep() const override
   {
-    if( _step == Step::WaitingForTrigger ) {
-      return OnboardingSteps::FirstTriggerWord;
-    } else {
-      return OnboardingSteps::Default;
+    switch( _step ) {
+      case Step::LookAtPhone:
+        return external_interface::STEP_PHONE_ICON;
+      case Step::Asleep:
+        return external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP;
+      case Step::WakingUp:
+      case Step::DriveOffCharger:
+        return external_interface::STEP_WAKING_UP;
+      case Step::WaitingForTrigger:
+        return external_interface::STEP_EXPECTING_FIRST_TRIGGER_WORD;
+      case Step::WaitingForComeHere:
+        return external_interface::STEP_EXPECTING_FIRST_VOICE_COMMAND;
+      case Step::ComeHereGetOut:
+      case Step::ComeHereResume:
+      case Step::ComeHere:
+        return external_interface::STEP_FIRST_VOICE_COMMAND;
+      case Step::Complete:
+        return external_interface::STEP_INVALID;
     }
   }
   
@@ -271,7 +292,7 @@ private:
     ComeHere,
     ComeHereGetOut, // reaction after coming here
     ComeHereResume, // if the robot hits a cliff during ComeHere, the resume behavior
-    Complete, // waiting for cleaning
+    Complete, // waiting for cleaning up
   };
   
   Step _step;

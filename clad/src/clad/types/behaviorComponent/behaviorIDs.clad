@@ -274,6 +274,7 @@ enum uint_16 BehaviorID {
   OnboardingLookAtUser,
   OnboardingLookForCube,
   OnboardingLowBattery,
+  OnboardingPhysicalReactions,
   OnboardingPickUpCube,
   OnboardingPickedUp,
   OnboardingPlacedOnCharger,

@@ -5,11 +5,12 @@
   "associatedActiveFeature": "Onboarding",
 
   "interruptions": [
-    "MandatoryPhysicalReactions", // todo: get rid of robot on side? might interfere with low battery
+    "SingletonPoweringRobotOff",  // is suppressed during first stage 
+    "OnboardingPhysicalReactions", 
     "OnboardingLowBattery",
-    "OnboardingPlacedOnCharger",  // is suppressed during first stage
     "OnboardingPickedUp",         // is suppressed during first stage
-    "DriveOffChargerStraight",    // is suppressed during first stage
+    "DriveOffChargerStraight",    // is suppressed during first stage and only runs after continue messages
+    "OnboardingPlacedOnCharger",  // is suppressed during first stage
     "OnboardingFirstTriggerWord", // only runs once, or never if booting after the first stage
     "TriggerWordDetected"         // may sometimes be suppressed
   ],

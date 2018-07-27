@@ -1,6 +1,11 @@
 {
-  "behaviorID" : "OnboardingAsleep",
-  "behaviorClass": "AnimSequence",
-  "animNames": ["anim_face_sleeping"],
-  "num_loops": 0
+  "behaviorID": "OnboardingAsleep",
+  "behaviorClass": "Sleeping",
+  "enablePowerSave": false,
+
+  // todo: generalize this override
+  "canActivateOffTreads": true,
+
+  // onboarding handles wake up
+  "shouldPlayEmergencyGetOut": false
 }

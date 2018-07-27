@@ -1,0 +1,41 @@
+// Onboarding messages
+
+syntax = "proto3";
+
+package Anki.Cozmo.external_interface;
+
+option optimize_for = LITE_RUNTIME;
+
+enum OnboardingSteps {
+  STEP_INVALID = 0;
+
+  // This step enum helps keep the app/robot in sync. Some steps are expecting a
+  // continue or other message (see comments). The rest of the steps are only used
+  // for information purposes since there exist better, more specific messages to
+  // handle state (e.g., low battery)
+
+  // interruptions:
+  STEP_PHYSICAL_INTERRUPTION             = 1;  // picked up, cliff, on side, etc.
+  STEP_LOW_BATTERY                       = 2;  // low battery of some sort. see OnboardingLowBattery
+  STEP_EXPECTING_LOW_BATTERY_RESUME      = 3;  // check the latest OnboardingOnCharger to know when to send this
+  STEP_EXPECTING_RESUME_FROM_CHARGER     = 4;  // check the latest OnboardingOnCharger to know when to send this
+  STEP_RESUMING                          = 5;  // generic resuming (e.g., driving off charger)
+
+  // chronological:
+  STEP_PHONE_ICON                        = 6;  // expecting an OnboardingConnectionComplete from app
+  STEP_EXPECTING_CONTINUE_WAKE_UP        = 7;  // expecting an OnboardingContinue from app
+  STEP_WAKING_UP                         = 8;
+  STEP_EXPECTING_FIRST_TRIGGER_WORD      = 9;
+  STEP_EXPECTING_FIRST_VOICE_COMMAND     = 10;
+  STEP_FIRST_VOICE_COMMAND               = 11;
+  STEP_EXPECTING_CONTINUE_MEET_VECTOR    = 12; // expecting an OnboardingContinue from app
+  STEP_EXPECTING_MEET_VECTOR             = 13;
+  STEP_MEET_VECTOR                       = 14;
+  STEP_EXPECTING_RESCAN                  = 15; // check the latest FaceEnrollmentResult to know if this is the state
+  STEP_EXPECTING_END_MEET_VECTOR         = 16; // check the latest FaceEnrollmentResult to know if this is the state
+  STEP_EXPECTING_START_CUBE_SEARCH       = 17; // expecting an OnboardingContinue from app
+  STEP_CUBE_SEARCH                       = 18;
+  STEP_CUBE_TRICK                        = 19;
+  STEP_EXPECTING_CONTINUE_APP_ONBOARDING = 20; // expecting an OnboardingContinue from app
+  STEP_APP_ONBOARDING                    = 21; // waiting any voice command before switching to the normal behavior stack
+}

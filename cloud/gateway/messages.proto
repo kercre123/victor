@@ -7,6 +7,7 @@ package Anki.Cozmo.external_interface;
 option optimize_for = LITE_RUNTIME;
 
 import "extensions.proto";
+import "onboardingSteps.proto";
 
 message ResultStatus {
   string description = 1;
@@ -111,7 +112,7 @@ message Onboarding {
     OnboardingState                    onboarding_state              = 1;
     OnboardingOnCharger                onboarding_on_charger         = 2;
     OnboardingLowBattery               onboarding_battery            = 3;
-    OnboardingPickedUp                 onboarding_picked_up          = 4;
+    OnboardingPhysicalInterruption     onboarding_physical           = 4;
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
     OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
@@ -429,8 +430,15 @@ message OnboardingLowBattery {
   bool low_battery = 1;
 }
 
-message OnboardingPickedUp {
-  bool picked_up = 1;
+// these are sent in case the copy needs to change
+enum OnboardingPhysicalInterruptions {
+  ONBOARDING_INTERRUPTION_NONE         = 0;
+  ONBOARDING_INTERRUPTION_PICKED_UP    = 1;
+  ONBOARDING_INTERRUPTION_PHYSICAL     = 2;
+  ONBOARDING_INTERRUPTION_POWER_BUTTON = 3;
+}
+message OnboardingPhysicalInterruption {
+  OnboardingPhysicalInterruptions type = 1;
 }
 
 message OnboardingSeesCube {
@@ -446,11 +454,6 @@ message OnboardingStateRequest {
 message OnboardingStateResponse {
   ResultStatus status = 1;
   OnboardingState onboarding_state = 2;
-}
-
-enum OnboardingSteps {
-  DEFAULT = 0;
-  FIRST_TRIGGER_WORD = 1;
 }
 
 message OnboardingContinue {

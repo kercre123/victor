@@ -42,12 +42,14 @@ protected:
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
   
   virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
 
 private:
   
   void MoveHeadUp();
+  void RunLoopAction();
   void MoveHeadDown();
   
   void SetupConsoleFuncs();
@@ -60,6 +62,8 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
+    bool hasRun;
+    bool receivedMessage;
   };
 
   InstanceConfig _iConfig;

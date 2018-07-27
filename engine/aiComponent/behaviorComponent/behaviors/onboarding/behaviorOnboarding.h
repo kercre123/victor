@@ -27,6 +27,7 @@ namespace Util{
   
 namespace Cozmo {
 
+class BehaviorOnboardingInterruptionHead;
 class IOnboardingStage;
 enum class OnboardingStages : uint8_t;
 enum class OnboardingSteps  : uint8_t;
@@ -87,7 +88,7 @@ private:
   void Interrupt( ICozmoBehaviorPtr interruption, BehaviorID interruptionID );
   
   // App or devtool queues an event for continue/skip
-  void RequestContinue();
+  void RequestContinue( int step );
   void RequestSkip();
   void RequestRetryCharging();
   void RequestSkipRobotOnboarding();
@@ -98,6 +99,17 @@ private:
   void SetTriggerWordEnabled(bool enabled);
   void SetAllowedIntent(UserIntentTag tag);
   void SetAllowAnyIntent();
+  void SetStreamAfterWakeWord(bool stream);
+  
+  void SendContinueResponse( bool acceptedContinue, int step );
+  
+  void SetRobotExpectingStep( int step );
+  
+  bool CanInterruptionActivate( BehaviorID interruptionID ) const;
+  
+  int GetPhysicalInterruptionMsgType( BehaviorID interruptionID ) const;
+  
+  void OnDelegateComplete();
 
   // before dealing with any stages, make sure the eyes animation wakes up based on the current stage.
   // the initial wake up stage handles its own wake up animations
@@ -132,16 +144,22 @@ private:
     } type;
     double time_s;
     union {
-      // continue and skip have no params
-      GameToEngineEvent gameToEngineEvent;
-      EngineToGameEvent engineToGameEvent;
-      AppToEngineEvent  appToEngineEvent;
+      GameToEngineEvent gameToEngineEvent; // GameToEngine
+      EngineToGameEvent engineToGameEvent; // EngineToGame
+      AppToEngineEvent  appToEngineEvent;  // AppToEngine
+      int               continueNum;       // Continue
+      // Skip has no params
     };
   };
   
   struct BatteryInfo {
+    enum class ChargerState : uint8_t {
+      Uninitialized=0,
+      OnCharger,
+      OffCharger,
+    };
     bool lowBattery = false;
-    bool onCharger = false;
+    ChargerState chargerState = ChargerState::Uninitialized;
     bool sentOutOfLowBattery = false;
     float timeChargingDone_s = -1.0f;
     float timeRemovedFromCharger = -1.0f;
@@ -155,6 +173,8 @@ private:
     
     std::vector<BehaviorID> interruptionIDs;
     std::vector<ICozmoBehaviorPtr> interruptions;
+    std::shared_ptr<BehaviorOnboardingInterruptionHead> pickedUpBehavior;
+    std::shared_ptr<BehaviorOnboardingInterruptionHead> onChargerBehavior;
     
     std::unordered_map<OnboardingStages,StagePtr> stages;
     
@@ -172,9 +192,8 @@ private:
     OnboardingStages currentStage;
     
     IBehavior* lastBehavior;
-    bool lastTriggerWordEnabled;
     UserIntentTag lastWhitelistedIntent;
-    OnboardingSteps lastExpectedStep;
+    int lastExpectedStep;
     BehaviorID lastInterruption;
     
     
@@ -191,7 +210,11 @@ private:
     // so that a stage's OnBehaviorDeactivated gets called
     bool currentStageBehaviorFinished;
     
-    bool receivedContinue;
+    bool robotWokeUp; // woke up and finished driving off the charger
+    bool robotHeardTrigger; // first trigger word was used
+    
+    // when true, allow DriveOffChargerStraight and prevent OnboardingPlacedOnCharger
+    bool shouldDriveOffCharger;
 
     BatteryInfo batteryInfo;
     

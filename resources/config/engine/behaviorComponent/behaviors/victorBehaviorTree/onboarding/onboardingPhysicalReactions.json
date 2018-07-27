@@ -1,0 +1,17 @@
+{
+  "behaviorID" : "OnboardingPhysicalReactions",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "StuckOnEdge",
+    "ReactToRobotOnBack",
+    "ReactToRobotOnFace",
+    "ReactToRobotOnSide",
+    "ReactToCliff",
+    "ReactToPlacedOnSlope"
+    // "ReactToUnexpectedMovement" // no unexpected movement
+  ]
+}

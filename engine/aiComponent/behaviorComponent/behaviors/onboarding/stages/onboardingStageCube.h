@@ -32,7 +32,7 @@ namespace Cozmo {
 namespace {
   const unsigned int kMaxActivationAttempts = 2;
   const unsigned int kMaxPickUpAttempts = 3;
-  const float kMaxSearchDuration_s = 60.0f;
+  const float kMaxSearchDuration_s = 30.0f;
   const int kMaxAgeForRedoSearch_ms = 5000;
   
   const std::string& kLockName = "onboardingCubeStage";
@@ -101,14 +101,18 @@ public:
     _timeStartedSearching_ms = 0;
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
   {
+    bool accepted = false;
     if( _step == Step::LookingAtUser ) {
-      TransitionToLookingForCube( bei );
+      accepted = (stepNum == external_interface::STEP_EXPECTING_START_CUBE_SEARCH);
+      if( accepted ) {
+        TransitionToLookingForCube( bei );
+      }
     } else if( _step != Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageCube.UnexpectedContinue");
     }
-    return true;
+    return accepted;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
@@ -221,6 +225,23 @@ public:
           TransitionToLookingAtUser();
         }
       }
+    }
+  }
+  
+  virtual int GetExpectedStep() const override
+  {
+    switch( _step ) {
+      case Step::LookingAtUser:
+        return external_interface::STEP_EXPECTING_START_CUBE_SEARCH;
+      case Step::LookingForCube:
+        return external_interface::STEP_CUBE_SEARCH;
+      case Step::ActivatingCube:
+      case Step::PickingUpCube:
+      case Step::PuttingCubeDown:
+        return external_interface::STEP_CUBE_TRICK;
+      case Step::Invalid:
+      case Step::Complete:
+        return external_interface::STEP_INVALID;
     }
   }
   
