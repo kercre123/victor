@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include "app.h"
@@ -253,10 +254,12 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
+#define IS_FIXMODE_ROBOTNFO() ( g_fixmode==FIXMODE_INFO )
 #define IS_FIXMODE_ROBOT1()   ( g_fixmode==FIXMODE_ROBOT1  || g_fixmode==FIXMODE_ROBOT1_OL )
 #define IS_FIXMODE_ROBOT3()   ( g_fixmode==FIXMODE_ROBOT3  || g_fixmode==FIXMODE_ROBOT3_OL )
 #define IS_FIXMODE_PACKOUT()  ( g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL )
 #define IS_FIXMODE_OFFLINE()  ( g_fixmode==FIXMODE_ROBOT1_OL || g_fixmode==FIXMODE_ROBOT3_OL || g_fixmode==FIXMODE_PACKOUT_OL )
+#define IS_FIXMODE_UNPACKOUT() ( g_fixmode==FIXMODE_UN_PACKOUT )
 
 int detect_ma = 0, detect_mv = 0;
 
@@ -376,6 +379,11 @@ void read_robot_info_(void)
     uint32_t playpenTouchSensorStdDevThresh = rcomGmr( EMR_FIELD_OFS(playpenTouchSensorStdDevThresh) );
     uint32_t playpenTestDisableMask         = rcomGmr( EMR_FIELD_OFS(playpenTestDisableMask) );
     
+    //read factory test dataz
+    uint32_t packoutCnt     = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
+    uint32_t packoutVbatMv  = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_VBAT_MV );
+    uint32_t robot3VbatMv   = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_ROBOT3_VBAT_MV );
+    
     #define U32FLOAT(u)     ( *((float*)&(u)) )
     
     ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
@@ -391,6 +399,37 @@ void read_robot_info_(void)
     ConsolePrintf("EMR[%u] playpenTouchSensorRangeThresh :%f\n", EMR_FIELD_OFS(playpenTouchSensorRangeThresh), U32FLOAT(playpenTouchSensorRangeThresh) );
     ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), U32FLOAT(playpenTouchSensorStdDevThresh) );
     ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
+    ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
+    ConsolePrintf("EMR[%u] packoutVbatMv:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_VBAT_MV, packoutVbatMv);
+    ConsolePrintf("EMR[%u] robot3VbatMv:%i\n", EMR_FIELD_OFS(fixture)+EMRF_ROBOT3_VBAT_MV, robot3VbatMv);
+    
+    //inspect robot3 motor data
+    if( (!g_isReleaseBuild && IS_FIXMODE_ROBOT3() ) || IS_FIXMODE_ROBOTNFO() )
+    {
+      struct {
+        struct {
+          struct { emr_tread_dat_t L; emr_tread_dat_t R; } lo;
+          struct { emr_tread_dat_t L; emr_tread_dat_t R; } hi; 
+        }tread;
+        struct {
+          struct { emr_range_dat_t lift; emr_range_dat_t head; } lo;
+          struct { emr_range_dat_t lift; emr_range_dat_t head; } hi;
+        }range;
+      }dat;
+      
+      //read from emr
+      for(int i=0; i < sizeof(dat)/4; i++)
+        ((uint32_t*)&dat)[i] = rcomGmr( EMR_FIELD_OFS(fixture) + EMRF_ROBOT3_TREAD_L_LO + i );
+      
+      ConsolePrintf("tread LEFT  LO pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.lo.L.power, dat.tread.lo.L.fwd.speed, dat.tread.lo.L.fwd.travel, dat.tread.lo.L.rev.speed, dat.tread.lo.L.rev.travel);
+      ConsolePrintf("tread RIGHT LO pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.lo.R.power, dat.tread.lo.R.fwd.speed, dat.tread.lo.R.fwd.travel, dat.tread.lo.R.rev.speed, dat.tread.lo.R.rev.travel);
+      ConsolePrintf("tread LEFT  HI pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.hi.L.power, dat.tread.hi.L.fwd.speed, dat.tread.hi.L.fwd.travel, dat.tread.hi.L.rev.speed, dat.tread.hi.L.rev.travel);
+      ConsolePrintf("tread RIGHT HI pwr:%i FWD speed:%+i travel:%+i REV speed:%+i travel:%+i\n", dat.tread.hi.R.power, dat.tread.hi.R.fwd.speed, dat.tread.hi.R.fwd.travel, dat.tread.hi.R.rev.speed, dat.tread.hi.R.rev.travel);
+      ConsolePrintf("range LIFT LO pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.lo.lift.power, dat.range.lo.lift.NN, dat.range.lo.lift.up.speed, dat.range.lo.lift.up.travel, dat.range.lo.lift.dn.speed, dat.range.lo.lift.dn.travel);
+      ConsolePrintf("range HEAD LO pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.lo.head.power, dat.range.lo.head.NN, dat.range.lo.head.up.speed, dat.range.lo.head.up.travel, dat.range.lo.head.dn.speed, dat.range.lo.head.dn.travel);
+      ConsolePrintf("range LIFT HI pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.hi.lift.power, dat.range.hi.lift.NN, dat.range.hi.lift.up.speed, dat.range.hi.lift.up.travel, dat.range.hi.lift.dn.speed, dat.range.hi.lift.dn.travel);
+      ConsolePrintf("range HEAD HI pwr:%i NN:%i UP speed:%+i travel:%+i DN speed:%+i travel:%+i\n", dat.range.hi.head.power, dat.range.hi.head.NN, dat.range.hi.head.up.speed, dat.range.hi.head.up.travel, dat.range.hi.head.dn.speed, dat.range.hi.head.dn.travel);
+    }
   }
 }
 
@@ -574,8 +613,19 @@ static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
+//convert tread data to emr record
+static void get_emr_tread_dat_(int8_t power, robot_tread_dat_t *ptread, emr_tread_dat_t *out_emr_tread) {
+  assert( ptread != NULL && out_emr_tread != NULL );
+  memset(out_emr_tread, 0, sizeof(emr_tread_dat_t));
+  out_emr_tread->power = power;
+  out_emr_tread->fwd.speed  = ptread->fwd_avg;
+  out_emr_tread->fwd.travel = ptread->fwd_travel;
+  out_emr_tread->rev.speed  = ptread->rev_avg;
+  out_emr_tread->rev.travel = ptread->rev_travel;
+}
+
 #define TREAD_TEST_DATA_GATHERING 0
-static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
+static void TestRobotTreads_(bool pwr_hi_nlow, int8_t power, int min_speed, int min_travel)
 {
   robot_tread_dat_t treadL = *robot_tread_test_(RCOM_SENSOR_MOT_LEFT, power);
   robot_tread_dat_t treadR = *robot_tread_test_(RCOM_SENSOR_MOT_RIGHT, -power);
@@ -585,6 +635,21 @@ static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
   #if TREAD_TEST_DATA_GATHERING > 0
   #warning "TREAD ERROR CHECKING DISABLED"
   #else
+  
+  //record test data
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() )
+  {
+    emr_tread_dat_t emrL, emrR;
+    get_emr_tread_dat_( power, &treadL, &emrL );
+    get_emr_tread_dat_( power, &treadR, &emrR );
+    
+    int ofsHi = pwr_hi_nlow ? 2*sizeof(emr_tread_dat_t)/4 : 0; //offset for high speed data block
+    
+    for(int x=0; x < sizeof(emr_tread_dat_t)/4; x++)
+      rcomSmr( EMR_FIELD_OFS(fixture) + EMRF_ROBOT3_TREAD_L_LO + ofsHi + x, ((uint32_t*)&emrL)[x] );
+    for(int x=0; x < sizeof(emr_tread_dat_t)/4; x++)
+      rcomSmr( EMR_FIELD_OFS(fixture) + EMRF_ROBOT3_TREAD_R_LO + ofsHi + x, ((uint32_t*)&emrR)[x] );
+  }
   
   if( treadL.fwd_avg < min_speed || (-1)*treadL.rev_avg < min_speed ) {
     ConsolePrintf("insufficient LEFT tread speed %i,%i < %i\n", treadL.fwd_avg, treadL.rev_avg, min_speed);
@@ -611,17 +676,17 @@ void TestRobotTreads(void)
   #warning "TREAD TEST"
   for(int pwr = 127; pwr >= 60; pwr -= 5) {
     ConsolePrintf("TREAD TEST pwr = %i\n", pwr);
-    TestRobotTreads_(pwr, 9999, 9999);
+    TestRobotTreads_(0, pwr, 9999, 9999);
   }
     
   #else
   
   //full power: speed 1760-1980, travel 790-1160
-  TestRobotTreads_(127, 1500, 600);
+  TestRobotTreads_(1, 127, 1500, 600);
   
   //low power (72): speed 870-1070, travel 400-550
   if( !IS_FIXMODE_PACKOUT() )
-    TestRobotTreads_(75, 750, 300);
+    TestRobotTreads_(0, 75, 750, 300);
   
   #endif
 }
@@ -709,9 +774,21 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, uint8_t NNtest, int8
   return &test;
 }
 
+//convert range data to emr record
+static void get_emr_range_dat_(uint8_t NN, int8_t power, robot_range_dat_t *prange, emr_range_dat_t *out_emr_range) {
+  assert( prange != NULL && out_emr_range != NULL );
+  memset(out_emr_range, 0, sizeof(emr_range_dat_t));
+  out_emr_range->NN = NN;
+  out_emr_range->power = power;
+  out_emr_range->up.speed  = prange->up_avg;
+  out_emr_range->up.travel = prange->up_travel;
+  out_emr_range->dn.speed  = prange->dn_avg;
+  out_emr_range->dn.travel = prange->dn_travel;
+}
+
 #define RANGE_TEST_DATA_GATHERING 0
 typedef struct { uint8_t NN; int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
-void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
+void TestRobotRange(bool pwr_hi_nlow, robot_range_t *testlift, robot_range_t *testhead)
 {
   robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, testlift->NN, testlift->power);
   robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, testhead->NN, testhead->power);
@@ -721,6 +798,21 @@ void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
   #if RANGE_TEST_DATA_GATHERING > 0
   #warning "RANGE ERROR CHECKING DISABLED"
   #else
+  
+  //record test data
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() )
+  {
+    emr_range_dat_t emrLift, emrHead;
+    get_emr_range_dat_(testlift->NN, testlift->power, &lift, &emrLift);
+    get_emr_range_dat_(testhead->NN, testhead->power, &head, &emrHead);
+    
+    int ofsHi = pwr_hi_nlow ? 2*sizeof(emr_range_dat_t)/4 : 0; //offset for high pwr data block
+    
+    for(int x=0; x < sizeof(emr_range_dat_t)/4; x++)
+      rcomSmr( EMR_FIELD_OFS(fixture) + EMRF_ROBOT3_RANGE_LIFT_LO + ofsHi + x, ((uint32_t*)&emrLift)[x] );
+    for(int x=0; x < sizeof(emr_range_dat_t)/4; x++)
+      rcomSmr( EMR_FIELD_OFS(fixture) + EMRF_ROBOT3_RANGE_HEAD_LO + ofsHi + x, ((uint32_t*)&emrHead)[x] );
+  }
   
   const int lift_start_delta_max = 50;
   lift.dn_travel *= -1; lift.dn_avg *= -1; //positive comparisons
@@ -766,7 +858,7 @@ void TestRobotRange(void)
       uint8_t NNhead = pwr<90 ? 125 : 70;
       robot_range_t lift = { NNlift, /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
       robot_range_t head = { NNhead, /*power*/ pwr, /*travel_min*/ 0, /*travel_max*/ 99999, /*speed_min*/ 0 };
-      TestRobotRange( &lift, &head );
+      TestRobotRange(0, &lift, &head );
     }
   }
   #else
@@ -778,13 +870,13 @@ void TestRobotRange(void)
     //head travel ~800-850 in each direction
     robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
     robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
-    TestRobotRange( &lift, &head );
+    TestRobotRange(1, &lift, &head );
   } else if( !IS_FIXMODE_PACKOUT() ) {
     //lift: travel 195-200, speed 760-1600
     //head: travel 550-560, speed 2130-2400
     robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 230, /*speed_min*/  650 };
     robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 520, /*travel_max*/ 590, /*speed_min*/ 1700 };
-    TestRobotRange( &lift, &head );
+    TestRobotRange(1, &lift, &head );
   }
   
   //Low Power
@@ -794,13 +886,13 @@ void TestRobotRange(void)
     //head travel ~650-??? in each direction
     robot_range_t lift = { /*NN*/  85, /*power*/  50, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 800 };
     robot_range_t head = { /*NN*/ 125, /*power*/  55, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 700 };
-    TestRobotRange( &lift, &head );
+    TestRobotRange(0, &lift, &head );
   } else {
     //lift: travel 190-200, speed 580-1520
     //head: travel 545-555, speed 900-1230
     robot_range_t lift = { /*NN*/  85, /*power*/  65, /*travel_min*/ 170, /*travel_max*/  230, /*speed_min*/ 400 };
     robot_range_t head = { /*NN*/ 125, /*power*/  60, /*travel_min*/ 520, /*travel_max*/  590, /*speed_min*/ 700 };
-    TestRobotRange( &lift, &head );
+    TestRobotRange(0, &lift, &head );
   }
   
   #endif
@@ -809,9 +901,6 @@ void TestRobotRange(void)
 void EmrChecks(void)
 {
   //Make sure previous tests have passed
-  if( IS_FIXMODE_ROBOT3() ) {
-    //no previous. first fixture with head attached
-  }
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
     uint32_t ppPassed = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
@@ -821,11 +910,21 @@ void EmrChecks(void)
   }
   
   //require retest on all downstream fixtures after rework
-  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() )
+  {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
+    
+    ConsolePrintf("clear previous test data...");
+    for(int i=EMRF_ROBOT3_VBAT_MV; i < EMRF_ROBOT3_RANGE_HEAD_HI+((sizeof(emr_range_dat_t)/4)); i++ ) {
+      if( !g_isReleaseBuild )
+        ConsolePrintf("%i,", EMR_FIELD_OFS(fixture)+i );
+      rcomSmr( EMR_FIELD_OFS(fixture)+i, 0);
+    }
+    ConsolePutChar('\n');
   }
+  
   if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
     //will throw error if Ribbit has been packed out
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
@@ -870,9 +969,55 @@ void EmrUpdate(void)
     ConsolePrintf("EMR[%u] playpenTouchSensorStdDevThresh:%f\n", EMR_FIELD_OFS(playpenTouchSensorStdDevThresh), U32FLOAT(playpenTouchSensorStdDevThresh));
     ConsolePrintf("EMR[%u] playpenTestDisableMask:%08x\n", EMR_FIELD_OFS(playpenTestDisableMask), playpenTestDisableMask);
   }
-  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
+  
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() )
+  {
+    uint32_t packoutCnt = 1 + rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
+    rcomSmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt );
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate );
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
+  }
+}
+
+void EmrUnPackout(void)
+{
+  const uint32_t WIPE_PACKOUT_MAGIC = 0x57495045;
+  ConsolePrintf("Unpacking the ribbit...\n");
+  
+  //writing magic value clears several emr registers:
+  //  PACKED_OUT_FLAG, PACKED_OUT_DATE, PLAYPEN_PASSED_FLAG, PLAYPEN_READY_FLAG
+  rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), WIPE_PACKOUT_MAGIC, RCOM_PRINT_LEVEL_CMD ); //RCOM_PRINT_LEVEL_ALL );
+  
+  //change packout flag causes delay while some internal processes react
+  ConsolePrintf("wait for system reconfig...\n");
+  uint32_t Tstart = Timer::get(); int reconfig=0;
+  while(reconfig < 5) {
+    if( Timer::elapsedUs(Tstart) > 5*1000*1000 ) 
+      throw ERROR_TIMEOUT; //ERROR_ROBOT_PACKED_OUT;
+    try {
+      rcomGmr( EMR_FIELD_OFS(ESN), RCOM_PRINT_LEVEL_NONE ); //read something and see if it succeeds
+      reconfig++;
+    } catch(...) { 
+      reconfig=0;
+    }
+  }
+  ConsolePrintf("done in %ims\n", Timer::elapsedUs(Tstart)/1000 );
+  
+  //readback verify
+  uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  uint32_t packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  //uint32_t packoutCnt     = rcomGmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT );
+  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
+  //ConsolePrintf("EMR[%u] packoutCnt:%i\n", EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_CNT, packoutCnt);
+  
+  if( playpenready > 0 || playpenpass > 0 || packedout > 0 || packoutdate > 0 ) {
+    ConsolePrintf("---UNPACK FAILED---\n");
+    throw ERROR_ROBOT_PACKED_OUT;
   }
 }
 
@@ -882,9 +1027,19 @@ void RobotPowerDown(void)
   
   if( !IS_FIXMODE_ROBOT1() )
   {
-    rcomPwr(RCOM_PWR_OFF);
+    if( IS_FIXMODE_UNPACKOUT() ) {
+      //un-packout hack is a little unstable. Add some reliability to power-down.
+      int retries=5;
+      while(1) { 
+        try{ rcomPwr(RCOM_PWR_OFF); break; }
+        catch(...) { if( --retries <= 0 ) throw; } 
+      }
+    } else {
+      rcomPwr(RCOM_PWR_OFF);
+    }
     Contacts::powerOn(); //immdediately turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+    Timer::delayMs(1000); //power off command has a delayed reaction time
     
     /*/DEBUG:
     ConsolePrintf("delay for manual powerdown check. press a key to skip\n");
@@ -1425,6 +1580,14 @@ static void BatteryCheck(void)
     if( flexnfo.bat_mv > VBAT_MV_MAXIMUM )
       throw ERROR_BAT_OVERVOLT;
   }
+  
+  //record test data
+  if( IS_FIXMODE_ROBOT3() && !IS_FIXMODE_OFFLINE() ) {
+    rcomSmr( EMR_FIELD_OFS(fixture)+EMRF_ROBOT3_VBAT_MV, (uint32_t)flexnfo.bat_mv );
+  }
+  if( IS_FIXMODE_PACKOUT() && !IS_FIXMODE_OFFLINE() ) {
+    rcomSmr( EMR_FIELD_OFS(fixture)+EMRF_PACKOUT_VBAT_MV, (uint32_t)flexnfo.bat_mv );
+  }
 }
 
 void EngPlaySound(uint8_t select, uint8_t volume=255, int delayms=750);
@@ -1636,6 +1799,16 @@ TestFunction* TestRobotPackoutGetTests(void) {
     SadBeep, //eng sound cmd only works before packout flag set
     RobotFlexFlowPackoutReport, //final report and error checks
     EmrUpdate, //set packout flag, timestamp
+    RobotPowerDown,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobotUnPackoutGetTests(void) {
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    EmrUnPackout,
     RobotPowerDown,
     NULL,
   };

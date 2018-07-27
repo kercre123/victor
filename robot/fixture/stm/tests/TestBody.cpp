@@ -36,7 +36,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_BODY_HW_REV = BODYID_HWREV_PVT;
+static const int CURRENT_BODY_HW_REV = BODYID_HWREV_MP;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -60,10 +60,19 @@ static void mcu_power_down_(void) {
 }
 
 static void mcu_swd_init_(void) {
-  try { swd_stm32_init(); /*safe from re-init*/ }
-  catch(int e) {
+  int e, attempts=0;
+  do {
+    try{ e=swd_stm32_init(); } catch(int err) { e=err; }
+    //if( e != ERROR_OK ) { //power cycle and reset swd driver
+    //  mcu_power_down_();
+    //  Timer::delayMs(attempts<2 ? 10 : 250); //extra time for discharge
+    //  mcu_power_up_();
+    //}
+  } while( e != ERROR_OK && ++attempts < 5 );
+  
+  ConsolePrintf("swd init e=%i, %i attempts\n", e, attempts);
+  if( e != ERROR_OK )
     throw e;
-  }
 }
 
 static void mcu_flash_erase_(void) {
@@ -75,8 +84,6 @@ static void mcu_flash_erase_(void) {
 
 static void mcu_flash_program_(uint32_t flash_addr, const uint8_t *bin, const uint8_t *binEnd, bool verify, const char* name)
 {
-  mcu_swd_init_();
-  
   int size = binEnd - bin;
   if( size < 1 ) {
     ConsolePrintf("BAD_ARG: mcu_flash_program_() size=%i\n", size );
@@ -193,6 +200,7 @@ static void BodyLoadTestFirmware(void)
   
   //Erase and flash
   mcu_power_up_();
+  mcu_swd_init_();
   mcu_flash_program_(FLASH_ADDR_TEST_APP, g_BodyTest, g_BodyTestEnd, 1, "test firmware");
   mcu_power_down_();
   
@@ -285,6 +293,7 @@ static void BodyLoadProductionFirmware(void)
   //Erase and flash boot/app
   ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
   mcu_power_up_();
+  mcu_swd_init_();
   mcu_flash_program_(FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize, 1, "bootloader");
   mcu_flash_program_(FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
   mcu_flash_verify_( FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize );

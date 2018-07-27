@@ -1,0 +1,16 @@
+
+----------------
+Fixture
+----------------
+Hardware: EE change to match MP encoder resistors
+
+CUBE: allow wider test range, check led variance to catch failures
+ROBOT1: test charge comms (spine loop)
+ROBOT1/3: check syscon-reported TOF/cliff error flags
+MOTORx: port test modes from coz1.5
+
+----------------
+Helper
+----------------
+log management: erase old logs? what happens when partition is full?
+

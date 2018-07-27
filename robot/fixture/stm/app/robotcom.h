@@ -103,8 +103,8 @@ robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, 
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 int           rcomRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //read log 'idx' into buf (NOT null-terminated). return num chars written to buf [e.g. strlen(buf)]
 void          rcomEng(uint8_t idx, uint8_t dat0=0, uint8_t dat1=0);
-void          rcomSmr(uint8_t idx, uint32_t val);
-uint32_t      rcomGmr(uint8_t idx);
+void          rcomSmr(uint8_t idx, uint32_t val, int printlvl = RCOM_PRINT_LEVEL_DAT);
+uint32_t      rcomGmr(uint8_t idx, int printlvl = RCOM_PRINT_LEVEL_DAT);
 //void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
 //void          rcomLfe(uint8_t idx, uint32_t val);
 

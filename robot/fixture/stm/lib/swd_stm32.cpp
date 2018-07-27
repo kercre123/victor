@@ -157,10 +157,16 @@ int swd_stm32_erase(void)
   int r = 0;
   
   // Unlock flash chip
+  //   0x40022004: Flash key register (FLASH_KEYR)
+  //   unlock sequence, write 0x45670123, then 0xCDEF89AB
   r |= swd_write32(0x40022004, 0x45670123);
   r |= swd_write32(0x40022004, 0xCDEF89AB);
   
   // Start mass erase
+  //   0x40022010: Flash control register (FLASH_CR)
+  //    <2> MER: mass erase
+  //    <6> STRT: start
+  //    <9> OPTWRE: option byte write enable (set by unlock sequence, reset by writing 0)
   r |= swd_write32(0x40022010, 0x00000204);
   r |= swd_write32(0x40022010, 0x00000244);
   
@@ -168,6 +174,8 @@ int swd_stm32_erase(void)
     THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   
   // Check busy flag
+  //   0x4002200C: Flash status register (FLASH_SR)
+  //    <0> BSY: flash operation in progress
   int timeout = 50;
   SwdDebugPrintf("  .");
   while ((swd_read32(0x4002200C) & 1) && (timeout--) > 0) {

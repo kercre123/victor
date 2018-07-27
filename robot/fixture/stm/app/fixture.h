@@ -45,6 +45,8 @@ extern "C" {
 #define FIXMODE_INFO           31
 #define FIXMODE_PACKOUT        33
 #define FIXMODE_PACKOUT_OL     34
+#define FIXMODE_UN_PACKOUT     35
+
 #define FIXMODE_RECHARGE0      37
 #define FIXMODE_RECHARGE1      38
 #define FIXMODE_SOUND1         40
@@ -137,7 +139,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "PACKOUT"     , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT     },  /*33*/  \
   { "PACKOUT-OL"  , TestRobotDetect     , TestRobotPackoutGetTests    , TestRobotCleanup            , FIXMODE_PACKOUT_OL  },  /*34*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "UN-PACKOUT"  , TestRobotDetect     , TestRobotUnPackoutGetTests  , TestRobotCleanup            , FIXMODE_UN_PACKOUT  },  /*35*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "RECHARGE0"   , TestRobotDetect     , TestRobotRechargeGetTests   , TestRobotCleanup            , FIXMODE_RECHARGE0   },  /*37*/  \
   { "RECHARGE1"   , TestRobotDetect     , TestRobotRechargeGetTests   , TestRobotCleanup            , FIXMODE_RECHARGE1   },  /*38*/  \

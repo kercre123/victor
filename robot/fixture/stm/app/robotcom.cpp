@@ -317,8 +317,8 @@ void gmr_handler_(char* s) {
   m_ccc.err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_ccc.err;
 }
 
-uint32_t cccGmr(uint8_t idx) {
-  ccc_IdxVal32_(idx, 0, "gmr", gmr_handler_, RCOM_PRINT_LEVEL_DAT);
+uint32_t cccGmr(uint8_t idx, int printlvl) {
+  ccc_IdxVal32_(idx, 0, "gmr", gmr_handler_, printlvl);
   //ConsolePrintf("emr[%u] = %08x\n", idx, m_ccc.rsp.emr_val);
   return !ccc_error_check_(1) ? m_ccc.rsp.emr_val : 0;
 }
@@ -882,9 +882,9 @@ robot_sr_t* rcomGet(uint8_t NN, uint8_t sensor, int printlvl)
 
 int  rcomRlg(uint8_t idx, char *buf, int buf_max_size, int printlvl) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size,printlvl) : 0; }
 void rcomEng(uint8_t idx, uint8_t dat0, uint8_t dat1) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, ((dat1<<8)|dat0), "eng", 0); }
-void rcomSmr(uint8_t idx, uint32_t val) {
+void rcomSmr(uint8_t idx, uint32_t val, int printlvl ) {
   if( !rcom_target_spine_nCCC ) {
-    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, RCOM_PRINT_LEVEL_DAT, false);
+    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, printlvl, false);
     if( cmdStatus == 4 /*ERR_LOCKED*/ )
       throw ERROR_ROBOT_PACKED_OUT;
     else if( cmdStatus != 0 )
@@ -894,8 +894,8 @@ void rcomSmr(uint8_t idx, uint32_t val) {
 //void rcomFcc(uint8_t mode, uint8_t cn)  { if( !rcom_target_spine_nCCC ) cccFcc(mode, cn); }
 //void rcomLfe(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "lfe", 0); }
 
-uint32_t rcomGmr(uint8_t idx) { 
-  return !rcom_target_spine_nCCC ? cccGmr(idx) : 0;
+uint32_t rcomGmr(uint8_t idx, int printlvl) { 
+  return !rcom_target_spine_nCCC ? cccGmr(idx, printlvl) : 0;
 }
 
 void rcomPrintBsv(robot_bsv_t* bsv) {

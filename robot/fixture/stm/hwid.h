@@ -20,6 +20,7 @@
 #define CUBEID_HWREV_DVT3       3
 #define CUBEID_HWREV_DVT4       4
 #define CUBEID_HWREV_PVT        5
+#define CUBEID_HWREV_MP         6
 
 #define CUBEID_MODEL_INVALID    0 //unprogrammed/empty OTP value
 #define CUBEID_MODEL_CUBE1      1
@@ -44,7 +45,8 @@ typedef struct {
 #define BODYID_HWREV_DVT3       3
 #define BODYID_HWREV_DVT4       4
 #define BODYID_HWREV_PVT        5
-#define BODYID_HWREV_IS_VALID(r)  ((r) > 1 && (r) <= BODYID_HWREV_PVT)
+#define BODYID_HWREV_MP         6
+#define BODYID_HWREV_IS_VALID(r)  ((r) > 1 && (r) <= BODYID_HWREV_MP)
 
 #define BODYID_MODEL_EMPTY      0xffff //unprogrammed/empty value
 #define BODYID_MODEL_BLACK_STD  1
@@ -68,7 +70,8 @@ typedef struct {
 #define HEADID_HWREV_DEBUG      1 //debug use and DVT1-3
 #define HEADID_HWREV_DVT4       4
 #define HEADID_HWREV_PVT        5
-#define HEADID_HWREV_IS_VALID(r)  ((r) > 0 && (r) <= HEADID_HWREV_PVT)
+#define HEADID_HWREV_MP         6
+#define HEADID_HWREV_IS_VALID(r)  ((r) > 0 && (r) <= HEADID_HWREV_MP)
 
 typedef struct {
   uint32_t  esn;

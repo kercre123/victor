@@ -117,17 +117,18 @@ function log_current()
   fi
 }
 
+gFileCnt=0; gLineCnt=0;
 function parse_file()
 {
   infile=$1;
   echo processing "$infile"
   dos2unix "$infile"
-  linenum=0
+  lineCnt=0
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
-    linenum=$((linenum+1))
+    lineCnt=$((lineCnt+1))
     
     #filter lines without current measurements (much faster than regex every line)
-    if echo $line | grep -q "current"; then
+    if [[ "$line" == *"current"* ]]; then #echo $line | grep -q "current"; then
       
       #strip timestamp prefix '[###.######] '
       if [ "${line:0:1}" == "[" ]; then 
@@ -140,11 +141,14 @@ function parse_file()
       #skip CUBEBAT startup current measurements
       if [ "$current" != "" ]; then
         led=$(echo $line | grep -oP '^[\w\d\.]+') #parse the led name for this measurement
-        log_current "$led" "$current" "$infile" "$line" "$linenum"
+        log_current "$led" "$current" "$infile" "$line" "$lineCnt"
       fi
     fi
   done < "$infile"
   write_row "$infile" -1
+  
+  gFileCnt=$(($gFileCnt+1))
+  gLineCnt=$(($gLineCnt+$lineCnt))
 }
 
 #init column lables
@@ -152,10 +156,14 @@ for i in "${!leds[@]}"; do values[${i}]="${leds[$i]}"; done
 write_row "logfile" -1
 
 #parse logfiles (*.log or *.txt formats)
+Tstart=$(($(date +%s%N)/1000000))
 for infile in ./*.log; do if [ "$infile" != "./*.log" ]; then parse_file "$infile"; fi done
 for infile in ./*.txt; do if [ "$infile" != "./*.txt" ]; then parse_file "$infile"; fi done
+Tend=$(($(date +%s%N)/1000000))
+Tproc=$(($Tend-$Tstart))
 
 write_maths $numrows
 
+echo processed $gFileCnt files $gLineCnt lines in $(($Tproc))ms. avg $(($Tproc/$gLineCnt))ms per line
 exit 0
 

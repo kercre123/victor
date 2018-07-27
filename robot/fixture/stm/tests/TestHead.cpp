@@ -14,7 +14,7 @@
 #include "timer.h"
 
 static headid_t headnfo;
-static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_PVT;
+static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_MP;
 static const int CURRENT_HEAD_MODEL = 1;
 
 static uint32_t m_previous_esn = ~0;

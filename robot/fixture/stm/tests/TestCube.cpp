@@ -20,7 +20,7 @@
 #include "timer.h"
 
 #define TESTCUBE_DEBUG 1
-static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_PVT;
+static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_MP;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
@@ -321,23 +321,26 @@ static void ShortCircuitTest(void)
 }
 
 //led test array
+const int iRED_nominal=27, iRED_variance=5;
+const int iGRN_nominal=28, iGRN_variance=8;
+const int iBLU_nominal=28, iBLU_variance=8;
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED", 0x1111, 12, 0, 10,  4, ERROR_CUBE_LED    },
-  {(char*)"All.GRN", 0x2222, 12, 0, 10,  4, ERROR_CUBE_LED    },
-  {(char*)"All.BLU", 0x4444, 12, 0,  9,  4, ERROR_CUBE_LED    },
-  {(char*)"D1.RED",  0x0001,  1, 0, 27,  5, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.GRN",  0x0002,  1, 0, 28,  8, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.BLU",  0x0004,  1, 0, 28,  8, ERROR_CUBE_LED_D1 },
-  {(char*)"D2.RED",  0x0010,  1, 0, 27,  5, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.GRN",  0x0020,  1, 0, 28,  8, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.BLU",  0x0040,  1, 0, 28,  8, ERROR_CUBE_LED_D2 },
-  {(char*)"D3.RED",  0x0100,  1, 0, 27,  5, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.GRN",  0x0200,  1, 0, 28,  8, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.BLU",  0x0400,  1, 0, 28,  8, ERROR_CUBE_LED_D3 },
-  {(char*)"D4.RED",  0x1000,  1, 0, 27,  5, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.GRN",  0x2000,  1, 0, 28,  8, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.BLU",  0x4000,  1, 0, 28,  8, ERROR_CUBE_LED_D4 }
+  {(char*)"All.RED", 0x1111, 12, 0,           10,             4,  ERROR_CUBE_LED    },
+  {(char*)"All.GRN", 0x2222, 12, 0,           10,             4,  ERROR_CUBE_LED    },
+  {(char*)"All.BLU", 0x4444, 12, 0,            9,             4,  ERROR_CUBE_LED    },
+  {(char*)"D1.RED",  0x0001,  1, 0, iRED_nominal, iRED_variance,  ERROR_CUBE_LED_D1 },
+  {(char*)"D1.GRN",  0x0002,  1, 0, iGRN_nominal, iGRN_variance,  ERROR_CUBE_LED_D1 },
+  {(char*)"D1.BLU",  0x0004,  1, 0, iBLU_nominal, iBLU_variance,  ERROR_CUBE_LED_D1 },
+  {(char*)"D2.RED",  0x0010,  1, 0, iRED_nominal, iRED_variance,  ERROR_CUBE_LED_D2 },
+  {(char*)"D2.GRN",  0x0020,  1, 0, iGRN_nominal, iGRN_variance,  ERROR_CUBE_LED_D2 },
+  {(char*)"D2.BLU",  0x0040,  1, 0, iBLU_nominal, iBLU_variance,  ERROR_CUBE_LED_D2 },
+  {(char*)"D3.RED",  0x0100,  1, 0, iRED_nominal, iRED_variance,  ERROR_CUBE_LED_D3 },
+  {(char*)"D3.GRN",  0x0200,  1, 0, iGRN_nominal, iGRN_variance,  ERROR_CUBE_LED_D3 },
+  {(char*)"D3.BLU",  0x0400,  1, 0, iBLU_nominal, iBLU_variance,  ERROR_CUBE_LED_D3 },
+  {(char*)"D4.RED",  0x1000,  1, 0, iRED_nominal, iRED_variance,  ERROR_CUBE_LED_D4 },
+  {(char*)"D4.GRN",  0x2000,  1, 0, iGRN_nominal, iGRN_variance,  ERROR_CUBE_LED_D4 },
+  {(char*)"D4.BLU",  0x4000,  1, 0, iBLU_nominal, iBLU_variance,  ERROR_CUBE_LED_D4 }
 };
 
 static inline bool ledtest_pass(led_test_t *ptest, int i_test) {
