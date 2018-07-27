@@ -45,12 +45,12 @@ const float kBackgroundConnectionTimeout_s = 15.0f;
 const float kDisconnectGracePeriodSec = 0.0f;
 
 // Webviz
+#if ANKI_DEV_CHEATS
 const std::string kWebVizModuleNameCubes = "cubes";
 const float kUpdateWebVizPeriod_s = 1.0f;
 const float kDebugTempSubscriptionTimeout_s = 10.0f;
 
 // Console test constants
-#if ANKI_DEV_CHEATS
 static Anki::Cozmo::CubeConnectionCoordinator* sThis = nullptr;
 static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber1(1);
 static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber2(2);
@@ -95,8 +95,8 @@ CubeConnectionCoordinator::~CubeConnectionCoordinator()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::InitDependent( Robot* robot, const RobotCompMap& dependentComps )
 {
-  _context = robot->GetContext();
 #if ANKI_DEV_CHEATS
+  _context = robot->GetContext();
   SubscribeToWebViz();
 #endif // ANKI_DEV_CHEATS
 }
@@ -486,6 +486,7 @@ bool CubeConnectionCoordinator::FindRecordBySubscriber(ICubeConnectionSubscriber
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::SubscribeToWebViz()
 {
+#if ANKI_DEV_CHEATS
   if(nullptr != _context){
     auto* webService = _context->GetWebService();
     if(nullptr != webService){
@@ -524,11 +525,13 @@ void CubeConnectionCoordinator::SubscribeToWebViz()
       _signalHandles.emplace_back(webService->OnWebVizData(kWebVizModuleNameCubes).ScopedSubscribe(onData));
     }
   }
+#endif // ANKI_DEV_CHEATS
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeConnectionCoordinator::SendDataToWebViz()
 {
+#if ANKI_DEV_CHEATS
   if(nullptr != _context){
     auto* webService = _context->GetWebService();
     if(nullptr != webService){
@@ -567,6 +570,7 @@ void CubeConnectionCoordinator::SendDataToWebViz()
       webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
     }
   }
+#endif // ANKI_DEV_CHEATS
 }
 
 } // namespace Cozmo

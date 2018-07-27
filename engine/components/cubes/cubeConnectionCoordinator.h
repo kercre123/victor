@@ -121,9 +121,11 @@ private:
   float _timeToDisconnect_s = 0.0f;
 
   // for webviz
+#if ANKI_DEV_CHEATS
   const CozmoContext* _context = nullptr;
   float _timeToUpdateWebViz_s = 0.0f;
   std::vector<Signal::SmartHandle> _signalHandles;
+#endif
   std::string _debugStateString = "Unconnected";
 };
 
