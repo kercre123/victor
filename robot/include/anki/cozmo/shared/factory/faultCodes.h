@@ -46,8 +46,8 @@ enum : uint16_t {
 
   //critical processes
   SYSTEMD               = 919,
-  NO_ROBOT_PROCESS      = 917,
-  NO_ENGINE_PROCESS     = 915,
+  NO_ROBOT_COMMS        = 917,
+  NO_ENGINE_COMMS       = 915,
   NO_SWITCHBOARD        = 913,
   AUDIO_FAILURE         = 911,
 

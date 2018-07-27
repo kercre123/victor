@@ -659,11 +659,11 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
 
 Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_nanosec)
 {
-  // If nonzero, we are scheduled to display a NO_ENGINE_PROCESS fault code
+  // If nonzero, we are scheduled to display a NO_ENGINE_COMMS fault code
   static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
   
   // Amount of time for which we must be disconnected from the engine in order
-  // to display the NO_ENGINE_PROCESS fault code
+  // to display the NO_ENGINE_COMMS fault code
   static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
   
   // Check for changes in connection state to engine and send RobotAvailable and
@@ -711,7 +711,7 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   if ((displayFaultCodeTime_nanosec > 0) &&
       (currTime_nanosec > displayFaultCodeTime_nanosec)) {
     displayFaultCodeTime_nanosec = 0;
-    FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_PROCESS);
+    FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_COMMS);
   }
   
   return RESULT_OK;
@@ -743,7 +743,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     static bool faultCodeDisplayed = false;
     if (!faultCodeDisplayed) {
       LOG_WARNING("AnimProcessMessages.Update.NoConnectionToRobot", "");
-      FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);
+      FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_COMMS);
       faultCodeDisplayed = true;
     }
   } else if ((_pendingRobotDisconnectTime_sec > 0.f) &&
