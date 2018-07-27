@@ -43,6 +43,7 @@ namespace Anki {
 namespace Cozmo {
   
     // Forward declaration
+    struct ImageSaverParams;
     class ObservableObject;
   
     // Turn in place by a given angle, wherever the robot is when the action is executed.
@@ -500,7 +501,15 @@ namespace Cozmo {
       // use a default number of images to give the robot a good chance to see something with the given vision modes
       WaitForImagesAction(UseDefaultNumImages_t, VisionMode visionMode);
       
-      virtual ~WaitForImagesAction() { }
+      // Set save params, assuming VisionMode::SavingImages is active
+      // If Mode is SingleShot, will save one image at the start of this action.
+      // If Mode is Stream, will save all images (irrespective of visionMode above) while the action
+      //   is running. In this case, the mode will be set back to off when the action ends, so anything
+      //   that was previously saving will be disabled.
+      // This is primarily useful for debugging.
+      void SetSaveParams(const ImageSaverParams& params);
+      
+      virtual ~WaitForImagesAction();
       
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
@@ -520,6 +529,8 @@ namespace Cozmo {
       Signal::SmartHandle             _imageProcSignalHandle;
       VisionMode                      _visionMode = VisionMode::Count;
       u32                             _numModeFramesSeen = 0;
+      
+      std::unique_ptr<ImageSaverParams> _saveParams;
       
     }; // WaitForImagesAction()
   

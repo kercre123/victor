@@ -29,9 +29,12 @@ public:
   explicit VisionModeSchedule(std::vector<bool>&& initSchedule);
   explicit VisionModeSchedule(bool alwaysOnOrOff);
   explicit VisionModeSchedule(int onFrequency, int frameOffset = 0);
+
+  bool IsTimeToProcess() const;
+  void Advance();
   
-  // Checks schedule and advances for next query (so should be called once per image/tick)
-  bool CheckTimeToProcessAndAdvance();
+  // Returns whether the schedule will ever run (i.e. is not just "false" for all time)
+  bool WillEverRun() const;
   
 private:
   std::vector<bool> _schedule;
@@ -66,10 +69,12 @@ public:
   // Get the schedule for a specific mode
   VisionModeSchedule& GetScheduleForMode(VisionMode mode);
   const VisionModeSchedule& GetScheduleForMode(VisionMode mode) const;
+    
+  // Returns whether it is time to process a mode
+  bool IsTimeToProcess(VisionMode mode) const;
   
-  // Returns whether it is time to process a mode and advances that mode for the next query
-  // (So should only be called once per image/tick, for each mode)
-  bool CheckTimeToProcessAndAdvance(VisionMode mode);
+  // Advances all schedules to be ready for next query (should be called once per image/tick)
+  void Advance();
   
   // Change the defaults to use for unspecified modes
   static void SetDefaultSchedule(VisionMode mode, VisionModeSchedule&& schedule);

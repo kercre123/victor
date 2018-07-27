@@ -26,6 +26,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/vision/imageSaver.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -244,12 +245,13 @@ void BehaviorDevImageCapture::SwitchToNextClass()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string BehaviorDevImageCapture::GetSavePath() const
 {
+  const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
+  
   if(_dVars.currentClassIter == _iConfig.classNames.end())
   {
-    return _iConfig.imageSavePath;
+    return Util::FileUtils::FullFilePath({cachePath, "images", _iConfig.imageSavePath});
   }
   
-  const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
   return Util::FileUtils::FullFilePath({cachePath, "images", _iConfig.imageSavePath, *_dVars.currentClassIter});
 }
 
@@ -330,11 +332,12 @@ void BehaviorDevImageCapture::BehaviorUpdate()
       BlinkLight();
     }
     
-    visionComponent.SetSaveImageParameters(sendMode,
-                                           GetSavePath(),
-                                           "", // No basename: rely on auto-numbering
-                                           _iConfig.imageSaveQuality,
-                                           _iConfig.imageSaveSize);
+    ImageSaverParams params(GetSavePath(),
+                            sendMode,
+                            _iConfig.imageSaveQuality,
+                            "",
+                            _iConfig.imageSaveSize);
+    visionComponent.SetSaveImageParameters(params);
   }
   else if( !wasTouched && isTouched ) {
     PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.newTouch", "new press");
@@ -342,11 +345,12 @@ void BehaviorDevImageCapture::BehaviorUpdate()
 
     if( _dVars.isStreaming ) {
       // we were streaming but now should stop because there was a new touch
-      visionComponent.SetSaveImageParameters(ImageSendMode::Off,
-                                             GetSavePath(),
-                                             "", // No basename: rely on auto-numbering
-                                             _iConfig.imageSaveQuality,
-                                             _iConfig.imageSaveSize);
+      ImageSaverParams params(GetSavePath(),
+                              ImageSendMode::Off,
+                              _iConfig.imageSaveQuality,
+                              "", // No basename: rely on auto-numbering
+                              _iConfig.imageSaveSize);
+      visionComponent.SetSaveImageParameters(params);
 
       _dVars.isStreaming = false;
     }

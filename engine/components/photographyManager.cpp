@@ -21,6 +21,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/utils/cozmoFeatureGate.h"
+#include "engine/vision/imageSaver.h"
 #include "webServerProcess/src/webService.h"
 
 #include "proto/external_interface/shared.pb.h"
@@ -297,15 +298,15 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
   
   // Upsampling half-res to full scale for PRDemo until VIC-4077 is fixed
   const float saveScale = (_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo) ? 2.f : 1.f);
-    
-  _visionComponent->SetSaveImageParameters(ImageSendMode::SingleShot,
-                                           GetSavePath(),
-                                           GetBasename(_nextPhotoID),
-                                           kSaveQuality,
-                                           photoSize,
-                                           kRemoveDistortion,
-                                           kThumbnailScale,
-                                           saveScale);
+  
+  _visionComponent->SetSaveImageParameters(ImageSaverParams(GetSavePath(),
+                                                            ImageSendMode::SingleShot,
+                                                            kSaveQuality,
+                                                            GetBasename(_nextPhotoID),
+                                                            photoSize,
+                                                            kThumbnailScale,
+                                                            saveScale,
+                                                            kRemoveDistortion));
 
   _lastRequestedPhotoHandle = _visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
@@ -326,8 +327,13 @@ void PhotographyManager::CancelTakePhoto()
     _state = State::Idle;
   }
 }
-
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PhotographyManager::IsWaitingForPhoto() const
+{
+  return (_lastRequestedPhotoHandle > 0);
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
 {
@@ -357,6 +363,7 @@ void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
              _nextPhotoID, epochTimestamp, index);
 
     _nextPhotoID++;
+    _lastRequestedPhotoHandle = 0;
 
     SavePhotosFile();
   }

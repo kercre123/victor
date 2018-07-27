@@ -264,14 +264,23 @@ void MarkerDetector::Parameters::Initialize()
   useIntegralImageFiltering = true;
   useIlluminationNormalization = true;
   
-  // NOTE: 0.8 was good for dark-on-light (Cozmo) markers, 0.9 for light-on-dark Victor markers
-  scaleImage_thresholdMultiplier = static_cast<s32>(65536.f * 0.9f);
+  // NOTE: 0.8 was good for dark-on-light (Cozmo) markers, 1.1 for light-on-dark Victor markers
+  scaleImage_thresholdMultiplier = static_cast<s32>(65536.f * 1.1f);
   
   //scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
   //scaleImage_thresholdMultiplier = 49152; // 0.75*(2^16)=49152
   
+  // It seems strange that the number of pyramid levels is only 1, given the desire to compute the
+  // "best" neighborhood size for binarization using characteristic scale computation, but there may be
+  // a deeper bug since this seemed to work best. Punting for now.
   scaleImage_numPyramidLevels = 1;
-  imagePyramid_baseScale = 4;
+  
+  // Smaller window sizes for binarization seem to allow us to break apart nearly-connected regions better,
+  // at the possible expense of hollowing out thick fiducial regions. However, unless we were to completely
+  // hollow out the rounded fiducial rectangle into two separate "rings" (or break it somewhere), this
+  // is likely generally less of a problem than the "leakage" problem when the fiducial is far away and
+  // near another bright region.
+  imagePyramid_baseScale = 2;
   
   component1d_minComponentWidth = 0;
   component1d_maxSkipDistance = 0;
@@ -294,7 +303,7 @@ void MarkerDetector::Parameters::Initialize()
   
   decode_minContrastRatio = 1.01f;
   
-  maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  maxConnectedComponentSegments = 640*360/2;
   
   // Maximum number of refinement iterations (i.e. if convergence is not
   // detected in the meantime according to minCornerChange parameter below)

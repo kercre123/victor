@@ -49,5 +49,15 @@
   "maxNumRecentSearches" : 4,
   
   "minDrivingDist_mm" : 150,
-  "maxDrivingDist_mm" : 400
+  "maxDrivingDist_mm" : 400,
+  
+  // Enable to use exposure cycling while for searching for charger to improve chances
+  // of seeing it in difficult illumination (backlight, harsh sunlight).
+  // NOTE: numImagesToWaitFor (below) also should be increased to accommodate the cycling time.
+  "useExposureCycling" : true,
+  
+  // If using exposure cycling to find charger (above), we need to wait at least cycle_length * auto_exp_period frames
+  // Default is auto exposure every 8 frames and cycle length 3, meaning 24 frames
+  // TODO: Disable white balance for this behavior so we can do auto exposure every 4 frames (VIC-4945)
+  "numImagesToWaitFor" : 25
 }

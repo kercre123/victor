@@ -32,16 +32,24 @@ namespace Vision {
     
     ImagingPipeline();
     
-    Result SetExposureParameters(u8  targetValue,
-                                 f32 targetPercentile,
-                                 f32 maxChangeFraction,
-                                 s32 subSample);
+    Result SetExposureParameters(const u8               targetValue,
+                                 const std::vector<u8>& cyclingTargetValues,
+                                 const f32              targetPercentile,
+                                 const f32              maxChangeFraction,
+                                 const s32              subSample);
     
     Result SetGammaTable(const std::vector<u8>& inputs, const std::vector<u8>& gamma);
     
     // Compute multiplicative amount by which to adjust exposure
-    Result ComputeExposureAdjustment(const Vision::Image& image, f32& adjustmentFraction);
-    Result ComputeExposureAdjustment(const Vision::Image& image, const Vision::Image& weightMask, f32& adjustmentFraction);
+    Result ComputeExposureAdjustment(const Vision::Image& image,
+                                     const bool useCycling,
+                                     f32& adjustmentFraction);
+    
+    Result ComputeExposureAdjustment(const Vision::Image& image,
+                                     const Vision::Image& weightMask,
+                                     const bool useCycling,
+                                     f32& adjustmentFraction);
+    
     Result ComputeExposureAdjustment(const std::vector<Vision::Image>& imageROIs, f32& adjustmentFraction);
 
     // Computes multiplicative amount by which to adjust red, and blue gains for WhiteBalance
@@ -62,11 +70,15 @@ namespace Vision {
     f32       _maxChangeFraction        = 0.5f;
     s32       _subSample                = 1;
     
+    std::vector<u8>                   _cyclingTargetValues;
+    std::vector<u8>::const_iterator   _cycleTargetIter;
+    
     ImageBrightnessHistogram _hist;
     
     std::array<u8,256> _gammaLUT;
     std::array<u8,256> _linearizationLUT;
     
+    Result ComputeAdjustmentFraction(const bool useCycling, f32& fraction);
   };
   
 } // namespace Vision

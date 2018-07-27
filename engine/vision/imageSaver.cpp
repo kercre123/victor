@@ -23,6 +23,27 @@ namespace Cozmo {
 static const char* kLogChannelName = "VisionSystem";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ImageSaverParams::ImageSaverParams(const std::string&       pathIn,
+                                   Mode                     saveModeIn,
+                                   int8_t                   qualityIn,
+                                   const std::string&       basenameIn,
+                                   Vision::ImageCache::Size sizeIn,
+                                   float                    thumbnailScaleIn,
+                                   float                    saveScaleIn,
+                                   bool                     removeDistortionIn)
+: path(pathIn)
+, basename(basenameIn)
+, mode(saveModeIn)
+, quality(qualityIn)
+, size(sizeIn)
+, thumbnailScale(thumbnailScaleIn)
+, saveScale(saveScaleIn)
+, removeDistortion(removeDistortionIn)
+{
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImageSaver::ImageSaver(const Vision::Camera& camera)
 : _camera(camera)
 {
@@ -30,7 +51,7 @@ ImageSaver::ImageSaver(const Vision::Camera& camera)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImageSaver::SetParams(Params&& params)
+Result ImageSaver::SetParams(const ImageSaverParams& params)
 {
   // Make sure given params are ok
   
@@ -68,7 +89,7 @@ Result ImageSaver::SetParams(Params&& params)
   }
   
   // Use 'em:
-  std::swap(params, _params);
+  _params = params;
   return RESULT_OK;
 }
   

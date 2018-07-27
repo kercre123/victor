@@ -72,6 +72,10 @@ CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // 
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
 CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
 CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
+
+// How long to disable auto exposure after using detections to meter
+CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
+  
 CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
 CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
 
@@ -186,7 +190,15 @@ Result VisionSystem::Init(const Json::Value& config)
     GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",   maxChangeFraction);
     GET_JSON_PARAMETER(imageQualityConfig, "SubSample",           subSample);
     
+    std::vector<u8> cyclingTargetValues;
+    if(!JsonTools::GetVectorOptional(imageQualityConfig, "CyclingTargetValues", cyclingTargetValues))
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", "CyclingTargetValues");
+      return RESULT_FAIL;
+    }
+    
     const Result result = _imagingPipeline->SetExposureParameters(targetValue,
+                                                                  cyclingTargetValues,
                                                                   kTargetPercentile,
                                                                   maxChangeFraction,
                                                                   subSample);
@@ -446,18 +458,9 @@ Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::SetSaveParameters(const ImageSendMode saveMode,
-                                     const std::string& path,
-                                     const std::string& basename,
-                                     const int8_t quality,
-                                     const Vision::ImageCache::Size& saveSize,
-                                     const bool removeRadialDistortion,
-                                     const f32 thumbnailScaleFraction,
-                                     const f32 saveScaleFraction)
+void VisionSystem::SetSaveParameters(const ImageSaverParams& params)
 {
-  const Result result = _imageSaver->SetParams( ImageSaver::Params{
-    path, basename, saveMode, quality, saveSize, thumbnailScaleFraction, saveScaleFraction, removeRadialDistortion
-  });
+  const Result result = _imageSaver->SetParams(params);
   
   if(RESULT_OK != result)
   {
@@ -645,50 +648,103 @@ u8 VisionSystem::ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc
   const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
   return mean;
 }
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache,
-                                       const std::vector<Anki::Rectangle<s32>>& detections)
+void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRectsByMode&& detectionsByMode)
 {
-#   define DEBUG_IMAGE_HISTOGRAM 0
-
+  const bool meterFromChargerOnly = ShouldProcessVisionMode(VisionMode::MeteringFromChargerOnly);
+  
+  // Before we do image quality / auto exposure, swap in the detections for any mode that actually ran,
+  // in case we need them for metering
+  // - if a mode ran but detected nothing, then an empty vector of rects will be swapped in
+  // - if a mode did not run, the previous detections for that mode will persist until it runs again
+  for(auto & current : detectionsByMode)
+  {
+    const VisionMode mode = current.first;
+    if(meterFromChargerOnly && (mode != VisionMode::DetectingMarkers))
+    {
+      continue;
+    }
+    std::swap(_meteringRegions[mode], current.second);
+  }
+  
+  // Clear out any stale "previous" detections for modes that are completely disabled by the current schedule
+  // Also remove empty vectors of rectangles that got swapped in above
+  auto iter = _meteringRegions.begin();
+  while(iter != _meteringRegions.end())
+  {
+    const VisionMode mode = iter->first;
+    if(iter->second.empty() || !IsModeScheduledToEverRun(mode)) {
+      iter = _meteringRegions.erase(iter);
+    }
+    else if(meterFromChargerOnly && (mode != VisionMode::DetectingMarkers)) {
+      iter = _meteringRegions.erase(iter);
+    }
+    else {
+      ++iter;
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache)
+{
+# define DEBUG_IMAGE_HISTOGRAM 0
+  
   const Vision::Image& inputImage = imageCache.GetGray();
-
+  
   // Compute the exposure we would like to have
   f32 exposureAdjFrac = 1.f;
   
   Result expResult = RESULT_FAIL;
-  if(!kMeterFromDetections || detections.empty())
+  if(!kMeterFromDetections || _meteringRegions.empty())
   {
-    expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
+    if(imageCache.GetTimeStamp() <= (_lastMeteringTimestamp_ms + kMeteringHoldTime_ms))
+    {
+      // Don't update auto exposure for a little while after we lose metered regions
+      PRINT_CH_INFO("VisionSystem", "VisionSystem.CheckImageQuality.HoldingExposureAfterRecentMeteredRegions", "");
+      return RESULT_OK;
+    }
+    
+    const bool useCycling = ShouldProcessVisionMode(VisionMode::CyclingExposure);
+    expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, useCycling, exposureAdjFrac);
   }
   else
   {
     // Give half the weight to the detections, the other half to the rest of the image
-    std::vector<Anki::Rectangle<s32>> roiRects;
-    s32 totalRoiArea = 0;
-    for(auto const& quad : detections)
+    
+    // When we have detections to weight, don't use cycling exposures. Just let the detections drive the exposure.
+    const bool kUseCycling = false;
+    
+    _lastMeteringTimestamp_ms = imageCache.GetTimeStamp();
+    
+    s32 totalMeteringArea = 0;
+    for(auto const& entry : _meteringRegions)
     {
-      roiRects.emplace_back(quad);
-      totalRoiArea += roiRects.back().Area();
+      for(auto const& rect : entry.second)
+      {
+        totalMeteringArea += rect.Area();
+      }
     }
+    DEV_ASSERT(totalMeteringArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
     
-    DEV_ASSERT(totalRoiArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
-    
-    if(2*totalRoiArea < inputImage.GetNumElements())
+    if(2*totalMeteringArea < inputImage.GetNumElements())
     {
-      const u8 backgroundWeight = Util::numeric_cast<u8>(255.f * static_cast<f32>(totalRoiArea)/static_cast<f32>(inputImage.GetNumElements()));
+      const u8 backgroundWeight = Util::numeric_cast<u8>(255.f * static_cast<f32>(totalMeteringArea)/static_cast<f32>(inputImage.GetNumElements()));
       const u8 roiWeight = 255 - backgroundWeight;
       
       Vision::Image weightMask(inputImage.GetNumRows(), inputImage.GetNumCols());
       weightMask.FillWith(backgroundWeight);
       
-      for(auto & rect : roiRects)
+      for(auto const& entry : _meteringRegions)
       {
-        weightMask.GetROI(rect).FillWith(roiWeight);
+        for(auto rect : entry.second) // deliberate copy b/c GetROI can modify rect
+        {
+          weightMask.GetROI(rect).FillWith(roiWeight);
+        }
       }
       
-      expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, weightMask, exposureAdjFrac);
+      expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, weightMask, kUseCycling, exposureAdjFrac);
       
       if(DEBUG_IMAGE_HISTOGRAM)
       {
@@ -704,14 +760,13 @@ Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache,
     {
       // Detections already make up more than half the image, so they'll already
       // get more focus. Just expose normally
-      expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
+      expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, kUseCycling, exposureAdjFrac);
     }
   }
   
   if(RESULT_OK != expResult)
   {
-    PRINT_NAMED_WARNING("VisionSystem.CheckImageQuality.ComputeNewExposureFailed",
-                        "Detection Quads=%zu", detections.size());
+    PRINT_NAMED_WARNING("VisionSystem.CheckImageQuality.ComputeNewExposureFailed", "");
     return expResult;
   }
   
@@ -788,23 +843,7 @@ Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache,
       }
     }
   }
-  
-  // If we are in limited exposure mode limit the exposure to multiples of 10 ms
-  // This is to prevent image artifacts from mismatched exposure and head light pulsing
-  if(_mode.IsBitFlagSet(VisionMode::LimitedExposure))
-  {
-    static const int kExposureMultiple = 10;
-
-    const int remainder = desiredExposureTime_ms % kExposureMultiple;
-    // Round _maxCameraExposureTime_ms down to the nearest multiple of kExposureMultiple
-    const int maxCameraExposureRounded_ms = _maxCameraExposureTime_ms - (_maxCameraExposureTime_ms % kExposureMultiple);
-    if(remainder != 0)
-    {
-      desiredExposureTime_ms += (kExposureMultiple - remainder);
-      desiredExposureTime_ms = std::min(maxCameraExposureRounded_ms, desiredExposureTime_ms);
-    }
-  }
-  
+    
   _currentResult.cameraParams.exposureTime_ms = desiredExposureTime_ms;
   _currentResult.cameraParams.gain = desiredGain;
 
@@ -1301,10 +1340,18 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       break;
   }
   
+  const bool meterFromChargerOnly = ShouldProcessVisionMode(VisionMode::MeteringFromChargerOnly);
+  
   auto markerIter = _currentResult.observedMarkers.begin();
   while(markerIter != _currentResult.observedMarkers.end())
   {
     auto & marker = *markerIter;
+    
+    if(meterFromChargerOnly && (marker.GetCode() != Vision::MARKER_CHARGER_HOME))
+    {
+      markerIter = _currentResult.observedMarkers.erase(markerIter);
+      continue;
+    }
     
     // Add the bounding rect of the (unwarped) marker to the detection rectangles
     Quad2f scaledCorners(marker.GetImageCorners());
@@ -1533,17 +1580,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
     Toc("TotalComputingStatistics");
   }
-  
-  std::vector<Anki::Rectangle<s32>> detectionRects;
+
+  DetectionRectsByMode detectionsByMode;
 
   bool anyModeFailures = false;
   
-  if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
+  if(ShouldProcessVisionMode(VisionMode::DetectingMarkers))
+  {
     // Marker detection uses rolling shutter compensation
     UpdateRollingShutter(poseData, imageCache);
 
     Tic("TotalDetectingMarkers");
-    lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
+    lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE);
+    
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
       anyModeFailures = true;
@@ -1553,12 +1602,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Toc("TotalDetectingMarkers");
   }
   
-  if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
+  if(ShouldProcessVisionMode(VisionMode::DetectingFaces))
+  {
     Tic("TotalDetectingFaces");
     // NOTE: To use rolling shutter in DetectFaces, call UpdateRollingShutterHere
     // See: VIC-1417 
     // UpdateRollingShutter(poseData, imageCache);
-    if((lastResult = DetectFaces(imageCache, detectionRects)) != RESULT_OK) {
+    if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::DetectingFaces])) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
       anyModeFailures = true;
     } else {
@@ -1567,9 +1617,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Toc("TotalDetectingFaces");
   }
   
-  if(ShouldProcessVisionMode(VisionMode::DetectingPets)) {
+  if(ShouldProcessVisionMode(VisionMode::DetectingPets))
+  {
     Tic("TotalDetectingPets");
-    if((lastResult = DetectPets(imageCache, detectionRects)) != RESULT_OK) {
+    if((lastResult = DetectPets(imageCache, detectionsByMode[VisionMode::DetectingPets])) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
       anyModeFailures = true;
     } else {
@@ -1718,12 +1769,14 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
 
+  UpdateMeteringRegions(imageCache.GetTimeStamp(), std::move(detectionsByMode));
+  
   // NOTE: This should come after any detectors that add things to "detectionRects"
   //       since it meters exposure based on those.
   if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
   {
     Tic("CheckingImageQuality");
-    lastResult = CheckImageQuality(imageCache, detectionRects);
+    lastResult = CheckImageQuality(imageCache);
     Toc("CheckingImageQuality");
     
     if(RESULT_OK != lastResult) {
@@ -1798,6 +1851,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   _results.push(_currentResult);
   _mutex.unlock();
   
+  // Advance the vision mode schedule for next call
+  _modeScheduleStack.front().Advance();
+  
   return (anyModeFailures ? RESULT_FAIL : RESULT_OK);
 } // Update()
 
@@ -1870,7 +1926,7 @@ Result VisionSystem::SaveSensorData() const {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
+bool VisionSystem::ShouldProcessVisionMode(VisionMode mode) const
 {
   if (!IsModeEnabled(mode))
   {
@@ -1885,8 +1941,14 @@ bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
   }
 
   // See if it's time to process based on the schedule
-  const bool isTimeToProcess = _modeScheduleStack.front().CheckTimeToProcessAndAdvance(mode);
+  const bool isTimeToProcess = _modeScheduleStack.front().IsTimeToProcess(mode);
   return isTimeToProcess;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VisionSystem::IsModeScheduledToEverRun(VisionMode mode) const
+{
+  return _modeScheduleStack.front().GetScheduleForMode(mode).WillEverRun();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
