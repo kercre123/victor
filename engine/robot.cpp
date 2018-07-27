@@ -128,10 +128,6 @@ CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 // Enable to enable example code of face image drawing
 CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
-// TEMP support for 'old' chargers with black stripe and white body (VIC-2755)
-// Set to true to allow the robot to dock with older white chargers (that have a light-on-dark marker sticker)
-CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot", false);
-
 #if REMOTE_CONSOLE_ENABLED
 
 // Robot singleton
@@ -1282,14 +1278,6 @@ Result Robot::Update()
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
-  }
-
-  // Always send the "charger stripe color" the first time,
-  // then only if the console var changes thereafter.
-  static bool wasChargerStripeIsBlack = !kChargerStripeIsBlack;
-  if (kChargerStripeIsBlack != wasChargerStripeIsBlack) {
-    SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
-    wasChargerStripeIsBlack = kChargerStripeIsBlack;
   }
  
   const bool trackingPowerButtonPress = (_timePowerButtonPressed_ms != 0);

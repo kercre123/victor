@@ -592,11 +592,6 @@ namespace Anki {
         IMUFilter::EnableBraceWhenFalling(msg.enable);
       }
 
-      void Process_chargerDockingStripeColor(const RobotInterface::ChargerDockingStripeColor& msg)
-      {
-        PickAndPlaceController::SetChargerStripeIsBlack(msg.isBlack);
-      }
-
       void Process_recordHeading(RobotInterface::RecordHeading const& msg)
       {
         SteeringController::RecordHeading();

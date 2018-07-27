@@ -53,8 +53,6 @@ namespace Anki {
       Result Init();
 
       Result Update();
-
-      void SetChargerStripeIsBlack(const bool b);
       
       Mode GetMode();
       

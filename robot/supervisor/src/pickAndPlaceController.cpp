@@ -86,13 +86,6 @@ namespace Anki {
         // For charger mounting, whether or not to use cliff sensors to align the robot.
         bool useCliffSensorAlignment_ = false;
 
-        // TODO: Default this to false once we have enough dark gray chargers (VIC-2755)
-#ifdef  SIMULATOR
-        bool chargerStripeIsBlack_ = false; // simulated chargers are "correct": dark gray with white stripe
-#else
-        bool chargerStripeIsBlack_ = true;
-#endif
-
         // Threshold used to distinguish white stripe on charger from the dark grey body
 #ifdef SIMULATOR
         const u16 kChargerCliffBlackThreshold = 880;
@@ -180,10 +173,6 @@ namespace Anki {
         const u32       CLIFF_ALIGN_MAX_COUNT_ZERO_GYRO = 300; // ~1.5 seconds of no turning
 
       } // "private" namespace
-
-      void SetChargerStripeIsBlack(const bool b) {
-        chargerStripeIsBlack_ = b;
-      }
 
       Mode GetMode() {
         return mode_;
@@ -791,32 +780,22 @@ namespace Anki {
               const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
               const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
 
-              // TODO: Only keep the logic for white stripe on dark charger once we have enough chargers (VIC-2755)
-              if (chargerStripeIsBlack_) {
-                // Slow down one of the sides if it's seeing black
-                if (isBlackBL && !isBlackBR) {
-                  leftSpeed = kChargerDockingSpeedLow;
-                } else if (!isBlackBL && isBlackBR) {
-                  rightSpeed = kChargerDockingSpeedLow;
-                }
-              } else {
-                // Slow down one of the sides if it's seeing white, but only
-                // if we have first seen black at some point.
-                // This is to ensure that the robot does not veer away from
-                // the charger on initial approach with light-colored tables.
-                if (isBlackBL) {
-                  cliffSensorCorrectionEnabledBL_ = true;
-                }
-                if (isBlackBR) {
-                  cliffSensorCorrectionEnabledBR_ = true;
-                }
+              // Slow down one of the sides if it's seeing white, but only
+              // if we have first seen black at some point.
+              // This is to ensure that the robot does not veer away from
+              // the charger on initial approach with light-colored tables.
+              if (isBlackBL) {
+                cliffSensorCorrectionEnabledBL_ = true;
+              }
+              if (isBlackBR) {
+                cliffSensorCorrectionEnabledBR_ = true;
+              }
 
-                if (cliffSensorCorrectionEnabledBL_ && !isBlackBL) {
-                  leftSpeed = kChargerDockingSpeedLow;
-                }
-                if (cliffSensorCorrectionEnabledBR_ && !isBlackBR) {
-                  rightSpeed = kChargerDockingSpeedLow;
-                }
+              if (cliffSensorCorrectionEnabledBL_ && !isBlackBL) {
+                leftSpeed = kChargerDockingSpeedLow;
+              }
+              if (cliffSensorCorrectionEnabledBR_ && !isBlackBR) {
+                rightSpeed = kChargerDockingSpeedLow;
               }
 
               SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);

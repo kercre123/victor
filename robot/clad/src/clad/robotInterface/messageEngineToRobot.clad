@@ -289,11 +289,6 @@ message EnableBraceWhenFalling
   bool enable
 }
 
-// TEMP support for 'old' chargers with black stripe and white body
-message ChargerDockingStripeColor
-{
-  bool isBlack
-}
 
 // ========== V2 Animation process messages ===========
 
@@ -706,9 +701,6 @@ union EngineToRobot
   RobotStoppedAck               robotStoppedAck             = 0x36,
   CliffAlignToWhiteAction       cliffAlignToWhiteAction     = 0x37,
   EnableStopOnWhite             enableStopOnWhite           = 0x38,
-
-  // TEMP support for 'old' chargers with black stripe and white body
-  ChargerDockingStripeColor     chargerDockingStripeColor   = 0x40,
 
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
