@@ -561,7 +561,7 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
   _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
 
-  FaceInfoScreenManager::getInstance()->Update(robotState);
+  FaceInfoScreenManager::getInstance()->Update(robotState, _animStreamer);
 
 #if ANKI_DEV_CHEATS
   auto * micDataSystem = _context->GetMicDataSystem();

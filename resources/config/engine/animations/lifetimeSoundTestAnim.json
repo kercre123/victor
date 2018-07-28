@@ -1,0 +1,17 @@
+{
+  "lifetimeSoundTestAnim": [
+    {
+      "audioName": [
+        "Play__Dev_Robot__Freq_Sweep_5Sec"
+      ],
+      "Name": "RobotAudioKeyFrame",
+      "volume": 1.0,
+      "audioEventId": [
+        253187573
+      ],
+      "probability": 1.0,
+      "hasAlts": false,
+      "triggerTime_ms": 0
+    }
+  ]
+}
