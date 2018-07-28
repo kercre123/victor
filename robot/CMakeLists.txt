@@ -35,7 +35,7 @@ target_link_libraries(robot_hal
   cti_common_robot
   robot_interface
   robot_clad_cpplite
-  hdr_histogram
+  hdr_histogram_static
   log
 )
 

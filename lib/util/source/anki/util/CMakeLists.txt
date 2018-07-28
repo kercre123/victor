@@ -37,7 +37,6 @@ target_link_libraries(util
   # vendor libs
   jsoncpp
   kazmath
-  hdr_histogram
   ${PLATFORM_LIBS}
 )
 
