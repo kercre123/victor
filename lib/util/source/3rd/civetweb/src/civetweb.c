@@ -7482,7 +7482,9 @@ handle_static_file_request(struct mg_connection *conn,
 	                "Content-Type: %.*s\r\n"
 	                "Content-Length: %" INT64_FMT "\r\n"
 	                "Connection: %s\r\n"
-	                "Accept-Ranges: bytes\r\n"
+// <anki> VIC-4809 webservice hangs if multiple audio files are used. Disabling "Content-Range" seems to fix it
+	                "Accept-Ranges: none\r\n" // used to be "Accept-Ranges: bytes\r\n"
+// </anki>
 	                "%s%s",
 	                lm,
 	                etag,
