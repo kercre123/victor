@@ -27,6 +27,7 @@ namespace Util{
   
 namespace Cozmo {
 
+class BehaviorOnboardingDetectHabitat;
 class BehaviorOnboardingInterruptionHead;
 class IOnboardingStage;
 enum class OnboardingStages : uint8_t;
@@ -175,6 +176,7 @@ private:
     std::vector<ICozmoBehaviorPtr> interruptions;
     std::shared_ptr<BehaviorOnboardingInterruptionHead> pickedUpBehavior;
     std::shared_ptr<BehaviorOnboardingInterruptionHead> onChargerBehavior;
+    std::shared_ptr<BehaviorOnboardingDetectHabitat> detectHabitatBehavior;
     
     std::unordered_map<OnboardingStages,StagePtr> stages;
     

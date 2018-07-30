@@ -20,6 +20,7 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingDetectHabitat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingInterruptionHead.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageApp.h"
@@ -237,6 +238,9 @@ void BehaviorOnboarding::InitBehavior()
   GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingPlacedOnCharger),
                                                               BEHAVIOR_CLASS(OnboardingInterruptionHead),
                                                               _iConfig.onChargerBehavior);
+  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingDetectHabitat),
+                                                              BEHAVIOR_CLASS(OnboardingDetectHabitat),
+                                                              _iConfig.detectHabitatBehavior);
   
   {
     _iConfig.wakeUpBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( _iConfig.wakeUpID );
@@ -738,6 +742,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   // SingletonPoweringRobotOff   : send OnboardingPhysicalInterruption. todo: power off messages
   // OnboardingPhysicalReactions : OnboardingPhysicalInterruption
   // OnboardingLowBattery        : start charging countdown logic
+  // OnboardingDetectHabitat     : send OnboardingHabitatDetected
   // OnboardingPlacedOnCharger   : only send if not low battery, since OnboardingLowBattery handles that
   // DriveOffChargerStraight     : no message
   // OnboardingPickedUp          : send OnboardingPhysicalInterruption
@@ -776,6 +781,15 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
     SetRobotExpectingStep( external_interface::STEP_LOW_BATTERY );
     if( interruptionChanged ) {
       StartLowBatteryCountdown();
+    }
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingDetectHabitat) ) {
+    SetRobotExpectingStep( external_interface::STEP_EXPECTING_RESUME_FROM_HABITAT );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( interruptionChanged && (gi != nullptr) ) {
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                    "Detected the habitat. Pausing until Continue, or until some other interruption");
+      auto* msg = new external_interface::OnboardingHabitatDetected;
+      gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
     }
   }
   
@@ -852,6 +866,14 @@ void BehaviorOnboarding::RequestContinue( int step )
         // start driving off the charger
         CancelDelegates(false);
         _dVars.shouldDriveOffCharger = true;
+      }
+      SendContinueResponse( accepted, step );
+    } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingDetectHabitat) ) {
+      const bool accepted = (step == external_interface::STEP_EXPECTING_RESUME_FROM_HABITAT);
+      if( accepted ) {
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Resuming from habitat");
+        // resume
+        CancelDelegates(false);
       }
       SendContinueResponse( accepted, step );
     }
@@ -1086,6 +1108,9 @@ void BehaviorOnboarding::SetRobotExpectingStep( int step )
   
   if( step >= external_interface::STEP_EXPECTING_FIRST_TRIGGER_WORD ) {
     _dVars.robotWokeUp = true;
+  }
+  if( _iConfig.detectHabitatBehavior != nullptr ) {
+    _iConfig.detectHabitatBehavior->SetOnboardingStep( step );
   }
   
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();

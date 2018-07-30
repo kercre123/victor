@@ -159,6 +159,7 @@ enum uint_8 BehaviorClass {
   // onboarding
   Onboarding,
   OnboardingActivateCube,
+  OnboardingDetectHabitat,
   OnboardingInterruptionHead,
   OnboardingLookAtPhone,
 

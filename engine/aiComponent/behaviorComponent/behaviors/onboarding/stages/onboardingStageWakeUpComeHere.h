@@ -92,6 +92,11 @@ public:
   
   virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
+    if( (_step == Step::ComeHere) && (interruptingBehavior == BEHAVIOR_ID(OnboardingDetectHabitat)) ) {
+      // if "come here" driving was interrupted by the habitat detection, resume prior to come here
+      // so they get the full experience once outside the habitat
+      _step = Step::WaitingForTrigger;
+    }
     // stage is complete upon interruption if come here finished
     return (_step == Step::ComeHereResume) || (_step == Step::ComeHereGetOut);
   }
@@ -116,6 +121,8 @@ public:
     } else if( (interruptingBehavior == BEHAVIOR_ID(ReactToCliff)) && (_step == Step::ComeHere) ) {
       // hit a cliff during come here, so something easier this time
       TransitionToComeHereResume();
+    } else if( _step == Step::WaitingForTrigger ) {
+      TransitionToWaitingForComeHere();
     }
   }
   

@@ -8,6 +8,7 @@
     "SingletonPoweringRobotOff",  // is suppressed during first stage 
     "OnboardingPhysicalReactions", 
     "OnboardingLowBattery",
+    "OnboardingDetectHabitat",
     "OnboardingPickedUp",         // is suppressed during first stage
     "DriveOffChargerStraight",    // is suppressed during first stage and only runs after continue messages
     "OnboardingPlacedOnCharger",  // is suppressed during first stage

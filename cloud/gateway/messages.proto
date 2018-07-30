@@ -116,6 +116,7 @@ message Onboarding {
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
     OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
+    OnboardingHabitatDetected          onboarding_habitat_detected   = 8;
   }
 }
 
@@ -495,6 +496,9 @@ message OnboardingInputResponse {
 
 message OnboardingRobotExpectingStep {
   OnboardingSteps step_number = 1;
+}
+
+message OnboardingHabitatDetected {
 }
 
 message WakeWordBegin {

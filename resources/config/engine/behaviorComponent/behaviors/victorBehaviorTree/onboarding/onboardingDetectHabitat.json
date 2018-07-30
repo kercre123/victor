@@ -1,0 +1,5 @@
+{
+  "behaviorID": "OnboardingDetectHabitat",
+  "behaviorClass": "OnboardingDetectHabitat",
+  "behaviorIfDetected": "OnboardingHabitatDetected"
+}

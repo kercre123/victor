@@ -150,6 +150,11 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << cliffDataRaw[1] << '\n';
   ss << cliffDataRaw[2] << '\n';
   ss << cliffDataRaw[3] << '\n';
+  
+  ss << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(0)) << ' '
+     << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(1)) << ' '
+     << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
+     << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(3)) << '\n';
 
   const auto& proxSensorComponent = robot->GetProxSensorComponent();
   const auto& proxDataRaw = proxSensorComponent.GetLatestProxDataRaw();
