@@ -84,14 +84,6 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-  // reaction direction functions ...
-
-  // cache the direction we want to react to
-  void ComputeReactionDirection();
-  // get the direction we want to react to
-  MicDirectionIndex GetReactionDirection() const;
-  // get the "best recent" direction from the mic history
-  MicDirectionIndex GetDirectionFromMicHistory() const;
   
   void UpdateUserIntentStatus();
 
@@ -104,11 +96,31 @@ protected:
 
   // coincide with the beginning of the stream being opened
   void OnStreamingBegin();
+  void OnStreamingEnd();
 
   // this is the state when victor is "listening" for the users intent
   // and should therefore cue the user to speak
   void OnVictorListeningBegin();
   void OnVictorListeningEnd();
+
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Direction Helpers
+
+  // cache the direction we want to react to
+  void ComputeReactionDirectionFromStream();
+
+  // get the direction we want to react to
+  MicDirectionIndex GetReactionDirection() const;
+  // get the "best recent" direction from the mic history
+  MicDirectionIndex GetDirectionFromMicHistory() const;
+
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Time Helpers
+
+  double GetStreamingDuration() const;
+  double GetListeningTimeout() const;
 
 
 private:
@@ -160,7 +172,10 @@ private:
     EState                    state;
     MicDirectionIndex         reactionDirection;
     BackpackLightDataLocator  lightsHandle;
-    float                     streamingBeginTime;
+
+    double                    streamingBeginTime;
+    double                    streamingEndTime;
+
     EIntentStatus             intentStatus;
     TimeStamp_t               timestampToDisableTurnFor;
   } _dVars;

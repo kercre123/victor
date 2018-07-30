@@ -53,7 +53,7 @@
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false },
-      { "channel": "MicData",              "enabled": false },
+      { "channel": "MicData",              "enabled": true },
       { "channel": "FaceInfoScreenManager", "enabled": false },
       { "channel": "RobotStats",            "enabled": false },
       { "channel": "KnowledgeGraph",       "enabled": false },

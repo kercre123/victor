@@ -35,6 +35,7 @@ namespace Cozmo {
   // Interface for requesting a copy of direction history
   struct MicDirectionNode
   {
+    TimeStamp_t             timestampBegin  = 0;
     TimeStamp_t             timestampEnd    = 0;
     MicDirectionIndex       directionIndex  = kMicDirectionUnknown;
     MicDirectionConfidence  confidenceAvg   = 0;
