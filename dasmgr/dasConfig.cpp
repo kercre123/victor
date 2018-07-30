@@ -15,10 +15,20 @@
 namespace Anki {
 namespace Victor {
 
-DASConfig::DASConfig(const std::string & url, size_t queue_threshold_size, size_t max_deferrals_size) :
+DASConfig::DASConfig(const std::string & url,
+                     size_t file_threshold_size,
+                     uint32_t flush_interval,
+                     const std::string& storage_path,
+                     size_t storage_quota,
+                     const std::string& backup_path,
+                     size_t backup_quota) :
   _url(url),
-  _queue_threshold_size(queue_threshold_size),
-  _max_deferrals_size(max_deferrals_size)
+  _file_threshold_size(file_threshold_size),
+  _flush_interval(flush_interval),
+  _storage_path(storage_path),
+  _storage_quota(storage_quota),
+  _backup_path(backup_path),
+  _backup_quota(backup_quota)
 {
 }
 
@@ -43,19 +53,50 @@ std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const Json::Value & json)
     return nullptr;
   }
 
-  const auto & queue_threshold_size = dasConfig["queue_threshold_size"];
-  if (!queue_threshold_size.isUInt()) {
-    LOG_ERROR("DASConfig.GetDASConfig.InvalidQueueThresholdSize", "Invalid queue_threshold_size attribute");
+  const auto & file_threshold_size = dasConfig["file_threshold_size"];
+  if (!file_threshold_size.isUInt()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidFileThresholdSize", "Invalid file_threshold_size attribute");
     return nullptr;
   }
 
-  const auto & max_deferrals_size = dasConfig["max_deferrals_size"];
-  if (!max_deferrals_size.isUInt()) {
-    LOG_ERROR("DASConfig.GetDASConfig.InvalidMaxDeferralsSize", "Invalid max_deferrals_size attribute");
+  const auto & flush_interval = dasConfig["flush_interval"];
+  if (!flush_interval.isUInt()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidFlushInterval", "Invalid flush_interval attribute");
     return nullptr;
   }
 
-  return std::make_unique<DASConfig>(url.asString(), queue_threshold_size.asUInt(), max_deferrals_size.asUInt());
+  const auto & storage_path = dasConfig["storage_path"];
+  if (!storage_path.isString()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidStoragePath", "Invalid storage_path attribute");
+    return nullptr;
+  }
+
+  const auto & storage_quota = dasConfig["storage_quota"];
+  if (!storage_quota.isUInt()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidStorageQuota", "Invalid storage_quota attribute");
+    return nullptr;
+  }
+
+  const auto & backup_path = dasConfig["backup_path"];
+  if (!backup_path.isString()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidBackupPath", "Invalid backup_path attribute");
+    return nullptr;
+  }
+
+  const auto & backup_quota = dasConfig["backup_quota"];
+  if (!backup_quota.isUInt()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidBackupQuota", "Invalid backup_quota attribute");
+    return nullptr;
+  }
+
+  return std::make_unique<DASConfig>(url.asString(),
+                                     file_threshold_size.asUInt(),
+                                     flush_interval.asUInt(),
+                                     storage_path.asString(),
+                                     storage_quota.asUInt(),
+                                     backup_path.asString(),
+                                     backup_quota.asUInt());
+
 }
 
 std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const std::string & path)

@@ -292,22 +292,54 @@ bool FileUtils::WriteFileAtomic(const std::string& fileName, const std::vector<u
   return success;
 }
 
-  
-bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd)
+static bool CopyOrMoveFile(const std::string& dest,
+                           const std::string& srcFileName,
+                           const int maxBytesToCopyFromEnd,
+                           const bool deleteSource)
 {
-  if (!FileExists(srcFileName) || dest.empty()) {
+  if (!FileUtils::FileExists(srcFileName) || dest.empty()) {
     return false;
   }
-  
+
+  // If dest is a file use that.
+  // If dest is a folder use the src file name.
+  std::string outFileName = dest;
+  if (FileUtils::GetFileName(dest, true).empty()) {
+
+    // dest is the output directory name
+    // Get the output file name
+    // Remove trailing separator if there is one
+    while (outFileName.back() == kFileSeparator) {
+      outFileName.pop_back();
+    }
+
+    outFileName += kFileSeparator + FileUtils::GetFileName(srcFileName, false);
+  }
+
+  // Create output directory in case it doesn't exist already
+  FileUtils::CreateDirectory(outFileName, true, true);
+
+  if (!maxBytesToCopyFromEnd && deleteSource) {
+    // If we are moving the file on the same mounted filesystem it should succeed
+    if (0 == rename(srcFileName.c_str(), outFileName.c_str())) {
+      return true;
+    }
+    if (errno != EXDEV) {
+      return false;
+    }
+    // A simple rename won't work.  The source and destination are on two different
+    // mounted filesystems.  A copy is required.
+  }
+
   std::ifstream inFile(srcFileName.c_str(), std::ios::binary);
-  
+
   // Seek to appropriate starting position of input file
   if (maxBytesToCopyFromEnd != 0) {
-    
+
     // Get file size
     inFile.seekg(0, std::ios_base::end);
     int fileSize = static_cast<int>(inFile.tellg());
-    
+
     // Set stream position to given offset if file size > offset
     if (fileSize > maxBytesToCopyFromEnd) {
       inFile.seekg(-std::abs(maxBytesToCopyFromEnd), std::ios_base::end);
@@ -316,33 +348,29 @@ bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName
     }
   }
 
-  
-  // If dest is a file use that.
-  // If dest is a folder use the src file name.
-  std::string outFileName = dest;
-  if (GetFileName(dest, true).empty()) {
-    
-    // dest is the output directory name
-    // Get the output file name
-    // Remove trailing separator if there is one
-    while (outFileName.back() == kFileSeparator) {
-      outFileName.pop_back();
-    }
-    
-    outFileName += kFileSeparator + GetFileName(srcFileName, false);
-  }
-  
-  // Create output directory in case it doesn't exist already
-  CreateDirectory(outFileName, true, true);
-  
   // Copy file
   std::ofstream outFile(outFileName.c_str(), std::ios::binary);
   outFile << inFile.rdbuf();
   outFile.close();
-  
+  inFile.close();
+
+  if (deleteSource) {
+    FileUtils::DeleteFile(srcFileName);
+  }
+
   return true;
 }
-  
+
+bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd)
+{
+  return CopyOrMoveFile(dest, srcFileName, maxBytesToCopyFromEnd, false /* deleteSource */);
+}
+
+bool FileUtils::MoveFile(const std::string& dest, const std::string& srcFileName)
+{
+  return CopyOrMoveFile(dest, srcFileName, 0, true /* deleteSource */);
+}
+
 void FileUtils::DeleteFile(const std::string &fileName)
 {
   (void) remove(fileName.c_str());
