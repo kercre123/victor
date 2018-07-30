@@ -16,5 +16,6 @@
 
   "emotionEventOnActivated": "ReactToSoundAwake",
 
+  "micDirectionReactionBehavior" : "ReactToSoundDirectionAwake",
   "FromSleep" : false
 }

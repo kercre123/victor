@@ -14,11 +14,14 @@
 #define __Engine_MicDirectionTypes_H_
 
 #include <deque>
+#include <limits>
 
 namespace Anki {
 namespace Cozmo {
 
   using MicDirectionIndex = uint16_t;
+  enum { kInvalidMicDirectionIndex = std::numeric_limits<MicDirectionIndex>::max() };
+
   using MicDirectionConfidence = int16_t;
 
   enum
