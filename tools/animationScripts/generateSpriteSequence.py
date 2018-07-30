@@ -1,13 +1,19 @@
+"""
+This script can be used to generate the definition.json file.
+Run this script from the same directory as the .png image sequence
+and it will spit out the definition.json file in the same directory.
+"""
 
 import argparse
 import os
-import re
-import shutil
+import glob
 
 
-PATH_TO_SPRITE_SEQ = "EXTERNALS/animation-assets/sprites/spriteSequences/"
+HELP_MSG = "Generate a basic JSON file for playing back a sprite sequence"
 
-preSeqString = '''
+PATH_TO_SPRITE_SEQ = "EXTERNALS/animation-assets/sprites/spriteSequences"
+
+preSeqString = """
 {
   "loop" : "doNothing", 
   "sequence" :[
@@ -15,36 +21,41 @@ preSeqString = '''
       "segmentType" : "straightThrough",
       // file names relative to folder
       "fileList": [
-'''
+"""
 
-postSequenceString = '''\n      ]
+
+postSequenceString = """\n      ]
     }
   ]
 }
-'''
+"""
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Generate a basic JSON file for playing back a sprite sequence')
-    parser.add_argument('folder-name',
-                        help='name of the folder to re-number')
+def writeJsonFile(fullJSONPath, outString):
+    if os.path.exists(fullJSONPath):
+        os.remove(fullJSONPath)
+    f = open(fullJSONPath,"w")
+    f.write(outString)
+    f.close()
 
 
+def main(outputFile="definition.json"):
+    parser = argparse.ArgumentParser(description=HELP_MSG)
+    parser.add_argument('folder-name', help='name of the folder to re-number')
     args = parser.parse_args()
     folderName = getattr(args, 'folder-name')
-    fullPath = PATH_TO_SPRITE_SEQ + folderName + "/"
+    fullPath = os.path.join(PATH_TO_SPRITE_SEQ, folderName)
+    fullJSONPath = os.path.join(fullPath, outputFile)
     print("Generating JSON definition for " + folderName + " at path " + fullPath)
 
-    files = os.listdir(fullPath)
-    files = [f for f in files if (re.search(".png", f) != None)]
-
-
+    # Make a list of all the .png files and sort them alphabetically
+    files = glob.glob(os.path.join(fullPath, "*.png"))
+    files = map(os.path.basename, files)
+    files.sort()
 
     fileList = ""
-
     for entry in files:
-        fileList += "        \"" + (entry + "\",\n")
-
+        fileList += '        "%s",' % entry + os.linesep
 
     outString = preSeqString + fileList + postSequenceString
 
@@ -52,12 +63,10 @@ if __name__ == "__main__":
     commaIdx = outString.rfind(",")
     outString = outString[:commaIdx] + outString[commaIdx + 1:]
 
-    fullJSONPath = fullPath + "definition.json"
-    if os.path.exists(fullJSONPath):
-        os.remove(fullJSONPath)
+    writeJsonFile(fullJSONPath, outString)
 
-    f = open(fullJSONPath,"w")
-    f.write(outString)
-    f.close()
+
+if __name__ == "__main__":
+    main()
 
 
