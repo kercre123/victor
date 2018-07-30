@@ -76,9 +76,9 @@ enum : uint16_t {
   //Camera config errors
   NO_CAMERA_CALIB       = 840,
 
-  // Should always be 800 as the fault code
-  // display image for this fault is hardcoded into
-  // the animfail program
+  // DO NOT CHANGE any of the codes in this section
+  // They are hardcoded into various system level programs
+  DFU_FAILED            = 801,
   NO_ANIM_PROCESS       = 800,
 
   COUNT = 1000
