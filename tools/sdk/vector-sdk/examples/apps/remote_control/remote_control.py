@@ -6,6 +6,7 @@ This example lets you control Vector by Remote Control, using a webpage served b
 '''
 
 import argparse
+import asyncio
 import io
 import json
 import os
@@ -254,8 +255,12 @@ class RemoteControlVector:
             self.action_queue.pop(0)
         self.action_queue.append(new_action)
 
+    async def dummy_wait(self):
+        await asyncio.sleep(0)
+
     def update(self):
         '''Try and execute the next queued action'''
+        self.vector.loop.run_until_complete(self.dummy_wait())
         if self.action_queue:
             queued_action, action_args = self.action_queue[0]
             if queued_action(action_args):
@@ -661,7 +666,7 @@ def run():
     cert = Path(args.cert_file)
     args.cert = cert.resolve()
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
 
         # TODO: Enable image stream once camera feed is added
         # Turn on image receiving by the camera
@@ -672,7 +677,6 @@ def run():
 
 
 if __name__ == '__main__':
-    vector.util.setup_basic_logging()
     try:
         run()
     except KeyboardInterrupt as e:
