@@ -13,6 +13,7 @@ enum int_32 BackpackAnimationTrigger
 
   Charging,
   BadCharger,
+  DanceToTheBeat,
   Idle_09,
   Off,
   Offline,

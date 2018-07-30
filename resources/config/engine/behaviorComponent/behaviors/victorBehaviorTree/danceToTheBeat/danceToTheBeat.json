@@ -21,6 +21,8 @@
   "idleAnim"    : "DanceBeatIdle",
   "eyeHoldAnim" : "DanceBeatEyeHold",
   
+  "backpackAnim" : "DanceToTheBeat",
+  
   // Dance phrase configuration:
   //
   // A DancePhrase is made up of one or more possible dance animations
