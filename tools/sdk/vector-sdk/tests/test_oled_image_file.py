@@ -12,14 +12,13 @@ try:
 except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector  # pylint: disable=wrong-import-position
 
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("------ begin testing oled ------")

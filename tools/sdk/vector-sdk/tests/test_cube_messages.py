@@ -7,7 +7,6 @@ Test cube connection interactions
 import asyncio
 import os
 import sys
-import utilities
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector  # pylint: disable=wrong-import-position
@@ -19,7 +18,7 @@ async def wait_async(t):
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     print("------ begin cube interactions ------")
 

@@ -10,7 +10,6 @@ If successful sets its lights all to yellow for 2.5 seconds, then red, green, bl
 import os
 import sys
 import time
-import utilities
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector  # pylint: disable=wrong-import-position
@@ -18,7 +17,7 @@ import vector  # pylint: disable=wrong-import-position
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     print("------ begin cube light interactions ------")
 
