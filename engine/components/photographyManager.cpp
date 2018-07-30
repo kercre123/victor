@@ -362,6 +362,13 @@ void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
              "Photo with ID %i and epoch date/time %i saved at index %u",
              _nextPhotoID, epochTimestamp, index);
 
+    if(_robot != nullptr && _robot->HasGatewayInterface())
+    {
+      auto* gi = _robot->GetGatewayInterface();
+      auto* msg = new external_interface::PhotoTaken(_nextPhotoID);
+      gi->Broadcast(ExternalMessageRouter::Wrap(msg));
+    }
+
     _nextPhotoID++;
     _lastRequestedPhotoHandle = 0;
 

@@ -30,6 +30,7 @@ message Event {
     RobotObservedObject              robot_observed_object               = 13;
     CubeConnectionLost               cube_connection_lost                = 14;
     StimulationInfo                  stimulation_info                    = 15;
+    PhotoTaken                       photo_taken                         = 16;
   }
 }
 

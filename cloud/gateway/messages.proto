@@ -565,6 +565,10 @@ message DeletePhotoResponse {
   bool success = 2;
 }
 
+message PhotoTaken {
+  uint32 photo_id = 1;
+}
+
 // NOTE: must match attentionTransferTypes.clad
 enum AttentionTransferReason {
   Invalid = 0;
