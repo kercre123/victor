@@ -11,6 +11,8 @@ def getListOfOnlineNodesForLabel(label) {
   return nodes
 }
 
+def server = Artifactory.server 'artifactory-dev'
+
 stage('Parallel Build') {
     parallel docker: {
         node('victor-slaves') {
@@ -49,8 +51,36 @@ stage('Parallel Build') {
             stage('Zip Deployables') {
                 sh './project/buildServer/steps/zipDeployables.sh'
             }
-            stage('Collecting VicOS artifacts') {
-                archiveArtifacts artifacts: '_build/**', onlyIfSuccessful: true, caseSensitive: true
+            stage('Pushing VicOS artifacts to artifactory') {
+                def vicosFileSpec = """{
+                                          "files": [
+                                            {
+                                              "pattern": "_build/vicos/Release/CMakeCache.txt",
+                                              "target": "victor-engine/${env.BRANCH_NAME}/"
+                                            },
+                                            {
+                                              "pattern": "_build/vicos/Release/CMakeFiles/*",
+                                              "target": "victor-engine/${env.BRANCH_NAME}/"
+                                            },
+                                            {
+                                                "pattern": "_build/vicos/Release/bin/*",
+                                                "target": "victor-engine/${env.BRANCH_NAME}/"
+                                            },
+                                            {
+                                                "pattern": "_build/vicos/Release/bin/*.full",
+                                                "target": "victor-engine/${env.BRANCH_NAME}/vicos/release/"
+                                            },
+                                            {
+                                                "pattern": "_build/vicos/Release/lib/*.so.full",
+                                                "target": "victor-engine/${env.BRANCH_NAME}/vicos/release/"
+                                            },
+                                            {
+                                                "pattern": "_build/deployables*.tar.gz",
+                                                "target": "victor-engine/${env.BRANCH_NAME}/"
+                                            }
+                                          ]
+                                        }"""
+                server.upload(vicosFileSpec)
             }
         }
     },
@@ -76,8 +106,15 @@ stage('Parallel Build') {
                         sh "./project/buildServer/steps/unittestsEngine.sh -c ${TESTCONFIG}"
                     }
                 }
-                stage('Collecting MacOS artifacts') {
-                    archiveArtifacts artifacts: '_build/mac/**', onlyIfSuccessful: true, caseSensitive: true
+                stage('Pushing MacOS artifacts to Artifactory') {
+                    def macosFileSpec = """{
+                      "files": [
+                        {
+                          "pattern": "_build/mac/Debug/webots_out*.tar.gz",
+                          "target": "victor-engine/${env.BRANCH_NAME}/"
+                        }
+                     ]
+                    }"""
                 }
             }
         }
