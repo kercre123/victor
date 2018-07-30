@@ -136,7 +136,7 @@ function parse_file()
       fi
       
       #parse the current measurement value
-      current=$(echo $line | grep -oP 'current \K([0-9]+)')
+      current=$(echo $line | grep -oP 'current \K[+-]*([0-9]+)')
       
       #skip CUBEBAT startup current measurements
       if [ "$current" != "" ]; then
