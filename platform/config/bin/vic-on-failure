@@ -21,11 +21,15 @@ set -u
 : ${VIC_ONFAILURE_RESTART_FILE:="/tmp/vic-on-failure-restart"}
 
 #
-# Stop robot services?
+# Stop robot services?  Systemd doesn't recognize "kill victor.target"
+# so we have to enumerate service names.
 #
 if [ "${VIC_ONFAILURE_RESTART}" == "1" ]; then
   echo "Stopping victor target"
   /bin/systemctl stop victor.target
+  sleep 3
+  echo "Killing victor services"
+  /bin/systemctl kill vic-anim vic-cloud vic-crashuploader vic-dasmgr vic-engine vic-gateway vic-neuralnets vic-robot vic-switchboard vic-webserver
 fi
 
 #
