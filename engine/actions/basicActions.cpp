@@ -35,6 +35,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/vision/imageSaver.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "util/console/consoleInterface.h"
 
@@ -2288,7 +2289,19 @@ namespace Anki {
     : WaitForImagesAction( kDefaultNumFramesToWait, visionMode )
     {
     }
-
+    
+    WaitForImagesAction::~WaitForImagesAction()
+    {
+      // Disable saving if needed
+      if(ANKI_DEV_CHEATS && nullptr != _saveParams)
+      {
+        PRINT_NAMED_INFO("WaitForImagesAction.Destructor.DisablingSave", "Saved %d images to %s",
+                         _numFramesToWaitFor, _saveParams->path.c_str());
+        _saveParams->mode = ImageSaverParams::Mode::Off;
+        GetRobot().GetVisionComponent().SetSaveImageParameters(*_saveParams);
+      }
+    }
+    
     void WaitForImagesAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
     {
       // If the user has subscribed to VisionMode::Count, they are asking to be notified after N
@@ -2335,6 +2348,15 @@ namespace Anki {
       
       _imageProcSignalHandle = GetRobot().GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage, imageProcLambda);
       
+      if(ANKI_DEV_CHEATS && nullptr != _saveParams)
+      {
+        PRINT_NAMED_DEBUG("WaitForImagesAction.Init.SetSaveParams", "Mode:%s Path:%s Quality:%d",
+                          EnumToString(_saveParams->mode),
+                          _saveParams->path.c_str(),
+                          _saveParams->quality);
+        
+        GetRobot().GetVisionComponent().SetSaveImageParameters(*_saveParams);
+      }
       return ActionResult::SUCCESS;
     }
     
@@ -2348,10 +2370,15 @@ namespace Anki {
       // Reset the signalHandler to unsubscribe from the ProcessedImage message in case this action is not
       // immediatly destroyed after completion
       _imageProcSignalHandle.reset();
+      
       return ActionResult::SUCCESS;
     }
     
-
+    void WaitForImagesAction::SetSaveParams(const ImageSaverParams& params)
+    {
+      _saveParams.reset(new ImageSaverParams(params));
+    }
+    
 #pragma mark ---- CliffAlignToWhiteAction ----
     
     CliffAlignToWhiteAction::CliffAlignToWhiteAction()

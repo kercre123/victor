@@ -18,6 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "proto/external_interface/onboardingSteps.pb.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,18 +41,24 @@ public:
   virtual void OnBegin( BehaviorExternalInterface& bei ) override
   {
     _selectedBehavior = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
+    _receivedStart = false;
     
     // disable trigger word until continue
     DebugTransition("Waiting on continue to begin");
     SetTriggerWordEnabled(false);
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
   {
-    DebugTransition("Waiting on voice command");
-    // enable trigger word
-    SetTriggerWordEnabled(true);
-    return true;
+    // ignore whether or not _receivedStart since there are only two stages here
+    const bool accepted = (stepNum == external_interface::STEP_EXPECTING_CONTINUE_APP_ONBOARDING);
+    if( accepted ) {
+      DebugTransition("Waiting on voice command");
+      // enable trigger word
+      SetTriggerWordEnabled(true);
+      _receivedStart = true;
+    }
+    return accepted;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
@@ -76,6 +83,15 @@ public:
     }
   }
   
+  virtual int GetExpectedStep() const override
+  {
+    if( _receivedStart ) {
+      return external_interface::STEP_APP_ONBOARDING;
+    } else {
+      return external_interface::STEP_EXPECTING_CONTINUE_APP_ONBOARDING;
+    }
+  }
+  
 private:
   void DebugTransition(const std::string& debugInfo)
   {
@@ -83,6 +99,7 @@ private:
   }
   
   IBehavior* _selectedBehavior = nullptr;
+  bool _receivedStart = false;
 };
   
 } // namespace Cozmo

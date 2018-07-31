@@ -18,6 +18,7 @@
 #include "engine/components/backpackLights/backpackLightComponent.h"
 
 #include "clad/types/animationTrigger.h"
+#include "clad/types/backpackAnimationTriggers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -90,6 +91,8 @@ private:
     const bool useBackpackLights;
     const bool canListenForBeatsDuringGetIn;
     
+    BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::Count;
+    
     AnimationTrigger getInAnim   = AnimationTrigger::Count;
     AnimationTrigger getOutAnim  = AnimationTrigger::Count;
     AnimationTrigger quitAnim    = AnimationTrigger::Count;
@@ -113,8 +116,6 @@ private:
     // ID for registering OnBeat callback with BeatDetectorComponent. A
     // value of less than 0 indicates that no callback is registered.
     int onBeatCallbackId = -1;
-    
-    BackpackLightDataLocator backpackDataRef;
     
     // The queue of animations to play
     std::queue<DanceAnimMetadata> animsToPlay;

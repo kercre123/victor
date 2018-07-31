@@ -3,9 +3,13 @@
       "CladEvent": "Charging",
       "AnimName": "charging"
   },
-      {
+  {
       "CladEvent": "BadCharger",
       "AnimName": "badCharger"
+  },
+  {
+      "CladEvent": "DanceToTheBeat",
+      "AnimName": "danceToTheBeat"
   },
   {
       "CladEvent": "Idle_09",

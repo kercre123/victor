@@ -24,7 +24,10 @@
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/utils/robotPointSamplerHelper.h"
+#include "engine/vision/imageSaver.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
+#include "util/console/consoleInterface.h"
+#include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
 #include "util/random/rejectionSamplerHelper.h"
@@ -35,7 +38,6 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 
-#include "util/math/numericCast.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -50,9 +52,14 @@ namespace {
   const char* kMaxNumRecentSearchesKey           = "maxNumRecentSearches";
   const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
   const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
+  const char* kUseExposureCyclingKey             = "useExposureCycling";
+  const char* kNumImagesToWaitForKey             = "numImagesToWaitFor";
 
   const float kMinCliffPenaltyDist_mm = 100.0f;
   const float kMaxCliffPenaltyDist_mm = 600.0f;
+  
+  // Enable for debug, to save images during WaitForImageAction
+  CONSOLE_VAR(bool, kFindHome_SaveImages, "Behaviors.FindHome", false);
   
   // When generating new locations from which to search for the charger, new
   // locations should be at least this far from previously-searched locations.
@@ -111,6 +118,19 @@ BehaviorFindHome::~BehaviorFindHome()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,        EVisionUpdateFrequency::High });
+  if(_iConfig.useExposureCycling)
+  {
+    modifiers.visionModesForActiveScope->insert({ VisionMode::CyclingExposure,         EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::MeteringFromChargerOnly, EVisionUpdateFrequency::High });
+  }
+  modifiers.wantsToBeActivatedWhenOnCharger = false;
+  modifiers.wantsToBeActivatedWhenCarryingObject = true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
@@ -123,6 +143,8 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kMaxNumRecentSearchesKey,
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
+    kUseExposureCyclingKey,
+    kNumImagesToWaitForKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
@@ -262,16 +284,27 @@ void BehaviorFindHome::TransitionToSearchTurn()
     // Always do the "search turn"
     action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger));
     
+    WaitForImagesAction* waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor,
+                                                                       VisionMode::DetectingMarkers);
+    if(kFindHome_SaveImages)
+    {
+      const std::string path = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache,
+                                                                                         "findHomeImages");
+      ImageSaverParams params(path,
+                              ImageSaverParams::Mode::Stream,
+                              -1);  // Quality: save PNGs
+      
+      waitForImagesAction->SetSaveParams(params);
+    }
+    
     if (isHighStim) {
-      action->AddAction(new WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages,
-                                                VisionMode::DetectingMarkers));
+      action->AddAction(waitForImagesAction);
     } else {
       // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
       // images action, and play a "search turn end" animation after the "wait for images" anim.
       auto* loopAndWaitForImagesAction = new CompoundActionParallel();
       loopAndWaitForImagesAction->AddAction(new TriggerAnimationAction(_iConfig.waitForImagesAnimTrigger));
-      loopAndWaitForImagesAction->AddAction(new WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages,
-                                                                    VisionMode::DetectingMarkers));
+      loopAndWaitForImagesAction->AddAction(waitForImagesAction);
       action->AddAction(loopAndWaitForImagesAction);
       action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
     }

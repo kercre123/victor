@@ -149,6 +149,8 @@ Event,,Play__Robot_Sfx__Srv_Surprised_Long,3606017555,Robot_Sfx,Srv_Surprised_Lo
 Event,,Play__Robot_Sfx__Srv_Surprised_Short,4054065165,Robot_Sfx,Srv_Surprised_Short,
 Event,,Play__Robot_Sfx__Wink,3564343056,Robot_Sfx,Wink,
 Event,,Play__Robot_Vic_Scene__Anim_Abort,3575715931,Robot_Vic_Scene,Anim_Abort,
+Event,,Play__Robot_Vic_Scene__Low_Power_Mode_Off,2023173047,Robot_Vic_Scene,Low_Power_Mode_Off,
+Event,,Play__Robot_Vic_Scene__Low_Power_Mode_On,596052867,Robot_Vic_Scene,Low_Power_Mode_On,
 Event,,Play__Robot_Vic_Scene__Mov_Rtpc_Reset,1762574059,Robot_Vic_Scene,Mov_Rtpc_Reset,
 Event,,Play__Robot_Vic_Scene__Quiet_Off,2112819935,Robot_Vic_Scene,Quiet_Off,
 Event,,Play__Robot_Vic_Scene__Quiet_On,1987410443,Robot_Vic_Scene,Quiet_On,

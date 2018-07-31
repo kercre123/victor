@@ -199,15 +199,33 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   {
     case NeuralNetParams::OutputType::Classification:
     {
-      const float* outputData = _interpreter->typed_output_tensor<float>(0);
-      ClassificationOutputHelper(outputData, t, salientPoints);
+      if(_params.useFloatInput)
+      {
+        const float* outputData = _interpreter->typed_output_tensor<float>(0);
+        ClassificationOutputHelper(outputData, t, salientPoints);
+      }
+      else
+      {
+        const uint8_t* outputData = _interpreter->typed_output_tensor<uint8_t>(0);
+        ClassificationOutputHelper(outputData, t, salientPoints);
+      }
+      
       break;
     }
       
     case NeuralNetParams::OutputType::BinaryLocalization:
     {
-      const float* outputData = _interpreter->typed_output_tensor<float>(0);
-      LocalizedBinaryOutputHelper(outputData, t, salientPoints);
+      if(_params.useFloatInput)
+      {
+        const float* outputData = _interpreter->typed_output_tensor<float>(0);
+        LocalizedBinaryOutputHelper(outputData, t, salientPoints);
+      }
+      else
+      {
+        const uint8_t* outputData = _interpreter->typed_output_tensor<uint8_t>(0);
+        LocalizedBinaryOutputHelper(outputData, t, salientPoints);
+      }
+      
       break;
     }
       

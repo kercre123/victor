@@ -17,6 +17,7 @@
 #include "engine/navMap/mapComponent.h"
 
 #include "coretech/planning/engine/aStar.h"
+#include "coretech/planning/engine/bidirectionalAStar.h"
 
 #include <numeric>
 
@@ -73,9 +74,9 @@ namespace {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//  A* Configuration through collision free space
+//  Bidirectional A* Configuration through collision free space
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class PlannerConfig : public IAStarConfig<Point2f, PlannerConfig> {
+class PlannerConfig : public BidirectionalAStarConfig<Point2f, PlannerConfig> {
 public:
   // define a custom iterator class to avoid dynamic memory allocation
   class SuccessorIter : private std::iterator<std::input_iterator_tag, Successor>{
@@ -101,28 +102,41 @@ public:
     const Point2f       _parent;
     const MapComponent& _map;
   };
-  
-  PlannerConfig(const MapComponent& map, const volatile bool& stopPlanning, const Point2f& goal) 
-  : _map(map)
-  , _abort(stopPlanning)
-  , _goal(goal) {}
 
-  inline bool          IsGoal(const Point2f& p)        const { return IsNearlyEqual(p, _goal, kPlanningResolution_mm/2); }
+  PlannerConfig(const Point2f& start, const std::vector<Point2f>& goals, const MapComponent& map, const volatile bool& stopPlanning) 
+  : _start(start)
+  , _goals(goals)
+  , _map(map)
+  , _abort(stopPlanning) {}
+
+  inline bool   StopPlanning()                               { return _abort || (++_numExpansions > kPlanPathMaxExpansions); }
+  inline size_t GetNumExpansions() const                     { return _numExpansions; }
   inline SuccessorIter GetSuccessors(const Point2f& p) const { return SuccessorIter(GetNearestGridPoint(p), _map); };
-  inline size_t        GetNumExpansions()              const { return _numExpansions; }
-  inline bool          StopPlanning()                        { return _abort || (++_numExpansions > kPlanPathMaxExpansions); }
-  inline float         Heuristic(const Point2f& p)     const { 
-    // Manhattan Distance
-    Point2f d = (p - _goal).Abs();
+  
+  inline float ReverseHeuristic(const Point2f& p) const { return ManhattanDistance(p, _start); };
+  inline float ForwardHeuristic(const Point2f& p) const { 
+    float minDist = std::numeric_limits<float>::max();
+    for (const auto& g : _goals) {
+      minDist = fmin(minDist, (ManhattanDistance(p, g)));
+    }
+    return minDist;
+  };
+
+
+  const Point2f&              GetStart() const { return _start; }
+  const std::vector<Point2f>& GetGoals() const { return _goals; }
+
+private:
+  inline float ManhattanDistance(const Point2f& p, const Point2f& q) const {
+    Point2f d = (p - q).Abs();
     return d.x() + d.y(); 
   }
 
-private:
-
-  const MapComponent&  _map;
-  const volatile bool& _abort;
-  const Point2f&       _goal;
-  size_t               _numExpansions = 0;
+  const Point2f&              _start;
+  const std::vector<Point2f>& _goals;
+  const MapComponent&         _map;
+  const volatile bool&        _abort;
+  size_t                      _numExpansions = 0;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1009,7 +1009,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
 
     // Messages from switchboard
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
@@ -1588,25 +1587,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
     } else {
       robot->GetCarryingComponent().SetCarryingObject(msg.objectID, Vision::MARKER_INVALID);
     }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetRobot();
-
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.StopRobotForSdk.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    robot->GetActionList().Cancel();
-    robot->GetMoveComponent().StopAllMotors();
-    robot->GetBackpackLightComponent().ClearAllBackpackLightConfigs();
   }
 }
 

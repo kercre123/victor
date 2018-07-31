@@ -59,6 +59,7 @@ const BehaviorReactToMicDirection::DynamicStateReaction BehaviorReactToMicDirect
     { kInvalidAnimationTrigger, -((float)EClockDirection::NineOClock * kDegreesPerDirection) },
     { kInvalidAnimationTrigger, -((float)EClockDirection::TenOClock * kDegreesPerDirection) },
     { kInvalidAnimationTrigger, -((float)EClockDirection::ElevenOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, 0 },
   }
 };
 
@@ -212,8 +213,7 @@ BehaviorReactToMicDirection::EClockDirection BehaviorReactToMicDirection::Conver
                        "BehaviorReactToMicDirection.ConvertMicDirectionToClockDirection",
                        "Attempting to convert an invalid mic direction" );
 
-    // we'll treat all of these exceptions as simply coming from the twelve o'clock direction
-    return EClockDirection::TwelveOClock;
+    return EClockDirection::Invalid;
   }
 }
 
@@ -265,6 +265,8 @@ std::string BehaviorReactToMicDirection::ConvertClockDirectionToString( EClockDi
       return "TenOClock";
     case EClockDirection::ElevenOClock:
       return "ElevenOClock";
+    case EClockDirection::Ambient:
+      return "Ambient";
     case EClockDirection::Invalid:
       PRINT_NAMED_ERROR( "BehaviorReactToMicDirection.ConvertClockDirectionToString", "Invalid conversion of EClockDirection::Invalid to string" );
     break;

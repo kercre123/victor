@@ -60,6 +60,7 @@ namespace Cozmo {
 // Forward declaration
 class Robot;
 class CozmoContext;
+struct ImageSaverParams;
 struct VisionProcessingResult;
 class VisionSystem;
 class VizManager;
@@ -292,16 +293,8 @@ struct DockingErrorSignal;
     Result SaveFaceAlbum(); // use album path specified in vision_config.json
     Result LoadFaceAlbum(); // use album path specified in vision_config.json, broadcast loaded names and IDs
     
-    // See VisionSystem::SetSaveParameters for details on the arguments
-    // NOTE: if path is empty, it will default to <cachePath>/camera/images (where cachePath comes from DataPlatform)
-    void SetSaveImageParameters(const ImageSendMode saveMode,
-                                const std::string& path,
-                                const std::string& basename,
-                                const int8_t onRobotQuality,
-                                const Vision::ImageCache::Size& saveSize = Vision::ImageCache::Size::Full,
-                                const bool removeRadialDistortion = false,
-                                const f32 thumbnailScaleFraction = 0.f,
-                                const f32 saveScaleFraction = 1.f);
+    // NOTE: if params.path is empty, it will default to <cachePath>/camera/images (where cachePath comes from DataPlatform)
+    void SetSaveImageParameters(const ImageSaverParams& params);
 
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);

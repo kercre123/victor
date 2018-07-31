@@ -8,6 +8,8 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInitialConnection.h"
@@ -17,6 +19,7 @@
 #include "coretech/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "json/json.h"
+#include "proto/external_interface/messages.pb.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -160,6 +163,7 @@ Result RobotManager::UpdateRobot()
 
     if (_robot->HasReceivedRobotState()) {
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(_robot->GetRobotState()));
+      _context->GetGatewayInterface()->Broadcast(ExternalMessageRouter::Wrap(_robot->GenerateRobotStateProto()));
     }
     else {
       LOG_PERIODIC_INFO(10, "RobotManager.UpdateRobot",

@@ -24,26 +24,37 @@
 namespace Anki {
 namespace Vision {
 
+namespace {
+#define CONSOLE_GROUP "Vision.PreProcessing"
+    
 // Turn this on to linearize brightness values using the camera's Gamma table
 // before computing the desired exposure. Should be more accurate, but may not
 // be super necessary.
-CONSOLE_VAR(bool,  kLinearizeForAutoExposure,     "Vision.PreProcessing", false);
-CONSOLE_VAR(bool,  kUseWhiteBalanceExposureCheck, "Vision.PreProcessing", true);
+CONSOLE_VAR(bool,         kLinearizeForAutoExposure,       CONSOLE_GROUP, false);
+CONSOLE_VAR(bool,         kUseWhiteBalanceExposureCheck,   CONSOLE_GROUP, true);
+CONSOLE_VAR_RANGED(f32,   kExposure_TargetPercentile,      CONSOLE_GROUP, 0.f, 0.f, 1.f); // 0 to disable
+CONSOLE_VAR_RANGED(s32,   kExposure_TargetValue,           CONSOLE_GROUP, 128, 0, 255);   
+CONSOLE_VAR_RANGED(f32,   kMaxFractionOverexposed,         CONSOLE_GROUP, 0.8f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32,   kOverExposedAdjustmentFraction,  CONSOLE_GROUP, 0.5f, 0.f, 1.f);
+  
+#undef CONSOLE_GROUP
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImagingPipeline::SetExposureParameters(u8  targetValue,
-                                              f32 targetPercentile,
-                                              f32 maxChangeFraction,
-                                              s32 subSample)
+Result ImagingPipeline::SetExposureParameters(const u8               targetValue,
+                                              const std::vector<u8>& cyclingTargetValues,
+                                              const f32              targetPercentile,
+                                              const f32              maxChangeFraction,
+                                              const s32              subSample)
 {
-  if(FLT_LT(maxChangeFraction, 0.f) || FLT_GT(maxChangeFraction, 1.f))
+  if(!Util::InRange(maxChangeFraction, 0.f, 1.f))
   {
     PRINT_NAMED_ERROR("ImagingPipeline.SetExposureParameters.BadMaxChangeFraction",
                       "%f not on interval [0,1]", maxChangeFraction);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
-  if(FLT_LT(targetPercentile, 0.f) || FLT_GT(targetPercentile, 1.f))
+  if(!Util::InRange(targetPercentile, 0.f, 1.f))
   {
     PRINT_NAMED_ERROR("ImagingPipeline.SetExposureParameters.BadTargetPercentile",
                       "%f not on interval [0,1]", targetPercentile);
@@ -61,12 +72,27 @@ Result ImagingPipeline::SetExposureParameters(u8  targetValue,
   _targetPercentile         = targetPercentile;
   _maxChangeFraction        = maxChangeFraction;
   _subSample                = subSample;
+  _cyclingTargetValues      = cyclingTargetValues;
+  
+  if(cyclingTargetValues.empty())
+  {
+    PRINT_NAMED_WARNING("ImagingPipeline.SetExposureParameters.EmptyCyclingTargetList",
+                        "Will use targetValue=%d", (s32)_targetValue);
+    _cyclingTargetValues.push_back(_targetValue);
+  }
+  else
+  {
+    _cyclingTargetValues = cyclingTargetValues;
+  }
+  _cycleTargetIter          = _cyclingTargetValues.begin();
   
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImagingPipeline::ImagingPipeline()
+: _cyclingTargetValues{32, 128, 224}
+, _cycleTargetIter(_cyclingTargetValues.begin())
 {
   for(s32 i=0; i<256; ++i)
   {
@@ -167,7 +193,62 @@ Result ImagingPipeline::SetGammaTable(const std::vector<u8>& inputs, const std::
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImagingPipeline::ComputeExposureAdjustment(const Vision::Image& image, const Vision::Image& weightMask,
+Result ImagingPipeline::ComputeAdjustmentFraction(const bool useCycling, f32& adjustmentFraction)
+{
+  if(_hist.GetTotalCount() == 0)
+  {
+    PRINT_NAMED_WARNING("ImagingPipeline.ComputeAdjustmentFraction.EmptyHistogram", "");
+    return RESULT_FAIL;
+  }
+  
+  const s32 numOverexposed = _hist.GetCounts().back();
+  const f32 fractionOverexposed = static_cast<f32>(numOverexposed) / static_cast<f32>(_hist.GetTotalCount());
+  if(fractionOverexposed > kMaxFractionOverexposed)
+  {
+    // Special case: too over-exposed. Drop the exposure drastically.
+    adjustmentFraction = kOverExposedAdjustmentFraction;
+    return RESULT_OK;
+  }
+  
+  const bool useConsoleVarTargets = Util::IsFltGTZero(kExposure_TargetPercentile);
+
+  const f32 currentTargetPercentile = (useConsoleVarTargets ? kExposure_TargetPercentile : _targetPercentile);
+
+  const u8 currentPercentileValue = _hist.ComputePercentile(currentTargetPercentile);
+  
+  if(currentPercentileValue == 0)
+  {
+    // Special case: avoid divide by zero and just increase by maximum amount possible
+    adjustmentFraction = 1.f + _maxChangeFraction;
+    return RESULT_OK;
+  }
+  
+  u8 currentTargetValue = 128;
+  if(useCycling)
+  {
+    DEV_ASSERT(!_cyclingTargetValues.empty(), "ImagingPipeline.ComputeAdjustmentFraction.EmptyCyclingTargetValues");
+    currentTargetValue = *_cycleTargetIter;
+    ++_cycleTargetIter;
+    if(_cycleTargetIter == _cyclingTargetValues.end()) {
+      _cycleTargetIter = _cyclingTargetValues.begin();
+    }
+  }
+  else
+  {
+    currentTargetValue = (useConsoleVarTargets ? kExposure_TargetValue : _targetValue);
+  }
+  
+  // Normal case: Current exposure is "reasonable" so just figure out how to make it a bit better
+  adjustmentFraction = static_cast<f32>(currentTargetValue) / static_cast<f32>(currentPercentileValue);
+  adjustmentFraction = Util::Clamp(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
+  
+  return RESULT_OK;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ImagingPipeline::ComputeExposureAdjustment(const Vision::Image& image,
+                                                  const Vision::Image& weightMask,
+                                                  const bool useCycling,
                                                   f32& adjustmentFraction)
 {
   // Initialize in case of early return
@@ -201,36 +282,19 @@ Result ImagingPipeline::ComputeExposureAdjustment(const Vision::Image& image, co
     return result;
   }
   
-  if(_hist.GetTotalCount() == 0)
-  {
-    PRINT_NAMED_WARNING("ImagingPipeline.ComputeNewExposure.EmptyHistogram", "");
-    return RESULT_FAIL;
-  }
+  result = ComputeAdjustmentFraction(useCycling, adjustmentFraction);
   
-  const u8 currentPercentileValue = _hist.ComputePercentile(_targetPercentile);
-  
-  if(currentPercentileValue == 0)
-  {
-    // Special case: avoid divide by zero and just increase by maximum amount possible
-    adjustmentFraction = 1.f + _maxChangeFraction;
-  }
-  else
-  {
-    adjustmentFraction = static_cast<f32>(_targetValue) / static_cast<f32>(currentPercentileValue);
-    adjustmentFraction = CLIP(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
-  }
-  
-  return RESULT_OK;
-
+  return result;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImagingPipeline::ComputeExposureAdjustment(const Image& img, f32& adjustmentFraction)
+Result ImagingPipeline::ComputeExposureAdjustment(const Image& img, const bool useCycling, f32& adjustmentFraction)
 {
   const Vision::Image emptyWeights;
-  return ComputeExposureAdjustment(img, emptyWeights, adjustmentFraction);
+  return ComputeExposureAdjustment(img, emptyWeights, useCycling, adjustmentFraction);
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImagingPipeline::ComputeExposureAdjustment(const std::vector<Vision::Image>& imageROIs, f32& adjustmentFraction)
 {
   // Initialize in case of early return
@@ -271,29 +335,14 @@ Result ImagingPipeline::ComputeExposureAdjustment(const std::vector<Vision::Imag
       return result;
     }
   }
+
+  const bool kUseCycling = false;
+  Result result = ComputeAdjustmentFraction(kUseCycling, adjustmentFraction);
   
-  if(_hist.GetTotalCount() == 0)
-  {
-    PRINT_NAMED_WARNING("ImagingPipeline.ComputeNewExposure.EmptyHistogram", "");
-    return RESULT_FAIL;
-  }
-  
-  const u8 currentPercentileValue = _hist.ComputePercentile(_targetPercentile);
-  
-  if(currentPercentileValue == 0)
-  {
-    // Special case: avoid divide by zero and just increase by maximum amount possible
-    adjustmentFraction = 1.f + _maxChangeFraction;
-  }
-  else
-  {
-    adjustmentFraction = static_cast<f32>(_targetValue) / static_cast<f32>(currentPercentileValue);
-    adjustmentFraction = CLIP(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
-  }
-  
-  return RESULT_OK;
+  return result;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, f32& adjR, f32& adjB)
 {
   s32 sumR = 0;

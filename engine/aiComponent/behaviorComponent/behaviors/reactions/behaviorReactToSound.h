@@ -22,6 +22,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class BehaviorReactToMicDirection;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorReactToSound : public ICozmoBehavior
 {
@@ -48,6 +50,7 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
@@ -57,7 +60,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behavior Related Functions
 
-  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override { }
+  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
@@ -70,7 +73,6 @@ private:
 
   MicDirectionNodeList GetLatestMicDirectionData() const;
   DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
-  DirectionResponse GetResponseData( MicDirectionIndex index ) const;
 
   bool HeardValidSound( MicDirectionIndex& outIndex ) const;
 
@@ -107,11 +109,17 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
 
+  struct InstanceConfig
+  {
+    InstanceConfig();
 
-  static const MicDirectionIndex kInvalidDirectionIndex;
+    std::string reactionBehaviorString;
+    std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
+
+  } _iVars;
 
   EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
-  MicDirectionIndex                     _triggeredDirection       = kInvalidDirectionIndex;
+  MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;
 
   TimeStamp_t                           _reactionTriggeredTime    = 0;
   TimeStamp_t                           _reactionEndedTime        = 0;

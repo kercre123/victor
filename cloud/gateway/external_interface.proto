@@ -62,13 +62,6 @@ service ExternalInterface {
     };
   }
   
-  // Endpoint for streaming robot state/sensor data
-  rpc RobotStateStream(RobotStateRequest) returns (stream RobotStateResult) {
-    option (google.api.http) = {
-      post: "/v1/robot_state_stream",
-      body: "*"
-    };
-  }
   // Request control from behavior system
   rpc SDKBehaviorActivation(SDKActivationRequest) returns (SDKActivationResult) {
     option (google.api.http) = {

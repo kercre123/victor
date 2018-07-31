@@ -19,9 +19,6 @@
 This is an example of integrating Vector with an ipython-based command line interface.
 '''
 
-import argparse
-from pathlib import Path
-import os
 import sys
 
 try:
@@ -39,16 +36,7 @@ usage = ('This is an IPython interactive shell for Vector.\n'
          '  object?   -> Details about \'object\'.\n'
          '  object??  -> More detailed, verbose information about \'object\'.')
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--name", nargs='?', default=os.environ.get('VECTOR_ROBOT_NAME', None))
-parser.add_argument("-i", "--ip", nargs='?', default=os.environ.get('VECTOR_ROBOT_IP', None))
-parser.add_argument("-c", "--cert_file", nargs='?', default=os.environ.get('VECTOR_ROBOT_CERT', None))
-parser.add_argument("--port", nargs='?', default="443")
-args = parser.parse_args()
-
-cert = Path(args.cert_file)
-args.cert = cert.resolve()
+args = vector.util.parse_test_args()
 
 ipyshell = InteractiveShellEmbed(banner1='\nWelcome to the Vector Shell!',
                                  exit_msg='Goodbye\n')

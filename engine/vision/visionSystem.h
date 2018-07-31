@@ -79,6 +79,7 @@ namespace Cozmo {
   class CozmoContext;
   class IlluminationDetector;
   class ImageSaver;
+  struct ImageSaverParams;
   class LaserPointDetector;
   class MotionDetector;
   class OverheadEdgesDetector;
@@ -207,23 +208,8 @@ namespace Cozmo {
                                      f32 whiteBalanceGainG, 
                                      f32 whiteBalanceGainB);
     
-    // When SavingImages mode is enabled:
-    //  saveMode: SingleShot=save one image and wait for this call again
-    //            Stream=save according to the mode schedule
-    //            Off=no saving until this is called again with one of the above
-    //  subsample: Factor to reduce image size by (1 is no subsampling)
-    //  path: Where to save images (relative to <Cache>/camera/images)
-    //  basename: Filename without extension (leave empty to use auto-numbering)
-    //  quality: -1=PNG, 0-100=JPEG quality
-    //  thumbnailScaleFraction (as fraction of saveSize), in range [0,1], 0 to disable
-    void SetSaveParameters(const ImageSendMode saveMode,
-                           const std::string& path,
-                           const std::string& basename,
-                           const int8_t quality,
-                           const Vision::ImageCache::Size& saveSize,
-                           const bool removeRadialDistortion,
-                           const f32 thumbnailScaleFraction,
-                           const f32 saveScaleFraction);
+    // When SavingImages mode is enabled, how to save them
+    void SetSaveParameters(const ImageSaverParams& params);
 
     CameraParams GetCurrentCameraParams() const;
   
@@ -312,7 +298,7 @@ namespace Cozmo {
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
     
-    TimeStamp_t                   _neuralNetRunnerTimestamp = 0;
+    TimeStamp_t                                     _neuralNetRunnerTimestamp = 0;
     
     Result UpdatePoseData(const VisionPoseData& newPoseData);
     Radians GetCurrentHeadAngle();
@@ -343,9 +329,17 @@ namespace Cozmo {
     // Uses grayscale
     static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
     
+    
+    // Used for CheckImageQuality below to keep up with regions to use for metering, based on detected markers/faces
+    // The TimeStamp is used to keep metering from recent detections briefly, even after we lose them
+    using DetectionRectsByMode = std::map<VisionMode, std::vector<Rectangle<s32>>>;
+    DetectionRectsByMode _meteringRegions;
+    TimeStamp_t          _lastMeteringTimestamp_ms = 0;
+    
+    void UpdateMeteringRegions(TimeStamp_t t, DetectionRectsByMode&& detections);
+    
     // Uses grayscale
-    Result CheckImageQuality(Vision::ImageCache& imageCache,
-                             const std::vector<Anki::Rectangle<s32>>& detectionRects);
+    Result CheckImageQuality(Vision::ImageCache& imageCache);
     
     // Will use color if not empty, or gray otherwise
     Result DetectLaserPoints(Vision::ImageCache& imageCache);
@@ -372,7 +366,8 @@ namespace Cozmo {
     
     void CheckForNeuralNetResults();
     
-    bool ShouldProcessVisionMode(VisionMode mode);
+    bool ShouldProcessVisionMode(VisionMode mode) const;
+    bool IsModeScheduledToEverRun(VisionMode mode) const;
     
     Result EnableMode(VisionMode whichMode, bool enabled);
 

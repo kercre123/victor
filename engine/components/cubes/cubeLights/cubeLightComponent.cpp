@@ -1430,8 +1430,19 @@ void CubeLightComponent::HandleAppRequest(const AppToEngineEvent& event)
           .relativePoint          = {request.relative_to_x(),request.relative_to_y()}
         };
 
+        const CubeLightAnimation::LightPattern pattern {
+          .name                   = "SetCubeLightsRequest_GeneratedWrappedAnimation",
+          .lights                 = lights,
+          .duration_ms            = 0,
+          .canBeOverridden        = true
+        };
+
+        CubeLightAnimation::Animation animation = { pattern };
+
+        AnimationHandle handle;
+
         // TODO: Fully integrate these light calls with the sdk behavior VIC-4872
-        SetCubeLightAnimation(request.object_id(), lights);
+        PlayLightAnimInternal(request.object_id(), animation, AnimLayerEnum::Engine, nullptr, false, {}, 0, "GeneratedWrappedAnimation", handle);
       }
       break;
     }

@@ -438,6 +438,8 @@ void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 
   CompoundActionSequential* action = new CompoundActionSequential();
 
+  // if StopOnWhite is enabled while playing an animation, then it will
+  // interrupt that animation. In this case, however we don't want that.
   action->AddAction(
     new WaitForLambdaAction([](Robot& robot)->bool {
       robot.GetComponentPtr<CliffSensorComponent>()->EnableStopOnWhite(false);
@@ -446,7 +448,7 @@ void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 
   action->AddAction(new TriggerAnimationAction(AnimationTrigger::ReactToHabitat, 1, true));
 
-  // sometimes after playing an animation, the lift heigh is blocking the prox
+  // sometimes after playing an animation, the lift is blocking the prox
   action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
 
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
@@ -602,7 +604,7 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
     }
     action->AddAction(new TriggerLiftSafeAnimationAction(animToPlay, 1, true, (u8)AnimTrackFlag::BODY_TRACK));
 
-    // sometimes after playing an animation, the lift heigh is blocking the prox
+    // sometimes after playing an animation, the lift is blocking the prox
     action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
 
     _dVars._nextWhiteReactionAnimTime_sec = currTime_sec + kReactToWhiteAnimCooldown_sec;

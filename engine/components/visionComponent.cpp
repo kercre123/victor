@@ -33,6 +33,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotStateHistory.h"
+#include "engine/vision/imageSaver.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
@@ -1659,7 +1660,10 @@ namespace Cozmo {
 
   Result VisionComponent::UpdatePhotoManager(const VisionProcessingResult& procResult)
   {
-    _robot->GetPhotographyManager().SetLastPhotoTimeStamp(procResult.timestamp);
+    if(_robot->GetPhotographyManager().IsWaitingForPhoto())
+    {
+      _robot->GetPhotographyManager().SetLastPhotoTimeStamp(procResult.timestamp);
+    }
     return RESULT_OK;
   }
   
@@ -2910,18 +2914,11 @@ namespace Cozmo {
     }
   }
 
-  void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
-                                               const std::string& path,
-                                               const std::string& basename,
-                                               const int8_t onRobotQuality,
-                                               const Vision::ImageCache::Size& saveSize,
-                                               const bool removeRadialDistortion,
-                                               const f32 thumbnailScaleFraction,
-                                               const f32 saveScaleFraction)
+  void VisionComponent::SetSaveImageParameters(const ImageSaverParams& params)
   {
     if(nullptr != _visionSystem)
     {
-      std::string fullPath(path);
+      std::string fullPath(params.path);
       if(fullPath.empty())
       {
         // If no path specified, default to <cachePath>/camera/images
@@ -2929,33 +2926,25 @@ namespace Cozmo {
         fullPath = Util::FileUtils::FullFilePath({cachePath, "images"});
       }
       
-      _visionSystem->SetSaveParameters(saveMode,
-                                       fullPath,
-                                       basename,
-                                       onRobotQuality,
-                                       saveSize,
-                                       removeRadialDistortion,
-                                       thumbnailScaleFraction,
-                                       saveScaleFraction);
+      _visionSystem->SetSaveParameters(params);
 
-      if(saveMode != ImageSendMode::Off)
+      if(params.mode != ImageSendMode::Off)
       {
         EnableMode(VisionMode::SavingImages, true);
       }
 
       PRINT_CH_DEBUG("VisionComponent", "VisionComponent.SetSaveImageParameters.SaveImages",
                      "Setting image save mode to %s. Saving to: %s",
-                     EnumToString(saveMode), fullPath.c_str());
+                     EnumToString(params.mode), fullPath.c_str());
     }
   }
 
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
-    SetSaveImageParameters(payload.mode, payload.path, "",
-                           payload.qualityOnRobot,
-                           Vision::ImageCache::Size::Full,
-                           payload.removeRadialDistortion);
+    ImageSaverParams params(payload.path, payload.mode, payload.qualityOnRobot, "",
+                            Vision::ImageCache::Size::Full, 0.f, 1.f, payload.removeRadialDistortion);
+    SetSaveImageParameters(params);
   }
 
   template<>

@@ -15,7 +15,7 @@ import vector  # pylint: disable=wrong-import-position
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     print("------ begin testing face events ------")
     # Should see a stream of face events when the robot observes a face

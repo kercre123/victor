@@ -46,11 +46,7 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
-    modifiers.wantsToBeActivatedWhenOnCharger = false;
-    modifiers.wantsToBeActivatedWhenCarryingObject = true;
-  }
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
@@ -66,6 +62,16 @@ private:
     float       recentSearchWindow_sec = 0.f;
     float       minDrivingDist_mm = 0.f;
     float       maxDrivingDist_mm = 0.f;
+    
+    // Enable to use exposure cycling while waiting for searching for charger to improve chances
+    // of seeing it in difficult illumination (backlight, harsh sunlight). NumImagesToWaitFor (below)
+    // also should be increased
+    bool        useExposureCycling = true;
+    
+    // If using cycling exposure to find charger (above), we need to wait at least cycle_length * auto_exp_period frames
+    // Default is auto exposure every 8 frames and cycle length 3, meaning 24 frames
+    // TODO: Disable white balance for this behavior so we can do auto exposure every 4 frames (VIC-4945)
+    int         numImagesToWaitFor = 25;
     
     AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
     AnimationTrigger searchTurnEndAnimTrigger = AnimationTrigger::Count;

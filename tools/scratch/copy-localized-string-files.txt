@@ -1,4 +1,0 @@
-de-DE/CodeLabStrings.json
-en-US/CodeLabStrings.json
-fr-FR/CodeLabStrings.json
-ja-JP/CodeLabStrings.json

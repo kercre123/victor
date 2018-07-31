@@ -10,9 +10,7 @@
 # If upload fails, exit with an appropriate error. There is no attempt
 # at retry or deferred send.
 #
-# The default filter specification will capture all messages from Anki service processes.
-# It will also capture system messages reported at ERROR or FATAL level, including tombstone traces
-# reported by debuggerd.
+# The default filter specification will capture everything logged at Android DEBUG level or higher.
 #
 # Default configuration values may be overridden by environment.
 #
@@ -20,7 +18,7 @@ set -eu
 
 : ${VIC_LOGMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-logmgr"}
 : ${VIC_LOGMGR_FORMAT:="printable"}
-: ${VIC_LOGMGR_FILTERSPECS:="vic-anim:V vic-cloud:V vic-crashuploader:V vic-dasmgr:V vic-engine:V vic-gateway:V vic-init:V vic-neuralnets:V vic-robot:V vic-switchboard:V vic-watchdog:V vic-webserver:V *:E"}
+: ${VIC_LOGMGR_FILTERSPECS:="*:D"}
 
 #
 # Callers must provide APP_URL, APP_KEY and APP_USER on command line.

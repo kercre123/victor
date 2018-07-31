@@ -80,6 +80,9 @@ public:
   bool WriteProfilerCapture( bool write );
   // Save session audio output to a file
   bool WriteAudioOutputCapture( bool write );
+  // Console helpers
+  static void RemoveCaptureFiles( const std::string& dirPath, const std::string& fileExtension, uint8_t maxCount );
+  static std::string CreateFormattedUtcDateTimeString();
   
   // Activate consumable parameters to get updated Audio Engine runtime values
   // See cozmoAudioController.cpp for "consumable parameters" list

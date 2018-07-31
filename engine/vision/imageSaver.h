@@ -14,6 +14,7 @@
 #define __Anki_Cozmo_Engine_Vision_ImageSaver_H__
 
 #include "clad/types/imageTypes.h"
+#include "coretech/vision/engine/imageCache.h"
 
 namespace Anki {
   
@@ -25,6 +26,32 @@ namespace Vision {
   
 namespace Cozmo {
 
+struct ImageSaverParams
+{
+  using Mode = ImageSendMode;
+  
+  std::string               path;                     // absolute path for output images (including thumbnails)
+  std::string               basename;                 // leave empty to use frame number
+  Mode                      mode = Mode::Off;
+  int8_t                    quality = -1;             // -1 for .png, [0,100] for .jpg quality
+  Vision::ImageCache::Size  size = Vision::ImageCache::Size::Full;
+  float                     thumbnailScale = 0.f;     // in range [0,1], as fraction of size, 0 to disable
+  float                     saveScale = 1.f;          // > 0, as fraction of size
+  bool                      removeDistortion = false;
+  
+  ImageSaverParams() = default;
+  
+  explicit ImageSaverParams(const std::string&       path,
+                            Mode                     saveMode,
+                            int8_t                   quality,
+                            const std::string&       basename = "",
+                            Vision::ImageCache::Size size = Vision::ImageCache::Size::Full,
+                            float                    thumbnailScale = 0.f,
+                            float                    saveScale = 1.f,
+                            bool                     removeDistortion = false);
+  
+};
+  
 class ImageSaver
 {
 public:
@@ -34,21 +61,7 @@ public:
   
   virtual ~ImageSaver() { }
   
-  using Mode = ImageSendMode;
-  
-  struct Params
-  {
-    std::string               path;                     // absolute path for output images (including thumbnails)
-    std::string               basename;                 // leave empty to use frame number
-    Mode                      mode = Mode::Off;
-    int8_t                    quality = -1;             // -1 for .png, [0,100] for .jpg quality
-    Vision::ImageCache::Size  size = Vision::ImageCache::Size::Full;
-    float                     thumbnailScale = 0.f;     // in range [0,1], as fraction of size, 0 to disable
-    float                     saveScale = 1.f;          // > 0, as fraction of size
-    bool                      removeDistortion = false;
-  };
-  
-  Result SetParams(Params&& params);
+  Result SetParams(const ImageSaverParams& params);
   
   // Returns true if the current mode is set such that the saver wants to save an image (SingleShot* or Stream)
   bool WantsToSave() const;
@@ -66,8 +79,10 @@ public:
   
 private: 
   
+  using Mode = ImageSaverParams::Mode;
+  
   const Vision::Camera& _camera;
-  Params _params;
+  ImageSaverParams _params;
   
 };
 

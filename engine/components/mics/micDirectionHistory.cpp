@@ -63,6 +63,7 @@ void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp,
   {
     _micDirectionBufferIndex = GetNextNodeIdx(_micDirectionBufferIndex);
     auto& newEntry = _micDirectionBuffer[_micDirectionBufferIndex];
+    newEntry.timestampBegin = timestamp;
     newEntry.timestampEnd = timestamp;
     newEntry.directionIndex = newDirection;
     newEntry.confidenceAvg = newConf;

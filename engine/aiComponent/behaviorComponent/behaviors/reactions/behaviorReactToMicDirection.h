@@ -88,6 +88,7 @@ private:
     NineOClock,
     TenOClock,
     ElevenOClock,
+    Ambient,
 
     NumDirections,
     Invalid = NumDirections,

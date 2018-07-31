@@ -61,13 +61,6 @@ message IsDeviceIMUSupported {
     bool isGyroSupported
 }
 
-message GameToGame {        // For sending between 2 "Game" ends, e.g. Unity to/from SDK
-  uint_8  messagePartIndex, // messagePart allow a long message to be divided into chunks, shorter messages
-  uint_8  messagePartCount,
-  string  messageType,      // softly-typed indicator of type
-  string[uint_16]  payload  // string-friendly contents (e.g. json data)
-}
-
 
 } // namespace ExternalInterface
 } // namespace Cozmo

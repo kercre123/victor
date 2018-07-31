@@ -31,6 +31,8 @@
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
 #include "webServerProcess/src/webService.h"
+#include <chrono>
+#include <iomanip>
 #include <set>
 #include <sstream>
 
@@ -51,8 +53,12 @@
 
 namespace {
 static Anki::Cozmo::Audio::CozmoAudioController* sThis = nullptr;
-const std::string kProfilerCaptureFileName    = "VictorProfilerSession.prof";
-const std::string kAudioOutputCaptureFileName = "VictorOutputSession.wav";
+static std::string sWritePath;
+const std::string kProfilerCaptureFileName          = "VictorProfilerSession";
+const std::string kProfilerCaptureFileExtension     = "prof";
+const std::string kAudioOutputCaptureFileName       = "VictorOutputSession";
+const std::string kAudioOutputCaptureFileExtension  = "wav";
+  
 using APT = Anki::AudioMetaData::GameParameter::ParameterType;
 // Consumable Parameters
 const std::set<APT> kConsumableParameters =
@@ -80,6 +86,8 @@ namespace Console {
 #define CONSOLE_PATH "Audio.Controller"
 CONSOLE_VAR( bool, kWriteAudioProfilerCapture, CONSOLE_PATH, false );
 CONSOLE_VAR( bool, kWriteAudioOutputCapture, CONSOLE_PATH, false );
+CONSOLE_VAR_RANGED(uint8_t, kWriteAudioProfilerMaxLogCount, CONSOLE_PATH, 3, 1, 5);
+CONSOLE_VAR_RANGED(uint8_t, kWriteAudioOutputMaxLogCount, CONSOLE_PATH, 1, 1, 5);
 
 #if REMOTE_CONSOLE_ENABLED
 // Console Functions
@@ -97,6 +105,22 @@ void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
   kWriteAudioOutputCapture = ConsoleArg_Get_Bool( context, "writeOutput" );
   if ( sThis != nullptr ) {
     sThis->WriteAudioOutputCapture( kWriteAudioOutputCapture );
+  }
+}
+
+void DeleteAudioProfilerCaptures( ConsoleFunctionContextRef context )
+{
+  const auto files = Util::FileUtils::FilesInDirectory( sWritePath, true, kProfilerCaptureFileExtension.c_str() );
+  for ( const auto& file : files ) {
+    Util::FileUtils::DeleteFile( file );
+  }
+}
+
+void DeleteAudioOutputCaptures( ConsoleFunctionContextRef context )
+{
+  const auto files = Util::FileUtils::FilesInDirectory( sWritePath, true, kAudioOutputCaptureFileExtension.c_str() );
+  for ( const auto& file : files ) {
+    Util::FileUtils::DeleteFile( file );
   }
 }
 
@@ -164,6 +188,8 @@ void StopAllAudioEvents( ConsoleFunctionContextRef context )
 // Register console var func
 CONSOLE_FUNC( SetWriteAudioProfilerCapture, CONSOLE_PATH, bool writeProfiler );
 CONSOLE_FUNC( SetWriteAudioOutputCapture, CONSOLE_PATH, bool writeOutput );
+CONSOLE_FUNC( DeleteAudioProfilerCaptures, CONSOLE_PATH );
+CONSOLE_FUNC( DeleteAudioOutputCaptures, CONSOLE_PATH );
 CONSOLE_FUNC( TestAudio_PinkNoise, CONSOLE_PATH );
 CONSOLE_FUNC( PostAudioEvent, CONSOLE_PATH, const char* event, optional uint64 gameObjectId );
 CONSOLE_FUNC( SetAudioState, CONSOLE_PATH, const char* stateGroup, const char* state );
@@ -185,9 +211,9 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 
     const Util::Data::DataPlatform* dataPlatform = _animContext->GetDataPlatform();
     const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound" );
-    const std::string writePath = dataPlatform->pathToResource(Util::Data::Scope::Cache, "sound");
+    sWritePath = dataPlatform->pathToResource(Util::Data::Scope::Cache, "sound");
     PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "AssetPath '%s'", assetPath.c_str());
-    PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "WritePath '%s'", writePath.c_str());
+    PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "WritePath '%s'", sWritePath.c_str());
     // If assets don't exist don't init the Audio engine
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
     if ( !assetsExist ) {
@@ -201,7 +227,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     SetupConfig config{};
     // Read/Write Asset path
     config.assetFilePath = assetPath;
-    config.writeFilePath = writePath;
+    config.writeFilePath = sWritePath;
 
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
@@ -220,9 +246,16 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.defaultLEMemoryPoolSize    = ( 6 * 1024 * 1024 );  //  6 MB
     config.ioMemorySize               = ( 2 * 1024 * 1024 );  //  2 MB
 #endif
-    config.defaultMaxNumPools         = 30;
-    config.enableGameSyncPreparation  = true;
+
+    // Performance
+    config.sampleRate         = 32000;
+    config.bufferSize         = 1024;
+    config.defaultMaxNumPools = 30;
+    
+    // Systems
+    config.enableGameSyncPreparation  = false;
     config.enableStreamCache          = true;
+    config.enableMusicEngine          = false; // Not using music system
 
     // Start your Engines!!!
     InitializeAudioEngine( config );
@@ -285,13 +318,92 @@ CozmoAudioController::~CozmoAudioController()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CozmoAudioController::WriteProfilerCapture( bool write )
 {
-  return AudioEngineController::WriteProfilerCapture( write, kProfilerCaptureFileName );
+  std::string uniqueName; // Only need to set name when write is true
+  if ( write ) {
+    // Remove old captures
+    const auto maxLogCount = Console::kWriteAudioProfilerMaxLogCount - 1; // Make room for new file
+    RemoveCaptureFiles( sWritePath, kProfilerCaptureFileExtension, maxLogCount );
+    // Create new log file name
+    const auto dateTimeStr = CreateFormattedUtcDateTimeString();
+    uniqueName = kProfilerCaptureFileName + '_' + dateTimeStr + '.' +  kProfilerCaptureFileExtension;
+  }
+  
+  return AudioEngineController::WriteProfilerCapture( write, uniqueName );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CozmoAudioController::WriteAudioOutputCapture( bool write )
 {
-  return AudioEngineController::WriteAudioOutputCapture( write, kAudioOutputCaptureFileName );
+  std::string uniqueName; // Only need to set name when write is true
+  if ( write ) {
+    // Remove old captures
+    const auto maxLogCount = Console::kWriteAudioOutputMaxLogCount - 1; // Make room for new file
+    RemoveCaptureFiles( sWritePath, kAudioOutputCaptureFileExtension, maxLogCount );
+    // Create new log file name
+    const auto dateTimeStr = CreateFormattedUtcDateTimeString();
+    uniqueName = kAudioOutputCaptureFileName + '_' + dateTimeStr + '.' +  kAudioOutputCaptureFileExtension;
+  }
+  return AudioEngineController::WriteAudioOutputCapture( write, uniqueName );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::RemoveCaptureFiles( const std::string& dirPath,
+                                               const std::string& fileExtension,
+                                               uint8_t maxCount )
+{
+  using namespace Util;
+  const auto files = FileUtils::FilesInDirectory( dirPath, true, fileExtension.c_str() );
+  if ( files.size() > maxCount ) {
+    // Need to delete files
+    using fileTime_t = unsigned long;
+    std::map<fileTime_t, const std::string&, std::greater<fileTime_t> > fileTimeMap;
+    // Get file creation time
+    for ( const auto& file : files ) {
+      struct stat info;
+      if( stat(file.c_str(), &info) != 0 ) {
+        PRINT_NAMED_WARNING("CozmoAudioController.RemoveCaptureFiles", "Unable to get file info '%s'", file.c_str());
+        FileUtils::DeleteFile( file );
+        continue;
+      }
+      // Add files into ordered map, sort newest to oldest
+      fileTime_t birthTime = 0;
+#if defined(ANKI_PLATFORM_VICOS)
+      birthTime = static_cast<fileTime_t>( info.st_mtime );
+#else
+      birthTime = static_cast<fileTime_t>( info.st_birthtimespec.tv_sec );
+#endif
+      fileTimeMap.emplace( birthTime, file );
+    }
+    // Remove old logs
+    if ( fileTimeMap.size() > maxCount ) {
+      auto deleteIt = fileTimeMap.begin();
+      std::advance( deleteIt, maxCount ); // Go to the first element we want to delete
+      // Delete remaining files
+      for ( ; deleteIt != fileTimeMap.end(); ++deleteIt ) {
+        FileUtils::DeleteFile( deleteIt->second );
+      }
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string CozmoAudioController::CreateFormattedUtcDateTimeString()
+{
+  using namespace std::chrono;
+  const time_t now = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now() );
+  tm* time = gmtime( &now );
+  if( nullptr == time ) {
+    PRINT_NAMED_ERROR("CozmoAudioController.CreateFormattedUtcDateTimeString.UTC.Invalid",
+                      "gmtime returned null. Error: %s",
+                      strerror(errno));
+    return "";
+  }
+  // Creat Data String "00-00-00_00-00-00_XXX"
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(2) << (time->tm_mon + 1) << '-' << std::setw(2) << time->tm_mday << '-'
+  << std::setw(2) << (time->tm_year - 100) << '_' << std::setw(2) << time->tm_hour << '-'
+  << std::setw(2) << time->tm_min << '-' << time->tm_sec << '_' << time->tm_zone;
+  return ss.str();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

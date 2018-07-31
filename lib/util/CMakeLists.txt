@@ -37,7 +37,7 @@ if (NOT TARGET civetweb)
   add_subdirectory("source/3rd/civetweb")
 endif()
 
-if (NOT TARGET hdr_histogram)
+if (NOT TARGET hdr_histogram_static)
   add_subdirectory("source/3rd/hdrhistogram_c")
   foreach(target hdr_histogram hdr_histogram_static)
   anki_build_target_license(${target} "BSD-2,${CMAKE_CURRENT_SOURCE_DIR}/source/3rd/hdrhistogram_c/LICENSE.txt")

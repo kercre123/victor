@@ -90,6 +90,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/gameStatusFlag.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "proto/external_interface/messages.pb.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
@@ -2504,6 +2505,7 @@ void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
             error);
 }
 
+// @TODO: Refactor internal components to use proto state, and remove clad state utilities/messages VIC-4998
 ExternalInterface::RobotState Robot::GetRobotState() const
 {
   ExternalInterface::RobotState msg;
@@ -2550,6 +2552,77 @@ ExternalInterface::RobotState Robot::GetRobotState() const
   msg.batteryVoltage = GetBatteryComponent().GetBatteryVolts();
 
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
+
+  return msg;
+}
+
+external_interface::RobotState* Robot::GenerateRobotStateProto() const
+{
+  auto* msg = new external_interface::RobotState;
+
+  auto srcPoseStruct = GetPose().ToPoseStruct3d(GetPoseOriginList());
+  auto* dstPoseStruct = new external_interface::PoseStruct(
+    srcPoseStruct.x, srcPoseStruct.y, srcPoseStruct.z,
+    srcPoseStruct.q0, srcPoseStruct.q1, srcPoseStruct.q2, srcPoseStruct.q3,
+    srcPoseStruct.originID);
+
+  msg->set_allocated_pose(dstPoseStruct);
+
+  if (srcPoseStruct.originID == PoseOriginList::UnknownOriginID)
+  {
+    LOG_WARNING("Robot.GetRobotStateProto.BadOriginID", "");
+  }
+
+  msg->set_pose_angle_rad(GetPose().GetRotationAngle<'Z'>().ToFloat());
+  msg->set_pose_pitch_rad(GetPitchAngle().ToFloat());
+
+  msg->set_left_wheel_speed_mmps(GetLeftWheelSpeed());
+  msg->set_right_wheel_speed_mmps(GetRightWheelSpeed());
+
+  msg->set_head_angle_rad(GetComponent<FullRobotPose>().GetHeadAngle());
+  msg->set_lift_height_mm(GetLiftHeight());
+
+  const auto& srcAccelStruct = GetHeadAccelData();
+  auto* dstAccelStruct = new external_interface::AccelData(srcAccelStruct.x, srcAccelStruct.y, srcAccelStruct.z);
+  msg->set_allocated_accel(dstAccelStruct);
+
+  const auto& srcGyroStruct = GetHeadGyroData();
+  auto* dstGyroStruct = new external_interface::GyroData(srcGyroStruct.x, srcGyroStruct.y, srcGyroStruct.z);
+  dstGyroStruct->set_x(srcGyroStruct.x);
+  dstGyroStruct->set_y(srcGyroStruct.y);
+  dstGyroStruct->set_z(srcGyroStruct.z);
+  msg->set_allocated_gyro(dstGyroStruct);
+
+  auto status = _lastStatusFlags;
+  if (GetAnimationComponent().IsAnimating()) {
+    status |= (uint32_t)RobotStatusFlag::IS_ANIMATING;
+  }
+
+  if (GetCarryingComponent().IsCarryingObject()) {
+    status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
+    msg->set_carrying_object_id(GetCarryingComponent().GetCarryingObject());
+    msg->set_carrying_object_on_top_id(GetCarryingComponent().GetCarryingObjectOnTop());
+  } else {
+    msg->set_carrying_object_id(-1);
+    msg->set_carrying_object_on_top_id(-1);
+  }
+  msg->set_status(status);
+
+  msg->set_head_tracking_object_id(GetMoveComponent().GetTrackToObject());
+
+  msg->set_localized_to_object_id(GetLocalizedTo());
+
+  msg->set_last_image_time_stamp(GetVisionComponent().GetLastProcessedImageTimeStamp());
+
+  const auto& srcProxData = GetProxSensorComponent().GetLatestProxData();
+  auto* dstProxData = new external_interface::ProxData(
+    srcProxData.distance_mm,
+    srcProxData.signalQuality,
+    srcProxData.isInValidRange,
+    srcProxData.isValidSignalQuality,
+    srcProxData.isLiftInFOV,
+    srcProxData.isTooPitched);
+  msg->set_allocated_prox_data(dstProxData);
 
   return msg;
 }

@@ -1,5 +1,5 @@
 {
   "behaviorID": "OnboardingComeHereResume",
   "behaviorClass": "AnimSequence",
-  "animTriggers": ["AlreadyAtFace"]
+  "animTriggers": ["ComeHereSuccess"]
 }

@@ -216,7 +216,7 @@ void checkClassifier(Anki::Cozmo::RawPixelsClassifier& clf,
 /*
  * Tests that training works with a specific error when not using class weighting
  */
-TEST(SurfaceClassifier, LRClassifier_TestWholeErrorNoWeighting)
+TEST(SurfaceClassifier, DISABLED_LRClassifier_TestWholeErrorNoWeighting)
 {
   Json::Value config;
   // populate the Json file
@@ -262,7 +262,7 @@ TEST(SurfaceClassifier, LRClassifier_TestWholeErrorNoWeighting)
 /*
  * Test that training works better with a higher weight for the positive class.
  */
-TEST(SurfaceClassifier, LRClassifier_TestPositiveClassOnlyWithWeights)
+TEST(SurfaceClassifier, DISABLED_LRClassifier_TestPositiveClassOnlyWithWeights)
 {
 
   Json::Value config;
@@ -295,7 +295,7 @@ TEST(SurfaceClassifier, LRClassifier_TestPositiveClassOnlyWithWeights)
 /*
  * Test the Logistic Regression classifier on manually labeled data
  */
-TEST(SurfaceClassifier, LRClassifier_TestManualLabels)
+TEST(SurfaceClassifier, DISABLED_LRClassifier_TestManualLabels)
 {
   Json::Value config;
   // populate the Json file
@@ -330,7 +330,7 @@ TEST(SurfaceClassifier, LRClassifier_TestManualLabels)
 /*
  * Test the threshold classifier
  */
-TEST(SurfaceClassifier, THClassifier_TestRealRun)
+TEST(SurfaceClassifier, DISABLED_THClassifier_TestRealRun)
 {
   Json::Value config;
   // populate the Json file
@@ -372,7 +372,7 @@ TEST(SurfaceClassifier, THClassifier_TestRealRun)
 /*
  * Test the decision trees classifier on manually labeled data
  */
-TEST(SurfaceClassifier, DTClassifier_TestManualLabels)
+TEST(SurfaceClassifier, DISABLED_DTClassifier_TestManualLabels)
 {
   Json::Value config;
   // populate the Json file
@@ -405,7 +405,7 @@ TEST(SurfaceClassifier, DTClassifier_TestManualLabels)
 /*
  * Test decision tree classifier serialization and deserialization
  */
-TEST(SurfaceClassifier, DTClassifier_TestSerialization)
+TEST(SurfaceClassifier, DISABLED_DTClassifier_TestSerialization)
 {
 
   Json::Value config;
@@ -454,7 +454,7 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization)
   }
 }
 
-TEST(SurfaceClassifier, DTClassifier_TestMeanData)
+TEST(SurfaceClassifier, DISABLED_DTClassifier_TestMeanData)
 {
 
   Json::Value root;
@@ -495,7 +495,7 @@ TEST(SurfaceClassifier, DTClassifier_TestMeanData)
   }
 }
 
-TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval)
+TEST(SurfaceClassifier, DISABLED_GroundClassifier_NoiseRemoval)
 {
 
   Json::Value config;
@@ -549,7 +549,7 @@ TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval)
 /*
  * Test decision tree classifier on reflective maze
  */
-TEST(SurfaceClassifier, DTClassifier_TestReflectiveDesk)
+TEST(SurfaceClassifier, DISABLED_DTClassifier_TestReflectiveDesk)
 {
 
   Json::Value config;

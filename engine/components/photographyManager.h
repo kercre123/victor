@@ -77,6 +77,9 @@ public:
   PhotoHandle TakePhoto();
   void CancelTakePhoto();
 
+  // Returns true if TakePhoto was called and there is a PhotoHandle set
+  bool IsWaitingForPhoto() const;
+  
   // Returns true once the corresponding TakePhoto() call has completed
   bool WasPhotoTaken(const PhotoHandle handle) const;
 

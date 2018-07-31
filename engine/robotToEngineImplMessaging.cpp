@@ -526,10 +526,6 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
     IActionRunner* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::AudioOnlyHuh, 1,
                                                                true, (u8)AnimTrackFlag::NO_TRACKS, 3.f, true);
     robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
-  } else if (!robot->GetContext()->IsInSdkMode()) {
-    LOG_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
-    robot->GetMoveComponent().StopAllMotors();
-    robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   }
 }
 
@@ -699,8 +695,11 @@ void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterfa
 
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
+  // using our own timestamp so we can make accurate timestamp comparisons on the engine process
+  const TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
   const auto & payload = message.GetData().Get_micDirection();
-  robot->GetMicComponent().GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
+  robot->GetMicComponent().GetMicDirectionHistory().AddDirectionSample(currentTime,
                                                      payload.direction, payload.confidence,
                                                      payload.selectedDirection);
 }

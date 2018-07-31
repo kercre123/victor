@@ -1,0 +1,19 @@
+  {
+    "behaviorID": "OnboardingHabitatDetected",
+    "behaviorClass": "DispatcherQueue",
+    "behaviors": [
+      "ReactToHabitatDetectedInternal",
+      "Wait"
+    ],
+
+    // no need to worry about groggy state here, since the only way
+    // the habitat can be detected is if the robot is awake already.
+    // we might still want something other than Wait though
+    "anonymousBehaviors": [
+      {
+        "behaviorName": "ReactToHabitatDetectedInternal",
+        "behaviorClass": "AnimSequence",
+        "animTriggers": ["ReactToCliff"]
+      }
+    ]
+  }

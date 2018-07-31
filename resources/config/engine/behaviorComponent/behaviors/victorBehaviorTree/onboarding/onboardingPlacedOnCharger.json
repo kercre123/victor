@@ -2,13 +2,10 @@
   "behaviorID": "OnboardingPlacedOnCharger",
   "behaviorClass": "OnboardingInterruptionHead",
 
-  // todo: should it wiggle back here?
+  "animWhenGroggy": "OnboardingLookDown",
 
   "wantsToBeActivatedCondition": {
-    "conditionType": "BecameTrueThisTick",
-    "subCondition": {
-      "conditionType": "OnChargerPlatform"
-    }
+    "conditionType": "OnChargerPlatform"
   },
 
   "wantsToCancelSelfCondition": {

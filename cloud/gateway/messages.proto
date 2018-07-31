@@ -7,6 +7,7 @@ package Anki.Cozmo.external_interface;
 option optimize_for = LITE_RUNTIME;
 
 import "extensions.proto";
+import "onboardingSteps.proto";
 
 message ResultStatus {
   string description = 1;
@@ -111,10 +112,11 @@ message Onboarding {
     OnboardingState                    onboarding_state              = 1;
     OnboardingOnCharger                onboarding_on_charger         = 2;
     OnboardingLowBattery               onboarding_battery            = 3;
-    OnboardingPickedUp                 onboarding_picked_up          = 4;
+    OnboardingPhysicalInterruption     onboarding_physical           = 4;
     OnboardingSeesCube                 onboarding_sees_cube          = 5;
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
     OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
+    OnboardingHabitatDetected          onboarding_habitat_detected   = 8;
   }
 }
 
@@ -164,6 +166,15 @@ message GyroData {
   float z = 3;
 }
 
+message ProxData {
+  uint32 distance_mm             = 1;
+  float  signal_quality          = 2;
+  bool   is_in_valid_range       = 3; // Distance is within valid range
+  bool   is_valid_signal_quality = 4; // Signal quality is sufficiently strong to trust that something was detected
+  bool   is_lift_in_fov          = 5; // Lift (or object on lift) is occluding the sensor
+  bool   is_too_pitched          = 6; // Robot is too far pitched up or down
+}
+
 message RobotState {
   PoseStruct pose = 1;
   float pose_angle_rad = 2;
@@ -172,16 +183,15 @@ message RobotState {
   float right_wheel_speed_mmps = 5;
   float head_angle_rad = 6;
   float lift_height_mm = 7;
-  float battery_voltage = 8;
-  AccelData accel = 9;
-  GyroData gyro = 10;
-  int32 carrying_object_id = 11;
-  int32 carrying_object_on_top_id = 12;
-  int32 head_tracking_object_id = 13;
-  int32 localized_to_object_id = 14;
-  uint32 last_image_time_stamp = 15;
-  uint32 status = 16;
-  uint32 game_status = 17;
+  AccelData accel = 8;
+  GyroData gyro = 9;
+  int32 carrying_object_id = 10;
+  int32 carrying_object_on_top_id = 11;
+  int32 head_tracking_object_id = 12;
+  int32 localized_to_object_id = 13;
+  uint32 last_image_time_stamp = 14;
+  uint32 status = 15;
+  ProxData prox_data = 16;
 }
 
 message CladPoint
@@ -240,15 +250,6 @@ message RobotObservedFace {
 message RobotChangedObservedFaceID {
   int32   old_id = 1;
   int32   new_id = 2;
-}
-
-// TODO: Remove this request/response once RobotState is made an event
-message RobotStateRequest {}
-
-message RobotStateResult {
-  option (streamed) = true;
-  ResultStatus status = 1;
-  RobotState robot_state = 2;
 }
 
 message SDKActivationRequest {
@@ -429,8 +430,15 @@ message OnboardingLowBattery {
   bool low_battery = 1;
 }
 
-message OnboardingPickedUp {
-  bool picked_up = 1;
+// these are sent in case the copy needs to change
+enum OnboardingPhysicalInterruptions {
+  ONBOARDING_INTERRUPTION_NONE         = 0;
+  ONBOARDING_INTERRUPTION_PICKED_UP    = 1;
+  ONBOARDING_INTERRUPTION_PHYSICAL     = 2;
+  ONBOARDING_INTERRUPTION_POWER_BUTTON = 3;
+}
+message OnboardingPhysicalInterruption {
+  OnboardingPhysicalInterruptions type = 1;
 }
 
 message OnboardingSeesCube {
@@ -446,11 +454,6 @@ message OnboardingStateRequest {
 message OnboardingStateResponse {
   ResultStatus status = 1;
   OnboardingState onboarding_state = 2;
-}
-
-enum OnboardingSteps {
-  DEFAULT = 0;
-  FIRST_TRIGGER_WORD = 1;
 }
 
 message OnboardingContinue {
@@ -492,6 +495,9 @@ message OnboardingInputResponse {
 
 message OnboardingRobotExpectingStep {
   OnboardingSteps step_number = 1;
+}
+
+message OnboardingHabitatDetected {
 }
 
 message WakeWordBegin {
@@ -556,6 +562,10 @@ message DeletePhotoRequest {
 message DeletePhotoResponse {
   ResultStatus status = 1;
   bool success = 2;
+}
+
+message PhotoTaken {
+  uint32 photo_id = 1;
 }
 
 // NOTE: must match attentionTransferTypes.clad

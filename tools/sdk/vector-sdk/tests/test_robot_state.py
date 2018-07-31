@@ -14,13 +14,11 @@ import vector  # pylint: disable=wrong-import-position
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     print("------ Fetch robot state from robot's properties ------")
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
-        # Add some operation before testing properties to permit enough time
-        # for the stream to be setup
-        robot.anim.play_animation("anim_poked_giggle")
+        robot.loop.run_until_complete(utilities.delay_close(1, lambda _: None))
         print(robot.pose)
         print(robot.pose_angle_rad)
         print(robot.pose_pitch_rad)
@@ -28,7 +26,6 @@ def main():
         print(robot.right_wheel_speed_mmps)
         print(robot.head_angle_rad)
         print(robot.lift_height_mm)
-        print(robot.battery_voltage)
         print(robot.accel)
         print(robot.gyro)
         print(robot.carrying_object_id)
@@ -37,7 +34,6 @@ def main():
         print(robot.localized_to_object_id)
         print(robot.last_image_time_stamp)
         print(robot.status)
-        print(robot.game_status)
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ BehaviorOnboardingLookAtPhone::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingLookAtPhone::DynamicVariables::DynamicVariables()
 {
+  receivedMessage = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,19 +59,40 @@ void BehaviorOnboardingLookAtPhone::GetBehaviorOperationModifiers(BehaviorOperat
 {
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
-  modifiers.behaviorAlwaysDelegates = true;
+  modifiers.behaviorAlwaysDelegates = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::OnBehaviorActivated() 
 {
-  MoveHeadUp();
+  bool hasRun = _dVars.hasRun;
+  _dVars = DynamicVariables();
+  _dVars.hasRun = true;
+  if( hasRun ) {
+    RunLoopAction();
+  } else {
+    MoveHeadUp();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingLookAtPhone::BehaviorUpdate()
+{
+  if( IsActivated() && !IsControlDelegated() ) {
+    // this can happen if the robot cancels all actions (like when it detect that it's falling)
+    if( !_dVars.receivedMessage ) {
+      MoveHeadUp();
+    } else {
+      MoveHeadDown();
+    }
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::HandleWhileActivated(const AppToEngineEvent& event)
 {
   if( event.GetData().GetTag() == AppToEngineTag::kOnboardingConnectionComplete ) {
+    _dVars.receivedMessage = true;
     MoveHeadDown();
   }
 }
@@ -80,15 +102,24 @@ void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneUp };
   DelegateIfInControl(action, [this](const ActionResult& res){
-    auto* loopAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop, 0 };
-    DelegateIfInControl( loopAction ); // loop forever, waiting for a message
+    RunLoopAction();
   });
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingLookAtPhone::RunLoopAction()
+{
+  auto* loopAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop, 0 };
+  DelegateIfInControl( loopAction ); // loop forever, waiting for a message
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::MoveHeadDown()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneDown };
-  DelegateNow( action ); // and then the behavior ends
+  DelegateNow( action, [this](const ActionResult& res){
+    CancelSelf();
+  });
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -98,6 +129,7 @@ void BehaviorOnboardingLookAtPhone::SetupConsoleFuncs()
     if( _iConfig.consoleFuncs.empty() ) {
       // console func to mimic the app sending OnboardingConnectionComplete
       auto func = [this](ConsoleFunctionContextRef context) {
+        _dVars.receivedMessage = true;
         MoveHeadDown();
       };
       _iConfig.consoleFuncs.emplace_front( "EndPhoneIcon", std::move(func), "Onboarding", "" );

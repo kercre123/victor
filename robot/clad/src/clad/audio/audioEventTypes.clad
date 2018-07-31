@@ -292,6 +292,8 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Srv_Surprised_Short = 4054065165,
   Play__Robot_Sfx__Wink = 3564343056,
   Play__Robot_Vic_Scene__Anim_Abort = 3575715931,
+  Play__Robot_Vic_Scene__Low_Power_Mode_Off = 2023173047,
+  Play__Robot_Vic_Scene__Low_Power_Mode_On = 596052867,
   Play__Robot_Vic_Scene__Mov_Rtpc_Reset = 1762574059,
   Play__Robot_Vic_Scene__Quiet_Off = 2112819935,
   Play__Robot_Vic_Scene__Quiet_On = 1987410443,
@@ -1196,6 +1198,8 @@ enum uint_32 Robot_Vic_Scene
 {
   Anim_Abort = 3575715931,
   Invalid = 0,  // Use this to check for Invalid events
+  Low_Power_Mode_Off = 2023173047,
+  Low_Power_Mode_On = 596052867,
   Mov_Rtpc_Reset = 1762574059,
   Quiet_Off = 2112819935,
   Quiet_On = 1987410443,

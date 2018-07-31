@@ -150,6 +150,11 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << cliffDataRaw[1] << '\n';
   ss << cliffDataRaw[2] << '\n';
   ss << cliffDataRaw[3] << '\n';
+  
+  ss << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(0)) << ' '
+     << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(1)) << ' '
+     << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
+     << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(3)) << '\n';
 
   const auto& proxSensorComponent = robot->GetProxSensorComponent();
   const auto& proxDataRaw = proxSensorComponent.GetLatestProxDataRaw();
@@ -657,11 +662,7 @@ void CozmoEngine::UpdateLatencyInfo()
     double currentImageDelay = useRobotStats ? robot->GetCurrentImageDelay() : 0.0;
 
     const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
-    const Util::Stats::StatsAccumulator& sdk1Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverUdp);
-    const Util::Stats::StatsAccumulator& sdk2Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverTcp);
-    const Util::Stats::StatsAccumulator& sdkLatency = (sdk1Latency.GetNumDbl() > sdk2Latency.GetNumDbl()) ? sdk1Latency : sdk2Latency;
     ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
-    ExternalInterface::TimingInfo sdkEngineLatency(sdkLatency.GetMean(), sdkLatency.GetMin(), sdkLatency.GetMax());
     ExternalInterface::CurrentTimingInfo imageLatency(imageStats.GetMean(), imageStats.GetMin(), imageStats.GetMax(), currentImageDelay * 1000.0);
 
     ExternalInterface::MessageEngineToGame debugLatencyMessage(ExternalInterface::LatencyMessage(
@@ -670,7 +671,6 @@ void CozmoEngine::UpdateLatencyInfo()
                                                                                      std::move(sendQueueTime),
                                                                                      std::move(recvQueueTime),
                                                                                      std::move(unityEngineLatency),
-                                                                                     std::move(sdkEngineLatency),
                                                                                      std::move(imageLatency) ));
 
     #if REMOTE_CONSOLE_ENABLED
@@ -683,10 +683,6 @@ void CozmoEngine::UpdateLatencyInfo()
       if (unityLatency.GetNumDbl() > 0.0)
       {
         PrintTimingInfoStats(unityEngineLatency, "unity");
-      }
-      if (sdkLatency.GetNumDbl() > 0.0)
-      {
-        PrintTimingInfoStats(sdkEngineLatency, "sdk");
       }
 
       PrintTimingInfoStats(imageLatency, "image");

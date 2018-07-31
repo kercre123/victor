@@ -19,7 +19,6 @@
 #pragma once
 
 #include "util/helpers/noncopyable.h"
-#include "clad/types/onboardingStages.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -37,16 +36,20 @@ public:
   virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const = 0;
   
   // Return what behavior should be active. If nullptr is returned, BehaviorOnboarding will move to
-  // the next stage. This behavior MUST want to activate, or this stage ends. All the other calls
-  // below this will occur before GetBehavior()
+  // the next stage. This behavior MUST want to activate, or this stage ends.
   virtual IBehavior* GetBehavior( BehaviorExternalInterface& bei ) = 0;
+  
+  // Return what external_interface::OnboardingSteps the robot is expecting.
+  virtual int GetExpectedStep() const = 0;
+  
+  // All the other calls below this will occur before GetBehavior() and GetExpectedStep()
   
   // called when this stage begins for the first time. This should reset all member vars
   virtual void OnBegin( BehaviorExternalInterface& bei ) {}
   
   // App (or dev tools) says "Continue"
   // Should return whether this stage accepts/handles the continue
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) = 0;
+  virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) = 0;
   
   // App (or dev tools) says "Skip"
   virtual void OnSkip( BehaviorExternalInterface& bei ) {}
@@ -74,8 +77,6 @@ public:
   virtual void OnMessage( BehaviorExternalInterface& bei, const EngineToGameEvent& event ) {}
   virtual void OnMessage( BehaviorExternalInterface& bei, const GameToEngineEvent& event ) {}
   virtual void OnMessage( BehaviorExternalInterface& bei, const AppToEngineEvent& event ) {}
-  
-  virtual OnboardingSteps GetExpectedStep() const { return OnboardingSteps::Default; }
   
   // Called each tick, after any of the above On* methods, but before GetBehavior()
   virtual void Update( BehaviorExternalInterface& bei ) {}

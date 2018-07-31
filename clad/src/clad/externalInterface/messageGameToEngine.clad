@@ -52,18 +52,6 @@ message UiDeviceConnectionWrongVersion {
   string  buildVersion,
 }
 
-// this (and all subsequent) messages can change post-ship - it's only sent if versions match
-message UiDeviceConnectionSuccess {
-  UiConnectionType  connectionType,
-  uint_32 deviceID,
-  string  buildVersion,
-  string  sdkModuleVersion,
-  string  pythonVersion,
-  string  pythonImplementation,
-  string  osVersion,
-  string  cpuVersion
-}
-
 // ConnectToUiDevice
 message ConnectToUiDevice {
     UiConnectionType  connectionType,
@@ -1025,36 +1013,13 @@ message EnableDroneMode {
 // SDK Specific
 ///////////////////////////////////////////////////////////////////////////////
 
-message EnterSdkMode {
-  bool isExternalSdkMode = 1
-}
-
-message ExitSdkMode {
-bool isExternalSdkMode = 1
-}
-
-message SetStopRobotOnSdkDisconnect {
-  bool doStop = 1
-}
-
-message StopRobotForSdk {
-}
-
-message SetShouldAutoConnectToCubesAtStart {
-  bool doAutoConnect = 0
-}
-
-message SetShouldAutoDisconnectFromCubesAtEnd {
-  bool doAutoDisconnect = 0
-}
-
 // Upload animations
 enum uint_8 FileType {
   Animation,
-  FaceImg,
-  CodeLab
+  FaceImg
 }
 
+// Upload animations
 message TransferFile {
   uint_8   fileBytes[uint_16],
   uint_16  filePart,

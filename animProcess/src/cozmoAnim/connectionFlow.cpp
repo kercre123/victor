@@ -177,6 +177,8 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           const AnimContext* context)
 {
   using namespace SwitchboardInterface;
+
+  PRINT_NAMED_INFO("ConnectionFlow.UpdateConnectionFlow.NewStatus", "%s", EnumToString(msg.status));
   
   // isPairing is a proxy for "switchboard is doing something and needs to display something on face"
   const bool isPairing = msg.status != ConnectionStatus::NONE &&

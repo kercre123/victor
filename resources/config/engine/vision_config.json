@@ -35,7 +35,7 @@
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "RunningNeuralNet"       : 1, // Won't actually run every frame, but as frequently as possible (is asynchronous)
-    "SavingImages"           : 5,
+    "SavingImages"           : 1,
     "DetectingIllumination"  : 1
   },
 
@@ -67,8 +67,9 @@
   {
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
-    "TargetValue"               : 115,   // [0,255] - Try to make targetPercentile have this value
+    "TargetValue"               : 100,   // [0,255] - Try to make targetPercentile have this value
     "TargetPercentile"          : 0.50,  // [0.0, 1.0]
+    "CyclingTargetValues"       : [5, 100, 250], // When "cycling" exposure is enabled, the target values to use [0,255]
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
     "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
     "LowPercentile"             : 0.10,  // [0.0, 1.0]  (Near 0.0)

@@ -20,6 +20,8 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingDetectHabitat.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingInterruptionHead.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageApp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageCube.h"
@@ -50,8 +52,16 @@ namespace {
   const float kRequiredChargeTime_s = 5*60.0f;
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
   
+  // Behaviors that dim the screen on the app
+  const std::set<BehaviorID> kBehaviorsThatPauseFlow = {
+    BEHAVIOR_ID(SingletonPoweringRobotOff),
+    BEHAVIOR_ID(OnboardingPhysicalReactions),
+    BEHAVIOR_ID(OnboardingPickedUp),
+  };
+  
   // these should match OnboardingStages (clad)
   CONSOLE_VAR_ENUM(int, kDevMoveToStage, "Onboarding", 0, "NotStarted,FinishedComeHere,FinishedMeetVictor,Complete,DevDoNothing");
+  CONSOLE_VAR(bool, kDevAllowAnyContinue, "Onboarding", false);
 }
   
 
@@ -69,14 +79,16 @@ BehaviorOnboarding::DynamicVariables::DynamicVariables()
   currentStage = OnboardingStages::NotStarted;
   
   lastBehavior = nullptr;
-  lastTriggerWordEnabled = true; // needs to be true so that trigger detection will get disabled upon activation
   lastWhitelistedIntent = USER_INTENT(INVALID);
   lastInterruption = BEHAVIOR_ID(Anonymous);
   
   currentStageBehaviorFinished = false;
   
   devConsoleStagePending = false;
-  receivedContinue = false;
+  robotWokeUp = false;
+  robotHeardTrigger = false;
+  
+  shouldDriveOffCharger = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -220,6 +232,16 @@ void BehaviorOnboarding::InitBehavior()
     }
   }
   
+  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingPickedUp),
+                                                              BEHAVIOR_CLASS(OnboardingInterruptionHead),
+                                                              _iConfig.pickedUpBehavior);
+  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingPlacedOnCharger),
+                                                              BEHAVIOR_CLASS(OnboardingInterruptionHead),
+                                                              _iConfig.onChargerBehavior);
+  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingDetectHabitat),
+                                                              BEHAVIOR_CLASS(OnboardingDetectHabitat),
+                                                              _iConfig.detectHabitatBehavior);
+  
   {
     _iConfig.wakeUpBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( _iConfig.wakeUpID );
     ANKI_VERIFY( _iConfig.wakeUpBehavior != nullptr,
@@ -239,7 +261,8 @@ void BehaviorOnboarding::InitBehavior()
     _iConfig.consoleFuncs.emplace_front( "MoveToStage", std::move(setStageFunc), "Onboarding", "" );
     
     auto continueFunc = [this](ConsoleFunctionContextRef context) {
-      RequestContinue();
+      // cheat and request the continue that's expected
+      RequestContinue( _dVars.lastExpectedStep );
     };
     _iConfig.consoleFuncs.emplace_front( "Continue", std::move(continueFunc), "Onboarding", "" );
     
@@ -283,6 +306,9 @@ void BehaviorOnboarding::OnBehaviorActivated()
   const auto stage = _dVars.currentStage;
   _dVars = DynamicVariables();
   _dVars.currentStage = stage;
+  // robot has already woken up and heard trigger if starting in any stage other than the first.
+  _dVars.robotWokeUp = (_dVars.currentStage != OnboardingStages::NotStarted);
+  _dVars.robotHeardTrigger = (_dVars.currentStage != OnboardingStages::NotStarted);
   
   // default to no trigger word allowed
   SetTriggerWordEnabled( false );
@@ -346,7 +372,7 @@ void BehaviorOnboarding::BehaviorUpdate()
   
   UpdateBatteryInfo();
   
-  OnboardingSteps requestedStep = OnboardingSteps::Default;
+  int requestedStep = external_interface::STEP_INVALID;
   
   IBehavior* stageBehavior = nullptr;
   if( !CheckAndDelegateInterruptions() ) {
@@ -361,12 +387,12 @@ void BehaviorOnboarding::BehaviorUpdate()
         PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "No longer placed on charger");
         gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
       }
-    } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPickedUp) ) {
+    } else if( kBehaviorsThatPauseFlow.find(_dVars.lastInterruption) != kBehaviorsThatPauseFlow.end() ) {
       auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
       if( gi != nullptr ) {
-        auto* onboardingPickedUp = new external_interface::OnboardingPickedUp{ false };
+        auto* msg = new external_interface::OnboardingPhysicalInterruption{ external_interface::ONBOARDING_INTERRUPTION_NONE };
         PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Put back down, resuming");
-        gi->Broadcast( ExternalMessageRouter::Wrap(onboardingPickedUp) );
+        gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
       }
     }
     const auto lastInterruption = _dVars.lastInterruption;
@@ -393,18 +419,11 @@ void BehaviorOnboarding::BehaviorUpdate()
         GetCurrentStage()->OnResume( GetBEI(), lastInterruption );
       }
       
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
       // send events
       for( const auto& pendingEvent : _dVars.pendingEvents ) {
         if( pendingEvent.second.type == PendingEvent::Continue ) {
-          // todo: use app message for this
-          OnboardingSteps stepNum = OnboardingSteps::Default;
-          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), stepNum );
-          if( gi != nullptr ) {
-            auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse{ allowedContinue };
-            gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
-          }
-          // todo: OnboardingRobotExpectingContinue
+          const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), pendingEvent.second.continueNum );
+          SendContinueResponse( allowedContinue, pendingEvent.second.continueNum );
         } else if( pendingEvent.second.type == PendingEvent::Skip ) {
           GetCurrentStage()->OnSkip( GetBEI() );
         } else if( pendingEvent.second.type == PendingEvent::GameToEngine ) {
@@ -430,14 +449,19 @@ void BehaviorOnboarding::BehaviorUpdate()
       UserIntentTag allowedIntentTag = USER_INTENT(INVALID);
       const bool triggerAllowed = GetCurrentStage()->GetWakeWordBehavior( allowedIntentTag );
       SetTriggerWordEnabled( triggerAllowed );
-      SetAllowedIntent( allowedIntentTag );
+      if( triggerAllowed && (allowedIntentTag == USER_INTENT(unmatched_intent)) ) {
+        SetStreamAfterWakeWord( false );
+      } else {
+        SetStreamAfterWakeWord( true );
+        SetAllowedIntent( allowedIntentTag );
+      }
       
       _dVars.state = BehaviorState::StageRunning;
       
-      // now get what behavior the stage requests
-      requestedStep = GetCurrentStage()->GetExpectedStep();
+      // now get what behavior the stage requests for behavior and step num
       stageBehavior = GetCurrentStage()->GetBehavior( GetBEI() );
       if( stageBehavior != nullptr ) {
+        requestedStep = GetCurrentStage()->GetExpectedStep();
         if( (stageBehavior != _dVars.lastBehavior) && !stageBehavior->WantsToBeActivated() ) {
           PRINT_NAMED_WARNING( "BehaviorOnboarding.BehaviorUpdate.DoesntWantToActivate",
                                "OnboardingStatus: Transition from %s to %s, but it doesn't want to activate!",
@@ -449,15 +473,16 @@ void BehaviorOnboarding::BehaviorUpdate()
           break;
         }
       } else {
+        // the stage thinks it's done
         PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.BehaviorUodate.OnboardingStatus",
                       "Stage %s signaled it is complete", OnboardingStagesToString(_dVars.currentStage));
       }
       
-      // stageBehavior wasn't valid, so move to next stage
+      // either the stage is done, or stageBehavior isn't valid, so move to next stage
       
       // just in case two stages request the same behavior, cancel the running one when moving to the next stage
       // todo: maybe this shouldn't happen if one stage ends with the same behavior the next begins with, and
-      // restarting would not be smooth?
+      // restarting would not be smooth? the interstitials are lookaround behaviors so far
       CancelDelegates(false);
       _dVars.lastBehavior = nullptr;
       
@@ -469,26 +494,25 @@ void BehaviorOnboarding::BehaviorUpdate()
     }
   }
   
-  if( requestedStep != _dVars.lastExpectedStep ) {
-    _dVars.lastExpectedStep = requestedStep;
-    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-    if( gi != nullptr ) {
-      auto* msg = new external_interface::OnboardingRobotExpectingStep{ CladProtoTypeTranslator::ToProtoEnum(requestedStep) };
-      gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
-    }
-  }
-  
   if( (stageBehavior != nullptr) && (_dVars.lastBehavior != stageBehavior) ) {
-    _dVars.lastBehavior = stageBehavior;
-    _dVars.currentStageBehaviorFinished = false;
+    if( _dVars.lastBehavior != nullptr ) {
+      // there was an interruption or other behavior running. Cancel it and run a callback. This
+      // is done instead of CancelDelegates(true) since that callback is used to know whether a stage
+      // behavior finished normally
+      OnDelegateComplete();
+    }
     CancelDelegates(false);
+    _dVars.lastBehavior = stageBehavior;
+    SetRobotExpectingStep( requestedStep );
+    _dVars.currentStageBehaviorFinished = false;
     DelegateIfInControl( stageBehavior, [this]() {
       _dVars.currentStageBehaviorFinished = true;
+      OnDelegateComplete();
     });
   } else if( stageBehavior == nullptr ) {
     _dVars.lastBehavior = nullptr;
-    _dVars.lastExpectedStep = OnboardingSteps::Default;
   }
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -504,7 +528,12 @@ void BehaviorOnboarding::AlwaysHandleInScope(const GameToEngineEvent& event)
 void BehaviorOnboarding::AlwaysHandleInScope(const AppToEngineEvent& event)
 {
   if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingContinue ) {
-    RequestContinue();
+    const auto stepNum = event.GetData().onboarding_continue().step_number();
+    if( kDevAllowAnyContinue ) {
+      RequestContinue( _dVars.lastExpectedStep );
+    } else {
+      RequestContinue( stepNum );
+    }
   } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingSkip ) {
     RequestSkip();
   } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingSkipOnboarding ) {
@@ -593,7 +622,9 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
   if( ei != nullptr ) {
     auto onEvent = [this](const EngineToGameEvent& event) {
-      _dVars.pendingEvents.emplace( std::piecewise_construct, std::forward_as_tuple(event.GetCurrentTime()),  std::forward_as_tuple(event) );
+      _dVars.pendingEvents.emplace( std::piecewise_construct,
+                                    std::forward_as_tuple(event.GetCurrentTime()),
+                                    std::forward_as_tuple(event) );
     };
     std::set<EngineToGameTag> tags;
     GetCurrentStage()->GetAdditionalMessages( tags );
@@ -603,7 +634,9 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   }
   if( ei != nullptr ) { // having two ifs is only for scope purposes
     auto onEvent = [this](const GameToEngineEvent& event) {
-      _dVars.pendingEvents.emplace( std::piecewise_construct, std::forward_as_tuple(event.GetCurrentTime()),  std::forward_as_tuple(event) );
+      _dVars.pendingEvents.emplace( std::piecewise_construct,
+                                    std::forward_as_tuple(event.GetCurrentTime()),
+                                    std::forward_as_tuple(event) );
     };
     std::set<GameToEngineTag> tags;
     GetCurrentStage()->GetAdditionalMessages( tags );
@@ -614,7 +647,9 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto onEvent = [this](const AppToEngineEvent& event) {
-      _dVars.pendingEvents.emplace( std::piecewise_construct, std::forward_as_tuple(event.GetCurrentTime()),  std::forward_as_tuple(event) );
+      _dVars.pendingEvents.emplace( std::piecewise_construct,
+                                    std::forward_as_tuple(event.GetCurrentTime()),
+                                    std::forward_as_tuple(event) );
     };
     std::set<AppToEngineTag> tags;
     GetCurrentStage()->GetAdditionalMessages( tags );
@@ -638,29 +673,17 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
   DEV_ASSERT( _iConfig.interruptions.size() == _iConfig.interruptionIDs.size(),
               "BehaviorOnboarding.CheckAndDelegateInterruptions.SizeMismatch" );
   for( size_t i=0; i<_iConfig.interruptions.size(); ++i ) {
+    
     const auto& interruption = _iConfig.interruptions[i];
-    const auto& interruptionID = _iConfig.interruptionIDs[i];
-    
-    // special logic for first stage
-    if( _dVars.currentStage == OnboardingStages::NotStarted ) {
-      if( interruptionID == BEHAVIOR_ID(DriveOffChargerStraight) ) {
-        // first stage has a special drive off charger
-        continue;
-      } else if( !_dVars.receivedContinue ) {
-        // dont run interruptions if we havent received the first Continue, which would drive the robot off charger
-        continue;
-      }
-    } else {
-      // OnboardingFirstTriggerWord json ensures it only runs once, but we never want it to run at all if
-      // the robot boots into a stage later than wake up
-      if( interruptionID == BEHAVIOR_ID(OnboardingFirstTriggerWord) ) {
-        continue;
-      }
-    }
-    
     if( interruption->IsActivated() ) {
       return true;
     }
+    
+    const auto& interruptionID = _iConfig.interruptionIDs[i];
+    if( !CanInterruptionActivate( interruptionID ) ) {
+      continue;
+    }
+    
     if( interruption->WantsToBeActivated() ) {
       Interrupt( interruption, interruptionID );
       return true;
@@ -673,7 +696,14 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID interruptionID )
 {
+  if( (_dVars.lastBehavior != nullptr) || (_dVars.lastInterruption != BEHAVIOR_ID(Anonymous)) ) {
+    // there was an interruption or other behavior running. Cancel it and run a callback. This
+    // is done instead of CancelDelegates(true) since that callback is used to know whether a stage
+    // behavior finished normally
+    OnDelegateComplete();
+  }
   CancelDelegates(false);
+  
   
   // if a stage was running, tell it it was interrupted
   if( _dVars.state == BehaviorState::StageRunning ) {
@@ -687,34 +717,80 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
     }
   }
   
+  // currently some interruption behaviors can end and immediately want to activate, so check whether
+  // something has changed to prevent giving the app the same message multiple times
+  const bool interruptionChanged = (_dVars.lastInterruption != interruptionID);
+  
+  // tell picked up and on charger whether or not the robot is "groggy" (whether it received a trigger word)
+  if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
+    _iConfig.pickedUpBehavior->SetPlayGroggyAnimations( !_dVars.robotHeardTrigger );
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
+    _iConfig.onChargerBehavior->SetPlayGroggyAnimations( !_dVars.robotHeardTrigger );
+  } else if( (interruptionID == BEHAVIOR_ID(OnboardingFirstTriggerWord))
+             || (interruptionID == BEHAVIOR_ID(TriggerWordDetected)) )
+  {
+    _dVars.robotHeardTrigger = true;
+  }
+  
   _dVars.lastInterruption = interruptionID;
   _dVars.lastBehavior = nullptr;
-  _dVars.lastExpectedStep = OnboardingSteps::Default;
+  _dVars.currentStageBehaviorFinished = false;
   DelegateIfInControl( interruption.get() );
   
-  // notify app of certain interruptions
-  // MandatoryPhysicalReactions : no app update needed for now
-  // OnboardingLowBattery       : start charging countdown logic
-  // TriggerWordDetected        : will send normal messages (WakeWordBegin/End)
-  // OnboardingFirstTriggerWord : will send normal messages (WakeWordBegin/End)
-  // OnboardingPickedUp         : sends messages here
-  // OnboardingPlacedOnCharger  : only send if not low battery, since OnboardingLowBattery handles that
-  if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
-    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-    if( !_dVars.batteryInfo.lowBattery && (gi != nullptr) ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Placed on charger, waiting for continue");
-      auto* onboardingOnCharger = new external_interface::OnboardingOnCharger{ true, false, -1.0f };
-      gi->Broadcast( ExternalMessageRouter::Wrap( onboardingOnCharger) );
+  
+  // notify app of certain interruptions:
+  // SingletonPoweringRobotOff   : send OnboardingPhysicalInterruption. todo: power off messages
+  // OnboardingPhysicalReactions : OnboardingPhysicalInterruption
+  // OnboardingLowBattery        : start charging countdown logic
+  // OnboardingDetectHabitat     : send OnboardingHabitatDetected
+  // OnboardingPlacedOnCharger   : only send if not low battery, since OnboardingLowBattery handles that
+  // DriveOffChargerStraight     : no message
+  // OnboardingPickedUp          : send OnboardingPhysicalInterruption
+  // OnboardingFirstTriggerWord  : will send normal messages (WakeWordBegin/End)
+  // TriggerWordDetected         : will send normal messages (WakeWordBegin/End)
+  if( interruptionID == BEHAVIOR_ID(DriveOffChargerStraight) ) {
+    // generic resuming state
+    SetRobotExpectingStep( external_interface::STEP_RESUMING );
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
+    // low battery handled from UpdateBatteryInfo
+    if( !_dVars.batteryInfo.lowBattery && interruptionChanged ) {
+      SetRobotExpectingStep( external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER );
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Placed on charger, waiting for continue");
+        auto* onboardingOnCharger = new external_interface::OnboardingOnCharger{ true, false, -1.0f };
+        gi->Broadcast( ExternalMessageRouter::Wrap( onboardingOnCharger) );
+      }
     }
-  } else if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
-    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-    if( gi != nullptr ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Picked up. Waiting to be put down");
-      auto* onboardingPickedUp = new external_interface::OnboardingPickedUp{ true };
-      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingPickedUp) );
+  } else if( kBehaviorsThatPauseFlow.find(interruptionID) != kBehaviorsThatPauseFlow.end() ) {
+    SetRobotExpectingStep( external_interface::STEP_PHYSICAL_INTERRUPTION );
+    if( interruptionChanged ) {
+      // screen should go dim
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                      "Physical reaction %s. Waiting to be be on a flat surface",
+                      BehaviorIDToString(interruptionID));
+        const int msgType = GetPhysicalInterruptionMsgType( interruptionID );
+        auto* msg = new external_interface::OnboardingPhysicalInterruption;
+        msg->set_type( static_cast<external_interface::OnboardingPhysicalInterruptions>( msgType ) );
+        gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
+      }
     }
   } else if( interruptionID == BEHAVIOR_ID(OnboardingLowBattery) ) {
-    StartLowBatteryCountdown();
+    SetRobotExpectingStep( external_interface::STEP_LOW_BATTERY );
+    if( interruptionChanged ) {
+      StartLowBatteryCountdown();
+    }
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingDetectHabitat) ) {
+    SetRobotExpectingStep( external_interface::STEP_EXPECTING_RESUME_FROM_HABITAT );
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( interruptionChanged && (gi != nullptr) ) {
+      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                    "Detected the habitat. Pausing until Continue, or until some other interruption");
+      auto* msg = new external_interface::OnboardingHabitatDetected;
+      gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
+    }
   }
   
   // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
@@ -751,33 +827,64 @@ void BehaviorOnboarding::TerminateOnboarding()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboarding::RequestContinue()
+void BehaviorOnboarding::RequestContinue( int step )
 {
-  _dVars.receivedContinue = true;
-  if( (_dVars.state == BehaviorState::Interrupted) || (_dVars.state == BehaviorState::InterruptedButComplete) ) {
+  if( (_dVars.state == BehaviorState::Interrupted)
+      || (_dVars.state == BehaviorState::InterruptedButComplete)
+      || (_dVars.state == BehaviorState::StageNotStarted) )
+  {
     if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingLowBattery) ) {
-      // the app should only be sending this if the battery is out of low battery mode
-      if( GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low ) {
-        PRINT_NAMED_WARNING("BehaviorOnboarding.RequestContinue.LowBattery", "App requested off charger, but not done");
+      ANKI_VERIFY( _dVars.lastExpectedStep == external_interface::STEP_EXPECTING_LOW_BATTERY_RESUME,
+                   "BehaviorOnboarding.Interrupt.ContinueMismatchLowBattery",
+                   "State was %d not STEP_EXPECTING_LOW_BATTERY_RESUME",
+                   _dVars.lastExpectedStep );
+      const bool accepted = (step == external_interface::STEP_EXPECTING_LOW_BATTERY_RESUME);
+      if( accepted ) {
+        // the app should only be sending this if the battery is out of low battery mode
+        if( GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low ) {
+          PRINT_NAMED_WARNING("BehaviorOnboarding.RequestContinue.LowBattery", "App requested off charger, but not done");
+        }
+        _dVars.batteryInfo = BatteryInfo(); // reset. This will re-trigger everything if it is still low battery
+        DEV_ASSERT( IsControlDelegated(), "Should be delegating to OnboardingLowBattery" );
+        // start driving off the charger
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
+                      "Robot is charged and received continue. Resuming");
+        CancelDelegates(false);
+        _dVars.shouldDriveOffCharger = true;
       }
-      _dVars.batteryInfo = BatteryInfo(); // reset. This will re-trigger everything if it is still low battery
-      DEV_ASSERT( IsControlDelegated(), "Should be delegating to OnboardingLowBattery" );
-      // start driving off the charger
-      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
-                    "Robot is charged and received continue. Resuming");
-      CancelDelegates(false);
+      SendContinueResponse( accepted, step );
     } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Resuming from charger");
-      // if the user placed the robot on the charger, continue acts as the command to get it off
-      DEV_ASSERT( IsControlDelegated(), "Should be delegating to PlacedOnCharger" );
-      // start driving off the charger
-      CancelDelegates(false);
+      ANKI_VERIFY( _dVars.lastExpectedStep == external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER,
+                  "BehaviorOnboarding.Interrupt.ContinueMismatchLowBattery",
+                  "State was %d not STEP_EXPECTING_LOW_BATTERY_RESUME",
+                  _dVars.lastExpectedStep );
+      const bool accepted = (step == external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER);
+      if( accepted ) {
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Resuming from charger");
+        // if the user placed the robot on the charger, continue acts as the command to get it off
+        DEV_ASSERT( IsControlDelegated(), "Should be delegating to PlacedOnCharger" );
+        // start driving off the charger
+        CancelDelegates(false);
+        _dVars.shouldDriveOffCharger = true;
+      }
+      SendContinueResponse( accepted, step );
+    } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingDetectHabitat) ) {
+      const bool accepted = (step == external_interface::STEP_EXPECTING_RESUME_FROM_HABITAT);
+      if( accepted ) {
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Resuming from habitat");
+        // resume
+        CancelDelegates(false);
+      }
+      SendContinueResponse( accepted, step );
     }
   } else {
-    double time_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    // use default PendingEvent constructor
-    auto itInserted = _dVars.pendingEvents.emplace( std::piecewise_construct, std::forward_as_tuple(time_s), std::forward_as_tuple() );
+    // pass continue along to stage during Update()
+    const float time_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    auto itInserted = _dVars.pendingEvents.emplace( std::piecewise_construct,
+                                                   std::forward_as_tuple(time_s),
+                                                   std::forward_as_tuple() );
     itInserted->second.type = PendingEvent::Continue;
+    itInserted->second.continueNum = step;
     itInserted->second.time_s = time_s;
   }
 }
@@ -785,12 +892,19 @@ void BehaviorOnboarding::RequestContinue()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::RequestSkip()
 {
-  // todo: there's probably some edge case where the app sends a skip right around the time an interruption
-  // begins, so we should probably add a SkipResponse message or just provide more state info. Same for Continue
-  if( _dVars.state == BehaviorState::StageRunning ) {
+  if( (_dVars.state == BehaviorState::StageRunning) || (_dVars.state == BehaviorState::Interrupted) ) {
+    if( _dVars.state != BehaviorState::StageRunning ) {
+      // The user sent a skip and immediately afterward an interruption ran. We keep it pending until
+      // the interruption is over since the app moved on. If this is a problem we might need a skip response.
+      PRINT_NAMED_WARNING("BehaviorOnboarding.RequestSkip.SkipDuringInterruption",
+                          "Requesting a skip during '%s'", BehaviorIDToString(_dVars.lastInterruption));
+    }
+    
     double time_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     // use default PendingEvent constructor
-    auto itInserted = _dVars.pendingEvents.emplace( std::piecewise_construct, std::forward_as_tuple(time_s), std::forward_as_tuple() );
+    auto itInserted = _dVars.pendingEvents.emplace( std::piecewise_construct,
+                                                    std::forward_as_tuple(time_s),
+                                                    std::forward_as_tuple() );
     itInserted->second.type = PendingEvent::Skip;
     itInserted->second.time_s = time_s;
   }
@@ -824,9 +938,9 @@ void BehaviorOnboarding::RequestRetryCharging()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::SetTriggerWordEnabled(bool enabled)
 {
-  if( _dVars.lastTriggerWordEnabled != enabled ) {
+  auto& micComponent = GetBEI().GetMicComponent();
+  if( micComponent.GetTriggerWordDetectionEnabled() != enabled ) {
     GetBEI().GetMicComponent().SetTriggerWordDetectionEnabled( enabled );
-    _dVars.lastTriggerWordEnabled = enabled;
   }
 }
   
@@ -853,12 +967,21 @@ void BehaviorOnboarding::SetAllowAnyIntent()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::SetStreamAfterWakeWord( bool stream )
+{
+  auto& micComponent = GetBEI().GetMicComponent();
+  if( micComponent.GetShouldStreamAfterWakeWord() != stream ) {
+    micComponent.SetShouldStreamAfterWakeWord( stream );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::UpdateBatteryInfo()
 {
   auto& info = _dVars.batteryInfo;
   
   if( !info.lowBattery
-     && !_dVars.receivedContinue
+     && !_dVars.robotWokeUp
      && (_dVars.currentStage == OnboardingStages::NotStarted)
      && (GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low) )
   {
@@ -868,6 +991,7 @@ void BehaviorOnboarding::UpdateBatteryInfo()
       gi->Broadcast( ExternalMessageRouter::Wrap(onboardingLowBattery) );
     }
     info.lowBattery = true;
+    SetRobotExpectingStep( external_interface::STEP_LOW_BATTERY );
   }
   
   
@@ -879,8 +1003,8 @@ void BehaviorOnboarding::UpdateBatteryInfo()
   // robot should be charging for the first 30 mins or so of being on contacts, so use IsOnChargerContacts instead of IsCharging
   const bool currOnCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
   const bool currOnChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
-  if( currOnCharger && !info.onCharger ) {
-    info.onCharger = true;
+  if( currOnCharger && (info.chargerState != BatteryInfo::ChargerState::OnCharger) ) {
+    info.chargerState = BatteryInfo::ChargerState::OnCharger;
     float requiredChargeTime_s;
     if( (info.timeChargingDone_s < 0.0f) || (info.timeRemovedFromCharger < 0.0f) ) {
       // was never on charger before
@@ -903,9 +1027,9 @@ void BehaviorOnboarding::UpdateBatteryInfo()
       gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
     }
     info.sentOutOfLowBattery = false;
-  } else if( !currOnCharger && !currOnChargerPlatform && info.onCharger ) {
+  } else if( !currOnCharger && !currOnChargerPlatform && (info.chargerState == BatteryInfo::ChargerState::OnCharger) ) {
     // this also checked charger platform in case it slips off contact while wiggling onto charger
-    info.onCharger = false;
+    info.chargerState = BatteryInfo::ChargerState::OffCharger;
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                   "Low battery off charger. Countdown paused");
     info.timeRemovedFromCharger = currTime_s;
@@ -925,6 +1049,7 @@ void BehaviorOnboarding::UpdateBatteryInfo()
       auto* onboardingLowBattery = new external_interface::OnboardingLowBattery{ false };
       gi->Broadcast( ExternalMessageRouter::Wrap(onboardingLowBattery) );
     }
+    SetRobotExpectingStep( external_interface::STEP_EXPECTING_LOW_BATTERY_RESUME );
     info.sentOutOfLowBattery = true;
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                   "Robot is charged now. Waiting on continue");
@@ -938,6 +1063,7 @@ void BehaviorOnboarding::StartLowBatteryCountdown()
   // only start it if not already started, since low battery can get interrupted by mandatory reactions
   if( !info.lowBattery ) {
     info.lowBattery = true;
+    SetRobotExpectingStep( external_interface::STEP_LOW_BATTERY );
     
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                   "Low battery. Countdown will start when on charger");
@@ -949,7 +1075,119 @@ void BehaviorOnboarding::StartLowBatteryCountdown()
     }
   }
 }
+            
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::SendContinueResponse( bool acceptedContinue, int step )
+{
+  if( !acceptedContinue ) {
+    PRINT_NAMED_WARNING( "BehaviorOnboarding.SendContinueResponse.InvalidContinue",
+                         "Stage '%s' (step '%d') did not accept input step %d",
+                         (_dVars.lastBehavior != nullptr) ? _dVars.lastBehavior->GetDebugLabel().c_str() : "[null]",
+                         _dVars.lastExpectedStep, step );
+  }
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse{ acceptedContinue };
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
+    
+    if( !acceptedContinue ) {
+      // resend expected state
+      external_interface::OnboardingSteps stepEnum = static_cast<external_interface::OnboardingSteps>(_dVars.lastExpectedStep);
+      auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ stepEnum };
+      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingExpectedStep) );
+    }
+  }
+}
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::SetRobotExpectingStep( int step )
+{
+  ANKI_VERIFY( step != external_interface::STEP_INVALID,
+               "BehaviorOnboarding.SetRobotExpectingStep.Invalid",
+               "Internally requested invalid step" );
+  
+  if( step >= external_interface::STEP_EXPECTING_FIRST_TRIGGER_WORD ) {
+    _dVars.robotWokeUp = true;
+  }
+  if( _iConfig.detectHabitatBehavior != nullptr ) {
+    _iConfig.detectHabitatBehavior->SetOnboardingStep( step );
+  }
+  
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( (gi != nullptr) && (_dVars.lastExpectedStep != step) ) {
+    external_interface::OnboardingSteps stepEnum{ static_cast<external_interface::OnboardingSteps>(step) };
+    auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ stepEnum };
+    gi->Broadcast( ExternalMessageRouter::Wrap(onboardingExpectedStep) );
+  }
+  _dVars.lastExpectedStep = step;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorOnboarding::CanInterruptionActivate( BehaviorID interruptionID ) const
+{
+  // special logic for first stage
+  if( _dVars.currentStage == OnboardingStages::NotStarted ) {
+    if( interruptionID == BEHAVIOR_ID(DriveOffChargerStraight) ) {
+      // first stage has a special drive off charger
+      return false;
+    } else if( !_dVars.robotWokeUp ) {
+      // dont run interruptions if it hasn't finished waking up
+      // todo: exception to this exception: driving off the charger that is placed right next to a cliff.
+      // Currently the drive of charger animation stops, and then the robot will wait for a message
+      // to leave the charger again with groggy eyes. Ideally there'd be some groggy react to
+      // cliff animation prior to that
+      return false;
+    }
+  } else {
+    // OnboardingFirstTriggerWord json ensures it only runs once, but we never want it to run at all if
+    // the robot boots into a stage later than wake up
+    if( interruptionID == BEHAVIOR_ID(OnboardingFirstTriggerWord) ) {
+      return false;
+    }
+  }
+  
+  if( (interruptionID == BEHAVIOR_ID(DriveOffChargerStraight)) && !_dVars.shouldDriveOffCharger ) {
+    // drive off charger should only activate when a flag is set, which usually corresponds to receipt of a "continue"
+    return false;
+  }
+  
+  if( (_dVars.currentStage == OnboardingStages::NotStarted)
+     && (interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger))
+     && _dVars.shouldDriveOffCharger )
+  {
+    // placed on charger should not activate while the robot is driving off the charger (first stage only)
+    return false;
+  }
+  
+  // all others should check WantsToBeActivated()
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::OnDelegateComplete()
+{
+  // not matter what behavior ended, clear the flag that the robot should drive off the charger
+  _dVars.shouldDriveOffCharger = false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int BehaviorOnboarding::GetPhysicalInterruptionMsgType( BehaviorID interruptionID ) const
+{
+  int interruptionType = 0;
+  if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
+    interruptionType = external_interface::ONBOARDING_INTERRUPTION_PICKED_UP;
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingPhysicalReactions) ) {
+    interruptionType = external_interface::ONBOARDING_INTERRUPTION_PHYSICAL;
+  } else if( interruptionID == BEHAVIOR_ID(SingletonPoweringRobotOff) ) {
+    interruptionType = external_interface::ONBOARDING_INTERRUPTION_POWER_BUTTON;
+  } else {
+    ANKI_VERIFY(false,
+                "BehaviorOnboarding.GetPhysicalInterruptionMessage.Invalid",
+                "kBehaviorsThatPauseFlow does not include %s",
+                BehaviorIDToString(interruptionID));
+  }
+  return interruptionType;
+}
 
 }
 }

@@ -21,7 +21,11 @@
     "en":
     {
       "voice": "colibri-ben_enu",
-      "speed": 90,
+      "speed": 80,
+      "speedTraits": [
+        { "textLengthMin": 0, "textLengthMax": 4, "rangeMin": 75, "rangeMax": 75},
+        { "textLengthMin": 10, "textLengthMax": 9999, "rangeMin": 83, "rangeMax": 83}
+      ],
       "pitch": 100,
       "shaping": 115
     },
@@ -48,7 +52,11 @@
     "en":
     {
       "voice": "co-USEnglish-Bendnn-22khz/enu/enu_bendnn_22k_co.fl.ini",
-      "speed": 90,
+      "speed": 80,
+      "speedTraits": [
+        { "textLengthMin": 0, "textLengthMax": 4, "rangeMin": 75, "rangeMax": 75},
+        { "textLengthMin": 10, "textLengthMax": 9999, "rangeMin": 83, "rangeMax": 83}
+      ],
       "pitch": 100,
       "shaping": 115
     },

@@ -5,13 +5,11 @@
 This example lets you control Vector by Remote Control, using a webpage served by Flask.
 '''
 
-import argparse
+import asyncio
 import io
 import json
-import os
 import sys
 import time
-from pathlib import Path
 from lib import flask_helpers
 
 try:
@@ -57,7 +55,7 @@ def remap_to_range(x, x_min, x_max, out_min, out_max):
     '''convert x (in x_min..x_max range) to out_min..out_max range'''
     if x < x_min:
         return out_min
-    elif x > x_max:
+    if x > x_max:
         return out_max
     ratio = (x - x_min) / (x_max - x_min)
     return out_min + ratio * (out_max - out_min)
@@ -218,7 +216,7 @@ class RemoteControlVector:
 
         # Handle any keys being released (e.g. the end of a key-click)
         if not is_key_down:
-            if (key_code >= ord('0')) and (key_code <= ord('9')):
+            if ord('9') >= key_code >= ord('0'):
                 anim_name = self.key_code_to_anim_name(key_code)
                 self.queue_action((self.vector.anim.play_animation, anim_name))
             elif key_code == ord(' '):
@@ -233,7 +231,7 @@ class RemoteControlVector:
     def func_to_name(self, func):
         if func == self.vector.say_text:
             return "say_text"
-        elif func == self.vector.anim.play_animation:
+        if func == self.vector.anim.play_animation:
             return "play_anim"
         return "UNKNOWN"
 
@@ -254,8 +252,12 @@ class RemoteControlVector:
             self.action_queue.pop(0)
         self.action_queue.append(new_action)
 
+    async def dummy_wait(self):
+        await asyncio.sleep(0)
+
     def update(self):
         '''Try and execute the next queued action'''
+        self.vector.loop.run_until_complete(self.dummy_wait())
         if self.action_queue:
             queued_action, action_args = self.action_queue[0]
             if queued_action(action_args):
@@ -650,18 +652,9 @@ def handle_updateVector():
 
 
 def run():
+    args = util.parse_test_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name", nargs='?', default=os.environ.get('VECTOR_ROBOT_NAME', None))
-    parser.add_argument("-i", "--ip", nargs='?', default=os.environ.get('VECTOR_ROBOT_IP', None))
-    parser.add_argument("-c", "--cert_file", nargs='?', default=os.environ.get('VECTOR_ROBOT_CERT', None))
-    parser.add_argument("--port", nargs='?', default="443")
-    args = parser.parse_args()
-
-    cert = Path(args.cert_file)
-    args.cert = cert.resolve()
-
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
 
         # TODO: Enable image stream once camera feed is added
         # Turn on image receiving by the camera
@@ -672,7 +665,6 @@ def run():
 
 
 if __name__ == '__main__':
-    vector.util.setup_basic_logging()
     try:
         run()
     except KeyboardInterrupt as e:

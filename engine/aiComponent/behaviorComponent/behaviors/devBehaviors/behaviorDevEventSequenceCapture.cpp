@@ -42,6 +42,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/vision/imageSaver.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
 
@@ -377,11 +378,12 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         _dVars.seqState = SequenceState::PreEventCapture;
         _dVars.waitStartTime_s = currTime_s;
         _dVars.seqStartTimeStamp = GetTimestamp();
-        visionComponent.SetSaveImageParameters(ImageSendMode::Stream,
-                                               GetAbsSequenceSavePath(),
-                                               "", // No basename: use auto-numbering
-                                               _iConfig.imageSaveQuality,
-                                               _iConfig.imageSaveSize);
+        ImageSaverParams params(GetAbsSequenceSavePath(),
+                                ImageSendMode::Stream,
+                                _iConfig.imageSaveQuality,
+                                "",
+                                _iConfig.imageSaveSize);
+        visionComponent.SetSaveImageParameters(params);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Countdown,
                                                  GO::Behavior);
         GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsPreCap );
@@ -413,11 +415,12 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
       {
         _dVars.seqState = SequenceState::Waiting;
         _dVars.seqEndTimeStamp = GetTimestamp();
-        visionComponent.SetSaveImageParameters(ImageSendMode::Off,
-                                               GetAbsSequenceSavePath(),
-                                               "", // No basename: use auto-numbering
-                                               _iConfig.imageSaveQuality,
-                                               _iConfig.imageSaveSize);
+        ImageSaverParams params(GetAbsSequenceSavePath(),
+                                ImageSendMode::Off,
+                                _iConfig.imageSaveQuality,
+                                "", // No basename: use auto-numbering
+                                _iConfig.imageSaveSize);
+        visionComponent.SetSaveImageParameters(params);
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Timer_Cancel,
                                                  GO::Behavior);
         GetBEI().GetBackpackLightComponent().SetBackpackAnimation( kLightsWaiting );

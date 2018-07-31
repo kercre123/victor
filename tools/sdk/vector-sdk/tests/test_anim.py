@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 import sys
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector  # pylint: disable=wrong-import-position
 
@@ -17,7 +16,7 @@ CUSTOM_ANIM_FOLDER = Path("test_assets", "custom_animations")
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     print("------ begin testing animations ------")
 

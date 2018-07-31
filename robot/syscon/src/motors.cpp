@@ -115,17 +115,16 @@ static void Motors::transmit(BodyToHead *payload) {
       switch (i) {
         case MOTOR_LEFT:
         case MOTOR_RIGHT:
-          state->position += (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
+          payload->motor[i].delta = (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
           break ;
         default:
-          state->position += delta_last[i];
+          payload->motor[i].delta = delta_last[i];
           break ;
       }
 
-      payload->motor[i].position = state->position;
-
       // Copy over tick values
-      payload->motor[i].delta = (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
+      state->position += payload->motor[i].delta;
+      payload->motor[i].position = state->position;
       payload->motor[i].time = state->last_time - time_last[i];
 
       // We will survives

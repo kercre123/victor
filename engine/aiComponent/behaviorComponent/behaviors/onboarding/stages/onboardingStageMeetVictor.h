@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "proto/external_interface/onboardingSteps.pb.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
 
@@ -49,13 +50,14 @@ public:
     // load all behaviors
     _behaviors.clear();
     // todo: for LookingAround, behavior to look around and at user instead of just at user
-    _behaviors[Step::LookingAround] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
-    _behaviors[Step::MeetVictor]    = GetBehaviorByID( bei, BEHAVIOR_ID(MeetVictor) );
-    _behaviors[Step::LookAtUser]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
-    _behaviors[Step::WaitForReScan] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
-    _behaviors[Step::RenameFace]    = GetBehaviorByID( bei, BEHAVIOR_ID(RespondToRenameFace) );
+    _behaviors[Step::LookingAround]  = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
+    _behaviors[Step::MeetVictor]     = GetBehaviorByID( bei, BEHAVIOR_ID(MeetVictor) );
+    _behaviors[Step::SuccessfulScan] = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
+    _behaviors[Step::WaitForReScan]  = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
+    _behaviors[Step::RenameFace]     = GetBehaviorByID( bei, BEHAVIOR_ID(RespondToRenameFace) );
     _enrollmentSuccessful = false;
     _step = Step::LookingAround;
+    _receivedStartMsg = false;
     
     // initial behavior
     _selectedBehavior = _behaviors[Step::LookingAround];
@@ -67,34 +69,45 @@ public:
     SetTriggerWordEnabled(false);
   }
   
-  virtual bool OnContinue( BehaviorExternalInterface& bei, OnboardingSteps stepNum ) override
+  virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
   {
+    bool accepted = false;
     if( _step == Step::LookingAround ) {
-      DebugTransition("Waiting on \"my name is\"");
-      SetTriggerWordEnabled(true);
-      SetAllowedIntent( USER_INTENT(meet_victor) );
-    } else if( _step == Step::WaitForReScan ) {
-      DebugTransition("Trying to start meet victor again for rescan");
-      // restart
-      ANKI_VERIFY(!_enrollmentName.empty(), "OnboardingStageMeetVictor.OnContinue.NoName", "Unknown name!");
-      const bool sayName = true;
-      const bool saveFaceToRobot = true;
-      const bool useMusic = false;
-      const s32 faceID = Vision::UnknownFaceID;
-      ExternalInterface::SetFaceToEnroll setFaceToEnroll(_enrollmentName, faceID, faceID, saveFaceToRobot, sayName, useMusic);
-      auto* ei = bei.GetRobotInfo().GetExternalInterface();
-      if( ei != nullptr ) {
-        ei->Broadcast(ExternalInterface::MessageGameToEngine{std::move(setFaceToEnroll)});
+      accepted = (stepNum == external_interface::STEP_EXPECTING_CONTINUE_MEET_VECTOR);
+      if( accepted ) {
+        DebugTransition("Waiting on \"my name is\"");
+        SetTriggerWordEnabled(true);
+        SetAllowedIntent( USER_INTENT(meet_victor) );
+        _receivedStartMsg = true;
       }
-    } else if( _step == Step::LookAtUser ) {
-      // done
-      DebugTransition("Complete");
-      _step = Step::Complete;
-      _selectedBehavior = nullptr;
+    } else if( _step == Step::WaitForReScan ) {
+      accepted = (stepNum == external_interface::STEP_EXPECTING_RESCAN);
+      if( accepted ) {
+        DebugTransition("Trying to start meet victor again for rescan");
+        // restart
+        ANKI_VERIFY(!_enrollmentName.empty(), "OnboardingStageMeetVictor.OnContinue.NoName", "Unknown name!");
+        const bool sayName = true;
+        const bool saveFaceToRobot = true;
+        const bool useMusic = false;
+        const s32 faceID = Vision::UnknownFaceID;
+        ExternalInterface::SetFaceToEnroll setFaceToEnroll(_enrollmentName, faceID, faceID, saveFaceToRobot, sayName, useMusic);
+        auto* ei = bei.GetRobotInfo().GetExternalInterface();
+        if( ei != nullptr ) {
+          ei->Broadcast(ExternalInterface::MessageGameToEngine{std::move(setFaceToEnroll)});
+        }
+      }
+    } else if( _step == Step::SuccessfulScan ) {
+      accepted = (stepNum == external_interface::STEP_EXPECTING_END_MEET_VECTOR);
+      if( accepted ) {
+        // done
+        DebugTransition("Complete");
+        _step = Step::Complete;
+        _selectedBehavior = nullptr;
+      }
     } else if( _step != Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageMeetVictor.UnexpectedContinue");
     }
-    return true;
+    return accepted;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
@@ -111,7 +124,8 @@ public:
       _enrollmentEnded = true;
       TryEndingMeetVictor();
     } else if( _step == Step::RenameFace ) {
-      TransitionToLookAtFace();
+      // todo: fix if renameFace is brought back to life
+      TransitionToSuccessfulScan();
     } else {
       DEV_ASSERT(false, "OnboardingStageMeetVictor.UnexpectedEndToBehavior");
     }
@@ -148,6 +162,26 @@ public:
       DebugTransition("Renaming face");
       _step = Step::RenameFace;
       _selectedBehavior = _behaviors[_step];
+    }
+  }
+  
+  virtual int GetExpectedStep() const override
+  {
+    switch( _step ) {
+      case Step::LookingAround:
+        return _receivedStartMsg
+               ? external_interface::STEP_EXPECTING_MEET_VECTOR
+               : external_interface::STEP_EXPECTING_CONTINUE_MEET_VECTOR;
+      case Step::MeetVictor:
+        return external_interface::STEP_MEET_VECTOR;
+      case Step::SuccessfulScan:
+        return external_interface::STEP_EXPECTING_END_MEET_VECTOR;
+      case Step::WaitForReScan:
+        return external_interface::STEP_EXPECTING_RESCAN;
+      case Step::Invalid:
+      case Step::Complete:
+      case Step::RenameFace: // valid case, but no longer used in onboarding. keeping this here in case it is brought back
+        return external_interface::STEP_INVALID;
     }
   }
   
@@ -196,10 +230,10 @@ private:
     _selectedBehavior = _behaviors[_step];
   }
   
-  void TransitionToLookAtFace()
+  void TransitionToSuccessfulScan()
   {
     DebugTransition("Finished meeting victor, looking around, waiting for continue or rename face");
-    _step = Step::LookAtUser;
+    _step = Step::SuccessfulScan;
     _selectedBehavior = _behaviors[_step];
     SetTriggerWordEnabled( false ); // no more intents for this stage
   }
@@ -208,7 +242,7 @@ private:
   {
     if( _receivedEnrollmentResult && _enrollmentEnded ) {
       if( _enrollmentSuccessful ) {
-        TransitionToLookAtFace();
+        TransitionToSuccessfulScan();
       } else {
         TransitionToWaitForReScan();
       }
@@ -247,7 +281,7 @@ private:
     Invalid=0,
     LookingAround,
     MeetVictor,
-    LookAtUser,
+    SuccessfulScan,
     WaitForReScan,
     RenameFace,
     Complete,
@@ -260,6 +294,7 @@ private:
   bool _receivedEnrollmentResult = false;
   bool _enrollmentEnded = false;
   std::string _enrollmentName;
+  bool _receivedStartMsg = false;
   
   std::unordered_map<Step, IBehavior*> _behaviors;
   

@@ -15,14 +15,13 @@ import os
 import sys
 import time
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector  # pylint: disable=wrong-import-position
 
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("------ begin testing oled ------")

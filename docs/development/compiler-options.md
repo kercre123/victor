@@ -394,15 +394,6 @@ Anki::Util::sEvent
 #endif
 ```
 
-### uiMessageHandler
-```
-  #if defined(SHIPPING)
-    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk,  "Sdk", false);
-  #else
-    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
-  #endif
-```
-
 ### consoleMacro
 ```
 #ifndef REMOTE_CONSOLE_ENABLED

@@ -41,16 +41,6 @@ namespace {
   // amount to account for messaging/tick latency/timing.
   const float kLatencyCorrectionTime_sec = 0.050f;
   
-  const BackpackLightAnimation::BackpackAnimation beatBackpackLights = {
-    .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
-    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{60,60,60}},
-    .offPeriod_ms           = {{1000,1000,1000}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{200,200,200}},
-    .offset                 = {{0,0,0}}
-  };
-  
   // Maximum number of beats that can make up a single "dance phrase"
   const uint32_t kMaxBeatsPerDancePhrase = 32;
   
@@ -62,6 +52,7 @@ namespace {
   const char* kQuitAnim_key    = "quitAnim";
   const char* kIdleAnim_key    = "idleAnim";
   const char* kEyeHoldAnim_key = "eyeHoldAnim";
+  const char* kBackpackAnim_key = "backpackAnim";
   const char* kDancePhraseConfigs_key  = "dancePhraseConfigs";
 }
 
@@ -80,11 +71,12 @@ BehaviorDanceToTheBeat::InstanceConfig::InstanceConfig(const Json::Value& config
   , useBackpackLights(JsonTools::ParseBool(config, kUseBackpackLights_key, debugName))
   , canListenForBeatsDuringGetIn(JsonTools::ParseBool(config, kCanListenForBeatsDuringGetIn_key, debugName))
 {
-  JsonTools::GetCladEnumFromJSON(config, kGetInAnim_key,   getInAnim,   debugName);
-  JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,  getOutAnim,  debugName);
-  JsonTools::GetCladEnumFromJSON(config, kQuitAnim_key,    quitAnim,    debugName);
-  JsonTools::GetCladEnumFromJSON(config, kIdleAnim_key,    idleAnim,    debugName);
-  JsonTools::GetCladEnumFromJSON(config, kEyeHoldAnim_key, eyeHoldAnim, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetInAnim_key,    getInAnim,    debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,   getOutAnim,   debugName);
+  JsonTools::GetCladEnumFromJSON(config, kQuitAnim_key,     quitAnim,     debugName);
+  JsonTools::GetCladEnumFromJSON(config, kIdleAnim_key,     idleAnim,     debugName);
+  JsonTools::GetCladEnumFromJSON(config, kEyeHoldAnim_key,  eyeHoldAnim,  debugName);
+  JsonTools::GetCladEnumFromJSON(config, kBackpackAnim_key, backpackAnim, debugName);
   
   const auto& animConfig = config[kDancePhraseConfigs_key];
   ANKI_VERIFY(!animConfig.isNull(), "BehaviorDanceToTheBeat.InstanceConfig.NullDancePhraseConfig", "");
@@ -161,6 +153,7 @@ void BehaviorDanceToTheBeat::GetBehaviorJsonKeys(std::set<const char*>& expected
     kQuitAnim_key,
     kIdleAnim_key,
     kEyeHoldAnim_key,
+    kBackpackAnim_key,
     kDancePhraseConfigs_key,
   };
   expectedKeys.insert(std::begin(list), std::end(list));
@@ -367,9 +360,8 @@ void BehaviorDanceToTheBeat::OnBeat()
   if (_iConfig.useBackpackLights) {
     StopBackpackLights();
     auto& blc = GetBEI().GetBackpackLightComponent();
-    blc.StartLoopingBackpackAnimation(beatBackpackLights,
-                                   BackpackLightSource::Behavior,
-                                   _dVars.backpackDataRef);
+    const bool shouldLoop = true;
+    blc.SetBackpackAnimation(_iConfig.backpackAnim, shouldLoop);
   }
   
   // If we're currently listening for beats, then this means
@@ -398,11 +390,7 @@ void BehaviorDanceToTheBeat::OnBeat()
 void BehaviorDanceToTheBeat::StopBackpackLights()
 {
   auto& blc = GetBEI().GetBackpackLightComponent();
-  if (_dVars.backpackDataRef.IsValid() &&
-      !blc.StopLoopingBackpackAnimation(_dVars.backpackDataRef)) {
-    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.StopBackpackLights.FailedStoppingBackpackLights",
-                        "Failed to stop backpack lights");
-  }
+  blc.ClearAllBackpackLightConfigs();
 }
 
 void BehaviorDanceToTheBeat::UnregisterOnBeatCallback()

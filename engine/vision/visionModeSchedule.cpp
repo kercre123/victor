@@ -55,18 +55,35 @@ VisionModeSchedule::VisionModeSchedule(int onFrequency, int frameOffset)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionModeSchedule::CheckTimeToProcessAndAdvance()
+bool VisionModeSchedule::IsTimeToProcess() const
 {
-  const bool isTimeToProcess = _schedule[_index++];
+  const bool isTimeToProcess = _schedule[_index];
+  return isTimeToProcess;
+}
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionModeSchedule::Advance()
+{
+  ++_index;
   if(_index == _schedule.size())
   {
     _index = 0;
   }
-  
-  return isTimeToProcess;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VisionModeSchedule::WillEverRun() const
+{
+  for(bool isScheduled : _schedule)
+  {
+    if(isScheduled) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Static member initialization
 AllVisionModesSchedule::ScheduleArray AllVisionModesSchedule::sDefaultSchedules = AllVisionModesSchedule::InitDefaultSchedules();
@@ -113,11 +130,19 @@ const VisionModeSchedule& AllVisionModesSchedule::GetScheduleForMode(VisionMode 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AllVisionModesSchedule::CheckTimeToProcessAndAdvance(VisionMode mode)
+bool AllVisionModesSchedule::IsTimeToProcess(VisionMode mode) const
 {
-  VisionModeSchedule& schedule = GetScheduleForMode(mode); // Note that we return a reference!
-  const bool isTimeToProcess = schedule.CheckTimeToProcessAndAdvance();
+  const bool isTimeToProcess = GetScheduleForMode(mode).IsTimeToProcess();
   return isTimeToProcess;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AllVisionModesSchedule::Advance()
+{
+  for(auto & schedule : _schedules)
+  {
+    schedule.Advance();
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

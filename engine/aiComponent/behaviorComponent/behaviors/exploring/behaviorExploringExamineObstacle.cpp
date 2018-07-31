@@ -30,6 +30,7 @@
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "engine/vision/imageSaver.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -585,10 +586,8 @@ void BehaviorExploringExamineObstacle::DevTakePhoto() const
     "exploringObstacles"
   });
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
-                                         path,
-                                         "", // No basename: rely on auto-numbering
-                                         kImageQuality);
+  ImageSaverParams params(path, ImageSendMode::SingleShot, kImageQuality);
+  visionComponent.SetSaveImageParameters(params);
 
 }
 

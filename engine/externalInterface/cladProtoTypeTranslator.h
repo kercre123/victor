@@ -36,10 +36,6 @@ namespace CladProtoTypeTranslator {
   constexpr external_interface::FaceEnrollmentResult ToProtoEnum( FaceEnrollmentResult value ){
     return static_cast<external_interface::FaceEnrollmentResult>( static_cast<std::underlying_type_t<FaceEnrollmentResult>>(value) );
   }
-  
-  constexpr external_interface::OnboardingSteps ToProtoEnum( OnboardingSteps value ){
-    return static_cast<external_interface::OnboardingSteps>( static_cast<std::underlying_type_t<OnboardingSteps>>(value) );
-  }
 
   #define CLAD_PROTO_COMPARE_ASSERT(T,V) static_assert(ToProtoEnum(T::V) == external_interface::T::V, "Invalid cast " #T "::" #V )
   #define CLAD_PROTO_COMPARE_ASSERT2(T,V,U) static_assert(ToProtoEnum(T::V) == external_interface::T::U, "Invalid cast " #T "::" #V " to " #T "::" #U )
@@ -65,9 +61,6 @@ namespace CladProtoTypeTranslator {
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, NameInUse, NAME_IN_USE);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, NamedStorageFull, NAMED_STORAGE_FULL);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, UnknownFailure, UNKNOWN_FAILURE);
-  
-  CLAD_PROTO_COMPARE_ASSERT2(OnboardingSteps, Default, DEFAULT);
-  CLAD_PROTO_COMPARE_ASSERT2(OnboardingSteps, FirstTriggerWord, FIRST_TRIGGER_WORD);
 }
 
 

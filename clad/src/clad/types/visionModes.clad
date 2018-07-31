@@ -21,7 +21,7 @@ namespace Cozmo {
     DetectingSmileAmount,        //  "
     DetectingGaze,               //  "
     DetectingBlinkAmount,        //  "
-    LimitedExposure,
+    CyclingExposure,
     DetectingLaserPoints,
     BuildingOverheadMap,
     DetectingVisualObstacles,
@@ -29,6 +29,7 @@ namespace Cozmo {
     SavingImages,
     RunningNeuralNet, 
     DetectingIllumination,
+    MeteringFromChargerOnly,     // For auto-exposure metering, only use charger marker, if detected
     Count
   }
       

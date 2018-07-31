@@ -26,8 +26,6 @@ import vector  # pylint: disable=wrong-import-position
 from vector.messaging import protocol  # pylint: disable=wrong-import-position
 from vector.messaging import client  # pylint: disable=wrong-import-position
 
-from tests import utilities  # pylint: disable=import-error,wrong-import-position
-
 Interface = client.ExternalInterfaceServicer
 
 # Both the EventStream and RobotStream should be kicked off automatically when we initialize a
@@ -39,7 +37,6 @@ Interface = client.ExternalInterfaceServicer
 #  - nicolas 06/18/18
 MESSAGES_TO_IGNORE = [
     Interface.EventStream,
-    Interface.RobotStateStream,
 ]
 
 
@@ -417,7 +414,7 @@ async def run_message_tests(robot, future):
 
 def main():
     '''main execution'''
-    args = utilities.parse_args()
+    args = vector.util.parse_test_args()
 
     logger = logging.getLogger('vector')
     logger.setLevel(logging.DEBUG)

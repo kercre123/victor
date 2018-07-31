@@ -49,6 +49,20 @@
 
 #define DEBUG_TRIGGER_WORD_VERBOSE 0 // add some verbose debugging if trying to track down issues
 
+#define CONSOLE_GROUP  "TriggerWord"
+
+#if DEBUG_TRIGGER_WORD_VERBOSE
+  // only print these debug if we're tracking down something so we don't spam the logs
+  #define PRINT_TRIGGER_DEBUG( format, ... ) \
+    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.TriggerWord", format, ##__VA_ARGS__ )
+#else
+  #define PRINT_TRIGGER_DEBUG( format, ... )
+#endif
+
+#define PRINT_TRIGGER_INFO( format, ... ) \
+  PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.TriggerWord", format, ##__VA_ARGS__ )
+
+
 namespace Anki {
 namespace Cozmo {
 
@@ -63,22 +77,25 @@ namespace {
   const char* kAnimListeningGetIn               = "animListeningGetIn";
   const char* kExitAfterGetInKey                = "exitAfterGetIn";
 
-  constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
-  constexpr float            kDirectionalityListeningBuffer_s = 2.0f;
-
-#define CONSOLE_GROUP "BehaviorReactToVoiceCommand"
-
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
-  // the behavior will always "listed" for at least this long once it hears the wakeword, even if we receive
+  // the behavior will always "listen" for at least this long once it hears the wakeword, even if we receive
   // an error sooner than this. Note that the behavior will also consider the intent to be an error if the
   // stream doesn't open within this amount of time, so don't lower this number too much
-  CONSOLE_VAR_RANGED( float, kMinListeningTimeout_s, CONSOLE_GROUP, 5.0f, 0.0f, 30.0f);
+  CONSOLE_VAR_RANGED( float, kMinListeningTimeout_s, CONSOLE_GROUP, 5.0f, 0.0f, 30.0f );
+  // this is the maximum duration we'll wait from streaming begin
+  CONSOLE_VAR_RANGED( float, kMaxStreamingDuration_s, CONSOLE_GROUP, 10.0f, 0.0f, 20.0f );
 
-  // In addition to the max time the mic process will record, we want to allow some buffer room for chipper to
-  // get and process it's response, so we don't timeout too early. This variable controls that extra amount of
-  // time
-  CONSOLE_VAR_RANGED( float, kCloudTimeoutBuffer_s, CONSOLE_GROUP, 7.0f, 0.0f, 20.0f);
+
+  // when our streaming begins/ends there is a high chance that we will record some non-intent sound, these
+  // values allow us to chop off the front and back of the streaming window when determining the intent direction
+  CONSOLE_VAR_RANGED( double, kDirStreamingTimeToIgnoreBegin,  CONSOLE_GROUP, 0.5, 0.0, 2.0 );
+  CONSOLE_VAR_RANGED( double, kDirStreamingTimeToIgnoreEnd,    CONSOLE_GROUP, 1.25, 0.0, 2.0 );
+  // ignore mic direction with confidence below this when trying to determine streaming direction
+  CONSOLE_VAR_RANGED( MicDirectionConfidence, kDirStreamingConfToIgnore, CONSOLE_GROUP, 500, 0, 10000 );
+  // if we cannot determine the mic direction, we fall back to the most recent direction
+  // this allows you to specify how far back we sample for the most recent direction
+  CONSOLE_VAR_RANGED( double, kRecentDirFallbackTime,          CONSOLE_GROUP, 1.0, 0.0, 10.0 );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -98,7 +115,8 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
 BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   state( EState::GetIn ),
   reactionDirection( kMicDirectionUnknown ),
-  streamingBeginTime( -1.0f ),
+  streamingBeginTime( 0.0 ),
+  streamingEndTime( 0.0 ),
   intentStatus( EIntentStatus::NoIntentHeard ),
   timestampToDisableTurnFor(0)
 {
@@ -276,10 +294,6 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordBegin) );
   }
 
-  // cache our reaction direction at the start in case we were told to turn
-  // upon hearing the trigger word
-  ComputeReactionDirection();
-
   if ( GetBEI().HasMoodManager() )
   {
     auto& moodManager = GetBEI().GetMoodManager();
@@ -340,32 +354,35 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
+  DEV_ASSERT( ( GetStreamingDuration() >= ( MicData::kStreamingTimeout_ms / 1000.0 ) ),
+              "BehaviorReactToVoiceCommand: Behavior streaming timeout is less than mic streaming timeout" );
 
-  const bool wasStreaming = _dVars.streamingBeginTime >= 0.0f;
+  const bool wasStreaming = ( _dVars.streamingBeginTime > 0.0 );
   const bool isStreaming = GetBehaviorComp<UserIntentComponent>().IsCloudStreamOpen();
 
-  if( !wasStreaming && isStreaming ) {
-    OnStreamingBegin();
+  // track when our stream opens and closes; technically this is not synced with our states which is why we track
+  // it independently.
+  if ( !wasStreaming )
+  {
+    if ( isStreaming )
+    {
+      OnStreamingBegin();
+    }
+  }
+  else
+  {
+    const bool notAlreadyRecordedEnd = ( _dVars.streamingEndTime <= 0.0 );
+    if ( !isStreaming && notAlreadyRecordedEnd )
+    {
+      OnStreamingEnd();
+    }
   }
 
   if ( _dVars.state == EState::Listening )
   {
-    // since this "listening loop" is decoupled from the actual anim process recording,
-    // this means we're exiting the listening state based on a computed engine process time,
-    // not the actual recording stopped event; since there can be a slight timing
-    // error between the two, let's add a bit of buffer to make sure we don't compute
-    // the reaction direction AFTER the anim process has "unlocked" the selected direction
-    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( currentTime < ( _dVars.streamingBeginTime + kMaxRecordTime_s - kDirectionalityListeningBuffer_s ) )
-    {
-      // we need to constantly update our reaction direction in case the robot
-      // is rotating ... there appears to be a bit of lag in the update from SE
-      // which is why we need to constantly update during the listen loop (while we're still)
-      ComputeReactionDirection();
-    }
-
     const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-    if ( isIntentPending ) {
+    if ( isIntentPending )
+    {
       // kill delegates, we'll handle next steps with callbacks
       // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
       PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
@@ -373,23 +390,21 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
       CancelDelegates( false );
       StopListening();
     }
-    else {
-      const bool isErrorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
-      const bool neverStartedStreaming = !isStreaming && !wasStreaming;
-      if( isErrorPending || neverStartedStreaming )
+    else
+    {
+      // there are a few ways we can timeout from the Listening state;
+      // + error received
+      // + streaming never started
+      // + streaming started but no intent came back
+      const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+      const double listeningTimeout = GetListeningTimeout();
+      if ( currTime_s >= listeningTimeout )
       {
-        const float timeoutStartTime = wasStreaming ? _dVars.streamingBeginTime : GetTimeActivated_s();
-
-        // cloud either returned an error or hasn't opened a stream yet. In either case, this counts as an
-        // error after our min listening time has expired
-        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if( currTime_s >= timeoutStartTime + kMinListeningTimeout_s ) {
-          PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
-                        "Stopping listening because of a(n) %s",
-                        isErrorPending ? "error" : "timeout");
-          CancelDelegates( false );
-          StopListening();
-        }
+        PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
+                       "Stopping listening because of a(n) %s",
+                       GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
+        CancelDelegates( false );
+        StopListening();
       }
     }
   }
@@ -403,24 +418,89 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::ComputeReactionDirection()
+void BehaviorReactToVoiceCommand::ComputeReactionDirectionFromStream()
 {
-  // note:
-  // the robot may have moved between the time we heard the trigger word direction
-  // and the time we go to respond, so we need to update the direction based on the
-  // robots new pose
-
-  // soooooo, the anim process should be doing this automatically by sending us an
-  // updated "selected direction" after the robot is done moving, so let's just use that
-  // if we find this is not working, we can do a bit of pose math and figure shit out
-  _dVars.reactionDirection = GetDirectionFromMicHistory();
-
-  #if DEBUG_TRIGGER_WORD_VERBOSE
+  // what we are trying to do is figure out the direction that the user is located with respect to the robot.
+  // we know the robot will not be moving while streaming, so we can assume all directions recorded during streaming
+  // are in the same "coordinate space".
+  // -> We will take the most common direction recorded during streaming as the most probable direction the user is located
+  // we can expect a few spikes in noise causing the speaking direction to be false, but hopefully the user's actual
+  // speaking direction will be the most consistent
+  const MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
+  if ( _dVars.streamingBeginTime > 0.0f )
   {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Debug",
-                   "Computing selected direction [%d]", (int)_dVars.reactionDirection );
+    // take into account the "uknown" direction
+    // we are going to ignore the unknown direction in our calculations since it is not helpful to us and very misleading
+    // as any time the robot is moving or making noise will record the direction as unknown, skewing us to that direction
+    constexpr uint16_t kNumHistoryIndices = ( kNumMicDirections + 1 );
+    using DirectionHistoryCount = std::array<uint32_t, kNumHistoryIndices>;
+    DirectionHistoryCount micDirectionCounts{};
+
+    const TimeStamp_t streamBeginTime = ( _dVars.streamingBeginTime + kDirStreamingTimeToIgnoreBegin ) * 1000.0;
+    const TimeStamp_t streamEndTime = ( _dVars.streamingEndTime - kDirStreamingTimeToIgnoreEnd ) * 1000.0;
+
+    if ( streamEndTime >= streamBeginTime )
+    {
+      const TimeStamp_t elapsed = ( streamEndTime - streamBeginTime );
+      MicDirectionNodeList list = micHistory.GetHistoryAtTime( streamEndTime, elapsed );
+
+      // in the case where we have more than 1 sample, we want ignore partial samples outside of our time range, so
+      // we'll just lop off the front and back portions of the list nodes
+      if ( list.size() > 1 )
+      {
+        // case where the front extends beyond our streaming begin time ...
+        MicDirectionNode& front = list.front();
+        if ( front.timestampBegin < streamBeginTime )
+        {
+          DEV_ASSERT( ( front.timestampEnd >= streamBeginTime ), "Including node that is outside of streaming window" );
+          const double nodeDuration = ( front.timestampEnd - front.timestampBegin );
+          const double timeInNode = ( front.timestampEnd - streamBeginTime );
+          front.count *= ( timeInNode / nodeDuration );
+        }
+
+        // case where the back extends beyond our streamin end time ...
+        MicDirectionNode& back = list.back();
+        if ( back.timestampEnd > streamEndTime )
+        {
+          DEV_ASSERT( ( back.timestampBegin <= streamEndTime ), "Including node that is outside of streaming window" );
+          const double nodeDuration = ( back.timestampEnd - back.timestampBegin );
+          const double timeInNode = ( streamEndTime - back.timestampBegin );
+          back.count *= ( timeInNode / nodeDuration );
+        }
+      }
+
+      // walk our list of heard directions and add up all of their counts
+      // we're assuming a constant sample rate; we could always add up times as well
+      for ( const auto& node : list )
+      {
+        // ignore directions that have too low of a confidence
+        if ( node.confidenceAvg > kDirStreamingConfToIgnore )
+        {
+          PRINT_TRIGGER_DEBUG( "Heard valid direction [%d], with confidence [%d]", node.directionIndex, node.confidenceAvg );
+          micDirectionCounts[node.directionIndex] += node.count;
+        }
+      }
+
+      // now go through all of our valid directions and find the one with the highset count
+      uint32_t highestCount = 0;
+      for ( MicDirectionIndex i = 0; i < kNumHistoryIndices; ++i )
+      {
+        PRINT_TRIGGER_DEBUG( "Direction [%d], Count [%d]", i, micDirectionCounts[i] );
+        if ( ( i != kMicDirectionUnknown ) && ( micDirectionCounts[i] > highestCount ) )
+        {
+          _dVars.reactionDirection = i;
+          highestCount = micDirectionCounts[i];
+        }
+      }
+
+      PRINT_TRIGGER_INFO( "Computed trigger reaction direction of %d", (int)_dVars.reactionDirection );
+    }
+    else
+    {
+      PRINT_TRIGGER_INFO( "Streaming duration was too short, falling back to most recent direction" );
+      _dVars.reactionDirection = GetDirectionFromMicHistory();
+    }
   }
-  #endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -429,19 +509,17 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
   MicDirectionIndex direction = _dVars.reactionDirection;
   if ( kMicDirectionUnknown == direction )
   {
+    PRINT_TRIGGER_INFO( "Didn't have a reaction or trigger direction, so falling back to trigger direction" );
+
     // fallback to our trigger direction
     // accuracy is generally off by the amount the robot has turned
-    // (see comment in ComputeReactionDirection())
-    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.GetReactionDirection.UsingTriggerDirection",
-                   "Didn't have a reaction or trigger direction, so falling back to trigger direction" );
+    // there's been some observed inaccuracy with this direction reported from trigger word event
     direction = _triggerDirection;
   }
 
-  // this should never happen, but fuck it
   if ( kMicDirectionUnknown == direction )
   {
-    PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.GetReactionDirection.UsingSelectedHistoryDirection",
-                        "Didn't have a reaction or trigger direction, so falling back to latest selected direction");
+    PRINT_TRIGGER_INFO( "Didn't have a reaction or trigger direction, so falling back to latest selected direction" );
 
     // this is the least accurate if called post-intent
     // no difference if called pre-intent / post-trigger word
@@ -454,9 +532,12 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDirectionIndex BehaviorReactToVoiceCommand::GetDirectionFromMicHistory() const
 {
-  const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();
-  const auto& recentDirection = history.GetRecentDirection();
-  return recentDirection;
+  const TimeStamp_t duration = ( kRecentDirFallbackTime * 1000.0 );
+
+  const MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
+  MicDirectionIndex direction = micHistory.GetRecentDirection( duration );
+
+  return direction;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -464,7 +545,27 @@ void BehaviorReactToVoiceCommand::OnStreamingBegin()
 {
   PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.OnStreamingBegin",
                 "Got notice that cloud stream is open");
-  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+  _dVars.streamingEndTime = 0.0; // reset this to we can match our start/ends
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::OnStreamingEnd()
+{
+  // only record end time if we've begun streaming
+  const bool hasBegunStreaming = ( _dVars.streamingBeginTime > 0.0 );
+  const bool notAlreadyRecordedEnd = ( _dVars.streamingEndTime <= 0.0 );
+  if ( hasBegunStreaming && notAlreadyRecordedEnd )
+  {
+    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.OnStreamingEnd",
+                   "Got notice that cloud stream is closed" );
+
+    _dVars.streamingEndTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+
+    // let's attempt to compute the reaction direction as soon as we know the stream is closed
+    // note: this can be called outside of IsActivated(), but it doesn't matter to us
+    ComputeReactionDirectionFromStream();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -485,24 +586,13 @@ void BehaviorReactToVoiceCommand::StartListening()
       OnVictorListeningEnd();
       return; // and the behavior ends
     }
-    
-    // if for some reason it doesn't look like streaming has begun yet (we didn't get a call from vic-cloud
-    // saying the stream is open) consider the elapsed time to be 0
-    float elapsed = 0.0f;
-    if( _dVars.streamingBeginTime > 0.0f )
-    {
-      elapsed = ( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()
-                  - _dVars.streamingBeginTime );
-    }
 
-    const float timeout = ( (kMaxRecordTime_s + kCloudTimeoutBuffer_s) - elapsed );
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningLoop,
-                                                     0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
-                                                     std::max( timeout, 1.0f ) ),
-                         &BehaviorReactToVoiceCommand::StopListening );
+    // we now loop indefinitely and wait for the timeout in the update function
+    // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningLoop, 0 ) );
   };
 
-  DelegateIfInControl( new TriggerAnimationAction( _iVars.animListeningGetIn ), callback );
+  DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetIn ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -511,6 +601,9 @@ void BehaviorReactToVoiceCommand::StopListening()
   ASSERT_NAMED_EVENT( _dVars.state == EState::Listening,
                       "BehaviorReactToVoiceCommand.State",
                       "Transitioning to EState::IntentReceived from invalid state [%hhu]", _dVars.state );
+
+  // force our model of the streaming to close, in the case that we timed out (etc) before the actual stream closed
+  OnStreamingEnd();
 
   UpdateUserIntentStatus();
   TransitionToThinking();
@@ -673,7 +766,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
   };
 
   // we need to get out of our listening loop anim before we react
-  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningGetOut ), callback );
+  DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningGetOut ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -735,8 +828,8 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
       // track that an error occurred
       _iVars.cloudErrorTracker.AddOccurrence();
 
-      if( _iVars.cloudErrorHandle &&
-          _iVars.cloudErrorHandle->AreConditionsMet() ) {
+      if( _iVars.cloudErrorHandle && _iVars.cloudErrorHandle->AreConditionsMet() )
+      {
         // time to let the user know
 
         auto errorBehaviorCallback = [this]() {
@@ -785,7 +878,7 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
         }
         else
         {
-          PRINT_CH_DEBUG("BehaviorReactToVoiceCommand.Intent.Error",
+          PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error",
                          "%s: intent reaction behavior '%s' doesn't want to activate (in case of intent error)",
                          GetDebugLabel().c_str(),
                          _iVars.reactionBehavior->GetDebugLabel().c_str());
@@ -809,6 +902,34 @@ bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
   return ts != _dVars.timestampToDisableTurnFor;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+double BehaviorReactToVoiceCommand::GetStreamingDuration() const
+{
+  // our streaming duration is how long after streaming begins do we wait for an intent
+  return kMaxStreamingDuration_s;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+double BehaviorReactToVoiceCommand::GetListeningTimeout() const
+{
+  double timeout = 0.0;
+
+  const bool errorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
+  const bool streamingHasBegun = ( _dVars.streamingBeginTime > 0.0 );
+
+  if ( errorPending || !streamingHasBegun )
+  {
+    // we haven't start streaming, so timeout this much after we've been active
+    timeout = ( GetTimeActivated_s() + kMinListeningTimeout_s );
+  }
+  else
+  {
+    // we're currently streaming, so timeout when we hit our streaming duration
+    timeout = ( _dVars.streamingBeginTime + GetStreamingDuration() );
+  }
+
+  return timeout;
+}
 
 } // namespace Cozmo
 } // namespace Anki
