@@ -69,15 +69,6 @@ void CozmoContext::Shutdown()
   _robotMgr->Shutdown();
 }
 
-bool CozmoContext::IsInSdkMode() const
-{
-  if (_externalInterface)
-  {
-    return _externalInterface->IsInSdkMode();
-  }
-  return false;
-}
-
 
 void CozmoContext::SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const
 {

@@ -711,7 +711,6 @@ message LatencyMessage {
   TimingInfo sendQueueTime,
   TimingInfo recvQueueTime,
   TimingInfo unityEngineLatency,
-  TimingInfo sdkEngineLatency,
   CurrentTimingInfo imageLatency
 }
 
@@ -783,28 +782,6 @@ message FirmwareUpdateComplete {
   string  fwSig
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  GAME  /////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-message SdkConnectionStatus
-{
-  string   sdkBuildVersion,
-  string   requiredSdkBuildVersion,
-  uint_32  numCommands,
-  float_32 timeInCurrentConnection_s,
-  bool     isConnected,
-  bool     isWrongSdkVersion,
-}
-
-message SdkStatus {
-  SdkConnectionStatus connectionStatus,
-  string   sdkStatus[uint_8],
-  uint_32  numTimesConnected,
-  float_32 timeInSdkMode_s,
-  float_32 timeSinceLastSdkMessage_s,
-  float_32 timeSinceLastSdkCommand_s,
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  Behavior  /////////////////////////////////////

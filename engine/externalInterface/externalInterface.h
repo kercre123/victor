@@ -63,8 +63,6 @@ public:
   
   virtual void OnRobotDisconnected(uint32_t robotID) = 0;
   
-  virtual bool IsInSdkMode() const = 0;
-  
   virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) = 0;
   
   virtual uint32_t GetMessageCountGtE() const = 0;

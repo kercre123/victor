@@ -253,7 +253,6 @@ class _EngineInterfaceImpl:
                         # sys.stdout.write("sendQueueTime = " + str(msg.sendQueueTime) + os.linesep);
                         # sys.stdout.write("recvQueueTime = " + str(msg.recvQueueTime) + os.linesep);
                         # sys.stdout.write("unityEngineLatency = " + str(msg.unityEngineLatency) + os.linesep);
-                        # sys.stdout.write("sdkEngineLatency = " + str(msg.sdkEngineLatency) + os.linesep);
                     elif fromEngMsg.tag == fromEngMsg.Tag.UnlockStatus:
                          msg = fromEngMsg.UnlockStatus
                          #sys.stdout.write("Recv: UnlockStatus length=" + str(len(msg.unlocks)) + " c= " + str(msg.unlocks) + os.linesep)

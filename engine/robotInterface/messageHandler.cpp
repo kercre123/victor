@@ -52,12 +52,6 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   _robotConnectionManager->Init();
   
   _isInitialized = true;
-
-  if (context->GetExternalInterface() != nullptr) {
-    auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
-  }
 }
 
 Result MessageHandler::ProcessMessages()
@@ -190,15 +184,6 @@ void MessageHandler::Disconnect()
 const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
 {
   return _robotConnectionManager->GetQueuedTimes_ms();
-}
-
-template<>
-void MessageHandler::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
-{
-  // Force robot to disconnect when leaving the sdk - ensures they will be in a default initialized state for main app
-  if (msg.isExternalSdkMode) {
-    Disconnect();
-  }
 }
   
 } // end namespace RobotInterface

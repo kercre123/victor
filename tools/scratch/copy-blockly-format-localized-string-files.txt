@@ -1,4 +1,0 @@
-de-DE/CodeLabVerticalBlocks.json
-en-US/CodeLabVerticalBlocks.json
-fr-FR/CodeLabVerticalBlocks.json
-ja-JP/CodeLabVerticalBlocks.json

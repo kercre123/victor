@@ -98,7 +98,6 @@ public:
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
 
-  bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
 
   void SetRandomSeed(uint32_t seed);

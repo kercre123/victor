@@ -322,7 +322,7 @@ void RobotDataLoader::CollectAnimFiles()
 
 bool RobotDataLoader::IsCustomAnimLoadEnabled() const
 {
-  return (_context->IsInSdkMode() || (ANKI_DEV_CHEATS != 0));
+  return (ANKI_DEV_CHEATS != 0);
 }
 
 void RobotDataLoader::LoadCubeLightAnimations()

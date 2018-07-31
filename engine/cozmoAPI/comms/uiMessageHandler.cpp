@@ -64,36 +64,6 @@ static const u32 kPingTimeoutForDisconnect_ms = 5000;
 
 namespace Anki {
   namespace Cozmo {
-
-
-#if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
-  #define ANKI_ENABLE_SDK_OVER_UDP  0
-  #if defined(NDEBUG)
-    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk,  "Sdk", false);
-  #else
-    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
-  #endif
-  // TODO: This variable may not make sense in a world where all
-  // communication is through an SDK interface.
-  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
-#else
-  #define ANKI_ENABLE_SDK_OVER_UDP  0
-  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
-  CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
-#endif
-
-// see https://ankiinc.atlassian.net/browse/VIC-1544
-//#if defined(NDEBUG)
-//    static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
-//    static_assert(!kEnableSdkCommsInInternalSdk, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
-//#endif
-
-CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
-
-
-#define ANKI_ENABLE_SDK_OVER_TCP 1
-
-
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
 
 
@@ -145,22 +115,11 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         }
         case UiConnectionType::SdkOverUdp:
         {
-        #if ANKI_ENABLE_SDK_OVER_UDP
-          #if defined(NDEBUG)
-            #error To enable SDK over UDP in SHIPPING builds requires support for closing the socket outside of SDK mode
-          #endif
-          return new UdpSocketComms(type);
-        #else
           return nullptr;
-        #endif
         }
         case UiConnectionType::SdkOverTcp:
         {
-        #if ANKI_ENABLE_SDK_OVER_TCP
-          return new TcpSocketComms(isSdkCommunicationEnabled);
-        #else
           return nullptr;
-        #endif
         }
         case UiConnectionType::Switchboard:
         {
@@ -182,7 +141,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 
 
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
-      : _sdkStatus(this)
+      : _sdkStatus()
       , _hostUiDeviceID(hostUiDeviceID)
       , _messageCountGtE(0)
       , _messageCountEtG(0)
@@ -256,28 +215,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetShouldAutoConnectToCubesAtStart, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetShouldAutoDisconnectFromCubesAtEnd, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::TransferFile, commonCallback));
-
-      // We'll use this callback for game to game events we care about (SDK to Unity or vice versa)
-      auto gameToGameCallback = std::bind(&UiMessageHandler::HandleGameToGameEvents, this, std::placeholders::_1);
-
-      // Subscribe to desired game to game events
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesRaw, gameToGameCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesUser, gameToGameCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceGyroValues, gameToGameCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnableDeviceIMUData, gameToGameCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::IsDeviceIMUSupported, gameToGameCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::GameToGame, gameToGameCallback));
-
-      // Subscribe to specific events
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnterSdkMode,
-                                         std::bind(&UiMessageHandler::OnEnterSdkMode, this, std::placeholders::_1)));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ExitSdkMode,
-                                         std::bind(&UiMessageHandler::OnExitSdkMode, this, std::placeholders::_1)));
 
       return RESULT_OK;
     }
@@ -301,10 +239,10 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     }
 
 
+    
     bool UiMessageHandler::IsSdkCommunicationEnabled() const
     {
-      return _sdkStatus.IsInExternalSdkMode() || kEnableSdkCommsAlways ||
-             (_sdkStatus.IsInInternalSdkMode() && kEnableSdkCommsInInternalSdk);
+      return false;
     }
 
 
@@ -428,80 +366,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     }
 
 
-    bool AlwaysHandleMessageTypeForNonSdkConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
-    {
-      // Return true for small subset of message types that we handle even if we're not listening to the UI connection
-      // We still want to accept certain message types (e.g. enter/exit mode and console vars for debugging)
-
-      using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
-      switch (messageTag)
-      {
-        case GameToEngineTag::SetDebugConsoleVarMessage:    return true;
-        case GameToEngineTag::RunDebugConsoleFuncMessage:   return true;
-        case GameToEngineTag::GetDebugConsoleVarMessage:    return true;
-        case GameToEngineTag::GetAllDebugConsoleVarMessage: return true;
-        case GameToEngineTag::EnterSdkMode:                 return true;
-        case GameToEngineTag::ExitSdkMode:                  return true;
-        case GameToEngineTag::DeviceAccelerometerValuesRaw: return true;
-        case GameToEngineTag::DeviceAccelerometerValuesUser: return true;
-        case GameToEngineTag::DeviceGyroValues:             return true;
-        case GameToEngineTag::IsDeviceIMUSupported:         return true;
-
-        default:
-          return false;
-      }
-    }
-
-
-    bool IgnoreMessageTypeForSdkConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
-    {
-      if (kAllowBannedSdkMessages)
-      {
-        return false;
-      }
-
-      // Return true for any messages that we want to ignore (blacklist) from SDK usage
-
-      using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
-      switch (messageTag)
-      {
-        case GameToEngineTag::CalibrateMotors:                  return true;
-        case GameToEngineTag::IMURequest:                       return true;
-        case GameToEngineTag::StartControllerTestMode:          return true;
-        case GameToEngineTag::RawPWM:                           return true;
-        case GameToEngineTag::RequestFeatureToggles:            return true;
-        case GameToEngineTag::SetFeatureToggle:                 return true;
-        case GameToEngineTag::UpdateFirmware:                   return true;
-        case GameToEngineTag::ResetFirmware:                    return true;
-        case GameToEngineTag::ControllerGains:                  return true;
-        case GameToEngineTag::RestoreRobotFromBackup:           return true;
-        case GameToEngineTag::RequestRobotRestoreData:          return true;
-        case GameToEngineTag::WipeRobotGameData:                return true;
-        case GameToEngineTag::SetRobotImageSendMode:            return true;
-        case GameToEngineTag::SaveImages:                       return true;
-        case GameToEngineTag::SaveRobotState:                   return true;
-        case GameToEngineTag::ExecuteTestPlan:                  return true;
-        case GameToEngineTag::PlannerRunMode:                   return true;
-        case GameToEngineTag::StartTestMode:                    return true;
-        case GameToEngineTag::GetJsonDasLogsMessage:            return true;
-        case GameToEngineTag::SaveCalibrationImage:             return true;
-        case GameToEngineTag::ClearCalibrationImages:           return true;
-        case GameToEngineTag::ComputeCameraCalibration:         return true;
-        case GameToEngineTag::NVStorageEraseEntry:              return true;
-        case GameToEngineTag::NVStorageWipeAll:                 return true;
-        case GameToEngineTag::NVStorageWriteEntry:              return true;
-        case GameToEngineTag::NVStorageClearPartialPendingWriteEntry:  return true;
-        case GameToEngineTag::NVStorageReadEntry:               return true;
-        case GameToEngineTag::EnterSdkMode:                     return true;
-        case GameToEngineTag::ExitSdkMode:                      return true;
-        case GameToEngineTag::PerfMetricCommand:                return true;
-        case GameToEngineTag::PerfMetricGetStatus:              return true;
-        default:
-          return false;
-      }
-    }
-
-
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
@@ -517,34 +381,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         }
       }
 
-      const bool isExternalSdkConnection = IsExternalSdkConnection(connectionType);
-      if (isExternalSdkConnection && IgnoreMessageTypeForSdkConnection(messageTag))
-      {
-        // Ignore - this message type is blacklisted from SDK usage
-        PRINT_NAMED_WARNING("sdk.bannedmessage", "%s", MessageGameToEngineTagToString(messageTag));
-        return;
-      }
-
-      if (_sdkStatus.IsInExternalSdkMode() && !isExternalSdkConnection)
-      {
-        // Accept only a limited set of messages (e.g. enter/exit mode)
-        if (!AlwaysHandleMessageTypeForNonSdkConnection(messageTag))
-        {
-          return;
-        }
-      }
-
       #if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
       #endif
-
-      if (isExternalSdkConnection || _sdkStatus.IsInInternalSdkMode())
-      {
-        _sdkStatus.OnRecvMessage(message, messageSize);
-      }
 
       // We must handle pings at this level because they are a connection type specific message
       // and must be dealt with at the transport level rather than at the app level
@@ -824,78 +666,10 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       return lastResult;
     } // Update()
 
-
+    // TODO Revisit this. Use for SDK DAS messages?
     void UiMessageHandler::UpdateSdk()
     {
-      if (_sdkStatus.IsInExternalSdkMode())
-      {
-        const ISocketComms* sdkSocketComms = GetSdkSocketComms();
-        DEV_ASSERT(sdkSocketComms, "Sdk.InModeButNoComms");
-
-        if (!sdkSocketComms)
-        {
-          return;
-        }
-
-        _sdkStatus.UpdateConnectionStatus(sdkSocketComms);
-
-        const bool sendStatusThisTick = (kSdkStatusSendFreq > 0) && ((_updateCount % kSdkStatusSendFreq) == 0);
-
-        if (sendStatusThisTick)
-        {
-          // Send status to the UI comms
-
-          const double currentTime_s = _sdkStatus.GetCurrentTime_s();
-
-          ExternalInterface::SdkConnectionStatus connectionStatus(_sdkStatus.GetSdkBuildVersion(),
-                                                                  kBuildVersion,
-                                                                  _sdkStatus.NumCommandsOverConnection(),
-                                                                  _sdkStatus.TimeInCurrentConnection_s(currentTime_s),
-                                                                  _sdkStatus.IsConnected(),
-                                                                  _sdkStatus.IsWrongSdkVersion());
-
-          std::vector<std::string> sdkStatusStrings;
-          sdkStatusStrings.reserve(SdkStatusTypeNumEntries);
-          for (uint32_t i=0; i < SdkStatusTypeNumEntries; ++i)
-          {
-            sdkStatusStrings.push_back( _sdkStatus.GetStatus(SdkStatusType(i)) );
-          }
-
-          ExternalInterface::SdkStatus sdkStatus(std::move(connectionStatus),
-                                                 std::move(sdkStatusStrings),
-                                                 _sdkStatus.NumTimesConnected(),
-                                                 _sdkStatus.TimeInMode_s(currentTime_s),
-                                                 _sdkStatus.TimeSinceLastSdkMessage_s(currentTime_s),
-                                                 _sdkStatus.TimeSinceLastSdkCommand_s(currentTime_s));
-
-          ExternalInterface::MessageEngineToGame message(std::move(sdkStatus));
-
-          DeliverToGame(message, (DestinationId)UiConnectionType::UI);
-        }
-      }
-      else
-      {
-      #if ANKI_DEV_CHEATS
-        static bool sWasSdkCommsAlwaysEnabled = kEnableSdkCommsAlways;
-        const bool wasAlwaysEnabledToggled = (sWasSdkCommsAlwaysEnabled != kEnableSdkCommsAlways);
-        if (wasAlwaysEnabledToggled)
-        {
-          sWasSdkCommsAlwaysEnabled = kEnableSdkCommsAlways;
-          UpdateIsSdkCommunicationEnabled();
-        }
-        if (IsSdkCommunicationEnabled() || wasAlwaysEnabledToggled)
-        {
-          const ISocketComms* sdkSocketComms = GetSdkSocketComms();
-
-          if (sdkSocketComms)
-          {
-            _sdkStatus.UpdateConnectionStatus(sdkSocketComms);
-          }
-        }
-      #endif // ANKI_DEV_CHEATS
-      }
     }
-
 
     bool UiMessageHandler::ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType)
     {
@@ -930,66 +704,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       return success;
     }
 
-    void TransferCodeLabFile(const ExternalInterface::TransferFile& msg, Util::Data::DataPlatform* dataPlatform)
-    {
-    #if ANKI_DEV_CHEATS
-      DEV_ASSERT_MSG((msg.fileType == ExternalInterface::FileType::CodeLab), "TransferCodeLabFile.WrongFileType",
-                     "Incorrect FileType %d '%s'", (int)msg.fileType, EnumToString(msg.fileType));
-
-      static uint16_t sExpectedNextPart = std::numeric_limits<uint16_t>::max();
-      static uint16_t sExpectedPartCount = std::numeric_limits<uint16_t>::max();
-
-      std::string full_path = dataPlatform->pathToResource(Util::Data::Scope::Cache, msg.filename);
-
-      // Special signal for CodeLab to nuke the directory
-      if ((msg.filePart == 0) && (msg.numFileParts == 0) && (msg.fileBytes.size() == 0))
-      {
-        PRINT_NAMED_INFO("TransferCodeLabFile.DeleteCache", "Delete Cache '%s'", full_path.c_str());
-        Util::FileUtils::RemoveDirectory(full_path);
-        return;
-      }
-
-      // Verify this is the chunk we're waiting for.
-      if( sExpectedNextPart == msg.filePart)
-      {
-        ++sExpectedNextPart;
-      }
-      else if( msg.filePart == 0 )
-      {
-        if (sExpectedNextPart != sExpectedPartCount)
-        {
-          PRINT_NAMED_ERROR("TransferCodeLabFile.FailedToComplete", "Got: 0, Expected: %u/%u", sExpectedNextPart, sExpectedPartCount);
-        }
-
-        // New file - delete it if it already exists
-        if( Util::FileUtils::FileExists(full_path))
-        {
-          Util::FileUtils::DeleteFile(full_path);
-        }
-        sExpectedNextPart = 1;
-        sExpectedPartCount = msg.numFileParts;
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("TransferCodeLabFile.UnexpectedPart", "Got: %d, Expected: %d", (int)msg.filePart, (int)sExpectedNextPart);
-        return;
-      }
-
-      const bool append = msg.filePart != 0;
-      const bool res1 = Util::FileUtils::CreateDirectory(full_path, true, true);
-      const bool res2 = Util::FileUtils::WriteFile(full_path, msg.fileBytes, append);
-      if (!res1 || !res2)
-      {
-        PRINT_NAMED_WARNING("TransferCodeLabFile.WriteFailed", "load '%s' dir_res=%d write_res=%d part %u of %u", full_path.c_str(), (int)res1, (int)res2, msg.filePart, msg.numFileParts);
-      }
-      else if (sExpectedNextPart == sExpectedPartCount)
-      {
-        // This was the last part - file is loaded
-        PRINT_NAMED_INFO("TransferCodeLabFile.Complete", "Loaded all %u parts of '%s'", msg.numFileParts, full_path.c_str());
-      }
-    #endif // ANKI_DEV_CHEATS
-    }
-
     void UiMessageHandler::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
       switch (event.GetData().GetTag())
@@ -1005,16 +719,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
             {
               socketComms->DisconnectDeviceByID(msg.deviceID);
             }
-          }
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess:
-        {
-          const ExternalInterface::UiDeviceConnectionSuccess& msg = event.GetData().Get_UiDeviceConnectionSuccess();
-          if (IsExternalSdkConnection(msg.connectionType))
-          {
-            _sdkStatus.OnConnectionSuccess(msg);
-
           }
           break;
         }
@@ -1049,33 +753,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 
           break;
         }
-        case ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect:
-        {
-          const ExternalInterface::SetStopRobotOnSdkDisconnect& msg = event.GetData().Get_SetStopRobotOnSdkDisconnect();
-          _sdkStatus.SetStopRobotOnDisconnect(msg.doStop);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::SetShouldAutoConnectToCubesAtStart:
-        {
-          const ExternalInterface::SetShouldAutoConnectToCubesAtStart& msg = event.GetData().Get_SetShouldAutoConnectToCubesAtStart();
-          _sdkStatus.SetShouldAutoConnectToCubes(msg.doAutoConnect);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::SetShouldAutoDisconnectFromCubesAtEnd:
-        {
-          const ExternalInterface::SetShouldAutoDisconnectFromCubesAtEnd& msg = event.GetData().Get_SetShouldAutoDisconnectFromCubesAtEnd();
-          _sdkStatus.SetShouldAutoDisconnectFromCubes(msg.doAutoDisconnect);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::TransferFile:
-        {
-          const ExternalInterface::TransferFile& msg = event.GetData().Get_TransferFile();
-          if( msg.fileType == ExternalInterface::FileType::CodeLab)
-          {
-            TransferCodeLabFile(msg, _context->GetDataPlatform());
-          }
-          break;
-        }
         default:
         {
           PRINT_STREAM_ERROR("UiMessageHandler.HandleEvents",
@@ -1084,86 +761,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         }
       }
     }
-
-    void UiMessageHandler::HandleGameToGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-    {
-      const bool isFromSdk = IsExternalSdkConnection(_connectionSource);
-      UiConnectionType destType = isFromSdk ? UiConnectionType::UI : UiConnectionType::SdkOverTcp;
-      DestinationId destinationId = (DestinationId)(destType);
-
-      // Note we have to copy msg to a non-const temporary as MessageEngineToGame constructor only takes r-values
-      switch (event.GetData().GetTag())
-      {
-        case ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesRaw:
-        {
-          ExternalInterface::DeviceAccelerometerValuesRaw msg = event.GetData().Get_DeviceAccelerometerValuesRaw();
-          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesUser:
-        {
-          ExternalInterface::DeviceAccelerometerValuesUser msg = event.GetData().Get_DeviceAccelerometerValuesUser();
-          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::DeviceGyroValues:
-        {
-          ExternalInterface::DeviceGyroValues msg = event.GetData().Get_DeviceGyroValues();
-          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::EnableDeviceIMUData:
-        {
-          ExternalInterface::EnableDeviceIMUData msg = event.GetData().Get_EnableDeviceIMUData();
-          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::IsDeviceIMUSupported:
-        {
-          ExternalInterface::IsDeviceIMUSupported msg = event.GetData().Get_IsDeviceIMUSupported();
-          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
-          break;
-        }
-        case ExternalInterface::MessageGameToEngineTag::GameToGame:
-        {
-          ExternalInterface::GameToGame msg = event.GetData().Get_GameToGame();
-          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
-          break;
-        }
-        default:
-        {
-          PRINT_STREAM_ERROR("HandleGameToGameEvents",
-                             "Subscribed to unhandled event of type "
-                             << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
-        }
-      }
-    }
-
-    void UiMessageHandler::OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-    {
-      const ExternalInterface::EnterSdkMode& msg = event.GetData().Get_EnterSdkMode();
-      _sdkStatus.EnterMode(msg.isExternalSdkMode);
-
-      UpdateIsSdkCommunicationEnabled();
-    }
-
-
-    void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-    {
-      const ExternalInterface::ExitSdkMode& msg = event.GetData().Get_ExitSdkMode();
-
-      // Note: Robot's message handler also handles this event, and that disconnects the robot
-      //       (that's how we ensure that we restore the robot to a safe default state)
-      DoExitSdkMode(msg.isExternalSdkMode);
-    }
-
-
-    void UiMessageHandler::DoExitSdkMode(bool isExternalSdkMode)
-    {
-      _sdkStatus.ExitMode(isExternalSdkMode);
-      UpdateIsSdkCommunicationEnabled();
-    }
-
 
     void UiMessageHandler::UpdateIsSdkCommunicationEnabled()
     {
@@ -1206,14 +803,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 
     void UiMessageHandler::OnRobotDisconnected(uint32_t robotID)
     {
-      if (_sdkStatus.IsInInternalSdkMode())
-      {
-        DoExitSdkMode(false);
-      }
-      if (_sdkStatus.IsInExternalSdkMode())
-      {
-        DoExitSdkMode(true);
-      }
     }
 
 
