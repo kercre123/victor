@@ -117,6 +117,9 @@ namespace Anki {
 
     void CameraService::DeleteCamera() {
       std::lock_guard<std::mutex> lock(_lock);
+      if (_camera == NULL) {
+        return;
+      }
       int res = camera_stop(_camera);
       if (res != 0) {
         LOG_ERROR("CameraService.DeleteCamera.CameraStopFailed", "camera_stop error %d", res);
