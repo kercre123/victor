@@ -120,9 +120,6 @@ private:
 
   std::future<void> _offlineCheckFuture;
   std::atomic<TimeStamp_t> _offlineAtTime_ms;
-
-  bool _offlineIsPulsing = true;
-  TimeStamp_t _offlinePulseTime_ms = 0;
   
   Result SetBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights);
   void StartLoopingBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out);

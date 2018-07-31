@@ -40,9 +40,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(u32, kOfflineTimeBeforeLights_ms, "Backpacklights", (1000*60*5));
-CONSOLE_VAR(u32, kOfflinePulse_ms,            "Backpacklights", 3000);
-CONSOLE_VAR(u32, kOfflinePulseOff_ms,         "Backpacklights", 10000);
+CONSOLE_VAR(u32, kOfflineTimeBeforeLights_ms, "Backpacklights", (1000*60*2));
 CONSOLE_VAR(u32, kOfflineCheckFreq_ms,        "Backpacklights", 10000);
   
 enum class BackpackLightSourcePrivate : BackpackLightSourceType
@@ -92,18 +90,6 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   // Low Battery, Offline, Streaming, Charging, or Nothing
   BackpackAnimationTrigger trigger = BackpackAnimationTrigger::Off;
 
-  if(_offlineAtTime_ms == 0)
-  {
-    _offlinePulseTime_ms = 0;
-    _offlineIsPulsing = true;
-  }
-  // If pulsing offline lights have been off for long enough
-  else if(curTime_ms - _offlinePulseTime_ms > kOfflinePulseOff_ms)
-  {
-    _offlinePulseTime_ms = curTime_ms;
-    _offlineIsPulsing = true;
-  }
-
   const auto& batteryComponent = _robot->GetBatteryComponent();
   if(batteryComponent.IsBatteryLow() &&
      !batteryComponent.IsCharging())
@@ -114,17 +100,8 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   }
   // If we have been offline for long enough
   else if(_offlineAtTime_ms > 0 &&
-          (curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms) &&
-          _offlineIsPulsing)
+          (curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
   {
-    // The offline backpack lights alternate between pulsing and off every so often
-    // If lights have been pulsing for long enough
-    if(curTime_ms - _offlinePulseTime_ms > kOfflinePulse_ms)
-    {
-      _offlinePulseTime_ms = curTime_ms;
-      _offlineIsPulsing = false;
-    }
-      
     trigger = BackpackAnimationTrigger::Offline; 
   }
   // If we are currently streaming to the cloud
@@ -428,10 +405,10 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
         // Pulsing yellow
         light.onColor = 0xFFFF0000;
         light.offColor = 0x00FF0000;
-        light.onFrames = 16;
-        light.offFrames = 16;
-        light.transitionOnFrames = 16;
-        light.transitionOffFrames = 16;
+        light.onFrames = 32;
+        light.offFrames = 32;
+        light.transitionOnFrames = 0;
+        light.transitionOffFrames = 0;
         light.offset = 0;
       }
       break;
@@ -440,11 +417,11 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
       {
         // Pulsing cyan
         light.onColor = 0x00FFFF00;
-        light.offColor = 0x00FF0000;
-        light.onFrames = 16;
-        light.offFrames = 16;
-        light.transitionOnFrames = 16;
-        light.transitionOffFrames = 16;
+        light.offColor = 0x00FFFF00;
+        light.onFrames = 32;
+        light.offFrames = 32;
+        light.transitionOnFrames = 0;
+        light.transitionOffFrames = 0;
         light.offset = 0;
       }
       break;
@@ -455,10 +432,10 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
     if(!OSState::getInstance()->IsUserSpaceSecure())
     {
       light.offColor = 0xFFFFFF00;
-      light.onFrames = 16;
-      light.offFrames = 16;
-      light.transitionOnFrames = 16;
-      light.transitionOffFrames = 16;
+      light.onFrames = 32;
+      light.offFrames = 32;
+      light.transitionOnFrames = 0;
+      light.transitionOffFrames = 0;
       light.offset = 0;
     }
 
