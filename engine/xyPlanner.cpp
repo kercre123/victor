@@ -162,16 +162,16 @@ void XYPlanner::StartPlanner()
   _startPlanner = false;
 
   // convert targets to planner states
-  std::vector<Point2f> plannerStart;
+  std::vector<Point2f> plannerGoals;
   if (_allowGoalChange || (_path.GetNumSegments() == 0)) {
     for (const auto& g : _targets) {
-      plannerStart.push_back( g.GetTranslation() );
+      plannerGoals.push_back( g.GetTranslation() );
     }
   } else {
     // no goal change, so use the end point of the last computed path
     float x, y, t;
     _path[_path.GetNumSegments()-1].GetEndPose(x,y,t);
-    plannerStart.emplace_back(x,y);
+    plannerGoals.emplace_back(x,y);
   }
 
   // expand out of collision state if necessary
@@ -181,21 +181,23 @@ void XYPlanner::StartPlanner()
   // NOTE2: there seems to be a bug in the planner where using Point::IsNear is not a sufficient check for determining
   //        that the goal is safe, even if we use a known safe point for the goal. The work around, for now, is
   //        to find the nearest safe -grid- point, and then insert the true goal state after a plan has been made.
-  const Point2f plannerGoal = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation()) );
+  const Point2f plannerStart = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation()) );
   
-  for (const auto& s : plannerStart) {
+  for (const auto& s : plannerGoals) {
     PRINT_NAMED_INFO("XYPlanner.StartPlanner", "Plan from %s to %s (%.1f mm)", 
-      plannerGoal.ToString().c_str(), s.ToString().c_str(), (plannerGoal - s).Length() );
+      plannerStart.ToString().c_str(), s.ToString().c_str(), (plannerStart - s).Length() );
   }
 
   // profile time it takes to find a plan
   using namespace std::chrono;
   high_resolution_clock::time_point startTime = high_resolution_clock::now();
 
-  PlannerConfig config(_map, _stopPlanner, plannerGoal);
-  AStar<Point2f, PlannerConfig> planner( config );
-  std::vector<Point2f> plan = planner.Search(plannerStart);
+  PlannerConfig config(plannerStart, plannerGoals, _map, _stopPlanner);
+  BidirectionalAStar<Point2f, PlannerConfig> planner( config );
+  std::vector<Point2f> plan = planner.Search();
   
+  high_resolution_clock::time_point planTime = high_resolution_clock::now();
+
   if(kArtificialPlanningDelay_ms>0) {
     const int kMaxNumToBlock_ms = 10;
     int msBlocked = 0;
@@ -206,25 +208,22 @@ void XYPlanner::StartPlanner()
     }
   }
 
-  high_resolution_clock::time_point planTime = high_resolution_clock::now();
-
   if(!plan.empty()) {
-
-    plan.push_back(_start.GetTranslation()); // planner will only go to the nearest safe grid point, so add the real start to shortcut escape obstacle path
-    std::reverse(plan.begin(), plan.end());  // planner runs from goal->start, so reverse it before building path
+    // planner will only go to the nearest safe grid point, so add the real start to shortcut escape obstacle path
+    plan.insert(plan.begin(), _start.GetTranslation()); 
 
     _path = BuildPath( plan );
     _collisionPenalty = GetPathCollisionPenalty( _path );
     _status = EPlannerStatus::CompleteWithPlan;
   } else {
-    PRINT_NAMED_WARNING("XYPlanner.ComputeNewPathIfNeeded", "No path found!" );
+    PRINT_NAMED_WARNING("XYPlanner.StartPlanner", "No path found!" );
     _status = EPlannerStatus::CompleteNoPlan;
   }
 
   // profile time it takes to smooth a plan into a valid robot path
   auto smoothTime_ms = duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - planTime);
   auto planTime_ms = duration_cast<std::chrono::milliseconds>(planTime - startTime);
-  PRINT_NAMED_INFO("XYPlanner.ComputeNewPathIfNeeded", "planning took %s ms, smoothing took %s ms (%zu expansions)", 
+  PRINT_NAMED_INFO("XYPlanner.StartPlanner", "planning took %s ms, smoothing took %s ms (%zu expansions)", 
                    std::to_string(planTime_ms.count()).c_str(), 
                    std::to_string(smoothTime_ms.count()).c_str(),
                    config.GetNumExpansions() );
@@ -370,20 +369,11 @@ bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Pl
     }
   };
 
-  bool foundNonPointTurn = false;
   validPath.Clear();
   for (int i = 0; i < path.GetNumSegments(); ++i) {
-    const auto& segment = path.GetSegmentConstRef(i);
-    if ( !isSafe(segment) ) {
-      return false;
-    }
-    if ( !foundNonPointTurn ) {
-      // The input path isn't smoothed, so for now, only consider up to the first non-point turn segment "safe."
-      // TODO (VIC-4315) return the actual safe subpath. It might need splitting into smaller components if the
-      // current segment is long and only part of it is unsafe.
-      validPath.AppendSegment(segment);
-      foundNonPointTurn = (segment.GetType() != Planning::PST_POINT_TURN);
-    }
+    // TODO (VIC-4315) return the actual safe subpath. It might need splitting into smaller components if the
+    // current segment is long and only part of it is unsafe.
+    if ( !isSafe(path.GetSegmentConstRef(i)) ) { return false; }
   } 
   return true;
 }
