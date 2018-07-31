@@ -22,7 +22,6 @@
 #include "clad/types/facialExpressions.clad"
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/featureGateTypes.clad"
-#include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/loadedKnownFace.clad"
@@ -38,7 +37,6 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
-#include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotCompletedAction.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
@@ -95,12 +93,6 @@ message EngineRobotCLADVersionMismatch {
   string  engineRobotToEngineHash,	// Engine's calculated hash for the robot to engine messages
   string  robotEnginetoRobotHash,	// Robot's calculated hash for the engine to robot messages
   string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
-}
-
-// Indicates that a previously advertising object is no longer advertising
-message ObjectUnavailable
-{
-  string       factory_id,
 }
 
 // Responds to Unity request for feature toggles
@@ -173,7 +165,6 @@ message RobotState {
     int_32          localizedToObjectID,   // Will be -1 if not localized to any object
     uint_32         lastImageTimeStamp,    // Last image processed by the vision system
     uint_32         status,                // See RobotStatusFlag in robotStatusAndActions.clad
-    uint_8          gameStatus             // See GameStatusFlag in cozmoTypes.h
 }
 
 message RobotDelocalized {
@@ -767,23 +758,6 @@ message NVStorageOpResult {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Firmware
-///////////////////////////////////////////////////////////////////////////////
-
-message FirmwareUpdateProgress {
-  FirmwareUpdateStage stage,
-  FirmwareUpdateSubStage subStage,
-  string  fwSig,
-  uint_8  percentComplete
-}
-
-message FirmwareUpdateComplete {
-  FirmwareUpdateResult  result,
-  string  fwSig
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  Behavior  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -798,25 +772,8 @@ message BehaviorTransition{
   //string newBehaviorDisplayKey
 }
 
-message RespondAllBehaviorsList{
-  //BehaviorID behaviors[uint_16]
-}
-
-
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective
-}
-
-// notify game that build pyramid spark prerequisites have been met/not met
-message PyramidPreReqState{
-  bool areCubesUpright
-}
-
-message GuardDogStart {
-}
-
-message GuardDogEnd {
-  bool success
 }
 
 
@@ -888,22 +845,6 @@ message ResponseLocale {
   string locale
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Notifications
-///////////////////////////////////////////////////////////////////////////////
-
-message ClearNotificationCache {
-}
-
-message CacheNotificationToSchedule {
-  int_32 secondsInFuture,
-  string textKey,
-  bool   persist,
-}
-
-message NotificationTextKeys {
-  string textKeys[uint_16],
-}
 
 // Response to request for control from behavior system
 message SDKActivationResult {

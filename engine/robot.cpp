@@ -88,7 +88,6 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/gameStatusFlag.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "proto/external_interface/messages.pb.h"
 #include "util/console/consoleInterface.h"
@@ -2541,9 +2540,6 @@ ExternalInterface::RobotState Robot::GetRobotState() const
     msg.carryingObjectID = -1;
     msg.carryingObjectOnTopID = -1;
   }
-
-  msg.gameStatus = 0;
-  if (IsLocalized() && _offTreadsState == OffTreadsState::OnTreads) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
 
   msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
 

@@ -252,13 +252,11 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestFeatureToggles>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFeatureToggle>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
@@ -380,19 +378,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
   return RESULT_OK;
 }
 
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::UpdateFirmware& msg)
-{
-  if (EngineState::UpdatingFirmware == _engineState)
-  {
-    PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.UpdateFirmware.AlreadyStarted", "");
-    return;
-  }
-
-  // TODO: figure out how to update firmware for Victor
-}
-
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::RequestFeatureToggles& msg)
 {
@@ -410,12 +395,6 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetFeatureToggle& message)
 {
   _context->GetFeatureGate()->SetFeatureEnabled(message.feature, message.value);
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
-{
-  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ResetFirmwareUndefined", "What does this mean for Victor?");
 }
 
 Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
@@ -556,15 +535,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       LOG_INFO("CozmoEngine.Update.ConnectingToRobot", "Now connected to robot");
       SetEngineState(EngineState::Running);
       break;
-    }
-    case EngineState::UpdatingFirmware:
-    {
-      // TODO: VictorFirmwareUpdate
-      SetEngineState(EngineState::Running);
-
-      // deliberate fallthrough because we
-      // do not handle updating firmware in
-      // victor yet
     }
     case EngineState::Running:
     {

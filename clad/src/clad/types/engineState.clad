@@ -10,8 +10,7 @@ enum uint_8 EngineState {
   Stopped,
   LoadingData,
   ConnectingToRobot,
-  Running,
-  UpdatingFirmware
+  Running
 }
 
 enum uint_8 RobotConnectionResult {
