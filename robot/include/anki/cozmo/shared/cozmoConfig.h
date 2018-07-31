@@ -198,6 +198,13 @@ namespace Cozmo {
   // value is undetected
   const u16 CLIFF_STOP_ON_WHITE_HYSTERSIS = 50;
 
+  // In calm mode, cliffs are never detected
+  const u16 CLIFF_CALM_MODE_VAL = 1000;
+
+  // In calm mode, prox sensor returns this distance reading
+  // but it's also of negative signal quality so it should never be used
+  const u16 PROX_CALM_MODE_DIST_MM = 1000;
+
   /***************************************************************************
    *
    *                          Speeds and Accels

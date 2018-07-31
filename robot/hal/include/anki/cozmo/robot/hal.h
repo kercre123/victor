@@ -162,11 +162,6 @@ ProxSensorDataRaw GetRawProxData();
 /// Cliff sensors
 u16 GetRawCliffData(const CliffID cliff_id);
 
-/// Value of light sensor when IR light is off
-/// Used to do additional logic on whether or not the ambient light
-/// is too bright to trust the cliff reading
-u16 GetCliffOffLevel(const CliffID cliff_id);
-
 /************************************************************************
  * \section Microphones
  */
