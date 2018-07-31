@@ -101,10 +101,11 @@ void OnTechnologyChanged (GDBusConnection *connection,
   Log::Write("WiFi connection status changed: [connected=%s / mac=%s]", 
     propertyValue?"true":"false", apMacManufacturerBytes.c_str());
 
-  DASMSG(wifi_connection_status, "wifi.status",
-          "WiFi connection status has changed.");
-  DASMSG_SET(s1, connectionStatus, "Connection status");
-  DASMSG_SET(s2, apMacManufacturerBytes, "AP MAC manufacturer bytes");
+  std::string event = propertyValue?"wifi.connection":"wifi.disconnection";
+
+  DASMSG(wifi_connection_status, event,
+          "WiFi connection status changed.");
+  DASMSG_SET(s4, apMacManufacturerBytes, "AP MAC manufacturer bytes");
   DASMSG_SEND();
 }
 
@@ -841,10 +842,10 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
       break;
   }
 
-  DASMSG(wifi_connection_status, "wifi.connection",
+  DASMSG(wifi_connection_status, "wifi.manual_connect_attempt",
           "WiFi connection attempt.");
   DASMSG_SET(s1, statusString, "Connection attempt result");
-  DASMSG_SET(s2, errorString, "Error");
+  DASMSG_SET(s2, errorString, "Error reason");
   DASMSG_SET(s3, hidden?"hidden":"visible", "SSID broadcast");
   DASMSG_SEND();
 
