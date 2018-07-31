@@ -86,6 +86,8 @@ static bool HasVoiceAccess()
 namespace Anki {
 namespace Cozmo {
 
+  CONSOLE_VAR_RANGED(uint32_t, kMotorTestDelay, "LifetimeTest", 2000, 0, 60000);
+  
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
 const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
@@ -1505,9 +1507,8 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms, AnimationS
   {
     // Every alternateTime_ms, while we are in the camera test mode,
     // send alternating motor commands
-    static const uint32_t alternateTime_ms = 1000;
     static BaseStationTime_t lastMovement_ms = curTime_ms;
-    if(curTime_ms - lastMovement_ms > alternateTime_ms)
+    if(curTime_ms - lastMovement_ms > kMotorTestDelay)
     {
       lastMovement_ms = curTime_ms;
       static bool up = false;
