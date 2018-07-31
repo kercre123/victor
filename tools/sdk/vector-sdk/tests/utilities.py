@@ -14,3 +14,7 @@ async def delay_close(time=30, log_fn=print):
             log_fn(f"{countdown:2} second{'s' if countdown > 1 else ''} remaining...")
     except Exception as e:
         raise e
+
+
+async def wait_async(t):
+    return await asyncio.sleep(t)

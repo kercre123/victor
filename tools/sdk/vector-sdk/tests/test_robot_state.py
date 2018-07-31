@@ -26,7 +26,6 @@ def main():
         print(robot.right_wheel_speed_mmps)
         print(robot.head_angle_rad)
         print(robot.lift_height_mm)
-        print(robot.battery_voltage)
         print(robot.accel)
         print(robot.gyro)
         print(robot.carrying_object_id)
@@ -35,7 +34,6 @@ def main():
         print(robot.localized_to_object_id)
         print(robot.last_image_time_stamp)
         print(robot.status)
-        print(robot.game_status)
 
 
 if __name__ == '__main__':

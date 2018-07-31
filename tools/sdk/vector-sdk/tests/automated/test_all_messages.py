@@ -37,7 +37,6 @@ Interface = client.ExternalInterfaceServicer
 #  - nicolas 06/18/18
 MESSAGES_TO_IGNORE = [
     Interface.EventStream,
-    Interface.RobotStateStream,
 ]
 
 

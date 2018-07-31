@@ -142,6 +142,10 @@ class MessageEngineToGame;
 struct RobotState;
 }
 
+namespace external_interface {
+class RobotState;
+}
+
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
 {
@@ -610,8 +614,11 @@ public:
 
   Util::Data::DataPlatform* GetContextDataPlatform();
 
-  // Populate a RobotState message with robot's current state information (suitable for sending to external listeners)
+  // Populate a RobotState clad message with robot's current state information (suitable for sending to external listeners)
   ExternalInterface::RobotState GetRobotState() const;
+
+  // Populate a RobotState proto message with robot's current state information (suitable for sending to external listeners)
+  external_interface::RobotState* GenerateRobotStateProto() const;
 
   // Populate a RobotState message with default values (suitable for sending to the robot itself, e.g. in unit tests)
   static RobotState GetDefaultRobotState();

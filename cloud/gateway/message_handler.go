@@ -316,32 +316,6 @@ func CladGyroDataToProto(msg *gw_clad.GyroData) *extint.GyroData {
 	}
 }
 
-func CladRobotStateToProto(msg *gw_clad.RobotState) *extint.RobotStateResult {
-	robotState := &extint.RobotState{
-		Pose:                  CladPoseToProto(&msg.Pose),
-		PoseAngleRad:          msg.PoseAngleRad,
-		PosePitchRad:          msg.PosePitchRad,
-		LeftWheelSpeedMmps:    msg.LeftWheelSpeedMmps,
-		RightWheelSpeedMmps:   msg.RightWheelSpeedMmps,
-		HeadAngleRad:          msg.HeadAngleRad,
-		LiftHeightMm:          msg.LiftHeightMm,
-		BatteryVoltage:        msg.BatteryVoltage,
-		Accel:                 CladAccelDataToProto(&msg.Accel),
-		Gyro:                  CladGyroDataToProto(&msg.Gyro),
-		CarryingObjectId:      msg.CarryingObjectID,
-		CarryingObjectOnTopId: msg.CarryingObjectOnTopID,
-		HeadTrackingObjectId:  msg.HeadTrackingObjectID,
-		LocalizedToObjectId:   msg.LocalizedToObjectID,
-		LastImageTimeStamp:    msg.LastImageTimeStamp,
-		Status:                msg.Status,
-		GameStatus:            uint32(msg.GameStatus), // protobuf does not have a uint8 representation, so cast to a uint32
-	}
-
-	return &extint.RobotStateResult{
-		RobotState: robotState,
-	}
-}
-
 func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	switch tag := msg.Tag(); tag {
 	// Event is currently unused in CLAD, but if you start
@@ -643,29 +617,6 @@ func (m *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.Display
 			Description: "Message sent to engine",
 		},
 	}, nil
-}
-
-// TODO: This should be handled as an event stream once RobotState is made an event
-// Long running message for sending events to listening sdk users
-func (c *rpcService) RobotStateStream(in *extint.RobotStateRequest, stream extint.ExternalInterface_RobotStateStreamServer) error {
-	log.Println("Received rpc request RobotStateStream(", in, ")")
-
-	f, stream_channel := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_RobotState, 16)
-	defer f()
-
-	for result := range stream_channel {
-		log.Printf("Got result: %+v", result)
-		robotState := CladRobotStateToProto(result.GetRobotState())
-		log.Printf("Made RobotState: %+v", robotState)
-		if err := stream.Send(robotState); err != nil {
-			return err
-		} else if err = stream.Context().Err(); err != nil {
-			// This is the case where the user disconnects the stream
-			// We should still return the err in case the user doesn't think they disconnected
-			return err
-		}
-	}
-	return nil
 }
 
 func (m *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRequest) (*extint.AppIntentResult, error) {
@@ -1455,7 +1406,7 @@ func (m *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeight
 }
 
 func (m *rpcService) SetBackpackLights(ctx context.Context, in *extint.SetBackpackLightsRequest) (*extint.SetBackpackLightsResponse, error) {
-	log.Println("Received rpc request SetBackpackLEDs(", in, ")")
+	log.Println("Received rpc request SetBackpackLights(", in, ")")
 	_, err := engineCladManager.Write(ProtoSetBackpackLightsToClad(in))
 	if err != nil {
 		return nil, err

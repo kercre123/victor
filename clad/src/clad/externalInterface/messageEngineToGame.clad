@@ -157,23 +157,23 @@ message PerRobotSettings {
 ///////////////////////////////////////////////////////////////////////////////
 
 message RobotState {
-    PoseStruct3d pose,
-    float_32 poseAngle_rad,    // heading in X-Y plane
-    float_32 posePitch_rad,    // robot pitch angle
-    float_32 leftWheelSpeed_mmps,
-    float_32 rightWheelSpeed_mmps,
-    float_32 headAngle_rad,
-    float_32 liftHeight_mm,
-    float_32 batteryVoltage,
-    AccelData accel,                // in head frame (mm/s^2)
-    GyroData gyro,                  // in head frame (rad/s)
-    int_32   carryingObjectID,      // will be -1 if not carrying object
-    int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
-    int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
-    int_32   localizedToObjectID,   // Will be -1 if not localized to any object
-    uint_32  lastImageTimeStamp,    // Last image processed by the vision system
-    uint_32  status,                // See RobotStatusFlag in robotStatusAndActions.clad
-    uint_8   gameStatus             // See GameStatusFlag in cozmoTypes.h
+    PoseStruct3d    pose,
+    float_32        poseAngle_rad,    // heading in X-Y plane
+    float_32        posePitch_rad,    // robot pitch angle
+    float_32        leftWheelSpeed_mmps,
+    float_32        rightWheelSpeed_mmps,
+    float_32        headAngle_rad,
+    float_32        liftHeight_mm,
+    float_32        batteryVoltage,
+    AccelData       accel,                 // in head frame (mm/s^2)
+    GyroData        gyro,                  // in head frame (rad/s)
+    int_32          carryingObjectID,      // will be -1 if not carrying object
+    int_32          carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+    int_32          headTrackingObjectID,  // will be -1 if head is not tracking to any object
+    int_32          localizedToObjectID,   // Will be -1 if not localized to any object
+    uint_32         lastImageTimeStamp,    // Last image processed by the vision system
+    uint_32         status,                // See RobotStatusFlag in robotStatusAndActions.clad
+    uint_8          gameStatus             // See GameStatusFlag in cozmoTypes.h
 }
 
 message RobotDelocalized {
@@ -953,19 +953,18 @@ autounion MessageEngineToGame
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
   SDKActivationResult               SDKActivationResult                = 0x04,
-  RobotState                        RobotState                         = 0x05, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  EnrolledNamesResponse             EnrolledNamesResponse              = 0x06,  
-  RobotObservedFace                 RobotObservedFace                  = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x08, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  AnimationAvailable                AnimationAvailable                 = 0x09,
-  EndOfMessage                      EndOfMessage                       = 0x0A,
-  ObjectConnectionState             ObjectConnectionState              = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  ObjectMoved                       ObjectMoved                        = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  ObjectStoppedMoving               ObjectStoppedMoving                = 0x0D, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  ObjectUpAxisChanged               ObjectUpAxisChanged                = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  ObjectTapped                      ObjectTapped                       = 0x0F, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  ObjectAccel                       ObjectAccel                        = 0x10, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
-  RobotObservedObject               RobotObservedObject                = 0x11, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
+  RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  AnimationAvailable                AnimationAvailable                 = 0x08,
+  EndOfMessage                      EndOfMessage                       = 0x09,
+  ObjectConnectionState             ObjectConnectionState              = 0x0A, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectMoved                       ObjectMoved                        = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectStoppedMoving               ObjectStoppedMoving                = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectUpAxisChanged               ObjectUpAxisChanged                = 0x0D, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectTapped                      ObjectTapped                       = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectAccel                       ObjectAccel                        = 0x0F, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
+  RobotObservedObject               RobotObservedObject                = 0x10, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
 }
 
 } // namespace ExternalInterface

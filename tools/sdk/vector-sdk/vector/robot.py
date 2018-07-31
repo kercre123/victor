@@ -11,7 +11,8 @@ import logging
 
 from . import (animation, backpack, behavior, connection,
                events, exceptions, faces, motors,
-               oled_face, photos, sync, util, world)
+               oled_face, photos, proximity, sync, util,
+               world)
 from .messaging import protocol
 
 MODULE_LOGGER = logging.getLogger(__name__)
@@ -40,11 +41,12 @@ class Robot:
         # placeholders for components before they exist
         self._anim = None
         self._backpack = None
-        self._behavior = behavior.BehaviorComponent(self)
+        self._behavior = None
         self._faces = None
         self._motors = None
         self._oled = None
         self._photos = None
+        self._proximity = None
         self._world = None
 
         self.behavior_timeout = behavior_timeout
@@ -56,7 +58,6 @@ class Robot:
         self._right_wheel_speed_mmps: float = None
         self._head_angle_rad: float = None
         self._lift_height_mm: float = None
-        self._battery_voltage: float = None
         self._accel: util.Vector3 = None
         self._gyro: util.Vector3 = None
         self._carrying_object_id: float = None
@@ -65,7 +66,6 @@ class Robot:
         self._localized_to_object_id: float = None
         self._last_image_time_stamp: float = None
         self._status: float = None
-        self._game_status: float = None
         self.pending = []
 
     @property
@@ -113,6 +113,12 @@ class Robot:
         return self._photos
 
     @property
+    def proximity(self):
+        '''Component containing state related to object proximity detection
+        '''
+        return self._proximity
+
+    @property
     def world(self):
         if self._world is None:
             raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
@@ -154,11 +160,6 @@ class Robot:
         return self._lift_height_mm
 
     @property
-    def battery_voltage(self):
-        '''The current battery voltage'''
-        return self._battery_voltage
-
-    @property
     def accel(self):
         ''':class:`vector.util.Vector3`: The current accelerometer reading (x, y, z)'''
         return self._accel
@@ -197,10 +198,6 @@ class Robot:
     def status(self):
         return self._status
 
-    @property
-    def game_status(self):
-        return self._game_status
-
     # Unpack streamed data to robot's internal properties
     def _unpack_robot_state(self, _, msg):
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
@@ -213,7 +210,6 @@ class Robot:
         self._right_wheel_speed_mmps = msg.right_wheel_speed_mmps
         self._head_angle_rad = msg.head_angle_rad
         self._lift_height_mm = msg.lift_height_mm
-        self._battery_voltage = msg.battery_voltage
         self._accel = util.Vector3(msg.accel.x, msg.accel.y, msg.accel.z)
         self._gyro = util.Vector3(msg.gyro.x, msg.gyro.y, msg.gyro.z)
         self._carrying_object_id = msg.carrying_object_id
@@ -222,7 +218,7 @@ class Robot:
         self._localized_to_object_id = msg.localized_to_object_id
         self._last_image_time_stamp = msg.last_image_time_stamp
         self._status = msg.status
-        self._game_status = msg.game_status
+        self._proximity.on_proximity_update(msg.prox_data)
 
     def connect(self, timeout=10):
         if self.loop is None:
@@ -239,10 +235,12 @@ class Robot:
         # Initialize components
         self._anim = animation.AnimationComponent(self)
         self._backpack = backpack.BackpackComponent(self)
+        self._behavior = behavior.BehaviorComponent(self)
         self._faces = faces.FaceComponent(self)
         self._motors = motors.MotorComponent(self)
         self._oled = oled_face.OledComponent(self)
         self._photos = photos.PhotographComponent(self)
+        self._proximity = proximity.ProximityComponent(self)
         self._world = world.World(self)
 
         # Enable face detection, to allow Vector to add faces to its world view
