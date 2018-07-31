@@ -21,6 +21,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+#include <sys/wait.h>
 
 #define LOG_CHANNEL "SettingsManager"
 
@@ -151,6 +152,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _settingSetters[RobotSetting::master_volume] = &SettingsManager::ApplySettingMasterVolume;
   _settingSetters[RobotSetting::eye_color]     = &SettingsManager::ApplySettingEyeColor;
   _settingSetters[RobotSetting::locale]        = &SettingsManager::ApplySettingLocale;
+  _settingSetters[RobotSetting::time_zone]     = &SettingsManager::ApplySettingTimeZone;
 
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
@@ -337,6 +339,67 @@ bool SettingsManager::ApplySettingLocale()
   DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
   return _robot->SetLocale(value);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplySettingTimeZone()
+{
+  static const std::string key = RobotSettingToString(RobotSetting::time_zone);
+  const std::string value = _currentSettings[key].asString();
+  DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingTimeZone.InvalidRobot");
+
+  std::vector<std::string> command;
+  command.push_back("/usr/bin/timedatectl");
+  command.push_back("set-timezone");
+  command.push_back(value);
+  return ExecCommand(command);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ExecCommand(const std::vector<std::string>& args)
+{
+  LOG_INFO("SettingsManager.ExecCommand", "Called with cmd: %s (and %i arguments)",
+           args[0].c_str(), (int)(args.size() - 1));
+
+  pid_t pID = fork();
+  if (pID == 0) // child
+  {
+    char* argv_child[args.size() + 1];
+
+    for (size_t i = 0; i < args.size(); i++)
+    {
+      argv_child[i] = (char *) malloc(args[i].size() + 1);
+      strcpy(argv_child[i], args[i].c_str());
+    }
+    argv_child[args.size()] = nullptr;
+
+    execv(argv_child[0], argv_child);
+
+    // We'll only get here if execv fails
+    for (size_t i = 0 ; i < args.size() + 1 ; ++i)
+    {
+      free(argv_child[i]);
+    }
+    exit(0);
+  }
+  else if (pID < 0) // fail
+  {
+    LOG_INFO("SettingsManager.ExecCommand.FailedFork", "Failed fork!");
+    return false;
+  }
+  else  // parent
+  {
+    // Wait for child to complete so we can get an error code
+    int status;
+    waitpid(pID, &status, 0);
+    LOG_INFO("SettingsManager.ExecCommand", "Status of forked child process is %i", status);
+    // Status will be non-zero if the time zone string is invalid
+    return (status == 0);
+  }
+  return true;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

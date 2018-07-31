@@ -67,6 +67,8 @@ private:
   bool ApplySettingMasterVolume();
   bool ApplySettingEyeColor();
   bool ApplySettingLocale();
+  bool ApplySettingTimeZone();
+  bool ExecCommand(const std::vector<std::string>& args);
 
   Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
