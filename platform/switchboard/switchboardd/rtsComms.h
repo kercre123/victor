@@ -30,7 +30,8 @@ public:
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
     bool isPairing,
-    bool isOtaUpdating);
+    bool isOtaUpdating,
+    Anki::Wifi::Wifi *wifi);
 
   ~RtsComms();
 
@@ -72,6 +73,7 @@ private:
   const uint16_t kPairingTimeout_s = 60;
 
   // Fields
+  Anki::Wifi::Wifi *_wifi;
   std::string _pin;
   INetworkStream* _stream;
   struct ev_loop* _loop;

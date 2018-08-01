@@ -13,6 +13,7 @@
 #include "switchboardd/rtsHandlerV2.h"
 #include "switchboardd/rtsHandlerV3.h"
 #include "switchboardd/rtsComms.h"
+#include "anki-wifi/wifi.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -21,7 +22,9 @@ RtsComms::RtsComms(INetworkStream* stream,
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
     bool isPairing,
-    bool isOtaUpdating) :
+    bool isOtaUpdating,
+    Anki::Wifi::Wifi *wifi) :
+_wifi(wifi),
 _pin(""),
 _stream(stream),
 _loop(evloop),
@@ -220,7 +223,9 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                               _loop,
                               _engineClient,
                               _isPairing,
-                              _isOtaUpdating);
+                              _isOtaUpdating,
+                              _wifi
+                );
 
               RtsHandlerV3* _v3 = static_cast<RtsHandlerV3*>(_rtsHandler);
               _pinHandle = _v3->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
@@ -246,7 +251,9 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                               _loop,
                               _engineClient,
                               _isPairing,
-                              _isOtaUpdating);
+                              _isOtaUpdating,
+                              _wifi
+                );
 
               RtsHandlerV2* _v2 = static_cast<RtsHandlerV2*>(_rtsHandler);
               _pinHandle = _v2->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){

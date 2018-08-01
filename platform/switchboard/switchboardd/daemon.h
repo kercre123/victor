@@ -139,6 +139,7 @@ namespace Switchboard {
       std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
       bool _isUpdateEngineServiceRunning;
       bool _shouldRestartPairing;
+      Anki::Wifi::Wifi _wifi;
   };
 }
 }

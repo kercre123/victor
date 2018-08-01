@@ -17,6 +17,7 @@
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/log.h"
+#include "anki-wifi/wifi.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -50,9 +51,10 @@ public:
   void SetOtaUpdating(bool updating) { _isOtaUpdating = updating; }
 
 protected:
-  IRtsHandler(const bool pairing, const bool updating)
-  : _isPairing(pairing)
-  , _isOtaUpdating(updating) {}
+  IRtsHandler(const bool pairing, const bool updating, Anki::Wifi::Wifi *wifi)
+    : _isPairing(pairing)
+    , _isOtaUpdating(updating)
+    , _wifi(wifi){}
 
   inline bool AssertState(RtsCommsType state) {
     return state == _type;
@@ -71,6 +73,7 @@ protected:
   RtsKeys _rtsKeys;
   bool _isPairing;
   bool _isOtaUpdating;
+  Anki::Wifi::Wifi *_wifi;
 };
 
 } // Switchboard

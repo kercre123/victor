@@ -19,6 +19,7 @@
 #include <string>
 #include <signals/simpleSignal.hpp>
 #include "ev++.h"
+#include "anki-wifi/wifi.h"
 #include "coretech/messaging/shared/socketConstants.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -30,7 +31,8 @@ namespace Switchboard {
 class EngineMessagingClient {
 public:
   using EngineMessageSignal = Signal::Signal<void (Anki::Vector::ExternalInterface::MessageEngineToGame)>;
-  explicit EngineMessagingClient(struct ev_loop* loop);
+  explicit EngineMessagingClient(struct ev_loop* loop, Anki::Wifi::Wifi *wifi);
+
   bool Init();
   bool Connect();
   bool Disconnect();
@@ -49,6 +51,7 @@ public:
 
 private:
 
+  Anki::Wifi::Wifi *_wifi;
   LocalUdpClient _client;
   EngineMessageSignal _pairingStatusSignal;
   EngineMessageSignal _engineMessageSignal;

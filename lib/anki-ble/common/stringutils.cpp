@@ -14,6 +14,9 @@
 #include "stringutils.h"
 #include <algorithm>
 #include <cctype>
+#include <sstream>
+#include <iomanip>
+
 
 static uint8_t hex_char_to_byte(char input) {
   if (input >= '0' && input <= '9') {
@@ -91,4 +94,8 @@ std::string hexStringToAsciiString(const std::string& hexString)
     asciiString.push_back(c);
   }
   return asciiString;
+}
+
+void ToUpper(std::string& str) {
+  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }

@@ -17,7 +17,6 @@
 #include <chrono>
 #include <thread>
 #include "anki-ble/common/log.h"
-#include "anki-wifi/wifi.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -32,8 +31,8 @@ namespace Switchboard {
 
 uint8_t EngineMessagingClient::sMessageData[2048];
 
-EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop)
-: loop_(evloop)
+EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop, Anki::Wifi::Wifi *wifi)
+  : _wifi(wifi), loop_(evloop)
 {}
 
 bool EngineMessagingClient::Init() {
@@ -101,8 +100,8 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
 }
 
 void EngineMessagingClient::HandleWifiScanRequest() {
-  std::vector<Wifi::WiFiScanResult> wifiResults;
-  Wifi::WifiScanErrorCode code = Wifi::ScanForWiFiAccessPoints(wifiResults);
+  std::vector<Anki::Wifi::WifiScanResult> wifiResults;
+  Anki::Wifi::WifiScanErrorCode code = _wifi->ScanForWifiAccessPoints(wifiResults);
 
   const uint8_t statusCode = (uint8_t)code;
 
