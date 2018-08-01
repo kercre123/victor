@@ -13,6 +13,7 @@
 #include "exec_command.h"
 #include "anki-wifi/fileutils.h"
 #include "util/fileUtils/fileUtils.h"
+#include "switchboardd/onboardingState.h"
 #include "switchboardd/rtsHandlerV3.h"
 #include <sstream>
 #include <cutils/properties.h>
@@ -771,6 +772,13 @@ void RtsHandlerV3::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatu
   if(_engineClient == nullptr) {
     // no engine client -- probably testing
     return;
+  }
+
+  if(OnboardingState::HasStartedOnboarding()) {
+    if((state == Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS) ||
+      (state == Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI)) {
+      return;
+    }
   }
 
   if(!_isOtaUpdating) {
