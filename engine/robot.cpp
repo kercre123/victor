@@ -92,6 +92,7 @@
 #include "proto/external_interface/messages.pb.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
@@ -2896,8 +2897,12 @@ Result Robot::UpdateStartupChecks()
 
 bool Robot::SetLocale(const std::string & locale)
 {
-  // Note: Since Locale utility has no error returns, we can't detect error;
-  // an invalid locale results in setting to the default en-US
+  if (!Anki::Util::Locale::IsValidLocaleString(locale))
+  {
+    LOG_ERROR("Robot.SetLocale", "Invalid locale: %s", locale.c_str());
+    return false;
+  }
+
   DEV_ASSERT(_context != nullptr, "Robot.SetLocale.InvalidContext");
   _context->SetLocale(locale);
 

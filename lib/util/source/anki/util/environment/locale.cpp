@@ -908,11 +908,16 @@ std::string Locale::CountryISO2ToString(const Locale::CountryISO2 countryCode)
   return sCountryToString[countryCode];
 }
 
-Locale::CountryISO2 Locale::CountryISO2FromString(const std::string& countryString)
+Locale::CountryISO2 Locale::CountryISO2FromString(const std::string& countryString,
+                                                  bool* resultValid)
 {
   std::string countryStringUpperCase = Anki::Util::StringToUpper(countryString);
   auto const& search = sStringToCountry.find(countryStringUpperCase);
-  if (search != sStringToCountry.end()) {
+  const bool found = search != sStringToCountry.end();
+  if (resultValid != nullptr) {
+    *resultValid = found;
+  }
+  if (found) {
     return search->second;
   }
   return kDefaultCountry;
@@ -923,14 +928,35 @@ std::string Locale::LanguageToString(const Locale::Language languageCode)
   return sLanguageToString[languageCode];
 }
 
-Locale::Language Locale::LanguageFromString(const std::string& languageString)
+Locale::Language Locale::LanguageFromString(const std::string& languageString,
+                                            bool* resultValid)
 {
   std::string languageStringLowerCase = Anki::Util::StringToLower(languageString);
   auto const& search = sStringToLanguage.find(languageStringLowerCase);
-  if (search != sStringToLanguage.end()) {
+  const bool found = search != sStringToLanguage.end();
+  if (resultValid != nullptr) {
+    *resultValid = found;
+  }
+  if (found) {
     return search->second;
   }
   return kDefaultLanguage;
+}
+
+bool Locale::IsValidLocaleString(const std::string& localeString)
+{
+  if (localeString.size() != 5) {
+    return false;
+  }
+  bool valid = false;
+  std::string languageString = localeString.substr(0, 2);
+  (void) Locale::LanguageFromString(languageString, &valid);
+  if (!valid) {
+    return false;
+  }
+  std::string countryString = localeString.substr(3, 2);
+  (void) Locale::CountryISO2FromString(countryString, &valid);
+  return valid;
 }
 
 const Locale Locale::kDefaultLocale = Locale(kDefaultLanguage, kDefaultCountry);
