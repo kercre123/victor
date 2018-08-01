@@ -695,13 +695,8 @@ void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterfa
 
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
-  // using our own timestamp so we can make accurate timestamp comparisons on the engine process
-  const TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
   const auto & payload = message.GetData().Get_micDirection();
-  robot->GetMicComponent().GetMicDirectionHistory().AddDirectionSample(currentTime,
-                                                     payload.direction, payload.confidence,
-                                                     payload.selectedDirection);
+  robot->GetMicComponent().GetMicDirectionHistory().AddMicSample(payload);
 }
 
 void RobotToEngineImplMessaging::HandleMicDataState(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

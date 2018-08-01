@@ -17,25 +17,37 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/components/mics/micDirectionTypes.h"
 #include "engine/robotComponents_fwd.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <array>
 #include <cstdint>
+#include <functional>
 
 namespace Anki {
 namespace Cozmo {
 
+class CozmoContext;
+
+namespace WebService {
+  class WebService;
+}
+
 class MicDirectionHistory
 {
 public:
-  MicDirectionHistory() {}
+  MicDirectionHistory() : _webService(nullptr) {}
+
+  void Initialize( const CozmoContext* context );
 
   static constexpr uint32_t kMicDirectionHistory_ms = 10000;
   static constexpr uint32_t kTimePerDirectionUpdate_ms = 10;
   static constexpr uint32_t kMicDirectionHistoryLen = kMicDirectionHistory_ms / kTimePerDirectionUpdate_ms;
 
+  void AddMicSample( const RobotInterface::MicDirection& message );
   void AddDirectionSample(TimeStamp_t timestamp,
                           MicDirectionIndex newIndex, MicDirectionConfidence newConf,
                           MicDirectionIndex selectedDirection);
+  void AddMicPowerSample(TimeStamp_t timestamp, float powerLevel, float noiseFloor);
 
   // Interface for requesting the "best" direction
   static constexpr uint32_t kDefaultDirectionRecentTime_ms = 1000;
@@ -47,12 +59,49 @@ public:
   MicDirectionNodeList GetRecentHistory(TimeStamp_t timeLength_ms) const;
   MicDirectionNodeList GetHistoryAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
+
+  // currently we only allow the listerner to supply an OnSound "reaction", but could easily have them supply
+  // the "testing" function to determine themselves what is considered a valid sound reaction
+  SoundReactorId RegisterSoundReactor(OnMicPowerSampledCallback callback);
+  void UnRegisterSoundReactor(SoundReactorId id);
+
+
 private:
+  WebService::WebService* _webService;
+
   std::array<MicDirectionNode, kMicDirectionHistoryLen> _micDirectionBuffer;
   uint32_t _micDirectionBufferIndex = 0;
 
   // direction that we're currently focusing our mics
   MicDirectionIndex _mostRecentSelectedDirection = kMicDirectionUnknown;
+
+  struct SoundTrackingData
+  {
+    MicDirectionIndex         latestMicDirection = kMicDirectionUnknown;
+    MicDirectionConfidence    latestMicConfidence = 0;
+    double                    latestPowerLevel = 0.0;
+    double                    latestNoiseFloor = 0.0;
+    bool                      increasing = false;
+    double                    latestPeakLevel = 0.0;
+    double                    averagePeakLevel = 0.0;
+  };
+  struct SoundReactionListener
+  {
+    SoundReactorId              id;
+    OnMicPowerSampledCallback   callback;
+  };
+  // data we want to send to the webserver for debugging, but don't otherwise need to store
+  struct WebServerData
+  {
+    bool                    forceUpdate = false;
+    double                  timeOfReaction = 0.0;
+    double                  powerLevel = 0.0;
+    MicDirectionConfidence  confidence = 0;
+    MicDirectionIndex       direction = kMicDirectionUnknown;
+  };
+  SoundTrackingData         _soundTrackingData;
+  WebServerData             _webServerData;
+  std::vector<SoundReactionListener> _soundReactors;
 
   using DirectionHistoryCount = std::array<uint32_t, (kLastMicDirectionIndex - kFirstMicDirectionIndex + 1)>;
 
@@ -63,6 +112,10 @@ private:
   DirectionHistoryCount GetDirectionCountAtIndex(uint32_t startIndex, TimeStamp_t timeLength_ms) const;
   MicDirectionNodeList GetHistoryAtIndex(uint32_t startIndex, TimeStamp_t timeLength_ms) const;
   static MicDirectionIndex GetBestDirection(const DirectionHistoryCount& directionCount);
+
+  double AccumulatePeakPowerLevel( double latestPeakPowerLevel );
+  void ProcessSoundReactors();
+  void SendMicDataToWebserver();
 };
 
 } // namespace Cozmo

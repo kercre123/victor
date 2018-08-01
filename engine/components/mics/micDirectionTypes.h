@@ -40,12 +40,20 @@ namespace Cozmo {
     MicDirectionIndex       directionIndex  = kMicDirectionUnknown;
     MicDirectionConfidence  confidenceAvg   = 0;
     MicDirectionConfidence  confidenceMax   = 0;
+    MicDirectionConfidence  latestConfidence  = 0;
     TimeStamp_t             timestampAtMax  = 0;
     uint32_t                count           = 0;
 
     bool IsValid() const { return count > 0; }
   };
   using MicDirectionNodeList = std::deque<MicDirectionNode>;
+
+  using SoundReactorId = uint32_t;
+  enum { kInvalidSoundReactorId = 0 };
+
+  // a Sound Reactor needs to register this callback function which is called each time we record a valid mic power sample
+  // arguments = ( micPowerLevel, micConfidenceValue, micDirection )
+  using OnMicPowerSampledCallback = std::function<bool(double,MicDirectionConfidence,MicDirectionIndex)>;
 
 } // namespace Cozmo
 } // namespace Anki

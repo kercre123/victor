@@ -48,6 +48,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
@@ -565,7 +566,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 
   // When we know the robot is moving, or speaker is playing, or low power mode, or there's no
   //  current activity (so we didn't do beamforming) clear direction data
-  if (robotIsMoving || _isSpeakerActive || (activityFlag != 1) || isLowPowerMode)
+  if (robotIsMoving || ( _isSpeakerActive && kMicData_SpeakerNoiseDisablesMics ) || (activityFlag != 1) || isLowPowerMode)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }
