@@ -1,8 +1,11 @@
 {
   "dasConfig" : {
-    // VIC-2035: Production environment not yet ready for production use
-    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT",
-    "queue_threshold_size": 256,
-    "max_deferrals_size": 4
+    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasProd-dasprodSqs-1845FTIME3RHN",
+    "file_threshold_size": 40000,
+    "flush_interval": 60,
+    "storage_path": "/run/dasLogs",
+    "storage_quota": 5000000,
+    "backup_path": "/data/data/com.anki.victor/cache/dasLogs",
+    "backup_quota": 10000000
   }
 }
