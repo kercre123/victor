@@ -27,11 +27,13 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/block.h"
+#include "engine/charger.h"
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"
 #include "engine/cozmoContext.h"
 #include "engine/markerlessObject.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/habitatDetectorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/groundPlaneROI.h"
@@ -144,16 +146,105 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 
 const char* const kWebVizModuleName = "navmap";
 
-// points for calculating the collision area of a charger, which is different from the physical bounding box
-//    (x := marker normal, y := marker horizontal)
-const Vec3f kInteriorChargerOffsetBR = {-12.f, -12.f, 0.f};
-const Vec3f kInteriorChargerOffsetBL = {-12.f,  12.f, 0.f};
-const Vec3f kInteriorChargerOffsetFL = { 26.f,  12.f, 0.f};
-const Vec3f kInteriorChargerOffsetFR = { 26.f, -12.f, 0.f};
-const Vec3f kExteriorChargerOffsetBR = {  0.f,   0.f, 0.f};
-const Vec3f kExteriorChargerOffsetBL = {  0.f,   0.f, 0.f};
-const Vec3f kExteriorChargerOffsetFL = { 26.f,   0.f, 0.f};
-const Vec3f kExteriorChargerOffsetFR = { 26.f,   0.f, 0.f};
+decltype(auto) GetChargerRegion(const Pose3d& poseWRTRoot) 
+{
+  // grab the cannonical corners and then apply the transformation. If we use `GetBoundingQuadXY`, 
+  // we no longer know where the "back" is. Unfortunately, order matters here, and for corners
+  // on the ground plane, the order is (from charger.cpp): 
+  //    {BackLeft, FrontLeft, FrontRight, BackLeft, ...top corners...}
+  //
+  //            eBL----------------------eBR
+  //             |  \       back       /  |               +x
+  //             |    iBL----------iBR    |               ^
+  //             |     |            |     |               |
+  //             |  l  |            |  r  |               |
+  //             |  e  |            |  i  |               +-----> +y               
+  //             |  f  |            |  g  |
+  //             |  t  |            |  h  |
+  //             |     |            |  t  |
+  //             |     |            |     |
+  //            eFL---iFL          iFR---eFR
+  //
+
+
+  // points for calculating the collision area of a charger, which is different from the physical bounding box
+  //    (x := marker normal, y := marker horizontal)
+  const Vec3f kInteriorChargerOffsetBR = {-12.f, -12.f, 0.f};
+  const Vec3f kInteriorChargerOffsetBL = {-12.f,  12.f, 0.f};
+  const Vec3f kInteriorChargerOffsetFL = { 26.f,  12.f, 0.f};
+  const Vec3f kInteriorChargerOffsetFR = { 26.f, -12.f, 0.f};
+  const Vec3f kExteriorChargerOffsetBR = {  0.f,   0.f, 0.f};
+  const Vec3f kExteriorChargerOffsetBL = {  0.f,   0.f, 0.f};
+  const Vec3f kExteriorChargerOffsetFL = { 26.f,   0.f, 0.f};
+  const Vec3f kExteriorChargerOffsetFR = { 26.f,   0.f, 0.f};
+
+  const std::vector<Point3f>& corners = Charger().GetCanonicalCorners();
+  const Point2f exteriorBL = poseWRTRoot * (corners[0] + kExteriorChargerOffsetBL);
+  const Point2f exteriorFL = poseWRTRoot * (corners[1] + kExteriorChargerOffsetFL);
+  const Point2f exteriorFR = poseWRTRoot * (corners[2] + kExteriorChargerOffsetFR);
+  const Point2f exteriorBR = poseWRTRoot * (corners[3] + kExteriorChargerOffsetBR);
+  const Point2f interiorBL = poseWRTRoot * (corners[0] + kInteriorChargerOffsetBL);
+  const Point2f interiorFL = poseWRTRoot * (corners[1] + kInteriorChargerOffsetFL);
+  const Point2f interiorFR = poseWRTRoot * (corners[2] + kInteriorChargerOffsetFR);
+  const Point2f interiorBR = poseWRTRoot * (corners[3] + kInteriorChargerOffsetBR);
+
+
+  // only want to flag the back and sides of the charger, so define each side as a separate trapezoid
+  // as seen in the diagram above
+  return MakeUnion2f( FastPolygon({ exteriorBL, interiorBL, interiorBR, exteriorBR }),  // back
+                      FastPolygon({ exteriorBL, exteriorFL, interiorFL, interiorBL }),  // left
+                      FastPolygon({ interiorBR, interiorFR, exteriorFR, exteriorBR }) ); // right
+
+}
+
+
+decltype(auto) GetHabitatRegion(const Pose3d& poseWRTRoot) 
+{
+  //
+  //                   eB                       
+  //                 ╱    ╲
+  //               ╱   iB   ╲                 +x 
+  //             ╱   ╱ xx ╲   ╲                ^
+  //           ╱   ╱   xx   ╲   ╲              |
+  //         ╱   ╱            ╲   ╲            |
+  //       eL--iL              iR--eR          +-----> +y
+  //        ╲   ╲             ╱   ╱        
+  //          ╲   ╲         ╱   ╱                       
+  //            ╲   ╲     ╱   ╱                        
+  //              ╲    iF   ╱                           
+  //                ╲     ╱                        
+  //                   eF                       
+  //                                          
+  //
+  
+  // points for calculating the collision area of a habitat, relative to charger pose
+  //    (x := charger marker normal, y := charger marker horizontal)
+  const Vec3f kInteriorBack  = {  160.f,    0.f, 0.f };
+  const Vec3f kInteriorLeft  = {  -40.f, -200.f, 0.f };
+  const Vec3f kInteriorRight = {  -40.f,  200.f, 0.f };
+  const Vec3f kInteriorFront = { -260.f,    0.f, 0.f };
+  const Vec3f kExteriorBack  = {  210.f,    0.f, 0.f };
+  const Vec3f kExteriorLeft  = {  -40.f, -250.f, 0.f };
+  const Vec3f kExteriorRight = {  -40.f,  250.f, 0.f };
+  const Vec3f kExteriorFront = { -290.f,    0.f, 0.f };
+
+  const Point2f actualInteriorBack  = poseWRTRoot * kInteriorBack;
+  const Point2f actualInteriorLeft  = poseWRTRoot * kInteriorLeft;
+  const Point2f actualInteriorRight = poseWRTRoot * kInteriorRight;
+  const Point2f actualInteriorFront = poseWRTRoot * kInteriorFront;
+  const Point2f actualExteriorBack  = poseWRTRoot * kExteriorBack;
+  const Point2f actualExteriorLeft  = poseWRTRoot * kExteriorLeft;
+  const Point2f actualExteriorRight = poseWRTRoot * kExteriorRight;
+  const Point2f actualExteriorFront = poseWRTRoot * kExteriorFront;
+
+  // only want to flag the back and sides of the charger, so define each side as a separate trapezoid
+  // as seen in the diagram above
+  return MakeUnion2f( 
+    FastPolygon({ actualExteriorBack,  actualExteriorLeft,  actualInteriorLeft,  actualInteriorBack  }),  // back-left
+    FastPolygon({ actualExteriorBack,  actualExteriorRight, actualInteriorRight, actualInteriorBack  }),  // back-right
+    FastPolygon({ actualExteriorFront, actualExteriorLeft,  actualInteriorLeft,  actualInteriorFront }),  // front-left
+    FastPolygon({ actualExteriorFront, actualExteriorRight, actualInteriorRight, actualInteriorFront })); // front-right
+}
 
 };
 
@@ -886,46 +977,15 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
         {
           case ObjectFamily::Charger:
           {
-            // grab the cannonical corners and then apply the transformation. If we use `GetBoundingQuadXY`, 
-            // we no longer know where the "back" is. Unfortunately, order matters here, and for corners
-            // on the ground plane, the order is (from charger.cpp): 
-            //    {BackLeft, FrontLeft, FrontRight, BackLeft, ...top corners...}
-            //
-            //            eBL----------------------eBR
-            //             |  \       back       /  |               +x
-            //             |    iBL----------iBR    |               ^
-            //             |     |            |     |               |
-            //             |  l  |            |  r  |               |
-            //             |  e  |            |  i  |               +-----> +y               
-            //             |  f  |            |  g  |
-            //             |  t  |            |  h  |
-            //             |     |            |  t  |
-            //             |     |            |     |
-            //            eFL---iFL          iFR---eFR
-            //
-            
-            const std::vector<Point3f>& corners = object.GetCanonicalCorners();
-
-            const Point2f exteriorBL = newPoseWrtOrigin * (corners[0] + kExteriorChargerOffsetBL);
-            const Point2f exteriorFL = newPoseWrtOrigin * (corners[1] + kExteriorChargerOffsetFL);
-            const Point2f exteriorFR = newPoseWrtOrigin * (corners[2] + kExteriorChargerOffsetFR);
-            const Point2f exteriorBR = newPoseWrtOrigin * (corners[3] + kExteriorChargerOffsetBR);
-            const Point2f interiorBL = newPoseWrtOrigin * (corners[0] + kInteriorChargerOffsetBL);
-            const Point2f interiorFL = newPoseWrtOrigin * (corners[1] + kInteriorChargerOffsetFL);
-            const Point2f interiorFR = newPoseWrtOrigin * (corners[2] + kInteriorChargerOffsetFR);
-            const Point2f interiorBR = newPoseWrtOrigin * (corners[3] + kInteriorChargerOffsetBR);
-
-
-            // only want to flag the back and sides of the charger, so define each side as a separate trapezoid
-            // as seen in the diagram above
-            auto region = MakeUnion2f(
-              FastPolygon({ exteriorBL, interiorBL, interiorBR, exteriorBR }),  // back
-              FastPolygon({ exteriorBL, exteriorFL, interiorFL, interiorBL }),  // left
-              FastPolygon({ interiorBR, interiorFR, exteriorFR, exteriorBR})    // right
-            );
-
+            const bool inHabitat = (_robot->GetHabitatDetectorComponent().GetHabitatBeliefState() == HabitatBeliefState::InHabitat);
             MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
-            InsertData(region, data);
+
+            if (inHabitat) {
+              const auto region = MakeUnion2f( GetChargerRegion(newPoseWrtOrigin), GetHabitatRegion(newPoseWrtOrigin) );
+              InsertData( region, data );
+            } else {
+              InsertData( GetChargerRegion(newPoseWrtOrigin), data );
+            }            
             break;
           }
           case ObjectFamily::Block:
