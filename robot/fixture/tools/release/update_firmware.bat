@@ -1,16 +1,10 @@
 @echo OFF
 
 where adb >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
-  echo adb command not found
-  exit 1
-)
+if %ERRORLEVEL% NEQ 0 ( echo "adb command not found" & goto :END )
 
 adb shell "echo shell connection established"
-if %ERRORLEVEL% NEQ 0 (
-  echo adb not connected to a device, e=%ERRORLEVEL%
-  exit 2
-)
+if %ERRORLEVEL% NEQ 0 ( echo adb not connected to a device e=%ERRORLEVEL% & goto :END )
 
 REM caller specify a firmware .safe file?
 set ARG1=%~1
@@ -33,17 +27,22 @@ adb push dfu data/local/fixture/
 adb push %FILEPATH% data/local/fixture/
 adb shell -x "cd data/local/fixture && chmod +x dfu"
 
-echo updating firmware...
-adb shell -x "pkill helper && sleep 1"
-adb shell -x "cd data/local/fixture && ./dfu %FILENAME%"
+echo stopping helper process...
+adb shell "echo ps old: `ps | grep ./helper | grep -v grep`"
+adb shell "killall -9 helper && sleep 1 && ps | grep ./helper | grep -v grep"
 
-echo restarting helper...
-adb shell "sleep 1 && cd /data/local/fixture && ./helper > /dev/null 2>&1 < /dev/null &"
-adb shell "sleep 1 && ps | grep helper"
+echo updating firmware...
+adb shell "cd data/local/fixture && ./dfu %FILENAME%"
+
+echo restarting helper process...
+adb shell "echo `cd /data/local/fixture && nohup ./helper >/dev/null 2>&1 </dev/null &` >/dev/null && sleep 1"
+adb shell "echo ps new: `ps | grep ./helper | grep -v grep`"
 
 REM echo rebooting...
 adb shell "sync && sleep 1"
 REM adb reboot
 
 echo Done!
+
+:END
 pause
