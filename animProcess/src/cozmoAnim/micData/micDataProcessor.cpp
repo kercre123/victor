@@ -78,7 +78,7 @@ namespace {
   const TriggerModelTypeData kTriggerModelDataList[] = 
   {
     // Easily selectable values for consolevar dropdown. Note 'Count' and '-1' values indicate to use default
-    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 18 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 11 },
     { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_500kb, .searchFileIndex = -1 },
     { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_250kb, .searchFileIndex = -1 },
     { .locale = Util::Locale("en","GB"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
