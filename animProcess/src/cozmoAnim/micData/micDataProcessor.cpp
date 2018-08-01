@@ -57,7 +57,24 @@ namespace {
   // NOTE: This enum needs to EXACTLY match the number and ordering of the kTriggerModelDataList array below
   enum class SupportedLocales
   {
-    enUS_1mb, // default
+    enUS_1mb_1,
+    enUS_1mb_2,
+    enUS_1mb_3,
+    enUS_1mb_4,
+    enUS_1mb_5,
+    enUS_1mb_6,
+    enUS_1mb_7,
+    enUS_1mb_8,
+    enUS_1mb_9,
+    enUS_1mb_10,
+    enUS_1mb_11, // default
+    enUS_1mb_12,
+    enUS_1mb_13,
+    enUS_1mb_14,
+    enUS_1mb_15,
+    enUS_1mb_16,
+    enUS_1mb_17,
+    enUS_1mb_18,
     enUS_500kb,
     enUS_250kb,
     enUK,
@@ -78,7 +95,24 @@ namespace {
   const TriggerModelTypeData kTriggerModelDataList[] = 
   {
     // Easily selectable values for consolevar dropdown. Note 'Count' and '-1' values indicate to use default
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 1 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 2 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 3 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 4 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 5 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 6 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 7 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 8 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 9 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 10 },
     { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 11 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 12 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 13 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 14 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 15 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 16 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 17 },
+    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = 18 },
     { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_500kb, .searchFileIndex = -1 },
     { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_250kb, .searchFileIndex = -1 },
     { .locale = Util::Locale("en","GB"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
@@ -89,8 +123,11 @@ namespace {
   constexpr size_t kTriggerDataListLen = sizeof(kTriggerModelDataList) / sizeof(kTriggerModelDataList[0]);
   static_assert(kTriggerDataListLen == (size_t) SupportedLocales::Count, "Need trigger data for each supported locale");
 
-  size_t _triggerModelTypeIndex = (size_t) SupportedLocales::enUS_1mb;
-  CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndex, CONSOLE_GROUP, _triggerModelTypeIndex, "enUS_1mb,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE");
+  size_t _triggerModelTypeIndex = (size_t) SupportedLocales::enUS_1mb_11;
+  const char* consoleEnums = "enUS_1mb_01,enUS_1mb_02,enUS_1mb_03,enUS_1mb_04,enUS_1mb_05,enUS_1mb_06,enUS_1mb_07,"
+                             "enUS_1mb_08,enUS_1mb_09,enUS_1mb_10,enUS_1mb_11,enUS_1mb_12,enUS_1mb_13,enUS_1mb_14,"
+                             "enUS_1mb_15,enUS_1mb_16,enUS_1mb_17,enUS_1mb_18,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE";
+  CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndex, CONSOLE_GROUP, _triggerModelTypeIndex, consoleEnums);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
