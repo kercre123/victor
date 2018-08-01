@@ -38,7 +38,7 @@ func refreshRoutine(ctx context.Context) {
 			}
 			ch := make(chan *response)
 			queue <- request{
-				m:  cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{SessionToken: "blahblah"}),
+				m:  cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{}),
 				ch: ch}
 			msg := <-ch
 			close(ch)

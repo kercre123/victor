@@ -7,6 +7,8 @@ import (
 	"clad/cloud"
 	"fmt"
 	"time"
+
+	"google.golang.org/grpc/credentials"
 )
 
 type request struct {
@@ -33,9 +35,8 @@ func queueInit(done <-chan struct{}) error {
 				log.Println("Couldn't print face error:", err)
 			}
 			return fmt.Errorf("error reading ESN: %s", err.Error())
-		} else {
-			esn = defaultESN()
 		}
+		esn = defaultESN()
 	}
 	robotESN = esn
 	go queueRoutine(done)
@@ -55,8 +56,8 @@ func handleQueueRequest(req *request) error {
 	return err
 }
 
-func getConnection() (*conn, error) {
-	c, err := newConn(url)
+func getConnection(creds credentials.PerRPCCredentials) (*conn, error) {
+	c, err := newConn(url, creds)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 	}
 	if existing != nil {
 		if time.Now().After(existing.RefreshTime()) {
-			c, err := getConnection()
+			c, err := getConnection(getTokenMetadata(existing.String()))
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
@@ -105,7 +106,7 @@ func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
 		return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{Error: code})
 	}
 
-	c, err := getConnection()
+	c, err := getConnection(getAuthMetadata(session))
 	if err != nil {
 		return errorResp(cloud.TokenError_Connection), err
 	}
