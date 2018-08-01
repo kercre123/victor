@@ -247,10 +247,16 @@ namespace Anki {
       }
       
       // Make sure none of the projected corners are occluded
-      if(camera.IsOccluded(imgCorners[TopLeft]    , markerCornersWrtCamera[TopLeft].z())    ||
-         camera.IsOccluded(imgCorners[TopRight]   , markerCornersWrtCamera[TopRight].z())   ||
-         camera.IsOccluded(imgCorners[BottomLeft] , markerCornersWrtCamera[BottomLeft].z()) ||
-         camera.IsOccluded(imgCorners[BottomRight], markerCornersWrtCamera[BottomRight].z()))
+      // NOTE: occluder list uses closest point as the distance to the quad, so use that here as well
+      f32 atDistance = std::numeric_limits<float>::max();
+      for (const auto& corner : markerCornersWrtCamera) {
+        atDistance = std::fmin(atDistance, corner.z());
+      }
+
+      if(camera.IsOccluded(imgCorners[TopLeft]    , atDistance) ||
+         camera.IsOccluded(imgCorners[TopRight]   , atDistance) ||
+         camera.IsOccluded(imgCorners[BottomLeft] , atDistance) ||
+         camera.IsOccluded(imgCorners[BottomRight], atDistance))
       {
         reason = NotVisibleReason::OCCLUDED;
         return false;
@@ -260,10 +266,6 @@ namespace Anki {
         // Make sure there was something visible behind the marker's quad.
         // Otherwise, we don't know if we should have seen
         // it or if detection failed for some reason
-        const f32 atDistance = 0.25f*(markerCornersWrtCamera[TopLeft].z() +
-                                      markerCornersWrtCamera[TopRight].z() +
-                                      markerCornersWrtCamera[BottomLeft].z() +
-                                      markerCornersWrtCamera[BottomRight].z());
         
         if(not camera.IsAnythingBehind(imgCorners, atDistance))
         {

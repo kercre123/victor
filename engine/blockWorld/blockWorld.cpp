@@ -1679,8 +1679,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
       const bool isDirtyPoseState = (PoseState::Dirty == unobservedObject->GetPoseState());
 
-      // ignore the occluded reason because it seems broken (VIC-2699). that reason is only returned if
-      // the object is otherwise visible, so treat it as visible for all intensive porpoises
       bool shouldBeVisible = true;
       bool occluded        = false;
       bool objectAligned   = true;

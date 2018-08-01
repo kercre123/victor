@@ -121,9 +121,8 @@ ObjectID BehaviorTrackCube::GetVisibleCube() const
                                                                 kMinImageSizePix,
                                                                 false);
       
-      // ignore the occluded reason because it seems broken (VIC-2699). that reason is only returned if
-      // the object is otherwise visible, so treat it as visible for all intensive porpoises
-      const bool isVisible = (reason == NotVisibleReason::IS_VISIBLE) || (reason == NotVisibleReason::OCCLUDED);
+
+      const bool isVisible = (reason == NotVisibleReason::IS_VISIBLE);
       // currently, cubes arent removed if they are not seen in their original location, so check the last time they were seen
       const bool recent = (_iConfig.maxTimeSinceObserved_ms < 0)
                           || (object->GetLastObservedTime() + _iConfig.maxTimeSinceObserved_ms >= currentTime_ms);

@@ -350,11 +350,10 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(const ObservableObject*
   static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see // ANDREW: is this true?
   static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it, size doesn't matter
   
-  // it's ok if markers have nothing behind them, or even if they are occluded. What we want to know is if
+  // it's ok if markers have nothing behind them. What we want to know is if
   // we'd gain any information by trying to look at the marker pose
   static const std::set<Vision::KnownMarker::NotVisibleReason> okReasons{{
     Vision::KnownMarker::NotVisibleReason::IS_VISIBLE,
-    Vision::KnownMarker::NotVisibleReason::OCCLUDED,
     Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND }};
   
 
