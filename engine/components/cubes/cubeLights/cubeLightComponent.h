@@ -32,6 +32,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h" // some useful typedefs
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/robotComponents_fwd.h"
 #include "json/json.h"
 
@@ -197,7 +198,7 @@ private:
     
     // The basestation time that the curPattern ends and the next pattern in the CubeLightAnimation should
     // start playing
-    TimeStamp_t timeCurPatternEnds = 0;
+    EngineTimeStamp_t timeCurPatternEnds = 0;
     
     // Whether or not this anim can be overridden by another anim
     bool canBeOverridden = true;

@@ -15,6 +15,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorFindFaceAndThen__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/smartFaceId.h"
 
 namespace Anki {
@@ -93,9 +94,9 @@ private:
     float stateMinTime_s;
     
     SmartFaceID targetFace;
-    TimeStamp_t lastFaceTimeStamp_ms;
+    RobotTimeStamp_t lastFaceTimeStamp_ms;
     
-    TimeStamp_t activationTimeStamp_ms;
+    RobotTimeStamp_t activationTimeStamp_ms;
   };
 
   InstanceConfig   _iConfig;
@@ -109,8 +110,8 @@ private:
   void TransitionToFollowupBehavior();
   
   // If there is a face, and it is the most recent, and it shares the same origin, this returns true and sets the params
-  bool GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFaceID& faceID, TimeStamp_t& timeStamp_ms );
-  bool GetRecentFace( SmartFaceID& faceID, TimeStamp_t& timeStamp_ms );
+  bool GetRecentFaceSince( RobotTimeStamp_t sinceTime_ms, SmartFaceID& faceID, RobotTimeStamp_t& timeStamp_ms );
+  bool GetRecentFace( SmartFaceID& faceID, RobotTimeStamp_t& timeStamp_ms );
   
   void SetState_internal(State state, const std::string& stateName);
 

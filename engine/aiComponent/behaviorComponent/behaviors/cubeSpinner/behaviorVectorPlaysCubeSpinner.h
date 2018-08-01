@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/cubeSpinnerGame.h"
+#include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -75,7 +76,7 @@ private:
     DynamicVariables();
 
     // Find cube variables
-    TimeStamp_t timeSearchForCubeShouldEnd_ms = 0;
+    EngineTimeStamp_t timeSearchForCubeShouldEnd_ms = 0;
     // game variables
     ObjectID objID;
     CubeSpinnerGame::LockResult lastLockResult = CubeSpinnerGame::LockResult::Count;
@@ -83,7 +84,7 @@ private:
     BehaviorStage stage = BehaviorStage::SearchingForCube;
     bool isCubeSpinnerGameReady = false;
     // player decision tracker
-    TimeStamp_t timeOfLastTap = 0;
+    EngineTimeStamp_t timeOfLastTap = 0;
     bool wasLastCycleTarget = false;
     int lightIdxToLock = CubeLightAnimation::kNumCubeLEDs;
     AnimationTrigger nextResponseAnimation = AnimationTrigger::Count;

@@ -341,7 +341,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 // Helper method for BlockWorld.UpdateObjectOrigins Test
 static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
                                         std::list<std::pair<Anki::Vision::Marker::Code, Anki::Quad2f>>&& codesAndCorners,
-                                        Anki::TimeStamp_t& fakeTime,
+                                        Anki::RobotTimeStamp_t& fakeTime,
                                         Anki::Cozmo::Robot& robot,
                                         Anki::Cozmo::RobotState& stateMsg,
                                         Anki::Cozmo::VisionProcessingResult& procResult)
@@ -350,21 +350,21 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
 
   for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
   {
-    stateMsg.timestamp = fakeTime;
+    stateMsg.timestamp = (TimeStamp_t)fakeTime;
     stateMsg.pose_frame_id = robot.GetPoseFrameID();
     stateMsg.pose_origin_id = robot.GetPoseOriginList().GetCurrentOriginID();
     Result lastResult = robot.UpdateFullRobotState(stateMsg);
     if(RESULT_OK != lastResult)
     {
-      PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateFullRobotStateFailed", "i=%d fakeTime=%u", i, fakeTime);
+      PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateFullRobotStateFailed", "i=%d fakeTime=%u", i, (TimeStamp_t)fakeTime);
       return lastResult;
     }
 
-    procResult.timestamp = fakeTime;
+    procResult.timestamp = (TimeStamp_t)fakeTime;
     procResult.observedMarkers.clear();
     for(auto & codeAndCorners : codesAndCorners)
     {
-      procResult.observedMarkers.push_back(Vision::ObservedMarker(fakeTime, codeAndCorners.first, codeAndCorners.second,
+      procResult.observedMarkers.push_back(Vision::ObservedMarker((TimeStamp_t)fakeTime, codeAndCorners.first, codeAndCorners.second,
                                                                   robot.GetVisionComponent().GetCamera()));
     }
 
@@ -372,7 +372,7 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
 
     if(RESULT_OK != lastResult)
     {
-      PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateVisionMarkersFailed", "i=%d fakeTime=%u", i, fakeTime);
+      PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateVisionMarkersFailed", "i=%d fakeTime=%u", i, (TimeStamp_t)fakeTime);
       return lastResult;
     }
   }
@@ -383,12 +383,12 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
 // Helper method for BlockWorld.UpdateObjectOrigins Test
 static Anki::Result FakeRobotMovement(Anki::Cozmo::Robot& robot,
                                       Anki::Cozmo::RobotState& stateMsg,
-                                      Anki::TimeStamp_t& fakeTime)
+                                      Anki::RobotTimeStamp_t& fakeTime)
 {
   using namespace Anki;
   using namespace Cozmo;
 
-  stateMsg.timestamp = fakeTime;
+  stateMsg.timestamp = (TimeStamp_t)fakeTime;
   stateMsg.status |= (u16)RobotStatusFlag::ARE_WHEELS_MOVING; // Set moving flag
   Result lastResult = robot.UpdateFullRobotState(stateMsg);
   stateMsg.status &= ~(u16)RobotStatusFlag::ARE_WHEELS_MOVING; // Unset moving flag
@@ -471,7 +471,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
   VisionProcessingResult procResult;
 
   // See far block and localize to it.
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
 
   // After seeing three times, should be Known and localizable
   const s32 kNumObservations = 5;
@@ -557,7 +557,7 @@ namespace {
 // helper for device connection messages, for example when cubes connect/disconnect. Note implementation directly
 // calls the robot handler, rather than simulating actually sending a message
 using namespace Anki::Cozmo;
-void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, std::string factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
+void FakeRecvConnectionMessage(Robot& robot, uint32_t activeID, std::string factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
 {
   DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
 
@@ -687,7 +687,7 @@ TEST(BlockWorld, PoseUpdates)
   // - - - See all objects from close so that their poses are Known
 
   VisionProcessingResult procResult;
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
 
   // After seeing at least 2 times, should be Known
   const s32 kNumObservations = 5;
@@ -776,7 +776,7 @@ TEST(BlockWorld, PoseUpdates)
   // DISCONNECT object3
   {
     const ActiveObject* con3 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj3 );
-    FakeRecvConnectionMessage(robot, fakeTime, con3->GetActiveID(), "BB:BB:BB:BB:BB:BB", Anki::Cozmo::ObjectType::Block_LIGHTCUBE2, false);
+    FakeRecvConnectionMessage(robot, con3->GetActiveID(), "BB:BB:BB:BB:BB:BB", Anki::Cozmo::ObjectType::Block_LIGHTCUBE2, false);
     ++fakeTime;
   }
 
@@ -873,7 +873,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   // - - - See all objects from close so that their poses are Known
 
   VisionProcessingResult procResult;
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
 
   // After seeing at least 2 times, should be Known
   const s32 kNumObservations = 5;
@@ -892,13 +892,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
     Vision::TrackedFace face;
     Pose3d headPose(0, Z_AXIS_3D(), {300.f, 300.f, 300.f});
     face.SetID(faceID);
-    face.SetTimeStamp(fakeTime);
+    face.SetTimeStamp((TimeStamp_t)fakeTime);
     face.SetHeadPose(headPose);
 
     std::list<Vision::TrackedFace> faces{std::move(face)};
 
     // Need a state message for the observation time first
-    stateMsg.timestamp = fakeTime;
+    stateMsg.timestamp = (TimeStamp_t)fakeTime;
     lastResult = robot.UpdateFullRobotState(stateMsg);
     ASSERT_EQ(RESULT_OK, lastResult);
 
@@ -1068,7 +1068,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
   };
 
   VisionProcessingResult procResult;
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
 
   const PoseOriginID_t originA = robot.GetWorldOriginID();
 
@@ -1161,7 +1161,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
 
   // Receive state message with pose information referencing old origin C
   stateMsg.pose_origin_id = originC;
-  stateMsg.timestamp = fakeTime;
+  stateMsg.timestamp = (TimeStamp_t)fakeTime;
 
   // Using that message should still be kosher
   lastResult = robot.UpdateFullRobotState(stateMsg);
@@ -1205,10 +1205,10 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
     Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
   };
 
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
 
   // connect to cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, true);
+  FakeRecvConnectionMessage(robot, closeActiveID, closeFactoryID, closeType, true);
   ++fakeTime;
 
   // Should have a "close" object connected
@@ -1261,7 +1261,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
 
   // disconnect from the cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeType, false);
+  FakeRecvConnectionMessage(robot, closeActiveID, closeFactoryID, closeType, false);
   ++fakeTime;
 
   // delocalize while the cube is disconnected
@@ -1271,7 +1271,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   ++fakeTime;
 
   // reconnect to the cube
-  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, "AA:AA:AA:AA:AA:AA", closeType, true);
+  FakeRecvConnectionMessage(robot, closeActiveID, "AA:AA:AA:AA:AA:AA", closeType, true);
   ++fakeTime;
 
   // see the cube again
@@ -1784,7 +1784,7 @@ TEST(Localization, LocalizationDistance)
   robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
 
   VisionProcessingResult procResult;
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
   const s32 kNumObservations = 5;
   f32 observedDistance_mm = -1.f;
   bool success = false;
@@ -1810,11 +1810,11 @@ TEST(Localization, LocalizationDistance)
   // Should be localized to "first" object
   ASSERT_EQ(firstID, robot.GetLocalizedTo());
 
-  auto FakeMovement = [](RobotState& stateMsg, Robot& robot, TimeStamp_t& fakeTime) -> Result
+  auto FakeMovement = [](RobotState& stateMsg, Robot& robot, RobotTimeStamp_t& fakeTime) -> Result
   {
     // "Move" the robot with a fake state message indicating movement
     stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-    stateMsg.timestamp = fakeTime;
+    stateMsg.timestamp = (TimeStamp_t)fakeTime;
     fakeTime += 10;
     Result lastResult = robot.UpdateFullRobotState(stateMsg);
     if(RESULT_OK == lastResult)
@@ -1822,7 +1822,7 @@ TEST(Localization, LocalizationDistance)
 
       // Stop
       stateMsg.status &= ~(s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-      stateMsg.timestamp = fakeTime;
+      stateMsg.timestamp = (TimeStamp_t)fakeTime;
       fakeTime += 10;
       lastResult = robot.UpdateFullRobotState(stateMsg);
 
@@ -1857,14 +1857,14 @@ TEST(Localization, LocalizationDistance)
 
   // Need to move and stop the robot so it's willing to localize again
   stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-  stateMsg.timestamp = fakeTime;
+  stateMsg.timestamp = (TimeStamp_t)fakeTime;
   fakeTime += 10;
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(RESULT_OK, lastResult);
 
   // Stop in a new pose
   stateMsg.status &= ~(s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-  stateMsg.timestamp = fakeTime;
+  stateMsg.timestamp = (TimeStamp_t)fakeTime;
   stateMsg.pose.angle = DEG_TO_RAD(90);
   fakeTime += 10;
   lastResult = robot.UpdateFullRobotState(stateMsg);
@@ -2134,7 +2134,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
   const ObjectID& objID = object->GetID();
   ASSERT_TRUE(objID.IsSet());
 
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
 
   // Put the robot somewhere "random" (to avoid possible special case of reasoning near origin)
   const Pose3d robotPose(M_PI_4_F, Z_AXIS_3D(), {123.f, 456.f, 0.f}, robot.GetWorldOrigin());
@@ -2152,7 +2152,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
       robot.GetVisionComponent().FakeImageProcessed(fakeTime);
 
       object->SetIsMoving(false, 0);
-      object->SetLastObservedTime(fakeTime);
+      object->SetLastObservedTime((TimeStamp_t)fakeTime);
       pose.SetParent(robot.GetPose().GetParent());
 
       // Add enough observations to fully update object's pose and make it Known
@@ -2255,7 +2255,7 @@ TEST(Localization, UnexpectedMovement)
   robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
 
   VisionProcessingResult procResult;
-  TimeStamp_t fakeTime = 10;
+  RobotTimeStamp_t fakeTime = 10;
   const s32 kNumObservations = 5;
 
   // After first seeing three times, should be Known and localizable
@@ -2274,11 +2274,11 @@ TEST(Localization, UnexpectedMovement)
   // Should be localized to "first" object
   ASSERT_EQ(firstID, robot.GetLocalizedTo());
 
-  auto FakeUnexpectedMovement = [](RobotState& stateMsg, Robot& robot, TimeStamp_t& fakeTime) -> Result
+  auto FakeUnexpectedMovement = [](RobotState& stateMsg, Robot& robot, RobotTimeStamp_t& fakeTime) -> Result
   {
     // "Move" the robot with a fake state message indicating movement
     stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-    stateMsg.timestamp = fakeTime;
+    stateMsg.timestamp = (TimeStamp_t)fakeTime;
     stateMsg.lwheel_speed_mmps = 50;
     stateMsg.rwheel_speed_mmps = 0;
     fakeTime += 10;

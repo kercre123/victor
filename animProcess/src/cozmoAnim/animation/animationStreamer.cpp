@@ -1438,7 +1438,7 @@ namespace Cozmo {
       std::string playbackTime = std::to_string(secs) + ":" + std::to_string(ms);
 
       // Estimate if animation process is running slowly and display this on the screen
-      const auto estimatedRealTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _startTime_ms;
+      const AnimTimeStamp_t estimatedRealTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _startTime_ms;
       const auto timeDrift = estimatedRealTime - _relativeStreamTime_ms;
 
       ColorRGBA color = NamedColors::GREEN;
@@ -1447,7 +1447,7 @@ namespace Cozmo {
 
         const auto realSecs = estimatedRealTime/1000;
         const auto realMS = estimatedRealTime % 1000;
-        playbackTime += ("/" + std::to_string(realSecs) + ":" + std::to_string(realMS));
+        playbackTime += ("/" + std::to_string((TimeStamp_t)realSecs) + ":" + std::to_string((TimeStamp_t)realMS));
       }
 
       const Point2f pos(20,20);
@@ -1638,12 +1638,12 @@ namespace Cozmo {
           eventTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms))
       {
         // Get keyframe and send contents to engine
-        const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const AnimTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         auto& eventKeyFrame = eventTrack.GetCurrentKeyFrame();
 
         stateToSend.eventMessage = new AnimationEvent();
         stateToSend.eventMessage->event_id = eventKeyFrame.GetAnimEvent();
-        stateToSend.eventMessage->timestamp = currTime_ms;
+        stateToSend.eventMessage->timestamp = (TimeStamp_t)currTime_ms;
         stateToSend.eventMessage->tag = _tag;
       }
     }
@@ -1656,7 +1656,7 @@ namespace Cozmo {
     
     auto & spriteSeqTrack    = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
     if(ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false)){
-      const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      const AnimTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
     }
   

@@ -19,6 +19,7 @@
 
 
 #include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include <vector>
 
@@ -84,7 +85,7 @@ private:
     bool  hasRegisteredActionComplete;
     // map of cubes to skip. Key is the object ID, value is the last pose updated timestamp where we want to
     // ignore it. If the pose has updated after this timestamp, consider it valid again
-    std::map< ObjectID, TimeStamp_t > badCubesMap;
+    std::map< ObjectID, RobotTimeStamp_t > badCubesMap;
   };
 
   InstanceConfig   _iConfig;

@@ -20,7 +20,7 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(const ObservableObject& o, 
                                                                const Poly2f& p, 
-                                                               TimeStamp_t t)
+                                                               RobotTimeStamp_t t)
 : MemoryMapData(MemoryMapTypes::EContentType::ObstacleObservable, t, true)
 , id(o.GetID())
 , boundingPoly(p)

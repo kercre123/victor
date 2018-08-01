@@ -347,14 +347,14 @@ void BehaviorFeedingEat::MarkCubeAsBad()
     return;
   }
 
-  const TimeStamp_t lastPoseUpdateTime_ms = GetBEI().GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_dVars.targetID);
+  const RobotTimeStamp_t lastPoseUpdateTime_ms = GetBEI().GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_dVars.targetID);
   _dVars.badCubesMap[_dVars.targetID] = lastPoseUpdateTime_ms;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFeedingEat::IsCubeBad(const ObjectID& objectID) const
 { 
-  const TimeStamp_t lastPoseUpdateTime_ms = GetBEI().GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
+  const RobotTimeStamp_t lastPoseUpdateTime_ms = GetBEI().GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
 
   auto iter = _dVars.badCubesMap.find( objectID );
   if( iter != _dVars.badCubesMap.end() ) {

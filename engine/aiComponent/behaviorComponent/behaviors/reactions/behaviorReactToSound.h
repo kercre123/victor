@@ -91,7 +91,7 @@ private:
 
   bool CanReactToSound() const;
 
-  TimeStamp_t GetCurrentTimeMS() const;
+  EngineTimeStamp_t GetCurrentTimeMS() const;
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -129,7 +129,7 @@ private:
   EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
   MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;
 
-  TimeStamp_t                           _triggerDetectedTime      = 0;
+  EngineTimeStamp_t                     _triggerDetectedTime      = 0;
 };
 
 }

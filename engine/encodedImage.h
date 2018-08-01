@@ -12,7 +12,7 @@
 #ifndef __Anki_Vision_Basestation_EncodedImage_H__
 #define __Anki_Vision_Basestation_EncodedImage_H__
 
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "clad/types/imageTypes.h"
 
 #include <vector>
@@ -50,7 +50,7 @@ namespace Cozmo {
     s32 GetWidth()   const { return _imgWidth; }
     s32 GetHeight()  const { return _imgHeight; }
     
-    TimeStamp_t GetTimeStamp() const { return _timestamp; }
+    RobotTimeStamp_t GetTimeStamp() const { return _timestamp; }
     
     // Decode internal buffer into a given gray or RGB image
     Result DecodeImageRGB(Vision::ImageRGB& decodedImg) const;
@@ -58,15 +58,15 @@ namespace Cozmo {
     
     Result Save(const std::string& filename) const;
     
-    const TimeStamp_t GetPrevTimestamp() const { return _prevTimestamp; }
-    void SetPrevTimestamp(const TimeStamp_t timestamp) { _prevTimestamp = timestamp; }
+    const RobotTimeStamp_t GetPrevTimestamp() const { return _prevTimestamp; }
+    void SetPrevTimestamp(const RobotTimeStamp_t timestamp) { _prevTimestamp = timestamp; }
     
   private:
 
     std::vector<u8>        _buffer;
     
-    TimeStamp_t            _timestamp;
-    TimeStamp_t            _prevTimestamp;
+    RobotTimeStamp_t       _timestamp;
+    RobotTimeStamp_t       _prevTimestamp;
     s32                    _imgWidth;
     s32                    _imgHeight;
     u32                    _imgID;

@@ -13,6 +13,7 @@
 #ifndef __Engine_MicDirectionTypes_H_
 #define __Engine_MicDirectionTypes_H_
 
+#include "engine/engineTimeStamp.h"
 #include <deque>
 #include <limits>
 
@@ -35,13 +36,13 @@ namespace Cozmo {
   // Interface for requesting a copy of direction history
   struct MicDirectionNode
   {
-    TimeStamp_t             timestampBegin  = 0;
-    TimeStamp_t             timestampEnd    = 0;
+    EngineTimeStamp_t       timestampBegin  = 0;
+    EngineTimeStamp_t       timestampEnd    = 0;
     MicDirectionIndex       directionIndex  = kMicDirectionUnknown;
     MicDirectionConfidence  confidenceAvg   = 0;
     MicDirectionConfidence  confidenceMax   = 0;
     MicDirectionConfidence  latestConfidence  = 0;
-    TimeStamp_t             timestampAtMax  = 0;
+    EngineTimeStamp_t       timestampAtMax  = 0;
     uint32_t                count           = 0;
 
     bool IsValid() const { return count > 0; }

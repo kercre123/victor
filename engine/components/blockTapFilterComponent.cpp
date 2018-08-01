@@ -84,7 +84,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
   
   if( !_tapInfo.empty() )
   {
-    const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if( currTime > _waitToTime )
     {
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(_tapInfo.back())));
@@ -94,7 +94,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
   
   for(auto& doubleTapInfo : _doubleTapObjects)
   {
-    const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const EngineTimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     const bool ignoreMovementTimePassed = doubleTapInfo.second.ignoreNextMoveTime <= curTime;
     
     // If we were ignoring move messages but the timeout has expired mark the object as dirty
@@ -265,7 +265,7 @@ bool BlockTapFilterComponent::ShouldIgnoreMovementDueToDoubleTap(const ObjectID&
 
 void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID)
 {
-  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   auto doubleTapInfo = _doubleTapObjects.find(objectID);
   if(doubleTapInfo == _doubleTapObjects.end())

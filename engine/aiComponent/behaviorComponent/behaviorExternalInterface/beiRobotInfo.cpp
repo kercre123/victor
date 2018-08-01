@@ -128,19 +128,19 @@ const RobotID_t BEIRobotInfo::GetID() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BEIRobotInfo::GetLastChargingStateChangeTimestamp() const
+RobotTimeStamp_t BEIRobotInfo::GetLastChargingStateChangeTimestamp() const
 {
   return _robot.GetBatteryComponent().GetLastChargingStateChangeTimestamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BEIRobotInfo::GetLastImageTimeStamp() const
+RobotTimeStamp_t BEIRobotInfo::GetLastImageTimeStamp() const
 {
   return _robot.GetLastImageTimeStamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BEIRobotInfo::GetLastMsgTimestamp() const
+RobotTimeStamp_t BEIRobotInfo::GetLastMsgTimestamp() const
 {
   return _robot.GetLastMsgTimestamp();
 }
@@ -176,7 +176,7 @@ OffTreadsState BEIRobotInfo::GetOffTreadsState() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BEIRobotInfo::GetOffTreadsStateLastChangedTime_ms() const
+EngineTimeStamp_t BEIRobotInfo::GetOffTreadsStateLastChangedTime_ms() const
 {
   return _robot.GetOffTreadsStateLastChangedTime_ms();
 }

@@ -45,7 +45,7 @@ TEST(RobotStateHistory, AddGetPose)
   
   RobotStateHistory hist;
   HistRobotState histState;
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   
   // Pose 1, 2, and 3
   const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0), origin );
@@ -69,9 +69,9 @@ TEST(RobotStateHistory, AddGetPose)
   state2.cliffDataRaw.fill(800);
   state3.cliffDataRaw.fill(800);
   
-  const TimeStamp_t t1 = 0;
-  const TimeStamp_t t2 = 10;
-  const TimeStamp_t t3 = 1005;
+  const RobotTimeStamp_t t1 = 0;
+  const RobotTimeStamp_t t2 = 10;
+  const RobotTimeStamp_t t3 = 1005;
   
   state1.status &= !Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK);
   state2.status &=  Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK);
@@ -164,7 +164,7 @@ TEST(RobotStateHistory, GroundTruthPose)
   
   RobotStateHistory hist;
   HistRobotState histState;
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   
   PoseFrameID_t frameID = 0;
   
@@ -182,9 +182,9 @@ TEST(RobotStateHistory, GroundTruthPose)
   const f32 l1 = 0;
   const f32 l2 = 0.5f;
   const f32 l3 = 0.7f;
-  const TimeStamp_t t1 = 0;
-  const TimeStamp_t t2 = 10;
-  const TimeStamp_t t3 = 20;
+  const RobotTimeStamp_t t1 = 0;
+  const RobotTimeStamp_t t2 = 10;
+  const RobotTimeStamp_t t3 = 20;
   
   hist.SetTimeWindow(1000);
   
@@ -283,7 +283,7 @@ TEST(RobotStateHistory, CullToWindowSizeTest)
     // Don't add any visStates so as to test possible bad erase conditions in CullToWindowSize()
     
     if (t % 1000 == 0) {
-      TimeStamp_t actualTime;
+      RobotTimeStamp_t actualTime;
       HistRobotState *statePtr;
       hist.ComputeAndInsertStateAt(t, actualTime, &statePtr);
     }

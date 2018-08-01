@@ -65,6 +65,8 @@ const char* kGetInLengthKey = "getInLength_ms";
 const char* kTimePerLEDKey = "timePerLED_ms";
 
 }
+  
+const uint32_t CubeSpinnerGame::kGameHasntStartedTick = 0;
 
 CubeAnimationTrigger CubeTriggerFromJson(const Json::Value& trigger){
   return CubeAnimationTriggerFromString(trigger.asString());
@@ -271,7 +273,7 @@ void CubeSpinnerGame::Update()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::CheckForNextLEDRotation()
 {
-  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   if(_currentGame.timeNextAdvanceToLED_ms < currTime_ms){
     if(_currentGame.currentCycleLEDIdx < (CubeLightAnimation::kNumCubeLEDs - 1)){
       _currentGame.currentCycleLEDIdx++;
@@ -406,7 +408,7 @@ uint8_t CubeSpinnerGame::GetRoundNumber() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::LockNow()
 {
-  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   if((_currentGame.lastTimeLightLocked_ms + kDedupTimeAfterLock_ms) > currTime_ms){
     PRINT_NAMED_INFO("CubeSpinnerGame.LockNow.DuplicateLock", "Received duplicate lock call before timeout");
@@ -445,7 +447,7 @@ void CubeSpinnerGame::LockNow()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeSpinnerGame::CheckForGamePhaseTransitions()
 {
-  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   switch(_currentGame.gamePhase){
     case GamePhase::GameGetIn:{
       if(currTime_ms > (_currentGame.lastTimePhaseChanged_ms + _settingsConfig.getInLength_ms)){
@@ -553,9 +555,9 @@ void CubeSpinnerGame::GetGameSnapshot(GameSnapshot& outSnapshot) const
   outSnapshot.currentLitLEDIdx = GetCurrentCycleIdx();
   outSnapshot.isCurrentLightTarget = (_currentGame.targetLightIdx == _currentGame.currentCycleLightIdx);
   outSnapshot.lightsLocked = _currentGame.lightsLocked;
-  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   const auto timeUntilNextRotation = (_currentGame.timeNextAdvanceToLED_ms > currTime_ms) ?
-                                      _currentGame.timeNextAdvanceToLED_ms - currTime_ms : 0;
+                                     _currentGame.timeNextAdvanceToLED_ms - currTime_ms : 0;
   outSnapshot.timeUntilNextRotation = timeUntilNextRotation;
   outSnapshot.roundNumber = GetRoundNumber();
 }

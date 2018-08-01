@@ -21,6 +21,7 @@
 #include "util/global/globalDefinitions.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotComponents_fwd.h"
 #include "coretech/common/engine/objectIDs.h"
@@ -78,18 +79,18 @@ private:
   std::list<Signal::SmartHandle> _eventHandles;
   
   bool _enabled;
-  Anki::TimeStamp_t _waitToTime;
+  EngineTimeStamp_t _waitToTime;
   
   struct DoubleTapInfo {
     // The time we should stop waiting for a double tap
-    TimeStamp_t doubleTapTime = 0;
+    EngineTimeStamp_t doubleTapTime = 0;
     
     // Whether or not the object is moving
     bool isMoving = false;
     
     // The time we should stop ignoring move messages for the objectID this DoubleTapInfo
     // maps to
-    TimeStamp_t ignoreNextMoveTime = 0;
+    EngineTimeStamp_t ignoreNextMoveTime = 0;
     bool isIgnoringMoveMessages = false;
   };
   

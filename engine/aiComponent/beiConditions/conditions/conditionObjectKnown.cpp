@@ -101,7 +101,7 @@ bool ConditionObjectKnown::AreConditionsMetInternal(BehaviorExternalInterface& b
   const bool thisTickOnly = _setMaxAge && (_maxAge_ms == 0);
   for( const auto& match : matches ) {
     ObjectID matchID = match->GetID();
-    const TimeStamp_t matchTime = match->GetLastObservedTime();
+    const RobotTimeStamp_t matchTime = match->GetLastObservedTime();
     if( thisTickOnly ) {
       // this is different than filter.OnlyConsiderLatestUpdate because that checks against the
       // last marker sighting time. If we were to add our own filter lambda to compare the object

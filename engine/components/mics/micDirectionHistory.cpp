@@ -55,12 +55,12 @@ void MicDirectionHistory::PrintNodeData(uint32_t index) const
   const MicDirectionNode& node = _micDirectionBuffer[GetPrevNodeIdx(GetNextNodeIdx(index))];
   PRINT_NAMED_INFO("MicDirectionHistory::PrintNodeData", 
                    "idx: %d ts: %d dir: %d confAvg: %d count: %d",
-                   index, node.timestampEnd, node.directionIndex, node.confidenceAvg, node.count);
+                   index, (TimeStamp_t)node.timestampEnd, node.directionIndex, node.confidenceAvg, node.count);
 }
 
 void MicDirectionHistory::AddMicSample(const RobotInterface::MicDirection& message)
 {
-  const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   AddDirectionSample(currentTime_ms, message.direction, message.confidence, message.selectedDirection);
   AddMicPowerSample(currentTime_ms, message.latestPowerValue, message.latestNoiseFloor);
@@ -79,15 +79,15 @@ uint32_t MicDirectionHistory::GetPrevNodeIdx(uint32_t nodeIndex) const
   return (nodeIndex == 0) ? (kMicDirectionHistoryLen - 1) : (nodeIndex - 1);
 }
 
-MicDirectionIndex MicDirectionHistory::GetDirectionAtTime(TimeStamp_t timestampEnd,
-                                                                            TimeStamp_t timeLength_ms) const
+MicDirectionIndex MicDirectionHistory::GetDirectionAtTime(EngineTimeStamp_t timestampEnd,
+                                                          TimeStamp_t timeLength_ms) const
 {
   // Special case where we're asked for time after or at the end of history
   {
     auto& currentEntry = _micDirectionBuffer[_micDirectionBufferIndex];
     if (timestampEnd >= currentEntry.timestampEnd)
     {
-      const auto timeDiff = timestampEnd - currentEntry.timestampEnd;
+      const auto timeDiff = TimeStamp_t(timestampEnd - currentEntry.timestampEnd);
       // Update our timelength to remove time not yet recorded in direction history
       timeLength_ms = timeDiff > timeLength_ms ? 0 : timeLength_ms - timeDiff;
       return GetRecentDirection(timeLength_ms);
@@ -112,7 +112,7 @@ MicDirectionIndex MicDirectionHistory::GetDirectionAtTime(TimeStamp_t timestampE
   }
 
   // Was the full time length requested within this node?
-  const auto timeSpentInEndNode = timestampEnd - _micDirectionBuffer[prevToEndingIndex].timestampEnd;
+  const auto timeSpentInEndNode = TimeStamp_t(timestampEnd - _micDirectionBuffer[prevToEndingIndex].timestampEnd);
   if (timeSpentInEndNode >= timeLength_ms)
   {
     return endingNode.directionIndex;
@@ -124,7 +124,7 @@ MicDirectionIndex MicDirectionHistory::GetDirectionAtTime(TimeStamp_t timestampE
 
   // Add in the partial count based on leftover time
   const auto fullNodeLength = endingNode.timestampEnd - _micDirectionBuffer[prevToEndingIndex].timestampEnd;
-  const auto proportionCount = (timeSpentInEndNode * endingNode.count) / fullNodeLength;
+  const auto proportionCount = (timeSpentInEndNode * endingNode.count) / (TimeStamp_t)fullNodeLength;
   directionCount[endingNode.directionIndex] += proportionCount;
 
   return GetBestDirection(directionCount);
@@ -159,12 +159,12 @@ MicDirectionHistory::DirectionHistoryCount MicDirectionHistory::GetDirectionCoun
       break;
     }
     const auto& prevNode = _micDirectionBuffer[prevNodeIdx];
-    const auto nodeTimeDiff = currentNode.timestampEnd - prevNode.timestampEnd;
+    const auto nodeTimeDiff = TimeStamp_t(currentNode.timestampEnd - prevNode.timestampEnd);
 
     // If we're using up the last of the time we're counting over, do a proportional count and break
     if (nodeTimeDiff >= timeLength_ms)
     {
-      const auto divisor = nodeTimeDiff > 0 ? nodeTimeDiff : 1;
+      const TimeStamp_t divisor = nodeTimeDiff > 0 ? nodeTimeDiff : 1;
       const auto proportionCount = (timeLength_ms * currentNode.count) / divisor;
       directionCount[currentNode.directionIndex] += proportionCount;
       timeLength_ms = 0;
@@ -214,8 +214,8 @@ MicDirectionNodeList MicDirectionHistory::GetRecentHistory(TimeStamp_t timeLengt
   return GetHistoryAtIndex(startIndex, timeLength_ms);
 }
 
-MicDirectionNodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t timestampEnd,
-                                                                    TimeStamp_t timeLength_ms) const
+MicDirectionNodeList MicDirectionHistory::GetHistoryAtTime(EngineTimeStamp_t timestampEnd,
+                                                           TimeStamp_t timeLength_ms) const
 {
   // Special case where we're asked for time after or at the end of history
   {
@@ -224,7 +224,7 @@ MicDirectionNodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t timestamp
     {
       const auto timeDiff = timestampEnd - currentEntry.timestampEnd;
       // Update our timelength to remove time not yet recorded in direction history
-      timeLength_ms = timeDiff > timeLength_ms ? 0 : timeLength_ms - timeDiff;
+      timeLength_ms = timeDiff > timeLength_ms ? 0 : TimeStamp_t(timeLength_ms - timeDiff);
       return GetRecentHistory(timeLength_ms);
     }
   }
@@ -264,7 +264,7 @@ MicDirectionNodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t timestamp
   }
 
   // Start with the count from before the ending node
-  const auto timePrevToNode = timeLength_ms - timeSpentInEndNode;
+  const auto timePrevToNode = TimeStamp_t(timeLength_ms - timeSpentInEndNode);
   MicDirectionNodeList results = GetHistoryAtIndex(prevToEndingIndex, timePrevToNode);
   if (endingNode.IsValid())
   {
@@ -289,7 +289,7 @@ MicDirectionNodeList MicDirectionHistory::GetHistoryAtIndex(uint32_t startIndex,
       break;
     }
     const auto& prevNode = _micDirectionBuffer[prevNodeIdx];
-    const auto nodeTimeDiff = currentNode.timestampEnd - prevNode.timestampEnd;
+    const auto nodeTimeDiff = (TimeStamp_t)(currentNode.timestampEnd - prevNode.timestampEnd);
 
     // otherwise include this node and move on
     if (nodeTimeDiff >= timeLength_ms)
@@ -340,7 +340,7 @@ void MicDirectionHistory::UnRegisterSoundReactor(SoundReactorId id)
   PRINT_NAMED_WARNING("MicDirectionHistory.UnRegisterSoundReactor", "No SoundReactor found with id %d", (int)id);
 }
 
-void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp,
+void MicDirectionHistory::AddDirectionSample(EngineTimeStamp_t timestamp,
                                              MicDirectionIndex newDirection,
                                              MicDirectionConfidence newConf,
                                              MicDirectionIndex selectedDirection)
@@ -392,7 +392,7 @@ void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp,
   }
 }
 
-void MicDirectionHistory::AddMicPowerSample(TimeStamp_t timestamp, float powerLevel, float noiseFloor)
+void MicDirectionHistory::AddMicPowerSample(EngineTimeStamp_t timestamp, float powerLevel, float noiseFloor)
 {
   const double previousPowerLevel = _soundTrackingData.latestPowerLevel;
   const double previousNoiseFloor = _soundTrackingData.latestNoiseFloor;

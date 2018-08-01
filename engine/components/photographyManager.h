@@ -20,6 +20,7 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include <vector>
@@ -87,7 +88,7 @@ public:
   bool IsPhotoStorageFull();
 
   // Called by VisionComponent when photo has been taken and saved
-  void SetLastPhotoTimeStamp(TimeStamp_t timestamp);
+  void SetLastPhotoTimeStamp(RobotTimeStamp_t timestamp);
 
   static const char * GetPhotoExtension() { return "jpg"; }
   static const char * GetThumbExtension() { return "thm.jpg"; }

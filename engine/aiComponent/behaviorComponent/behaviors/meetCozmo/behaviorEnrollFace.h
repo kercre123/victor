@@ -17,6 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/faceEnrollmentResult.h"
@@ -134,7 +135,7 @@ private:
   IActionRunner* CreateLookAroundAction();
 
   bool HasTimedOut() const;
-  bool IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime);
+  bool IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotTimeStamp_t lastImgTime);
   bool IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName) const;
   
   // Helper which returns false if the robot is not on its treads or a cliff is being detected

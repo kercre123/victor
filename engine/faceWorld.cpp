@@ -239,7 +239,7 @@ namespace Cozmo {
     // set up to be the robot's world origin here, using the origin ID from the
     // time the face was seen
     DEV_ASSERT(!face.GetHeadPose().HasParent(), "FaceWorld.AddOrUpdateFace.HeadPoseHasParent");
-    TimeStamp_t t=0;
+    RobotTimeStamp_t t=0;
     HistRobotState* histStatePtr = nullptr;
     HistStateKey histStateKey;
     const Result histStateResult = _robot->GetStateHistory()->ComputeAndInsertStateAt(face.GetTimeStamp(), t,
@@ -622,7 +622,7 @@ namespace Cozmo {
       }
     }
 
-    const TimeStamp_t lastProcImageTime = _robot->GetVisionComponent().GetLastProcessedImageTimeStamp();
+    const RobotTimeStamp_t lastProcImageTime = _robot->GetVisionComponent().GetLastProcessedImageTimeStamp();
 
     // Delete any unnamed faces we haven't seen in awhile
     for(auto faceIter = _faceEntries.begin(); faceIter != _faceEntries.end(); )
@@ -633,7 +633,7 @@ namespace Cozmo {
       {
         PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.Update.DeletingOldFace",
                       "Removing unnamed face %d at t=%d, because it hasn't been seen since t=%d.",
-                      faceIter->first, lastProcImageTime, face.GetTimeStamp());
+                      faceIter->first, (TimeStamp_t)lastProcImageTime, face.GetTimeStamp());
 
         if(faceIter->second.HasStableID())
         {
@@ -672,7 +672,7 @@ namespace Cozmo {
   } // Update()
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly, 
+  bool FaceWorld::ShouldReturnFace(const FaceEntry& faceEntry, RobotTimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly,
                                    float relativeRobotAngleTolerence_rad, const Radians& angleRelativeRobot_rad) const
   {
     if (faceEntry.face.GetTimeStamp() >= seenSinceTime_ms)
@@ -809,7 +809,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  std::set<Vision::FaceID_t> FaceWorld::GetFaceIDs(TimeStamp_t seenSinceTime_ms,
+  std::set<Vision::FaceID_t> FaceWorld::GetFaceIDs(RobotTimeStamp_t seenSinceTime_ms,
                                                    bool includeRecognizableOnly,
                                                    float relativeRobotAngleTolerence_rad,
                                                    const Radians& angleRelativeRobot_rad) const
@@ -839,7 +839,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  std::vector<SmartFaceID> FaceWorld::GetSmartFaceIDs(TimeStamp_t seenSinceTime_ms,
+  std::vector<SmartFaceID> FaceWorld::GetSmartFaceIDs(RobotTimeStamp_t seenSinceTime_ms,
                                                       bool includeRecognizableOnly,
                                                       float relativeRobotAngleTolerence_rad,
                                                       const Radians& angleRelativeRobot_rad) const
@@ -857,7 +857,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::HasAnyFaces(TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly) const
+  bool FaceWorld::HasAnyFaces(RobotTimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly) const
   {
     auto faceEntryIter = _faceEntries.begin();
     while(faceEntryIter != _faceEntries.end())
@@ -875,9 +875,9 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& poseWrtRobotOrigin, bool inRobotOriginOnly) const
+  RobotTimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& poseWrtRobotOrigin, bool inRobotOriginOnly) const
   {
-    TimeStamp_t returnTime = 0;
+    RobotTimeStamp_t returnTime = 0;
 
     if(_lastObservedFaceTimeStamp > 0)
     {
@@ -1055,10 +1055,10 @@ namespace Cozmo {
   bool FaceWorld::IsMakingEyeContact(const u32 withinLast_ms) const
   {
     // Loop over all the faces and see if any of them are making eye contact
-    const TimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
-    const TimeStamp_t recentTime = lastImgTime > withinLast_ms ?
-                                   ( lastImgTime - withinLast_ms ) :
-                                   0;
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
     // Loop over all the faces and see if any of them are making eye contact
     for (const auto& entry: _faceEntries)
     {

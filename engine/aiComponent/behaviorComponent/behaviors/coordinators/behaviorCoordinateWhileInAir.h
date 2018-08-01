@@ -16,6 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
+#include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,7 +41,7 @@ private:
 
   // For tracking initial pickup reaction
   bool _hasPickupReactionPlayed = false;
-  TimeStamp_t _lastTimeWasOnTreads_ms = 0;
+  EngineTimeStamp_t _lastTimeWasOnTreads_ms = 0;
 
   ICozmoBehaviorPtr _initialPickupReaction;
 

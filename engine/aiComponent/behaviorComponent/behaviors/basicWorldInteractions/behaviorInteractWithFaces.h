@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/smartFaceId.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 
 #include <string>
@@ -90,7 +91,7 @@ private:
     mutable SmartFaceID targetFace;
     // We only want to run for faces we've seen since the last time we ran, so keep track of the final timestamp
     // when the behavior finishes
-    TimeStamp_t lastImageTimestampWhileRunning;
+    RobotTimeStamp_t lastImageTimestampWhileRunning;
     // In the face tracking stage the action will hang, so store a time at which we want to stop it (from within
     // Update)
     float trackFaceUntilTime_s;

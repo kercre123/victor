@@ -453,8 +453,8 @@ void BehaviorReactToVoiceCommand::ComputeReactionDirectionFromStream()
         if ( front.timestampBegin < streamBeginTime )
         {
           DEV_ASSERT( ( front.timestampEnd >= streamBeginTime ), "Including node that is outside of streaming window" );
-          const double nodeDuration = ( front.timestampEnd - front.timestampBegin );
-          const double timeInNode = ( front.timestampEnd - streamBeginTime );
+          const double nodeDuration = TimeStamp_t( front.timestampEnd - front.timestampBegin );
+          const double timeInNode = TimeStamp_t( front.timestampEnd - streamBeginTime );
           front.count *= ( timeInNode / nodeDuration );
         }
 
@@ -463,8 +463,8 @@ void BehaviorReactToVoiceCommand::ComputeReactionDirectionFromStream()
         if ( back.timestampEnd > streamEndTime )
         {
           DEV_ASSERT( ( back.timestampBegin <= streamEndTime ), "Including node that is outside of streaming window" );
-          const double nodeDuration = ( back.timestampEnd - back.timestampBegin );
-          const double timeInNode = ( streamEndTime - back.timestampBegin );
+          const double nodeDuration = TimeStamp_t( back.timestampEnd - back.timestampBegin );
+          const double timeInNode = TimeStamp_t( streamEndTime - back.timestampBegin );
           back.count *= ( timeInNode / nodeDuration );
         }
       }
@@ -898,7 +898,7 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
 {
-  const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   return ts != _dVars.timestampToDisableTurnFor;
 }
 

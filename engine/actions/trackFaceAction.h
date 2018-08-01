@@ -13,6 +13,7 @@
 #ifndef __Anki_Cozmo_Basestation_TrackFaceAction_H__
 #define __Anki_Cozmo_Basestation_TrackFaceAction_H__
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "engine/actions/trackActionInterface.h"
 #include "engine/smartFaceId.h"
@@ -49,7 +50,7 @@ private:
   FaceID               _tmpFaceID;
   
   SmartFaceID          _faceID;
-  TimeStamp_t          _lastFaceUpdate = 0;
+  RobotTimeStamp_t     _lastFaceUpdate = 0;
 
 }; // class TrackFaceAction
     

@@ -199,15 +199,15 @@ namespace Anki {
     }
     
     
-    Result RobotStateHistory::AddRawOdomState(const TimeStamp_t t,
-                                             const HistRobotState& state)
+    Result RobotStateHistory::AddRawOdomState(const RobotTimeStamp_t t,
+                                              const HistRobotState& state)
     {
       if (!_states.empty())
       {
-        TimeStamp_t newestTime = _states.rbegin()->first;
+        RobotTimeStamp_t newestTime = _states.rbegin()->first;
         if (newestTime > _windowSize_ms && t < newestTime - _windowSize_ms) {
           LOG_WARNING("RobotStateHistory.AddRawOdomState.TimeTooOld", "newestTime %u, oldestAllowedTime %u, t %u",
-                      newestTime, newestTime - _windowSize_ms, t);
+                      (TimeStamp_t)newestTime, (TimeStamp_t)(newestTime - _windowSize_ms), (TimeStamp_t)t);
           return RESULT_FAIL;
         }
         
@@ -227,7 +227,7 @@ namespace Anki {
           {
             LOG_ERROR("RobotStateHistory.AddRawOdomState.TimestampDeltaTooLarge",
                       "State with t:%u is too different from last state with t:%u, allowed delta:%u",
-                      t, newestTime, kMaxTimeDiffBetweenStates_ms);
+                      (TimeStamp_t)t, (TimeStamp_t)newestTime, kMaxTimeDiffBetweenStates_ms);
           }
           
           ++numConsecLargeDeltas;
@@ -264,7 +264,7 @@ namespace Anki {
       res = _states.emplace(t, state);
 
       if (!res.second) {
-        LOG_WARNING("RobotStateHistory.AddRawOdomState.AddFailed", "Time: %u", t);
+        LOG_WARNING("RobotStateHistory.AddRawOdomState.AddFailed", "Time: %u", (TimeStamp_t)t);
         return RESULT_FAIL;
       }
 
@@ -273,7 +273,7 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    Result RobotStateHistory::AddVisionOnlyState(const TimeStamp_t t,
+    Result RobotStateHistory::AddVisionOnlyState(const RobotTimeStamp_t t,
                                                 const HistRobotState& state)
     {
       if (state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
@@ -285,11 +285,11 @@ namespace Anki {
 
       // Check if the pose's timestamp is too old.
       if (!_states.empty()) {
-        TimeStamp_t newestTime = _states.rbegin()->first;
+        RobotTimeStamp_t newestTime = _states.rbegin()->first;
         if (newestTime > _windowSize_ms && t < newestTime - _windowSize_ms) {
           LOG_ERROR("RobotStateHistory.AddVisionOnlyState.TooOld",
                     "Pose at t=%d too old to add. Newest time=%d, windowSize=%d",
-                    t, newestTime, _windowSize_ms);
+                    (TimeStamp_t)t, (TimeStamp_t)newestTime, _windowSize_ms);
           return RESULT_FAIL;
         }
       }
@@ -344,7 +344,7 @@ namespace Anki {
         if (!res.second) {
           LOG_ERROR("RobotStateHistory.AddVisionOnlyState.EmplaceFailed",
                     "Emplace of pose with t=%d, frameID=%d failed",
-                    t, state.GetFrameId());
+                    (TimeStamp_t)t, state.GetFrameId());
           return RESULT_FAIL;
         }
         
@@ -355,10 +355,10 @@ namespace Anki {
     }
 
     
-    Result RobotStateHistory::GetRawStateBeforeAndAfter(const TimeStamp_t t,
-                                                        TimeStamp_t&    t_before,
+    Result RobotStateHistory::GetRawStateBeforeAndAfter(const RobotTimeStamp_t t,
+                                                        RobotTimeStamp_t&    t_before,
                                                         HistRobotState& state_before,
-                                                        TimeStamp_t&    t_after,
+                                                        RobotTimeStamp_t&    t_after,
                                                         HistRobotState& state_after)
     {
       // Get the iterator for time t
@@ -392,8 +392,8 @@ namespace Anki {
     // Sets p to the pose nearest the given timestamp t.
     // Interpolates pose if withInterpolation == true.
     // Returns OK if t is between the oldest and most recent timestamps stored.
-    Result RobotStateHistory::GetRawStateAt(const TimeStamp_t t_request,
-                                          TimeStamp_t& t, HistRobotState& state,
+    Result RobotStateHistory::GetRawStateAt(const RobotTimeStamp_t t_request,
+                                          RobotTimeStamp_t& t, HistRobotState& state,
                                           bool withInterpolation) const
     {
       // This pose occurs at or immediately after t_request
@@ -420,7 +420,7 @@ namespace Anki {
         {
           LOG_INFO("RobotStateHistory.GetRawStateAt.MisMatchedFrameIds",
                    "Cannot interpolate at t=%u as requested because the two frame IDs don't match: prev=%d vs next=%d",
-                    t_request,
+                    (TimeStamp_t)t_request,
                     prev_it->second.GetFrameId(),
                    it->second.GetFrameId());
           
@@ -441,7 +441,7 @@ namespace Anki {
           if (inSameOrigin)
           {
             // Compute scale factor between time to previous pose and time between previous pose and next pose.
-            const f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
+            const f32 timeScale = (f32)(t_request - prev_it->first) / TimeStamp_t(it->first - prev_it->first);
 
             state = HistRobotState::Interpolate(prev_it->second, it->second, pTransform, timeScale);
 
@@ -469,7 +469,7 @@ namespace Anki {
         {
           LOG_INFO("RobotStateHistory.GetRawStateAt.MisMatchedOrigins",
                    "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
-                   t_request,
+                   (TimeStamp_t)t_request,
                    prev_it->second.GetPose().FindRoot().GetName().c_str(),
                    it->second.GetPose().FindRoot().GetName().c_str());
 
@@ -482,7 +482,7 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    Result RobotStateHistory::GetVisionOnlyStateAt(const TimeStamp_t t_request, HistRobotState** state)
+    Result RobotStateHistory::GetVisionOnlyStateAt(const RobotTimeStamp_t t_request, HistRobotState** state)
     {
       StateMapIter_t it = _visStates.find(t_request);
       if (it != _visStates.end()) {
@@ -492,8 +492,8 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
-    Result RobotStateHistory::ComputeStateAt(const TimeStamp_t t_request,
-                                           TimeStamp_t& t, HistRobotState& state,
+    Result RobotStateHistory::ComputeStateAt(const RobotTimeStamp_t t_request,
+                                           RobotTimeStamp_t& t, HistRobotState& state,
                                            bool withInterpolation) const
     {
       // If the vision-based version of the pose exists, return it.
@@ -644,8 +644,8 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result RobotStateHistory::ComputeAndInsertStateAt(const TimeStamp_t t_request,
-                                                    TimeStamp_t& t, HistRobotState** state,
+    Result RobotStateHistory::ComputeAndInsertStateAt(const RobotTimeStamp_t t_request,
+                                                    RobotTimeStamp_t& t, HistRobotState** state,
                                                     HistStateKey* key,
                                                     bool withInterpolation)
     {
@@ -696,7 +696,7 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    Result RobotStateHistory::GetComputedStateAt(const TimeStamp_t t_request,
+    Result RobotStateHistory::GetComputedStateAt(const RobotTimeStamp_t t_request,
                                                  const HistRobotState ** state,
                                                  HistStateKey* key) const
     {
@@ -725,14 +725,14 @@ namespace Anki {
 
 
     // TODO:(bn) is there a way to avoid this duplicated code here? Not eager to use templates...
-    Result RobotStateHistory::GetComputedStateAt(const TimeStamp_t t_request,
+    Result RobotStateHistory::GetComputedStateAt(const RobotTimeStamp_t t_request,
                                                  HistRobotState ** state,
                                                  HistStateKey* key)
     {
       return GetComputedStateAt(t_request, const_cast<const HistRobotState **>(state), key);
     }
     
-    Result RobotStateHistory::GetLatestVisionOnlyState(TimeStamp_t& t, HistRobotState& state) const
+    Result RobotStateHistory::GetLatestVisionOnlyState(RobotTimeStamp_t& t, HistRobotState& state) const
     {
       if (!_visStates.empty()) {
         t = _visStates.rbegin()->first;
@@ -794,13 +794,13 @@ namespace Anki {
                   "First frameID in vis pose history is %d (t:%u), last is %d (t:%u).)",
                   frameID,
                   _states.begin()->second.GetFrameId(),
-                  _states.begin()->first,
+                  (TimeStamp_t)_states.begin()->first,
                   _states.rbegin()->second.GetFrameId(),
-                  _states.rbegin()->first,
+                  (TimeStamp_t)_states.rbegin()->first,
                   (_visStates.empty() ? -1 : _visStates.begin()->second.GetFrameId()),
-                  (_visStates.empty() ? 0 : _visStates.begin()->first),
+                  (TimeStamp_t)(_visStates.empty() ? 0 : _visStates.begin()->first),
                   (_visStates.empty() ? -1 : _visStates.rbegin()->second.GetFrameId()),
-                  (_visStates.empty() ? 0 : _visStates.rbegin()->first));
+                  (TimeStamp_t)(_visStates.empty() ? 0 : _visStates.rbegin()->first));
         return RESULT_FAIL;
 
       }
@@ -812,7 +812,7 @@ namespace Anki {
       if (_states.size() > 1) {
         
         // Get the most recent timestamp
-        TimeStamp_t mostRecentTime = _states.rbegin()->first;
+        RobotTimeStamp_t mostRecentTime = _states.rbegin()->first;
         
         // If most recent time is less than window size, we're done.
         if (mostRecentTime < _windowSize_ms) {
@@ -820,7 +820,7 @@ namespace Anki {
         }
         
         // Get pointer to the oldest timestamp that may remain in the map
-        TimeStamp_t oldestAllowedTime = mostRecentTime - _windowSize_ms;
+        RobotTimeStamp_t oldestAllowedTime = mostRecentTime - _windowSize_ms;
         const auto it = _states.lower_bound(oldestAllowedTime);
         const auto git = _visStates.lower_bound(oldestAllowedTime);
         const auto cit = _computedStates.lower_bound(oldestAllowedTime);
@@ -873,22 +873,22 @@ namespace Anki {
       return (_tsByKeyMap.find(key) != _tsByKeyMap.end());
     }
     
-    TimeStamp_t RobotStateHistory::GetOldestTimeStamp() const
+    RobotTimeStamp_t RobotStateHistory::GetOldestTimeStamp() const
     {
       return (_states.empty() ? 0 : _states.begin()->first);
     }
     
-    TimeStamp_t RobotStateHistory::GetNewestTimeStamp() const
+    RobotTimeStamp_t RobotStateHistory::GetNewestTimeStamp() const
     {
       return (_states.empty() ? 0 : _states.rbegin()->first);
     }
 
-    TimeStamp_t RobotStateHistory::GetOldestVisionOnlyTimeStamp() const
+    RobotTimeStamp_t RobotStateHistory::GetOldestVisionOnlyTimeStamp() const
     {
       return (_visStates.empty() ? 0 : _visStates.begin()->first);
     }
 
-    TimeStamp_t RobotStateHistory::GetNewestVisionOnlyTimeStamp() const
+    RobotTimeStamp_t RobotStateHistory::GetNewestVisionOnlyTimeStamp() const
     {
       return (_visStates.empty() ? 0 : _visStates.rbegin()->first);
     }

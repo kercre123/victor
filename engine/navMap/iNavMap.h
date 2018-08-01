@@ -19,6 +19,7 @@
 #include "coretech/common/engine/math/fastPolygon2d.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/ball.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "util/logging/logging.h"
 
 #include <unordered_set>
@@ -92,7 +93,7 @@ public:
   virtual bool HasContentType(EContentType type) const = 0;
   
   // returns the time navMap was last changed
-  virtual TimeStamp_t GetLastChangedTimeStamp() const = 0;
+  virtual RobotTimeStamp_t GetLastChangedTimeStamp() const = 0;
   
   // Pack map data to broadcast
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const = 0;

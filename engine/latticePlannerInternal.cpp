@@ -358,7 +358,7 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-  const TimeStamp_t timeOfLastChange = _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp();
+  const RobotTimeStamp_t timeOfLastChange = _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp();
   const bool didObjectsChange = (_timeOfLastObjectsImport < timeOfLastChange);
 
   if(!isReplanning ||  // get obstacles if they've changed or we're not replanning

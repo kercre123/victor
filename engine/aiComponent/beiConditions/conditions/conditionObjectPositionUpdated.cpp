@@ -146,7 +146,7 @@ void ConditionObjectPositionUpdated::ReactionData::FakeReaction()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ConditionObjectPositionUpdated::HandleNewObservation(s32 id,
                                                          const Pose3d& pose,
-                                                         u32 timestamp,
+                                                         RobotTimeStamp_t timestamp,
                                                          bool reactionEnabled)
 {
   const auto reactionIt = _reactionData.find(id);
@@ -171,7 +171,7 @@ void ConditionObjectPositionUpdated::HandleNewObservation(s32 id,
                     pose.GetTranslation().x(),
                     pose.GetTranslation().y(),
                     pose.GetTranslation().z(),
-                    timestamp,
+                    (TimeStamp_t)timestamp,
                     reactionEnabled ? 1 : 0);
     }
     
@@ -269,7 +269,7 @@ bool ConditionObjectPositionUpdated::ShouldReactToTarget(BehaviorExternalInterfa
     // if we have reacted, then check if we want to react again based on the last pose and time we reacted.
     if( hasEverReactedToThisId ) {
       const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-      const u32 currTimestamp = robotInfo.GetLastImageTimeStamp();
+      const RobotTimeStamp_t currTimestamp = robotInfo.GetLastImageTimeStamp();
       const bool isCooldownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
       
       const bool shouldReactToPose = ShouldReactToTarget_poseHelper(reactionPair.second.lastPose,
@@ -295,7 +295,7 @@ bool ConditionObjectPositionUpdated::ShouldReactToTarget(BehaviorExternalInterfa
         PRINT_CH_INFO("ReactionTriggers", ("ConditionObjectPositionUpdated.DoInitialReaction"),
                       "Doing first reaction to new id %d at ts=%dms",
                       reactionPair.first,
-                      reactionPair.second.lastSeenTime_ms);
+                      (TimeStamp_t)reactionPair.second.lastSeenTime_ms);
         reactionPair.second.lastPose.Print("Behaviors", ("ConditionObjectPositionUpdated.NewPose"));
       }
     }

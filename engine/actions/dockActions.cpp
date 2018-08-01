@@ -1314,7 +1314,7 @@ namespace Anki {
     ActionResult PickupObjectAction::Verify()
     {
       ActionResult result = ActionResult::ABORT;
-      const TimeStamp_t currentTime = GetRobot().GetLastMsgTimestamp();
+      const RobotTimeStamp_t currentTime = GetRobot().GetLastMsgTimestamp();
       bool checkObjectMotion = false;
 
       if (_firstVerifyCallTime == 0) {
@@ -1361,7 +1361,7 @@ namespace Anki {
 
           // Only do this motion check if connected
           if (obj->GetActiveID() >= 0) {
-            TimeStamp_t lastMovingTime;
+            RobotTimeStamp_t lastMovingTime;
 
             // Check that object is not moving for longer than expected following the first call to Verify().
             // If it's moving for too long it's probably being handled by someone.
@@ -1380,7 +1380,7 @@ namespace Anki {
             else if (VerifyCarryingComponentValid() &&
                      (_firstVerifyCallTime > lastMovingTime + (_dockAction == DockAction::DA_PICKUP_LOW ? kMaxObjectHasntMovedBeforeRobotStopTime_ms : kMaxObjectHasntMovedBeforeRobotStopTimeForHighPickup_ms))) {
               _carryingComponentPtr->SetCarriedObjectAsUnattached(true);
-              PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", lastMovingTime, _firstVerifyCallTime);
+              PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", (TimeStamp_t)lastMovingTime, (TimeStamp_t)_firstVerifyCallTime);
               return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING;
             }
           }

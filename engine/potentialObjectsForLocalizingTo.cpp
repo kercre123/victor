@@ -119,7 +119,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
     .observationAlreadyUsed = observationAlreadyUsed
   };
   
-  const TimeStamp_t obsTime = observedObject->GetLastObservedTime();
+  const RobotTimeStamp_t obsTime = observedObject->GetLastObservedTime();
   
   const bool isMatchedObjectInCurrentOrigin = _robot.IsPoseInWorldOrigin(newPair.matchedObject->GetPose());
   
@@ -158,7 +158,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   // poses because we are moving
   if (wasCameraMoving)
   {
-    VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.WasMoving", "t=%u", obsTime);
+    VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.WasMoving", "t=%u", (TimeStamp_t)obsTime);
     return false;
   }
   
@@ -166,10 +166,10 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   // If it hasn't moved, then only localize if the observed object pose is nearly identical to the
   // matched object pose.
   if(isMatchedObjectInCurrentOrigin) {
-    const TimeStamp_t lastObservedTime = _robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(matchedObject->GetID());
-    const TimeStamp_t currObservedTime = obsTime;
-    const HistRobotState *hrsMatched;
-    const HistRobotState *hrsObserved;
+    const RobotTimeStamp_t lastObservedTime = _robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(matchedObject->GetID());
+    const RobotTimeStamp_t currObservedTime = obsTime;
+    const HistRobotState *hrsMatched = nullptr;
+    const HistRobotState *hrsObserved = nullptr;
     if (_robot.GetStateHistory()->GetComputedStateAt(lastObservedTime, &hrsMatched) == RESULT_OK &&
         _robot.GetStateHistory()->GetComputedStateAt(currObservedTime, &hrsObserved) == RESULT_OK) {
       

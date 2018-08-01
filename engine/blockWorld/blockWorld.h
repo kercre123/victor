@@ -25,8 +25,8 @@
 #include "engine/mat.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/overheadEdge.h"
-#include "coretech/common/shared/types.h"
 #include "coretech/common/engine/exceptions.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/observableObjectLibrary.h"
 
@@ -330,7 +330,7 @@ namespace Anki
       // last call to Update().
       bool DidObjectsChange() const;
       // Gets the timestamp of the last robot msg when objects changed
-      const TimeStamp_t& GetTimeOfLastChange() const;
+      const RobotTimeStamp_t& GetTimeOfLastChange() const;
       
       // Get/Set currently-selected object
       ObjectID GetSelectedObject() const { return _selectedObjectID; }
@@ -449,7 +449,7 @@ namespace Anki
       //
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      Result UpdateMarkerlessObjects(TimeStamp_t atTimestamp);
+      Result UpdateMarkerlessObjects(RobotTimeStamp_t atTimestamp);
       
       // Finds existing objects that overlap with and are of the same type as objectSeen,
       // where overlap is defined by the IsSameAs() function.
@@ -473,7 +473,7 @@ namespace Anki
       // Looks for objects that should have been seen (markers should have been visible
       // but something was seen through/behind their last known location) and delete
       // them.
-      void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
+      void CheckForUnobservedObjects(RobotTimeStamp_t atTimestamp);
       
       // Checks whether an object is unobserved and in collision with the robot,
       // for use in filtering objects to mark them as dirty
@@ -483,7 +483,7 @@ namespace Anki
       //  will either directly add them to BlockWorld's existing objects or delete them
       //  if/when they are no longer needed.
       Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                 const TimeStamp_t atTimestamp);
+                                 const RobotTimeStamp_t atTimestamp);
       
       // Updates poses of stacks of objects by finding the difference between old object
       // poses and applying that to the new observed poses
@@ -543,7 +543,7 @@ namespace Anki
       DefinedObjectsMapCountByFamily_t _definedObjectTypeCount;
       
       bool _didObjectsChange;
-      TimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
+      RobotTimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
       
       ObjectID _selectedObjectID;
 
@@ -565,7 +565,7 @@ namespace Anki
       
       std::vector<Signal::SmartHandle> _eventHandles;
             
-      TimeStamp_t _currentObservedMarkerTimestamp = 0;
+      RobotTimeStamp_t _currentObservedMarkerTimestamp = 0;
     }; // class BlockWorld
 
 

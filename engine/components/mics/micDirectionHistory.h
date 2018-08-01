@@ -16,6 +16,7 @@
 #include "coretech/common/shared/types.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/components/mics/micDirectionTypes.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/robotComponents_fwd.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
@@ -44,20 +45,20 @@ public:
   static constexpr uint32_t kMicDirectionHistoryLen = kMicDirectionHistory_ms / kTimePerDirectionUpdate_ms;
 
   void AddMicSample( const RobotInterface::MicDirection& message );
-  void AddDirectionSample(TimeStamp_t timestamp,
+  void AddDirectionSample(EngineTimeStamp_t timestamp,
                           MicDirectionIndex newIndex, MicDirectionConfidence newConf,
                           MicDirectionIndex selectedDirection);
-  void AddMicPowerSample(TimeStamp_t timestamp, float powerLevel, float noiseFloor);
+  void AddMicPowerSample(EngineTimeStamp_t timestamp, float powerLevel, float noiseFloor);
 
   // Interface for requesting the "best" direction
   static constexpr uint32_t kDefaultDirectionRecentTime_ms = 1000;
   MicDirectionIndex GetRecentDirection(TimeStamp_t timeLength_ms = kDefaultDirectionRecentTime_ms) const;
-  MicDirectionIndex GetDirectionAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
+  MicDirectionIndex GetDirectionAtTime(EngineTimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
   MicDirectionIndex GetSelectedDirection() const { return _mostRecentSelectedDirection; }
 
   MicDirectionNodeList GetRecentHistory(TimeStamp_t timeLength_ms) const;
-  MicDirectionNodeList GetHistoryAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
+  MicDirectionNodeList GetHistoryAtTime(EngineTimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
 
   // currently we only allow the listerner to supply an OnSound "reaction", but could easily have them supply

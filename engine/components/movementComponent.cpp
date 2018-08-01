@@ -326,7 +326,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
       const bool rightGoingForward = FLT_GT(avgRightWheelSpeed_mmps, 0.f);
       
       HistRobotState histState;
-      TimeStamp_t historicalTime;
+      RobotTimeStamp_t historicalTime;
       Result poseResult = _robot->GetStateHistory()->ComputeStateAt(_unexpectedMovement.GetStartTime(), historicalTime,
                                                                  histState, true);
       
@@ -336,13 +336,13 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         // a warning, just an info
         LOG_INFO("MovementComponent.CheckForUnexpectedMovement.PoseHistoryOriginMismatch",
                  "Could not get robot pose at t=%u",
-                 _unexpectedMovement.GetStartTime());
+                 (TimeStamp_t)_unexpectedMovement.GetStartTime());
       }
       else if (RESULT_OK != poseResult)
       {
         LOG_WARNING("MovementComponent.CheckForUnexpectedMovement.PoseHistoryFailure",
                     "Could not get robot pose at t=%u",
-                    _unexpectedMovement.GetStartTime());
+                    (TimeStamp_t)_unexpectedMovement.GetStartTime());
       }
       else
       {
@@ -1089,19 +1089,19 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
   return ss.str();
 }
 
-  static inline bool WasMovingHelper(Robot& robot, TimeStamp_t atTime, const std::string& debugStr,
+  static inline bool WasMovingHelper(Robot& robot, RobotTimeStamp_t atTime, const std::string& debugStr,
                                      std::function<bool(const HistRobotState&)>&& wasMovingFcn)
   {
     bool wasMoving = false;
     
-    TimeStamp_t t_hist = 0;
+    RobotTimeStamp_t t_hist = 0;
     HistRobotState histState;
     const bool kWithInterpolation = true;
     const Result result = robot.GetStateHistory()->GetRawStateAt(atTime, t_hist, histState, kWithInterpolation);
     if (RESULT_OK != result)
     {
       LOG_WARNING(("MovementComponent." + debugStr + ".GetHistoricalPoseFailed").c_str(),
-                  "t=%u", atTime);
+                  "t=%u", (TimeStamp_t)atTime);
       wasMoving = true;
     }
     else
@@ -1112,35 +1112,35 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
     return wasMoving;
   }
   
-  bool MovementComponent::WasMoving(TimeStamp_t atTime)
+  bool MovementComponent::WasMoving(RobotTimeStamp_t atTime)
   {
     const bool wasMoving = WasMovingHelper(*_robot, atTime, "WasMoving",
                                            [](const HistRobotState& s) { return s.WasMoving(); });
     return wasMoving;
   }
   
-  bool MovementComponent::WasHeadMoving(TimeStamp_t atTime)
+  bool MovementComponent::WasHeadMoving(RobotTimeStamp_t atTime)
   {
     const bool wasHeadMoving = WasMovingHelper(*_robot, atTime, "WasHeadMoving",
                                                [](const HistRobotState& s) { return s.WasHeadMoving(); });
     return wasHeadMoving;
   }
   
-  bool MovementComponent::WasLiftMoving(TimeStamp_t atTime)
+  bool MovementComponent::WasLiftMoving(RobotTimeStamp_t atTime)
   {
     const bool wasLiftMoving = WasMovingHelper(*_robot, atTime, "WasLiftMoving",
                                                [](const HistRobotState& s) { return s.WasLiftMoving(); });
     return wasLiftMoving;
   }
   
-  bool MovementComponent::WereWheelsMoving(TimeStamp_t atTime)
+  bool MovementComponent::WereWheelsMoving(RobotTimeStamp_t atTime)
   {
     const bool wereWheelsMoving = WasMovingHelper(*_robot, atTime, "WereWheelsMoving",
                                                   [](const HistRobotState& s) { return s.WereWheelsMoving(); });
     return wereWheelsMoving;
   }
   
-  bool MovementComponent::WasCameraMoving(TimeStamp_t atTime)
+  bool MovementComponent::WasCameraMoving(RobotTimeStamp_t atTime)
   {
     const bool wasCameraMoving = WasMovingHelper(*_robot, atTime, "WasCameraMoving",
                                                  [](const HistRobotState& s) { return s.WasCameraMoving(); });
@@ -1157,7 +1157,7 @@ bool MovementComponent::UnexpectedMovement::IsDetected() const
   return _count >= kMaxUnexpectedMovementCount;
 }
 
-void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, TimeStamp_t currentTime)
+void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, RobotTimeStamp_t currentTime)
 {
   if (_count == 0)
   {

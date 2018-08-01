@@ -14,9 +14,12 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAestheticallyCenterFaces__
 #pragma once
 
+#include "coretech/common/engine/robotTimeStamp.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "engine/aiComponent/faceSelectionComponent.h"
+#include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -56,8 +59,8 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     BehaviorState state;
-    TimeStamp_t timeFaceSearchShouldEnd;
-    TimeStamp_t imageTimestampWhenActivated = 0;
+    EngineTimeStamp_t timeFaceSearchShouldEnd;
+    RobotTimeStamp_t imageTimestampWhenActivated = 0;
   };
 
   InstanceConfig _iConfig;

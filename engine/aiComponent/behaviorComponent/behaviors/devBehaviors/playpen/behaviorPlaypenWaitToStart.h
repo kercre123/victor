@@ -16,6 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
 #include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -39,7 +40,7 @@ protected:
     
 private:
   
-  TimeStamp_t _touchStartTime_ms = 0;
+  EngineTimeStamp_t _touchStartTime_ms = 0;
 
   bool _buttonPressed = false;
 

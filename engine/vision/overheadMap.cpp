@@ -187,7 +187,7 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
                  "number of pixels outside: %d",
                  pointsInMap, int(imgGroundQuad.ComputeArea()) - pointsInMap);
 
-  _overheadMap.SetTimestamp(poseData.timeStamp);
+  _overheadMap.SetTimestamp((TimeStamp_t)poseData.timeStamp);
 
   UpdateFootprintMask(poseData.histState.GetPose(), debugImageRGBs);
 

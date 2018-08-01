@@ -117,7 +117,7 @@ void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
     
     if (prevTapCnt != ActiveObject::kInvalidTapCnt) {
       ExternalInterface::ObjectTapped objectTapped;
-      objectTapped.timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      objectTapped.timestamp = (TimeStamp_t)_robot->GetLastMsgTimestamp();
       objectTapped.objectID  = objectID;
       
       // Pass to BlockTapFilterComponent
@@ -187,7 +187,7 @@ void CubeAccelComponent::HandleMessage(const ExternalInterface::ObjectConnection
 
 void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, const bool isMoving)
 {
-  const TimeStamp_t timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const RobotTimeStamp_t timestamp = _robot->GetLastMsgTimestamp();
   
   // find active object by objectId
   auto* connectedObj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectId);
@@ -268,13 +268,13 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
       using namespace ExternalInterface;
       ObjectMoved objectMoved;
       objectMoved.objectID = objectId;
-      objectMoved.timestamp = timestamp;
+      objectMoved.timestamp = (TimeStamp_t)timestamp;
       _robot->Broadcast(MessageEngineToGame(std::move(objectMoved)));
     } else {
       using namespace ExternalInterface;
       ObjectStoppedMoving objectStopped;
       objectStopped.objectID = objectId;
-      objectStopped.timestamp = timestamp;
+      objectStopped.timestamp = (TimeStamp_t)timestamp;
       _robot->Broadcast(MessageEngineToGame(std::move(objectStopped)));
     }
   }
@@ -295,7 +295,7 @@ void CubeAccelComponent::ObjectUpAxisChangedCallback(const ObjectID objectId, co
   using namespace ExternalInterface;
   ObjectUpAxisChanged objectUpAxisChanged;
   objectUpAxisChanged.objectID = objectId;
-  objectUpAxisChanged.timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  objectUpAxisChanged.timestamp = (TimeStamp_t) _robot->GetLastMsgTimestamp();
   objectUpAxisChanged.upAxis = upAxis;
   _robot->Broadcast(MessageEngineToGame(std::move(objectUpAxisChanged)));
 }

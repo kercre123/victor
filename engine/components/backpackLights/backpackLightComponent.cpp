@@ -16,6 +16,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/components/backpackLights/backpackLightAnimationContainer.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
@@ -84,7 +85,7 @@ void BackpackLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompM
 
 void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen)
 {
-  const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
  
   // Check which, if any, backpack lights should be displayed
   // Low Battery, Offline, Streaming, Charging, or Nothing
@@ -100,7 +101,7 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   }
   // If we have been offline for long enough
   else if(_offlineAtTime_ms > 0 &&
-          (curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
+          ((TimeStamp_t)curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
   {
     trigger = BackpackAnimationTrigger::Offline; 
   }
@@ -448,14 +449,14 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
 // VIC-4094 VIC-4099
 void BackpackLightComponent::UpdateOfflineCheck()
 {
-  static TimeStamp_t lastCheck_ms = 0;
-  const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  static EngineTimeStamp_t lastCheck_ms = 0;
+  const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   auto offlineCheck = [this, curTime_ms]() {
     const bool hasVoiceAccess = Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
     if(_offlineAtTime_ms == 0 && !hasVoiceAccess)
     {
-      _offlineAtTime_ms = curTime_ms;
+      _offlineAtTime_ms = (TimeStamp_t)curTime_ms;
     }
     else if(_offlineAtTime_ms > 0 && hasVoiceAccess)
     {

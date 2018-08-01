@@ -11,6 +11,7 @@
  **/
 
 #include "engine/cozmoObservableObject.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "clad/types/ledTypes.h"
 
 #ifndef __Anki_Cozmo_ActiveObject_H__
@@ -61,10 +62,11 @@ public:
 
   // If object is moving, returns true and the time that it started moving in t.
   // If not moving, returns false and the time that it stopped moving in t.
-  virtual bool IsMoving(TimeStamp_t* t = nullptr) const override { if (t) *t=_movingTime; return _isMoving; }
+  
+  virtual bool IsMoving(RobotTimeStamp_t* t = nullptr) const override { if (t) *t=_movingTime; return _isMoving; }
   
   // Set the moving state of the object and when it either started or stopped moving.
-  virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
+  virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
   
   virtual bool CanBeUsedForLocalization() const override;
   
@@ -98,7 +100,7 @@ public:
 protected:
   
   bool        _isMoving = false;
-  TimeStamp_t _movingTime = 0;
+  RobotTimeStamp_t _movingTime = 0;
   
   // Keep track of flash rate and color of each LED
   std::array<LEDstate,NUM_LEDS> _ledState;

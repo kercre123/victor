@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 #define __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -75,7 +75,7 @@ public:
   // NOTE: This is NOT a check of whether faces are currently in frame/at the robot's current head angle
   // it's a check of last known position within a range of where the robot's facing
   bool AreFacesInFrontOfRobot(std::vector<SmartFaceID>& faceIDs,
-                              TimeStamp_t seenSinceTime_ms = 0,
+                              RobotTimeStamp_t seenSinceTime_ms = 0,
                               bool includeRecognizableOnly = false) const;
 
 

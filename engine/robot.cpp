@@ -426,7 +426,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 
   const bool isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   const bool isFalling = IS_STATUS_FLAG_SET(IS_FALLING);
-  const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   //////////
   // Check the robot's orientation
@@ -533,7 +533,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _fallingStartedTime_ms = GetLastMsgTimestamp();
       PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStarted",
                        "t=%dms",
-                       _fallingStartedTime_ms);
+                       (TimeStamp_t)_fallingStartedTime_ms);
 
       // Stop all actions
       GetActionList().Cancel();
@@ -543,7 +543,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
       PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStopped",
                        "t=%dms, duration=%dms",
-                       GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
+                       (TimeStamp_t)GetLastMsgTimestamp(), (TimeStamp_t)(GetLastMsgTimestamp() - _fallingStartedTime_ms));
       _fallingStartedTime_ms = 0;
     }
 
@@ -592,7 +592,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   // Might be indicative of a vibrating surface or overly sensitive conditions 
   // for staying in the picked up state.
   static bool        reportedInAirTooLong      = false;
-  static TimeStamp_t inAirTooLongReportTime_ms = 0;
+  static EngineTimeStamp_t inAirTooLongReportTime_ms = 0;
   static Radians     lastStableRobotAngle_rad  = msg.pose.angle;
 
   if (!reportedInAirTooLong) {
@@ -712,7 +712,7 @@ void Robot::Delocalize(bool isCarryingObject)
     // Need to update the robot's pose history with our new origin and pose frame IDs
     LOG_INFO("Robot.Delocalize.SendingNewOriginID",
              "Sending new localization update at t=%u, with pose frame %u and origin ID=%u",
-             GetLastMsgTimestamp(),
+             (TimeStamp_t)GetLastMsgTimestamp(),
              GetPoseFrameID(),
              worldOrigin.GetID());
     SendAbsLocalizationUpdate(GetComponent<FullRobotPose>().GetPose(), GetLastMsgTimestamp(), GetPoseFrameID());
@@ -793,7 +793,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   }
 
   // Find the closest, most recently observed marker on the object
-  TimeStamp_t mostRecentObsTime = 0;
+  RobotTimeStamp_t mostRecentObsTime = 0;
   for(const auto& marker : object->GetMarkers()) {
     if(marker.GetLastObservedTime() >= mostRecentObsTime) {
       Pose3d markerPoseWrtCamera;
@@ -1194,10 +1194,10 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   GetVisionComponent().SetPhysicalRobot(_isPhysical);
 }
 
-Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const
+Result Robot::GetHistoricalCamera(RobotTimeStamp_t t_request, Vision::Camera& camera) const
 {
   HistRobotState histState;
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   Result result = GetStateHistory()->GetRawStateAt(t_request, t, histState);
   if (RESULT_OK != result)
   {
@@ -1208,7 +1208,7 @@ Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera)
   return RESULT_OK;
 }
 
-Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp_t t) const
+Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, RobotTimeStamp_t t) const
 {
   // Compute pose from robot body to camera
   // Start with canonical (untilted) headPose
@@ -1224,7 +1224,7 @@ Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp
   // Set parent pose to be the historical robot pose
   camPose.SetParent(histState.GetPose());
 
-  camPose.SetName("PoseHistoryCamera_" + std::to_string(t));
+  camPose.SetName("PoseHistoryCamera_" + std::to_string((TimeStamp_t)t));
 
   return camPose;
 }
@@ -1242,7 +1242,7 @@ u32 Robot::GetDisplayHeightInPixels() const
   return FACE_DISPLAY_HEIGHT;
 }
 
-Vision::Camera Robot::GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const
+Vision::Camera Robot::GetHistoricalCamera(const HistRobotState& histState, RobotTimeStamp_t t) const
 {
   Vision::Camera camera(GetVisionComponent().GetCamera());
 
@@ -1447,7 +1447,7 @@ Result Robot::SetNewPose(const Pose3d& newPose)
   //  because it's possible we did not put the last-received state message into
   //  history (if it had old frame ID), but we still want the latest time we
   //  can get.
-  const TimeStamp_t timeStamp = GetLastMsgTimestamp();
+  const RobotTimeStamp_t timeStamp = GetLastMsgTimestamp();
 
   return AddVisionOnlyStateToHistory(timeStamp, GetComponent<FullRobotPose>().GetPose(), GetComponent<FullRobotPose>().GetHeadAngle(), GetComponent<FullRobotPose>().GetLiftAngle());
 }
@@ -1551,9 +1551,11 @@ bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
   return GetComponent<BlockTapFilterComponent>().ShouldIgnoreMovementDueToDoubleTap(objectID);
 }
 
-TimeStamp_t Robot::GetTimeSincePowerButtonPressed_ms() const { 
+TimeStamp_t Robot::GetTimeSincePowerButtonPressed_ms() const {
+  // this is a time difference, so could be any type, but to avoid someone thinking that all
+  // power button times are robot times, this returns an engine timestmap to match _timePowerButtonPressed_ms
   return _timePowerButtonPressed_ms == 0 ? 0 : 
-          BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timePowerButtonPressed_ms; 
+          TimeStamp_t(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timePowerButtonPressed_ms);
 }
 
 Result Robot::SyncRobot()
@@ -1974,14 +1976,14 @@ Result Robot::SetPoseOnCharger()
     return lastResult;
   }
 
-  const TimeStamp_t timeStamp = GetStateHistory()->GetNewestTimeStamp();
+  const RobotTimeStamp_t timeStamp = GetStateHistory()->GetNewestTimeStamp();
 
   LOG_INFO("Robot.SetPoseOnCharger.SetPose",
            "Robot %d now on charger %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
            _ID, charger->GetID().GetValue(),
            GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
            GetComponent<FullRobotPose>().GetPose().GetRotationAngle<'Z'>().getDegrees(),
-            timeStamp);
+            (TimeStamp_t)timeStamp);
 
   return RESULT_OK;
 
@@ -2043,9 +2045,9 @@ Result Robot::SendSyncRobot() const
   return result;
 }
 
-Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
-                                        const TimeStamp_t&   t,
-                                        const PoseFrameID_t& frameId) const
+Result Robot::SendAbsLocalizationUpdate(const Pose3d&             pose,
+                                        const RobotTimeStamp_t&   t,
+                                        const PoseFrameID_t&      frameId) const
 {
   // Send flattened poses to the robot, because when we get them back in odometry
   // updates with origin IDs, we can only hook them back up directly to the
@@ -2066,7 +2068,7 @@ Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
 
   return SendMessage(RobotInterface::EngineToRobot(
                        RobotInterface::AbsoluteLocalizationUpdate(
-                         t,
+                         (TimeStamp_t)t,
                          frameId,
                          originID,
                          poseWrtOrigin.GetTranslation().x(),
@@ -2078,7 +2080,7 @@ Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
 Result Robot::SendAbsLocalizationUpdate() const
 {
   // Look in history for the last vis pose and send it.
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   HistRobotState histState;
   if (GetStateHistory()->GetLatestVisionOnlyState(t, histState) == RESULT_FAIL) {
     LOG_WARNING("Robot.SendAbsLocUpdate.NoVizPoseFound", "");
@@ -2179,7 +2181,7 @@ void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t Robot::GetLastImageTimeStamp() const {
+RobotTimeStamp_t Robot::GetLastImageTimeStamp() const {
   return GetVisionComponent().GetLastProcessedImageTimeStamp();
 }
 
@@ -2326,10 +2328,10 @@ Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
 } // UpdateWorldOrigin()
 
 
-Result Robot::AddVisionOnlyStateToHistory(const TimeStamp_t t,
-                                         const Pose3d& pose,
-                                         const f32 head_angle,
-                                         const f32 lift_angle)
+Result Robot::AddVisionOnlyStateToHistory(const RobotTimeStamp_t t,
+                                          const Pose3d& pose,
+                                          const f32 head_angle,
+                                          const f32 lift_angle)
 {
   // We have a new ("ground truth") key frame. Increment the pose frame!
   ++_frameId;
@@ -2342,7 +2344,7 @@ Result Robot::AddVisionOnlyStateToHistory(const TimeStamp_t t,
   return GetStateHistory()->AddVisionOnlyState(t, histState);
 }
 
-Result Robot::GetComputedStateAt(const TimeStamp_t t_request, Pose3d& pose) const
+Result Robot::GetComputedStateAt(const RobotTimeStamp_t t_request, Pose3d& pose) const
 {
   HistStateKey histStateKey;
   const HistRobotState* histStatePtr = nullptr;
@@ -2360,7 +2362,7 @@ bool Robot::UpdateCurrPoseFromHistory()
 {
   bool poseUpdated = false;
 
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   HistRobotState histState;
   if (GetStateHistory()->ComputeStateAt(GetStateHistory()->GetNewestTimeStamp(), t, histState) == RESULT_OK)
   {
@@ -2547,7 +2549,7 @@ ExternalInterface::RobotState Robot::GetRobotState() const
 
   msg.batteryVoltage = GetBatteryComponent().GetBatteryVolts();
 
-  msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
+  msg.lastImageTimeStamp = (TimeStamp_t)GetVisionComponent().GetLastProcessedImageTimeStamp();
 
   return msg;
 }
@@ -2608,7 +2610,7 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
 
   msg->set_localized_to_object_id(GetLocalizedTo());
 
-  msg->set_last_image_time_stamp(GetVisionComponent().GetLastProcessedImageTimeStamp());
+  msg->set_last_image_time_stamp((TimeStamp_t)GetVisionComponent().GetLastProcessedImageTimeStamp());
 
   const auto& srcProxData = GetProxSensorComponent().GetLatestProxData();
   auto* dstProxData = new external_interface::ProxData(
@@ -2757,7 +2759,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
   return RESULT_OK;
 }
 
-Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
+Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const RobotTimeStamp_t timestamp,
                                                  Radians& absPanAngle, Radians& absTiltAngle,
                                                  const bool isPointNormalized) const
 {
@@ -2786,11 +2788,11 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   pt -= calib->GetCenter();
 
   HistRobotState histState;
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   Result result = GetStateHistory()->ComputeStateAt(timestamp, t, histState);
   if (RESULT_OK != result)
   {
-    LOG_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", timestamp);
+    LOG_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", (TimeStamp_t)timestamp);
     absPanAngle = GetPose().GetRotation().GetAngleAroundZaxis();
     absTiltAngle = GetComponent<FullRobotPose>().GetHeadAngle();
     return result;

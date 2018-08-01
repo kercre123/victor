@@ -18,7 +18,7 @@ namespace Cozmo {
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(ExploredType explored, const Pose2d& pose, TimeStamp_t t)
+MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(ExploredType explored, const Pose2d& pose, RobotTimeStamp_t t)
 : MemoryMapData( MemoryMapTypes::EContentType::ObstacleProx,  t, true)
 , _pose(pose)
 , _explored(explored)

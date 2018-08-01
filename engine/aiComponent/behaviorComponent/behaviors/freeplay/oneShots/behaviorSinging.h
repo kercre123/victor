@@ -17,6 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/cubes/cubeAccelListeners/shakeListener.h"
+#include "engine/engineTimeStamp.h"
 
 #include "clad/audio/audioSwitchTypes.h"
 
@@ -75,7 +76,7 @@ private:
   float _vibratoScaleFilt = 0;
   
   // Keep track of when cubes start being shaken
-  TimeStamp_t _cubeShakingStartTime_ms = 0;
+  EngineTimeStamp_t _cubeShakingStartTime_ms = 0;
 };
   
 }

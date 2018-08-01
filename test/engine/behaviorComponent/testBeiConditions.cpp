@@ -1444,7 +1444,7 @@ TEST(BeiConditions, ObjectKnown)
   ASSERT_TRUE(nullptr != object1);
   ObjectID objID1 = object1->GetID();
   const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {100, 0, 0}, robot.GetPose());
-  object1->_lastObservedTime = robot._lastMsgTimestamp;
+  object1->_lastObservedTime = (TimeStamp_t)robot._lastMsgTimestamp;
   auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, result);
   

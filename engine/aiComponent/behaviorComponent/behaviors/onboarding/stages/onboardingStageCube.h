@@ -15,11 +15,13 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingActivateCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/drivingAnimationHandler.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "proto/external_interface/messages.pb.h"
@@ -33,7 +35,7 @@ namespace {
   const unsigned int kMaxActivationAttempts = 2;
   const unsigned int kMaxPickUpAttempts = 3;
   const float kMaxSearchDuration_s = 30.0f;
-  const int kMaxAgeForRedoSearch_ms = 5000;
+  const uint32_t kMaxAgeForRedoSearch_ms = 5000;
   
   const std::string& kLockName = "onboardingCubeStage";
 }
@@ -206,7 +208,7 @@ public:
       // cube we see, and play lights on whatever cube we're connected to, if any.
       // also: things like if an active cube moves etc etc
       const bool seesCube = _cubeKnownCondition->AreConditionsMet(bei);
-      TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       if( seesCube ) {
         const auto& cubes = _cubeKnownCondition->GetObjects( bei );
         if( !cubes.empty() ) {
@@ -334,8 +336,8 @@ private:
     // or something based on cube connection logic
     const auto* cubeObject = bei.GetBlockWorld().GetLocatedObjectByID(_objectID);
     if( cubeObject != nullptr ) {
-      TimeStamp_t lastObservedTime_ms = cubeObject->GetLastObservedTime();
-      TimeStamp_t currTime_ms = bei.GetRobotInfo().GetLastMsgTimestamp();
+      RobotTimeStamp_t lastObservedTime_ms = cubeObject->GetLastObservedTime();
+      RobotTimeStamp_t currTime_ms = bei.GetRobotInfo().GetLastMsgTimestamp();
       if( currTime_ms <= kMaxAgeForRedoSearch_ms + lastObservedTime_ms ) {
         return true;
       }
@@ -365,7 +367,7 @@ private:
   
   unsigned int _activationAttemptCount;
   unsigned int _pickUpAttemptCount;
-  TimeStamp_t _timeStartedSearching_ms;
+  EngineTimeStamp_t _timeStartedSearching_ms;
   
   
   std::unordered_map<Step, IBehavior*> _behaviors;

@@ -259,7 +259,7 @@ void ProxSensorComponent::UpdateNavMap()
     if (++_measurementsAtPose >= kNumMeasurementsAtPose) { return; }
 
     // Clear out any obstacles between the robot and ray if we have good signal strength 
-    TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+    RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
     // build line for ray cast by getting the robot pose, casting forward by sensor reading
     const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 

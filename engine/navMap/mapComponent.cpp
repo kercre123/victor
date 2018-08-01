@@ -361,7 +361,7 @@ void MapComponent::UpdateRobotPose()
   const bool addAgain = isFarFromPrev;
   if ( addAgain )
   {
-    TimeStamp_t currentTimestamp = _robot->GetLastMsgTimestamp();
+    RobotTimeStamp_t currentTimestamp = _robot->GetLastMsgTimestamp();
 
     // robot quad relative to cliff sensor positions
     Quad2f robotSensorQuad {
@@ -392,22 +392,22 @@ void MapComponent::TimeoutObjects()
   if (currentNavMemoryMap)
   {
     // check for object timeouts in navMap occasionally
-    const TimeStamp_t currentTime = _robot->GetLastMsgTimestamp();
+    const RobotTimeStamp_t currentTime = _robot->GetLastMsgTimestamp();
     if( currentTime <= _nextTimeoutUpdate_ms ) {
       return;
     }
     _nextTimeoutUpdate_ms = currentTime + kTimeoutUpdatePeriod_ms;
     
     // ternary to prevent uInt wrapping on subtract
-    const TimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
-    const TimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
-    const TimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
+    const RobotTimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
+    const RobotTimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
+    const RobotTimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
     
     NodeTransformFunction timeoutObjects =
       [obstacleTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
-        const TimeStamp_t lastObs = data->GetLastObservedTime();
+        const RobotTimeStamp_t lastObs = data->GetLastObservedTime();
 
         if ((EContentType::Cliff                == nodeType && lastObs <= obstacleTooOld) ||
             (EContentType::ObstacleUnrecognized == nodeType && lastObs <= obstacleTooOld) ||
@@ -1000,7 +1000,7 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
   auto matchPair = _navMaps.find(originID);
   if ( matchPair != _navMaps.end() )
   {
-    TimeStamp_t timeStamp = _robot->GetLastImageTimeStamp();
+    RobotTimeStamp_t timeStamp = _robot->GetLastImageTimeStamp();
 
     // for Cubes, we can lookup by ID
     auto clearData = MemoryMapData(removalType, timeStamp).Clone();
@@ -1147,7 +1147,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t)
+void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const RobotTimeStamp_t t)
 {
   INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
@@ -1167,7 +1167,7 @@ void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const Ti
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::ClearRegion(const BoundedConvexSet2f& region, const TimeStamp_t t) 
+void MapComponent::ClearRegion(const BoundedConvexSet2f& region, const RobotTimeStamp_t t)
 {
   INavMap* currentMap = GetCurrentMemoryMap();
   if (currentMap)
@@ -1390,7 +1390,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   const float kDebugRenderOverheadEdgesZ_mm = 31.0f;
 
   // grab the robot pose at the timestamp of this frame
-  TimeStamp_t t;
+  RobotTimeStamp_t t;
   HistRobotState* histState = nullptr;
   HistStateKey histStateKey;
   const Result poseRet = _robot->GetStateHistory()->ComputeAndInsertStateAt(frameInfo.timestamp, t, &histState, &histStateKey, true);
@@ -1406,9 +1406,9 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     // this can happen if robot status messages are lost
     PRINT_CH_INFO("MapComponent", "MapComponent.AddVisionOverheadEdges.HistoricalPoseNotFound",
                   "Pose not found for timestamp %u (hist: %u to %u). Edges ignored for this timestamp.",
-                  frameInfo.timestamp,
-                  _robot->GetStateHistory()->GetOldestTimeStamp(),
-                  _robot->GetStateHistory()->GetNewestTimeStamp());
+                  (TimeStamp_t)frameInfo.timestamp,
+                  (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
+                  (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
     return RESULT_OK;
   }
 
@@ -1417,7 +1417,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   Pose3d observedPose;
   if ( !histState->GetPose().GetWithRespectTo( _robot->GetWorldOrigin(), observedPose) ) {
     PRINT_CH_INFO("MapComponent", "MapComponent.AddVisionOverheadEdges.NotInThisWorld",
-                  "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
+                  "Received timestamp %d, but could not translate that timestamp into current origin.", (TimeStamp_t)frameInfo.timestamp);
     return RESULT_OK;
   }
 
@@ -1912,7 +1912,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   // notify the whiteboard we just processed edge information from a frame
   const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
     std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
-  _robot->GetAIComponent().GetComponent<AIWhiteboard>().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
+  _robot->GetAIComponent().GetComponent<AIWhiteboard>().SetLastEdgeInformation(closestPointDist_mm);
 
   return RESULT_OK;
 }

@@ -144,13 +144,13 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTrackingHelper(Radians&
 {
   // Find pose of robot at time point was observed
   HistRobotState* histStatePtr = nullptr;
-  TimeStamp_t junkTime;
+  RobotTimeStamp_t junkTime;
   if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_pointObservation.timestamp, junkTime, &histStatePtr))
   {
     PRINT_NAMED_ERROR("TrackGroundPointAction.UpdateTrackingHelper.PoseHistoryError",
                       "Could not get historical pose for point observed at t=%d (lastRobotMsgTime = %d)",
-                      _pointObservation.timestamp,
-                      GetRobot().GetLastMsgTimestamp());
+                      (TimeStamp_t)_pointObservation.timestamp,
+                      (TimeStamp_t)GetRobot().GetLastMsgTimestamp());
     
     return UpdateResult::NoNewInfo;
   }
@@ -195,13 +195,13 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   // Convert observations to absolute coordinates so we can compare them relative to a common origin
   HistRobotState* histStatePtr1 = nullptr;
-  TimeStamp_t t1;
+  RobotTimeStamp_t t1;
   if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_prevPointObservation.timestamp, t1, &histStatePtr1))
   {
     PRINT_NAMED_ERROR("TrackGroundPointAction.PredictTrackingHelper.PoseHistoryError",
                       "Could not get historical pose for point observed at t=%d (lastRobotMsgTime = %d)",
-                      _prevPointObservation.timestamp,
-                      GetRobot().GetLastMsgTimestamp());
+                      (TimeStamp_t)_prevPointObservation.timestamp,
+                      (TimeStamp_t)GetRobot().GetLastMsgTimestamp());
     
     return UpdateResult::NoNewInfo;
   }
@@ -221,13 +221,13 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   }
   
   HistRobotState* histStatePtr2 = nullptr;
-  TimeStamp_t t2;
+  RobotTimeStamp_t t2;
   if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_pointObservation.timestamp, t2, &histStatePtr2))
   {
     PRINT_NAMED_ERROR("TrackGroundPointAction.PredictTrackingHelper.PoseHistoryError",
                       "Could not get historical pose for point observed at t=%d (lastRobotMsgTime = %d)",
-                      _pointObservation.timestamp,
-                      GetRobot().GetLastMsgTimestamp());
+                      (TimeStamp_t)_pointObservation.timestamp,
+                      (TimeStamp_t)GetRobot().GetLastMsgTimestamp());
     
     return UpdateResult::NoNewInfo;
   }
@@ -261,7 +261,7 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   // Estimate the current position of the ground point assuming it continued traveling the
   // same velocity since it was last seen up until "now" (the last message timestamp)
-  const TimeStamp_t now = GetRobot().GetLastMsgTimestamp();
+  const RobotTimeStamp_t now = GetRobot().GetLastMsgTimestamp();
   DEV_ASSERT(now >= t2, "TrackGroundPointAction.PredictTrackingHelper.BadTimestamp");
   Point2f predictedGroundPoint(groundPoint2);
   predictedGroundPoint += groundPointVel * (f32)(now - t2);
@@ -284,7 +284,7 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
                    "TrackGroundPointAction.PredictTrackingHelper.Prediction",
                    "t: %u->%u->%u x: %.2f->%.2f->%.2f y: %.2f->%.2f->%.2f "
                    "pan:%.1fdeg tilt:%.1fdeg d:%.1fmm",
-                   _prevPointObservation.timestamp, _pointObservation.timestamp, now,
+                   (TimeStamp_t)_prevPointObservation.timestamp, (TimeStamp_t)_pointObservation.timestamp, (TimeStamp_t)now,
                    _prevPointObservation.groundPoint.x(),  _pointObservation.groundPoint.x(),
                    predictedGroundPoint.x(),
                    _prevPointObservation.groundPoint.y(),  _pointObservation.groundPoint.y(),
@@ -367,9 +367,9 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTracking(Radians& absPa
     DEV_ASSERT_MSG(GetRobot().GetLastImageTimeStamp() >= _pointObservation.timestamp,
                    "TrackGroundPointAction.UpdateTracking.BadTimeStamps",
                    "LastImageTimestamp=%u PointObservationTimestamp=%u",
-                   GetRobot().GetLastImageTimeStamp(), _pointObservation.timestamp);
+                   (TimeStamp_t)GetRobot().GetLastImageTimeStamp(), (TimeStamp_t)_pointObservation.timestamp);
     
-    const TimeStamp_t timeSinceLastPoint_ms = GetRobot().GetLastImageTimeStamp() - _pointObservation.timestamp;
+    const RobotTimeStamp_t timeSinceLastPoint_ms = GetRobot().GetLastImageTimeStamp() - _pointObservation.timestamp;
     
     // Didn't see the point in the last image
     if(_canPredict && (timeSinceLastPoint_ms < _maxPredictionWindow_ms))

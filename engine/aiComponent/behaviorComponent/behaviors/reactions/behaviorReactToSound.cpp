@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/engineTimeStamp.h"
 #include "clad/types/animationTrigger.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -212,7 +213,7 @@ void BehaviorReactToSound::BehaviorUpdate()
   {
     if ( kInvalidMicDirectionIndex != _triggeredDirection )
     {
-      const TimeStamp_t currentTime = GetCurrentTimeMS();
+      const EngineTimeStamp_t currentTime = GetCurrentTimeMS();
       const TimeStamp_t reactionTime = static_cast<TimeStamp_t>( kRTS_MaxReactionTime * 1000.0 );
       if ( currentTime >= ( _triggerDetectedTime + reactionTime ) )
       {
@@ -318,9 +319,9 @@ bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionC
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BehaviorReactToSound::GetCurrentTimeMS() const
+EngineTimeStamp_t BehaviorReactToSound::GetCurrentTimeMS() const
 {
-  return static_cast<TimeStamp_t>( BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble() * 1000.0 );
+  return BaseStationTimer::getInstance()->GetCurrentTimeStamp(); // internally just a cast from double
 }
 
 }

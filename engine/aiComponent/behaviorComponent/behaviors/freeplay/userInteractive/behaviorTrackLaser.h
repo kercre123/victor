@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorTrackLaser_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "clad/types/cameraParams.h"
 
@@ -68,10 +69,10 @@ private:
       Confirmed     // Seen while running (with reduced exposure)
     };
     
-    Type        type;
-    TimeStamp_t timestamp_ms;
-    TimeStamp_t timestamp_prev_ms;
-    Point2f     pointWrtRobot;
+    Type             type;
+    RobotTimeStamp_t timestamp_ms;
+    RobotTimeStamp_t timestamp_prev_ms;
+    Point2f          pointWrtRobot;
   };
 
   // Set from Json config (use keys named exactly the same as the struct members).
@@ -158,7 +159,7 @@ private:
     bool    shouldSendTrackingObjectiveAchieved;
     
     s16 imageMean;
-    TimeStamp_t exposureChangedTime_ms;
+    RobotTimeStamp_t exposureChangedTime_ms;
     
     float lastTimeRotate;
     float startedTracking_sec;

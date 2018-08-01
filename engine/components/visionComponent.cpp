@@ -378,7 +378,7 @@ namespace Cozmo {
     CameraService::removeInstance();
   } // ~VisionSystem()
 
-  TimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
+  RobotTimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
   {
     return _lastProcessedImageTimeStamp_ms;
   }
@@ -433,14 +433,14 @@ namespace Cozmo {
   }
 
   static Result GetImageHistState(const Robot&      robot,
-                                  const TimeStamp_t imageTimeStamp,
+                                  const RobotTimeStamp_t imageTimeStamp,
                                   HistRobotState&   imageHistState,
-                                  TimeStamp_t&      imageHistTimeStamp)
+                                  RobotTimeStamp_t&      imageHistTimeStamp)
   {
     // Handle the (rare, Webots-test-only?) possibility that the image timstamp is _newer_
     // than the latest thing in history. In that case, we'll just use the last pose information
     // we have, since we can't really interpolate.
-    const TimeStamp_t requestedTimeStamp = std::min(imageTimeStamp, robot.GetStateHistory()->GetNewestTimeStamp());
+    const RobotTimeStamp_t requestedTimeStamp = std::min(imageTimeStamp, robot.GetStateHistory()->GetNewestTimeStamp());
 
     Result lastResult = robot.GetStateHistory()->ComputeStateAt(requestedTimeStamp, imageHistTimeStamp, imageHistState, true);
 
@@ -497,7 +497,7 @@ namespace Cozmo {
           {
             PRINT_NAMED_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
                                 "Current:%u Last:%u",
-                                _bufferedImg.GetTimestamp(), _lastReceivedImageTimeStamp_ms);
+                                _bufferedImg.GetTimestamp(), (TimeStamp_t)_lastReceivedImageTimeStamp_ms);
 
             // This should be recoverable (it could happen if we receive a bunch of garbage image data)
             // so reset the lastReceived and lastProcessed timestamps so we can set them fresh next time
@@ -507,7 +507,7 @@ namespace Cozmo {
             ReleaseImage(_bufferedImg);
             return;
           }
-          _framePeriod_ms = _bufferedImg.GetTimestamp() - _lastReceivedImageTimeStamp_ms;
+          _framePeriod_ms = (TimeStamp_t)(_bufferedImg.GetTimestamp() - _lastReceivedImageTimeStamp_ms);
         }
         _lastReceivedImageTimeStamp_ms = _bufferedImg.GetTimestamp();
       }
@@ -534,7 +534,7 @@ namespace Cozmo {
         // history. Just drop this image.
         PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.DroppingImageOlderThanStateHistory",
                        "ImageTime=%d OldestState=%d",
-                       _bufferedImg.GetTimestamp(), _robot->GetStateHistory()->GetOldestTimeStamp());
+                       _bufferedImg.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp());
 
         ReleaseImage(_bufferedImg);
 
@@ -553,7 +553,7 @@ namespace Cozmo {
         {
           PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
                          "CapturedImageTime:%u NewestStateInHistory:%u",
-                         _bufferedImg.GetTimestamp(), _robot->GetStateHistory()->GetNewestTimeStamp());
+                         _bufferedImg.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
         }
       }
       else
@@ -618,7 +618,7 @@ namespace Cozmo {
 
     // Fill in the pose data for the given image, by querying robot history
     HistRobotState imageHistState;
-    TimeStamp_t imageHistTimeStamp;
+    RobotTimeStamp_t imageHistTimeStamp;
 
     Result lastResult = GetImageHistState(*_robot, image.GetTimestamp(), imageHistState, imageHistTimeStamp);
 
@@ -636,11 +636,11 @@ namespace Cozmo {
                           "Unable to get computed pose at image timestamp of %u. (rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
                           image.GetTimestamp(),
                           _robot->GetStateHistory()->GetNumRawStates(),
-                          _robot->GetStateHistory()->GetOldestTimeStamp(),
-                          _robot->GetStateHistory()->GetNewestTimeStamp(),
+                          (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
+                          (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp(),
                           _robot->GetStateHistory()->GetNumVisionStates(),
-                          _robot->GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
-                          _robot->GetStateHistory()->GetNewestVisionOnlyTimeStamp());
+                          (TimeStamp_t)_robot->GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
+                          (TimeStamp_t)_robot->GetStateHistory()->GetNewestVisionOnlyTimeStamp());
       return lastResult;
     }
 
@@ -1056,13 +1056,13 @@ namespace Cozmo {
             const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
             const s32  kDisplayNumCols = 640; //   "
             for(auto & debugGray : result.debugImages) {
-              debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              debugGray.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
               debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
                                                      Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
               CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
-              debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
+              debugRGB.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
               debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
                                                     Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
               CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
@@ -1107,7 +1107,7 @@ namespace Cozmo {
         if(!result.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
         {
           DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
-          _processingPeriod_ms = result.timestamp - _lastProcessedImageTimeStamp_ms;
+          _processingPeriod_ms = (TimeStamp_t)(result.timestamp - _lastProcessedImageTimeStamp_ms);
           _lastProcessedImageTimeStamp_ms = result.timestamp;
         }
 
@@ -1130,7 +1130,7 @@ namespace Cozmo {
             imageMean = result.imageMean;
           }
 
-          _robot->Broadcast(MessageEngineToGame(RobotProcessedImage(result.timestamp,
+          _robot->Broadcast(MessageEngineToGame(RobotProcessedImage((TimeStamp_t)result.timestamp,
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
@@ -1204,7 +1204,7 @@ namespace Cozmo {
     {
       // Get historical robot pose at this processing result's timestamp to get
       // head angle and to attach as parent of the camera pose.
-      TimeStamp_t t;
+      RobotTimeStamp_t t;
       HistRobotState* histStatePtr = nullptr;
       HistStateKey histStateKey;
 
@@ -1221,9 +1221,9 @@ namespace Cozmo {
         // this can happen if we missed a robot status update message
         PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.HistoricalPoseNotFound",
                       "Time: %u, hist: %u to %u",
-                      procResult.timestamp,
-                      _robot->GetStateHistory()->GetOldestTimeStamp(),
-                      _robot->GetStateHistory()->GetNewestTimeStamp());
+                      (TimeStamp_t)procResult.timestamp,
+                      (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
+                      (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
         return RESULT_OK;
       }
 
@@ -1258,7 +1258,7 @@ namespace Cozmo {
         {
           PRINT_NAMED_ERROR("VisionComponent.UpdateVisionMarkers.MismatchedTimestamps",
                             "Marker t=%u vs. ProcResult t=%u",
-                            visionMarker.GetTimeStamp(), procResult.timestamp);
+                            visionMarker.GetTimeStamp(), (TimeStamp_t)procResult.timestamp);
           continue;
         }
 
@@ -1454,7 +1454,7 @@ namespace Cozmo {
 
   Result VisionComponent::UpdateSalientPoints(const VisionProcessingResult& procResult)
   {
-    TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    EngineTimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
     const bool usingFixedDrawTime = (kKeepDrawingSalientPointsFor_ms > 0);
     if(usingFixedDrawTime)
@@ -1594,7 +1594,7 @@ namespace Cozmo {
     }
     else if(_lastBroadcastImageQuality != ImageQuality::Good) // Don't keep broadcasting once in Good state
     {
-      const TimeStamp_t timeWithThisQuality_ms = procResult.timestamp - _currentQualityBeginTime_ms;
+      const RobotTimeStamp_t timeWithThisQuality_ms = procResult.timestamp - _currentQualityBeginTime_ms;
 
       if(timeWithThisQuality_ms > _waitForNextAlert_ms)
       {
@@ -1626,8 +1626,8 @@ namespace Cozmo {
         PRINT_CH_DEBUG("VisionComponent",
                        "VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
                        "Seeing %s for more than %u > %ums, broadcasting %s",
-                       EnumToString(procResult.imageQuality), timeWithThisQuality_ms,
-                       _waitForNextAlert_ms, EnumToString(errorCode));
+                       EnumToString(procResult.imageQuality), (TimeStamp_t)timeWithThisQuality_ms,
+                       (TimeStamp_t)_waitForNextAlert_ms, EnumToString(errorCode));
 
         using namespace ExternalInterface;
         _robot->Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
@@ -1674,7 +1674,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  bool VisionComponent::WasHeadRotatingTooFast(TimeStamp_t t,
+  bool VisionComponent::WasHeadRotatingTooFast(RobotTimeStamp_t t,
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
@@ -1694,7 +1694,7 @@ namespace Cozmo {
       {
         PRINT_CH_INFO("VisionComponent",
                       "VisionComponent.VisionComponent.WasHeadRotatingTooFast.NoIMUData",
-                      "Could not get next/previous imu data for timestamp %u", t);
+                      "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
         return true;
       }
 
@@ -1707,7 +1707,7 @@ namespace Cozmo {
     return false;
   }
 
-  bool VisionComponent::WasBodyRotatingTooFast(TimeStamp_t t,
+  bool VisionComponent::WasBodyRotatingTooFast(RobotTimeStamp_t t,
                                                const f32 bodyTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
@@ -1726,7 +1726,7 @@ namespace Cozmo {
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyRotatingTooFast",
-                      "Could not get next/previous imu data for timestamp %u", t);
+                      "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
         return true;
       }
 
@@ -1739,7 +1739,7 @@ namespace Cozmo {
     return false;
   }
 
-  bool VisionComponent::WasRotatingTooFast(TimeStamp_t t,
+  bool VisionComponent::WasRotatingTooFast(RobotTimeStamp_t t,
                                            const f32 bodyTurnSpeedLimit_radPerSec,
                                            const f32 headTurnSpeedLimit_radPerSec,
                                            const int numImuDataToLookBack) const
@@ -1748,11 +1748,11 @@ namespace Cozmo {
             WasBodyRotatingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
   }
 
-  void VisionComponent::AddLiftOccluder(const TimeStamp_t t_request)
+  void VisionComponent::AddLiftOccluder(const RobotTimeStamp_t t_request)
   {
     // TODO: More precise check for position of lift in FOV given head angle
     HistRobotState histState;
-    TimeStamp_t t;
+    RobotTimeStamp_t t;
     Result result = _robot->GetStateHistory()->GetRawStateAt(t_request, t, histState, false);
 
     if(RESULT_FAIL_ORIGIN_MISMATCH == result)
@@ -1760,13 +1760,13 @@ namespace Cozmo {
       // Not a warning, this can legitimately happen
       PRINT_CH_INFO("VisionComponent",
                     "VisionComponent.VisionComponent.AddLiftOccluder.StateHistoryOriginMismatch",
-                    "Could not get pose at t=%u due to origin change. Skipping.", t_request);
+                    "Could not get pose at t=%u due to origin change. Skipping.", (TimeStamp_t)t_request);
       return;
     }
     else if(RESULT_OK != result)
     {
       PRINT_NAMED_WARNING("VisionComponent.WasLiftInFOV.StateHistoryFailure",
-                          "Could not get raw pose at t=%u", t_request);
+                          "Could not get raw pose at t=%u", (TimeStamp_t)t_request);
       return;
     }
 
@@ -2319,7 +2319,7 @@ namespace Cozmo {
     _robot->GetFaceWorld().InitLoadedKnownFaces(loadedFaces);
   }
 
-  void VisionComponent::FakeImageProcessed(TimeStamp_t t)
+  void VisionComponent::FakeImageProcessed(RobotTimeStamp_t t)
   {
     _lastProcessedImageTimeStamp_ms = t;
   }
@@ -2493,7 +2493,7 @@ namespace Cozmo {
     TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
     ImageEncoding format;
 
-    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
     if(gotImage)
     {
@@ -2632,7 +2632,7 @@ namespace Cozmo {
       {
         PRINT_NAMED_WARNING("VisionComponent.CaptureImage.TooLongSinceFrameWasCaptured", 
                             "last: %dms, now: %dms", 
-                            _lastImageCaptureTime_ms, currTime_ms);
+                            (TimeStamp_t)_lastImageCaptureTime_ms, (TimeStamp_t)currTime_ms);
       }
     }
 

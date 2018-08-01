@@ -553,7 +553,7 @@ message AnimationAborted {
 }
 
 message AnimationEvent {
-  uint_32   timestamp,
+  uint_32   timestamp, // AnimTimeStamp_t
   AnimEvent event_id
 }
 

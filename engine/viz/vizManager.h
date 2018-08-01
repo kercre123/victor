@@ -18,7 +18,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/colorRGBA.h"
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "util/helpers/ankiDefines.h"
 #include "coretech/planning/shared/path.h"
 #include "coretech/messaging/shared/UdpClient.h"
@@ -219,7 +219,7 @@ namespace Anki {
                            const ColorRGBA& color);
       
       
-      void DisplayCameraImage(const TimeStamp_t timestamp);
+      void DisplayCameraImage(const RobotTimeStamp_t timestamp);
       
       // Draw a generic 2D quad in the camera display
       // TopColor is the color of the line connecting the upper left and upper right corners.

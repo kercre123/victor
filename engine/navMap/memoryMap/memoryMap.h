@@ -13,7 +13,11 @@
 #define ANKI_COZMO_MEMORY_MAP_H
 
 #include "engine/navMap/iNavMap.h"
+
+#include "coretech/common/engine/robotTimeStamp.h"
+
 #include "engine/navMap/quadTree/quadTree.h"
+
 
 #include <shared_mutex>
 
@@ -108,7 +112,7 @@ public:
 
   // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
   // does not change)
-  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetData()->GetLastObservedTime();}
+  virtual RobotTimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetData()->GetLastObservedTime();}
 
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -308,7 +308,7 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
                                                             saveScale,
                                                             kRemoveDistortion));
 
-  _lastRequestedPhotoHandle = _visionComponent->GetLastProcessedImageTimeStamp();
+  _lastRequestedPhotoHandle = (TimeStamp_t)_visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
   
   LOG_INFO("PhotographyManager.TakePhoto.SetSaveParams",
@@ -335,10 +335,10 @@ bool PhotographyManager::IsWaitingForPhoto() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PhotographyManager::SetLastPhotoTimeStamp(TimeStamp_t timestamp)
+void PhotographyManager::SetLastPhotoTimeStamp(RobotTimeStamp_t timestamp)
 {
   static_assert(sizeof(PhotoHandle) >= sizeof(TimeStamp_t), "PhotoHandle alias must be able to accomodate TimeStamps");
-  _lastSavedPhotoHandle = timestamp;
+  _lastSavedPhotoHandle = (TimeStamp_t)timestamp;
   
   LOG_INFO("PhotographyManager.SetLastPhotoTimeStamp.SettingHandle",
            "Saved Handle: %zu (Last Requested: %zu)",

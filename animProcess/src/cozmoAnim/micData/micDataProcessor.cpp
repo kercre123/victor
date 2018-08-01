@@ -188,12 +188,12 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
     return;
   }
 
-  TimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
+  RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
 
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
-  twDetectedMessage.timestamp = mostRecentTimestamp;
+  twDetectedMessage.timestamp = (TimeStamp_t)mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
@@ -213,10 +213,10 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
                     "Direction index %d at timestamp %d",
                     currentDirection,
-                    mostRecentTimestamp);
+                    (TimeStamp_t)mostRecentTimestamp);
 }
 
-TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
 {
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
 
@@ -306,7 +306,7 @@ TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
     }
   }
 
-  TimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
+  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
   return mostRecentTimestamp;
 }
 
@@ -322,7 +322,7 @@ MicDataProcessor::~MicDataProcessor()
   _recognizer->Stop();
 }
 
-void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
+void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
                                        const AudioUtil::AudioSample* audioChunk,
                                        uint32_t robotStatus,
                                        float robotAngle)
@@ -408,7 +408,7 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
 
     // Set up a message to send out about the direction
     RobotInterface::MicDirection newMessage;
-    newMessage.timestamp = timestamp;
+    newMessage.timestamp = (TimeStamp_t)timestamp;
     newMessage.direction = directionResult.winningDirection;
     newMessage.confidence = directionResult.winningConfidence;
     newMessage.selectedDirection = directionResult.selectedDirection;

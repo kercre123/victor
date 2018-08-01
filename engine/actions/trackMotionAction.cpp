@@ -69,12 +69,12 @@ ITrackAction::UpdateResult TrackMotionAction::UpdateTracking(Radians& absPanAngl
     
     // Find pose of robot at time motion was observed
     HistRobotState* histStatePtr = nullptr;
-    TimeStamp_t junkTime;
+    RobotTimeStamp_t junkTime;
     if(RESULT_OK != GetRobot().GetStateHistory()->ComputeAndInsertStateAt(_motionObservation.timestamp, junkTime, &histStatePtr)) {
       PRINT_NAMED_ERROR("TrackMotionAction.UpdateTracking.PoseHistoryError",
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
-                        GetRobot().GetLastMsgTimestamp());
+                        (TimeStamp_t)GetRobot().GetLastMsgTimestamp());
       return UpdateResult::NoNewInfo;
     }
     

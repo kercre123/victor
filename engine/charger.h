@@ -15,6 +15,7 @@
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/observableObject.h"
 
@@ -86,8 +87,8 @@ namespace Anki {
       
       
       // Charger has no accelerometer so it should never be considered moving nor used for localization
-      virtual bool IsMoving(TimeStamp_t* t = nullptr) const override { return false; }
-      virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { }
+      virtual bool IsMoving(RobotTimeStamp_t* t = nullptr) const override { return false; }
+      virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { }
       virtual bool CanBeUsedForLocalization() const override { return false; }
       
       

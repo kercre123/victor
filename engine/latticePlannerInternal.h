@@ -14,6 +14,7 @@
 #ifndef __LATTICEPLANNER_INTERNAL_H__
 #define __LATTICEPLANNER_INTERNAL_H__
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "util/helpers/noncopyable.h"
 
 #include <thread>
@@ -71,7 +72,7 @@ public:
   xythetaPlanner        _planner;
 
   int                   _searchNum = 0;               // number of searches
-  TimeStamp_t           _timeOfLastObjectsImport = 0; // the last timestamp at which blockworld objects were imported
+  RobotTimeStamp_t      _timeOfLastObjectsImport = 0; // the last timestamp at which blockworld objects were imported
   GoalID                _selectedGoalID = 0;          // the chosen best goal out of _targetPoses_orig
   xythetaPlan           _totalPlan;                   // current plan if the planner has already run
   std::vector<Pose3d>   _targetPoses_orig;            // possible goals before converting to GoadID and loading to _context

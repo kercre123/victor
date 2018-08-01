@@ -521,12 +521,12 @@ static void DisplayImageHelper(const EncodedImage& encodedImage, webots::ImageRe
   Vision::ImageRGB img;
   Result result = encodedImage.DecodeImageRGB(img);
   if(RESULT_OK != result) {
-    PRINT_NAMED_WARNING("VizControllerImpl.DisplayImageHelper.DecodeFailed", "t=%d", encodedImage.GetTimeStamp());
+    PRINT_NAMED_WARNING("VizControllerImpl.DisplayImageHelper.DecodeFailed", "t=%d", (TimeStamp_t)encodedImage.GetTimeStamp());
     return;
   }
   
   if(img.IsEmpty()) {
-    PRINT_NAMED_WARNING("VizControllerImpl.DisplayImageHelper.EmptyImageDecoded", "t=%d", encodedImage.GetTimeStamp());
+    PRINT_NAMED_WARNING("VizControllerImpl.DisplayImageHelper.EmptyImageDecoded", "t=%d", (TimeStamp_t)encodedImage.GetTimeStamp());
     return;
   }
   
@@ -570,7 +570,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
     {
       DEV_ASSERT_MSG(payload.frameTimeStamp == encodedImage.GetTimeStamp(),
                      "VizControllerImpl.ProcessVizImageChunkMessage.TimestampMismath",
-                     "Payload:%u Image:%u", payload.frameTimeStamp, encodedImage.GetTimeStamp());
+                     "Payload:%u Image:%u", payload.frameTimeStamp, (TimeStamp_t)encodedImage.GetTimeStamp());
       
       // Add an entry in EncodedImages map for this new image, now that it's complete
       auto result = _encodedImages.emplace(payload.frameTimeStamp, _imageBufferIndex);
@@ -660,11 +660,11 @@ void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterfa
     return;
   }
   
-  const TimeStamp_t timestamp = encImgIter->first;
+  const RobotTimeStamp_t timestamp = encImgIter->first;
   const EncodedImage& encodedImage = _bufferedImages[encImgIter->second];
   DEV_ASSERT_MSG(timestamp == encodedImage.GetTimeStamp(),
                  "VizControllerImpl.ProcessVizDisplayImage.TimeStampMisMatch",
-                 "key=%u vs. encImg=%u", timestamp, encodedImage.GetTimeStamp());
+                 "key=%u vs. encImg=%u", (TimeStamp_t)timestamp, (TimeStamp_t)encodedImage.GetTimeStamp());
   
   if(_saveVizImage && _curImageTimestamp > 0)
   {
@@ -709,14 +709,14 @@ void VizControllerImpl::ProcessCameraParams(const AnkiEvent<VizInterface::Messag
   _cameraParams = payload.cameraParams;
 }
 
-void VizControllerImpl::DisplayCameraInfo(const TimeStamp_t timestamp)
+void VizControllerImpl::DisplayCameraInfo(const RobotTimeStamp_t timestamp)
 {
   // Print values
   char text[42];
   snprintf(text, sizeof(text), "Exp:%u Gain:%.3f\n", 
            _cameraParams.exposureTime_ms, _cameraParams.gain);
   SetColorHelper(_camDisp, NamedColors::RED);
-  _camDisp->drawText(std::to_string(timestamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
+  _camDisp->drawText(std::to_string((TimeStamp_t)timestamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
   _camDisp->drawText(text, _camDisp->getWidth()-144, _camDisp->getHeight()-9); //display exposure in bottom right
 
 

@@ -18,6 +18,7 @@
 #include "clad/types/ledTypes.h"
 #include "coretech/common/shared/types.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/engineTimeStamp.h"
 #include "json/json.h"
 #include "util/random/randomGenerator.h"
 
@@ -58,7 +59,7 @@ public:
     uint8_t roundNumber = 0;
     bool isCurrentLightTarget = false;
     CubeSpinnerGame::LightsLocked lightsLocked;
-    TimeStamp_t timeUntilNextRotation = 0;
+    EngineTimeStamp_t timeUntilNextRotation = 0;
   };
 
 
@@ -128,7 +129,7 @@ private:
     std::vector<LightMapEntry> lights;
   };
 
-  static const size_t kGameHasntStartedTick = 0;
+  static const uint32_t kGameHasntStartedTick;
   struct CurrentGame{
     bool hasStarted = false;
 
@@ -137,16 +138,16 @@ private:
     // Idxs correspond to light list in GameLightConfig
     uint8_t targetLightIdx = 0;
     uint8_t currentCycleLightIdx = 0;
-    uint32_t timeNextAdvanceToLED_ms = 0;
+    EngineTimeStamp_t timeNextAdvanceToLED_ms = 0;
     // tracking locked/rotation light state
     uint8_t lastLEDLockedIdx = 0;
     uint8_t currentCycleLEDIdx = 0;
     LightsLocked lightsLocked;
-    TimeStamp_t lastTimeLightLocked_ms = kGameHasntStartedTick;
+    EngineTimeStamp_t lastTimeLightLocked_ms = kGameHasntStartedTick;
 
     uint32_t numberOfCyclesTillNextCorrectLight = 0;
     
-    TimeStamp_t lastTimePhaseChanged_ms = kGameHasntStartedTick;
+    EngineTimeStamp_t lastTimePhaseChanged_ms = kGameHasntStartedTick;
     // Cube light playback
     CubeLightAnimation::LightPattern baseLightPattern;
     CubeLightComponent::AnimationHandle currentCubeHandle = 0;

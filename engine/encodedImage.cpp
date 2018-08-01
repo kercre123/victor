@@ -156,8 +156,8 @@ namespace Cozmo {
         {
           PRINT_NAMED_WARNING("EncodedImage.AddChunk.TimestampNotIncreasing",
                               "Got last chunk but current timestamp %u is less than previous timestamp %u",
-                              _timestamp,
-                              _prevTimestamp);
+                              (TimeStamp_t)_timestamp,
+                              (TimeStamp_t)_prevTimestamp);
           _isImgValid = false;
         }
       }
@@ -325,7 +325,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    decodedImg.SetTimestamp(_timestamp);
+    decodedImg.SetTimestamp((TimeStamp_t)_timestamp);
     
     return RESULT_OK;
   }

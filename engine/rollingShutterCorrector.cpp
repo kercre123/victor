@@ -20,7 +20,7 @@
 namespace Anki {
   namespace Cozmo {
   
-    void ImuDataHistory::AddImuData(TimeStamp_t systemTimestamp_ms,
+    void ImuDataHistory::AddImuData(RobotTimeStamp_t systemTimestamp_ms,
                                     float rateX,
                                     float rateY,
                                     float rateZ)
@@ -38,7 +38,7 @@ namespace Anki {
       _history.push_back(data);
     }
     
-    bool ImuDataHistory::GetImuDataBeforeAndAfter(TimeStamp_t t,
+    bool ImuDataHistory::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
                                                   ImuDataHistory::ImuData& before,
                                                   ImuDataHistory::ImuData& after) const
     {
@@ -54,9 +54,10 @@ namespace Anki {
         // or We have gotten to the imu data that has yet to be given a timestamp and
         // our last known timestamped imu data is fairly close the time we are looking for
         // so use it and the data after it that doesn't have a timestamp
+        const int64_t tDiff = ((int64_t)(TimeStamp_t)(iter - 1)->timestamp - (int64_t)(TimeStamp_t)t);
         if(iter->timestamp > t ||
            (iter->timestamp == 0 &&
-            ABS((int)((iter - 1)->timestamp - t)) < RollingShutterCorrector::timeBetweenFrames_ms))
+            ABS(tDiff) < RollingShutterCorrector::timeBetweenFrames_ms))
         {
           after = *iter;
           before = *(iter - 1);
@@ -66,7 +67,7 @@ namespace Anki {
       return false;
     }
     
-    bool ImuDataHistory::IsImuDataBeforeTimeGreaterThan(const TimeStamp_t t,
+    bool ImuDataHistory::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
                                                         const int numToLookBack,
                                                         const f32 rateX, const f32 rateY, const f32 rateZ) const
     {
@@ -97,9 +98,10 @@ namespace Anki {
         // If we get to the imu data after the timestamp
         // or We have gotten to the imu data that has yet to be given a timestamp and
         // our last known timestamped imu data is fairly close the time we are looking for
+        const int64_t tDiff = ((int64_t)(TimeStamp_t)(iter - 1)->timestamp - (int64_t)(TimeStamp_t)t);
         if(iter->timestamp > t ||
            (iter->timestamp == 0 &&
-            ABS((int)((iter - 1)->timestamp - t)) < RollingShutterCorrector::timeBetweenFrames_ms))
+            ABS(tDiff) < RollingShutterCorrector::timeBetweenFrames_ms))
         {          
           // Once we get to the imu data after the timestamp look at the numToLookBack imu data before it
           for(int i = 0; i < numToLookBack; i++)
@@ -142,7 +144,7 @@ namespace Anki {
       for(int i=1;i<=_rsNumDivisions;i++)
       {
         Vec2f pixelShifts;
-        const TimeStamp_t time = poseData.timeStamp - std::round(i*timeDif);
+        const RobotTimeStamp_t time = poseData.timeStamp - Anki::Util::numeric_cast<TimeStamp_t>(std::round(i*timeDif));
         didComputePixelShiftsFail |= !ComputePixelShiftsWithImageIMU(time,
                                                                      pixelShifts,
                                                                      poseData,
@@ -162,15 +164,15 @@ namespace Anki {
         {
           PRINT_NAMED_WARNING("RollingShutterCorrector.ComputePixelShifts.NoImageIMUData",
                               "No ImageIMU data from timestamp %i have data from time %i:%i",
-                              poseData.timeStamp,
-                              poseData.imuDataHistory.front().timestamp,
-                              poseData.imuDataHistory.back().timestamp);
+                              (TimeStamp_t)poseData.timeStamp,
+                              (TimeStamp_t)poseData.imuDataHistory.front().timestamp,
+                              (TimeStamp_t)poseData.imuDataHistory.back().timestamp);
         }
         else
         {
           PRINT_NAMED_WARNING("RollingShutterCorrector.ComputePixelShifts.EmptyHistory",
                               "No ImageIMU data from timestamp %i, imuDataHistory is empty",
-                              poseData.timeStamp);
+                              (TimeStamp_t)poseData.timeStamp);
         }
       }
     }
@@ -212,7 +214,7 @@ namespace Anki {
       return img;
     }
     
-    bool RollingShutterCorrector::ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+    bool RollingShutterCorrector::ComputePixelShiftsWithImageIMU(RobotTimeStamp_t t,
                                                                  Vec2f& shift,
                                                                  const VisionPoseData& poseData,
                                                                  const VisionPoseData& prevPoseData,
@@ -249,8 +251,8 @@ namespace Anki {
             beforeAfterSet = true;
           }
           
-          const int tMinusBeforeTime     = t - ImuBeforeT->timestamp;
-          const int afterMinusBeforeTime = ImuAfterT->timestamp - ImuBeforeT->timestamp;
+          const TimeStamp_t tMinusBeforeTime     = (TimeStamp_t)(t - ImuBeforeT->timestamp);
+          const TimeStamp_t afterMinusBeforeTime = (TimeStamp_t)(ImuAfterT->timestamp - ImuBeforeT->timestamp);
           
           // Linearly interpolate the imu data using the timestamps before and after imu data was captured
           rateY = (((tMinusBeforeTime)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (afterMinusBeforeTime)) + ImuBeforeT->rateY;

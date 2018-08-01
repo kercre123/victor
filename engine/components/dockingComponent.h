@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_Components_DockingComponent_H__
 
 #include "coretech/common/engine/objectIDs.h"
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
@@ -74,7 +74,7 @@ public:
   Result AbortDocking() const;
   
   // Sends an updated docking error signal to the robot if we are currently docking
-  void UpdateDockingErrorSignal(const TimeStamp_t t) const;
+  void UpdateDockingErrorSignal(const RobotTimeStamp_t t) const;
   
   void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
   bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}

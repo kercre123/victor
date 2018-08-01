@@ -13,6 +13,7 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevEventSequenceCapture_H__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevEventSequenceCapture_H__
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -77,14 +78,14 @@ private:
   struct DynamicVariables {
     DynamicVariables();
 
-    SequenceState seqState;
-    float         waitStartTime_s;
-    TimeStamp_t   seqStartTimeStamp;
-    TimeStamp_t   seqEventTimeStamp;
-    TimeStamp_t   seqEndTimeStamp;
-    int32_t       currentSeqNumber;
-    bool          wasTouched;
-    bool          wasLiftUp;
+    SequenceState      seqState;
+    float              waitStartTime_s;
+    RobotTimeStamp_t   seqStartTimeStamp;
+    RobotTimeStamp_t   seqEventTimeStamp;
+    RobotTimeStamp_t   seqEndTimeStamp;
+    int32_t            currentSeqNumber;
+    bool               wasTouched;
+    bool               wasLiftUp;
 
     std::list<std::string>::const_iterator currentClassIter;
   };
@@ -93,7 +94,7 @@ private:
   DynamicVariables _dVars;
 
   int32_t GetNumCurrentSequences() const;
-  TimeStamp_t GetTimestamp() const;
+  RobotTimeStamp_t GetTimestamp() const;
   float GetTimestampSec() const;
 
   std::string GetRelClassSavePath() const;

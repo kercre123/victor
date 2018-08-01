@@ -934,7 +934,7 @@ void AnimationComponent::HandleAnimationEvent(const AnkiEvent<RobotInterface::Ro
   if (it != _callbackMap.end()) {
     PRINT_CH_INFO("AnimationComponent", "HandleAnimationEvent", "%s", EnumToString(payload.event_id));
     ExternalInterface::AnimationEvent msg;
-    msg.timestamp = payload.timestamp;
+    msg.timestamp = payload.timestamp; // AnimTimeStamp_t
     msg.event_id = payload.event_id;
     _robot->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationEvent>(std::move(msg));
   }

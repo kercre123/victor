@@ -434,7 +434,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     if(filter.IsOnlyConsideringLatestUpdate())
     {
-      const TimeStamp_t atTimestamp = _currentObservedMarkerTimestamp;
+      const RobotTimeStamp_t atTimestamp = _currentObservedMarkerTimestamp;
 
       filter.AddFilterFcn([atTimestamp](const ObservableObject* object) -> bool
                           {
@@ -1147,7 +1147,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                         const TimeStamp_t atTimestamp)
+                                         const RobotTimeStamp_t atTimestamp)
   {
     const Pose3d& currFrame = _robot->GetWorldOrigin();
     const PoseOriginID_t currFrameID = currFrame.GetID();
@@ -1216,7 +1216,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         ObservableObject* curMatchInOrigin = GetLocatedObjectByID(objSeen->GetID());
 
         // Add observation. Check if the robot was moving at all
-        const bool wasRobotMoving = (_robot->GetMoveComponent().WasCameraMoving(atTimestamp));
+        const bool wasRobotMoving = _robot->GetMoveComponent().WasCameraMoving(atTimestamp);
         const bool isConfirmingObservation = _robot->GetObjectPoseConfirmer().AddVisualObservation(objSeen,
                                                                                 curMatchInOrigin,
                                                                                 wasRobotMoving,
@@ -1425,7 +1425,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       BroadcastObjectObservation(observedObject);
 
       _didObjectsChange = true;
-      _robotMsgTimeStampAtChange = fmax(atTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+      _robotMsgTimeStampAtChange = Anki::Util::Max(atTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
 
     } // for each object seen
 
@@ -1477,7 +1477,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         // to think there is an issue with the cube. To avoid this, we do not allow updating a stack if we have seen
         // the top cube "recently", because it's likely that we are simply not seeing all the cubes' markers in all the
         // frames. See also notes in COZMO-10580.
-        const TimeStamp_t lastProcImageTime_ms = _robot->GetLastImageTimeStamp();
+        const RobotTimeStamp_t lastProcImageTime_ms = _robot->GetLastImageTimeStamp();
         BlockWorldFilter::FilterFcn notSeenRecently = [lastProcImageTime_ms](const ObservableObject* obj)
         {
           if(obj->GetLastObservedTime() + kRecentlySeenTimeForStackUpdate_ms < lastProcImageTime_ms) {
@@ -1550,7 +1550,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     }
   } // UpdatePoseOfStackedObjects()
 
-  void BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
+  void BlockWorld::CheckForUnobservedObjects(RobotTimeStamp_t atTimestamp)
   {
     // Don't bother if the robot is picked up or if it was rotating too fast to
     // have been able to see the markers on the objects anyway.
@@ -1596,7 +1596,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
           //    - that we are currently docking to
           //    - whose pose origin does not match the robot's
           //    - who are a charger (since those stay around)
-          const TimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
+          const RobotTimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
           const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
                                       (_robot->GetCarryingComponent().GetCarryingObject() != object->GetID()) &&
                                       (_robot->GetDockingComponent().GetDockObject() != object->GetID()) );
@@ -1750,11 +1750,11 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
   Result BlockWorld::AddMarkerlessObject(const Pose3d& p, ObjectType type)
   {
-    TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+    RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
     // Create an instance of the detected object
     auto markerlessObject = std::make_shared<MarkerlessObject>(type);
-    markerlessObject->SetLastObservedTime(lastTimestamp);
+    markerlessObject->SetLastObservedTime((TimeStamp_t)lastTimestamp);
 
     // Raise origin of object above ground.
     // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
@@ -1775,7 +1775,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     // Update the last observed time of existing overlapping obstacles
     for(auto obj : existingObjects) {
-      obj->SetLastObservedTime(lastTimestamp);
+      obj->SetLastObservedTime((TimeStamp_t)lastTimestamp);
     }
 
     // No need to add the obstacle again if it already exists
@@ -1802,7 +1802,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = fmax(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = Anki::Util::Max(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
 
     return RESULT_OK;
   }
@@ -1830,7 +1830,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     AddLocatedObject(customObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = fmax(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = Anki::Util::Max(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
 
     return customObject->GetID();
   }
@@ -1838,8 +1838,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   bool BlockWorld::DidObjectsChange() const {
     return _didObjectsChange;
   }
-
-  const TimeStamp_t& BlockWorld::GetTimeOfLastChange() const {
+  
+  const RobotTimeStamp_t& BlockWorld::GetTimeOfLastChange() const {
     return _robotMsgTimeStampAtChange;
   }
 
@@ -2422,7 +2422,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     if(!currentObsMarkers.empty())
     {
-      const TimeStamp_t atTimestamp = currentObsMarkers.front().GetTimeStamp();
+      const RobotTimeStamp_t atTimestamp = currentObsMarkers.front().GetTimeStamp();
       _currentObservedMarkerTimestamp = atTimestamp;
 
       // Sanity check
@@ -2433,7 +2433,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
           if(marker.GetTimeStamp() != atTimestamp)
           {
             PRINT_NAMED_ERROR("BlockWorld.UpdateObservedMarkers.MisMatchedTimestamps", "Expected t=%u, Got t=%u",
-                              atTimestamp, marker.GetTimeStamp());
+                              (TimeStamp_t)atTimestamp, marker.GetTimeStamp());
             return RESULT_FAIL;
           }
         }
@@ -2492,7 +2492,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       _currentObservedMarkerTimestamp = 0;
 
 
-      const TimeStamp_t lastImgTimestamp = _robot->GetLastImageTimeStamp();
+      const RobotTimeStamp_t lastImgTimestamp = _robot->GetLastImageTimeStamp();
       if(lastImgTimestamp > 0) // Avoid warning on first Update()
       {
         // Even if there were no markers observed, check to see if there are
@@ -2647,7 +2647,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     return false;
   }
 
-  Result BlockWorld::UpdateMarkerlessObjects(TimeStamp_t atTimestamp)
+  Result BlockWorld::UpdateMarkerlessObjects(RobotTimeStamp_t atTimestamp)
   {
     // Remove old obstacles or ones intersecting with robot (except cliffs)
     BlockWorldFilter filter;
@@ -2666,7 +2666,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
                             PRINT_CH_DEBUG("BlockWorld", "BlockWorld.UpdateMarkerlessObjects.RemovingExpired",
                                            "%s %d not seen since %d. Current time=%d",
                                            EnumToString(object->GetType()), object->GetID().GetValue(),
-                                           object->GetLastObservedTime(), atTimestamp);
+                                           object->GetLastObservedTime(), (TimeStamp_t)atTimestamp);
                             return true;
                           }
 
@@ -2758,7 +2758,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     // Flag that we removed an object
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = fmax(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = Anki::Util::Max(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
   }
 
   ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
@@ -2943,12 +2943,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   const ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filterIn) const
   {
-    TimeStamp_t bestTime = 0;
+    RobotTimeStamp_t bestTime = 0;
 
     BlockWorldFilter filter(filterIn);
     filter.AddFilterFcn([&bestTime](const ObservableObject* current)
     {
-      const TimeStamp_t currentTime = current->GetLastObservedTime();
+      const RobotTimeStamp_t currentTime = current->GetLastObservedTime();
       if(currentTime > bestTime) {
         bestTime = currentTime;
         return true;
