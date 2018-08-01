@@ -18,8 +18,8 @@
 
 #include "clad/types/batteryTypes.h"
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/common/shared/radians.h"
-#include "coretech/common/shared/types.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -104,7 +104,7 @@ public:
   bool IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
   // Return the message timestamp of the last time the value of IsCharging changed
-  TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
+  RobotTimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
   
   // Returns how long the "fully charged" state has been active. Returns 0
   // if not currently fully charged.
@@ -137,7 +137,7 @@ private:
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
   
-  TimeStamp_t _lastChargingChange_ms = 0;
+  RobotTimeStamp_t _lastChargingChange_ms = 0;
   
   float _lastBatteryLevelChange_sec = 0;
   
@@ -146,7 +146,7 @@ private:
   float _lastSaturationChargingEndTime_sec = 0.f;
 
   // The timestamp of the RobotState message with the latest data
-  TimeStamp_t _lastMsgTimestamp = 0;
+  RobotTimeStamp_t _lastMsgTimestamp = 0;
   
   // The pitch angle of the robot when it was last on the charger
   // contacts (and not moving).

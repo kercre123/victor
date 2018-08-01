@@ -14,6 +14,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
@@ -50,7 +51,7 @@ public:
   
 private:
   ObjectID _objectID;
-  TimeStamp_t _timeStartedMoving;
+  RobotTimeStamp_t _timeStartedMoving;
   UpAxis _axisOfAccel;
   
   // tracking if the block has moved long enough
@@ -241,7 +242,7 @@ bool ReactionObjectData::ObjectHasMovedLongEnough(BehaviorExternalInterface& beh
   }
   
   if(_isObjectMoving && _observedSinceLastReaction){
-    TimeStamp_t time_ms = behaviorExternalInterface.GetRobotInfo().GetLastMsgTimestamp();
+    RobotTimeStamp_t time_ms = behaviorExternalInterface.GetRobotInfo().GetLastMsgTimestamp();
     if(_timeStartedMoving != 0 && time_ms - _timeStartedMoving > kMinTimeMoving_ms){
       return true;
     }

@@ -228,7 +228,7 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   
   // Grab historical state at the time the cliff was detected
   HistRobotState histState;
-  TimeStamp_t histTimestamp;
+  RobotTimeStamp_t histTimestamp;
   const bool useInterp = true;
   const auto& res = _robot->GetStateHistory()->ComputeStateAt(cliffEvent.timestamp, histTimestamp, histState, useInterp);
   if (res != RESULT_OK) {

@@ -15,7 +15,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,7 +48,7 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     bool waitingForFaces; // in lieu of a state
-    TimeStamp_t activationTime_ms;
+    RobotTimeStamp_t robotTimeStampAtActivation;
   };
 
   InstanceConfig _iConfig;

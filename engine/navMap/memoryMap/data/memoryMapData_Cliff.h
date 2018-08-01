@@ -15,6 +15,7 @@
 #include "memoryMapData.h"
 
 #include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -25,7 +26,7 @@ namespace Cozmo {
 struct MemoryMapData_Cliff : public MemoryMapData
 {
   // constructor
-  MemoryMapData_Cliff(const Pose3d& cliffPose, TimeStamp_t t);
+  MemoryMapData_Cliff(const Pose3d& cliffPose, RobotTimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapDataPtr Clone() const override;

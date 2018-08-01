@@ -48,6 +48,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
@@ -187,12 +188,12 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
     return;
   }
 
-  TimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
+  RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
 
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
-  twDetectedMessage.timestamp = mostRecentTimestamp;
+  twDetectedMessage.timestamp = (TimeStamp_t)mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
@@ -212,10 +213,10 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
                     "Direction index %d at timestamp %d",
                     currentDirection,
-                    mostRecentTimestamp);
+                    (TimeStamp_t)mostRecentTimestamp);
 }
 
-TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
 {
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
 
@@ -305,7 +306,7 @@ TimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
     }
   }
 
-  TimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
+  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
   return mostRecentTimestamp;
 }
 
@@ -321,7 +322,7 @@ MicDataProcessor::~MicDataProcessor()
   _recognizer->Stop();
 }
 
-void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
+void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
                                        const AudioUtil::AudioSample* audioChunk,
                                        uint32_t robotStatus,
                                        float robotAngle)
@@ -407,7 +408,7 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
 
     // Set up a message to send out about the direction
     RobotInterface::MicDirection newMessage;
-    newMessage.timestamp = timestamp;
+    newMessage.timestamp = (TimeStamp_t)timestamp;
     newMessage.direction = directionResult.winningDirection;
     newMessage.confidence = directionResult.winningConfidence;
     newMessage.selectedDirection = directionResult.selectedDirection;
@@ -565,7 +566,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 
   // When we know the robot is moving, or speaker is playing, or low power mode, or there's no
   //  current activity (so we didn't do beamforming) clear direction data
-  if (robotIsMoving || _isSpeakerActive || (activityFlag != 1) || isLowPowerMode)
+  if (robotIsMoving || ( _isSpeakerActive && kMicData_SpeakerNoiseDisablesMics ) || (activityFlag != 1) || isLowPowerMode)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }

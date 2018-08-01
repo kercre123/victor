@@ -14,9 +14,10 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__
 #define __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__
 
-#include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/engineTimeStamp.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "clad/types/batteryTypes.h"
 #include "clad/types/offTreadsStates.h"
@@ -96,16 +97,16 @@ public:
   const f32 GetHeadAngle() const;
   const GyroData& GetHeadGyroData() const;
   const RobotID_t GetID() const;
-  TimeStamp_t GetLastChargingStateChangeTimestamp() const;
-  TimeStamp_t GetLastImageTimeStamp() const;  
-  TimeStamp_t GetLastMsgTimestamp() const;
+  RobotTimeStamp_t GetLastChargingStateChangeTimestamp() const;
+  RobotTimeStamp_t GetLastImageTimeStamp() const;
+  RobotTimeStamp_t GetLastMsgTimestamp() const;
   f32 GetLiftAngle() const;
   f32 GetLiftHeight() const;
   MovementComponent& GetMoveComponent() const;
   NVStorageComponent& GetNVStorageComponent() const;
   ObjectPoseConfirmer& GetObjectPoseConfirmer() const;
   OffTreadsState GetOffTreadsState() const;
-  TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const; // note: engine time, not robot time
+  EngineTimeStamp_t GetOffTreadsStateLastChangedTime_ms() const;
   PathComponent& GetPathComponent() const;
   Radians GetPitchAngle() const;
   const Pose3d& GetPose() const;

@@ -1831,7 +1831,7 @@ namespace Anki {
   
 #pragma mark ---- TurnTowardsImagePointAction ----
     
-    TurnTowardsImagePointAction::TurnTowardsImagePointAction(const Point2f& imgPoint, const TimeStamp_t t)
+    TurnTowardsImagePointAction::TurnTowardsImagePointAction(const Point2f& imgPoint, const RobotTimeStamp_t t)
     : PanAndTiltAction(0, 0, true, true)
     , _imgPoint(imgPoint)
     , _timestamp(t)
@@ -1855,7 +1855,7 @@ namespace Anki {
       if(RESULT_OK != result)
       {
         PRINT_NAMED_WARNING("TurnTowardsImagePointAction.Init.ComputeTurnTowardsImagePointAnglesFailed",
-                            "(%f,%f) at t=%u", _imgPoint.x(), _imgPoint.y(), _timestamp);
+                            "(%f,%f) at t=%u", _imgPoint.x(), _imgPoint.y(), (TimeStamp_t)_timestamp);
         return ActionResult::ABORT;
       }
       
@@ -2274,7 +2274,7 @@ namespace Anki {
     
 #pragma mark ---- WaitForImagesAction ----
   
-    WaitForImagesAction::WaitForImagesAction(u32 numFrames, VisionMode visionMode, TimeStamp_t afterTimeStamp)
+    WaitForImagesAction::WaitForImagesAction(u32 numFrames, VisionMode visionMode, RobotTimeStamp_t afterTimeStamp)
     : IAction("WaitFor" + std::to_string(numFrames) + "Images",
               RobotActionType::WAIT_FOR_IMAGES,
               (u8)AnimTrackFlag::NO_TRACKS)

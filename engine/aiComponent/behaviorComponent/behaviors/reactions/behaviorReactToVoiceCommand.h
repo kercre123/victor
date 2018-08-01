@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/backpackLights/backpackLightComponentTypes.h"
 #include "engine/components/mics/micDirectionTypes.h"
-
+#include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,7 +48,7 @@ public:
 
   // Allow other behaviors to specify a timestamp (generally the current timestamp)
   // on which the turn on trigger/intent is disabled
-  void DisableTurnForTimestamp(TimeStamp_t timestampToDisableFor){
+  void DisableTurnForTimestamp(EngineTimeStamp_t timestampToDisableFor){
     _dVars.timestampToDisableTurnFor = timestampToDisableFor;
   }
 
@@ -177,7 +177,7 @@ private:
     double                    streamingEndTime;
 
     EIntentStatus             intentStatus;
-    TimeStamp_t               timestampToDisableTurnFor;
+    EngineTimeStamp_t         timestampToDisableTurnFor;
   } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...

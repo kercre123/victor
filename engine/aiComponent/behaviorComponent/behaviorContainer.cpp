@@ -86,14 +86,6 @@ void BehaviorContainer::InitDependent(Robot* robot, const BCCompMap& dependentCo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(externalInterface != nullptr) {
-    _robotExternalInterface = externalInterface.get();
-    auto helper = MakeAnkiEventUtil((*externalInterface.get()), *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAllBehaviorsList>();
-  }**/
-  
   for(auto& behaviorMap: _idToBehaviorMap){
     behaviorMap.second->Init(behaviorExternalInterface);
   }
@@ -228,21 +220,6 @@ bool BehaviorContainer::RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior)
   }
   
   return false;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void BehaviorContainer::HandleMessage(const ExternalInterface::RequestAllBehaviorsList& msg)
-{
-  /**if(_robotExternalInterface != nullptr){
-    std::vector<BehaviorID> behaviorList;
-    for(const auto& entry : _idToBehaviorMap){
-      behaviorList.push_back(entry.first);
-    }
-    ExternalInterface::RespondAllBehaviorsList message(std::move(behaviorList));
-    _robotExternalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-  }**/
 }
 
 

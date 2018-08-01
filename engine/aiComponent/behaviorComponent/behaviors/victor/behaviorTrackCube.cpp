@@ -110,7 +110,7 @@ ObjectID BehaviorTrackCube::GetVisibleCube() const
   ObjectID movingObject;
   float movingObjectDist_mm = std::numeric_limits<float>::max();
   
-  const float currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const RobotTimeStamp_t currentTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   
   for( const auto* object : objects ) {
     

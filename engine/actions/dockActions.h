@@ -18,6 +18,7 @@
 #include "engine/actionableObject.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/animationTrigger.h"
@@ -395,10 +396,10 @@ namespace Anki {
     
       std::unique_ptr<IActionRunner> _verifyAction = nullptr;
       bool                           _verifyActionDone = false;
-      TimeStamp_t                    _firstVerifyCallTime = 0;
+      RobotTimeStamp_t               _firstVerifyCallTime = 0;
       
       const u32 kLiftLoadTimeout_ms = 500;
-      u32 _liftLoadWaitTime_ms = 0;
+      RobotTimeStamp_t _liftLoadWaitTime_ms = 0;
       
       // The max amount of time that cube motion is allowed to be moving after robot completes backup.
       // This is to check that the cube is not in the user's hands.

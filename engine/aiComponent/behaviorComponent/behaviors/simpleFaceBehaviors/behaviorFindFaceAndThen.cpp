@@ -208,7 +208,7 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
     {
       if( currentTime_s < _dVars.stateEndTime_s ) {
         SmartFaceID newFace;
-        TimeStamp_t timeStamp_ms = 0;
+        RobotTimeStamp_t timeStamp_ms = 0;
         const bool hasFace = GetRecentFaceSince( _dVars.activationTimeStamp_ms, newFace, timeStamp_ms );
         const bool differentOrNew = (newFace != _dVars.targetFace) || (timeStamp_ms > _dVars.lastFaceTimeStamp_ms);
         if( hasFace && differentOrNew && (currentTime_s >= _dVars.stateMinTime_s) ) {
@@ -237,7 +237,7 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
     {
       if( currentTime_s < _dVars.stateEndTime_s ) {
         SmartFaceID newFace;
-        TimeStamp_t timeStamp_ms = 0;
+        RobotTimeStamp_t timeStamp_ms = 0;
         const bool hasFace = GetRecentFace( newFace, timeStamp_ms );
         const bool differentOrNew = (newFace != _dVars.targetFace) || (timeStamp_ms > _dVars.lastFaceTimeStamp_ms);
         if( hasFace && differentOrNew ) {
@@ -407,13 +407,13 @@ void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFindFaceAndThen::GetRecentFace( SmartFaceID& faceID, TimeStamp_t& timeStamp_ms )
+bool BehaviorFindFaceAndThen::GetRecentFace( SmartFaceID& faceID, RobotTimeStamp_t& timeStamp_ms )
 {
   return GetRecentFaceSince( 0, faceID, timeStamp_ms );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFindFaceAndThen::GetRecentFaceSince( TimeStamp_t sinceTime_ms, SmartFaceID& faceID, TimeStamp_t& timeStamp_ms )
+bool BehaviorFindFaceAndThen::GetRecentFaceSince( RobotTimeStamp_t sinceTime_ms, SmartFaceID& faceID, RobotTimeStamp_t& timeStamp_ms )
 {
   SmartFaceID retFace;
   retFace.Reset();
@@ -421,7 +421,7 @@ bool BehaviorFindFaceAndThen::GetRecentFaceSince( TimeStamp_t sinceTime_ms, Smar
   const auto& robotInfo = GetBEI().GetRobotInfo();
 
   Pose3d facePose;
-  TimeStamp_t timeLastFaceObserved = GetBEI().GetFaceWorld().GetLastObservedFace(facePose, true);
+  RobotTimeStamp_t timeLastFaceObserved = GetBEI().GetFaceWorld().GetLastObservedFace(facePose, true);
   const bool lastFaceInCurrentOrigin = robotInfo.IsPoseInWorldOrigin(facePose);
   if( lastFaceInCurrentOrigin ) {
     timeLastFaceObserved = Anki::Util::Max( sinceTime_ms, timeLastFaceObserved );

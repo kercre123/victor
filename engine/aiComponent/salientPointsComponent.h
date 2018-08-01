@@ -20,6 +20,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/aiBeacon.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
@@ -65,10 +66,10 @@ public:
 
   // Get all the SalientPoints of a specific type since a specific timestamp
   void GetSalientPointSinceTime(std::list<Vision::SalientPoint>& salientPoints,
-                                const Vision::SalientPointType& type, const uint32_t timestamp = 0) const;
+                                const Vision::SalientPointType& type, const RobotTimeStamp_t timestamp = 0) const;
 
   // Returns true wheter a SalientPoint of a spefic type has been seen since a specific timestamp
-  bool SalientPointDetected(const Vision::SalientPointType& type, const uint32_t timestamp = 0) const;
+  bool SalientPointDetected(const Vision::SalientPointType& type, const RobotTimeStamp_t timestamp = 0) const;
 
   // Adds a list of SalientPoint. All the points are stored according to their type. If a specific list of points is
   // already stored for a type, it will be replaced.

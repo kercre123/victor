@@ -15,6 +15,7 @@
 #include "memoryMapData.h"
 
 #include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -31,7 +32,7 @@ public:
   };
   
   // constructor
-  MemoryMapData_ProxObstacle(ExploredType explored, const Pose2d& pose, TimeStamp_t t);
+  MemoryMapData_ProxObstacle(ExploredType explored, const Pose2d& pose, RobotTimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   virtual MemoryMapDataPtr Clone() const override;

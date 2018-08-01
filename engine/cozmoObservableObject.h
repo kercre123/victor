@@ -18,6 +18,7 @@
 #include "engine/objectPoseConfirmer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/observableObject.h"
 
 #include "clad/types/objectFamilies.h"
@@ -92,6 +93,15 @@ public:
   // Get the distance within which we are allowed to localize to objects
   // (This will probably need to be updated with COZMO-9672)
   static f32 GetMaxLocalizationDistance_mm();
+  
+  // CTI SetIsMoving/IsMoving methods with TimeStamp_t are forwarded to cozmo methods and marked as
+  // final to force child classes to use RobotTimeStamp_t
+  virtual bool IsMoving(TimeStamp_t* t = (TimeStamp_t*)nullptr) const override final;
+  virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override final { SetIsMoving(isMoving, RobotTimeStamp_t{t}); }
+  
+  // These match the CTI ObservableObject (base class)'s default implementation
+  virtual bool IsMoving(RobotTimeStamp_t* t) const { return false; }
+  virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) {}
   
 protected:
   

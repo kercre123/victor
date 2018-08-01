@@ -294,7 +294,7 @@ int32_t BehaviorDevEventSequenceCapture::GetNumCurrentSequences() const
   return (int32_t) currentSequences.size();
 }
 
-TimeStamp_t BehaviorDevEventSequenceCapture::GetTimestamp() const
+RobotTimeStamp_t BehaviorDevEventSequenceCapture::GetTimestamp() const
 {
   // NOTE We're clocking ourselves using the image timestamps to make sure sequence info is on the same clock
   // This should be fixed when a proper wall time implementation is added
@@ -429,9 +429,9 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
         
         // Save JSON file in directory listing sequence timings
         Json::Value seqInfo;
-        seqInfo["startTime"] = _dVars.seqStartTimeStamp;
-        seqInfo["eventTime"] = _dVars.seqEventTimeStamp;
-        seqInfo["endTime"] = _dVars.seqEndTimeStamp;
+        seqInfo["startTime"] = (TimeStamp_t)_dVars.seqStartTimeStamp;
+        seqInfo["eventTime"] = (TimeStamp_t)_dVars.seqEventTimeStamp;
+        seqInfo["endTime"] = (TimeStamp_t)_dVars.seqEndTimeStamp;
         std::ofstream seqFile(GetAbsInfoSavePath());
         Json::StyledWriter writer;
         seqFile << writer.write(seqInfo);

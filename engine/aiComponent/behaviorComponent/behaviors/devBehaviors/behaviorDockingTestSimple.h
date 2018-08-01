@@ -29,6 +29,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
@@ -113,7 +114,7 @@ private:
     bool didHM;
     bool failedCurrentAttempt;
 
-    TimeStamp_t attemptStartTime;
+    RobotTimeStamp_t attemptStartTime;
     Pose3d      initialRobotPose;
     Pose3d      initialCubePose;
   };

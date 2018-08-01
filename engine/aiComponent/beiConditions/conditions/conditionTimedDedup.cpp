@@ -62,7 +62,7 @@ void ConditionTimedDedup::InitInternal(BehaviorExternalInterface& bei)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ConditionTimedDedup::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
-  const TimeStamp_t currentTime_ms =  BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currentTime_ms =  BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   if( _instanceParams.subCondition && 
       (currentTime_ms >= _lifetimeParams.nextTimeValid_ms)) {
     const bool subResult = _instanceParams.subCondition->AreConditionsMet(bei);

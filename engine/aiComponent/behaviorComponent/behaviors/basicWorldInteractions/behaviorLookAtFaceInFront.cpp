@@ -16,6 +16,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/faceWorld.h"
 
@@ -36,7 +37,7 @@ BehaviorLookAtFaceInFront::InstanceConfig::InstanceConfig()
 BehaviorLookAtFaceInFront::DynamicVariables::DynamicVariables()
 {
   waitingForFaces = false;
-  activationTime_ms = 0;
+  robotTimeStampAtActivation = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,7 +93,7 @@ void BehaviorLookAtFaceInFront::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
   
-  _dVars.activationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _dVars.robotTimeStampAtActivation = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   
   SmartFaceID smartID;
   if(GetFaceIDToLookAt(smartID)){
@@ -108,8 +109,8 @@ bool BehaviorLookAtFaceInFront::GetFaceIDToLookAt(SmartFaceID& smartID) const
 {
   auto& selectionComp = GetAIComp<FaceSelectionComponent>();
 
-  const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  const TimeStamp_t earliestTime = std::max( currentTime_ms - kSeenFaceWindow_ms, _dVars.activationTime_ms );
+  const RobotTimeStamp_t currentTime_ms = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  const RobotTimeStamp_t earliestTime = std::max( currentTime_ms - kSeenFaceWindow_ms, _dVars.robotTimeStampAtActivation );
   const bool includeRecognizableOnly = false;
   std::vector<SmartFaceID> ids;
   const bool res = selectionComp.AreFacesInFrontOfRobot(ids, earliestTime, includeRecognizableOnly);

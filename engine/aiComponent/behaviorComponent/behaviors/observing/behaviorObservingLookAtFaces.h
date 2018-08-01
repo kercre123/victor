@@ -14,7 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorObservingLookAtFaces_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/smartFaceId.h"
 
 namespace Anki {
@@ -56,7 +56,7 @@ private:
     StareAtFace
   };
 
-  TimeStamp_t GetRecentFaceTime();
+  RobotTimeStamp_t GetRecentFaceTime();
   SmartFaceID GetFaceToStareAt();
   bool ShouldStareAtFace(const SmartFaceID& face) const;
   

@@ -86,5 +86,18 @@ void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, PoseStat
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObservableObject::IsMoving(TimeStamp_t* t) const
+{
+  if( t != nullptr ) {
+    RobotTimeStamp_t roboTime{*t};
+    const bool ret = IsMoving( &roboTime );
+    *t = (TimeStamp_t)roboTime;
+    return ret;
+  } else {
+    return IsMoving((RobotTimeStamp_t*)nullptr);
+  }
+}
+  
 } // namespace Cozmo
 } // namespace Anki

@@ -21,6 +21,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/playpenConfig.h"
+#include "engine/engineTimeStamp.h"
 
 #include "clad/types/factoryTestTypes.h"
 #include "clad/types/nvStorageTypes.h"
@@ -217,7 +218,7 @@ private:
     const std::string& GetName() const { return _name; }
     
   private:
-    TimeStamp_t _time_ms = 0;
+    EngineTimeStamp_t _time_ms = 0;
     std::function<void(void)> _callback = nullptr;
     std::string _name = "";
   };

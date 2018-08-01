@@ -226,13 +226,13 @@ bool BehaviorObservingLookAtFaces::ShouldStareAtFace(const SmartFaceID& face) co
   return true;
 }
 
-TimeStamp_t BehaviorObservingLookAtFaces::GetRecentFaceTime()
+RobotTimeStamp_t BehaviorObservingLookAtFaces::GetRecentFaceTime()
 {
 
-  const TimeStamp_t lastImgTime = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
-  const TimeStamp_t recentTime = lastImgTime > kMaxTimeSinceSeenFaceToLook_ms ?
-                                 ( lastImgTime - kMaxTimeSinceSeenFaceToLook_ms ) :
-                                 0;
+  const RobotTimeStamp_t lastImgTime = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  const RobotTimeStamp_t recentTime = lastImgTime > kMaxTimeSinceSeenFaceToLook_ms ?
+                                      ( lastImgTime - kMaxTimeSinceSeenFaceToLook_ms ) :
+                                      0;
   return recentTime;
 }
 

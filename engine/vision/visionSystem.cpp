@@ -1915,7 +1915,7 @@ Result VisionSystem::SaveSensorData() const {
     config["requestedCamWhiteBalanceBlue"] = _currentCameraParams.whiteBalanceGainB;
 
     // image timestamp
-    config["imageTimestamp"] = _currentResult.timestamp;
+    config["imageTimestamp"] = (TimeStamp_t)_currentResult.timestamp;
   }
 
   Json::StyledWriter writer;

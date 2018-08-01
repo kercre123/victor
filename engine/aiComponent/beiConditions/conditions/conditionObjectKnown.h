@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "coretech/common/engine/objectIDs.h"
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -51,8 +51,8 @@ private:
   bool _setMaxAge = false; // for asserting multiple ctors
   
   struct ObjectInfo {
-    ObjectInfo( TimeStamp_t t, ObjectID o ) : observedTime(t), objectID(o), matchedThisTickOnly(false) {}
-    TimeStamp_t observedTime;
+    ObjectInfo( RobotTimeStamp_t t, ObjectID o ) : observedTime(t), objectID(o), matchedThisTickOnly(false) {}
+    RobotTimeStamp_t observedTime;
     ObjectID objectID;
     bool matchedThisTickOnly;
   };

@@ -17,6 +17,7 @@
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEventMgr.h"
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/image.h"
 
 #include "util/container/circularBuffer.h"
@@ -125,7 +126,7 @@ private:
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
-  void DisplayCameraInfo(const TimeStamp_t timestamp);
+  void DisplayCameraInfo(const RobotTimeStamp_t timestamp);
   
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
@@ -195,9 +196,9 @@ private:
   static const size_t kNumBufferedImages = 10;
   std::array<EncodedImage, kNumBufferedImages> _bufferedImages;
   size_t                                       _imageBufferIndex = 0;
-  std::map<TimeStamp_t, size_t>                _encodedImages;
-  std::map<TimeStamp_t, u32>                   _bufferedSaveCtrs;
-  TimeStamp_t   _curImageTimestamp = 0;
+  std::map<RobotTimeStamp_t, size_t>           _encodedImages;
+  std::map<RobotTimeStamp_t, u32>              _bufferedSaveCtrs;
+  RobotTimeStamp_t _curImageTimestamp = 0;
   ImageSendMode _saveImageMode = ImageSendMode::Off;
   std::string   _savedImagesFolder = "";
   u32           _saveCtr = 0;

@@ -73,7 +73,7 @@ namespace {
   
   
   // if discovered an obstacle within this long, and an unrelated path brings you nearby turn toward it
-  int kTimeForTurnToPassingObstacles_ms = 5000;
+  int kTimeForTurnToPassingObstacles_ms = 15000;
 }
   
 #define SET_STATE(s) do{ _dVars.state = State::s; PRINT_NAMED_INFO("BehaviorExploringExamineObstacle.State", "State = %s", #s); } while(0);
@@ -554,7 +554,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
   // only react to unexplored prox obstacles
   const EContentTypePackedType nodeTypeFlags = EContentTypeToFlag( MemoryMapTypes::EContentType::ObstacleProx );
   // and only if theyre recent
-  TimeStamp_t earliestTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - kTimeForTurnToPassingObstacles_ms;
+  RobotTimeStamp_t earliestTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp() - kTimeForTurnToPassingObstacles_ms;
   auto evalFunc = [&](MemoryMapDataConstPtr data){
     const bool sameType = IsInEContentTypePackedType( data->type, nodeTypeFlags );
     const bool newObstacle = data->GetFirstObservedTime() >= earliestTime;

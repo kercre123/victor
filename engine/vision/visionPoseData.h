@@ -15,6 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/matrix.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include "engine/groundPlaneROI.h"
 #include "engine/robotStateHistory.h"
@@ -26,7 +27,7 @@ namespace Cozmo {
 struct VisionPoseData
 {
   // TODO: Add getters for these and make them private, prefixed with underscore (COZMO-14998)
-  TimeStamp_t           timeStamp;
+  RobotTimeStamp_t      timeStamp;
   HistRobotState        histState;  // contains historical head/lift/pose info
   Pose3d                cameraPose; // w.r.t. pose in poseStamp
   bool                  groundPlaneVisible;
@@ -36,7 +37,7 @@ struct VisionPoseData
   
   VisionPoseData() = default;
   
-  void Set(const TimeStamp_t      histTimeStamp_in,
+  void Set(const RobotTimeStamp_t histTimeStamp_in,
            const HistRobotState&  histState_in,
            const Pose3d&          cameraPose_in,
            const bool             groundPlaneVisible_in,

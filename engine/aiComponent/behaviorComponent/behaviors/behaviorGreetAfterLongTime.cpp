@@ -135,8 +135,8 @@ void BehaviorGreetAfterLongTime::BehaviorUpdate()
 
     // keeps track of the last time a face was seen to avoid rechecking old faces
     // necessary because vision may add faces into the past after completing processing
-    // note: times stored in lastFaceCheckTime_ms use BaseStationTime and are not compatible with WallTime
-    _dVars.lastFaceCheckTime_ms = std::max(_dVars.lastFaceCheckTime_ms, face->GetTimeStamp());
+    // note: times stored in lastFaceCheckTime_ms use robot time and are not compatible with WallTime
+    _dVars.lastFaceCheckTime_ms = std::max(_dVars.lastFaceCheckTime_ms, (RobotTimeStamp_t)face->GetTimeStamp());
     }
   }
 }

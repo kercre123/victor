@@ -13,7 +13,7 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_StatusLogHandler_H__
 #define __Engine_AiComponent_BehaviorComponent_StatusLogHandler_H__
 
-
+#include "engine/engineTimeStamp.h"
 #include "util/container/circularBuffer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -41,7 +41,7 @@ private:
   
   const CozmoContext* _context = nullptr;
   
-  using StatusHistory = Util::CircularBuffer<std::pair<uint32_t,external_interface::Status>>;
+  using StatusHistory = Util::CircularBuffer<std::pair<EngineTimeStamp_t,external_interface::Status>>;
   std::unique_ptr<StatusHistory> _statusHistory;
 
   std::vector<Signal::SmartHandle> _signalHandles;

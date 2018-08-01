@@ -73,6 +73,12 @@ public:
   // the part we care about for the last robot.
   static bool CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd = 0);
 
+  // Moves srcFileName to dest
+  // If dest is a file, the srcFileName is moved to a file called dest
+  // If dest is a folder, the move retains the name of the original file and is put in dest.
+  // Returns true if the move was successful, false otherwise
+  static bool MoveFile(const std::string& dest, const std::string& srcFileName);
+
   static void DeleteFile(const std::string& fileName);
   
   static void ListAllDirectories( const std::string& path, std::vector<std::string>& directories );

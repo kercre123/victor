@@ -36,7 +36,7 @@
 #include "engine/vision/visionPoseData.h"
 
 #include "coretech/common/engine/matlabInterface.h"
-
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/imageCache.h"
@@ -91,7 +91,7 @@ namespace Cozmo {
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
   {
-    TimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
+    RobotTimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
     Util::BitFlags32<VisionMode> modesProcessed;
     
     ImageQuality imageQuality;
@@ -235,7 +235,7 @@ namespace Cozmo {
   
     RollingShutterCorrector _rollingShutterCorrector;
     bool _doRollingShutterCorrection = false;
-    TimeStamp_t _lastRollingShutterCorrectionTime;
+    RobotTimeStamp_t _lastRollingShutterCorrectionTime;
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
@@ -298,7 +298,7 @@ namespace Cozmo {
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
     
-    TimeStamp_t                                     _neuralNetRunnerTimestamp = 0;
+    RobotTimeStamp_t                                _neuralNetRunnerTimestamp = 0;
     
     Result UpdatePoseData(const VisionPoseData& newPoseData);
     Radians GetCurrentHeadAngle();

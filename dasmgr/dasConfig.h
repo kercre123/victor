@@ -23,16 +23,42 @@ namespace Victor {
 class DASConfig
 {
 public:
-  DASConfig(const std::string & url, size_t queue_threshold_size, size_t max_deferrals_size);
+  DASConfig() {}
+  DASConfig(const std::string & url,
+            size_t file_threshold_size,
+            uint32_t flush_interval,
+            const std::string& storage_path,
+            size_t storage_quota,
+            const std::string& backup_path,
+            size_t backup_quota);
 
   // DAS endpoint URL
   const std::string & GetURL() const { return _url; }
 
-  // How many events do we buffer before send? Counted by events.
-  size_t GetQueueThresholdSize() const { return _queue_threshold_size; }
+  // How big of a JSON log file do we create before we try to upload it
+  size_t GetFileThresholdSize() const { return _file_threshold_size; }
 
-  // How many queues are we willing to hold for deferred send? Counted by queues, not events.
-  size_t GetMaxDeferralsSize() const { return _max_deferrals_size; }
+  // How many seconds should we collect events before trying to upload to the server
+  uint32_t GetFlushInterval() const { return _flush_interval; }
+
+  // Where should we store the JSON log files as we create them
+  // We expect this to be a tmpfs (RAM) instead of an on-disk location as we
+  // don't want to wear out the eMMC in the robot
+  const std::string & GetStoragePath() const { return _storage_path; }
+
+  // How much space can we use for our JSON log files before we must start dropping
+  // events.  This should only happen in extreme cases where we can't reach the DAS
+  // server.
+  size_t GetStorageQuota() const { return _storage_quota; }
+
+  // Where should we store the JSON log files when we are shutting down.
+  // We epxect this to be an on-disk location that we can backup to
+  // before a reboot.
+  const std::string & GetBackupPath() const { return _backup_path; }
+
+  // How much space can we use at the backup location before we have to stop accepting
+  // new log files
+  size_t GetBackupQuota() const { return _backup_quota; }
 
   // Helper methods to parse DAS configuration file.
   // Helper methods return nullptr on error.
@@ -40,8 +66,12 @@ public:
   // {
   //   "dasConfig" : {
   //     "url": "string",
-  //     "queue_threshold_size" : uint,
-  //     "max_deferrals_size" : uint
+  //     "file_threshold_size" : uint,
+  //     "flush_interval" : uint,
+  //     "storage_path": string,
+  //     "storage_quota": uint,
+  //     "backup_path": string,
+  //     "backup_quota": uint
   //   }
   // }
   //
@@ -50,8 +80,12 @@ public:
 
 private:
   std::string _url;
-  size_t _queue_threshold_size;
-  size_t _max_deferrals_size;
+  size_t _file_threshold_size;
+  uint32_t _flush_interval;
+  std::string _storage_path;
+  size_t _storage_quota;
+  std::string _backup_path;
+  size_t _backup_quota;
 };
 
 } // end namespace Victor

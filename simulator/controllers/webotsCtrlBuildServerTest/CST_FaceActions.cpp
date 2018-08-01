@@ -45,8 +45,8 @@ namespace Anki {
       
       bool _lastActionSucceeded = false;
       
-      TimeStamp_t _prevFaceSeenTime = 0;
-      TimeStamp_t _faceSeenTime = 0;
+      RobotTimeStamp_t _prevFaceSeenTime = 0;
+      RobotTimeStamp_t _faceSeenTime = 0;
       
       // Message handlers
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;

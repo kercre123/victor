@@ -186,7 +186,7 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
   
   const bool isOnTreads = (robotInfo.GetOffTreadsState() == OffTreadsState::OnTreads);
   if( (_dVars.countShaken>0) && (!_dVars.shakingSession) && isOnTreads ) {
-    TimeStamp_t currTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    EngineTimeStamp_t currTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if( _dVars.tickPlacedDown == 0 ) {
       _dVars.tickPlacedDown = currTimeStamp;
     }

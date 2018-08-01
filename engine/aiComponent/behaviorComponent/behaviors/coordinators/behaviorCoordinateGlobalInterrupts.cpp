@@ -271,7 +271,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       const bool isNotASelfie = takeAPhoto.empty_or_selfie.empty();
       const bool isStorageFull = GetBEI().GetPhotographyManager().IsPhotoStorageFull();
       if(isNotASelfie && !isStorageFull){
-        const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
       }
     }
@@ -280,7 +280,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     // him to just go directly into looking for the charger / going to the charger.
     const bool isGoHomePending = uic.IsUserIntentPending(USER_INTENT(system_charger));
     if (isGoHomePending) {
-      const auto ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
     }
   }

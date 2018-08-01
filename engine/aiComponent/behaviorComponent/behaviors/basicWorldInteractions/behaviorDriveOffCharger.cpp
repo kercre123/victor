@@ -305,8 +305,8 @@ void BehaviorDriveOffCharger::TransitionToDrivingRandomly()
 void BehaviorDriveOffCharger::TransitionToDrivingFace()
 {
   Pose3d facePose;
-  const TimeStamp_t imageTimeStamp_ms = GetBEI().GetFaceWorld().GetLastObservedFace( facePose );
-  const TimeStamp_t lastImageTimeStamp_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  const RobotTimeStamp_t imageTimeStamp_ms = GetBEI().GetFaceWorld().GetLastObservedFace( facePose );
+  const RobotTimeStamp_t lastImageTimeStamp_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   if( imageTimeStamp_ms > 0 && (imageTimeStamp_ms + 1000*_iConfig.maxFaceAge_s >= lastImageTimeStamp_ms) ) {
     Pose3d faceWrtRobot;
     const bool poseSuccess = facePose.GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), faceWrtRobot);
@@ -327,8 +327,8 @@ void BehaviorDriveOffCharger::TransitionToDrivingCube()
   std::vector<const ObservableObject*> objects;
   const ObservableObject* obj = GetBEI().GetBlockWorld().FindMostRecentlyObservedObject( filter );
   if( obj != nullptr ) {
-    const TimeStamp_t cubeTimeStamp_ms = obj->GetLastObservedTime();
-    const TimeStamp_t lastImageTimeStamp_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+    const RobotTimeStamp_t cubeTimeStamp_ms = obj->GetLastObservedTime();
+    const RobotTimeStamp_t lastImageTimeStamp_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
     if( cubeTimeStamp_ms + 1000*_iConfig.maxCubeAge_s >= lastImageTimeStamp_ms ) {
       Pose3d cubeWrtRobot;
       const bool poseSuccess = obj->GetPose().GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), cubeWrtRobot);

@@ -199,7 +199,7 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
     // Have we seen a potential laser observation recently?
     if(_dVars.lastLaserObservation.type != LaserObservation::Type::None)
     {
-      const TimeStamp_t lastImgTime_ms = robotInfo.GetLastImageTimeStamp();
+      const RobotTimeStamp_t lastImgTime_ms = robotInfo.GetLastImageTimeStamp();
       const TimeStamp_t seenWithin_ms  = Util::SecToMilliSec(_iConfig.startIfLaserSeenWithin_sec);
 
       const bool crntSeenRecently = ((_dVars.lastLaserObservation.timestamp_ms + seenWithin_ms) > lastImgTime_ms);
@@ -209,9 +209,9 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
       {
         PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.WantsToBeActivatedBehavior.CanStart",
                        "LastObs:%dms PrevObs:%dms LastImgTime:%dms Threshold:%.2fs",
-                       _dVars.lastLaserObservation.timestamp_ms,
-                       _dVars.lastLaserObservation.timestamp_prev_ms,
-                       lastImgTime_ms, _iConfig.startIfLaserSeenWithin_sec);
+                       (TimeStamp_t)_dVars.lastLaserObservation.timestamp_ms,
+                       (TimeStamp_t)_dVars.lastLaserObservation.timestamp_prev_ms,
+                       (TimeStamp_t)lastImgTime_ms, _iConfig.startIfLaserSeenWithin_sec);
         return true;
       }
     }
@@ -395,7 +395,7 @@ bool BehaviorTrackLaser::CheckForTimeout()
   // We're done if we haven't seen a laser in a long while or we've exceeded the max time for the behavior
   bool isTimedOut = false;
 
-  const TimeStamp_t lastImgTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  const RobotTimeStamp_t lastImgTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
 
   if (_dVars.haveEverConfirmedLaser &&
       (_dVars.lastLaserObservation.timestamp_ms + (_dVars.currentLostLaserTimeout_s * 1000)) < lastImgTime_ms )
@@ -417,7 +417,9 @@ bool BehaviorTrackLaser::CheckForTimeout()
     // to get out of the behavior without really having done anything
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.NeverConfirmed",
                    "LastImg:%dms LastObs:%dms MaxTime:%dms",
-                   lastImgTime_ms, _dVars.lastLaserObservation.timestamp_ms, (TimeStamp_t)_iConfig.maxTimeToConfirm_ms);
+                   (TimeStamp_t)lastImgTime_ms,
+                   (TimeStamp_t)_dVars.lastLaserObservation.timestamp_ms,
+                   (TimeStamp_t)_iConfig.maxTimeToConfirm_ms);
 
     PRINT_NAMED_INFO("robot.laser_behavior.laser_never_confirmed", "");
 
@@ -556,7 +558,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange()
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToWaitForExposureChange.AssumingChanged",
                    "%d images have passed. Assuming exposure change has taken effect at t=%dms",
                    (s32)_iConfig.numImagesToWaitForExposureChange,
-                   _dVars.exposureChangedTime_ms);
+                   (TimeStamp_t)_dVars.exposureChangedTime_ms);
   });
 }
 

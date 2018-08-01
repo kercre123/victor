@@ -14,6 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTurnTowardsPerson__
 
 #include "clad/types/salientPointTypes.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 
@@ -69,7 +70,7 @@ private:
 
   struct DynamicVariables {
     struct Persistent {
-      TimeStamp_t lastSeenTimeStamp;
+      RobotTimeStamp_t lastSeenTimeStamp;
     } persistent;
 
     DynamicVariables();
@@ -79,7 +80,7 @@ private:
     bool searchingForFaces;
     bool droveOffCharger;
     bool actingOnFaceFound; // currently tracking, could be something else
-    TimeStamp_t imageTimestampWhenActivated;
+    RobotTimeStamp_t imageTimestampWhenActivated;
   };
 
   InstanceConfig _iConfig;

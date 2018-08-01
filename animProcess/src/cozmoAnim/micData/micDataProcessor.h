@@ -17,7 +17,7 @@
 #include "svad.h"
 
 #include "micDataTypes.h"
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
 #include "audioUtil/audioDataTypes.h"
 #include "util/container/fixedCircularBuffer.h"
@@ -134,7 +134,7 @@ private:
   static constexpr uint32_t kImmediateBufferSize = kTriggerAudioLength_ms / kTimePerSEBlock_ms;
   struct TimedMicData {
     std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
-    TimeStamp_t timestamp;
+    RobotTimeStamp_t timestamp;
   };
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
 
@@ -161,8 +161,8 @@ private:
   
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
-  TimeStamp_t CreateTriggerWordDetectedJobs();
-  void ProcessRawAudio(TimeStamp_t timestamp,
+  RobotTimeStamp_t CreateTriggerWordDetectedJobs();
+  void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,
                        float robotAngle);

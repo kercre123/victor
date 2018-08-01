@@ -63,12 +63,12 @@ static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png
 
 // Helper lambda to pass an image file into the vision component and
 // then update FaceWorld with any resulting detections
-static void Recognize(Robot& robot, TimeStamp_t timestamp, RobotState& stateMsg, Vision::Image& img,
+static void Recognize(Robot& robot, RobotTimeStamp_t timestamp, RobotState& stateMsg, Vision::Image& img,
                       const std::string& filename, const char *dispName, const std::set<std::string>& namesPresent)
 {
   Result lastResult = RESULT_OK;
   
-  stateMsg.timestamp = timestamp;
+  stateMsg.timestamp = (TimeStamp_t)timestamp;
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(RESULT_OK, lastResult);
   
@@ -83,7 +83,7 @@ static void Recognize(Robot& robot, TimeStamp_t timestamp, RobotState& stateMsg,
     ASSERT_EQ(RESULT_OK, lastResult);
   }
   
-  img.SetTimestamp(timestamp);
+  img.SetTimestamp((TimeStamp_t)timestamp);
   
   Vision::ImageRGB imgRGB(img);
   lastResult = robot.GetVisionComponent().SetNextImage(imgRGB);
@@ -159,7 +159,7 @@ static void Recognize(Robot& robot, TimeStamp_t timestamp, RobotState& stateMsg,
 
 } // Recognize()
 
-Result Enroll(Robot& robot, TimeStamp_t& fakeTime, RobotState& stateMsg, Vision::Image& img, const std::string& dataPath, const std::string& userDir)
+Result Enroll(Robot& robot, RobotTimeStamp_t& fakeTime, RobotState& stateMsg, Vision::Image& img, const std::string& dataPath, const std::string& userDir)
 {
   const std::string& enrollSubDir = "enroll";
   
@@ -250,7 +250,7 @@ Result Enroll(Robot& robot, TimeStamp_t& fakeTime, RobotState& stateMsg, Vision:
   return RESULT_FAIL;
 }
 
-Result ShowBlankFrames(s32 N, Robot& robot, TimeStamp_t& fakeTime, RobotState& stateMsg, Vision::Image& img, const char* dispName)
+Result ShowBlankFrames(s32 N, Robot& robot, RobotTimeStamp_t& fakeTime, RobotState& stateMsg, Vision::Image& img, const char* dispName)
 {
   Result lastResult = RESULT_OK;
   
@@ -359,7 +359,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   
   Vision::kFaceRecognitionExtraDebug = true;
   
-  TimeStamp_t fakeTime = 100000;
+  RobotTimeStamp_t fakeTime = 100000;
   const TimeStamp_t kTestTimeInc = 65;
   
   s32 totalFalsePositives = 0;

@@ -119,7 +119,7 @@ private:
   SystemLightState _systemLightState = SystemLightState::Off;
 
   std::future<void> _offlineCheckFuture;
-  std::atomic<TimeStamp_t> _offlineAtTime_ms;
+  std::atomic<TimeStamp_t> _offlineAtTime_ms; // engine timestamp
   
   Result SetBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights);
   void StartLoopingBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights, BackpackLightSourceType source, BackpackLightDataLocator& lightLocator_out);

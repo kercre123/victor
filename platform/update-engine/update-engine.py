@@ -57,7 +57,16 @@ def make_blocking(pipe, blocking):
 
 def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "", i4 = ""):
     fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
+    s1 = s1.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    s2 = s2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    s3 = s3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    s4 = s4.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    i1 = i1.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    i2 = i2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    i3 = i3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
+    i4 = i4.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4))
+    sys.stdout.flush()
 
 
 def safe_delete(name):
@@ -84,7 +93,7 @@ def write_status(file_name, status):
 def die(code, text):
     "Write out an error string and exit with given status code"
     write_status(ERROR_FILE, text)
-    das_event("robot.ota_download_end", "fail", get_prop("ro.anki.version"), str(text), "", code)
+    das_event("robot.ota_download_end", "fail", get_prop("ro.anki.version"), str(text), "", str(code))
     if DEBUG:
         sys.stderr.write(str(text))
         sys.stderr.write(os.linesep)

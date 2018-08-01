@@ -22,6 +22,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "coretech/vision/engine/faceIdTypes.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
@@ -468,7 +469,7 @@ namespace Cozmo {
     {
     public:
 
-      TurnTowardsImagePointAction(const Point2f& imgPoint, const TimeStamp_t imgTimeStamp);
+      TurnTowardsImagePointAction(const Point2f& imgPoint, const RobotTimeStamp_t imgTimeStamp);
       
       // Constructor for turning towards a SalientPoint, whose (x,y) location is in normalized
       // coordinates (and which has its own timestamp)
@@ -480,7 +481,7 @@ namespace Cozmo {
     private:
       
       Point2f     _imgPoint;
-      TimeStamp_t _timestamp;
+      RobotTimeStamp_t _timestamp;
       bool        _isPointNormalized;
       
     }; // class TurnTowardsImagePointAction
@@ -493,7 +494,7 @@ namespace Cozmo {
     public:
       
       // VisionMode indicates the vision mode(s) that this action wants to wait for, for numFrames instances. VisionMode::Count means any
-      WaitForImagesAction(u32 numFrames, VisionMode visionMode = VisionMode::Count, TimeStamp_t afterTimeStamp = 0);
+      WaitForImagesAction(u32 numFrames, VisionMode visionMode = VisionMode::Count, RobotTimeStamp_t afterTimeStamp = 0);
 
       struct UseDefaultNumImages_t {};
       static constexpr UseDefaultNumImages_t UseDefaultNumImages = UseDefaultNumImages_t{};
@@ -524,7 +525,7 @@ namespace Cozmo {
       
     private:
       u32 _numFramesToWaitFor;
-      TimeStamp_t _afterTimeStamp;
+      RobotTimeStamp_t _afterTimeStamp;
       
       Signal::SmartHandle             _imageProcSignalHandle;
       VisionMode                      _visionMode = VisionMode::Count;

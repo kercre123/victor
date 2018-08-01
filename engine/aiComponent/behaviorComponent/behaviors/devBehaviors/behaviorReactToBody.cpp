@@ -172,7 +172,7 @@ void BehaviorReactToBody::OnBehaviorActivated()
 
   if (latestPersons.empty()) {
     LOG_DEBUG( "BehaviorReactToPersonDetected.OnBehaviorActivated.NoPersonDetected",
-        "Activated but no person with a timestamp > %u", _dVars.persistent.lastSeenTimeStamp);
+        "Activated but no person with a timestamp > %u", (TimeStamp_t)_dVars.persistent.lastSeenTimeStamp);
     TransitionToCompleted();
     return;
   }

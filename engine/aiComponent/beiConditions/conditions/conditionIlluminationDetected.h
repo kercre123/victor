@@ -14,7 +14,7 @@
 #ifndef __Engine_AiComponent_BeiConditions_Conditions_ConditionIlluminationDetected_H__
 #define __Engine_AiComponent_BeiConditions_Conditions_ConditionIlluminationDetected_H__
 
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "clad/types/imageTypes.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
@@ -61,17 +61,17 @@ private:
   
   struct DynamicVariables
   {
-    MatchState   matchState;     // State of matching process
-    TimeStamp_t  matchStartTime; // Time at which first match in series received (if matched)
-    u32          matchedEvents;  // Number of matches in current series
+    MatchState        matchState;     // State of matching process
+    RobotTimeStamp_t  matchStartTime; // Time at which first match in series received (if matched)
+    u32               matchedEvents;  // Number of matches in current series
   };
 
   ConfigParams _params;
   DynamicVariables _variables;
   std::unique_ptr<BEIConditionMessageHelper> _messageHelper;
 
-  void TickStateMachine( const TimeStamp_t& currTime, const IlluminationState& obsState );
-  bool IsTimePassed( const TimeStamp_t& t, const f32& dur ) const;
+  void TickStateMachine( const RobotTimeStamp_t& currTime, const IlluminationState& obsState );
+  bool IsTimePassed( const RobotTimeStamp_t& t, const f32& dur ) const;
   bool IsTriggerState( const IlluminationState& state ) const;
 };
 

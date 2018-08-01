@@ -11,6 +11,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/camera.h"
 #include "clad/types/robotStatusAndActions.h"
 
@@ -135,62 +136,62 @@ namespace Anki {
       // Adds a timestamped state received from the robot to the history.
       // Returns RESULT_FAIL if an entry for that timestamp already exists
       // or the state is too old to be added.
-      Result AddRawOdomState(const TimeStamp_t t, const HistRobotState& state);
+      Result AddRawOdomState(const RobotTimeStamp_t t, const HistRobotState& state);
 
       // Adds a timestamped state based off of a vision marker to the history.
       // These are used in conjunction with raw odometry states to compute
       // better estimates of the state at any point t in the history.
-      Result AddVisionOnlyState(const TimeStamp_t t, const HistRobotState& state);
+      Result AddVisionOnlyState(const RobotTimeStamp_t t, const HistRobotState& state);
       
       // Sets p to the raw odometry state nearest the given timestamp t in the history.
       // Interpolates state if withInterpolation == true.
       // Returns OK if t is between the oldest and most recent timestamps stored.
-      Result GetRawStateAt(const TimeStamp_t t_request,
-                           TimeStamp_t& t, HistRobotState& state,
+      Result GetRawStateAt(const RobotTimeStamp_t t_request,
+                           RobotTimeStamp_t& t, HistRobotState& state,
                            bool withInterpolation = false) const;
       
       // Get raw odometry states (and their times) immediately before and after
       // the state nearest to the requested time. Returns failure if either cannot
       // be found (e.g. when the requested time corresponds to the first or last
       // state in  history).
-      Result GetRawStateBeforeAndAfter(const TimeStamp_t t,
-                                       TimeStamp_t&    t_before,
+      Result GetRawStateBeforeAndAfter(const RobotTimeStamp_t t,
+                                       RobotTimeStamp_t&    t_before,
                                        HistRobotState& state_before,
-                                       TimeStamp_t&    t_after,
+                                       RobotTimeStamp_t&    t_after,
                                        HistRobotState& state_after);
       
       // Returns OK and points statePtr to a vision-based state at the specified time if such a state exists.
       // Note: The state that statePtr points to may be invalidated by subsequent calls to
       //       the history like Clear() or Add...(). Use carefully!
-      Result GetVisionOnlyStateAt(const TimeStamp_t t_request, HistRobotState** statePtr);
+      Result GetVisionOnlyStateAt(const RobotTimeStamp_t t_request, HistRobotState** statePtr);
       
       // Same as above except that it uses the last vision-based
       // state that exists at or before t_request to compute a
       // better estimate of the state at time t.
-      Result ComputeStateAt(const TimeStamp_t t_request,
-                            TimeStamp_t& t, HistRobotState& state,
+      Result ComputeStateAt(const RobotTimeStamp_t t_request,
+                            RobotTimeStamp_t& t, HistRobotState& state,
                             bool withInterpolation = false) const;
 
       // Same as above except that it also inserts the resulting state
       // as a vision-based state back into history.
-      Result ComputeAndInsertStateAt(const TimeStamp_t t_request,
-                                     TimeStamp_t& t, HistRobotState** statePtr,
+      Result ComputeAndInsertStateAt(const RobotTimeStamp_t t_request,
+                                     RobotTimeStamp_t& t, HistRobotState** statePtr,
                                      HistStateKey* key = nullptr,
                                      bool withInterpolation = false);
 
       // Points *statePtr to a computed state in the history that was insert via ComputeAndInsertStateAt
-      Result GetComputedStateAt(const TimeStamp_t t_request,
+      Result GetComputedStateAt(const RobotTimeStamp_t t_request,
                                 HistRobotState ** statePtr,
                                 HistStateKey* key = nullptr);
 
       // NOTE: p is not const, but *statePtr is. So you can assign to *statePtr, or statePtr, but not **statePtr
-      Result GetComputedStateAt(const TimeStamp_t t_request,
+      Result GetComputedStateAt(const RobotTimeStamp_t t_request,
                                 const HistRobotState ** statePtr,
                                 HistStateKey* key = nullptr) const;
 
       // If at least one vision only state exists, the most recent one is returned in p
       // and the time it occured at in t.
-      Result GetLatestVisionOnlyState(TimeStamp_t& t, HistRobotState& state) const;
+      Result GetLatestVisionOnlyState(RobotTimeStamp_t& t, HistRobotState& state) const;
       
       // Get the last state in history with the given pose frame ID.
       Result GetLastStateWithFrameID(const PoseFrameID_t frameID, HistRobotState& state) const;
@@ -199,16 +200,16 @@ namespace Anki {
       bool IsValidKey(const HistStateKey key) const;
       
       
-      TimeStamp_t GetOldestTimeStamp() const;
-      TimeStamp_t GetNewestTimeStamp() const;
+      RobotTimeStamp_t GetOldestTimeStamp() const;
+      RobotTimeStamp_t GetNewestTimeStamp() const;
 
-      TimeStamp_t GetOldestVisionOnlyTimeStamp() const;
-      TimeStamp_t GetNewestVisionOnlyTimeStamp() const;
+      RobotTimeStamp_t GetOldestVisionOnlyTimeStamp() const;
+      RobotTimeStamp_t GetNewestVisionOnlyTimeStamp() const;
 
       // Prints the entire history
       void Print() const;
       
-      typedef std::map<TimeStamp_t, HistRobotState> StateMap_t;
+      typedef std::map<RobotTimeStamp_t, HistRobotState> StateMap_t;
       
       const StateMap_t& GetRawPoses() const { return _states; }
       
@@ -231,9 +232,9 @@ namespace Anki {
       static HistStateKey currHistStateKey_;
       
       // Map of HistStateKeys to timestamps and vice versa
-      using TimestampByKeyMap_t           = std::map<HistStateKey, TimeStamp_t> ;
+      using TimestampByKeyMap_t           = std::map<HistStateKey, RobotTimeStamp_t> ;
       using TimestampByKeyMapIter_t       = TimestampByKeyMap_t::iterator;
-      using KeyByTimestampMap_t           = std::map<TimeStamp_t, HistStateKey>;
+      using KeyByTimestampMap_t           = std::map<RobotTimeStamp_t, HistStateKey>;
       using KeyByTimestampMapIter_t       = KeyByTimestampMap_t::iterator;
       using const_KeyByTimestampMapIter_t = KeyByTimestampMap_t::const_iterator;
       

@@ -101,7 +101,7 @@ void ConditionIlluminationDetected::HandleEvent( const EngineToGameEvent& event,
   }
 }
 
-void ConditionIlluminationDetected::TickStateMachine( const TimeStamp_t& currTime, const IlluminationState& obsState )
+void ConditionIlluminationDetected::TickStateMachine( const RobotTimeStamp_t& currTime, const IlluminationState& obsState )
 {
 
   if( _params.ignoreUnknown && IlluminationState::Unknown == obsState )
@@ -155,7 +155,7 @@ void ConditionIlluminationDetected::TickStateMachine( const TimeStamp_t& currTim
   }
 }
 
-bool ConditionIlluminationDetected::IsTimePassed( const TimeStamp_t& t, const f32& dur ) const
+bool ConditionIlluminationDetected::IsTimePassed( const RobotTimeStamp_t& t, const f32& dur ) const
 {
   if( t < _variables.matchStartTime )
   {
@@ -164,7 +164,7 @@ bool ConditionIlluminationDetected::IsTimePassed( const TimeStamp_t& t, const f3
     return false;
   }
 
-  return Util::IsFltGT( (t - _variables.matchStartTime) / 1000.0f, dur );
+  return Util::IsFltGT( f32(t - _variables.matchStartTime) / 1000.0f, dur );
 }
 
 bool ConditionIlluminationDetected::IsTriggerState( const IlluminationState& state ) const

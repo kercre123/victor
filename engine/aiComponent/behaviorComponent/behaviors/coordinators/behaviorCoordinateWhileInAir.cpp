@@ -149,7 +149,7 @@ void BehaviorCoordinateWhileInAir::SuppressInAirReactionIfAppropriate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileInAir::SuppressInitialPickupReactionIfAppropriate()
 {
-  const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   _hasPickupReactionPlayed |= (currTime_ms > (_lastTimeWasOnTreads_ms + kMaxTimeForInitialPickupReaction_ms));
 
   // Only play the pickup reaction

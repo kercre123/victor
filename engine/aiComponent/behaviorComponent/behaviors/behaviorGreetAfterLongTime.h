@@ -15,6 +15,9 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+
+#include "coretech/common/engine/robotTimeStamp.h"
+
 #include "engine/wallTime.h"
 
 #include <string>
@@ -63,7 +66,7 @@ private:
     std::shared_ptr<std::unordered_map<std::string, time_t>> lastSeenTimesPtr;
 
     // last time a face was seen
-    TimeStamp_t lastFaceCheckTime_ms;
+    RobotTimeStamp_t lastFaceCheckTime_ms;
 
     // should play reaction flag
     bool shouldActivateBehavior;

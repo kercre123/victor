@@ -136,7 +136,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(const Pose3d& robotPose,
   }
   
   Pose3d facePose;
-  TimeStamp_t faceTime = faceWorld.GetLastObservedFace(facePose);
+  RobotTimeStamp_t faceTime = faceWorld.GetLastObservedFace(facePose);
   
   if(preActionPoseOutput.preActionPoses.empty())
   {

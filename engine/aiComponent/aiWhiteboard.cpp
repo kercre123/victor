@@ -984,6 +984,13 @@ void AIWhiteboard::ClearPostBehaviorSuggestions()
 {
   _postBehaviorSuggestions.clear();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetLastEdgeInformation(const float closestEdgeDist_mm)
+{
+  _edgeInfoTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _edgeInfoClosestEdge_mm = closestEdgeDist_mm;
+}
 
 
 } // namespace Cozmo

@@ -61,8 +61,14 @@ protected:
   // Behavior Related Functions
 
   virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
+
+
   virtual void BehaviorUpdate() override;
 
 
@@ -71,22 +77,22 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions
 
+  void SetTriggerDirection( MicDirectionIndex direction );
+  void ClearTriggerDirection();
+
   MicDirectionNodeList GetLatestMicDirectionData() const;
   DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
 
-  bool HeardValidSound( MicDirectionIndex& outIndex ) const;
+  // callback function for sound reaction
+  bool OnMicPowerSampleRecorded( double, MicDirectionConfidence, MicDirectionIndex );
 
   void RespondToSound();
   void OnResponseComplete();
 
   bool CanReactToSound() const;
 
-  TimeStamp_t GetCurrentTimeMS() const;
-  TimeStamp_t GetCooldownBeginTime() const;
-  TimeStamp_t GetCooldownEndTime() const;
-  // the earliest timestamp that we'll respond to a sound
-  TimeStamp_t GetReactionWindowBeginTime() const;
-  
+  EngineTimeStamp_t GetCurrentTimeMS() const;
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Internal Data Structure Definitions ...
@@ -116,13 +122,14 @@ private:
     std::string reactionBehaviorString;
     std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
 
+    SoundReactorId  reactorId;
+
   } _iVars;
 
   EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
   MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;
 
-  TimeStamp_t                           _reactionTriggeredTime    = 0;
-  TimeStamp_t                           _reactionEndedTime        = 0;
+  EngineTimeStamp_t                     _triggerDetectedTime      = 0;
 };
 
 }

@@ -13,8 +13,8 @@
 #ifndef __Anki_Cozmo_Basestation_MotionDetector_H__
 #define __Anki_Cozmo_Basestation_MotionDetector_H__
 
-#include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/image.h"
 
@@ -149,7 +149,7 @@ private:
   bool _wasPrevImageRGBBlurred = false;
   bool _wasPrevImageGrayBlurred = false;
   
-  TimeStamp_t   _lastMotionTime = 0;
+  RobotTimeStamp_t   _lastMotionTime = 0;
   
   VizManager*   _vizManager = nullptr;
 

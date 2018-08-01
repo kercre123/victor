@@ -212,7 +212,7 @@ void BehaviorFistBump::BehaviorUpdate()
       auto& robotInfo = GetBEI().GetRobotInfo();
       // Check if face observed very recently
       Pose3d facePose;
-      TimeStamp_t lastObservedFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
+      RobotTimeStamp_t lastObservedFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
       if (lastObservedFaceTime > 0 && (robotInfo.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
         DelegateIfInControl(new TurnTowardsLastFacePoseAction());
         ResetFistBumpTimer();

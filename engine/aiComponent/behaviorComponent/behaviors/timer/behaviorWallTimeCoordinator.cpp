@@ -149,10 +149,10 @@ void BehaviorWallTimeCoordinator::TransitionToFindFaceInFront()
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
   // We should see a face during this behavior if there's one in front of us to center on
   Pose3d unused;
-  const TimeStamp_t lastTimeObserved_ms = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
+  const RobotTimeStamp_t lastTimeObserved_ms = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
   DelegateIfInControl(_iConfig.lookAtFaceInFront.get(), [this, lastTimeObserved_ms](){
     Pose3d unused;
-    const TimeStamp_t nextTimeSeen = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
+    const RobotTimeStamp_t nextTimeSeen = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
     _dVars.shouldSayTime = (nextTimeSeen == lastTimeObserved_ms);
   });
 }

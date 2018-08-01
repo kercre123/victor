@@ -50,8 +50,8 @@ bool ConditionOffTreadsState::AreConditionsMetInternal(BehaviorExternalInterface
   bool ret = false;
   const OffTreadsState currState = bei.GetRobotInfo().GetOffTreadsState();
   if( currState == _targetState ) {
-    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    const TimeStamp_t lastChangedTime_ms = bei.GetRobotInfo().GetOffTreadsStateLastChangedTime_ms();
+    const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const EngineTimeStamp_t lastChangedTime_ms = bei.GetRobotInfo().GetOffTreadsStateLastChangedTime_ms();
     ret = (currTime_ms - lastChangedTime_ms >= _minTimeSinceChange_ms)
           && ( (_maxTimeSinceChange_ms < 0) || (currTime_ms - lastChangedTime_ms <= _maxTimeSinceChange_ms) );
   }

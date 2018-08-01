@@ -17,9 +17,11 @@
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/droppedFrameStats.h"
 #include "coretech/vision/engine/imageCache.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "util/entityComponent/entity.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -185,7 +187,7 @@ struct DockingErrorSignal;
     bool IsCameraCalibrationSet() const { return _camera->IsCalibrated(); }
     Result ClearCalibrationImages();
       
-    TimeStamp_t GetLastProcessedImageTimeStamp() const;
+    RobotTimeStamp_t GetLastProcessedImageTimeStamp() const;
     
     TimeStamp_t GetProcessingPeriod_ms() const;
     TimeStamp_t GetFramePeriod_ms() const;
@@ -204,24 +206,24 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasHeadRotatingTooFast(TimeStamp_t t,
+    bool WasHeadRotatingTooFast(RobotTimeStamp_t t,
                                 const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
                                 const int numImuDataToLookBack = 0) const;
-    bool WasBodyRotatingTooFast(TimeStamp_t t,
+    bool WasBodyRotatingTooFast(RobotTimeStamp_t t,
                                 const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
                                 const int numImuDataToLookBack = 0) const;
     
     // Returns true if head or body were moving too fast at the timestamp
     // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
     // of just looking at the previous and next imu data
-    bool WasRotatingTooFast(TimeStamp_t t,
+    bool WasRotatingTooFast(RobotTimeStamp_t t,
                             const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
                             const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
                             const int numImuDataToLookBack = 0) const;
 
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time
-    void AddLiftOccluder(const TimeStamp_t t_request);
+    void AddLiftOccluder(const RobotTimeStamp_t t_request);
     
     // Camera calibration
     void StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI);
@@ -297,7 +299,7 @@ struct DockingErrorSignal;
     void SetSaveImageParameters(const ImageSaverParams& params);
 
     // This is for faking images being processed for unit tests
-    void FakeImageProcessed(TimeStamp_t t);
+    void FakeImageProcessed(RobotTimeStamp_t t);
     
     // Templated message handler used internally by AnkiEventUtil
     template<typename T>
@@ -350,7 +352,7 @@ struct DockingErrorSignal;
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
-    std::list<std::pair<TimeStamp_t, Vision::SalientPoint>> _salientPointsToDraw;
+    std::list<std::pair<EngineTimeStamp_t, Vision::SalientPoint>> _salientPointsToDraw;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
@@ -390,15 +392,15 @@ struct DockingErrorSignal;
     f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
     f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
     
-    TimeStamp_t _lastReceivedImageTimeStamp_ms = 0;
-    TimeStamp_t _lastProcessedImageTimeStamp_ms = 0;
+    RobotTimeStamp_t _lastReceivedImageTimeStamp_ms = 0;
+    RobotTimeStamp_t _lastProcessedImageTimeStamp_ms = 0;
     TimeStamp_t _processingPeriod_ms = 0;  // How fast we are processing frames
     TimeStamp_t _framePeriod_ms = 0;       // How fast we are receiving frames
     
     ImageQuality _lastImageQuality = ImageQuality::Good;
     ImageQuality _lastBroadcastImageQuality = ImageQuality::Unchecked;
-    TimeStamp_t  _currentQualityBeginTime_ms = 0;
-    TimeStamp_t  _waitForNextAlert_ms = 0;
+    RobotTimeStamp_t  _currentQualityBeginTime_ms = 0;
+    RobotTimeStamp_t  _waitForNextAlert_ms = 0;
     
     VisionPoseData   _currentPoseData;
     VisionPoseData   _nextPoseData;
@@ -421,7 +423,7 @@ struct DockingErrorSignal;
     };
     CaptureFormatState _captureFormatState = CaptureFormatState::None;
 
-    TimeStamp_t _lastImageCaptureTime_ms = 0;
+    EngineTimeStamp_t _lastImageCaptureTime_ms = 0;
 
     // Future used for async image conversions
     std::future<Vision::ImageRGB> _cvtFuture;

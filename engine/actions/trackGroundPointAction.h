@@ -16,7 +16,7 @@
 #include "engine/actions/trackActionInterface.h"
 
 #include "clad/types/visionModes.h"
-
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
@@ -56,9 +56,9 @@ protected:
 private:
   
   struct PointObservation {
-    TimeStamp_t timestamp;
-    f32         groundArea;
-    Point2f     groundPoint;
+    RobotTimeStamp_t timestamp;
+    f32              groundArea;
+    Point2f          groundPoint;
   };
   
   ExternalInterface::MessageEngineToGameTag _salientTag;

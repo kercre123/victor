@@ -169,11 +169,11 @@ struct BehaviorEnrollFace::DynamicVariables
   };
   
   struct Persistent {
-    State          state = State::NotStarted;
-    bool           didEverLeaveCharger = false;
-    TimeStamp_t    lastDeactivationTime_ms = 0;
+    State              state = State::NotStarted;
+    bool               didEverLeaveCharger = false;
+    EngineTimeStamp_t  lastDeactivationTime_ms = 0;
     
-    bool           requestedRescan = false;
+    bool               requestedRescan = false;
     
     using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
     std::unique_ptr<EnrollmentSettings> settings;
@@ -193,10 +193,10 @@ struct BehaviorEnrollFace::DynamicVariables
   FaceID_t         saveID;
   FaceID_t         observedUnusableID;
   
-  TimeStamp_t      lastFaceSeenTime_ms;
+  RobotTimeStamp_t      lastFaceSeenTime_ms;
   
-  TimeStamp_t      timeScanningStarted_ms;
-  TimeStamp_t      timeStartedLookingForFace_ms;
+  EngineTimeStamp_t      timeScanningStarted_ms;
+  EngineTimeStamp_t      timeStartedLookingForFace_ms;
   
   f32 timeout_sec;
   
@@ -542,7 +542,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
     if( _dVars->persistent.state != State::NotStarted ) {
       // interrupted
       if( _dVars->persistent.lastDeactivationTime_ms > 0 ) {
-        TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         if( currTime_ms - _dVars->persistent.lastDeactivationTime_ms > kEnrollFace_MaxInterruptionBeforeReset_ms ) {
           DisableEnrollment();
           SET_STATE( NotStarted );
@@ -696,9 +696,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
         }
         // das msg
         {
-          const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-          const TimeStamp_t timeSpentScanning_ms = currentTime_ms - _dVars->timeScanningStarted_ms;
-          const TimeStamp_t timeBeforeFirstFace_ms = _dVars->timeScanningStarted_ms - _dVars->timeStartedLookingForFace_ms;
+          const EngineTimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+          const TimeStamp_t timeSpentScanning_ms = (TimeStamp_t)(currentTime_ms - _dVars->timeScanningStarted_ms);
+          const TimeStamp_t timeBeforeFirstFace_ms = (TimeStamp_t)(_dVars->timeScanningStarted_ms - _dVars->timeStartedLookingForFace_ms);
           int numPartialFacesSeen = 0;
           int numFullFacesSeen = 0;
           int numNamedFacesSeen = 0;
@@ -1626,13 +1626,13 @@ void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime)
+bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotTimeStamp_t lastImgTime)
 {
   // Check if we've also seen too many within a recent time window
   const TimeStamp_t multipleFaceTimeWindow_ms = Util::SecToMilliSec(_iConfig->tooManyFacesRecentTime_sec);
-  const TimeStamp_t recentTime = (lastImgTime > multipleFaceTimeWindow_ms ?
-                                  lastImgTime - multipleFaceTimeWindow_ms :
-                                  0); // Avoid unsigned math rollover
+  const RobotTimeStamp_t recentTime = (lastImgTime > multipleFaceTimeWindow_ms ?
+                                      lastImgTime - multipleFaceTimeWindow_ms :
+                                      0); // Avoid unsigned math rollover
 
   auto recentlySeenFaceIDs = faceWorld.GetFaceIDs(recentTime);
 
@@ -1715,7 +1715,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
   const FaceWorld& faceWorld = GetBEI().GetFaceWorld();
   auto& robotInfo = GetBEI().GetRobotInfo();
 
-  const TimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
+  const RobotTimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
 
   const bool tooManyFaces = IsSeeingTooManyFaces(GetBEI().GetFaceWorldMutable(), lastImgTime);
   if(tooManyFaces)

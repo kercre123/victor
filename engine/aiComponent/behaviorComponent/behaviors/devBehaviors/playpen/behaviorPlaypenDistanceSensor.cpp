@@ -278,7 +278,7 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
   {
     // Get the most recently observed object of the expected object type
     ObservableObject* object = nullptr;
-    TimeStamp_t t = 0;
+    RobotTimeStamp_t t = 0;
     for(const auto& obj : objects)
     {
       if(obj->GetLastObservedTime() > t)
@@ -298,7 +298,7 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
     
     // Get the pose of the marker that was most recently observed
     Pose3d markerPose;
-    TimeStamp_t lastObservedTime = 0;
+    RobotTimeStamp_t lastObservedTime = 0;
     std::string markerName = "";
     for(const auto& marker : markers)
     {

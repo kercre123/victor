@@ -20,7 +20,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData_Cliff::MemoryMapData_Cliff(const Pose3d& cliffPose, TimeStamp_t t)
+MemoryMapData_Cliff::MemoryMapData_Cliff(const Pose3d& cliffPose, RobotTimeStamp_t t)
 : MemoryMapData(MemoryMapTypes::EContentType::Cliff, t, true)
 , pose(cliffPose)
 {

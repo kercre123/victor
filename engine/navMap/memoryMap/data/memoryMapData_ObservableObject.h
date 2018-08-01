@@ -16,6 +16,7 @@
 
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/cozmoObservableObject.h"
 
 namespace Anki {
@@ -28,7 +29,7 @@ class MemoryMapData_ObservableObject : public MemoryMapData
 {
 public:
   // constructor
-  MemoryMapData_ObservableObject(const ObservableObject& o, const Poly2f& p, TimeStamp_t t);
+  MemoryMapData_ObservableObject(const ObservableObject& o, const Poly2f& p, RobotTimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapDataPtr Clone() const override;

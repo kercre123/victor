@@ -18,7 +18,7 @@
 namespace Anki {
 namespace Cozmo {
 
-void VisionPoseData::Set(const TimeStamp_t      histTimeStamp_in,
+void VisionPoseData::Set(const RobotTimeStamp_t histTimeStamp_in,
                          const HistRobotState&  histState_in,
                          const Pose3d&          cameraPose_in,
                          const bool             groundPlaneVisible_in,

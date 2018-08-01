@@ -15,6 +15,7 @@
 #ifndef __Anki_Cozmo_FaceWorld_H__
 #define __Anki_Cozmo_FaceWorld_H__
 
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -108,19 +109,19 @@ namespace Cozmo {
     //       MeetCozmo. They could simply be recognized as a session-only person already seen in this session.
     // If relativeRobotAngleTolerence_rad is set to something other than 0, only faces within +/- the relative robot
     // angle will be returned
-    std::set<Vision::FaceID_t> GetFaceIDs(TimeStamp_t seenSinceTime_ms = 0,
+    std::set<Vision::FaceID_t> GetFaceIDs(RobotTimeStamp_t seenSinceTime_ms = 0,
                                           bool includeRecognizableOnly = false,
                                           float relativeRobotAngleTolerence_rad = kDontCheckRelativeAngle,
                                           const Radians& angleRelativeRobot_rad = 0) const;
 
     // Returns smart face IDs observed since seenSinceTime_ms (inclusive)
-    std::vector<SmartFaceID> GetSmartFaceIDs(TimeStamp_t seenSinceTime_ms = 0,
+    std::vector<SmartFaceID> GetSmartFaceIDs(RobotTimeStamp_t seenSinceTime_ms = 0,
                                              bool includeRecognizableOnly = false,
                                              float relativeRobotAngleTolerence_rad = kDontCheckRelativeAngle,
                                              const Radians& angleRelativeRobot_rad = 0) const;
 
     // Returns true if any faces are in the world
-    bool HasAnyFaces(TimeStamp_t seenSinceTime_ms = 0, bool includeRecognizableOnly = false) const;
+    bool HasAnyFaces(RobotTimeStamp_t seenSinceTime_ms = 0, bool includeRecognizableOnly = false) const;
 
     // If the robot has observed a face, sets poseWrtRobotOrigin to the pose of the last observed face
     // and returns the timestamp when that face was last seen. Otherwise, returns 0. Normally,
@@ -130,7 +131,7 @@ namespace Cozmo {
     // different coordinate frame, modified such that its parent is the robot's current origin. This
     // could be a completely inaccurate guess for the last observed face pose, but may be "good enough"
     // for some uses.
-    TimeStamp_t GetLastObservedFace(Pose3d& poseWrtRobotOrigin, bool inRobotOriginOnly = true) const;
+    RobotTimeStamp_t GetLastObservedFace(Pose3d& poseWrtRobotOrigin, bool inRobotOriginOnly = true) const;
 
     // Returns true if any action has turned towards this face
     bool HasTurnedTowardsFace(Vision::FaceID_t faceID) const;
@@ -208,14 +209,14 @@ namespace Cozmo {
     Vision::FaceID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;
-    TimeStamp_t _lastObservedFaceTimeStamp = 0;
+    RobotTimeStamp_t _lastObservedFaceTimeStamp = 0;
 
     bool _previousEyeContact = false;
     
     bool _lastEnrollmentCompleted = false;
     
     // Helper used by public Get() methods to determine if an entry should be returned
-    bool ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly,
+    bool ShouldReturnFace(const FaceEntry& faceEntry, RobotTimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly,
                           float relativeRobotAngleTolerence_rad = kDontCheckRelativeAngle, const Radians& angleRelativeRobot_rad = 0) const;
     
     // Removes the face and advances the iterator. Notifies any listeners that

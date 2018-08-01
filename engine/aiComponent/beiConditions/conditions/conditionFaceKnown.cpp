@@ -42,9 +42,9 @@ bool ConditionFaceKnown::AreConditionsMetInternal(BehaviorExternalInterface& beh
   
   std::set<Vision::FaceID_t> faces;
   if( _maxFaceAge_s >= 0 ) {
-    const auto latestImageTimestamp = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+    const RobotTimeStamp_t latestImageTimestamp = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
     const auto maxFaceAge_ms = 1000*_maxFaceAge_s;
-    TimeStamp_t minAge = (latestImageTimestamp > maxFaceAge_ms) ? (latestImageTimestamp - maxFaceAge_ms) : 0;
+    RobotTimeStamp_t minAge = (latestImageTimestamp > maxFaceAge_ms) ? (latestImageTimestamp - maxFaceAge_ms) : 0;
     faces = faceWorld.GetFaceIDs( minAge );
   } else {
     faces = faceWorld.GetFaceIDs();

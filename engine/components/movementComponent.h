@@ -15,6 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "engine/components/animationComponent.h"
 #include "util/entityComponent/entity.h"
@@ -86,14 +87,14 @@ public:
   // Same as above, but looks up moving state in history, by given time
   // - If we fail finding the state in history, all methods return TRUE (to be conservative)
   // - These are non-const because they can insert things into pose history due to interpolation
-  bool   WasMoving(TimeStamp_t atTime); // Reminder: head, lift, or wheels!
-  bool   WasHeadMoving(TimeStamp_t atTime);
-  bool   WasLiftMoving(TimeStamp_t atTime);
-  bool   WereWheelsMoving(TimeStamp_t atTime);
+  bool   WasMoving(RobotTimeStamp_t atTime); // Reminder: head, lift, or wheels!
+  bool   WasHeadMoving(RobotTimeStamp_t atTime);
+  bool   WasLiftMoving(RobotTimeStamp_t atTime);
+  bool   WereWheelsMoving(RobotTimeStamp_t atTime);
   
   // Convenience methods for checking head OR wheels, since either moves the camera
   bool   IsCameraMoving() const { return _isHeadMoving || _areWheelsMoving; }
-  bool   WasCameraMoving(TimeStamp_t atTime); // Slightly more efficient than calling WasHeadMoving _and_ WereWheelsMoving
+  bool   WasCameraMoving(RobotTimeStamp_t atTime); // Slightly more efficient than calling WasHeadMoving _and_ WereWheelsMoving
 
   uint8_t GetTracksLockedBy(const std::string& who) const;
   uint8_t GetLockedTracks() const;
@@ -288,10 +289,10 @@ private:
   // Helper class for detecting unexpected movement
   class UnexpectedMovement
   {
-    TimeStamp_t  _startTime;
-    f32          _sumWheelSpeedL_mmps;
-    f32          _sumWheelSpeedR_mmps;
-    u8           _count;
+    RobotTimeStamp_t  _startTime;
+    f32               _sumWheelSpeedL_mmps;
+    f32               _sumWheelSpeedR_mmps;
+    u8                _count;
     
   public:
     
@@ -300,11 +301,11 @@ private:
     static const u8  kMaxUnexpectedMovementCount;
     
     u8          GetCount() const { return _count; }
-    TimeStamp_t GetStartTime() const { return _startTime; }
+    RobotTimeStamp_t GetStartTime() const { return _startTime; }
     void        GetAvgWheelSpeeds(f32& left, f32& right) const;
     
     bool IsDetected() const;
-    void Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, TimeStamp_t currentTime);
+    void Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, RobotTimeStamp_t currentTime);
     void Decrement();
     void Reset();
   };

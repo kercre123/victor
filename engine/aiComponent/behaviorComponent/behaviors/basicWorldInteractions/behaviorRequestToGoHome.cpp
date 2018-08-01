@@ -171,9 +171,9 @@ void BehaviorRequestToGoHome::BehaviorUpdate()
 void BehaviorRequestToGoHome::TransitionToCheckForFaces()
 {
   // Do we have any known faces?
-  TimeStamp_t maxFaceAge_ms = Util::numeric_cast<TimeStamp_t>(1000.f * _iConfig.maxFaceAge_sec);
+  RobotTimeStamp_t maxFaceAge_ms = Util::numeric_cast<TimeStamp_t>(1000.f * _iConfig.maxFaceAge_sec);
   maxFaceAge_ms = std::min(maxFaceAge_ms, _dVars.imageTimestampWhenActivated);
-  TimeStamp_t oldestFaceTimestamp = _dVars.imageTimestampWhenActivated - maxFaceAge_ms;
+  RobotTimeStamp_t oldestFaceTimestamp = _dVars.imageTimestampWhenActivated - maxFaceAge_ms;
   
   const bool hasFace = GetBEI().GetFaceWorld().HasAnyFaces(oldestFaceTimestamp);
   if (hasFace) {

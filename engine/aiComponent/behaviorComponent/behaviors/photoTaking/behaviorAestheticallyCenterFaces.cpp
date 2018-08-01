@@ -106,7 +106,7 @@ void BehaviorAestheticallyCenterFaces::BehaviorUpdate()
 
   if(_dVars.state == BehaviorState::SearchForFace){
     if(IsControlDelegated()){
-      const auto currentTS = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      const EngineTimeStamp_t currentTS = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       if(GetBestFaceToCenter() != nullptr){
         CancelDelegates();
       }

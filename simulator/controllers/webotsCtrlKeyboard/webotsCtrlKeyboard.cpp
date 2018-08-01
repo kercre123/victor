@@ -14,6 +14,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "clad/types/actionTypes.h"
@@ -106,8 +107,8 @@ namespace Cozmo {
     FactoryTestLogger _factoryTestLogger;
     
     struct ObservedImageCentroid {
-      Point2f     point;
-      TimeStamp_t timestamp;
+      Point2f          point;
+      RobotTimeStamp_t timestamp;
       
       template<class MsgType>
       void SetFromMessage(const MsgType& msg)
@@ -1614,7 +1615,7 @@ namespace Cozmo {
       ExternalInterface::TurnTowardsImagePoint msg;
       msg.x = _lastObservedImageCentroid.point.x();
       msg.y = _lastObservedImageCentroid.point.y();
-      msg.timestamp = _lastObservedImageCentroid.timestamp;
+      msg.timestamp = (TimeStamp_t)_lastObservedImageCentroid.timestamp;
       
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }

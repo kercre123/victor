@@ -18,6 +18,8 @@
 
 #include "clad/types/animationTrigger.h"
 
+#include "coretech/common/engine/robotTimeStamp.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -93,7 +95,7 @@ private:
     int numNormalRequests;
     int numSevereRequests;
     // robot image timestamp at the time the behavior was activated
-    TimeStamp_t imageTimestampWhenActivated;
+    RobotTimeStamp_t imageTimestampWhenActivated;
   };
 
   InstanceConfig   _iConfig;

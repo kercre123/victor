@@ -48,7 +48,7 @@ namespace {
   std::string _logFile = "";
 
   const u32 LOGGING_PERIOD_MS = 5000;
-  u32 _nextLogTime_ms = 0;
+  EngineTimeStamp_t _nextLogTime_ms = 0;
 
   static const char* kWheelSpeedKey = "wheelSpeed_mmps";
   static const char* kLiftSpeedKey = "liftSpeed_degps";
@@ -261,7 +261,7 @@ void BehaviorDevBatteryLogging::InitLog()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void BehaviorDevBatteryLogging::LogData() const
 {
-  u32 currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   if (currTime_ms > _nextLogTime_ms) {
     _nextLogTime_ms += LOGGING_PERIOD_MS;

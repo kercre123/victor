@@ -171,7 +171,7 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool FaceSelectionComponent::AreFacesInFrontOfRobot(std::vector<SmartFaceID>& faceIDs,
-                                                    TimeStamp_t seenSinceTime_ms,
+                                                    RobotTimeStamp_t seenSinceTime_ms,
                                                     bool includeRecognizableOnly) const
 {
   // To check if faces are within Robot's range of view, pass in half the camera's FOV as the acceptabel face range
@@ -246,8 +246,8 @@ float FaceSelectionComponent::CalculateTrackingOnlyCost(const Vision::TrackedFac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float FaceSelectionComponent::CalculateTimeSinceSeenCost(const Vision::TrackedFace* currentFace) const
 {
-  const TimeStamp_t currTime_ms = _robot.GetLastImageTimeStamp();
-  const TimeStamp_t dt_ms = currTime_ms - currentFace->GetTimeStamp();
+  const RobotTimeStamp_t currTime_ms = _robot.GetLastImageTimeStamp();
+  const RobotTimeStamp_t dt_ms = currTime_ms - currentFace->GetTimeStamp();
 
   return Util::MilliSecToSec((float)dt_ms);
 }

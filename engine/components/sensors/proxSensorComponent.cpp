@@ -93,7 +93,12 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     _latestDataRaw = msg.proxData;
 
     UpdateReadingValidity();
-    UpdateNavMap();
+
+    // Reading is meaningless in calm mode so just skip map update
+    const bool isCalmPowerMode = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
+    if (!isCalmPowerMode) {
+      UpdateNavMap();
+    }
   }
 }
 
@@ -254,7 +259,7 @@ void ProxSensorComponent::UpdateNavMap()
     if (++_measurementsAtPose >= kNumMeasurementsAtPose) { return; }
 
     // Clear out any obstacles between the robot and ray if we have good signal strength 
-    TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+    RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
     // build line for ray cast by getting the robot pose, casting forward by sensor reading
     const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 

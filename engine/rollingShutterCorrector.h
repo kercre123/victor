@@ -16,6 +16,7 @@
 
 #include "coretech/vision/engine/image.h"
 #include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include <deque>
 #include <vector>
 
@@ -35,22 +36,22 @@ namespace Anki {
       public:
         ImuDataHistory() {};
       
-        void AddImuData(TimeStamp_t systemTimestamp_ms, float rateX, float rateY, float rateZ);
+        void AddImuData(RobotTimeStamp_t systemTimestamp_ms, float rateX, float rateY, float rateZ);
       
         struct ImuData
         {
           float rateX = 0;
           float rateY = 0;
           float rateZ = 0;
-          TimeStamp_t timestamp = 0;
+          RobotTimeStamp_t timestamp = 0;
         };
       
         // Gets the imu data before and after the timestamp
-        bool GetImuDataBeforeAndAfter(TimeStamp_t t, ImuData& before, ImuData& after) const;
+        bool GetImuDataBeforeAndAfter(RobotTimeStamp_t t, ImuData& before, ImuData& after) const;
       
         // Returns true if the any of the numToLookBack imu data before timestamp t have rates that are greater than
         // the given rates
-        bool IsImuDataBeforeTimeGreaterThan(const TimeStamp_t t,
+        bool IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
                                             const int numToLookBack,
                                             const f32 rateX, const f32 rateY, const f32 rateZ) const;
       
@@ -87,7 +88,7 @@ namespace Anki {
     private:
       // Calculates pixel shifts based on gyro rates from ImageIMUData messages
       // Returns false if unable to calculate shifts due to not having relevant gyro data
-      bool ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+      bool ComputePixelShiftsWithImageIMU(RobotTimeStamp_t t,
                                           Vec2f& shift,
                                           const VisionPoseData& poseData,
                                           const VisionPoseData& prevPoseData,

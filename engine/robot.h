@@ -25,6 +25,7 @@
 #include "engine/actionableObject.h"
 #include "engine/contextWrapper.h"
 #include "engine/encodedImage.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/fullRobotPose.h"
 #include "engine/robotComponents_fwd.h"
@@ -34,6 +35,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/visionMarker.h"
 
 #include "clad/types/animationTypes.h"
@@ -181,7 +183,7 @@ public:
 
   Result SyncRobot();  // TODO:(bn) only for robot event handler, move out of this header...
 
-  TimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
+  RobotTimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
 
   // This is just for unit tests to fake a syncRobotAck message from the robot
   // and force the head into calibrated state.
@@ -390,12 +392,12 @@ public:
   u32 GetDisplayHeightInPixels() const;
 
   // =========== Camera / Vision ===========
-  Vision::Camera GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const;
-  Result         GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;
-  Pose3d         GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp_t t) const;
+  Vision::Camera GetHistoricalCamera(const HistRobotState& histState, RobotTimeStamp_t t) const;
+  Result         GetHistoricalCamera(RobotTimeStamp_t t_request, Vision::Camera& camera) const;
+  Pose3d         GetHistoricalCameraPose(const HistRobotState& histState, RobotTimeStamp_t t) const;
 
   // Return the timestamp of the last _processed_ image
-  TimeStamp_t GetLastImageTimeStamp() const;
+  RobotTimeStamp_t GetLastImageTimeStamp() const;
 
   // =========== Pose (of the robot or its parts) ===========
   const Pose3d&       GetPose() const;
@@ -407,7 +409,7 @@ public:
   Transform3d         GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const;
-  TimeStamp_t GetOffTreadsStateLastChangedTime_ms() const { return _timeOffTreadStateChanged_ms; }
+  EngineTimeStamp_t GetOffTreadsStateLastChangedTime_ms() const { return _timeOffTreadStateChanged_ms; }
 
   // Return whether the given pose is in the same origin as the robot's current origin
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
@@ -422,7 +424,7 @@ public:
   // assumption that the head rotates around the camera center.
   // If isPointNormalized=true, imgPoint.x() and .y() must be on the interval [0,1] and
   // are assumed to be relative to image size.
-  Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
+  Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const RobotTimeStamp_t timestamp,
                                             Radians& absPanAngle, Radians& absTiltAngle,
                                             const bool isPointNormalized = false) const;
 
@@ -532,17 +534,17 @@ public:
 
   // Increments frameID and adds a vision-only pose to history
   // Sets a flag to send a localization update on the next tick
-  Result AddVisionOnlyStateToHistory(const TimeStamp_t t,
-                                    const Pose3d& pose,
-                                    const f32 head_angle,
-                                    const f32 lift_angle);
+  Result AddVisionOnlyStateToHistory(const RobotTimeStamp_t t,
+                                     const Pose3d& pose,
+                                     const f32 head_angle,
+                                     const f32 lift_angle);
 
   // Updates the current pose to the best estimate based on
   // historical poses including vision-based poses.
   // Returns true if the pose is successfully updated, false otherwise.
   bool UpdateCurrPoseFromHistory();
 
-  Result GetComputedStateAt(const TimeStamp_t t_request, Pose3d& pose) const;
+  Result GetComputedStateAt(const RobotTimeStamp_t t_request, Pose3d& pose) const;
 
   // =========  Block messages  ============
 
@@ -668,8 +670,8 @@ protected:
   bool _syncRobotAcked = false;
 
   // Flag indicating whether a robotStateMessage was ever received
-  TimeStamp_t _lastMsgTimestamp;
-  bool        _newStateMsgAvailable = false;
+  RobotTimeStamp_t _lastMsgTimestamp;
+  bool             _newStateMsgAvailable = false;
 
 
   // Hash to not spam debug messages
@@ -707,19 +709,19 @@ protected:
   ObjectID         _chargerID;
 
   // State
-  ImageSendMode    _imageSendMode             = ImageSendMode::Off;
-  u32              _lastSentImageID           = 0;
-  bool             _powerButtonPressed        = false;
-  TimeStamp_t      _timePowerButtonPressed_ms = 0;
-  bool             _isPickedUp                = false;
-  bool             _isCliffReactionDisabled   = false;
-  bool             _gotStateMsgAfterRobotSync = false;
-  u32              _lastStatusFlags           = 0;
+  ImageSendMode      _imageSendMode             = ImageSendMode::Off;
+  u32                _lastSentImageID           = 0;
+  bool               _powerButtonPressed        = false;
+  EngineTimeStamp_t  _timePowerButtonPressed_ms = 0;
+  bool               _isPickedUp                = false;
+  bool               _isCliffReactionDisabled   = false;
+  bool               _gotStateMsgAfterRobotSync = false;
+  u32                _lastStatusFlags           = 0;
 
-  OffTreadsState   _offTreadsState;
-  OffTreadsState   _awaitingConfirmationTreadState;
-  TimeStamp_t      _timeOffTreadStateChanged_ms    = 0;
-  TimeStamp_t      _fallingStartedTime_ms          = 0;
+  OffTreadsState     _offTreadsState;
+  OffTreadsState     _awaitingConfirmationTreadState;
+  EngineTimeStamp_t  _timeOffTreadStateChanged_ms    = 0;
+  RobotTimeStamp_t   _fallingStartedTime_ms          = 0;
 
   // IMU data
   AccelData        _robotAccel;
@@ -746,9 +748,9 @@ protected:
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);
 
-  Result SendAbsLocalizationUpdate(const Pose3d&        pose,
-                                   const TimeStamp_t&   t,
-                                   const PoseFrameID_t& frameId) const;
+  Result SendAbsLocalizationUpdate(const Pose3d&             pose,
+                                   const RobotTimeStamp_t&   t,
+                                   const PoseFrameID_t&      frameId) const;
 
   // Sync with physical robot
   Result SendSyncRobot() const;

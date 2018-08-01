@@ -81,7 +81,7 @@ void SalientPointsComponent::AddSalientPoints(const std::list<Vision::SalientPoi
 
 void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientPoint>& salientPoints,
                                                       const Vision::SalientPointType& type,
-                                                      const uint32_t timestamp) const
+                                                      const RobotTimeStamp_t timestamp) const
 {
 
   ANKI_DEVELOPER_CODE_ONLY(const size_t previousSize = salientPoints.size();) // used for debugging
@@ -97,13 +97,13 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
 
   PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.GetSalientPointSinceTime.CopiedElements",
                  "Number of salient points of type %s received since timestamp %u: %zu",
-                 Vision::SalientPointTypeToString(type), timestamp,
+                 Vision::SalientPointTypeToString(type), (TimeStamp_t)timestamp,
                  salientPoints.size() - previousSize);
 
 
 }
 
-bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType& type, const uint32_t timestamp) const
+bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType& type, const RobotTimeStamp_t timestamp) const
 {
 
   if (kRandomPersonDetection) {
@@ -117,7 +117,7 @@ bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType
       auto addPoint = [this, &pointsToAdd](const Vision::SalientPointType& type) {
         Vision::SalientPoint salientPoint;
 
-        salientPoint.timestamp = _robot->GetLastImageTimeStamp();
+        salientPoint.timestamp = (TimeStamp_t) _robot->GetLastImageTimeStamp();
         salientPoint.salientType = type;
 
         // Random image coordinates

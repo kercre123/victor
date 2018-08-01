@@ -20,6 +20,7 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
+#include "cozmoAnim/animTimeStamp.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/track.h"
@@ -234,7 +235,7 @@ namespace Cozmo {
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time
-    TimeStamp_t _startTime_ms;
+    AnimTimeStamp_t _startTime_ms;
     
     // Where we are in the animation in terms of what has been streamed out, since
     // we don't stream in real time. Each time we send an audio frame to the
@@ -253,7 +254,7 @@ namespace Cozmo {
     // to smooth over gaps in between non-procedural frames that can occur
     // when trying to render them at near real-time. Otherwise, procedural
     // face layers like eye darts could play during these gaps.
-    TimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
+    AnimTimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
     
     // Last time we streamed anything
     f32 _lastAnimationStreamTime = std::numeric_limits<f32>::lowest();

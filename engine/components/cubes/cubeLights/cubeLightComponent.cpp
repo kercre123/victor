@@ -145,7 +145,7 @@ void CubeLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
 void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
 {
-  const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   // We are going from delocalized to localized
   bool doRelocalizedUpdate = false;
@@ -508,7 +508,7 @@ bool CubeLightComponent::PlayLightAnimInternal(const ObjectID& objectID,
   
   auto& newAnimOnLayer = animationsOnLayer.back();
   
-  const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   // Set this animation's duration modifier
   newAnimOnLayer.durationModifier_ms = durationModifier_ms;

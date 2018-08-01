@@ -118,7 +118,7 @@ void BehaviorFindFaces::OnBehaviorActivated()
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
   // Get known faces
-  const TimeStamp_t latestImageTimeStamp = robotInfo.GetLastImageTimeStamp();
+  const RobotTimeStamp_t latestImageTimeStamp = robotInfo.GetLastImageTimeStamp();
   _dVars.imageTimestampWhenActivated = latestImageTimeStamp;
   
   _dVars.startingFaces = GetBEI().GetFaceWorld().GetFaceIDs(latestImageTimeStamp > _iConfig.maxFaceAgeToLook_ms ?

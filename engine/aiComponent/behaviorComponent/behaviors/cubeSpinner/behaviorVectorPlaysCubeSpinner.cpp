@@ -219,7 +219,7 @@ void BehaviorVectorPlaysCubeSpinner::BehaviorUpdate()
       CancelDelegates();
       TransitionToFindCubeAndApproachCube();
     }else{
-      const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       if(currTime_ms > _dVars.timeSearchForCubeShouldEnd_ms){
         CancelSelf();
         return;
@@ -334,7 +334,7 @@ void BehaviorVectorPlaysCubeSpinner::TransitionToSearchForCube()
   ANKI_VERIFY(_iConfig.searchBehavior->WantsToBeActivated(),
               "BehaviorVectorPlaysCubeSpinner.TransitionToFindCubeAndApproachCube.SearchDoesntWantToBeActivated","");
   DelegateIfInControl(_iConfig.searchBehavior.get());
-  const auto currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   _dVars.timeSearchForCubeShouldEnd_ms = (currTime_ms + _iConfig.maxLengthSearchForCube_ms);
   _dVars.stage = BehaviorStage::SearchingForCube;
 }
@@ -378,7 +378,7 @@ void BehaviorVectorPlaysCubeSpinner::MakeTapDecision(const CubeSpinnerGame::Game
   }
 
 
-  const auto currTime_ms =  BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t currTime_ms =  BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   if((_dVars.timeOfLastTap + kMinTimeBetweenTaps_ms) > currTime_ms){
     return;
   }

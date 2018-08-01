@@ -148,7 +148,7 @@ void BehaviorSearchWithinBoundingBox::TransitionToMoveToLookAt()
   _dVars.initialTilt = GetBEI().GetRobotInfo().GetHeadAngle();
   _dVars.initialTheta = GetBEI().GetRobotInfo().GetPose().GetRotationAngle();
 
-  const uint32_t timestamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  const TimeStamp_t timestamp = static_cast<TimeStamp_t>(GetBEI().GetRobotInfo().GetLastImageTimeStamp());
   // will use the SalientPoint to use the Action that takes image coordinates between 0 and 1
   const Vision::SalientPoint point(timestamp,
                                    _dVars.nextX,

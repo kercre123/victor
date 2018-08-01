@@ -16,9 +16,9 @@
 #ifndef __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__
 #define __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__
 
-#include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "clad/types/objectFamilies.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
@@ -154,10 +154,10 @@ public:
   void DeletedObjectInCurrentOrigin(const ObjectID& ID);
   
   // Get last time that the pose of the object was updated. Returns 0 if ID not found.
-  TimeStamp_t GetLastPoseUpdatedTime(const ObjectID& ID) const;
+  RobotTimeStamp_t GetLastPoseUpdatedTime(const ObjectID& ID) const;
   
   // Get last time that an object was matched visually, even if not yet confirmed/updated. Returns 0 if ID not found.
-  TimeStamp_t GetLastVisuallyMatchedTime(const ObjectID& ID) const;
+  RobotTimeStamp_t GetLastVisuallyMatchedTime(const ObjectID& ID) const;
   
 protected:
   
@@ -166,8 +166,8 @@ protected:
     Pose3d referencePose;
     s32    numTimesObserved   = 0; // at this pose, using vision
     s32    numTimesUnobserved = 0;
-    TimeStamp_t    lastPoseUpdatedTime = 0;
-    TimeStamp_t    lastVisuallyMatchedTime = 0;
+    RobotTimeStamp_t    lastPoseUpdatedTime = 0;
+    RobotTimeStamp_t    lastVisuallyMatchedTime = 0;
     
     // pointer to the object while it's not confirmed. Once it is confirmed in a pose, its ownership is passed
     // onto the blockworld, and this pointer is set to nullptr.
@@ -180,10 +180,10 @@ protected:
     // initializes lastVisuallyMatchedTime with the observation's LastObservedTime
     PoseConfirmation(const std::shared_ptr<ObservableObject>& observation,
                      s32 initNumTimesObserved,
-                     TimeStamp_t initLastPoseUpdatedTime);
+                     RobotTimeStamp_t initLastPoseUpdatedTime);
 
     // update pose, resets numTimesObserved back to 1, leaves visuallyMatchedTime unchanged
-    void UpdatePose(const Pose3d& newPose, TimeStamp_t poseUpdatedTime);
+    void UpdatePose(const Pose3d& newPose, RobotTimeStamp_t poseUpdatedTime);
 
     // returns true if the reference pose is confirmed (by comparing observation number)
     bool IsReferencePoseConfirmed() const;

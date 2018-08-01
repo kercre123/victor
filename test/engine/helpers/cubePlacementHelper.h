@@ -1,5 +1,5 @@
 /**
- * File: cubePhacementHelper.h
+ * File: cubePlacementHelper.h
  *
  * Author: ross made the file / original by ??
  * Created: 2018
@@ -41,7 +41,7 @@ public:
     BlockWorld& blockWorld = robot.GetBlockWorld();
     ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
     DEV_ASSERT(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull");
-    objectPtr->SetLastObservedTime( BaseStationTimer::getInstance()->GetCurrentTimeStamp() );
+    objectPtr->SetLastObservedTime( (TimeStamp_t)robot.GetLastMsgTimestamp() );
     
     // check it currently doesn't exist in BlockWorld
     {

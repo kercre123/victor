@@ -213,7 +213,7 @@ public:
   float GetTimeAtWhichRobotReturnedToTreadsSecs() const { return _returnedToTreadsAtTime_sec; }
   
   // set/return time at which engine processed information regarding edges
-  inline void SetLastEdgeInformation(const float time_sec, const float closestEdgeDist_mm);
+  void SetLastEdgeInformation(const float closestEdgeDist_mm);
   float GetLastEdgeInformationTime() const { return _edgeInfoTime_sec; }
   float GetLastEdgeClosestDistance() const { return _edgeInfoClosestEdge_mm; }
 
@@ -350,15 +350,6 @@ private:
   // holds the current onboarding stage to avoid having to listen for it or read it from disk
   OnboardingStages _onboardingStage;
 };
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Inline
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetLastEdgeInformation(const float time_sec, const float closestEdgeDist_mm)
-{
-  _edgeInfoTime_sec = time_sec;
-  _edgeInfoClosestEdge_mm = closestEdgeDist_mm;
-}
   
 
 } // namespace Cozmo

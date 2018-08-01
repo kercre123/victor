@@ -52,7 +52,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const EngineTimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   if(robot.GetTouchSensorComponent().GetIsPressed() && _touchStartTime_ms == 0)
   {

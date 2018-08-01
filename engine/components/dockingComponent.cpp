@@ -125,7 +125,7 @@ Result DockingComponent::AbortDocking() const
   return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::AbortDocking()));
 }
 
-void DockingComponent::UpdateDockingErrorSignal(const TimeStamp_t t) const
+void DockingComponent::UpdateDockingErrorSignal(const RobotTimeStamp_t t) const
 {
   // The WasRotatingTooFast threshold for sending the docking error signal should be
   // tighter than the general WasRotatingTooFast threshold for marker detection
@@ -144,7 +144,7 @@ void DockingComponent::UpdateDockingErrorSignal(const TimeStamp_t t) const
     PRINT_CH_INFO("VisionComponent",
                   "VisionComponent.UpdateDockingErrorSignal.RotatingTooFast",
                   "Body rotating too fast at time %u",
-                  t);
+                  (TimeStamp_t)t);
     return;
   }
   
@@ -168,7 +168,7 @@ void DockingComponent::UpdateDockingErrorSignal(const TimeStamp_t t) const
         if(wrtSuccess)
         {          
           DockingErrorSignal dockErrMsg;
-          dockErrMsg.timestamp = t;
+          dockErrMsg.timestamp = (TimeStamp_t)t;
           // xOffset should always be positive distance in front of the object so subtract it from
           // the x dist error
           dockErrMsg.x_distErr = markerWrtRobot.GetTranslation().x() - _dockPlacementOffsetX_mm;
@@ -208,7 +208,7 @@ void DockingComponent::UpdateDockingErrorSignal(const TimeStamp_t t) const
         // Potentially expected?
         PRINT_NAMED_WARNING("VisionComponent.UpdateVisionMarkers.GetHistoricRobotPoseFailed",
                             "Failed to get computed state at time %u, result %u",
-                            t,
+                            (TimeStamp_t)t,
                             res);
       }
     }

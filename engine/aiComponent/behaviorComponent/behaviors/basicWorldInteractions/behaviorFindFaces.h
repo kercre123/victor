@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -70,7 +71,7 @@ private:
     bool searchingForFaces;
     // The robot's image timestamp at the time the behavior was activated
     // (used to determine if new faces have been observed since the behavior started)
-    TimeStamp_t imageTimestampWhenActivated;
+    RobotTimeStamp_t imageTimestampWhenActivated;
     std::set<Vision::FaceID_t> startingFaces;
   };
 

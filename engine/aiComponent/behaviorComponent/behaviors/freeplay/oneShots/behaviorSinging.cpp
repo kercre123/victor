@@ -237,19 +237,19 @@ void BehaviorSinging::BehaviorUpdate()
   const bool shakeAmountExceedsMin = _vibratoScaleFilt > kMinFiltVibrato;
   const bool shakeStartTimeIsZero = _cubeShakingStartTime_ms == 0;
 
+  const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
   // If cube is not being shaken and its shake amount exceeds minimum record the time
   // it started being shaken
   if(shakeStartTimeIsZero && shakeAmountExceedsMin)
   {
-    _cubeShakingStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    _cubeShakingStartTime_ms = curTime_ms;
   }
   // Otherwise if it is being shaken and the shake amount is now below minimum
   else if(!shakeStartTimeIsZero && !shakeAmountExceedsMin)
   {
-    const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-
     const char* song = BehaviorTypesWrapper::BehaviorIDToString(GetID());
-    const TimeStamp_t durationOfShake_ms = curTime_ms - _cubeShakingStartTime_ms;
+    const TimeStamp_t durationOfShake_ms = (TimeStamp_t)(curTime_ms - _cubeShakingStartTime_ms);
 
     // If the shake was longer than 500 ms then log event with the shake duration and song
     // name. Ignore short shakes which might be caused by cubes being moved or table shaking

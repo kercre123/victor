@@ -100,7 +100,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   // they exist)
   const ObjectID& objectID = object->GetID();
   const ActiveObject* const connectedMatch = _robot->GetBlockWorld().GetConnectedActiveObjectByID( objectID );
-  TimeStamp_t stoppedMovingTime = 0;
+  RobotTimeStamp_t stoppedMovingTime = 0;
   // ask both instances
   bool objectIsMoving = false;
   if (connectedMatch) {
@@ -282,7 +282,7 @@ void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const std::shared_ptr<ObservableObject>& observation,
                                                         s32 initNumTimesObserved,
-                                                        TimeStamp_t initLastPoseUpdatedTime)
+                                                        RobotTimeStamp_t initLastPoseUpdatedTime)
 : referencePose(observation->GetPose())
 , numTimesObserved(initNumTimesObserved)
 , lastPoseUpdatedTime(initLastPoseUpdatedTime)
@@ -292,7 +292,7 @@ ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const std::shared_ptr<Ob
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::PoseConfirmation::UpdatePose(const Pose3d& newPose, TimeStamp_t poseUpdatedTime)
+void ObjectPoseConfirmer::PoseConfirmation::UpdatePose(const Pose3d& newPose, RobotTimeStamp_t poseUpdatedTime)
 {
   numTimesObserved = 1;
   referencePose = newPose;
@@ -588,7 +588,7 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
   DEV_ASSERT_MSG(_poseConfirmations.at(objectID).lastVisuallyMatchedTime == observation->GetLastObservedTime(),
                  "ObjectPoseConfirmer.AddVisualObservation.WrongLastVisuallyMatchedTime",
                  "PoseConf t=%u, Observation t=%u",
-                 _poseConfirmations.at(objectID).lastVisuallyMatchedTime,
+                 (TimeStamp_t)_poseConfirmations.at(objectID).lastVisuallyMatchedTime,
                  observation->GetLastObservedTime());
   
   // ask if this observation confirms the reference pose
@@ -1006,7 +1006,7 @@ void ObjectPoseConfirmer::DeletedObjectInCurrentOrigin(const ObjectID& ID)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t ObjectPoseConfirmer::GetLastPoseUpdatedTime(const ObjectID& ID) const
+RobotTimeStamp_t ObjectPoseConfirmer::GetLastPoseUpdatedTime(const ObjectID& ID) const
 {
   auto poseConf = _poseConfirmations.find(ID);
   if (poseConf != _poseConfirmations.end()) {
@@ -1017,7 +1017,7 @@ TimeStamp_t ObjectPoseConfirmer::GetLastPoseUpdatedTime(const ObjectID& ID) cons
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t ObjectPoseConfirmer::GetLastVisuallyMatchedTime(const ObjectID& ID) const
+RobotTimeStamp_t ObjectPoseConfirmer::GetLastVisuallyMatchedTime(const ObjectID& ID) const
 {
   auto poseConf = _poseConfirmations.find(ID);
   if (poseConf != _poseConfirmations.end()) {

@@ -543,12 +543,20 @@ ProxSensorDataRaw HAL::GetRawProxData()
 {
   ProxSensorDataRaw proxData;
   proxData.rangeStatus = bodyData_->proximity.rangeStatus;
-  proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
-  // Signal/Ambient Rate are fixed point 9.7, so convert to float:
-  proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
-  proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
-  // SPAD count is fixed point 8.8, so convert to float:
-  proxData.spadCount = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+  if (HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
+    proxData.distance_mm      = FlipBytes(bodyData_->proximity.rangeMM);
+    // Signal/Ambient Rate are fixed point 9.7, so convert to float:
+    proxData.signalIntensity  = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
+    proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
+    // SPAD count is fixed point 8.8, so convert to float:
+    proxData.spadCount        = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+  } else {
+    // Calm mode values
+    proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
+    proxData.signalIntensity  = 0.f;
+    proxData.ambientIntensity = 0.f;
+    proxData.spadCount        = 200.f;
+  }
   return proxData;
 }
 
@@ -564,13 +572,11 @@ u16 HAL::GetButtonState(const ButtonID button_id)
 u16 HAL::GetRawCliffData(const CliffID cliff_id)
 {
   assert(cliff_id < DROP_SENSOR_COUNT);
-  return bodyData_->cliffSense[cliff_id];
-}
+  if (HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
+    return bodyData_->cliffSense[cliff_id];
+  }
 
-u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
-{
-  // This is not supported by V2 hardware
-  return 0;
+  return CLIFF_CALM_MODE_VAL;
 }
 
 bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)

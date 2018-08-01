@@ -281,9 +281,9 @@ namespace Anki {
       return vizID;
     }
     
-    void VizManager::DisplayCameraImage(const TimeStamp_t timestamp)
+    void VizManager::DisplayCameraImage(const RobotTimeStamp_t timestamp)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage(timestamp)));
+      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage((TimeStamp_t)timestamp)));
     }
     
     void VizManager::DrawCameraOval(const Point2f &center,

@@ -14,7 +14,7 @@
  #ifndef __Anki_Cozmo_MapComponent_H__
  #define __Anki_Cozmo_MapComponent_H__
 
-#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -116,10 +116,10 @@ public:
 
   // clear the space between the robot and the line segment defined by points p and q. The base of
   // the region is a line segment of fixed length that is perpendicular to the robot direction
-  void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
+  void ClearRobotToEdge(const Point2f& p, const Point2f& q, const RobotTimeStamp_t t);
 
   // flag the region as clear of all positive obstacles
-  void ClearRegion(const BoundedConvexSet2f& region, const TimeStamp_t t);
+  void ClearRegion(const BoundedConvexSet2f& region, const RobotTimeStamp_t t);
 
   // flag the region as a prox obstacle
   void AddProxData(const BoundedConvexSet2f& region, const MemoryMapData& data);
@@ -205,7 +205,7 @@ private:
   PoseOriginID_t                  _currentMapOriginID;
   ObjectIdToPosesPerOrigin        _reportedPoses;
   Pose3d                          _reportedRobotPose;
-  TimeStamp_t                     _nextTimeoutUpdate_ms;
+  RobotTimeStamp_t                _nextTimeoutUpdate_ms;
 
   // use multiple dirty flags to broadcast to different channels in case they have different broadcast rates
   bool                            _vizMessageDirty;

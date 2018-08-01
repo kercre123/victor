@@ -15,7 +15,6 @@
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/emotionTypes.clad"
 #include "clad/types/featureGateTypes.clad"
-#include "clad/types/firmwareTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
@@ -97,18 +96,6 @@ message RequestDataCollectionOption {
 ///////////////////////////////////////////////////////////////////////////////
 // Low-level Robot Controls
 ///////////////////////////////////////////////////////////////////////////////
-
-// UpdateFirmware
-// Tell the engine to start updating the robot firmware to specific version
-message UpdateFirmware {
-  FirmwareType fwType,
-  int_32 version
-}
-
-// ResetFirmware
-// Tell the engine to kill robot body code and reset to factory defaults
-message ResetFirmware {
-}
 
 // DriveWheels
 message DriveWheels {
@@ -568,10 +555,6 @@ message StartTestMode {
     TestMode mode
 }
 
-// request behaviors for chooser
-message RequestAllBehaviorsList {
-}
-
 
 // Engine will preserve the head and lift state between reactionary behaviors
 message SetDefaultHeadAndLiftState {
@@ -582,10 +565,6 @@ message SetDefaultHeadAndLiftState {
 
 message SetSparkedMusicState{
   AudioMetaData::SwitchState::Sparked sparkedMusicState
-}
-
-// A message for Game to poll pyramid pre-reqs
-message RequestPyramidPreReqState{
 }
 
 // A message for Game to let engine know that Cozmo is waking up

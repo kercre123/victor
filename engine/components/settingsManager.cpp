@@ -344,25 +344,29 @@ bool SettingsManager::ApplySettingLocale()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingTimeZone()
 {
+#if defined(ANKI_PLATFORM_VICOS)
   static const std::string key = RobotSettingToString(RobotSetting::time_zone);
   const std::string value = _currentSettings[key].asString();
-  DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingTimeZone.InvalidRobot");
 
   std::vector<std::string> command;
   command.push_back("/usr/bin/timedatectl");
   command.push_back("set-timezone");
   command.push_back(value);
   return ExecCommand(command);
+#else
+  return true;
+#endif
 }
 
 
+#if defined(ANKI_PLATFORM_VICOS)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ExecCommand(const std::vector<std::string>& args)
 {
   LOG_INFO("SettingsManager.ExecCommand", "Called with cmd: %s (and %i arguments)",
            args[0].c_str(), (int)(args.size() - 1));
 
-  pid_t pID = fork();
+  const pid_t pID = fork();
   if (pID == 0) // child
   {
     char* argv_child[args.size() + 1];
@@ -392,13 +396,21 @@ bool SettingsManager::ExecCommand(const std::vector<std::string>& args)
   {
     // Wait for child to complete so we can get an error code
     int status;
-    waitpid(pID, &status, 0);
+    pid_t w = TEMP_FAILURE_RETRY(waitpid(pID, &status, 0));
+    if (w == -1)
+    {
+      return false;
+    }
+    if (!WIFEXITED(status))
+    {
+      return false;
+    }
     LOG_INFO("SettingsManager.ExecCommand", "Status of forked child process is %i", status);
-    // Status will be non-zero if the time zone string is invalid
-    return (status == 0);
+    return (WEXITSTATUS(status) == 0);
   }
   return true;
 }
+#endif
 
 
 } // namespace Cozmo

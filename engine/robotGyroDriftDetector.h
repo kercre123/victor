@@ -9,8 +9,8 @@
 #define __Anki_Cozmo_RobotGyroDriftDetector_H__
 
 #include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/common/shared/radians.h"
-#include "coretech/common/shared/types.h"
 
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -59,7 +59,7 @@ private:
   PoseFrameID_t _startPoseFrameId = 0;
   Radians       _startAngle_rad;
   f32           _startGyroZ_rad_per_sec = 0.f;
-  TimeStamp_t   _startTime_ms = 0;
+  RobotTimeStamp_t _startTime_ms = 0;
   f32           _cumSumGyroZ_rad_per_sec = 0.f;
   f32           _minGyroZ_rad_per_sec = 0.f;
   f32           _maxGyroZ_rad_per_sec = 0.f;
