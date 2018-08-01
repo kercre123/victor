@@ -49,6 +49,18 @@ func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error
 	return response.Data, nil
 }
 
+func (c *conn) associateSecondary(jwt, session, clientName, appID string) (*pb.TokenBundle, error) {
+	req := pb.AssociateSecondaryClientRequest{Token: jwt,
+		UserSession: session,
+		ClientName:  clientName,
+		AppId:       appID}
+	response, err := c.client.AssociateSecondaryClient(context.Background(), &req)
+	if err != nil {
+		return nil, err
+	}
+	return response.Data, nil
+}
+
 func (c *conn) refreshToken(existingToken string) (*pb.TokenBundle, error) {
 	req := pb.RefreshTokenRequest{
 		RefreshJwtTokens: true,

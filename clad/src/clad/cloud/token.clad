@@ -18,6 +18,12 @@ structure AuthResponse {
 	TokenError error
 }
 
+structure SecondaryAuthRequest {
+	string sessionToken,
+	string clientName,
+	string appId
+}
+
 structure JwtRequest {
 }
 
@@ -28,11 +34,12 @@ structure JwtResponse {
 
 union TokenRequest {
 	AuthRequest auth,
+	SecondaryAuthRequest secondary,
 	JwtRequest jwt
 }
 
 union TokenResponse {
-	AuthResponse auth,
+	AuthResponse auth, // used for both primary & secondary auth responses
 	JwtResponse jwt
 }
 
