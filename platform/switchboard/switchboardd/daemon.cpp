@@ -270,7 +270,6 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
 
   DASMSG(ble_connection_status, "ble.connection",
           "BLE connection status has changed.");
-  DASMSG_SET(s1, "connected", "Connection status");
   DASMSG_SEND();
 }
 
@@ -292,9 +291,8 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
 
   UpdateAdvertisement(false);
 
-  DASMSG(ble_connection_status, "ble.connection",
+  DASMSG(ble_connection_status, "ble.disconnection",
           "BLE connection status has changed.");
-  DASMSG_SET(s1, "disconnected", "Connection status");
   DASMSG_SEND();
 }
 
