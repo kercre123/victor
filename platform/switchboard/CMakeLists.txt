@@ -35,6 +35,7 @@ PRIVATE
   libffi.so.6
   libdl.so.2
   libz.so.1
+  libnm.so
   libresolv.so.2
   libgmodule-2.0.so.0
   libpcre.so.1
@@ -56,6 +57,7 @@ target_compile_definitions(switchboard
 
 target_include_directories(switchboard
   PUBLIC
+  $<BUILD_INTERFACE:${victor_SOURCE_DIR}/robot/hal/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/switchboardd>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bleClient>
@@ -65,6 +67,7 @@ target_include_directories(switchboard
   $<BUILD_INTERFACE:${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/include>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/glib-2.0>
+  $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/libnm>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/lib/glib-2.0/include>
   ${PLATFORM_INCLUDES}
 )
@@ -85,6 +88,7 @@ target_link_libraries(vic-switchboard
   robot_clad_cpplite
   cti_messaging
   engine_clad
+  robot_hal
   ${SODIUM_LIBS}
   jsoncpp
   libglib-2.0.so

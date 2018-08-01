@@ -154,6 +154,7 @@ namespace Switchboard {
       bool _shouldRestartPairing;
       bool _isTokenClientFullyInitialized;
       bool _hasCloudOwner = false;
+      Anki::Wifi::Wifi _wifi;
   };
 }
 }

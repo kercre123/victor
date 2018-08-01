@@ -77,7 +77,7 @@ void Daemon::Start() {
   ev_timer_init(&_pairingTimer.timer, &Daemon::sEvTimerHandler, kPairingPreConnectionTimeout_s, 0);
 
   // Initialize wifi listeners
-  Anki::Wifi::Initialize();
+  _wifi.Initialize();
 
   // Initialize IPC connections
   InitializeGatewayComms();
@@ -102,7 +102,7 @@ void Daemon::Stop() {
 }
 
 void Daemon::InitializeEngineComms() {
-  _engineMessagingClient = std::make_shared<EngineMessagingClient>(_loop);
+  _engineMessagingClient = std::make_shared<EngineMessagingClient>(_loop, &_wifi);
   _engineMessagingClient->Init();
   _engineMessagingClient->OnReceivePairingStatus().SubscribeForever(std::bind(&Daemon::OnPairingStatus, this, std::placeholders::_1));
   _engineTimer.data = this;
@@ -233,7 +233,8 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     _connectionId = connId;
 
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _tokenClient, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
+      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _tokenClient,
+                                                                     _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner, &_wifi);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));

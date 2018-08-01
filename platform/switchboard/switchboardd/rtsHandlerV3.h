@@ -32,7 +32,8 @@ public:
     std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
     bool isOtaUpdating,
-    bool hasOwner);
+    bool hasOwner,
+    Anki::Wifi::Wifi *wifi);
 
   ~RtsHandlerV3();
 
@@ -69,7 +70,7 @@ private:
   void SendCancelPairing();
   void SendChallengeSuccess();
   void SendWifiScanResult();
-  void SendWifiConnectResult(Wifi::ConnectWifiResult result);
+  void SendWifiConnectResult(Anki::Wifi::ConnectWifiResult result);
   void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
   void SendStatusResponse();
   void SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes);

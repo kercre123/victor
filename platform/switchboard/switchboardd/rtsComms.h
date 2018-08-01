@@ -34,7 +34,8 @@ public:
     std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
     bool isOtaUpdating,
-    bool hasCloudOwner);
+    bool hasCloudOwner,
+    Anki::Wifi::Wifi *wifi);
 
   ~RtsComms();
 
@@ -78,6 +79,7 @@ private:
   const uint16_t kPairingTimeout_s = 60;
 
   // Fields
+  Anki::Wifi::Wifi *_wifi;
   std::string _pin;
   INetworkStream* _stream;
   struct ev_loop* _loop;

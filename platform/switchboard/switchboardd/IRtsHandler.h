@@ -18,6 +18,7 @@
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/tokenClient.h"
 #include "switchboardd/log.h"
+#include "anki-wifi/wifi.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -54,11 +55,14 @@ public:
 
 
 protected:
-  IRtsHandler(const bool pairing, const bool updating, bool hasOwner, std::shared_ptr<TokenClient> tokenClient)
+  IRtsHandler(const bool pairing, const bool updating,
+              bool hasOwner, std::shared_ptr<TokenClient> tokenClient,
+              Anki::Wifi::Wifi *wifi)
   : _isPairing(pairing)
   , _isOtaUpdating(updating)
   , _tokenClient(tokenClient)
-  , _hasOwner(hasOwner) {}
+  , _hasOwner(hasOwner)
+  , _wifi(wifi) {}
 
   inline bool AssertState(RtsCommsType state) {
     return state == _type;
@@ -79,6 +83,7 @@ protected:
   bool _isOtaUpdating;
   std::shared_ptr<TokenClient> _tokenClient;
   bool _hasOwner;
+  Anki::Wifi::Wifi *_wifi;
 };
 
 } // Switchboard

@@ -22,3 +22,4 @@ std::string byteVectorToHexString(const std::vector<uint8_t>& byteVector,
                                   const bool lowercase = false);
 bool IsHexString(const std::string& hexString);
 std::string hexStringToAsciiString(const std::string& hexString);
+void ToUpper(std::string& str);
