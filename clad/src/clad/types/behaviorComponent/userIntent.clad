@@ -67,6 +67,11 @@ structure UserIntent_KnowledgeResponse
   string query_text
 }
 
+structure UserIntent_GlobalStop
+{
+  string what_to_stop,
+}
+
 // test structs. todo: get rid of these in favor of actual structs once
 // there are legit user intents. tests can use the actual structs
 enum uint_8 UserIntent_Test_Time_Units
@@ -111,7 +116,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             play_anytrick,
   UserIntent_PlaySpecific     play_specific,
   UserIntent_Void             check_timer,
-  UserIntent_Void             cancel_timer,
+  UserIntent_GlobalStop       global_stop,
   UserIntent_TimeInSeconds    set_timer,
   UserIntent_Void             show_clock,
   UserIntent_WeatherResponse  weather_response,

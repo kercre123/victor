@@ -29,7 +29,10 @@
     },
     {
       "cloud_intent": "intent_global_stop_extend",
-      "user_intent": "cancel_timer"
+      "user_intent": "global_stop",
+      "cloud_substitutions": {
+        "entity_behavior_stoppable": "what_to_stop"
+      }
     },
     {
       "cloud_intent": "intent_greeting_goodbye",
