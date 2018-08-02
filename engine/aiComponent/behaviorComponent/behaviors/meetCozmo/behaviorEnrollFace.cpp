@@ -462,6 +462,13 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   }
   
   _dVars->persistent.requestedRescan = false;
+  
+  // Because we use SayTextAction instead of the tts coordinator for TTS, there's no way to do an
+  // idle animation while TTS is being generated. Ideally we move animations in this behavior over
+  // to the TTS coordinator, but that doesn't support audio keyframes yet. So instead, disable face
+  // keepalive. This means that when the scanning loop ends and before the sayname action begins,
+  // the eyes will retain the shape of the scanning loop's last frame for a few more ms. 
+  SmartDisableKeepFaceAlive();
 
   // Check if we were interrupted and need to fast forward:
   switch(_dVars->persistent.state)
