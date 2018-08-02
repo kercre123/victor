@@ -2,6 +2,8 @@
 
 import os
 import errno
+import glob
+import inspect
 import subprocess
 import sys
 import argparse
@@ -15,10 +17,13 @@ import json
 from enum import Enum, unique
 from functools import lru_cache
 
-# Root folder path of cozmo-one repo
-COZMO_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip(b"\r\n").decode("utf-8")
+# Root folder path of victor repo
+VECTOR_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip(b"\r\n").decode("utf-8")
 
-BUILD_TOOLS_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'tools', 'build', 'tools')
+BUILD_TOOLS_ROOT = os.path.join(VECTOR_ENGINE_ROOT, 'tools', 'build', 'tools')
+
+VICTOR_SDK_PORT = 8443
+
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 from ankibuild import util
 
@@ -29,7 +34,7 @@ formatter = logging.Formatter('{name} {levelname} - {message}', style='{')
 stdout_handler.setFormatter(formatter)
 UtilLog.addHandler(stdout_handler)
 
-WORLD_FILE_TEST_NAME_PLACEHOLDER = r'%COZMO_SIM_TEST'
+WORLD_FILE_TEST_NAME_PLACEHOLDER = r'%VECTOR_SIM_TEST'
 # Name of user created certificate for signing webots executables to be
 # excepted by the firewall
 CERTIFICATE_NAME = "WebotsFirewall"
@@ -66,7 +71,7 @@ class ForwardWebotsLogLevel(Enum):
 def get_subpath(partial_path, *args):
   """Joins `partial_path` with project root folder and returns the full path to the subfolder.
 
-  This exists instead of just using os.path.join(COZMO_ENGINE_ROOT, 'path', 'to', 'folder')
+  This exists instead of just using os.path.join(VECTOR_ENGINE_ROOT, 'path', 'to', 'folder')
   everywhere so that it is much easier to find and replace a particular path if the folder moves in
   the future. Having paths in a path/to/folder as opposed to os.path.join(...) also makes the folder
   paths easier to read.
@@ -83,9 +88,9 @@ def get_subpath(partial_path, *args):
   """
   forward_args = partial_path.split("/") + list(args)
   if forward_args:
-    return os.path.join(COZMO_ENGINE_ROOT, *(forward_args))
+    return os.path.join(VECTOR_ENGINE_ROOT, *(forward_args))
   else:
-    return COZMO_ENGINE_ROOT
+    return VECTOR_ENGINE_ROOT
 
 def mkdir_p(path):
   try:
@@ -241,13 +246,10 @@ def sign_webot_executables(build_type, password):
 
   UtilLog.info("Your password may be needed in order to add the webots executables to the firewall exception list.")
 
-  executables_folder = get_subpath("generated/mac/DerivedData", build_type)
-
-  executables = [
-    'webotsCtrlBuildServerTest',
-    'webotsCtrlGameEngine',
-    'webotsCtrlRobot'
-  ]
+  executables_folder = get_subpath(os.path.join("_build","mac"), build_type.name, "bin")
+  webots_ctrl_executable = glob.glob(os.path.join(executables_folder, 'webotsCtrl*'))
+  vic_gateway_executable = glob.glob(os.path.join(executables_folder, 'vic-gateway'))
+  executables = webots_ctrl_executable + vic_gateway_executable
 
   codesign_command = [
     'codesign',
@@ -257,11 +259,11 @@ def sign_webot_executables(build_type, password):
   ]
 
   # Add the executables to the firewall list and explicitly allow incoming connections
-  for exe in executables:
-    exe_path = os.path.join(executables_folder, exe)
-    firewall_cli(["--add"], password, executable_path=exe_path)
-    firewall_cli(["--unblock"], password, executable_path=exe_path)
-    sudo_this(codesign_command + [exe_path], password)
+  for exe_path in executables:
+    if os.path.isfile(exe_path):
+      firewall_cli(["--add"], password, executable_path=exe_path)
+      firewall_cli(["--unblock"], password, executable_path=exe_path)
+      sudo_this(codesign_command + [exe_path], password)
 
   # There is a strange issue where select tests will fail for no reason if
   # firewall is not reset like below (CST_RobotKidnapping and
@@ -277,27 +279,6 @@ def sign_webot_executables(build_type, password):
   firewall_cli(["--setglobalstate", "on"], password)
 
   UtilLog.info("sign_webot_executables() finished")
-
-
-# build unittest executable
-def build(build_type):
-  derived_data_path = get_subpath("generated/mac/DerivedData")
-
-  build_command = [
-    'xcodebuild',
-    '-workspace', get_subpath("generated/mac", "CozmoWorkspace_mac.xcworkspace"),
-    '-scheme', 'BUILD_WORKSPACE',
-    '-sdk', 'macosx',
-    '-configuration', build_type.name,
-    # 'SYMROOT=' + derived_data_path,
-    # 'OBJROOT=' + derived_data_path,
-    'build'
-    ]
-
-  UtilLog.debug('build command {command}'.format(command=' '.join(build_command)))
-
-  return subprocess.call(build_command) == 0
-
 
 def run_webots(output, wbt_file_path, world_file_name, show_graphics, log_file_name):
   """Run an individual webots simulation and return the return code of the process through `output`.
@@ -368,7 +349,9 @@ def run_sdk(output, sdk_root, sdk_file_name, log_file_name):
 
 
   run_command = [
-    sdk_root + '/' + sdk_file_name
+    "python3",
+    sdk_root + '/' + sdk_file_name,
+    "--port={0}".format(VICTOR_SDK_PORT)
     ]
 
   UtilLog.debug('run command {command}'.format(command=' '.join(run_command)))
@@ -403,12 +386,13 @@ def is_webots_not_running():
 
 # sleep for some time, then kill webots if needed
 def stop_webots():
+  currFile = inspect.getfile(inspect.currentframe())
+
   # kill all webots processes
-  ps   = subprocess.Popen(('ps', 'Aux'), stdout=subprocess.PIPE)
-  grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
-  grep_minus_this_process = subprocess.Popen(('grep', '-v', '.py'), stdin=grep.stdout, stdout=subprocess.PIPE)
-  grep_minus_bash_scripts = subprocess.Popen(('grep', '-v', '.sh'), stdin=grep_minus_this_process.stdout, stdout=subprocess.PIPE)
-  awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grep_minus_bash_scripts.stdout, stdout=subprocess.PIPE)
+  ps   = subprocess.Popen(('ps', 'Auxc'), stdout=subprocess.PIPE)
+  grep = subprocess.Popen(('grep', '-e', '[w]ebots', '-e', 'vic-gateway'), stdin=ps.stdout, stdout=subprocess.PIPE)
+  grep_minus_this_process = subprocess.Popen(('grep', '-v', currFile), stdin=grep.stdout, stdout=subprocess.PIPE)
+  awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grep_minus_this_process.stdout, stdout=subprocess.PIPE)
   kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out, err = kill.communicate()
   if err:
@@ -665,8 +649,8 @@ def get_build_folder(build_type):
   build_type (BuildType enum) --
     The targetted build type. Must be a member of the BuildType enum.
   """
-  assert build_type in BuildType
-  return get_subpath("build/mac", build_type.name)
+
+  return get_subpath("_build/mac", build_type.name)
 
 def get_log_file_path(log_folder, test_name, world_file_name, extension=".txt", timestamp="", retry_number=0):
   """Returns what the log file names should be.
@@ -743,7 +727,7 @@ def main(args):
   parser.add_argument('--sdkScriptLocation',
                       dest='sdk_root',
                       action='store',
-                      default=os.path.join(COZMO_ENGINE_ROOT, 'tools', 'sdk_devonly', 'test_scripts'),
+                      default=os.path.join(VECTOR_ENGINE_ROOT, 'tools', 'sdk', 'vector-sdk', 'tests', 'automated'),
                       type=str,
                       help='Location of where to look for the sdk scripts which will be ran.')
 
@@ -811,17 +795,12 @@ def main(args):
   else:
     UtilLog.setLevel(logging.INFO)
 
-  os.chdir(COZMO_ENGINE_ROOT)
+  os.chdir(VECTOR_ENGINE_ROOT)
 
   cfg_path = get_subpath("project/build-scripts/webots", options.config_file)
   assert os.path.isfile(cfg_path)
 
   UtilLog.debug(options)
-
-  # build the project first
-  if not build(options.build_type):
-    UtilLog.error("build failed")
-    return 1
 
   sign_webot_executables(options.build_type, options.password)
 
