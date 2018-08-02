@@ -48,7 +48,8 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
-    std::shared_ptr<IBEICondition> powerButtonHeldCondition;
+    std::shared_ptr<IBEICondition> activateBehaviorCondition;
+    std::shared_ptr<IBEICondition> startEyeAnimationCondition;
     std::string powerOnAnimName;
     std::string powerOffAnimName;
   };
