@@ -74,7 +74,6 @@
     {
       "cloud_intent" : "intent_weather_extend",
       "user_intent"  : "weather_response",
-      "cloud_numerics": ["temperature"],
       "cloud_substitutions": {
         "speakable_location_string": "speakableLocationString",
         "is_forecast": "isForecast",
