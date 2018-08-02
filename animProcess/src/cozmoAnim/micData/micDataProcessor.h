@@ -80,6 +80,8 @@ public:
   void UpdateTriggerForLocale(Util::Locale newLocale,
                               MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
                               int searchFileIndex = -1);
+
+  void FakeTriggerWordDetection() { TriggerWordDetectCallback(nullptr, 0.f); }
   
 private:
   MicDataSystem* _micDataSystem = nullptr;

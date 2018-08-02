@@ -191,6 +191,11 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
                    "Starting Wake Wordless streaming");
 }
 
+void MicDataSystem::FakeTriggerWordDetection()
+{ 
+  _micDataProcessor->FakeTriggerWordDetection();
+} 
+
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
 {
   MicDataInfo* newJob = new MicDataInfo{};
