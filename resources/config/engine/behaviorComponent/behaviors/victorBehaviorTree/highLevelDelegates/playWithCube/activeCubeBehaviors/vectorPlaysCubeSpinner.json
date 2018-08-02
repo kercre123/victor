@@ -3,6 +3,7 @@
   "behaviorID": "VectorPlaysCubeSpinner",
 
   "associatedActiveFeature": "CubeSpinner",
+  "emotionEventOnActivated": "CubeSpinner",
   
   "minRoundsToPlay" : 2,
   "maxRoundsToPlay" : 5,

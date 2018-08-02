@@ -41,6 +41,15 @@
           }
         ]
       }
+    },
+    {
+      "name" : "CubeSpinner",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.05
+        }
+      ]
     }
   ]
 }
