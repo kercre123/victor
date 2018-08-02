@@ -2707,11 +2707,19 @@ namespace Vision {
       return RESULT_FAIL;
     }
 
+    if(!Util::FileUtils::DirectoryExists(albumName))
+    {
+      PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.LoadAlbum.DoesNotExist",
+                    "Album %s does not exist yet: no faces enrolled yet",
+                    albumName.c_str());
+      return RESULT_OK;
+    }
+    
     Result result = RESULT_OK;
-
-    const std::string dataFilename(albumName + "/data.bin");
+    const std::string dataFilename(Util::FileUtils::FullFilePath({albumName, "data.bin"}));
     std::ifstream fs(dataFilename, std::ios::in | std::ios::binary);
     if(!fs.is_open()) {
+      // At this point, we've verified the album directory exists, so we should be able to load the data.bin file
       PRINT_NAMED_WARNING("FaceRecognizer.LoadAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
       result = RESULT_FAIL;
     } else {
