@@ -10,8 +10,6 @@ syntax = "proto3";
 
 package Anki.Cozmo.external_interface;
 
-option optimize_for = LITE_RUNTIME;
-
 import "google/api/annotations.proto";
 import "cube.proto";
 import "messages.proto";
