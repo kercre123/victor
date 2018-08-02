@@ -117,6 +117,7 @@ union dupes_allowed UserIntent
   UserIntent_PlaySpecific     play_specific,
   UserIntent_Void             check_timer,
   UserIntent_GlobalStop       global_stop,
+  UserIntent_GlobalStop       global_delete,
   UserIntent_TimeInSeconds    set_timer,
   UserIntent_Void             show_clock,
   UserIntent_WeatherResponse  weather_response,

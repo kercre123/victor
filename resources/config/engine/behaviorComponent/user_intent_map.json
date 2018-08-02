@@ -35,6 +35,13 @@
       }
     },
     {
+      "cloud_intent": "intent_global_delete_extend",
+      "user_intent": "global_delete",
+      "cloud_substitutions": {
+        "entity_behavior_deletable": "what_to_stop"
+      }
+    },
+    {
       "cloud_intent": "intent_greeting_goodbye",
       "user_intent": "greeting_goodbye"
     },
