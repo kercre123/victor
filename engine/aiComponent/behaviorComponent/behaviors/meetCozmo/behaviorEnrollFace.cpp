@@ -526,6 +526,7 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     TransitionToPutDownBlock();
   } else {
     // First thing we want to do is turn towards the face and make sure we see it
+    // todo (VIC-5000): use BehaviorFindFaceAndThen to inform the face search with person detection (nice ticket number, eh?)
     TransitionToLookingForFace();
   }
 }

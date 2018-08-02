@@ -38,6 +38,8 @@
       "searchForFaceBehavior": "ObservingFindFaces",
       "shouldLeaveChargerFirst": true,
       "driveOffChargerBehavior": "DriveOffChargerFace",
+
+      "useBodyDetector": false,
       
       "exitOnceFound": true
     }

@@ -24,7 +24,11 @@
       "shouldLeaveChargerFirst": true, // should already been off the charger at this point
       "driveOffChargerBehavior": "DriveOffChargerStraight",
 
-      "exitOnceFound": true
+      "exitOnceFound": true,
+
+      "useBodyDetector": true,
+      "additionalLookTimeIfSawBody_s": 3.0,
+      "additionalSearchTimeIfSawBody_s": 3.0
     }
   ]
 }

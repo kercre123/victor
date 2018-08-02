@@ -13,6 +13,10 @@
   "searchForFaceBehavior": "ObservingFindFaces",
   "shouldLeaveChargerFirst": false,
 
+  "useBodyDetector": true,
+  "additionalLookTimeIfSawBody_s": 3.0,
+  "additionalSearchTimeIfSawBody_s": 3.0,
+
   "behavior": "WhatsMyNameInternal",
   
   "anonymousBehaviors": [
