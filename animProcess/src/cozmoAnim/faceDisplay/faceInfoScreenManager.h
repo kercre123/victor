@@ -61,7 +61,7 @@ public:
   FaceInfoScreenManager();
 
   void Init(AnimContext* context, AnimationStreamer* animStreamer);
-  void Update(const RobotState& state);
+  void Update(const RobotState& state, AnimationStreamer* animStreamer);
   
   // Debug drawing is expected from only one thread
   ScreenName GetCurrScreenName() const;
@@ -147,7 +147,7 @@ private:
   // Updates the FAC screen if needed
   void UpdateFAC();
 
-  void UpdateCameraTestMode(uint32_t curTime_ms);
+  void UpdateCameraTestMode(uint32_t curTime_ms, AnimationStreamer* animStreamer);
   
   static const Point2f kDefaultTextStartingLoc_pix;
   static const u32 kDefaultTextSpacing_pix;

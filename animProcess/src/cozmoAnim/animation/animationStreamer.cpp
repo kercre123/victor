@@ -841,7 +841,7 @@ namespace Cozmo {
       FaceInfoScreenManager::getInstance()->DrawCameraImage(debugImg);
 
       // TODO: Return here or will that screw up stuff on the engine side?
-      //return RESULT_OK;
+      return RESULT_OK;
     }
 
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");

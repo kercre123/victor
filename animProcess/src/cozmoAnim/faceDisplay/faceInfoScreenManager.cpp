@@ -86,6 +86,8 @@ static bool HasVoiceAccess()
 namespace Anki {
 namespace Cozmo {
 
+  CONSOLE_VAR_RANGED(uint32_t, kMotorTestDelay, "LifetimeTest", 2000, 0, 60000);
+  
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
 const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
@@ -216,6 +218,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(MicDirectionClock, Camera);
   ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
   ADD_SCREEN(CameraMotorTest, Camera);
+  ADD_SCREEN(CameraSpeakerTest, Camera);
 
 
   // ========== Screen Customization ========= 
@@ -379,16 +382,31 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
   // and camera images are streamed to the face
-  ADD_MENU_ITEM(Camera, "TEST MODE", CameraMotorTest);
-  SET_TIMEOUT(CameraMotorTest, 300.f, None);
-
+  ADD_MENU_ITEM(Camera, "MOTOR TEST MODE", CameraMotorTest);
+  ADD_MENU_ITEM(Camera, "SPEAKER TEST MODE", CameraSpeakerTest);
+  DISABLE_TIMEOUT(CameraMotorTest);
+  DISABLE_TIMEOUT(CameraSpeakerTest);
+  
   auto cameraMotorTestExitAction = [cameraExitAction]() {
     cameraExitAction();
     SendAnimToRobot(RobotInterface::StopAllMotors());
   };
+
+auto cameraSpeakerTestExitAction = [cameraExitAction, animStreamer]() {
+    cameraExitAction();
+    animStreamer->Abort();
+  };
+
+auto cameraSpeakerTestEnterAction = [cameraEnterAction]() {
+    cameraEnterAction();
+  };
+
   SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
   SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
 
+  SET_ENTER_ACTION(CameraSpeakerTest, cameraSpeakerTestEnterAction);
+  SET_EXIT_ACTION(CameraMotorTest, cameraSpeakerTestExitAction);
+                       
   
   // Check if we booted in recovery mode
   if (OSState::getInstance()->IsInRecoveryMode()) {
@@ -556,7 +574,8 @@ void FaceInfoScreenManager::UpdateFAC()
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
 {
   if (GetCurrScreenName() != ScreenName::Camera &&
-      GetCurrScreenName() != ScreenName::CameraMotorTest) {
+      GetCurrScreenName() != ScreenName::CameraMotorTest &&
+      GetCurrScreenName() != ScreenName::CameraSpeakerTest) {
     return;
   }
 
@@ -1050,7 +1069,7 @@ ScreenName FaceInfoScreenManager::GetCurrScreenName() const
   return _currScreen->GetName();
 }
 
-void FaceInfoScreenManager::Update(const RobotState& state)
+void FaceInfoScreenManager::Update(const RobotState& state, AnimationStreamer* animStreamer)
 {
   ProcessMenuNavigation(state);
 
@@ -1085,7 +1104,10 @@ void FaceInfoScreenManager::Update(const RobotState& state)
       UpdateFAC();
       break;
     case ScreenName::CameraMotorTest:
-      UpdateCameraTestMode(state.timestamp);
+      UpdateCameraTestMode(state.timestamp, animStreamer);
+      break;
+    case ScreenName::CameraSpeakerTest:
+      UpdateCameraTestMode(state.timestamp, animStreamer);
       break;
     default:
       // Other screens are either updated once when SetScreen() is called
@@ -1478,46 +1500,54 @@ void FaceInfoScreenManager::Reboot()
 #endif
 }
 
-void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
+void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms, AnimationStreamer* animStreamer)
 {
   const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
-  if(curScreen != ScreenName::CameraMotorTest)
+  if(curScreen == ScreenName::CameraMotorTest)
   {
-    return;
-  }
+    // Every alternateTime_ms, while we are in the camera test mode,
+    // send alternating motor commands
+    static BaseStationTime_t lastMovement_ms = curTime_ms;
+    if(curTime_ms - lastMovement_ms > kMotorTestDelay)
+    {
+      lastMovement_ms = curTime_ms;
+      static bool up = false;
 
-  // Every alternateTime_ms, while we are in the camera test mode,
-  // send alternating motor commands
-  static const uint32_t alternateTime_ms = 2000;
-  static BaseStationTime_t lastMovement_ms = curTime_ms;
-  if(curTime_ms - lastMovement_ms > alternateTime_ms)
-  {
-    lastMovement_ms = curTime_ms;
-    static bool up = false;
-
-    RobotInterface::SetHeadAngle head;
-    head.angle_rad = (up ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE);
-    head.duration_sec = alternateTime_ms / 1000.f;
-    head.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
-    head.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
+      RobotInterface::SetHeadAngle head;
+      head.angle_rad = (up ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE);
+      head.duration_sec = 0;
+      head.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
+      head.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
       
-    RobotInterface::SetLiftHeight lift;
-    lift.height_mm = (up ? LIFT_HEIGHT_CARRY : 50);
-    lift.duration_sec = alternateTime_ms / 1000.f;
-    lift.max_speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S;
-    lift.accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2;
+      RobotInterface::SetLiftHeight lift;
+      lift.height_mm = (up ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK);
+      lift.duration_sec = 0;
+      lift.max_speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S;
+      lift.accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2;
 
-    RobotInterface::DriveWheels wheels;
-    wheels.lwheel_speed_mmps = (up ? 60 : -60);
-    wheels.rwheel_speed_mmps = (up ? 60 : -60);
-    wheels.lwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
-    wheels.rwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
+      RobotInterface::DriveWheels wheels;
+      wheels.lwheel_speed_mmps = (up ? 120 : -120);
+      wheels.rwheel_speed_mmps = (up ? 120 : -120);
+      wheels.lwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
+      wheels.rwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
 
-    SendAnimToRobot(std::move(head));
-    SendAnimToRobot(std::move(lift));
-    SendAnimToRobot(std::move(wheels));
+      SendAnimToRobot(std::move(head));
+      SendAnimToRobot(std::move(lift));
+      SendAnimToRobot(std::move(wheels));
 
-    up = !up;
+      up = !up;
+    }
+  }
+  else if(curScreen == ScreenName::CameraSpeakerTest)
+  {
+    static const uint32_t alternateTime_ms = 5000;
+    static BaseStationTime_t lastMovement_ms = curTime_ms;
+    if(curTime_ms - lastMovement_ms > alternateTime_ms)
+    {
+      lastMovement_ms = curTime_ms;
+
+      animStreamer->SetStreamingAnimation("lifetimeSoundTestAnim", 1);
+    }
   }
 }
 

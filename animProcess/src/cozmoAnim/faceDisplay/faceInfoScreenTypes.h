@@ -36,6 +36,7 @@ enum class ScreenName {
   MotorInfo,
   Camera,
   CameraMotorTest,
+  CameraSpeakerTest,
   MicInfo,
   MicDirectionClock,
   CustomText,
