@@ -1,4 +1,10 @@
 #!/usr/bin/env groovy
+if (env.CHANGE_ID) {
+    properties([pipelineTriggers([pollSCM('H/10 * * * *')])])
+} else {
+    properties([pipelineTriggers([pollSCM('H/50 * * * *')])])
+}
+
 
 @NonCPS
 def getListOfOnlineNodesForLabel(label) {
@@ -12,6 +18,7 @@ def getListOfOnlineNodesForLabel(label) {
 }
 
 def server = Artifactory.server 'artifactory-dev'
+library 'victor-helpers@master'
 
 stage('Parallel Build') {
     parallel docker: {
@@ -37,8 +44,13 @@ stage('Parallel Build') {
                         sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'
                     }
                     withEnv(["HOME=${env.WORKSPACE}"]) {
-                        stage('Build Engine') {
-                            sh './project/victor/build-victor.sh -c Release -O2 -j8'
+                        if (env.CHANGE_ID) {
+                            echo "Using PR specific build steps..."
+                            buildPRStepsVicOS type: 'Debug'
+                        } else {
+                            stage('Build Engine') {
+                                sh './project/victor/build-victor.sh -c Release -O2 -j8'
+                            }
                         }
                     }
                 }
@@ -89,11 +101,17 @@ stage('Parallel Build') {
         if (!macBuildAgentsList.isEmpty()) {
             node('mac-slaves') {
                 withEnv(['PLATFORM=mac', 'CONFIGURATION=release']) {
-                    stage("Build MacOS ${CONFIGURATION}") {
+                    stage('Git Checkout') {
                         checkout scm
                         sh 'git submodule update --init --recursive'
                         sh 'git submodule update --recursive'
-                        sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
+                    }
+                    if (env.CHANGE_ID) {
+                        buildPRStepsMacOS type: 'Debug'
+                    } else {
+                        stage("Build MacOS ${CONFIGURATION}") {
+                            sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
+                        }
                     }
                 }
                 stage('Webots') {
@@ -115,6 +133,7 @@ stage('Parallel Build') {
                         }
                      ]
                     }"""
+                    server.upload(macosFileSpec)
                 }
             }
         }
