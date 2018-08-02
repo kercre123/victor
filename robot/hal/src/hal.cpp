@@ -592,7 +592,11 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 f32 HAL::BatteryGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
-  return kBatteryScale * bodyData_->battery.main_voltage;
+  //return kBatteryScale * bodyData_->battery.main_voltage;
+
+  // FOR FACTORY OUT-OF-BOX AUDIT
+  // Force battery to be below BatteryComponent::kLowBatteryThresholdVolts so that it always looks for charger.
+  return 3.5;
 }
 
 bool HAL::BatteryIsCharging()
