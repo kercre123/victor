@@ -42,6 +42,10 @@
   {
     "feature": "PRDemo",
     "enabled": false
+  },
+  {
+    "feature": "ReactToIllumination",
+    "enabled": true
   }
 ]
 

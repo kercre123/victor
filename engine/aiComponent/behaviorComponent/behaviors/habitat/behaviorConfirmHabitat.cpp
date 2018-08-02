@@ -491,7 +491,10 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
       {
         // this is probably indicative that we are not in the habitat
         // => force set the habitat detection state as NotInHabitat
-        GetBEI().GetHabitatDetectorComponent().ForceSetHabitatBeliefState(HabitatBeliefState::NotInHabitat);
+        std::stringstream ss;
+        ss << "BehaviorConfirmHabitat.";
+        ss << EnumToString(msg.result);
+        GetBEI().GetHabitatDetectorComponent().ForceSetHabitatBeliefState(HabitatBeliefState::NotInHabitat, ss.str());
         break;
       }
       case ActionResult::CLIFF_ALIGN_FAILED_STOPPED:
@@ -790,7 +793,11 @@ void BehaviorConfirmHabitat::HandleWhileActivated(const EngineToGameEvent& event
         // - backup, turn in a direction
         // - if there is no prox obstacle within the minimum gap => continue
         // - else turn some more, and stop
-        if(GetBEI().GetHabitatDetectorComponent().IsProxObservingHabitatWall()) {
+        auto proxData = GetBEI().GetRobotInfo().GetProxSensorComponent().GetLatestProxData();
+        const bool valid = !proxData.isLiftInFOV &&
+                            !proxData.isTooPitched &&
+                            proxData.isValidSignalQuality;
+        if(valid && proxData.distance_mm <= HabitatDetectorComponent::kConfirmationConfigProxMaxReading) {
           _dVars._randomWalkTooCloseObstacle = true;
         }
       }

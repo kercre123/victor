@@ -43,7 +43,7 @@ def main():
             time.sleep(2.5)
 
             # Turn off cube lights
-            cube.set_lights(vector.lights.off_light)
+            cube.set_lights_off()
 
             print("------ finish cube light interactions ------")
         else:

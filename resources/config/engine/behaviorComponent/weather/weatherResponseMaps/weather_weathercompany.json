@@ -17,7 +17,7 @@
     }, 
     {
         "APIValue": "Thunder and Hail", 
-        "CladType": "Rain"
+        "CladType": "Thunderstorms"
     }, 
     {
         "APIValue": "Rain to Snow Showers", 
@@ -101,7 +101,7 @@
     }, 
     {
         "APIValue": "Frigid / Ice Crystals", 
-        "CladType": "Cold"
+        "CladType": "Sunny"
     }, 
     {
         "APIValue": "Cloudy", 
@@ -141,7 +141,7 @@
     }, 
     {
         "APIValue": "Isolated Thunderstorms", 
-        "CladType": "Rain"
+        "CladType": "Thunderstorms"
     }, 
     {
         "APIValue": "Thunderstorms", 
@@ -173,6 +173,6 @@
     }, 
     {
         "APIValue": "Scattered Thunderstorms", 
-        "CladType": "Rain"
+        "CladType": "Thunderstorms"
     }
 ]

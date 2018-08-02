@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"anki/log"
+	"anki/robot"
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
@@ -80,23 +81,23 @@ func main() {
 		os.Exit(0)
 	}()
 
-	if _, err := os.Stat(Cert); os.IsNotExist(err) {
-		log.Println("Cannot find cert:", Cert)
+	if _, err := os.Stat(robot.GatewayCert); os.IsNotExist(err) {
+		log.Println("Cannot find cert:", robot.GatewayCert)
 		os.Exit(1)
 	}
-	if _, err := os.Stat(Key); os.IsNotExist(err) {
-		log.Println("Cannot find key: ", Key)
+	if _, err := os.Stat(robot.GatewayKey); os.IsNotExist(err) {
+		log.Println("Cannot find key: ", robot.GatewayKey)
 		os.Exit(1)
 	}
 
-	pair, err := tls.LoadX509KeyPair(Cert, Key)
+	pair, err := tls.LoadX509KeyPair(robot.GatewayCert, robot.GatewayKey)
 	if err != nil {
 		log.Println("Failed to initialize key pair")
 		os.Exit(1)
 	}
 	demoKeyPair = &pair
 	demoCertPool = x509.NewCertPool()
-	caCert, err := ioutil.ReadFile(Cert)
+	caCert, err := ioutil.ReadFile(robot.GatewayCert)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -124,7 +125,7 @@ func main() {
 
 	log.Println("Sockets successfully created")
 
-	creds, err := credentials.NewServerTLSFromFile(Cert, Key)
+	creds, err := credentials.NewServerTLSFromFile(robot.GatewayCert, robot.GatewayKey)
 	if err != nil {
 		log.Println("Error creating server tls:", err)
 		os.Exit(1)

@@ -3,7 +3,8 @@
   "behaviorID": "SingletonPoweringRobotOff",
   "associatedActiveFeature": "NoFeature",
 
-  "startPowerOffEyes_ms" : 1000,
+  "powerButtonHeldToActivate_ms" : 1,
+  "powerButtonHeldToPowerOffEyes_ms" : 1000,
   "powerOnAnimName" : "anim_power_offon_01",
   "powerOffAnimName" : "anim_power_onoff_01"
 }

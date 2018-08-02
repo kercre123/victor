@@ -9,8 +9,8 @@
       {
         "conditionType"   : "time",
         "operator"        : "or",
-        "LocalTimeBefore" : "08:00",
-        "LocalTimeAfter"  : "20:00"
+        "LocalTimeBefore" : "05:00",
+        "LocalTimeAfter"  : "21:00"
       }
     ],
 

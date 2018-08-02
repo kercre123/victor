@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
 #include "engine/engineTimeStamp.h"
@@ -164,7 +165,11 @@ void BehaviorReactToSound::GetAllDelegates( std::set<IBehavior*>& delegates ) co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToSound::WantsToBeActivatedBehavior() const
 {
-  return _iVars.reactionBehavior->WantsToBeActivatedBehavior();
+  // don't activate if any intent is pending since that will likely cause an unclaimed intent reaction afterwards
+  const auto& uic = GetBehaviorComp<UserIntentComponent>();
+  const bool intentPending = uic.IsAnyUserIntentPending();
+  
+  return (!intentPending) && _iVars.reactionBehavior->WantsToBeActivatedBehavior();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

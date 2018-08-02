@@ -38,6 +38,7 @@
     habitatInfoDiv.empty();
     habitatInfoDiv.append('<div class="detectionTitle">' + "Detection state: " + data["habitatState"] + '</div>');
     habitatInfoDiv.append('<div class="stopOnWhiteEnabled">' + "Stop-On-White enabled: " + data["stopOnWhiteEnabled"] + '</div>');
+    habitatInfoDiv.append('<div class="reasonTitle">' + "Reason: " + data["reason"] + '</div>');
   };
 
   myMethods.update = function(dt, elem) { };
@@ -50,6 +51,10 @@
       }
       
       .detectionTitle {
+        margin-bottom:10px;
+      }
+      
+      .reasonTitle {
         margin-bottom:10px;
       }
       

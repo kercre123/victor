@@ -75,6 +75,7 @@ public:
   void SetShouldStreamAfterWakeWord(bool shouldStream);
   void SetTriggerWordDetectionEnabled(bool enabled);
   void StartWakeWordlessStreaming(CloudMic::StreamType type);
+  void FakeTriggerWordDetection();
   void Update(BaseStationTime_t currTime_nanosec);
 
 //#if ANKI_DEV_CHEATS

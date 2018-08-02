@@ -34,6 +34,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -1069,6 +1070,36 @@ TEST(BeiConditions, OnCharger)
   
   robot.GetBatteryComponent().SetOnChargeContacts(false);
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
+
+
+TEST(BeiConditions, RobotInHabitat)
+{
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  
+  const std::string json = R"json(
+  {
+    "conditionType": "RobotInHabitat"
+  })json";
+  
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+  
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  cond->Init(bei);
+  cond->SetActive(bei, true);
+  
+  bei.GetHabitatDetectorComponent().ForceSetHabitatBeliefState(HabitatBeliefState::InHabitat, "UnitTest");
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  bei.GetHabitatDetectorComponent().ForceSetHabitatBeliefState(HabitatBeliefState::NotInHabitat, "UnitTest");
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  bei.GetHabitatDetectorComponent().ForceSetHabitatBeliefState(HabitatBeliefState::Unknown, "UnitTest");
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 }
 

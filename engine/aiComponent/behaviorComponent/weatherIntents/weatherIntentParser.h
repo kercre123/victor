@@ -37,6 +37,9 @@ public:
   WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent,
                                     bool isForPRDemo = false) const;
   tm GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const;
+  bool GetTemperature(const UserIntent_WeatherResponse& weatherIntent,
+                      int& outTemp) const;
+
 
 private:
   class ConditionRemaps{

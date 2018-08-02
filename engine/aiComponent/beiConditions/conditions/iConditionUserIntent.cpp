@@ -38,7 +38,20 @@ std::unordered_map< std::string, IConditionUserIntent::EvalUserIntentFunc > ICon
 {
   // PLEASE KEEP ALPHABETIZED
   
-  
+  {
+    "habitat_play_specific_filter",
+    [](const UserIntent& intent)->bool
+    {
+      auto playSpecific = intent.Get_play_specific();
+      auto entityBehavior = playSpecific.entity_behavior;
+      if( entityBehavior.compare("cube_spinner")==0 ||
+         entityBehavior.compare("pick_up_cube")==0 ||
+         entityBehavior.compare("roll_cube")==0) {
+        return true;
+      }
+      return false;
+    }
+  },
   {
     // test_lambda. Only used in unit tests. keep this at the end
     "test_lambda", [](const UserIntent& intent)

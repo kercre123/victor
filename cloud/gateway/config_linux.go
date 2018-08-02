@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	Key                    = "/data/etc/robot.pem"
-	Cert                   = "/data/vic-gateway/gateway.cert"
 	Port                   = 443
 	SocketPath             = "/dev/socket/"
 	IsSwitchboardAvailable = true

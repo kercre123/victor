@@ -6,9 +6,17 @@
 namespace Anki {
 namespace Cozmo {
 
+// Note: Keep this enum in sync with the JdocType enum defined in settings.proto
+enum uint_8 JdocType
+{
+  ROBOT_SETTINGS = 0,
+  ROBOT_LIFETIME_STATS = 1,
+  ACCOUNT_SETTINGS = 2,
+  USER_ENTITLEMENTS = 3,
+}
 
 // Note: Keep these enum value names the same as those used in settings.proto file,
-// 'message RobotSettingsConfig' (currently in another branch); but they don't have to be in the same order
+// 'message RobotSettingsConfig'
 enum uint_8 RobotSetting
 {
   clock_24_hour = 0,

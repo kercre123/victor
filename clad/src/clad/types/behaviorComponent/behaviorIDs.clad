@@ -108,6 +108,7 @@ enum uint_16 BehaviorID {
   ComeHereVoiceCommand,
   ConfirmHabitat,
   CoordinateGlobalInterrupts,
+  CoordinateInHabitat,
   CoordinateWhileInAir,
 
   // victorBehaviorTree/danceToTheBeat
@@ -126,6 +127,8 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree
   GlobalInterruptions,
   GreetAfterLongTime,
+  HabitatMutedDispatcher,
+  HabitatMutedVoiceCommandResponse,
   HighLevelAI,
 
   // victorBehaviorTree/highLevelDelegates

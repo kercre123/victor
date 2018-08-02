@@ -104,11 +104,14 @@ WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherI
   if(iter != _remaps.end()){
     const tm localDatetime = parser.GetLocalDateTime(weatherIntent);
 
+    int trueTemperature = 0;
+    parser.GetTemperature(weatherIntent, trueTemperature);
+
     for(const auto& entry : iter->second){
       const bool shouldConsiderTemperature = (entry.temperatureBelow != kInvalidTemp) || (entry.temperatureAbove != kInvalidTemp);
 
-      const bool isBelowConfigTemp = ((entry.temperatureBelow != kInvalidTemp) && (entry.temperatureBelow > weatherIntent.temperature));
-      const bool isAboveConfigTemp = ((entry.temperatureAbove != kInvalidTemp) && (entry.temperatureAbove < weatherIntent.temperature));
+      const bool isBelowConfigTemp = ((entry.temperatureBelow != kInvalidTemp) && (entry.temperatureBelow > trueTemperature));
+      const bool isAboveConfigTemp = ((entry.temperatureAbove != kInvalidTemp) && (entry.temperatureAbove < trueTemperature));
 
       const bool inTemperatureRange = entry.allSpecifiedConditionsMustBeMet ? 
                                         isBelowConfigTemp && isAboveConfigTemp : 

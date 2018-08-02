@@ -69,6 +69,7 @@ class SettingsCommManager;
 class SettingsManager;
 class VariableSnapshotComponent;
 class PowerStateManager;
+class JdocsManager;
 class RobotExternalRequestComponent;
 
 } // namespace Cozmo
@@ -123,6 +124,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(SettingsManager,               RobotComponentID, Set
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
+LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, JdocsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent,   RobotComponentID, RobotExternalRequestComponent)
 
 // Translate entity into string
@@ -156,6 +158,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
     case Cozmo::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
     case Cozmo::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
+    case Cozmo::RobotComponentID::JdocsManager:                 { return "JdocsManager";}
     case Cozmo::RobotComponentID::Map:                          { return "Map";}
     case Cozmo::RobotComponentID::MicComponent:                 { return "MicComponent"; }
     case Cozmo::RobotComponentID::MoodManager:                  { return "MoodManager";}

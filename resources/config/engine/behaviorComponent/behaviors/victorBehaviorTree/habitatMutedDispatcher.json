@@ -1,0 +1,28 @@
+{
+  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorID" : "HabitatMutedDispatcher",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors" : [
+    "HabitatDoATrickInternal",
+    "HabitatMutedVoiceCommandResponse",
+    "CoordinateGlobalInterrupts"
+  ],
+
+  "anonymousBehaviors": [                                                       
+    {                                                                           
+      "behaviorName" : "HabitatDoATrickInternal",                                      
+      "behaviorClass" : "DispatcherQueue",                                     
+      "behaviors" : [ "FistBump" ],
+      "respondToUserIntents" : [
+        { 
+          "type" : "play_anytrick"
+        }
+      ],
+      "wantsToBeActivatedCondition" : {
+        "conditionType" : "RobotInHabitat"
+      }
+    }
+  ]
+}

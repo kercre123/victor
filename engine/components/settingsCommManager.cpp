@@ -14,6 +14,7 @@
 #include "engine/components/settingsCommManager.h"
 
 #include "engine/robot.h"
+#include "engine/components/jdocsManager.h"
 #include "engine/components/settingsManager.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/externalInterface/externalMessageRouter.h"
@@ -34,6 +35,7 @@ namespace
 #if REMOTE_CONSOLE_ENABLED
 
   static const char* kConsoleGroup = "RobotSettings";
+  static const bool kUpdateSettingsJdoc = true;
 
   // NOTE: Need to keep kMasterVolumeLevels in sync with MasterVolume in robotSettings.clad
   constexpr const char* kMasterVolumeLevels = "Mute,Low,MediumLow,Medium,MediumHigh,High";
@@ -42,7 +44,8 @@ namespace
   {
     const std::string& volumeSettingValue = MasterVolumeToString(static_cast<MasterVolume>(kMasterVolumeLevel));
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::master_volume,
-                                                           Json::Value(volumeSettingValue));
+                                                           Json::Value(volumeSettingValue),
+                                                           kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
 
@@ -53,7 +56,8 @@ namespace
   {
     const std::string& eyeColorValue = EyeColorToString(static_cast<EyeColor>(kEyeColor));
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::eye_color,
-                                                           Json::Value(eyeColorValue));
+                                                           Json::Value(eyeColorValue),
+                                                           kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetEyeColor, kConsoleGroup);
 
@@ -61,7 +65,8 @@ namespace
   {
     const std::string& localeValue = ConsoleArg_Get_String(context, "localeValue");
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::locale,
-                                                           Json::Value(localeValue));
+                                                           Json::Value(localeValue),
+                                                           kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetLocale, kConsoleGroup, const char* localeValue);
 
@@ -69,7 +74,8 @@ namespace
   {
     const std::string& timeZoneValue = ConsoleArg_Get_String(context, "timeZoneValue");
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::time_zone,
-                                                           Json::Value(timeZoneValue));
+                                                           Json::Value(timeZoneValue),
+                                                           kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetTimeZone, kConsoleGroup, const char* timeZoneValue);
 
@@ -77,25 +83,26 @@ namespace
   {
     const std::string& defaultLocationValue = ConsoleArg_Get_String(context, "defaultLocationValue");
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::default_location,
-                                                           Json::Value(defaultLocationValue));
+                                                           Json::Value(defaultLocationValue),
+                                                           kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetDefaultLocation, kConsoleGroup, const char* defaultLocationValue);
 
   void DebugToggle24HourClock(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->HandleRobotSettingToggleRequest(RobotSetting::clock_24_hour);
+    s_SettingsCommManager->ToggleRobotSettingHelper(RobotSetting::clock_24_hour);
   }
   CONSOLE_FUNC(DebugToggle24HourClock, kConsoleGroup);
 
   void DebugToggleTempIsFahrenheit(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->HandleRobotSettingToggleRequest(RobotSetting::temp_is_fahrenheit);
+    s_SettingsCommManager->ToggleRobotSettingHelper(RobotSetting::temp_is_fahrenheit);
   }
   CONSOLE_FUNC(DebugToggleTempIsFahrenheit, kConsoleGroup);
 
   void DebugToggleDistIsMetric(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->HandleRobotSettingToggleRequest(RobotSetting::dist_is_metric);
+    s_SettingsCommManager->ToggleRobotSettingHelper(RobotSetting::dist_is_metric);
   }
   CONSOLE_FUNC(DebugToggleDistIsMetric, kConsoleGroup);
 
@@ -142,6 +149,7 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
 {
   s_SettingsCommManager = this;
   _settingsManager = &robot->GetComponent<SettingsManager>();
+  _jdocsManager = &robot->GetComponent<JdocsManager>();
   _gatewayInterface = robot->GetGatewayInterface();
   auto* gi = _gatewayInterface;
   if (gi != nullptr)
@@ -188,28 +196,26 @@ void SettingsCommManager::UpdateDependent(const RobotCompMap& dependentComps)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting robotSetting,
-                                                          const Json::Value& settingJson)
+                                                          const Json::Value& settingJson,
+                                                          const bool updateSettingsJdoc)
 {
   // Change the robot setting and apply the change
-  const bool success = _settingsManager->SetRobotSetting(robotSetting, settingJson);
+  const bool success = _settingsManager->SetRobotSetting(robotSetting, settingJson, updateSettingsJdoc);
   if (!success)
   {
     LOG_ERROR("SettingsCommManager.HandleRobotSettingChangeRequest",
               "Error setting key %s to value %s", EnumToString(robotSetting), settingJson.asString().c_str());
   }
 
-  // TODO Update the jdoc (maybe only if successful?)
-  // TODO Potentially send message to Cloud (only if successful?)
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// this is a helper function mostly for testing
-bool SettingsCommManager::HandleRobotSettingToggleRequest(const RobotSetting robotSetting)
+bool SettingsCommManager::ToggleRobotSettingHelper(const RobotSetting robotSetting)
 {
   const bool curSetting = _settingsManager->GetRobotSettingAsBool(robotSetting);
-  return HandleRobotSettingChangeRequest(robotSetting, Json::Value(!curSetting));
+  return HandleRobotSettingChangeRequest(robotSetting, Json::Value(!curSetting), kUpdateSettingsJdoc);
 }
 
 
@@ -257,9 +263,10 @@ void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::Gatew
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsCommManager::OnRequestPullSettings(const external_interface::PullSettingsRequest& pullSettingsRequest)
 {
-  // TODO
   LOG_INFO("SettingsCommManager.OnRequestPullSettings", "Pull settings request");
   auto* pullSettingsResp = new external_interface::PullSettingsResponse();
+  auto* jdoc = pullSettingsResp->add_doc();
+  _jdocsManager->GetJdoc(external_interface::JdocType::ROBOT_SETTINGS, *jdoc);
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pullSettingsResp));
 }
 
@@ -281,57 +288,66 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 {
   LOG_INFO("SettingsCommManager.OnRequestUpdateSettings", "Update settings request");
   const auto& settings = updateSettingsRequest.settings();
+  bool updateSettingsJdoc = false;
 
   if (settings.oneof_clock_24_hour_case() == external_interface::RobotSettingsConfig::OneofClock24HourCase::kClock24Hour)
   {
-    HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,
-                                    Json::Value(settings.clock_24_hour()));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,
+                                                          Json::Value(settings.clock_24_hour()));
   }
   if (settings.oneof_eye_color_case() == external_interface::RobotSettingsConfig::OneofEyeColorCase::kEyeColor)
   {
     // Cast the protobuf3 enum to our CLAD enum, then call into CLAD to get the string version
-    // todo:  replace the clad enum completely
+    // todo:  replace the clad enum completely, when we get protobuf versions of enum-to-string, string-to-enum
     const std::string& eyeColor = EnumToString(static_cast<EyeColor>(settings.eye_color()));
-    HandleRobotSettingChangeRequest(RobotSetting::eye_color,
-                                    Json::Value(eyeColor));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::eye_color,
+                                                          Json::Value(eyeColor));
   }
   if (settings.oneof_default_location_case() == external_interface::RobotSettingsConfig::OneofDefaultLocationCase::kDefaultLocation)
   {
-    HandleRobotSettingChangeRequest(RobotSetting::default_location,
-                                    Json::Value(settings.default_location()));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::default_location,
+                                                          Json::Value(settings.default_location()));
   }
   if (settings.oneof_dist_is_metric_case() == external_interface::RobotSettingsConfig::OneofDistIsMetricCase::kDistIsMetric)
   {
-    HandleRobotSettingChangeRequest(RobotSetting::dist_is_metric,
-                                    Json::Value(settings.dist_is_metric()));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::dist_is_metric,
+                                                          Json::Value(settings.dist_is_metric()));
   }
   if (settings.oneof_locale_case() ==  external_interface::RobotSettingsConfig::OneofLocaleCase::kLocale)
   {
-    HandleRobotSettingChangeRequest(RobotSetting::locale,
-                                    Json::Value(settings.locale()));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::locale,
+                                                          Json::Value(settings.locale()));
   }
   if (settings.oneof_master_volume_case() == external_interface::RobotSettingsConfig::OneofMasterVolumeCase::kMasterVolume)
   {
     // Cast the protobuf3 enum to our CLAD enum, then call into CLAD to get the string version
-    // todo:  replace the clad enum completely
+    // todo:  replace the clad enum completely, when we get protobuf versions of enum-to-string, string-to-enum
     const std::string masterVolume = EnumToString(static_cast<MasterVolume>(settings.master_volume()));
-    HandleRobotSettingChangeRequest(RobotSetting::master_volume,
-                                    Json::Value(masterVolume));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::master_volume,
+                                                          Json::Value(masterVolume));
   }
   if (settings.oneof_temp_is_fahrenheit_case() == external_interface::RobotSettingsConfig::OneofTempIsFahrenheitCase::kTempIsFahrenheit)
   {
-    HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
-                                    Json::Value(settings.temp_is_fahrenheit()));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
+                                                          Json::Value(settings.temp_is_fahrenheit()));
   }
   if (settings.oneof_time_zone_case() == external_interface::RobotSettingsConfig::OneofTimeZoneCase::kTimeZone)
   {
-    HandleRobotSettingChangeRequest((RobotSetting::time_zone),
-                                    Json::Value(settings.time_zone()));
+    updateSettingsJdoc |= HandleRobotSettingChangeRequest((RobotSetting::time_zone),
+                                                          Json::Value(settings.time_zone()));
   }
 
-  auto* updateSettingsResp = new external_interface::UpdateSettingsResponse();
-  // TODO put the jdoc in the response?
-  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(updateSettingsResp));
+  // The request can handle multiple settings changes, but we only update the jdoc once, for efficiency
+  if (updateSettingsJdoc)
+  {
+    _settingsManager->UpdateSettingsJdoc();
+  }
+
+  auto* response = new external_interface::UpdateSettingsResponse();
+  auto* jdoc = new external_interface::Jdoc();
+  _jdocsManager->GetJdoc(external_interface::JdocType::ROBOT_SETTINGS, *jdoc);
+  response->set_allocated_doc(jdoc);
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
 }
 
 

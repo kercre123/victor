@@ -4,13 +4,18 @@ syntax = "proto3";
 
 package Anki.Cozmo.external_interface;
 
-option optimize_for = LITE_RUNTIME;
-
 import "messages.proto";
 
 enum ApiVersion {
   INVALID = 0;
   LATEST  = 1;
+}
+
+enum JdocType {
+  ROBOT_SETTINGS = 0;
+  ROBOT_LIFETIME_STATS = 1;
+  ACCOUNT_SETTINGS = 2;
+  USER_ENTITLEMENTS = 3;
 }
 
 enum Volume {

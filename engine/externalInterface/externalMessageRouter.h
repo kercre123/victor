@@ -64,6 +64,18 @@ public:
     Event* event = new Event{ message };
     return WrapResponse( event );
   }
+
+  // custom Wrap() function for timestamped status
+  template <typename T>
+  inline static ReturnIf<CanContruct<Status,T>::value, GatewayWrapper>
+  Wrap( T* message )
+  {
+    auto* statusMsg = new Status{ message };
+    auto* timeStampedStatusMsg = new external_interface::TimeStampedStatus;
+    timeStampedStatusMsg->set_allocated_status( statusMsg );
+    timeStampedStatusMsg->set_timestamp_utc( GetTimestampUTC() );
+    return Wrap( timeStampedStatusMsg );
+  }
   
   // macro to generate Wrap() methods based on Event types listed in the proto file
   #define MAKE_MESSAGE_WRAPPER(Type) \
@@ -74,7 +86,6 @@ public:
       auto* msgPtr = new Type{ message }; \
       return Wrap( msgPtr ); \
     }
-  MAKE_MESSAGE_WRAPPER(Status)
   MAKE_MESSAGE_WRAPPER(Onboarding)
   MAKE_MESSAGE_WRAPPER(WakeWord)
   MAKE_MESSAGE_WRAPPER(AttentionTransfer)
@@ -117,6 +128,10 @@ public:
     CLADEvent event{ std::forward<T>(message) };
     return Wrap( std::move(event) );
   }
+
+private:
+
+  static uint32_t GetTimestampUTC();
 
 };
 
