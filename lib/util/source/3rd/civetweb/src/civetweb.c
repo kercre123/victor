@@ -242,6 +242,10 @@ _civet_safe_clock_gettime(int clk_id, struct timespec *t)
 #define SOCKET_TIMEOUT_QUANTUM (2000)
 #endif
 
+#ifndef TCP_USER_TIMEOUT_MS
+#define TCP_USER_TIMEOUT_MS 1000
+#endif
+
 #define SHUTDOWN_RD (0)
 #define SHUTDOWN_WR (1)
 #define SHUTDOWN_BOTH (2)
@@ -4368,7 +4372,7 @@ set_blocking_mode(SOCKET sock, int blocking)
 	int flags;
 
 	flags = fcntl(sock, F_GETFL, 0);
-	if (blocking) {
+	if (!blocking) {
 		(void)fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 	} else {
 		(void)fcntl(sock, F_SETFL, flags & (~(int)(O_NONBLOCK)));
@@ -6655,6 +6659,15 @@ mg_inet_pton(int af, const char *src, void *dst, size_t dstlen)
 	return func_ret;
 }
 
+static int set_tcp_retry_timeout(SOCKET sock_fd, int timeout_ms)
+{
+	int rc = setsockopt(sock_fd,
+                            6,  /* SOL_TCP */
+                            18, /* TCP_USER_TIMEOUT */
+                            (char*) &timeout_ms,
+                            sizeof (timeout_ms));
+	return rc;
+}
 
 static int
 connect_socket(struct mg_context *ctx /* may be NULL */,
@@ -6768,6 +6781,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 	        == 0)) {
 		/* connected with IPv4 */
 		set_blocking_mode(*sock, 0);
+		set_tcp_retry_timeout(*sock, TCP_USER_TIMEOUT_MS);
 		return 1;
 	}
 
@@ -6777,6 +6791,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 	        == 0)) {
 		/* connected with IPv6 */
 		set_blocking_mode(*sock, 0);
+		set_tcp_retry_timeout(*sock, TCP_USER_TIMEOUT_MS);
 		return 1;
 	}
 #endif
@@ -12672,6 +12687,7 @@ mg_connect_client_impl(const struct mg_client_options *client_options,
 
 	if (conn) {
 		set_blocking_mode(sock, 0);
+		set_tcp_retry_timeout(sock, TCP_USER_TIMEOUT_MS);
 	}
 
 	return conn;
@@ -13819,6 +13835,7 @@ accept_new_connection(const struct socket *listener, struct mg_context *ctx)
 		 * call is no longer required. */
 
 		set_blocking_mode(so.sock, 0);
+		set_tcp_retry_timeout(so.sock, TCP_USER_TIMEOUT_MS);
 
 		produce_socket(ctx, &so);
 	}
