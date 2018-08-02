@@ -1,0 +1,21 @@
+{
+  "managedJdocs" :
+  {
+    "ROBOT_SETTINGS" : {
+      "docName" : "vic.RobotSettings",
+      "savedOnDisk" : true
+    },
+    "ROBOT_LIFETIME_STATS" : {
+      "docName" : "vic.RobotLifetimeStats",
+      "savedOnDisk" : true
+    },
+    "ACCOUNT_SETTINGS" : {
+      "docName" : "vic.AccountSettings",
+      "savedOnDisk" : false
+    },
+    "USER_ENTITLEMENTS" : {
+      "docName" : "vic.UserEntitlements",
+      "savedOnDisk" : false
+    }
+  }
+}

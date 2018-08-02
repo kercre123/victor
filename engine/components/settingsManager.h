@@ -27,7 +27,9 @@
 namespace Anki {
 namespace Cozmo {
 
-class SettingsManager : public IDependencyManagedComponent<RobotComponentID>, 
+class JdocsManager;
+
+class SettingsManager : public IDependencyManagedComponent<RobotComponentID>,
                         private Anki::Util::noncopyable
 {
 public:
@@ -39,6 +41,7 @@ public:
   virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
+    dependencies.insert(RobotComponentID::JdocsManager);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
   };
@@ -50,18 +53,16 @@ public:
   // Returns true if successful
   bool SetRobotSetting(const RobotSetting robotSetting,
                        const Json::Value& valueJson,
-                       const bool saveSettingsFile = true);
+                       const bool updateSettingsJdoc);
 
   // Return the setting value (currently only strings or bools supported)
   std::string GetRobotSettingAsString(const RobotSetting key) const;
   bool        GetRobotSettingAsBool  (const RobotSetting key) const;
 
+  bool UpdateSettingsJdoc();
+  
 private:
 
-  // Load/save settings file from/to persistent robot storage
-  bool LoadSettingsFile();
-  void SaveSettingsFile() const;
-  
   void ApplyAllCurrentSettings();
   bool ApplyRobotSetting(const RobotSetting robotSetting);
   bool ApplySettingMasterVolume();
@@ -73,14 +74,12 @@ private:
   Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
-  std::string               _savePath = "";
-  std::string               _fullPathSettingsFile = "";
   bool                      _applySettingsNextTick = false;
   using SettingSetter = bool (SettingsManager::*)();
   using SettingSetters = std::map<RobotSetting, SettingSetter>;
-  //  bool (SettingsManager::*_settingSetter)(const std::string& newValue) = nullptr;
   SettingSetters            _settingSetters;
 
+  JdocsManager*                  _jdocsManager = nullptr;
   Audio::EngineRobotAudioClient* _audioClient = nullptr;
 };
 

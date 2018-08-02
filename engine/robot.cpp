@@ -45,6 +45,7 @@
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
+#include "engine/components/jdocsManager.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
@@ -351,6 +352,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->AddDependentComponent(RobotComponentID::VariableSnapshotComponent,  new VariableSnapshotComponent());
+    _components->AddDependentComponent(RobotComponentID::JdocsManager,               new JdocsManager());
     _components->InitComponents(this);
   }
 
