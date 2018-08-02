@@ -39,6 +39,8 @@ public:
   
   static constexpr int kNumCliffSensors = CliffSensorComponent::kNumCliffSensors;
 
+  static const int kConfirmationConfigProxMaxReading;
+
   HabitatDetectorComponent();
   
   ~HabitatDetectorComponent();
@@ -85,9 +87,7 @@ public:
   
   HabitatBeliefState GetHabitatBeliefState() const { return _habitatBelief; }
   
-  bool IsProxObservingHabitatWall() const;
-  
-  void ForceSetHabitatBeliefState(HabitatBeliefState belief);
+  void ForceSetHabitatBeliefState(HabitatBeliefState belief, const std::string& sourceStr);
   
 protected:
   
@@ -95,8 +95,10 @@ protected:
   
   // adds valid prox readings to a buffer
   // - used to average readings to counteract noise
-  // - returns true when enough readings are collected
+  // - returns true when enough readings are collected OR when it times out
   bool UpdateProxObservations();
+
+  void SetBelief(HabitatBeliefState state, std::string devReasonStr);
 
 private:
   

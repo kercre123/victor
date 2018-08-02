@@ -40,21 +40,25 @@
 #include <array>
 #include <vector>
 #include <sstream>
+#include <iomanip>
 
 namespace Anki {
 
 namespace Cozmo {
-  
-namespace {
+
+
+// when the robot is positioned such that its front two cliff
+// sensors see the white line of the habitat, then this is
+// the max expected of values for the sensor seeing the wall
+const int HabitatDetectorComponent::kConfirmationConfigProxMaxReading = 39;
+
+// "private" constants
+namespace 
+{
   
   // highest expected value to come out of any cliff sensor
   // when it is observing the grey-matte surface of a habitat
   const int kCliffGreyMaxHabitat = 200;
-  
-  // when the robot is positioned such that its front two cliff
-  // sensors see the white line of the habitat, then this is
-  // the max expected of values for the sensor seeing the wall
-  const int kConfirmationConfigProxMaxReading = 39;
   
   // number of consecutive readings while the front two cliff
   // sensors are positioned on the white line to average over
@@ -70,6 +74,7 @@ namespace {
   
   const std::string kWebVizHabitatModuleName = "habitat";
   const f32 kSendWebVizDataPeriod_sec = 0.5f;
+  Json::Value _toSendJson = Json::objectValue;
 }
     
 
@@ -105,7 +110,7 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
         auto* webService = context->GetWebService();
         if (webService != nullptr) {
           auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
-            _habitatBelief = HabitatBeliefStateFromString(data["forceHabitatState"].asCString());
+            ForceSetHabitatBeliefState(HabitatBeliefStateFromString(data["forceHabitatState"].asCString()), "WebViz"); 
           };
           _signalHandles.emplace_back(webService->OnWebVizData(kWebVizHabitatModuleName).ScopedSubscribe(onData));
         }
@@ -114,6 +119,8 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
   } else {
     PRINT_NAMED_WARNING("HabitatDetectorComponent.InitDependent.MissingExternalIterface","");
   }
+
+  _toSendJson["reason"] = "";
 }
 
 template<>
@@ -135,26 +142,19 @@ template<>
 void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotStopped& msg)
 {
   if(msg.reason == StopReason::CLIFF) {
-    _habitatBelief = HabitatBeliefState::NotInHabitat;
-    _habitatLineRelPose = HabitatLineRelPose::Invalid;
+    SetBelief(HabitatBeliefState::NotInHabitat, "CliffDetected");
   }
 }
 
-bool HabitatDetectorComponent::IsProxObservingHabitatWall() const
+void HabitatDetectorComponent::SetBelief(HabitatBeliefState state, std::string devReasonStr)
 {
-  if(_proxReadingBuffer.size() < kMinProxReadingsRequired) {
-    // we timed out while waiting for
-    // enough prox sensor readings
-    return false;
-  }
-  u32 sum = 0;
-  for(auto& reading : _proxReadingBuffer) {
-    sum += reading;
-  }
-  float distance_mm = float(sum)/_proxReadingBuffer.size();
-  return distance_mm <= kConfirmationConfigProxMaxReading;
+  PRINT_NAMED_INFO("HabitatDetectorComponent.SetBelief","%s <- %s", EnumToString(state), devReasonStr.c_str());
+  _habitatBelief = state;
+  _habitatLineRelPose = HabitatLineRelPose::Invalid;
+  _toSendJson["reason"] = devReasonStr;
 }
-  
+
+
 bool HabitatDetectorComponent::UpdateProxObservations()
 {
   auto proxData = _robot->GetProxSensorComponent().GetLatestProxData();
@@ -174,9 +174,10 @@ bool HabitatDetectorComponent::UpdateProxObservations()
          _numTicksWaitingForProx > kMaxTicksToWaitForProx;
 }
   
-void HabitatDetectorComponent::ForceSetHabitatBeliefState(HabitatBeliefState belief)
+void HabitatDetectorComponent::ForceSetHabitatBeliefState(HabitatBeliefState belief, const std::string& sourceStr)
 {
-  _habitatBelief = belief;
+  // prepend ForceSet to calls to this method so we can track the caller
+  SetBelief(belief, "ForceSet(" + sourceStr + ")");
 }
 
 void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<RobotComponentID>& dependentComps)
@@ -186,7 +187,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
   const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
   if(inPRDemo) {
     if( _habitatBelief != HabitatBeliefState::NotInHabitat ) {
-      _habitatBelief = HabitatBeliefState::NotInHabitat;
+      SetBelief(HabitatBeliefState::NotInHabitat, "FeatureGate");
     }
     
     return;
@@ -199,9 +200,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     // determine if we have driven too far without detecting white from cliffs
     f32 distance = ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin());
     if(!_detectedWhiteFromCliffs && distance > kMinTravelDistanceWithoutSeeingWhite_mm) {
-      _habitatBelief = HabitatBeliefState::NotInHabitat;
-      _habitatLineRelPose = HabitatLineRelPose::Invalid;
-      PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.NotInHabitat.FromOdometry","");
+      SetBelief(HabitatBeliefState::NotInHabitat, "OdometryTooHigh");
     }
   
     u8 numGrey = 0;
@@ -226,8 +225,13 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     
     if(numWhite >= 3 || numNone >= 3) {
       // impossible configurations when not on the charger platform
-      _habitatBelief = HabitatBeliefState::NotInHabitat;
-      _habitatLineRelPose = HabitatLineRelPose::Invalid;
+      std::stringstream reason;
+      reason << "InvalidCliffConfig" << " [";
+      for(int i=0; i<kNumCliffSensors; ++i) {
+        reason << cliffValues[i] << "(" << (int)cliffCats[i] << "), ";
+      }
+      reason << "]";
+      SetBelief(HabitatBeliefState::NotInHabitat, reason.str());
     } else {
       // note: we take specific actions based on the line-pose determined here
       // inside the behavior ConfirmHabitat
@@ -256,14 +260,32 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       }
       
       if(_habitatLineRelPose == HabitatLineRelPose::WhiteFLFR) {
-        const bool hasEnoughReadings = UpdateProxObservations();
-        if(hasEnoughReadings) {
-          if(IsProxObservingHabitatWall()) {
-            _habitatBelief = HabitatBeliefState::InHabitat;
-            PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.InHabitat","");
+        const bool proxDataCollectionEnded = UpdateProxObservations();
+        if(proxDataCollectionEnded) {
+          if(_proxReadingBuffer.size() >= kMinProxReadingsRequired) {
+            u32 sum = 0;
+            for(auto& reading : _proxReadingBuffer) {
+              sum += reading;
+            }
+            float distance_mm = float(sum)/_proxReadingBuffer.size();
+
+            // debug info for webviz
+            std::stringstream reason;
+            reason << "ProxReadings = [";
+            for(auto& reading : _proxReadingBuffer) {
+              reason << reading << ",";
+            }
+            reason << "] = " << std::setprecision(2) << distance_mm;
+
+            if(distance_mm <= kConfirmationConfigProxMaxReading) {
+              SetBelief(HabitatBeliefState::InHabitat, reason.str());
+            } else {
+              SetBelief(HabitatBeliefState::NotInHabitat, reason.str());
+            }
           } else {
-            _habitatBelief = HabitatBeliefState::NotInHabitat;
-            PRINT_NAMED_INFO("HabitatDetectorComponent.UpdateDependent.NotInHabitat","");
+            // we timed out while waiting for
+            // enough prox sensor readings
+            SetBelief(HabitatBeliefState::NotInHabitat, "NotEnoughProxReadings");
           }
         }
       } else {
@@ -291,10 +313,9 @@ void HabitatDetectorComponent::SendDataToWebViz() const
   if (context != nullptr) {
     auto* webService = context->GetWebService();
     if (webService!= nullptr) {
-      Json::Value toSend = Json::objectValue;
-      toSend["habitatState"] = EnumToString(_habitatBelief);
-      toSend["stopOnWhiteEnabled"] = _robot->GetCliffSensorComponent().IsStopOnWhiteEnabled() ? "yes" : "no";
-      webService->SendToWebViz(kWebVizHabitatModuleName, toSend);
+      _toSendJson["habitatState"] = EnumToString(_habitatBelief);
+      _toSendJson["stopOnWhiteEnabled"] = _robot->GetCliffSensorComponent().IsStopOnWhiteEnabled() ? "yes" : "no";
+      webService->SendToWebViz(kWebVizHabitatModuleName, _toSendJson);
     }
   }
 }
