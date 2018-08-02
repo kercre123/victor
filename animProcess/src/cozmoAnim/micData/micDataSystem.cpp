@@ -42,6 +42,13 @@ namespace {
 
 # define CONSOLE_GROUP "MicData"
 
+// FACTORY OUT-OF-BOX AUDIT
+#ifdef ANKI_DEV_CHEATS
+#undef ANKI_DEV_CHEATS
+#endif
+#define ANKI_DEV_CHEATS 1
+
+
 #if ANKI_DEV_CHEATS
   std::string _debugMicDataWriteLocation = "";
 

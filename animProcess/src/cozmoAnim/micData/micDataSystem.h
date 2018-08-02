@@ -77,10 +77,10 @@ public:
   void StartWakeWordlessStreaming(CloudMic::StreamType type);
   void Update(BaseStationTime_t currTime_nanosec);
 
-#if ANKI_DEV_CHEATS
+//#if ANKI_DEV_CHEATS
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
   void SetLocaleDevOnly(const Util::Locale& locale) { _locale = locale; }
-#endif
+//#endif
 
   void ResetMicListenDirection();
 
@@ -114,18 +114,18 @@ private:
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
   mutable std::recursive_mutex _dataRecordJobMutex;
   bool _currentlyStreaming = false;
-#if ANKI_DEV_CHEATS
+//#if ANKI_DEV_CHEATS
   bool _fakeStreamingState = false;
-#endif
+//#endif
   size_t _streamingAudioIndex = 0;
   Util::Locale _locale = {"en", "US"};
 
   std::unique_ptr<MicDataProcessor> _micDataProcessor;
   std::unique_ptr<LocalUdpServer> _udpServer;
 
-#if ANKI_DEV_CHEATS
+//#if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
-#endif
+//#endif
   
   std::atomic<uint32_t> _speakerLatency_ms{0};
   
