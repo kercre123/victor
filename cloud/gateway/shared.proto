@@ -14,7 +14,7 @@ import "extensions.proto";
 // Messages originating from the engine
 message Event {
   oneof event_type {
-    Status                           status                              = 1;
+    TimeStampedStatus                time_stamped_status                 = 1;
     Onboarding                       onboarding                          = 2;
     WakeWord                         wake_word                           = 3;
     AttentionTransfer                attention_transfer                  = 4;

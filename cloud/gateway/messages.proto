@@ -129,7 +129,7 @@ message WakeWord {
 
 message TimeStampedStatus {
   Status status = 1;
-  uint32 timestamp_ms = 2;
+  uint32 timestamp_utc = 2;
 }
 
 message RobotHistoryRequest {
