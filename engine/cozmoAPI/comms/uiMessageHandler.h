@@ -106,25 +106,11 @@ namespace Anki {
         return const_cast<ISocketComms*>( const_cast<const UiMessageHandler*>(this)->GetSocketComms(type) );
       }
       
-      const ISocketComms* GetSdkSocketComms() const
-      {
-        const ISocketComms* socketComms = GetSocketComms(UiConnectionType::SdkOverTcp);
-        return socketComms;
-      }
-      
-      ISocketComms* GetSdkSocketComms()
-      {
-        return const_cast<ISocketComms*>( const_cast<const UiMessageHandler*>(this)->GetSdkSocketComms() );
-      }
-      
       uint32_t GetNumConnectedDevicesOnAnySocket() const;
       
       bool ShouldHandleMessagesFromConnection(UiConnectionType type) const;
       
-      bool IsSdkCommunicationEnabled() const;
-      
       void UpdateSdk();
-      void UpdateIsSdkCommunicationEnabled();
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.

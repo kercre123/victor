@@ -101,10 +101,6 @@ void configure_engine(Json::Value& config)
   if (!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = Anki::Cozmo::UI_ADVERTISING_PORT;
   }
-  if (!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
-    config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = Anki::Cozmo::SDK_ON_DEVICE_TCP_PORT;
-  }
-
 }
 
 static Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,

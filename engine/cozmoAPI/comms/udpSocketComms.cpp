@@ -4,7 +4,7 @@
  * Author: Mark Wesley
  * Created: 05/14/16
  *
- * Description: UDP implementation for socket-based communications from e.g. Game/SDK to Engine
+ * Description: UDP implementation for socket-based communications.  Used by webots for Vector.
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -45,9 +45,8 @@ void UdpSocketComms::StartAdvertising(UiConnectionType connectionType)
 {
   assert((connectionType == UiConnectionType::UI) || (connectionType == UiConnectionType::SdkOverUdp));
   
-  const bool isUI = (connectionType == UiConnectionType::UI);
-  const int registrationPort = isUI ? UI_ADVERTISEMENT_REGISTRATION_PORT : SDK_ADVERTISEMENT_REGISTRATION_PORT;
-  const int advertisingPort  = isUI ? UI_ADVERTISING_PORT : SDK_ADVERTISING_PORT;
+  const int registrationPort = UI_ADVERTISEMENT_REGISTRATION_PORT;
+  const int advertisingPort  = UI_ADVERTISING_PORT;
 
   PRINT_CH_INFO("UiComms", "UdpSocketComms::StartAdvertising",
                    "Starting %sAdvertisementService, reg port %d, ad port %d",
@@ -63,8 +62,8 @@ bool UdpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
   
   const bool isUI = (connectionType == UiConnectionType::UI);
   using namespace AnkiUtil;
-  const char* hostIPKey     = isUI ? kP_ADVERTISING_HOST_IP : kP_SDK_ADVERTISING_HOST_IP;
-  const char* advertPortKey = isUI ? kP_UI_ADVERTISING_PORT : kP_SDK_ADVERTISING_PORT;
+  const char* hostIPKey     = kP_ADVERTISING_HOST_IP;
+  const char* advertPortKey = kP_UI_ADVERTISING_PORT;
   
   const Json::Value& hostIPValue     = config[hostIPKey];
   const Json::Value& advertPortValue = config[advertPortKey];
@@ -88,7 +87,7 @@ bool UdpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
     }
   }
   
-  const char* numDevicesKey = isUI ? kP_NUM_UI_DEVICES_TO_WAIT_FOR : kP_NUM_SDK_DEVICES_TO_WAIT_FOR;
+  const char* numDevicesKey = kP_NUM_UI_DEVICES_TO_WAIT_FOR;
   
   if(!config.isMember(numDevicesKey))
   {

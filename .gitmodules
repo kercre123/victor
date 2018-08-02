@@ -4,6 +4,3 @@
 [submodule "lib/das-client"]
 	path = lib/das-client
 	url = git@github.com:anki/DAS-Client.git
-[submodule "tools/sdk/victor-python-sdk"]
-	path = tools/sdk/victor-python-sdk
-	url = git@github.com:anki/victor-python-sdk-private.git
