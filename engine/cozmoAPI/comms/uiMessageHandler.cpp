@@ -107,11 +107,14 @@ namespace Anki {
       {
         case UiConnectionType::UI:
         {
-          #if USE_DIRECT_COMMS
-          return new DirectGameComms(gameMessagePort, hostDeviceId);
-          #else
-          return new UdpSocketComms(type);
-          #endif
+          // ====== FOR FACTORY OUT-OF-BOX AUDIT ======
+          // ====== Disable Webots support       ======
+          // #if USE_DIRECT_COMMS
+          // return new DirectGameComms(gameMessagePort, hostDeviceId);
+          // #else
+          // return new UdpSocketComms(type);
+          // #endif
+          return nullptr;
         }
         case UiConnectionType::SdkOverUdp:
         {
