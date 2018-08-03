@@ -27,67 +27,64 @@ bool TestAuxTofDetect(void)
   return false;
 }
 
-void TestAuxTofCleanup(void)
-{
+void TestAuxTofCleanup(void) {
   Opto::stop();
   DUT_I2C::deinit();
 }
 
-/*
-void TestAuxI2CDebug(void)
-{
-  ConsolePrintf("initializing i2c driver...\n");
-  DUT_I2C::init();
-  ConsolePrintf("done!\n");
-  Timer::delayMs(1000);
-  
-  DUT_I2C::writeReg(0, TOF_SENSOR_ADDRESS, 0xAD, 0xA5);
-  Timer::wait(250);
-  DUT_I2C::writeReg16(0, TOF_SENSOR_ADDRESS, 0xAD, 0x11A5);
-  Timer::wait(250);
-  DUT_I2C::writeReg32(0, TOF_SENSOR_ADDRESS, 0xAD, 0x332211A5);
-  Timer::wait(250);
-  
-  uint8_t buf[9] = {1,2,3,4,5,6,7,8,9};
-  DUT_I2C::multiOp(I2C_REG_WRITE, 0, TOF_SENSOR_ADDRESS, 0xAD, sizeof(buf), buf);
-  Timer::wait(250);
-  
-  Timer::delayMs(5000);
-  
-  DUT_I2C::deinit();
-}
-*/
-
-void TestAuxTOF1(void)
-{
+void TOF_init(void) {
   ConsolePrintf("initializing opto driver...\n");
-  Opto::start(); //DUT_I2C::init();
+  DUT_I2C::init();
+  Opto::start();
   ConsolePrintf("done!\n");
-  Timer::delayMs(250);
-  
-  while( ConsoleReadChar() > -1 );
-  while(1) //for( int x=0; x<10; x++ )
+}
+
+void TOF_sensorCheck(void)
+{
+  ConsolePrintf("sampling TOF sensor:\n");
+  int reading_avg=0; const int num_readings=25;
+  for(int i=-10; i<num_readings; i++)
   {
-    Timer::delayMs(250);
-    
+    tof_dat_t tof = *Opto::read();
+    uint16_t value = __REV16(tof.reading);
+    if( i>=0 ) reading_avg += value; //don't include initial readings; "warm-up" period
+    if( i==0 ) ConsolePrintf("\n");
+    ConsolePrintf("%i,", value );
+  }
+  ConsolePrintf("\navg reading: %imm\n", reading_avg /= num_readings);
+  
+  //nominal reading expected: 80mm
+  if( reading_avg < 65 || reading_avg > 125 )
+    throw ERROR_SENSOR_TOF;
+}
+
+void TOF_debugInspectRaw(void)
+{
+  //spew raw sensor data. break on console input
+  while( ConsoleReadChar() > -1 );
+  while(1)
+  {
     tof_dat_t tof = *Opto::read();
     ConsolePrintf("TOF: status=%03i reading=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
-      tof.status, tof.reading, tof.signal_rate, tof.ambient_rate, tof.spad_count );
+      tof.status, __REV16(tof.reading), __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );
     
-    if( ConsoleReadChar() > -1 )
-      break;
+    if( ConsoleReadChar() > -1 ) break;
+    Timer::delayMs(250);
   }
-  
-  Opto::stop(); //DUT_I2C::deinit();
 }
 
 TestFunction* TestAuxTofGetTests(void)
 {
   static TestFunction m_tests[] = {
-    //TestAuxI2CDebug,
-    TestAuxTOF1,
+    TOF_init,
+    TOF_sensorCheck,
     NULL,
   };
-  return m_tests;
+  static TestFunction m_tests_debug[] = {
+    TOF_init,
+    TOF_debugInspectRaw,
+    NULL,
+  };
+  return g_fixmode==FIXMODE_TOF_DEBUG ? m_tests_debug : m_tests;
 }
 
