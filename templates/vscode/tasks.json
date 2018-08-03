@@ -27,6 +27,11 @@
             "dependsOn": [ "deploy:debug" ],
             "type": "shell",
             "command": "${workspaceRoot}/project/victor/scripts/start-lldb.sh"
+        },
+        {
+            "label": "debugonly:debug",
+            "type": "shell",
+            "command": "${workspaceRoot}/project/victor/scripts/start-lldb.sh"
         }
     ]
 }
