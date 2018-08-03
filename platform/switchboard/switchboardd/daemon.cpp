@@ -34,7 +34,6 @@
 #include "anki-wifi/exec_command.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
-#include "switchboardd/onboardingState.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/DAS.h"
@@ -483,10 +482,6 @@ void Daemon::HandleOtaUpdateExit(int rc) {
         // Change the face back to end pairing state *only* if
         // we didn't update successfully and there is no BLE connection
         _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
-      } else {
-        if(!OnboardingState::HasStartedOnboarding()) {
-          _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS_ERROR);
-        }
       }
     }
   });
@@ -500,9 +495,6 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
 
   _isOtaUpdating = true;
   ev_timer_again(_loop, &_handleOtaTimer.timer);
-  if(!OnboardingState::HasStartedOnboarding()) {
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
-  }
 
   Log::Write("Ota Update Initialized...");
   // If the update-engine.service file is not present then we are running on an older version of
