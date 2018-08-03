@@ -571,6 +571,11 @@
               <FileType>8</FileType>
               <FilePath>.\tests\TestDebugHeadprogram.cpp</FilePath>
             </File>
+            <File>
+              <FileName>TestAux.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\tests\TestAux.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -690,6 +695,16 @@
               <FileName>flexflow.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\flexflow.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dut_i2c.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\dut_i2c.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>opto.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\opto.cpp</FilePath>
             </File>
           </Files>
         </Group>

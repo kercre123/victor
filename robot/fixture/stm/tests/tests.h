@@ -72,6 +72,10 @@ TestFunction* TestMotor1GetTests(void);
 TestFunction* TestMotor2GetTests(void);
 TestFunction* TestMotor3GetTests(void);
 
+//Auxilliary
+bool          TestAuxTofDetect(void);
+void          TestAuxTofCleanup(void);
+TestFunction* TestAuxTofGetTests(void);
 
 #ifdef __cplusplus
 }

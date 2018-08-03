@@ -296,17 +296,28 @@ inline void dbgBtnHandler(void)
     if( edge != 0 )
       ConsolePrintf("btn %u %s\n", x, edge > 0 ? "pressed" : "released");
     
-    //XXX: debug backback test. Either kill it, or find a good home (not here)
-    if( g_fixmode == FIXMODE_BACKPACK1 && edge > 0 && x == Board::BTN_4 )
-      g_forceStart = 1;
-    
-    //XXX: hack to manually start head programming
-    if( (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) && edge > 0 && x == Board::BTN_4 )
-      g_forceStart = 1;
-    
-    //XXX: run debug tests
-    if( g_fixmode == FIXMODE_DEBUG && edge > 0 && x == Board::BTN_4 )
-      g_forceStart = 1;
+    //XXX: allow button 4 to start some tests
+    if( x == Board::BTN_4 && edge > 0 )
+    {
+      if(     g_fixmode == FIXMODE_DEBUG
+          ||  g_fixmode == FIXMODE_BACKPACK1
+          || (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1)
+          ||  g_fixmode == FIXMODE_BODY1_OL
+          ||  g_fixmode == FIXMODE_CUBE_OL
+          ||  g_fixmode == FIXMODE_ROBOT1_OL
+          ||  g_fixmode == FIXMODE_ROBOT3_OL
+          ||  g_fixmode == FIXMODE_PACKOUT_OL
+          ||  g_fixmode == FIXMODE_INFO
+          ||  g_fixmode == FIXMODE_SOUND1
+          ||  g_fixmode == FIXMODE_SOUND2
+          ||  g_fixmode == FIXMODE_LOG_DL
+          ||  g_fixmode == FIXMODE_TOF
+      )
+      {
+        ConsolePrintf("manual force start\n");
+        g_forceStart = 1;
+      }
+    }
     
     /*/DEBUG: the ol' btn toggles an LED trick
     if( edge > 0 ) { 
