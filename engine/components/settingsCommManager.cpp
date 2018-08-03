@@ -31,11 +31,11 @@ namespace Cozmo {
 namespace
 {
   SettingsCommManager* s_SettingsCommManager = nullptr;
+  static const bool kUpdateSettingsJdoc = true;
 
 #if REMOTE_CONSOLE_ENABLED
 
   static const char* kConsoleGroup = "RobotSettings";
-  static const bool kUpdateSettingsJdoc = true;
 
   // NOTE: Need to keep kMasterVolumeLevels in sync with MasterVolume in robotSettings.clad
   constexpr const char* kMasterVolumeLevels = "Mute,Low,MediumLow,Medium,MediumHigh,High";
