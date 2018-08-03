@@ -7,6 +7,7 @@ Test cube connection interactions
 import os
 import sys
 
+import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import vector  # pylint: disable=wrong-import-position
 

@@ -17,7 +17,7 @@ class ProximitySensorData:
     reported distance describes how far in front of this sensor vector feels an obstacle is.  The sensor estimates
     based on time of flight information within a field of view which the engine resolves to a certain quality value.
 
-    Four additional flags are supplied by the engine to indicate whether this proximity data is considered valid 
+    Four additional flags are supplied by the engine to indicate whether this proximity data is considered valid
     for the robot's internal pathfinding.  Respecting these is optional, but will help python code respect the
     behavior of the robot's innate object avoidance.
     '''

@@ -187,7 +187,7 @@ class LightCube(util.Component):
             color_profile (:class:`vector.lights.ColorProfile`): The profile to be used for the cube lights
         '''
         return self.set_light_corners(light, light, light, light, color_profile)
-    
+
     def set_lights_off(self, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
         '''Set all lights off on the cube
 
