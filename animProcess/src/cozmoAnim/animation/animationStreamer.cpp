@@ -458,11 +458,16 @@ namespace Cozmo {
     _faceImageGrayscale.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
    
     // Start with a blank face (face scale == 0) until the engine has initialized and sent an animation
-    ProceduralFace blankFace;
-    const f32 zeroScale = 0.0f;
-    const std::vector<f32> arbitraryEyes((int)ProceduralEyeParameter::NumParameters, 0.5f);
-    blankFace.SetFromValues(arbitraryEyes, arbitraryEyes, 0.0f, 0.0f, 0.0f, zeroScale, zeroScale, 0.0f);
-    SetProceduralFace(blankFace, std::numeric_limits<u32>::max());
+    {
+      ProceduralFace blankFace;
+      const f32 zeroScale = 0.0f;
+      const std::vector<f32> arbitraryEyes((int)ProceduralEyeParameter::NumParameters, 0.5f);
+      blankFace.SetFromValues(arbitraryEyes, arbitraryEyes, 0.0f, 0.0f, 0.0f, zeroScale, zeroScale, 0.0f);
+      
+      SetProceduralFace(blankFace, std::numeric_limits<u32>::max());
+      
+      ProceduralFace::SetBlankFaceData(blankFace);
+    }
 
     return RESULT_OK;
   }
@@ -1046,6 +1051,16 @@ namespace Cozmo {
         // Give it a little duration so it doesn't pop.
         if(spriteTrackAllowsEyes){
           _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, (3 * ANIM_TIME_STEP_MS));
+        }
+      }
+      
+      if (!s_enableKeepFaceAlive){
+        // If the animation doesn't have a procedural face track, and Face Keep-alive is false (i.e.,
+        // the "last procedural face should persist") then the last procedural face should be blank.
+        // Set the last procedural face to blank
+        auto& faceTrack = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>();
+        if(faceTrack.IsEmpty()){
+          _proceduralTrackComponent->SetLastProceduralFaceAsBlank();
         }
       }
       

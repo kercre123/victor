@@ -24,6 +24,7 @@ namespace Anki {
 namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
+ProceduralFace* ProceduralFace::_blankFaceData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
 
 ProceduralFace::Value ProceduralFace::_saturation = DefaultSaturation;
@@ -126,11 +127,28 @@ void ProceduralFace::SetResetData(const ProceduralFace& newResetData)
   Util::SafeDelete(oldPointer);
 }
   
-void ProceduralFace::Reset()
+void ProceduralFace::SetBlankFaceData(const ProceduralFace& blankFace)
 {
-  if (nullptr != _resetData)
+  ProceduralFace* oldPointer = _blankFaceData;
+  _blankFaceData = new ProceduralFace(blankFace);
+  Util::SafeDelete(oldPointer);
+}
+  
+void ProceduralFace::Reset(bool withBlankFace)
+{
+  if ((!withBlankFace) && (nullptr != _resetData))
   {
     *this = *_resetData;
+  }
+  else if (withBlankFace && (nullptr != _blankFaceData))
+  {
+    *this = *_blankFaceData;
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ProceduralFace.Reset.NoFacePtr",
+                      "No valid %s face pointer to reset with",
+                      withBlankFace ? "blank" : "default");
   }
 }
 

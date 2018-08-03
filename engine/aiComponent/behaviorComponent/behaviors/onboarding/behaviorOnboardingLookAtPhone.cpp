@@ -65,6 +65,7 @@ void BehaviorOnboardingLookAtPhone::GetBehaviorOperationModifiers(BehaviorOperat
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::OnBehaviorActivated() 
 {
+  SmartDisableKeepFaceAlive();
   bool hasRun = _dVars.hasRun;
   _dVars = DynamicVariables();
   _dVars.hasRun = true;

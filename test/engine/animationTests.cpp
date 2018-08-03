@@ -507,7 +507,12 @@ const std::set<std::string> kLegacyAnimationsWithCastDifferences{
   "anim_peekaboo_successgetout_01",
   "anim_rtpmemorymatch_no_02",
   "anim_energy_eat_02",
-  "anim_guarddog_settle_01"
+  "anim_guarddog_settle_01",
+  
+  // todo: remove this if block once (VIC-4929) is resolved, or these animations no longer contain
+  // procedural faces, whichever comes first
+  "anim_lookatphone_getin_01",
+  "anim_lookatphone_getout_01",
 };
 
 TEST(AnimationTest, AnimationLoading)

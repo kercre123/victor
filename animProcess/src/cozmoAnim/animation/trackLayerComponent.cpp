@@ -136,6 +136,12 @@ void TrackLayerComponent::RemoveKeepFaceAlive(TimeStamp_t streamTime_ms, TimeSta
   _audioLayerManager->RemovePersistentLayer(kEyeBlinkLayerName, streamTime_ms, duration_ms);
   _faceLayerManager->RemovePersistentLayer(kEyeBlinkLayerName, streamTime_ms, duration_ms);
 }
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TrackLayerComponent::SetLastProceduralFaceAsBlank()
+{
+  _lastProceduralFace->Reset( true );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TrackLayerComponent::ResetKeepFaceAliveTimers()
