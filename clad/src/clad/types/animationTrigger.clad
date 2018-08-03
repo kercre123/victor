@@ -62,6 +62,7 @@ enum int_32 AnimationTrigger
   ChargerDockingSettle,
   ChargerDockingSevereRequest,
   ChargerDockingSevereRequestGetout,
+  ChargerDockingSorryButLowBattery,
   ChargerReaction,
   ClockGetIn,
   ClockGetOut,

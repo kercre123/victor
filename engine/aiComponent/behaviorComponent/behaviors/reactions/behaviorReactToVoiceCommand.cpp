@@ -68,14 +68,15 @@ namespace Cozmo {
 
 namespace {
 
-  const char* kEarConBegin                      = "earConAudioEventBegin";
-  const char* kEarConSuccess                    = "earConAudioEventSuccess";
-  const char* kEarConFail                       = "earConAudioEventNeutral";
-  const char* kIntentBehaviorKey                = "behaviorOnIntent";
-  const char* kProceduralBackpackLights         = "backpackLights";
-  const char* kNotifyOnErrors                   = "notifyOnErrors";
-  const char* kAnimListeningGetIn               = "animListeningGetIn";
-  const char* kExitAfterGetInKey                = "exitAfterGetIn";
+  const char* kEarConBegin                         = "earConAudioEventBegin";
+  const char* kEarConSuccess                       = "earConAudioEventSuccess";
+  const char* kEarConFail                          = "earConAudioEventNeutral";
+  const char* kIntentBehaviorKey                   = "behaviorOnIntent";
+  const char* kProceduralBackpackLights            = "backpackLights";
+  const char* kNotifyOnErrors                      = "notifyOnErrors";
+  const char* kAnimListeningGetIn                  = "animListeningGetIn";
+  const char* kExitAfterGetInKey                   = "exitAfterGetIn";
+  const char* kExitAfterListeningIfNotStreamingKey = "exitAfterListeningIfNotStreaming";
 
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
@@ -106,6 +107,7 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   animListeningGetIn( AnimationTrigger::VC_ListeningGetIn ),
   backpackLights( true ),
   exitAfterGetIn( false ),
+  exitAfterListeningIfNotStreaming( false ),
   cloudErrorTracker( "VoiceCommandErrorTracker" )
 {
 
@@ -164,6 +166,8 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   
   JsonTools::GetValueOptional( config, kExitAfterGetInKey, _iVars.exitAfterGetIn );
 
+  JsonTools::GetValueOptional( config, kExitAfterListeningIfNotStreamingKey, _iVars.exitAfterListeningIfNotStreaming );
+  
   if( !config[kNotifyOnErrors].isNull() )
   {
     int numErrorsToTriggerAnim;
@@ -194,6 +198,7 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kNotifyOnErrors,
     kAnimListeningGetIn,
     kExitAfterGetInKey,
+    kExitAfterListeningIfNotStreamingKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -723,6 +728,15 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     // in after we've closed our recording stream.
     OnVictorListeningEnd();
 
+    const bool streamingToCloud = GetBEI().GetMicComponent().GetShouldStreamAfterWakeWord();
+    if (!streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinkingCallback.NotStreaming",
+                    "We are not streaming to the cloud currently, so no point in continuing with the behavior (since "
+                    "we do not want to increment the error count, etc.). Playing the \"unheard\" anim then exiting");
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
+      return;
+    }
+    
     // Play a reaction behavior if we were told to ...
     // ** only in the case that we've heard a valid intent **
     UpdateUserIntentStatus();

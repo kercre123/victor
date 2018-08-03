@@ -450,9 +450,9 @@ void BehaviorOnboarding::BehaviorUpdate()
       const bool triggerAllowed = GetCurrentStage()->GetWakeWordBehavior( allowedIntentTag );
       SetTriggerWordEnabled( triggerAllowed );
       if( triggerAllowed && (allowedIntentTag == USER_INTENT(unmatched_intent)) ) {
-        SetStreamAfterWakeWord( false );
+        SmartSuppressStreamAfterWakeWord( true );
       } else {
-        SetStreamAfterWakeWord( true );
+        SmartSuppressStreamAfterWakeWord( false );
         SetAllowedIntent( allowedIntentTag );
       }
       
@@ -963,15 +963,6 @@ void BehaviorOnboarding::SetAllowAnyIntent()
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.ClearWhitelistedIntents();
     _dVars.lastWhitelistedIntent = USER_INTENT(INVALID);
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboarding::SetStreamAfterWakeWord( bool stream )
-{
-  auto& micComponent = GetBEI().GetMicComponent();
-  if( micComponent.GetShouldStreamAfterWakeWord() != stream ) {
-    micComponent.SetShouldStreamAfterWakeWord( stream );
   }
 }
   

@@ -264,8 +264,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   // the "do a fist bump" part of "hey victor"
   const bool shouldSuppressStreaming = shouldSuppressTriggerWord;
   if( shouldSuppressStreaming != _dVars.isSuppressingStreaming ) {
-    GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( !shouldSuppressStreaming );
-    _dVars.isSuppressingStreaming = shouldSuppressStreaming;
+    SmartSuppressStreamAfterWakeWord(shouldSuppressStreaming);
   }
 
   {

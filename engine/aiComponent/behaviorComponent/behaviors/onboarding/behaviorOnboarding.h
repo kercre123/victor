@@ -100,7 +100,6 @@ private:
   void SetTriggerWordEnabled(bool enabled);
   void SetAllowedIntent(UserIntentTag tag);
   void SetAllowAnyIntent();
-  void SetStreamAfterWakeWord(bool stream);
   
   void SendContinueResponse( bool acceptedContinue, int step );
   

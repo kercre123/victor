@@ -46,7 +46,8 @@ static const BehaviorID kWaitBehaviorID = BEHAVIOR_ID(Wait);
 const std::string kWebVizModuleNameBehaviors = "behaviors";
 const std::string kWebVizModuleNameIntents = "intents";
 
-static const char* kKeepFaceAliveLockName = "BehaviorMessageHandler";
+// string used as an identifier for 'locking' certain things
+static const char* kLockName = "BehaviorMessageHandler";
 
 // This value is enough for things to settle down. This is many ticks, but it's a only pause after
 // exiting a screen, so doesn't look excessive. Testing shows we need a minimum of 6.
@@ -181,7 +182,7 @@ void BehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependent
     size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
     if( currTick - _tickInfoScreenEnded >= kTicksBeforeEnableFaceKeepalive ) {
       // remove the keepalive lock after the stack has a chance to send its first animation
-      _robot.GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
+      _robot.GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kLockName);
       // reset
       _tickInfoScreenEnded = 0;
     }
@@ -205,7 +206,7 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   
   // Disable neutral eyes while in the dev screens, because symmetry with another call to
   // enable it in this class
-  _robot.GetAnimationComponent().AddKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
+  _robot.GetAnimationComponent().AddKeepFaceAliveDisableLock(kLockName);
 
   // Prevent the Update loop from sending an EnableKeepFaceAlive(true) in case the user is
   // entering and exiting the pairing screen quickly. There's a potential race condition here if the
@@ -214,13 +215,10 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   _tickInfoScreenEnded = 0;
   
   _wasTriggerWordEnabled = _robot.GetMicComponent().GetTriggerWordDetectionEnabled();
-  _wasStreamingEnabled = _robot.GetMicComponent().GetShouldStreamAfterWakeWord();
   if( _wasTriggerWordEnabled ) {
     _robot.GetMicComponent().SetTriggerWordDetectionEnabled( false );
   }
-  if( _wasStreamingEnabled ) {
-    _robot.GetMicComponent().SetShouldStreamAfterWakeWord( false );
-  }
+  _robot.GetMicComponent().SuppressStreamingAfterWakeWord( true , kLockName );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -243,9 +241,7 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
   if( micComp.GetTriggerWordDetectionEnabled() != _wasTriggerWordEnabled ){
     micComp.SetTriggerWordDetectionEnabled( _wasTriggerWordEnabled );
   }
-  if( micComp.GetShouldStreamAfterWakeWord() != _wasStreamingEnabled ){
-    micComp.SetShouldStreamAfterWakeWord( _wasStreamingEnabled );
-  }
+  micComp.SuppressStreamingAfterWakeWord( false , kLockName );
   
   IBehavior* bootBehavior = bbl.GetBootBehavior();
   bsm.ResetBehaviorStack(bootBehavior);

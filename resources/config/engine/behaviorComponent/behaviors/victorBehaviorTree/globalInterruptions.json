@@ -6,7 +6,6 @@
 
   "behaviors": [
     "MandatoryPhysicalReactions",
-    "LowBatteryFindAndGoToHome",
     "SDK0",
     "TriggerWordDetected",
     "SingletonWallTimeCoordinator",

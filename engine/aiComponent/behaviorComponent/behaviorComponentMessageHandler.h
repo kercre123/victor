@@ -55,7 +55,6 @@ private:
   
   // caches old values while info screens are up
   bool _wasTriggerWordEnabled = true;
-  bool _wasStreamingEnabled = true;
   
   void OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm );
   

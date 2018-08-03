@@ -141,6 +141,11 @@ private:
     bool backpackLights;
     
     bool exitAfterGetIn;
+    
+    // If we are not streaming audio to the cloud, then this causes the behavior to exit after playing the "unheard"
+    // animation. This is to prevent the accumulation of "errors" due to unreceived intents (we would not expect any
+    // intents to come down if we are not streaming)
+    bool exitAfterListeningIfNotStreaming;
 
     // response behavior to hearing the trigger word (or intent)
     std::string reactionBehaviorString;

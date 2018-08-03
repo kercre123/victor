@@ -53,12 +53,16 @@ public:
 
   void StartWakeWordlessStreaming( CloudMic::StreamType streamType );
   
-  void SetShouldStreamAfterWakeWord( bool shouldStream );
+  // Request to suppress (or stop suppressing) streaming of audio to the cloud after hearing the wake word. Callers
+  // should supply a string identifying themselves. Once suppressed, streaming remains suppressed until all requesters
+  // re-enable it.
+  void SuppressStreamingAfterWakeWord(const bool shouldSuppress, const std::string& requester);
   
   void SetTriggerWordDetectionEnabled( bool enabled );
   
-  // getters for the above, based on local info, not from the anim process
-  bool GetShouldStreamAfterWakeWord() const { return _streamAfterWakeWord; }
+  // getters for the above, based on local info, not from the anim process.
+  // These both default to true, which matches the anim process default (micDataProcessor.h)
+  bool GetShouldStreamAfterWakeWord() const { return _suppressStreamAfterWakeWordRequesters.empty(); }
   bool GetTriggerWordDetectionEnabled() const { return _triggerDetectionEnabled; }
 
   // set / get the fullness of the audio processing buffer on the robot (float from 0 to 1)
@@ -70,13 +74,15 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
   
-  bool _streamAfterWakeWord = true; // default based on micDataProcessor.h
   bool _triggerDetectionEnabled = true; // default based on micDataProcessor.h
 
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
   Robot*                    _robot;
   float                     _fullness;
+  
+  // Keep track of who has requested to disable streaming-after-wakeword
+  std::set<std::string> _suppressStreamAfterWakeWordRequesters;
 };
 
 } // namespace Cozmo

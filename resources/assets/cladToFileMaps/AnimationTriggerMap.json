@@ -220,6 +220,10 @@
     "AnimName": "ag_chargerdocking_severegetout"
   },
   {
+    "CladEvent": "ChargerDockingSorryButLowBattery",
+    "AnimName": "ag_chargerdocking_searchforcharger_canthelp"
+  },
+  {
     "CladEvent": "ChargerReaction",
     "AnimName": "ag_chargerdocking_reaction"
   },

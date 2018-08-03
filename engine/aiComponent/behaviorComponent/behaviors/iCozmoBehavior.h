@@ -485,6 +485,9 @@ protected:
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
 
+  // Disable streaming after a wake work is detected. Will be automatically re-enabled when the behavior is deactivated.
+  void SmartSuppressStreamAfterWakeWord(const bool suppress);
+  
   // Request that the robot enter power save mode
   void SmartRequestPowerSaveMode();
 
@@ -618,6 +621,10 @@ private:
 
   bool _hasSetMotionProfile = false;
 
+  bool _disableStreamAfterWakeWord = false;
+  
+  bool _isSuppressingStreamAfterWakeWord = false;
+  
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
   

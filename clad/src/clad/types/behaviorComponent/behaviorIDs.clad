@@ -262,6 +262,14 @@ enum uint_16 BehaviorID {
   InitNormalOperation,
   InitPRDemo,
   IntentUnmatched,
+
+  // victorBehaviorTree/lowBatteryMode
+  LowBatteryInAir,
+  LowBatteryMode,
+  LowBatteryOffCharger,
+  LowBatteryTriggerWord,
+
+  // victorBehaviorTree
   ModeSelector,
   NoCloud,
   NoWifi,

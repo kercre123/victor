@@ -37,6 +37,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/powerStateManager.h"
@@ -87,6 +88,7 @@ static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
 static const char* kAssociatedActiveFeature          = "associatedActiveFeature";
 static const char* kBehaviorStatToIncrement          = "behaviorStatToIncrement";
 static const char* kTracksToLockWhileActivatedKey    = "tracksToLockWhileActivated";
+static const char* kDisableStreamAfterWakeWordKey    = "disableStreamAfterWakeWord";
 
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -326,6 +328,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     }
   }            
   
+  _disableStreamAfterWakeWord = config.get(kDisableStreamAfterWakeWordKey, false).asBool();
+  
   return true;
 }
 
@@ -378,7 +382,8 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kPostBehaviorSuggestionKey,
     kAssociatedActiveFeature,
     kBehaviorStatToIncrement,
-    kTracksToLockWhileActivatedKey
+    kTracksToLockWhileActivatedKey,
+    kDisableStreamAfterWakeWordKey
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
 
@@ -783,6 +788,10 @@ void ICozmoBehavior::OnActivatedInternal()
   if( _respondToTriggerWord ) {
     GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
   }
+  
+  if (_disableStreamAfterWakeWord) {
+    SmartSuppressStreamAfterWakeWord(true);
+  }
 
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActiveScope->empty()){
@@ -937,6 +946,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.DeactivateUserIntent( _intentToDeactivate );
     _intentToDeactivate = UserIntentTag::INVALID;
+  }
+  
+  if (_isSuppressingStreamAfterWakeWord) {
+    SmartSuppressStreamAfterWakeWord(false);
   }
 
   if( !_powerSaveRequest.empty() ) {
@@ -1599,6 +1612,17 @@ UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
   return uic.ActivateUserIntent(tag, GetDebugLabel());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartSuppressStreamAfterWakeWord(const bool suppress)
+{
+  ANKI_VERIFY(suppress != _isSuppressingStreamAfterWakeWord,
+              "ICozmoBehavior.SmartSuppressStreamAfterWakeWord.AlreadySet",
+              "we have already %s wake word streaming", suppress ? "suppressed" : "unsuppressed");
+  
+  GetBEI().GetMicComponent().SuppressStreamingAfterWakeWord(suppress, GetDebugLabel());
+  _isSuppressingStreamAfterWakeWord = suppress;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartRequestPowerSaveMode()
 {

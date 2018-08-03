@@ -96,7 +96,7 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
 {
 
   // for now we want to disable streaming until we're awake
-  GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( false );
+  SmartSuppressStreamAfterWakeWord(true);
 
   // also disable face keep-alive
   GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kPRDemoDisableLockName);
@@ -106,7 +106,7 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
   
   if( _iConfig.sleepingBehavior->WantsToBeActivated() ) {
     DelegateIfInControl(_iConfig.sleepingBehavior.get(), [this]() {
-        GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( true );
+        SmartSuppressStreamAfterWakeWord(false);
         GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kPRDemoDisableLockName);
         if( _iConfig.wakeUpBehavior->WantsToBeActivated() ) {
           DelegateIfInControl(_iConfig.wakeUpBehavior.get());

@@ -100,7 +100,13 @@ void IBehavior::Update()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::WantsToBeActivated() const
 {
-  AssertActivationState_DevOnly(ActivationState::InScope, "IBehavior.WantsToBeActivated");
+#if ANKI_DEV_CHEATS
+  // It's possible that this behavior appears in multiple places in the tree, so it may be active when checking
+  // WantsToBeActivated.
+  DEV_ASSERT((_currentActivationState == ActivationState::Activated) ||
+             (_currentActivationState == ActivationState::InScope),
+             "IBehavior.WantsToBeActivated.InalidActivationState");
+#endif
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
   return WantsToBeActivatedInternal();

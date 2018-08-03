@@ -66,11 +66,33 @@ void MicComponent::StartWakeWordlessStreaming( CloudMic::StreamType streamType )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::SetShouldStreamAfterWakeWord( bool shouldStream )
+void MicComponent::SuppressStreamingAfterWakeWord(const bool shouldSuppress, const std::string& requester)
 {
-  RobotInterface::SetShouldStreamAfterWakeWord message{shouldStream};
-  _robot->SendMessage(RobotInterface::EngineToRobot( std::move(message)) );
-  _streamAfterWakeWord = shouldStream;
+  auto sendMessage = [this, shouldSuppress]() {
+    PRINT_NAMED_INFO("MicComponent.SuppressStreamingAfterWakeWord.SendMessage",
+                     "Sending message to %s streaming after wake word",
+                     shouldSuppress ? "suppress" : "enable");
+    RobotInterface::SetShouldStreamAfterWakeWord message{!shouldSuppress};
+    _robot->SendMessage(RobotInterface::EngineToRobot( std::move(message)) );
+  };
+
+  auto& requesters = _suppressStreamAfterWakeWordRequesters;
+  
+  PRINT_NAMED_INFO("MicComponent.SuppressStreamingAfterWakeWord.Request",
+                   "Requester '%s' is %s streaming after wake word (num requesters %zu)",
+                   requester.c_str(),
+                   shouldSuppress ? "suppressing" : "no longer suppressing",
+                   requesters.size());
+  
+  if (shouldSuppress) {
+    requesters.insert(requester);
+    sendMessage();
+  } else {
+    requesters.erase(requester);
+    if (requesters.empty()) {
+      sendMessage();
+    }
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

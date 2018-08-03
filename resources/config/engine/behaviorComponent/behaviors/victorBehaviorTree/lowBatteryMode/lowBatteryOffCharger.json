@@ -1,0 +1,18 @@
+{
+  "behaviorID" : "LowBatteryOffCharger",
+  "behaviorClass": "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior" : true,
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OnCharger"
+  },
+  
+  "behaviors" : [
+    "MandatoryPhysicalReactions",
+    "LowBatteryInAir",
+    "LowBatteryTriggerWord",
+    "LowBatteryFindAndGoToHome"
+  ]
+  
+}

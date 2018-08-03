@@ -1,0 +1,47 @@
+{
+  "behaviorID" : "LowBatteryMode",
+  "behaviorClass": "DispatcherQueue",
+ 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+    {
+      "conditionType": "BatteryLevel",
+      "targetBatteryLevel" : "Low"
+    },
+    {
+      "conditionType": "Compound",
+      "not": {
+        "conditionType": "OnCharger"
+      }
+    }
+    ]
+  },
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "BatteryLevel",
+      "targetBatteryLevel" : "Low"
+    }
+  },
+ 
+  "associatedActiveFeature" : "LowBattery",
+ 
+  // Do not stream after hearing the wakeword, since we ignore voice commands while low battery anyway
+  "disableStreamAfterWakeWord" : true,
+  
+  "behaviors" : [
+    "InitialLowBatteryReaction",
+    "LowBatteryOffCharger"
+  ],
+  
+  "anonymousBehaviors" : [
+    {
+      "behaviorClass": "AnimSequence",
+      "behaviorName": "InitialLowBatteryReaction",
+      
+      "animTriggers" : ["ChargerDockingSorryButLowBattery"]
+    }
+  ]
+}
