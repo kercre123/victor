@@ -49,7 +49,8 @@ namespace Switchboard {
         _securePairing(nullptr),
         _engineMessagingClient(nullptr),
         _gatewayMessagingServer(nullptr),
-        _isUpdateEngineServiceRunning(false)
+        _isUpdateEngineServiceRunning(false),
+        _shouldRestartPairing(false)
       {}
 
       void Start();
@@ -77,6 +78,7 @@ namespace Switchboard {
       void InitializeEngineComms();
       void InitializeGatewayComms();
       void InitializeBleComms();
+      void StartPairing();
       void OnConnected(int connId, INetworkStream* stream);
       void OnDisconnected(int connId, INetworkStream* stream);
       void OnBleIpcDisconnected();
@@ -136,6 +138,7 @@ namespace Switchboard {
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
       std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
       bool _isUpdateEngineServiceRunning;
+      bool _shouldRestartPairing;
   };
 }
 }

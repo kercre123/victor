@@ -293,6 +293,12 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   DASMSG(ble_connection_status, "ble.disconnection",
           "BLE connection status has changed.");
   DASMSG_SEND();
+
+  if(_shouldRestartPairing) {
+    // if pairing should be restarted, restart it
+    _shouldRestartPairing = false;
+    StartPairing();
+  }
 }
 
 void Daemon::OnBleIpcDisconnected() {
@@ -553,24 +559,35 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   _isUpdateEngineServiceRunning = true;
 }
 
+void Daemon::StartPairing() {
+  Log::Write("Entering pairing mode.");
+
+  if(_securePairing != nullptr) {
+    if(_bleClient != nullptr) {
+      _shouldRestartPairing = true;
+      _bleClient->Disconnect(_connectionId);
+    } else {
+      Log::Error("RtsComms was alive while BleClient was null.");
+    }
+    return;
+  } 
+
+  UpdateAdvertisement(true);
+  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
+  
+  ev_timer_stop(_loop, &_pairingTimer.timer);
+  ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0.);
+  ev_timer_start(_loop, &_pairingTimer.timer);
+  
+  Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
+}
+
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
   Anki::Cozmo::ExternalInterface::MessageEngineToGameTag tag = message.GetTag();
 
   switch(tag){
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
-      printf("Enter pairing: %hhu\n", tag);
-      if(_securePairing != nullptr) {
-        break;
-      } 
-      
-      UpdateAdvertisement(true);
-      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
-      
-      ev_timer_stop(_loop, &_pairingTimer.timer);
-      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0.);
-      ev_timer_start(_loop, &_pairingTimer.timer);
-      
-      Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
+      StartPairing();
       break;
     }
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
