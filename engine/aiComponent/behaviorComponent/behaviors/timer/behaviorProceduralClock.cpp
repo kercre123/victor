@@ -38,6 +38,7 @@ const char* kGetOutTriggerKey       = "getOutAnimTrigger";
 const char* kDisplayClockSKey       = "displayClockFor_s";
 const char* kStaticElementsKey      = "staticElements";
 const char* kShouldTurnToFaceKey    = "shouldTurnToFace";
+const char* kShouldPlayAudioKey     = "shouldPlayAudioOnClockUpdates";
 
 }
 const std::vector<Vision::SpriteBoxName> BehaviorProceduralClock::DigitDisplayList = 
@@ -71,6 +72,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
   _instanceParams.totalTimeDisplayClock_sec = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
   JsonTools::GetValueOptional(config, kShouldTurnToFaceKey, _instanceParams.shouldTurnToFace);
+  JsonTools::GetValueOptional(config, kShouldPlayAudioKey, _instanceParams.shouldPlayAudioOnClockUpdates);
 
   // add all static elements
   if(config.isMember(kStaticElementsKey)){
@@ -97,7 +99,8 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kGetOutTriggerKey,
     kDisplayClockSKey,
     kStaticElementsKey,
-    kShouldTurnToFaceKey
+    kShouldTurnToFaceKey,
+    kShouldPlayAudioKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
   GetBehaviorJsonKeysInternal(expectedKeys);
@@ -302,13 +305,15 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
     GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg, displayOffset_aligned_ms);
   }
 
-  // Have the animation process send ticks at the appropriate time stamp 
-  AudioEngine::Multiplexer::PostAudioEvent audioMessage;
-  audioMessage.gameObject = Anki::AudioMetaData::GameObjectType::Animation;
-  audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Timer_Countdown;
+  if(_instanceParams.shouldPlayAudioOnClockUpdates){
+    // Have the animation process send ticks at the appropriate time stamp 
+    AudioEngine::Multiplexer::PostAudioEvent audioMessage;
+    audioMessage.gameObject = Anki::AudioMetaData::GameObjectType::Animation;
+    audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Timer_Countdown;
 
-  RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
-  GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), displayOffset_aligned_ms);
+    RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
+    GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), displayOffset_aligned_ms);
+  }
 }
 
 

@@ -94,6 +94,7 @@ private:
     bool shouldTurnToFace = false;
     Json::Value layout;
     int totalTimeDisplayClock_sec;
+    bool shouldPlayAudioOnClockUpdates = true;
 
     // Asset properties
     Vision::CompositeImageLayer::ImageMap staticImageMap;

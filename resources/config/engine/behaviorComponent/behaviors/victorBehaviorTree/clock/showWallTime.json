@@ -5,6 +5,7 @@
   "getInAnimTrigger" : "ClockGetIn",
   "getOutAnimTrigger" : "ClockGetOut",
   "displayClockFor_s" : 5,
+  "shouldPlayAudioOnClockUpdates" : false,
 
   "clockLayout" : [{  
     "layerName" : "Clock_Display",
