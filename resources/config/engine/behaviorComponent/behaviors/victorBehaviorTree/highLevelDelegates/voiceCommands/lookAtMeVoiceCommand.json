@@ -16,6 +16,10 @@
 
   "behavior": "LookAtMeInternal",
   "timeUntilCancelFollowup_s": 15.0,
+
+  "useBodyDetector": true,
+  "additionalLookTimeIfSawBody_s": 3.0,
+  "additionalSearchTimeIfSawBody_s": 3.0,
   
   "anonymousBehaviors": [
     {

@@ -277,9 +277,10 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
                                                           emptySpriteBoxesAllowed,
                                                           animationCallback);
   
-  const auto temperature = weatherResponse.temperature;
+  int temperature = 0;
+  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
   const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(weatherResponse);
-  const auto success = GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
+  success &= GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
   if(!success){
     return;
   }

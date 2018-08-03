@@ -1,16 +1,9 @@
-# Victor Python SDK
-
-The SDK itself is now at https://github.com/anki/victor-python-sdk-private
-
-The `victorclad` directory contains boilerplate for creating a separate Python
-package for the CLAD dependency.
-
-# Vector Clad
-The `vector-clad` directory contains a script to build and copy up the current
-sdk-facing clad messages.  This is a pre-requisite for the vector-sdk folder.
-
 # Vector SDK
-The `vector-sdk` directory contains a starting point for a victor development
-kit.  Currently it consists of a single file which defines a robot similar to
-in the cozmo SDK, and invokes some basic driving/turning through the robot
-proxy.
+
+The Python SDK currently lives under `tools/sdk/vector-sdk/`. Instructions to
+use the SDK can be found [on confluence](https://ankiinc.atlassian.net/wiki/spaces/VD/pages/441319496/Python+Vector+SDK+-+Getting+Started).
+
+## grpc_tools
+The `grpc_tools` directory is mainly useful for the Makefile contained within.
+Everything in there is intended to be a temporary band aid until better processes
+exist. Further details may be found [in grpc_tools's README](grpc_tools/README.md)

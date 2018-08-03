@@ -61,6 +61,11 @@
       "activateIntent": "explore_start"
     },
     {
+      "name": "InvestigateHeldCube",
+      "behavior": "InvestigateHeldCube",
+      "getInBehavior": "InvestigateHeldCubeGetIn"
+    },
+    {
       "name": "Socializing",
       "behavior": "Socialize"
     },
@@ -154,6 +159,26 @@
               }
             ]
           }
+        },
+        {
+          "to": "InvestigateHeldCube",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "UserIsHoldingCube"
+              },
+              {
+                "conditionType": "ObjectKnown",
+                "objectTypes": ["Block_LIGHTCUBE1","Block_LIGHTCUBE2","Block_LIGHTCUBE3"],
+                "maxAge_ms" : 1000
+              },
+              {
+                "conditionType": "FeatureGate",
+                "feature": "CubeBehaviors"
+              }
+            ]
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -220,6 +245,26 @@
               "conditionType": "OnChargerPlatform"
             }
           }
+        },
+        {
+          "to": "InvestigateHeldCube",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "UserIsHoldingCube"
+              },
+              {
+                "conditionType": "ObjectKnown",
+                "objectTypes": ["Block_LIGHTCUBE1","Block_LIGHTCUBE2","Block_LIGHTCUBE3"],
+                "maxAge_ms" : 1000
+              },
+              {
+                "conditionType": "FeatureGate",
+                "feature": "CubeBehaviors"
+              }
+            ]
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -249,7 +294,8 @@
         "Socializing",
         "PlayingWithCube",
         "Exploring",
-        "ExploringVoiceCommand"
+        "ExploringVoiceCommand",
+        "InvestigateHeldCube"
       ],
       "interruptingTransitions": [
         {
@@ -263,7 +309,7 @@
           "emotionEvent": "PlacedOnCharger"
         }
       ]
-    },        
+    },
 
     {
       "from": "Observing",
@@ -391,10 +437,43 @@
 
     {
       "from": [
+        "Observing",
         "Socializing",
         "PlayingWithCube",
         "Exploring",
         "ExploringVoiceCommand"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "InvestigateHeldCube",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "UserIsHoldingCube"
+              },
+              {
+                "conditionType": "ObjectKnown",
+                "objectTypes": ["Block_LIGHTCUBE1","Block_LIGHTCUBE2","Block_LIGHTCUBE3"],
+                "maxAge_ms" : 1000
+              },
+              {
+                "conditionType": "FeatureGate",
+                "feature": "CubeBehaviors"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    
+    {
+      "from": [
+        "Socializing",
+        "PlayingWithCube",
+        "Exploring",
+        "ExploringVoiceCommand",
+        "InvestigateHeldCube"
       ],
       "exitTransitions": [
         {
@@ -771,7 +850,8 @@
         "Socializing",
         "Exploring",
         "ExploringVoiceCommand",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "InvestigateHeldCube"
       ],
       "interruptingTransitions": [
         {
@@ -817,7 +897,8 @@
         "FailedToFindCharger",
         "PlayingWithCube",
         "Exploring",
-        "ExploringVoiceCommand"
+        "ExploringVoiceCommand",
+        "InvestigateHeldCube"
       ],
       "interruptingTransitions": [
         {
@@ -891,7 +972,8 @@
         "FailedToFindCharger",
         "PlayingWithCube",
         "Exploring",
-        "ExploringVoiceCommand"
+        "ExploringVoiceCommand",
+        "InvestigateHeldCube"
       ],
       "interruptingTransitions": [
         {

@@ -63,6 +63,7 @@ enum int_32 CubeAnimationTrigger
   SpinnerYellowLockedPulse,
   SpinnerYellowLocked,
 
+  TapResponsePulse,
   TestAllLeds,
   TestOffset,
   TestRotation,

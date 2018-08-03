@@ -4,8 +4,6 @@ syntax = "proto3";
 
 package Anki.Cozmo.external_interface;
 
-option optimize_for = LITE_RUNTIME;
-
 import "cube.proto";
 import "messages.proto";
 import "settings.proto";
@@ -14,7 +12,7 @@ import "extensions.proto";
 // Messages originating from the engine
 message Event {
   oneof event_type {
-    Status                           status                              = 1;
+    TimeStampedStatus                time_stamped_status                 = 1;
     Onboarding                       onboarding                          = 2;
     WakeWord                         wake_word                           = 3;
     AttentionTransfer                attention_transfer                  = 4;

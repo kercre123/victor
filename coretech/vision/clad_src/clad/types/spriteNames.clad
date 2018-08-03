@@ -182,7 +182,9 @@ enum uint_8 SpriteName
   Face_Nocloud_Icon,
   Face_Nowifi_Icon,
   Face_Nowifi_Signal,
+  Face_Nowifi_Trouble_Icon,
   Face_Rain,
+  Face_Shearchforcharger_Canthelp,
   Face_Snow01,
   Face_Snow_Mist,
   Face_Stars,
@@ -199,6 +201,8 @@ enum uint_8 SpriteName
   Face_Timerset_Getout_01,
   Face_Timersup_Getin_02,
   Face_Windy01,
+  Vig_Always_Helpful_Knowledgegraph,
+  Vig_Always_Helpful_Timer,
   Count
 }
 
@@ -379,7 +383,9 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Nocloud_Icon = 1,
   Face_Nowifi_Icon = 1,
   Face_Nowifi_Signal = 1,
+  Face_Nowifi_Trouble_Icon = 1,
   Face_Rain = 1,
+  Face_Shearchforcharger_Canthelp = 1,
   Face_Snow01 = 1,
   Face_Snow_Mist = 1,
   Face_Stars = 1,
@@ -396,6 +402,8 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Timerset_Getout_01 = 1,
   Face_Timersup_Getin_02 = 1,
   Face_Windy01 = 1,
+  Vig_Always_Helpful_Knowledgegraph = 1,
+  Vig_Always_Helpful_Timer = 1,
   Count = 0
 }
 

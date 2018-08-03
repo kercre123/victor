@@ -42,6 +42,7 @@ class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeCommsComponent;
 class CubeConnectionCoordinator;
+class CubeInteractionTracker;
 class RobotGyroDriftDetector;
 class DockingComponent;
 class CarryingComponent;
@@ -69,6 +70,7 @@ class SettingsCommManager;
 class SettingsManager;
 class VariableSnapshotComponent;
 class PowerStateManager;
+class JdocsManager;
 class RobotExternalRequestComponent;
 
 } // namespace Cozmo
@@ -96,6 +98,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(BackpackLightComponent,        RobotComponentID, Bac
 LINK_COMPONENT_TYPE_TO_ENUM(CubeAccelComponent,            RobotComponentID, CubeAccel)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeCommsComponent,            RobotComponentID, CubeComms)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeConnectionCoordinator,     RobotComponentID, CubeConnectionCoordinator)
+LINK_COMPONENT_TYPE_TO_ENUM(CubeInteractionTracker,        RobotComponentID, CubeInteractionTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotGyroDriftDetector,        RobotComponentID, GyroDriftDetector)
 LINK_COMPONENT_TYPE_TO_ENUM(HabitatDetectorComponent,      RobotComponentID, HabitatDetector)
 LINK_COMPONENT_TYPE_TO_ENUM(DockingComponent,              RobotComponentID, Docking)
@@ -123,6 +126,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(SettingsManager,               RobotComponentID, Set
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
+LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, JdocsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent,   RobotComponentID, RobotExternalRequestComponent)
 
 // Translate entity into string
@@ -148,6 +152,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
     case Cozmo::RobotComponentID::CubeComms:                    { return "CubeComms";}
     case Cozmo::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
+    case Cozmo::RobotComponentID::CubeInteractionTracker:       { return "CubeInteractionTracker";}
     case Cozmo::RobotComponentID::CubeLights:                   { return "CubeLights";}
     case Cozmo::RobotComponentID::DataAccessor:                 { return "DataAccessor";}
     case Cozmo::RobotComponentID::Docking:                      { return "Docking";}
@@ -156,6 +161,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
     case Cozmo::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
     case Cozmo::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
+    case Cozmo::RobotComponentID::JdocsManager:                 { return "JdocsManager";}
     case Cozmo::RobotComponentID::Map:                          { return "Map";}
     case Cozmo::RobotComponentID::MicComponent:                 { return "MicComponent"; }
     case Cozmo::RobotComponentID::MoodManager:                  { return "MoodManager";}

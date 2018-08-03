@@ -24,6 +24,7 @@ namespace Cozmo {
 class CozmoContext;
 namespace external_interface {
   class Status;
+  class TimeStampedStatus;
 }
 
 class StatusLogHandler : private Util::noncopyable
@@ -35,13 +36,13 @@ public:
   
 private:
   
-  void SaveStatusHistory( const external_interface::Status& status );
+  void SaveStatusHistory( const external_interface::TimeStampedStatus& status );
 
   void SendStatusHistory();
   
   const CozmoContext* _context = nullptr;
-  
-  using StatusHistory = Util::CircularBuffer<std::pair<EngineTimeStamp_t,external_interface::Status>>;
+
+  using StatusHistory = Util::CircularBuffer<external_interface::TimeStampedStatus>;
   std::unique_ptr<StatusHistory> _statusHistory;
 
   std::vector<Signal::SmartHandle> _signalHandles;

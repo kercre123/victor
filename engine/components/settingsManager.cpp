@@ -13,6 +13,7 @@
 
 #include "engine/components/settingsManager.h"
 
+#include "engine/components/jdocsManager.h"
 #include "engine/components/settingsCommManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -29,12 +30,6 @@ namespace Anki {
 namespace Cozmo {
 
 
-namespace
-{
-  const std::string kSettingsManagerFolder = "settings";
-  const std::string kSettingsFilename = "settings.json";
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsManager::SettingsManager()
@@ -47,6 +42,7 @@ SettingsManager::SettingsManager()
 void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
+  _jdocsManager = &robot->GetComponent<JdocsManager>();
   _audioClient = robot->GetAudioClient();
 
   // Get the default settings config
@@ -55,60 +51,17 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "SettingsManager.InitDependent.DataPlatformIsNull");
 
-  _savePath = _platform->pathToResource(Util::Data::Scope::Persistent, kSettingsManagerFolder);
-  if (!Util::FileUtils::CreateDirectory(_savePath))
-  {
-    LOG_ERROR("SettingsManager.InitDependent.FailedToCreateFolder", "Failed to create folder %s", _savePath.c_str());
-    return;
-  }
-
-  // Read saved settings from robot if they exist; handle missing settings file
+  // Call the JdocsManager to see if our robot settings jdoc file exists
   bool settingsDirty = false;
   _currentSettings.clear();
-  _fullPathSettingsFile = Util::FileUtils::FullFilePath({_savePath, kSettingsFilename});
-  if (Util::FileUtils::FileExists(_fullPathSettingsFile))
+  if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_SETTINGS))
   {
-    if (!LoadSettingsFile())
-    {
-      LOG_ERROR("SettingsManager.InitDependent.FailedLoadingSettingsFile", "Error loading settings file");
-      settingsDirty = true;
-    }
-    else
-    {
-      // Fix-up code:  Some robots had a settings file where I was saving bools as strings ("true" instead of true)
-      // This is code that can be removed at some future date.  A workaround is to just delete your settings file.
-      // But this code fixes the settings file.
-      {
-        const std::string& keyString = EnumToString(RobotSetting::clock_24_hour);
-        if (_currentSettings.isMember(keyString) && _currentSettings[keyString].isString())
-        {
-          _currentSettings[keyString] = _currentSettings[keyString] == "true" ? true : false;
-          settingsDirty = true;
-        }
-      }
-      {
-        const std::string& keyString = EnumToString(RobotSetting::dist_is_metric);
-        if (_currentSettings.isMember(keyString) && _currentSettings[keyString].isString())
-        {
-          _currentSettings[keyString] = _currentSettings[keyString] == "true" ? true : false;
-          settingsDirty = true;
-        }
-      }
-      {
-        const std::string& keyString = EnumToString(RobotSetting::temp_is_fahrenheit);
-        if (_currentSettings.isMember(keyString) && _currentSettings[keyString].isString())
-        {
-          _currentSettings[keyString] = _currentSettings[keyString] == "true" ? true : false;
-          settingsDirty = true;
-        }
-      }
-      // End fix-up code
-    }
+    LOG_WARNING("SettingsManager.InitDependent.NoSettingsJdocsFile", "Settings jdocs file not found; one will be created shortly");
+    settingsDirty = true;
   }
   else
   {
-    LOG_WARNING("SettingsManager.InitDependent.NoSettingsFile", "Settings file not found; one will be created shortly");
-    settingsDirty = true;
+    _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
   }
 
   // Ensure current settings has each of the default settings;
@@ -145,7 +98,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
   if (settingsDirty)
   {
-    SaveSettingsFile();
+    UpdateSettingsJdoc();
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
@@ -177,7 +130,7 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
                                       const Json::Value& valueJson,
-                                      const bool saveSettingsFile)
+                                      const bool updateSettingsJdoc)
 {
   const std::string key = RobotSettingToString(robotSetting);
   if (!_currentSettings.isMember(key))
@@ -189,19 +142,19 @@ bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
   const Json::Value prevValue = _currentSettings[key];
   _currentSettings[key] = valueJson;
 
-  const bool success = ApplyRobotSetting(robotSetting);
+  bool success = ApplyRobotSetting(robotSetting);
   if (!success)
   {
     _currentSettings[key] = prevValue;  // Restore previous good value
     return false;
   }
 
-  if (saveSettingsFile)
+  if (updateSettingsJdoc)
   {
-    SaveSettingsFile();
+    success = UpdateSettingsJdoc();
   }
 
-  return true;
+  return success;
 }
 
 
@@ -234,24 +187,12 @@ bool SettingsManager::GetRobotSettingAsBool(const RobotSetting key) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::LoadSettingsFile()
+bool SettingsManager::UpdateSettingsJdoc()
 {
-  if (!_platform->readAsJson(_fullPathSettingsFile, _currentSettings))
-  {
-    LOG_ERROR("SettingsManager.LoadSettingsFile.Failed", "Failed to read %s", _fullPathSettingsFile.c_str());
-    return false;
-  }
-  return true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsManager::SaveSettingsFile() const
-{
-  if (!_platform->writeAsJson(_fullPathSettingsFile, _currentSettings))
-  {
-    LOG_ERROR("SettingsManager.SaveSettingsFile.Failed", "Failed to write settings file");
-  }
+  static const bool saveToDiskImmediately = true;
+  const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_SETTINGS,
+                                                 _currentSettings, saveToDiskImmediately);
+  return success;
 }
 
 
@@ -288,8 +229,8 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingMasterVolume()
 {
-  static const std::string key = RobotSettingToString(RobotSetting::master_volume);
-  const std::string value = _currentSettings[key].asString();
+  static const std::string& key = RobotSettingToString(RobotSetting::master_volume);
+  const std::string& value = _currentSettings[key].asString();
   MasterVolume masterVolume;
   const bool valueIsValid = EnumFromString(value, masterVolume);
   if (!valueIsValid)
@@ -308,8 +249,8 @@ bool SettingsManager::ApplySettingMasterVolume()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingEyeColor()
 {
-  static const std::string key = RobotSettingToString(RobotSetting::eye_color);
-  const std::string value = _currentSettings[key].asString();
+  static const std::string& key = RobotSettingToString(RobotSetting::eye_color);
+  const std::string& value = _currentSettings[key].asString();
   EyeColor eyeColorUnused;
   const bool valueIsValid = EnumFromString(value, eyeColorUnused);
   if (!valueIsValid)
@@ -334,8 +275,8 @@ bool SettingsManager::ApplySettingEyeColor()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingLocale()
 {
-  static const std::string key = RobotSettingToString(RobotSetting::locale);
-  const std::string value = _currentSettings[key].asString();
+  static const std::string& key = RobotSettingToString(RobotSetting::locale);
+  const std::string& value = _currentSettings[key].asString();
   DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
   return _robot->SetLocale(value);
 }

@@ -41,7 +41,7 @@ structure UserIntent_WeatherResponse
 
   string  condition,
 
-  int_32 temperature,
+  string  temperature,
   string  temperatureUnit,
   string  localDateTime
 }
@@ -65,6 +65,11 @@ structure UserIntent_KnowledgeResponse
 {
   string answer,
   string query_text
+}
+
+structure UserIntent_GlobalStop
+{
+  string what_to_stop,
 }
 
 // test structs. todo: get rid of these in favor of actual structs once
@@ -111,7 +116,8 @@ union dupes_allowed UserIntent
   UserIntent_Void             play_anytrick,
   UserIntent_PlaySpecific     play_specific,
   UserIntent_Void             check_timer,
-  UserIntent_Void             cancel_timer,
+  UserIntent_GlobalStop       global_stop,
+  UserIntent_GlobalStop       global_delete,
   UserIntent_TimeInSeconds    set_timer,
   UserIntent_Void             show_clock,
   UserIntent_WeatherResponse  weather_response,

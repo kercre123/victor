@@ -302,16 +302,6 @@ namespace Cozmo {
   
   // Port on which UI device should connect to (de)register for advertisement
   const u32 UI_ADVERTISEMENT_REGISTRATION_PORT = 5103;
-  
-  // Port on which registered SDK devices advertise.
-  const u32 SDK_ADVERTISING_PORT = 5104;
-  
-  // Port on which SDK device should connect to (de)register for advertisement
-  const u32 SDK_ADVERTISEMENT_REGISTRATION_PORT = 5105;
-  
-  // Port for TCP/IP based version of SDK to communicate over
-  const u32 SDK_ON_DEVICE_TCP_PORT = 5106;
-  // See SDK_ON_COMPUTER_TCP_PORT in engineInterface.py for corresponding port on attached PC
 
   const u32 SWITCHBOARD_TCP_PORT = 5107;
   

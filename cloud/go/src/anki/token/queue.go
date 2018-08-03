@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	pb "github.com/anki/sai-token-service/proto/tokenpb"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -49,6 +50,8 @@ func handleQueueRequest(req *request) error {
 	switch req.m.Tag() {
 	case cloud.TokenRequestTag_Auth:
 		resp, err = handleAuthRequest(req.m.GetAuth().SessionToken)
+	case cloud.TokenRequestTag_Secondary:
+		resp, err = handleSecondaryAuthRequest(req.m.GetSecondary())
 	case cloud.TokenRequestTag_Jwt:
 		resp, err = handleJwtRequest()
 	}
@@ -101,24 +104,47 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 	return errorResp(cloud.TokenError_NullToken), nil
 }
 
+func authErrorResp(code cloud.TokenError) *cloud.TokenResponse {
+	return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{Error: code})
+}
+
 func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
-	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
-		return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{Error: code})
+	metadata := getAuthMetadata(session)
+	requester := func(c *conn) (*pb.TokenBundle, error) {
+		return c.associatePrimary(session, robotESN)
+	}
+	return authRequester(metadata, requester)
+}
+
+func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenResponse, error) {
+	existing := jwt.GetToken()
+	if existing == nil {
+		return authErrorResp(cloud.TokenError_NullToken), nil
 	}
 
-	c, err := getConnection(getAuthMetadata(session))
+	metadata := getTokenMetadata(existing.String())
+	requester := func(c *conn) (*pb.TokenBundle, error) {
+		return c.associateSecondary(existing.String(), req.SessionToken, req.ClientName, req.AppId)
+	}
+	return authRequester(metadata, requester)
+}
+
+func authRequester(creds credentials.PerRPCCredentials,
+	requester func(c *conn) (*pb.TokenBundle, error)) (*cloud.TokenResponse, error) {
+
+	c, err := getConnection(creds)
 	if err != nil {
-		return errorResp(cloud.TokenError_Connection), err
+		return authErrorResp(cloud.TokenError_Connection), err
 	}
 	defer c.Close()
 
-	bundle, err := c.associatePrimary(session, robotESN)
+	bundle, err := requester(c)
 	if err != nil {
-		return errorResp(cloud.TokenError_Connection), err
+		return authErrorResp(cloud.TokenError_Connection), err
 	}
 	_, err = jwt.ParseToken(bundle.Token)
 	if err != nil {
-		return errorResp(cloud.TokenError_InvalidToken), err
+		return authErrorResp(cloud.TokenError_InvalidToken), err
 	}
 	return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{
 		AppToken: bundle.ClientToken,

@@ -845,46 +845,50 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   DrawScratch();
 }
 
-
-bool CheckForDoublePress(bool buttonReleased)
+void CheckForButtonEvent(bool buttonPressed, 
+                         bool& buttonPressedEvent,
+                         bool& buttonReleasedEvent,
+                         bool& singlePressDetected, 
+                         bool& doublePressDetected)
 {
-  // Time window in which to consider a second press as a double press
-  const  u32 kDoublePressWindow_ms   = 700;
-  static u32 buttonTappedCount       = 0;
-  static u32 timeDoublePressStart_ms = 0;
+  static u32  lastPressTime_ms   = 0;
+  static bool singlePressPending = false;
+  static bool doublePressPending = false;
+  static bool buttonWasPressed   = false;
 
-  const u32 curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  buttonPressedEvent  = !buttonWasPressed && buttonPressed;
+  buttonReleasedEvent = buttonWasPressed && !buttonPressed;
+  buttonWasPressed = buttonPressed;
+  singlePressDetected = false;
+  doublePressDetected = false;
 
-  // If it has been too long since the first button release then
-  // reset time and buttonTappedCount
-  if(timeDoublePressStart_ms > 0 &&
-     curTime_ms - timeDoublePressStart_ms > kDoublePressWindow_ms)
-  {
-    timeDoublePressStart_ms = 0;
-    buttonTappedCount = 0;
-  }
+  // The maximum amount of time allowed between button releases
+  // to register as a double press
+  static const u32 kDoublePressWindow_ms   = 700;
 
-  // If the button has been released
-  if(buttonReleased)
-  {
-    // If this is the first release set timeDoublePressStart
-    if(buttonTappedCount == 0)
-    {
-      timeDoublePressStart_ms = curTime_ms;
+  const u32  curTime_ms         = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  const bool mightBeDoublePress = (lastPressTime_ms > 0) && (curTime_ms - lastPressTime_ms < kDoublePressWindow_ms);
+
+  if (buttonPressedEvent) {
+    if (mightBeDoublePress) {
+      lastPressTime_ms = 0;
+      doublePressPending = true;
+    } else {
+      lastPressTime_ms = curTime_ms;
     }
-
-    buttonTappedCount++;
+    singlePressPending = false;
+  } else if (buttonReleasedEvent) {
+    if (lastPressTime_ms > 0) {
+      singlePressPending = true;
+    } else if (doublePressPending) {
+      doublePressPending = false;
+      doublePressDetected = true;
+    }
+  } else if (singlePressPending && !mightBeDoublePress) {
+    lastPressTime_ms = 0;
+    singlePressPending = false;
+    singlePressDetected = true;
   }
-
-  // If the button has been released twice then broadcast a double pressed message
-  if(buttonTappedCount == 2)
-  {
-    timeDoublePressStart_ms = 0;
-    buttonTappedCount = 0;
-    return true;
-  }
-
-  return false;
 }
 
 void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()
@@ -898,24 +902,35 @@ void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()
 
 void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 {
-  static bool buttonWasPressed = false;
   const bool buttonIsPressed = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  //const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
-  const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
-  buttonWasPressed = buttonIsPressed;
+  bool buttonPressedEvent;
+  bool buttonReleasedEvent;
+  bool singlePressDetected;
+  bool doublePressDetected;
+  CheckForButtonEvent(buttonIsPressed, 
+                      buttonPressedEvent, 
+                      buttonReleasedEvent, 
+                      singlePressDetected, 
+                      doublePressDetected);
 
   const bool isOnCharger = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
 
   const ScreenName currScreenName = GetCurrScreenName();
 
+  // Fake trigger word on single press
+  if (singlePressDetected && currScreenName == ScreenName::None) {
+    LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
+    _context->GetMicDataSystem()->FakeTriggerWordDetection();
+  }
+
   // Check for conditions to enter BLE pairing mode
-  if (isOnCharger &&
+  if (doublePressDetected && 
+      isOnCharger &&
       // Only enter pairing from these three screens which include
       // screens that are normally active during playpen test
       (currScreenName == ScreenName::None ||
        currScreenName == ScreenName::FAC  ||
-       currScreenName == ScreenName::CustomText) &&
-      CheckForDoublePress(buttonReleasedEvent)) {
+       currScreenName == ScreenName::CustomText)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 

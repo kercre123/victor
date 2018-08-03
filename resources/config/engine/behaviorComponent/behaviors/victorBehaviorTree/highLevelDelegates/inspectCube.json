@@ -1,12 +1,4 @@
 {
   "behaviorClass": "InspectCube",
-  "behaviorID": "InspectCube",
-
-  "targetUnmovedGetOutTimeout_s":      10.0, // Behavior will end with "Bored" if the cube is unmoved for this long  
-  "noValidTargetGetOutTimeout_s":      20.0, // Behavior will end with "Bored" if there is no valid target for this long
-  "targetHiddenGetOutTimeout_s":       10.0, // Behavior will end with "Bored" if the target goes this long unseen
-  "useProxForDistance":                true,
-  "triggerDistance_mm":                125.0, // Cube must get this close before withdrawal to trigger keepaway
-  "minWithdrawalSpeed_mmpers":         50.0, // Cube must be withdrawn at least this fast to trigger keepaway
-  "minWithdrawalDist_mm":              40.0 // Cube must be withdrawn at least this far to trigger keepaway
+  "behaviorID": "InspectCube"
 }

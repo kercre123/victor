@@ -36,8 +36,16 @@
     "enabled": true
   },
   {
+    "feature": "PopAWheelie",
+    "enabled": true
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
+  },
+  {
+    "feature": "ReactToIllumination",
+    "enabled": true
   }
 ]
 

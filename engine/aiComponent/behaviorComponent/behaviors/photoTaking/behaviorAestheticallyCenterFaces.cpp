@@ -23,9 +23,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-
-CONSOLE_VAR(int, kSearchLength_ms, "PhotoCenterFacesSearchTimeoutMS", 5000);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAestheticallyCenterFaces::InstanceConfig::InstanceConfig()
@@ -36,7 +33,6 @@ BehaviorAestheticallyCenterFaces::InstanceConfig::InstanceConfig()
 BehaviorAestheticallyCenterFaces::DynamicVariables::DynamicVariables()
 {
   state = BehaviorState::SearchForFace;
-  timeFaceSearchShouldEnd = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -59,6 +55,7 @@ bool BehaviorAestheticallyCenterFaces::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAestheticallyCenterFaces::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.behaviorAlwaysDelegates = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,18 +102,10 @@ void BehaviorAestheticallyCenterFaces::BehaviorUpdate()
   }
 
   if(_dVars.state == BehaviorState::SearchForFace){
-    if(IsControlDelegated()){
-      const EngineTimeStamp_t currentTS = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      if(GetBestFaceToCenter() != nullptr){
-        CancelDelegates();
+    if(GetBestFaceToCenter() != nullptr){
+      if(IsControlDelegated()){
+        CancelDelegates(false);
       }
-      const bool reachedTimeout = (_dVars.timeFaceSearchShouldEnd < currentTS);
-      if(reachedTimeout){
-        CancelSelf();
-        return;
-      }
-    }
-    if(!IsControlDelegated()){
       TransitionToCenterFace();
     }
   }
@@ -128,12 +117,12 @@ void BehaviorAestheticallyCenterFaces::BehaviorUpdate()
 void BehaviorAestheticallyCenterFaces::TransitionToSearchForFaces()
 {
   _dVars.state = BehaviorState::SearchForFace;
-  _dVars.timeFaceSearchShouldEnd = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + kSearchLength_ms;
   ANKI_VERIFY(_iConfig.findFacesBehavior->WantsToBeActivated(),
               "BehaviorAestheticallyCenterFaces.TransitionToSearchForFaces.DoesNotWantToBeActivated",
               "");
   // Delegate to the find faces behavior. It will exit if a face is seen, so in that case skip
-  // directly to TransitionToCenterFace.
+  // directly to TransitionToCenterFace. It will also dynamically adjust its timeout based on
+  // whether a body is seen
   DelegateIfInControl(_iConfig.findFacesBehavior.get(),
                       &BehaviorAestheticallyCenterFaces::TransitionToCenterFace);
 }

@@ -584,6 +584,22 @@
     "SpriteName" : "face_cloud01"
   },
   {
+    "CladEvent" : "Face_Cloud02",
+    "SpriteName" : "face_cloud02"
+  },
+  {
+    "CladEvent" : "Face_Cloud03",
+    "SpriteName" : "face_cloud03"
+  },
+  {
+    "CladEvent" : "Face_Cloud04",
+    "SpriteName" : "face_cloud04"
+  },
+  {
+    "CladEvent" : "Face_Clouds_Mist",
+    "SpriteName" : "face_clouds_mist"
+  },
+  {
     "CladEvent" : "Face_Flashing_Zeros",
     "SpriteName" : "face_flashing_zeros"
   },
@@ -688,8 +704,16 @@
     "SpriteName" : "face_nowifi_signal"
   },
   {
+    "CladEvent" : "Face_Nowifi_Trouble_Icon",
+    "SpriteName" : "face_nowifi_trouble_icon"
+  },
+  {
     "CladEvent" : "Face_Rain",
     "SpriteName" : "face_rain"
+  },
+  {
+    "CladEvent" : "Face_Shearchforcharger_Canthelp",
+    "SpriteName" : "face_shearchforcharger_canthelp"
   },
   {
     "CladEvent" : "Face_Snow01",
@@ -754,5 +778,13 @@
   {
     "CladEvent" : "Face_Windy01",
     "SpriteName" : "face_windy01"
+  },
+  {
+    "CladEvent" : "Vig_Always_Helpful_Knowledgegraph",
+    "SpriteName" : "vig_always_helpful_knowledgegraph"
+  },
+  {
+    "CladEvent" : "Vig_Always_Helpful_Timer",
+    "SpriteName" : "vig_always_helpful_timer"
   }
 ]

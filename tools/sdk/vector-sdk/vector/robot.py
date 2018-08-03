@@ -27,8 +27,51 @@ MAX_HEAD_ANGLE = util.degrees(45)
 
 
 class Robot:
-    def __init__(self, name, ip, cert_file, port="443",
-                 loop=None, default_logging=True, behavior_timeout=10):
+    def __init__(self,
+                 name: str,
+                 ip: str,
+                 cert_file: str,
+                 port: str = "443",
+                 loop: asyncio.BaseEventLoop = None,
+                 default_logging: bool = True,
+                 behavior_timeout: int = 10,
+                 enable_vision_mode: bool = False):
+        """Create a new Robot Object
+
+        This object is responsible for managing the state and connections
+        to Vector, and is typically the entry-point to running the sdk.
+
+        The majority of the robot will not work until it is properly connected
+        to Vector. There are two ways to get connected:
+
+        1. Using :func:`with`: it works just like opening a file, and will close when
+        the :func:`with` block's indentation ends
+
+        .. code-block:: python
+
+            with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+                robot.play_animation("anim_poked_giggle")
+
+        2. Using :func:`connect()` and :func:`disconnect()` to explicitly open and close the connection:
+        it allows the robot's connection to continue in the context in which it started.
+
+        .. code-block:: python
+
+            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot.connect()
+            robot.play_animation("anim_poked_giggle")
+            robot.disconnect()
+
+        Args:
+            name (str): The name of the Vector. Usually something like "Vector-A1B2".
+            ip (str): the ip address that Victor is currently connected to.
+            cert_file (str): The location of the cert file downloaded from the cloud.
+            port (str): the port on which Vector is listening. default=443
+            loop (:class:`asyncio.BaseEventLoop`): the async loop on which the Vector commands will execute. default=None
+            default_logging (bool): Disable default logging. default=False
+            behavior_timeout (int): The time to wait for control of the robot before failing. default=10
+            enable_vision_mode (bool): Turn on face detection. default=False
+        """
         if default_logging:
             util.setup_basic_logging()
         self.logger = util.get_class_logger(__name__, self)
@@ -50,6 +93,7 @@ class Robot:
         self._world = None
 
         self.behavior_timeout = behavior_timeout
+        self.enable_vision_mode = enable_vision_mode
         # Robot state/sensor data
         self._pose: util.Pose = None
         self._pose_angle_rad: float = None
@@ -244,7 +288,7 @@ class Robot:
         self._world = world.World(self)
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self._faces.enable_vision_mode(enable=True)
+        self._faces.enable_vision_mode(enable=self.enable_vision_mode)
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe("robot_state", self._unpack_robot_state)
@@ -280,6 +324,10 @@ class Robot:
         if self.is_async and wait_for_tasks:
             for task in self.pending:
                 task.wait_for_completed()
+
+        vision_mode = self._faces.enable_vision_mode(enable=False)
+        if isinstance(vision_mode, sync.Synchronizer):
+            vision_mode.wait_for_completed()
 
         self.events.close()
         self.loop.run_until_complete(self.conn.close())

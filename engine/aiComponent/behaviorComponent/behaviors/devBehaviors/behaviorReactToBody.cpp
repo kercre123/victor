@@ -32,7 +32,7 @@ namespace Cozmo {
 namespace {
   const char* const kDriveOffChargerBehaviorKey        = "driveOffChargerBehavior";
   const char* const kShouldDriveStraightIfNotOnCharger = "shouldDriveStraightIfNotOnCharger";
-  const char* const kDrivingForwadDistance             = "drivingForwadDistance_mm";
+  const char* const kDrivingForwardDistance            = "drivingForwardDistance_mm";
   const char* const kUpperPortionLookUpPercent         = "upperPortionLookUpPercent";
   const char* const kTrackingTimeout                   = "trackingTimeout_sec";
   const char* const kFaceSelectionPenaltiesKey         = "faceSelectionPenalties";
@@ -49,7 +49,7 @@ BehaviorReactToBody::InstanceConfig::InstanceConfig(const Json::Value& config)
                                                      debugName);
   shouldDriveStraightWhenBodyDetected = JsonTools::ParseBool(config, kShouldDriveStraightIfNotOnCharger,
                                                              debugName);
-  drivingForwardDistance = JsonTools::ParseFloat(config, kDrivingForwadDistance,
+  drivingForwardDistance = JsonTools::ParseFloat(config, kDrivingForwardDistance,
                                                  debugName);
   upperPortionLookUpPercent = JsonTools::ParseFloat(config, kUpperPortionLookUpPercent,
                                                     debugName);
@@ -135,7 +135,7 @@ void BehaviorReactToBody::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
   const char* list[] = {
       kDriveOffChargerBehaviorKey,
       kShouldDriveStraightIfNotOnCharger,
-      kDrivingForwadDistance,
+      kDrivingForwardDistance,
       kUpperPortionLookUpPercent,
       kTrackingTimeout,
       kFaceSelectionPenaltiesKey,

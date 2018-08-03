@@ -29,6 +29,7 @@ template <typename T>
 class AnkiEvent;
 class IGatewayInterface;
 class SettingsManager;
+class JdocsManager;
 namespace external_interface {
   class GatewayWrapper;
   class PullSettingsRequest;
@@ -49,6 +50,7 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::SettingsManager);
+    dependencies.insert(RobotComponentID::JdocsManager);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
   };
@@ -58,8 +60,9 @@ public:
   //////
 
   bool HandleRobotSettingChangeRequest(const RobotSetting robotSetting,
-                                       const Json::Value& settingJson);
-  bool HandleRobotSettingToggleRequest(const RobotSetting robotSetting);
+                                       const Json::Value& settingJson,
+                                       const bool updateSettingsJdoc = false);
+  bool ToggleRobotSettingHelper(const RobotSetting robotSetting);
 
   void RefreshConsoleVars();
 
@@ -71,6 +74,7 @@ private:
   void OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest&  updateSettingsRequest);
 
   SettingsManager*    _settingsManager = nullptr;
+  JdocsManager*       _jdocsManager = nullptr;
   IGatewayInterface*  _gatewayInterface = nullptr;
 
   std::vector<Signal::SmartHandle> _signalHandles;

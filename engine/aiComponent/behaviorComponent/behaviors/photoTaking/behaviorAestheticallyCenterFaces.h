@@ -19,7 +19,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/engineTimeStamp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -59,7 +58,6 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     BehaviorState state;
-    EngineTimeStamp_t timeFaceSearchShouldEnd;
     RobotTimeStamp_t imageTimestampWhenActivated = 0;
   };
 

@@ -223,10 +223,10 @@ void BehaviorOnboardingDetectHabitat::BehaviorUpdate()
     // not in habitat. Let the component decide for itself when the state is undetermined
     if( _dVars.state == DetectionState::InHabitat ) {
       auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
-      habitatDetector.ForceSetHabitatBeliefState( HabitatBeliefState::InHabitat );
+      habitatDetector.ForceSetHabitatBeliefState( HabitatBeliefState::InHabitat, "Onboarding");
     } else if( _dVars.state == DetectionState::NotInHabitat ) {
       auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
-      habitatDetector.ForceSetHabitatBeliefState( HabitatBeliefState::NotInHabitat );
+      habitatDetector.ForceSetHabitatBeliefState( HabitatBeliefState::NotInHabitat, "Onboarding");
     }
   }
   

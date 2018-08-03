@@ -41,10 +41,12 @@
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
+#include "engine/components/cubes/cubeInteractionTracker.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
+#include "engine/components/jdocsManager.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
@@ -324,6 +326,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
     _components->AddDependentComponent(RobotComponentID::CubeComms,                  new CubeCommsComponent());
     _components->AddDependentComponent(RobotComponentID::CubeConnectionCoordinator,  new CubeConnectionCoordinator());
+    _components->AddDependentComponent(RobotComponentID::CubeInteractionTracker,     new CubeInteractionTracker());
     _components->AddDependentComponent(RobotComponentID::GyroDriftDetector,          new RobotGyroDriftDetector());
     _components->AddDependentComponent(RobotComponentID::HabitatDetector,            new HabitatDetectorComponent());
     _components->AddDependentComponent(RobotComponentID::Docking,                    new DockingComponent());
@@ -351,6 +354,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->AddDependentComponent(RobotComponentID::VariableSnapshotComponent,  new VariableSnapshotComponent());
+    _components->AddDependentComponent(RobotComponentID::JdocsManager,               new JdocsManager());
     _components->InitComponents(this);
   }
 

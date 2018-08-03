@@ -18,7 +18,6 @@
 #include "engine/debug/devLoggingSystem.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/directGameComms.h"
-#include "engine/cozmoAPI/comms/tcpSocketComms.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -51,8 +50,6 @@
 #include "osState/osState.h"
 #endif
 
-#define USE_DIRECT_COMMS 0
-
 // The amount of time that the UI must have not been
 // returning pings before we consider it disconnected
 #ifdef SIMULATOR
@@ -68,7 +65,6 @@ namespace Anki {
 
 
     CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "UiComms", true);
-    CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "UiComms", true);
     CONSOLE_VAR(double, kPingSendFreq_ms, "UiComms", 1000.0); // 0 = never
     CONSOLE_VAR(uint32_t, kSdkStatusSendFreq, "UiComms", 1); // 0 = never
 
@@ -93,7 +89,7 @@ namespace Anki {
 
 
     ISocketComms* CreateSocketComms(UiConnectionType type, GameMessagePort* gameMessagePort,
-                                    ISocketComms::DeviceId hostDeviceId, bool isSdkCommunicationEnabled)
+                                    ISocketComms::DeviceId hostDeviceId)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
 #if FACTORY_TEST
@@ -107,11 +103,7 @@ namespace Anki {
       {
         case UiConnectionType::UI:
         {
-          #if USE_DIRECT_COMMS
-          return new DirectGameComms(gameMessagePort, hostDeviceId);
-          #else
           return new UdpSocketComms(type);
-          #endif
         }
         case UiConnectionType::SdkOverUdp:
         {
@@ -163,11 +155,10 @@ namespace Anki {
       }
       #endif
 
-      const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         auto& socket = _socketComms[(uint32_t)i];
-        socket = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID(), isSdkCommunicationEnabled);
+        socket = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID());
 
         // If UI disconnects due to timeout, disconnect Viz too
         if ((i == UiConnectionType::UI) && (socket != nullptr)) {
@@ -226,8 +217,8 @@ namespace Anki {
       switch(type)
       {
         case UiConnectionType::UI:          return kAcceptMessagesFromUI;
-        case UiConnectionType::SdkOverUdp:  return kAcceptMessagesFromSDK;
-        case UiConnectionType::SdkOverTcp:  return kAcceptMessagesFromSDK;
+        case UiConnectionType::SdkOverUdp:  return false;
+        case UiConnectionType::SdkOverTcp:  return false;
         case UiConnectionType::Switchboard: return true;
         case UiConnectionType::Gateway: return true;
         default:
@@ -237,14 +228,6 @@ namespace Anki {
         }
       }
     }
-
-
-    
-    bool UiMessageHandler::IsSdkCommunicationEnabled() const
-    {
-      return false;
-    }
-
 
     uint32_t UiMessageHandler::GetNumConnectedDevicesOnAnySocket() const
     {
@@ -758,23 +741,6 @@ namespace Anki {
           PRINT_STREAM_ERROR("UiMessageHandler.HandleEvents",
                              "Subscribed to unhandled event of type "
                              << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
-        }
-      }
-    }
-
-    void UiMessageHandler::UpdateIsSdkCommunicationEnabled()
-    {
-      const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
-
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
-      {
-        if (IsExternalSdkConnection(i))
-        {
-          ISocketComms* socketComms = GetSocketComms(i);
-          if (socketComms)
-          {
-            socketComms->EnableConnection(isSdkCommunicationEnabled);
-          }
         }
       }
     }

@@ -16,6 +16,7 @@
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
+#include <exception>
 #include <iomanip>
 
 namespace Anki {
@@ -102,6 +103,22 @@ tm WeatherIntentParser::GetLocalDateTime(const UserIntent_WeatherResponse& weath
   tm localTime;
   strptime(weatherIntent.localDateTime.c_str(), "%Y-%m-%dT%H:%M%S-", &localTime);
   return localTime;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool WeatherIntentParser::GetTemperature(const UserIntent_WeatherResponse& weatherIntent,
+                                         int& outTemp) const
+{
+  if(weatherIntent.temperature.empty()){
+    return false;
+  }
+  try{
+    outTemp = std::stoi(weatherIntent.temperature);
+  }catch(const std::invalid_argument& ia){
+    return false;
+  }
+  return true;
 }
 
 

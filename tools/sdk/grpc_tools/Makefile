@@ -20,12 +20,12 @@ endif
 MAC_VECTOR_HOSTNAME := Vector-Local
 
 ifeq ("$(WEBOTS)","1")
-curl_command := curl --resolve $(MAC_VECTOR_HOSTNAME):8443:127.0.0.1 ---cacert trust_mac.cert --header "Authorization: Bearer 8675309" https://$(MAC_VECTOR_HOSTNAME):8443
+curl_command := curl --resolve $(MAC_VECTOR_HOSTNAME):8443:127.0.0.1 --cacert trust_mac.cert --header "Authorization: Bearer 8675309" https://$(MAC_VECTOR_HOSTNAME):8443
 else
 curl_command := curl --resolve $(ROBOT_HOSTNAME):443:$(ANKI_ROBOT_HOST) --cacert trust.cert --header "Authorization: Bearer 8675309" https://$(ROBOT_HOSTNAME)
 endif
 
-all: python
+all: go python
 
 pip: .PHONY
 	python3 -m pip install grpcio grpcio-tools aiogrpc googleapis-common-protos
@@ -36,7 +36,12 @@ gen_py_proto: .PHONY
 	sed -i -e 's/import "\([^\/]*\).proto"/import "vector\/messaging\/\1.proto"/g' $(PYTHON_OUT)/*.proto
 	rm $(PYTHON_OUT)/*.proto-e
 
-python: pip gen_py_proto
+go: .PHONY
+	if [ ! -d "$(GIT_ROOT)/cloud/go/github.com/grpc-ecosystem/grpc-gateway" ]; then \
+		GOPATH=$(GIT_ROOT)/cloud/go/ go get github.com/grpc-ecosystem/grpc-gateway/...; \
+	fi
+
+python: go pip gen_py_proto
 	python3 -m grpc_tools.protoc \
 	-I $(PYTHON_SDK_ROOT) \
 	-I $(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \

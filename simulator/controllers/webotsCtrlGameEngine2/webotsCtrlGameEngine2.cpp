@@ -42,7 +42,6 @@
 #include <webots/Supervisor.hpp>
 
 #define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
-#define SDK_ADVERTISING_HOST_IP   "127.0.0.1"
 
 namespace Anki {
   namespace Cozmo {
@@ -167,18 +166,6 @@ int main(int argc, char **argv)
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
 
-  if(!config.isMember(AnkiUtil::kP_SDK_ADVERTISING_HOST_IP)) {
-    config[AnkiUtil::kP_SDK_ADVERTISING_HOST_IP] = SDK_ADVERTISING_HOST_IP;
-  }
-
-  if(!config.isMember(AnkiUtil::kP_SDK_ADVERTISING_PORT)) {
-    config[AnkiUtil::kP_SDK_ADVERTISING_PORT] = SDK_ADVERTISING_PORT;
-  }
-
-  if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
-    config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
-  }
-
   int numUIDevicesToWaitFor = 1;
   webots::Field* numUIsField = engineSupervisor.getSelf()->getField("numUIDevicesToWaitFor");
   if (numUIsField) {
@@ -189,7 +176,6 @@ int main(int argc, char **argv)
 
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
-  config[AnkiUtil::kP_NUM_SDK_DEVICES_TO_WAIT_FOR] = 1;
 
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsEngine.ini");

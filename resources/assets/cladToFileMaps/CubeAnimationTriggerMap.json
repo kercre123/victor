@@ -172,6 +172,10 @@
         "AnimName": "spinner_yellow_locked"
     },
     {
+        "CladEvent": "TapResponsePulse",
+        "AnimName": "tapResponsePulse"
+    },
+    {
         "CladEvent": "TestAllLeds",
         "AnimName": "testAllLeds"
     },

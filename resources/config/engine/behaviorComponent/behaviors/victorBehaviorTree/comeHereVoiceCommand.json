@@ -34,7 +34,11 @@
       "searchForFaceBehavior": "ObservingFindFaces",
       "shouldLeaveChargerFirst": true,
       "driveOffChargerBehavior": "DriveOffChargerFace",    
-      "exitOnceFound": true
+      "exitOnceFound": true,
+
+      "useBodyDetector": true,
+      "additionalLookTimeIfSawBody_s": 3.0,
+      "additionalSearchTimeIfSawBody_s": 3.0
     }
   ],
 

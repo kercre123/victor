@@ -831,6 +831,18 @@ bool CubeLightComponent::PlayDisconnectionLights(const ObjectID& objectID, AnimC
   return PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::ShutDown, AnimLayerEnum::State, callback);
 }
 
+bool CubeLightComponent::CancelDisconnectionLights(const ObjectID& objectID)
+{
+  return StopLightAnimByTrigger(CubeAnimationTrigger::ShutDown, AnimLayerEnum::State, objectID);
+}
+
+bool CubeLightComponent::PlayTapResponseLights(const ObjectID& objectID, AnimCompletedCallback callback)
+{
+  // Cube tap response lights should take precedence over other state anims
+  StopAllAnimsOnLayer(AnimLayerEnum::State);
+  return PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::TapResponsePulse, AnimLayerEnum::State, callback);
+}
+
 bool CubeLightComponent::EnableStatusAnims(const bool enable)
 {
   bool stateChanged = (_enableStatusAnims != enable);

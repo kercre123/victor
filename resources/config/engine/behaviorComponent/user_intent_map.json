@@ -29,7 +29,17 @@
     },
     {
       "cloud_intent": "intent_global_stop_extend",
-      "user_intent": "cancel_timer"
+      "user_intent": "global_stop",
+      "cloud_substitutions": {
+        "entity_behavior_stoppable": "what_to_stop"
+      }
+    },
+    {
+      "cloud_intent": "intent_global_delete_extend",
+      "user_intent": "global_delete",
+      "cloud_substitutions": {
+        "entity_behavior_deletable": "what_to_stop"
+      }
     },
     {
       "cloud_intent": "intent_greeting_goodbye",
@@ -71,7 +81,6 @@
     {
       "cloud_intent" : "intent_weather_extend",
       "user_intent"  : "weather_response",
-      "cloud_numerics": ["temperature"],
       "cloud_substitutions": {
         "speakable_location_string": "speakableLocationString",
         "is_forecast": "isForecast",

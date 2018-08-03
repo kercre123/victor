@@ -36,8 +36,8 @@ StatusLogHandler::StatusLogHandler( const CozmoContext* context )
     auto handleEvent = [this](const AnkiEvent<external_interface::GatewayWrapper>& msg) {
       if( msg.GetData().GetTag() == external_interface::GatewayWrapperTag::kEvent ) {
         const auto& event = msg.GetData().event();
-        if( event.GetTag() == external_interface::EventTag::kStatus ) {
-          SaveStatusHistory( event.status() );
+        if( event.GetTag() == external_interface::EventTag::kTimeStampedStatus ) {
+          SaveStatusHistory( event.time_stamped_status() );
         }
       }
     };
@@ -66,12 +66,9 @@ void StatusLogHandler::SetFeature( const std::string& featureName, const std::st
   }
 }
   
-void StatusLogHandler::SaveStatusHistory( const external_interface::Status& status )
+void StatusLogHandler::SaveStatusHistory( const external_interface::TimeStampedStatus& status )
 {
-  EngineTimeStamp_t timeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  static_assert( std::is_same<EngineTimeStamp_t::Underlying_t, uint32_t>::value, "Proto is expecting uint32");
-  std::pair<EngineTimeStamp_t,external_interface::Status> entry = std::make_pair( timeStamp, status );
-  _statusHistory->push_back( std::move(entry) );
+  _statusHistory->push_back(status);
 }
   
 void StatusLogHandler::SendStatusHistory()
@@ -81,11 +78,8 @@ void StatusLogHandler::SendStatusHistory()
     auto* response = new external_interface::RobotHistoryResult;
     response->mutable_messages()->Reserve( (int)_statusHistory->size() );
     for( size_t i=0; i<_statusHistory->size(); ++i ) {
-      const auto& elem = (*_statusHistory.get())[i];
-      // and you get a copy! and YOU get a copy!
-      auto* timeStampedStatus = response->mutable_messages()->Add();
-      *timeStampedStatus->mutable_status() = elem.second;
-      timeStampedStatus->set_timestamp_ms((TimeStamp_t)elem.first);
+      auto* status = response->mutable_messages()->Add();
+      *status = (*_statusHistory)[i];
     }
     gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
   }

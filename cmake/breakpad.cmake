@@ -55,6 +55,7 @@ macro(copy_breakpad_exes)
       message(STATUS "copy breakpad exe: ${exe} ${EXE_PATH} -> ${DST_PATH}")
       add_custom_command(
           OUTPUT "${DST_PATH}"
+          DEPENDS "${EXE_PATH}"
           COMMAND ${CMAKE_COMMAND}
           ARGS -E copy_if_different "${EXE_PATH}" "${DST_PATH}"
           COMMENT "copy ${EXE_PATH}"

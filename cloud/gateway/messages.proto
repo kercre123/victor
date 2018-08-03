@@ -4,8 +4,6 @@ syntax = "proto3";
 
 package Anki.Cozmo.external_interface;
 
-option optimize_for = LITE_RUNTIME;
-
 import "extensions.proto";
 import "onboardingSteps.proto";
 
@@ -129,7 +127,7 @@ message WakeWord {
 
 message TimeStampedStatus {
   Status status = 1;
-  uint32 timestamp_ms = 2;
+  uint32 timestamp_utc = 2;
 }
 
 message RobotHistoryRequest {

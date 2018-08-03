@@ -15,12 +15,14 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorFindFaceAndThen__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Cozmo {
   
+class BehaviorSearchWithinBoundingBox;
 class ISimpleFaceBehavior;
 
 class BehaviorFindFaceAndThen : public ICozmoBehavior
@@ -47,6 +49,9 @@ protected:
   
 private:
   
+  // "Look" is looking in the current direction
+  // "Search" is reorienting toward multiple directions
+  
   enum class State {
     Invalid=0,
     DriveOffCharger,
@@ -67,6 +72,15 @@ private:
     float timeUntilCancelSearching_s;
     float timeUntilCancelFollowup_s;
     
+    // when looking in a specific direction for a face, _extend_ timeUntilCancelFaceLooking_s by
+    // this much time if a body is seen, and run a find-face-from-body behavior for the remainder
+    float additionalLookTimeIfSawBody_s;
+    // when searching all over for a face, _extend_ timeUntilCancelFaceSearching_s by this much time,
+    // and run the find-face-from-body behavior for only this long. Afterwards, if the total time
+    // searching for a face is still less than the updated timeUntilCancelSearching_s, continue
+    // the original search behavior
+    float additionalSearchTimeIfSawBody_s;
+    
     // if it starts on the charger, if can either leave the charger before looking for a face, or stay
     // on the charger looking for a face. If it leaves the charger, it will subsequently turn to the last seen face
     bool shouldLeaveChargerFirst;
@@ -84,6 +98,10 @@ private:
     ICozmoBehaviorPtr behaviorOnceFound;
     bool behaviorOnceFoundIsSimpleFace;
     bool exitOnceFound;
+    
+    bool useBodyDetector;
+    std::shared_ptr<BehaviorSearchWithinBoundingBox> behaviorFindFaceInBB;
+    float upperPortionLookUpPercent;
   };
 
   struct DynamicVariables {
@@ -97,6 +115,11 @@ private:
     RobotTimeStamp_t lastFaceTimeStamp_ms;
     
     RobotTimeStamp_t activationTimeStamp_ms;
+    
+    RobotTimeStamp_t timeAtStateChange;
+    bool sawBodyDuringState;
+    Vision::SalientPoint lastPersonDetected;
+    float timeEndFaceFromBodyBehavior_s;
   };
 
   InstanceConfig   _iConfig;
@@ -112,6 +135,14 @@ private:
   // If there is a face, and it is the most recent, and it shares the same origin, this returns true and sets the params
   bool GetRecentFaceSince( RobotTimeStamp_t sinceTime_ms, SmartFaceID& faceID, RobotTimeStamp_t& timeStamp_ms );
   bool GetRecentFace( SmartFaceID& faceID, RobotTimeStamp_t& timeStamp_ms );
+  
+  bool GetRecentBodySince( RobotTimeStamp_t sinceTime_ms, Vision::SalientPoint& person ) const;
+  
+  // Adds an action without changing the state
+  void RunFindFaceFromBodyAction();
+  
+  // Adds an action without changing the state
+  void RunSearchFaceBehavior();
   
   void SetState_internal(State state, const std::string& stateName);
 

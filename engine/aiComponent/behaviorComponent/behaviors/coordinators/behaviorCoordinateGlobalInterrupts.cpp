@@ -43,9 +43,14 @@ namespace{
   // _any_ behavior of that class is running below us on the stack
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(FistBump),
                                                                            BEHAVIOR_CLASS(Keepaway),
+                                                                           BEHAVIOR_CLASS(BlackJack),
+                                                                           BEHAVIOR_CLASS(InspectCube),
                                                                            BEHAVIOR_CLASS(RollBlock),
                                                                            BEHAVIOR_CLASS(PounceWithProx) }};
   
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressReactToSound = {{ BEHAVIOR_CLASS(InspectCube),
+                                                                                   BEHAVIOR_CLASS(Keepaway) }};
+
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenSleeping = {{
     BEHAVIOR_ID(ReactToTouchPetting),
     BEHAVIOR_ID(TriggerWordDetected),
@@ -134,7 +139,12 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   
   _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AddBehavior(BC, BEHAVIOR_CLASS(BumpObject));
   _iConfig.reactToUnexpectedMovementBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToUnexpectedMovement));
-  
+
+  _iConfig.reactToSoundAwakeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToSoundAwake));
+  for(const auto& behaviorClass : kBehaviorClassesToSuppressReactToSound){
+    _iConfig.behaviorsThatShouldntReactToSoundAwake.AddBehavior(BC, behaviorClass);
+  }
+
   _iConfig.reactToCliffBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToCliff));
   std::set<ICozmoBehaviorPtr> driveToFaceBehaviors = BC.FindBehaviorsByClass(BEHAVIOR_CLASS(DriveToFace));
   _iConfig.driveToFaceBehaviors.reserve( driveToFaceBehaviors.size() );
@@ -292,6 +302,13 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
   
+  // Suppress ReactToSoundAwake if needed
+  {
+    if( _iConfig.behaviorsThatShouldntReactToSoundAwake.AreBehaviorsActivated() ) {
+      _iConfig.reactToSoundAwakeBehavior->SetDontActivateThisTick(GetDebugLabel());
+    }
+  }
+  
   // tell BehaviorDriveToFace whenever a cliff interruption behavior is active, so that it knows when
   // it is reasonable to resume-i-mean-wants-to-be-activated-sorry-kevin
   {
@@ -303,7 +320,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
 {
   // scan through the stack below this behavior and return true if any behavior is active which is listed in

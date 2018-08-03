@@ -4,7 +4,7 @@
  * Author: Mark Wesley
  * Created: 05/14/16
  *
- * Description: UDP implementation for socket-based communications from e.g. Game/SDK to Engine
+ * Description: UDP implementation for socket-based communications. Used by webots for Vector.
  *
  * Copyright: Anki, Inc. 2016
  *

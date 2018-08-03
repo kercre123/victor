@@ -41,6 +41,8 @@ const char* kMinValidTimerKey = "minValidTimer_s";
 const char* kMaxValidTimerKey = "maxValidTimer_s";
 const char* kTimerRingingBehaviorKey = "timerRingingBehaviorID";
 
+const char* kCancelTimerEntity = "timer";
+
 // antic keys
 const char* kRecurIntervalMinKey = "recurIntervalMin_s";
 const char* kRecurIntervalMaxKey = "recurIntervalMax_s";
@@ -354,7 +356,11 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool setTimerWantsToRun = uic.IsUserIntentPending(USER_INTENT(set_timer));
   const bool timerShouldRing    = TimerShouldRing();
-  const bool cancelTimerPending = uic.IsUserIntentPending(USER_INTENT(cancel_timer));
+  UserIntent stopData;
+  const bool cancelTimerPending = uic.IsUserIntentPending(USER_INTENT(global_stop), stopData) &&
+                                  stopData.Get_global_stop().what_to_stop == kCancelTimerEntity;
+  const bool deleteTimerPending = uic.IsUserIntentPending(USER_INTENT(global_delete), stopData) &&
+                                  stopData.Get_global_delete().what_to_stop == kCancelTimerEntity;
   const bool checkTimePending = uic.IsUserIntentPending(USER_INTENT(check_timer));
   
   // Todo - need to have a distinction of polite interrupt on min time vs max time
@@ -378,7 +384,7 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   }
 
 
-  return cancelTimerPending || setTimerWantsToRun || 
+  return cancelTimerPending || deleteTimerPending || setTimerWantsToRun || 
          timeToRunAntic || timerShouldRing || 
          _lParams.shouldForceAntic || checkTimePending;
 }
@@ -473,9 +479,21 @@ void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
 void BehaviorTimerUtilityCoordinator::CheckShouldCancelTimer()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  if(uic.IsUserIntentPending(USER_INTENT(cancel_timer))){
-    SmartActivateUserIntent(USER_INTENT(cancel_timer));
+  // WantsToBeActivated verifies that the what_to_stop field is correct, so if it's pending
+  // and we hit this point in the code, no need to verify the what_to_stop field
+  bool cancelIntentPending = false;
+  if(uic.IsUserIntentPending(USER_INTENT(global_stop))){
+    SmartActivateUserIntent(USER_INTENT(global_stop));
+    cancelIntentPending = true;
+  }
 
+  if(uic.IsUserIntentPending(USER_INTENT(global_delete))){
+    SmartActivateUserIntent(USER_INTENT(global_delete));
+    cancelIntentPending = true;
+  }
+
+
+  if(cancelIntentPending){
     // Cancel a timer if it is set, otherwise play "I Cant Do That"
     auto handle = GetTimerUtility().GetTimerHandle();
     if(handle != nullptr){

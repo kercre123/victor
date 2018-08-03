@@ -14,6 +14,7 @@ enum uint_8 FeatureType {
   GreetAfterLongTime,
   AttentionTransfer,
   UserDefinedBehaviorTree,
+  PopAWheelie,
   
   PRDemo
 }

@@ -57,6 +57,7 @@ private:
   DynamicVariables _dVars;
 
   void TransitionToStorageIsFull();
+  void TransitionToFindFaces();
   void TransitionToFrameFaces();
   void TransitionToFocusingAnimation();
   void TransitionToTakePhoto();
