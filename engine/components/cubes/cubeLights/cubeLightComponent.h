@@ -147,6 +147,8 @@ public:
   // got one cube (just let the cubeCommsComponent worry about it) but that's a thought for later...
   bool PlayConnectionLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
   bool PlayDisconnectionLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
+  bool CancelDisconnectionLights(const ObjectID& objectID);
+  bool PlayTapResponseLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
   bool EnableStatusAnims(const bool enable);
 
   template<typename T>

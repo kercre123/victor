@@ -83,6 +83,7 @@ class CozmoContext;
 class CubeAccelComponent;
 class CubeCommsComponent;
 class CubeConnectionCoordinator;
+class CubeInteractionTracker;
 class DrivingAnimationHandler;
 class DataAccessorComponent;
 enum class EngineErrorCode : uint8_t;
@@ -252,6 +253,9 @@ public:
 
   inline CubeConnectionCoordinator& GetCubeConnectionCoordinator() {return GetComponent<CubeConnectionCoordinator>();}
   inline const CubeConnectionCoordinator& GetCubeConnectionCoordinator() const {return GetComponent<CubeConnectionCoordinator>();}
+
+  inline CubeInteractionTracker& GetCubeInteractionTracker() {return GetComponent<CubeInteractionTracker>();}
+  inline const CubeInteractionTracker& GetCubeInteractionTracker() const {return GetComponent<CubeInteractionTracker>();}
 
   inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>();}
   inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>();}

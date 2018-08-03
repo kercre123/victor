@@ -1,0 +1,16 @@
+{
+  "behaviorID" : "InvestigateHeldCube",
+  "behaviorClass" : "DispatcherQueue",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "FeatureGate",
+    "feature": "CubeBehaviors"
+  },
+
+  "behaviors": [
+    "DriveOffChargerCube",
+    "InspectCube"
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
+}

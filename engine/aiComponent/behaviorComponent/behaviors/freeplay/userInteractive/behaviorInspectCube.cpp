@@ -13,115 +13,67 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorInspectCube.h"
 
-#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackObjectAction.h"
-#include "engine/activeObject.h"
-#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorKeepaway.h"
-#include "engine/blockWorld/blockWorld.h"
-#include "engine/components/sensors/proxSensorComponent.h"
-#include "engine/components/visionComponent.h"
-#include "engine/moodSystem/moodManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/components/cubes/cubeInteractionTracker.h"
+#include "engine/cozmoObservableObject.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/math/math.h"
 
-#include <set>
-
 #define SET_STATE(s) SetState_internal(s, #s)
+
+#define DEBUG_INSPECT_CUBE_BEHAVIOR 0
 
 namespace Anki {
 namespace Cozmo {
 
 namespace{
-// JSON parameter keys
-static const char* kTargetUnmovedGetOutKey     = "targetUnmovedGetOutTimeout_s";
-static const char* kNoValidTargetGetOutKey     = "noValidTargetGetOutTimeout_s";
-static const char* kTargetHiddenGetOutKey      = "targetHiddenGetOutTimeout_s";
-static const char* kUseProxSensorKey           = "useProxForDistance";
-static const char* kTriggerDistKey             = "triggerDistance_mm";
-static const char* kMinWithdrawalSpeedKey      = "minWithdrawalSpeed_mmpers";
-static const char* kMinWithdrawalDistKey       = "minWithdrawalDist_mm";
 
 // Internal Tunable params 
-static const float kTargetVisibleTimeout_s = 1.0f;
-static const float kTargetUnmovedDistance_mm = 4.0f;
-static const float kTargetUnmovedAngle_deg = 5.0f;
-static const float kMinApproachMovementThreshold_mm  = 10.0f;
+static const float kSearchGetOutTimeout_s         = 5.0f;
+static const float kTrackingUnseenSearchTimeout_s = 2.5f;
+static const float kTrackingMinGetOutTime_s       = 10.0f;
+static const float kTrackingUnmovedGetOutTime_s   = 5.0f;
+static const float kBoredGetOutTimeout_s          = 30.0f;
+
+static const float kTriggerDistance_mm            = 80.0f;
+
+static const float kMinTrackingTiltAngle_deg = 4.0f;
+static const float kMinTrackingPanAngle_deg = 4.0f;
+static const float kMinTrackingClampPeriod_s = 0.2f;
+static const float kMaxTrackingClampPeriod_s = 0.7f;
 
 // Constants
-const char* kDebugName = "BehaviorInspectCube";
-static const char* kLogChannelName = "Behaviors";
+const char* kLogChannelName = "Behaviors";
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorInspectCube::TargetStatus::TargetStatus()
-: prevPose(Pose3d())
-, lastValidTime_s(0.0f)
-, lastObservedTime_s(0.0f)
-, lastMovedTime_s(0.0f)
-, distance(0.0f)
-, isValid(false)
-, isVisible(false)
-, isNotMoving(false)
-{
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInspectCube::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
-  targetFilter = std::make_unique<BlockWorldFilter>();
-  targetFilter->AddAllowedFamily(ObjectFamily::Block);
-  targetFilter->AddAllowedFamily(ObjectFamily::LightCube);
-  targetFilter->AddAllowedFamily(ObjectFamily::CustomObject);
-
-  targetUnmovedGetOutTimeout_s  = 10.0f;
-  noValidTargetGetOutTimeout_s  = 20.0f;
-  targetHiddenGetOutTimeout_s   = 10.0f;
-  useProxForDistance            = true;
-  triggerDistance_mm            = 125.0f;
-  minWithdrawalSpeed_mmpers     = 50.0f;
-  minWithdrawalDist_mm          = 40.0f;
-
-  JsonTools::GetValueOptional(config, kTargetUnmovedGetOutKey,    targetUnmovedGetOutTimeout_s);
-  JsonTools::GetValueOptional(config, kNoValidTargetGetOutKey,    noValidTargetGetOutTimeout_s);
-  JsonTools::GetValueOptional(config, kTargetHiddenGetOutKey,     targetHiddenGetOutTimeout_s);
-  JsonTools::GetValueOptional(config, kUseProxSensorKey,          useProxForDistance);
-  JsonTools::GetValueOptional(config, kTriggerDistKey,            triggerDistance_mm);
-  JsonTools::GetValueOptional(config, kMinWithdrawalSpeedKey,     minWithdrawalSpeed_mmpers);
-  JsonTools::GetValueOptional(config, kMinWithdrawalDistKey,      minWithdrawalDist_mm);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorInspectCube::DynamicVariables::DynamicVariables()
+BehaviorInspectCube::DynamicVariables::DynamicVariables(float startTime_s)
 : state(InspectCubeState::GetIn)
-, targetID(ObjectID())
-, target(TargetStatus())
-, approachState(TargetApproachState::Static)
-, prevApproachState(TargetApproachState::Static)
-, behaviorStartTime_s(0.0f)
-, retreatStartDistance_mm(0.0f)
-, retreatStartTime_s(0.0f)
-, nearApproachTriggered(false)
-, victorIsBored(false)
+, behaviorStartTime_s(startTime_s)
+, searchEndTime_s(0.0f)
+, trackingMinEndTime_s(0.0f)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInspectCube::BehaviorInspectCube(const Json::Value& config)
- : ICozmoBehavior(config)
- , _iConfig(config)
+: ICozmoBehavior(config)
+, _iConfig(config)
+, _dVars(0.0f)
+, _currentTimeThisTick_s(0.0f)
 {
-  MakeMemberTunable(_iConfig.targetUnmovedGetOutTimeout_s, kTargetUnmovedGetOutKey, kDebugName);
-  MakeMemberTunable(_iConfig.noValidTargetGetOutTimeout_s, kNoValidTargetGetOutKey, kDebugName);
-  MakeMemberTunable(_iConfig.targetHiddenGetOutTimeout_s, kTargetHiddenGetOutKey, kDebugName);
-  MakeMemberTunable(_iConfig.useProxForDistance, kUseProxSensorKey, kDebugName);
-  MakeMemberTunable(_iConfig.triggerDistance_mm, kTriggerDistKey, kDebugName);
-  MakeMemberTunable(_iConfig.minWithdrawalSpeed_mmpers, kMinWithdrawalSpeedKey, kDebugName);
-  MakeMemberTunable(_iConfig.minWithdrawalDist_mm, kMinWithdrawalDistKey, kDebugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,9 +85,12 @@ BehaviorInspectCube::~BehaviorInspectCube()
 void BehaviorInspectCube::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Keepaway),
-                                 BEHAVIOR_CLASS(Keepaway),
-                                 _iConfig.keepawayBehavior);
+  _iConfig.keepawayBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(Keepaway));
+
+  if(!_iConfig.cubeSetDownBehaviorIDString.empty()){
+    BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.cubeSetDownBehaviorIDString);
+    _iConfig.cubeSetDownBehavior = BC.FindBehaviorByID(behaviorID);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -151,6 +106,11 @@ void BehaviorInspectCube::GetBehaviorOperationModifiers(BehaviorOperationModifie
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+
+  // Interaction tracking is MUCH better when connected. Request a background connection once we've decided the 
+  // user is trying to engage with a cube
+  modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
+  modifiers.connectToCubeInBackground = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -162,28 +122,27 @@ void BehaviorInspectCube::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  const char* list[] = {
-    kTargetUnmovedGetOutKey,
-    kNoValidTargetGetOutKey,
-    kTargetHiddenGetOutKey,
-    kUseProxSensorKey,
-    kTriggerDistKey,
-    kMinWithdrawalSpeedKey,
-    kMinWithdrawalDistKey
-  };
-  expectedKeys.insert( std::begin(list), std::end(list) );
+  // const char* list[] = {
+  // };
+  // expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::OnBehaviorActivated() 
 {
   // reset dynamic variables
-  _dVars = DynamicVariables();
+  _dVars = DynamicVariables(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
 
-  // Initialize time stamps for various timeouts
-  _dVars.target.lastValidTime_s = GetCurrentTimeInSeconds();
-  _dVars.target.lastObservedTime_s = GetCurrentTimeInSeconds();
-  _dVars.target.lastMovedTime_s = GetCurrentTimeInSeconds();
+#if DEBUG_INSPECT_CUBE_BEHAVIOR
+  //DNM
+  float lastSeenTime_s = GetBEI().GetCubeInteractionTracker().GetTargetStatus().lastObservedTime_s;
+  float timeSinceSeen_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - lastSeenTime_s;
+  if(timeSinceSeen_s > 4.0f){
+    PRINT_NAMED_WARNING("BehaviorInspectCube", "Too long since cube seen");
+  }
+#endif
+
+  TransitionToSearching();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,30 +159,30 @@ void BehaviorInspectCube::BehaviorUpdate()
     return;
   }
 
-  CheckTargetStatus();
-  UpdateBoredomTimeouts();
+  _currentTimeThisTick_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  TargetStatus targetStatus = GetBEI().GetCubeInteractionTracker().GetTargetStatus();
+
+  if( InspectCubeState::Searching == _dVars.state ||
+      InspectCubeState::Tracking == _dVars.state){
+    UpdateBoredomTimeouts(targetStatus);
+  }
 
   switch(_dVars.state){
-    case InspectCubeState::GetIn:
-    {
-      if(!IsControlDelegated()){
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetIn),
-                            &BehaviorInspectCube::TransitionToSearching);
-      }
-      break;
-    }
     case InspectCubeState::Searching:
     {
-      UpdateSearching();
+      UpdateSearching(targetStatus);
       break;
     }
     case InspectCubeState::Tracking:
     {
-      UpdateApproachState();
-      UpdateTracking();
+      UpdateTracking(targetStatus);
       break;
     }
+    case InspectCubeState::GetIn:
     case InspectCubeState::Keepaway:
+    case InspectCubeState::CubeSetDown:
+    // TODO(str) Watch for the user to set down the cube, then trigger behaviors like moveCube, rollCube, etc
+    // as appropriate
     case InspectCubeState::GetOutBored:
     {
       //Do Nothing
@@ -233,60 +192,14 @@ void BehaviorInspectCube::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateApproachState()
+void BehaviorInspectCube::UpdateBoredomTimeouts(const TargetStatus& targetStatus)
 {
-  _dVars.prevApproachState = _dVars.approachState;
-  const float distanceDelta = _dVars.target.prevDistance - _dVars.target.distance;
-  if(distanceDelta > kMinApproachMovementThreshold_mm){
-    _dVars.approachState = TargetApproachState::Approaching;
-  } else if (distanceDelta < -kMinApproachMovementThreshold_mm){
-    _dVars.approachState = TargetApproachState::Retreating;
-  } else {
-    _dVars.approachState = TargetApproachState::Static;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateBoredomTimeouts()
-{
-  if(_dVars.victorIsBored){
-    return;
-  }
-
-  // If we haven't had a valid target for too long, end the game bored
-  float timeSinceTargetValid = GetCurrentTimeInSeconds() - _dVars.target.lastValidTime_s;
-  if((_iConfig.noValidTargetGetOutTimeout_s > 0.0f) &&
-     (timeSinceTargetValid > _iConfig.noValidTargetGetOutTimeout_s)){
+  if((_currentTimeThisTick_s - _dVars.behaviorStartTime_s) > kBoredGetOutTimeout_s){
     PRINT_CH_INFO(kLogChannelName,
-                  "BehaviorInspectCube.GameEndTimeout", 
-                  "Victor got bored and quit because he coudn't find a cube...");
-    _dVars.victorIsBored = true;
-  }
-
-  // Check if we want to end the behavior due to player inactivity
-  if((_dVars.target.isValid) &&
-     (_dVars.target.isNotMoving) && 
-     (_iConfig.targetUnmovedGetOutTimeout_s > 0.0f) &&
-     (GetCurrentTimeInSeconds() - _dVars.target.lastMovedTime_s > _iConfig.targetUnmovedGetOutTimeout_s)){
-    PRINT_CH_INFO(kLogChannelName,
-                  "BehaviorInspectCube.Timeout", 
-                  "Victor got bored and quit because no one was playing with him...");
-    _dVars.victorIsBored = true;
-  }
-
-  if((_dVars.target.isValid) &&
-     (!_dVars.target.isVisible) &&
-     (_iConfig.targetHiddenGetOutTimeout_s > 0.0f) &&
-     (GetCurrentTimeInSeconds() - _dVars.target.lastObservedTime_s) > _iConfig.targetHiddenGetOutTimeout_s){
-    PRINT_CH_INFO(kLogChannelName,
-                  "BehaviorInspectCube.GameEndTimeout", 
-                  "Victor got bored and quit because his cube was hidden too long...");
-    _dVars.victorIsBored = true;
-  }
-
-  if(_dVars.victorIsBored){
+                  "BehaviorInspectCube.BoredTimeout", 
+                  "We've been diddling about inspecing the cube too long with no result. Victor got bored.");
     TransitionToGetOutBored();
-    return;
+    // TODO:(str) hook this up to a cooldown so we don't jump right back in
   }
 }
 
@@ -294,22 +207,35 @@ void BehaviorInspectCube::UpdateBoredomTimeouts()
 void BehaviorInspectCube::TransitionToSearching()
 {
   SET_STATE(InspectCubeState::Searching);
+  CancelDelegates(false);
+  TargetStatus targetStatus = GetBEI().GetCubeInteractionTracker().GetTargetStatus();
+  if(targetStatus.visibleRecently){
+    TransitionToTracking();
+  }
+  else{
+    // If we don't find the target soon, exit bored
+    _dVars.searchEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kSearchGetOutTimeout_s;
+    if(nullptr != targetStatus.object){
+      DelegateIfInControl(new SearchForNearbyObjectAction(targetStatus.object->GetID()),
+                          &BehaviorInspectCube::TransitionToSearching);
+    }
+    else {
+      DelegateIfInControl(new SearchForNearbyObjectAction(),
+                          &BehaviorInspectCube::TransitionToSearching);
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateSearching(){
-  if(_dVars.target.isVisible){
-    CancelDelegates();
+void BehaviorInspectCube::UpdateSearching(const TargetStatus& targetStatus){
+  if(targetStatus.visibleThisFrame){
     TransitionToTracking();
-    return;
   }
-
-  if(!IsControlDelegated()) {
-    if(_dVars.target.isValid){
-      DelegateIfInControl(new SearchForNearbyObjectAction(_dVars.targetID));
-    } else {
-      DelegateIfInControl(new SearchForNearbyObjectAction());
-    }
+  else if(!targetStatus.isValid){
+    TransitionToGetOutTargetLost();
+  }
+  else if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _dVars.searchEndTime_s){
+    TransitionToGetOutBored();
   }
 }
 
@@ -317,94 +243,71 @@ void BehaviorInspectCube::UpdateSearching(){
 void BehaviorInspectCube::TransitionToTracking()
 {
   SET_STATE(InspectCubeState::Tracking);
-  _dVars.nearApproachTriggered = false;
-  PRINT_CH_INFO(kLogChannelName,
-                "BehaviorInspectCube.DistanceTriggerReset", 
-                "Cube must get within %f mm of victor before withdrawal to trigger keepaway",
-                _iConfig.triggerDistance_mm);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceReactToCube));
+  CancelDelegates(false);
+  TargetStatus targetStatus = GetBEI().GetCubeInteractionTracker().GetTargetStatus();
+
+  bool trackByType = false;
+  TrackObjectAction* trackAction = new TrackObjectAction(targetStatus.object->GetID(), trackByType);
+  trackAction->SetTiltTolerance(DEG_TO_RAD(kMinTrackingTiltAngle_deg));
+  trackAction->SetPanTolerance(DEG_TO_RAD(kMinTrackingPanAngle_deg));
+  trackAction->SetClampSmallAnglesToTolerances(true);
+  trackAction->SetClampSmallAnglesPeriod(kMinTrackingClampPeriod_s, kMaxTrackingClampPeriod_s);
+
+  // If the TrackObjectAction returns, it has lost its target. Go to searching
+  DelegateIfInControl(trackAction, &BehaviorInspectCube::TransitionToSearching); 
+  _dVars.trackingMinEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTrackingMinGetOutTime_s;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateTracking()
+void BehaviorInspectCube::UpdateTracking(const TargetStatus& targetStatus)
 {
-  if(!_dVars.target.isValid || !_dVars.target.isVisible){
-    CancelDelegates(false);
-    TransitionToSearching();
+  if(!targetStatus.isValid){
+    TransitionToGetOutTargetLost();
     return;
   }
 
-  if(!IsControlDelegated()){
-    TrackObjectAction* trackAction = new TrackObjectAction(_dVars.targetID, true);
-    trackAction->SetPanDuration(0.2f);
-    trackAction->SetTiltDuration(0.1f);
-    DelegateIfInControl(trackAction, &BehaviorInspectCube::TransitionToSearching);
-  } 
-
-  // Monitor for the user "teasing" victor with a cube
-  const float currentTime_s = GetCurrentTimeInSeconds();
-
-  if(!_dVars.nearApproachTriggered && (_dVars.target.distance <= _iConfig.triggerDistance_mm)){
+  if(targetStatus.distance_mm <= kTriggerDistance_mm){
     PRINT_CH_INFO(kLogChannelName,
-                  "BehaviorInspectCube.DistanceTriggerSet", 
-                  "Cube came within %f mm of victor, withdraw faster than %f mm/s over at least %f mm to trigger keepaway",
-                  _iConfig.triggerDistance_mm,
-                  _iConfig.minWithdrawalSpeed_mmpers,
-                  _iConfig.minWithdrawalDist_mm);
-    CancelDelegates(false);
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceReactToCube));
-
-    _dVars.nearApproachTriggered = true;
-  }
-  if(!_dVars.nearApproachTriggered){
-   return;
+                  "BehaviorInspectCube.DistanceTriggerTripped", 
+                  "Cube came within %f mm of victor, while (we think) held by the user. Triggering keepaway",
+                  kTriggerDistance_mm);
+    TransitionToKeepaway();
+    return;
   }
 
- // Only Consider frames where the approach state has changed
-  if(_dVars.approachState != _dVars.prevApproachState){
-    if(_dVars.approachState == TargetApproachState::Retreating){
-      // If we just started retreating note when and where it started
-      _dVars.retreatStartDistance_mm = _dVars.target.distance;
-      _dVars.retreatStartTime_s = currentTime_s;
-      PRINT_CH_INFO(kLogChannelName,
-                    "BehaviorInspectCube.StartRetreat", 
-                    "Detected cube being pulled away from Victor");
+  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-    }else if(_dVars.prevApproachState == TargetApproachState::Retreating){
-      // If we just stopped retreating, see if we should transition to keepaway
-      float distanceDelta = _dVars.target.distance - _dVars.retreatStartDistance_mm;
-      float timeDelta = currentTime_s - _dVars.retreatStartTime_s;
-      float avgRetreatSpeed = distanceDelta / timeDelta;
-      if(avgRetreatSpeed < _iConfig.minWithdrawalSpeed_mmpers){
-        PRINT_CH_INFO(kLogChannelName,
-                      "BehaviorInspectCube.FailedTease", 
-                      "Cube was withdrawn too slow.");
-      }
-      if(distanceDelta < _iConfig.minWithdrawalDist_mm){
-        PRINT_CH_INFO(kLogChannelName,
-                      "BehaviorInspectCube.FailedTease", 
-                      "Cube was not withdrawn far enough.");
-      }
-
-      if((avgRetreatSpeed > _iConfig.minWithdrawalSpeed_mmpers) &&
-        (distanceDelta > _iConfig.minWithdrawalDist_mm)){
-        TransitionToKeepaway();
-      }
-    }
+  float timeSinceSeen_s = currentTime_s - targetStatus.lastObservedTime_s;
+  if(timeSinceSeen_s > kTrackingUnseenSearchTimeout_s){
+    TransitionToSearching();
+    PRINT_CH_INFO(kLogChannelName,
+                  "BehaviorInspectCube.TrackingUnseenTimeout", 
+                  "Target was unseen for %f sec while tracking, going to Searching",
+                  kTrackingUnseenSearchTimeout_s);
+    return;
   }
 
+  float timeSinceMoved_s = currentTime_s - targetStatus.lastMovedTime_s;
+  if( (currentTime_s > _dVars.trackingMinEndTime_s) && (timeSinceMoved_s > kTrackingUnmovedGetOutTime_s)){
+    TransitionToGetOutBored();
+    PRINT_CH_INFO(kLogChannelName,
+                  "BehaviorInspectCube.TargetUnmovedTimeout", 
+                  "Target was tracked for at least %f sec without moving for at least %f sec. Victor got bored.",
+                  kTrackingMinGetOutTime_s, kTrackingUnmovedGetOutTime_s);
+    return;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToKeepaway()
 {
+  SET_STATE(InspectCubeState::Keepaway);
   CancelDelegates(false);      
-  if(_iConfig.keepawayBehavior->WantsToBeActivatedBehavior()){
+  if(_iConfig.keepawayBehavior->WantsToBeActivated()){
     DelegateIfInControl(_iConfig.keepawayBehavior.get(),
                         [this](){
                           CancelSelf();
                         });
-    SET_STATE(InspectCubeState::Keepaway);
   } else {
     CancelSelf();
   }
@@ -413,165 +316,24 @@ void BehaviorInspectCube::TransitionToKeepaway()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToGetOutBored()
 {
-  CancelDelegates(false);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored), [this](){CancelSelf();});
   SET_STATE(InspectCubeState::GetOutBored);
+  CancelDelegates(false);
+  // TODO:(str) replace this with a "Where'd ma cube get off to?" anim
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored), [this](){CancelSelf();});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorInspectCube::GetCurrentTimeInSeconds() const
+void BehaviorInspectCube::TransitionToGetOutTargetLost()
 {
-  return BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  SET_STATE(InspectCubeState::GetOutBored);
+  CancelDelegates(false);
+
+  PRINT_CH_INFO(kLogChannelName,
+                "BehaviorInspectCube.TargetLost", 
+                "CubeInteractionTracker Reported target as invalid, exiting");
+
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored), [this](){CancelSelf();});
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Target Tracking Methods
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// TODO:(str) Consider pulling the code from TargetTrackingMethods to a new behavior component and refactoring Keepaway
-// to get its data from the same component. Perhaps a subscription system akin to the VSM?
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInspectCube::CheckTargetStatus()
-{
-  if(CheckTargetObject()){
-    UpdateTargetVisibility();
-    UpdateTargetAngle();
-    UpdateTargetDistance();
-    UpdateTargetMotion();
-    return true;
-  }
-
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInspectCube::CheckTargetObject()
-{
-  const ObservableObject* targetObject;
-
-  if(!_dVars.targetID.IsSet()){
-    // If we don't yet have a target, see whether we have a recently observed cube
-    targetObject = GetBEI().GetBlockWorld().FindMostRecentlyObservedObject(*_iConfig.targetFilter);
-  } else {
-    // We do already have a target selected, see if blockworld knows where it is
-    targetObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
-  }
-
-  if(nullptr == targetObject){
-    // Reset the target status if we don't have a target
-    _dVars.target.isValid = false;
-    _dVars.target.isVisible = false;
-    _dVars.target.isNotMoving = false;
-
-    return false;
-  } else if(!_dVars.targetID.IsSet()){
-    _dVars.targetID = targetObject->GetID();
-  }
-
-  _dVars.target.lastValidTime_s = GetCurrentTimeInSeconds();
-
-  if(!_dVars.target.isValid){
-    // It is possible that visible or movement timeouts are shorter than validTarget timeout. In that case,
-    // we will instantly timeout on them upon recovering a valid target unless we reset their timers.
-    _dVars.target.lastMovedTime_s = GetCurrentTimeInSeconds();
-    _dVars.target.lastObservedTime_s = GetCurrentTimeInSeconds();    
-    _dVars.target.isValid = true;
-  }
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateTargetVisibility()
-{
-  const ObservableObject* targetObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
-
-  if(targetObject->GetLastObservedTime() >= GetBEI().GetRobotInfo().GetLastImageTimeStamp()){
-    _dVars.target.lastObservedTime_s = GetCurrentTimeInSeconds();
-    _dVars.target.isVisible = true;
-
-  } else{
-    float timeSinceTargetObserved_s = GetCurrentTimeInSeconds() - _dVars.target.lastObservedTime_s;
-    _dVars.target.isVisible = timeSinceTargetObserved_s < kTargetVisibleTimeout_s;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateTargetAngle()
-{
-  // Use the center of the cube for AngleToTarget computation 
-  const ObservableObject* targetObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
-  Pose3d targetWRTRobot;
-  targetObject->GetPose().GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), targetWRTRobot);
-  Pose2d robotToTargetFlat(targetWRTRobot);
-  Radians angleToTarget(atan2f(robotToTargetFlat.GetY(), robotToTargetFlat.GetX()));
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateTargetDistance()
-{
-  const ObservableObject* targetObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
-
-  _dVars.target.prevDistance = _dVars.target.distance;
-  bool usingProx = false;
-  if(_iConfig.useProxForDistance){
-    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-    bool targetIsInProxFOV = false;
-    proxSensor.IsInFOV(targetObject->GetPose(), targetIsInProxFOV);
-    u16 proxDist_mm = 0;
-
-    // If we can see the cube (or have seen it recently enough) to verify its in prox range, use prox
-    if(_dVars.target.isVisible && targetIsInProxFOV && proxSensor.GetLatestDistance_mm(proxDist_mm)){
-      _dVars.target.distance = proxDist_mm;
-      usingProx = true;
-    }
-  } 
-  
-  if(!usingProx){
-    // Otherwise, use ClosestMarker for VisionBased distance checks
-    Pose3d closestMarkerPose;
-    targetObject->GetClosestMarkerPose(GetBEI().GetRobotInfo().GetPose(), true, closestMarkerPose);
-    _dVars.target.distance = Point2f(closestMarkerPose.GetTranslation()).Length();
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::UpdateTargetMotion()
-{
-  const ObservableObject* targetObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
-
-  if(TargetHasMoved(targetObject)){
-    _dVars.target.lastMovedTime_s = GetCurrentTimeInSeconds();
-    _dVars.target.isNotMoving = false;
-  } else {
-    float timeSinceTargetMoved = GetCurrentTimeInSeconds() - _dVars.target.lastMovedTime_s;
-    _dVars.target.isNotMoving = timeSinceTargetMoved > _iConfig.targetUnmovedGetOutTimeout_s;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInspectCube::TargetHasMoved(const ObservableObject* targetObject)
-{
-  // See if we can check this as an active object first
-  ActiveObject* targetActiveObject = GetBEI().GetBlockWorld().GetConnectedActiveObjectByID(targetObject->GetID());
-  if(nullptr != targetActiveObject){
-    // See if its reporting movement
-    return targetActiveObject->IsMoving();
-  }
-
-  // Target is not connected, lets see if we can check for movement by pose
-  // If we can't validate that it has moved due to pose parenting changes, assume it hasn't moved
-  bool hasMoved = false;
-  Radians angleThreshold;
-  angleThreshold.setDegrees(kTargetUnmovedAngle_deg);
-  hasMoved = !targetObject->GetPose().IsSameAs(_dVars.target.prevPose, 
-                                        kTargetUnmovedDistance_mm,
-                                        angleThreshold);
-  _dVars.target.prevPose = targetObject->GetPose();
-
-  return hasMoved;
-}
-
 
 }
 }

@@ -55,6 +55,7 @@ enum uint_8 BEIConditionType {
   UnexpectedMovement,
   UserIntentActive,
   UserIntentPending,
+  UserIsHoldingCube,
 
   UnitTestCondition,
 }

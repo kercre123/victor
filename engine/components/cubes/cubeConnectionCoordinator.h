@@ -16,8 +16,8 @@
 #define __Engine_AiComponent_BehaviorComponent_CubeConnectionCoordinator_H__
 
 
-#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/components/cubes/iCubeConnectionSubscriber.h"
+#include "engine/cozmoObservableObject.h"
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -28,6 +28,7 @@ namespace Cozmo{
 
 // Fwd Delarations
 class CozmoContext;
+class ActiveObject;
 
 class CubeConnectionCoordinator : public IDependencyManagedComponent<RobotComponentID>, public Anki::Util::noncopyable
 {
@@ -52,22 +53,28 @@ public:
   bool IsConnectedToCube(){ return (ECoordinatorState::ConnectedInteractable          == _coordinatorState ||
                                     ECoordinatorState::ConnectedBackground            == _coordinatorState ||
                                     ECoordinatorState::ConnectedSwitchingToBackground == _coordinatorState); }
+
+  bool IsConnectedInteractable(){ return (ECoordinatorState::ConnectedInteractable          == _coordinatorState ||
+                                          ECoordinatorState::ConnectedSwitchingToBackground == _coordinatorState); }
+
+  // Returns the ActiveID of the currently-connected cube from the cubeCommsComponent, or
+  // ObservableObject::InvalidActiveID if there is no connected cube
+  ActiveID GetConnectedCubeActiveId() const { return _connectedCubeActiveID; }
+
+  // Returns the ActiveObject corresponding to the _connectedCubeActiveID returned from the CubeCommsComponent,
+  // or nullptr if there is no such object
+  ActiveObject* GetConnectedActiveObject() const { return _connectedActiveObject; }
   
 private:
-  void CheckForConnectionLoss(const RobotCompMap& dependentComps);
-  void PruneExpiredSubscriptions();
-
-  void TransitionToSwitchingToBackground(const RobotCompMap& dependentComps);
-  void CancelSwitchToBackground(const RobotCompMap& dependentComps);
-  void TransitionToConnectedInteractable(const RobotCompMap& dependentComps);
-  void TransitionToConnectedBackground(const RobotCompMap& dependentComps);
-
-  void RequestConnection(const RobotCompMap& dependentComps);
-  void RequestDisconnect(const RobotCompMap& dependentComps);
-  void HandleConnectionAttemptResult(const RobotCompMap& dependentComps);
-
-  void SubscribeToWebViz();
-  void SendDataToWebViz();
+  // Private data structures
+  enum class ECoordinatorState{
+    UnConnected,
+    Connecting,
+    ConnectedInteractable,
+    ConnectedSwitchingToBackground,
+    ConnectedBackground,
+    Disconnecting
+  };
 
   struct SubscriberRecord{
     static constexpr float kDontExpire = -1.0f; 
@@ -94,31 +101,46 @@ private:
     }
   };
 
-  std::set<SubscriberRecord> _subscriptionRecords;
   using SubscriptionIterator = std::set<SubscriberRecord>::iterator;
-  std::set<ICubeConnectionSubscriber*> _subscribersDumpedByConnectionLoss;
 
-  int _nonBackgroundSubscriberCount = 0;
-  bool FindRecordBySubscriber(ICubeConnectionSubscriber* const subscriber, SubscriptionIterator& iterator);
+  //Private Methods
+  void CheckForConnectionLoss(const RobotCompMap& dependentComps);
+  void PruneExpiredSubscriptions();
 
-  enum class ECoordinatorState{
-    UnConnected,
-    Connecting,
-    ConnectedInteractable,
-    ConnectedSwitchingToBackground,
-    ConnectedBackground,
-    Disconnecting
-  } _coordinatorState;
+  void TransitionToSwitchingToBackground(const RobotCompMap& dependentComps);
+  void CancelSwitchToBackground(const RobotCompMap& dependentComps);
+  void TransitionToConnectedInteractable(const RobotCompMap& dependentComps);
+  void TransitionToConnectedBackground(const RobotCompMap& dependentComps);
+
+  void RequestConnection(const RobotCompMap& dependentComps);
+  void RequestDisconnect(const RobotCompMap& dependentComps);
+  void HandleConnectionAttemptResult(const RobotCompMap& dependentComps);
 
   void SetState(ECoordinatorState newState);
 
-  bool _connectionAttemptFinished = false;
-  bool _connectionAttemptSucceeded = false;
-  bool _connectionLostUnexpectedly = false;
+  bool FindRecordBySubscriber(ICubeConnectionSubscriber* const subscriber, SubscriptionIterator& iterator);
+  
+  void SubscribeToWebViz();
+  void SendDataToWebViz();
 
-  float _timeToEndStandby_s = 0.0f;
-  float _timeToSwitchToBackground_s = 0.0f;
-  float _timeToDisconnect_s = 0.0f;
+  // Private Member Vars
+  ECoordinatorState _coordinatorState;
+
+  std::set<SubscriberRecord> _subscriptionRecords;
+  std::set<ICubeConnectionSubscriber*> _subscribersDumpedByConnectionLoss;
+  int _nonBackgroundSubscriberCount;
+
+  bool _connectionAttemptFinished;
+  bool _connectionAttemptSucceeded;
+  bool _connectionLostUnexpectedly;
+  bool _cancelSwitchToBackground;
+
+  float _timeToEndStandby_s;
+  float _timeToSwitchToBackground_s;
+  float _timeToDisconnect_s;
+
+  ActiveID _connectedCubeActiveID;
+  ActiveObject* _connectedActiveObject;
 
   // for webviz
 #if ANKI_DEV_CHEATS

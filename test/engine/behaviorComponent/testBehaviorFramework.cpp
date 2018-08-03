@@ -88,6 +88,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),
            GetFromMap<CubeCommsComponent>(map, BEIComponentID::CubeComms),
            GetFromMap<CubeConnectionCoordinator>(map, BEIComponentID::CubeConnectionCoordinator),
+           GetFromMap<CubeInteractionTracker>(map, BEIComponentID::CubeInteractionTracker),
            GetFromMap<CubeLightComponent>(map, BEIComponentID::CubeLight),
            GetFromMap<CliffSensorComponent>(map, BEIComponentID::CliffSensor),
            GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),

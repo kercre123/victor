@@ -44,6 +44,7 @@ enum class RobotComponentID{
   CubeAccel,
   CubeComms,
   CubeConnectionCoordinator,
+  CubeInteractionTracker,
   CubeLights,
   DataAccessor,
   Docking,

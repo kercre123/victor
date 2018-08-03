@@ -209,6 +209,8 @@ enum uint_16 BehaviorID {
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube
+  InvestigateHeldCube,
+  InvestigateHeldCubeGetIn,
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,

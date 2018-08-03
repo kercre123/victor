@@ -42,6 +42,7 @@ class BackpackLightComponent;
 class CubeAccelComponent;
 class CubeCommsComponent;
 class CubeConnectionCoordinator;
+class CubeInteractionTracker;
 class RobotGyroDriftDetector;
 class DockingComponent;
 class CarryingComponent;
@@ -97,6 +98,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(BackpackLightComponent,        RobotComponentID, Bac
 LINK_COMPONENT_TYPE_TO_ENUM(CubeAccelComponent,            RobotComponentID, CubeAccel)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeCommsComponent,            RobotComponentID, CubeComms)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeConnectionCoordinator,     RobotComponentID, CubeConnectionCoordinator)
+LINK_COMPONENT_TYPE_TO_ENUM(CubeInteractionTracker,        RobotComponentID, CubeInteractionTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotGyroDriftDetector,        RobotComponentID, GyroDriftDetector)
 LINK_COMPONENT_TYPE_TO_ENUM(HabitatDetectorComponent,      RobotComponentID, HabitatDetector)
 LINK_COMPONENT_TYPE_TO_ENUM(DockingComponent,              RobotComponentID, Docking)
@@ -150,6 +152,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
     case Cozmo::RobotComponentID::CubeComms:                    { return "CubeComms";}
     case Cozmo::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
+    case Cozmo::RobotComponentID::CubeInteractionTracker:       { return "CubeInteractionTracker";}
     case Cozmo::RobotComponentID::CubeLights:                   { return "CubeLights";}
     case Cozmo::RobotComponentID::DataAccessor:                 { return "DataAccessor";}
     case Cozmo::RobotComponentID::Docking:                      { return "Docking";}

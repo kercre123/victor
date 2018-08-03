@@ -54,6 +54,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentActive.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserHoldingCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
@@ -367,6 +368,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::UserIntentPending:
     {
       condition = std::make_shared<ConditionUserIntentPending>(config);
+      break;
+    }
+    case BEIConditionType::UserIsHoldingCube:
+    {
+      condition = std::make_shared<ConditionUserHoldingCube>(config);
       break;
     }
     case BEIConditionType::OnCharger:
