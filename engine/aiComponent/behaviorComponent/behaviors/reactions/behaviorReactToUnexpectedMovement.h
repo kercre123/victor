@@ -1,5 +1,5 @@
 /**
- * File: behaviorReactToUnexpectedMovement.h
+ * File: behaviorReactTo                 UnexpectedMovement.h
  *
  * Author: Al Chaussee
  * Created: 7/11/2016
@@ -28,7 +28,29 @@ private:
   
   friend class BehaviorFactory;
   BehaviorReactToUnexpectedMovement(const Json::Value& config);
+
+  struct InstanceConfig {
+      InstanceConfig() {};
+      InstanceConfig(const Json::Value& config, const std::string& debugName);
+      
+      float repeatedActivationCheckWindow_sec = 0.f;
+      size_t numRepeatedActivationsAllowed = 0;
+      
+      float retreatDistance_mm = 0.f;
+      float retreatSpeed_mmps = 0.f;
+  };
   
+  struct DynamicVariables {
+      DynamicVariables() {};
+      struct Persistent {
+          std::set<float> activatedTimes; // set of basestation times at which we've been activated
+      };
+      Persistent persistent;
+  };
+ 
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+    
   IBEIConditionPtr _unexpectedMovementCondition;
   
 public:  
