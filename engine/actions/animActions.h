@@ -61,6 +61,16 @@ namespace Anki {
       virtual void OnRobotSet() override final;
       virtual void OnRobotSetInternalAnim() {};
 
+      // called at the end of Init, can (and should) be overridden to log additional stats to DAS / webviz
+      virtual void InitSendStats();
+
+      // helper that can be called from InitSendStats to send stats with the specified information. May use
+      // GetRobot() to add robot info. Note that this will _only_ send to DAS if a trigger name is specified
+      void SendStatsToDasAndWeb(const std::string& animClipName,
+                                const std::string& animGroupName,
+                                const AnimationTrigger& animTrigger);
+
+
       std::string               _animName;
       u32                       _numLoopsRemaining;
       bool                      _stoppedPlaying;
@@ -101,6 +111,8 @@ namespace Anki {
       bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
       virtual void OnRobotSetInternalAnim() override final;
       virtual void OnRobotSetInternalTrigger() {};
+
+      virtual void InitSendStats() override;
 
 
     private:
