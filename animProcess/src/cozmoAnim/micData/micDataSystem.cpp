@@ -127,7 +127,7 @@ MicDataSystem::~MicDataSystem()
 
   _udpServer->StopListening();
 }
-  
+
 void MicDataSystem::ProcessMicDataPayload(const RobotInterface::MicData& payload)
 {
   _micDataProcessor->ProcessMicDataPayload(payload);
@@ -142,7 +142,7 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
 {
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
 }
-  
+
 void MicDataSystem::SetShouldStreamAfterWakeWord(bool shouldStream)
 {
   if (_micDataProcessor != nullptr)
@@ -150,7 +150,7 @@ void MicDataSystem::SetShouldStreamAfterWakeWord(bool shouldStream)
     _micDataProcessor->SetShouldStreamAfterTrigger(shouldStream);
   }
 }
-  
+
 void MicDataSystem::SetTriggerWordDetectionEnabled(bool enabled)
 {
   if (_micDataProcessor != nullptr)
@@ -199,7 +199,7 @@ void MicDataSystem::FakeTriggerWordDetection()
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
 {
   MicDataInfo* newJob = new MicDataInfo{};
-  
+
   // If the input path has a file separator, remove the filename at the end and use as the write directory
   if (path.find('/') != std::string::npos)
   {
@@ -214,7 +214,7 @@ void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string&
     newJob->_writeNameBase = path;
   }
   newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
-  
+
   newJob->EnableDataCollect(type, true);
   newJob->SetTimeToRecord(duration_ms);
   newJob->_doFFTProcess = runFFT;
@@ -229,7 +229,7 @@ void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string&
       }
     };
   }
-  
+
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     _micProcessingJobs.push_back(std::shared_ptr<MicDataInfo>(newJob));
@@ -244,7 +244,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     auto result = std::move(_fftResultData->_fftResultList.front());
     _fftResultData->_fftResultList.pop_front();
     _fftResultData->_fftResultMutex.unlock();
-    
+
     // Populate the fft result message
     auto msg = RobotInterface::AudioFFTResult();
 
@@ -262,7 +262,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   bool receivedStopMessage = false;
   static constexpr size_t kMaxReceiveBytes = 2000;
   uint8_t receiveArray[kMaxReceiveBytes];
-  
+
   const ssize_t bytesReceived = _udpServer->Recv((char*)receiveArray, kMaxReceiveBytes);
   if (bytesReceived > 0) {
     CloudMic::Message msg{receiveArray, (size_t)bytesReceived};
@@ -344,7 +344,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
   // lock the job mutex
   {
-    
+
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && HasStreamingJob()
@@ -360,7 +360,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       {
         _currentlyStreaming = true;
         _streamingAudioIndex = 0;
-  
+
         // Send out the message announcing the trigger word has been detected
         auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString()};
         if (_currentStreamingJob != nullptr) {
@@ -380,9 +380,14 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     {
       // Are we done with what we want to stream?
       static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
-      if (receivedStopMessage || _streamingAudioIndex >= kMaxRecordNumChunks)
+      const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
+      if (receivedStopMessage || didTimeout)
       {
         ClearCurrentStreamingJob();
+        if (didTimeout)
+        {
+          SendUdpMessage(CloudMic::Message::CreateaudioDone(CloudMic::Void{}));
+        }
         PRINT_NAMED_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
         #if ANKI_DEV_CHEATS
           _fakeStreamingState = false;
@@ -397,7 +402,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
           // Copy any new data that has been pushed onto the currently streaming job
           AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(_streamingAudioIndex);
           _streamingAudioIndex += newAudio.size();
-      
+
           // Send the audio to any clients we've got
           if (_udpServer->HasClient())
           {
@@ -443,7 +448,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
     else
     {
-      DEV_ASSERT_MSG(false, 
+      DEV_ASSERT_MSG(false,
                      "MicDataSystem.Update.UnhandledOutgoingMessageType",
                      "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
     }
@@ -464,7 +469,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }
   #endif
-  
+
   // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
   // only need to actually call into the plugin once (or until we get a
   // nonzero latency), since the latency does not change during runtime.
@@ -499,7 +504,7 @@ void MicDataSystem::ClearCurrentStreamingJob()
       _currentStreamingJob = nullptr;
     }
   }
-  
+
   ResetMicListenDirection();
 }
 
@@ -609,7 +614,7 @@ void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
   _locale = newLocale;
   _micDataProcessor->UpdateTriggerForLocale(newLocale);
 }
-  
+
 bool MicDataSystem::IsSpeakerPlayingAudio() const
 {
   if (_context != nullptr) {
@@ -621,7 +626,7 @@ bool MicDataSystem::IsSpeakerPlayingAudio() const
       }
     }
   }
-  
+
   return false;
 }
 

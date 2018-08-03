@@ -104,7 +104,7 @@ func (p *Process) AddIntentWriter(s MsgSender) {
 type strmReceiver struct {
 	intent chan *cloud.IntentResult
 	err    chan cloudError
-	open   chan struct{}
+	open   chan string
 }
 
 func (c *strmReceiver) OnIntent(r *cloud.IntentResult) {
@@ -115,8 +115,8 @@ func (c *strmReceiver) OnError(kind cloud.ErrorType, err error) {
 	c.err <- cloudError{kind, err}
 }
 
-func (c *strmReceiver) OnStreamOpen() {
-	c.open <- struct{}{}
+func (c *strmReceiver) OnStreamOpen(session string) {
+	c.open <- session
 }
 
 // Run starts the cloud process, which will run until stopped on the given channel
@@ -133,7 +133,7 @@ func (p *Process) Run(ctx context.Context, options ...Option) {
 	cloudChans := &strmReceiver{
 		intent: make(chan *cloud.IntentResult),
 		err:    make(chan cloudError),
-		open:   make(chan struct{}),
+		open:   make(chan string),
 	}
 
 	var strm *stream.Streamer
@@ -201,6 +201,15 @@ procloop:
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
 
+			case cloud.MessageTag_AudioDone:
+				// no more audio is coming - close send on the stream
+				if strm != nil {
+					logVerbose("Got notification mic is done sending audio")
+					if err := strm.CloseSend(); err != nil {
+						log.Println("Error closing stream send:", err)
+					}
+				}
+
 			case cloud.MessageTag_Audio:
 				// add samples to our buffer
 				buf := msg.msg.GetAudio().Data
@@ -234,8 +243,8 @@ procloop:
 			}
 			strm = nil
 
-		case <-cloudChans.open:
-			p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.Void{}))
+		case sess := <-cloudChans.open:
+			p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.StreamOpen{sess}))
 
 		case <-ctx.Done():
 			logVerbose("Received stop notification")

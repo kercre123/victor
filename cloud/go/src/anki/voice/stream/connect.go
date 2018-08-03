@@ -40,7 +40,7 @@ func (strm *Streamer) connect() error {
 
 	// signal to engine that we got a connection; the _absence_ of this will
 	// be used to detect server timeout errors
-	strm.receiver.OnStreamOpen()
+	strm.receiver.OnStreamOpen(sessionID)
 
 	logVerbose("Received hotword event", strm.opts.mode, "created session", sessionID, "in",
 		int(connectTime), "ms (token", int(tokenTime), "ms)")

@@ -48,6 +48,10 @@ func (strm *Streamer) Close() error {
 	return err.Error()
 }
 
+func (strm *Streamer) CloseSend() error {
+	return strm.stream.CloseSend()
+}
+
 // SetVerbose enables or disables verbose logging
 func SetVerbose(value bool) {
 	verbose = value

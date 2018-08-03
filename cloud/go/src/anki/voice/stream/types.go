@@ -23,6 +23,6 @@ type Streamer struct {
 
 type Receiver interface {
 	OnError(cloud.ErrorType, error)
-	OnStreamOpen()
+	OnStreamOpen(string)
 	OnIntent(*cloud.IntentResult)
 }

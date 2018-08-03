@@ -21,6 +21,10 @@ enum uint_8 ErrorType {
 structure Void {
 }
 
+structure StreamOpen {
+	string session
+}
+
 structure Hotword {
 	StreamType mode,
 	string locale
@@ -46,15 +50,21 @@ structure IntentError {
 }
 
 union dupes_allowed Message {
+	// anim -> cloud
 	Hotword hotword,
 	AudioData audio,
+	Void audioDone,
+
+	// cloud -> anim
 	Void stopSignal,
-	Filename debugFile,
 	Void testStarted,
 	Void streamTimeout,
+
+	// cloud -> engine
+	Filename debugFile,
 	IntentResult result,
 	IntentError error,
-	Void streamOpen
+	StreamOpen streamOpen
 }
 
 
