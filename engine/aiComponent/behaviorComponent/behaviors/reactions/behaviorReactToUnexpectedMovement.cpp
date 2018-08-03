@@ -87,14 +87,14 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
   _dVars.persistent = persistent;
-  
+
   if(GetBEI().HasMoodManager()){
     auto& moodManager = GetBEI().GetMoodManager();
     // Make Cozmo more frustrated if he keeps running into things/being turned
     moodManager.TriggerEmotionEvent("ReactToUnexpectedMovement",
                                     MoodManager::GetCurrentTimeInSeconds());
   }
-    
+
   const auto& unexpectedMovementSide = GetBEI().GetMovementComponent().GetUnexpectedMovementSide();
 
   // Have we been activated a lot recently?
@@ -102,9 +102,8 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   auto& times = _dVars.persistent.activatedTimes;
   times.insert(now_sec);
   // Discard records of activations outside of time window.
-  times.erase(times.begin(),
-              times.lower_bound(now_sec - _iConfig.repeatedActivationCheckWindow_sec));
-    
+  times.erase(times.begin(), times.lower_bound(now_sec - _iConfig.repeatedActivationCheckWindow_sec));
+
   // If we have been activated too many times within a short window of time, then just delegate control to an action that
   // attempts to raise the lift and moves away from the direction of the unexpected movement, instead of continuing with
   // the ReactToUnexpectedMovement behavior, since we may be stuck in a loop, in the event that somehow the lift has been

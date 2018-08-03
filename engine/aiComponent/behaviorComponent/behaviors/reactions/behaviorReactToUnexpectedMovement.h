@@ -32,10 +32,10 @@ private:
   struct InstanceConfig {
       InstanceConfig() {};
       InstanceConfig(const Json::Value& config, const std::string& debugName);
-      
+
       float repeatedActivationCheckWindow_sec = 0.f;
       size_t numRepeatedActivationsAllowed = 0;
-      
+
       float retreatDistance_mm = 0.f;
       float retreatSpeed_mmps = 0.f;
   };
@@ -47,10 +47,10 @@ private:
       };
       Persistent persistent;
   };
- 
+
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
-    
+
   IBEIConditionPtr _unexpectedMovementCondition;
   
 public:  
