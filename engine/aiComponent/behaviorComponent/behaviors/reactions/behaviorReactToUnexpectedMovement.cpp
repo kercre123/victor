@@ -29,10 +29,21 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-    const char* kRepeatedActivationWindowKey = "repeatedActivationWindow";
+    const char* kRepeatedActivationWindowKey = "repeatedActivationWindow_sec";
     const char* kNumRepeatedActivationsAllowedKey = "numRepeatedActivationsAllowed";
-    const char* kRetreatDistanceKey = "retreatDistance";
-    const char* kRetreatSpeedKey = "retreatSpeed";
+    const char* kRetreatDistanceKey = "retreatDistance_mm";
+    const char* kRetreatSpeedKey = "retreatSpeed_mmps";
+}
+
+void BehaviorReactToUnexpectedMovement::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kRepeatedActivationWindowKey,
+    kNumRepeatedActivationsAllowedKey,
+    kRetreatDistanceKey,
+    kRetreatSpeedKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,7 +142,8 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   const bool kInterruptRunning = true;
   
   AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation, kNumLoops, kInterruptRunning, tracksToLock), [this]()
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
+                                                         kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
   });  

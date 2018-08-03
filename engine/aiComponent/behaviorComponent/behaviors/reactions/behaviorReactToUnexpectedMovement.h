@@ -1,5 +1,5 @@
 /**
- * File: behaviorReactTo                 UnexpectedMovement.h
+ * File: behaviorReactToUnexpectedMovement.h
  *
  * Author: Al Chaussee
  * Created: 7/11/2016
@@ -60,7 +60,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
-  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override {}
+  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorEnteredActivatableScope() override;
