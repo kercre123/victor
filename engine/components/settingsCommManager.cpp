@@ -214,8 +214,11 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting rob
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsCommManager::ToggleRobotSettingHelper(const RobotSetting robotSetting)
 {
+#if REMOTE_CONSOLE_ENABLED
   const bool curSetting = _settingsManager->GetRobotSettingAsBool(robotSetting);
   return HandleRobotSettingChangeRequest(robotSetting, Json::Value(!curSetting), kUpdateSettingsJdoc);
+#endif
+  return false;
 }
 
 

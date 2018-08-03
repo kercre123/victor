@@ -52,20 +52,22 @@ namespace {
 #if ANKI_DEV_CHEATS
   std::string _debugMicDataWriteLocation = "";
 
-  void ClearMicData(ConsoleFunctionContextRef context)
-  {
-    if (!_debugMicDataWriteLocation.empty())
-    {
-      Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
-    }
-  }
-  CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
+  // void ClearMicData(ConsoleFunctionContextRef context)
+  // {
+  //   if (!_debugMicDataWriteLocation.empty())
+  //   {
+  //     Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
+  //   }
+  // }
+  // CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
 
 #endif
 
 #if ANKI_DEV_CHEATS
-  CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
-  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
+  //CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
+  //CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
+  u32 kMicData_ClipRecordTime_ms = 4000;
+  bool kMicData_SaveRawFullIntent_Wakewordless = false;
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
