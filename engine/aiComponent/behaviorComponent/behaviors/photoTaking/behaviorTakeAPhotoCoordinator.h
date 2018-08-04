@@ -46,6 +46,7 @@ private:
     InstanceConfig();
     ICozmoBehaviorPtr frameFacesBehavior;
     ICozmoBehaviorPtr storageIsFullBehavior;
+    ICozmoBehaviorPtr driveOffChargerBehavior;
   };
 
   struct DynamicVariables {
@@ -58,6 +59,7 @@ private:
 
   void TransitionToStorageIsFull();
   void TransitionToFindFaces();
+  void TransitionToDriveOffCharger();
   void TransitionToFrameFaces();
   void TransitionToFocusingAnimation();
   void TransitionToTakePhoto();
