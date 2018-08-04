@@ -9,27 +9,33 @@
 #include "tests.h"
 #include "timer.h"
 
+//force start (via console or button) skips detect
+#define TOF_REQUIRE_FORCE_START 1
+
+int detectPrescale=0; bool detectSticky=0;
 bool TestAuxTofDetect(void)
 {
-  // Make sure power is not applied, as it messes up the detection code below
-  TestAuxTofCleanup();
+  if( TOF_REQUIRE_FORCE_START && !g_isDevicePresent ) {
+    TestAuxTofCleanup();
+    return false;
+  }
   
-  /*
-  //weakly pulled-up - it will detect as grounded when the board is attached
-  DUT_SWC::init(MODE_INPUT, PULL_UP);
-  Timer::wait(100);
-  bool detected = !DUT_SWC::read(); //true if pin is pulled down by the board
-  DUT_SWC::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
+  //throttle detection so we don't choke out the console
+  if( ++detectPrescale >= 50 ) {
+    detectPrescale = 0;
+    DUT_I2C::init();
+    uint8_t status = DUT_I2C::readReg(0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS);
+    detectSticky = status != 0xff;
+  }
   
-  return detected;
-  */
-  
-  return false;
+  return detectSticky;
 }
 
 void TestAuxTofCleanup(void) {
   Opto::stop();
   DUT_I2C::deinit();
+  detectPrescale = 0;
+  detectSticky = g_isDevicePresent;
 }
 
 void TOF_init(void) {
@@ -54,22 +60,34 @@ void TOF_sensorCheck(void)
   ConsolePrintf("\navg reading: %imm\n", reading_avg /= num_readings);
   
   //nominal reading expected: 80mm
-  if( reading_avg < 65 || reading_avg > 125 )
+  if( reading_avg < 75 || reading_avg > 125 )
     throw ERROR_SENSOR_TOF;
 }
 
 void TOF_debugInspectRaw(void)
 {
-  //spew raw sensor data. break on console input
+  uint32_t Tsample = 0;
   while( ConsoleReadChar() > -1 );
+  
+  //spew raw sensor data
   while(1)
   {
-    tof_dat_t tof = *Opto::read();
-    ConsolePrintf("TOF: status=%03i reading=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
-      tof.status, __REV16(tof.reading), __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );
+    if( Timer::elapsedUs(Tsample) > 250*1000 ) {
+      Tsample = Timer::get();
+      tof_dat_t tof = *Opto::read();
+      ConsolePrintf("TOF: status=%03i reading=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
+        tof.status, __REV16(tof.reading), __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );      
+    }
     
+    //break on console input
     if( ConsoleReadChar() > -1 ) break;
-    Timer::delayMs(250);
+    
+    //break on device disconnect
+    uint8_t status = DUT_I2C::readReg(0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS);
+    if( status == 0xff ) {
+      ConsolePrintf("disconnected\n");
+      break;
+    }
   }
 }
 

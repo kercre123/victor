@@ -311,7 +311,7 @@ inline void dbgBtnHandler(void)
           ||  g_fixmode == FIXMODE_SOUND1
           ||  g_fixmode == FIXMODE_SOUND2
           ||  g_fixmode == FIXMODE_LOG_DL
-          ||  g_fixmode == FIXMODE_TOF
+          ||  g_fixmode == FIXMODE_TOF || g_fixmode == FIXMODE_TOF_DEBUG
       )
       {
         ConsolePrintf("manual force start\n");
