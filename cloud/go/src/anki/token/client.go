@@ -2,7 +2,9 @@ package token
 
 import (
 	"anki/log"
+	"anki/robot"
 	"context"
+	"io/ioutil"
 
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
 	"google.golang.org/grpc"
@@ -42,6 +44,11 @@ func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error
 		GenerateStsToken: false,
 		RobotId:          robotID,
 		UserSession:      session}
+	cert, err := ioutil.ReadFile(robot.GatewayCert)
+	if err != nil {
+		return nil, err
+	}
+	req.SessionCertificate = cert
 	response, err := c.client.AssociatePrimaryUser(context.Background(), &req)
 	if err != nil {
 		return nil, err
