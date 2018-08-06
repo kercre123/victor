@@ -184,6 +184,7 @@ namespace Vision {
     // Remove radial distortion. If the calibration is for a different resolution image,
     // it will be scaled to match this image's resolution before undistorting.
     // NOTE: Cannot be done in place (i.e. do not do img.Undistort(calib, img)), will trigger assertion.
+    // NOTE: If calling repeatedly, consider using an Vision::Undistorter object, which uses caching for better performance.
     void Undistort(const CameraCalibration& calib, ImageBase<T>& undistortedImage) const;
     
   protected:

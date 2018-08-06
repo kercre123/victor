@@ -41,7 +41,9 @@ CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
 
 // If true, requires OS version that supports camera format change
 CONSOLE_VAR(bool, kTakePhoto_UseSensorResolution, "Photography", true);
-    
+  
+// If enabled, disables all smoothing and sharpening, despite what is in Json config (but still uses undistortion)
+CONSOLE_VAR(bool, kTakePhoto_UseRawPhotos, "Photography", false);
 
 static int DeleteAllPhotosWebServerImpl(WebService::WebService::Request* request)
 {
@@ -73,6 +75,8 @@ namespace
   // Overridden by config file
   int kMaxSlots           = 20;
   bool kRemoveDistortion  = true;
+  uint8_t kMedianFilterSize = 0;
+  float kSharpeningAmount = 0.f;
   int8_t kSaveQuality     = 95;
   float kThumbnailScale   = 0.125f;
   
@@ -115,6 +119,8 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
   const auto& config = robot->GetContext()->GetDataLoader()->GetPhotographyConfig();
   kMaxSlots = JsonTools::GetValue<s32>(config["MaxSlots"]);
   kRemoveDistortion = JsonTools::ParseBool(config, "RemoveDistortion", kModuleName);
+  kMedianFilterSize = JsonTools::ParseUint8(config, "MedianFilterSize", kModuleName);
+  kSharpeningAmount = JsonTools::ParseFloat(config, "SharpeningAmount", kModuleName);
   kSaveQuality = JsonTools::GetValue<int8_t>(config["SaveQuality"]);
   kThumbnailScale = JsonTools::GetValue<float>(config["ThumbnailScale"]);
 
@@ -298,6 +304,8 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
   
   // Upsampling half-res to full scale for PRDemo until VIC-4077 is fixed
   const float saveScale = (_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo) ? 2.f : 1.f);
+  const uint8_t medianFilterSize = (kTakePhoto_UseRawPhotos ? 0 : kMedianFilterSize);
+  const float   sharpeningAmount = (kTakePhoto_UseRawPhotos ? 0.f : kSharpeningAmount);
   
   _visionComponent->SetSaveImageParameters(ImageSaverParams(GetSavePath(),
                                                             ImageSendMode::SingleShot,
@@ -306,7 +314,9 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
                                                             photoSize,
                                                             kThumbnailScale,
                                                             saveScale,
-                                                            kRemoveDistortion));
+                                                            kRemoveDistortion,
+                                                            medianFilterSize,
+                                                            sharpeningAmount));
 
   _lastRequestedPhotoHandle = (TimeStamp_t)_visionComponent->GetLastProcessedImageTimeStamp();
   _state = State::WaitingForTakePhoto;
@@ -376,7 +386,18 @@ void PhotographyManager::SetLastPhotoTimeStamp(RobotTimeStamp_t timestamp)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char * PhotographyManager::GetPhotoExtension()
+{
+  return ImageSaver::GetExtension(kSaveQuality);
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char * PhotographyManager::GetThumbExtension()
+{
+  return ImageSaver::GetThumbnailExtension(kSaveQuality);
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool PhotographyManager::WasPhotoTaken(const PhotoHandle handle) const
 {

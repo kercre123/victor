@@ -334,11 +334,11 @@ struct DockingErrorSignal;
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
 
     void EnableSensorRes(bool sensorRes);
+
+  protected:
     
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
-
-  protected:
     
     // helper method --- unpacks bitflags representation into a set of vision modes
     std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;

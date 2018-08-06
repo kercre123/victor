@@ -72,13 +72,12 @@ CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // 
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
 CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
 CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
+CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
+CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
 
 // How long to disable auto exposure after using detections to meter
 CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
   
-CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
-CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
-
 CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
 CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
 
@@ -133,7 +132,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
 , _cameraCalibrator(new CameraCalibrator(*this))
 , _illuminationDetector(new IlluminationDetector())
-, _imageSaver(new ImageSaver(_camera))
+, _imageSaver(new ImageSaver())
 , _benchmark(new Vision::Benchmark())
 , _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
@@ -380,6 +379,11 @@ Result VisionSystem::UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalib
   // Re-initialize the marker detector for the new image size
   _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
 
+  // Provide the ImageSaver with the camera calibration so that it can remove distortion if needed
+  // Also pre-cache distortion maps for Sensor resolution, since we use that for photos
+  _imageSaver->SetCalibration(camCalib);
+  _imageSaver->CacheUndistortionMaps(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
+  
   return result;
 } // Init()
 
@@ -793,21 +797,98 @@ Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache)
   s32 desiredExposureTime_ms = _currentCameraParams.exposureTime_ms;
   f32 desiredGain = _currentCameraParams.gain;
   
-  if(FLT_LT(exposureAdjFrac, 1.f))
+  enum class AutoExpMode : u8 {
+    MinExposure,  // Prefer keeping exposure low to avoid motion blur
+    MinGain,      // Prefer keeping gain low to make less noisy/grainy images
+  };
+  
+  static AutoExpMode aeMode_prev = (ShouldProcessVisionMode(VisionMode::MinGainAutoExposure) ?
+                                    AutoExpMode::MinGain : AutoExpMode::MinExposure);
+  
+  const AutoExpMode aeMode = (ShouldProcessVisionMode(VisionMode::MinGainAutoExposure) ?
+                              AutoExpMode::MinGain : AutoExpMode::MinExposure);
+  
+  if(aeMode != aeMode_prev)
   {
-    // Want to bring brightness down: reduce exposure first, if possible
-    if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
+    // Switching modes: try to preserve roughly the same product of gain and exposure
+    const f32 prod = static_cast<f32>(_currentCameraParams.exposureTime_ms) * _currentCameraParams.gain;
+    
+    switch(aeMode)
     {
-      desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
-      desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
+      case AutoExpMode::MinGain:
+      {
+        // Make the new exposure the same fraction of its max that gain currently is.
+        // Then pick a new gain to "match".
+        const f32 frac = _currentCameraParams.gain / GetMaxCameraGain();
+        desiredExposureTime_ms = static_cast<s32>(std::round(frac * static_cast<f32>(GetMaxCameraExposureTime_ms())));
+        desiredExposureTime_ms = std::max(desiredExposureTime_ms, GetMinCameraExposureTime_ms());
+        desiredGain = Util::Clamp(prod/static_cast<f32>(desiredExposureTime_ms),
+                                  GetMinCameraGain(), GetMaxCameraGain());
+        break;
+      }
+        
+      case AutoExpMode::MinExposure:
+      {
+        // Make the new gain the same fraction of its max that exposure currently is.
+        // Then pick a new exposure to "match".
+        const f32 frac = (static_cast<f32>(_currentCameraParams.exposureTime_ms) /
+                          static_cast<f32>(GetMaxCameraExposureTime_ms()));
+        desiredGain = std::max(frac*GetMaxCameraGain(), GetMinCameraGain());
+        desiredExposureTime_ms = Util::Clamp(static_cast<s32>(std::round(prod / desiredGain)),
+                                             GetMinCameraExposureTime_ms(), GetMaxCameraExposureTime_ms());
+        break;
+      }
     }
-    else if(FLT_GT(_currentCameraParams.gain, _minCameraGain))
+    
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.CheckImageQuality.ToggleExpMode",
+                  "Mode:%s, Gain:%.3f->%.3f, Exp:%d->%dms",
+                  (aeMode_prev == AutoExpMode::MinGain ? "MinGain->MinExp" : "MinExp->MinGain"),
+                  _currentCameraParams.gain, desiredGain,
+                  _currentCameraParams.exposureTime_ms, desiredExposureTime_ms);
+    
+    aeMode_prev = aeMode;
+  }
+  
+  if(Util::IsFltLT(exposureAdjFrac, 1.f))
+  {
+    // Want to bring brightness down
+    bool madeAdjustment = false;
+    switch(aeMode)
     {
-      // Already at min exposure time; reduce gain
-      desiredGain *= exposureAdjFrac;
-      desiredGain = std::max(_minCameraGain, desiredGain);
+      case AutoExpMode::MinExposure:
+        if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
+        {
+          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
+          desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
+          madeAdjustment = true;
+        }
+        else if(Util::IsFltGT(_currentCameraParams.gain, _minCameraGain))
+        {
+          // Already at min exposure time; reduce gain
+          desiredGain *= exposureAdjFrac;
+          desiredGain = std::max(_minCameraGain, desiredGain);
+          madeAdjustment = true;
+        }
+        break;
+        
+      case AutoExpMode::MinGain:
+        if(Util::IsFltGT(_currentCameraParams.gain, _minCameraGain))
+        {
+          desiredGain *= exposureAdjFrac;
+          desiredGain = std::max(_minCameraGain, desiredGain);
+          madeAdjustment = true;
+        }
+        else if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
+        {
+          // Already at min gain time; reduce exposure
+          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
+          desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
+          madeAdjustment = true;
+        }
+        break;
     }
-    else
+    
+    if(!madeAdjustment)
     {
       const u8 currentLowValue = _imagingPipeline->GetHistogram().ComputePercentile(kLowPercentile);
       if(currentLowValue > kTooBrightValue)
@@ -818,21 +899,46 @@ Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache)
       }
     }
   }
-  else if(FLT_GT(exposureAdjFrac, 1.f))
+  else if(Util::IsFltGT(exposureAdjFrac, 1.f))
   {
-    // Want to bring brightness up: increase gain first, if possible
-    if(FLT_LT(_currentCameraParams.gain, _maxCameraGain))
+    // Want to bring brightness up
+    bool madeAdjustment = false;
+    switch(aeMode)
     {
-      desiredGain *= exposureAdjFrac;
-      desiredGain = std::min(_maxCameraGain, desiredGain);
+      case AutoExpMode::MinExposure:
+        if(Util::IsFltLT(_currentCameraParams.gain, _maxCameraGain))
+        {
+          desiredGain *= exposureAdjFrac;
+          desiredGain = std::min(_maxCameraGain, desiredGain);
+          madeAdjustment = true;
+        }
+        else if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
+        {
+          // Already at max gain; increase exposure
+          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
+          desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
+          madeAdjustment = true;
+        }
+        break;
+        
+      case AutoExpMode::MinGain:
+        if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
+        {
+          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
+          desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
+          madeAdjustment = true;
+        }
+        else if(Util::IsFltLT(_currentCameraParams.gain, _maxCameraGain))
+        {
+          // Already at max exposure; increase gain
+          desiredGain *= exposureAdjFrac;
+          desiredGain = std::min(_maxCameraGain, desiredGain);
+          madeAdjustment = true;
+        }
+        break;
     }
-    else if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
-    {
-      // Already at max gain; increase exposure
-      desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
-      desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
-    }
-    else
+    
+    if(!madeAdjustment)
     {
       const u8 currentHighValue = _imagingPipeline->GetHistogram().ComputePercentile(kHighPercentile);
       if(currentHighValue < kTooDarkValue)

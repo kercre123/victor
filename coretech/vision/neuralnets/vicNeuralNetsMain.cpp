@@ -28,6 +28,7 @@
 #endif
 
 #include "coretech/common/shared/types.h"
+#include "coretech/common/engine/scopedTicToc.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -82,43 +83,6 @@ static void CleanupAndExit(Anki::Result result)
 
   exit(result);
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Lightweight scoped timing mechanism
-// TODO: Use coretech/util profiling mechanism
-class TicToc
-{
-  using ClockType = std::chrono::high_resolution_clock;
-  using TimePoint = std::chrono::time_point<ClockType>;
-
-  std::string _name;
-  TimePoint   _startTime;
-  static bool _enabled;
-  
-public:
-
-  static void Enable(const bool enable) { _enabled = enable; }
-  
-  TicToc(const std::string& name)
-  : _name(name) 
-  , _startTime(ClockType::now())
-  { 
-
-  }
-
-  ~TicToc()
-  {
-    if(_enabled)
-    {
-      const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - _startTime);
-      const std::string eventName("VicNeuralNets.Toc." + _name);
-      LOG_INFO(eventName.c_str(), "%dms", (int)duration.count());
-    }
-  }
-
-};
-
-bool TicToc::_enabled = false;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Define helpers for timing and reading / writing images and results (implemented below, after main())
@@ -237,7 +201,7 @@ int main(int argc, char **argv)
   // Initialize the detector
   Vision::NeuralNetModel neuralNet(cachePath);
   {
-    auto ticToc = TicToc("LoadModel");
+    ScopedTicToc ticToc("LoadModel", LOG_CHANNEL);
     result = neuralNet.LoadModel(modelPath, config);
   
     if(RESULT_OK != result)
@@ -246,7 +210,7 @@ int main(int argc, char **argv)
       CleanupAndExit(result);
     }
     
-    TicToc::Enable(neuralNet.IsVerbose());
+    ScopedTicToc::Enable(neuralNet.IsVerbose());
   }
   
   LOG_INFO("VicNeuralNets.Main.ImageLoadMode", "%s: %s",
@@ -281,7 +245,7 @@ int main(int argc, char **argv)
       cv::Mat img;
       TimeStamp_t timestamp=0;
       {
-        auto ticToc = TicToc("GetImage");
+        ScopedTicToc ticToc("GetImage", LOG_CHANNEL);
         GetImage(imageFilename, timestampFilename, img, timestamp);
         
         if(img.empty())
@@ -295,7 +259,7 @@ int main(int argc, char **argv)
       // Detect what's in it
       std::list<Vision::SalientPoint> salientPoints;
       {
-        auto ticToc = TicToc("Detect");
+        ScopedTicToc ticToc("Detect", LOG_CHANNEL);
         result = neuralNet.Detect(img, timestamp, salientPoints);
       
         if(RESULT_OK != result)
@@ -310,7 +274,7 @@ int main(int argc, char **argv)
 
       // Write out the Json
       {
-        auto ticToc = TicToc("WriteJSON");
+        ScopedTicToc ticToc("WriteJSON", LOG_CHANNEL);
         if(neuralNet.IsVerbose())
         {
           LOG_INFO("VicNeuralNets.Main.WritingResults", "%s", jsonFilename.c_str());

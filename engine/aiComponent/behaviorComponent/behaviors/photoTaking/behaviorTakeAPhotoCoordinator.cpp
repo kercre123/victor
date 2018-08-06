@@ -30,11 +30,13 @@ namespace Anki {
 namespace Cozmo {
   
 namespace {
-  // TODO: Move to console vars or Json config
- static constexpr f32 kReadyToTakePhotoTimeout_sec = 3.f;
- static constexpr f32 kTakingPhotoTimeout_sec      = 6.f;
-
- CONSOLE_VAR(f32, kHeadAngleDeg, "TakeAPhoto", 25.0);
+#define CONSOLE_GROUP "Behaviors.TakeAPhoto"
+  
+CONSOLE_VAR(f32, kHeadAngleDeg,                  CONSOLE_GROUP, 25.0);
+CONSOLE_VAR(f32, kReadyToTakePhotoTimeout_sec,   CONSOLE_GROUP, 3.f);
+CONSOLE_VAR(f32, kTakingPhotoTimeout_sec,        CONSOLE_GROUP, 6.f);
+  
+#undef CONSOLE_GROUP
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,6 +75,7 @@ void BehaviorTakeAPhotoCoordinator::GetBehaviorOperationModifiers(BehaviorOperat
 {
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.visionModesForActiveScope->insert({ VisionMode::SavingImages, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::MinGainAutoExposure, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
