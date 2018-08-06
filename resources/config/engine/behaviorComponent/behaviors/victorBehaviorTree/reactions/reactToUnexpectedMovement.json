@@ -1,5 +1,11 @@
 {
   "behaviorClass": "ReactToUnexpectedMovement",
   "behaviorID": "ReactToUnexpectedMovement",
-  "associatedActiveFeature": "NoFeature"
+  "associatedActiveFeature": "NoFeature",
+
+  "repeatedActivationWindow_sec": 15.0,
+  "retreatDistance_mm": 20.0,
+  "retreatSpeed_mmps": 20.0,
+
+  "numRepeatedActivationsAllowed": 2
 }
