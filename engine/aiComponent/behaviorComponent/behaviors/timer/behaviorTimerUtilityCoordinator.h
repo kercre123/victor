@@ -75,12 +75,16 @@ private:
     std::unique_ptr<AnticTracker>            anticTracker;
     int                                      minValidTimer_s;
     int                                      maxValidTimer_s;
+
+    int                                      touchTimeToCancelTimer_ms;
   };
 
   struct LifetimeParams{
     LifetimeParams();
     bool shouldForceAntic;
     unsigned long tickToSuppressAnticFor;
+    bool touchReleasedSinceStartedRinging;
+    bool robotPlacedDownSinceStartedRinging;
   };
 
   InstanceParams _iParams;
