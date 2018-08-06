@@ -97,30 +97,3 @@ func getDialOptions(creds credentials.PerRPCCredentials) ([]grpc.DialOption, err
 	}
 	return dialOpts, nil
 }
-
-type rpcMetadata map[string]string
-
-func (r *rpcMetadata) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return *r, nil
-}
-
-func (r *rpcMetadata) RequireTransportSecurity() bool {
-	return true
-}
-
-// TODO: make this configurable
-const ankiDevKey = "xiepae8Ach2eequiphee4U"
-
-func getAuthMetadata(sessionToken string) *rpcMetadata {
-	return &rpcMetadata{
-		"anki-user-session": sessionToken,
-		"anki-app-key":      ankiDevKey,
-	}
-}
-
-func getTokenMetadata(jwtToken string) *rpcMetadata {
-	return &rpcMetadata{
-		"anki-access-token": jwtToken,
-		"anki-app-key":      ankiDevKey,
-	}
-}

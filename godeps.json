@@ -12,7 +12,7 @@
     "branch": "master"
   },
   "github.com/anki/sai-chipper-voice": {
-    "commit": "3242e5939283f806bd4d8e421c42289a28317a21",
+    "commit": "9b6b6666875bbc5aa3674dae0e097272607d11a0",
     "branch": "active"
   },
   "github.com/golang/protobuf": {

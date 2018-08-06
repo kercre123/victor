@@ -4,6 +4,7 @@ import (
 	"anki/log"
 	"anki/robot"
 	"anki/token/jwt"
+	"anki/util"
 	"clad/cloud"
 	"fmt"
 	"time"
@@ -81,7 +82,7 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 	}
 	if existing != nil {
 		if time.Now().After(existing.RefreshTime()) {
-			c, err := getConnection(getTokenMetadata(existing.String()))
+			c, err := getConnection(util.GrpcMetadata(existing.String()))
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
@@ -109,7 +110,8 @@ func authErrorResp(code cloud.TokenError) *cloud.TokenResponse {
 }
 
 func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
-	metadata := getAuthMetadata(session)
+	metadata := util.GrpcMetadata("")
+	metadata["anki-user-session"] = session
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associatePrimary(session, robotESN)
 	}
@@ -122,7 +124,7 @@ func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenRe
 		return authErrorResp(cloud.TokenError_NullToken), nil
 	}
 
-	metadata := getTokenMetadata(existing.String())
+	metadata := util.GrpcMetadata(existing.String())
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associateSecondary(existing.String(), req.SessionToken, req.ClientName, req.AppId)
 	}

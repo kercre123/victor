@@ -50,7 +50,7 @@ func (strm *Streamer) connect() error {
 func (strm *Streamer) openStream(jwtToken string, sessionID string) (*chipper.Conn, chipper.Stream, error) {
 	opts := platformOpts
 	if jwtToken != "" {
-		opts = append(opts, chipper.WithAccessToken(jwtToken))
+		opts = append(opts, chipper.WithCredentials(util.GrpcMetadata(jwtToken)))
 	}
 	opts = append(opts, chipper.WithSessionID(sessionID))
 	conn, err := chipper.NewConn(strm.ctx, strm.opts.url, strm.opts.secret, opts...)
