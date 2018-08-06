@@ -278,14 +278,14 @@ void BehaviorExploreBringCubeToBeacon::OnBehaviorActivated()
   
   // this is now a valid situation. We started the behavior but did not find valid poses. It should have flagged
   // the beacon as not valid anymore
-  bool shouldControlBeDelegated = true;
-  if ( !IsControlDelegated() ) {
-    const AIBeacon* activeBeacon = GetAIComp<AIWhiteboard>().GetActiveBeacon();
-    const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
-    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
-    shouldControlBeDelegated = !beaconFlaggedFail; // should have delegated if the beacon is valid
-  }
+  // bool shouldControlBeDelegated = true;
+  // if ( !IsControlDelegated() ) {
+  //   const AIBeacon* activeBeacon = GetAIComp<AIWhiteboard>().GetActiveBeacon();
+  //   const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
+  //   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  //   const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
+  //   shouldControlBeDelegated = !beaconFlaggedFail; // should have delegated if the beacon is valid
+  // }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
