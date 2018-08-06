@@ -86,6 +86,12 @@ namespace {
   const float kNoRobotStateDisconnectTimeout_sec = 2.f;
   float _pendingRobotDisconnectTime_sec = -1.f;
 
+  // Whether or not engine has finished loading and is ready to do things
+  bool _engineLoaded = false;
+
+  // Whether or not we have already told the boot anim to stop
+  bool _bootAnimStopped = false;
+  
 #if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -503,6 +509,11 @@ void Process_setLocale(const RobotInterface::SetLocale& msg)
   _animEngine->HandleMessage(msg);
 }
 
+void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
+{
+  _engineLoaded = true;
+}
+
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
@@ -524,7 +535,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
       forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
-
+    
 #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
 
     default:
@@ -815,6 +826,19 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->fields.PACKED_OUT_FLAG);
 #endif
 #endif
+
+  // If the boot anim has not already been stopped,
+  // MicDataSystem has a cloud connection,
+  // Engine has synced with the robot, and
+  // Engine is fully loaded and ready
+  // then stop the boot animation
+  if(!_bootAnimStopped &&
+     _context->GetMicDataSystem()->HasConnectionToCloud() &&
+     _engineLoaded)
+  {
+    _bootAnimStopped = true;
+    FaceDisplay::getInstance()->StopBootAnim();
+  }
 
   return RESULT_OK;
 }

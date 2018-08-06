@@ -23,7 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-
+#include <atomic>
 
 namespace Anki {
 
@@ -53,6 +53,9 @@ public:
   // NB: This should probably only be used by FaceInfoScreenManager::Reboot()
   void EnableFaultCodeDisplay(bool enable) { _enableFaultCodeDisplay = enable; }
 
+  // Stops the boot animation process if it is running
+  void StopBootAnim();
+  
 protected:
   FaceDisplay();
   virtual ~FaceDisplay();
@@ -71,6 +74,10 @@ private:
   std::mutex                            _faceDrawMutex;
   bool                                  _stopDrawFace = false;
 
+  // Whether or not the boot animation process has been stopped
+  // Atomic because it is checked by the face drawing thread
+  std::atomic<bool> _stopBootAnim;
+  
   void DrawFaceLoop();
   void UpdateNextImgPtr();
 

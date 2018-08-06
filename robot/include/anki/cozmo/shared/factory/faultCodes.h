@@ -50,7 +50,8 @@ enum : uint16_t {
   NO_ENGINE_COMMS       = 915,
   NO_SWITCHBOARD        = 913,
   AUDIO_FAILURE         = 911,
-
+  STOP_BOOT_ANIM_FAILED = 909,
+    
   //Body and external errors
   NO_BODY               = 899, //no response from syscon
 

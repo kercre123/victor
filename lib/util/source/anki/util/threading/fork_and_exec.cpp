@@ -23,6 +23,19 @@
 
 #define ARRAY_SIZE(x)   (sizeof(x) / sizeof(*(x)))
 
+// Mac OS doesn't have TEMP_FAILURE_RETRY
+// https://android.googlesource.com/platform/system/core/+/master/base/include/android-base/macros.h
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(exp)           \
+  ({                                      \
+    decltype (exp) _rc;                   \
+    do {                                  \
+      _rc = (exp);                        \
+    } while(_rc == -1 && errno == EINTR); \
+    _rc;                                  \
+  })
+#endif
+
 namespace Anki {
 
 static pid_t sChildPid = -1;

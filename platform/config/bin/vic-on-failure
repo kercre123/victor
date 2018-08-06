@@ -37,6 +37,9 @@ fi
 #
 if [ "${VIC_ONFAILURE_ANIMFAIL}" == "1" ]; then
   echo "Showing animation fault code"
+  # Need to stop the early-anim (boot animation) first
+  # should it be running
+  /bin/systemctl stop early-anim
   /bin/animfail
 fi
 

@@ -194,6 +194,11 @@ message SyncRobot
 
 }
 
+message EngineFullyLoaded
+{
+
+}
+
 message CalmPowerMode
 {
   bool enable,
@@ -757,6 +762,8 @@ union EngineToRobot
   AlterStreamingAnimationAtTime             alterStreamingAnimation   = 0xA2,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
+
+  EngineFullyLoaded engineFullyLoaded = 0xAB,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

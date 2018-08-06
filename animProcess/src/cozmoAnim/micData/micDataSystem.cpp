@@ -630,6 +630,10 @@ bool MicDataSystem::IsSpeakerPlayingAudio() const
   return false;
 }
 
+bool MicDataSystem::HasConnectionToCloud() const
+{
+  return _udpServer->HasClient();
+}
 
 } // namespace MicData
 } // namespace Cozmo

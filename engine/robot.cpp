@@ -136,6 +136,9 @@ CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 // Robot singleton
 static Robot* _thisRobot = nullptr;
 
+// Whether or not we have sent the engine is fully loaded message
+bool _sentEngineLoadedMsg = false;
+  
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
 //   on the Unity side), then this console func can be removed.
@@ -1424,6 +1427,14 @@ Result Robot::Update()
     }
   }
 
+  // Send a message indicating we are fully loaded and capable of running
+  // after the first tick
+  if(!_sentEngineLoadedMsg)
+  {
+    _sentEngineLoadedMsg = true;
+    SendRobotMessage<RobotInterface::EngineFullyLoaded>();
+  }
+  
   return RESULT_OK;
 
 } // Update()

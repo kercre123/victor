@@ -10,9 +10,9 @@
  *
  **/
 
-#include "exec_command.h"
+#include "cozmoAnim/execCommand/exec_command.h"
+#include "cozmoAnim/execCommand/taskExecutor.h"
 #include "util/threading/fork_and_exec.h"
-#include "taskExecutor.h"
 
 #include <sstream>
 

@@ -626,7 +626,7 @@ namespace Anki {
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
         BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
       }
-
+      
 // ----------- Send messages -----------------
 
       Result SendRobotStateMsg()

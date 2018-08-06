@@ -1869,7 +1869,7 @@ namespace Vision {
   {
     SetFromVector( pixels );
   }
-
+  
   ImageRGB565& ImageRGB565::SetFromImage(const Image& image)
   {
     Allocate(image.GetNumRows(), image.GetNumCols());

@@ -105,6 +105,8 @@ public:
   // Get the maximum speaker 'latency', which is the max delay between when we
   // command audio to be played and it actually gets played on the speaker
   uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
+
+  bool HasConnectionToCloud() const;
   
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
