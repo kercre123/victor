@@ -83,7 +83,6 @@ BehaviorCoordinateGlobalInterrupts::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
   : suppressProx(false)
-  , isSuppressingStreaming(false)
 {
 }
 
@@ -263,9 +262,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   // this will suppress the streaming POST-wakeword pending
   // the "do a fist bump" part of "hey victor"
   const bool shouldSuppressStreaming = shouldSuppressTriggerWord;
-  if( shouldSuppressStreaming != _dVars.isSuppressingStreaming ) {
-    SmartSuppressStreamAfterWakeWord(shouldSuppressStreaming);
-  }
+  SmartSuppressStreamAfterWakeWord(shouldSuppressStreaming);
 
   {
     auto& uic = GetBehaviorComp<UserIntentComponent>();

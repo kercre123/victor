@@ -1615,12 +1615,10 @@ UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartSuppressStreamAfterWakeWord(const bool suppress)
 {
-  ANKI_VERIFY(suppress != _isSuppressingStreamAfterWakeWord,
-              "ICozmoBehavior.SmartSuppressStreamAfterWakeWord.AlreadySet",
-              "we have already %s wake word streaming", suppress ? "suppressed" : "unsuppressed");
-  
-  GetBEI().GetMicComponent().SuppressStreamingAfterWakeWord(suppress, GetDebugLabel());
-  _isSuppressingStreamAfterWakeWord = suppress;
+  if( suppress != _isSuppressingStreamAfterWakeWord ) {
+    GetBEI().GetMicComponent().SuppressStreamingAfterWakeWord(suppress, GetDebugLabel());
+    _isSuppressingStreamAfterWakeWord = suppress;
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -79,8 +79,6 @@ private:
     DynamicVariables();
 
     bool suppressProx;
-    
-    bool isSuppressingStreaming;
   };
 
   InstanceConfig   _iConfig;
