@@ -111,6 +111,7 @@ namespace Anki {
         }
 
         case RobotActionType::PLAY_ANIMATION:
+        case RobotActionType::RESELECTING_LOOP_ANIMATION:
         {
           _completionUnion.Set_animationCompleted(AnimationCompleted());
           break;

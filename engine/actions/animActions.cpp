@@ -285,6 +285,88 @@ namespace Anki {
     {
       SetTracksToLock(TracksToLock(GetRobot(), GetTracksToLock()));
     }
+    
+    #pragma mark ---- ReselectingLoopAnimationAction ----
+
+    ReselectingLoopAnimationAction::ReselectingLoopAnimationAction(AnimationTrigger animEvent,
+                                                                   u32 numLoops,
+                                                                   bool interruptRunning,
+                                                                   u8 tracksToLock,
+                                                                   float timeout_sec,
+                                                                   bool strictCooldown)
+      : IAction(GetDebugString(animEvent),
+                RobotActionType::RESELECTING_LOOP_ANIMATION,
+                tracksToLock)
+      , _loopForever( 0 == numLoops )
+      , _numLoopsRemaining( numLoops )
+    {
+      _animParams.animEvent = animEvent;
+      _animParams.interruptRunning = interruptRunning;
+      _animParams.tracksToLock = tracksToLock;
+      _animParams.timeout_sec = timeout_sec;
+      _animParams.strictCooldown = strictCooldown;
+      
+      constexpr f32 defaultTimeout_s = PlayAnimationAction::GetDefaultTimeoutInSeconds();
+      if( (numLoops == 0) && (_animParams.timeout_sec == defaultTimeout_s) ) {
+        _animParams.timeout_sec = PlayAnimationAction::GetInfiniteTimeoutInSeconds();
+      }
+    }
+    
+    std::string ReselectingLoopAnimationAction::GetDebugString(const AnimationTrigger& trigger)
+    {
+      return std::string{"ReselectingLoopAnimationAction"} + AnimationTriggerToString(trigger);
+    }
+    
+    ReselectingLoopAnimationAction::~ReselectingLoopAnimationAction() {
+      if( _subAction != nullptr ) {
+        _subAction->PrepForCompletion();
+      }
+    }
+    
+    void ReselectingLoopAnimationAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      if( _subAction != nullptr ) {
+        _subAction->GetCompletionUnion( completionUnion );
+      }
+    }
+
+    ActionResult ReselectingLoopAnimationAction::Init() {
+      ResetSubAction();
+      return ActionResult::SUCCESS;
+    }
+    
+    void ReselectingLoopAnimationAction::ResetSubAction() {
+      if( _subAction != nullptr ) {
+        _subAction->PrepForCompletion();
+      }
+      _subAction.reset( new TriggerLiftSafeAnimationAction{_animParams.animEvent,
+                                                           1, // only one loop here!
+                                                           _animParams.interruptRunning,
+                                                           _animParams.tracksToLock,
+                                                           _animParams.timeout_sec,
+                                                           _animParams.strictCooldown} );
+      _subAction->SetRobot( &GetRobot() );
+    }
+    
+    ActionResult ReselectingLoopAnimationAction::CheckIfDone()
+    {
+      if( _subAction == nullptr ) {
+        return ActionResult::NULL_SUBACTION;
+      }
+      
+      ActionResult subActionResult = _subAction->Update();
+      const ActionResultCategory category = IActionRunner::GetActionResultCategory(subActionResult);
+      
+      if( (category == ActionResultCategory::SUCCESS)
+          && (_loopForever || (--_numLoopsRemaining > 0)) )
+      {
+        ResetSubAction();
+        return ActionResult::RUNNING;
+      } else {
+        return subActionResult;
+      }
+    }
+
 
   }
 }

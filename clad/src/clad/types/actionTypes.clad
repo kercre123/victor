@@ -60,6 +60,7 @@ enum int_32 RobotActionType {
     PLAY_ANIMATION,
     PLAY_CUBE_ANIMATION,
     POP_A_WHEELIE,
+    RESELECTING_LOOP_ANIMATION,
     ROLL_OBJECT_LOW,           // Possible sub-type of PickAndPlaceAction
     SAY_TEXT,
     SEARCH_FOR_NEARBY_OBJECT,

@@ -50,7 +50,8 @@ namespace Anki {
       
       virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
 
-      static f32 GetDefaultTimeoutInSeconds() { return _kDefaultTimeout_sec; }
+      static constexpr f32 GetDefaultTimeoutInSeconds() { return _kDefaultTimeout_sec; }
+      static constexpr f32 GetInfiniteTimeoutInSeconds() { return _kDefaultTimeoutForInfiniteLoops_sec; }
       
     protected:
       
@@ -126,6 +127,54 @@ namespace Anki {
       static u8 TracksToLock(Robot& robot, u8 tracksCurrentlyLocked);
     protected:
         virtual void OnRobotSetInternalTrigger() override final;
+      
+    };
+    
+    #pragma mark ---- ReselectingLoopAnimationAction ----
+    // Repeatedly creates and plays TriggerLiftSafeAnimationAction numLoops times. This is different
+    // than using a TriggerLiftSafeAnimationAction with the param numLoops, since that will select
+    // one animation from the anim group at Init and loop it, whereas this reselects the
+    // animation each loop.
+    class ReselectingLoopAnimationAction : public IAction
+    {
+    public:
+      ReselectingLoopAnimationAction(AnimationTrigger animEvent,
+                                     u32 numLoops = 0, // default is loop forever
+                                     bool interruptRunning = true,
+                                     u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
+                                     float timeout_sec = PlayAnimationAction::GetDefaultTimeoutInSeconds(),
+                                     bool strictCooldown = false);
+      
+      virtual ~ReselectingLoopAnimationAction();
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      
+      virtual ActionResult CheckIfDone() override;
+      
+      virtual f32 GetTimeoutInSeconds() const override { return _animParams.timeout_sec; }
+      
+    private:
+      
+      void ResetSubAction();
+      
+      static std::string GetDebugString(const AnimationTrigger& trigger);
+      
+      struct AnimParams {
+        AnimationTrigger animEvent;
+        bool interruptRunning;
+        u8 tracksToLock;
+        float timeout_sec;
+        bool strictCooldown;
+      };
+      
+      AnimParams _animParams;
+      const bool _loopForever;
+      u32        _numLoopsRemaining;
+      std::unique_ptr<TriggerLiftSafeAnimationAction> _subAction;
       
     };
 

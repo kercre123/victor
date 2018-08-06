@@ -1220,9 +1220,9 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   trackAction->SetPanTolerance(DEG_TO_RAD(kEnrollFace_MinTrackingPanAngle_deg));
   trackAction->SetClampSmallAnglesToTolerances(true);
 
-  // Play the scanning animation in parallel while we're tracking
-  const s32 numLoops = 0; // loop forever
-  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFace, numLoops);
+  // Play the scanning animation in parallel while we're tracking. This anim group has multiple
+  // animations chosen at random. It loops forever
+  auto* scanLoop = new ReselectingLoopAnimationAction{ AnimationTrigger::MeetVictorLookFace };
 
   CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
 
