@@ -112,8 +112,6 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
                                     MoodManager::GetCurrentTimeInSeconds());
   }
 
-  const auto& unexpectedMovementSide = GetBEI().GetMovementComponent().GetUnexpectedMovementSide();
-
   // Have we been activated a lot recently?
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto& times = _dVars.persistent.activatedTimes;
@@ -122,23 +120,25 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   times.erase(times.begin(), times.lower_bound(now_sec - _iConfig.repeatedActivationCheckWindow_sec));
 
   // If we have been activated too many times within a short window of time, then just delegate control to an action that
-  // attempts to raise the lift and moves away from the direction of the unexpected movement, instead of continuing with
-  // the ReactToUnexpectedMovement behavior, since we may be stuck in a loop, in the event that somehow the lift has been
-  // caught on something low to the ground plane.
+  // attempts to raise the lift and backs up, instead of continuing with the ReactToUnexpectedMovement behavior, since we
+  // may be stuck in a loop, in the event that somehow the lift has been caught on something low to the ground plane.
   if (times.size() > _iConfig.numRepeatedActivationsAllowed) {
-      LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.RepeatedlyActivated",
-                  "Activated %zu times in the past %.1f seconds.",
-                  times.size(), _iConfig.repeatedActivationCheckWindow_sec);
-      const float travel_direction = unexpectedMovementSide == UnexpectedMovementSide::BACK ? 1.0 : -1.0;
-      CompoundActionSequential* seq_action = new CompoundActionSequential({
-        new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
-        new DriveStraightAction(travel_direction * _iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
-      DelegateIfInControl(seq_action);
-      return;
+    LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.RepeatedlyActivated",
+                "Activated %zu times in the past %.1f seconds.",
+                times.size(), _iConfig.repeatedActivationCheckWindow_sec);
+    // Reset the records of activation times to prevent getting stuck in a loop with this emergency maneuver.
+    times.clear();
+    // Command the emergency maneuver of raising the lift as high as possible and then retreating slowly.
+    CompoundActionSequential* seq_action = new CompoundActionSequential({
+      new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
+      new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
+    DelegateIfInControl(seq_action);
+    return;
   }
 
   // Otherwise, Lock the wheels if the unexpected movement is behind us so we don't drive backward and delete the created obstacle
   // TODO: Consider using a different animation that drives forward instead of backward? (COZMO-13035)
+  const auto& unexpectedMovementSide = GetBEI().GetMovementComponent().GetUnexpectedMovementSide();
   const u8 tracksToLock = Util::EnumToUnderlying(unexpectedMovementSide == UnexpectedMovementSide::BACK ?
                                                  AnimTrackFlag::BODY_TRACK :
                                                  AnimTrackFlag::NO_TRACKS);
