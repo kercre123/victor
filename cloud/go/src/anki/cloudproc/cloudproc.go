@@ -3,8 +3,11 @@ package cloudproc
 import (
 	"anki/token"
 	"context"
+	"log"
 	"sync"
 )
+
+var devServer func() error
 
 func Run(ctx context.Context, procOptions ...Option) {
 	var opts options
@@ -13,7 +16,15 @@ func Run(ctx context.Context, procOptions ...Option) {
 	}
 
 	var wg sync.WaitGroup
+	if devServer != nil {
+		launchProcess(&wg, func() {
+			if err := devServer(); err != nil {
+				log.Println("dev HTTP server reported error:", err)
+			}
+		})
+	}
 	launchProcess(&wg, func() {
+		addHandlers(token.GetDevHandlers)
 		token.Run(ctx, opts.tokenOpts...)
 	})
 	if opts.voice != nil {

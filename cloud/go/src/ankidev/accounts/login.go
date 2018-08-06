@@ -1,0 +1,45 @@
+package accounts
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/anki/sai-go-cli/config"
+)
+
+// DoLogin attempts to log in to the Accounts service with the given credentials. The returned
+// session references the given config but NOT the other way around - call session.Save() to
+// persist it to disk and make sure it remains associated with the returned configuration in
+// the future. For temporary use, the values in the session (i.e. token) can be used independently
+// of the config without saving it.
+func DoLogin(user, pass string) (*config.Session, *config.Config, error) {
+	c, cfg, err := newClient()
+	resp, err := c.NewUserSession(user, pass)
+	if err != nil {
+		return nil, nil, err
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, nil, errors.New(fmt.Sprint("http status ", resp.StatusCode))
+	}
+
+	jresp, err := resp.Json()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	s, err := cfg.NewSession("default")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if userID, _ := jresp.FieldStr("user", "user_id"); userID != "" {
+		s.UserID = userID
+	}
+
+	token, err := jresp.FieldStr("session", "session_token")
+	if err != nil {
+		return nil, nil, err
+	}
+	s.Token = token
+	return s, cfg, nil
+}

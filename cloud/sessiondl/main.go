@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ankidev/accounts"
 	"bufio"
 	"bytes"
 	"encoding/binary"
@@ -14,7 +15,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/anki/sai-go-accounts/client/accounts"
 	"github.com/anki/sai-go-cli/apiutil"
 	"github.com/anki/sai-go-cli/config"
 	wav "github.com/youpy/go-wav"
@@ -36,8 +36,14 @@ func main() {
 		log.Fatalln("-user and -pass options must be used together (only one supplied)")
 	}
 	if *user != "" {
-		if err := doLogin(*user, *pass); err != nil {
+		if s, _, err := accounts.DoLogin(*user, *pass); err != nil {
 			fmt.Println("Error logging in:", err)
+		} else {
+			if err := s.Save(); err != nil {
+				fmt.Println("Error saving session:", err)
+				return
+			}
+			fmt.Println("Successfully logged in")
 		}
 		return
 	}
@@ -182,52 +188,4 @@ func getSessionIds(c *blobstore.Client, session string) ([]string, error) {
 		ret = append(ret, id)
 	}
 	return ret, nil
-}
-
-func doLogin(user, pass string) error {
-	cfg, err := config.Load("", false, "dev", "default")
-	if err != nil {
-		return err
-	}
-	apicfg, err := apiutil.ApiClientCfg(cfg, config.Accounts)
-	if err != nil {
-		return err
-	}
-	c, err := accounts.NewAccountsClient("sai-go-cli", apicfg...)
-	if err != nil {
-		return err
-	}
-	resp, err := c.NewUserSession(user, pass)
-	if err != nil {
-		return err
-	} else if resp.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprint("http status ", resp.StatusCode))
-	}
-
-	jresp, err := resp.Json()
-	if err != nil {
-		return err
-	}
-
-	s, err := cfg.NewSession("default")
-	if err != nil {
-		return err
-	}
-
-	if userID, _ := jresp.FieldStr("user", "user_id"); userID != "" {
-		s.UserID = userID
-	}
-
-	token, err := jresp.FieldStr("session", "session_token")
-	if err != nil {
-		return err
-	}
-	s.Token = token
-
-	if err := s.Save(); err != nil {
-		return err
-	}
-
-	fmt.Println("Successfully logged in")
-	return nil
 }

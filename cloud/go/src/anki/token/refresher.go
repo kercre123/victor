@@ -20,34 +20,12 @@ func refreshRoutine(ctx context.Context) {
 
 		// wait until we have a valid token
 		var tok jwt.Token
-		// TODO: this is the code we WILL use once pairing flow exists
-		// for {
-		// 	tok = jwt.GetToken()
-		// 	if tok != nil {
-		// 		break
-		// 	}
-		// 	if util.SleepSelect(tokSleep, ctx.Done()) {
-		// 		return
-		// 	}
-		// }
-
-		// TODO: delete this but for now, null token = fetch one ourselves with a fake request
 		for {
-			if tok = jwt.GetToken(); tok != nil {
+			tok = jwt.GetToken()
+			if tok != nil {
 				break
 			}
-			ch := make(chan *response)
-			queue <- request{
-				m:  cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{}),
-				ch: ch}
-			msg := <-ch
-			close(ch)
-			if tok = jwt.GetToken(); tok != nil {
-				log.Println("token refresh: obtained initial fake token")
-				break
-			}
-			log.Println("token refresh: failed fake init, errors:", msg.err, msg.resp.GetAuth().Error)
-			log.Println("waiting", tokSleep, "to try again")
+			log.Println("token refresher: no valid token yet, sleeping", tokSleep)
 			if util.SleepSelect(tokSleep, ctx.Done()) {
 				return
 			}

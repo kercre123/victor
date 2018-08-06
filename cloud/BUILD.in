@@ -61,6 +61,11 @@ go_project(
 )
 
 go_project(
+    name = 'tokprovision',
+    dir = 'tokprovision'
+)
+
+go_project(
     name = 'sessiondl',
     dir = 'sessiondl'
 )

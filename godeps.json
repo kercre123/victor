@@ -109,5 +109,13 @@
   "github.com/anki/sai-go-accounts": {
     "commit": "d3dfb40cd1259ac834e9c926ea9dc6f823f38b0d",
     "branch": "master"
+  },
+  "golang.org/x/crypto": {
+    "commit": "c126467f60eb25f8f27e5a981f32a87e3965053f",
+    "branch": "master"
+  },
+  "golang.org/x/sys": {
+    "commit": "3dc4335d56c789b04b0ba99b7a37249d9b614314",
+    "branch": "master"
   }
 }

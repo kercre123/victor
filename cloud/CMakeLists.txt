@@ -127,6 +127,8 @@ if (MACOSX)
   _build_cloud_executable(sessiondl)
   anki_disable_default_build(sessiondl)
 
+  _build_cloud_executable(tokprovision)
+
 endif()
 
 # ipctest - for testing interop capability of C++ and Go socket code
@@ -203,7 +205,7 @@ if (MACOSX)
     "/tmp/anki/gateway/trust.cert"
     "/tmp/anki/gateway/trust.key"
   )
-  
+
   add_custom_target(
     GenerateGatewayMacCerts ALL
     DEPENDS ${GATEWAY_MAC_CERTS}

@@ -19,6 +19,7 @@ type Token interface {
 	IssuedAt() time.Time
 	RefreshTime() time.Time
 	String() string
+	UserID() string
 }
 
 // ParseToken parses the given token received from the server and saves it
@@ -125,4 +126,8 @@ func (t tokWrapper) String() string {
 
 func (t tokWrapper) IssuedAt() time.Time {
 	return t.tok.IssuedAt
+}
+
+func (t tokWrapper) UserID() string {
+	return t.tok.UserId
 }
