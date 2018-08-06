@@ -3,6 +3,7 @@
 #include "console.h"
 #include "dut_i2c.h"
 #include "fixture.h"
+#include "flexflow.h"
 #include "meter.h"
 #include "opto.h"
 #include "portable.h"
@@ -11,6 +12,8 @@
 
 //force start (via console or button) skips detect
 #define TOF_REQUIRE_FORCE_START 1
+
+static struct { uint16_t reading_mm; uint16_t reading_adj; } flexnfo;
 
 int detectPrescale=0; bool detectSticky=0;
 bool TestAuxTofDetect(void)
@@ -36,6 +39,7 @@ void TestAuxTofCleanup(void) {
   DUT_I2C::deinit();
   detectPrescale = 0;
   detectSticky = g_isDevicePresent;
+  memset( &flexnfo, 0, sizeof(flexnfo) );
 }
 
 void TOF_init(void) {
@@ -58,6 +62,11 @@ void TOF_sensorCheck(void)
     ConsolePrintf("%i,", value );
   }
   ConsolePrintf("\navg reading: %imm\n", reading_avg /= num_readings);
+  
+  //FlexFlow report (print here to allow data collection on failed sensors)
+  flexnfo.reading_mm = reading_avg;
+  flexnfo.reading_adj = reading_avg > 30 ? reading_avg - 30 : 0;
+  FLEXFLOW::printf("<flex> TOF reading %imm adj %imm </flex>\n", flexnfo.reading_mm, flexnfo.reading_adj );
   
   //nominal reading expected by playpen 90-130mm raw (80mm +/-20mm after -30 window adjustment)
   if( reading_avg < 95 || reading_avg > 125 )
