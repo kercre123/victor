@@ -151,6 +151,8 @@ void SetOKText(void)
   helperLcdShow(1,1,'g', "OK");
 }
 
+static void dbgBtnHandler(void);
+
 // Wait until the Device has been pulled off the fixture
 void WaitForDeviceOff(bool error, int debounce_ms = 500);
 void WaitForDeviceOff(bool error, int debounce_ms)
@@ -182,6 +184,7 @@ void WaitForDeviceOff(bool error, int debounce_ms)
       debounce = 0;
     
     ConsoleUpdate();  // No need to freeze up the console while waiting
+    dbgBtnHandler();  // process btn input
     
     if( g_forceStart ) { //force=1 exits this infuriating loop
       g_forceStart = 0;
@@ -286,7 +289,7 @@ static bool TryToRunTests(void)
   return TRUE;
 }
 
-inline void dbgBtnHandler(void)
+static void dbgBtnHandler(void)
 {
   //monitor unused buttons
   int x = USE_START_BTN > 0 ? Board::BTN_2 : Board::BTN_1; //skip start btn if used for testing
