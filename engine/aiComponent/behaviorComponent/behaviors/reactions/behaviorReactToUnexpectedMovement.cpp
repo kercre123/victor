@@ -52,13 +52,21 @@ BehaviorReactToUnexpectedMovement::InstanceConfig::InstanceConfig(const Json::Va
   repeatedActivationCheckWindow_sec = JsonTools::ParseFloat(config, kRepeatedActivationWindowKey, debugName);
   numRepeatedActivationsAllowed = JsonTools::ParseUInt32(config, kNumRepeatedActivationsAllowedKey, debugName);
   retreatDistance_mm = JsonTools::ParseFloat(config, kRetreatDistanceKey, debugName);
-  if (Util::IsFltLEZero(retreatDistance_mm)) {
-    LOG_WARNING((debugName + ".NegativeDistance").c_str(),
-                "Retreat distance should always be positive (not %f). Making positive.",
-                retreatDistance_mm);
+  if (ANKI_VERIFY(Util::IsFltLEZero(retreatDistance_mm),
+                  (debugName + ".NonPositiveDistance").c_str(),
+                  "Retreat distance should always be positive (not %f). Making positive.",
+                  retreatDistance_mm))
+  {
     retreatDistance_mm *= -1.0;
   }
   retreatSpeed_mmps = JsonTools::ParseFloat(config, kRetreatSpeedKey, debugName);
+  if (ANKI_VERIFY(Util::IsFltLEZero(retreatSpeed_mmps),
+                  (debugName + ".NonPositiveSpeed").c_str(),
+                  "Retreat speed should always be positive (not %f). Making positive.",
+                  retreatSpeed_mmps))
+  {
+    retreatSpeed_mmps *= -1.0;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
