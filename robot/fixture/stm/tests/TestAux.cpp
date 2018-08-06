@@ -59,8 +59,8 @@ void TOF_sensorCheck(void)
   }
   ConsolePrintf("\navg reading: %imm\n", reading_avg /= num_readings);
   
-  //nominal reading expected: 80mm
-  if( reading_avg < 75 || reading_avg > 125 )
+  //nominal reading expected by playpen 90-130mm raw (80mm +/-20mm after -30 window adjustment)
+  if( reading_avg < 95 || reading_avg > 125 )
     throw ERROR_SENSOR_TOF;
 }
 
@@ -75,8 +75,9 @@ void TOF_debugInspectRaw(void)
     if( Timer::elapsedUs(Tsample) > 250*1000 ) {
       Tsample = Timer::get();
       tof_dat_t tof = *Opto::read();
-      ConsolePrintf("TOF: status=%03i reading=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
-        tof.status, __REV16(tof.reading), __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );      
+      uint16_t reading_adj = __REV16(tof.reading)>30 ? __REV16(tof.reading)-30 : 0; //adjustment for window interference
+      ConsolePrintf("TOF: status=%03i mm=%05i mm.adj=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
+        tof.status, __REV16(tof.reading), reading_adj, __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );      
     }
     
     //break on console input
