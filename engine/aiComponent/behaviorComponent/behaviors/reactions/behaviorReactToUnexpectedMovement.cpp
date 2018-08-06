@@ -29,10 +29,10 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-    const char* kRepeatedActivationWindowKey = "repeatedActivationWindow_sec";
-    const char* kNumRepeatedActivationsAllowedKey = "numRepeatedActivationsAllowed";
-    const char* kRetreatDistanceKey = "retreatDistance_mm";
-    const char* kRetreatSpeedKey = "retreatSpeed_mmps";
+  const char* kRepeatedActivationWindowKey = "repeatedActivationWindow_sec";
+  const char* kNumRepeatedActivationsAllowedKey = "numRepeatedActivationsAllowed";
+  const char* kRetreatDistanceKey = "retreatDistance_mm";
+  const char* kRetreatSpeedKey = "retreatSpeed_mmps";
 }
 
 void BehaviorReactToUnexpectedMovement::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -49,10 +49,16 @@ void BehaviorReactToUnexpectedMovement::GetBehaviorJsonKeys(std::set<const char*
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToUnexpectedMovement::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
-    repeatedActivationCheckWindow_sec = JsonTools::ParseFloat(config, kRepeatedActivationWindowKey, debugName);
-    numRepeatedActivationsAllowed = JsonTools::ParseInt32(config, kNumRepeatedActivationsAllowedKey, debugName);
-    retreatDistance_mm = JsonTools::ParseFloat(config, kRetreatDistanceKey, debugName);
-    retreatSpeed_mmps = JsonTools::ParseFloat(config, kRetreatSpeedKey, debugName);
+  repeatedActivationCheckWindow_sec = JsonTools::ParseFloat(config, kRepeatedActivationWindowKey, debugName);
+  numRepeatedActivationsAllowed = JsonTools::ParseUInt32(config, kNumRepeatedActivationsAllowedKey, debugName);
+  retreatDistance_mm = JsonTools::ParseFloat(config, kRetreatDistanceKey, debugName);
+  if (Util::IsFltLEZero(retreatDistance_mm)) {
+    LOG_WARNING((debugName + ".NegativeDistance").c_str(),
+                "Retreat distance should always be positive (not %f). Making positive.",
+                retreatDistance_mm);
+    retreatDistance_mm *= -1.0;
+  }
+  retreatSpeed_mmps = JsonTools::ParseFloat(config, kRetreatSpeedKey, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -121,8 +127,7 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   // caught on something low to the ground plane.
   if (times.size() > _iConfig.numRepeatedActivationsAllowed) {
       LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.RepeatedlyActivated",
-                  "We have been activated %zu times in the past %.1f seconds, so instead of continuing with this"
-                  "behavior, we are raising the lift and moving away from the disturbance slowly.",
+                  "Activated %zu times in the past %.1f seconds.",
                   times.size(), _iConfig.repeatedActivationCheckWindow_sec);
       const float travel_direction = unexpectedMovementSide == UnexpectedMovementSide::BACK ? 1.0 : -1.0;
       CompoundActionSequential* seq_action = new CompoundActionSequential({
