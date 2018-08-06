@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-  
+const char* const kPanToleranceKey = "panTolerance_deg";
 }
 
 
@@ -42,6 +42,7 @@ BehaviorLookAtMe::DynamicVariables::DynamicVariables()
 BehaviorLookAtMe::BehaviorLookAtMe(const Json::Value& config)
   : ISimpleFaceBehavior(config)
 {
+  _iConfig.panTolerance_deg = config.get(kPanToleranceKey, -1.0f).asFloat();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -49,6 +50,12 @@ void BehaviorLookAtMe::GetBehaviorOperationModifiers(BehaviorOperationModifiers&
 {
   modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
   modifiers.behaviorAlwaysDelegates = true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAtMe::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kPanToleranceKey );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -66,6 +73,9 @@ void BehaviorLookAtMe::OnBehaviorActivated()
   if(facePtr != nullptr){
     Vision::FaceID_t faceID = facePtr->GetID();
     TrackFaceAction* trackAction = new TrackFaceAction( faceID );
+    if( _iConfig.panTolerance_deg >= 0.0f ) {
+      trackAction->SetPanTolerance( DEG_TO_RAD(_iConfig.panTolerance_deg) );
+    }
     const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
     if( onCharger ) {
       trackAction->SetMode( ITrackAction::Mode::HeadOnly );

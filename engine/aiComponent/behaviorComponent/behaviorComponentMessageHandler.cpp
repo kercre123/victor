@@ -234,7 +234,9 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
   if( uic.IsTriggerWordPending() ) {
     uic.ClearPendingTriggerWord();
   }
-  uic.DropAnyUserIntent();
+  if( uic.IsAnyUserIntentPending() ) {
+    uic.DropAnyUserIntent();
+  }
   uic.ResetUserIntentUnclaimed();
   
   auto& micComp = _robot.GetMicComponent();

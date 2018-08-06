@@ -1,7 +1,36 @@
 {
-  // this is used in meet victor for now, although the design calls for the robot to be looking around.
-  // it should probably look around AND for faces so it has a better chance of finding one for meet
+  // onboarding death stare
   "behaviorID": "OnboardingLookAtUser",
-  "behaviorClass": "ObservingLookAtFaces"
+  "behaviorClass": "FindFaceAndThen",
+  
+  // look for face/body in startup direction for 15-45 seconds
+  // if none is found, do a (distracting) search forever until a
+  // face is found, then once found, stare at the user forever and ever
+
+  "startsWithMicDirection": false,
+  "timeUntilCancelFaceLooking_s": 15.0,
+  "timeUntilCancelFaceSearch_s": 9999.0, // never end searching if no face is founs
+  "searchForFaceBehavior": "ObservingFindFaces",
+
+  "behavior": "LookAtMeInternal",
+  "timeUntilCancelFollowup_s": 999999.0, // never end once found a face
+
+  "useBodyDetector": true,
+  "additionalLookTimeIfSawBody_s": 30.0,
+  "additionalSearchTimeIfSawBody_s": 30.0,
+
+  // shouldnt be needed
+  "shouldLeaveChargerFirst": true, 
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "LookAtMeInternal",
+      "behaviorClass" : "LookAtMe",
+
+      // don't turn as much, so as to not move the motors as much, so as to hear VCs better
+      "panTolerance_deg": 15.0
+    }
+  ]
 }
 
