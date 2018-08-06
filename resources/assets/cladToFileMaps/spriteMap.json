@@ -584,22 +584,6 @@
     "SpriteName" : "face_cloud01"
   },
   {
-    "CladEvent" : "Face_Cloud02",
-    "SpriteName" : "face_cloud02"
-  },
-  {
-    "CladEvent" : "Face_Cloud03",
-    "SpriteName" : "face_cloud03"
-  },
-  {
-    "CladEvent" : "Face_Cloud04",
-    "SpriteName" : "face_cloud04"
-  },
-  {
-    "CladEvent" : "Face_Clouds_Mist",
-    "SpriteName" : "face_clouds_mist"
-  },
-  {
     "CladEvent" : "Face_Flashing_Zeros",
     "SpriteName" : "face_flashing_zeros"
   },
