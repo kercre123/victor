@@ -19,16 +19,35 @@ from .messaging import client, protocol
 class SDK_PRIORITY_LEVEL(Enum):
     '''Enum used to specify the priority level that the program requests to run at'''
 
-    # Runs below level "MandatoryPhysicalReactions" and
-    # "LowBatteryFindAndGoToHome", and above "TriggerWordDetected".
+    #: Runs below level "MandatoryPhysicalReactions" and
+    #: "LowBatteryFindAndGoToHome", and above "TriggerWordDetected".
     SDK_HIGH_PRIORITY = 0
 
 
 class Connection:
-    def __init__(self, robot, name, host, cert_file):
+    """Creates and maintains a aiogrpc connection.
+
+    .. code-block:: python
+
+        # Note: this needs to execute in an async function
+        # Connect to your Vector
+        conn = connection.Connection(robot, "Vector-XXXX", "XX.XX.XX.XX:443", "/path/tp/cert.pem")
+        conn.connect()
+        # Run your commands (for example play animation)
+        anim = vector.messaging.protocol.PlayAnimationRequest(name="anim_poked_giggle")
+        await conn.interface.PlayAnimation(anim)
+        # Close the connection
+        await conn.close()
+
+    :param robot: A reference to the owner Robot object. (May be :class:`None`)
+    :param name: Vector's name in the format of "Vector-A1B2"
+    :param host: The ip and port of Vector in the format "XX.XX.XX.XX:443"
+    :param cert_file: The location of the certificate file on disk
+    """
+    def __init__(self, robot, name: str, host: str, cert_file: str):
         if cert_file is None:
             raise Exception("Must provide a cert file")
-        self._priority = None
+        self._priority:SDK_PRIORITY_LEVEL = None
         self.name = name
         self.host = host
         self.cert_file = cert_file
@@ -42,14 +61,23 @@ class Connection:
         return self._robot
 
     @property
-    def interface(self):
+    def interface(self) -> client.ExternalInterfaceStub:
+        """A direct reference to the connected aiogrpc interface
+        """
         return self._interface
 
     @property
-    def priority(self):
+    def priority(self) -> SDK_PRIORITY_LEVEL:
+        """The currently enabled priority inside the behavior
+        system.
+        """
         return self._priority
 
-    def connect(self, timeout=10):
+    def connect(self, timeout:int = 10):
+        """Connect to Vector
+
+        :param timeout: The time allotted to attempt a connection
+        """
         trusted_certs = None
         with open(self.cert_file, 'rb') as cert:
             trusted_certs = cert.read()

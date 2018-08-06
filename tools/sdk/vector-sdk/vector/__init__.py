@@ -16,4 +16,4 @@ logger = logging.getLogger('victor')  # pylint: disable=invalid-name
 if sys.version_info < (3, 5, 1):
     sys.exit('victor requires Python 3.5.1 or later')
 
-__all__ = ['logger', 'AsyncRobot', 'Robot', 'messaging']
+__all__ = ['Robot', 'AsyncRobot', 'logger', 'messaging']

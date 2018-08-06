@@ -6,7 +6,13 @@ Copyright (c) 2018 Anki, Inc.
 
 from grpc import RpcError, StatusCode
 
-__all__ = ["VectorException", "VectorConnectionException"]
+__all__ = ["VectorException",
+           "VectorConnectionException",
+           "VectorUnauthenticatedException",
+           "VectorUnavailableException",
+           "VectorUnimplementedException",
+           "VectorTimeoutException",
+           "VectorNotReadyException"]
 
 
 class VectorException(Exception):

@@ -4,9 +4,10 @@ The main robot class for managing the Vector SDK
 Copyright (c) 2018 Anki, Inc.
 '''
 
-__all__ = ['MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE', 'Robot', 'AsyncRobot']
+__all__ = ['Robot', 'AsyncRobot', 'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE']
 
 import asyncio
+import functools
 import logging
 
 from . import (animation, backpack, behavior, connection,
@@ -27,6 +28,45 @@ MAX_HEAD_ANGLE = util.degrees(45)
 
 
 class Robot:
+    """The Robot object is responsible for managing the state and connections
+    to a Vector, and is typically the entry-point to running the sdk.
+
+    The majority of the robot will not work until it is properly connected
+    to Vector. There are two ways to get connected:
+
+    1. Using :code:`with`: it works just like opening a file, and will close when
+    the :code:`with` block's indentation ends
+
+    .. code-block:: python
+
+        # Create the robot connection
+        with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            # Run your commands (for example play animation)
+            robot.play_animation("anim_poked_giggle")
+
+    2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
+    it allows the robot's connection to continue in the context in which it started.
+
+    .. code-block:: python
+
+        # Create a Robot object
+        robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+        # Connect to the Robot
+        robot.connect()
+        # Run your commands (for example play animation)
+        robot.play_animation("anim_poked_giggle")
+        # Disconnect from the Robot
+        robot.disconnect()
+
+    :param name: The name of the Vector. Usually something like "Vector-A1B2".
+    :param ip: the ip address that Victor is currently connected to.
+    :param cert_file: The location of the cert file downloaded from the cloud.
+    :param port: the port on which Vector is listening. default=443
+    :param loop: the async loop on which the Vector commands will execute. default=None
+    :param default_logging: Disable default logging. default=False
+    :param behavior_timeout: The time to wait for control of the robot before failing. default=10
+    :param enable_vision_mode: Turn on face detection. default=False"""
+
     def __init__(self,
                  name: str,
                  ip: str,
@@ -36,42 +76,6 @@ class Robot:
                  default_logging: bool = True,
                  behavior_timeout: int = 10,
                  enable_vision_mode: bool = False):
-        """Create a new Robot Object
-
-        This object is responsible for managing the state and connections
-        to Vector, and is typically the entry-point to running the sdk.
-
-        The majority of the robot will not work until it is properly connected
-        to Vector. There are two ways to get connected:
-
-        1. Using :func:`with`: it works just like opening a file, and will close when
-        the :func:`with` block's indentation ends
-
-        .. code-block:: python
-
-            with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
-                robot.play_animation("anim_poked_giggle")
-
-        2. Using :func:`connect()` and :func:`disconnect()` to explicitly open and close the connection:
-        it allows the robot's connection to continue in the context in which it started.
-
-        .. code-block:: python
-
-            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
-            robot.connect()
-            robot.play_animation("anim_poked_giggle")
-            robot.disconnect()
-
-        Args:
-            name (str): The name of the Vector. Usually something like "Vector-A1B2".
-            ip (str): the ip address that Victor is currently connected to.
-            cert_file (str): The location of the cert file downloaded from the cloud.
-            port (str): the port on which Vector is listening. default=443
-            loop (:class:`asyncio.BaseEventLoop`): the async loop on which the Vector commands will execute. default=None
-            default_logging (bool): Disable default logging. default=False
-            behavior_timeout (int): The time to wait for control of the robot before failing. default=10
-            enable_vision_mode (bool): Turn on face detection. default=False
-        """
         if default_logging:
             util.setup_basic_logging()
         self.logger = util.get_class_logger(__name__, self)
@@ -82,15 +86,15 @@ class Robot:
         self.conn = connection.Connection(self, name, ':'.join([ip, port]), cert_file)
         self.events = events.EventHandler()
         # placeholders for components before they exist
-        self._anim = None
-        self._backpack = None
-        self._behavior = None
-        self._faces = None
-        self._motors = None
-        self._oled = None
-        self._photos = None
-        self._proximity = None
-        self._world = None
+        self._anim: animation.AnimationComponent = None
+        self._backpack: backpack.BackpackComponent = None
+        self._behavior: behavior.BehaviorComponent = None
+        self._faces: faces.FaceComponent = None
+        self._motors: motors.MotorComponent = None
+        self._oled: oled_face.OledComponent = None
+        self._photos: photos.PhotographComponent = None
+        self._proximity: proximity.ProximityComponent = None
+        self._world: world.World = None
 
         self.behavior_timeout = behavior_timeout
         self.enable_vision_mode = enable_vision_mode
@@ -264,7 +268,19 @@ class Robot:
         self._status = msg.status
         self._proximity.on_proximity_update(msg.prox_data)
 
-    def connect(self, timeout=10):
+    def connect(self, timeout: int = 10) -> None:
+        """Start the connection to Vector
+
+        .. code-block:: python
+
+            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot.connect()
+            robot.play_animation("anim_poked_giggle")
+            robot.disconnect()
+
+        :param timeout: The time to allow for a connection before a
+            :class:`vector.exceptions.VectorTimeoutException` is raised.
+        """
         if self.loop is None:
             self.logger.debug("Creating asyncio loop")
             self.is_loop_owner = True
@@ -320,8 +336,17 @@ class Robot:
         self.events.subscribe("robot_observed_object",
                               self.world.robot_observed_object)
 
-    def disconnect(self, wait_for_tasks=True):
-        if self.is_async and wait_for_tasks:
+    def disconnect(self) -> None:
+        """Close the connection with Vector
+
+        .. code-block:: python
+
+            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot.connect()
+            robot.play_animation("anim_poked_giggle")
+            robot.disconnect()
+        """
+        if self.is_async:
             for task in self.pending:
                 task.wait_for_completed()
 
@@ -347,34 +372,49 @@ class Robot:
         self.disconnect()
 
     @sync.Synchronizer.wrap
-    async def get_battery_state(self):
+    async def get_battery_state(self) -> protocol.BatteryStateResponse:
+        """Check the current state of the battery.
+
+        .. code-block:: python
+
+            battery_state = robot.get_battery_state()
+        """
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.interface.BatteryState(get_battery_state_request)
 
     @sync.Synchronizer.wrap
-    async def get_version_state(self):
+    async def get_version_state(self) -> protocol.VersionStateResponse:
+        """Get the versioning information of the Robot
+
+        .. code-block:: python
+
+            version_state = robot.get_version_state()
+        """
         get_version_state_request = protocol.VersionStateRequest()
         return await self.conn.interface.VersionState(get_version_state_request)
 
     @sync.Synchronizer.wrap
-    async def get_network_state(self):
+    async def get_network_state(self) -> protocol.NetworkStateResponse:
+        """Get the network information of the Robot
+
+        .. code-block:: python
+
+            network_state = robot.get_version_state()
+        """
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.interface.NetworkState(get_network_state_request)
 
     @sync.Synchronizer.wrap
-    async def say_text(self, text, use_vector_voice=True, duration_scalar=1.0):
+    async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         '''Have Vector say text!
 
-        Args:
-            text (string): The words for Vector to say.
-            use_vector_voice (bool): Whether to use Vector's robot voice
+        :param text: The words for Vector to say.
+        :param use_vector_voice: Whether to use Vector's robot voice
                 (otherwise, he uses a generic human male voice).
-            duration_scalar (float): Adjust the relative duration of the
+        :param duration_scalar: Adjust the relative duration of the
                 generated text to speech audio.
 
-        Returns:
-            A :class:`vector.messaging.messages_pb2.SayTextResponse` object that
-            provides the status and utterance state
+        :return: object that provides the status and utterance state
         '''
         say_text_request = protocol.SayTextRequest(text=text,
                                                    use_vector_voice=use_vector_voice,
@@ -383,6 +423,44 @@ class Robot:
 
 
 class AsyncRobot(Robot):
+    """The AsyncRobot object is just like the Robot object, but allows multiple commands
+    to be executed at the same time. To achieve this, all function calls also
+    return a :class:`sync.Synchronizer`
+
+    1. Using :code:`with`: it works just like opening a file, and will close when
+    the :code:`with` block's indentation ends
+
+    .. code-block:: python
+
+        # Create the robot connection
+        with AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            # Run your commands (for example play animation)
+            robot.play_animation("anim_poked_giggle").wait_for_completed()
+
+    2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
+    it allows the robot's connection to continue in the context in which it started.
+
+    .. code-block:: python
+
+        # Create a Robot object
+        robot = AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+        # Connect to the Robot
+        robot.connect()
+        # Run your commands (for example play animation)
+        robot.play_animation("anim_poked_giggle").wait_for_completed()
+        # Disconnect from the Robot
+        robot.disconnect()
+
+    :param name: The name of the Vector. Usually something like "Vector-A1B2".
+    :param ip: the ip address that Victor is currently connected to.
+    :param cert_file: The location of the cert file downloaded from the cloud.
+    :param port: the port on which Vector is listening. default=443
+    :param loop: the async loop on which the Vector commands will execute. default=None
+    :param default_logging: Disable default logging. default=False
+    :param behavior_timeout: The time to wait for control of the robot before failing. default=10
+    :param enable_vision_mode: Turn on face detection. default=False"""
+
+    @functools.wraps(Robot.__init__)
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs)
         self.is_async = True

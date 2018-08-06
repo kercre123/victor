@@ -27,18 +27,16 @@ import logging
 import math
 import os
 from pathlib import Path
-import sys
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
 
 # TODO: Update this using the login credentials when they're available
-def parse_test_args(parser=None):
+def parse_test_args(parser: argparse.ArgumentParser = None):
     '''
     Provides the command line interface for all the tests
 
-    Args:
-    parser (argparse.ArgumentParser): To add new arguments,
+    :param parser: To add new arguments,
          pass an argparse parser with the new options
          already defined. Leave empty to use the defaults.
     '''
@@ -65,15 +63,16 @@ def parse_test_args(parser=None):
     return args
 
 
-def setup_basic_logging(custom_handler=None,
-                        general_log_level=None,
-                        target=sys.stderr):
+def setup_basic_logging(custom_handler: logging.Handler = None,
+                        general_log_level: str = None,
+                        target: object = None):
     '''Helper to perform basic setup of the Python logging machinery.
-    Args:
-        general_log_level (str): 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
+
+    :param custom_handler: provide an external logger for custom logging locations
+    :param general_log_level: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
             constant from the :mod:`logging` module.  If None then a
-            value will be read from the COZMO_LOG_LEVEL environment variable.
-        target (object): The stream to send the log data to; defaults to stderr
+            value will be read from the VECTOR_LOG_LEVEL environment variable.
+    :param target: The stream to send the log data to; defaults to stderr
     '''
     if general_log_level is None:
         general_log_level = os.environ.get('VICTOR_LOG_LEVEL', logging.DEBUG)
@@ -90,8 +89,12 @@ def setup_basic_logging(custom_handler=None,
         vector_logger.setLevel(general_log_level)
 
 
-def get_class_logger(module, obj):
-    '''Helper to create logger for a given class (and module)'''
+def get_class_logger(module: str, obj: object) -> logging.Logger:
+    '''Helper to create logger for a given class (and module)
+
+    :param module: The name of the module to which the object belongs.
+    :param obj: the object that owns the logger.
+    '''
     return logging.getLogger(".".join([module, type(obj).__name__]))
 
 
@@ -122,15 +125,14 @@ def angle_z_to_quaternion(angle_z):
 class Vector3:
     '''Represents a 3D Vector (type/units aren't specified)
 
-    Args:
-        x (float): X component
-        y (float): Y component
-        z (float): Z component
+    :param x: X component
+    :param y: Y component
+    :param z: Z component
     '''
 
     __slots__ = ('_x', '_y', '_z')
 
-    def __init__(self, x, y, z):
+    def __init__(self, x: float, y: float, z: float):
         self._x = x
         self._y = y
         self._z = z
@@ -162,16 +164,15 @@ class Angle:
     Use the :func:`degrees` or :func:`radians` convenience methods to generate
     an Angle instance.
 
-    Args:
-        radians (float): The number of radians the angle should represent
-            (cannot be combined with ``degrees``)
-        degrees (float): The number of degress the angle should represent
-            (cannot be combined with ``radians``)
+    :param radians: The number of radians the angle should represent
+        (cannot be combined with ``degrees``)
+    :param degrees: The number of degress the angle should represent
+        (cannot be combined with ``radians``)
     '''
 
     __slots__ = ('_radians')
 
-    def __init__(self, radians=None, degrees=None):  # pylint: disable=redefined-outer-name
+    def __init__(self, radians: float = None, degrees: float = None):  # pylint: disable=redefined-outer-name
         if radians is None and degrees is None:
             raise ValueError("Expected either the degrees or radians keyword argument")
         if radians and degrees:
@@ -210,12 +211,12 @@ class Angle:
         return Angle(radians=(self.radians * other))
 
 
-def degrees(degrees):  # pylint: disable=redefined-outer-name
+def degrees(degrees: float):  # pylint: disable=redefined-outer-name
     '''Returns an :class:`vector.util.Angle` instance set to the specified number of degrees.'''
     return Angle(degrees=degrees)
 
 
-def radians(radians):  # pylint: disable=redefined-outer-name
+def radians(radians: float):  # pylint: disable=redefined-outer-name
     '''Returns an :class:`vector.util.Angle` instance set to the specified number of radians.'''
     return Angle(radians=radians)
 
@@ -283,10 +284,9 @@ class Position(Vector3):
 
     A position consists of its x, y and z values in millimeters.
 
-    Args:
-        x (float): X position in millimeters
-        y (float): Y position in millimeters
-        z (float): Z position in millimeters
+    :param x: X position in millimeters
+    :param y: Y position in millimeters
+    :param z: Z position in millimeters
     '''
     __slots__ = ()
 
