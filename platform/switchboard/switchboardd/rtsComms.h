@@ -45,6 +45,7 @@ public:
   // Methods
   void BeginPairing();
   void StopPairing();
+  void ForceDisconnect();
   void SetIsPairing(bool pairing);
   void SetOtaUpdating(bool updating);
   void SendOtaProgress(int32_t status, uint64_t progress, uint64_t expectedTotal);

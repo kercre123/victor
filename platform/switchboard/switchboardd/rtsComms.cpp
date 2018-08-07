@@ -86,6 +86,12 @@ void RtsComms::StopPairing() {
   }
 }
 
+void RtsComms::ForceDisconnect() {
+  if(_rtsHandler) {
+    _rtsHandler->ForceDisconnect();
+  }
+}
+
 void RtsComms::SetIsPairing(bool pairing) { 
   _isPairing = pairing;
 

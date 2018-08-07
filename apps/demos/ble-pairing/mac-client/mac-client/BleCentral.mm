@@ -1025,6 +1025,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _rtsState = Raw;
         break;
       }
+      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsForceDisconnect: {
+        printf("\n==> Received force disconnect message");
+        break;
+      }
       case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsAck: {
         //
         break;

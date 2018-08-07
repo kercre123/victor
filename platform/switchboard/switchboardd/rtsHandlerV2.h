@@ -36,6 +36,7 @@ public:
   void StopPairing() override;
   void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) override;
   void HandleTimeout() override;
+  void ForceDisconnect() override;
 
   // Types
   using StringSignal = Signal::Signal<void (std::string)>;

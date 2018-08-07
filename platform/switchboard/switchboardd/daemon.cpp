@@ -565,6 +565,7 @@ void Daemon::StartPairing() {
   if(_securePairing != nullptr) {
     if(_bleClient != nullptr) {
       _shouldRestartPairing = true;
+      _securePairing->ForceDisconnect();
       _bleClient->Disconnect(_connectionId);
     } else {
       Log::Error("RtsComms was alive while BleClient was null.");

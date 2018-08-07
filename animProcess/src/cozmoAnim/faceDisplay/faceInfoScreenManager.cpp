@@ -930,7 +930,8 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       // screens that are normally active during playpen test
       (currScreenName == ScreenName::None ||
        currScreenName == ScreenName::FAC  ||
-       currScreenName == ScreenName::CustomText)) {
+       currScreenName == ScreenName::CustomText ||
+       currScreenName == ScreenName::Pairing)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 

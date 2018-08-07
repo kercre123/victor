@@ -113,6 +113,10 @@ void RtsHandlerV3::StopPairing() {
   Reset(true);
 }
 
+void RtsHandlerV3::ForceDisconnect() {
+  SendRtsMessage<RtsForceDisconnect>();
+}
+
 void RtsHandlerV3::SubscribeToCladMessages() {
   _rtsConnResponseHandle = _cladHandler->OnReceiveRtsConnResponse().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsConnResponse, this, std::placeholders::_1));
   _rtsChallengeMessageHandle = _cladHandler->OnReceiveRtsChallengeMessage().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsChallengeMessage, this, std::placeholders::_1));
@@ -594,6 +598,8 @@ void RtsHandlerV3::SendChallengeSuccess() {
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
+
+  UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
 
   // Send challenge and update state
   SendRtsMessage<RtsChallengeSuccessMessage>();
