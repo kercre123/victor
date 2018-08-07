@@ -71,6 +71,7 @@ protected:
   // Implemented for float and uint8 types
   template<typename T>
   void LocalizedBinaryOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                   const float scale, const int zero_point,
                                    std::list<Vision::SalientPoint>& salientPoints);
 
   template<typename T>

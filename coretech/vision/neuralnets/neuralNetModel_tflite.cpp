@@ -218,12 +218,16 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
       if(_params.useFloatInput)
       {
         const float* outputData = _interpreter->typed_output_tensor<float>(0);
-        LocalizedBinaryOutputHelper(outputData, t, salientPoints);
+        LocalizedBinaryOutputHelper(outputData, t,  1.f, 0, salientPoints);
       }
       else
       {
         const uint8_t* outputData = _interpreter->typed_output_tensor<uint8_t>(0);
-        LocalizedBinaryOutputHelper(outputData, t, salientPoints);
+        const std::vector<int>& outputs_ = _interpreter->outputs();
+        TfLiteTensor* outputTensor = _interpreter->tensor(outputs_[0]);
+        const float scale = outputTensor->params.scale;
+        const int zero_point = outputTensor->params.zero_point;
+        LocalizedBinaryOutputHelper(outputData, t, scale, zero_point, salientPoints);
       }
       
       break;
