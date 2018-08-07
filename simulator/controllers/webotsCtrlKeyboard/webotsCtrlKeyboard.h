@@ -119,8 +119,6 @@ protected:
   
   void RunDebugConsoleFunc();
   void SetDebugConsoleVar();
-  
-  void StartFreeplayMode();
 
   void SetRollActionParams();
   void SetCameraSettings();

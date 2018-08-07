@@ -1526,13 +1526,6 @@ namespace Vector {
   }
   
   
-  void WebotsKeyboardController::StartFreeplayMode()
-  {
-    using namespace ExternalInterface;
-    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("DevDispatchAfterShake", "1")));
-  }
-  
-  
   void WebotsKeyboardController::SetRollActionParams()
   {
     SendRollActionParams(root_->getField("rollLiftHeight_mm")->getSFFloat(),

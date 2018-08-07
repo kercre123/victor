@@ -41,9 +41,9 @@ s32 CST_ChargerDocking::UpdateSimInternal()
   switch (_testState) {
     case TestState::Init:
     {
-      // Start the charger docking behavior
-      using namespace ExternalInterface;
-      SendMessage(MessageGameToEngine(ExecuteBehaviorByID("FindAndGoToHome", -1)));
+      // Start freeplay mode. The robot's proto in the testWorldChargerDocking.wbt world has the battery level set to a
+      // 'low' level, so the robot should immediately begin trying to dock with the charger.
+      StartFreeplayMode();
       
       SET_TEST_STATE(ShiftChargerSlightly);
       break;
@@ -70,7 +70,7 @@ s32 CST_ChargerDocking::UpdateSimInternal()
     case TestState::TestDone:
     {
       const bool onCharger = IsRobotStatus(RobotStatusFlag::IS_ON_CHARGER);
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(onCharger, 60.f) {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(onCharger, 75.f) {
         StopMovie();
         CST_EXIT();
         break;

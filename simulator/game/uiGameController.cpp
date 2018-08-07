@@ -2001,6 +2001,12 @@ namespace Anki {
       _touchSensorTouchedField->setSFBool(touched);
     }
     
+    void UiGameController::StartFreeplayMode()
+    {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("DevDispatchAfterShake", "1")));
+    }
+    
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
     {      
       SetNodePose(_robotNode, newPose);

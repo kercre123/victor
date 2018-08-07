@@ -46,6 +46,13 @@ MountChargerAction::~MountChargerAction()
   if (HasRobot() && _playDrivingAnimation) {
     GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
   }
+  
+  if (_mountAction != nullptr) {
+    _mountAction->PrepForCompletion();
+  }
+  if (_driveForRetryAction != nullptr) {
+    _driveForRetryAction->PrepForCompletion();
+  }
 }
 
   
