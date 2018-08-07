@@ -7,13 +7,17 @@
 #include "meter.h"
 #include "opto.h"
 #include "portable.h"
+#include "robotcom.h"
 #include "tests.h"
 #include "timer.h"
 
 //force start (via console or button) skips detect
 #define TOF_REQUIRE_FORCE_START 1
 
-static struct { uint16_t reading_mm; uint16_t reading_adj; } flexnfo;
+static uint16_t m_last_read_mm = 0;
+uint16_t TestAuxTofLastRead(void) {
+  return m_last_read_mm;
+}
 
 int detectPrescale=0; bool detectSticky=0;
 bool TestAuxTofDetect(void)
@@ -39,15 +43,20 @@ void TestAuxTofCleanup(void) {
   DUT_I2C::deinit();
   detectPrescale = 0;
   detectSticky = g_isDevicePresent;
-  memset( &flexnfo, 0, sizeof(flexnfo) );
 }
 
 void TOF_init(void) {
+  m_last_read_mm = 0;
   ConsolePrintf("initializing opto driver...\n");
   DUT_I2C::init();
   Opto::start();
   ConsolePrintf("done!\n");
 }
+
+//Playpen: 80mm+/-20mm after -30 window adjustment
+const int tof_window_adjust = 30;
+const int tof_read_min = 80-15; //test to tighter tolerance than playpen
+const int tof_read_max = 80+15;
 
 void TOF_sensorCheck(void)
 {
@@ -61,36 +70,61 @@ void TOF_sensorCheck(void)
     if( i==0 ) ConsolePrintf("\n");
     ConsolePrintf("%i,", value );
   }
-  ConsolePrintf("\navg reading: %imm\n", reading_avg /= num_readings);
+  ConsolePrintf("\n");
   
-  //FlexFlow report (print here to allow data collection on failed sensors)
-  flexnfo.reading_mm = reading_avg;
-  flexnfo.reading_adj = reading_avg > 30 ? reading_avg - 30 : 0;
-  FLEXFLOW::printf("<flex> TOF reading %imm adj %imm </flex>\n", flexnfo.reading_mm, flexnfo.reading_adj );
+  reading_avg /= num_readings;
+  uint16_t reading_adj = reading_avg > tof_window_adjust ? reading_avg - tof_window_adjust : 0;
+  
+  //save result for display
+  m_last_read_mm = reading_adj;
+  
+  //FlexFlow report (print before throwing err to allow data collection on failed sensors)
+  FLEXFLOW::printf("<flex> TOF reading %imm </flex>\n", reading_adj );
   
   //nominal reading expected by playpen 90-130mm raw (80mm +/-20mm after -30 window adjustment)
-  if( reading_avg < 95 || reading_avg > 125 )
+  if( reading_adj < tof_read_min || reading_adj > tof_read_max )
     throw ERROR_SENSOR_TOF;
 }
 
 void TOF_debugInspectRaw(void)
 {
-  uint32_t Tsample = 0;
+  uint32_t Tsample = 0, displayErr=0;
   while( ConsoleReadChar() > -1 );
+  
+  //ignore spurious initial readings
+  for(int i=0; i<5; i++)
+    Opto::read();
   
   //spew raw sensor data
   while(1)
   {
-    if( Timer::elapsedUs(Tsample) > 250*1000 ) {
+    if( Timer::elapsedUs(Tsample) > 250*1000 )
+    {
       Tsample = Timer::get();
+      
       tof_dat_t tof = *Opto::read();
-      uint16_t reading_adj = __REV16(tof.reading)>30 ? __REV16(tof.reading)-30 : 0; //adjustment for window interference
+      uint16_t reading_raw = __REV16(tof.reading);
+      uint16_t reading_adj = reading_raw > tof_window_adjust ? reading_raw - tof_window_adjust : 0;
       ConsolePrintf("TOF: status=%03i mm=%05i mm.adj=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
-        tof.status, __REV16(tof.reading), reading_adj, __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );      
+        tof.status, reading_raw, reading_adj, __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );
+      
+      m_last_read_mm = reading_adj; //save for display
+      
+      //real-time measurements on helper display
+      if( displayErr < 3 ) { //give up if no helper detected
+        char b[30], color = reading_adj < tof_read_min || reading_adj > tof_read_max ? 'r' : 'g';
+        //int status = helperLcdShow(1,0,color, snformat(b,sizeof(b),"%imm [%i]   ", reading_adj, reading_raw) );
+        int status = helperLcdShow(1,0,color, snformat(b,sizeof(b),"%imm", reading_adj) );
+        displayErr = status==0 ? 0 : displayErr+1;
+      }
     }
     
     //break on console input
     if( ConsoleReadChar() > -1 ) break;
+    
+    //break on btn4 press
+    if( Board::btnEdgeDetect(Board::BTN_4, 1000, 50) > 0 )
+      break;
     
     //break on device disconnect
     uint8_t status = DUT_I2C::readReg(0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS);
@@ -99,6 +133,9 @@ void TOF_debugInspectRaw(void)
       break;
     }
   }
+  
+  if( m_last_read_mm < tof_read_min || m_last_read_mm > tof_read_max )
+    throw ERROR_SENSOR_TOF;
 }
 
 TestFunction* TestAuxTofGetTests(void)

@@ -26,12 +26,13 @@ STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= srdatMaxSize , rcom_sensor_buffer_size_che
 #define HELPER_CMD_OPTS_LOGGED  (CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN))
 #define HELPER_CMD_OPTS_NOLOG   (CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL))
 
-void helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text)
+int helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text)
 {
   char b[50]; int bz = sizeof(b);
   if( color_rgbw != 'r' && color_rgbw != 'g' && color_rgbw != 'b' && color_rgbw != 'w' )
     color_rgbw = 'w';
   cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdshow %u %s%c %s", solo, invert?"i":"", color_rgbw, center_text), HELPER_LCD_CMD_TIMEOUT, HELPER_CMD_OPTS_NOLOG);
+  return cmdStatus();
 }
 
 void helperLcdSetLine(int n, const char* line)

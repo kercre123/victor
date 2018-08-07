@@ -80,6 +80,7 @@ void SetFixtureText(bool reinit)
   //current mode
   bool is_fixmode_head = g_fixmode==FIXMODE_HEAD1 || g_fixmode==FIXMODE_HEAD1_OL || g_fixmode==FIXMODE_HEAD2 || g_fixmode==FIXMODE_HELPER1;
   bool is_fixmode_packout = g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL;
+  bool is_fixmode_tof = g_fixmode==FIXMODE_TOF || g_fixmode==FIXMODE_TOF_DEBUG;
   
   //different colors for debug builds
   char color = 'b';
@@ -90,10 +91,13 @@ void SetFixtureText(bool reinit)
   
   //for head programming fixtures, show last written ESN on the display
   //for packout fixtures, show current RTC time on the display
+  //for TOF fixtures, show last sensor reading
   if( is_fixmode_head )
     helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
   else if( is_fixmode_packout )
     helperLcdSetLine(1, fixtureTimeStr(RtcDisplayTime) ); //e.g. "Sun Sep16 01:03 1973"
+  else if( is_fixmode_tof )
+    helperLcdSetLine(1, snformat(b,bz,"last read: %imm", TestAuxTofLastRead()) );
   else if( !inited && !g_isReleaseBuild )
     helperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
   

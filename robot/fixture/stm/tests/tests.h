@@ -73,6 +73,7 @@ TestFunction* TestMotor2GetTests(void);
 TestFunction* TestMotor3GetTests(void);
 
 //Auxilliary
+uint16_t      TestAuxTofLastRead(void); //get last sensor reading [mm]
 bool          TestAuxTofDetect(void);
 void          TestAuxTofCleanup(void);
 TestFunction* TestAuxTofGetTests(void);

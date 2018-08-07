@@ -11,7 +11,7 @@
 
 #define DEFAULT_TEMP_ZONE 3
 
-void  helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text);
+int   helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text); //return cmd status
 void  helperLcdSetLine(int n, const char* line);
 void  helperLcdClear(void);
 char* helperGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
