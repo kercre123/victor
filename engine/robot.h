@@ -735,6 +735,9 @@ protected:
   AccelData        _robotAccelFiltered; // low-pass filtered robot accelerometer data (for each axis)
   float            _robotImuTemperature_degC = 0.f;
 
+  // Whether or not we have sent the engine is fully loaded message
+  bool _sentEngineLoadedMsg = false;
+  
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
   // the public function SetNewPose()

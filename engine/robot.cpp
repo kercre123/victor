@@ -134,9 +134,6 @@ CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
 // Robot singleton
 static Robot* _thisRobot = nullptr;
-
-// Whether or not we have sent the engine is fully loaded message
-bool _sentEngineLoadedMsg = false;
   
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
