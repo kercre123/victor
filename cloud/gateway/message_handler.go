@@ -1140,7 +1140,7 @@ func (m *rpcService) ConnectCube(ctx context.Context, in *extint.ConnectCubeRequ
 	gatewayWrapper := <-result
 	response := gatewayWrapper.GetConnectCubeResponse()
 	response.Status = &extint.ResultStatus{
-		Description: "Response recieved from engine",
+		Description: "Response received from engine",
 	}
 	return response, nil
 }
