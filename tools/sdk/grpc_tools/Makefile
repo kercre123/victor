@@ -14,7 +14,7 @@ PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
 GATEWAY_GO_FILES := $(filter-out $(GIT_ROOT)/cloud/gateway/config_mac.go,$(wildcard $(GIT_ROOT)/cloud/gateway/*.go))
 
 ifneq ("$(ANKI_ROBOT_HOST)","")
-ROBOT_HOSTNAME := $(shell ssh root@$(ANKI_ROBOT_HOST) -t echo "\$$HOSTNAME" 2>/dev/null)
+ROBOT_HOSTNAME := $(shell ssh -o ConnectTimeout=3 root@$(ANKI_ROBOT_HOST) -t echo "\$$HOSTNAME" 2>/dev/null)
 endif
 
 MAC_VECTOR_HOSTNAME := Vector-Local
@@ -37,7 +37,7 @@ gen_py_proto: .PHONY
 	rm $(PYTHON_OUT)/*.proto-e
 
 go: .PHONY
-	if [ ! -d "$(GIT_ROOT)/cloud/go/github.com/grpc-ecosystem/grpc-gateway" ]; then \
+	if [ ! -d "$(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway" ]; then \
 		GOPATH=$(GIT_ROOT)/cloud/go/ go get github.com/grpc-ecosystem/grpc-gateway/...; \
 	fi
 
@@ -85,6 +85,9 @@ flat: .PHONY
 .require_ip: .PHONY
 ifeq ("$(ANKI_ROBOT_HOST)","")
 	$(error Could not find ANKI_ROBOT_HOST environment variable)
+endif
+ifeq ("$(ROBOT_HOSTNAME)","")
+	$(error Failed to find ROBOT_HOSTNAME)
 endif
 
 certs_show: .PHONY
