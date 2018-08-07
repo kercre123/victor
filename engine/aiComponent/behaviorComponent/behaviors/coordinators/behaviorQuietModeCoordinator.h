@@ -18,6 +18,8 @@
 namespace Anki {
 namespace Vector {
 
+class BehaviorTimerUtilityCoordinator;
+
 class BehaviorQuietModeCoordinator : public ICozmoBehavior
 {
 public: 
@@ -58,6 +60,7 @@ private:
     float activeTime_s;
     std::vector<BehaviorInfo> behaviors;
     ICozmoBehaviorPtr wakeWordBehavior;
+    std::shared_ptr<BehaviorTimerUtilityCoordinator> timerBehavior;
   };
 
   struct DynamicVariables {
