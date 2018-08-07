@@ -32,6 +32,11 @@ class IOnboardingStage : private Anki::Util::noncopyable
 public:
   virtual ~IOnboardingStage() = default;
   
+  void Init() {
+    _triggerEnabled = false;
+    _whitelisted = USER_INTENT(INVALID);
+  }
+  
   // Return what behaviors this stage comprises
   virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const = 0;
   

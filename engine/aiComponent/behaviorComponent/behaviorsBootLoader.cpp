@@ -135,19 +135,22 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
       auto* onboardingState = new external_interface::OnboardingState{ CladProtoTypeTranslator::ToProtoEnum(_stage) };
       gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingState) );
     };
-    
     _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingStateRequest,
                                            onRequestOnboardingState) );
+    
+    auto onRestart = [this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
+      RestartOnboarding();
+    };
+    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingRestart,
+                                           onRestart) );
   }
   
   auto resetOnboarding = [ei,robot,this](ConsoleFunctionContextRef context) {
-    Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
-    Util::FileUtils::DeleteFile( _saveFolder );
     if( ei != nullptr ) {
       ei->Broadcast(ExternalInterface::MessageGameToEngine{ExternalInterface::EraseAllEnrolledFaces{}});
-      
       robot->GetCubeCommsComponent().ForgetPreferredCube();
     }
+    RestartOnboarding();
   };
   _consoleFuncs.emplace_front( "ResetOnboarding", std::move(resetOnboarding), "Onboarding", "" );
 }
@@ -160,6 +163,26 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
     if( bsm != nullptr ) {
       bsm->ResetBehaviorStack( _behaviorToSwitchTo );
       _behaviorToSwitchTo = nullptr;
+    }
+    
+    if( _countUntilResetOnboarding > 0 ) {
+      // onboarding was just stopped because we plan to reset it. Set the stage
+      _stage = OnboardingStages::NotStarted;
+      // explicitly pass the stage so we don't have to worry about when messages are received
+      std::shared_ptr<BehaviorOnboarding> castPtr;
+      _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding), castPtr);
+      if( castPtr != nullptr ) {
+        castPtr->SetOnboardingStage(_stage);
+      }
+    }
+  }
+  
+  if( (_countUntilResetOnboarding > 0) && (_behaviorToSwitchTo == nullptr) ) {
+    // waiting to restart onboarding
+    --_countUntilResetOnboarding;
+    if( _countUntilResetOnboarding == 0 ) {
+      // flag to start onboarding
+      SetNewBehavior( _behaviors.onboardingBehavior );
     }
   }
 }
@@ -246,6 +269,17 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID)
       _bootBehavior = behavior;
     }
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorsBootLoader::RestartOnboarding()
+{
+  Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
+  
+  // hacky way of de-activating the current onboarding and then re-activating it. Flag to start the Wait behavior,
+  // when it starts change the stage within BehaviorOnboarding, pause a few ticks, then flag to start onboarding again.
+  SetNewBehavior( BEHAVIOR_ID(Wait) );
+  _countUntilResetOnboarding = 20;
 }
 
 }

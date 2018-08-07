@@ -101,6 +101,7 @@ public:
     _activationAttemptCount = 0;
     _pickUpAttemptCount = 0;
     _timeStartedSearching_ms = 0;
+    _objectID.UnSet();
   }
   
   virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override

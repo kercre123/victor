@@ -474,6 +474,9 @@ message OnboardingConnectionComplete {
 message OnboardingSkipOnboarding {
 }
 
+message OnboardingRestart {
+}
+
 message OnboardingInputRequest {
   oneof oneof_message_type {
     OnboardingContinue onboarding_continue = 1;
@@ -481,6 +484,7 @@ message OnboardingInputRequest {
     OnboardingRetryCharging onboarding_retry_charging = 3;
     OnboardingConnectionComplete onboarding_connection_complete = 4;
     OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
+    OnboardingRestart onboarding_restart = 6;
   }
 }
 

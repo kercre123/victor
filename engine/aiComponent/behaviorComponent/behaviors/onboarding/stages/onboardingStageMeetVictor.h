@@ -58,6 +58,9 @@ public:
     _enrollmentSuccessful = false;
     _step = Step::LookingAround;
     _receivedStartMsg = false;
+    _enrollmentName.clear();
+    _enrollmentEnded = false;
+    _receivedEnrollmentResult = false;
     
     // initial behavior
     _selectedBehavior = _behaviors[Step::LookingAround];

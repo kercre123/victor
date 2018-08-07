@@ -334,7 +334,7 @@ void BehaviorOnboarding::OnBehaviorActivated()
 
 void BehaviorOnboarding::OnBehaviorDeactivated()
 {
-  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorDeactivated.OnboardingStatus", "Onboarding complete");
+  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorDeactivated.OnboardingStatus", "Onboarding complete (deactivated)");
   SetTriggerWordEnabled( true );
   SetAllowAnyIntent();
 }
@@ -547,12 +547,15 @@ void BehaviorOnboarding::InitStages(bool resetExisting)
   // init stages
   if( resetExisting || !_iConfig.stages[OnboardingStages::NotStarted] ) {
     _iConfig.stages[OnboardingStages::NotStarted].reset( new OnboardingStageWakeUpComeHere{} );
+    _iConfig.stages[OnboardingStages::NotStarted]->Init();
   }
   if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedComeHere] ) {
     _iConfig.stages[OnboardingStages::FinishedComeHere].reset( new OnboardingStageMeetVictor{} );
+    _iConfig.stages[OnboardingStages::FinishedComeHere]->Init();
   }
   if( resetExisting || !_iConfig.stages[OnboardingStages::FinishedMeetVictor] ) {
     _iConfig.stages[OnboardingStages::FinishedMeetVictor].reset( new OnboardingStageCube{} );
+    _iConfig.stages[OnboardingStages::FinishedMeetVictor]->Init();
   }
   if( resetExisting || !_iConfig.stages[OnboardingStages::Complete] ) {
     // this stage only runs if app onboarding directly follows robot onboarding, since BehaviorOnboarding
@@ -560,6 +563,7 @@ void BehaviorOnboarding::InitStages(bool resetExisting)
     // while you peruse the app, and is not necessary if you restart app onboarding after having used
     // the robot for a while
     _iConfig.stages[OnboardingStages::Complete].reset( new OnboardingStageApp{} );
+    _iConfig.stages[OnboardingStages::Complete]->Init();
   }
 }
   

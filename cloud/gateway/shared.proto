@@ -55,6 +55,7 @@ message GatewayWrapper {
     OnboardingSkip                onboarding_skip = 6;
     OnboardingConnectionComplete  onboarding_connection_complete = 7;
     OnboardingSkipOnboarding      onboarding_skip_onboarding = 8;
+    OnboardingRestart             onboarding_restart = 9;
 
     // ------------ test request/response pairs --------------------------
     // TODO: remove these once we have more examples

@@ -454,6 +454,21 @@ func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboar
 	}, nil
 }
 
+func SendOnboardingRestart(in *extint.GatewayWrapper_OnboardingRestart) (*extint.OnboardingInputResponse, error) {
+	log.Println("Received rpc request OnboardingRestart(", in, ")")
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResultStatus{
+			Description: "Message sent to engine",
+		},
+	}, nil
+}
+
 // The service definition.
 // This must implement all the rpc functions defined in the external_interface proto file.
 type rpcService struct{}
@@ -934,6 +949,10 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	case *extint.OnboardingInputRequest_OnboardingSkipOnboarding:
 		return SendOnboardingSkipOnboarding(&extint.GatewayWrapper_OnboardingSkipOnboarding{
 			OnboardingSkipOnboarding: in.GetOnboardingSkipOnboarding(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingRestart:
+		return SendOnboardingRestart(&extint.GatewayWrapper_OnboardingRestart{
+			OnboardingRestart: in.GetOnboardingRestart(),
 		})
 	default:
 		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
