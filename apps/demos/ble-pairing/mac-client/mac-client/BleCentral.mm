@@ -165,7 +165,7 @@ void CancelCommand(int s) {
 - (std::string)hexStr:(char*)data length:(int)len {
   std::stringstream ss;
   for(int i(0);i<len;++i)
-    ss << std::setfill('0') << std::setw(2) << std::hex << (int)data[i];
+    ss << std::setfill('0') << std::setw(2) << std::hex << (int)(unsigned char)data[i];
   return ss.str();
 }
 
