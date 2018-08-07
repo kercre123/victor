@@ -827,7 +827,7 @@ void ICozmoBehavior::OnActivatedInternal()
     GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(*_behaviorStatToIncrement);
   }
 
-  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
+  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActivated);
 
   {
     using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;

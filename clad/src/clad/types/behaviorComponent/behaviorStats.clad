@@ -19,7 +19,7 @@ enum uint_32 BehaviorStat {
   AnimationPlayed,
   AttemptedFistBump,
   AttemptedPounceOnCube,
-  BehaviorActived,
+  BehaviorActivated,
   BlackjackDealerWon,
   BlackjackGameComplete,
   EnrolledFace,
