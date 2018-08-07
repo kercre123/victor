@@ -8,6 +8,10 @@
           "value" : 0.2
         },
         {
+          "emotionType" : "Happy",
+          "value" : 0.15
+        },
+        {
           "emotionType" : "Stimulated",
           "value" : 0.1
         }
@@ -37,6 +41,10 @@
           "value" : 0.8
         },
         {
+          "emotionType" : "Happy",
+          "value" : 0.5
+        },
+        {
           "emotionType" : "Stimulated",
           "value" : 0.4
         }
@@ -48,6 +56,10 @@
         {
           "emotionType" : "Social",
           "value" : 0.6
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.35
         },
         {
           "emotionType" : "Stimulated",
@@ -81,6 +93,10 @@
         },
         {
           "emotionType" : "Stimulated",
+          "value" : 0.5
+        },
+        {
+          "emotionType" : "Happy",
           "value" : 0.5
         }
       ]
