@@ -1212,7 +1212,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {
   char temp[32] = "";
   sprintf(temp,
-          "CLIFF: %4u %4u %4u %4u",
+          "CLF: %4u %4u %4u %4u",
           state.cliffDataRaw[0],
           state.cliffDataRaw[1],
           state.cliffDataRaw[2],
