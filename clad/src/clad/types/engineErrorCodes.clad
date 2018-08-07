@@ -3,7 +3,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Error codes from things in engine going wrong that game should know about
 // Each error code should have a cause, and solution if one exists
@@ -44,5 +44,5 @@ enum uint_8 EngineErrorCode
   Count
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

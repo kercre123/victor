@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   inline u32 AlphaBlend(const u32 onColor, const u32 offColor, const float alpha)
   {
     const float onRed  = GET_RED(onColor);
@@ -89,4 +89,4 @@ namespace Cozmo {
   } // GetCurrentLEDcolor()
 
 } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector

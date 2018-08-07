@@ -29,7 +29,7 @@
 #include <csignal>
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 #define LOG_CHANNEL "VictorWebServer"
 

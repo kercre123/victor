@@ -17,7 +17,7 @@
 #include "coretech/common/engine/array2d_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if defined(ANDROID) || defined(VICOS)
   

@@ -54,7 +54,7 @@
 static constexpr f32 kWhiteBalanceScale = 0.6f;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 bool CubeLightAnimation::ObjectLights::operator==(const CubeLightAnimation::ObjectLights& other) const
@@ -103,7 +103,7 @@ CubeLightComponent::CubeLightComponent()
 }
 
 
-void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void CubeLightComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _cubeLightAnimations = std::make_unique<CubeLightAnimationContainer>(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations());
@@ -1438,7 +1438,7 @@ void CubeLightComponent::HandleAppRequest(const AppToEngineEvent& event)
           .transitionOffPeriod_ms = transitionOffPeriodMs,
           .offset                 = offset,
           .rotate                 = request.rotate(),
-          .makeRelative           = (Anki::Cozmo::MakeRelativeMode)((int)request.make_relative()-1),
+          .makeRelative           = (Anki::Vector::MakeRelativeMode)((int)request.make_relative()-1),
           .relativePoint          = {request.relative_to_x(),request.relative_to_y()}
         };
 

@@ -25,7 +25,7 @@
 #define LOG_CHANNEL "SettingsCommManager"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 namespace
@@ -351,5 +351,5 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

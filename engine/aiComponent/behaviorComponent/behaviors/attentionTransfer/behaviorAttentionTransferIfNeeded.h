@@ -24,7 +24,7 @@
 #include "clad/types/behaviorComponent/attentionTransferTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorAttentionTransferIfNeeded : public ICozmoBehavior
 {
@@ -65,7 +65,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorAttentionTransferIfNeeded__

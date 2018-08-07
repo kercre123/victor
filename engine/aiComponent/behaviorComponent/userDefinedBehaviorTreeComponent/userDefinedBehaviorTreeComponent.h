@@ -28,7 +28,7 @@
 #define __Cozmo_Basestation_UserDefinedBehaviorTreeComponent_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorContainer;
 class BehaviorExternalInterface;
@@ -42,7 +42,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents) override final;
+  virtual void InitDependent(Vector::Robot* robot, const BCCompMap& dependentComponents) override final;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {
     dependencies.insert(BCComponentID::BehaviorContainer);
     dependencies.insert(BCComponentID::BehaviorExternalInterface);

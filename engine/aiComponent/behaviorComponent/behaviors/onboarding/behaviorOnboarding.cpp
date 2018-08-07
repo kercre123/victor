@@ -38,7 +38,7 @@
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 const std::string BehaviorOnboarding::kOnboardingFolder   = "onboarding";
 const std::string BehaviorOnboarding::kOnboardingFilename = "onboardingState.json";

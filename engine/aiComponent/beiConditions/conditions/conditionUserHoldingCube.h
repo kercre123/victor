@@ -16,7 +16,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionUserHoldingCube : public IBEICondition
 {
@@ -30,7 +30,7 @@ protected:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

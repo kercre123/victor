@@ -18,7 +18,7 @@
 #include <chrono>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CozmoAudienceTags::CozmoAudienceTags(const CozmoContext* context)
 {

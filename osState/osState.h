@@ -33,7 +33,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class DesiredCPUFrequency : uint32_t {
   Automatic = 0,
@@ -195,7 +195,7 @@ private:
   
 }; // class OSState
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Victor_OSState_H__ */

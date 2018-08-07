@@ -50,7 +50,7 @@
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace RobotInterface {
 
 #if ANKI_DEBUG_INFO

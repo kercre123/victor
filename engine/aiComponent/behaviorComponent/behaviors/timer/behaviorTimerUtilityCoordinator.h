@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class BehaviorAdvanceClock;
@@ -114,7 +114,7 @@ private:
   void CheckShouldShowTimeRemaining();
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

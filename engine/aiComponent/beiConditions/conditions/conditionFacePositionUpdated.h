@@ -21,7 +21,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BEIConditionMessageHelper;
 
@@ -69,7 +69,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionFacePositionUpdated_H__

@@ -14,7 +14,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class TestState {
   Init,
@@ -183,6 +183,6 @@ void CST_CliffDetection::HandleSetCliffDetectThresholds(const SetCliffDetectThre
 }
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

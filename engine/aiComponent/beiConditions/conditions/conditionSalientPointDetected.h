@@ -20,7 +20,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionSalientPointDetected : public IBEICondition
 {
@@ -38,7 +38,7 @@ protected:
 };
 
 } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector
 
 
 #endif //__Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPersonDetected_H__

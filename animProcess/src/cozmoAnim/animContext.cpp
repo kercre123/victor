@@ -19,7 +19,7 @@
 #define LOG_CHANNEL "AnimContext"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ThreadIDInternal : private Util::noncopyable
 {
@@ -103,5 +103,5 @@ void AnimContext::SetLocale(const std::string & locale)
     _micDataSystem->UpdateLocale(*_locale);
   }
 }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

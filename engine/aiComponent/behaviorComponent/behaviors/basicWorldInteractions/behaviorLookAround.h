@@ -22,7 +22,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 template<typename TYPE> class AnkiEvent;
@@ -129,7 +129,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__

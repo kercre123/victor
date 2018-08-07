@@ -26,7 +26,7 @@
 #include <errno.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
 HeadToBody headData_;  //-we own this one.
@@ -247,7 +247,7 @@ Result HAL::Init(const int * shutdownSignal)
   using Result = Anki::Result;
 
   // Set ID
-  robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
+  robotID_ = Anki::Vector::DEFAULT_ROBOT_ID;
 
   InitIMU();
 
@@ -660,7 +660,7 @@ HAL::PowerState HAL::PowerGetMode()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 
@@ -671,7 +671,7 @@ extern "C" {
   }
 
   void hal_terminate(void) {
-    Anki::Cozmo::HAL::Shutdown();
+    Anki::Vector::HAL::Shutdown();
   }
 
 }

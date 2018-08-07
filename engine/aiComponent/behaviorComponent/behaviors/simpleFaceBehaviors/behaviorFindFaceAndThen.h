@@ -20,7 +20,7 @@
 #include "engine/smartFaceId.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorSearchWithinBoundingBox;
 class ISimpleFaceBehavior;
@@ -149,7 +149,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

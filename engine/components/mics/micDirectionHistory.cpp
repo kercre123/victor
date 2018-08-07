@@ -29,7 +29,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR_RANGED( uint32_t,       kRTS_PowerAvgNumSamples,   "SoundReaction", 100, 1, 250 );
 CONSOLE_VAR_RANGED( double,         kRTS_WebVizUpdateInterval, "SoundReaction", 0.20, 0.0, 1.0 );
@@ -510,5 +510,5 @@ void MicDirectionHistory::SendMicDataToWebserver()
   #endif
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

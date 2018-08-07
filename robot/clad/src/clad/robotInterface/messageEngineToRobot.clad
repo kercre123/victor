@@ -24,7 +24,7 @@
 #include "clad/types/switchboardToRobot.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace RobotInterface {
 
@@ -770,5 +770,5 @@ union EngineToRobot
 
 
 } // namespace RobotInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

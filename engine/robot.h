@@ -68,7 +68,7 @@ class DataPlatform;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations:
 class AppCubeConnectionSubscriber;
@@ -839,7 +839,7 @@ inline bool Robot::IsLocalized() const {
   return _isLocalized;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_ROBOT_H

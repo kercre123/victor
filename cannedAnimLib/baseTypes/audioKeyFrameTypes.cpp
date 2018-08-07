@@ -22,7 +22,7 @@
 #define INVALID_EVENT_IDX std::numeric_limits<size_t>::max()
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace AudioKeyFrameType {
 
 AudioEventGroupRef& AudioEventGroupRef::operator=( const AudioEventGroupRef& other )
@@ -205,6 +205,6 @@ bool AudioRef::operator==( const AudioRef& other ) const
 
 
 } // namespace AudioKeyFrameType
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

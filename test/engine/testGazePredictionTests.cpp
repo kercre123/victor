@@ -21,7 +21,7 @@
 
 #include <fstream>
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 using namespace Anki::Vision;
 using namespace Anki;

@@ -28,7 +28,7 @@
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 namespace {
 
@@ -37,7 +37,7 @@ const int kRobotId = 0;
 // removes all test information from storage before tests
 void RemoveTestDataPrior()
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
 
@@ -49,7 +49,7 @@ void RemoveTestDataPrior()
 // removes all test information from storage before tests
 void RemoveTestDataAfter()
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   // cache the name of our save directory
   auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
@@ -62,7 +62,7 @@ void RemoveTestDataAfter()
 // normal case of adding a mapping, checking for false overwrite, looking it up to get checked pointer
 TEST(UserDefinedBehaviorTreeComponent, BasicUseCase)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
   RemoveTestDataPrior();
 
   auto testBEICondType = BEIConditionType::CliffDetected;
@@ -86,7 +86,7 @@ TEST(UserDefinedBehaviorTreeComponent, BasicUseCase)
 // overwrite a mapping, check for true, look it up with pointer
 TEST(UserDefinedBehaviorTreeComponent, OverwriteUseCase)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
   RemoveTestDataPrior();
 
   auto testBEICondType = BEIConditionType::CliffDetected;
@@ -123,7 +123,7 @@ TEST(UserDefinedBehaviorTreeComponent, BehaviorNotYetUserDefined)
 // check that data persists properly (encoder/decoder)
 TEST(UserDefinedBehaviorTreeComponent, PersistenceCheck)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
   RemoveTestDataPrior();
 
   auto testBEICondType = BEIConditionType::CliffDetected;

@@ -62,7 +62,7 @@
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
 
@@ -1663,5 +1663,5 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetBLEPin& msg
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

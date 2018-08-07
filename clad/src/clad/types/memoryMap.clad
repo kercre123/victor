@@ -3,7 +3,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 structure MemoryMapInfo
@@ -40,5 +40,5 @@ structure MemoryMapQuadInfo
 
 
 } // namespace ExternalInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

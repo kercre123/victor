@@ -48,7 +48,7 @@ const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 namespace Anki {
 
-  namespace Cozmo {
+  namespace Vector {
 
     namespace DockingController {
 
@@ -117,7 +117,7 @@ namespace Anki {
       void SetCameraFieldOfView(f32 horizontalFOV, f32 verticalFOV);
 
     } // namespace DockingController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_DOCKING_CONTROLLER_H_

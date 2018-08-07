@@ -6,7 +6,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 const char* EnumToString(const AnimationTrigger m)
 {
@@ -694,7 +694,7 @@ const uint8_t AnimationTriggerVersionHash[16] = {
     0x57, 0xe5, 0x9c, 0x85, 0xe7, 0xbd, 0x30, 0x91, 0x5d, 0x60, 0x3c, 0x6a, 0x47, 0xf8, 0x3b, 0x1e 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 

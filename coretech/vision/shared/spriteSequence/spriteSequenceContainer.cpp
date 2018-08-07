@@ -75,5 +75,5 @@ const Vision::SpriteSequence* const SpriteSequenceContainer::GetSequenceAgnostic
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

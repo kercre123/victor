@@ -29,7 +29,7 @@
                         } while(0);
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   const bool kFaceUp = true;
@@ -455,5 +455,5 @@ IBehavior* BehaviorBlackJack::SetUpSpeakingBehavior(const std::string& vocalizat
   return _iConfig.ttsBehavior.get();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

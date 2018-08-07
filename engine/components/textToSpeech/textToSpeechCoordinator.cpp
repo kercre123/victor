@@ -40,7 +40,7 @@ static uint8_t GetNextID()
 }
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 namespace {
   // The coordinator will wait kPlayTimeoutScalar times the expected duration before erroring out on a TTS utterance
@@ -57,7 +57,7 @@ TextToSpeechCoordinator::TextToSpeechCoordinator()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechCoordinator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void TextToSpeechCoordinator::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Keep a pointer to robot for message sending
   _robot = robot;
@@ -376,7 +376,7 @@ void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID,
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

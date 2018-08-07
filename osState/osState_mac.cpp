@@ -42,7 +42,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState", 0, "Off,10ms,100ms,1000ms,10000ms");
 
@@ -415,5 +415,5 @@ void OSState::SetOnChargeContacts(const bool onChargeContacts) const
   // Do nothing
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

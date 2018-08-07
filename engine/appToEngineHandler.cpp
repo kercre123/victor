@@ -26,7 +26,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   using Tag = ExternalInterface::MessageEngineToGameTag;
@@ -387,5 +387,5 @@ void AppToEngineHandler::HandleEngineToGameMessage( const AnkiEvent<ExternalInte
   ++_pendingCount;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

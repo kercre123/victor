@@ -22,7 +22,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CozmoExperiments::CozmoExperiments(const CozmoContext* context)
 : _context(context)

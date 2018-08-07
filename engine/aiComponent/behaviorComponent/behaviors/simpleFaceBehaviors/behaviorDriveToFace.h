@@ -17,7 +17,7 @@
 #include "engine/smartFaceId.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorFindFaceAndThen;
 struct PathMotionProfile;
@@ -112,7 +112,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

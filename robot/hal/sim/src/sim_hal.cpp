@@ -76,7 +76,7 @@ static const bool kSimulateGyroBias = false;
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     namespace { // "Private members"
 
@@ -686,7 +686,7 @@ namespace Anki {
     Result HAL::Step(void)
     {
 
-      if(webotRobot_.step(Cozmo::ROBOT_TIME_STEP_MS) == -1) {
+      if(webotRobot_.step(Vector::ROBOT_TIME_STEP_MS) == -1) {
         return RESULT_FAIL;
       } else {
         MotorUpdate();
@@ -958,5 +958,5 @@ namespace Anki {
       return powerState_;
     }
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

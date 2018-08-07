@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(bool , kRenderSeeds        , "QuadTreeProcessor", false); // renders seeds differently for debugging purposes
 CONSOLE_VAR(bool , kRenderBordersFrom  , "QuadTreeProcessor", false); // renders detected borders (origin quad)
@@ -1061,5 +1061,5 @@ QuadTreeProcessor::BorderCombination& QuadTreeProcessor::RefreshBorderCombinatio
   return borderCombination;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

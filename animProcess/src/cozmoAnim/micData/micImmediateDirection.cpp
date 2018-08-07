@@ -14,7 +14,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 MicImmediateDirection::MicImmediateDirection()
@@ -79,5 +79,5 @@ MicDirectionData MicImmediateDirection::GetLatestSample() const
 }
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

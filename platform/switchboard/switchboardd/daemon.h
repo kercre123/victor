@@ -86,7 +86,7 @@ namespace Switchboard {
       void OnOtaUpdatedRequest(std::string url);
       void OnEndPairing();
       void OnCompletedPairing();
-      void OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message);
+      void OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGame message);
       bool TryConnectToEngineServer();
       bool TryConnectToAnkiBluetoothDaemon();
       void HandleOtaUpdateExit(int rc);

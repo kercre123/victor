@@ -22,7 +22,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class BEIConditionType : uint8_t;
 
@@ -73,7 +73,7 @@ private:
   std::string _conditionName;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_BEIConditionFactory_H__

@@ -10,14 +10,14 @@
 extern "C" {
   bool emr_is_locked(void) {
     const uint8_t index_PACKED_OUT_FLAG = 6;
-    const Anki::Cozmo::Factory::EMR* emr;
-    emr = Anki::Cozmo::Factory::GetEMR();
+    const Anki::Vector::Factory::EMR* emr;
+    emr = Anki::Vector::Factory::GetEMR();
     return !emr || emr->data[index_PACKED_OUT_FLAG] > 0;
   }
   
   int emr_set(uint8_t index, uint32_t value) {
-    const Anki::Cozmo::Factory::EMR* emr;
-    emr = Anki::Cozmo::Factory::GetEMR();
+    const Anki::Vector::Factory::EMR* emr;
+    emr = Anki::Vector::Factory::GetEMR();
     if (emr) {
       if( emr_is_locked() )
         return 4; //ERR_LOCKED
@@ -29,8 +29,8 @@ extern "C" {
   }
 
   int emr_get(uint8_t index, uint32_t* value) {
-    const Anki::Cozmo::Factory::EMR* emr;
-    emr = Anki::Cozmo::Factory::GetEMR();
+    const Anki::Vector::Factory::EMR* emr;
+    emr = Anki::Vector::Factory::GetEMR();
     if (emr) {
       *value = emr->data[index];
       return 0;

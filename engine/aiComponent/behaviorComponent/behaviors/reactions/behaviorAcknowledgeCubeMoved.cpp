@@ -21,7 +21,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 namespace{
@@ -175,5 +175,5 @@ void BehaviorAcknowledgeCubeMoved::HandleObservedObject(const ExternalInterface:
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

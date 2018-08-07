@@ -18,7 +18,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using namespace ExternalInterface;
   
@@ -234,5 +234,5 @@ u8 BehaviorAnimSequence::GetTracksToLock() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

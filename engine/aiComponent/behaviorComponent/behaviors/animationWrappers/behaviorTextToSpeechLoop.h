@@ -19,7 +19,7 @@
 #include <functional>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Fwd Declarations
 enum class UtteranceState;
@@ -112,7 +112,7 @@ private:
   void OnUtteranceUpdated(const UtteranceState& state);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTextToSpeechLoop__

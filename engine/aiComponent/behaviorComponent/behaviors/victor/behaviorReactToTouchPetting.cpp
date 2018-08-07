@@ -36,7 +36,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // convenience namespace aliases
 using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;

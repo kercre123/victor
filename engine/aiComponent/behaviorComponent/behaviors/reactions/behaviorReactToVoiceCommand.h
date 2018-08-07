@@ -21,7 +21,7 @@
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorReactToMicDirection;
 enum class AnimationTrigger : int32_t;
@@ -192,7 +192,7 @@ private:
 
 }; // class BehaviorReactToVoiceCommand
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__

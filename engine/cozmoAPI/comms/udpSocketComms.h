@@ -26,7 +26,7 @@ namespace Comms{
 
   
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   
 class MultiClientComms;
@@ -71,7 +71,7 @@ private:
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

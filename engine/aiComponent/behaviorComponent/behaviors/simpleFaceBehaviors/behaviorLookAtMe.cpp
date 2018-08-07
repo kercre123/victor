@@ -18,7 +18,7 @@
 #include "engine/faceWorld.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* const kPanToleranceKey = "panTolerance_deg";

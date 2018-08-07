@@ -99,7 +99,7 @@ namespace {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
@@ -885,5 +885,5 @@ void CozmoEngine::SetEngineThread()
   _context->SetEngineThread();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

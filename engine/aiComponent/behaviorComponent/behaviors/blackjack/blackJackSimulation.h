@@ -24,7 +24,7 @@ namespace Util{
 }
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 const int kInvalidCardID = -1;
 const int kAceRank       = 0;
@@ -129,7 +129,7 @@ private:
   static std::unique_ptr<std::vector<int>> _stackedDeck;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //__Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackSimumation__

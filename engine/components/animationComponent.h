@@ -37,7 +37,7 @@ class CompositeImage;
 class RGB565ImageBuilder;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class Animation;
@@ -73,7 +73,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::DataAccessor);
@@ -366,7 +366,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif

@@ -20,7 +20,7 @@
 #include "clad/types/cubeAnimationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDevViewCubeBackpackLights : public ICozmoBehavior
 {
@@ -63,7 +63,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevViewCubeBackpackLights__

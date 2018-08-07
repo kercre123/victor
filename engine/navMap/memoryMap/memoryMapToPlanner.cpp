@@ -26,7 +26,7 @@
 #include <algorithm>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

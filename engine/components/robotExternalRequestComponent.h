@@ -19,7 +19,7 @@
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 template<typename T> class AnkiEvent;

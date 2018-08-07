@@ -29,7 +29,7 @@ $includes
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
 {
@@ -86,7 +86,7 @@ def write_behavior_factory_cpp(filename, behaviors, path_to_behavior_code):
 behavior_class_clad_prefix = '''\
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // BehaviorClass identifies the ICozmoBehavior child class which the behavior is
 // an instance of. The names of the BehaviorClass, the code file, and the actual C++ class
@@ -128,7 +128,7 @@ def write_behavior_class_clad(filename, behaviors):
 behavior_id_clad_prefix = '''\
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // BehaviorID is a unique identifier for each instance of a behavior
 // so that they can be referenced by other parts of the behavior system

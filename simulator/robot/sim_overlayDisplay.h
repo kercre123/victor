@@ -4,7 +4,7 @@
 #include "coretech/common/shared/types.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Sim {
       namespace OverlayDisplay {
         
@@ -25,7 +25,7 @@ namespace Anki {
         
       } //OverlayDisplay
     } // namespace Sim
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_SIM_OVERLAY_DISPLAY_H

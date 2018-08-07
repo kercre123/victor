@@ -24,7 +24,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicComponent::MicComponent() :
@@ -51,7 +51,7 @@ void MicComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::InitDependent( Cozmo::Robot* robot, const RobotCompMap& dependentComps )
+void MicComponent::InitDependent( Vector::Robot* robot, const RobotCompMap& dependentComps )
 {
   _micHistory->Initialize( robot->GetContext() );
   _messageSystem->Initialize( robot );
@@ -138,5 +138,5 @@ void MicComponent::SetBufferFullness(float val)
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

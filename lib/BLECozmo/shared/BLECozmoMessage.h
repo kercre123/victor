@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BLECozmoMessage {
 public:
@@ -58,7 +58,7 @@ private:
   bool _isEncrypted = false;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

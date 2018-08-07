@@ -28,7 +28,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class TestState {
   Init,
@@ -568,6 +568,6 @@ void CST_CustomObjects::HandleRobotDeletedCustomMarkerObjects(const ExternalInte
 
 // ================ End of message handler callbacks ==================
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

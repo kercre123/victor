@@ -29,7 +29,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class AIComponent;
@@ -113,7 +113,7 @@ private:
   ComponentPtr _comps;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

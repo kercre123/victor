@@ -19,7 +19,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionDebugFactors.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionRobotInHabitat : public IBEICondition
 {

@@ -29,7 +29,7 @@ static const size_t kMaxUploadSize = 10 * 1024 * 1024;
 
 void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
 {
-  Cozmo::DevLoggingSystem* devLoggingSystem = Cozmo::DevLoggingSystem::GetInstance();
+  Vector::DevLoggingSystem* devLoggingSystem = Vector::DevLoggingSystem::GetInstance();
   if (devLoggingSystem == nullptr) {
     return;
   }
@@ -63,16 +63,16 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
       request.headers.emplace("Anki-App-Key", "toh5awu3kee1ahfaikeeGh");
       
       // get apprun data
-      Json::Value appRunData = Cozmo::DevLoggingSystem::GetAppRunData(Cozmo::DevLoggingSystem::GetAppRunFilename(filename));
+      Json::Value appRunData = Vector::DevLoggingSystem::GetAppRunData(Vector::DevLoggingSystem::GetAppRunFilename(filename));
       if (!appRunData.empty()) {
         std::string fileAppRun;
-        if (JsonTools::GetValueOptional(appRunData, Cozmo::DevLoggingSystem::kAppRunKey, fileAppRun))
+        if (JsonTools::GetValueOptional(appRunData, Vector::DevLoggingSystem::kAppRunKey, fileAppRun))
         {
           request.headers.emplace("Usr-apprun", std::move(fileAppRun));
         }
         
         // This gets a little complicated in the interest of supporting uint64 on platforms that can:
-        const Json::Value& child(appRunData[Cozmo::DevLoggingSystem::kTimeSinceEpochKey]);
+        const Json::Value& child(appRunData[Vector::DevLoggingSystem::kTimeSinceEpochKey]);
         if(!child.isNull())
         {
           const auto appStartTimeSinceEpoch_ms = child.asLargestUInt();
@@ -80,7 +80,7 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
         }
         
         std::string fileDeviceID;
-        if (JsonTools::GetValueOptional(appRunData, Cozmo::DevLoggingSystem::kDeviceIdKey, fileDeviceID))
+        if (JsonTools::GetValueOptional(appRunData, Vector::DevLoggingSystem::kDeviceIdKey, fileDeviceID))
         {
           request.headers.emplace("Usr-Deviceid", fileDeviceID);
         }
@@ -97,9 +97,9 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
                                      const std::map<std::string, std::string>&,
                                      const std::vector<uint8_t>&) {
       if (isHttpSuccessCode(responseCode)) {
-        std::string appRunFilename = Cozmo::DevLoggingSystem::GetAppRunFilename(filename);
-        Json::Value appRunData = Cozmo::DevLoggingSystem::GetAppRunData(appRunFilename);
-        appRunData[Cozmo::DevLoggingSystem::kHasBeenUploadedKey] = true;
+        std::string appRunFilename = Vector::DevLoggingSystem::GetAppRunFilename(filename);
+        Json::Value appRunData = Vector::DevLoggingSystem::GetAppRunData(appRunFilename);
+        appRunData[Vector::DevLoggingSystem::kHasBeenUploadedKey] = true;
         Util::FileUtils::WriteFile(appRunFilename, appRunData.toStyledString());
 
         auto it = innerRequest.headers.find("Usr-apprun");

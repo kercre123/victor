@@ -19,7 +19,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 namespace ExternalInterface {
@@ -172,7 +172,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

@@ -44,7 +44,7 @@
 #define CONSOLE_GROUP "Behavior.InteractWithFaces"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -441,5 +441,5 @@ void BehaviorInteractWithFaces::SelectFaceToTrack() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

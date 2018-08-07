@@ -45,7 +45,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 
@@ -326,7 +326,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // ANKI_PLATFORM_OSX

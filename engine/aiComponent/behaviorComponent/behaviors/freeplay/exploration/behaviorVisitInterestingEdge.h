@@ -21,7 +21,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IActionRunner;
   
@@ -251,7 +251,7 @@ void BehaviorVisitInterestingEdge::CacheForWantsToBeActivated::Set(VantagePointV
 }
  
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

@@ -16,7 +16,7 @@
 #define __Test_Helpers_Messaging_StubRobotMessageHandler_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class StubMessageHandler : public RobotInterface::MessageHandler
 {

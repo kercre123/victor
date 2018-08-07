@@ -33,7 +33,7 @@ namespace{
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -346,5 +346,5 @@ void BlackJackGame::ScoreDealerHand()
                    _dealerScore);
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

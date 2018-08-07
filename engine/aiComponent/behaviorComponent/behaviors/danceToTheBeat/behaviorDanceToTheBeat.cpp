@@ -32,7 +32,7 @@
 #include "util/time/universalTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   
@@ -163,7 +163,7 @@ void BehaviorDanceToTheBeat::GetBehaviorJsonKeys(std::set<const char*>& expected
 bool BehaviorDanceToTheBeat::WantsToBeActivatedBehavior() const
 {
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::Dancing);
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::Dancing);
   if(!featureEnabled)
   {
     return false;

@@ -39,7 +39,7 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using namespace ExternalInterface;
 
@@ -176,7 +176,7 @@ void BehaviorTrackLaser::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
-  const bool featureEnabled = robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::Laser);
+  const bool featureEnabled = robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Vector::FeatureType::Laser);
   if(!featureEnabled)
   {
     return false;
@@ -850,5 +850,5 @@ void BehaviorTrackLaser::SetState_internal(State state, const std::string& state
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

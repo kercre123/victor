@@ -15,7 +15,7 @@
 #include "engine/activeCube.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ActiveObject* CreateActiveObjectByType(ObjectType objType, ActiveID activeID, FactoryID factoryID)
 {
@@ -33,5 +33,5 @@ ActiveObject* CreateActiveObjectByType(ObjectType objType, ActiveID activeID, Fa
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

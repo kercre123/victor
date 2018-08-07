@@ -48,10 +48,10 @@
 #include <tuple>
 #include <map>
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 namespace {
   
@@ -68,7 +68,7 @@ public:
   : _touchButtonEventCount(0)
   , _lastTouchButtonEventPressed(false)
   {
-    using namespace Anki::Cozmo::ExternalInterface;
+    using namespace Anki::Vector::ExternalInterface;
 
     IExternalInterface* extInterface = context->GetExternalInterface();
 
@@ -218,7 +218,7 @@ public:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 TEST_F(TouchSensorTest, DISABLED_CalibrateAndClassifyMultirobotTests)
 {
-  using namespace Anki::Cozmo::ExternalInterface;
+  using namespace Anki::Vector::ExternalInterface;
 
   const std::string basePath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, kTestResourcesDir);
   const std::string configFile = "config.json";
@@ -257,7 +257,7 @@ TEST_F(TouchSensorTest, DISABLED_CalibrateAndClassifyMultirobotTests)
 
       for(size_t j=begIdx; j<endIdx; ++j) {
         uint16_t touch = rawTouchSensorReadings[j];
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw.fill(touch);
         testTouchSensorComponent.NotifyOfRobotState(msg);
       }
@@ -273,7 +273,7 @@ TEST_F(TouchSensorTest, DISABLED_CalibrateAndClassifyMultirobotTests)
 
       for(size_t j=begIdx; j<endIdx; ++j) {
         uint16_t touch = rawTouchSensorReadings[j];
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw.fill(touch);
         testTouchSensorComponent.NotifyOfRobotState(msg);
 
@@ -378,7 +378,7 @@ namespace {
 //    the percentage of trials that correctly "do not result in false positives"
 TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
 {
-  using namespace Anki::Cozmo::ExternalInterface;
+  using namespace Anki::Vector::ExternalInterface;
   
   RobotCompMap dummyCompMap;
   
@@ -514,7 +514,7 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       
       for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
         const auto reading = readings[i];
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw.fill(reading);
         tscomp.NotifyOfRobotStateInternal(msg);
       }
@@ -582,7 +582,7 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       DEV_ASSERT(calibrationReadings.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
       for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
         const auto reading = calibrationReadings[i];
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw.fill(reading);
         tscomp.NotifyOfRobotStateInternal(msg);
       }
@@ -595,7 +595,7 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       _msgMonitor->ResetCountTouchButtonEvent();
       for(int i=0; i<testingReadings.size(); ++i) {
         const auto reading = testingReadings[i];
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw.fill(reading);
         tscomp.NotifyOfRobotStateInternal(msg);
       }
@@ -776,7 +776,7 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzeManualDataCollection)
     DEV_ASSERT(calib.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
     for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
       const auto reading = calib[i];
-      Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+      Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
       msg.backpackTouchSensorRaw.fill(reading);
       tscomp.NotifyOfRobotStateInternal(msg);
     }
@@ -791,7 +791,7 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzeManualDataCollection)
       _msgMonitor->ResetCountTouchButtonEvent();
       for(int i=0; i<test.size(); ++i) {
         const auto reading = test[i];
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw.fill(reading);
         tscomp.NotifyOfRobotStateInternal(msg);
       }
@@ -1074,7 +1074,7 @@ TEST_F(TouchSensorTest, DISABLED_TouchSensorTuningPVT)
       size_t last = readings.size();
       last -= (readings.size()%6);
       for(int i=240; i<last; i+=6) {
-        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        Anki::Vector::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw = {
           {readings[i],
             readings[i+1],

@@ -27,7 +27,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 IlluminationDetector::IlluminationDetector() 
 : _featureGate( nullptr )

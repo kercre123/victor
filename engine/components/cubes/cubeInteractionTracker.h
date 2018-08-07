@@ -24,7 +24,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // Forward Declarations
 class ActiveObject;
@@ -129,7 +129,7 @@ private:
   float _filterDecrement;
 };
 
-} //namespace Cozmo
+} //namespace Vector
 } //namespace Anki
 
 #endif // __Engine_Components_CubeInteractionTracker_H__

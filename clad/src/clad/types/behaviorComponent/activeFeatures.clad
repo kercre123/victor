@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 ActiveFeatureType {
 
@@ -133,5 +133,5 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   WhatsMyName             = verbatim ActiveFeatureType::Social
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -25,7 +25,7 @@
 #include <functional>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 
@@ -119,7 +119,7 @@ private:
   void SendMicDataToWebserver();
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_MicDirectionHistory_H_

@@ -15,7 +15,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTimerManager::BehaviorTimerManager()
@@ -111,5 +111,5 @@ bool BehaviorTimer::HasCooldownExpired(float cooldown, bool valueIfNoReset) cons
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

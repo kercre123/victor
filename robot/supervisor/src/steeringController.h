@@ -17,7 +17,7 @@
 //        out of products-cozmo)
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   namespace SteeringController {
     
     // Available steering controller modes.
@@ -123,7 +123,7 @@ namespace Anki {
                                            bool useShortestDir);
     
   } // namespace SteeringController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // STEERING_CONTROLLER_H_

@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/cubeSpinnerGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 class CubeSpinnerGame;
@@ -69,7 +69,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDevCubeSpinnerConsole__

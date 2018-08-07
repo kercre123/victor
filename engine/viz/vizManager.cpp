@@ -37,7 +37,7 @@
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
     CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
@@ -1145,5 +1145,5 @@ namespace Anki {
     }
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

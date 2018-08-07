@@ -27,7 +27,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
 
     class PlayAnimationAction : public IAction
     {

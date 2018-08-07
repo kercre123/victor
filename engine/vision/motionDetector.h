@@ -34,7 +34,7 @@ class Camera;
 class ImageCache;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration:
 struct VisionPoseData;
@@ -156,7 +156,7 @@ private:
   const Json::Value& _config;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_MotionDetector_H__ */

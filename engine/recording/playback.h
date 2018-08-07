@@ -22,7 +22,7 @@
 using namespace std;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // internal definition of wrapper that contains message meta data and message itself
@@ -76,7 +76,7 @@ protected:
   //PlannerManager *plannerManager_;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //BASESTATION_RECORDING_RECORDING_H_

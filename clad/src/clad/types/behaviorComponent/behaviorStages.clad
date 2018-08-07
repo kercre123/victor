@@ -4,7 +4,7 @@
 // Copyright: Anki, inc. 2015
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ////////
 // User Facing Behavior Stages
@@ -41,5 +41,5 @@ enum uint_8 PyramidConstructionStage {
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

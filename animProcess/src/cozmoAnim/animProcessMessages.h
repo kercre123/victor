@@ -20,7 +20,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class AnimationStreamer;
@@ -68,7 +68,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

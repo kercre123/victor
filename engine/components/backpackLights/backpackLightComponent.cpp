@@ -39,7 +39,7 @@
 #define DEBUG_LIGHTS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(u32, kOfflineTimeBeforeLights_ms, "Backpacklights", (1000*60*2));
 CONSOLE_VAR(u32, kOfflineCheckFreq_ms,        "Backpacklights", 10000);
@@ -66,7 +66,7 @@ BackpackLightComponent::BackpackLightComponent()
 }
 
 
-void BackpackLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void BackpackLightComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _backpackLightContainer = std::make_unique<BackpackLightAnimationContainer>(
@@ -236,7 +236,7 @@ Result BackpackLightComponent::SetBackpackAnimationInternal(const BackpackLightA
   // Convert MS to LED FRAMES
   #define MS_TO_LED_FRAMES(ms)  (ms == std::numeric_limits<u32>::max() ? std::numeric_limits<u8>::max() : (((ms)+29)/30))
   
-  std::array<Anki::Cozmo::LightState, (int)LEDId::NUM_BACKPACK_LEDS> lightStates;
+  std::array<Anki::Vector::LightState, (int)LEDId::NUM_BACKPACK_LEDS> lightStates;
   for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i)
   {
     lightStates[i].onColor  = lights.onColors[i];

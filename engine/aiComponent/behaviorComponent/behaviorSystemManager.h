@@ -26,7 +26,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class BehaviorExternalInterface;
@@ -154,7 +154,7 @@ private:
   
 }; // class BehaviorSystemManager
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

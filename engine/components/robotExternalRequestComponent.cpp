@@ -20,7 +20,7 @@
 #include "util/transport/connectionStats.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 	RobotExternalRequestComponent::RobotExternalRequestComponent()
 	  : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RobotExternalRequestComponent)

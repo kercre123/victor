@@ -3,7 +3,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Convenience structure definition
 structure ActiveAccel
@@ -24,5 +24,5 @@ enum uint_8 UpAxis {
   UnknownAxis
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

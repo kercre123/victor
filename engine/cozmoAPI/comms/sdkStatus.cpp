@@ -19,7 +19,7 @@
 #include "util/time/universalTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 SdkStatus::SdkStatus()
   : _recentCommands(10) // TODO Remove
@@ -33,5 +33,5 @@ void SdkStatus::OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongV
   _connectedSdkBuildVersion = message.buildVersion;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

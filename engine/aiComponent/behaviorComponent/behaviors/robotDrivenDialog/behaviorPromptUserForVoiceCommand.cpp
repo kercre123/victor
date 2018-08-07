@@ -30,7 +30,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
@@ -500,5 +500,5 @@ void BehaviorPromptUserForVoiceCommand::TurnOffBackpackLights()
   }
 }
 
-} // namespace Cozmo 
+} // namespace Vector 
 } // namespace Anki

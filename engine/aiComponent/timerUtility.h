@@ -23,7 +23,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
   
@@ -99,7 +99,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__

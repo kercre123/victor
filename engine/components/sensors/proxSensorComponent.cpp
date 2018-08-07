@@ -25,7 +25,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const std::string kLogDirName = "proxSensor";

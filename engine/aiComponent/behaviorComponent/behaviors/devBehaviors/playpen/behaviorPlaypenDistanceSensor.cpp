@@ -22,7 +22,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* const kAngleToTurnKey    = "AngleToTurnToSeeTarget_deg";

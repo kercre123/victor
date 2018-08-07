@@ -22,10 +22,10 @@
 #include <chrono>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
-Anki::Cozmo::TimerUtility* sTimerUtility = nullptr;
+Anki::Vector::TimerUtility* sTimerUtility = nullptr;
 }
 
 #if ANKI_DEV_CHEATS
@@ -115,5 +115,5 @@ int TimerUtility::GetSystemTime_s() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

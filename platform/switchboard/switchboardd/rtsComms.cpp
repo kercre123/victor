@@ -134,7 +134,7 @@ void RtsComms::SendOtaProgress(int status, uint64_t progress, uint64_t expectedT
   }
 }
 
-void RtsComms::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
+void RtsComms::UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus state) {
   if(_engineClient == nullptr) {
     // no engine client -- probably testing
     return;
@@ -143,7 +143,7 @@ void RtsComms::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus st
   if(!_isOtaUpdating) {
     _engineClient->ShowPairingStatus(state);
   } else {
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
+    _engineClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
   }
 }
 
@@ -161,16 +161,16 @@ void RtsComms::HandleReset(bool forced) {
     if(forced) {
       Log::Write("Client disconnected. Stopping pairing.");
       ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
       Init();
       Log::Write("SecurePairing restarting.");
-      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
+      UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::START_PAIRING);
     } else {
       Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
       ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
       _stopPairingSignal.emit();
-      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     }
   });
 }

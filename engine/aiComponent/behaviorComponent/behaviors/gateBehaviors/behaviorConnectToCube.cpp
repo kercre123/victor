@@ -26,7 +26,7 @@ const char* kDelegateBehaviorIDKey = "delegateBehaviorID";
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,5 +199,5 @@ void BehaviorConnectToCube::ConnectionLostCallback()
   TransitionToConnectionLost();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

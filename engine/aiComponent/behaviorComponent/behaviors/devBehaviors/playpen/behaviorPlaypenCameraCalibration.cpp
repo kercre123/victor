@@ -25,7 +25,7 @@
 #include "util/console/consoleSystem.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

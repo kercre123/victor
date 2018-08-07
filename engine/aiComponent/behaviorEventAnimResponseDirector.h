@@ -25,7 +25,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct ActionResponseData{
 public:
@@ -67,7 +67,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

@@ -72,7 +72,7 @@ namespace Vision {
   class PetTracker;
 }
   
-namespace Cozmo {
+namespace Vector {
     
   // Forward declaration:
   class CameraCalibrator;
@@ -390,7 +390,7 @@ namespace Cozmo {
 
 }; // class VisionSystem
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_VISIONSYSTEM_H

@@ -48,7 +48,7 @@ namespace {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextToSpeechComponent(const AnimContext* context)
@@ -625,5 +625,5 @@ void TextToSpeechComponent::SetLocale(const std::string & locale)
   Util::Dispatch::Async(_dispatchQueue, task);
 
 }
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

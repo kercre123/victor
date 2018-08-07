@@ -40,7 +40,7 @@ bool has_any_digits(const std::string& s)
 #define CREATE_STREAM_MSG(msgName, sourceMsg)
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
 #pragma mark -
 #pragma mark IKeyFrame
@@ -1456,5 +1456,5 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       }
     #endif
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

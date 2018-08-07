@@ -36,7 +36,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class BlockWorldFilter;  
@@ -94,7 +94,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent<AIComponentID> functions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  virtual void InitDependent(Cozmo::Robot* robot, 
+  virtual void InitDependent(Vector::Robot* robot, 
                              const AICompMap& dependentComps) override;
 
   
@@ -352,7 +352,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

@@ -31,7 +31,7 @@ private:
   CladHandlerV3* _cladHandler;
   bool _handShake;
   bool _connected;
-  std::queue<Anki::Cozmo::ExternalComms::RtsConnection_3> _queue;
+  std::queue<Anki::Vector::ExternalComms::RtsConnection_3> _queue;
   RtsComms* _securePairing;
   KeyExchange* _keyExchange;
 
@@ -49,7 +49,7 @@ private:
   template<typename T, typename... Args>
   void SendRtsMessage(Args&&... args);
 
-  void ReceiveMessage(const Anki::Cozmo::ExternalComms::RtsConnection_3& msg);
+  void ReceiveMessage(const Anki::Vector::ExternalComms::RtsConnection_3& msg);
 };
 
 } // Switchboard

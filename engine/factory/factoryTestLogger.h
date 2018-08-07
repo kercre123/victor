@@ -33,7 +33,7 @@ namespace Util {
   }
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class FactoryTestLogger {
 public:
@@ -113,7 +113,7 @@ private:
   bool _exportJson;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

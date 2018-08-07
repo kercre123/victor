@@ -51,15 +51,15 @@ const float kUpdateWebVizPeriod_s = 1.0f;
 const float kDebugTempSubscriptionTimeout_s = 10.0f;
 
 // Console test constants
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber1(1);
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber2(2);
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber3(3);
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber4(4);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber1(1);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber2(2);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber3(3);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber4(4);
 #endif
 }
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CubeConnectionCoordinator::SubscriberRecord::SubscriberRecord(ICubeConnectionSubscriber* const subscriberPtr,
@@ -585,5 +585,5 @@ void CubeConnectionCoordinator::SendDataToWebViz()
 #endif // ANKI_DEV_CHEATS
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

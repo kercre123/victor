@@ -25,7 +25,7 @@ namespace Util {
 class IConsoleFunction;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class UnitTestKey;
   

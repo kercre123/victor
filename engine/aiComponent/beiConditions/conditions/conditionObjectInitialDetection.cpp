@@ -16,7 +16,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   const char* kFirstTimeOnlyKey = "firstTimeOnly";
@@ -61,5 +61,5 @@ bool ConditionObjectInitialDetection::AreConditionsMetInternal(BehaviorExternalI
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

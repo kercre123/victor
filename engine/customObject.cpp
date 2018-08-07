@@ -14,7 +14,7 @@
 #include "coretech/common/engine/math/quad_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(CustomObjectMarker);
   
@@ -335,5 +335,5 @@ void CustomObject::EraseVisualization() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

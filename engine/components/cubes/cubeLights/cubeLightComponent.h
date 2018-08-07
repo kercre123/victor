@@ -47,7 +47,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ActiveObject;
 class CozmoContext;
@@ -66,7 +66,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };

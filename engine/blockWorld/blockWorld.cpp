@@ -77,7 +77,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1469,8 +1469,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         // some objects should not be updated! (specially those that are not managed through observations)
         // TODO rsam/andrew: I don't like not having to specify true/false for families. Whether a new family
         // gets included or ignored happens silently for filters if we don't static_assert requiring all
-        filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
-        filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+        filter.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
+        filter.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
 
         // When Cozmo is looking at a stack/pyramid from a certain distance, the top cube can toggle rapidly between
         // 'known' and 'dirty' pose state, causing the cube LEDs to flash on and off rapidly. This may cause users
@@ -3517,5 +3517,5 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
   } // SendObjectUpdateToWebViz()
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

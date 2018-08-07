@@ -19,7 +19,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeAccelListeners {
   
 LowPassFilterListener::LowPassFilterListener(const Vec3f& coeffs, std::weak_ptr<ActiveAccel> output)

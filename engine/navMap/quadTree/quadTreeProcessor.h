@@ -26,7 +26,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class QuadTree;
 using namespace MemoryMapTypes;

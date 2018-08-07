@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kTimeButtonPressed_ms  = "minTimeButtonPressed_ms";

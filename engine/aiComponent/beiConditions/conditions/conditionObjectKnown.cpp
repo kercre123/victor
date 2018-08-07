@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   const char* kObjectTypesKey = "objectTypes";
@@ -148,5 +148,5 @@ const std::vector<const ObservableObject*> ConditionObjectKnown::GetObjects(Beha
   return ret;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

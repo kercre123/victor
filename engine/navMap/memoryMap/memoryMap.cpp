@@ -28,7 +28,7 @@
  
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helpers
@@ -358,5 +358,5 @@ void MemoryMap::FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, M
   MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, poly) );
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

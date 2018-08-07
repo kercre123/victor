@@ -25,7 +25,7 @@
 int main(int argc, char **argv)
 {
   using namespace Anki;
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   //
   // Main Execution loop
   //
-  while (vizSupervisor.step(Anki::Cozmo::BS_TIME_STEP_MS) != -1)
+  while (vizSupervisor.step(Anki::Vector::BS_TIME_STEP_MS) != -1)
   {
     // Any messages received?
     while ((numBytesRecvd = server.Recv((char*)data, maxPacketSize)) > 0) {

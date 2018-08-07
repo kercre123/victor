@@ -20,7 +20,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 namespace{
@@ -116,5 +116,5 @@ bool BehaviorDisplayWallTime::ShouldDisplayAsMilitaryTime() const
   return clockIs24Hour;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

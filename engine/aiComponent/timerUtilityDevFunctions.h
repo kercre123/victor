@@ -17,12 +17,12 @@
 #define __Cozmo_Basestation_BehaviorSystem_TimerUtilityDevFunctions_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 void AdvanceAnticBySeconds(int seconds);
 void AdvanceTimerBySeconds(int seconds);
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_TimerUtilityDevFunctions_H__

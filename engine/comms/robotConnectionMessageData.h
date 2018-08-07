@@ -27,7 +27,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class RobotConnectionMessageType
 {
@@ -83,7 +83,7 @@ private:
 #endif // TRACK_INCOMING_PACKET_LATENCY
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

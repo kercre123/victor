@@ -21,7 +21,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   constexpr unsigned int kCapacity = 5; // see comment in NotifyOfChange

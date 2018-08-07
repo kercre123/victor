@@ -22,7 +22,7 @@
 #include <memory.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
   
@@ -35,7 +35,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override {};
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
   //////
@@ -112,6 +112,6 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 #endif /* RobotToEngineImplMessaging_h */

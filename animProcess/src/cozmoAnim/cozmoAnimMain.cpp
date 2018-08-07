@@ -34,7 +34,7 @@
 #include <csignal>
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 #define LOG_PROCNAME "vic-anim"
 #define LOG_CHANNEL "CozmoAnimMain"

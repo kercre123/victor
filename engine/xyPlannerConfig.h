@@ -35,7 +35,7 @@ namespace std {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {  
   const float kPlanningResolution_mm        = 20.f;
@@ -167,7 +167,7 @@ private:
   size_t               _numExpansions = 0;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Victor_Engine_XYPlannerConfig_H__

@@ -21,7 +21,7 @@
 #include <assert.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 const float kEmotionValueMin     = -1.0f;
@@ -159,6 +159,6 @@ void Emotion::SetEmotionValueRange(float min, float max)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

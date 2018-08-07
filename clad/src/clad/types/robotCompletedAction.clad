@@ -2,7 +2,7 @@
 #include "clad/types/actionResults.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 // RobotCompletedAction

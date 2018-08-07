@@ -17,7 +17,7 @@
 #include "coretech/messaging/engine/IComms.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 DirectGameComms::DirectGameComms(GameMessagePort* messagePort, ISocketComms::DeviceId hostId)
 : _connectState(ConnectionState::Disconnected)

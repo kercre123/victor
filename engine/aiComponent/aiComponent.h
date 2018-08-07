@@ -26,7 +26,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorContainer;
 
@@ -45,7 +45,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override final;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override final;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::CubeComms);

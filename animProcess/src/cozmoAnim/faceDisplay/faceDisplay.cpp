@@ -30,7 +30,7 @@
 #define LOG_CHANNEL "FaceDisplay"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if ANKI_CPU_PROFILER_ENABLED
   CONSOLE_VAR_RANGED(float, maxDrawTime_ms,      ANKI_CPU_CONSOLEVARGROUP, 5, 5, 32);
@@ -449,5 +449,5 @@ void FaceDisplay::StopBootAnim()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

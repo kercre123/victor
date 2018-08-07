@@ -22,7 +22,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using namespace ExternalInterface;
 
@@ -111,5 +111,5 @@ void BehaviorReactToRobotOnBack::OnBehaviorDeactivated()
 {
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

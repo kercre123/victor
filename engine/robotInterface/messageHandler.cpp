@@ -32,7 +32,7 @@
 #include "util/transport/transportAddress.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 
 MessageHandler::MessageHandler()
@@ -187,5 +187,5 @@ const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
 }
   
 } // end namespace RobotInterface
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

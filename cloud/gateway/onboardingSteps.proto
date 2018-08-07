@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package Anki.Cozmo.external_interface;
+package Anki.Vector.external_interface;
 
 enum OnboardingSteps {
   STEP_INVALID = 0;

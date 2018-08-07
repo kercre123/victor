@@ -40,7 +40,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class IReactionTriggerStrategy;
@@ -373,5 +373,5 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

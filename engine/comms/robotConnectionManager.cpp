@@ -29,7 +29,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const int kNumQueueSizeStatsToSendToDas = 4000;
@@ -104,8 +104,8 @@ Result RobotConnectionManager::Connect(RobotID_t robotID)
     _udpClient.Disconnect();
   }
 
-  const std::string & client_path = Anki::Cozmo::ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
-  const std::string & server_path = Anki::Cozmo::ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
+  const std::string & client_path = Anki::Vector::ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
+  const std::string & server_path = Anki::Vector::ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
 
   const bool ok = _udpClient.Connect(client_path, server_path);
   if (!ok) {
@@ -307,5 +307,5 @@ const Anki::Util::Stats::StatsAccumulator& RobotConnectionManager::GetQueuedTime
 #endif // TRACK_INCOMING_PACKET_LATENCY
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

@@ -38,7 +38,7 @@
 #define CONSOLE_GROUP "Behavior.ReactToCliff"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using namespace ExternalInterface;
 
@@ -466,5 +466,5 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffReactAction(uint8_t clif
   return action;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

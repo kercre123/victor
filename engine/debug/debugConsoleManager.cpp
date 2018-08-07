@@ -28,7 +28,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   void DebugConsoleManager::Init( IExternalInterface* externalInterface, RobotInterface::MessageHandler* robotInterface )
   {
@@ -66,7 +66,7 @@ namespace Cozmo {
     }
   }
   
-  static void SetCladVarUnionFromConsoleVar(Anki::Cozmo::ConsoleVarUnion& outVarValue, const Anki::Util::IConsoleVariable* consoleVar)
+  static void SetCladVarUnionFromConsoleVar(Anki::Vector::ConsoleVarUnion& outVarValue, const Anki::Util::IConsoleVariable* consoleVar)
   {
     if( consoleVar->IsToggleable())
     {
@@ -229,7 +229,7 @@ namespace Cozmo {
     {
       case ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage:
       {
-        const Anki::Cozmo::ExternalInterface::GetDebugConsoleVarMessage& msg = eventData.Get_GetDebugConsoleVarMessage();
+        const Anki::Vector::ExternalInterface::GetDebugConsoleVarMessage& msg = eventData.Get_GetDebugConsoleVarMessage();
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
         if (consoleVar)
         {
@@ -250,7 +250,7 @@ namespace Cozmo {
       break;
       case ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage:
       {
-        const Anki::Cozmo::ExternalInterface::RunDebugConsoleFuncMessage& msg = eventData.Get_RunDebugConsoleFuncMessage();
+        const Anki::Vector::ExternalInterface::RunDebugConsoleFuncMessage& msg = eventData.Get_RunDebugConsoleFuncMessage();
         Anki::Util::IConsoleFunction* consoleFunc = Anki::Util::ConsoleSystem::Instance().FindFunction(msg.funcName.c_str());
         if( consoleFunc )
         {
@@ -268,7 +268,7 @@ namespace Cozmo {
       break;
       case ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage:
       {
-        const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
+        const Anki::Vector::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
         
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
         if (consoleVar && consoleVar->ParseText(msg.tryValue.c_str()) )
@@ -288,7 +288,7 @@ namespace Cozmo {
       // Animation Process Console Var Message
       case ExternalInterface::MessageGameToEngineTag::SetAnimDebugConsoleVarMessage:
       {
-        const Anki::Cozmo::ExternalInterface::SetAnimDebugConsoleVarMessage& msg = eventData.Get_SetAnimDebugConsoleVarMessage();
+        const Anki::Vector::ExternalInterface::SetAnimDebugConsoleVarMessage& msg = eventData.Get_SetAnimDebugConsoleVarMessage();
         
         RobotInterface::SetDebugConsoleVarMessage robotInterfaceMsg;
         
@@ -355,6 +355,6 @@ namespace Cozmo {
     }
   }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

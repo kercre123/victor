@@ -21,7 +21,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // The physical blocks are not capable of displaying
 // all light channels at full intensity so this is where
@@ -157,6 +157,6 @@ void ActiveObject::FillMessage(MessageSetBlockLights& m) const
 }
 */
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

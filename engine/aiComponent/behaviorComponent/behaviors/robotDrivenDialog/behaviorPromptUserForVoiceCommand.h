@@ -21,7 +21,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Fwd Declarations
 class BehaviorTextToSpeechLoop;
@@ -131,7 +131,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPromptUserForVoiceCommand__

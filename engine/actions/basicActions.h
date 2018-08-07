@@ -41,7 +41,7 @@ namespace Anki {
     struct SalientPoint;
   }
   
-namespace Cozmo {
+namespace Vector {
   
     // Forward declaration
     struct ImageSaverParams;
@@ -810,7 +810,7 @@ namespace Cozmo {
     }; // class CliffAlignToWhiteAction
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* ANKI_COZMO_BASIC_ACTIONS_H */

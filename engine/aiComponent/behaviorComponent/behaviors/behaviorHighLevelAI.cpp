@@ -30,7 +30,7 @@
 #include "util/helpers/boundedWhile.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // speed up high level AI with this. Be careful -- some conditions that check for time
 // within a short interval [a,b] may not be met if you choose too fast a speedup factor

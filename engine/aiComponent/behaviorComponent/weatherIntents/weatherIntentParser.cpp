@@ -20,7 +20,7 @@
 #include <iomanip>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const std::string kWeatherLocationPrepend = "Right now in ";
@@ -122,5 +122,5 @@ bool WeatherIntentParser::GetTemperature(const UserIntent_WeatherResponse& weath
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

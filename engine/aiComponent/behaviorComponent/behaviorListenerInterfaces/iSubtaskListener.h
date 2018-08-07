@@ -15,7 +15,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class ISubtaskListener{
 public:
@@ -23,7 +23,7 @@ public:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_ISubtaskListener_H__

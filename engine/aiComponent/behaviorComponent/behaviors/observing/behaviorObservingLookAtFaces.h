@@ -18,7 +18,7 @@
 #include "engine/smartFaceId.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorObservingLookAtFaces : public ICozmoBehavior
 {

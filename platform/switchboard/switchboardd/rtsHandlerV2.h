@@ -80,7 +80,7 @@ private:
   void IncrementChallengeCount();
 
   void SubscribeToCladMessages();
-  void UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state);
+  void UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus state);
 
   INetworkStream* _stream;
   struct ev_loop* _loop;
@@ -126,43 +126,43 @@ private:
   // V3 Request to Listen for
   //
   Signal::SmartHandle _rtsConnResponseHandle;
-  void HandleRtsConnResponse(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsConnResponse(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsChallengeMessageHandle;
-  void HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsChallengeMessage(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsWifiConnectRequestHandle;
-  void HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsWifiIpRequestHandle;
-  void HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsWifiIpRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsRtsStatusRequestHandle;
-  void HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsStatusRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsWifiScanRequestHandle;
-  void HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsWifiScanRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsOtaUpdateRequestHandle;
-  void HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsOtaCancelRequestHandle;
-  void HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsWifiAccessPointRequestHandle;
-  void HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsWifiAccessPointRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsCancelPairingHandle;
-  void HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsCancelPairing(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsAckHandle;
-  void HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsAck(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsLogRequestHandle;
-  void HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsLogRequest(const Vector::ExternalComms::RtsConnection_2& msg);
 
   Signal::SmartHandle _rtsForceDisconnectHandle;
-  void HandleRtsForceDisconnect(const Cozmo::ExternalComms::RtsConnection_2& msg);
+  void HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConnection_2& msg);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Send messages method
@@ -170,8 +170,8 @@ private:
 
   template<typename T, typename... Args>
   int SendRtsMessage(Args&&... args) {
-    Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(
-      Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+    Anki::Vector::ExternalComms::ExternalComms msg = Anki::Vector::ExternalComms::ExternalComms(
+      Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 

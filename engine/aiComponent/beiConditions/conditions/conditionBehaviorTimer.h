@@ -18,7 +18,7 @@
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 class ConditionBehaviorTimer : public IBEICondition

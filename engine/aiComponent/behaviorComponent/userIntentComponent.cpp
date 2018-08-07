@@ -33,7 +33,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

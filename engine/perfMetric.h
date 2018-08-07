@@ -24,7 +24,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 typedef enum
@@ -149,7 +149,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

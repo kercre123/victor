@@ -30,7 +30,7 @@
 #include <vector>
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // Forward declaration:
 class CozmoContext;
@@ -48,7 +48,7 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::Vision);
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
@@ -136,7 +136,7 @@ private:
 
 }; // class VisionScheduleMediator
 
-}// namespace Cozmo
+}// namespace Vector
 }// namespace Anki
 
 #endif //__Engine_Components_VisionScheduleMediator_H__

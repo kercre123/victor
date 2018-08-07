@@ -33,7 +33,7 @@
 #define APPROACH_NORMAL_TO_MARKERS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // distance from the possible cube to go visit
 CONSOLE_VAR(float, kEvpm_DistanceFromPossibleCubeMin_mm, "BehaviorExploreLookAroundInPlace", 100.0f);
@@ -254,5 +254,5 @@ void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(ObjectType obje
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

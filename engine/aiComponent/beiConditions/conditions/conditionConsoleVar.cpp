@@ -19,7 +19,7 @@
 #include "util/console/consoleVariable.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kVariableNameKey = "variable";

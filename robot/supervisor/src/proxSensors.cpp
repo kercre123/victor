@@ -16,7 +16,7 @@
 #include <array>
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace ProxSensors {
 
       namespace {
@@ -384,5 +384,5 @@ namespace Anki {
       }
 
     } // namespace ProxSensors
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

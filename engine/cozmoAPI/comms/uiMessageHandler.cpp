@@ -60,7 +60,7 @@ static const u32 kPingTimeoutForDisconnect_ms = 5000;
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
 
 
@@ -786,5 +786,5 @@ namespace Anki {
       }
     }
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

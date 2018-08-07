@@ -21,13 +21,13 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   class AnimContext;
 }
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 class AudioPlaybackJob;
@@ -77,7 +77,7 @@ private:
 };
 
 } //  namespace Audio
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_AudioPlaybackSystem_H__

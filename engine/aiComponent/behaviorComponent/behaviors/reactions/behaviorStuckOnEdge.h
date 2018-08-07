@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorStuckOnEdge : public ICozmoBehavior
 {

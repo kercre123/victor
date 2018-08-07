@@ -22,7 +22,6 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
 
 namespace {
 static const char* kRecentOccurrenceKey = "recentOccurrence";
@@ -214,5 +213,4 @@ void RecentOccurrenceTracker::RecomputeLimits()
   }
 }
 
-}
 }

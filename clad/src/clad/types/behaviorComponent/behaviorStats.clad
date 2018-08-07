@@ -12,7 +12,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_32 BehaviorStat {
 
@@ -38,5 +38,5 @@ enum uint_32 BehaviorStat {
   
 } // enum class BehaviorObjectives
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

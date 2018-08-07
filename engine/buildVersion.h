@@ -13,13 +13,13 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 constexpr const char* const kBuildVersion = "00002.00002.00000";
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_BuildVersion_h__

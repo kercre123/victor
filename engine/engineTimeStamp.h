@@ -17,7 +17,7 @@
 #include "util/helpers/stronglyTyped.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 typedef Util::StronglyTyped<TimeStamp_t, struct EngineTimeStampID> EngineTimeStamp_t;
 

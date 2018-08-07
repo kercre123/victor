@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // Procedural Eye Blink types
   enum class BlinkState : uint8_t {
@@ -36,7 +36,7 @@ namespace Cozmo {
   
   using BlinkEventList = std::vector<BlinkEvent>;
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_ProceduralFaceModifierTypes_H__ */

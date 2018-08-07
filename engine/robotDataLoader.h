@@ -55,7 +55,7 @@ class SpriteCache;
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class AnimationGroupContainer;

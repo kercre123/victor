@@ -8,7 +8,7 @@
 
 syntax = "proto3";
 
-package Anki.Cozmo.external_interface;
+package Anki.Vector.external_interface;
 
 import "google/api/annotations.proto";
 import "cube.proto";

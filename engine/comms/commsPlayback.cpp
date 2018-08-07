@@ -20,7 +20,7 @@
 //using namespace AnkiUtil;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // Constructor
@@ -145,7 +145,7 @@ void CommsPlayback::PrepareLogFile()
   ReadFromFile();
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif

@@ -37,7 +37,7 @@ namespace Vision {
   class ImageRGB565;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class AnimContext;
 class AnimationStreamer;
@@ -188,7 +188,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_FaceDisplay_FaceInfoScreenManager_H_

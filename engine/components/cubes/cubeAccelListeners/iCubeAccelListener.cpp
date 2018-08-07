@@ -16,7 +16,7 @@
 #include "clad/types/activeObjectAccel.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeAccelListeners {
   
 

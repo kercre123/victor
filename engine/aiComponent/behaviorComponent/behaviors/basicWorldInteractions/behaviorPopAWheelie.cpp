@@ -32,7 +32,7 @@
 #include "clad/types/featureGateTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
@@ -66,7 +66,7 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 bool BehaviorPopAWheelie::WantsToBeActivatedBehavior() const
 {
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::CubeBehaviors);
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::CubeBehaviors);
   if(!featureEnabled)
   {
     return false;
@@ -273,5 +273,5 @@ void BehaviorPopAWheelie::ResetBehavior()
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

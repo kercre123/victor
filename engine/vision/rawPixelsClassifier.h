@@ -38,7 +38,7 @@ namespace Vision{
 class Profiler;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 
@@ -260,7 +260,7 @@ protected:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

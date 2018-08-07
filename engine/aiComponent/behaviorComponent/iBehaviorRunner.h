@@ -14,7 +14,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class BehaviorExternalInterface;
@@ -46,7 +46,7 @@ public:
 
 }; // class IBehaviorRunner
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

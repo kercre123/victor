@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BlockWorldFilter;
 class BehaviorPickUpCube;
@@ -83,7 +83,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Behaviors_BehaviorClearChargerArea_H__

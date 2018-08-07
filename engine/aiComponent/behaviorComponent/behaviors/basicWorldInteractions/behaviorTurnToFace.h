@@ -19,7 +19,7 @@
 #include "engine/smartFaceId.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorTurnToFace : public ICozmoBehavior
 {
@@ -56,7 +56,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__

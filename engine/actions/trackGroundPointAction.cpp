@@ -30,7 +30,7 @@
 #define kLogChannelName "Actions"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TrackGroundPointAction::TrackGroundPointAction(const ExternalInterface::MessageEngineToGameTag& salientPointTag)
@@ -387,5 +387,5 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTracking(Radians& absPa
 } // UpdateTracking()
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

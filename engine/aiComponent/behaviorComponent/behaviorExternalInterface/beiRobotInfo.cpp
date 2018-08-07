@@ -20,7 +20,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 
@@ -351,5 +351,5 @@ NVStorageComponent& BEIRobotInfo::GetNVStorageComponent() const
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

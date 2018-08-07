@@ -21,7 +21,7 @@
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 

@@ -22,7 +22,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* const kAnimWhenGroggyKey = "animWhenGroggy";

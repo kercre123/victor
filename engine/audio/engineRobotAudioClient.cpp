@@ -30,7 +30,7 @@
 
 
 namespace Anki {
-namespace Cozmo {  
+namespace Vector {  
 namespace Audio {
 
 namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
@@ -43,7 +43,7 @@ EngineRobotAudioClient::EngineRobotAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioClient::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void EngineRobotAudioClient::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Create & setup behavior listener
   _behaviorListener.reset( new AudioBehaviorStackListener( *this, robot->GetContext() ) );

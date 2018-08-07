@@ -12,7 +12,7 @@
 #include <math.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   /***************************************************************************
    *
@@ -353,7 +353,7 @@ namespace Cozmo {
   constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
   #endif
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_CONFIG_H

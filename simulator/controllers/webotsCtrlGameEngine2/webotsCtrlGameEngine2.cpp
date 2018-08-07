@@ -44,13 +44,13 @@
 #define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
   }
 }
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 int main(int argc, char **argv)
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
       // otherwise anyone with a config set to spam every message could run into issues
       // with the amount of messages overwhelming the socket on engine startup/load.
       // Anyone who needs the log messages can enable it afterwards via Unity, SDK or Webots
-      Anki::Cozmo::kEnableCladLogger = false;
+      Anki::Vector::kEnableCladLogger = false;
     }
     #endif // ANKI_DEV_CHEATS
   }

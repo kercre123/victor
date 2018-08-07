@@ -26,7 +26,7 @@ namespace Json {
 }
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     // Forward Declaration
     class CannedAnimationContainer;
@@ -67,7 +67,7 @@ namespace Anki {
       f32  _headAngleMax;
       
     }; // class AnimationGroupEntry
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_AnimationGroup_AnimationGroupEntry_H__

@@ -52,7 +52,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace
 {
@@ -94,7 +94,7 @@ BehaviorConfirmHabitat::InstanceConfig::InstanceConfig()
 }
 
 BehaviorConfirmHabitat::BehaviorConfirmHabitat(const Json::Value& config)
-: Anki::Cozmo::ICozmoBehavior(config)
+: Anki::Vector::ICozmoBehavior(config)
 {
   SubscribeToTags({{
     EngineToGameTag::RobotStopped,

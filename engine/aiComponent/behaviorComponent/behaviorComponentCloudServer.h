@@ -25,7 +25,7 @@
 #include <thread>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace CloudMic {
 class Message;

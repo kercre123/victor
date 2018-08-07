@@ -25,7 +25,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 static const char* kLoopKey        = "loop";
@@ -265,5 +265,5 @@ void SpriteSequenceLoader::LoadSequenceFromSpec(Vision::SpriteCache* cache,
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

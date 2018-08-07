@@ -20,7 +20,7 @@
 #include "engine/components/dataAccessorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kPowerButtonActivationKey = "powerButtonHeldToActivate_ms";

@@ -26,7 +26,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kReasonKey = "attentionTransferReason";
@@ -94,7 +94,7 @@ void BehaviorAttentionTransferIfNeeded::GetBehaviorJsonKeys(std::set<const char*
 bool BehaviorAttentionTransferIfNeeded::WantsToBeActivatedBehavior() const
 {
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::AttentionTransfer);
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::AttentionTransfer);
   return featureEnabled || !_iConfig.animsIfNotRecent.empty();
 }
 
@@ -104,7 +104,7 @@ void BehaviorAttentionTransferIfNeeded::OnBehaviorActivated()
   GetBehaviorComp<AttentionTransferComponent>().PossibleAttentionTransferNeeded( _iConfig.reason );
 
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::AttentionTransfer);
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::AttentionTransfer);
 
   if( featureEnabled && _iConfig.recentOccurrenceHandle->AreConditionsMet() ) {
     TransitionToAttentionTransfer();

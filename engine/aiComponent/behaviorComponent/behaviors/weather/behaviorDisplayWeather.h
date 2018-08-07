@@ -23,7 +23,7 @@ namespace Vision {
 class CompositeImage;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTextToSpeechLoop;
 class WeatherIntentParser;
@@ -83,7 +83,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDisplayWeather__

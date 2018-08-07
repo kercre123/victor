@@ -41,7 +41,7 @@
 #define LOG_CHANNEL   "RobotDataLoader"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";

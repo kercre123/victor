@@ -17,7 +17,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class FeatureType : uint8_t;
 

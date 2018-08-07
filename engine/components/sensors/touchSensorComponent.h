@@ -24,7 +24,7 @@
 #include <deque>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IBehaviorPlaypen;
 struct FilterParameters;

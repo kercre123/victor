@@ -90,7 +90,7 @@ void Daemon::Stop() {
 
   if(_engineMessagingClient != nullptr) {
     Log::Write("End pairing state.");
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 
   ev_timer_stop(_loop, &_engineTimer);
@@ -278,7 +278,7 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _securePairing->StopPairing();
     Log::Write("BLE Central disconnected.");
     if(!_isOtaUpdating) {
-      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     }
     Log::Write("Destroying secure pairing object.");
     _pinHandle = nullptr;
@@ -308,7 +308,7 @@ void Daemon::OnBleIpcDisconnected() {
 
 void Daemon::OnPinUpdated(std::string pin) {
   _engineMessagingClient->SetPairingPin(pin);
-  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PIN);
+  _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::SHOW_PIN);
   Log::Blue((" " + pin + " ").c_str());
 }
 
@@ -323,7 +323,7 @@ void Daemon::OnEndPairing() {
   }
 
   if(_engineMessagingClient != nullptr) {
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 }
 
@@ -341,7 +341,7 @@ void Daemon::HandlePairingTimeout() {
   Log::Write("[PT] Pairing timed-out before connection made.");
   UpdateAdvertisement(false);
   if(_engineMessagingClient != nullptr) {
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 }
 
@@ -487,7 +487,7 @@ void Daemon::HandleOtaUpdateExit(int rc) {
       if(_securePairing == nullptr) {
         // Change the face back to end pairing state *only* if
         // we didn't update successfully and there is no BLE connection
-        _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+        _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
       }
     }
   });
@@ -573,7 +573,7 @@ void Daemon::StartPairing() {
   } 
 
   UpdateAdvertisement(true);
-  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
+  _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
   
   ev_timer_stop(_loop, &_pairingTimer.timer);
   ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0.);
@@ -582,24 +582,24 @@ void Daemon::StartPairing() {
   Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
 }
 
-void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
-  Anki::Cozmo::ExternalInterface::MessageEngineToGameTag tag = message.GetTag();
+void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGame message) {
+  Anki::Vector::ExternalInterface::MessageEngineToGameTag tag = message.GetTag();
 
   switch(tag){
-    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
       StartPairing();
       break;
     }
-    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
       printf("Exit pairing: %hhu\n", tag);
       UpdateAdvertisement(false);
       if(_securePairing != nullptr && _isPairing) {
         _securePairing->StopPairing();
       }
-      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
       break;
     }
-    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::WifiScanRequest: {
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::WifiScanRequest: {
       _engineMessagingClient->HandleWifiScanRequest();
       break;
     }

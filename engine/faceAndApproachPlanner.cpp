@@ -42,7 +42,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 EComputePathStatus FaceAndApproachPlanner::ComputePath(const Pose3d& startPose,
                                                        const Pose3d& targetPose)
@@ -162,5 +162,5 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
 
     
  
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

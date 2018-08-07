@@ -18,7 +18,7 @@
 #include "engine/components/cubes/cubeAccelListeners/highPassFilterListener.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 struct ActiveAccel;
   

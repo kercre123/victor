@@ -77,7 +77,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   VisionComponent* s_VisionComponent = nullptr;
 
@@ -168,7 +168,7 @@ namespace Cozmo {
   } // VisionSystem()
 
 
-  void VisionComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+  void VisionComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
   {
     s_VisionComponent = this;
     _robot = robot;
@@ -645,7 +645,7 @@ namespace Cozmo {
     }
 
     // Get most recent pose data in history
-    Anki::Cozmo::HistRobotState lastHistState;
+    Anki::Vector::HistRobotState lastHistState;
     _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
 
     {
@@ -3084,5 +3084,5 @@ namespace Cozmo {
     }
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

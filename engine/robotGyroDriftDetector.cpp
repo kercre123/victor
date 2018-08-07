@@ -14,7 +14,7 @@
 #include <limits> // std::numeric_limits<>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD(10.f);
@@ -36,7 +36,7 @@ RobotGyroDriftDetector::RobotGyroDriftDetector()
 
 }
 
-void RobotGyroDriftDetector::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void RobotGyroDriftDetector::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }
@@ -203,5 +203,5 @@ void RobotGyroDriftDetector::ResetBiasDetector()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

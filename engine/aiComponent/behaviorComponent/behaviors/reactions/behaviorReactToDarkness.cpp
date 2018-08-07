@@ -30,7 +30,7 @@
 #include <iterator>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kLookHeadAngleMinKey   = "lookHeadAngleMin_deg";

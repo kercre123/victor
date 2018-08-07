@@ -23,7 +23,7 @@ Test_INetworkStreamV3::~Test_INetworkStreamV3() {
   }
 }
 
-void Test_INetworkStreamV3::ReceiveMessage(const Anki::Cozmo::ExternalComms::RtsConnection_3& msg) {
+void Test_INetworkStreamV3::ReceiveMessage(const Anki::Vector::ExternalComms::RtsConnection_3& msg) {
   _queue.push(msg);
 }
 
@@ -81,12 +81,12 @@ void Test_INetworkStreamV3::Update() {
   }
 
   while(_queue.size() > 0) {
-    Anki::Cozmo::ExternalComms::RtsConnection_3 msg = _queue.front();
+    Anki::Vector::ExternalComms::RtsConnection_3 msg = _queue.front();
     _queue.pop();
 
     switch(msg.GetTag()) {
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsConnRequest: {
-        Anki::Cozmo::ExternalComms::RtsConnRequest m = msg.Get_RtsConnRequest();
+      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsConnRequest: {
+        Anki::Vector::ExternalComms::RtsConnRequest m = msg.Get_RtsConnRequest();
         const uint8_t pinDigits = 6;
         _keyExchange = new KeyExchange(pinDigits);
         _keyExchange->SetRemotePublicKey((const uint8_t*)m.publicKey.begin());
@@ -96,12 +96,12 @@ void Test_INetworkStreamV3::Update() {
                   publicKeyPtr + crypto_kx_PUBLICKEYBYTES, 
                   publicKey.begin());
 
-        SendRtsMessage<Cozmo::ExternalComms::RtsConnResponse>
-          (Cozmo::ExternalComms::RtsConnType::FirstTimePair, publicKey);
+        SendRtsMessage<Vector::ExternalComms::RtsConnResponse>
+          (Vector::ExternalComms::RtsConnType::FirstTimePair, publicKey);
         break;
       }
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsNonceMessage: {
-        Anki::Cozmo::ExternalComms::RtsNonceMessage m = msg.Get_RtsNonceMessage();
+      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsNonceMessage: {
+        Anki::Vector::ExternalComms::RtsNonceMessage m = msg.Get_RtsNonceMessage();
 
         _keyExchange->CalculateSharedKeysClient((const uint8_t*)_securePairing->GetPin().c_str());
 
@@ -121,20 +121,20 @@ void Test_INetworkStreamV3::Update() {
                   _keyExchange->GetDecryptKey() + crypto_kx_SESSIONKEYBYTES, 
                   _DecryptKey);
 
-        SendRtsMessage<Cozmo::ExternalComms::RtsAck>
-          ((uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsNonceMessage);
+        SendRtsMessage<Vector::ExternalComms::RtsAck>
+          ((uint8_t)Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsNonceMessage);
 
           _state = MessageState::TestSecure;
         break;
       }
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsChallengeMessage: {
-        Anki::Cozmo::ExternalComms::RtsChallengeMessage m = msg.Get_RtsChallengeMessage();
+      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsChallengeMessage: {
+        Anki::Vector::ExternalComms::RtsChallengeMessage m = msg.Get_RtsChallengeMessage();
 
         uint32_t challenge = m.number + 1;
-        SendRtsMessage<Cozmo::ExternalComms::RtsChallengeMessage>(challenge);
+        SendRtsMessage<Vector::ExternalComms::RtsChallengeMessage>(challenge);
         break;
       }
-      case Anki::Cozmo::ExternalComms::RtsConnection_3Tag::RtsChallengeSuccessMessage: {
+      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsChallengeSuccessMessage: {
         _connected = true;
         break;
       }
@@ -218,8 +218,8 @@ void Test_INetworkStreamV3::Test(RtsComms* securePairing) {
 
 template<typename T, typename... Args>
 void Test_INetworkStreamV3::SendRtsMessage(Args&&... args) {
-  Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(
-    Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
+  Anki::Vector::ExternalComms::ExternalComms msg = Anki::Vector::ExternalComms::ExternalComms(
+    Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
   std::vector<uint8_t> messageData(msg.Size());
   const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 

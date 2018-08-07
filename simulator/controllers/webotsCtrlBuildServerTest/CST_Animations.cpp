@@ -17,7 +17,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const constexpr float kTimeToWaitForAnimations_s = 3.0f;
@@ -183,6 +183,6 @@ void CST_Animations::HandleAnimationAvailable(const ExternalInterface::Animation
 
   
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

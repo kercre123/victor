@@ -162,7 +162,7 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
 {

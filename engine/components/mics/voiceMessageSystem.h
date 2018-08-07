@@ -28,7 +28,7 @@ namespace Json {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 
@@ -187,7 +187,7 @@ const VoiceMessageSystem::MessageRecord& VoiceMessageSystem::GetMessageRecordAtI
   return _messages[index];
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Components_VoiceMessageSystem_H_

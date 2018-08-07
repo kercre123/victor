@@ -37,7 +37,7 @@
 #include "util/transport/udpTransport.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   //const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
   
@@ -213,7 +213,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("GameComms.AdvertiseToService", "Sending registration for UI device %d at address %s on port %d/%d", regMsg_.id, regMsg_.ip.c_str(),
            (int)regMsg_.toEnginePort, (int)regMsg_.fromEnginePort);
   
-    Cozmo::ExternalInterface::MessageGameToEngine outMessage;
+    Vector::ExternalInterface::MessageGameToEngine outMessage;
     outMessage.Set_AdvertisementRegistrationMsg(regMsg_);
     
     uint8_t messageBuffer[64];
@@ -223,7 +223,7 @@ namespace Cozmo {
   }
   
   
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki
 
 

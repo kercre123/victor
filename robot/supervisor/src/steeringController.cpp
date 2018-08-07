@@ -31,7 +31,7 @@
 #define INVALID_IDEAL_FOLLOW_LINE_IDX std::numeric_limits<s16>::max()
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   namespace SteeringController {
 
 
@@ -719,7 +719,7 @@ namespace Anki {
       f32 currDesiredAngularVel, currDesiredAngle;
       vpg_.Step(currDesiredAngularVel, currDesiredAngle);
 
-      const Radians& currAngle = Cozmo::Localization::GetCurrPose_angle();
+      const Radians& currAngle = Vector::Localization::GetCurrPose_angle();
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currDesiredAngularVel / PI = arcVel / (PI * R)
@@ -952,5 +952,5 @@ namespace Anki {
 
     
   } // namespace SteeringController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

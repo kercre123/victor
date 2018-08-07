@@ -23,7 +23,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class ActionList;
@@ -70,7 +70,7 @@ private:
 };
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_RobotEventHandler_H__

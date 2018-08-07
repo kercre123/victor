@@ -36,7 +36,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // How long before deleting an unnamed, unobserved face.
   // NOTE: we never delete _named_ faces.
@@ -93,7 +93,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+  void FaceWorld::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
   {
     _robot = robot;
     if(robot->HasExternalInterface()) {
@@ -1114,5 +1114,5 @@ namespace Cozmo {
   }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -12,7 +12,7 @@
 #include "engine/events/BaseStationEvent.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
 //==============================================================================================================================
 // These macros expand into the definitions of our required functions for each event defined in BaseStationEventDefinitions.def
@@ -42,5 +42,5 @@ namespace Anki {
 #undef EVENT_ARG
 #undef EVENT_BEGIN
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

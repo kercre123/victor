@@ -38,7 +38,7 @@ namespace Vision{
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 class Animation;
@@ -99,7 +99,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_CANNED_ANIMATION_LOADER_H

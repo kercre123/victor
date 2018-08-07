@@ -4,7 +4,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 TestMode {
   TM_NONE,
@@ -92,5 +92,5 @@ message RawPWM
   int_16 pwm[4]
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

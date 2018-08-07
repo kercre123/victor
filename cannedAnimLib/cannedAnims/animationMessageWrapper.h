@@ -23,7 +23,7 @@ namespace Vision{
 class ImageRGB565;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class RobotAudioKeyFrame;
 
@@ -48,7 +48,7 @@ struct AnimationMessageWrapper{
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ANIMATION_MESSAGE_WRAPPER_H

@@ -28,7 +28,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AnimContext;
 class AnimationStreamer;

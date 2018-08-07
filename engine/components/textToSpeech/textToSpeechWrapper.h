@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class TextToSpeechCoordinator;
 
@@ -98,7 +98,7 @@ private:
   OnUtteranceCompleteCallback _finishedCallback;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Components_TextToSpeechWrapper_H__

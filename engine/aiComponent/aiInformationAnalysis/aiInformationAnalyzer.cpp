@@ -25,7 +25,7 @@
 #include <type_traits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIInformationAnalyzer::AIInformationAnalyzer()
@@ -37,7 +37,7 @@ AIInformationAnalyzer::AIInformationAnalyzer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIInformationAnalyzer::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
+void AIInformationAnalyzer::InitDependent(Vector::Robot* robot, const AICompMap& dependentComps)
 {
   _robot = robot;
 }
@@ -186,5 +186,5 @@ bool AIInformationAnalyzer::RemoveRequest(RequestSet& fromSet, const std::string
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

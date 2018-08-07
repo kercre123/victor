@@ -68,7 +68,7 @@
 #define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
@@ -1713,5 +1713,5 @@ void ICozmoBehavior::SetDebugStateNameToWebViz() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

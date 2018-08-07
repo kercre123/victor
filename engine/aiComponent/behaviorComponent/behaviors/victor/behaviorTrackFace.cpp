@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kFaceSelectionPenaltiesKey = "faceSelectionPenalties";

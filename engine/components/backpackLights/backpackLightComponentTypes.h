@@ -18,7 +18,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct BackpackLightData;
 class BackpackLightComponent;
@@ -55,7 +55,7 @@ private:
   
 }; // class LightDataLocator
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_Components_BackpackLightComponentTypes_H__

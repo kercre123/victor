@@ -30,7 +30,7 @@
 //const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::SayTextAction(const std::string& text,
@@ -215,5 +215,5 @@ void SayTextAction::UpdateAnimationToFitDuration(const float duration_ms)
 } // UpdateAnimationToFitDuration()
 #endif
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

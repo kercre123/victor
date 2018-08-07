@@ -22,7 +22,7 @@
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     //////////////////////// HistRobotState /////////////////////////
     
@@ -927,5 +927,5 @@ namespace Anki {
       }
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

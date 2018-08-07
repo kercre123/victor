@@ -45,7 +45,7 @@
 // * use BehaviorPromptUserForVoiceCommand for the question/response
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace
 {
@@ -523,5 +523,5 @@ void BehaviorKnowledgeGraphQuestion::PlayStreamingCues( bool onBegin )
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

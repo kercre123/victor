@@ -19,7 +19,7 @@
 #include <list>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDevImageCapture : public ICozmoBehavior
 {
@@ -80,7 +80,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevImageCapture_H__

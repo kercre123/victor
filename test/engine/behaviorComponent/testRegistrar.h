@@ -14,7 +14,7 @@
 #define __Test_TestRegistrar_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 template <class T>
 struct TestRegistrar

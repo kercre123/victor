@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum int_32 BackpackAnimationTrigger
 {
@@ -38,5 +38,5 @@ enum int_32 BackpackAnimationTrigger
   Count
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

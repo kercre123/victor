@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
   
 #define ENABLE_TREAD_LOG 0

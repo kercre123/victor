@@ -53,7 +53,7 @@ namespace {
 CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false);
 
 #if REMOTE_CONSOLE_ENABLED
-static Anki::Cozmo::ThreadedPrintStressTester stressTester;
+static Anki::Vector::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
 const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
@@ -95,7 +95,7 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)

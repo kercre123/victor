@@ -19,7 +19,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 inline const char* MessageTagToString(const ExternalInterface::MessageEngineToGameTag& tag)
 {

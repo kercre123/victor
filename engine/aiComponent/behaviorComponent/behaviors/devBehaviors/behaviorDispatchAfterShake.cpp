@@ -25,7 +25,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   
@@ -225,5 +225,5 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

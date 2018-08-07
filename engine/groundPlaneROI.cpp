@@ -21,7 +21,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 const f32 GroundPlaneROI::_dist = 45.f;
 const f32 GroundPlaneROI::_length = 150.f;
@@ -267,5 +267,5 @@ bool GroundPlaneROI::ClampQuad(Quad2f& quad, const Point2f& groundLeft, const Po
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

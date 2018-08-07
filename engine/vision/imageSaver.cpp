@@ -22,7 +22,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static const char* kLogChannelName = "VisionSystem";
   
@@ -241,7 +241,7 @@ std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *exten
   return fullFilename;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

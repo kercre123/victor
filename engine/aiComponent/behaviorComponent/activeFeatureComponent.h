@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 class StatusLogHandler;

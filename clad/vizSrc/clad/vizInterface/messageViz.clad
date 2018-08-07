@@ -14,7 +14,7 @@
 #include "clad/types/memoryMap.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace VizInterface {
 
 message RobotStateMessage
@@ -292,7 +292,7 @@ message DockingErrorSignal
 // VizCameraParams
 message CameraParams
 {
-  Anki::Cozmo::CameraParams cameraParams
+  Anki::Vector::CameraParams cameraParams
 }
 
 // VizVisionMarker
@@ -432,5 +432,5 @@ message ObjectAccelState
 autounion MessageViz { }
 
 } // namespace Viz
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -18,7 +18,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 #pragma mark - 
 #pragma mark IVisuallyVerifyAction
@@ -368,5 +368,5 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
 
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namesace Anki

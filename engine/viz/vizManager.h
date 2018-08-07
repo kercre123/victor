@@ -44,7 +44,7 @@ namespace Anki {
     class TrackedFace;
   }
   
-  namespace Cozmo {
+  namespace Vector {
 
   namespace VizInterface {
   class MessageViz;
@@ -775,7 +775,7 @@ namespace Anki {
       }
       DrawPoly(polyID, newCircle, color);
     }
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

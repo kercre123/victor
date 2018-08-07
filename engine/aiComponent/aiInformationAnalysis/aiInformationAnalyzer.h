@@ -26,7 +26,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 
@@ -59,7 +59,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // IDependencyManagedComponent<AIComponentID> functions
-  virtual void InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const AICompMap& dependentComps) override;
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
   
@@ -132,7 +132,7 @@ private:
   INavMap::BorderRegionVector _interestingRegions;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

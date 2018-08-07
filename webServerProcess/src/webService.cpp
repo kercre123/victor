@@ -47,7 +47,7 @@
 
 #define LOG_CHANNEL "WebService"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 namespace {
 #ifndef SIMULATOR
@@ -767,7 +767,7 @@ static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
   if (query.substr(0, 5) == "proc=")
   {
     struct mg_context* ctx = mg_get_context(conn);
-    Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+    Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
 
     std::string remainder = query.substr(5);
     std::vector<std::string> args;
@@ -868,7 +868,7 @@ static int ProcessStatus(struct mg_connection *conn, void *cbdata)
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace WebService {
 
 WebService::WebService()
@@ -1496,7 +1496,7 @@ int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* 
 void WebService::HandleWebSocketsReady(struct mg_connection* conn, void* cbparams)
 {
   struct mg_context* ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
   DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
   that->OnOpenWebSocket( conn );
 }
@@ -1515,7 +1515,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
     {
       if( (dataLen >= 2) && (data[0] == '{') ) {
         struct mg_context* ctx = mg_get_context(conn);
-        Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+        Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
         DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
 
         Json::Reader reader;
@@ -1545,7 +1545,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
 void WebService::HandleWebSocketsClose(const struct mg_connection* conn, void* cbparams)
 {
   struct mg_context* ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
   DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
   that->OnCloseWebSocket( conn );
 }
@@ -1639,13 +1639,13 @@ void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 }
 
 } // namespace WebService
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #else
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace WebService {
 
   WebService::WebService()
@@ -1689,7 +1689,7 @@ namespace WebService {
   }
 
 } // namespace WebService
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_WEBSERVICE_ENABLED

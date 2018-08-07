@@ -17,7 +17,7 @@
 #include "engine/components/habitatDetectorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionRobotInHabitat::ConditionRobotInHabitat(const Json::Value& config)

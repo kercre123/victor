@@ -14,7 +14,7 @@
 #include <random>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 uint8_t BLECozmoMessage::ChunkifyMessage(const uint8_t* bytes, const uint32_t numBytesTotal, bool encrypted)
 {
@@ -144,5 +144,5 @@ bool BLECozmoMessage::IsMessageComplete() const
     && _messageChunks[_numChunksUsed-1][kMessageExactMessageLength-kMessageFlagsSize] & MESSAGE_END;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

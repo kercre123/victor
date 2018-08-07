@@ -31,7 +31,7 @@
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Messages {
 
       namespace {
@@ -270,7 +270,7 @@ namespace Anki {
         // Each packet is a single message
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
+          Anki::Vector::RobotInterface::EngineToRobot msgBuf;
 
           // Copy into structured memory
           memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
@@ -284,7 +284,7 @@ namespace Anki {
           }
           else
           {
-            Anki::Cozmo::Messages::ProcessMessage(msgBuf);
+            Anki::Vector::Messages::ProcessMessage(msgBuf);
           }
         }
 
@@ -717,5 +717,5 @@ namespace Anki {
 
 
     } // namespace HAL
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

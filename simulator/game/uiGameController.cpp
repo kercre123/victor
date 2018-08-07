@@ -27,7 +27,7 @@
 #define LOG_CHANNEL "Keyboard"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
       // Private members:
       namespace {
@@ -2219,5 +2219,5 @@ namespace Anki {
       size_t numBytes = message.Pack(buf, message.Size());
       _physicsControllerClient.Send((char*)buf, numBytes);
     }
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

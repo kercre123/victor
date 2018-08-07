@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace CladProtoTypeTranslator {
 
@@ -64,7 +64,7 @@ namespace CladProtoTypeTranslator {
 }
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Engine_ExternalInterface_CladProtoTypeTranslator_H__

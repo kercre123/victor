@@ -25,7 +25,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -563,5 +563,5 @@ void CubeSpinnerGame::GetGameSnapshot(GameSnapshot& outSnapshot) const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

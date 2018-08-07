@@ -27,7 +27,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const BEIComponentWrapper& BehaviorExternalInterface::GetComponentWrapper(BEIComponentID componentID) const
@@ -262,5 +262,5 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::VisionScheduleMediator,    BEIComponentWrapper(visionScheduleMediator)}
 }){}
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

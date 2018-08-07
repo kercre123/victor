@@ -6,7 +6,7 @@
 #include "clad/types/behaviorComponent/behaviorStages.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 
@@ -42,5 +42,5 @@ no_default_constructor structure RobotPublicState{
   BehaviorStageStruct userFacingBehaviorStageStruct
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

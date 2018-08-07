@@ -22,7 +22,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace  Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Head_deg/s", 10.f);
 CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Body_deg/s", 30.f);
@@ -37,7 +37,7 @@ PetWorld::PetWorld()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PetWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void PetWorld::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }
@@ -197,5 +197,5 @@ const Vision::TrackedPet* PetWorld::GetPetByID(Vision::FaceID_t faceID) const
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

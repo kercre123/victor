@@ -35,7 +35,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -378,6 +378,6 @@ void BehaviorFeedingEat::SetState_internal(State state, const std::string& state
 
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

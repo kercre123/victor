@@ -8,7 +8,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_32 VariableSnapshotId {
   // robot versioning snapshot variables
@@ -27,5 +27,5 @@ enum uint_32 VariableSnapshotId {
   Count
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

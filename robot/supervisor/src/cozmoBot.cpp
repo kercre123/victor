@@ -30,7 +30,7 @@
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Robot {
 
       // "Private Member Variables"
@@ -393,5 +393,5 @@ namespace Anki {
       } // Robot::step_MainExecution()
 
     } // namespace Robot
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

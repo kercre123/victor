@@ -58,7 +58,7 @@ static int conceal(int val) {
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 float AcapelaTTS::GetSpeechRate(int speed, float durationScalar)
@@ -133,5 +133,5 @@ std::string AcapelaTTS::GetLicense() {
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

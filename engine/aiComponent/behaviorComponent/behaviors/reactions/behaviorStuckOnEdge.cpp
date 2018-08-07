@@ -20,7 +20,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static const u8 kTracksToLock = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
 
@@ -85,5 +85,5 @@ void BehaviorStuckOnEdge::OnBehaviorDeactivated()
 {
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

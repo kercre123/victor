@@ -30,7 +30,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   constexpr float kNominalCubeDist_mm = 150.0f;

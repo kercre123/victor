@@ -34,7 +34,7 @@
 
 // Declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     class BeatDetector;
     namespace MicData {
       class MicDataSystem;
@@ -52,7 +52,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 class MicDataProcessor {
@@ -179,7 +179,7 @@ private:
 };
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_MicDataProcessor_H_

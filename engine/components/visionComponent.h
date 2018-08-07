@@ -57,7 +57,7 @@ namespace Vision {
   class TrackedFace;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class Robot;
@@ -83,7 +83,7 @@ struct DockingErrorSignal;
     //////
     // IDependencyManagedComponent functions
     //////
-    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+    virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
       dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
@@ -549,7 +549,7 @@ struct DockingErrorSignal;
     return _processingPeriod_ms;
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H

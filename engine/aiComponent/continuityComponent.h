@@ -23,7 +23,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 
@@ -63,7 +63,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_AI_ContinuityComponent_H__

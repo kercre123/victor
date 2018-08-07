@@ -35,7 +35,7 @@
 #define LOG_CHANNEL "PhotographyManager"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
 
@@ -684,5 +684,5 @@ void PhotographyManager::OnRequestDeletePhoto(const external_interface::DeletePh
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

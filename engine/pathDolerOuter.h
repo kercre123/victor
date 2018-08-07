@@ -18,7 +18,7 @@
 #include "coretech/planning/shared/path.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 class MessageHandler;
 }

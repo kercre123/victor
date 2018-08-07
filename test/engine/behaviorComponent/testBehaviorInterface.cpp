@@ -30,7 +30,7 @@
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 static const BehaviorClass emptyClass = BEHAVIOR_CLASS(Wait);
 static const BehaviorID emptyID = BEHAVIOR_ID(Wait);

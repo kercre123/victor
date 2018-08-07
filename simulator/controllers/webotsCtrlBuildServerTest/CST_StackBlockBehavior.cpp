@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class TestState {
   Init,                         // Init everything

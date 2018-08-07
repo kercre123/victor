@@ -19,7 +19,7 @@
 #include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 namespace ExternalInterface {
@@ -210,7 +210,7 @@ bool BehaviorLookInPlaceMemoryMap::NeedsVisit(int16_t index) const
   return ret;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

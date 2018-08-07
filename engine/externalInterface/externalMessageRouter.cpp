@@ -16,7 +16,7 @@
 #include "engine/wallTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 uint32_t ExternalMessageRouter::GetTimestampUTC()
 {

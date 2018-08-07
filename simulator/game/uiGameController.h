@@ -41,7 +41,7 @@ namespace Anki {
     }
   }
   
-namespace Cozmo {
+namespace Vector {
 
 class UiGameController {
 
@@ -584,7 +584,7 @@ private:
   
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

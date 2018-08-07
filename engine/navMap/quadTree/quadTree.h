@@ -19,7 +19,7 @@ namespace Anki {
 
 class Pose3d;
 
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class QuadTree : public QuadTreeNode

@@ -32,7 +32,7 @@
 
 // Declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace CloudMic {
       class Message;
     }
@@ -56,7 +56,7 @@ namespace Anki {
 class LocalUdpServer;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 class MicDataSystem {
@@ -94,7 +94,7 @@ public:
   void AudioSaveCallback(const std::string& dest);
 
   BeatInfo GetLatestBeatInfo();
-  const Anki::Cozmo::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
+  const Anki::Vector::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
 
@@ -153,7 +153,7 @@ private:
 };
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_MicData_MicDataSystem_H_

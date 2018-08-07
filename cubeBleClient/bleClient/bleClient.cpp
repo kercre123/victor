@@ -23,7 +23,7 @@
 #include <cmath>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   // If we're not connected, keep trying to connect at this rate

@@ -45,7 +45,7 @@
 #define DEBUG_ANIMATION_LOCKING 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
 CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, "Robot", true);
@@ -59,7 +59,7 @@ MovementComponent::MovementComponent()
 
 }
  
-void MovementComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void MovementComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _animComponent = dependentComps.GetComponentPtr<AnimationComponent>();
@@ -115,7 +115,7 @@ void MovementComponent::OnRobotDelocalized()
   _unexpectedMovement.Reset();
 }
   
-void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
+void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
 {
   _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
   _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
@@ -170,7 +170,7 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
   CheckForUnexpectedMovement(robotState);
 }
 
-void MovementComponent::UpdateOdometers(const Cozmo::RobotState& robotState)
+void MovementComponent::UpdateOdometers(const Vector::RobotState& robotState)
 {
   const float lWheelSpeed_mmps  = robotState.lwheel_speed_mmps;
   const float rWheelSpeed_mmps  = robotState.rwheel_speed_mmps;
@@ -189,7 +189,7 @@ void MovementComponent::UpdateOdometers(const Cozmo::RobotState& robotState)
   _robot->GetComponent<RobotStatsTracker>().IncreaseOdometer(lWheelDelta_mm, rWheelDelta_mm, bodyDelta_mm);
 }
 
-void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
+void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& robotState)
 {
   const bool wasUnexpectedMovementDetected = _unexpectedMovement.IsDetected();
   
@@ -1191,5 +1191,5 @@ void MovementComponent::UnexpectedMovement::GetAvgWheelSpeeds(f32& left, f32& ri
   right = _sumWheelSpeedR_mmps / (f32) _count;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

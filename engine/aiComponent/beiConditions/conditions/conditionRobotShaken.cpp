@@ -19,7 +19,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
@@ -44,5 +44,5 @@ bool ConditionRobotShaken::AreConditionsMetInternal(BehaviorExternalInterface& b
   return shouldTrigger;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

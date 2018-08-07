@@ -472,7 +472,7 @@ Result DASManager::Run(const bool & shutdown)
 
   LOG_DEBUG("DASManager.Run", "Begin reading loop");
   {
-    auto * osState = Anki::Cozmo::OSState::getInstance();
+    auto * osState = Anki::Vector::OSState::getInstance();
     DEV_ASSERT(osState != nullptr, "DASManager.Run.InvalidOSState");
     if (osState->HasValidEMR()) {
       _robot_id = osState->GetSerialNumberAsString();
@@ -481,7 +481,7 @@ Result DASManager::Run(const bool & shutdown)
     }
     _robot_version = osState->GetRobotVersion();
     _boot_id = osState->GetBootID();
-    Cozmo::OSState::removeInstance();
+    Vector::OSState::removeInstance();
   }
 
   _profile_id = "system";

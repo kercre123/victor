@@ -32,7 +32,7 @@ namespace Anki {
     class ImageCache;
   }
 
-namespace Cozmo {
+namespace Vector {
     
 // Forward declaration:
 struct VisionPoseData;
@@ -88,7 +88,7 @@ private:
 
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_LaserPointDetector_H__ */

@@ -17,7 +17,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     enum class TestState {
       PlayAnimation,
@@ -99,6 +99,6 @@ namespace Anki {
       return _result;
     }
     
-  } // end namespace Cozmo
+  } // end namespace Vector
 } // end namespace Anki
 

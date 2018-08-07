@@ -23,7 +23,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct ActiveAccel;
   

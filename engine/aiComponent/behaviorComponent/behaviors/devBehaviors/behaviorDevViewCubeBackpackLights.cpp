@@ -21,7 +21,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kCubeTriggersKey = "cubeTriggers";

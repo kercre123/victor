@@ -20,9 +20,9 @@
 
 
 using namespace Anki;
-using namespace Cozmo;
+using namespace Vector;
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 // These legacy animations are from the days when animations were exported with float values instead of ints
 // The JSON -> binary conversion clamps these values, but the result is that the animations don't match and

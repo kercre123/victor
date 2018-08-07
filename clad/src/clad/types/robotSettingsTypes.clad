@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Note: Keep this enum in sync with the JdocType enum defined in settings.proto
 enum uint_8 JdocType
@@ -53,5 +53,5 @@ enum uint_8 EyeColor
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

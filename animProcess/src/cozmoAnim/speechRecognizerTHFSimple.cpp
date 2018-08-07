@@ -27,7 +27,7 @@
 #include <sstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Anonymous namespace to use with debug console vars for manipulating input
 namespace {
@@ -387,5 +387,5 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   }
 }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

@@ -21,7 +21,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 class CannedAnimationContainer
 {
@@ -44,7 +44,7 @@ private:
   
 }; // class CannedAnimationContainer
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H

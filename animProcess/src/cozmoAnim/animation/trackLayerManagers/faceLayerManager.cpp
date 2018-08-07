@@ -26,7 +26,7 @@
 #define CONSOLE_GROUP_NAME "Face.Layers"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 namespace {
 CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, CONSOLE_GROUP_NAME, 30000);
@@ -304,6 +304,6 @@ u32 FaceLayerManager::GetMaxBlinkSpacingTimeForScreenProtection_ms() const
   return kMaxBlinkSpacingTimeForScreenProtection_ms;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

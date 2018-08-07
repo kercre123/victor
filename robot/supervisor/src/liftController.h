@@ -18,7 +18,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace LiftController {
       
       Result Init();
@@ -96,7 +96,7 @@ namespace Anki {
       void CheckForLoad(void (*callback)(bool) = SendLiftLoadMessage);
       
     } // namespace LiftController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_LIFT_CONTROLLER_H_

@@ -22,7 +22,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AsyncMessageGateComponent::AsyncMessageGateComponent(IExternalInterface* externalInterface,
@@ -347,5 +347,5 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

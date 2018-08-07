@@ -17,7 +17,7 @@
 #include "coretech/common/engine/math/polygon.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // fwd declaration
 class Robot;
@@ -45,7 +45,7 @@ void GetBorderPoly(INavMap* memoryMap,
                    const MemoryMapTypes::EContentType innerType,
                    std::vector<Poly2f>& outPoly);
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // 

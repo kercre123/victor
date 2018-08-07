@@ -34,7 +34,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* kTileSizeKey = "tileSize_pixels";
@@ -527,5 +527,5 @@ bool BehaviorPuzzleMaze::IsPuzzleCompleted()
   return _dVars.isMazeSolved;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -22,7 +22,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward Declaration
 class BehaviorSystemManager;
@@ -87,7 +87,7 @@ private:
   
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorComponent_BehaviorEventComponent_H__

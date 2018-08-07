@@ -22,7 +22,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const bool kDebugFaceDist = false;
@@ -168,5 +168,5 @@ bool ConditionFacePositionUpdated::AddDesiredFace(BehaviorExternalInterface& beh
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

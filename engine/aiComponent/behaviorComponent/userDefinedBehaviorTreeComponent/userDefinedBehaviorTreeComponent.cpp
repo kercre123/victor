@@ -23,7 +23,7 @@
 #define __Cozmo_Basestation_UserDefinedBehaviorTreeComponent__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 UserDefinedBehaviorTreeComponent::UserDefinedBehaviorTreeComponent()
@@ -37,7 +37,7 @@ UserDefinedBehaviorTreeComponent::~UserDefinedBehaviorTreeComponent()
 {
 }
 
-void UserDefinedBehaviorTreeComponent::InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents)
+void UserDefinedBehaviorTreeComponent::InitDependent(Vector::Robot* robot, const BCCompMap& dependentComponents)
 { 
   _behaviorContainer = dependentComponents.GetComponentPtr<BehaviorContainer>();
   auto& bei = dependentComponents.GetComponent<BehaviorExternalInterface>();

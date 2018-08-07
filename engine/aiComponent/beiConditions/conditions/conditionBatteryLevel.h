@@ -18,7 +18,7 @@
 #include "clad/types/batteryTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionBatteryLevel : public IBEICondition
 {

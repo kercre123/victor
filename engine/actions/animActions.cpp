@@ -35,7 +35,7 @@
 
 namespace Anki {
 
-  namespace Cozmo {
+  namespace Vector {
 
     namespace {
       static constexpr const char* kManualBodyTrackLockName = "PlayAnimationOnChargerSpecialLock";

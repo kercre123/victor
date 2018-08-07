@@ -26,7 +26,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class ObjectInteractionCacheEntry;
 class ObservableObject;
@@ -158,7 +158,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_ObjectInteractionInfoCache_H__

@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AudioLayerManager : public ITrackLayerManager<RobotAudioKeyFrame>
 {

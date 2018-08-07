@@ -16,7 +16,7 @@
 #include "engine/actions/compoundActions.h"
 #include "gtest/gtest.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 TEST(Action, CreateAndDestroy)

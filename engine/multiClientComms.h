@@ -35,7 +35,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   typedef struct {
     AdvertisementMsg devInfo;
@@ -184,7 +184,7 @@ namespace Cozmo {
     
   };
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki
 
 #endif  // #ifndef BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_

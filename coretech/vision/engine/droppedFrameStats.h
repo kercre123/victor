@@ -81,7 +81,7 @@ private:
 }; // class DroppedFrameStats
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Vision_Basestation_DroppedFrameStats_H__

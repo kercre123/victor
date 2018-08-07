@@ -20,7 +20,7 @@
 #include "engine/cozmoContext.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using FaceID_t = Vision::FaceID_t;
 

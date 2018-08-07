@@ -27,7 +27,7 @@
 #define LOG_CHANNEL "TextToSpeechProvider"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 TextToSpeechProvider::TextToSpeechProvider(const AnimContext * ctx, const Json::Value& tts_config)
@@ -66,5 +66,5 @@ Result TextToSpeechProvider::CreateAudioData(const std::string& text,
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

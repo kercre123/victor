@@ -19,7 +19,7 @@
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 CubeLightAnimationContainer::CubeLightAnimationContainer(const InitMap& initializationMap)
 {
@@ -62,5 +62,5 @@ CubeLightAnimation::Animation* CubeLightAnimationContainer::GetAnimation(const s
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

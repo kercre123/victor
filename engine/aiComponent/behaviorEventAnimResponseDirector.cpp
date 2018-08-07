@@ -14,7 +14,7 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -38,5 +38,5 @@ AnimationTrigger BehaviorEventAnimResponseDirector::GetAnimationToPlayForActionR
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

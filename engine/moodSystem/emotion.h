@@ -25,7 +25,7 @@ namespace Util {
   class GraphEvaluator2d;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class MoodDecayEvaulator;
   
@@ -78,7 +78,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

@@ -4,7 +4,7 @@
 // Copyright: Anki, inc. 2017
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 BehaviorChooserType {
   Scoring,
@@ -13,5 +13,5 @@ enum uint_8 BehaviorChooserType {
 
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

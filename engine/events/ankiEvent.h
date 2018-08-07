@@ -20,7 +20,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 template <typename DataType>
 class AnkiEvent
@@ -56,7 +56,7 @@ protected:
 }; // class Event
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //  ANKI_COZMO_EVENT_H

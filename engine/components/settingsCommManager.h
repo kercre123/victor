@@ -23,7 +23,7 @@
 #include "clad/types/robotSettingsTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 template <typename T>
 class AnkiEvent;
@@ -81,7 +81,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Components_settingsCommManager_H__

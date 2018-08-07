@@ -29,7 +29,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 SDKComponent::SDKComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::SDK)
@@ -48,7 +48,7 @@ void SDKComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 }
 
 
-void SDKComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   // TODO It's preferred, where possible, to use dependentComps rather than caching robot
   // directly (makes it much easier to write unit tests)
@@ -107,5 +107,5 @@ void SDKComponent::DispatchSDKActivationResult(bool enabled) {
   _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(sar)));  
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

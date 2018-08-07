@@ -22,7 +22,7 @@
 #include "util/helpers/ankiDefines.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 // Keep Face Alive Layer Names

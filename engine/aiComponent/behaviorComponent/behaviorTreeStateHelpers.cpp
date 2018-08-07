@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AreBehaviorsActivatedHelper::AreBehaviorsActivatedHelper(const BehaviorContainer& bc, const std::set<BehaviorID>& behaviorIDs)
@@ -66,5 +66,5 @@ bool AreBehaviorsActivatedHelper::AreBehaviorsActivated() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

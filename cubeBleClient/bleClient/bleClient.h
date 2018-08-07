@@ -21,7 +21,7 @@
 #include <thread>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   class BleClient : public Anki::BluetoothDaemon::IPCClient {
   public:
     // Constructor

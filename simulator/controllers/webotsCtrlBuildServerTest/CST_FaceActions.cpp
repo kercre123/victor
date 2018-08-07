@@ -18,7 +18,7 @@
 #include "util/bitFlags/bitFlags.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     namespace
     {
@@ -188,6 +188,6 @@ namespace Anki {
     
     // ================ End of message handler callbacks ==================
     
-  } // end namespace Cozmo
+  } // end namespace Vector
 } // end namespace Anki
 

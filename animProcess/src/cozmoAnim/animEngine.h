@@ -17,7 +17,7 @@
 
 // Forward declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     class AnimContext;
     class AnimationStreamer;
     class StreamingAnimationModifier;
@@ -43,7 +43,7 @@ namespace Anki {
 } // Anki
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AnimEngine
 {
@@ -77,7 +77,7 @@ protected:
 }; // class AnimEngine
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ANIM_ENGINE_H

@@ -28,7 +28,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 std::set<ObjectFamily> _objectFamilies = {{
@@ -318,5 +318,5 @@ bool ConditionObjectPositionUpdated::HasDesiredReactionTargets(BehaviorExternalI
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

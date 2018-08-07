@@ -40,7 +40,7 @@ webots::Supervisor active_object_controller;
 uint8_t intensity[ANIMATION_CHANNELS * COLOR_CHANNELS];
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ActiveBlock {
 
 namespace {
@@ -399,5 +399,5 @@ Result Update() {
 
 
 }  // namespace ActiveBlock
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki

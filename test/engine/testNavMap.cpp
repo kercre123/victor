@@ -24,7 +24,7 @@
 #include "engine/robot.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 extern CozmoContext* cozmoContext;
 

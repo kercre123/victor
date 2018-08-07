@@ -22,7 +22,7 @@ namespace Anki {
 namespace Util {
 class RandomGenerator;
 }
-namespace Cozmo {
+namespace Vector {
 namespace AudioKeyFrameType {
 
 
@@ -168,7 +168,7 @@ struct AudioRef {
 
 
 } // namespace AudioKeyFrame
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_AudioKeyFrameTypes_H__

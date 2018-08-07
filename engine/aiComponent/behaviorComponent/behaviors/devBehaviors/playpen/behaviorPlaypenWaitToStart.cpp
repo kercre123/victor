@@ -19,7 +19,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BehaviorPlaypenWaitToStart::BehaviorPlaypenWaitToStart(const Json::Value& config)
 : IBehaviorPlaypen(config)

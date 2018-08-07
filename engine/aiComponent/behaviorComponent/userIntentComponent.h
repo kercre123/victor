@@ -29,7 +29,7 @@
 #include <mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorComponentCloudServer;
 class CozmoContext;

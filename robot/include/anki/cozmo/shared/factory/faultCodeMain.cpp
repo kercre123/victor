@@ -42,7 +42,7 @@ int main(int argc, char * argv[])
       char* end;
       // Convert first argument from a string to a uint16_t
       uint16_t code = (uint16_t)strtoimax(argv[1], &end, 10);
-      rc = Anki::Cozmo::FaultCode::DisplayFaultCode(code);
+      rc = Anki::Vector::FaultCode::DisplayFaultCode(code);
     }
     
     return rc;

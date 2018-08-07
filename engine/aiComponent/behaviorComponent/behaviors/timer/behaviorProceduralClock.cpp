@@ -28,7 +28,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kClockLayoutKey         = "clockLayout";
@@ -339,5 +339,5 @@ SmartFaceID BehaviorProceduralClock::UpdateTargetFace()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

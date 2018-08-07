@@ -19,7 +19,7 @@
 
 #include "engine/components/cubes/ledAnimation.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 TEST(CubeLedAnimation, TestAllFields)
 {

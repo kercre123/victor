@@ -26,7 +26,7 @@
 
 namespace Anki {
 class Pose3d;
-namespace Cozmo {
+namespace Vector {
 
 class CliffSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {

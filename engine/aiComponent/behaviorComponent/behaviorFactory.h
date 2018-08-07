@@ -21,7 +21,7 @@
 #include "json/json-forwards.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorFactory : private Util::noncopyable
 {

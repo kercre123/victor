@@ -3,7 +3,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 MotorID {
   MOTOR_LEFT_WHEEL = 0,
@@ -29,5 +29,5 @@ message MotorAutoEnabled
   bool enabled
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

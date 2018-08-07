@@ -18,7 +18,7 @@
 #include <iomanip>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   
 DevLoggerProvider::DevLoggerProvider(Util::Dispatch::Queue* queue, const std::string& baseDirectory, std::size_t maxFileSize)
@@ -36,5 +36,5 @@ void DevLoggerProvider::Log(ILoggerProvider::LogLevel logLevel, const std::strin
   Util::SaveToFileLoggerProvider::Log(logLevel, modMessageStream.str());
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

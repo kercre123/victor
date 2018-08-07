@@ -31,7 +31,7 @@
 #define DEBUG_INSPECT_CUBE_BEHAVIOR 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 

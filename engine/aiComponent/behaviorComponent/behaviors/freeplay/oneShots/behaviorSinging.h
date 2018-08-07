@@ -22,7 +22,7 @@
 #include "clad/audio/audioSwitchTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorSinging : public ICozmoBehavior
 {

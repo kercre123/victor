@@ -18,7 +18,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 DevLogProcessor::DevLogProcessor(const std::string& directory)
 : _directoryName(directory)
@@ -109,5 +109,5 @@ void DevLogProcessor::SetPrintCallback(DevLogReader::DataCallback callback)
   }
 }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

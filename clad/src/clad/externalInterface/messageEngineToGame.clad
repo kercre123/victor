@@ -49,7 +49,7 @@
 #include "util/ankiLab/ankiLabDef.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -886,5 +886,5 @@ autounion MessageEngineToGame
 }
 
 } // namespace ExternalInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

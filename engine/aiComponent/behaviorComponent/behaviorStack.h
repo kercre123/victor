@@ -29,7 +29,7 @@ class Value;
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class AsyncMessageGateComponent;
@@ -119,7 +119,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

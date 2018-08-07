@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class ActiveFeature : uint32_t;
 enum class BehaviorStat : uint32_t;
@@ -52,7 +52,7 @@ public:
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::JdocsManager);
   }
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 

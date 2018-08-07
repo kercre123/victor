@@ -20,7 +20,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   static constexpr float kMaxNormalAngle = DEG_TO_RAD(60.0f); // how steep of an angle we can see

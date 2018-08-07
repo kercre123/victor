@@ -22,7 +22,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* const kNewAreaAnimTriggerKey = "newAreaAnimTrigger";
@@ -106,5 +106,5 @@ void BehaviorThinkAboutBeacons::SelectNewBeacon()
   whiteboard.AddBeacon( GetBEI().GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

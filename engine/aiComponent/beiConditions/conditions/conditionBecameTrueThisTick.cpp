@@ -18,7 +18,7 @@
 #include "lib/util/source/anki/util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kSubConditionKey  = "subCondition";
@@ -70,5 +70,5 @@ void ConditionBecameTrueThisTick::BuildDebugFactorsInternal( BEIConditionDebugFa
   factors.AddChild( "subCondition", _subCondition );
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -52,7 +52,7 @@
 #endif
 
 namespace {
-static Anki::Cozmo::Audio::CozmoAudioController* sThis = nullptr;
+static Anki::Vector::Audio::CozmoAudioController* sThis = nullptr;
 static std::string sWritePath;
 const std::string kProfilerCaptureFileName          = "VictorProfilerSession";
 const std::string kProfilerCaptureFileExtension     = "prof";
@@ -67,7 +67,7 @@ const char* const kWebVizModuleName = "audioevents";
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 using namespace AudioEngine;

@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   
     void ImuDataHistory::AddImuData(RobotTimeStamp_t systemTimestamp_ms,
                                     float rateX,

@@ -4,7 +4,7 @@
 // Copyright: Anki, inc. 2017
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Identifies the BEICondition type
 // PLEASE KEEP ALPHABETIZED
@@ -60,5 +60,5 @@ enum uint_8 BEIConditionType {
   UnitTestCondition,
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

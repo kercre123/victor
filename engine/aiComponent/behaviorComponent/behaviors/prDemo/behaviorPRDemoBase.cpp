@@ -23,7 +23,7 @@
 #include "engine/components/mics/micComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

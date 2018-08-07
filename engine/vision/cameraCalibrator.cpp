@@ -36,7 +36,7 @@
 #define DRAW_CALIB_IMAGES 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Min/max size of calibration pattern blobs and distance between them
 CONSOLE_VAR(float, kMaxCalibBlobPixelArea,         "Vision.Calibration", 800.f);

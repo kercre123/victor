@@ -30,7 +30,7 @@ namespace Vision {
 class TrackedFace;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class BehaviorTextToSpeechLoop;
@@ -160,7 +160,7 @@ private:
   
 }; // class BehaviorEnrollFace
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__

@@ -25,7 +25,7 @@ namespace Vision {
   class Undistorter;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 struct ImageSaverParams
 {
@@ -112,7 +112,7 @@ inline const char* ImageSaver::GetThumbnailExtension(int8_t forQuality)
   return (forQuality < 0 ? "thm.png" : "thm.jpg");
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Engine_Vision_ImageSaver_H__ */

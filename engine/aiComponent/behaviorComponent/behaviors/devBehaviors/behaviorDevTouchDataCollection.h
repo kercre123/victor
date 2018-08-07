@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class IBEICondition;
   
@@ -99,7 +99,7 @@ private:
                      CollectionMode cm, DataAnnotation da) const;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDevTouchDataCollection_H__

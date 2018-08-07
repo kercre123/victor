@@ -4,7 +4,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace NVStorage {
 
   enum uint_32 NVConst

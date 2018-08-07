@@ -31,7 +31,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // forward declarations
 class IExternalInterface;
@@ -82,7 +82,7 @@ AnkiEventUtil<TNew, HNew> MakeAnkiEventUtil(IExternalInterface& externalInterfac
   return AnkiEventUtil<TNew, HNew>(externalInterface, object, handlersIn);
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //  __Cozmo_Basestation_AnkiEventUtil_H__

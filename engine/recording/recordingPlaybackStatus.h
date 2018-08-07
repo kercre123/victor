@@ -12,7 +12,7 @@
 #define BASESTATION_RECORDING_RECORDINGPLAYBACKSTATUS_H_
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // Return values for basestation recording/playback interface
@@ -24,7 +24,7 @@ typedef enum {
   RPMS_PLAYBACK_ENDED
 } RecordingPlaybackStatus;
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //BASESTATION_RECORDING_RECORDINGPLAYBACKSTATUS_H_

@@ -20,7 +20,7 @@
 #include "util/signals/simpleSignal.hpp"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   constexpr unsigned int kStatusHistoryLength = 100;

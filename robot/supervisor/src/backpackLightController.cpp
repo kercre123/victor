@@ -22,7 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace BackpackLightController {
 
   namespace {
@@ -147,4 +147,4 @@ namespace BackpackLightController {
 
 } // namespace BackpackLightController
 } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector

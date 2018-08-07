@@ -17,7 +17,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class PhysicsController
 {
@@ -64,7 +64,7 @@ private:
   UdpServer _server;
 };
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki
 
 #endif  //__CozmoPhysics_PhysicsControllerImpl_H__

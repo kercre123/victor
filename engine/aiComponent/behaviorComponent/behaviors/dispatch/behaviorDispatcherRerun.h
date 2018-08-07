@@ -20,7 +20,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDispatcherRerun : public ICozmoBehavior
 {
@@ -72,7 +72,7 @@ private:
   void CheckRerunState();
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_BehaviorDispatcherRerun_H__

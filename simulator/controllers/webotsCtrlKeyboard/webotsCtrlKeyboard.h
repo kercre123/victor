@@ -12,7 +12,7 @@
 #include "simulator/game/uiGameController.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class WebotsKeyboardController : public UiGameController {
 public:
@@ -195,7 +195,7 @@ private:
   webots::Node* _chargerNode = nullptr;
   
 }; // class WebotsKeyboardController
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif  // __webotsCtrlKeyboard_H_

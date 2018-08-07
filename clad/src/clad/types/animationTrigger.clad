@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Because of a bug in unity editor custom drawers
 // they only properly draw our serialized enums as int32s or bytes.
@@ -538,5 +538,5 @@ enum int_32 AnimationTrigger
   Count, // Keep count at end.
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

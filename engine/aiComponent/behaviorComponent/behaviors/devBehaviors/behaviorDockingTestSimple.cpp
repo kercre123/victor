@@ -50,7 +50,7 @@
 #define END_TEST_IN_HANDLER(RESULT, NAME) EndAttempt(robot, RESULT, NAME); return;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
@@ -1105,12 +1105,12 @@ void BehaviorDockingTestSimple::HandleDockingStatus(const AnkiEvent<RobotInterfa
   const DockingStatus& payload = message.GetData().Get_dockingStatus();
   switch(payload.status)
   {
-    case(Anki::Cozmo::Status::STATUS_BACKING_UP):
+    case(Anki::Vector::Status::STATUS_BACKING_UP):
     {
       _dVars.numDockingRetries++;
       break;
     }
-    case(Anki::Cozmo::Status::STATUS_DOING_HANNS_MANEUVER):
+    case(Anki::Vector::Status::STATUS_DOING_HANNS_MANEUVER):
     {
       _dVars.didHM = true;
       break;
@@ -1229,5 +1229,5 @@ void BehaviorDockingTestSimple::PrintStats()
   Write("=====End DockingTestSimple=====");
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

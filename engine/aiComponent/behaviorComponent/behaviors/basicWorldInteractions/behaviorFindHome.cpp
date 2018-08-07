@@ -40,7 +40,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
@@ -500,5 +500,5 @@ std::vector<Point2f> BehaviorFindHome::GetRecentlySearchedLocations()
   return prevSearchPositions;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

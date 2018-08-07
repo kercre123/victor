@@ -29,7 +29,7 @@ class SpriteCache;
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class DataAccessorComponent : public IDependencyManagedComponent<RobotComponentID>, 
                              private Anki::Util::noncopyable
@@ -41,7 +41,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -78,7 +78,7 @@ private:
 }; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif

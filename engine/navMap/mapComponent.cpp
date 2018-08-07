@@ -48,7 +48,7 @@
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMapRenderRate_sec, "MapComponent", 0.25f);
@@ -272,7 +272,7 @@ MapComponent::~MapComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void MapComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   if(_robot->HasExternalInterface())

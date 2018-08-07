@@ -17,7 +17,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionRobotShaken : public IBEICondition
 {
@@ -30,7 +30,7 @@ protected:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotShaken_H__

@@ -19,7 +19,7 @@
 #include "util/math/math.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 const char* kTriggerStatesKey = "triggerStates";
 
@@ -182,5 +182,5 @@ void ConditionIlluminationDetected::Reset()
   _variables.matchedEvents = 0;
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

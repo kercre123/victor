@@ -16,7 +16,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 namespace {
@@ -317,5 +317,5 @@ std::vector<std::string> MicTriggerConfig::GetAllTriggerModelFiles() const
 }
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

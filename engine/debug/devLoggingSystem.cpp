@@ -30,12 +30,12 @@
 #include <cstdio>
 
 namespace {
-  static Anki::Cozmo::DevLoggingSystem* sInstance = nullptr;
+  static Anki::Vector::DevLoggingSystem* sInstance = nullptr;
   static Anki::Util::ILoggerProvider* sInstancePrintProvider = nullptr;
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Save every Nth image (in chunks) to the log. Camera is 15fps.
 // So 0 disables saving, 15 saves one image per second, 75 saves an image every 5 seconds.
@@ -72,7 +72,7 @@ void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory, c
   auto * devlogQueue = sInstance->GetQueue();
   const auto & devlogBase = sInstance->GetDevLoggingBaseDirectory();
   const auto & devlogPath = Anki::Util::FileUtils::FullFilePath({devlogBase, kPrintName});
-  sInstancePrintProvider = new Anki::Cozmo::DevLoggerProvider(devlogQueue, devlogPath);
+  sInstancePrintProvider = new Anki::Vector::DevLoggerProvider(devlogQueue, devlogPath);
 }
 
 DevLoggingSystem* DevLoggingSystem::GetInstance()
@@ -206,7 +206,7 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
   {
     auto appRunFilename = GetAppRunFilename(filename);
     auto appRunFilepath = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, appRunFilename});
-    Json::Value appRunData = Cozmo::DevLoggingSystem::GetAppRunData(appRunFilepath);
+    Json::Value appRunData = Vector::DevLoggingSystem::GetAppRunData(appRunFilepath);
     bool readyForUpload = false;
     
     // If the apprun data for this archive either doesn't exist or hasn't been marked ready for upload, mark and move it
@@ -219,7 +219,7 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
       
       // Save out the updated apprun data with the prefix (with ReadyForUpload marked as true) and delete the old apprun data
       std::string newAppRunFilepath = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, namePrefix + appRunFilename});
-      appRunData[Cozmo::DevLoggingSystem::kReadyForUploadKey] = true;
+      appRunData[Vector::DevLoggingSystem::kReadyForUploadKey] = true;
       Util::FileUtils::WriteFile(newAppRunFilepath, appRunData.toStyledString());
       Util::FileUtils::DeleteFile(appRunFilepath);
     }
@@ -367,5 +367,5 @@ void DevLoggingSystem::LogMessage(const VizInterface::MessageViz& message)
   _engineToVizLog->Write(PrepareMessage(message));
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

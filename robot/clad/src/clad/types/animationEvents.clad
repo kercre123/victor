@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 AnimEvent {
   DEVICE_AUDIO_TRIGGER,
@@ -22,5 +22,5 @@ enum uint_8 AnimEvent {
   Count
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

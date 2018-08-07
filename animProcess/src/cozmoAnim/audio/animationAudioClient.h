@@ -28,7 +28,7 @@ struct AudioCallbackInfo;
 namespace Util {
 class RandomGenerator;
 }
-namespace Cozmo {
+namespace Vector {
 class RobotAudioKeyFrame;
 
 namespace Audio {

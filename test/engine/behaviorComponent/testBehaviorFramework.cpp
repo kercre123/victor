@@ -51,11 +51,11 @@ namespace {
 
 }
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 namespace {
 
@@ -118,7 +118,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TestBehaviorFramework::TestBehaviorFramework(int robotID,
-                                             Anki::Cozmo::CozmoContext* context)
+                                             Anki::Vector::CozmoContext* context)
 : _behaviorExternalInterface(nullptr)
 , _behaviorSystemManager(nullptr)
 {

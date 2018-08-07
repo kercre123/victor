@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
   struct ObjectAvailable;
 }

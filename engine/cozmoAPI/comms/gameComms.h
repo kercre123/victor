@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
   class GameComms : public Comms::IComms {
@@ -88,7 +88,7 @@ namespace Cozmo {
     
   };
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki
 
 #endif  // #ifndef BASESTATION_COMMS_TCPCOMMS_H_

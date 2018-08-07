@@ -20,7 +20,7 @@ const static std::string kBuildDirectory = "../../../build/";
 const static std::string kScreenShotsPath = kBuildDirectory + "mac/Debug/webots_screenshots/";
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP_MS)
@@ -414,5 +414,5 @@ namespace Anki {
 
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

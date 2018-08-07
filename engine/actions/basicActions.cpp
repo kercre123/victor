@@ -41,7 +41,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);

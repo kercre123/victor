@@ -34,7 +34,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kImageLayoutListKey = "imageLayouts";
@@ -314,7 +314,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   ///////
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
   const bool featureEnabled = (featureGate != nullptr) ? 
-                                featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo) :
+                                featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo) :
                                 false;
   if(featureEnabled){
     auto& settings = GetBEI().GetSettingsManager();

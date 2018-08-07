@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* const kMinDistKey = "minDist_mm";

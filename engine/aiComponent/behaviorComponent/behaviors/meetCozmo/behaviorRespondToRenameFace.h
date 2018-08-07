@@ -17,7 +17,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorRespondToRenameFace : public ICozmoBehavior
 {
@@ -45,7 +45,7 @@ private:
 }; // class BehaviorReactToRenameFace
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorRespondToRenameFace_H__

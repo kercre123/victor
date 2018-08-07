@@ -21,7 +21,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorAnimGetInLoop : public ICozmoBehavior
 {
@@ -94,7 +94,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__

@@ -6,7 +6,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 const char* EnumToString(const FaceEnrollmentResult m)
 {
@@ -40,7 +40,7 @@ const uint8_t FaceEnrollmentResultVersionHash[16] = {
     0x36, 0x7a, 0x2c, 0x2e, 0x56, 0x48, 0xc0, 0x64, 0xf8, 0xfd, 0x35, 0x30, 0x3f, 0xa1, 0x1d, 0x10 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 

@@ -66,7 +66,7 @@
 #define DRAW_TOOL_CODE_DEBUG 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
@@ -2180,5 +2180,5 @@ void VisionSystem::ClearImageCache()
   _imageCache->ReleaseMemory();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

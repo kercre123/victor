@@ -20,7 +20,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const bool kRandomPersonDetection = false;
@@ -176,5 +176,5 @@ bool SalientPointsComponent::SalientPointDetected(const Vision::SalientPointType
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 static const char* const kChannelName = "PublicStateBroadcast";
@@ -183,5 +183,5 @@ void PublicStateBroadcaster::SendUpdatedState()
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

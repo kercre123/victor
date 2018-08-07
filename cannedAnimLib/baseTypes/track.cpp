@@ -15,7 +15,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Animations {
 
   static void EnableStopMessageHelper(const BodyMotionKeyFrame& addedKeyFrame,
@@ -142,7 +142,7 @@ namespace Animations {
   }
   
 } // end namespace Animations
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

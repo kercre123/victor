@@ -3,7 +3,7 @@
 // EngineToRobot union in "messageEngineToRobot.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace SwitchboardInterface {
 
 enum uint_8 ConnectionStatus

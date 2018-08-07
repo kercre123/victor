@@ -17,7 +17,7 @@
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 TEST( TestRobotPosSampler, DistributionsCorrect )
 {

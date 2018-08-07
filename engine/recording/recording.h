@@ -32,7 +32,7 @@ namespace Anki {
     class IComms;
   }
 
-namespace Cozmo {
+namespace Vector {
 
 // size of buffer for writing ui messages to file
 #define TEMPORARY_BUFFER_SIZE 40
@@ -103,7 +103,7 @@ protected:
   string workPath_;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //BASESTATION_RECORDING_RECORDING_H_

@@ -18,7 +18,7 @@
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kAllowedBEIConditions = "allowedBEIConditions";

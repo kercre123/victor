@@ -15,7 +15,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using VoiceMessageID = uint32_t;
 static constexpr VoiceMessageID kInvalidVoiceMessageId = 0;
@@ -44,7 +44,7 @@ struct RecordMessageResult
   EVoiceMessageError  error;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Components_VoiceMessageTypes_H_

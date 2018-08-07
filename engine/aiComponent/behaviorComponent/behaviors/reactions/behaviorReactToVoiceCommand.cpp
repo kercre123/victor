@@ -64,7 +64,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -945,5 +945,5 @@ double BehaviorReactToVoiceCommand::GetListeningTimeout() const
   return timeout;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

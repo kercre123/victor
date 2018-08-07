@@ -4,7 +4,7 @@
 // Copyright: Anki Inc (c) 2018
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // Text To Speech processing state
   enum uint_8 TextToSpeechState
@@ -18,5 +18,5 @@ namespace Cozmo {
     Finished    // Utterance finished playing according to AudioEngine
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

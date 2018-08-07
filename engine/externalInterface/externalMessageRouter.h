@@ -21,7 +21,7 @@
 #include <type_traits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ExternalMessageRouter
 {
@@ -135,7 +135,7 @@ private:
 
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Engine_ExternalInterface_ExternalMessageRouter_H__

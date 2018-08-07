@@ -21,7 +21,7 @@
 #include "util/math/math.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 struct RobotState;
 namespace Audio {
 

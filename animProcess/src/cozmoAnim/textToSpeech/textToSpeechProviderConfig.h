@@ -25,7 +25,7 @@ namespace Json {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 class TextToSpeechProviderConfig
@@ -76,7 +76,7 @@ private:
 };
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__cozmo_textToSpeech_textToSpeechProviderConfig_h

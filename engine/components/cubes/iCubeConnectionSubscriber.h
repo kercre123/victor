@@ -20,7 +20,7 @@
 #include <string>
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 enum class ECubeConnectionType{
   Background,
@@ -79,7 +79,7 @@ private:
 
 #endif // ANKI_DEV_CHEATS
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //__Engine_AiComponent_BehaviorComponent_iCubeConnectionSubscriber_H__

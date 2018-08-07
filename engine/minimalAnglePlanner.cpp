@@ -37,7 +37,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 EComputePathStatus MinimalAnglePlanner::ComputePath(const Pose3d& startPose,
                                                     const Pose3d& targetPose)

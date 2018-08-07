@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace CubeAccelListeners {
 class MovementListener;
@@ -106,7 +106,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

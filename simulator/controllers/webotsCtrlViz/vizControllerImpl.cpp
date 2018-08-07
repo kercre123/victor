@@ -30,7 +30,7 @@
 #include <webots/Supervisor.hpp>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
@@ -1557,5 +1557,5 @@ void VizControllerImpl::ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::M
 }
   
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

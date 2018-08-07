@@ -14,7 +14,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 // ENUM AnimationTrigger
 enum class AnimationTrigger : int32_t {
@@ -365,7 +365,7 @@ extern const uint8_t AnimationTriggerVersionHash[16];
 
 constexpr int32_t AnimationTriggerNumEntries = 336;
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 

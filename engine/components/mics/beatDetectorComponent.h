@@ -23,7 +23,7 @@
 #include <deque>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 
@@ -41,7 +41,7 @@ public:
   virtual void GetInitDependencies( RobotCompIDSet& dependencies ) const override;
   virtual void GetUpdateDependencies( RobotCompIDSet& dependencies ) const override {};
   
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   
   // Is there currently a steady musical beat happening?
@@ -83,7 +83,7 @@ private:
   std::map<int, OnBeatCallback> _onBeatCallbacks;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Components_BeatDetectorComponent_H_

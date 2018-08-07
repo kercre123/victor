@@ -28,7 +28,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kPenaltyFactorKey = "factor";
@@ -273,5 +273,5 @@ float FaceSelectionComponent::CalculateDistanceCost(const Vision::TrackedFace* c
   return MM_TO_M(distanceBetween_mm);
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

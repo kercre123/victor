@@ -20,7 +20,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   const static std::set<BEIConditionType> kSupportedTypes = {

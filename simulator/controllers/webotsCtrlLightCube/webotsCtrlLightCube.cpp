@@ -19,7 +19,7 @@
 int main(int argc, char **argv)
 {
   using namespace Anki;
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);

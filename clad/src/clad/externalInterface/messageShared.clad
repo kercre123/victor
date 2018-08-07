@@ -6,7 +6,7 @@
 #include "clad/types/advertisementTypes.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 enum no_cpp_class uint_32 CommsConstants {
@@ -22,5 +22,5 @@ message Ping {
 
 
 } // namespace ExternalInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

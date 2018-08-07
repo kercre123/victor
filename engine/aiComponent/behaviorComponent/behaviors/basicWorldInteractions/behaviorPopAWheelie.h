@@ -20,7 +20,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BlockWorldFilter;
 class ObservableObject;

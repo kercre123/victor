@@ -30,7 +30,7 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 using namespace AudioMetaData::SwitchState;
@@ -93,7 +93,7 @@ BehaviorAudioComponent::BehaviorAudioComponent(Audio::EngineRobotAudioClient* ro
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioComponent::InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComps)
+void BehaviorAudioComponent::InitDependent(Vector::Robot* robot, const BCCompMap& dependentComps)
 {
   auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   Init(bei);

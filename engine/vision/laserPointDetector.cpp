@@ -28,7 +28,7 @@
 static const char * const kLogChannelName = "VisionSystem";
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace Params
 {
@@ -653,5 +653,5 @@ bool LaserPointDetector::IsSaturated(const Vision::ImageRGB& image,
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

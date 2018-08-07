@@ -20,7 +20,7 @@
 #include "coretech/vision/engine/image.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 FaceInfoScreen::FaceInfoScreen(ScreenName name,
@@ -159,5 +159,5 @@ ScreenName FaceInfoScreen::ConfirmMenuItemAndGetNextScreen()
   return item.action();
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

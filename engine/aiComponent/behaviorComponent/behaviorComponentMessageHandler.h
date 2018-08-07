@@ -25,7 +25,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class Robot;
@@ -67,7 +67,7 @@ private:
   void SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

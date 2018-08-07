@@ -36,7 +36,7 @@
 #include "util/random/rejectionSamplerHelper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* const kMinSearchRadiusKey = "minSearchRadius_m";

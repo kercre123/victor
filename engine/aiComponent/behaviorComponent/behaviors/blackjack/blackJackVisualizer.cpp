@@ -28,7 +28,7 @@
 #include "engine/components/movementComponent.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 namespace{
 // LayerLookup
@@ -445,5 +445,5 @@ void BlackJackVisualizer::ReleaseControl(BehaviorExternalInterface& bei)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

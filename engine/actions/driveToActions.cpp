@@ -36,7 +36,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     class BlockWorld;
 
     namespace {
@@ -1404,7 +1404,7 @@ namespace Anki {
       }
     }
     
-    void DriveToPickupObjectAction::SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger)
+    void DriveToPickupObjectAction::SetPostDockLiftMovingAnimation(Anki::Vector::AnimationTrigger trigger)
     {
       if(!_pickupAction.expired()) {
         static_cast<IDockAction*>(_pickupAction.lock().get())->SetPostDockLiftMovingAnimation(trigger);

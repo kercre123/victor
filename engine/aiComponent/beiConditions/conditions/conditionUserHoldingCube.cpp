@@ -16,7 +16,7 @@
 #include "engine/components/cubes/cubeInteractionTracker.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionUserHoldingCube::ConditionUserHoldingCube(const Json::Value& config)
@@ -33,5 +33,5 @@ bool ConditionUserHoldingCube::AreConditionsMetInternal(BehaviorExternalInterfac
   return  false;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

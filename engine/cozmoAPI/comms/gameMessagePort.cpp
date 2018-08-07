@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 GameMessagePort::GameMessagePort(const size_t toGameBufferSize, const bool isCritical)
 : _toGameBuffer(new uint8_t[toGameBufferSize])

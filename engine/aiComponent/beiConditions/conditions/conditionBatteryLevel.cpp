@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ConditionBatteryLevel::ConditionBatteryLevel(const Json::Value& config)
   : IBEICondition(config)

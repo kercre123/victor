@@ -24,7 +24,7 @@
 #define DEBUG_ANIMATIONS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static const char* kNameKey = "Name";
 CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
@@ -578,5 +578,5 @@ TimeStamp_t Animation::CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_m
   return lastFrameTime_ms;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -21,7 +21,7 @@
 #include <mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class RobotConnectionData : Util::noncopyable, public Anki::Util::INetTransportDataReceiver {
 public:
@@ -63,7 +63,7 @@ private:
   void UpdateQueueSizeStatistics();
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

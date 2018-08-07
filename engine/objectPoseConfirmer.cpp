@@ -6,7 +6,7 @@
  *
  * Description: Object for setting the poses and pose states of observable objects
  *              based on type of observation and accumulated evidence. Note that this
- *              class is a friend of Cozmo::ObservableObject and can therefore call
+ *              class is a friend of Vector::ObservableObject and can therefore call
  *              its SetPose method.
  *
  * Copyright: Anki, Inc. 2016
@@ -32,7 +32,7 @@
 #include "util/math/math.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #define VERBOSE_DEBUG_PRINT 0
   
@@ -61,7 +61,7 @@ ObjectPoseConfirmer::ObjectPoseConfirmer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void ObjectPoseConfirmer::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }
@@ -907,8 +907,8 @@ void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool prop
       filterOnTop.AddIgnoreID(curObject->GetID());
   
       // some objects should not be updated
-      filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
-      filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+      filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
+      filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
 
       // find object on top
       ObservableObject* objectOnTop = _robot->GetBlockWorld().FindLocatedObjectOnTopOf(*curObject, STACKED_HEIGHT_TOL_MM, filterOnTop);
@@ -969,8 +969,8 @@ void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object, bool propaga
     // Ignore the object we are looking on top off so that we don't consider it as on top of itself
     filterOnTop.AddIgnoreID(object->GetID());
     // some objects should not be updated
-    filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
-    filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+    filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
+    filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
 
     // find object on top
     ObservableObject* objectOnTop = _robot->GetBlockWorld().FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM, filterOnTop);
@@ -1036,5 +1036,5 @@ void ObjectPoseConfirmer::DelocalizeRobotFromObject(const ObjectID& objectID) co
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

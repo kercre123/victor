@@ -24,7 +24,7 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StackVizMonitor::NotifyOfChange( BehaviorExternalInterface& bei,

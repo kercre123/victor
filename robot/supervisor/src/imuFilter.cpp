@@ -40,7 +40,7 @@
 #define DEFAULT_BRACE_WHEN_FALLING true
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace IMUFilter {
 
       namespace {
@@ -991,5 +991,5 @@ namespace Anki {
       }
 
     } // namespace IMUFilter
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

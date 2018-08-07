@@ -66,7 +66,7 @@ namespace {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
@@ -636,5 +636,5 @@ bool MicDataSystem::HasConnectionToCloud() const
 }
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

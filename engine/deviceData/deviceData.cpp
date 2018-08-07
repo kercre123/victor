@@ -19,7 +19,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if USE_DAS
 void DeviceData::Refresh()
@@ -50,5 +50,5 @@ void DeviceData::Refresh()
 void DeviceData::Refresh() {}
 #endif
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

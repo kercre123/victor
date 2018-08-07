@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorPRDemo;
 
@@ -62,7 +62,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPRDemoBase__

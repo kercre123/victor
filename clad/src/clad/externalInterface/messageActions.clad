@@ -13,7 +13,7 @@
 #include "clad/types/petTypes.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -509,5 +509,5 @@ union RobotActionUnion {
 
 
 } // namespace U2G
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

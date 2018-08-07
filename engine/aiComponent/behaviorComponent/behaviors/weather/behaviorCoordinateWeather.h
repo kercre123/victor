@@ -18,7 +18,7 @@
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 enum class BehaviorID : uint16_t;
@@ -69,7 +69,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWeather__

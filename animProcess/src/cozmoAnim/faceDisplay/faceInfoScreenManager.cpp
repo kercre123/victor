@@ -84,7 +84,7 @@ static bool HasVoiceAccess()
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
@@ -1537,5 +1537,5 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

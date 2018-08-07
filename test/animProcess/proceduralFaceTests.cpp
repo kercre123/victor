@@ -15,7 +15,7 @@
 #define GENERATE_TEST_FILES 0
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 extern std::string resourcePath;
 

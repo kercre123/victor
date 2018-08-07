@@ -17,7 +17,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeLightAnimation {
 
 Json::Value AnimationToJSON(const std::string& animName, const Animation& animation);
@@ -33,7 +33,7 @@ const ObjectLights& GetLightsOffObjectLights();
 const LightPattern& GetLightsOffPattern();
 
 } // namespace CubeLightAnimation
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_Components_CubeLightAnimationHelpers_H__

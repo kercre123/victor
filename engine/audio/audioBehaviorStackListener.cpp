@@ -32,7 +32,7 @@
 
 
 namespace Anki {
-namespace Cozmo {  
+namespace Vector {  
 namespace Audio {
 namespace {
 const char* kAudioBehaviorMetadataFile = "audioBehaviorSceneEvents.json";

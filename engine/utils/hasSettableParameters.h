@@ -39,7 +39,7 @@
 #include "clad/externalInterface/messageGameToEngineTag.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   // Forward declarations
   class IExternalInterface;
@@ -111,7 +111,7 @@ namespace Cozmo {
     
   }; // class HasSettableParameters
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Util_HasSettableParameters_H__

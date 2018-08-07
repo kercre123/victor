@@ -16,7 +16,7 @@
 #include "json/json-forwards.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct PathMotionProfile;
 

@@ -4,7 +4,7 @@
 // Copyright: Anki, inc. 2017
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 UserFacingActionResult {
   DriveToBlockIssue,
@@ -15,5 +15,5 @@ enum uint_8 UserFacingActionResult {
 
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

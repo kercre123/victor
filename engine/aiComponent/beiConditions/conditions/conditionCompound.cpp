@@ -19,7 +19,7 @@
 #include "lib/util/source/anki/util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

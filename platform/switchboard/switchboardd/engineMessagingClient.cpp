@@ -23,10 +23,10 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "switchboardd/log.h"
 
-using GMessageTag = Anki::Cozmo::ExternalInterface::MessageGameToEngineTag;
-using GMessage = Anki::Cozmo::ExternalInterface::MessageGameToEngine;
-using EMessageTag = Anki::Cozmo::ExternalInterface::MessageEngineToGameTag;
-using EMessage = Anki::Cozmo::ExternalInterface::MessageEngineToGame;
+using GMessageTag = Anki::Vector::ExternalInterface::MessageGameToEngineTag;
+using GMessage = Anki::Vector::ExternalInterface::MessageGameToEngine;
+using EMessageTag = Anki::Vector::ExternalInterface::MessageEngineToGameTag;
+using EMessage = Anki::Vector::ExternalInterface::MessageEngineToGame;
 namespace Anki {
 namespace Switchboard {
 
@@ -106,7 +106,7 @@ void EngineMessagingClient::HandleWifiScanRequest() {
 
   const uint8_t statusCode = (uint8_t)code;
 
-  Anki::Cozmo::SwitchboardInterface::WifiScanResponse rsp;
+  Anki::Vector::SwitchboardInterface::WifiScanResponse rsp;
   rsp.status_code = statusCode;
   rsp.ssid_count = wifiResults.size();
 
@@ -124,13 +124,13 @@ void EngineMessagingClient::SendMessage(const GMessage& message) {
 }
 
 void EngineMessagingClient::SetPairingPin(std::string pin) {
-  Anki::Cozmo::SwitchboardInterface::SetBLEPin sbp;
+  Anki::Vector::SwitchboardInterface::SetBLEPin sbp;
   sbp.pin = std::stoul(pin);
   SendMessage(GMessage::CreateSetBLEPin(std::move(sbp)));
 }
 
-void EngineMessagingClient::ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus status) {
-  Anki::Cozmo::SwitchboardInterface::SetConnectionStatus scs;
+void EngineMessagingClient::ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status) {
+  Anki::Vector::SwitchboardInterface::SetConnectionStatus scs;
   scs.status = status;
 
   SendMessage(GMessage::CreateSetConnectionStatus(std::move(scs)));

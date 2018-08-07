@@ -21,7 +21,7 @@
 #include <chrono>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

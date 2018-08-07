@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 bool s_LockLightNextTick = false;

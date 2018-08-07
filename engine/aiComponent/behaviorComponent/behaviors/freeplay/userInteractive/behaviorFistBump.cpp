@@ -32,7 +32,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 // Json parameter keys
@@ -375,5 +375,5 @@ void BehaviorFistBump::ResetFistBumpTimer() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

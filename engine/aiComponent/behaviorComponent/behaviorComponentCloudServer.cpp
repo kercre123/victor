@@ -20,7 +20,7 @@
 #include <chrono>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   const std::string kWebVizTab = "cloudintents";

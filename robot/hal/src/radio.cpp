@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     namespace { // "Private members"
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
@@ -129,5 +129,5 @@ namespace Anki {
       return static_cast<u32>(dataLen);
 
     } // RadioGetNextMessage()
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

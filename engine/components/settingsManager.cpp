@@ -27,7 +27,7 @@
 #define LOG_CHANNEL "SettingsManager"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 
@@ -354,5 +354,5 @@ bool SettingsManager::ExecCommand(const std::vector<std::string>& args)
 #endif
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

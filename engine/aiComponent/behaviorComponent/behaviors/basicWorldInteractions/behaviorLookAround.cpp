@@ -39,7 +39,7 @@
 #define SET_STATE(s) SetState_internal(s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 static const char* const kShouldHandleConfirmedKey = "shouldHandleConfirmedObject";
@@ -717,5 +717,5 @@ void BehaviorLookAround::SetState_internal(State state, const std::string& state
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -19,7 +19,7 @@
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorPlaypenWaitToStart : public IBehaviorPlaypen
 {

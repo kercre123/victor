@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,5 +69,5 @@ void BehaviorReactToReturnedToTreads::OnBehaviorDeactivated()
 {
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

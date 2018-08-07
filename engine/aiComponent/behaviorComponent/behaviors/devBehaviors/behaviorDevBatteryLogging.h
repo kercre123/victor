@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class IBEICondition;
   
@@ -75,7 +75,7 @@ private:
   void EnqueueMotorActions();
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDevBatteryLogging_H__

@@ -26,7 +26,7 @@ class GraphEvaluator2d;
 class RandomGenerator;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 
 class DesiredFaceDistortionComponent : private Anki::Util::noncopyable

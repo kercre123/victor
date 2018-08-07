@@ -18,7 +18,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionTimerInRange : public IBEICondition
 {

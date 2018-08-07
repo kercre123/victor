@@ -35,7 +35,7 @@
 #include <unistd.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   // How often the filtered voltage reading is updated
@@ -95,7 +95,7 @@ BatteryComponent::BatteryComponent()
   _lastOnChargerContactsPitchAngle = kInvalidPitchAngle;
 }
 
-void BatteryComponent::Init(Cozmo::Robot* robot)
+void BatteryComponent::Init(Vector::Robot* robot)
 {
   _robot = robot;
 }

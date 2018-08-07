@@ -28,7 +28,7 @@ namespace Anki {
 namespace Util {
   class LowPassFilterSimple;
 }
-namespace Cozmo {
+namespace Vector {
 
 class BlockWorldFilter;
 class Robot;

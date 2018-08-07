@@ -24,7 +24,7 @@
 #include <unordered_set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

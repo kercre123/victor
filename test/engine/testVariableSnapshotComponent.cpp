@@ -27,15 +27,15 @@
 
 #include "clad/types/variableSnapshotIds.h"
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 const std::string emptyJson = R"json({})json";
 const int kRobotId = 0;
 
 // removes all test information from storage before tests - ignores robot versioning information
-void RemoveTestDataPrior(std::unique_ptr<Anki::Cozmo::Robot>& robot)
+void RemoveTestDataPrior(std::unique_ptr<Anki::Vector::Robot>& robot)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   std::string pathToVariableSnapshotFile;
 
@@ -46,7 +46,7 @@ void RemoveTestDataPrior(std::unique_ptr<Anki::Cozmo::Robot>& robot)
 // removes all test information from storage before tests - ignores robot versioning information
 void RemoveTestDataAfter()
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   // cache the name of our save directory
   auto robot = std::make_unique<Robot>(kRobotId, cozmoContext);
@@ -60,7 +60,7 @@ void RemoveTestDataAfter()
 TEST(VariableSnapshotComponent, SaveOnShutdown)
 {
   
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   const bool kFalseBool = false;
 
@@ -110,7 +110,7 @@ TEST(VariableSnapshotComponent, SaveOnShutdown)
 TEST(VariableSnapshotComponent, BasicFunctionalityTest)
 {
 
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   int initInt0 = 20;
 
@@ -156,7 +156,7 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
 // changing version info leads to data reset
 TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   bool falseBool = false;
   std::string wrongVersion = "wrongVersion";
@@ -211,7 +211,7 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
 // changing version robot build sha leads to data reset
 TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   bool falseBool = false;
   std::string wrongSha = "wrongSha";
@@ -266,7 +266,7 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
 // test that passing in a nullptr results in an error
 TEST(VariableSnapshotComponent, NullPointerError)
 {
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   {
     auto errGState = Anki::Util::_errG;

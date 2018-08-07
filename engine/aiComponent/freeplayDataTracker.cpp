@@ -23,7 +23,7 @@ static constexpr const float kUpdatePeriod_s = 30.0f;
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 const char* FreeplayDataTracker::FreeplayPauseFlagToString(FreeplayPauseFlag flag)
@@ -45,7 +45,7 @@ FreeplayDataTracker::FreeplayDataTracker()
   _timeToSendData_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kUpdatePeriod_s;
 }
 
-void FreeplayDataTracker::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
+void FreeplayDataTracker::InitDependent(Vector::Robot* robot, const AICompMap& dependentComps)
 {
   // Toggle flag to "start" the tracking process - legacy assumption that freeplay is not
   // active on app start - full fix requires a deeper update to the data tracking system

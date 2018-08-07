@@ -18,7 +18,7 @@
 #include <array>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ICompoundAction;
   
@@ -89,7 +89,7 @@ private:
 }; // class BehaviorReactToCliff
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__

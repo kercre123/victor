@@ -21,7 +21,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace RobotInterface{
 struct AlterStreamingAnimationAtTime;
@@ -58,7 +58,7 @@ private:
 }; // class StreamingAnimationModifier
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

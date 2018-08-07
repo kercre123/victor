@@ -18,7 +18,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 enum class TestState {
   Init,
@@ -180,6 +180,6 @@ void CST_PickUpBlockThenSeeDropped::HandleRobotCompletedAction(const ExternalInt
 
 // ================ End of message handler callbacks ==================
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

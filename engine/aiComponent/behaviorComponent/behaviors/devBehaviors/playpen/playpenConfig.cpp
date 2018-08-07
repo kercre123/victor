@@ -18,105 +18,105 @@ namespace Util {
   
 // ConsoleVar specialization for BodyColor
 template<>
-ConsoleVar<Cozmo::BodyColor>::ConsoleVar(Cozmo::BodyColor& value, const char* id, const char* category, bool unregisterInDestructor)
+ConsoleVar<Vector::BodyColor>::ConsoleVar(Vector::BodyColor& value, const char* id, const char* category, bool unregisterInDestructor)
 : IConsoleVariable( id, category, unregisterInDestructor )
 , _value( value )
-, _minValue( Cozmo::BodyColor::UNKNOWN )
-, _maxValue( Cozmo::BodyColor::COUNT )
+, _minValue( Vector::BodyColor::UNKNOWN )
+, _maxValue( Vector::BodyColor::COUNT )
 , _defaultValue( value )
 {
 }
 
-template<> bool ConsoleVar<Cozmo::BodyColor>::ParseText(const char* text)
+template<> bool ConsoleVar<Vector::BodyColor>::ParseText(const char* text)
 {
-  _value = Cozmo::BodyColorFromString(text);
+  _value = Vector::BodyColorFromString(text);
   return true;
 }
 
-template<> std::string ConsoleVar<Cozmo::BodyColor>::ToString() const
+template<> std::string ConsoleVar<Vector::BodyColor>::ToString() const
 {
-  return Cozmo::EnumToString(_value);
+  return Vector::EnumToString(_value);
 }
   
-template<> std::string ConsoleVar<Cozmo::BodyColor>::GetDefaultAsString() const
+template<> std::string ConsoleVar<Vector::BodyColor>::GetDefaultAsString() const
 {
-  return Cozmo::EnumToString(_defaultValue);
+  return Vector::EnumToString(_defaultValue);
 }
   
-template<> int64_t ConsoleVar<Cozmo::BodyColor>::GetMinAsInt64() const
+template<> int64_t ConsoleVar<Vector::BodyColor>::GetMinAsInt64() const
 {
   return numeric_cast_clamped<int64_t>((int)_minValue);
 }
 
-template<> int64_t ConsoleVar<Cozmo::BodyColor>::GetMaxAsInt64() const
+template<> int64_t ConsoleVar<Vector::BodyColor>::GetMaxAsInt64() const
 {
   return numeric_cast_clamped<int64_t>((int)_maxValue);
 }
 
-template<> uint64_t ConsoleVar<Cozmo::BodyColor>::GetMinAsUInt64() const
+template<> uint64_t ConsoleVar<Vector::BodyColor>::GetMinAsUInt64() const
 {
   return numeric_cast_clamped<uint64_t>((int)_minValue);
 }
 
-template<> uint64_t ConsoleVar<Cozmo::BodyColor>::GetMaxAsUInt64() const
+template<> uint64_t ConsoleVar<Vector::BodyColor>::GetMaxAsUInt64() const
 {
   return numeric_cast_clamped<uint64_t>((int)_maxValue);
 }
 
-template<> void ConsoleVar<Cozmo::BodyColor>::ToggleValue() { _value = (Cozmo::BodyColor)(!(((bool)(_value)))); }
+template<> void ConsoleVar<Vector::BodyColor>::ToggleValue() { _value = (Vector::BodyColor)(!(((bool)(_value)))); }
 
 // ConsoleVar specialization for CustomObjectMarker
 template<>
-ConsoleVar<Cozmo::CustomObjectMarker>::ConsoleVar(Cozmo::CustomObjectMarker& value, const char* id, const char* category, bool unregisterInDestructor )
+ConsoleVar<Vector::CustomObjectMarker>::ConsoleVar(Vector::CustomObjectMarker& value, const char* id, const char* category, bool unregisterInDestructor )
 : IConsoleVariable( id, category, unregisterInDestructor )
 , _value( value )
-, _minValue( Cozmo::CustomObjectMarker(0) )
-, _maxValue( Cozmo::CustomObjectMarker::Count )
+, _minValue( Vector::CustomObjectMarker(0) )
+, _maxValue( Vector::CustomObjectMarker::Count )
 , _defaultValue( value )
 {
 }
 
-template<> bool ConsoleVar<Cozmo::CustomObjectMarker>::ParseText(const char* text)
+template<> bool ConsoleVar<Vector::CustomObjectMarker>::ParseText(const char* text)
 {
-  _value = Cozmo::CustomObjectMarkerFromString(text);
+  _value = Vector::CustomObjectMarkerFromString(text);
   return true;
 }
 
-template<> std::string ConsoleVar<Cozmo::CustomObjectMarker>::ToString() const
+template<> std::string ConsoleVar<Vector::CustomObjectMarker>::ToString() const
 {
-  return Cozmo::EnumToString(_value);
+  return Vector::EnumToString(_value);
 }
 
-template<> std::string ConsoleVar<Cozmo::CustomObjectMarker>::GetDefaultAsString() const
+template<> std::string ConsoleVar<Vector::CustomObjectMarker>::GetDefaultAsString() const
 {
-  return Cozmo::EnumToString(_defaultValue);
+  return Vector::EnumToString(_defaultValue);
 }
 
-template<> int64_t ConsoleVar<Cozmo::CustomObjectMarker>::GetMinAsInt64() const
+template<> int64_t ConsoleVar<Vector::CustomObjectMarker>::GetMinAsInt64() const
 {
   return numeric_cast_clamped<int64_t>((int)_minValue);
 }
 
-template<> int64_t ConsoleVar<Cozmo::CustomObjectMarker>::GetMaxAsInt64() const
+template<> int64_t ConsoleVar<Vector::CustomObjectMarker>::GetMaxAsInt64() const
 {
   return numeric_cast_clamped<int64_t>((int)_maxValue);
 }
 
-template<> uint64_t ConsoleVar<Cozmo::CustomObjectMarker>::GetMinAsUInt64() const
+template<> uint64_t ConsoleVar<Vector::CustomObjectMarker>::GetMinAsUInt64() const
 {
   return numeric_cast_clamped<uint64_t>((int)_minValue);
 }
 
-template<> uint64_t ConsoleVar<Cozmo::CustomObjectMarker>::GetMaxAsUInt64() const
+template<> uint64_t ConsoleVar<Vector::CustomObjectMarker>::GetMaxAsUInt64() const
 {
   return numeric_cast_clamped<uint64_t>((int)_maxValue);
 }
 
-template<> void ConsoleVar<Cozmo::CustomObjectMarker>::ToggleValue() { _value = (Cozmo::CustomObjectMarker)(!(((bool)(_value)))); }
+template<> void ConsoleVar<Vector::CustomObjectMarker>::ToggleValue() { _value = (Vector::CustomObjectMarker)(!(((bool)(_value)))); }
   
 }
 
-namespace Cozmo {
+namespace Vector {
 namespace PlaypenConfig {
 
 WRAP_EXTERN_CONSOLE_VAR(bool,  kDisconnectAtEnd,              "Playpen");

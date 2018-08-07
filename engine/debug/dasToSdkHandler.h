@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 template <typename Type>
 class AnkiEvent;
@@ -43,7 +43,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 IPathPlanner::IPathPlanner(const std::string& name)
@@ -425,5 +425,5 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

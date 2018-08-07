@@ -6,7 +6,7 @@
  *
  * Description: Object for setting the poses and pose states of observable objects
  *              based on type of observation and accumulated evidence. Note that this
- *              class is a friend of Cozmo::ObservableObject and can therefore call
+ *              class is a friend of Vector::ObservableObject and can therefore call
  *              its SetPose method.
  *
  * Copyright: Anki, Inc. 2016
@@ -24,7 +24,7 @@
 #include "engine/robotComponents_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Forward decl.
 class Robot;
@@ -39,7 +39,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
   //////
@@ -228,7 +228,7 @@ private:
 }; // class ObjectPoseConfirmer
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__

@@ -25,7 +25,7 @@
 #include "engine/externalInterface/gatewayInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
@@ -297,5 +297,5 @@ void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::Drive
     gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
   }
 }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

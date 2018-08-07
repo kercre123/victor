@@ -32,7 +32,7 @@
 #include "util/helpers/boundedWhile.h"
 
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 TEST(DelegationTree, FullTreeWalkthrough)
 {
@@ -90,7 +90,7 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
   
   for( const auto& behPair : behaviorMap ) {
     
-    std::string id = Anki::Cozmo::BehaviorTypesWrapper::BehaviorIDToString( behPair.first );
+    std::string id = Anki::Vector::BehaviorTypesWrapper::BehaviorIDToString( behPair.first );
     const ICozmoBehaviorPtr behavior = behPair.second;
     
     std::set<IBehavior*> delegates;

@@ -2,7 +2,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class TestState {
   Init,
@@ -169,5 +169,5 @@ void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const Exter
 }
 
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki

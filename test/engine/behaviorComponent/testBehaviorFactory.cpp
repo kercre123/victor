@@ -28,7 +28,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 static const char* kTestBehaviorJson =

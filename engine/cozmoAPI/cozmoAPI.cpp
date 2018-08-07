@@ -26,7 +26,7 @@
 #include <chrono>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #pragma mark --- CozmoAPI Methods ---
 
@@ -355,5 +355,5 @@ void CozmoAPI::CozmoInstanceRunner::SetEngineThread()
   _cozmoInstance->SetEngineThread();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

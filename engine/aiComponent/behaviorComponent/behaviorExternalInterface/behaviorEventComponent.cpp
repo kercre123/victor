@@ -19,7 +19,7 @@
 #include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 
@@ -96,5 +96,5 @@ void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -33,7 +33,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 //
@@ -98,7 +98,7 @@ private:
 }; // class TextToSpeechProviderImpl
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // ANKI_PLATFORM_VICOS

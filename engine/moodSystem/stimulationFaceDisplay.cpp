@@ -25,7 +25,7 @@
 #include "util/math/math.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -45,7 +45,7 @@ StimulationFaceDisplay::~StimulationFaceDisplay()
 {
 }
 
-void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void StimulationFaceDisplay::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _saturationMap = std::make_unique<Util::GraphEvaluator2d>();
 

@@ -28,7 +28,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations:
 template<typename TYPE> class AnkiEvent;
@@ -89,7 +89,7 @@ private:
 }; // class BehaviorAcknowledgeFace
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__

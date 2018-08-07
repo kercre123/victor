@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum int_32 CubeConnectionState
 {
@@ -31,5 +31,5 @@ enum int_32 CubeConnectionState
   PendingDisconnect
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

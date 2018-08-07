@@ -36,7 +36,7 @@ namespace Anki {
     class KnownMarker;
   }
   
-  namespace Cozmo {
+  namespace Vector {
     
     // Forward Declarations:
     class Animation;

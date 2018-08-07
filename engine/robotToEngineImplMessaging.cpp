@@ -74,7 +74,7 @@
 #define POWER_LEVEL_INTERVAL_SEC 600
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
@@ -746,5 +746,5 @@ void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotI
   robot->GetVisionComponent().EnableDrawImagesToScreen(payload.enable);
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

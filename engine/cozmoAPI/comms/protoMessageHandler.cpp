@@ -32,7 +32,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 ProtoMessageHandler::ProtoMessageHandler(GameMessagePort* gameMessagePort)
@@ -284,5 +284,5 @@ const Util::Stats::StatsAccumulator& ProtoMessageHandler::GetLatencyStats() cons
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

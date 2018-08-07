@@ -34,7 +34,7 @@ namespace CozmoAnim {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace Animations {
 
@@ -610,7 +610,7 @@ void Track<FRAME_TYPE>::AdvanceTrackHelper(const TimeStamp_t toTime_ms)
   
   
 } // end namespace Animations
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

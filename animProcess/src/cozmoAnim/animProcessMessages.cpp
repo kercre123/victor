@@ -71,12 +71,12 @@ namespace {
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
-  Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
-  Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Cozmo::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
-  Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
-  Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
-  const Anki::Cozmo::AnimContext*            _context = nullptr;
+  Anki::Vector::AnimEngine*                   _animEngine = nullptr;
+  Anki::Vector::AnimationStreamer*            _animStreamer = nullptr;
+  Anki::Vector::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
+  Anki::Vector::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
+  Anki::Vector::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
+  const Anki::Vector::AnimContext*            _context = nullptr;
 
   bool _connectionFlowInited = false;
 
@@ -175,18 +175,18 @@ namespace {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
-void Process_setFullAnimTrackLockState(const Anki::Cozmo::RobotInterface::SetFullAnimTrackLockState& msg)
+void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFullAnimTrackLockState& msg)
 {
   //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);
   _animStreamer->SetLockedTracks(msg.trackLockState);
 }
 
-void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)
+void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
 {
   const std::string path(msg.animPath, msg.animPath_length);
 
@@ -196,7 +196,7 @@ void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)
   _context->GetDataLoader()->LoadAnimationFile(path);
 }
 
-void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
+void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
 {
   const std::string animName(msg.animName, msg.animName_length);
 
@@ -207,55 +207,55 @@ void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
   _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms);
 }
 
-void Process_abortAnimation(const Anki::Cozmo::RobotInterface::AbortAnimation& msg)
+void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
 {
   LOG_INFO("AnimProcessMessages.Process_abortAnimation", "Tag: %d", msg.tag);
   _animStreamer->Abort(msg.tag);
 }
 
-void Process_displayProceduralFace(const Anki::Cozmo::RobotInterface::DisplayProceduralFace& msg)
+void Process_displayProceduralFace(const Anki::Vector::RobotInterface::DisplayProceduralFace& msg)
 {
   ProceduralFace procFace;
   procFace.SetFromMessage(msg.faceParams);
   _animStreamer->SetProceduralFace(procFace, msg.duration_ms);
 }
 
-void Process_setFaceHue(const Anki::Cozmo::RobotInterface::SetFaceHue& msg)
+void Process_setFaceHue(const Anki::Vector::RobotInterface::SetFaceHue& msg)
 {
   ProceduralFace::SetHue(msg.hue);
 }
 
-void Process_setFaceSaturation(const Anki::Cozmo::RobotInterface::SetFaceSaturation& msg)
+void Process_setFaceSaturation(const Anki::Vector::RobotInterface::SetFaceSaturation& msg)
 {
   ProceduralFace::SetSaturation(msg.saturation);
 }
 
-void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg)
+void Process_displayFaceImageBinaryChunk(const Anki::Vector::RobotInterface::DisplayFaceImageBinaryChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayFaceImageGrayscaleChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageGrayscaleChunk& msg)
+void Process_displayFaceImageGrayscaleChunk(const Anki::Vector::RobotInterface::DisplayFaceImageGrayscaleChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg)
+void Process_displayFaceImageRGBChunk(const Anki::Vector::RobotInterface::DisplayFaceImageRGBChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayCompositeImageChunk(const Anki::Cozmo::RobotInterface::DisplayCompositeImageChunk& msg)
+void Process_displayCompositeImageChunk(const Anki::Vector::RobotInterface::DisplayCompositeImageChunk& msg)
 {
   _animStreamer->Process_displayCompositeImageChunk(msg);
 }
 
-void Process_updateCompositeImage(const Anki::Cozmo::RobotInterface::UpdateCompositeImage& msg)
+void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateCompositeImage& msg)
 {
   _animStreamer->Process_updateCompositeImage(msg);
 }
 
-void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompositeAnimation& msg)
+void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
 {
   const std::string animName(msg.animName, msg.animName_length);
 
@@ -263,17 +263,17 @@ void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompo
 }
 
 
-void Process_enableKeepFaceAlive(const Anki::Cozmo::RobotInterface::EnableKeepFaceAlive& msg)
+void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepFaceAlive& msg)
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
 }
 
-void Process_setDefaultKeepFaceAliveParameters(const Anki::Cozmo::RobotInterface::SetDefaultKeepFaceAliveParameters& msg)
+void Process_setDefaultKeepFaceAliveParameters(const Anki::Vector::RobotInterface::SetDefaultKeepFaceAliveParameters& msg)
 {
   _animStreamer->SetDefaultKeepFaceAliveParams();
 }
 
-void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKeepFaceAliveParameter& msg)
+void Process_setKeepFaceAliveParameter(const Anki::Vector::RobotInterface::SetKeepFaceAliveParameter& msg)
 {
   if (msg.setToDefault) {
     _animStreamer->SetParamToDefault(msg.param);
@@ -282,22 +282,22 @@ void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKee
   }
 }
 
-void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
+void Process_addOrUpdateEyeShift(const Anki::Vector::RobotInterface::AddOrUpdateEyeShift& msg)
 {
   _animStreamer->ProcessAddOrUpdateEyeShift(msg);
 }
 
-void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
+void Process_removeEyeShift(const Anki::Vector::RobotInterface::RemoveEyeShift& msg)
 {
   _animStreamer->ProcessRemoveEyeShift(msg);
 }
 
-void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
+void Process_addSquint(const Anki::Vector::RobotInterface::AddSquint& msg)
 {
   _animStreamer->ProcessAddSquint(msg);
 }
 
-void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
+void Process_removeSquint(const Anki::Vector::RobotInterface::RemoveSquint& msg)
 {
   _animStreamer->ProcessRemoveSquint(msg);
 }
@@ -327,7 +327,7 @@ void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioP
   _engAudioInput->HandleMessage(msg);
 }
 
-void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDebugConsoleVarMessage& msg)
+void Process_setDebugConsoleVarMessage(const Anki::Vector::RobotInterface::SetDebugConsoleVarMessage& msg)
 {
   // We are using messages generated by the CppLite emitter here, which does not support
   // variable length arrays. CLAD also doesn't have a char, so the "strings" in this message
@@ -355,7 +355,7 @@ void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDeb
   }
 }
 
-void Process_startRecordingMicsRaw(const Anki::Cozmo::RobotInterface::StartRecordingMicsRaw& msg)
+void Process_startRecordingMicsRaw(const Anki::Vector::RobotInterface::StartRecordingMicsRaw& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem == nullptr)
@@ -369,7 +369,7 @@ void Process_startRecordingMicsRaw(const Anki::Cozmo::RobotInterface::StartRecor
                                 msg.runFFT);
 }
 
-void Process_startRecordingMicsProcessed(const Anki::Cozmo::RobotInterface::StartRecordingMicsProcessed& msg)
+void Process_startRecordingMicsProcessed(const Anki::Vector::RobotInterface::StartRecordingMicsProcessed& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem == nullptr)
@@ -382,7 +382,7 @@ void Process_startRecordingMicsProcessed(const Anki::Cozmo::RobotInterface::Star
                                                   msg.path_length));
 }
 
-void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::StartWakeWordlessStreaming& msg)
+void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::StartWakeWordlessStreaming& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if(micDataSystem == nullptr){
@@ -392,7 +392,7 @@ void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::Start
   micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
 }
 
-void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::SetShouldStreamAfterWakeWord& msg)
+void Process_setShouldStreamAfterWakeWord(const Anki::Vector::RobotInterface::SetShouldStreamAfterWakeWord& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if(micDataSystem == nullptr){
@@ -402,7 +402,7 @@ void Process_setShouldStreamAfterWakeWord(const Anki::Cozmo::RobotInterface::Set
   micDataSystem->SetShouldStreamAfterWakeWord(msg.shouldStream);
 }
 
-void Process_setTriggerWordDetectionEnabled(const Anki::Cozmo::RobotInterface::SetTriggerWordDetectionEnabled& msg)
+void Process_setTriggerWordDetectionEnabled(const Anki::Vector::RobotInterface::SetTriggerWordDetectionEnabled& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if(micDataSystem == nullptr){
@@ -412,7 +412,7 @@ void Process_setTriggerWordDetectionEnabled(const Anki::Cozmo::RobotInterface::S
   micDataSystem->SetTriggerWordDetectionEnabled(msg.enabled);
 }
 
-void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetector& msg)
+void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDetector& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem != nullptr) {
@@ -420,12 +420,12 @@ void Process_resetBeatDetector(const Anki::Cozmo::RobotInterface::ResetBeatDetec
   }
 }
 
-void Process_setLCDBrightnessLevel(const Anki::Cozmo::RobotInterface::SetLCDBrightnessLevel& msg)
+void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
 }
 
-void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
+void Process_playbackAudioStart(const Anki::Vector::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;
 
@@ -438,12 +438,12 @@ void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlayback
   audioPlayer->PlaybackAudio( std::string(msg.path, msg.path_length) );
 }
 
-void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
+void Process_drawTextOnScreen(const Anki::Vector::RobotInterface::DrawTextOnScreen& msg)
 {
   FaceInfoScreenManager::getInstance()->SetCustomText(msg);
 }
 
-void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDebugConsoleFuncMessage& msg)
+void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunDebugConsoleFuncMessage& msg)
 {
   // We are using messages generated by the CppLite emitter here, which does not support
   // variable length arrays. CLAD also doesn't have a char, so the "strings" in this message
@@ -488,12 +488,12 @@ void Process_textToSpeechCancel(const RobotInterface::TextToSpeechCancel& msg)
   _animEngine->HandleMessage(msg);
 }
 
-void Process_setConnectionStatus(const Anki::Cozmo::SwitchboardInterface::SetConnectionStatus& msg)
+void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetConnectionStatus& msg)
 {
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
-void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
+void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);
 }
@@ -568,7 +568,7 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   }
 }
 
-static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
+static void HandleRobotStateUpdate(const Anki::Vector::RobotState& robotState)
 {
   _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
 
@@ -779,7 +779,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
     while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
     {
-      Anki::Cozmo::RobotInterface::EngineToRobot msg;
+      Anki::Vector::RobotInterface::EngineToRobot msg;
       memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
       if (msg.Size() != dataLen) {
         LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
@@ -801,7 +801,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
     while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
     {
-      Anki::Cozmo::RobotInterface::RobotToEngine msg;
+      Anki::Vector::RobotInterface::RobotToEngine msg;
       memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
       if (msg.Size() != dataLen) {
         LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
@@ -855,5 +855,5 @@ bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine &
   return AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

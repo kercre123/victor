@@ -26,7 +26,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 CONSOLE_VAR_RANGED(float, kCubeDistance_mm, "BehaviorPlannerTest", 25.0f, 0.0f, 100.0f );
 CONSOLE_VAR_RANGED(float, kDistance_mm, "BehaviorPlannerTest", 1000.0f, 0.0f, 2000.0f );

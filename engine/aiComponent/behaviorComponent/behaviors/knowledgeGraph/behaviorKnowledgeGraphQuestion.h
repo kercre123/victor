@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTextToSpeechLoop;
 
@@ -155,7 +155,7 @@ private:
 
 }; // class BehaviorKnowledgeGraphQuestion
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorKnowledgeGraphQuestion_H__

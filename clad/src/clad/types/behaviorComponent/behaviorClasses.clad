@@ -3,7 +3,7 @@
 // and re-run ./tools/ai/generateBehavior.py
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // BehaviorClass identifies the ICozmoBehavior child class which the behavior is
 // an instance of. The names of the BehaviorClass, the code file, and the actual C++ class

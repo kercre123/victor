@@ -39,7 +39,7 @@ class SpriteCache;
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class CannedAnimationContainer;
 class Animation;

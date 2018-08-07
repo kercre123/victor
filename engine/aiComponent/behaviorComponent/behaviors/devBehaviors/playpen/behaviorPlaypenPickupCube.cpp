@@ -22,7 +22,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   static const Pose3d kExpectedCubePose = Pose3d(0, Z_AXIS_3D(), 

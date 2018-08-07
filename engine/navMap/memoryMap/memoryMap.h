@@ -22,7 +22,7 @@
 #include <shared_mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MemoryMap : public INavMap

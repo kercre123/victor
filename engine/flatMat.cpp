@@ -19,7 +19,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     static const Point3f& GetSizeByType(FlatMat::Type type)
     {
@@ -94,5 +94,5 @@ namespace Anki {
 
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

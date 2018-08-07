@@ -12,7 +12,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   namespace WheelController {
     
     const float WHEEL_SPEED_COMMAND_STOPPED_MM_S = 2.0;
@@ -65,7 +65,7 @@ namespace Anki {
     void DoCoastUntilStop(void);
     
   } // namespace WheelController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

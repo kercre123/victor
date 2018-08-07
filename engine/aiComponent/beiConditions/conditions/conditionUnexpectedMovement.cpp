@@ -18,7 +18,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionUnexpectedMovement::ConditionUnexpectedMovement(const Json::Value& config)

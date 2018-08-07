@@ -29,7 +29,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IBehavior;
 class IExternalInterface;
@@ -56,7 +56,7 @@ public:
   //////
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {}
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComps) override {};
+  virtual void InitDependent(Vector::Robot* robot, const BCCompMap& dependentComps) override {};
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -128,7 +128,7 @@ private:
   
 }; // class AsyncMessageGateComponent
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

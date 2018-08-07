@@ -119,7 +119,7 @@
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(bool, kFakeRobotBeingHeld, "Robot", false);
 
@@ -2657,18 +2657,18 @@ RobotState Robot::GetDefaultRobotState()
   const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
                          0, //uint32_t pose_frame_id,
                          1, //uint32_t pose_origin_id,
-                         kDefaultPose, //const Anki::Cozmo::RobotPose &pose,
+                         kDefaultPose, //const Anki::Vector::RobotPose &pose,
                          0.f, //float lwheel_speed_mmps,
                          0.f, //float rwheel_speed_mmps,
                          0.f, //float headAngle
                          0.f, //float liftAngle,
-                         AccelData(), //const Anki::Cozmo::AccelData &accel,
-                         GyroData(), //const Anki::Cozmo::GyroData &gyro,
+                         AccelData(), //const Anki::Vector::AccelData &accel,
+                         GyroData(), //const Anki::Vector::GyroData &gyro,
                          0.f, // float batteryVoltage
                          0.f, // float chargerVoltage
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
-                         ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
+                         ProxSensorDataRaw(), //const Anki::Vector::ProxSensorDataRaw &proxData,
                          std::move(defaultTouchRawVals), // touch intensity value 
                          0, // uint8_t cliffDetectedFlags,
                          0, // uint8_t whiteDetectedFlags
@@ -2836,7 +2836,7 @@ void Robot::SetBodyColor(const s32 color)
 
 void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 {
-  IDependencyManagedComponent<Anki::Cozmo::RobotComponentID>* explicitUpcast = aiComponent;
+  IDependencyManagedComponent<Anki::Vector::RobotComponentID>* explicitUpcast = aiComponent;
   _components->DevReplaceDependentComponent(RobotComponentID::AIComponent,
                                             explicitUpcast,
                                             shouldManage);
@@ -2927,5 +2927,5 @@ bool Robot::SetLocale(const std::string & locale)
   return true;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

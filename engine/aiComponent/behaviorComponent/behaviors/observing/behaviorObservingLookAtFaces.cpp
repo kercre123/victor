@@ -24,7 +24,7 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const u32 kMaxTimeSinceSeenFaceToLook_ms = 5000;

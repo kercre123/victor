@@ -8,7 +8,7 @@
 #include "clad/types/pathMotionProfile.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     /***************************************************************************
      *
@@ -134,7 +134,7 @@ namespace Anki {
     // Default values in clad
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

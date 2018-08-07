@@ -27,7 +27,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kPickupRetryCountKey = "retryCount";
@@ -178,6 +178,6 @@ void BehaviorPickUpCube::TransitionToSuccessReaction()
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

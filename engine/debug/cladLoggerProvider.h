@@ -14,7 +14,7 @@
 #include "util/logging/iFormattedLoggerProvider.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class IExternalInterface;
 
@@ -26,7 +26,7 @@ private:
   IExternalInterface* _externalInterface = nullptr;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

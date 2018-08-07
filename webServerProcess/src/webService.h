@@ -40,7 +40,7 @@ namespace Data {
 } // namespace Data
 } // namespace Util
 
-namespace Cozmo {
+namespace Vector {
 
 namespace WebService {
 
@@ -179,7 +179,7 @@ private:
 
 } // namespace WebService
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // defined(WEB_SERVICE_H)

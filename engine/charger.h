@@ -27,7 +27,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
   
     class Robot;
     
@@ -130,7 +130,7 @@ namespace Anki {
       
     }; // class Charger
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_CHARGER_H

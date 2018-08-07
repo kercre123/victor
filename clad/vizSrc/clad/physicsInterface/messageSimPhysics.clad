@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace PhysicsInterface {
 
 message ApplyForce {
@@ -14,5 +14,5 @@ message ApplyForce {
 autounion MessageSimPhysics { }
 
 } // namespace PhysicsInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

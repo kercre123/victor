@@ -33,7 +33,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static_assert(EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL) == MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
 static_assert(EnumToUnderlyingType(MotorID::MOTOR_RIGHT_WHEEL) == MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
@@ -163,6 +163,6 @@ void PrintConsoleOutput(void)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

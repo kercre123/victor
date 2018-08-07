@@ -21,7 +21,7 @@
 #include "clad/types/backpackAnimationTriggers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDanceToTheBeat : public ICozmoBehavior
 {
@@ -147,7 +147,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

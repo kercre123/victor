@@ -28,7 +28,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 AppCubeConnectionSubscriber::AppCubeConnectionSubscriber()
 : IDependencyManagedComponent(this, RobotComponentID::AppCubeConnectionSubscriber)

@@ -27,7 +27,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace AcknowledgeFaceConsoleVars{
 CONSOLE_VAR(u32, kNumImagesToWaitFor, "AcknowledgementBehaviors", 3);
@@ -182,6 +182,6 @@ void BehaviorAcknowledgeFace::AddListener(IReactToFaceListener* listener)
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

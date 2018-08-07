@@ -35,7 +35,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
  
 namespace {
   static const char* kLogChannelName = "Animations";
@@ -64,7 +64,7 @@ AnimationComponent::AnimationComponent()
 
 }
 
-void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void AnimationComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
@@ -994,5 +994,5 @@ void AnimationComponent::AddAdditionalAnimationCallback(const std::string& name,
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

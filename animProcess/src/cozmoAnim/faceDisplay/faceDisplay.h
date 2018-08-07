@@ -31,7 +31,7 @@ namespace Vision {
   class ImageRGB565;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class FaceDisplayImpl;
 class FaceInfoScreenManager;
@@ -95,7 +95,7 @@ private:
 
 }; // class FaceDisplay
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMOANIM_FACE_DISPLAY_H

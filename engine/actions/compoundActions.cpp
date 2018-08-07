@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
 #pragma mark ---- ICompoundAction ----
     
@@ -585,5 +585,5 @@ namespace Anki {
       return result;
     } // CompoundActionParallel::Update()
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

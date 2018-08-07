@@ -3,7 +3,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 ImageEncoding
 {
@@ -69,5 +69,5 @@ enum uint_8 IlluminationState {
   Darkened
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

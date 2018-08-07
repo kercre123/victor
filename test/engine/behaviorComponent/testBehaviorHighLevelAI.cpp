@@ -30,13 +30,13 @@
 #include "test/engine/behaviorComponent/testIntentsFramework.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 extern CozmoContext* cozmoContext;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // class that is friends with UnitTestKey and ConditionUserIntentPending
 class TestBehaviorHighLevelAI

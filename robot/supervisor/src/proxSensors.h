@@ -21,7 +21,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     namespace ProxSensors {
 
@@ -60,7 +60,7 @@ namespace Anki {
       ProxSensorDataRaw GetProxData();
 
     } // namespace ProxSensors
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // PROX_SENSORS_H_

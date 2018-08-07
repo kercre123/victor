@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class VisionComponent;
 class IGatewayInterface;
@@ -156,7 +156,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Components_PhotographyManager_H__

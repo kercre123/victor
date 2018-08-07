@@ -2,7 +2,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   structure CameraParams
   {
@@ -15,5 +15,5 @@ namespace Cozmo {
     float_32 whiteBalanceGainB
   }
       
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

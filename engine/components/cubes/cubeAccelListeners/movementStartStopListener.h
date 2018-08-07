@@ -18,7 +18,7 @@
 #include "engine/components/cubes/cubeAccelListeners/movementListener.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 struct ActiveAccel;
   

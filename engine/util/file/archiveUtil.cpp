@@ -24,7 +24,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 bool ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
@@ -410,5 +410,5 @@ const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
   }
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

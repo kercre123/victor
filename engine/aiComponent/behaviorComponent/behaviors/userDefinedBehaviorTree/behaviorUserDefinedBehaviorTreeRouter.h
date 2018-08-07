@@ -19,7 +19,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorUserDefinedBehaviorTreeRouter : public ICozmoBehavior
 {
@@ -56,7 +56,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorUserDefinedBehaviorTreeRouter__

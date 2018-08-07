@@ -21,7 +21,7 @@
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace* ProceduralFace::_blankFaceData = nullptr;
@@ -799,5 +799,5 @@ void ProceduralFace::RegisterFaceWithConsoleVars() {
 }
 #undef CONSOLE_GROUP
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -20,7 +20,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const float kMaxCliffIntersectionDist_mm = 10000.0f;

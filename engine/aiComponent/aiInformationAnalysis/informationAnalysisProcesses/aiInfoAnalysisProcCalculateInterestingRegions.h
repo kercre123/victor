@@ -13,7 +13,7 @@
 #define __Cozmo_Basestation_AIInfoAnalysisProcCalculateInterestingRegions_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AIInformationAnalyzer;
 class Robot;
@@ -21,7 +21,7 @@ class Robot;
 // calculates interesting regions in the memory map
 void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyzer, Robot& robot);
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

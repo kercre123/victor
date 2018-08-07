@@ -29,7 +29,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // always forward declare this one
 class UserIntent;
@@ -45,13 +45,13 @@ class UserIntent;
 
 
 #if USER_INTENT_DEV_MODE
-#define USER_INTENT(name) Anki::Cozmo::UserIntentTagFromString(#name)
+#define USER_INTENT(name) Anki::Vector::UserIntentTagFromString(#name)
 #else
-#define USER_INTENT(name) Anki::Cozmo::UserIntentTag::name
+#define USER_INTENT(name) Anki::Vector::UserIntentTag::name
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 UserIntentTag UserIntentTagFromString(const std::string& name);
 bool UserIntentTagFromString(const std::string& name, UserIntentTag& intent);

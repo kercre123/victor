@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class BehaviorDriveToFace;
@@ -88,7 +88,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

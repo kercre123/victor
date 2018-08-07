@@ -27,7 +27,7 @@
 
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 extern CozmoContext* cozmoContext;
 
@@ -42,7 +42,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
   const FactoryID factoryID = "";
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
-  Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
+  Anki::Vector::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
   ANKI_VERIFY(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull", "");
   
   // check it currently doesn't exist in BlockWorld

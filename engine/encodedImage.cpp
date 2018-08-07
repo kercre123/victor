@@ -23,7 +23,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   EncodedImage::EncodedImage()
   : _timestamp(0)
@@ -554,5 +554,5 @@ namespace Cozmo {
     bufferOut.push_back(0xD9);
   }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

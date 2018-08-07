@@ -20,7 +20,7 @@
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorVectorPlaysCubeSpinner : public ICozmoBehavior
 {
@@ -111,7 +111,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorVectorPlaysCubeSpinner__

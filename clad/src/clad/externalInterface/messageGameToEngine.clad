@@ -34,7 +34,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1119,5 +1119,5 @@ autounion MessageGameToEngine
 
 
 } // namespace U2G
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

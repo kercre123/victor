@@ -35,7 +35,7 @@
 #include <deque>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 
@@ -376,5 +376,5 @@ void BehaviorCoordinateGlobalInterrupts::CreateConsoleVars()
   
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

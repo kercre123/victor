@@ -19,7 +19,7 @@
 #include <type_traits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class MemoryMapData;
 class QuadTreeNode;

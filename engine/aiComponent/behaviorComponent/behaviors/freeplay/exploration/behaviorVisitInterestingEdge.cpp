@@ -38,7 +38,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const char* const kObserveEdgeAnimTriggerKey = "observeEdgeAnimTrigger";
@@ -1080,5 +1080,5 @@ void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidOffsetConfiguration");
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -63,7 +63,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 namespace {
@@ -478,5 +478,5 @@ bool BEIConditionFactory::CheckConditionsAreUsed(const CustomBEIConditionHandleL
 }
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

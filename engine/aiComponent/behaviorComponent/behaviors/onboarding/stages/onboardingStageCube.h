@@ -29,7 +29,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const unsigned int kMaxActivationAttempts = 2;
@@ -379,7 +379,7 @@ private:
   std::unique_ptr<ConditionObjectKnown> _cubeKnownCondition;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageCube__

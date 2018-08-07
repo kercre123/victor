@@ -23,7 +23,7 @@
 #include <iomanip>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ActiveCube::ActiveCube(ObjectType type)
 : ObservableObject(ObjectFamily::LightCube, type)
@@ -349,5 +349,5 @@ WhichCubeLEDs ActiveCube::RotateWhichLEDsAroundTopFace(WhichCubeLEDs whichLEDs, 
   return (WhichCubeLEDs)rotatedWhichLEDs;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

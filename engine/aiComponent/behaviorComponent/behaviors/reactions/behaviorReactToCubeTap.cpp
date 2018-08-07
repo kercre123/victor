@@ -43,7 +43,7 @@ namespace {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 constexpr BehaviorReactToCubeTap::CubeIntensityAnimations BehaviorReactToCubeTap::kReactToCubeAnimations =
 {
@@ -393,5 +393,5 @@ AnimationTrigger BehaviorReactToCubeTap::GetSearchForCubeAnimation() const
   return kSearchForCubeAnimations[_dVars.intensity].Value();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

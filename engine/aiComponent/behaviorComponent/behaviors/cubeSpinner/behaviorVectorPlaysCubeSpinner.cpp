@@ -33,7 +33,7 @@
 #include <algorithm>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const char* kGameConfigKey = "gameConfig";

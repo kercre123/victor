@@ -24,7 +24,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const float kMinTimeMoving_ms = 1000;
@@ -338,5 +338,5 @@ void ReactionObjectData::ResetObject()
 }
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

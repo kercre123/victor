@@ -4,7 +4,7 @@
 #include "clad/types/animationEvents.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 AnimTrackFlag {
   NO_TRACKS = 0,
@@ -25,5 +25,5 @@ enum int_32 AnimConstants
   NUM_TRACKS            = 8
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

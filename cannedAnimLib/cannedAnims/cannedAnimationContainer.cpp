@@ -22,7 +22,7 @@
 #define LOG_CHANNEL "Animations"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if ANKI_DEV_CHEATS
 
@@ -123,5 +123,5 @@ std::vector<std::string> CannedAnimationContainer::GetAnimationNames()
   return v;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

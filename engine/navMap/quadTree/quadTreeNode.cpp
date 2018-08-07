@@ -24,7 +24,7 @@
 #include <algorithm>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
 static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
@@ -462,5 +462,5 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FoldableRegion& regi
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

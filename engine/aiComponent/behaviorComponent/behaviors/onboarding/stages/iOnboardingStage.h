@@ -25,7 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IOnboardingStage : private Anki::Util::noncopyable
 {
@@ -117,7 +117,7 @@ private:
   UserIntentTag _whitelisted = USER_INTENT(INVALID);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_iOnboardingStage__

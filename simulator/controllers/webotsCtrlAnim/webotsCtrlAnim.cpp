@@ -32,13 +32,13 @@
 #define LOG_CHANNEL    "webotsCtrlAnim"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
   }
 }
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 // Instantiate supervisor and pass to AndroidHAL

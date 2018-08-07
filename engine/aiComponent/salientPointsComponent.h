@@ -33,7 +33,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class Robot;
@@ -51,7 +51,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent<AIComponentID> functions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void InitDependent(Cozmo::Robot* robot,
+  void InitDependent(Vector::Robot* robot,
                      const AICompMap& dependentComps) override;
 
   
@@ -92,7 +92,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

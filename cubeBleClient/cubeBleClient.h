@@ -27,7 +27,7 @@ namespace webots {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace ExternalInterface {
   struct ObjectAvailable;
@@ -160,7 +160,7 @@ private:
 }; // class CubeBleClient
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Victor_CubeBleClient_H__

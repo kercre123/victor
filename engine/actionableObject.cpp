@@ -23,7 +23,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
         
     ActionableObject::ActionableObject()
     {
@@ -336,5 +336,5 @@ namespace Anki {
       ObservableObject::SetPose(newPose, fromDistance, newPoseState);
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

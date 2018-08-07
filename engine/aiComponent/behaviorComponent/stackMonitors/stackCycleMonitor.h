@@ -22,7 +22,7 @@
 namespace Anki {
 
   
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorExternalInterface;
 class BehaviorStack;
@@ -48,7 +48,7 @@ private:
   Util::CircularBuffer<const IBehavior*> _recentBehaviors;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_StackMonitors_StackCycleMonitor_H__

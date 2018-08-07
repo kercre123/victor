@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 PathEventType {
   PATH_STARTED,
@@ -12,5 +12,5 @@ enum uint_8 PathEventType {
   PATH_COMPLETED
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

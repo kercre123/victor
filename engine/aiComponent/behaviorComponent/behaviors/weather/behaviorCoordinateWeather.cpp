@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kResponseMapKey =  "responseMap";
@@ -159,7 +159,7 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
     ///////
     const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
     const bool isForPRDemo = (featureGate != nullptr) ? 
-                                  featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo) :
+                                  featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo) :
                                   false;
 
     const auto condition = _iConfig.intentParser->GetCondition(weatherResponse,
@@ -202,5 +202,5 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
 
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

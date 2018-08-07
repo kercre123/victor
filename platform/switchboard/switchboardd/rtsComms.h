@@ -64,7 +64,7 @@ private:
   bool HandleHandshake(uint16_t version);
   void HandleReset(bool forced);
   void HandleTimeout();
-  void UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state);
+  void UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus state);
 
   // Constants
   const uint8_t kMinMessageSize = 2;

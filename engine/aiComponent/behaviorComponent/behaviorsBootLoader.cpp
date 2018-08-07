@@ -40,7 +40,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)

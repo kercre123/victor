@@ -17,7 +17,7 @@
 namespace Anki {
 namespace Util {
   class IHttpAdapter;
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter();

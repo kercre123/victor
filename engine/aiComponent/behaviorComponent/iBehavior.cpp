@@ -21,7 +21,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 static const int kBSTickInterval = 1;
@@ -223,5 +223,5 @@ std::string IBehavior::ActivationStateToString(ActivationState state) const
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

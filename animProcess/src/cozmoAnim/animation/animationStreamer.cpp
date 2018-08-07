@@ -63,7 +63,7 @@
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #define CONSOLE_GROUP "Face.ParameterizedFace"
 
@@ -2179,6 +2179,6 @@ namespace Cozmo {
   }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

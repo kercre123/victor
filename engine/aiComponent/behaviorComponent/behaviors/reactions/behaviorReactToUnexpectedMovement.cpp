@@ -26,7 +26,7 @@
 #define LOG_CHANNEL    "BehaviorReactToUnexpectedMovement"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   const char* kRepeatedActivationWindowKey = "repeatedActivationWindow_sec";

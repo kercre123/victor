@@ -47,7 +47,7 @@ namespace Vision{
   class HueSatWrapper;
 }
 
-namespace Cozmo {
+namespace Vector {
   
 // Forward declarations
 namespace ExternalInterface {
@@ -373,7 +373,7 @@ inline Vision::Image* ProceduralFace::GetSaturationImagePtr() {
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ProceduralFace_H__

@@ -29,7 +29,7 @@ namespace webots {
 
 namespace Anki
 {
-  namespace Cozmo
+  namespace Vector
   {
     class CameraService
     {
@@ -118,7 +118,7 @@ namespace Anki
 
     }; // class CameraService
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // __platform_camera_camera_service_h__

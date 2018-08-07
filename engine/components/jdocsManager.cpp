@@ -26,7 +26,7 @@
 #define LOG_CHANNEL "JdocsManager"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 namespace
@@ -285,5 +285,5 @@ void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey) 
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

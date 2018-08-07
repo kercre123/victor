@@ -15,7 +15,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
                                  const std::string& ownerDebugLabel)

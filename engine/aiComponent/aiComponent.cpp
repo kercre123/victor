@@ -48,7 +48,7 @@ static const int kObsMaxObjectDistance_mm     = 100;   // don't respond if senso
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
@@ -66,7 +66,7 @@ AIComponent::~AIComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void AIComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   const CozmoContext* context = robot->GetContext();
@@ -217,5 +217,5 @@ BehaviorContainer& AIComponent::GetBehaviorContainer()
 }
 #endif
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

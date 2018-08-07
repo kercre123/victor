@@ -30,7 +30,7 @@
 #include "clad/audio/audioEventTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   static const char* kAudioSwitchGroup = "audioSwitchGroup";

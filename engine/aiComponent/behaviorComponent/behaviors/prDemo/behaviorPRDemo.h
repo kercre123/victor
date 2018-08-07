@@ -21,7 +21,7 @@
 #include "clad/types/behaviorComponent/activeFeatures.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorPRDemo : public InternalStatesBehavior
 {
@@ -59,7 +59,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPRDemo__

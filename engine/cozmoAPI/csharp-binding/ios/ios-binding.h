@@ -19,7 +19,7 @@ namespace Data {
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 namespace iOSBinding {
 
 // iOS specific initialization
@@ -36,7 +36,7 @@ void cozmo_engine_send_to_clipboard(const char* log);
 void update_settings_bundle(const char* appRunId, const char* deviceId);
 
 } // namespace iOSBinding
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __ios_binding__

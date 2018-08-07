@@ -32,7 +32,7 @@
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/helpers/boundedWhile.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 TEST(DelegationComponent, TestDelegationVariants)
 {

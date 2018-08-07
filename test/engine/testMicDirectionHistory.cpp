@@ -22,7 +22,7 @@
 #define LOG_CHANNEL "MicDirectionHistory"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 //
 // Use this to enable/disable all tests in the suite

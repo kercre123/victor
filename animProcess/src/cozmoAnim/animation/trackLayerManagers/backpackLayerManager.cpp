@@ -16,7 +16,7 @@
 #include "util/helpers/boundedWhile.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // How long to wait before the lights should start glitching
 CONSOLE_VAR(u32, kGlitchLightDelay_ms,    "GlitchLights", 200);

@@ -3,7 +3,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Layer to set the animations for
 enum uint_8 BackpackLightLayer {
@@ -118,5 +118,5 @@ enum int_32 CubeConstants
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

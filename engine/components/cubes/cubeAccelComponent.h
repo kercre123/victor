@@ -34,7 +34,7 @@
 static const Anki::TimeStamp_t kDefaultWindowSize_ms = 50;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct CubeAccelData;
 namespace CubeAccelListeners {
@@ -54,7 +54,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };

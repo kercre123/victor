@@ -33,7 +33,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct CozmoBotVizParams
 {
@@ -245,7 +245,7 @@ private:
   u8          _currAnimTag = 0;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

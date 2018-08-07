@@ -25,7 +25,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class JdocsManager;
 
@@ -84,7 +84,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Components_SettingsManager_H__

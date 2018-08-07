@@ -23,7 +23,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 class BehaviorGreetAfterLongTime : public ICozmoBehavior
@@ -77,7 +77,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorGreetAfterLongTime__

@@ -25,7 +25,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -89,7 +89,7 @@ RobotStatsTracker::~RobotStatsTracker()
 #endif
 }
 
-void RobotStatsTracker::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   const auto& context = dependentComps.GetComponent<ContextWrapper>().context;
   const auto* platform = context->GetDataPlatform();

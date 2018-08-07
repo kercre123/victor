@@ -21,7 +21,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class BehaviorExternalInterface;
@@ -130,7 +130,7 @@ private:
   #endif
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_IBehavior_H__

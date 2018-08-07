@@ -55,7 +55,7 @@ namespace {
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 TextToSpeechProviderConfig::TextToSpeechProviderConfig(const std::string & language,
@@ -161,5 +161,5 @@ TextToSpeechProviderConfig::ConfigTrait::ConfigTrait(const Json::Value & json)
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

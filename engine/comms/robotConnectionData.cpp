@@ -14,7 +14,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const uint32_t kQueueSizeWarningThreshold = 1024 * 1024;
@@ -174,5 +174,5 @@ void RobotConnectionData::UpdateQueueSizeStatistics()
 }
     
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

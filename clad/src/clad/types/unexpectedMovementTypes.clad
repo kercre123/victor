@@ -4,7 +4,7 @@
 // Copyright: Anki Inc (c) 2016
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 UnexpectedMovementType
 {
@@ -23,5 +23,5 @@ enum uint_8 UnexpectedMovementSide
   RIGHT
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

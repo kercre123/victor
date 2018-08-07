@@ -29,7 +29,7 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ActiveFeatureComponent::ActiveFeatureComponent()
   : IDependencyManagedComponent( this, BCComponentID::ActiveFeature )

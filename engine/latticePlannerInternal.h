@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using namespace Planning;
 

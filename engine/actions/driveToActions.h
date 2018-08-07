@@ -27,7 +27,7 @@
 namespace Anki {
   class Pose3d;
 
-  namespace Cozmo {
+  namespace Vector {
 
     // forward declarations
     class BlockWorld;
@@ -369,7 +369,7 @@ namespace Anki {
       
       void SetDockingMethod(DockingMethod dockingMethod);
       
-      void SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger);
+      void SetPostDockLiftMovingAnimation(Anki::Vector::AnimationTrigger trigger);
       
     private:
       std::weak_ptr<IActionRunner> _pickupAction;

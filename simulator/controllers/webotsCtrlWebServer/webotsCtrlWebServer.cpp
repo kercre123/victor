@@ -30,7 +30,7 @@
 #define LOG_CHANNEL    "webotsCtrlWebServer"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 // Instantiate supervisor and pass to AndroidHAL

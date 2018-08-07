@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace Factory {
 
@@ -63,6 +63,6 @@ namespace Factory {
 extern "C" {
   int engine_test_run(uint8_t id, uint8_t args[4])
   {
-    return Anki::Cozmo::Factory::RunEngineTest(id, args);
+    return Anki::Vector::Factory::RunEngineTest(id, args);
   }
 }

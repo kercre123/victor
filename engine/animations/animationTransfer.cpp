@@ -21,12 +21,12 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   const std::string AnimationTransfer::kCacheAnimFileName("NewAnim.json");
   const std::string AnimationTransfer::kCacheFaceAnimsDir(Anki::Util::FileUtils::FullFilePath({"assets", "faceAnimations"}));
   
-  AnimationTransfer::AnimationTransfer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform)
+  AnimationTransfer::AnimationTransfer(Anki::Vector::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform)
   {
     _externalInterface = externalInterface;
     _dataPlatform = dataPlatform;
@@ -69,7 +69,7 @@ namespace Cozmo {
   {
     if( event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::TransferFile )
     {
-      const Anki::Cozmo::ExternalInterface::TransferFile& msg = event.GetData().Get_TransferFile();
+      const Anki::Vector::ExternalInterface::TransferFile& msg = event.GetData().Get_TransferFile();
       
       if ((msg.fileType != ExternalInterface::FileType::Animation) &&
           (msg.fileType != ExternalInterface::FileType::FaceImg))
@@ -153,6 +153,6 @@ namespace Cozmo {
       }
     }
   }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

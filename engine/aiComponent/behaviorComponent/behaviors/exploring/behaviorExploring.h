@@ -20,7 +20,7 @@
 #include "util/random/rejectionSamplerHelper_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorExploringExamineObstacle;
 class INavMap;
@@ -156,7 +156,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorExploring__

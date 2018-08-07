@@ -27,7 +27,7 @@
 #include <mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace { // "Private members"
 
@@ -216,5 +216,5 @@ bool HAL::IMUReadData(HAL::IMU_DataStructure &imuData)
 #endif
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

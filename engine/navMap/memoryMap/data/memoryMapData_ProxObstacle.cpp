@@ -14,7 +14,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -53,5 +53,5 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData_ProxObstacle::GetExternalC
   return _explored ? ExternalInterface::ENodeContentTypeEnum::ObstacleProxExplored : ExternalInterface::ENodeContentTypeEnum::ObstacleProx;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

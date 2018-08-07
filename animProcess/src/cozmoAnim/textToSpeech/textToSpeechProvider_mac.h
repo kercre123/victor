@@ -26,13 +26,13 @@ namespace Anki {
   namespace Util {
     class RandomGenerator;
   }
-  namespace Cozmo {
+  namespace Vector {
     class AnimContext;
   }
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 //
@@ -43,7 +43,7 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const Cozmo::AnimContext* ctx, const Json::Value& tts_platform_config);
+  TextToSpeechProviderImpl(const Vector::AnimContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
 
   Result SetLocale(const std::string & locale);
@@ -81,7 +81,7 @@ private:
 }; // class TextToSpeechProviderImpl
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // ANKI_PLATFORM_OSX

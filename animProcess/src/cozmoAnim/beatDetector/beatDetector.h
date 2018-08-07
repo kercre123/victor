@@ -23,7 +23,7 @@
 #include <mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BeatDetector
 {
@@ -78,7 +78,7 @@ private:
   Util::FixedCircularBuffer<AudioUtil::AudioSample, 2 * (kAubioTempoHopSize + MicData::kSamplesPerBlock)> _aubioInputBuffer;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_BeatDetector_H_

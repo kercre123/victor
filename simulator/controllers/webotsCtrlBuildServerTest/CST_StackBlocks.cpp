@@ -17,7 +17,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     enum class TestState {
       Init,
@@ -147,6 +147,6 @@ namespace Anki {
     
     // ================ End of message handler callbacks ==================
     
-  } // end namespace Cozmo
+  } // end namespace Vector
 } // end namespace Anki
 

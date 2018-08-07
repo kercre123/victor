@@ -19,7 +19,7 @@
 #include "util/time/universalTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   #define CONSOLE_GROUP "BeatDetectorComponent"
@@ -61,7 +61,7 @@ void BeatDetectorComponent::GetInitDependencies( RobotCompIDSet& dependencies ) 
 }
 
 
-void BeatDetectorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void BeatDetectorComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   
@@ -205,6 +205,6 @@ bool BeatDetectorComponent::UnregisterOnBeatCallback(const int callbackId)
   return success;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

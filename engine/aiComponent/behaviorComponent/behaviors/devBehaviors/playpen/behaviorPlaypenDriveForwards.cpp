@@ -20,7 +20,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BehaviorPlaypenDriveForwards::BehaviorPlaypenDriveForwards(const Json::Value& config)
 : IBehaviorPlaypen(config)

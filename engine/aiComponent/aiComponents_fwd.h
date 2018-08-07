@@ -25,7 +25,7 @@ template<typename EnumType>
 class IDependencyManagedComponent;
 
 
-namespace Cozmo {
+namespace Vector {
 
 // When adding to this enum be sure to also declare a template specialization
 // in the _impl.cpp file mapping the enum to the class type it is associated with
@@ -63,7 +63,7 @@ using AICompMap = DependencyManagedEntity<AIComponentID>;
 using AICompIDSet = std::set<AIComponentID>;
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__

@@ -23,7 +23,7 @@ class DataPlatform;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 enum class FeatureType : uint8_t;
 

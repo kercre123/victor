@@ -21,7 +21,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 // Accelerometer magnitude threshold corresponding to "no longer shaking"
@@ -179,5 +179,5 @@ const char* BehaviorReactToRobotShaken::EReactionToString(EReaction reaction) co
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

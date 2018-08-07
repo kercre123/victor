@@ -21,7 +21,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ConditionStuckOnEdge::ConditionStuckOnEdge(const Json::Value& config)
 : IBEICondition(config) 
@@ -65,5 +65,5 @@ bool ConditionStuckOnEdge::AreConditionsMetInternal(BehaviorExternalInterface& b
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

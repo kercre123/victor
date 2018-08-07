@@ -22,9 +22,9 @@
 #include "engine/components/pathComponent.h"
 
 using namespace Anki;
-using namespace Cozmo;
+using namespace Vector;
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 
 namespace {

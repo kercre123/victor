@@ -22,7 +22,7 @@
                                   static_cast<uint8_t>((rgba & 0x0000FF00) >> 8)}}
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
 {

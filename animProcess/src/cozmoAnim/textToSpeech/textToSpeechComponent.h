@@ -27,7 +27,7 @@
 
 // Forward declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     class AnimContext;
     namespace Audio {
       class CozmoAudioController;
@@ -50,7 +50,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class TextToSpeechComponent
 {
@@ -82,7 +82,7 @@ private:
   // -------------------------------------------------------------------------------------------------------------------
   // Private types
   // -------------------------------------------------------------------------------------------------------------------
-  using AudioController = Cozmo::Audio::CozmoAudioController;
+  using AudioController = Vector::Audio::CozmoAudioController;
   using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
   using TextToSpeechProvider = TextToSpeech::TextToSpeechProvider;
   using DispatchQueue = Util::Dispatch::Queue;
@@ -200,7 +200,7 @@ private:
 }; // class TextToSpeechComponent
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

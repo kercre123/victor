@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations:
 template<typename TYPE> class AnkiEvent;
@@ -90,7 +90,7 @@ private:
 
 }; // class BehaviorPickUpCube
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif

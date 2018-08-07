@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -213,5 +213,5 @@ void TextToSpeechWrapper::CancelUtterance()
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace FaultCode {
 

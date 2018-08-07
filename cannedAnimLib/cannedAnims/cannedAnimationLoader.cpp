@@ -31,7 +31,7 @@
 #define LOG_CHANNEL   "RobotDataLoader"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 // We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
@@ -360,5 +360,5 @@ Result CannedAnimationLoader::SanityCheck(Result lastResult, Animation& animatio
 } // CannedAnimationLoader::SanityCheck()
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

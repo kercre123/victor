@@ -14,7 +14,7 @@
 #include "simulator/game/cozmoSimTestController.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 // ============ Test class declaration ============
 class CST_SmokeTest : public CozmoSimTestController {
@@ -45,6 +45,6 @@ s32 CST_SmokeTest::UpdateSimInternal()
   return _result;
 }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

@@ -20,7 +20,7 @@ namespace Anki {
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   /*
    Flag being set means there is wall there.
@@ -142,7 +142,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorPuzzleMaze_H__

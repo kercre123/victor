@@ -41,7 +41,7 @@
                         } while(0);
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 namespace{
 // Internal Tunable params 
@@ -512,5 +512,5 @@ void CubeInteractionTracker::HandleEngineEvents(const AnkiEvent<ExternalInterfac
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

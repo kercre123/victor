@@ -16,7 +16,7 @@
 #include "engine/actions/basicActions.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* const kHeadAngleKey = "headAngle_deg";

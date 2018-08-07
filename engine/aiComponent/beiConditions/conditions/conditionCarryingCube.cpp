@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -40,5 +40,5 @@ bool ConditionCarryingCube::AreConditionsMetInternal(BehaviorExternalInterface& 
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

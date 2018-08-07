@@ -38,7 +38,7 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehaviorRerun);
@@ -449,6 +449,6 @@ void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterfac
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

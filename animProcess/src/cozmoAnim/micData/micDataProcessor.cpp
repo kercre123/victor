@@ -40,7 +40,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 namespace {
@@ -807,5 +807,5 @@ void MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
 }
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

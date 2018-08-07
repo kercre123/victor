@@ -17,7 +17,7 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct UserIntentData
 {

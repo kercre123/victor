@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 message AdvertisementRegistrationMsg
@@ -26,5 +26,5 @@ message AdvertisementMsg
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

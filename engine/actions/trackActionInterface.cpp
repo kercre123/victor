@@ -33,7 +33,7 @@
 #define DEBUG_TRACKING_ACTIONS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 static const char * const kLogChannelName = "Actions";
 
@@ -827,5 +827,5 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
   return false;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

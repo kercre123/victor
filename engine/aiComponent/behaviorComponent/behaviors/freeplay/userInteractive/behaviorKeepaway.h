@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // Forward Declarations
 class BlockWorldFilter;
@@ -159,7 +159,7 @@ private:
   DynamicVariables _dVars;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorKeepaway_H_

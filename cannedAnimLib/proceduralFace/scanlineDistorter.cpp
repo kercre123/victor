@@ -23,7 +23,7 @@
 #define CONSOLE_GROUP_NAME "Face.ScanlineDistortion"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Fraction of (nominal) eye area to be off (note: does not consider "Width" parameter below)
 CONSOLE_VAR_RANGED(f32, kProcFaceScanline_OffNoiseProb, CONSOLE_GROUP_NAME, 0.1f, 0.f, 1.f);
@@ -219,5 +219,5 @@ bool ScanlineDistorter::GetNextDistortionFrame(const f32 degree, ProceduralFace&
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

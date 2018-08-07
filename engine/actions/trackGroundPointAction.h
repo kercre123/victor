@@ -20,7 +20,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class TrackGroundPointAction : public ITrackAction
 {
@@ -104,7 +104,7 @@ inline void TrackGroundPointAction::EnablePredictionWhenLost(bool enableX, bool 
   _maxPredictionWindow_ms = duration_ms;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_TrackGroundPointAction_H__

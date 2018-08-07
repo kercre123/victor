@@ -20,7 +20,7 @@
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 class WeatherIntentParser;
@@ -59,7 +59,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

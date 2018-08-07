@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 #pragma mark ---- MountChargerAction ----
   
@@ -389,6 +389,6 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

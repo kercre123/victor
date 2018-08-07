@@ -16,7 +16,7 @@
 #include "engine/aiComponent/timerUtility.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 namespace{

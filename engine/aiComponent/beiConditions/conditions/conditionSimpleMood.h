@@ -18,7 +18,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class SimpleMoodType : uint8_t;
 
@@ -38,7 +38,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BeiConditions_Conditions_ConditionSimpleMood_H__

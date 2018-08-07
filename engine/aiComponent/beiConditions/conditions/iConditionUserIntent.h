@@ -23,7 +23,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IConditionUserIntent : public IBEICondition
 {
@@ -98,7 +98,7 @@ private:
   BEIConditionType _type;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IConditionUserIntent_H__

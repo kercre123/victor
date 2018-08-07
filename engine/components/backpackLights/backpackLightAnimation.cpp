@@ -14,7 +14,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace BackpackLightAnimation {
 
 
@@ -32,5 +32,5 @@ bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
 }
 
 } // namespace BackpackLightAnimation
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

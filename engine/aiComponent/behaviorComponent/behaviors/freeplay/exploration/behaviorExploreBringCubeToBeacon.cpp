@@ -33,7 +33,7 @@
 #include <array>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // internal constants and helpers
@@ -925,5 +925,5 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::GetCandidate(const Blo
   return ret;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

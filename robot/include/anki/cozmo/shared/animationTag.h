@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using AnimationTag = uint8_t;
 

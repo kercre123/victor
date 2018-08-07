@@ -19,7 +19,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(const Json::Value& config)
@@ -71,5 +71,5 @@ void BehaviorReactToPlacedOnSlope::CheckPitch()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

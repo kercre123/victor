@@ -5,7 +5,7 @@
 // Copyright: Anki Inc (c) 2017
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   enum int_16 CustomObjectMarker
   {
@@ -33,5 +33,5 @@ namespace Cozmo {
     Count
   } // enum class CustomObjectMarker
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

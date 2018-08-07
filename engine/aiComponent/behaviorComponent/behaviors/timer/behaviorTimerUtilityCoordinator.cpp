@@ -34,7 +34,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kAnticConfigKey   = "anticConfig";
@@ -51,7 +51,7 @@ const char* kRecurIntervalMaxKey = "recurIntervalMax_s";
 const char* kRuleMinKey = "ruleMin_s";
 const char* kRuleMaxKey = "ruleMax_s";
 
-Anki::Cozmo::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
+Anki::Vector::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
 }
 
 
@@ -738,5 +738,5 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

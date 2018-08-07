@@ -33,7 +33,7 @@ namespace Comms {
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace ExternalInterface{
   struct Ping;
@@ -137,7 +137,7 @@ private:
   
   
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

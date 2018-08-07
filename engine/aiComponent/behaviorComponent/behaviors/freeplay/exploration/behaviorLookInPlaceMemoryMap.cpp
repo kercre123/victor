@@ -32,7 +32,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -582,5 +582,5 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

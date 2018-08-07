@@ -35,7 +35,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 
@@ -284,5 +284,5 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -21,7 +21,7 @@
 #include "util/entityComponent/dependencyManagedEntity.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 AttentionTransferComponent::AttentionTransferComponent()
   : IDependencyManagedComponent( this, BCComponentID::AttentionTransferComponent )

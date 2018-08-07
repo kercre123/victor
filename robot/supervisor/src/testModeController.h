@@ -21,7 +21,7 @@
 #include "clad/types/robotTestModes.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace TestModeController {
       
       // Sets up controller to run specified test mode
@@ -32,7 +32,7 @@ namespace Anki {
       TestMode GetMode();
       
     } // namespace TestModeController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // TEST_MODE_CONTROLLER_H_

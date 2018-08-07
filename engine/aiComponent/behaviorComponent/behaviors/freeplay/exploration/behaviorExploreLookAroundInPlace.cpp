@@ -32,7 +32,7 @@
 #include "engine/viz/vizManager.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 CONSOLE_VAR(bool, kVizConeOfFocus, "Behavior.LookAroundInPlace", false);
@@ -660,5 +660,5 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(
   return turnAction;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -16,12 +16,12 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   template<class ImageType>
   using DebugImageList = std::list<std::pair<std::string, ImageType>>;
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_DebugImageList_H__ */

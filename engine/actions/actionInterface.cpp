@@ -36,7 +36,7 @@
 
 namespace Anki {
 
-  namespace Cozmo {
+  namespace Vector {
 
     // Ensure that nobody sets bad tag ranges (we want them all to be mutually exclusive
     static_assert(ActionConstants::FIRST_GAME_TAG   > ActionConstants::INVALID_TAG,      "Game Tag Overlap");
@@ -695,5 +695,5 @@ namespace Anki {
       return result;
     } // UpdateInternal()
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

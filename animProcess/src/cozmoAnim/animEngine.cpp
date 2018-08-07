@@ -57,7 +57,7 @@
 #define NUM_ANIM_OPENCV_THREADS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if ANKI_CPU_PROFILER_ENABLED
   CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
@@ -275,5 +275,5 @@ void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
   }
 
 }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

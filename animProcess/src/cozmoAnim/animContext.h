@@ -36,7 +36,7 @@ class AudioMultiplexer;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 namespace MicData {
   class MicDataSystem;
@@ -55,7 +55,7 @@ namespace WebService {
 class WebService;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 // ---------- END FORWARD DECLARATIONS ----------
@@ -64,7 +64,7 @@ class WebService;
 
 // Here begins the actual namespace and interface for AnimContext
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AnimContext : private Util::noncopyable
 {
@@ -116,7 +116,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_AnimContext_H__

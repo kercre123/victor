@@ -15,7 +15,7 @@
 #include "simulator/controllers/shared/webotsHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class TestState {
   Init,
@@ -82,6 +82,6 @@ s32 CST_ChargerDocking::UpdateSimInternal()
 }
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

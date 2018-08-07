@@ -19,7 +19,7 @@
 #include <vector>
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
 //==============================================================================================================================
 typedef enum
@@ -89,6 +89,6 @@ private:
   static BaseStationEventDispatcher* instance_;
 };
   
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 #endif // BASESTATION_BASESTATIONEVENTS

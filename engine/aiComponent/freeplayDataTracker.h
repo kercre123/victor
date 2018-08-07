@@ -22,7 +22,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class FreeplayPauseFlag
 {
@@ -46,7 +46,7 @@ public:
   void SetFreeplayPauseFlag(bool value, FreeplayPauseFlag flag);
 
   // IDependencyManagedComponent<AIComponentID> functions
-  virtual void InitDependent(Cozmo::Robot* robot, 
+  virtual void InitDependent(Vector::Robot* robot, 
                              const AICompMap& dependentComps) override;
 
   // IDependencyManagedComponent<AIComponentID> functions

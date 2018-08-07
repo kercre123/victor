@@ -8,7 +8,7 @@
 #include "clad/types/proxMessages.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_32 RobotStatusFlag {
     NoneRobotStatusFlag,
@@ -111,5 +111,5 @@ enum int_8 BodyColor
   COUNT
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

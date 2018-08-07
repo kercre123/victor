@@ -26,7 +26,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward Declarations:
 class Robot;
@@ -212,7 +212,7 @@ private:
   
 }; // class ITrackAction
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_TrackActionInterface_H__ */

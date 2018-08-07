@@ -27,7 +27,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStack::BehaviorStack()
@@ -424,5 +424,5 @@ void BehaviorStack::StackMetadataEntry::RecursivelyGatherLinkedBehaviors(IBehavi
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

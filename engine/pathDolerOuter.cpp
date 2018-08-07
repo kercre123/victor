@@ -21,7 +21,7 @@
 #include "pathDolerOuter.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 PathDolerOuter::PathDolerOuter(RobotInterface::MessageHandler* msgHandler)
   : pathSizeOnBasestation_(0)

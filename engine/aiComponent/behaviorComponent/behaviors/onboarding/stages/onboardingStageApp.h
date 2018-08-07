@@ -21,7 +21,7 @@
 #include "proto/external_interface/onboardingSteps.pb.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class OnboardingStageApp : public IOnboardingStage
 {
@@ -102,7 +102,7 @@ private:
   bool _receivedStart = false;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageApp__

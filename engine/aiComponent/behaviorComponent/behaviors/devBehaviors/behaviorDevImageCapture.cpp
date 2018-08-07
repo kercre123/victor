@@ -31,7 +31,7 @@
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -381,5 +381,5 @@ void BehaviorDevImageCapture::BlinkLight()
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

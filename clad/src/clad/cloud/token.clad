@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 TokenError {
 	NoError,

@@ -16,7 +16,7 @@
 #include "engine/components/backpackLights/backpackLightComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 BackpackLightAnimationContainer::BackpackLightAnimationContainer(const InitMap& initializationMap)
@@ -74,5 +74,5 @@ const BackpackLightAnimation::BackpackAnimation* BackpackLightAnimationContainer
   return animPtr;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

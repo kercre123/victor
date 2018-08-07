@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace JsonKeys {
   static const char * const AnimationTriggerKey = "animationTrigger";
@@ -121,5 +121,5 @@ void BehaviorRespondToRenameFace::OnBehaviorActivated()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

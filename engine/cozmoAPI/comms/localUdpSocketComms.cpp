@@ -20,7 +20,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 LocalUdpSocketComms::LocalUdpSocketComms(bool isEnabled, std::string socket)
   : ISocketComms(isEnabled)

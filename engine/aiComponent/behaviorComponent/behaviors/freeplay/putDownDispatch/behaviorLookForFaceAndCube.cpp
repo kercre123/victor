@@ -29,7 +29,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -588,5 +588,5 @@ IAction* BehaviorLookForFaceAndCube::CreateBodyAndHeadTurnAction(
   return turnAction;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

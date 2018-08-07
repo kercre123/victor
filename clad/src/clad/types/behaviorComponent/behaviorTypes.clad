@@ -7,7 +7,7 @@
 #include "clad/types/behaviorComponent/behaviorIDs.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Each of these should map to exactly 1 instance of a behavior at runtime
 // Only needs to include behaviors that make sense for e.g. SDK to request directly
@@ -23,5 +23,5 @@ enum uint_8 ExecutableBehaviorType {
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

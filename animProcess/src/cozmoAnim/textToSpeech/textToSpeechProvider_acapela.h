@@ -16,7 +16,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
   
 class AcapelaTTS
@@ -39,7 +39,7 @@ public:
 };
   
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_acapela_H__

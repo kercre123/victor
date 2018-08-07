@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class SayTextAction : public IAction
 {
@@ -111,7 +111,7 @@ private:
 }; // class SayTextAction
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Actions_SayTextAction_H__ */

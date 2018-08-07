@@ -25,7 +25,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
 
@@ -90,7 +90,7 @@ private:
   void DrawHead(float width, float height, float depth);
   void DrawTetrahedronMarker(const float x, const float y, const float z,
     const float length_x, const float length_y, const float length_z);
-  void DrawRobot(Anki::Cozmo::VizRobotMarkerType type);
+  void DrawRobot(Anki::Vector::VizRobotMarkerType type);
   void DrawPredockPose();
   void DrawQuad(const float xUpperLeft,  const float yUpperLeft, const float zUpperLeft,
     const float xLowerLeft,  const float yLowerLeft, const float zLowerLeft,
@@ -190,7 +190,7 @@ private:
 };
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

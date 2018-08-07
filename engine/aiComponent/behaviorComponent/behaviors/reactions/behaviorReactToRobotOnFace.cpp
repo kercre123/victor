@@ -20,7 +20,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using namespace ExternalInterface;
 
@@ -114,5 +114,5 @@ void BehaviorReactToRobotOnFace::OnBehaviorDeactivated()
 {
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

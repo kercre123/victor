@@ -23,7 +23,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kEmotionScorersKey            = "emotionScorers";
@@ -250,5 +250,5 @@ bool BehaviorScoringWrapper::ReadFromJson(const Json::Value& config)
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

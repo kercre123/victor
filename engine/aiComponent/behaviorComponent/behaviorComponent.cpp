@@ -47,7 +47,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponent::BehaviorComponent()
@@ -285,5 +285,5 @@ BehaviorContainer& BehaviorComponent::GetBehaviorContainer()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

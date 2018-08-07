@@ -24,7 +24,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const char* kCooldownKey = "cooldown_s";

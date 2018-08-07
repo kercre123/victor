@@ -18,7 +18,7 @@
 #include "json/json-forwards.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionRobotTouched : public IBEICondition
 {
@@ -37,7 +37,7 @@ private:
   float _kMinTouchTime;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionRobotTouched_H__

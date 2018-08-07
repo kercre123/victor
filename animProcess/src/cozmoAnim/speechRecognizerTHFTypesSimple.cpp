@@ -14,7 +14,7 @@
 #include "speechRecognizerTHFTypesSimple.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 RecogData::RecogData(recog_t* recog, searchs_t* search, bool isPhraseSpotted, bool allowsFollowupRecog)
 : _recognizer(recog)
@@ -64,5 +64,5 @@ void RecogData::DestroyData(recog_t*& recognizer, searchs_t*& search)
   }
 }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

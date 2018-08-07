@@ -18,7 +18,7 @@
 #include "engine/aiComponent/salientPointsComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ConditionSalientPointDetected::ConditionSalientPointDetected(const Json::Value& config)
     : IBEICondition(config)
@@ -53,12 +53,12 @@ bool ConditionSalientPointDetected::AreConditionsMetInternal(BehaviorExternalInt
 }
 
 void
-Anki::Cozmo::ConditionSalientPointDetected::GetRequiredVisionModes(std::set<Anki::Cozmo::VisionModeRequest>& requiredVisionModes) const
+Anki::Vector::ConditionSalientPointDetected::GetRequiredVisionModes(std::set<Anki::Vector::VisionModeRequest>& requiredVisionModes) const
 {
   requiredVisionModes.insert( {VisionMode::RunningNeuralNet, EVisionUpdateFrequency::Low} );
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

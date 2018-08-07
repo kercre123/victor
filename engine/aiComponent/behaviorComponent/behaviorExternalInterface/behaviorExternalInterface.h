@@ -31,7 +31,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward Declaration
 class AIComponent;
@@ -316,7 +316,7 @@ private:
   std::unique_ptr<CompArrayWrapper> _arrayWrapper;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BehaviorExternalInterface_H__

@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BackpackLightAnimationContainer
 {
@@ -32,7 +32,7 @@ private:
   std::unordered_map<std::string, BackpackLightAnimation::BackpackAnimation> _animations;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Backpack_Light_Animation_Container_H__

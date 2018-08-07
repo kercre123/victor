@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorPlaypenDistanceSensor : public IBehaviorPlaypen
 {

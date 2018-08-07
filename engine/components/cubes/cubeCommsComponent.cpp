@@ -38,7 +38,7 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   // This is the only cube type that we expect to communicate with
@@ -77,7 +77,7 @@ CubeCommsComponent::CubeCommsComponent()
 }
 
 
-void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void CubeCommsComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   

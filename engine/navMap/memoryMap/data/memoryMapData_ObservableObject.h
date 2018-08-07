@@ -20,7 +20,7 @@
 #include "engine/cozmoObservableObject.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // MemoryMapData_ObservableObject

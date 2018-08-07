@@ -207,5 +207,5 @@ namespace Anki {
       return lastResult;
     } // Update()
     
-} // namespace Cozmo
+} // namespace Vision
 } // namespace Anki

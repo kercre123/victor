@@ -19,7 +19,7 @@
 #include <unordered_set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 class BehaviorContainer;
@@ -46,7 +46,7 @@ protected:
 
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_BehaviorTreeStateHelpers_H__

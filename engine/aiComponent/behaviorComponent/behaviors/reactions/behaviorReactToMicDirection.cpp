@@ -29,7 +29,7 @@
 #define DEBUG_MIC_REACTION_VERBOSE 0 // add some verbose debugging if trying to track down issues
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 

@@ -38,7 +38,7 @@ namespace Util {
   }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class RobotManager;
 class CozmoContext;
@@ -95,7 +95,7 @@ private:
 
 
 } // end namespace RobotInterface
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

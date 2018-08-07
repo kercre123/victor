@@ -25,7 +25,7 @@
 
 namespace Anki {
   
-namespace Cozmo {
+namespace Vector {
 
 // Forward decl.
 class Robot;
@@ -81,6 +81,6 @@ private:
 }; // class PotentialObjectsForLocalizingTo
 
 } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector
 
 #endif // __Anki_Cozmo_PotentialObjectsForLocalizingTo_H__

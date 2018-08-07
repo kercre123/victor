@@ -50,7 +50,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -451,4 +451,4 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
 }
 
 } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector

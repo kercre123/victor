@@ -47,7 +47,7 @@ namespace Util{
 class RandomGenerator;
 }
 class ObjectID;
-namespace Cozmo {
+namespace Vector {
   
 // Forward declarations
 class ActionableObject;
@@ -796,7 +796,7 @@ void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const 
 }
 #endif
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_ICozmoBehavior_H__

@@ -26,7 +26,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // declarations
 class Robot;
@@ -46,7 +46,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -62,7 +62,7 @@ public:
   
   void OnRobotDelocalized();
   
-  void UpdateOdometers(const Cozmo::RobotState& robotState);
+  void UpdateOdometers(const Vector::RobotState& robotState);
 
   // Checks for unexpected movement specifically while turning such as
   // - Cozmo is turning one direction but you turn him the other way
@@ -375,7 +375,7 @@ private:
 }; // class MovementComponent
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //  __Anki_Cozmo_Basestation_Components_MovementComponent_H__

@@ -23,7 +23,7 @@
 #define DISABLE_MOTORS_ON_CHARGER 1
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace LiftController {
 
       // Internal function declarations
@@ -446,7 +446,7 @@ namespace Anki {
       void PoseAndSpeedFilterUpdate()
       {
         // Get encoder speed measurements
-        f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
+        f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
 
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
@@ -859,5 +859,5 @@ namespace Anki {
       }
 
     } // namespace LiftController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

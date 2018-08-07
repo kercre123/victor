@@ -17,7 +17,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 
@@ -35,7 +35,7 @@ public:
   virtual void GetInitDependencies( RobotCompIDSet& dependencies ) const override;
   virtual void GetUpdateDependencies( RobotCompIDSet& dependencies ) const override {};
   
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
   // Event/Message handling
@@ -56,7 +56,7 @@ private:
   void DispatchSDKActivationResult(bool enabled);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Components_SDKComponent_H_

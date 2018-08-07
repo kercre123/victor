@@ -3,7 +3,7 @@
 // and re-run ./tools/ai/generateBehavior.py
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // BehaviorID is a unique identifier for each instance of a behavior
 // so that they can be referenced by other parts of the behavior system

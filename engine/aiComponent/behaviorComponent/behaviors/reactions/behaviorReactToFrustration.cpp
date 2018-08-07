@@ -28,7 +28,7 @@
 // TODO:(bn) this entire behavior could be generic for any type of emotion.... but that's too much effort
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const DrivingAnimationHandler::DrivingAnimations kFrustratedDrivingAnims { AnimationTrigger::DriveStartAngry,

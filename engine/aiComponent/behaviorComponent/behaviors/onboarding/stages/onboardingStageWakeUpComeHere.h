@@ -22,7 +22,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class OnboardingStageWakeUpComeHere : public IOnboardingStage
 {
@@ -309,7 +309,7 @@ private:
   std::unordered_map<Step,IBehavior*> _behaviors;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageWakeUp__

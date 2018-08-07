@@ -24,7 +24,7 @@
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // Fwd Delarations
 class CozmoContext;
@@ -151,7 +151,7 @@ private:
   std::string _debugStateString = "Unconnected";
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_CubeConnectionCoordinator_H__

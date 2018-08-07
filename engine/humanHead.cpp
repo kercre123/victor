@@ -18,7 +18,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
   
@@ -106,5 +106,5 @@ namespace Cozmo {
   }
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

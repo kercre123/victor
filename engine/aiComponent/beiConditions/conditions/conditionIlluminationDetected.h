@@ -20,7 +20,7 @@
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BEIConditionMessageHelper;
 
@@ -75,7 +75,7 @@ private:
   bool IsTriggerState( const IlluminationState& state ) const;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __Engine_AiComponent_BeiConditions_Conditions_ConditionIlluminationDetected_H__

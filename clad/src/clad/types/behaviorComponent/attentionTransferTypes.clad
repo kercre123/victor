@@ -11,7 +11,7 @@
  **/
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // NOTE: must match message in messages.proto
 enum uint_8 AttentionTransferReason {

@@ -18,7 +18,7 @@
 #include <utility>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace external_interface {
   class GatewayWrapper;
@@ -42,7 +42,7 @@ protected:
   virtual void DeliverToExternal(const external_interface::GatewayWrapper& message) = 0;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Anki_Cozmo_ExternalInterface_GatewayInterface_H__

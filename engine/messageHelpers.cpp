@@ -18,7 +18,7 @@
 #include <type_traits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using namespace ExternalInterface;
 
@@ -73,5 +73,5 @@ MessageEngineToGameTag GetEToGMessageTypeFromString(const char* inString)
   return MessageEngineToGameTag(std::numeric_limits<EToGUnderlyingType>::max());
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

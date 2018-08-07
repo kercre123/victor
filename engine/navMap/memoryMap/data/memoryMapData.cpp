@@ -13,7 +13,7 @@
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent) const
@@ -107,5 +107,5 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData::GetExternalContentType() 
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

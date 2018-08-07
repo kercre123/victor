@@ -20,7 +20,7 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Point in an edge
@@ -68,7 +68,7 @@ namespace Cozmo {
   };
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_OverheadEdge_H__

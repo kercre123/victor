@@ -33,7 +33,7 @@
 static const char* kLogChannelName = "VisionSystem";
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -731,5 +731,5 @@ std::vector<uchar> DTRawPixelsClassifier::PredictClass(const Array2d<RawPixelsCl
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

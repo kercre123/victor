@@ -18,7 +18,7 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 #define DoTicks(testFramework, r, b, n) do { SCOPED_TRACE(__LINE__); DoTicks_(testFramework, r, b, n); } while(0)
 #define DoTicksToComplete(testFramework, r, b, n) do { SCOPED_TRACE(__LINE__); DoTicks_(testFramework,r, b, n, true); } while(0)
@@ -27,7 +27,7 @@ extern Anki::Cozmo::CozmoContext* cozmoContext;
 /// Setup a test behavior class that tracks data for testing
 //////////
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 class AIComponent;
 class BehaviorExternalInterface;
 class BehaviorSystemManager;

@@ -28,7 +28,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class JdocsManager : public IDependencyManagedComponent<RobotComponentID>,
                      private Anki::Util::noncopyable
@@ -88,7 +88,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Components_JdocsManager_H__

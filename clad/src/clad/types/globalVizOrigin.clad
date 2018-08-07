@@ -4,7 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 message SetVizOrigin
 {
@@ -17,5 +17,5 @@ message SetVizOrigin
   float_32 trans_z_mm  // millimeters
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

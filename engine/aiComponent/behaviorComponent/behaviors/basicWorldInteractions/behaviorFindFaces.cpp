@@ -24,7 +24,7 @@
 #include "engine/actions/basicActions.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* const kMaxFaceAgeToLookKey = "maxFaceAgeToLook_ms";
@@ -210,5 +210,5 @@ const char* BehaviorFindFaces::StoppingConditionToString(BehaviorFindFaces::Stop
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -19,7 +19,7 @@
 #include <array>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace BackpackLightAnimation {
 
 using BackpackLEDArray = std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>;
@@ -36,7 +36,7 @@ struct BackpackAnimation {
 bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim);
 
 } // namespace BackpackLightAnimation
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_BackpackLights_BackpackLightAnimation_H__

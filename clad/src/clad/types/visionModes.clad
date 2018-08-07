@@ -3,7 +3,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   enum uint_32 VisionMode
   {
@@ -34,5 +34,5 @@ namespace Cozmo {
     Count
   }
       
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

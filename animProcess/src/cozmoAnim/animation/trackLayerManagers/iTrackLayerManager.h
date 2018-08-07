@@ -21,7 +21,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 template<class FRAME_TYPE>
 class ITrackLayerManager

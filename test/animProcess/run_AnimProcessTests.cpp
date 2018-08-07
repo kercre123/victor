@@ -7,7 +7,7 @@
 #include "util/logging/printfLoggerProvider.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   CONSOLE_VAR_EXTERN(bool, kProcFace_HotspotRender)
   CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
   CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
@@ -16,7 +16,7 @@ namespace Cozmo {
 }
 
 using namespace Anki;
-using namespace Cozmo;
+using namespace Vector;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(Cozmo, SimpleCozmoTest)

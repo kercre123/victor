@@ -61,7 +61,7 @@
 #define CONSOLE_GROUP "Behavior.EnrollFace"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -1990,5 +1990,5 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

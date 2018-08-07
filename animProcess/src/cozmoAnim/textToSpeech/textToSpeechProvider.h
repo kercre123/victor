@@ -19,7 +19,7 @@
 
 // Forward declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     class AnimContext;
     namespace TextToSpeech {
       class TextToSpeechProviderImpl;
@@ -32,7 +32,7 @@ namespace Json {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 //
@@ -103,7 +103,7 @@ private:
 
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_H__

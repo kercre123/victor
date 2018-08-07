@@ -5,7 +5,7 @@
 #include "clad/types/ledTypes.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   
     // Number of milliseconds corresponding to one frame
     const u32 kDefaultMsPerFrame = 30;
@@ -17,7 +17,7 @@ namespace Anki {
                            const TimeStamp_t phaseTime,     // timestamp indicating the 'beginning' of the light animation
                            const u32 msPerFrame = kDefaultMsPerFrame);
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

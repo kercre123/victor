@@ -18,7 +18,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 AnimationGroupContainer::AnimationGroupContainer(Util::RandomGenerator& rng)
 : _rng(rng)
@@ -141,5 +141,5 @@ void AnimationGroupContainer::SetAnimationCooldown(const std::string& name, doub
   _animationCooldowns[name] = cooldownExpiration_s;
 }
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

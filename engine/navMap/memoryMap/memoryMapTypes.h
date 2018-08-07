@@ -23,7 +23,7 @@
 #include <unordered_set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class MemoryMapData;
 
@@ -165,7 +165,7 @@ static const MemoryMapTypes::FullContentArray kTypesThatAreObstacles =
 };
 
 } // namespace MemoryMapTypes
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // 
