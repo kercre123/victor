@@ -984,6 +984,7 @@ void BehaviorOnboarding::UpdateBatteryInfo()
     return;
   }
  
+  // todo: migrate this to use BatteryComponent::GetSuggestedChargerTime()
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // robot should be charging for the first 30 mins or so of being on contacts, so use IsOnChargerContacts instead of IsCharging
   const bool currOnCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();

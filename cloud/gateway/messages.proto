@@ -768,6 +768,7 @@ message BatteryStateResponse {
   float battery_volts = 3;
   bool is_charging = 4;
   bool is_on_charger_platform = 5;
+  float suggested_charger_sec = 6;
 }
 
 message VersionStateRequest {}
