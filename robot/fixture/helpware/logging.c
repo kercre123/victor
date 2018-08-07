@@ -11,6 +11,7 @@
 #include "helpware/logging.h"
 
 #define LOGFILE_PATH "/data/local/fixture/logs/"
+#define SYS_RM_LOGS  "rm -f " LOGFILE_PATH "*.log"
 #define SEQFILE      LOGFILE_PATH "sequence.id"
 #define HELPER_LOGFILE LOGFILE_PATH "fixture%04d.log"
 #define MAX_LOGFILE_NAMELEN (sizeof(HELPER_LOGFILE)+9)
@@ -49,6 +50,10 @@ int fixture_log_init(void)
     memset(&gLogging, 0, sizeof(gLogging));
     int n = get_sequence_number(SEQFILE);
     char filename[MAX_LOGFILE_NAMELEN];
+
+    //printf("clean logs: system( %s )\n", SYS_RM_LOGS);
+    //fflush(stdout);
+    system(SYS_RM_LOGS);
 
     struct stat st={0};
     if (stat(LOGFILE_PATH, &st)==-1) {
