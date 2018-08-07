@@ -214,10 +214,7 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   // since the anim process is also calling EnableKeepFaceAlive(false), it should be ok
   _tickInfoScreenEnded = 0;
   
-  _wasTriggerWordEnabled = _robot.GetMicComponent().GetTriggerWordDetectionEnabled();
-  if( _wasTriggerWordEnabled ) {
-    _robot.GetMicComponent().SetTriggerWordDetectionEnabled( false );
-  }
+  _robot.GetMicComponent().SuppressTriggerWordDetection( true , kLockName );
   _robot.GetMicComponent().SuppressStreamingAfterWakeWord( true , kLockName );
 }
   
@@ -240,9 +237,7 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
   uic.ResetUserIntentUnclaimed();
   
   auto& micComp = _robot.GetMicComponent();
-  if( micComp.GetTriggerWordDetectionEnabled() != _wasTriggerWordEnabled ){
-    micComp.SetTriggerWordDetectionEnabled( _wasTriggerWordEnabled );
-  }
+  micComp.SuppressTriggerWordDetection( false , kLockName );
   micComp.SuppressStreamingAfterWakeWord( false , kLockName );
   
   IBehavior* bootBehavior = bbl.GetBootBehavior();

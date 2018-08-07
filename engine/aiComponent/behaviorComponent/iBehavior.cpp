@@ -105,7 +105,7 @@ bool IBehavior::WantsToBeActivated() const
   // WantsToBeActivated.
   DEV_ASSERT((_currentActivationState == ActivationState::Activated) ||
              (_currentActivationState == ActivationState::InScope),
-             "IBehavior.WantsToBeActivated.InalidActivationState");
+             "IBehavior.WantsToBeActivated.InvalidActivationState");
 #endif
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();

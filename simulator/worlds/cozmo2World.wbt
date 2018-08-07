@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.23013514393218407 0.46228201236631994 0.8563487353700352 3.947560634368608
-  position -1.8245716775419583 1.2809454025876654 1.5771613409945828
+  orientation -0.17938675697940168 0.3649045159895649 0.913600068755927 3.98585334742699
+  position -0.7876924042994399 0.9883799907203124 1.3320729357099879
 }
 Background {
   skyColor [
@@ -26,49 +26,51 @@ DirectionalLight {
   intensity 0.5
 }
 CozmoMat {
-  showMarkers FALSE
+}
+ComputerMouse {
+  translation -0.05780959803331032 0.026938352840530255 -2.220446049250313e-16
+  rotation -0.7745966627804132 0.4472136021675802 0.4472136000232374 4.459708721808911
 }
 VictorCharger {
-  translation -0.0650650263404583 -0.3833437665763433 1.2212453270876722e-15
+  translation -0.06370448839647203 0.17630918522517658 1.2212453270876722e-15
+  rotation 0 0 1 3.141592644
 }
 Face {
   translation 0.34 -0.97 0.27
 }
 LightCube {
   name "LightCube1"
-  translation 0.0884345 0.0833803 0.022
+  translation 0.16922062968218035 0.33003480587048156 0.022
   rotation 0 0 1 0.523599
-  objectType "Block_LIGHTCUBE1"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
 }
 LightCube {
   name "LightCube2"
-  translation 0.355064 0.0239116 0.0219929
+  translation -0.261168272223499 0.2841686525626108 0.021992900000000887
   rotation 0 0 -1 6.23319
-  objectType "Block_LIGHTCUBE2"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
+  objectType "Block_LIGHTCUBE2"
 }
 LightCube {
   name "LightCube3"
-  translation 0.129117 -0.00670031 0.0219929
+  translation 0.16414213550067566 0.19785107927798068 0.0219929
   rotation 1.3953699998618023e-5 -1.8370399998180594e-6 0.9999999999009599 0.261799
-  objectType "Block_LIGHTCUBE3"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
+  objectType "Block_LIGHTCUBE3"
 }
 CozmoBot2 {
+  translation 0.1362139754102607 -0.0532734542879576 0
   filterLogs TRUE
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
-  translation 0.288125 0.0208444 0.08
-  filterLogs FALSE
+  behaviorName "FindAndGoToHome"
+  consoleVarName "DevDispatchAfterShake"
+  consoleVarValue "1"
   colorizeStderrOutput TRUE
+  translation 0.288125 0.0208444 0.08
 }
 CozmoVizDisplay {
   streamResolution "NHD"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
 }

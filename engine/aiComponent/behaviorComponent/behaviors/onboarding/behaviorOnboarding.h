@@ -97,7 +97,6 @@ private:
   // Put this behavior in a state where it waits for the BSM to switch behavior stacks
   void TerminateOnboarding();
   
-  void SetTriggerWordEnabled(bool enabled);
   void SetAllowedIntent(UserIntentTag tag);
   void SetAllowAnyIntent();
   

@@ -96,11 +96,33 @@ void MicComponent::SuppressStreamingAfterWakeWord(const bool shouldSuppress, con
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicComponent::SetTriggerWordDetectionEnabled( bool enabled )
+void MicComponent::SuppressTriggerWordDetection(const bool shouldSuppress, const std::string& requester)
 {
-  RobotInterface::SetTriggerWordDetectionEnabled message{ enabled };
-  _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
-  _triggerDetectionEnabled = enabled;
+  auto sendMessage = [this, shouldSuppress]() {
+    PRINT_NAMED_INFO("MicComponent.SuppressTriggerWordDetection.SendMessage",
+                     "Sending message to %s trigger word detection",
+                     shouldSuppress ? "suppress" : "enable");
+    RobotInterface::SetTriggerWordDetectionEnabled message{!shouldSuppress};
+    _robot->SendMessage(RobotInterface::EngineToRobot( std::move(message)) );
+  };
+  
+  auto& requesters = _suppressTriggerWordDetectionRequesters;
+  
+  PRINT_NAMED_INFO("MicComponent.SuppressTriggerWordDetection.Request",
+                   "Requester '%s' is %s trigger word detection (num requesters %zu)",
+                   requester.c_str(),
+                   shouldSuppress ? "suppressing" : "no longer suppressing",
+                   requesters.size());
+  
+  if (shouldSuppress) {
+    requesters.insert(requester);
+    sendMessage();
+  } else {
+    requesters.erase(requester);
+    if (requesters.empty()) {
+      sendMessage();
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -58,12 +58,14 @@ public:
   // re-enable it.
   void SuppressStreamingAfterWakeWord(const bool shouldSuppress, const std::string& requester);
   
-  void SetTriggerWordDetectionEnabled( bool enabled );
+  // Request to suppress (or stop suppressing) trigger word ("Hey Vector") detection. Callers should supply a string
+  // identifying themselves. Once suppressed, detection remains suppressed until all requesters re-enable it.
+  void SuppressTriggerWordDetection(const bool shouldSuppress, const std::string& requester);
   
   // getters for the above, based on local info, not from the anim process.
   // These both default to true, which matches the anim process default (micDataProcessor.h)
   bool GetShouldStreamAfterWakeWord() const { return _suppressStreamAfterWakeWordRequesters.empty(); }
-  bool GetTriggerWordDetectionEnabled() const { return _triggerDetectionEnabled; }
+  bool GetTriggerWordDetectionEnabled() const { return _suppressTriggerWordDetectionRequesters.empty(); }
 
   // set / get the fullness of the audio processing buffer on the robot (float from 0 to 1)
   void  SetBufferFullness(float val);
@@ -74,8 +76,6 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
   
-  bool _triggerDetectionEnabled = true; // default based on micDataProcessor.h
-
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
   Robot*                    _robot;
@@ -83,6 +83,9 @@ private:
   
   // Keep track of who has requested to disable streaming-after-wakeword
   std::set<std::string> _suppressStreamAfterWakeWordRequesters;
+  
+  // Keep track of who has requested to disable trigger word detection
+  std::set<std::string> _suppressTriggerWordDetectionRequesters;
 };
 
 } // namespace Cozmo

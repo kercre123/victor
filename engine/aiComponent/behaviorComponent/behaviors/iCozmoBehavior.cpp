@@ -315,7 +315,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _behaviorStatToIncrement.reset(new BehaviorStat);
     const auto& statStr = config[kBehaviorStatToIncrement].asString();
     ANKI_VERIFY( BehaviorStatFromString( statStr, *_behaviorStatToIncrement ),
-                 "ICozmoBehavior.ReadFromJson.InalidBehaviorStat",
+                 "ICozmoBehavior.ReadFromJson.InvalidBehaviorStat",
                  "Behavior stat to increment '%s' invalid in behavior '%s'",
                  statStr.c_str(),
                  GetDebugLabel().c_str() );
@@ -950,6 +950,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
   
   if (_isSuppressingStreamAfterWakeWord) {
     SmartSuppressStreamAfterWakeWord(false);
+  }
+  
+  if (_isSuppressingTriggerWordDetection) {
+    SmartSuppressTriggerWordDetection(false);
   }
 
   if( !_powerSaveRequest.empty() ) {
@@ -1618,6 +1622,15 @@ void ICozmoBehavior::SmartSuppressStreamAfterWakeWord(const bool suppress)
   if( suppress != _isSuppressingStreamAfterWakeWord ) {
     GetBEI().GetMicComponent().SuppressStreamingAfterWakeWord(suppress, GetDebugLabel());
     _isSuppressingStreamAfterWakeWord = suppress;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartSuppressTriggerWordDetection(const bool suppress)
+{
+  if( suppress != _isSuppressingTriggerWordDetection ) {
+    GetBEI().GetMicComponent().SuppressTriggerWordDetection(suppress, GetDebugLabel());
+    _isSuppressingTriggerWordDetection = suppress;
   }
 }
   

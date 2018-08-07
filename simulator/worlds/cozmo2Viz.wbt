@@ -42,7 +42,8 @@ WebotsKeyboardController{
   
   # To connect to a physical Victor, uncomment and 
   # update to the IP address of the engine.
-  # engineIP      "192.168.X.X"
+  engineIP      "192.168.41.202"
+  #engineIP      "192.168.0.106"
   
   redirectViz            TRUE
   #filterLogs             TRUE
