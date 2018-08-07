@@ -10,6 +10,7 @@ factors (e.g., there is no cube, robot fails to drive onto the charger, robot mi
 requested pose due to a wall, etc.):
  - DriveOnCharger/DriveOffCharger
  - GoToPose
+ - MeetVictor
 '''
 
 import asyncio
@@ -172,10 +173,6 @@ MESSAGES_TO_TEST = [
     (Interface.SDKBehaviorActivation,
      protocol.SDKActivationRequest(slot=vector.connection.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY.value, enable=True),
      TestResultMatches(protocol.SDKActivationResult(status=protocol.ResultStatus(description="SDKActivationResult returned"), slot=vector.connection.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY.value, enabled=True))),
-    # AppIntent message
-    (Interface.AppIntent,
-     protocol.AppIntentRequest(intent='intent_meet_victor', param='Bobert'),
-     TestResultMatches(protocol.AppIntentResult(status=protocol.ResultStatus(description="Message sent to engine")))),
     # UpdateEnrolledFaceByID message
     (Interface.UpdateEnrolledFaceByID,
      protocol.UpdateEnrolledFaceByIDRequest(
