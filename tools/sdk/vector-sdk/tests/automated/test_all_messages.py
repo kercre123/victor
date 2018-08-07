@@ -8,7 +8,6 @@ Calls specific messages on the robot, with expected results and verifies that th
 Note that the following messages are intentionally not in here because they are unreliable due to environmental
 factors (e.g., there is no cube, robot fails to drive onto the charger, robot might not be able to move to the
 requested pose due to a wall, etc.):
- - ConnectCube
  - DriveOnCharger/DriveOffCharger
  - GoToPose
 '''
@@ -250,6 +249,13 @@ MESSAGES_TO_TEST = [
      protocol.SetBackpackLightsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
                                        off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
      TestResultMatches(protocol.SetBackpackLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+
+    # ConnectCube message
+    (client.ExternalInterfaceServicer.ConnectCube,
+     protocol.ConnectCubeRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+                                             protocol.ResultStatus(description="Response received from engine"),
+                                             ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
     (client.ExternalInterfaceServicer.DisconnectCube,
