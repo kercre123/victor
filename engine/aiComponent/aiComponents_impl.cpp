@@ -20,7 +20,6 @@ namespace Vector {
 class BehaviorComponent;
 class ContinuityComponent;
 class FaceSelectionComponent;
-class FreeplayDataTracker;
 class AIInformationAnalyzer;
 class ObjectInteractionInfoCache;
 class PuzzleComponent;
@@ -34,7 +33,6 @@ class SalientPointsComponent;
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponent,                 AIComponentID, BehaviorComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(ContinuityComponent,               AIComponentID, ContinuityComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceSelectionComponent,            AIComponentID, FaceSelection)
-LINK_COMPONENT_TYPE_TO_ENUM(FreeplayDataTracker,               AIComponentID, FreeplayDataTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(AIInformationAnalyzer,             AIComponentID, InformationAnalyzer)
 LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache,        AIComponentID, ObjectInteractionInfoCache)
 LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,                   AIComponentID, Puzzle)
@@ -53,7 +51,6 @@ std::string GetComponentStringForID<Vector::AIComponentID>(Vector::AIComponentID
     case Vector::AIComponentID::BehaviorComponent:                 { return "BehaviorComponent";}
     case Vector::AIComponentID::ContinuityComponent:               { return "ContinuityComponent";}
     case Vector::AIComponentID::FaceSelection:                     { return "FaceSelection";}
-    case Vector::AIComponentID::FreeplayDataTracker:               { return "FreeplayDataTracker";}
     case Vector::AIComponentID::InformationAnalyzer:               { return "InformationAnalyzer";}
     case Vector::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
     case Vector::AIComponentID::Puzzle:                            { return "Puzzle";}

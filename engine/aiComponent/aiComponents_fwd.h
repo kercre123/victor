@@ -37,8 +37,6 @@ enum class AIComponentID{
   ContinuityComponent,
   // provide a simple interface for selecting the best face to interact with
   FaceSelection,
-  // component for tracking freeplay DAS data
-  FreeplayDataTracker,
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
   InformationAnalyzer,

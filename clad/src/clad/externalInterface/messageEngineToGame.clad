@@ -728,17 +728,6 @@ message EngineErrorCodeMessage {
   EngineErrorCode errorCode
 }
 
-// Sent when a cube lights change in CubeLightComponent
-message CubeLightsStateTransition {
-  uint_32 objectID,
-  string  factoryID,
-  ObjectType objectType,
-  // Colors are encoded as uint with 5 bits per color
-  // To convert from frames to seconds divide by 30 (30 frames per second)
-  LightState lights[4],
-  bool lightRotation
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Robot flash (non-volatile storage)
 ///////////////////////////////////////////////////////////////////////////////
@@ -826,11 +815,6 @@ message SupportInfo {
 //  2 - Play__SFX__Cube_Feeding_Down - shake tick point drops
 //  3 - Play__SFX__Cube_Feeding_Success - game is over (also play the stop loop)
 //  4 - Stop__SFX__Cube_Feeding_Loop_Stop - stop looping sfx
-
-message FeedingSFXStageUpdate {
-  uint_8 stage,
-  float_32 chargePercentage = 0.0
-}
 
 enum uint_8 BehaviorStackState {
   NotActive = 0,

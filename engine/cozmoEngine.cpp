@@ -36,7 +36,6 @@
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
 #include "engine/utils/cozmoExperiments.h"
-#include "engine/utils/cozmoFeatureGate.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
 #include "engine/wallTime.h"
@@ -252,9 +251,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestFeatureToggles>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFeatureToggle>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
@@ -376,25 +372,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _isInitialized = true;
 
   return RESULT_OK;
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::RequestFeatureToggles& msg)
-{
-  // collect feature list and send to UI
-  ExternalInterface::FeatureToggles toggles;
-  auto featureList = _context->GetFeatureGate()->GetFeatures();
-  for (const auto& featurePair : featureList) {
-    toggles.features.emplace_back(featurePair.first, featurePair.second);
-  }
-
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::FeatureToggles>(std::move(toggles));
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::SetFeatureToggle& message)
-{
-  _context->GetFeatureGate()->SetFeatureEnabled(message.feature, message.value);
 }
 
 Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
@@ -790,12 +767,6 @@ void CozmoEngine::InitUnityLogger()
     }
   }
 #endif //ANKI_DEV_CHEATS
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg)
-{
-  _isGamePaused = msg.isPaused;
 }
 
 template<>

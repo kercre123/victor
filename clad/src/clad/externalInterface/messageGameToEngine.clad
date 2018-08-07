@@ -63,16 +63,6 @@ message DisconnectFromUiDevice {
     uint_8 deviceID
 }
 
-// Request feature toggles from engine
-message RequestFeatureToggles {
-}
-
-// Set feature toggle changed in UI
-message SetFeatureToggle {
-  FeatureType feature,
-  bool value
-}
-
 message StartIdleTimeout {
   float_32 faceOffTime_s = -1.0,
   float_32 disconnectTime_s = -1.0
@@ -80,10 +70,6 @@ message StartIdleTimeout {
 
 message CancelIdleTimeout {
   
-}
-
-message SetGameBeingPaused {
-  bool isPaused = 1
 }
 
 message RequestLocale {
@@ -786,11 +772,6 @@ message EnableCubeSleep {
   bool skipAnimation = 0 // If true will skip the fadeout part of the sleep anim
 }
 
-// Whether or not engine should be sending CubeLightsStateTransition messages to game
-message EnableCubeLightsStateTransitionMessages {
-  bool enable
-}
-
 // Makes the specified object flash its lights
 message FlashCurrentLightsState {
   uint_32 objectID
@@ -975,17 +956,6 @@ message ClearCalibrationImages {
 }
 
 message ComputeCameraCalibration {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Communicating UI interactions
-///////////////////////////////////////////////////////////////////////////////
-
-message ContinueFreeplayFromIdle{
-}
-
-message EnableDroneMode {
-  bool   isStarted
 }
 
 ///////////////////////////////////////////////////////////////////////////////

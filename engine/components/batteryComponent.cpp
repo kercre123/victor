@@ -14,7 +14,6 @@
 #include "engine/components/batteryComponent.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/freeplayDataTracker.h"
 
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -22,6 +21,8 @@
 #include "engine/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -363,9 +364,6 @@ void BatteryComponent::UpdateOnChargerPlatform()
     PRINT_NAMED_INFO("BatteryComponent.UpdateOnChargerPlatform.OnChargerPlatformChange",
                      "robot is now %s the charger platform",
                      _isOnChargerPlatform ? "ON" : "OFF");
-    
-    // pause the freeplay tracking if we are on the charger
-    _robot->GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
     
     // Reset last on charger pitch angle if we're no longer on the platform
     if (!onPlatform) {

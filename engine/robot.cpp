@@ -26,7 +26,6 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/block.h"
@@ -405,9 +404,6 @@ Robot::~Robot()
   // can be removed once the DEV_ASSERT is fixed
   _components->RemoveComponent(RobotComponentID::TouchSensor);
 
-  // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
-  GetAIComponent().GetComponent<FreeplayDataTracker>().ForceUpdate();
-
   AbortAll();
 
   // Destroy our actionList before things like the path planner, since actions often rely on those.
@@ -639,12 +635,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                       "OffTreadsState: %s  %s",
                       EnumToString(_offTreadsState),
                       awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
-
-  if (offTreadsStateChanged) {
-    // pause the freeplay tracking if we are not on the treads
-    const bool isPaused = (_offTreadsState != OffTreadsState::OnTreads);
-    GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::OffTreads);
-  }
 
   return offTreadsStateChanged;
 }
@@ -2153,13 +2143,6 @@ Util::Data::DataPlatform* Robot::GetContextDataPlatform()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Message handlers subscribed to in RobotToEngineImplMessaging::InitRobotMessageComponent
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
-{
-  _isCliffReactionDisabled = msg.isStarted;
-  SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(!msg.isStarted)));
-}
 
 template<>
 void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
