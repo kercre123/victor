@@ -41,6 +41,7 @@ def get_sprite_names(paths, folders = False):
           if(extension != 0):
             all_sprite_names.append(file[:extension])
 
+  all_sprite_names.sort()
   return all_sprite_names
 
 def generate_map(sprite_names, sprite_sequence_names):
@@ -62,6 +63,7 @@ def generate_map(sprite_names, sprite_sequence_names):
   os.remove(PATH_TO_MAP)
   with open(PATH_TO_MAP, 'w') as outfile:
     outfile.write(map_str)
+    outfile.write("\n")
 
 
 def generate_clad_file(sprite_names, sprite_sequence_names):
@@ -87,6 +89,7 @@ def generate_clad_file(sprite_names, sprite_sequence_names):
     t = string.Template(infile.read())
     with open(PATH_TO_CLAD_FILE, 'w') as outfile:
       outfile.write(t.substitute(values))
+      outfile.write("\n")
 
 
 
