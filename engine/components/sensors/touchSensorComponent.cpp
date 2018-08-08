@@ -200,14 +200,9 @@ TouchSensorComponent::TouchSensorComponent()
   const bool isExceptionESN = exceptionESNWithPVThardware.find(esn)!=exceptionESNWithPVThardware.end();
   _enabled = isValidESN || isExceptionESN;
   
-  // backwards compatibility checks for OS version
-  // note: 0.12.203 is the earliest version that this implementation
-  // of the touch sensor is verified working for. Disable earlier versions for safety
+  // send up the OS version (useful to determine if corresponding required syscon changes are present)
   int major, minor, incremental;
   osstate->GetOSBuildVersion(major, minor, incremental);
-  const bool versionCheck = major >= 0 && minor >= 12 && incremental >= 203;
-  _enabled &= versionCheck;
-  
   std::stringstream osv;
   osv << major << "." << minor << "." << incremental;
   
