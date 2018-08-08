@@ -4,9 +4,12 @@
   "behaviorID": "InteractWithFaces",
 
   "associatedActiveFeature": "InteractWithFaces",
-
+  // This is the minimum time the robot will track
+  // if no eye contact is made at all
   "minTimeToTrackFace_s": 8.0,
-  "maxTimeToTrackFace_s": 15.0,
+  // This is the max time the robot will track
+  // if eye contact is mainted the entire time
+  "maxTimeToTrackFace_s": 30.0,
 
   "clampSmallAngles": false
   // ,
