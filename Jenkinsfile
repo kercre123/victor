@@ -2,7 +2,7 @@
 if (env.CHANGE_ID) {
     properties([pipelineTriggers([pollSCM('H/10 * * * *')])])
 } else {
-    properties([pipelineTriggers([pollSCM('H/50 * * * *')])])
+    properties([pipelineTriggers([pollSCM('H/50 * * * *')])]) 
 }
 
 
@@ -135,6 +135,9 @@ stage('Parallel Build') {
                     }"""
                     server.upload(macosFileSpec)
                 }
+                stage('Cleaning MacOS workspace...') {
+                    cleanWs()
+                }
             }
         }
     }
@@ -143,8 +146,5 @@ stage('Parallel Build') {
 node('victor-slaves') {
     stage('Cleaning workspace') {
         cleanWs()
-        node('mac-slaves') {
-            cleanWs()
-        }
     }
 }
