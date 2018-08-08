@@ -171,7 +171,11 @@ void RtsComms::HandleReset(bool forced) {
     } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
       Init();
       Log::Write("SecurePairing restarting.");
-      UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::START_PAIRING);
+      if(_isPairing) {
+        UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
+      } else {
+        UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      }
     } else {
       Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
       ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
