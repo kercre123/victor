@@ -38,6 +38,10 @@ echo restarting helper process...
 adb shell "echo `cd /data/local/fixture && nohup ./helper >/dev/null 2>&1 </dev/null &` >/dev/null && sleep 1"
 adb shell "echo ps new: `ps | grep ./helper | grep -v grep`"
 
+echo clean temporary files...
+adb shell "rm -f /data/local/fixture/*.safe /data/local/fixture/dfu && sync"
+REM adb shell "ls -la /data/local/fixture"
+
 REM echo rebooting...
 adb shell "sync && sleep 1"
 REM adb reboot
