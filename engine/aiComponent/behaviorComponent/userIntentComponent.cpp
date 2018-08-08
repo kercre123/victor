@@ -589,36 +589,39 @@ void UserIntentComponent::SendWebVizIntents()
 {
   if( _context != nullptr ) {
     const auto* webService = _context->GetWebService();
-    
-    Json::Value toSend = Json::arrayValue;
-    
-    {
-      Json::Value blob;
-      blob["intentType"] = "user";
-      blob["type"] = "current-intent";
-      blob["value"] = UserIntentTagToString( _pendingIntent->intent.GetTag() );
-      toSend.append(blob);
+    static const std::string kWebVizModuleNameIntents = "intents";
+    if (webService->IsWebVizClientSubscribed(kWebVizModuleNameIntents)) {
+
+      Json::Value toSend = Json::arrayValue;
+
+      {
+        Json::Value blob;
+        blob["intentType"] = "user";
+        blob["type"] = "current-intent";
+        blob["value"] = UserIntentTagToString( _pendingIntent->intent.GetTag() );
+        toSend.append(blob);
+      }
+
+      if( !_devLastReceivedCloudIntent.empty() ) {
+        Json::Value blob;
+        blob["intentType"] = "cloud";
+        blob["type"] = "current-intent";
+        blob["value"] = _devLastReceivedCloudIntent;
+        toSend.append(blob);
+        _devLastReceivedCloudIntent.clear();
+      }
+
+      if( !_devLastReceivedAppIntent.empty() ) {
+        Json::Value blob;
+        blob["intentType"] = "app";
+        blob["type"] = "current-intent";
+        blob["value"] = _devLastReceivedAppIntent;
+        toSend.append(blob);
+        _devLastReceivedAppIntent.clear();
+      }
+
+      webService->SendToWebViz( kWebVizModuleNameIntents, toSend );
     }
-    
-    if( !_devLastReceivedCloudIntent.empty() ) {
-      Json::Value blob;
-      blob["intentType"] = "cloud";
-      blob["type"] = "current-intent";
-      blob["value"] = _devLastReceivedCloudIntent;
-      toSend.append(blob);
-      _devLastReceivedCloudIntent.clear();
-    }
-    
-    if( !_devLastReceivedAppIntent.empty() ) {
-      Json::Value blob;
-      blob["intentType"] = "app";
-      blob["type"] = "current-intent";
-      blob["value"] = _devLastReceivedAppIntent;
-      toSend.append(blob);
-      _devLastReceivedAppIntent.clear();
-    }
-    
-    webService->SendToWebViz( "intents", toSend );
   }
 }
 

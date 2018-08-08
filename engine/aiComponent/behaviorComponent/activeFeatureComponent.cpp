@@ -114,13 +114,14 @@ ActiveFeature ActiveFeatureComponent::GetActiveFeature() const
 
 void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intentSource) const
 {
+  static const std::string kWebVizModuleName = "behaviors";
   if( _activeFeature != ActiveFeature::NoFeature ) {
     if( _context != nullptr ) {
       const auto* webService = _context->GetWebService();
-      if( webService != nullptr ){
+      if( webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
         Json::Value data;
         data["activeFeature"] = std::string(ActiveFeatureToString(_activeFeature)) + " (" + intentSource + ")";
-        webService->SendToWebViz("behaviors", data);
+        webService->SendToWebViz(kWebVizModuleName, data);
       }
     }
   }

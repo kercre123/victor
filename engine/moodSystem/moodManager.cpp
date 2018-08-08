@@ -402,35 +402,36 @@ void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::strin
   }
 
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  const auto* webService = context->GetWebService();
+  if( nullptr != webService && webService->IsWebVizClientSubscribed(kWebVizModuleName)) {
 
-  Json::Value data;
-  data["time"] = currentTime_s;
+    Json::Value data;
+    data["time"] = currentTime_s;
 
-  auto& moodData = data["moods"];
+    auto& moodData = data["moods"];
 
-  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
-  {
-    const EmotionType emotionType = (EmotionType)i;
-    const float val = GetEmotionByIndex(i).GetValue();
+    for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+    {
+      const EmotionType emotionType = (EmotionType)i;
+      const float val = GetEmotionByIndex(i).GetValue();
 
-    Json::Value entry;
-    entry["emotion"] = EmotionTypeToString( emotionType );
-    entry["value"] = val;
-    moodData.append( entry );
+      Json::Value entry;
+      entry["emotion"] = EmotionTypeToString( emotionType );
+      entry["value"] = val;
+      moodData.append( entry );
+    }
+
+    if( ! emotionEvent.empty() ) {
+      data["emotionEvent"] = emotionEvent;
+    }
+
+    data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
+
+    webService->SendToWebViz( kWebVizModuleName, data );
   }
 
-  if( ! emotionEvent.empty() ) {
-    data["emotionEvent"] = emotionEvent;
-  }
-
-  data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
-
-  const auto* web = context->GetWebService();
-  if( nullptr != web ) {
-    web->SendToWebViz( kWebVizModuleName, data );
-  }
-
-  _lastWebVizSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastWebVizSendTime_s = currentTime_s;
 }
 
 void MoodManager::HandleActionEnded(const ExternalInterface::RobotCompletedAction& completion)

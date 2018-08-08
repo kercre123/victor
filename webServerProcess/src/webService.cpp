@@ -1174,7 +1174,7 @@ void WebService::Update()
           {
             const auto& moduleName = requestPtr->_param1;
             const auto& idxStr = requestPtr->_param2;
-            size_t idx = std::stoi( idxStr );
+            const size_t idx = std::stoi( idxStr );
 
             auto sendToClient = [idx, moduleName, this](const Json::Value& toSend){
               // might crash if webservice is somehow destroyed after the subscriber, but only in dev
@@ -1479,8 +1479,8 @@ void WebService::SendToWebSockets(const std::string& moduleName, const Json::Val
 bool WebService::IsWebVizClientSubscribed(const std::string& moduleName) const
 {
   for( const auto& connData : _webSocketConnections ) {
-    if( (moduleName.empty() && !connData.subscribedModules.empty()) // any module subscribed
-        || (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end()) )
+    if( (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end())
+        || (moduleName.empty() && !connData.subscribedModules.empty()) ) // any module subscribed
     {
       return true;
     }
@@ -1556,7 +1556,7 @@ void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& 
 
   std::stringstream ss;
   ss << data;
-  std::string str = ss.str();
+  const std::string& str = ss.str();
   mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
 }
 
@@ -1585,7 +1585,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
   if( it != _webSocketConnections.end() ) {
     if( !data["type"].isNull() && !data["module"].isNull() ) {
       const std::string& moduleName = data["module"].asString();
-      size_t idx = it - _webSocketConnections.begin();
+      const size_t idx = it - _webSocketConnections.begin();
 
       if( data["type"].asString() == "subscribe" ) {
         it->subscribedModules.insert( moduleName );

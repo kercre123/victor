@@ -724,7 +724,7 @@ void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
 void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
 {
   auto* webService = _robot->GetContext()->GetWebService();
-  if( webService == nullptr ) {
+  if( webService == nullptr || !webService->IsWebVizClientSubscribed(kWebVizModuleName)) {
     return;
   }
 
@@ -738,9 +738,9 @@ void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
   }
 
   // chunk the quad messages
-  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  for(u32 seqNum = 0; seqNum * kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
   {
-    auto start = seqNum*kQuadsPerMessage;
+    auto start = seqNum * kQuadsPerMessage;
     auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
     Json::Value toWeb;
     toWeb["type"] = "MemoryMapMessageViz";

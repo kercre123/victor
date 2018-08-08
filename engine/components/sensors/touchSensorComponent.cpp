@@ -290,12 +290,12 @@ void TouchSensorComponent::DevLogTouchSensorData() const
 void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
   // send the information for webviz once
-  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if (now_sec > _nextSendWebVizDataTime_sec) {
-    const auto* context = _robot->GetContext();
-    if(context != nullptr) {
-      auto* webService = context->GetWebService();
-      if(webService != nullptr) {
+  const auto* context = _robot->GetContext();
+  if(context != nullptr) {
+    auto* webService = context->GetWebService();
+    if(webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizTouchSensorModuleName)) {
+      const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (now_sec > _nextSendWebVizDataTime_sec) {
         _toSendJson["enabled"] = _enabled ? "true" : "false";
         _toSendJson["count"] = (int)_touchCountForWebviz;
         _toSendJson["calibrated"] = _baselineCalibrator.IsCalibrated() ? "yes" : "no";
@@ -304,7 +304,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       }
     }
   }
-  
+
   
   // in the process of going from DVT to PVT, the touch sensor hardware changed enough to
   // require a new scheme of sampling data from the sensor itself. As a result, the DVT

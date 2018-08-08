@@ -3477,8 +3477,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     const auto* webService = _robot->GetContext()->GetWebService();
     if( (webService != nullptr) && !toSendToWebViz.empty() ) {
       toSendToWebViz["type"] = "MemoryMapCubes";
-      const std::string moduleName = "navmap";
-      webService->SendToWebViz( moduleName, toSendToWebViz );
+      static const std::string kModuleName = "navmap";
+      webService->SendToWebViz( kModuleName, toSendToWebViz );
     }
 
   } // DrawAllObjects()
@@ -3486,14 +3486,14 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const
   {
-    Json::Value data;
-    data["type"] = "RobotDeletedLocatedObject";
-    data["objectID"] = msg.objectID;
-
+    static const std::string kModuleName = "observedobjects";
     const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr ) {
-      const std::string moduleName = "observedobjects";
-      webService->SendToWebViz( moduleName, data );
+    if( webService != nullptr && webService->IsWebVizClientSubscribed(kModuleName)) {
+      Json::Value data;
+      data["type"] = "RobotDeletedLocatedObject";
+      data["objectID"] = msg.objectID;
+
+      webService->SendToWebViz( kModuleName, data );
     }
 
   } // SendObjectUpdateToWebViz()
@@ -3501,18 +3501,18 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const
   {
-    Json::Value data;
-    data["type"] = "RobotObservedObject";
-    data["objectID"] = msg.objectID;
-    data["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
-    data["objectType"] = ObjectTypeToString(msg.objectType);
-    data["isActive"] = msg.isActive;
-    data["timestamp"] = msg.timestamp;
-
+    static const std::string kModuleName = "observedobjects";
     const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr ) {
-      const std::string moduleName = "observedobjects";
-      webService->SendToWebViz( moduleName, data );
+    if( webService != nullptr && webService->IsWebVizClientSubscribed(kModuleName)) {
+      Json::Value data;
+      data["type"] = "RobotObservedObject";
+      data["objectID"] = msg.objectID;
+      data["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
+      data["objectType"] = ObjectTypeToString(msg.objectType);
+      data["isActive"] = msg.isActive;
+      data["timestamp"] = msg.timestamp;
+
+      webService->SendToWebViz( kModuleName, data );
     }
 
   } // SendObjectUpdateToWebViz()

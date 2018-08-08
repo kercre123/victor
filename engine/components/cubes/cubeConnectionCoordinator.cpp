@@ -546,7 +546,7 @@ void CubeConnectionCoordinator::SendDataToWebViz()
 #if ANKI_DEV_CHEATS
   if(nullptr != _context){
     auto* webService = _context->GetWebService();
-    if(nullptr != webService){
+    if(nullptr != webService && webService->IsWebVizClientSubscribed(kWebVizModuleNameCubes)){
       Json::Value toSend = Json::objectValue;
       Json::Value cccInfo = Json::objectValue;
 
@@ -568,7 +568,7 @@ void CubeConnectionCoordinator::SendDataToWebViz()
       
       // Display current subscribers
       Json::Value subscriberData = Json::arrayValue;
-      for(auto& record : _subscriptionRecords){
+      for(const auto& record : _subscriptionRecords){
         Json::Value subscriberDatum;
         subscriberDatum["SubscriberName"] = record.subscriber->GetCubeConnectionDebugName();
         subscriberDatum["SubscriptionType"] = record.isBackgroundConnection ? "Background" : "Interactable";

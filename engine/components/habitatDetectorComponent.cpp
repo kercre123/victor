@@ -312,7 +312,7 @@ void HabitatDetectorComponent::SendDataToWebViz() const
   const auto* context = _robot->GetContext();
   if (context != nullptr) {
     auto* webService = context->GetWebService();
-    if (webService!= nullptr) {
+    if (webService!= nullptr && webService->IsWebVizClientSubscribed(kWebVizHabitatModuleName)) {
       _toSendJson["habitatState"] = EnumToString(_habitatBelief);
       _toSendJson["stopOnWhiteEnabled"] = _robot->GetCliffSensorComponent().IsStopOnWhiteEnabled() ? "yes" : "no";
       webService->SendToWebViz(kWebVizHabitatModuleName, _toSendJson);

@@ -372,7 +372,7 @@ void VisionScheduleMediator::SendDebugVizMessages(const CozmoContext* context)
   webVizData["patternWidth"] = kMaxUpdatePeriod;
   Json::Value& fullSchedule = webVizData["fullSchedule"]; 
   
-  for(auto& modeDataPair : _modeDataMap) {
+  for(const auto& modeDataPair : _modeDataMap) {
     if(modeDataPair.second.enabled){
       numActiveModes++;
 

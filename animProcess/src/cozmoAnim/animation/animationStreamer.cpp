@@ -173,7 +173,9 @@ namespace Vector {
 
   namespace{
     
-  const char* kLogChannelName = "Animations";
+  static const char* kLogChannelName = "Animations";
+    
+  static const std::string kWebVizModuleName = "animations";
 
   // Specifies how often to send AnimState message
   static const u32 kAnimStateReportingPeriod_tics = 2;
@@ -2087,10 +2089,12 @@ namespace Vector {
     if( _context != nullptr ) {
       auto* webService = _context->GetWebService();
       if( (webService != nullptr) && (_streamingAnimation != nullptr) ) {
-        Json::Value data;
-        data["type"] = starting ? "start" : "stop";
-        data["animation"] = _streamingAnimation->GetName();
-        webService->SendToWebViz("animations", data);
+        if (webService->IsWebVizClientSubscribed(kWebVizModuleName)) {
+          Json::Value data;
+          data["type"] = starting ? "start" : "stop";
+          data["animation"] = _streamingAnimation->GetName();
+          webService->SendToWebViz(kWebVizModuleName, data);
+        }
       }
     }
   }

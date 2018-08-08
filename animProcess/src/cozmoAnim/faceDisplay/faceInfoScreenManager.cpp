@@ -605,45 +605,47 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
 
 
-  // always send web server data until we feel this is too much a perf hit
   if (nullptr != _webService)
   {
     using namespace std::chrono;
 
-    // if we send this data every tick, we crash the robot;
-    // only send the web data every X seconds
-    static double nextWebServerUpdateTime = 0.0;
-    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-    if (currentTime > nextWebServerUpdateTime)
+    static const std::string kWebVizModuleName = "micdata";
+    if (_webService->IsWebVizClientSubscribed(kWebVizModuleName))
     {
-      nextWebServerUpdateTime = currentTime + 0.1;
-
-      Json::Value webData;
-      webData["time"] = currentTime;
-      webData["confidence"] = micData.confidence;
-      // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
-      webData["dominant"] = micData.direction;
-      webData["selectedDirection"] = micData.selectedDirection;
-      webData["maxConfidence"] = maxConf;
-      webData["triggerDetected"] = triggerRecognized;
-      webData["delayTime"] = delayTime_ms;
-      webData["latestPowerValue"] = (double)micData.latestPowerValue;
-      webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
-
-      Json::Value& directionValues = webData["directions"];
-      for ( float confidence : micData.confidenceList )
+      // if we send this data every tick, we crash the robot;
+      // only send the web data every X seconds
+      static double nextWebServerUpdateTime = 0.0;
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+      if (currentTime > nextWebServerUpdateTime)
       {
-        directionValues.append(confidence);
+        nextWebServerUpdateTime = currentTime + 0.1;
+        
+        Json::Value webData;
+        webData["time"] = currentTime;
+        webData["confidence"] = micData.confidence;
+        // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
+        webData["dominant"] = micData.direction;
+        webData["selectedDirection"] = micData.selectedDirection;
+        webData["maxConfidence"] = maxConf;
+        webData["triggerDetected"] = triggerRecognized;
+        webData["delayTime"] = delayTime_ms;
+        webData["latestPowerValue"] = (double)micData.latestPowerValue;
+        webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
+        
+        Json::Value& directionValues = webData["directions"];
+        for ( float confidence : micData.confidenceList )
+        {
+          directionValues.append(confidence);
+        }
+        
+        // Beat Detection stuff
+        Json::Value& beatInfo = webData["beatDetector"];
+        const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
+        beatInfo["confidence"] = latestBeat.confidence;
+        beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
+        
+        _webService->SendToWebViz( kWebVizModuleName, webData );
       }
-
-      // Beat Detection stuff
-      Json::Value& beatInfo = webData["beatDetector"];
-      const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
-      beatInfo["confidence"] = latestBeat.confidence;
-      beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
-      
-      static const std::string moduleName = "micdata";
-      _webService->SendToWebViz( moduleName, webData );
     }
   }
 

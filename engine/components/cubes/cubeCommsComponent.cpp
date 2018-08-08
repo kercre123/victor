@@ -832,17 +832,17 @@ void CubeCommsComponent::SendDataToWebViz()
   if (!ANKI_DEV_CHEATS) {
     return;
   }
-  
+
   const auto* context = _robot->GetContext();
   if (context != nullptr) {
     auto* webService = context->GetWebService();
-    if (webService!= nullptr) {
+    if (webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleNameCubes)) {
       Json::Value toSend = Json::objectValue;
       Json::Value commInfo = Json::objectValue;
       commInfo["connectionState"] = CubeConnectionStateToString(GetCubeConnectionState());
       commInfo["connectedCube"] = IsConnectedToCube() ? GetCurrentCube() : "(none)";
       commInfo["preferredCube"] = _preferredCubeFactoryId.empty() ? "(none)" : _preferredCubeFactoryId;
-      
+
       Json::Value cubeData = Json::arrayValue;
       for (const auto& mapEntry : _cubeScanResults) {
         const auto& factoryId = mapEntry.first;
