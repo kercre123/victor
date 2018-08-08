@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-Test showing solid image of cozmo on vector's face for 4 seconds
+Test showing solid image of Cozmo on Vector's face for 4 seconds
 '''
 
 import os
