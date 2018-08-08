@@ -5,7 +5,7 @@ if (VICOS)
 project(diagnostics-logger)
 
 # copy diagnostics-logger.py to rename it to diagnostics-logger
-configure_file(diagnostics-logger.py ${CMAKE_CURRENT_BINARY_DIR}/diagnostics-logger @ONLY)
+configure_file(diagnostics-logger ${CMAKE_CURRENT_BINARY_DIR}/diagnostics-logger @ONLY)
 
 # install script into bin
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/diagnostics-logger
