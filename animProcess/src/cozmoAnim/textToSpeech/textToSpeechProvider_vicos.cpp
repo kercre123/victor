@@ -263,15 +263,17 @@ Result TextToSpeechProviderImpl::SetLocale(const std::string & locale)
   return Initialize(locale);
 }
 
-Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
-                                                 float durationScalar,
-                                                 TextToSpeechProviderData& data)
+
+Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
+                                                   float durationScalar,
+                                                   TextToSpeechProviderData & data,
+                                                   bool & done)
 {
-  LOG_INFO("TextToSpeechProvider.CreateAudioData", "text=%s duration=%f",
+  LOG_INFO("TextToSpeechProvider.GetFirstAudioData", "text=%s duration=%f",
             Anki::Util::HidePersonallyIdentifiableInfo(text.c_str()),
             durationScalar);
   if (nullptr == _BAB_Obj) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData", "TTS SDK not initialized");
+    LOG_ERROR("TextToSpeechProvider.GetFirstAudioData", "TTS SDK not initialized");
     return RESULT_FAIL_INVALID_OBJECT;
   }
 
@@ -285,7 +287,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   // Reset TTS processing state & error state
   BB_ERROR bbError = BABILE_reset(_BAB_Obj);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to reset TTS (error %ld)", bbError);
+    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to reset TTS (error %ld)", bbError);
   }
 
   BABILE_resetError(_BAB_Obj);
@@ -293,76 +295,67 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   // Apply current TTS params
   bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, speed);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set speed %d (error %ld)", speed, bbError);
+    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to set speed %d (error %ld)", speed, bbError);
   }
 
   bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SEL_VOICESHAPE, shaping);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set shaping %d (error %ld)", shaping, bbError);
+    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to set shaping %d (error %ld)", shaping, bbError);
   }
 
   bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_PITCH, pitch);
   if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData", "Unable to set pitch %d (error %ld)", pitch, bbError);
+    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to set pitch %d (error %ld)", pitch, bbError);
   }
 
-  data.Init(_BAB_voicefreq, 1);
+  _str = text;
+  _strlen = text.size();
+  _strpos = 0;
 
-  BB_TCHAR * str = (BB_TCHAR *) text.c_str();
-  BB_S32 strpos = 0;
-  BB_U32 totSamples = 0;
+  return GetNextAudioData(data, done);
+}
+
+Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & data, bool & done)
+{
+  // If we are still processing text, return pointer to next text, else null
+  BB_TCHAR * str = (BB_TCHAR *) ((_strpos < _strlen) ? &_str[_strpos] : nullptr);
+
   BB_S16 samples[2048];
+  BB_U32 numWanted = (sizeof(samples)/_BAB_samplesize);
+  BB_U32 numSamples = 0;
 
-  while (true)
-  {
-    BB_U32 numSamples = 0;
-    BB_S32 charRead = BABILE_readText(_BAB_Obj, &str[strpos], samples, (BB_U32)(sizeof(samples)/_BAB_samplesize), &numSamples);
-    LOG_INFO("TextToSpeechProvider.CreateAudioData", "charRead=%ld numSamples=%lu", charRead, numSamples);
-    if (charRead < 0) {
-      LOG_ERROR("TextToSpeechProvider.CreateAudioData", "charRead=%ld", charRead);
-      testError(_BAB_Obj, _BAB_MemParam, stderr);
-      break;
-    }
-    if (charRead == 0 && numSamples == 0) {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Done");
-      break;
-    }
+  const BB_S32 charRead = BABILE_readText(_BAB_Obj, str, samples, numWanted, &numSamples);
+
+  LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "charRead=%ld numSamples=%lu", charRead, numSamples);
+
+  if (charRead < 0) {
+    LOG_ERROR("TextToSpeechProvider.GetNextAudioData", "charRead=%ld", charRead);
+    testError(_BAB_Obj, _BAB_MemParam, stderr);
+    return RESULT_FAIL;
+  }
+
+  if (charRead == 0 && numSamples == 0) {
+    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Done");
+    done = true;
+    return RESULT_OK;
+  }
+
+  if (charRead > 0) {
     // Advance string position
-    if (charRead > 0) {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Advance by %ld characters", charRead);
-      strpos += charRead;
-    }
-    // Add samples to result
-    if (numSamples > 0) {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Add %lu samples", numSamples);
-      data.AppendSamples(samples, numSamples);
-      totSamples += numSamples;
-    }
-
+    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Advance by %ld characters", charRead);
+    _strpos += charRead;
   }
 
-  while (true)
-  {
-    // Flush internal buffers
-    BB_U32 numSamples = 0;
-    BABILE_readText(_BAB_Obj, NULL, samples, (BB_U32)(sizeof(samples)/_BAB_samplesize), &numSamples);
-    if (numSamples <= 0) {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Done");
-      break;
-    }
+  if (numSamples > 0) {
     // Add samples to result
-    if (numSamples > 0)
-    {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Flush %lu samples", numSamples);
-      data.AppendSamples(samples, numSamples);
-      totSamples += numSamples;
-    }
+    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Add %lu samples", numSamples);
+    data.Init(_BAB_voicefreq, 1);
+    data.AppendSamples(samples, numSamples);
   }
-
-  LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Return %lu samples", totSamples);
 
   return RESULT_OK;
-} // CreateAudioData()
+
+} // GetNextAudioData()
 
 } // end namespace TextToSpeech
 } // end namespace Vector

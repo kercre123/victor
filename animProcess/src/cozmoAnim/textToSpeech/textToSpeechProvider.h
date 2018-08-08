@@ -93,7 +93,15 @@ public:
 
   Result SetLocale(const std::string & locale);
 
-  Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
+  // Initialize TTS utterance and get first chunk of TTS audio.
+  // Returns RESULT_OK on success, else error code.
+  // Sets done to true when audio generation is complete.
+  Result GetFirstAudioData(const std::string & text, float durationScalar, TextToSpeechProviderData & data, bool & done);
+
+  // Get next chunk of TTS audio.
+  // Returns RESULT_OK on success, else error code.
+  // Sets done to true when audio generation is complete.
+  Result GetNextAudioData(TextToSpeechProviderData & data, bool & done);
 
 private:
   // Pointer to platform-specific implementation

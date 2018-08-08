@@ -11,7 +11,7 @@ constexpr UtteranceId kInvalidUtteranceID = 0;
 
 enum class UtteranceState
 {
-  Invalid,
+  Invalid = 0,
   Generating,
   Ready,
   Playing,

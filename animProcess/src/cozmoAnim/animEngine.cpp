@@ -242,12 +242,6 @@ void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
   _ttsComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechDeliver & msg)
-{
-  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechDeliver.InvalidTTSComponent");
-  _ttsComponent->HandleMessage(msg);
-}
-
 void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPlay & msg)
 {
   DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPlay.InvalidTTSComponent");

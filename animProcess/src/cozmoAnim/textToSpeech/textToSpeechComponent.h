@@ -13,6 +13,7 @@
 #define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
+#include "audioEngine/audioTools/streamingWaveDataInstance.h"
 #include "audioEngine/audioTypes.h"
 #include "coretech/common/shared/types.h"
 #include "clad/audio/audioEventTypes.h"
@@ -23,7 +24,6 @@
 #include <deque>
 #include <mutex>
 #include <map>
-#include <set>
 
 // Forward declarations
 namespace Anki {
@@ -34,7 +34,6 @@ namespace Anki {
     }
     namespace RobotInterface {
       struct TextToSpeechPrepare;
-      struct TextToSpeechDeliver;
       struct TextToSpeechPlay;
       struct TextToSpeechCancel;
     }
@@ -63,7 +62,6 @@ public:
   // CLAD message handlers are called on the main thread to handle incoming requests.
   //
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
@@ -83,30 +81,34 @@ private:
   // Private types
   // -------------------------------------------------------------------------------------------------------------------
   using AudioController = Vector::Audio::CozmoAudioController;
+  using StreamingWaveDataPtr = std::shared_ptr<AudioEngine::StreamingWaveDataInstance>;
   using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
   using TextToSpeechProvider = TextToSpeech::TextToSpeechProvider;
   using DispatchQueue = Util::Dispatch::Queue;
   using TTSID_t = uint8_t;
-  using EventPair = std::pair<TTSID_t, TextToSpeechState>;
-  using EventQueue = std::deque<EventPair>;
+  using EventTuple = std::tuple<TTSID_t, TextToSpeechState, f32>;
+  using EventQueue = std::deque<EventTuple>;
 
-  // TTS creation state
+  // Audio creation state
   enum class AudioCreationState {
-    None,       // Does NOT exist
-    Preparing,  // In process of creating data
-    Ready       // Data is ready to use
+    None,       // No data available
+    Preparing,  // Audio generation in progress
+    Playable,   // Audio is ready to play
+    Prepared    // Audio is complete
   };
 
   // TTS data bundle
   struct TtsBundle
   {
     // TTS request context
+    TextToSpeechTriggerMode triggerMode = TextToSpeechTriggerMode::Invalid;
     AudioCreationState state = AudioCreationState::None;
     AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Unprocessed;
-    AudioEngine::StandardWaveDataContainer* waveData = nullptr;
-
-    ~TtsBundle() { Util::SafeDelete(waveData); }
+    StreamingWaveDataPtr waveData;
   };
+
+  // Shared pointer to data bundle
+  using BundlePtr = std::shared_ptr<TtsBundle>;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Private members
@@ -118,10 +120,7 @@ private:
   mutable std::mutex _lock;
 
   // Map of data bundles
-  std::map<TTSID_t, TtsBundle> _ttsWaveDataMap;
-
-  // Map of TTSID's to corresponding AudioEventId's for delayed playback
-  std::set<TTSID_t> _ttsIdSet;
+  std::map<TTSID_t, BundlePtr> _bundleMap;
 
   TTSID_t _activeTTSID;
 
@@ -135,37 +134,39 @@ private:
   std::unique_ptr<TextToSpeechProvider> _pvdr;
 
   // Thread-safe event queue
-  EventQueue _evtq;
-  std::mutex _evtq_mutex;
+  EventQueue _event_queue;
+  std::mutex _event_mutex;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Private methods
   // -------------------------------------------------------------------------------------------------------------------
 
   // Thread-safe event notifications
-  void PushEvent(const EventPair& evt);
-  bool PopEvent(EventPair& evt);
+  void PushEvent(const EventTuple& event);
+  bool PopEvent(EventTuple& event);
 
-  // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
-  // Return nullptr if Text to Speech lib fails to create audio data
-  AudioEngine::StandardWaveDataContainer* CreateAudioData(const std::string& text,
-                                                          float durationScalar);
+  // Initialize TTS utterance and get first chunk of TTS audio.
+  // Returns RESULT_OK on success, else error code.
+  // Sets done to true when audio generation is complete.
+  Result GetFirstAudioData(const std::string & text, float durationScalar, const StreamingWaveDataPtr & data, bool & done);
 
-  // Find TtsBundle for operation
-  const TtsBundle* GetTtsBundle(const TTSID_t ttsID) const;
+  // Get next chunk of TTS audio.
+  // Returns RESULT_OK on success, else error code.
+  // Sets done to true when audio generation is complete.
+  Result GetNextAudioData(const StreamingWaveDataPtr & data, bool & done);
 
-  TtsBundle* GetTtsBundle(const TTSID_t ttsID);
+  // Get bundle for given ID
+  // Returns nullptr if ID is not found
+  BundlePtr GetBundle(const TTSID_t ttsID);
 
   // Asynchronous create the wave data for the given text and style, to be played later
   // Use GetOperationState() to check if wave data is Ready
   // Return RESULT_OK on success
   Result CreateSpeech(const TTSID_t ttsID,
+                      const TextToSpeechTriggerMode triggerMode,
                       const std::string& text,
                       const AudioTtsProcessingStyle style,
                       const float durationScalar);
-
-  // Get the current state of the create speech operation
-  AudioCreationState GetOperationState(const TTSID_t ttsID) const;
 
   // Set up Audio Engine to play text's audio data
   // out_duration_ms provides approximate duration of event before processing in audio engine
@@ -187,12 +188,16 @@ private:
   //
   void OnStateInvalid(const TTSID_t ttsID);
   void OnStatePreparing(const TTSID_t ttsID);
-  void OnStatePrepared(const TTSID_t ttsID);
+  void OnStatePlayable(const TTSID_t ttsID, const f32 duration_ms);
+  void OnStatePrepared(const TTSID_t ttsID, const f32 duration_ms);
 
   // Audio helpers
   void SetAudioProcessingStyle(AudioTtsProcessingStyle style);
-  void PostAudioEvent(uint8_t ttsID);
+  bool PostAudioEvent(uint8_t ttsID);
   void StopActiveTTS();
+
+  // SWAG estimate of final duration
+  f32 GetEstimatedDuration_ms(const std::string & text);
 
   // AudioEngine Callbacks
   void OnUtteranceCompleted(uint8_t ttsID);

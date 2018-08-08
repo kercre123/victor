@@ -58,7 +58,7 @@ const std::string kProfilerCaptureFileName          = "VictorProfilerSession";
 const std::string kProfilerCaptureFileExtension     = "prof";
 const std::string kAudioOutputCaptureFileName       = "VictorOutputSession";
 const std::string kAudioOutputCaptureFileExtension  = "wav";
-  
+
 using APT = Anki::AudioMetaData::GameParameter::ParameterType;
 // Consumable Parameters
 const std::set<APT> kConsumableParameters =
@@ -144,7 +144,7 @@ void PostAudioEvent( ConsoleFunctionContextRef context )
     sThis->PostAudioEvent( event, gameObjectId );
   }
 }
-  
+
 void SetAudioState( ConsoleFunctionContextRef context )
 {
   if ( sThis != nullptr ) {
@@ -251,7 +251,6 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.sampleRate         = 32000;
     config.bufferSize         = 1024;
     config.defaultMaxNumPools = 30;
-    
     // Systems
     config.enableGameSyncPreparation  = false;
     config.enableStreamCache          = true;
@@ -271,8 +270,11 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     SetLogOutput( ErrorLevel::All, &AudioEngineLogCallback );
 
     InitializePluginInterface();
-    GetPluginInterface()->SetupWavePortalPlugIn();
     GetPluginInterface()->SetupAkAlsaSinkPlugIn();
+    GetPluginInterface()->SetupStreamingWavePortalPlugIn();
+
+    // TBD VIC-5253: Retire non-streaming WavePortal after switch to streaming
+    GetPluginInterface()->SetupWavePortalPlugIn();
 
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS
@@ -287,10 +289,20 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     if ( Console::kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
-    
+
     RegisterCladGameObjectsWithAudioController();
     SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Victor_Listener ) } );
     SetupConsumableAudioParameters();
+
+    using namespace AudioMetaData::SwitchState;
+
+    SetSwitchState( ToAudioSwitchGroupId( SwitchGroupType::Robot_Vic_External_Input_Source ),
+                    ToAudioSwitchStateId( (GenericSwitch) Robot_Vic_External_Input_Source::Streaming_Wave_Portal ),
+                    ToAudioGameObject(AudioMetaData::GameObjectType::TextToSpeech) );
+
+    SetSwitchState( ToAudioSwitchGroupId( SwitchGroupType::Robot_Vic_External_Input_Source ),
+                    ToAudioSwitchStateId( (GenericSwitch) Robot_Vic_External_Input_Source::Streaming_Wave_Portal ),
+                    ToAudioGameObject(AudioMetaData::GameObjectType::Animation) );
   }
   if (sThis == nullptr) {
     sThis = this;
@@ -327,7 +339,7 @@ bool CozmoAudioController::WriteProfilerCapture( bool write )
     const auto dateTimeStr = CreateFormattedUtcDateTimeString();
     uniqueName = kProfilerCaptureFileName + '_' + dateTimeStr + '.' +  kProfilerCaptureFileExtension;
   }
-  
+
   return AudioEngineController::WriteProfilerCapture( write, uniqueName );
 }
 
@@ -414,7 +426,7 @@ bool CozmoAudioController::ActivateParameterValueUpdates( bool activate )
     // Active state did not change
     return success;
   }
-  
+
   if ( activate ) {
     // Register callbacks
     AudioEngineCallbackFunc callbackFunc = [this]( AudioEngineCallbackId callbackId,
@@ -456,7 +468,7 @@ bool CozmoAudioController::GetActivatedParameterValue( AudioMetaData::GameParame
     // Not Active
     return success;
   }
-  
+
   const auto paramIt = _consumableParameterValues.find( parameter );
   if ( paramIt != _consumableParameterValues.end() ) {
     success = true;
@@ -485,7 +497,7 @@ void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::SetupConsumableAudioParameters()
 {
@@ -495,14 +507,14 @@ void CozmoAudioController::SetupConsumableAudioParameters()
     _consumableParameterValues.emplace( consumableParameter, 0.0f );
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioPlayingId CozmoAudioController::PostAudioEvent( const std::string& eventName,
                                                      AudioGameObject gameObjectId,
                                                      AudioCallbackContext* callbackContext )
 {
   AudioPlayingId ret = AudioEngineController::PostAudioEvent( eventName, gameObjectId, callbackContext );
-  
+
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
     if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
@@ -513,7 +525,7 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( const std::string& eventNam
       toSend["gameObjectId"] = AudioMetaData::EnumToString( static_cast<AudioMetaData::GameObjectType>(gameObjectId) );
       toSend["hasCallback"] = (callbackContext != nullptr);
       // Note: this hypothetically could flood wifi, but only if the webviz tab is open. Ideally there
-      // would be an update call in this class to flush accumuated events. We can add one if this
+      // would be an update call in this class to flush accumulated events. We can add one if this
       // ends up being problematic, possibly one that is called from the webviz update loop.
       // Same goes for all the other methods below
       webservice->SendToWebViz( kWebVizModuleName, toSend );
@@ -522,14 +534,14 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( const std::string& eventNam
 
   return ret;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioPlayingId CozmoAudioController::PostAudioEvent( AudioEventId eventId,
                                                      AudioGameObject gameObjectId,
                                                      AudioCallbackContext* callbackContext )
 {
   AudioPlayingId ret = AudioEngineController::PostAudioEvent( eventId, gameObjectId, callbackContext );
-  
+
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
     if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
@@ -542,7 +554,7 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( AudioEventId eventId,
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
   }
-  
+
   return ret;
 }
 
@@ -550,7 +562,7 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( AudioEventId eventId,
 void CozmoAudioController::StopAllAudioEvents( AudioGameObject gameObjectId )
 {
   AudioEngineController::StopAllAudioEvents( gameObjectId );
-  
+
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
     if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
@@ -562,13 +574,13 @@ void CozmoAudioController::StopAllAudioEvents( AudioGameObject gameObjectId )
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CozmoAudioController::SetState( AudioStateGroupId stateGroupId,
                                      AudioStateId stateId ) const
 {
   bool ret = AudioEngineController::SetState( stateGroupId, stateId );
-  
+
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
     if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
@@ -581,17 +593,17 @@ bool CozmoAudioController::SetState( AudioStateGroupId stateGroupId,
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
   }
-  
+
   return ret;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CozmoAudioController::SetSwitchState( AudioSwitchGroupId switchGroupId,
                                            AudioSwitchStateId switchStateId,
                                            AudioGameObject gameObjectId ) const
 {
   bool ret = AudioEngineController::SetSwitchState( switchGroupId, switchStateId, gameObjectId );
-  
+
   if( ANKI_DEV_CHEATS ) {
     auto* webservice = _animContext->GetWebService();
     if( (webservice != nullptr) && webservice->IsWebVizClientSubscribed(kWebVizModuleName) ) {
@@ -605,7 +617,7 @@ bool CozmoAudioController::SetSwitchState( AudioSwitchGroupId switchGroupId,
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
   }
-  
+
   return ret;
 }
 

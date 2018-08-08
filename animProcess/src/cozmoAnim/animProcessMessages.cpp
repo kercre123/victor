@@ -473,11 +473,6 @@ void Process_textToSpeechPrepare(const RobotInterface::TextToSpeechPrepare& msg)
   _animEngine->HandleMessage(msg);
 }
 
-void Process_textToSpeechDeliver(const RobotInterface::TextToSpeechDeliver& msg)
-{
-  _animEngine->HandleMessage(msg);
-}
-
 void Process_textToSpeechPlay(const RobotInterface::TextToSpeechPlay& msg)
 {
   _animEngine->HandleMessage(msg);
@@ -672,11 +667,11 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
 {
   // If nonzero, we are scheduled to display a NO_ENGINE_COMMS fault code
   static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
-  
+
   // Amount of time for which we must be disconnected from the engine in order
   // to display the NO_ENGINE_COMMS fault code
   static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
-  
+
   // Check for changes in connection state to engine and send RobotAvailable and
   // FirmwareVersion messages when engine connects
   static bool wasConnected = false;
@@ -704,27 +699,27 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
 
     // Clear any scheduled fault code display
     displayFaultCodeTime_nanosec = 0;
-    
+
     wasConnected = true;
   } else if (wasConnected && !isConnected) {
     // We've just become unconnected. Start a timer to display the fault
     // code on the face at the desired time.
     displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_nanosec;
-    
+
     PRINT_NAMED_WARNING("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine",
                         "We have become disconnected from engine process. Displaying a fault code in %.1f seconds.",
                         Util::NanoSecToSec(kDisconnectedTimeout_nanosec));
-    
+
     wasConnected = false;
   }
-  
+
   // Display fault code if necessary
   if ((displayFaultCodeTime_nanosec > 0) &&
       (currTime_nanosec > displayFaultCodeTime_nanosec)) {
     displayFaultCodeTime_nanosec = 0;
     FaultCode::DisplayFaultCode(FaultCode::NO_ENGINE_COMMS);
   }
-  
+
   return RESULT_OK;
 }
 

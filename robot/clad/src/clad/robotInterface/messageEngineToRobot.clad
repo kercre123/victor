@@ -22,6 +22,7 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/switchboardToRobot.clad"
+#include "clad/types/textToSpeechTypes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -228,7 +229,7 @@ message RollActionParams
    float_32 backupDist_mm,
 }
 
-message PlaypenStart 
+message PlaypenStart
 {
 
 }
@@ -549,17 +550,10 @@ message RunDebugConsoleFuncMessage {
 //
 message TextToSpeechPrepare {
   AudioMetaData::SwitchState::Robot_Vic_External_Processing style, // Audio processing style
-  float_32 durationScalar, // Duration adjustment
-  uint_8 ttsID,            // ID of utterance
-  int_8 text[1024]         // Text to be pronounced
-}
-
-//
-// Sent from engine to robot (anim process) to deliver TTS audio to wwise
-//
-message TextToSpeechDeliver {
-  uint_8 ttsID,            // ID of utterance
-  bool playImmediately     // Should the TTS be played immediately when finished, or is it triggered by message/animation?
+  float_32 durationScalar,             // Duration adjustment
+  TextToSpeechTriggerMode triggerMode, // Trigger mode
+  uint_8 ttsID,                        // ID of utterance
+  int_8 text[1024]                     // Text to be pronounced
 }
 
 //
@@ -743,7 +737,7 @@ union EngineToRobot
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechPrepare           textToSpeechPrepare         = 0x92,
-  TextToSpeechDeliver           textToSpeechDeliver         = 0x93,
+  // Available                                              = 0x93,
   TextToSpeechPlay              textToSpeechPlay            = 0x94,
   TextToSpeechCancel            textToSpeechCancel          = 0x95,
 
