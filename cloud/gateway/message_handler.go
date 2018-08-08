@@ -1256,22 +1256,22 @@ func (m *rpcService) SetCubeLights(ctx context.Context, in *extint.SetCubeLights
 	}, nil
 }
 
-func (m *rpcService) PushSettings(ctx context.Context, in *extint.PushSettingsRequest) (*extint.PushSettingsResponse, error) {
-	log.Println("Received rpc request PushSettings(", in, ")")
+func (m *rpcService) PushJdocs(ctx context.Context, in *extint.PushJdocsRequest) (*extint.PushJdocsResponse, error) {
+	log.Println("Received rpc request PushJdocs(", in, ")")
 
-	f, result := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PushSettingsResponse{}, 1)
+	f, result := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PushJdocsResponse{}, 1)
 	defer f()
 
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_PushSettingsRequest{
-			PushSettingsRequest: in,
+		OneofMessageType: &extint.GatewayWrapper_PushJdocsRequest{
+			PushJdocsRequest: in,
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 	response := <-result
-	return response.GetPushSettingsResponse(), nil
+	return response.GetPushJdocsResponse(), nil
 }
 
 func (m *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHistoryRequest) (*extint.RobotHistoryResult, error) {
@@ -1292,22 +1292,22 @@ func (m *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHis
 	return response.GetRobotHistoryResult(), nil
 }
 
-func (m *rpcService) PullSettings(ctx context.Context, in *extint.PullSettingsRequest) (*extint.PullSettingsResponse, error) {
-	log.Println("Received rpc request PullSettings(", in, ")")
+func (m *rpcService) PullJdocs(ctx context.Context, in *extint.PullJdocsRequest) (*extint.PullJdocsResponse, error) {
+	log.Println("Received rpc request PullJdocs(", in, ")")
 
-	f, result := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PullSettingsResponse{}, 1)
+	f, result := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PullJdocsResponse{}, 1)
 	defer f()
 
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_PullSettingsRequest{
-			PullSettingsRequest: in,
+		OneofMessageType: &extint.GatewayWrapper_PullJdocsRequest{
+			PullJdocsRequest: in,
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 	response := <-result
-	return response.GetPullSettingsResponse(), nil
+	return response.GetPullJdocsResponse(), nil
 }
 
 func (m *rpcService) UpdateSettings(ctx context.Context, in *extint.UpdateSettingsRequest) (*extint.UpdateSettingsResponse, error) {

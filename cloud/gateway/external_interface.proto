@@ -214,16 +214,16 @@ service ExternalInterface {
     };
   }
 
-  rpc PullSettings(PullSettingsRequest) returns (PullSettingsResponse) {
+  rpc PullJdocs(PullJdocsRequest) returns (PullJdocsResponse) {
     option (google.api.http) = {
-      post: "/v1/pull_settings",
+      post: "/v1/pull_jdocs",
       body: "*"
     };
   }
 
-  rpc PushSettings(PushSettingsRequest) returns (PushSettingsResponse) {
+  rpc PushJdocs(PushJdocsRequest) returns (PushJdocsResponse) {
     option (google.api.http) = {
-      post: "/v1/push_settings",
+      post: "/v1/push_jdocs",
       body: "*"
     };
   }

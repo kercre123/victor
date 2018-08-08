@@ -305,10 +305,10 @@ test_attention_transfer: .require_ip
 	@echo 
 
 test_settings: .require_ip
-	$(curl_command)/v1/push_settings -d '{}'
+	$(curl_command)/v1/push_jdocs -d '{"named_jdocs":[{"jdoc_type":"ACCOUNT_SETTINGS","doc":{"doc_version":3,"fmt_version":2,"client_metadata":"34","json_doc":"{\n   \"data_collection\" : true,\n   \"foo_bar_collection\" : false\n}\n"}}]}'
 	@echo
 
-	$(curl_command)/v1/pull_settings -d '{}'
+	$(curl_command)/v1/pull_jdocs -d '{"jdoc_types":["ROBOT_SETTINGS", "ROBOT_LIFETIME_STATS"]}'
 	@echo
 
 	$(curl_command)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'

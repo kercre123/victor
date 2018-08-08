@@ -22,6 +22,7 @@
 
 #include "clad/types/robotSettingsTypes.h"
 
+#include "json/json.h"
 #include <map>
 
 namespace Anki {

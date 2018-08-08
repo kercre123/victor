@@ -65,22 +65,29 @@ enum ResultCode {
 message Jdoc {
   uint64 doc_version = 1;
   uint64 fmt_version = 2;
-  string fingerprint = 3;
+  string client_metadata = 3;
   string json_doc = 4;
 }
 
-message PullSettingsRequest {}
+message NamedJdoc {
+  JdocType jdoc_type = 1;
+  Jdoc doc = 2;
+}
 
-message PullSettingsResponse {
+message PullJdocsRequest {
+  repeated JdocType jdoc_types = 1;
+}
+
+message PullJdocsResponse {
   ResultStatus status = 1;
-  repeated Jdoc doc = 2;
+  repeated NamedJdoc named_jdocs = 2;
 }
 
-message PushSettingsRequest {
-  Jdoc doc = 1; // Must be robot settings doc
+message PushJdocsRequest {
+  repeated NamedJdoc named_jdocs = 1;
 }
 
-message PushSettingsResponse {
+message PushJdocsResponse {
   ResultStatus status = 1;
   ResultCode code = 2;
 }

@@ -79,12 +79,12 @@ message GatewayWrapper {
     DeletePhotoRequest            delete_photo_request = 46;
     DeletePhotoResponse           delete_photo_response = 47;
     // ------------ settings pairs ---------------------------------------
-    PushSettingsRequest    push_settings_request    = 60;
-    PushSettingsResponse   push_settings_response   = 61;
-    PullSettingsRequest    pull_settings_request    = 62;
-    PullSettingsResponse   pull_settings_response   = 63;
-    UpdateSettingsRequest  update_settings_request  = 64;
-    UpdateSettingsResponse update_settings_response = 65;
+    PushJdocsRequest              push_jdocs_request  = 60;
+    PushJdocsResponse             push_jdocs_response = 61;
+    PullJdocsRequest              pull_jdocs_request  = 62;
+    PullJdocsResponse             pull_jdocs_response = 63;
+    UpdateSettingsRequest         update_settings_request  = 64;
+    UpdateSettingsResponse        update_settings_response = 65;
 
     // ------------ sdk behavior request/response pairs --------------------
     DriveOffChargerRequest        drive_off_charger_request = 70;
