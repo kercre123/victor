@@ -114,6 +114,7 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
 BehaviorInteractWithFaces::DynamicVariables::DynamicVariables()
 {
   lastImageTimestampWhileRunning = 0;
+  trackFaceUntilTime_s           = -1.0f;
 }
 
 
@@ -177,6 +178,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 void BehaviorInteractWithFaces::OnBehaviorActivated()
 {
   // reset the time to stop tracking (in the tracking state)
+  _dVars.trackFaceUntilTime_s = -1.0f;
 
   if( _dVars.targetFace.IsValid() ) {
     TransitionToInitialReaction();
@@ -192,6 +194,14 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
+  }
+
+  if( _dVars.trackFaceUntilTime_s >= 0.0f ) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if( currTime_s >= _dVars.trackFaceUntilTime_s ) {
+      BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
+      CancelDelegates();
+    }
   }
 }
 
@@ -377,6 +387,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
   const float randomTimeToTrack_s = Util::numeric_cast<float>(
     GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
+  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
 
   CompoundActionParallel* action = new CompoundActionParallel();
