@@ -94,7 +94,8 @@ const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
 
 static const float kTrackingTimeout_s = 2.5f;
-static const float kAllowedLookAwayTime_s = 3.f;
+// TODO should this be a console var or go in a configuration file?
+static const float kNoEyeContactTimeOut_sec = 10.f;
 
 }
 
@@ -384,10 +385,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
 {
   DEBUG_SET_STATE(TrackingFace);
 
-  const float randomTimeToTrack_s = Util::numeric_cast<float>(
-    GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
-  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
-  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
+  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.maxTimeToTrackFace_s;
 
 
   CompoundActionParallel* action = new CompoundActionParallel();
@@ -399,7 +397,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     trackAction->SetUpdateTimeout(kTrackingTimeout_s);
-    trackAction->SetStopCriteriaWithEyeContactOverride(randomTimeToTrack_s, kAllowedLookAwayTime_s);
+    trackAction->SetStopCriteriaWithEyeContactOverride(_iConfig.minTimeToTrackFace_s, kNoEyeContactTimeOut_sec);
     action->AddAction(trackAction);
   }
   
