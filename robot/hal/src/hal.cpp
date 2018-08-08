@@ -189,8 +189,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     if(HAL::GetTimeStamp() - startWait_ms > 2000)
     {
       AnkiError("spine_wait_for_first_frame.timeout","");
-      FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
-      return RESULT_FAIL;
+      break;
     }
 
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
@@ -237,6 +236,13 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 
     robot_io(&spine_);
     read_count++;
+  }
+
+  // If we failed to initialize or we don't have valid syscon
+  // display a fault code
+  if(!initialized || !haveValidSyscon_)
+  {
+    FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
   }
 
   return (initialized ? RESULT_OK : RESULT_FAIL_IO_TIMEOUT);
