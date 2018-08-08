@@ -1,6 +1,7 @@
 """
-This script can be used to help validate that all of the
-audio events used in animations are in fact available.
+This script can be used to help validate that all of the:
+(1) animations used in animation groups are in fact available
+(2) audio events used in animations are in fact available.
 """
 
 import os
@@ -12,6 +13,10 @@ SOUNDBANKS_XML_FILE = os.path.join("victor-audio-assets", "metadata", "Dev_Mac",
 # This is the animations directory (relative to the EXTERNALS directory) that
 # contains animation TAR files
 ANIM_ASSETS_DIR = os.path.join("animation-assets", "animations")
+
+# This is the animation group directory (relative to the EXTERNALS directory)
+# that contains animation group JSON files
+ANIM_GROUP_ASSETS_DIR = os.path.join("animation-assets", "animationGroups")
 
 # These are the relevant attribute names/values in the animation JSON files
 KEYFRAME_TYPE_ATTR = "Name"
@@ -29,7 +34,12 @@ INCLUDED_EVENTS_XML_ATTR = "IncludedEvents"
 AUDIO_EVENT_NAME_XML_ATTR = "Name"
 AUDIO_EVENT_ID_XML_ATTR = "Id"
 
+# These are the relevant attribute names in the animation group JSON files
+ANIM_GROUP_JSON_TOP_KEY = "Animations"
+ANIM_NAME_ATTR = "Name"
 
+
+import re
 import tarfile
 import json
 import xml.etree.ElementTree as ET
@@ -68,6 +78,42 @@ def unpack_tarball(tar_file):
             member = os.path.join(dest_dir, member.name)
             unpacked_files.append(member)
     return unpacked_files
+
+
+def get_anim_groups(anim_group_dir, return_full_paths=True):
+    """
+    Given a directory path, eg. "EXTERNALS/animation-assets/animationGroups",
+    this function will recursively search that directory and return a list
+    of all animation groups (.json files) that it finds.
+    """
+    #print("Checking %s..." % anim_group_dir)
+    dir_contents = os.listdir(anim_group_dir)
+    anim_groups = []
+    for anim_group in dir_contents:
+        if anim_group.startswith(os.extsep):
+            continue
+        full_path = os.path.join(anim_group_dir, anim_group)
+        if os.path.isdir(full_path):
+            anim_groups.extend(get_anim_groups(full_path, return_full_paths))
+        else:
+            if return_full_paths:
+                anim_groups.append(full_path)
+            else:
+                anim_groups.append(anim_group)
+    return anim_groups
+
+
+def get_clips_in_anim_group(json_file):
+    with open(json_file, 'r') as fh:
+        json_data = fh.read()
+        json_data = re.sub(r'//.*\n', os.linesep, json_data) # remove C-style comments
+        json_data = re.sub(r'#.*\n', os.linesep, json_data) # remove Python-style comments
+        anim_group = json.loads(json_data)
+    anim_clips = anim_group[ANIM_GROUP_JSON_TOP_KEY]
+    anim_clips = [x[ANIM_NAME_ATTR] for x in anim_clips]
+    anim_group_name = os.path.basename(json_file)
+    anim_group_name = os.path.splitext(anim_group_name)[0]
+    return (anim_group_name, anim_clips)
 
 
 def get_audio_events_in_soundbanks_info_xml_file(xml_file, sound_banks_attr=SOUND_BANKS_XML_ATTR,
@@ -179,6 +225,55 @@ def _check_using_event_name(audio_events, audio_ids, all_available_events,
             unavailable_events.append((audio_event, audio_id))
 
 
+def check_anims_all_anim_groups(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
+                                anim_group_assets_dir=ANIM_GROUP_ASSETS_DIR):
+    """
+    This function will raise ValueError with relevant info if any
+    animation groups use any animations that are unavailable.
+    """
+    problem_msg = "Unable to validate animations used in animation groups because: %s"
+
+    # Get a list of all available animations
+    all_anims = []
+    tar_files_dir = os.path.join(externals_dir, anim_assets_dir)
+    tar_files = get_tar_files(tar_files_dir)
+    if not tar_files:
+        this_prob = "No tar files available in %s" % tar_files_dir
+        raise ValueError(problem_msg % this_prob)
+    tar_file_dict = fill_file_dict(tar_files)
+    for file_name, file_paths in tar_file_dict.items():
+        file_path = file_paths[0]
+        unpacked_files = unpack_tarball(file_path)
+        for json_file in unpacked_files:
+            all_anims.append(os.path.splitext(os.path.basename(json_file))[0])
+
+    # Check all animations in all animation groups and keep track of what unavailable
+    # animations are currently being used
+    problems = {}
+    anim_groups_dir = os.path.join(externals_dir, anim_group_assets_dir)
+    anim_groups = get_anim_groups(anim_groups_dir)
+    if not anim_groups:
+        this_prob = "No animation groups available in %s" % anim_groups_dir
+        raise ValueError(problem_msg % this_prob)
+    for anim_group in anim_groups:
+        try:
+            anim_group_name, anim_clips = get_clips_in_anim_group(anim_group)
+        except ValueError:
+            this_prob = "Unable to parse %s" % anim_group
+            raise ValueError(problem_msg % this_prob)
+        unavailable_anims = []
+        for anim_clip in anim_clips:
+            if anim_clip not in all_anims:
+                unavailable_anims.append(anim_clip)
+        if unavailable_anims:
+            anim_group_name = os.path.basename(anim_group)
+            problems[anim_group_name] = unavailable_anims
+
+    if problems:
+        msg_title = "Found unavailable animations used in the following animation groups:"
+        report_problems(problems, msg_title)
+
+
 def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
                                  soundbanks_xml_file=SOUNDBANKS_XML_FILE):
     """
@@ -215,24 +310,32 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
                 problems[anim_name] = unavailable_events
 
     if problems:
-        msgs = []
-        for anim_name, unavailable_events in problems.items():
-            formatted_events = []
-            for event in unavailable_events:
-                event_name = event[0]
-                event_id = event[1]
-                formatted_events.append("%s (%s)" % (event_name, event_id))
-            if formatted_events:
-                msg = "%s uses: " % anim_name
-                msg += ", ".join(formatted_events)
-                msgs.append(msg)
-        msgs.sort()
-        msg = os.linesep * 2
-        msg += "Found unavailable audio events used in the following animations:"
-        msg += os.linesep
-        msg += os.linesep.join(msgs)
-        msg += os.linesep
-        raise ValueError(msg)
+        msg_title = "Found unavailable audio events used in the following animations:"
+        report_problems(problems, msg_title)
+
+
+def report_problems(problems, msg_title):
+    msgs = []
+    for container, unavailable_contents in problems.items():
+        formatted_contents = []
+        for content in unavailable_contents:
+            if isinstance(content, basestring):
+                formatted_contents.append(content)
+            else:
+                content_name = content[0]
+                content_id = content[1]
+                formatted_contents.append("%s (%s)" % (content_name, content_id))
+        if formatted_contents:
+            msg = "%s uses: " % container
+            msg += ", ".join(formatted_contents)
+            msgs.append(msg)
+    msgs.sort()
+    msg = os.linesep * 2
+    msg += msg_title
+    msg += os.linesep
+    msg += os.linesep.join(msgs)
+    msg += os.linesep
+    raise ValueError(msg)
 
 
 def get_anim_length(keyframe_list):

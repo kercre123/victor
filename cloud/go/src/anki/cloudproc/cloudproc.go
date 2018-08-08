@@ -2,6 +2,7 @@ package cloudproc
 
 import (
 	"anki/token"
+	"anki/voice"
 	"context"
 	"log"
 	"sync"
@@ -29,7 +30,10 @@ func Run(ctx context.Context, procOptions ...Option) {
 	})
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
-			opts.voice.Run(ctx, opts.voiceOpts...)
+			// provide default token accessor
+			voiceOpts := append([]voice.Option{voice.WithTokener(token.GetAccessor())},
+				opts.voiceOpts...)
+			opts.voice.Run(ctx, voiceOpts...)
 		})
 	}
 	wg.Wait()

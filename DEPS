@@ -13,11 +13,11 @@
             "tensorflow": {
                 "build_type_id": "anki",
                 "checksums": {
-                    "sha256": "8f4c537b1411d457d7d7cf5928999119554464f4ac98e697ad87d40ab6e04da1"
+                    "sha256": "55b52550fea7a3a32e59aefc6108915b2314ee1ccabf7268159a32faaa712091"
                 },
                 "extension": "tar.gz",
                 "package_name": "tensorflow",
-                "version": "1"
+                "version": "27"
             }
         },
         "root_url": "http://10.10.7.40:8081/artifactory"

@@ -92,6 +92,13 @@ protected:
     return (GetRNG().RandInt(2)==1) ? 1 : -1;
   }
   
+  // returns true iff:
+  // - the charger is seen
+  // - a pose can be computed between the robot and the charger
+  // - the cliff sensor poses for FrontLeft and FrontRight are
+  //    in the bounding box for the logo
+  bool CheckIfFrontCliffsAreInLogoRegion();
+  
   // steps in the process of confirming habitat
   enum class ConfirmHabitatPhase
   {
@@ -112,11 +119,6 @@ protected:
     // this will gate choosing certain drive actions, or
     // make the robot take a different maneuver to unblock it
     bool _randomWalkTooCloseObstacle = false;
-    
-    // if we are in the unknown habitat state, then a stop-on-white
-    // message is indicative of possibly being inside the habitat
-    // so use this control flag to activate the behavior
-    bool _robotStoppedOnWhite = false;
     
     // time of last reaction animation, for cooldown purposes
     float _nextWhiteReactionAnimTime_sec = 0.0;

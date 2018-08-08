@@ -2,7 +2,6 @@ package voice
 
 import (
 	"anki/log"
-	"anki/token"
 	"anki/voice/stream"
 	"clad/cloud"
 	"context"
@@ -172,7 +171,7 @@ procloop:
 				}
 
 				var strmopts []stream.Option
-				strmopts = append(strmopts, stream.WithTokener(p.getToken, p.opts.requireToken),
+				strmopts = append(strmopts, stream.WithTokener(p.opts.tokener, p.opts.requireToken),
 					stream.WithChipperURL(ChipperURL),
 					stream.WithChipperSecret(ChipperSecret))
 
@@ -270,21 +269,6 @@ func (p *Process) StreamSize() int {
 func SetVerbose(value bool) {
 	verbose = value
 	stream.SetVerbose(value)
-}
-
-func (p *Process) getToken() (string, error) {
-	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
-	resp, err := token.HandleRequest(req)
-	if err != nil {
-		log.Println("Error getting jwt token:", err)
-		return "", err
-	}
-	jwt := resp.GetJwt()
-	if jwt.Error != cloud.TokenError_NoError {
-		log.Println("Error code getting jwt token:", jwt.Error)
-		return "", fmt.Errorf("jwt error code %d", jwt.Error)
-	}
-	return resp.GetJwt().JwtToken, nil
 }
 
 func (p *Process) writeError(reason cloud.ErrorType, err error) {

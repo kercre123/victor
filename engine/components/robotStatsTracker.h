@@ -19,6 +19,8 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include "json/json.h"
+
 
 namespace Anki {
 namespace Vector {
@@ -26,6 +28,8 @@ namespace Vector {
 enum class ActiveFeature : uint32_t;
 enum class BehaviorStat : uint32_t;
 
+class JdocsManager;
+  
 class RobotStatsTracker : public IDependencyManagedComponent<RobotComponentID>,
                           public UnreliableComponent<BCComponentID>, 
                           private Anki::Util::noncopyable
@@ -68,14 +72,10 @@ private:
   
   void IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta);
 
-  void WriteStatsToFile();
-  void ReadStatsFromFile();
+  bool UpdateStatsJdoc(const bool saveToDiskImmediately);
 
-  std::map< std::string, uint64_t > _stats;
-
-  float _lastFileWriteTime_s = 0.0f;
-  bool _dirtySinceWrite = false;
-  std::string _filename;
+  bool _dirtyJdoc = false;
+  JdocsManager* _jdocsManager = nullptr;
 };
 
 }

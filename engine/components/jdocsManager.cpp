@@ -15,6 +15,7 @@
 
 #include "engine/components/jdocsManager.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
@@ -38,8 +39,11 @@ namespace
   static const char* kDocNameKey = "docName";
   static const char* kDocVersionKey = "doc_version";
   static const char* kFmtVersionKey = "fmt_version";
-  static const char* kFingerprintKey = "fingerprint";
+  static const char* kClientMetadataKey = "client_metadata";
+  static const char* kFingerprintKey = "fingerprint"; // for backwards compatibility
   static const char* kJdocKey = "jdoc";
+  static const char* kDiskSavePeriodKey = "delayedDiskSavePeriod_s";
+  static const char* kBodyOwnedByJdocsManagerKey = "bodyOwnedByJdocManager";
 
   static const std::string emptyString;
   static const Json::Value emptyJson;
@@ -94,15 +98,18 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     JdocInfo jdocInfo;
     jdocInfo._jdocVersion = 0;
     jdocInfo._jdocFormatVersion = 0;
-    jdocInfo._jdocFingerprint = "";
+    jdocInfo._jdocClientMetadata = "";
     jdocInfo._jdocBody = {};
+    jdocInfo._jdocName = jdocConfig[kDocNameKey].asString();
     jdocInfo._needsCreation = false;
     jdocInfo._savedOnDisk = jdocConfig[kSavedOnDiskKey].asBool();
-    jdocInfo._jdocName = jdocConfig[kDocNameKey].asString();
+    jdocInfo._diskFileDirty = false;
+    jdocInfo._diskSavePeriod_s = jdocConfig[kDiskSavePeriodKey].asInt();
+    jdocInfo._nextDiskSaveTime = jdocInfo._diskSavePeriod_s;
+    jdocInfo._bodyOwnedByJM = jdocConfig[kBodyOwnedByJdocsManagerKey].asBool();
     if (jdocInfo._savedOnDisk)
     {
       jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
-      jdocInfo._diskFileDirty = false;
     }
     _jdocs[jdocTypeKey] = jdocInfo;
 
@@ -115,6 +122,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
         {
           LOG_ERROR("JdocsManager.InitDependent.ErrorReadingJdocFile",
                     "Error reading jdoc file %s", jdocItem._jdocFullPath.c_str());
+          jdocItem._needsCreation = true;
         }
       }
       else
@@ -130,6 +138,17 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  for (auto& jdocPair : _jdocs)
+  {
+    auto& jdoc = jdocPair.second;
+    if (jdoc._savedOnDisk && jdoc._diskFileDirty && currTime_s > jdoc._nextDiskSaveTime)
+    {
+      SaveJdocFile(jdocPair.first);
+      jdoc._diskFileDirty = false;
+      jdoc._nextDiskSaveTime = currTime_s + jdoc._diskSavePeriod_s;
+    }
+  }
 }
 
 
@@ -179,6 +198,27 @@ const Json::Value& JdocsManager::GetJdocBody(const external_interface::JdocType 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Json::Value* JdocsManager::GetJdocBodyPointer(const external_interface::JdocType jdocTypeKey)
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.GetJdocBodyPointer.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return nullptr;
+  }
+  auto& jdocItem = (*it).second;
+  if (!jdocItem._bodyOwnedByJM)
+  {
+    LOG_ERROR("JdocsManager.GetJdocBodyPointer.BodyNotOwnedByJdocsManager",
+              "Cannot get jdoc body pointer when body is not owned by jdoc manager");
+    return nullptr;
+  }
+  return &jdocItem._jdocBody;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::GetJdoc(const external_interface::JdocType jdocTypeKey,
                            external_interface::Jdoc& jdocOut) const
 {
@@ -193,7 +233,7 @@ bool JdocsManager::GetJdoc(const external_interface::JdocType jdocTypeKey,
   const auto& jdocItem = (*it).second;
   jdocOut.set_doc_version(jdocItem._jdocVersion);
   jdocOut.set_fmt_version(jdocItem._jdocFormatVersion);
-  jdocOut.set_fingerprint(jdocItem._jdocFingerprint);
+  jdocOut.set_client_metadata(jdocItem._jdocClientMetadata);
   Json::StyledWriter writer;
   const std::string jdocBodyString = writer.write(jdocItem._jdocBody);
   jdocOut.set_json_doc(jdocBodyString);
@@ -204,7 +244,7 @@ bool JdocsManager::GetJdoc(const external_interface::JdocType jdocTypeKey,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
-                              const Json::Value& jdocBody,
+                              const Json::Value* jdocBody,
                               const bool saveToDiskImmediately)
 {
   const auto& it = _jdocs.find(jdocTypeKey);
@@ -215,18 +255,37 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
     return false;
   }
   auto& jdocItem = (*it).second;
-  jdocItem._jdocBody = jdocBody;
-  
+  if (jdocBody != nullptr)
+  {
+    if (jdocItem._bodyOwnedByJM)
+    {
+      LOG_ERROR("JdocsManager.UpdateJdoc.CannotAcceptJdocBody",
+                "Cannot accept jdoc body when body is owned by jdoc manager");
+      return false;
+    }
+
+    // Copy the jdoc json
+    jdocItem._jdocBody = *jdocBody;
+  }
+  else
+  {
+    if (!jdocItem._bodyOwnedByJM)
+    {
+      LOG_ERROR("JdocsManager.UpdateJdoc.MustProvideJdocBody",
+                "Must provide jdoc body when body is not owned by jdoc manager");
+      return false;
+    }
+  }
+
   // TODO: Increment some sort of 'minor version'
-  // TODO: Set some sorts of flags, perhaps 'appDirty', 'cloudDirty' etc.
+  // TODO: Cloud API
   // ... at some point this version needs to be 'committed' to the cloud, whether it's the first version or not
 
   // TODO later: When sending a jdoc to cloud, or app, use the two below lines to convert to a single big string.
   //  Json::StyledWriter writer;
   //  const std::string jdocBodyString = writer.write(jdocBodyJSON);
-  
 
-  jdocItem._needsCreation = false;
+
   if (jdocItem._savedOnDisk)
   {
     if (saveToDiskImmediately)
@@ -244,6 +303,30 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool JdocsManager::ClearJdocBody(const external_interface::JdocType jdocTypeKey)
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.ClearJdocBody.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return false;
+  }
+  auto& jdocItem = (*it).second;
+  if (!jdocItem._bodyOwnedByJM)
+  {
+    LOG_ERROR("JdocsManager.ClearJdocBody.BodyNotOwnedByJdocsManager",
+              "Cannot clear jdoc body when body is not owned by jdoc manager");
+    return false;
+  }
+
+  jdocItem._jdocBody = Json::Value(Json::objectValue);
+
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::LoadJdocFile(const external_interface::JdocType jdocTypeKey)
 {
   auto& jdocItem = _jdocs[jdocTypeKey];
@@ -255,31 +338,44 @@ bool JdocsManager::LoadJdocFile(const external_interface::JdocType jdocTypeKey)
     return false;
   }
 
-  jdocItem._jdocVersion       = jdocJson[kDocVersionKey].asUInt64();
-  jdocItem._jdocFormatVersion = jdocJson[kFmtVersionKey].asUInt64();
-  jdocItem._jdocFingerprint   = jdocJson[kFingerprintKey].asString();
-  jdocItem._jdocBody          = jdocJson[kJdocKey];
+  jdocItem._jdocVersion        = jdocJson[kDocVersionKey].asUInt64();
+  jdocItem._jdocFormatVersion  = jdocJson[kFmtVersionKey].asUInt64();
+  if (jdocJson.isMember(kClientMetadataKey))
+  {
+    jdocItem._jdocClientMetadata = jdocJson[kClientMetadataKey].asString();
+  }
+  else
+  {
+    // Temp code for backwards compatibility due to field rename
+    jdocItem._jdocClientMetadata = jdocJson[kFingerprintKey].asString();
+    jdocItem._diskFileDirty = true; // So we write it out with the correct key string
+  }
+  jdocItem._jdocBody           = jdocJson[kJdocKey];
 
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey) const
+void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey)
 {
   const auto& it = _jdocs.find(jdocTypeKey);
-  const auto& jdocItem = (*it).second;
+  auto& jdocItem = (*it).second;
 
   Json::Value jdocJson;
-  jdocJson[kDocVersionKey]  = jdocItem._jdocVersion;
-  jdocJson[kFmtVersionKey]  = jdocItem._jdocFormatVersion;
-  jdocJson[kFingerprintKey] = jdocItem._jdocFingerprint;
-  jdocJson[kJdocKey]        = jdocItem._jdocBody;
+  jdocJson[kDocVersionKey]     = jdocItem._jdocVersion;
+  jdocJson[kFmtVersionKey]     = jdocItem._jdocFormatVersion;
+  jdocJson[kClientMetadataKey] = jdocItem._jdocClientMetadata;
+  jdocJson[kJdocKey]           = jdocItem._jdocBody;
   
   if (!_platform->writeAsJson(jdocItem._jdocFullPath, jdocJson))
   {
     LOG_ERROR("JdocsManager.SaveJdocFile.Failed", "Failed to write settings file %s",
               jdocItem._jdocFullPath.c_str());
+  }
+  else
+  {
+    jdocItem._needsCreation = false;
   }
 }
 

@@ -3,19 +3,27 @@
   {
     "ROBOT_SETTINGS" : {
       "docName" : "vic.RobotSettings",
-      "savedOnDisk" : true
+      "savedOnDisk" : true,
+      "delayedDiskSavePeriod_s" : 0,
+      "bodyOwnedByJdocManager" : false
     },
     "ROBOT_LIFETIME_STATS" : {
       "docName" : "vic.RobotLifetimeStats",
-      "savedOnDisk" : true
+      "savedOnDisk" : true,
+      "delayedDiskSavePeriod_s" : 10,
+      "bodyOwnedByJdocManager" : true
     },
     "ACCOUNT_SETTINGS" : {
       "docName" : "vic.AccountSettings",
-      "savedOnDisk" : false
+      "savedOnDisk" : false,
+      "delayedDiskSavePeriod_s" : 0,
+      "bodyOwnedByJdocManager" : false
     },
     "USER_ENTITLEMENTS" : {
       "docName" : "vic.UserEntitlements",
-      "savedOnDisk" : false
+      "savedOnDisk" : false,
+      "delayedDiskSavePeriod_s" : 0,
+      "bodyOwnedByJdocManager" : false
     }
   }
 }

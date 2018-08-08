@@ -108,7 +108,7 @@ endif()
 #
 
 # Set this variable to the type of neural net platform to use
-set(NEURAL_NET_PLATFORM TensorFlow)
+set(NEURAL_NET_PLATFORM TFLite)
 
 # List of neural net options to validate the above with
 set(VALID_NEURAL_NET_PLATFORMS None TensorFlow TFLite)

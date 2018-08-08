@@ -156,8 +156,8 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
   {
     auto commonCallback = std::bind(&SettingsCommManager::HandleEvents, this, std::placeholders::_1);
     // Subscribe to desired simple events
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullSettingsRequest,   commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPushSettingsRequest,   commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullJdocsRequest,      commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPushJdocsRequest,      commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest, commonCallback));
   }
 
@@ -244,11 +244,11 @@ void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::Gatew
 {
   switch(event.GetData().GetTag())
   {
-    case external_interface::GatewayWrapperTag::kPullSettingsRequest:
-      OnRequestPullSettings(event.GetData().pull_settings_request());
+    case external_interface::GatewayWrapperTag::kPullJdocsRequest:
+      OnRequestPullJdocs(event.GetData().pull_jdocs_request());
       break;
-    case external_interface::GatewayWrapperTag::kPushSettingsRequest:
-      OnRequestPushSettings(event.GetData().push_settings_request());
+    case external_interface::GatewayWrapperTag::kPushJdocsRequest:
+      OnRequestPushJdocs(event.GetData().push_jdocs_request());
       break;
     case external_interface::GatewayWrapperTag::kUpdateSettingsRequest:
       OnRequestUpdateSettings(event.GetData().update_settings_request());
@@ -261,25 +261,57 @@ void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::Gatew
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsCommManager::OnRequestPullSettings(const external_interface::PullSettingsRequest& pullSettingsRequest)
+void SettingsCommManager::OnRequestPullJdocs(const external_interface::PullJdocsRequest& pullJdocsRequest)
 {
-  LOG_INFO("SettingsCommManager.OnRequestPullSettings", "Pull settings request");
-  auto* pullSettingsResp = new external_interface::PullSettingsResponse();
-  auto* jdoc = pullSettingsResp->add_doc();
-  _jdocsManager->GetJdoc(external_interface::JdocType::ROBOT_SETTINGS, *jdoc);
-  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pullSettingsResp));
+  LOG_INFO("SettingsCommManager.OnRequestPullJdocs", "Pull Jdocs request");
+  const auto numDocsRequested = pullJdocsRequest.jdoc_types_size();
+  auto* pullJdocsResp = new external_interface::PullJdocsResponse();
+  for (int i = 0; i < numDocsRequested; i++)
+  {
+    auto jdocType = pullJdocsRequest.jdoc_types(i);
+    auto* namedJdoc = pullJdocsResp->add_named_jdocs();
+    namedJdoc->set_jdoc_type(jdocType);
+    _jdocsManager->GetJdoc(jdocType, *namedJdoc->mutable_doc());
+  }
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pullJdocsResp));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsCommManager::OnRequestPushSettings(const external_interface::PushSettingsRequest& pushSettingsRequest)
+void SettingsCommManager::OnRequestPushJdocs(const external_interface::PushJdocsRequest& pushJdocsRequest)
 {
-  // TODO
-  LOG_INFO("SettingsCommManager.OnRequestPushSettings", "Push settings request");
+  LOG_INFO("SettingsCommManager.OnRequestPushJdocs", "Push Jdocs request");
+  const auto numDocsBeingPushed = pushJdocsRequest.named_jdocs_size();
+  for (int i = 0; i < numDocsBeingPushed; i++)
+  {
+    const auto& namedJdoc = pushJdocsRequest.named_jdocs(i);
+    const auto& jdocType = namedJdoc.jdoc_type();
+    static const bool saveToDiskImmediately = true;
+    // TOOD: Pass in/resolve version number, etc.
 
-  auto* pushSettingsResp = new external_interface::PushSettingsResponse();
-
-  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushSettingsResp));
+    // Convert the single jdoc STRING to a JSON::Value object
+    Json::Reader reader;
+    Json::Value docBodyJson;
+    bool success = reader.parse(namedJdoc.doc().json_doc(), docBodyJson);
+    if (!success)
+    {
+      LOG_ERROR("SettingsCommManager.OnRequestPushJdocs.JsonError",
+                "Error in parsing JSON string in body of jdoc being pushed to robot");
+    }
+    if (jdocType == external_interface::ROBOT_SETTINGS)
+    {
+      LOG_WARNING("SettingsCommManager.OnRequestPushJdocs.PushDirectionIssue",
+                  "WARNING: robot settings jdoc is being pushed to robot");
+    }
+    else if (jdocType == external_interface::ROBOT_LIFETIME_STATS)
+    {
+      LOG_WARNING("SettingsCommManager.OnRequestPushJdocs.PushDirectionIssue",
+                  "WARNING: robot lifetime stats jdoc is being pushed to robot");
+    }
+    _jdocsManager->UpdateJdoc(jdocType, &docBodyJson, saveToDiskImmediately);
+  }
+  auto* pushJdocsResp = new external_interface::PushJdocsResponse();
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushJdocsResp));
 }
 
 

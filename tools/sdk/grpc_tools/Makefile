@@ -14,7 +14,7 @@ PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
 GATEWAY_GO_FILES := $(filter-out $(GIT_ROOT)/cloud/gateway/config_mac.go,$(wildcard $(GIT_ROOT)/cloud/gateway/*.go))
 
 ifneq ("$(ANKI_ROBOT_HOST)","")
-ROBOT_HOSTNAME := $(shell ssh root@$(ANKI_ROBOT_HOST) -t echo "\$$HOSTNAME" 2>/dev/null)
+ROBOT_HOSTNAME := $(shell ssh -o ConnectTimeout=3 root@$(ANKI_ROBOT_HOST) -t echo "\$$HOSTNAME" 2>/dev/null)
 endif
 
 MAC_VECTOR_HOSTNAME := Vector-Local
@@ -37,7 +37,7 @@ gen_py_proto: .PHONY
 	rm $(PYTHON_OUT)/*.proto-e
 
 go: .PHONY
-	if [ ! -d "$(GIT_ROOT)/cloud/go/github.com/grpc-ecosystem/grpc-gateway" ]; then \
+	if [ ! -d "$(GIT_ROOT)/cloud/go/src/github.com/grpc-ecosystem/grpc-gateway" ]; then \
 		GOPATH=$(GIT_ROOT)/cloud/go/ go get github.com/grpc-ecosystem/grpc-gateway/...; \
 	fi
 
@@ -85,6 +85,9 @@ flat: .PHONY
 .require_ip: .PHONY
 ifeq ("$(ANKI_ROBOT_HOST)","")
 	$(error Could not find ANKI_ROBOT_HOST environment variable)
+endif
+ifeq ("$(ROBOT_HOSTNAME)","")
+	$(error Failed to find ROBOT_HOSTNAME)
 endif
 
 certs_show: .PHONY
@@ -302,10 +305,10 @@ test_attention_transfer: .require_ip
 	@echo 
 
 test_settings: .require_ip
-	$(curl_command)/v1/push_settings -d '{}'
+	$(curl_command)/v1/push_jdocs -d '{"named_jdocs":[{"jdoc_type":"ACCOUNT_SETTINGS","doc":{"doc_version":3,"fmt_version":2,"client_metadata":"34","json_doc":"{\n   \"data_collection\" : true,\n   \"foo_bar_collection\" : false\n}\n"}}]}'
 	@echo
 
-	$(curl_command)/v1/pull_settings -d '{}'
+	$(curl_command)/v1/pull_jdocs -d '{"jdoc_types":["ROBOT_SETTINGS", "ROBOT_LIFETIME_STATS"]}'
 	@echo
 
 	$(curl_command)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":"TEAL"}}'
@@ -313,6 +316,10 @@ test_settings: .require_ip
 
 test_status_history: .require_ip
 	$(curl_command)/v1/status_history -d '{}'
+	@echo
+
+test_cubes_available: .require_ip
+	$(curl_command)/v1/cubes_available -d '{}'
 	@echo
 
 update_time: .require_ip

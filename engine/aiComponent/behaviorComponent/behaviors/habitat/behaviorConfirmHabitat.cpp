@@ -185,8 +185,6 @@ bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
     const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
     behaviorIterator.IterateActiveCozmoBehaviorsForward( checkInterruptCallback, nullptr );
     return canInterrupt;
-  } else if(hbelief==HabitatBeliefState::Unknown && _dVars._robotStoppedOnWhite) {
-    return true;
   }
   // if control reaches here, robot EITHER:
   // - is on the charger platform
@@ -205,18 +203,11 @@ void BehaviorConfirmHabitat::GetBehaviorJsonKeys(std::set<const char*>& expected
 void BehaviorConfirmHabitat::OnBehaviorActivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Activated","");
-  GetBEI().GetCliffSensorComponent().EnableStopOnWhite(true);
+  
+  // disable stop-on-white until we finished looking for the charger
+  GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
 
-  // in a previous tick where we evaluated WantsToBeActivated
-  // as true, the reason could either be:
-  // - the robot has met all the conditions to enter ConfirmHabitat
-  //    organically
-  // - OR, the robot got a StopOnWhite message and we want to take
-  //    the opportunity to perform the cliff alignment actions
-  //    if possible.
-  bool doReactToWhite = _dVars._robotStoppedOnWhite;
   _dVars = DynamicVariables();
-  _dVars._robotStoppedOnWhite = doReactToWhite;
 }
 
 void BehaviorConfirmHabitat::OnBehaviorDeactivated()
@@ -238,6 +229,54 @@ void BehaviorConfirmHabitat::OnBehaviorLeftActivatableScope()
   if(_iConfig.onTreadsTimeCondition != nullptr) {
     _iConfig.onTreadsTimeCondition->SetActive(GetBEI(), false);
   }
+}
+  
+bool BehaviorConfirmHabitat::CheckIfFrontCliffsAreInLogoRegion()
+{
+  const auto getCliffSensorPoseWRTLogo = [this](float x, float y)->std::pair<bool,Pose3d>
+  {
+    Pose3d cliffPoseWrtLogo;
+    cliffPoseWrtLogo.SetParent(GetBEI().GetRobotInfo().GetPose());
+    cliffPoseWrtLogo.SetTranslation({x, y, 0.0f});
+    
+    const ObservableObject* charger = GetChargerIfObserved();
+    if(charger==nullptr) {
+      return {false, Pose3d()};
+    }
+    
+    Pose3d logoCenterPose;
+    logoCenterPose.SetParent(charger->GetPose());
+    // based on CAD drawings, the distance between the object origin
+    // of the charger, and the origin of the logo center is 54mm
+    logoCenterPose.SetTranslation({-54.0f, 0.f, 0.f});
+    
+    // result is false if they are not in connected pose trees
+    Pose3d out;
+    bool result = cliffPoseWrtLogo.GetWithRespectTo(logoCenterPose, out);
+    out.ClearParent();
+    return {result, out};
+  };
+  
+  auto gotFL = getCliffSensorPoseWRTLogo(kCliffSensorXOffsetFront_mm, kCliffSensorYOffset_mm);
+  if(!gotFL.first) {
+    return false;
+  }
+  
+  auto gotFR = getCliffSensorPoseWRTLogo(kCliffSensorXOffsetFront_mm, -kCliffSensorYOffset_mm);
+  if(!gotFR.first) {
+    return false;
+  }
+  
+  // Logo can be approximated as a 30mm x 70mm rectangle
+  // we pad these measurements to 50mm x 90mm to account for slop in charger pose-estimate
+  // these measurements are taken using CAD drawings
+  // note: the LogoCenter is slightly offset inside the rectangle
+  const AxisAlignedQuad aabb({15,45}, {-35,-45}); // in the frame of the logo
+  const bool FL = aabb.Contains(Point2f{gotFL.second.GetTranslation().x(),
+                                 gotFL.second.GetTranslation().y()});
+  const bool FR = aabb.Contains(Point2f{gotFR.second.GetTranslation().x(),
+                                 gotFR.second.GetTranslation().y()});
+  return FL || FR;
 }
 
 void BehaviorConfirmHabitat::BehaviorUpdate()
@@ -289,14 +328,8 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
     }
     case ConfirmHabitatPhase::InitialCheckCharger:
     {
-      // if the robot stopped on white, play the animation first
-      if(_dVars._robotStoppedOnWhite) {
-        auto lineRelPose = habitatDetector.GetHabitatLineRelPose();
-        _dVars._robotStoppedOnWhite = false;
-        _dVars._phase = ConfirmHabitatPhase::LineDocking;
-        TransitionToReactToWhite(lineRelPose);
-        return;
-      } else if(GetChargerIfObserved() != nullptr) {
+      if(GetChargerIfObserved() != nullptr) {
+        GetBEI().GetCliffSensorComponent().EnableStopOnWhite(true);
         _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
         TransitionToSeekLineFromCharger();
       } else {
@@ -463,6 +496,9 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger","");
   
   BehaviorSimpleCallback callback = [this](void)->void {
+    // enable stop-on-white after we attempted to look for the charger
+    GetBEI().GetCliffSensorComponent().EnableStopOnWhite(true);
+    
     if(GetChargerIfObserved() != nullptr) {
       PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerFound","");
       _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
@@ -820,14 +856,26 @@ void BehaviorConfirmHabitat::AlwaysHandleInScope(const EngineToGameEvent& event)
       const auto reason = event.GetData().Get_RobotStopped().reason;
       const auto belief = GetBEI().GetHabitatDetectorComponent().GetHabitatBeliefState();
       if(reason == StopReason::WHITE && belief == HabitatBeliefState::Unknown) {
-        PRINT_NAMED_INFO("ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite","");
-        if(IsActivated() || IsControlDelegated()) {
-          CancelDelegates();
-          TransitionToReactToWhite(event.GetData().Get_RobotStopped().whiteDetectedFlags);
+        if(IsActivated()) {
+          if(!CheckIfFrontCliffsAreInLogoRegion()) {
+            PRINT_NAMED_INFO("ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite","");
+            TransitionToReactToWhite(event.GetData().Get_RobotStopped().whiteDetectedFlags);
+          } else {
+            // we are confident we are stopped on top of the logo
+            int sign = 1;
+            switch(event.GetData().Get_RobotStopped().whiteDetectedFlags) {
+              case (kFL | kFR): { sign = RandomSign();  break; }
+              case kFL:         { sign = -1;            break; }
+              case kFR:         { sign = 1;             break; }
+              default: {
+                // other cliff-sensor configs for white stop are not valid
+              }
+            }
+            // rotates away from the logo
+            PRINT_NAMED_INFO("ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite.InLogoRegion","");
+            TransitionToTurnBackupForward(sign*M_PI_2, 0, 0);
+          }
         }
-        // on the next WantsToBeActivated() check for this behavior
-        // this will ensure the confirm habitat behavior is run
-        _dVars._robotStoppedOnWhite = true;
       }
       break;
     }

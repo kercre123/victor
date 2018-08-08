@@ -1,17 +1,16 @@
 package stream
 
 import (
+	"anki/token"
 	"clad/cloud"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 )
 
-type Tokener func() (string, error)
-
 var platformOpts []chipper.ConnOpt
 
 type options struct {
-	tokener      Tokener
+	tokener      token.Accessor
 	requireToken bool
 	mode         cloud.StreamType
 	connOpts     []chipper.ConnOpt
@@ -22,7 +21,7 @@ type options struct {
 
 type Option func(o *options)
 
-func WithTokener(t Tokener, require bool) Option {
+func WithTokener(t token.Accessor, require bool) Option {
 	return func(o *options) {
 		o.tokener = t
 		o.requireToken = require

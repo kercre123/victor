@@ -32,8 +32,8 @@ class SettingsManager;
 class JdocsManager;
 namespace external_interface {
   class GatewayWrapper;
-  class PullSettingsRequest;
-  class PushSettingsRequest;
+  class PullJdocsRequest;
+  class PushJdocsRequest;
   class UpdateSettingsRequest;
 }
 
@@ -69,9 +69,9 @@ public:
 private:
 
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void OnRequestPullSettings  (const external_interface::PullSettingsRequest&    pullSettingsRequest);
-  void OnRequestPushSettings  (const external_interface::PushSettingsRequest&    pushSettingsRequest);
-  void OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest&  updateSettingsRequest);
+  void OnRequestPullJdocs     (const external_interface::PullJdocsRequest& pullJdocsRequest);
+  void OnRequestPushJdocs     (const external_interface::PushJdocsRequest& pushJdocsRequest);
+  void OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest& updateSettingsRequest);
 
   SettingsManager*    _settingsManager = nullptr;
   JdocsManager*       _jdocsManager = nullptr;

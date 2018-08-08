@@ -8,19 +8,20 @@ import (
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/credentials"
 )
 
 func (strm *Streamer) connect() error {
-	var jwtToken string
+	var creds credentials.PerRPCCredentials
 	var err error
 	var tokenTime float64
 	if strm.opts.tokener != nil {
 		tokenTime = util.TimeFuncMs(func() {
-			jwtToken, err = strm.opts.tokener()
+			creds, err = strm.opts.tokener.Credentials()
 		})
 	}
 	if strm.opts.requireToken {
-		if jwtToken == "" && err == nil {
+		if creds == nil && err == nil {
 			err = errors.New("token required, got empty string")
 		}
 		if err != nil {
@@ -31,7 +32,7 @@ func (strm *Streamer) connect() error {
 
 	sessionID := uuid.New().String()[:16]
 	connectTime := util.TimeFuncMs(func() {
-		strm.conn, strm.stream, err = strm.openStream(jwtToken, sessionID)
+		strm.conn, strm.stream, err = strm.openStream(creds, sessionID)
 	})
 	if err != nil {
 		log.Println("Error creating Chipper:", err)
@@ -47,10 +48,10 @@ func (strm *Streamer) connect() error {
 	return nil
 }
 
-func (strm *Streamer) openStream(jwtToken string, sessionID string) (*chipper.Conn, chipper.Stream, error) {
+func (strm *Streamer) openStream(creds credentials.PerRPCCredentials, sessionID string) (*chipper.Conn, chipper.Stream, error) {
 	opts := platformOpts
-	if jwtToken != "" {
-		opts = append(opts, chipper.WithCredentials(util.GrpcMetadata(jwtToken)))
+	if creds != nil {
+		opts = append(opts, chipper.WithCredentials(creds))
 	}
 	opts = append(opts, chipper.WithSessionID(sessionID))
 	conn, err := chipper.NewConn(strm.ctx, strm.opts.url, strm.opts.secret, opts...)

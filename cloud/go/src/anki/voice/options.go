@@ -1,6 +1,8 @@
 package voice
 
 import (
+	"anki/token"
+
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 )
 
@@ -27,6 +29,7 @@ type options struct {
 	chunkMs      uint
 	handler      Handler
 	saveAudio    bool
+	tokener      token.Accessor
 	requireToken bool
 }
 
@@ -67,5 +70,12 @@ func WithSaveAudio(value bool) Option {
 func WithRequireToken() Option {
 	return func(o *options) {
 		o.requireToken = true
+	}
+}
+
+// WithTokener sets the accessor that should be used to obtain tokens
+func WithTokener(value token.Accessor) Option {
+	return func(o *options) {
+		o.tokener = value
 	}
 }

@@ -40,10 +40,7 @@ func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, erro
 }
 
 func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error) {
-	req := pb.AssociatePrimaryUserRequest{
-		GenerateStsToken: false,
-		RobotId:          robotID,
-		UserSession:      session}
+	req := pb.AssociatePrimaryUserRequest{}
 	cert, err := ioutil.ReadFile(robot.GatewayCert)
 	if err != nil {
 		return nil, err
@@ -57,7 +54,7 @@ func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error
 }
 
 func (c *conn) associateSecondary(jwt, session, clientName, appID string) (*pb.TokenBundle, error) {
-	req := pb.AssociateSecondaryClientRequest{Token: jwt,
+	req := pb.AssociateSecondaryClientRequest{
 		UserSession: session,
 		ClientName:  clientName,
 		AppId:       appID}
@@ -70,9 +67,7 @@ func (c *conn) associateSecondary(jwt, session, clientName, appID string) (*pb.T
 
 func (c *conn) refreshToken(existingToken string) (*pb.TokenBundle, error) {
 	req := pb.RefreshTokenRequest{
-		RefreshJwtTokens: true,
-		RefreshStsTokens: false,
-		Token:            existingToken}
+		RefreshJwtTokens: true}
 	response, err := c.client.RefreshToken(context.Background(), &req)
 	if err != nil {
 		return nil, err

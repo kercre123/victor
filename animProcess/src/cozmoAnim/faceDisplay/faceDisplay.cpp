@@ -70,6 +70,11 @@ namespace {
 FaceDisplay::FaceDisplay()
 : _stopBootAnim(false)
 {
+  // No boot anim in simulator
+#ifdef SIMULATOR
+  _stopBootAnim = true;
+#endif
+	
   // The boot anim process may be using the display so don't actually create
   // a FaceDisplay until we know for sure that process is no longer running
   _displayImpl.reset(nullptr);

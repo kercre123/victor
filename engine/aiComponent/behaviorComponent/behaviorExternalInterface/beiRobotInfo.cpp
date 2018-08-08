@@ -128,12 +128,6 @@ const RobotID_t BEIRobotInfo::GetID() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotTimeStamp_t BEIRobotInfo::GetLastChargingStateChangeTimestamp() const
-{
-  return _robot.GetBatteryComponent().GetLastChargingStateChangeTimestamp();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotTimeStamp_t BEIRobotInfo::GetLastImageTimeStamp() const
 {
   return _robot.GetLastImageTimeStamp();

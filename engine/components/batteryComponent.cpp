@@ -77,6 +77,14 @@ namespace {
   const float kFakeLowBatteryVoltage = 3.5f;
   
   const float kInvalidPitchAngle = std::numeric_limits<float>::max();
+  
+  // The app needs an estimate of time-to-charge in a few cases (mostly onboarding/FTUE). When low
+  // battery, the robot must sit on the charger for kRequiredChargeTime_s seconds. If the robot is
+  // removed, the timer pauses. When being re-placed on the charger, the remaining time is increased
+  // my an amount proportional to the time off charger (const is kExtraChargingTimePerDischargePeriod_s),
+  // clamped at a max of kRequiredChargeTime_s.
+  const float kRequiredChargeTime_s = 5*60.0f;
+  const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
 }
 
 BatteryComponent::BatteryComponent()
@@ -128,6 +136,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   if (!_battDisconnected) {
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   }
+  
+  const bool wasCharging = IsCharging();
+  const auto oldBatteryLevel = _batteryLevel;
 
   // Update isCharging / isOnChargerContacts / isOnChargerPlatform
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
@@ -224,7 +235,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       _nextSyncTime_sec = now_sec + kCriticalBatterySyncPeriod_sec;
     }
   }
-
+  
   if (level != _batteryLevel) {
     PRINT_NAMED_INFO("BatteryComponent.BatteryLevelChanged",
                      "New battery level %s (previously %s for %f seconds)",
@@ -234,6 +245,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _lastBatteryLevelChange_sec = now_sec;
     _batteryLevel = level;
   }
+  
+  const bool wasLowBattery = (oldBatteryLevel == BatteryLevel::Low);
+  UpdateSuggestedChargerTime(wasLowBattery, wasCharging);
 }
 
 
@@ -302,7 +316,6 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 void BatteryComponent::SetIsCharging(const bool isCharging)
 {
   if (isCharging != _isCharging) {
-    _lastChargingChange_ms = _lastMsgTimestamp;
     _isCharging = isCharging;
     // The voltage usually steps up or down by a few hundred millivolts when we start/stop charging, so reset the low
     // pass filter here to more closely track the actual battery voltage.
@@ -377,10 +390,74 @@ external_interface::GatewayWrapper BatteryComponent::GetBatteryState(const exter
                                                                                                     (external_interface::BatteryLevel)GetBatteryLevel(),
                                                                                                     GetBatteryVolts(),
                                                                                                     IsCharging(),
-                                                                                                    IsOnChargerPlatform()};
+                                                                                                    IsOnChargerPlatform(),
+                                                                                                    GetSuggestedChargerTime()};
   external_interface::GatewayWrapper wrapper;
   wrapper.set_allocated_battery_state_response(response);
   return wrapper;
+}
+  
+void BatteryComponent::UpdateSuggestedChargerTime(bool wasLowBattery, bool wasCharging)
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool isLowBattery = (_batteryLevel == BatteryLevel::Low);
+  
+  if( isLowBattery && !wasLowBattery ) {
+    // Just became low battery. reset vars so the logic below works
+    _suggestedChargeEndTime_s = 0.0f;
+    _timeRemovedFromCharger_s = 0.0f;
+  }
+  
+  const bool countdownStarted = (_suggestedChargeEndTime_s != 0.0f);
+  
+  if( countdownStarted && (currTime_s >= _suggestedChargeEndTime_s) ) {
+    // countdown finished
+    if( isLowBattery ) {
+      // this is ok since the logic below will just kick in again, but it means we should change the time
+      // params
+      PRINT_NAMED_WARNING( "BatteryComponent.UpdateSuggestedChargerTime.NotCharged",
+                           "Charge parameters did not fully charge the robot!" );
+    }
+    _suggestedChargeEndTime_s = 0.0f;
+    _timeRemovedFromCharger_s = 0.0f;
+  }
+  
+  if( IsCharging() ) {
+    // currently charging. Don't check for starting to charge (IsCharging() && !wasCharging) here in case
+    // the countdown just finished, above, and the times were reset to 0, but wasCharging is still true
+    
+    if( isLowBattery && !countdownStarted ) {
+      // was never on charger before. start the low battery countdown! it will continue even after the robot
+      // is no longer low battery
+      _suggestedChargeEndTime_s = currTime_s + kRequiredChargeTime_s;
+    } else if( countdownStarted && !wasCharging ){
+      // The robot was just placed on the charger, and not for the first time, so there should be a
+      // _timeRemovedFromCharger_s. Note that it may not be low battery at this point, but there's
+      // still a countdown since countdownStarted
+      ANKI_VERIFY( _timeRemovedFromCharger_s != 0.0f, "BatteryComponent.UpdateSuggestedChargerTime.UnexpectedOffChargerTime",
+                   "Off charger time was 0, expecting positive" );
+      const float elapsedOffChargerTime_s = currTime_s - _timeRemovedFromCharger_s;
+      _suggestedChargeEndTime_s += elapsedOffChargerTime_s * (1.0f + kExtraChargingTimePerDischargePeriod_s);
+      _suggestedChargeEndTime_s = Anki::Util::Min( _suggestedChargeEndTime_s, currTime_s + kRequiredChargeTime_s);
+    }
+  } else if( !IsCharging() && wasCharging ) {
+    _timeRemovedFromCharger_s = currTime_s;
+  }
+}
+  
+float BatteryComponent::GetSuggestedChargerTime() const
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( _suggestedChargeEndTime_s == 0.0f ) {
+    if( IsBatteryLow() ) {
+      // charging hasnt started yet
+      return kRequiredChargeTime_s;
+    } else {
+      return 0.0f;
+    }
+  } else {
+    return Anki::Util::Max( _suggestedChargeEndTime_s - currTime_s, 0.0f );
+  }
 }
 
 

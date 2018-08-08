@@ -20,6 +20,8 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotToEngineImplMessaging.h"
 
@@ -93,6 +95,13 @@ void CubeCommsComponent::InitDependent(Vector::Robot* robot, const RobotCompMap&
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SendAvailableObjects, callback));
     
     SubscribeToWebViz();
+  }
+  
+  if (ANKI_VERIFY(_robot->HasGatewayInterface(),
+                  "CubeCommsComponent.InitDependent.NoGatewayInterface", "")) {
+    auto* gatewayInterface = _robot->GetGatewayInterface();
+    auto callback = std::bind(&CubeCommsComponent::HandleAppEvents, this, std::placeholders::_1);
+    _signalHandles.push_back(gatewayInterface->Subscribe(external_interface::GatewayWrapperTag::kCubesAvailableRequest, callback));
   }
   
   const auto* platform = robot->GetContextDataPlatform();
@@ -478,6 +487,24 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
       break;
   }
 }
+  
+void CubeCommsComponent::HandleAppEvents(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kCubesAvailableRequest ) {
+    if( _robot->HasGatewayInterface() ) {
+      auto* msg = new external_interface::CubesAvailableResponse;
+      msg->mutable_factory_ids()->Reserve( (int)_cubeScanResults.size() );
+      int i=0;
+      for( const auto& p : _cubeScanResults ) {
+        msg->mutable_factory_ids()->Add();
+        (*msg->mutable_factory_ids())[i] = p.first;
+        ++i;
+      }
+      auto* gi = _robot->GetGatewayInterface();
+      gi->Broadcast( ExternalMessageRouter::WrapResponse( msg ) );
+    }
+  }
+}
 
 
 void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg)
@@ -489,9 +516,10 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
                  ObjectTypeToString(msg.objectType),
                  ObjectTypeToString(kValidCubeType));
 
+  const bool cubeUnknown = (_cubeScanResults.find(msg.factory_id) == _cubeScanResults.end());
   _cubeScanResults[msg.factory_id] = msg.rssi;
   
-  if (_broadcastObjectAvailableMsg) {
+  if( cubeUnknown || _broadcastObjectAvailableMsg ) {
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ObjectAvailable(msg)));
   }
@@ -751,7 +779,6 @@ void CubeCommsComponent::ReadPreferredCubeFromFile()
     }
   }
 }
-
 
 void CubeCommsComponent::SubscribeToWebViz()
 {

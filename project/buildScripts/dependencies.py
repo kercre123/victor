@@ -649,6 +649,7 @@ def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=T
     updated_deps = map(str, updated_deps)
     if validate_assets and len(set(updated_deps) & set(ASSET_VALIDATION_TRIGGERS)) > 0:
         # At least one of the asset validation triggers was updated, so perform validation...
+        validate_anim_data.check_anims_all_anim_groups(location)
         try:
             validate_anim_data.check_audio_events_all_anims(location)
         except ValueError, e:
