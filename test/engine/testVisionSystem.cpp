@@ -24,6 +24,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
@@ -614,4 +615,41 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
 
 } // LaserPointDetector
 
+// This test is meant to avoid checking in a vision_config.json or code changes that break the ability to load
+// the neural net model(s) successfully.
+GTEST_TEST(NeuralNets, InitFromConfig)
+{
+  using namespace Anki;
+  
+  // Load vision_config.json file and get NeuralNets section
+  cozmoContext->GetDataLoader()->LoadRobotConfigs();
+  const Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
+  ASSERT_TRUE(config.isMember("NeuralNets"));
+  const Json::Value& neuralNetConfig = config["NeuralNets"];
+  
+  const std::string visionConfigPath = Util::FileUtils::FullFilePath({"config", "engine", "vision"});
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                               visionConfigPath);
+  const std::string cachePath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "vision");
+  const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
+  const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
+  
+  // Make sure "NeuralNetRunner" load succeeds, given all the current params in vision_config.json
+  Vision::NeuralNetRunner neuralNetRunner;
+  const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, neuralNetConfig);
+  ASSERT_EQ(RESULT_OK, loadRunnerResult);
+  
+  ASSERT_TRUE(neuralNetConfig.isMember("graphFile"));
+  const std::string modelFileName = neuralNetConfig["graphFile"].asString();
+  
+  // Make sure we have correct extension
+  const size_t extIndex = modelFileName.find_last_of(".");
+  ASSERT_NE(std::string::npos, extIndex); // must have extension
+  const std::string extension = modelFileName.substr(extIndex, std::string::npos);
+  ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
+  
+  // Make sure model file exists
+  const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
+  ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+}
 
