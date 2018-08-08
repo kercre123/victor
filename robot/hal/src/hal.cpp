@@ -44,7 +44,7 @@ namespace { // "Private members"
     .cliffSense = {800, 800, 800, 800}
   };
 #endif
-
+  
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
@@ -479,8 +479,8 @@ void HAL::Stop()
 
 void ProcessTouchLevel(void)
 {
-  if(bodyData_->touchLevel[0] != 0xFFFF) {
-    lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
+  if(bodyData_->touchHires[HAL::BUTTON_CAPACITIVE] != 0xFFFF) {
+    lastValidTouchIntensity_ = bodyData_->touchHires[HAL::BUTTON_CAPACITIVE];
   }
 }
 
@@ -568,7 +568,7 @@ u16 HAL::GetButtonState(const ButtonID button_id)
   }
   return bodyData_->touchLevel[button_id];
 }
-
+  
 u16 HAL::GetRawCliffData(const CliffID cliff_id)
 {
   assert(cliff_id < DROP_SENSOR_COUNT);

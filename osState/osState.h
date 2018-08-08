@@ -120,6 +120,8 @@ public:
 
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
+  
+  void GetOSBuildVersion(int& major, int& minor, int& incremental) const;
 
   // Returns "major.minor.build" for reporting to DAS
   const std::string& GetRobotVersion();

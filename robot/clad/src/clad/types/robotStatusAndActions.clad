@@ -92,7 +92,7 @@ structure RobotState
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 cliffDataRaw[4],
   ProxSensorDataRaw proxData,
-  uint_16 backpackTouchSensorRaw[6],
+  uint_16 backpackTouchSensorRaw,
   uint_8  cliffDetectedFlags,
   uint_8  whiteDetectedFlags,
   int_8   currPathSegment, // -1 if not traversing a path

@@ -118,6 +118,11 @@ namespace {
   {
     return *str ? 1 + GetConstStrLength(str + 1) : 0;
   }
+  
+  // OS version numbers
+  int _majorVersion = -1;
+  int _minorVersion = -1;
+  int _incrementalVersion = -1;
 
 } // namespace
 
@@ -162,6 +167,29 @@ OSState::OSState()
   SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
 
   _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  
+  // read the OS versions once on boot up
+  if(Util::FileUtils::FileExists("/etc/os-version")) {
+    std::string osv = Util::FileUtils::ReadFile("/etc/os-version");
+    std::vector<std::string> tokens = Util::StringSplit(osv, '.');
+    if(tokens.size()==3) {
+      try {
+        size_t remSz;
+        _majorVersion = std::stoi(tokens[0]);
+        _minorVersion = std::stoi(tokens[1]);
+        _incrementalVersion = std::stoi(tokens[2], &remSz);
+      } catch(const std::invalid_argument& ia) {
+        PRINT_NAMED_WARNING("OSState.GetOSBuildVersion.UnableToParseVersionString","%s",osv.c_str());
+        _majorVersion = -1;
+        _minorVersion = -1;
+        _incrementalVersion = -1;
+      }
+    }
+  }
+  const bool versionsValid = _majorVersion >= 0 &&
+                             _minorVersion >= 0 &&
+                             _incrementalVersion >= 0;
+  DEV_ASSERT_MSG(versionsValid, "OSState.MajorMinorIncVersionInvalid", "");
 }
 
 OSState::~OSState()
@@ -412,6 +440,13 @@ const std::string& OSState::GetOSBuildVersion()
   }
 
   return _osBuildVersion;
+}
+
+void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental) const
+{
+  major = _majorVersion;
+  minor = _minorVersion;
+  incremental = _incrementalVersion;
 }
 
 const std::string& OSState::GetRobotVersion()
