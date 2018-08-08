@@ -6,6 +6,7 @@ import (
 	"anki/token/jwt"
 	"anki/util"
 	"clad/cloud"
+	"context"
 	"fmt"
 	"time"
 
@@ -29,7 +30,7 @@ var queue = make(chan request)
 var url = "token-dev.api.anki.com:443"
 var robotESN string
 
-func queueInit(done <-chan struct{}) error {
+func queueInit(ctx context.Context) error {
 	esn, err := robot.ReadESN()
 	if err != nil {
 		if defaultESN == nil {
@@ -41,7 +42,7 @@ func queueInit(done <-chan struct{}) error {
 		esn = defaultESN()
 	}
 	robotESN = esn
-	go queueRoutine(done)
+	go queueRoutine(ctx)
 	return nil
 }
 
@@ -153,11 +154,11 @@ func authRequester(creds credentials.PerRPCCredentials,
 		JwtToken: bundle.Token}), nil
 }
 
-func queueRoutine(done <-chan struct{}) {
+func queueRoutine(ctx context.Context) {
 	for {
 		var req request
 		select {
-		case <-done:
+		case <-ctx.Done():
 			return
 		case req = <-queue:
 			break

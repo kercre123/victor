@@ -23,7 +23,7 @@ func Run(ctx context.Context, optionValues ...Option) {
 		return
 	}
 
-	if err := queueInit(opts.stop); err != nil {
+	if err := queueInit(ctx); err != nil {
 		log.Println("Error initializing request queue:", err)
 		return
 	}

@@ -1,6 +1,7 @@
 package cloudproc
 
 import (
+	"anki/jdocs"
 	"anki/token"
 	"anki/voice"
 	"context"
@@ -28,12 +29,21 @@ func Run(ctx context.Context, procOptions ...Option) {
 		addHandlers(token.GetDevHandlers)
 		token.Run(ctx, opts.tokenOpts...)
 	})
+	tokener := token.GetAccessor()
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor
-			voiceOpts := append([]voice.Option{voice.WithTokener(token.GetAccessor())},
+			voiceOpts := append([]voice.Option{voice.WithTokener(tokener)},
 				opts.voiceOpts...)
 			opts.voice.Run(ctx, voiceOpts...)
+		})
+	}
+	if opts.jdocOpts != nil {
+		launchProcess(&wg, func() {
+			// provide default token accessor
+			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener)},
+				opts.jdocOpts...)
+			jdocs.Run(ctx, jdocOpts...)
 		})
 	}
 	wg.Wait()

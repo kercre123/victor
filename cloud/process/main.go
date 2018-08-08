@@ -3,6 +3,7 @@ package main
 import (
 	"anki/cloudproc"
 	"anki/ipc"
+	"anki/jdocs"
 	"anki/log"
 	"anki/token"
 	"anki/voice"
@@ -133,6 +134,7 @@ func main() {
 	options = append(options, cloudproc.WithVoiceOptions(voiceOpts...))
 	tokenOpts := []token.Option{token.WithServer()}
 	options = append(options, cloudproc.WithTokenOptions(tokenOpts...))
+	options = append(options, cloudproc.WithJdocs(jdocs.WithServer()))
 
 	cloudproc.Run(context.Background(), options...)
 

@@ -651,8 +651,9 @@ class OptionDetector(ast.NodeVisitor):
 
     def visit_MessageDecl(self, node, *args, **kwargs):
         self.options['use_bytes'] = True
-        self.options['use_binary'] = True
-        self.options['use_fmt'] = True
+        if len(node.members()) > 0:
+            self.options['use_binary'] = True
+            self.options['use_fmt'] = True
         for member in node.members():
             self.visit(member.type, member_name=member.name)
 

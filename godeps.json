@@ -117,5 +117,9 @@
   "golang.org/x/sys": {
     "commit": "3dc4335d56c789b04b0ba99b7a37249d9b614314",
     "branch": "master"
+  },
+  "github.com/anki/sai-jdocs": {
+    "commit": "11a60eebd8ee670e91380148156a000191be7e65",
+    "branch": "develop"
   }
 }

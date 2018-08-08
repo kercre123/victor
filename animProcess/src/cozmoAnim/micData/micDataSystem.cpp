@@ -192,9 +192,9 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
 }
 
 void MicDataSystem::FakeTriggerWordDetection()
-{ 
+{
   _micDataProcessor->FakeTriggerWordDetection();
-} 
+}
 
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
 {
@@ -386,7 +386,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         ClearCurrentStreamingJob();
         if (didTimeout)
         {
-          SendUdpMessage(CloudMic::Message::CreateaudioDone(CloudMic::Void{}));
+          SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
         }
         PRINT_NAMED_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
         #if ANKI_DEV_CHEATS
