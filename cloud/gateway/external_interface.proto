@@ -317,7 +317,13 @@ service ExternalInterface {
       body: "*"
     };
   }
-
+  
+  rpc CubesAvailable(CubesAvailableRequest) returns (CubesAvailableResponse) {
+    option (google.api.http) = {
+      post: "/v1/cubes_available",
+      body: "*"
+    };
+  }
   // Signal a connected cube to flash its lights using the default cube
   // flash animation.
   rpc FlashCubeLights(FlashCubeLightsRequest) returns (FlashCubeLightsResponse) {

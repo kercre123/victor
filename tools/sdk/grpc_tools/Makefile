@@ -318,6 +318,10 @@ test_status_history: .require_ip
 	$(curl_command)/v1/status_history -d '{}'
 	@echo
 
+test_cubes_available: .require_ip
+	$(curl_command)/v1/cubes_available -d '{}'
+	@echo
+
 update_time: .require_ip
 	ssh root@$(ANKI_ROBOT_HOST) -t date --set='@$(shell date +%s)'
 

@@ -867,6 +867,7 @@ autounion MessageEngineToGame
   ObjectTapped                      ObjectTapped                       = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectAccel                       ObjectAccel                        = 0x0F, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
   RobotObservedObject               RobotObservedObject                = 0x10, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectAvailable                   ObjectAvailable                    = 0x11,
 }
 
 } // namespace ExternalInterface

@@ -41,6 +41,9 @@ namespace ExternalInterface {
   class MessageEngineToGame;
   struct ObjectAvailable;
 }
+namespace external_interface {
+  class GatewayWrapper;
+}
   
 class CubeCommsComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -143,6 +146,8 @@ private:
   
   // Game to engine event handlers
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  // App to engine event handlers
+  void HandleAppEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
   
   // Handlers for messages from CubeBleClient:
   

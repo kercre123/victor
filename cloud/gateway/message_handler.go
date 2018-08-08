@@ -343,6 +343,11 @@ func CladObjectConnectionStateToProto(msg *gw_clad.ObjectConnectionState) *extin
 		Connected:  msg.Connected,
 	}
 }
+func CladObjectAvailableToProto(msg *gw_clad.ObjectAvailable) *extint.ObjectAvailable {
+	return &extint.ObjectAvailable{
+		FactoryId:  msg.FactoryId,
+	}
+}
 func CladObjectMovedToProto(msg *gw_clad.ObjectMoved) *extint.ObjectMoved {
 	return &extint.ObjectMoved{
 		Timestamp: msg.Timestamp,
@@ -1161,6 +1166,26 @@ func (m *rpcService) DisconnectCube(ctx context.Context, in *extint.DisconnectCu
 			Description: "Message sent to engine",
 		},
 	}, nil
+}
+
+func (m *rpcService) CubesAvailable(ctx context.Context, in *extint.CubesAvailableRequest) (*extint.CubesAvailableResponse, error) {
+	log.Println("Received rpc request CubesAvailable(", in, ")")
+	f, result := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CubesAvailableResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CubesAvailableRequest{
+			CubesAvailableRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	cubes_available := <-result
+	response := cubes_available.GetCubesAvailableResponse()
+	response.Status = &extint.ResultStatus{
+		Description: "Message sent to engine",
+	}
+	return response, nil
 }
 
 func (m *rpcService) FlashCubeLights(ctx context.Context, in *extint.FlashCubeLightsRequest) (*extint.FlashCubeLightsResponse, error) {

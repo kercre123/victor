@@ -17,6 +17,14 @@ message ConnectCubeResponse {
   string       factory_id = 4;
 }
 
+message CubesAvailableRequest {
+}
+
+message CubesAvailableResponse {
+  ResultStatus status = 1;
+  repeated string factory_ids = 2;
+}
+
 // Requests a disconnection from the currently connected cube.
 message DisconnectCubeRequest {
 }
@@ -118,6 +126,10 @@ enum ObjectFamily {
 // Indicates that a the connection subscribed through ConnectCube has
 // been lost.
 message CubeConnectionLost {
+}
+
+message ObjectAvailable {
+  string factory_id = 1;
 }
 
 // Indicates that a cube has connected or disconnected to the robot.

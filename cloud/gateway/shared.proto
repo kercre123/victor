@@ -30,6 +30,7 @@ message Event {
     StimulationInfo                  stimulation_info                    = 15;
     PhotoTaken                       photo_taken                         = 16;
     RobotState                       robot_state                         = 17;
+    ObjectAvailable                  object_available                    = 18;
   }
 }
 
@@ -115,6 +116,8 @@ message GatewayWrapper {
     ForgetPreferredCubeRequest    forget_preferred_cube_request = 104;
     SetPreferredCubeRequest       set_preferred_cube_request    = 105;
     SetCubeLightsRequest          set_cube_lights_request       = 106;
+    CubesAvailableRequest         cubes_available_request       = 107;
+    CubesAvailableResponse        cubes_available_response      = 108;
 
     // ------------ robot stats --------------------
     BatteryStateRequest             battery_state_request = 110;
