@@ -116,6 +116,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     // can't tell the robot to change its onboarding state
     auto onOnboardingStage = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& onboardingStageEvt){
       const auto newState = onboardingStageEvt.GetData().Get_OnboardingState().stage;
+      _stage = newState;
       if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
         SetNewBehavior( _behaviors.onboardingBehavior );
       } else if( newState == OnboardingStages::Complete ) {
