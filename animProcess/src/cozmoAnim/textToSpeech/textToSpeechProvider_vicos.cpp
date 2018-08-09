@@ -342,13 +342,11 @@ Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & dat
 
   if (charRead > 0) {
     // Advance string position
-    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Advance by %ld characters", charRead);
     _strpos += charRead;
   }
 
   if (numSamples > 0) {
     // Add samples to result
-    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Add %lu samples", numSamples);
     data.Init(_BAB_voicefreq, 1);
     data.AppendSamples(samples, numSamples);
   }

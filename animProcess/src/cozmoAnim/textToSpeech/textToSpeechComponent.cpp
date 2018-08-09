@@ -98,7 +98,7 @@ bool TextToSpeechComponent::PopEvent(EventTuple & event)
 // Estimates are generous to avoid premature timeout.
 f32 TextToSpeechComponent::GetEstimatedDuration_ms(const std::string & text)
 {
-  return (text.size() / 4.0f);
+  return (text.size() * 1000.f / 4.0f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
