@@ -341,6 +341,10 @@
               {
                 "conditionType": "SimpleMood",
                 "mood": "HighStim"
+              },
+              {
+                "conditionType": "Compound",
+                "not": { "conditionType": "RobotInHabitat" }
               }
             ]
           }
@@ -364,6 +368,10 @@
               {
                 "conditionType": "ObjectKnown",
                 "objectTypes": ["Charger_Basic"]
+              },
+              {
+                "conditionType": "Compound",
+                "not": { "conditionType": "RobotInHabitat" }
               }
             ]
           }
@@ -508,6 +516,10 @@
                 // fall back to observing but any additional stim should quickly get us back into playing range
                 "conditionType": "SimpleMood",
                 "mood": "HighStim"
+              },
+              {
+                "conditionType": "Compound",
+                "not": { "conditionType": "RobotInHabitat" }
               }
             ]
           }
