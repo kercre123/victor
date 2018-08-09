@@ -87,15 +87,17 @@ constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
 static_assert(MemoryMapTypes::IsSequentialArray(typesToBlockDriving),
   "This array does not define all types once and only once.");
   
-const char* const kMinTimeToTrackFaceKey = "minTimeToTrackFace_s";
-const char* const kMaxTimeToTrackFaceKey = "maxTimeToTrackFace_s";
+const char* const kMinTimeToTrackFaceKeyLowerBoundKey = "minTimeToTrackFaceLowerBound_s";
+const char* const kMinTimeToTrackFaceKeyUpperBoundKey = "minTimeToTrackFaceUpperBound_s";
+const char* const kMaxTimeToTrackFaceKeyLowerBoundKey = "maxTimeToTrackFaceLowerBound_s";
+const char* const kMaxTimeToTrackFaceKeyUpperBoundKey = "maxTimeToTrackFaceUpperBound_s";
+const char* const kNoEyeContactTimeOutKey = "noEyeContactTimeOut_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
 
 static const float kTrackingTimeout_s = 2.5f;
 // TODO should this be a console var or go in a configuration file?
-static const float kNoEyeContactTimeOut_sec = 10.f;
 
 }
 
@@ -103,10 +105,13 @@ static const float kNoEyeContactTimeOut_sec = 10.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
 {
-  minTimeToTrackFace_s = 0.0f;
-  maxTimeToTrackFace_s = 0.0f;
+  minTimeToTrackFaceLowerBound_s = 0.0f;
+  minTimeToTrackFaceUpperBound_s = 0.0f;
+  maxTimeToTrackFaceLowerBound_s = 0.0f;
+  maxTimeToTrackFaceUpperBound_s = 0.0f;
   minClampPeriod_s     = 0.0f;
   maxClampPeriod_s     = 0.0f;
+  noEyeContactTimeOut_s = 0.0f;
   clampSmallAngles     = false;
 }
 
@@ -131,8 +136,11 @@ BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
 void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-   kMinTimeToTrackFaceKey,
-   kMaxTimeToTrackFaceKey,
+   kMinTimeToTrackFaceKeyLowerBoundKey,
+   kMinTimeToTrackFaceKeyUpperBoundKey,
+   kMaxTimeToTrackFaceKeyLowerBoundKey,
+   kMaxTimeToTrackFaceKeyUpperBoundKey,
+   kNoEyeContactTimeOutKey,
    kClampSmallAnglesKey,
    kMinClampPeriodKey,
    kMaxClampPeriodKey,
@@ -146,16 +154,37 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = "BehaviorInteractWithFaces.BehaviorInteractWithFaces.LoadConfig";
 
-  _iConfig.minTimeToTrackFace_s = ParseFloat(config, kMinTimeToTrackFaceKey, debugName);
-  _iConfig.maxTimeToTrackFace_s = ParseFloat(config, kMaxTimeToTrackFaceKey, debugName);
+  _iConfig.minTimeToTrackFaceLowerBound_s = ParseFloat(config, kMinTimeToTrackFaceKeyLowerBoundKey, debugName);
+  _iConfig.minTimeToTrackFaceUpperBound_s = ParseFloat(config, kMinTimeToTrackFaceKeyUpperBoundKey, debugName);
+  _iConfig.maxTimeToTrackFaceLowerBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyLowerBoundKey, debugName);
+  _iConfig.maxTimeToTrackFaceUpperBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyUpperBoundKey, debugName);
+  _iConfig.noEyeContactTimeOut_s = ParseFloat(config, kNoEyeContactTimeOutKey, debugName);
 
-  if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFace_s >= _iConfig.minTimeToTrackFace_s,
+  if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
-                    "%s: minTrackTime = %f, maxTrackTime = %f",
+                    "%s: minTrackTimeUpperBound = %f, maxTrackTimeLowerBound = %f",
                     GetDebugLabel().c_str(),
-                    _iConfig.minTimeToTrackFace_s,
-                    _iConfig.maxTimeToTrackFace_s) ) {
-    _iConfig.maxTimeToTrackFace_s = _iConfig.minTimeToTrackFace_s;
+                    _iConfig.minTimeToTrackFaceUpperBound_s,
+                    _iConfig.maxTimeToTrackFaceLowerBound_s) ) {
+    _iConfig.maxTimeToTrackFaceLowerBound_s = _iConfig.minTimeToTrackFaceUpperBound_s;
+  }
+
+  if( ! ANKI_VERIFY(_iConfig.minTimeToTrackFaceUpperBound_s >= _iConfig.minTimeToTrackFaceLowerBound_s,
+                    "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
+                    "%s: minTrackTimeUpperBound = %f, minTrackTimeLowerBound = %f",
+                    GetDebugLabel().c_str(),
+                    _iConfig.minTimeToTrackFaceUpperBound_s,
+                    _iConfig.minTimeToTrackFaceLowerBound_s) ) {
+    _iConfig.minTimeToTrackFaceUpperBound_s = _iConfig.minTimeToTrackFaceLowerBound_s;
+  }
+
+  if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceUpperBound_s >= _iConfig.maxTimeToTrackFaceLowerBound_s,
+                    "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
+                    "%s: maxTrackTimeUpperBound = %f, maxTrackTimeLowerBound = %f",
+                    GetDebugLabel().c_str(),
+                    _iConfig.maxTimeToTrackFaceUpperBound_s,
+                    _iConfig.maxTimeToTrackFaceLowerBound_s) ) {
+    _iConfig.maxTimeToTrackFaceUpperBound_s = _iConfig.minTimeToTrackFaceLowerBound_s;
   }
 
   _iConfig.clampSmallAngles = ParseBool(config, kClampSmallAnglesKey, debugName);
@@ -385,7 +414,17 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
 {
   DEBUG_SET_STATE(TrackingFace);
 
-  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.maxTimeToTrackFace_s;
+  const float randomMaxTimeToTrack_s = Util::numeric_cast<float>(
+    GetRNG().RandDblInRange(_iConfig.maxTimeToTrackFaceLowerBound_s, _iConfig.maxTimeToTrackFaceUpperBound_s));
+  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.MaxTrackTime", "will track for at most %f seconds",
+    randomMaxTimeToTrack_s);
+  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() +
+    randomMaxTimeToTrack_s;
+
+  const float randomMinTimeToTrack_s = Util::numeric_cast<float>(
+    GetRNG().RandDblInRange(_iConfig.minTimeToTrackFaceLowerBound_s, _iConfig.minTimeToTrackFaceUpperBound_s));
+  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.MinTrackTime", "will track for at least %f seconds",
+    randomMinTimeToTrack_s);
 
 
   CompoundActionParallel* action = new CompoundActionParallel();
@@ -397,7 +436,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     trackAction->SetUpdateTimeout(kTrackingTimeout_s);
-    trackAction->SetStopCriteriaWithEyeContactOverride(_iConfig.minTimeToTrackFace_s, kNoEyeContactTimeOut_sec);
+    trackAction->SetStopCriteriaWithEyeContactOverride(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeOut_s);
     action->AddAction(trackAction);
   }
   

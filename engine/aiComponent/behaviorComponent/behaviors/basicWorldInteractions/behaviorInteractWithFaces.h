@@ -78,8 +78,13 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
-    float minTimeToTrackFace_s;
-    float maxTimeToTrackFace_s;
+    float minTimeToTrackFaceLowerBound_s;
+    float minTimeToTrackFaceUpperBound_s;
+
+    float maxTimeToTrackFaceLowerBound_s;
+    float maxTimeToTrackFaceUpperBound_s;
+
+    float noEyeContactTimeOut_s;
 
     float minClampPeriod_s;
     float maxClampPeriod_s;
