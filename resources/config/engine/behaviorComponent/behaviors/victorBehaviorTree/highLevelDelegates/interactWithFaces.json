@@ -13,7 +13,7 @@
   "maxTimeToTrackFaceLowerBound_s": 40.0,
   "maxTimeToTrackFaceUpperBound_s": 60.0,
 
-  "noEyeContactTimeOut_s": 10.0,
+  "noEyeContactTimeout_s": 10.0,
   // This is how far back in time to look
   // when we check for eye contact, ideally
   // this should be non-zero to add some robustness

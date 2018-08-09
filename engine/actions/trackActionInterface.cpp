@@ -260,12 +260,12 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.withinTolSince_sec = -1.f;
 }
 
-void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeOut_sec,
+void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeout_sec,
                                                          const TimeStamp_t eyeContactWithinLast_ms)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
   _stopCriteria.duration_sec = stopTime_sec;
-  _stopCriteria.noEyeContactTimeOut_sec = noEyeContactTimeOut_sec;
+  _stopCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
   _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
 
   _stopCriteria.withinTolSince_sec = -1.f;
@@ -773,7 +773,7 @@ bool ITrackAction::UpdateSmallAngleClamping()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
 {
-  if (Util::IsFltGTZero(_stopCriteria.noEyeContactTimeOut_sec))
+  if (Util::IsFltGTZero(_stopCriteria.noEyeContactTimeout_sec))
   {
     const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_stopCriteria.eyeContactWithinLast_ms);
     if (eyeContact)
@@ -784,7 +784,7 @@ bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
     else
     {
       const f32 timeDiff = currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec;
-      const bool shouldContinue = timeDiff <= _stopCriteria.noEyeContactTimeOut_sec;
+      const bool shouldContinue = timeDiff <= _stopCriteria.noEyeContactTimeout_sec;
       if (shouldContinue)
       {
         return true;

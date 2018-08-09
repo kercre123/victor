@@ -84,7 +84,7 @@ private:
     float maxTimeToTrackFaceLowerBound_s;
     float maxTimeToTrackFaceUpperBound_s;
 
-    float noEyeContactTimeOut_s;
+    float noEyeContactTimeout_s;
     float trackingTimeout_s;
     TimeStamp_t eyeContactWithinLast_ms;
 
