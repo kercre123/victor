@@ -34,17 +34,24 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {};
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override final;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {};
 
   virtual void InitBehavior() override; 
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override; 
 
 private:
 
+  void OnReturnFromSelectorBehavior();
+  void EraseCondition();
+  void SetNewCustomBehaviorWithSelector();
+  void UsePreviouslySetCustomBehavior(BEIConditionType);
+
   struct InstanceConfig {
     InstanceConfig();
-      std::set<IBEIConditionPtr> customizableConditions;
+    std::vector<IBEIConditionPtr> customizableConditions;
+    bool hasSetUpCustomizableConditions;
   };
 
   struct DynamicVariables {

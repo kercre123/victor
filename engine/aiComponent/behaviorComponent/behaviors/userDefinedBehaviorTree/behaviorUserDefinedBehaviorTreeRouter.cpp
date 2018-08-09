@@ -12,7 +12,6 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/userDefinedBehaviorTree/behaviorUserDefinedBehaviorTreeRouter.h"
-#include "util/console/consoleInterface.h"
 #include <string>
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
@@ -21,13 +20,12 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-const char* kAllowedBEIConditions = "allowedBEIConditions";
+const BehaviorID selectorBehaviorId = BehaviorID::UserDefinedBehaviorSelector;
 }
-
-CONSOLE_VAR(bool, kEnableUserDefinedBehaviorTree, "UserDefinedBehaviorTreeComponent", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorUserDefinedBehaviorTreeRouter::InstanceConfig::InstanceConfig()
+  : hasSetUpCustomizableConditions(false)
 {
 }
 
@@ -40,23 +38,6 @@ BehaviorUserDefinedBehaviorTreeRouter::DynamicVariables::DynamicVariables()
 BehaviorUserDefinedBehaviorTreeRouter::BehaviorUserDefinedBehaviorTreeRouter(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  std::vector<std::string> beiConds;
-  JsonTools::GetVectorOptional(config, kAllowedBEIConditions, beiConds);
-
-  // get list of allowed BEIConditions
-  for(const auto& beiCondString : beiConds) {
-    // turn them into BEIConditionTypes
-    BEIConditionType beiCondType = BEIConditionType::Invalid;
-    const bool beiCondLoaded = BEIConditionTypeFromString(beiCondString, beiCondType);
-    if( !beiCondLoaded ) {
-      PRINT_NAMED_WARNING("UserDefinedBehaviorTreeComponent.BehaviorUserDefinedBehaviorTreeRouter.UnknownBEIConditionType",
-                          "%s was not recognized as a valid BEIConditionType value, will be dropped", beiCondString.c_str());
-    }
-
-    _iConfig.customizableConditions.emplace(
-      BEIConditionFactory::CreateBEICondition(beiCondType, GetDebugLabel())
-    );
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,20 +48,17 @@ BehaviorUserDefinedBehaviorTreeRouter::~BehaviorUserDefinedBehaviorTreeRouter()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorUserDefinedBehaviorTreeRouter::InitBehavior()
 {
-  // initialize the triggers and get them ready to check for events
-  for(const auto& condition: _iConfig.customizableConditions) {
-    condition->Init(GetBEI());
-    condition->SetActive(GetBEI(), true);
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorUserDefinedBehaviorTreeRouter::WantsToBeActivatedBehavior() const
 {
+  auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+
   for( auto& condition : _iConfig.customizableConditions) {
     if (condition->AreConditionsMet(GetBEI())) {
-      // do not activate unless enabled by developer
-      return kEnableUserDefinedBehaviorTree;
+      // do not activate unless user-defined behavior tree is activated in console
+      return userBehaviorTreeComp.IsEnabled();
     }
   }
 
@@ -93,41 +71,133 @@ void BehaviorUserDefinedBehaviorTreeRouter::GetAllDelegates(std::set<IBehavior*>
   auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
 
   // add all possible delegates of the router
-  for( auto& condition : _iConfig.customizableConditions) {
-    auto behaviorPtr = userBehaviorTreeComp.GetDelegationBehavior(condition->GetConditionType());
-    if(nullptr != behaviorPtr.get()) {
-      delegates.emplace(behaviorPtr.get());
-    }
+  userBehaviorTreeComp.GetAllDelegates(delegates);
+  
+  // add the selection behavior to the possible delegates
+  auto& behaviorContainer = GetBehaviorComp<BehaviorContainer>();
+  ICozmoBehaviorPtr selectorBehaviorPtr = behaviorContainer.FindBehaviorByID(BehaviorID::UserDefinedBehaviorSelector);
+  if(nullptr != selectorBehaviorPtr) {
+    delegates.emplace(selectorBehaviorPtr.get());
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorUserDefinedBehaviorTreeRouter::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
-{
-  const char* list[] = {
-    kAllowedBEIConditions
-  };
-  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorUserDefinedBehaviorTreeRouter::OnBehaviorActivated() 
 {
-  // do not enable unless enabled by developer
-  if(!kEnableUserDefinedBehaviorTree) {
+  auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+
+  // do not enable unless user-defined behavior tree is activated in console
+  if(!userBehaviorTreeComp.IsEnabled()) {
     CancelSelf();
+    return;
   }
 
-  auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+  bool isAtLeastOneConditionMet = false;
+
   for( auto& condition : _iConfig.customizableConditions) {
-    if(condition->AreConditionsMet(GetBEI())) {
-      auto behaviorPtr = userBehaviorTreeComp.GetDelegationBehavior(condition->GetConditionType());
-      if(nullptr != behaviorPtr.get()) {
-        if(behaviorPtr->WantsToBeActivated()) {
-          DelegateNow(behaviorPtr.get());
-        }
-      }
+    // if condition is not met, ignore it and move on to the next one
+    const bool isConditionMet = condition->AreConditionsMet(GetBEI());
+    if(!isConditionMet) {
+      continue;
     }
+    isAtLeastOneConditionMet = isConditionMet || isAtLeastOneConditionMet;
+
+    // if condition is met, get the current settings for the condition
+    BEIConditionType beiCondType = condition->GetConditionType();
+    userBehaviorTreeComp.SetCurrentCondition(beiCondType);
+    auto behaviorPtr = userBehaviorTreeComp.GetDelegationBehavior(beiCondType);
+
+    // if a custom behavior hasn't yet been set, use the selector behavior to set one
+    if(nullptr == behaviorPtr.get()) {
+      SetNewCustomBehaviorWithSelector();
+    }
+    else {
+      UsePreviouslySetCustomBehavior(beiCondType);
+    }
+  }
+
+  if(!isAtLeastOneConditionMet) {
+    PRINT_NAMED_ERROR("BehaviorUserDefinedBehaviorTreeRouter.OnBehaviorActivated.NoConditionWantsToBeActivated",
+                      "Selector behavior activated, but no condition is activated.");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorUserDefinedBehaviorTreeRouter::OnReturnFromSelectorBehavior()
+{
+  auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+
+  BEIConditionType currentBeiCondType = userBehaviorTreeComp.GetCurrentCondition();
+  auto behaviorPtr = userBehaviorTreeComp.GetDelegationBehavior(currentBeiCondType);
+  if(behaviorPtr->WantsToBeActivated()) {
+    DelegateNow(behaviorPtr.get(), &BehaviorUserDefinedBehaviorTreeRouter::EraseCondition);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorUserDefinedBehaviorTreeRouter::EraseCondition()
+{
+  auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+
+  // now that we are done with the condition, remove it from being current.
+  userBehaviorTreeComp.EraseCurrentCondition();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorUserDefinedBehaviorTreeRouter::SetNewCustomBehaviorWithSelector() {
+  auto& behaviorContainer = GetBehaviorComp<BehaviorContainer>();
+
+  ICozmoBehaviorPtr selectorBehaviorPtr = behaviorContainer.FindBehaviorByID(selectorBehaviorId);
+  if(selectorBehaviorPtr->WantsToBeActivated()) {
+    DelegateNow(selectorBehaviorPtr.get(), &BehaviorUserDefinedBehaviorTreeRouter::OnReturnFromSelectorBehavior);
+  }
+  else {
+    PRINT_NAMED_WARNING("BehaviorUserDefinedBehaviorTreeRouter.OnBehaviorActivated.SelectorDoesNotWantToBeActivated",
+                        "Selector behavior did not want to be activated.");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorUserDefinedBehaviorTreeRouter::UsePreviouslySetCustomBehavior(BEIConditionType beiCondType)
+{
+  auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+
+  auto behaviorPtr = userBehaviorTreeComp.GetDelegationBehavior(beiCondType);
+  const bool behaviorDoesNotWantToBeActivated = !behaviorPtr->WantsToBeActivated();
+
+  if(behaviorDoesNotWantToBeActivated) {
+    PRINT_NAMED_ERROR("BehaviorUserDefinedBehaviorTreeRouter.OnBehaviorActivated.BehaviorActivationReqsTooStrict",
+                      "Behavior %s did not want to be activated. Check the conditions under which it is activated.", 
+                      BehaviorIDToString(behaviorPtr->GetID()));
+    return;
+  }
+
+  // otherwise, delegate to the behavior!
+  DelegateNow(behaviorPtr.get(), &BehaviorUserDefinedBehaviorTreeRouter::EraseCondition);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorUserDefinedBehaviorTreeRouter::BehaviorUpdate() 
+{
+  // we can avoid a circular dependency of the user-defined behavior component on behavior container
+  // by setting the customizable conditions on the first tick
+  if(!_iConfig.hasSetUpCustomizableConditions) {
+    auto& userBehaviorTreeComp = GetBehaviorComp<UserDefinedBehaviorTreeComponent>();
+
+    std::vector<BEIConditionType> beiCondTypes;
+    userBehaviorTreeComp.GetCustomizableConditions(beiCondTypes);
+
+    // get list of allowed BEIConditionTypes and turn them into BEIConditions
+    for(const auto& beiCondType : beiCondTypes) {
+      auto condition = BEIConditionFactory::CreateBEICondition(beiCondType, GetDebugLabel());
+
+      // initialize the triggers and get them ready to check for events
+      condition->Init(GetBEI());
+      condition->SetActive(GetBEI(), true);
+      _iConfig.customizableConditions.emplace_back(condition);
+    }
+
+    _iConfig.hasSetUpCustomizableConditions = true;
   }
 }
 

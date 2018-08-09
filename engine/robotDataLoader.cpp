@@ -168,6 +168,11 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadUserDefinedBehaviorTreeConfig");
+    LoadUserDefinedBehaviorTreeConfig();
+  }
+
+  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
     LoadBackpackLightAnimations();
   }
@@ -810,6 +815,98 @@ void RobotDataLoader::LoadCubeSpinnerConfig()
               "LoadCubeSpinnerConfig Json config file %s not found or failed to parse",
               jsonFilename.c_str());
   }
+}
+
+void RobotDataLoader::LoadUserDefinedBehaviorTreeConfig()
+{
+  const char* kBehaviorOptionsKey = "behaviorOptions";
+  const char* kConditionTypeKey = "conditionType";
+  const char* kEditModeTriggerIDKey = "editModeTrigger";
+  const char* kMappingOptionsListKey = "conditionToBehaviorMappingOptions";
+
+  Json::Value _userDefinedBehaviorTreeConfig;
+  static const std::string jsonFilename = "config/engine/userDefinedBehaviorTree/conditionToBehaviorMap.json";
+  const bool jsonSuccess = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _userDefinedBehaviorTreeConfig);
+
+  // if json is read properly, load the config data
+  if(!jsonSuccess)
+  {
+    LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+              "LoadUserDefinedBehaviorTreeConfig Json config file %s not found or failed to parse",
+              jsonFilename.c_str());
+  }
+
+  // load the behavior that triggers editing
+  _userDefinedEditCondition = BEIConditionType::Invalid;
+
+  const std::string editBehaviorIdString = JsonTools::ParseString(_userDefinedBehaviorTreeConfig,
+                                                                  kEditModeTriggerIDKey,
+                                                                  "RobotDataLoader.LoadUserDefinedBehaviorTreeConfig.ParseEditConditionStringFailed");
+  const bool editBehaviorIdSuccess = BEIConditionTypeFromString(editBehaviorIdString, _userDefinedEditCondition);
+
+  if(!editBehaviorIdSuccess) {
+    LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+              "LoadUserDefinedBehaviorTreeConfig: Edit behavior %s not a valid BehaviorID.",
+              editBehaviorIdString.c_str());
+    return;
+  }
+
+  // load the map of possible condition to behavior mappings
+  _conditionToBehaviorsMap = std::make_unique<ConditionToBehaviorsMap>();
+
+  for(const Json::Value& mapOptionsJson : _userDefinedBehaviorTreeConfig[kMappingOptionsListKey]) {
+    BEIConditionType beiCondType = BEIConditionType::Invalid;
+    const std::string beiCondTypeString = JsonTools::ParseString(mapOptionsJson,
+                                                                 kConditionTypeKey,
+                                                                 "RobotDataLoader.LoadUserDefinedBehaviorTreeConfig.ParseConditionStringFailed");
+    const bool beiCondTypeParseSuccess = BEIConditionTypeFromString(beiCondTypeString, beiCondType);
+    const bool editConditionMappedToBehaviors = _userDefinedEditCondition == beiCondType;
+
+    // edit condition should not be customizable
+    if(editConditionMappedToBehaviors) {
+      LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+                "LoadUserDefinedBehaviorTreeConfig: edit condition should not be customizable.");
+      return;
+    }
+
+    // if parsing the BEIConditionType works, read the behaviorIds
+    if(!beiCondTypeParseSuccess) {
+      LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+                "LoadUserDefinedBehaviorTreeConfig: %s not a valid BEIConditionType.",
+                beiCondTypeString.c_str());
+      return;
+    }
+
+    // if the BehaviorID strings are parsed to strings successfully, convert them to BehaviorIDs
+    std::vector<std::string> behaviorIdStrings;
+    const bool behaviorIdStringsParseSuccess = JsonTools::GetVectorOptional<std::string>(mapOptionsJson, kBehaviorOptionsKey, behaviorIdStrings);
+
+    if(!behaviorIdStringsParseSuccess) {
+      LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig.ParseBehaviorStringsFailed",
+                "LoadUserDefinedBehaviorTreeConfig: Could not parse list of Json BehaviorID Strings.");
+      return;
+    }
+
+    // if the string->BehaviorID conversion happens successfully, add them into a set
+    std::set<BehaviorID> behaviors;
+    for(const auto& behaviorIdString : behaviorIdStrings) {
+      BehaviorID behaviorId = BehaviorID::Anonymous;
+      const bool behaviorIdSuccess = BehaviorIDFromString(behaviorIdString, behaviorId);
+
+      if(!behaviorIdSuccess) {
+        LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+                  "LoadUserDefinedBehaviorTreeConfig: %s not a valid BehaviorID.",
+                  behaviorIdString.c_str());
+        return;
+      }
+
+      behaviors.emplace(behaviorId);
+    }
+
+    // add the set of behaviors into the map
+    _conditionToBehaviorsMap->emplace(beiCondType, behaviors);
+  }
+
 }
 
 std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(const std::vector<const char*> & srcDirs, const std::string& fileExtensions) const

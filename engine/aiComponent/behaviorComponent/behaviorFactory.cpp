@@ -148,6 +148,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/userDefinedBehaviorTree/behaviorUserDefinedBehaviorSelector.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/userDefinedBehaviorTree/behaviorUserDefinedBehaviorTreeRouter.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
@@ -1009,6 +1010,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::WallTimeCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorWallTimeCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::UserDefinedBehaviorSelector:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorUserDefinedBehaviorSelector(config));
       break;
     }
     

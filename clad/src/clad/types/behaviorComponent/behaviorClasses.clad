@@ -221,6 +221,7 @@ enum uint_8 BehaviorClass {
   WallTimeCoordinator,
 
   // userDefinedBehaviorTree
+  UserDefinedBehaviorSelector,
   UserDefinedBehaviorTreeRouter,
 
   // victor

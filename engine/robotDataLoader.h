@@ -15,6 +15,8 @@
 
 #include "clad/types/animationTrigger.h"
 #include "clad/types/backpackAnimationTriggers.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
+#include "clad/types/behaviorComponent/beiConditionTypes.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 #include "clad/types/compositeImageLayouts.h"
 #include "clad/types/compositeImageMaps.h"
@@ -135,6 +137,11 @@ public:
   // Cube Spinner game configuration
   const Json::Value& GetCubeSpinnerConfig() const             { return _cubeSpinnerConfig; }
 
+  // User-defined behavior tree config
+  using ConditionToBehaviorsMap = std::unordered_map<BEIConditionType, std::set<BehaviorID>>;
+  ConditionToBehaviorsMap* GetUserDefinedConditionToBehaviorsMap() const { assert(nullptr != _conditionToBehaviorsMap); return _conditionToBehaviorsMap.get(); }
+  const BEIConditionType GetUserDefinedEditCondition() const { assert(BEIConditionType::Invalid != _userDefinedEditCondition); return _userDefinedEditCondition; }
+
   // images are stored as a map of stripped file name (no file extension) to full path
   const Vision::SpritePathMap* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
@@ -202,6 +209,8 @@ private:
   
   void LoadCubeSpinnerConfig();
 
+  void LoadUserDefinedBehaviorTreeConfig();
+
   void LoadAnimationWhitelist();
 
   // Outputs a map of file name (no path or extensions) to the full file path
@@ -254,6 +263,10 @@ private:
   Json::Value _jdocsConfig;
 
   Json::Value _cubeSpinnerConfig;
+
+  // user-defined behavior tree config
+  std::unique_ptr<ConditionToBehaviorsMap> _conditionToBehaviorsMap;
+  BEIConditionType _userDefinedEditCondition;
 
   std::unique_ptr<Vision::SpritePathMap> _spritePaths;
   std::unique_ptr<Vision::SpriteCache>   _spriteCache;

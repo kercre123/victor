@@ -14,7 +14,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/beiConditions/iBEICondition_fwd.h"
+#include "engine/components/dataAccessorComponent.h"
 #include "engine/components/variableSnapshot/variableSnapshotEncoder.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 
@@ -33,6 +35,7 @@ namespace Vector {
 class BehaviorContainer;
 class BehaviorExternalInterface;
 class VariableSnapshotComponent;
+
 
 class UserDefinedBehaviorTreeComponent : public IDependencyManagedComponent<BCComponentID> {
 public:
@@ -64,13 +67,46 @@ public:
   //       types of dispatching
   bool AddCondition(BEIConditionType, BehaviorID);
 
+  // returns true if the component is enabled (if the feature is enabled from the console)
+  bool IsEnabled() const;
+
+  // returns BEIConditionType of edit condition
+  BEIConditionType GetEditModeCondition() const { return _editModeCondition; };
+
+  // get all possible delegates - fills the passed in set with the possible delegates
+  void GetAllDelegates(std::set<IBehavior*>&) const;
+
+  // fills the vector with all of the conditions that have options for customization
+  void GetCustomizableConditions(std::vector<BEIConditionType>&) const;
+
+  RobotDataLoader::ConditionToBehaviorsMap* GetConditionToBehaviorsMap() const { return _possibleMappingsPtr; }
+
+  // set and get the currently activated condition in the router - if an invalid condition is set, an error witll be thrown
+  // NOTE: these functions assume that only the router/selector will be setting/getting this info
+  void SetCurrentCondition(BEIConditionType);
+  BEIConditionType GetCurrentCondition() const { assert(BEIConditionType::Invalid != _currentCondition); return _currentCondition; };
+
+  // gets the possible behaviors of a given condition
+  std::set<BehaviorID> GetConditionOptions(BEIConditionType) const;
+
+  // reset current condition to invalid condition
+  void EraseCurrentCondition() { _currentCondition = BEIConditionType::Invalid; };
+
 private:
   // NOTE: Mapping to BehaviorIDs disallows the use of anonymous behaviors since there are no
   //       serialization functions for them.
   std::shared_ptr<std::unordered_map<BEIConditionType, BehaviorID>> _conditionMappingsPtr;
+  RobotDataLoader::ConditionToBehaviorsMap* _possibleMappingsPtr;
+
+  // edit mode condition - when triggered within some set of conditions, used to enter an 
+  // "edit" mode for the user-defined behavior tree feature
+  BEIConditionType _editModeCondition;
 
   // need to use BehaviorContainer, so store a pointer
   BehaviorContainer* _behaviorContainer;
+
+  // used for storing the currently activated condition
+  BEIConditionType _currentCondition;
 };
 
 

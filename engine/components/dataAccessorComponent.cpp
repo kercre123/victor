@@ -53,6 +53,8 @@ void DataAccessorComponent::InitDependent(Vector::Robot* robot, const RobotCompM
   _variableSnapshotJsonMap = dataLoader.GetVariableSnapshotJsonMap();
   // Copy, but it's fine
   _cupeSpinnerConfig = dataLoader.GetCubeSpinnerConfig();
+  _userDefinedConditionToBehaviorsMap = dataLoader.GetUserDefinedConditionToBehaviorsMap();
+  _userDefinedEditCondition = dataLoader.GetUserDefinedEditCondition();
 }
 
   
