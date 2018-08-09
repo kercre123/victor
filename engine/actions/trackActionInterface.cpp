@@ -784,8 +784,7 @@ bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
     else
     {
       const f32 timeDiff = currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec;
-      const bool shouldContinue = timeDiff <= _stopCriteria.noEyeContactTimeout_sec;
-      if (shouldContinue)
+      if (timeDiff <= _stopCriteria.noEyeContactTimeout_sec)
       {
         return true;
       }
@@ -855,8 +854,7 @@ bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltA
       if(wasWithinTol)
       {
         // Been within tolerance for long enough to stop yet?
-        const f32 timeDiff = currentTime_sec - _stopCriteria.withinTolSince_sec;
-        if( timeDiff > _stopCriteria.duration_sec)
+        if( currentTime_sec - _stopCriteria.withinTolSince_sec > _stopCriteria.duration_sec)
         {
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
                         "Within tolerances for > %.1fsec (panTol=%.1fdeg tiltTol=%.1fdeg distTol=[%.1f,%.1f]",
