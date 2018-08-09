@@ -1562,7 +1562,7 @@
   },
   {
     "CladEvent": "GreetAfterLongTime",
-    "AnimName" : "ag_greeting_happy"
+    "AnimName" : "ag_greeting_big_hello"
   },
   {
     "CladEvent": "ComeHereStart",
