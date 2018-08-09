@@ -805,7 +805,7 @@ bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
-                                      const f32 distance_mm, const f32 currentTime_sec)
+                                      const f32 distance_mm, const f32 currentTime_sec) const
 {
     bool isWithinPanTol = true;
     if (!Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f))

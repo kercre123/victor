@@ -155,9 +155,8 @@ private:
   
   bool StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                        const f32 dist_mm, const f32 currentTime_sec);
-  // TODO make a const method?
   bool IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
-                          const f32 dist_mm, const f32 currentTime_sec);
+                          const f32 dist_mm, const f32 currentTime_sec) const;
   bool ContinueCriteriaMet(const f32 currentTime_sec);
   bool TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                   const f32 dist_mm, const f32 currentTime_sec);
