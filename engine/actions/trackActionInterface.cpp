@@ -438,8 +438,6 @@ ActionResult ITrackAction::CheckIfDone()
     case UpdateResult::NewInfo:
     case UpdateResult::PredictedInfo:
     {
-      
-      PRINT_CH_INFO(kLogChannelName, "ITrackAction.UpdateResult.PredictedInfo", "");
       if( absTiltAngle > _maxHeadAngle ) {
         absTiltAngle = _maxHeadAngle;
       }
