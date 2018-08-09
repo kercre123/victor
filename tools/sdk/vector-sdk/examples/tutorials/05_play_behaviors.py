@@ -17,12 +17,7 @@
 """Tell Vector to drive on and off the charger.
 """
 
-import math
-import os
-import sys
-import time
 import vector
-from vector.util import degrees
 
 
 def main():
@@ -31,6 +26,7 @@ def main():
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.behavior.drive_on_charger()
         robot.behavior.drive_off_charger()
+
 
 if __name__ == '__main__':
     main()

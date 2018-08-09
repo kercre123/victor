@@ -21,11 +21,9 @@ This script combines the two previous examples (02_drive_and_turn.py and
 left 4 times in a row.
 """
 
-import os
-import sys
-import time
 import vector
 from vector.util import degrees, distance_mm, speed_mmps
+
 
 def main():
     args = vector.util.parse_test_args()
@@ -37,6 +35,7 @@ def main():
         for _ in range(4):
             robot.behavior.drive_straight(distance_mm(200), speed_mmps(50))
             robot.behavior.turn_in_place(degrees(90))
+
 
 if __name__ == "__main__":
     main()

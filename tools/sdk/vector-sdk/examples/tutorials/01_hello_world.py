@@ -19,15 +19,14 @@
 Make Vector say 'Hello World' in this simple Vector SDK example program.
 """
 
-import os
-import sys
-import time
 import vector
+
 
 def main():
     args = vector.util.parse_test_args()
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.say_text("Hello World")
+
 
 if __name__ == "__main__":
     main()

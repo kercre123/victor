@@ -19,10 +19,8 @@
 Play an animation using a trigger, and then another animation by name.
 """
 
-import os
-from pathlib import Path
-import sys
 import vector
+
 
 def main():
     args = vector.util.parse_test_args()
@@ -32,7 +30,7 @@ def main():
         # A trigger can pick from several appropriate animations for variety.
         # TODO add call to play_animation_trigger
         #print("Playing animation by trigger")
-        #robot.play_anim_trigger(cozmo.anim.Triggers.CubePounceLoseSession).wait_for_completed()
+        # robot.play_anim_trigger(cozmo.anim.Triggers.CubePounceLoseSession).wait_for_completed()
 
         # Play an animation via its Name.
         # Warning: Future versions of the app might change these, so for future-proofing
@@ -41,6 +39,7 @@ def main():
         # the available animations.
         print("Playing animation by name")
         robot.anim.play_animation("anim_weather_snow_01")
+
 
 if __name__ == "__main__":
     main()

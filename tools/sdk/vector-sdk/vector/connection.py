@@ -42,10 +42,11 @@ class Connection:
     :param host: The ip and port of Vector in the format "XX.XX.XX.XX:443"
     :param cert_file: The location of the certificate file on disk
     """
+
     def __init__(self, robot, name: str, host: str, cert_file: str):
         if cert_file is None:
             raise Exception("Must provide a cert file")
-        self._priority:SDK_PRIORITY_LEVEL = None
+        self._priority: SDK_PRIORITY_LEVEL = None
         self.name = name
         self.host = host
         self.cert_file = cert_file
@@ -71,7 +72,7 @@ class Connection:
         """
         return self._priority
 
-    def connect(self, timeout:int = 10):
+    def connect(self, timeout: int = 10):
         """Connect to Vector
 
         :param timeout: The time allotted to attempt a connection

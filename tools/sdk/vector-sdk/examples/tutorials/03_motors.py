@@ -21,10 +21,9 @@ This is an example of how you can also have low-level control of Vector's motors
 multiple things at once.
 """
 
-import os
-import sys
 import time
 import vector
+
 
 def main():
     args = vector.util.parse_test_args()
@@ -54,6 +53,7 @@ def main():
 
         # Stop the wheels
         robot.motors.set_wheel_motors(0, 0)
+
 
 if __name__ == "__main__":
     main()

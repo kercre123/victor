@@ -29,24 +29,26 @@ except ImportError:
 import vector
 from vector.util import degrees
 
+
 def main():
     args = vector.util.parse_test_args()
 
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         # If necessary, Move Vector's Head and Lift to make it easy to see his face
-        robot.behavior.set_head_angle(degrees(50.0))    
+        robot.behavior.set_head_angle(degrees(50.0))
         robot.behavior.set_lift_height(0.0)
-        
-        current_directory = os.path.dirname(os.path.realpath(__file__))        
+
+        current_directory = os.path.dirname(os.path.realpath(__file__))
         image_path = os.path.join(current_directory, "..", "face_images", "cozmo_image.jpg")
 
         # Load an image
         image_file = Image.open(image_path)
-        
+
         # Convert the image to the format used by the oled screen
         screen_data = vector.oled_face.convert_image_to_screen_data(image_file)
         robot.oled.set_oled_with_screen_data(screen_data, 4.0)
         time.sleep(5)
+
 
 if __name__ == "__main__":
     main()
