@@ -303,6 +303,11 @@ class Robot:
         self._proximity = proximity.ProximityComponent(self)
         self._world = world.World(self)
 
+        # Load animations so they are ready to play when requested
+        anim_request = self._anim.load_animation_list()
+        if isinstance(anim_request, sync.Synchronizer):
+            anim_request.wait_for_completed()
+
         # Enable face detection, to allow Vector to add faces to its world view
         self._faces.enable_vision_mode(enable=self.enable_vision_mode)
 

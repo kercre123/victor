@@ -5,8 +5,6 @@ Copyright (c) 2018 Anki, Inc.
 '''
 
 from enum import Enum
-# import inspect
-# import sys
 
 import aiogrpc
 

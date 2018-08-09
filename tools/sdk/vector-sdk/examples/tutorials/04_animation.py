@@ -31,16 +31,16 @@ def main():
         # TODO show list of animation triggers
         # A trigger can pick from several appropriate animations for variety.
         # TODO add call to play_animation_trigger
-        #print("Playing animation by trigger:")
-        #robot.play_anim_trigger(cozmo.anim.Triggers.CubePounceLoseSession).wait_for_completed() # REPLACE THIS
+        #print("Playing animation by trigger")
+        #robot.play_anim_trigger(cozmo.anim.Triggers.CubePounceLoseSession).wait_for_completed()
 
         # Play an animation via its Name.
         # Warning: Future versions of the app might change these, so for future-proofing
         # we recommend using play_anim_trigger above instead.
         # See the remote_control_cozmo.py example in apps for an easy way to see
         # the available animations.
-        print("Playing animation by name:")
-        robot.anim.play_animation("anim_poked_giggle")
+        print("Playing animation by name")
+        robot.anim.play_animation("anim_weather_snow_01")
 
 if __name__ == "__main__":
     main()
