@@ -22,9 +22,18 @@
 #include "engine/vision/illuminationDetector.h"
 #include "engine/vision/visionPoseData.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 
 #include <fstream>
+
+#define LOG_CHANNEL "VisionSystem"
+
+namespace {
+  // Enable for extra logging of features (too spammy for general use)
+  // NOTE: Uses DEBUG logging, so still visible only in Debug builds if enabled.
+  CONSOLE_VAR(bool, kEnableExtraIlluminationDetectorDebug, "Vision.Illumination", false);
+}
 
 namespace Anki {
 namespace Vector {
@@ -124,8 +133,11 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
   // If not enough buffered timepoints, bail
   if( _featureBuffer.size() < _classifier->GetInputDim() )
   {
-    PRINT_NAMED_DEBUG("IlluminationDetector.Detect.Buffering", "Buffer has %u/%u", 
-                      (u32) _featureBuffer.size(), (u32) _classifier->GetInputDim());
+    if(kEnableExtraIlluminationDetectorDebug)
+    {
+      LOG_DEBUG("IlluminationDetector.Detect.Buffering", "Buffer has %u/%u",
+                (u32) _featureBuffer.size(), (u32) _classifier->GetInputDim());
+    }
     return RESULT_OK;
   }
   while( _featureBuffer.size() > _classifier->GetInputDim() )
@@ -144,21 +156,18 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
     illumination.state = IlluminationState::Darkened;
   }
 
-  #ifndef NDEBUG
-  std::stringstream ss;
-  ss << "[";
-  for( unsigned int i = 0; i < _featureBuffer.size() - 1; ++i )
+  if(kEnableExtraIlluminationDetectorDebug)
   {
-    ss << _featureBuffer[i] << ", ";
+    std::stringstream ss;
+    ss << "[";
+    for( unsigned int i = 0; i < _featureBuffer.size() - 1; ++i )
+    {
+      ss << _featureBuffer[i] << ", ";
+    }
+    ss << _featureBuffer[_featureBuffer.size() - 1] << "]";
+    LOG_DEBUG("IlluminationDetector.Detect.FeaturesAndProbability",
+              "Features: %s, Probability: %.3f", ss.str().c_str(), prob);
   }
-  ss << _featureBuffer[_featureBuffer.size() - 1] << "]";
-  PRINT_NAMED_DEBUG("IlluminationDetector.Detect.Features",
-                    "Features: %s", ss.str().c_str());
-  #endif
-
-  PRINT_NAMED_DEBUG("IlluminationDetector.Detect.Result",
-                    "Probability: %.3f", prob);
-
   return RESULT_OK;
 }
 
@@ -176,15 +185,16 @@ void IlluminationDetector::GenerateFeatures( Vision::ImageCache& cache )
   hist.FillFromImage( cache.GetGray(), _featPercSubsample );
   const std::vector<u8> percentiles = hist.ComputePercentiles( _featPercentiles );
   
-  #ifndef NDEBUG
-  std::string f;
-  for( auto iter = percentiles.begin(); iter != percentiles.end(); ++iter )
+  if(kEnableExtraIlluminationDetectorDebug)
   {
-    f += std::to_string(*iter) + ", ";
+    std::string f;
+    for( auto iter = percentiles.begin(); iter != percentiles.end(); ++iter )
+    {
+      f += std::to_string(*iter) + ", ";
+    }
+    LOG_DEBUG("IlluminationDetector.GenerateFeatures.Features",
+              "Percentiles: %s", f.c_str());
   }
-  PRINT_NAMED_DEBUG("IlluminationDetector.GenerateFeatures.Features",
-                    "Percentiles: %s", f.c_str());
-  #endif
 
   // NOTE Have to push percentiles in reverse order
   for( auto iter = percentiles.rbegin(); iter != percentiles.rend(); ++iter )
