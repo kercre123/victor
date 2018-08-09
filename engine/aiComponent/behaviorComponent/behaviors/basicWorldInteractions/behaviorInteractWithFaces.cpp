@@ -91,8 +91,8 @@ const char* const kMinTimeToTrackFaceKeyLowerBoundKey = "minTimeToTrackFaceLower
 const char* const kMinTimeToTrackFaceKeyUpperBoundKey = "minTimeToTrackFaceUpperBound_s";
 const char* const kMaxTimeToTrackFaceKeyLowerBoundKey = "maxTimeToTrackFaceLowerBound_s";
 const char* const kMaxTimeToTrackFaceKeyUpperBoundKey = "maxTimeToTrackFaceUpperBound_s";
-const char* const kEyeContactWithinLast_ms = "eyeContactWithinLast_ms";
 const char* const kNoEyeContactTimeoutKey = "noEyeContactTimeout_s";
+const char* const kEyeContactWithinLastKey = "eyeContactWithinLast_ms";
 const char* const kTrackingTimeoutKey = "trackingTimeout_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
@@ -141,6 +141,7 @@ void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expec
    kMinTimeToTrackFaceKeyUpperBoundKey,
    kMaxTimeToTrackFaceKeyLowerBoundKey,
    kMaxTimeToTrackFaceKeyUpperBoundKey,
+   kEyeContactWithinLastKey,
    kNoEyeContactTimeoutKey,
    kTrackingTimeoutKey,
    kClampSmallAnglesKey,
@@ -160,8 +161,8 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   _iConfig.minTimeToTrackFaceUpperBound_s = ParseFloat(config, kMinTimeToTrackFaceKeyUpperBoundKey, debugName);
   _iConfig.maxTimeToTrackFaceLowerBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyLowerBoundKey, debugName);
   _iConfig.maxTimeToTrackFaceUpperBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyUpperBoundKey, debugName);
-  _iConfig.eyeContactWithinLast_ms        = ParseInt32(config, kEyeContactWithinLast_ms, debugName);
   _iConfig.noEyeContactTimeout_s          = ParseFloat(config, kNoEyeContactTimeoutKey, debugName);
+  _iConfig.eyeContactWithinLast_ms        = ParseInt32(config, kEyeContactWithinLastKey, debugName);
   _iConfig.trackingTimeout_s              = ParseFloat(config, kTrackingTimeoutKey, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
