@@ -107,11 +107,11 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
   minTimeToTrackFaceUpperBound_s = 0.0f;
   maxTimeToTrackFaceLowerBound_s = 0.0f;
   maxTimeToTrackFaceUpperBound_s = 0.0f;
-  minClampPeriod_s     = 0.0f;
-  maxClampPeriod_s     = 0.0f;
-  noEyeContactTimeOut_s = 0.0f;
-  trackingTimeout_s = 0.0f;
-  clampSmallAngles     = false;
+  minClampPeriod_s               = 0.0f;
+  maxClampPeriod_s               = 0.0f;
+  noEyeContactTimeOut_s          = 0.0f;
+  trackingTimeout_s              = 0.0f;
+  clampSmallAngles               = false;
 }
 
 
@@ -158,8 +158,8 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   _iConfig.minTimeToTrackFaceUpperBound_s = ParseFloat(config, kMinTimeToTrackFaceKeyUpperBoundKey, debugName);
   _iConfig.maxTimeToTrackFaceLowerBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyLowerBoundKey, debugName);
   _iConfig.maxTimeToTrackFaceUpperBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyUpperBoundKey, debugName);
-  _iConfig.noEyeContactTimeOut_s = ParseFloat(config, kNoEyeContactTimeOutKey, debugName);
-  _iConfig.trackingTimeout_s = ParseFloat(config, kTrackingTimeoutKey, debugName);
+  _iConfig.noEyeContactTimeOut_s          = ParseFloat(config, kNoEyeContactTimeOutKey, debugName);
+  _iConfig.trackingTimeout_s              = ParseFloat(config, kTrackingTimeoutKey, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
