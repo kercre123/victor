@@ -15,6 +15,7 @@ enum int_32 BackpackAnimationTrigger
   BadCharger,
   DanceToTheBeat,
   Idle_09,
+  MeetVictor,
   Off,
   Offline,
   Offline_Off,

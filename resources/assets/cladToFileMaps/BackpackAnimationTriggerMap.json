@@ -12,6 +12,10 @@
       "AnimName": "danceToTheBeat"
   },
   {
+      "CladEvent": "MeetVictor",
+      "AnimName": "meetVictor"
+  },
+  {
       "CladEvent": "Idle_09",
       "AnimName": "idle_09"
   },

@@ -30,6 +30,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/backpackLights/backpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -147,6 +148,8 @@ struct BehaviorEnrollFace::InstanceConfig
   std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
   
   FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
+  
+  BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::MeetVictor;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -691,12 +694,19 @@ void BehaviorEnrollFace::BehaviorUpdate()
           {
             ResetEnrollment();
             TransitionToWrongFace(wrongID, wrongName);
+            
+            auto& blc = GetBEI().GetBackpackLightComponent();
+            blc.ClearAllBackpackLightConfigs();
           }
         }
       }
 
       if( finishedScanning )
       {
+        
+        auto& blc = GetBEI().GetBackpackLightComponent();
+        blc.ClearAllBackpackLightConfigs();
+        
         // tell the app we've finished scanning
         if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
           auto* status = new external_interface::MeetVictorFaceScanComplete;
@@ -747,6 +757,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   _dVars->persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  auto& blc = GetBEI().GetBackpackLightComponent();
+  blc.ClearAllBackpackLightConfigs();
 
   // Reset the unexpected movement mode back to what it was when this behavior activated
   auto& moveComp = GetBEI().GetMovementComponent();
@@ -1225,6 +1238,10 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   auto* scanLoop = new ReselectingLoopAnimationAction{ AnimationTrigger::MeetVictorLookFace };
 
   CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
+  
+  auto& blc = GetBEI().GetBackpackLightComponent();
+  const bool shouldLoop = true;
+  blc.SetBackpackAnimation(_iConfig->backpackAnim, shouldLoop);
 
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to
@@ -1236,6 +1253,9 @@ void BehaviorEnrollFace::TransitionToEnrolling()
 void BehaviorEnrollFace::TransitionToScanningInterrupted()
 {
   SET_STATE(ScanningInterrupted);
+  
+  auto& blc = GetBEI().GetBackpackLightComponent();
+  blc.ClearAllBackpackLightConfigs();
 
   // Make sure we stop tracking necessary (in case we timed out while tracking)
   CancelDelegates(false);
