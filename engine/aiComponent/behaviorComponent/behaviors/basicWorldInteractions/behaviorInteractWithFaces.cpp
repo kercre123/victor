@@ -92,12 +92,10 @@ const char* const kMinTimeToTrackFaceKeyUpperBoundKey = "minTimeToTrackFaceUpper
 const char* const kMaxTimeToTrackFaceKeyLowerBoundKey = "maxTimeToTrackFaceLowerBound_s";
 const char* const kMaxTimeToTrackFaceKeyUpperBoundKey = "maxTimeToTrackFaceUpperBound_s";
 const char* const kNoEyeContactTimeOutKey = "noEyeContactTimeOut_s";
+const char* const kTrackingTimeoutKey = "trackingTimeout_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
-
-static const float kTrackingTimeout_s = 2.5f;
-// TODO should this be a console var or go in a configuration file?
 
 }
 
@@ -112,6 +110,7 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
   minClampPeriod_s     = 0.0f;
   maxClampPeriod_s     = 0.0f;
   noEyeContactTimeOut_s = 0.0f;
+  trackingTimeout_s = 0.0f;
   clampSmallAngles     = false;
 }
 
@@ -141,6 +140,7 @@ void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expec
    kMaxTimeToTrackFaceKeyLowerBoundKey,
    kMaxTimeToTrackFaceKeyUpperBoundKey,
    kNoEyeContactTimeOutKey,
+   kTrackingTimeoutKey,
    kClampSmallAnglesKey,
    kMinClampPeriodKey,
    kMaxClampPeriodKey,
@@ -159,6 +159,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   _iConfig.maxTimeToTrackFaceLowerBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyLowerBoundKey, debugName);
   _iConfig.maxTimeToTrackFaceUpperBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyUpperBoundKey, debugName);
   _iConfig.noEyeContactTimeOut_s = ParseFloat(config, kNoEyeContactTimeOutKey, debugName);
+  _iConfig.trackingTimeout_s = ParseFloat(config, kTrackingTimeoutKey, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
@@ -435,7 +436,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
-    trackAction->SetUpdateTimeout(kTrackingTimeout_s);
+    trackAction->SetUpdateTimeout(_iConfig.trackingTimeout_s);
     trackAction->SetStopCriteriaWithEyeContactOverride(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeOut_s);
     action->AddAction(trackAction);
   }
