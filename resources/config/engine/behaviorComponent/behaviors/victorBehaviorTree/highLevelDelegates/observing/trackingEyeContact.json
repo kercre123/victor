@@ -2,7 +2,6 @@
   "behaviorClass": "DispatcherQueue",
   "behaviorID": "TrackingEyeContact",
 
-  // Do I need a wants to be activated condition here
   "wantsToBeActivatedCondition": {
     "conditionType" : "EyeContact"
   },
