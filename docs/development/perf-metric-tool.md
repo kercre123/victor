@@ -68,17 +68,20 @@ PerfMetric is compiled into the engine by default for Debug and Release builds, 
 (or 0 to disable)
 
 ### Use from command line
-Currently, the only interface to PerfMetric is through Victor's embedded web server.  From the command line, this will start a recording session, assuming a robot IP of 192.168.42.82:
+Currently, the only interface to PerfMetric is through Victor's embedded web server.  From the command line, this will start a recording session, assuming ANKI_ROBOT_HOST is set to your robot IP:
 
-```curl 192.168.42.82:8888/perfmetric?start```
+```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?start'```
+
+(You can also use your robot IP directly, this way:)
+```curl '192.168.42.82:8888/perfmetric?start'```
 
 Now some time later, one can dump the results with:
 
-```curl 192.168.42.82:8888/perfmetric?stop&dumplogall```
+```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?stop&dumplogall'```
 
 Note that multiple commands can be entered at the same time, separated by ampersands.  This includes some 'wait' commands that allow you to do a recording session with one single command:
 
-```curl 192.168.42.82:8888/perfmetric?start&waitseconds60&stop&dumplogall```
+```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?start&waitseconds30&stop&dumplogall'```
 
 Here is the complete list of commands and what they do:
 * "start" starts recording; if a recording was in progress, the buffer is reset before re-starting
@@ -100,6 +103,7 @@ When using with webots pure simulator, use 'localhost' as your IP.  Also note th
 
 ### Future features
 * Build into the Anim process (vic-anim)
+* Create a bucket-based histogram feature that can help us quickly find code issue culprits
 * Record other message counts (e.g. engine-to-cloud)
 * Record visual schedule mediator info
 * HTML interface (start/stop buttons, and an area to see output)
