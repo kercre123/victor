@@ -25,7 +25,6 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BehaviorComponentMessageHandler;
 class BehaviorContainer;
-class BehaviorEventAnimResponseDirector;
 class BehaviorEventComponent;
 class BehaviorExternalInterface;
 class BehaviorHelperComponent;
@@ -52,7 +51,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(AsyncMessageGateComponent,          BCComponentID, A
 LINK_COMPONENT_TYPE_TO_ENUM(Audio::BehaviorAudioComponent,      BCComponentID, BehaviorAudioComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponentMessageHandler,    BCComponentID, BehaviorComponentMessageHandler)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorContainer,                  BCComponentID, BehaviorContainer)
-LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventAnimResponseDirector,  BCComponentID, BehaviorEventAnimResponseDirector)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventComponent,             BCComponentID, BehaviorEventComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorExternalInterface,          BCComponentID, BehaviorExternalInterface)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorHelperComponent,            BCComponentID, BehaviorHelperComponent)
@@ -84,7 +82,6 @@ std::string GetComponentStringForID<Vector::BCComponentID>(Vector::BCComponentID
     case Vector::BCComponentID::BehaviorAudioComponent:             { return "BehaviorAudioComponent";}
     case Vector::BCComponentID::BehaviorComponentMessageHandler:    { return "BehaviorComponentMessageHandler";}
     case Vector::BCComponentID::BehaviorContainer:                  { return "BehaviorContainer";}
-    case Vector::BCComponentID::BehaviorEventAnimResponseDirector:  { return "BehaviorEventAnimResponseDirector";}
     case Vector::BCComponentID::BehaviorEventComponent:             { return "BehaviorEventComponent";}
     case Vector::BCComponentID::BehaviorExternalInterface:          { return "BehaviorExternalInterface";}
     case Vector::BCComponentID::BehaviorHelperComponent:            { return "BehaviorHelperComponent";}

@@ -38,7 +38,6 @@ class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorComponentMessageHandler;
 class BehaviorContainer;
-class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
 class BehaviorManager;
 class BehaviorSystemManager;

@@ -33,7 +33,6 @@ enum class BCComponentID{
   AsyncMessageComponent,
   BehaviorAudioComponent,
   BehaviorContainer,
-  BehaviorEventAnimResponseDirector,
   BehaviorEventComponent,
   BehaviorExternalInterface,
   BehaviorHelperComponent,
