@@ -260,11 +260,11 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.withinTolSince_sec = -1.f;
 }
 
-void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeout_sec,
+void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 duration_sec, const f32 noEyeContactTimeout_sec,
                                                          const TimeStamp_t eyeContactWithinLast_ms)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
-  _stopCriteria.duration_sec = stopTime_sec;
+  _stopCriteria.duration_sec = duration_sec;
   _stopCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
   _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
 
