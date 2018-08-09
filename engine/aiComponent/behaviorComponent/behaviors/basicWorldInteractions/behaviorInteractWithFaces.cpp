@@ -92,6 +92,7 @@ const char* const kMinTimeToTrackFaceKeyUpperBoundKey = "minTimeToTrackFaceUpper
 const char* const kMaxTimeToTrackFaceKeyLowerBoundKey = "maxTimeToTrackFaceLowerBound_s";
 const char* const kMaxTimeToTrackFaceKeyUpperBoundKey = "maxTimeToTrackFaceUpperBound_s";
 const char* const kNoEyeContactTimeOutKey = "noEyeContactTimeOut_s";
+const char* const kEyeContactWithinLast_ms = "eyeContactWithinLast_ms";
 const char* const kTrackingTimeoutKey = "trackingTimeout_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
@@ -110,6 +111,7 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
   minClampPeriod_s               = 0.0f;
   maxClampPeriod_s               = 0.0f;
   noEyeContactTimeOut_s          = 0.0f;
+  eyeContactWithinLast_ms        = 0;
   trackingTimeout_s              = 0.0f;
   clampSmallAngles               = false;
 }
@@ -159,6 +161,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   _iConfig.maxTimeToTrackFaceLowerBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyLowerBoundKey, debugName);
   _iConfig.maxTimeToTrackFaceUpperBound_s = ParseFloat(config, kMaxTimeToTrackFaceKeyUpperBoundKey, debugName);
   _iConfig.noEyeContactTimeOut_s          = ParseFloat(config, kNoEyeContactTimeOutKey, debugName);
+  _iConfig.eyeContactWithinLast_ms        = ParseInt32(config, kEyeContactWithinLast_ms, debugName);
   _iConfig.trackingTimeout_s              = ParseFloat(config, kTrackingTimeoutKey, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
@@ -437,7 +440,8 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     trackAction->SetUpdateTimeout(_iConfig.trackingTimeout_s);
-    trackAction->SetStopCriteriaWithEyeContactOverride(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeOut_s);
+    trackAction->SetStopCriteriaWithEyeContactOverride(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeOut_s,
+                                                       _iConfig.eyeContactWithinLast_ms);
     action->AddAction(trackAction);
   }
   

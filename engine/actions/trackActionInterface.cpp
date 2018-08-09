@@ -260,11 +260,13 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.withinTolSince_sec = -1.f;
 }
 
-void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeOut_sec)
+void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeOut_sec,
+                                                         const TimeStamp_t eyeContactWithinLast_ms)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
   _stopCriteria.duration_sec = stopTime_sec;
   _stopCriteria.noEyeContactTimeOut_sec = noEyeContactTimeOut_sec;
+  _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
 
   _stopCriteria.withinTolSince_sec = -1.f;
 }
@@ -773,8 +775,7 @@ bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
 {
   if (Util::IsFltGTZero(_stopCriteria.noEyeContactTimeOut_sec))
   {
-    // TODO 100 ms "slop" factor is that what we want
-    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(100);
+    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_stopCriteria.eyeContactWithinLast_ms);
     if (eyeContact)
     {
       _stopCriteria.timeOfLastEyeContact_sec = currentTime_sec;

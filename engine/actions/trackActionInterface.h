@@ -62,7 +62,8 @@ public:
   // Set time to 0 to disable (default).
   void SetStopCriteria(const Radians& panTol, const Radians& tiltTol, f32 minDist_mm, f32 maxDist_mm, f32 time_sec,
                        bool interruptDrivingAnim = false);
-  void SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeOut_sec);
+  void SetStopCriteriaWithEyeContactOverride(const f32 stopTime_sec, const f32 noEyeContactTimeOut_sec,
+                                             const TimeStamp_t eyeContactWithinLast_ms);
   
   // Set how long the tracker will run without seeing whatever it is trying to track.
   // Set to 0 to disable timeout (default).
@@ -213,6 +214,7 @@ private:
     bool    interruptDrivingAnim = false;
     f32     noEyeContactTimeOut_sec  = 0.f;
     f32     timeOfLastEyeContact_sec = 0.f;
+    TimeStamp_t eyeContactWithinLast_ms = 0;
   } _stopCriteria;
 
   bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }

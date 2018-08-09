@@ -86,6 +86,7 @@ private:
 
     float noEyeContactTimeOut_s;
     float trackingTimeout_s;
+    TimeStamp_t eyeContactWithinLast_ms;
 
     float minClampPeriod_s;
     float maxClampPeriod_s;
