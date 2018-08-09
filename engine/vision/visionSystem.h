@@ -195,24 +195,15 @@ namespace Vector {
     static constexpr size_t GAMMA_CURVE_SIZE = 17;
     using GammaCurve = std::array<u8, GAMMA_CURVE_SIZE>;
     Result SetCameraExposureParams(const s32 currentExposureTime_ms,
-                                   const s32 minExposureTime_ms,
-                                   const s32 maxExposureTime_ms,
                                    const f32 currentGain,
-                                   const f32 minGain,
-                                   const f32 maxGain,
                                    const GammaCurve& gammaCurve);
-   
-    // Just specify what the current values are (don't actually change the robot's camera)
-    Result SetNextCameraExposure(s32 exposure_ms, f32 gain);
-    Result SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
-                                     f32 whiteBalanceGainG, 
-                                     f32 whiteBalanceGainB);
-    
+
     // When SavingImages mode is enabled, how to save them
     void SetSaveParameters(const ImageSaverParams& params);
 
     CameraParams GetCurrentCameraParams() const;
-  
+    Result SetNextCameraParams(const CameraParams& params);
+    
     bool CheckMailbox(VisionProcessingResult& result);
     
     const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
@@ -223,11 +214,11 @@ namespace Vector {
     
     bool IsGainValid(f32 gain) const;
     
-    s32 GetMinCameraExposureTime_ms() const { return _minCameraExposureTime_ms; }
-    s32 GetMaxCameraExposureTime_ms() const { return _maxCameraExposureTime_ms; }
+    s32 GetMinCameraExposureTime_ms() const { return MIN_CAMERA_EXPOSURE_TIME_MS; }
+    s32 GetMaxCameraExposureTime_ms() const { return MAX_CAMERA_EXPOSURE_TIME_MS; }
     
-    f32 GetMinCameraGain() const { return _minCameraGain; }
-    f32 GetMaxCameraGain() const { return _maxCameraGain; }
+    f32 GetMinCameraGain() const { return MIN_CAMERA_GAIN; }
+    f32 GetMaxCameraGain() const { return MAX_CAMERA_GAIN; }
 
     void ClearImageCache();
     
@@ -249,14 +240,7 @@ namespace Vector {
     
     Vision::Camera _camera;
     
-    // Camera parameters
     std::unique_ptr<Vision::ImagingPipeline> _imagingPipeline;
-    s32 _maxCameraExposureTime_ms = 66;
-    s32 _minCameraExposureTime_ms = 1;
-    
-    // These baseline defaults are overridden by whatever we receive from the camera
-    f32 _minCameraGain     = 0.1f; 
-    f32 _maxCameraGain     = 3.8f;
     
     CameraParams _currentCameraParams{31, 1.0, 2.0, 1.0, 2.0};
     std::pair<bool,CameraParams> _nextCameraParams{false, _currentCameraParams}; // bool represents if set but not yet sent
@@ -372,10 +356,6 @@ namespace Vector {
     Result EnableMode(VisionMode whichMode, bool enabled);
 
     Result SaveSensorData() const;
-    
-    // Populates whiteBalanceGains in _currentResult with adjusted values
-    // Uses color
-    Result CheckWhiteBalance(Vision::ImageCache& img);
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

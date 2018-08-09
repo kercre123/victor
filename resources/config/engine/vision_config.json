@@ -30,8 +30,8 @@
     "DetectingOverheadEdges" : [false, true],
     // CheckingQuality and CheckingAWB run every 8 frames but are interleaved so they don't
     // run at the same time and step on each other's toes
-    "CheckingQuality"        : [false, false, false, false, false, false, false, true],
-    "CheckingWhiteBalance"   : [false, false, false, true, false, false, false, false],
+    "CheckingQuality"        : 5,  // NOTE: Should probably be no more frequent than every 5th frame
+    "CheckingWhiteBalance"   : 5,  // NOTE: Should probably be no more frequent than every 5th frame
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "RunningNeuralNet"       : 1, // Won't actually run every frame, but as frequently as possible (is asynchronous)

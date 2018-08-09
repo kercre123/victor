@@ -13,8 +13,8 @@ namespace Vector {
     DetectingMotion,
     DetectingOverheadEdges,
     ComputingCalibration,
-    CheckingQuality,
-    CheckingWhiteBalance,
+    CheckingQuality,             // TODO: Rename to "AutoExposure"
+    CheckingWhiteBalance,        // TODO: Rename to "WhiteBalance"
     ComputingStatistics,
     DetectingPets,
     EstimatingFacialExpression,  // No effect if DetectingFaces not enabled

@@ -253,7 +253,13 @@ void BehaviorTrackLaser::InitHelper()
     {VisionMode::ComputingStatistics,  VisionModeSchedule(true)},
   }, kUseDefaultsForUnspecified);
   GetBEI().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
-  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain);
+  
+  const CameraParams darkenedParams(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain,
+                                    _dVars.originalCameraSettings.whiteBalanceGainR,
+                                    _dVars.originalCameraSettings.whiteBalanceGainG,
+                                    _dVars.originalCameraSettings.whiteBalanceGainB);
+  
+  GetBEI().GetVisionComponent().SetAndDisableCameraControl(darkenedParams);
 
   _dVars.exposureChangedTime_ms = 0;
   _dVars.imageMean = -1;
@@ -827,8 +833,7 @@ void BehaviorTrackLaser::Cleanup()
 
   // Leave the exposure/color settings as they were when we started
   GetBEI().GetVisionComponent().PopCurrentModeSchedule();
-  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(
-    _dVars.originalCameraSettings.exposureTime_ms, _dVars.originalCameraSettings.gain);
+  GetBEI().GetVisionComponent().SetAndDisableCameraControl(_dVars.originalCameraSettings);
   GetBEI().GetVisionComponent().EnableAutoExposure(true);
 
   // Only pop animations if set within this behavior

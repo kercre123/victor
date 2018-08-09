@@ -31,12 +31,18 @@ namespace {
 // before computing the desired exposure. Should be more accurate, but may not
 // be super necessary.
 CONSOLE_VAR(bool,         kLinearizeForAutoExposure,       CONSOLE_GROUP, false);
-CONSOLE_VAR(bool,         kUseWhiteBalanceExposureCheck,   CONSOLE_GROUP, true);
+  
+// Pixels are considered under-exposed if strictly less than this value
+CONSOLE_VAR(u8,           kUnderExposedThreshold,          CONSOLE_GROUP, 15);
+
+// Pixels are considered over-exposed if strictly greater than this value
+CONSOLE_VAR(u8,           kOverExposedThreshold,           CONSOLE_GROUP, 240);
+
 CONSOLE_VAR_RANGED(f32,   kExposure_TargetPercentile,      CONSOLE_GROUP, 0.f, 0.f, 1.f); // 0 to disable
 CONSOLE_VAR_RANGED(s32,   kExposure_TargetValue,           CONSOLE_GROUP, 128, 0, 255);   
 CONSOLE_VAR_RANGED(f32,   kMaxFractionOverexposed,         CONSOLE_GROUP, 0.8f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32,   kOverExposedAdjustmentFraction,  CONSOLE_GROUP, 0.5f, 0.f, 1.f);
-  
+
 #undef CONSOLE_GROUP
 }
   
@@ -341,6 +347,22 @@ Result ImagingPipeline::ComputeExposureAdjustment(const std::vector<Vision::Imag
   
   return result;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline static bool IsWellExposed(const Vision::PixelRGB& pixel)
+{
+  if( (kUnderExposedThreshold==0) && (kOverExposedThreshold==0) )
+  {
+    // Special case: everything is well exposed
+    return true;
+  }
+  
+  const bool isWellExposed = (Util::InRange(pixel.r(), kUnderExposedThreshold, kOverExposedThreshold) &&
+                              Util::InRange(pixel.g(), kUnderExposedThreshold, kOverExposedThreshold) &&
+                              Util::InRange(pixel.b(), kUnderExposedThreshold, kOverExposedThreshold));
+  
+  return isWellExposed;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, f32& adjR, f32& adjB)
@@ -364,10 +386,8 @@ Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& im
     {
       // Ignore over/under-exposed pixels in computing statistics
       const Vision::PixelRGB& pixel = image_i[j];
-      const bool isWellExposed = !kUseWhiteBalanceExposureCheck || (pixel.r() > 0 && pixel.r() < 255 &&
-                                                                    pixel.g() > 0 && pixel.g() < 255 &&
-                                                                    pixel.b() > 0 && pixel.b() < 255);
-      if(isWellExposed)
+      
+      if(IsWellExposed(pixel))
       {
         // TODO: Consider linearizing (un-gamma) before computing statistics needed for this update
         sumR += pixel.r();
@@ -388,6 +408,78 @@ Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& im
 
   return RESULT_OK;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ImagingPipeline::ComputeExposureAndWhiteBalance(const Vision::ImageRGB& img,
+                                                       const bool useCycling,
+                                                       f32 &adjExp, f32& adjR, f32& adjB)
+{
+  Vision::Image weights; // empty
+  return ComputeExposureAndWhiteBalance(img, weights, useCycling, adjExp, adjR, adjB);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ImagingPipeline::ComputeExposureAndWhiteBalance(const Vision::ImageRGB& img,
+                                                       const Vision::Image& weights,
+                                                       const bool useCycling,
+                                                       f32 &adjExp, f32& adjR, f32& adjB)
+{
+  _hist.Reset();
+  
+  // Calculate the sum for each of the three color channels for use in white balancing
+  // Note: we technically care about averages, but since we are just using ratios of the different channels
+  //       below, the divisor cancels out, so we can just use sums for better efficiency. This also means
+  //       we don't have to worry about tracking the number of [sub-sampled] well-exposed pixels.
+  s32 sumR = 0;
+  s32 sumG = 0;
+  s32 sumB = 0;
+  
+  const bool haveWeights = !weights.IsEmpty();
+  
+  // Use green channel to compute the desired exposure update
+  for(u32 i = 0; i < img.GetNumRows(); i += _subSample)
+  {
+    const Vision::PixelRGB* image_i = img.GetRow(i);
+    const u8* weight_i = (haveWeights ? weights.GetRow(i) : nullptr);
+    
+    for(u32 j = 0; j < img.GetNumCols(); j += _subSample)
+    {
+      const Vision::PixelRGB& pixel = image_i[j];
+      
+      // Ignore over/under-exposed pixels in computing statistics for white balance
+      if(IsWellExposed(pixel))
+      {
+        // TODO: Consider linearizing (un-gamma) before computing statistics needed for this update
+        sumR += pixel.r();
+        sumG += pixel.g();
+        sumB += pixel.b();
+      }
+      
+      // Use green channel for brightness statistics to compute exposure adjustment
+      if(haveWeights)
+      {
+        const u8 weight = weight_i[j];
+        _hist.IncrementBin(pixel.g(), weight);
+      }
+      else
+      {
+        _hist.IncrementBin(pixel.g());
+      }
+    }
+  }
+
+  // Adjust red and blue gains so their channel's average value match green's, making sure
+  // not to adjust too much in a single update:
+  adjR = (sumR==0 ? 1.f : (f32)sumG/(f32)sumR);
+  adjB = (sumB==0 ? 1.f : (f32)sumG/(f32)sumB);
+  adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  
+  const Result result = ComputeAdjustmentFraction(useCycling, adjExp);
+  
+  return result;
+}
+  
   
 } // namespace Vision
 } // namespace Anki

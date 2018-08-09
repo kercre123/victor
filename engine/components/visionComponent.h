@@ -176,7 +176,6 @@ struct DockingErrorSignal;
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
     Result UpdateSalientPoints(const VisionProcessingResult& result);
-    Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
     Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
 
@@ -305,11 +304,9 @@ struct DockingErrorSignal;
     template<typename T>
     void HandleMessage(const T& msg);
     
-    void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
     void EnableAutoExposure(bool enable);
-
-    void SetAndDisableWhiteBalance(f32 gainR, f32 gainG, f32 gainB);
     void EnableWhiteBalance(bool enable);
+    void SetAndDisableCameraControl(const CameraParams& params);
     
     s32 GetMinCameraExposureTime_ms() const;
     s32 GetMaxCameraExposureTime_ms() const;
@@ -454,12 +451,6 @@ struct DockingErrorSignal;
     void BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const;
     
     void VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const;
-    
-    // Sets the exposure and gain on the robot
-    void SetExposureSettings(const s32 exposure_ms, const f32 gain);
-
-    // Sets the WhiteBalance gains of the camera
-    void SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB);
 
     // Updates the state of requesting for a camera capture format change
     void UpdateCaptureFormatChange(s32 gotNumRows=0);
@@ -469,11 +460,6 @@ struct DockingErrorSignal;
     // message. This runs on the main thread and should only be used for factory tests.
     // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
     bool _doFactoryDotTest = false;
-    bool _enableAutoExposure = true;
-    bool _enableWhiteBalance = true;
-
-    bool _formatChangeAutoExposure = false;
-    bool _formatChangeWhiteBalance = false;
     
     // Threading for OpenCV
     int _openCvNumThreads = 1;

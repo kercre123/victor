@@ -163,6 +163,13 @@ namespace Vector {
   const u16 CAMERA_SENSOR_RESOLUTION_WIDTH  = 1280;
   const u16 CAMERA_SENSOR_RESOLUTION_HEIGHT = 720;
   
+  const f32 MIN_CAMERA_EXPOSURE_TIME_MS = 1;
+  const f32 MAX_CAMERA_EXPOSURE_TIME_MS = 66;
+  
+  // Range for exposure and white balance gains
+  const f32 MIN_CAMERA_GAIN = 0.1f;
+  const f32 MAX_CAMERA_GAIN = 3.8f;
+  
   /***************************************************************************
    *
    *                          Cliff Sensor

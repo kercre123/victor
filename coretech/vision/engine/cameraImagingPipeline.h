@@ -58,6 +58,16 @@ namespace Vision {
     // - Uses the gray world assumption
     Result ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, f32& adjR, f32& adjB);
     
+    // Simultanesouly compute exposure and white balance adjustment from a color image
+    Result ComputeExposureAndWhiteBalance(const Vision::ImageRGB& img,
+                                          const bool useCycling,
+                                          f32 &adjExp, f32& adjR, f32& adjB);
+    
+    Result ComputeExposureAndWhiteBalance(const Vision::ImageRGB& img,
+                                          const Vision::Image& weights,
+                                          const bool useCycling,
+                                          f32 &adjExp, f32& adjR, f32& adjB);
+    
     Result Linearize(const Vision::Image& image, Vision::Image& linearizedImage) const;
     
     // Get histogram computed in last ComputeExposureAdjustment() call

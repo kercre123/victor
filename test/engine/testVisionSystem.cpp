@@ -502,23 +502,48 @@ TEST(VisionSystem, ImageQuality)
   const std::vector<std::string> testSubDirs = {
     "Good", "TooBright", "TooDark"
   };
+  
+  struct Test {
+    std::string subDir;
+    s32 exposureTime_ms;
+    f32 exposureGain;
+  };
+  
+  const std::vector<Test> tests = {
+    {
+      .subDir = "Good",
+      .exposureTime_ms = 31,
+      .exposureGain = 2.f
+    },
+    {
+      .subDir = "TooBright",
+      .exposureTime_ms = visionSystem.GetMinCameraExposureTime_ms(),
+      .exposureGain = visionSystem.GetMinCameraGain(),
+    },
+    {
+      .subDir = "TooDark",
+      .exposureTime_ms = visionSystem.GetMaxCameraExposureTime_ms(),
+      .exposureGain = visionSystem.GetMaxCameraGain()
+    },
+  };
 
   Vision::ImageCache imageCache;
 
-  // Fake the exposure parameters so that we are always against the extremes in order
-  // to trigger TooDark and TooBright
-  const Vector::VisionSystem::GammaCurve gammaCurve{};
-  result = visionSystem.SetCameraExposureParams(1, 1, 1, 2.f, 2.f, 2.f, gammaCurve);
-  ASSERT_EQ(RESULT_OK, result);
-
-  for(auto & subDir : testSubDirs)
+  for(auto & test : tests)
   {
-    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".jpg");
+    // Fake the exposure parameters so that we are always against the extremes in order
+    // to trigger TooDark and TooBright
+    const Vector::VisionSystem::GammaCurve gammaCurve{};
+    result = visionSystem.SetCameraExposureParams(test.exposureTime_ms, test.exposureGain, gammaCurve);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    const std::string fullFileName = Util::FileUtils::FullFilePath({testImageDir, test.subDir});
+    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(fullFileName, false, ".jpg");
 
     for(auto & filename : testFiles)
     {
       Vision::ImageRGB img;
-      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
+      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, test.subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
 
       imageCache.Reset(img);
@@ -533,7 +558,7 @@ TEST(VisionSystem, ImageQuality)
       EXPECT_TRUE(resultAvailable);
 
       // Make sure the detected quality is as expected for this subdir
-      EXPECT_EQ(subDir, EnumToString(processingResult.imageQuality));
+      EXPECT_EQ(test.subDir, EnumToString(processingResult.imageQuality));
 
       PRINT_NAMED_INFO("VisionSystem.ImageQuality", "%s = %s",
                        filename.c_str(), EnumToString(processingResult.imageQuality));

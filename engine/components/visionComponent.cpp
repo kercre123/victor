@@ -1006,10 +1006,13 @@ namespace Vector {
           _vizManager->DisplayCameraImage(result.timestamp);
         }
 
-        using localHandlerType = Result(VisionComponent::*)(const VisionProcessingResult& procResult);
-        auto tryAndReport = [this, &result, &anyFailures]( localHandlerType handler, VisionMode mode )
+#       define ToVisionModeMask(__mode__) result.modesProcessed.GetBitMask(Util::EnumToUnderlying(VisionMode::__mode__))
+        
+        using LocalHandlerType = Result(VisionComponent::*)(const VisionProcessingResult&);
+        using VisionModeMask = std::underlying_type<VisionMode>::type;
+        auto tryAndReport = [this, &result, &anyFailures]( LocalHandlerType handler, VisionModeMask mask )
         {
-          if (!result.modesProcessed.IsBitFlagSet(mode) && (mode != VisionMode::Count))
+          if (!result.modesProcessed.AreAnyBitsInMaskSet(mask) && (mask != ToVisionModeMask(Count)))
           {
             return;
           }
@@ -1017,34 +1020,50 @@ namespace Vector {
           // Call the passed in member handler to look at the result
           if (RESULT_OK != (this->*handler)(result))
           {
+            std::string modeStr;
+            for(VisionMode mode=(VisionMode)0; mode < VisionMode::Count; ++mode)
+            {
+              if(mask & Util::EnumToUnderlying(mode))
+              {
+                modeStr += " ";
+                modeStr += EnumToString(mode);
+              }
+            }
+            
             PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.LocalHandlerFailed",
-                              "%s Failed", EnumToString(mode));
+                              "For mode(s):%s", modeStr.c_str());
             anyFailures = true;
           }
         };
-
+        
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,        VisionMode::DetectingMarkers);
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        ToVisionModeMask(DetectingMarkers));
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,                VisionMode::DetectingFaces);
+        tryAndReport(&VisionComponent::UpdateFaces,                ToVisionModeMask(DetectingFaces));
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                 VisionMode::DetectingPets);
+        tryAndReport(&VisionComponent::UpdatePets,                 ToVisionModeMask(DetectingPets));
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,       VisionMode::DetectingMotion);
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,        VisionMode::DetectingOverheadEdges);
-        tryAndReport(&VisionComponent::UpdateComputedCalibration,  VisionMode::ComputingCalibration);
-        tryAndReport(&VisionComponent::UpdateImageQuality,         VisionMode::CheckingQuality);
-        tryAndReport(&VisionComponent::UpdateWhiteBalance,         VisionMode::CheckingWhiteBalance);
-        tryAndReport(&VisionComponent::UpdateLaserPoints,          VisionMode::DetectingLaserPoints);
-        tryAndReport(&VisionComponent::UpdateSalientPoints,        VisionMode::Count); // Use Count here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,      VisionMode::DetectingVisualObstacles);
-        tryAndReport(&VisionComponent::UpdatePhotoManager,         VisionMode::SavingImages);
-        tryAndReport(&VisionComponent::UpdateDetectedIllumination, VisionMode::DetectingIllumination);
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       ToVisionModeMask(DetectingMotion));
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        ToVisionModeMask(DetectingOverheadEdges));
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  ToVisionModeMask(ComputingCalibration));
+        
+        // NOTE: Same handler for two modes
+        tryAndReport(&VisionComponent::UpdateImageQuality,        (ToVisionModeMask(CheckingQuality) |
+                                                                   ToVisionModeMask(CheckingWhiteBalance)));
+        
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          ToVisionModeMask(DetectingLaserPoints));
+        tryAndReport(&VisionComponent::UpdateSalientPoints,        ToVisionModeMask(Count)); // Use Count here to always call UpdateSalientPoints
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      ToVisionModeMask(DetectingVisualObstacles));
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         ToVisionModeMask(SavingImages));
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, ToVisionModeMask(DetectingIllumination));
+        
+#       undef ToVisionModeMask
+        
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1578,11 +1597,58 @@ namespace Vector {
       return RESULT_OK;
     }
 
-    // If auto exposure is not enabled don't set camera settings
-    if(_enableAutoExposure)
+    if(CaptureFormatState::None != _captureFormatState)
     {
-      SetExposureSettings(procResult.cameraParams.exposureTime_ms,
-                          procResult.cameraParams.gain);
+      // Disable auto exposure and white balance while switching formats
+      // Even though the vision system is paused, it is possible that we
+      // are just finishing processing an image and don't want to send
+      // auto exposure and white balance messages to the camera
+      return RESULT_OK;
+    }
+    
+    const CameraParams& params = procResult.cameraParams;
+    
+    // Note that we set all parameters together. If WB or AE isn't enabled accoding to current VisionModes,
+    // their corresponding values should not actually be different in the params.
+    const Result result = _visionSystem->SetNextCameraParams(params);
+      
+    if(RESULT_OK == result)
+    {
+      PRINT_CH_DEBUG("VisionComponent",
+                     "VisionComponent.UpdateImageQuality",
+                     "ExpTime:%dms ExpGain:%f GainR:%f GainG:%f GainB:%f",
+                     params.exposureTime_ms, params.gain,
+                     params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
+      
+      auto cameraService = CameraService::getInstance();
+      
+      const bool isWhiteBalanceEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::CheckingWhiteBalance);
+      if(isWhiteBalanceEnabled)
+      {
+        cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
+                                                       params.whiteBalanceGainG,
+                                                       params.whiteBalanceGainB);
+      }
+      
+      const bool isAutoExposureEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::CheckingQuality);
+      if(isAutoExposureEnabled)
+      {
+        cameraService->CameraSetParameters(procResult.cameraParams.exposureTime_ms,
+                                           procResult.cameraParams.gain);
+      }
+      
+      _vizManager->SendCameraParams(params);
+      
+      {
+        // Still needed?
+        // TODO: Add WB params to message?
+        using namespace ExternalInterface;
+        const u16 exposure_ms_u16 = Util::numeric_cast<u16>(params.exposureTime_ms);
+        _robot->Broadcast(MessageEngineToGame(CurrentCameraParams(params.gain,
+                                                                  exposure_ms_u16,
+                                                                  isAutoExposureEnabled)));
+      }
+    
     }
 
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
@@ -1642,18 +1708,6 @@ namespace Vector {
     }
 
     _lastImageQuality = procResult.imageQuality;
-
-    return RESULT_OK;
-  }
-
-  Result VisionComponent::UpdateWhiteBalance(const VisionProcessingResult& procResult)
-  {
-    if(_robot->IsPhysical() && _enableWhiteBalance)
-    {
-      SetWhiteBalanceSettings(procResult.cameraParams.whiteBalanceGainR,
-                              procResult.cameraParams.whiteBalanceGainG,
-                              procResult.cameraParams.whiteBalanceGainB);
-    }
 
     return RESULT_OK;
   }
@@ -2331,77 +2385,29 @@ namespace Vector {
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    _enableAutoExposure = enable;
-    _visionSystem->SetNextMode(VisionMode::CheckingQuality, enable);
+    if(_visionSystem)
+    {
+      _visionSystem->SetNextMode(VisionMode::CheckingQuality, enable);
+    }
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
   {
-    _enableWhiteBalance = enable;
-    _visionSystem->SetNextMode(VisionMode::CheckingWhiteBalance, enable);
+    if(_visionSystem)
+    {
+      _visionSystem->SetNextMode(VisionMode::CheckingWhiteBalance, enable);
+    }
   }
 
-  void VisionComponent::SetAndDisableAutoExposure(u16 exposure_ms, f32 gain)
+  void VisionComponent::SetAndDisableCameraControl(const CameraParams& params)
   {
-    SetExposureSettings(exposure_ms, gain);
-    EnableAutoExposure(false);
-  }
-
-  void VisionComponent::SetAndDisableWhiteBalance(f32 gainR, f32 gainG, f32 gainB)
-  {
-    SetWhiteBalanceSettings(gainR, gainG, gainB);
+    const Result result = _visionSystem->SetNextCameraParams(params);
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
+    }
     EnableWhiteBalance(false);
-  }
-
-  void VisionComponent::SetExposureSettings(const s32 exposure_ms, const f32 gain)
-  {
-    if(!_visionSystem->IsExposureValid(exposure_ms) || !_visionSystem->IsGainValid(gain))
-    {
-      return;
-    }
-
-    const u16 exposure_ms_u16 = Util::numeric_cast<u16>(exposure_ms);
-
-    PRINT_CH_DEBUG("VisionComponent",
-                   "VisionComponent.SetCameraSettings",
-                   "Exp:%ums Gain:%f",
-                   exposure_ms,
-                   gain);
-
-    _visionSystem->SetNextCameraExposure(exposure_ms, gain);
-
-    _vizManager->SendCameraParams(_visionSystem->GetCurrentCameraParams());
-
-    auto cameraService = CameraService::getInstance();
-    cameraService->CameraSetParameters(exposure_ms_u16, gain);
-
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                        ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));
-  }
-
-  void VisionComponent::SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB)
-  {
-    if(!_visionSystem->IsGainValid(gainR) ||
-       !_visionSystem->IsGainValid(gainG) ||
-       !_visionSystem->IsGainValid(gainB))
-    {
-      PRINT_PERIODIC_CH_INFO(100, "VisionComponent", "VisionComponent.SetWhiteBalance.InvalidGains",
-                             "gainR=%f gainG=%f gainB=%f", gainR, gainG, gainB);
-      return;
-    }
-
-    PRINT_CH_DEBUG("VisionComponent",
-                   "VisionComponent.SetWhiteBalanceSettings",
-                   "GainR:%f GainG:%f GainB:%f",
-                   gainR, gainG, gainB);
-
-    _visionSystem->SetNextCameraWhiteBalance(gainR, gainG, gainB);
-
-    auto cameraService = CameraService::getInstance();
-    cameraService->CameraSetWhiteBalanceParameters(gainR, gainG, gainB);
-
-    _vizManager->SendCameraParams(_visionSystem->GetCurrentCameraParams());
-
+    EnableAutoExposure(false);
   }
 
   s32 VisionComponent::GetMinCameraExposureTime_ms() const
@@ -2689,16 +2695,6 @@ namespace Vector {
     // Pause and wait for VisionSystem to finish processing the current image
     // before changing formats since that will release all shared camera memory
     Pause(true);
-
-    // Disable auto exposure and white balance while switching formats
-    // Even though the vision system is paused, it is possible that we
-    // are just finishing processing an image and don't want to send
-    // auto exposure and white balance messages
-    _formatChangeAutoExposure = _enableAutoExposure;
-    EnableAutoExposure(false);
-
-    _formatChangeWhiteBalance = _enableWhiteBalance;
-    EnableWhiteBalance(false);
  
     // Clear the next image so that it doesn't get swapped in to current immediately
     Lock();
@@ -2793,11 +2789,6 @@ namespace Vector {
           _currentImageFormat = _desiredImageFormat;
           _desiredImageFormat = ImageEncoding::NoneImageEncoding;
           Pause(false); // now that state/format are updated, un-pause the vision system
-          
-          EnableAutoExposure(_formatChangeAutoExposure);
-          EnableWhiteBalance(_formatChangeWhiteBalance);
-          _formatChangeAutoExposure = false;
-          _formatChangeWhiteBalance = false;
           
           PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
                         "New format: %s, NumRows=%d", ImageEncodingToString(_currentImageFormat), gotNumRows);
@@ -2905,13 +2896,8 @@ namespace Vector {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraSettings& payload)
   {
-    EnableAutoExposure(payload.enableAutoExposure);
-
-    // If we are not enabling auto exposure (we are disabling it) then set the exposure and gain
-    if(!payload.enableAutoExposure)
-    {
-      SetExposureSettings(payload.exposure_ms, payload.gain);
-    }
+    // TODO: Re-enable
+    PRINT_NAMED_ERROR("VisionComponent.HandleSetCameraSettings.DEPRECATED", "");
   }
 
   void VisionComponent::SetSaveImageParameters(const ImageSaverParams& params)
