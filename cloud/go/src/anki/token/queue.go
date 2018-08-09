@@ -11,7 +11,9 @@ import (
 	"time"
 
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 type request struct {
@@ -143,6 +145,9 @@ func authRequester(creds credentials.PerRPCCredentials,
 
 	bundle, err := requester(c)
 	if err != nil {
+		if status.Code(err) == codes.InvalidArgument {
+			return authErrorResp(cloud.TokenError_WrongAccount), err
+		}
 		return authErrorResp(cloud.TokenError_Connection), err
 	}
 	_, err = jwt.ParseToken(bundle.Token)

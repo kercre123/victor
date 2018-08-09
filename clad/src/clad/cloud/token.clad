@@ -5,7 +5,8 @@ enum uint_8 TokenError {
 	NoError,
 	NullToken,
 	InvalidToken,
-	Connection
+	Connection,
+	WrongAccount
 }
 
 structure AuthRequest {
