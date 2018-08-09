@@ -11,6 +11,7 @@ enum uint_8 FeatureType {
   KnowledgeGraph,
   Dancing,
   CubeBehaviors,
+  CubeSpinner,
   GreetAfterLongTime,
   AttentionTransfer,
   UserDefinedBehaviorTree,

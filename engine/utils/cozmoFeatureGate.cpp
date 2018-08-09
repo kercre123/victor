@@ -144,6 +144,7 @@ static const char* kFeatureEnumString =
   "KnowledgeGraph,"
   "Dancing,"
   "CubeBehaviors,"
+  "CubeSpinner,"
   "GreetAfterLongTime,"
   "AttentionTransfer,"
   "PopAWheelie,"
