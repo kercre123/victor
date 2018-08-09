@@ -29,6 +29,9 @@
 
 #define LOG_CHANNEL "FaceDisplay"
 
+// Whether or not we need to manually stop the boot animation process, vic-bootAnim
+#define MANUALLY_STOP_BOOT_ANIM 0
+
 namespace Anki {
 namespace Vector {
 
@@ -70,8 +73,10 @@ namespace {
 FaceDisplay::FaceDisplay()
 : _stopBootAnim(false)
 {
-  // No boot anim in simulator
-#ifdef SIMULATOR
+  // Don't try to stop the boot anim in sim
+  // or if we are not supposed to manunually stop it
+  // (systemd will stop it for us)
+#if defined(SIMULATOR) || !MANUALLY_STOP_BOOT_ANIM
   _stopBootAnim = true;
 #endif
 	
@@ -420,9 +425,9 @@ void FaceDisplay::StopBootAnim()
 {
   if(!_stopBootAnim)
   {
-    // Have systemd stop the boot animation process, early-anim
+    // Have systemd stop the boot animation process, vic-bootAnim
     // Will do nothing if it is not running
-    ExecCommandInBackground({"systemctl", "stop", "early-anim"},
+    ExecCommandInBackground({"systemctl", "stop", "vic-bootAnim"},
      [this](int rc)
       {
         if(rc != 0)
@@ -430,7 +435,7 @@ void FaceDisplay::StopBootAnim()
           PRINT_NAMED_WARNING("FaceDisplay.StopBootAnim.StopFailed", "%d", rc);
 
           // Asking nicely didn't work so try something more aggressive
-          ExecCommandInBackground({"systemctl", "kill", "-s", "9", "early-anim"},
+          ExecCommandInBackground({"systemctl", "kill", "-s", "9", "vic-bootAnim"},
             [this](int rc)
             {
               // Killing didn't work for some reason so error and show fault code
