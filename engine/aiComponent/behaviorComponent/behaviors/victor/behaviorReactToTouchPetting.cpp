@@ -191,6 +191,8 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
   
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;
+  
+  SmartDisableKeepFaceAlive();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
