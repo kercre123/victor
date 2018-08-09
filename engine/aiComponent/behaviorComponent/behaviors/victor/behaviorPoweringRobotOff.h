@@ -44,12 +44,13 @@ protected:
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorLeftActivatableScope() override;
 
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
+
 
 private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
     std::shared_ptr<IBEICondition> activateBehaviorCondition;
-    std::shared_ptr<IBEICondition> startEyeAnimationCondition;
     std::string powerOnAnimName;
     std::string powerOffAnimName;
   };
@@ -59,6 +60,7 @@ private:
     bool waitingForAnimationCallback;
     TimeStamp_t timeLastPowerAnimStopped_ms;
     std::string lastAnimPlayedName;
+    bool shouldStartPowerOffAnimaiton;
   };
 
   InstanceConfig _iConfig;

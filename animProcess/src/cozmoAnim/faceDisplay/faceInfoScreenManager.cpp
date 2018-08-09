@@ -123,6 +123,9 @@ namespace {
   // How often connectivity checks are performed while on 
   // Main and Network screens.
   const u32 kIPCheckPeriod_sec = 20;
+
+  // How long the button needs to be pressed for before it should trigger shutdown animation
+  CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
 }
 
 
@@ -847,16 +850,19 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   DrawScratch();
 }
 
-void CheckForButtonEvent(bool buttonPressed, 
-                         bool& buttonPressedEvent,
-                         bool& buttonReleasedEvent,
-                         bool& singlePressDetected, 
-                         bool& doublePressDetected)
+void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed, 
+                                                bool& buttonPressedEvent,
+                                                bool& buttonReleasedEvent,
+                                                bool& singlePressDetected, 
+                                                bool& doublePressDetected)
 {
   static u32  lastPressTime_ms   = 0;
   static bool singlePressPending = false;
   static bool doublePressPending = false;
   static bool buttonWasPressed   = false;
+
+  // Whether or not the shutdown message was already sent
+  static bool shutdownSent       = false;
 
   buttonPressedEvent  = !buttonWasPressed && buttonPressed;
   buttonReleasedEvent = buttonWasPressed && !buttonPressed;
@@ -886,10 +892,27 @@ void CheckForButtonEvent(bool buttonPressed,
       doublePressPending = false;
       doublePressDetected = true;
     }
+    shutdownSent = false;
   } else if (singlePressPending && !mightBeDoublePress) {
     lastPressTime_ms = 0;
     singlePressPending = false;
     singlePressDetected = true;
+  }
+
+  // Check if button was held down long enough for shutdown animation to start
+  const bool shouldTriggerShutdown = buttonPressed && 
+                                     (lastPressTime_ms > 0) && 
+                                     (curTime_ms - lastPressTime_ms > kButtonPressDurationForShutdown_ms) &&
+                                     (GetCurrScreenName() == ScreenName::None);
+  if (shouldTriggerShutdown && !shutdownSent) {
+    LOG_INFO("FaceInfoScreenManager.CheckForButtonEvent.StartShutdownAnim", "");
+    RobotInterface::SendAnimToEngine(StartShutdownAnim());
+    lastPressTime_ms    = 0;
+    singlePressPending  = false;
+    singlePressDetected = false;
+    doublePressPending  = false;
+    doublePressDetected = false;
+    shutdownSent        = true;
   }
 }
 

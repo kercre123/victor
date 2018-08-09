@@ -197,6 +197,8 @@ union RobotToEngine {
   // FREE SLOTS 0xCE to 0xD2
 
   // Messages from animation process to engine
+  StartShutdownAnim          startShutdownAnim      = 0xD0,
+
   AnimationAdded             animAdded              = 0xD3,
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
