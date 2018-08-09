@@ -163,21 +163,13 @@ target_compile_definitions(${TARGET_NAME}
   PRIVATE
   ${PLATFORM_DEFINITIONS}
 )
-
-# Link against OpenCV libs, but don't include OpenCV's protobuf as TF has its own
-# NOTE: This disgusting hack should be temporary: either protobuf disappears as part of 
-#       OPENCV_LIBS (if only needed by the DNN module, which we hope to remove) or when
-#       we switch to TensorFlow Lite, which uses Flatbuffers.
-set(OPENCV_LIBS_NO_PROTOBUF ${OPENCV_LIBS}) 
-list(REMOVE_ITEM OPENCV_LIBS_NO_PROTOBUF protobuf)
-
 target_link_libraries(${TARGET_NAME}
   PRIVATE
   jsoncpp
   util
   cti_common
   cti_vision_clad               # Just vision CLAD, not the whole enchilada
-  ${OPENCV_LIBS_NO_PROTOBUF}    # NOTE: Order may matter here? (OpenCV before platform?)
+  ${OPENCV_LIBS}                # NOTE: Order may matter here? (OpenCV before platform?)
   ${PLATFORM_LIBS}
 )
 
