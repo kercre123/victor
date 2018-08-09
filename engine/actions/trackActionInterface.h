@@ -202,18 +202,16 @@ private:
 
   const std::string _kKeepFaceAliveITrackActionName = "ITrackAction";
 
-  // TODO I am defaulting some of these to negative one to 
-  // indicate they are not enabled
   struct {
-    Radians panTol              = -1.f;
-    Radians tiltTol             = -1.f;
-    f32     minDist_mm          = -1.f;
-    f32     maxDist_mm          = -1.f;
-    f32     duration_sec        =  0.f; // _stopCriteria is ignored if this is 0
-    f32     withinTolSince_sec  =  0.f;
-    bool    interruptDrivingAnim = false;
-    f32     noEyeContactTimeOut_sec  = 0.f;
-    f32     timeOfLastEyeContact_sec = 0.f;
+    Radians panTol                      = -1.f;
+    Radians tiltTol                     = -1.f;
+    f32     minDist_mm                  = -1.f;
+    f32     maxDist_mm                  = -1.f;
+    f32     duration_sec                =  0.f; // _stopCriteria is ignored if this is 0
+    f32     withinTolSince_sec          =  0.f;
+    bool    interruptDrivingAnim        = false;
+    f32     noEyeContactTimeOut_sec     = 0.f;
+    f32     timeOfLastEyeContact_sec    = 0.f;
     TimeStamp_t eyeContactWithinLast_ms = 0;
   } _stopCriteria;
 
