@@ -807,20 +807,20 @@ bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_
 bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                                       const f32 distance_mm, const f32 currentTime_sec)
 {
-    bool isWithinPanTol  = Util::IsFltLE(std::abs(relPanAngle_rad), _stopCriteria.panTol.ToFloat());
-    if (Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f))
+    bool isWithinPanTol = true;
+    if (!Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f))
     {
-      isWithinPanTol = true;
+      isWithinPanTol  = Util::IsFltLE(std::abs(relPanAngle_rad), _stopCriteria.panTol.ToFloat());
     }
-    bool isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle_rad), _stopCriteria.tiltTol.ToFloat());
-    if (Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f))
+    bool isWithinTiltTol = true;
+    if (!Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f))
     {
-      isWithinTiltTol = true;
+      isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle_rad), _stopCriteria.tiltTol.ToFloat());
     }
-    bool isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
-    if (Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && Util::IsFltNear(_stopCriteria.minDist_mm, -1.f))
+    bool isWithinDistTol = true;
+    if (!Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && !Util::IsFltNear(_stopCriteria.minDist_mm, -1.f))
     {
-      isWithinDistTol = true;
+      isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
     }
 
     if(DEBUG_TRACKING_ACTIONS)
