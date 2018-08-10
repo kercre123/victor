@@ -167,6 +167,7 @@ private:
   struct mg_context* _ctx;
   
   std::vector<WebSocketConnectionData> _webSocketConnections;
+  mutable std::mutex s_wsConnectionsMutex;
 
   std::string _consoleVarsUIHTMLTemplate;
 

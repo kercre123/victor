@@ -1180,7 +1180,7 @@ void WebService::Update()
             const size_t idx = std::stoi( idxStr );
 
             auto sendToClient = [idx, moduleName, this](const Json::Value& toSend){
-              // might crash if webservice is somehow destroyed after the subscriber, but only in dev
+              std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
               if( (idx < _webSocketConnections.size())
                  && (_webSocketConnections[idx].subscribedModules.count( moduleName ) > 0) )
               {
@@ -1465,6 +1465,7 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
 void WebService::SendToWebSockets(const std::string& moduleName, const Json::Value& data) const
 {
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   Json::Value payload;
   bool hasAssigned = false; // don't copy payload unless there is >= 1 client for this module
   for( const auto& connData : _webSocketConnections ) {
@@ -1478,9 +1479,10 @@ void WebService::SendToWebSockets(const std::string& moduleName, const Json::Val
     }
   }
 }
-  
+
 bool WebService::IsWebVizClientSubscribed(const std::string& moduleName) const
 {
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   for( const auto& connData : _webSocketConnections ) {
     if( (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end())
         || (moduleName.empty() && !connData.subscribedModules.empty()) ) // any module subscribed
@@ -1577,13 +1579,14 @@ void WebService::OnOpenWebSocket(struct mg_connection* conn)
 {
   ASSERT_NAMED(conn != nullptr, "Can't create connection to n");
   // add a connection to the list that applies to all services
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   _webSocketConnections.push_back({});
   _webSocketConnections.back().conn = conn;
 }
 
 void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Value& data)
 {
-  // todo: deal with threads
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
 
   // find connection
   auto it = std::find_if( _webSocketConnections.begin(), _webSocketConnections.end(), [&conn](const auto& perConnData) {
@@ -1635,6 +1638,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
 
 void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 {
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   // find connection
   auto it = std::find_if( _webSocketConnections.begin(), _webSocketConnections.end(), [&conn](const auto& perConnData) {
     return perConnData.conn == conn;
