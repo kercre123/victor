@@ -57,6 +57,8 @@ public:
   bool IsConnectedInteractable(){ return (ECoordinatorState::ConnectedInteractable          == _coordinatorState ||
                                           ECoordinatorState::ConnectedSwitchingToBackground == _coordinatorState); }
 
+  bool IsConnectedBackground(){ return ECoordinatorState::ConnectedBackground == _coordinatorState; }
+
   // Returns the ActiveID of the currently-connected cube from the cubeCommsComponent, or
   // ObservableObject::InvalidActiveID if there is no connected cube
   ActiveID GetConnectedCubeActiveId() const { return _connectedCubeActiveID; }

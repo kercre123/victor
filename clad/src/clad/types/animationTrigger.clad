@@ -229,6 +229,9 @@ enum int_32 AnimationTrigger
   PokeObjectDriveLoop,
   PokeObjectGetOut,
   
+  PlaceCubeByChargerFail,
+  PlaceCubeByChargerSuccess,
+  
   PlanningGetIn,
   PlanningLoop,
   PlanningGetOut,

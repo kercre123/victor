@@ -161,8 +161,19 @@ enum uint_16 BehaviorID {
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates
-  InspectCube,
   InteractWithFaces,
+
+  // victorBehaviorTree/highLevelDelegates/investigateCube
+  InspectCube,
+  InteractWithStaticCube,
+  InvestigateCubeConnectionGate,
+  InvestigateHeldCube,
+  InvestigateHeldCubeGetIn,
+  PlaceCubeByCharger,
+  RollBlockIfNotVertical,
+  TurnToLastFace,
+
+  // victorBehaviorTree/highLevelDelegates
   Keepaway,
 
   // victorBehaviorTree/highLevelDelegates/knowledgeGraph
@@ -209,8 +220,6 @@ enum uint_16 BehaviorID {
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube
-  InvestigateHeldCube,
-  InvestigateHeldCubeGetIn,
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,

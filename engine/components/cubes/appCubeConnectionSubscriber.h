@@ -41,7 +41,7 @@ public:
 
   // Cube Connection Subscriber Methods
   virtual std::string GetCubeConnectionDebugName() const override;
-  virtual void ConnectedCallback(ECubeConnectionType connectionType) override;
+  virtual void ConnectedCallback(CubeConnectionType connectionType) override;
   virtual void ConnectionFailedCallback() override;
   virtual void ConnectionLostCallback() override;
   // end Cube Connection Subscriber Methods

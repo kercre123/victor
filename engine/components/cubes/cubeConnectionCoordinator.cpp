@@ -221,9 +221,9 @@ void CubeConnectionCoordinator::SubscribeToCubeConnection(ICubeConnectionSubscri
 
   // If we're already connected, invoke appropriate callbacks now since they won't be invoked by state transitions
   if(ECoordinatorState::ConnectedBackground == _coordinatorState){
-    subscriber->ConnectedCallback(ECubeConnectionType::Background);
+    subscriber->ConnectedCallback(CubeConnectionType::Background);
   } else if(ECoordinatorState::ConnectedInteractable == _coordinatorState){
-    subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
+    subscriber->ConnectedCallback(CubeConnectionType::Interactable);
   }
 
 #if ANKI_DEV_CHEATS
@@ -335,7 +335,7 @@ void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCom
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
+    subscriberRecord.subscriber->ConnectedCallback(CubeConnectionType::Interactable);
   }
 }
 
@@ -398,7 +398,7 @@ void CubeConnectionCoordinator::TransitionToConnectedBackground(const RobotCompM
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Background);
+    subscriberRecord.subscriber->ConnectedCallback(CubeConnectionType::Background);
   }
 }
 

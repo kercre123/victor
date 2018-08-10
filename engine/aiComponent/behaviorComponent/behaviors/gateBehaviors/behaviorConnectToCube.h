@@ -45,7 +45,7 @@ protected:
   virtual void BehaviorUpdate() override;
 
   // ICubeConnectionSubscriber - - - - -
-  virtual void ConnectedCallback(ECubeConnectionType connectionType) override;
+  virtual void ConnectedCallback(CubeConnectionType connectionType) override;
   virtual void ConnectionFailedCallback() override;
   virtual void ConnectionLostCallback() override;
 
@@ -57,6 +57,7 @@ private:
     ConnectionSucceeded,
     ConnectionFailed,
     Connected,
+    DelegatedWithoutConnection,
     ConnectionLost,
   };
 
@@ -64,6 +65,7 @@ private:
   void TransitionToConnectionSucceeded();
   void TransitionToConnectionFailed();
   void TransitionToConnected();
+  void TransitionToDelegatedWithoutConnection();
   void TransitionToConnectionClosed();
   void TransitionToConnectionLost();
 
@@ -71,6 +73,7 @@ private:
     InstanceConfig();
     std::string delegateBehaviorIDString;
     std::shared_ptr<ICozmoBehavior> delegateBehavior;
+    bool delegateOnFailedConnection;
   };
 
   struct DynamicVariables {

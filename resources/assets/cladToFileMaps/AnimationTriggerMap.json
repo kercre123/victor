@@ -784,6 +784,14 @@
     "AnimName": "ag_reacttoblock_react_short"
   },
   {
+    "CladEvent":"PlaceCubeByChargerFail",
+    "AnimName": "ag_pounceonmotionfail"
+  },
+  {
+    "CladEvent":"PlaceCubeByChargerSuccess",
+    "AnimName": "ag_greeting_big_hello"
+  },
+  {
     "CladEvent": "PlanningGetIn",
     "AnimName" : "ag_explorer_planning_getin"
   },

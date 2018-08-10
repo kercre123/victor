@@ -20,6 +20,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionConnectedToCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCubeTapped.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEmotion.h"
@@ -228,6 +229,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::ConsoleVar:
     {
       condition = std::make_shared<ConditionConsoleVar>(config);
+      break;
+    }
+    case BEIConditionType::ConnectedToCube:
+    {
+      condition = std::make_shared<ConditionConnectedToCube>(config);
       break;
     }
     case BEIConditionType::Emotion:

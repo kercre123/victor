@@ -23,6 +23,10 @@
 
 namespace{
 const char* kDelegateBehaviorIDKey = "delegateBehaviorID";
+
+// Note: this should only be used when delegating to Queue's or the like which have at least one
+// delegation option which is does not have RequiredLazy or RequiredManaged cubeConnectionRequirements
+const char* kDelegateOnFailedConnectionKey = "delegateOnFailedConnection";
 }
 
 namespace Anki {
@@ -32,6 +36,7 @@ namespace Vector {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorConnectToCube::InstanceConfig::InstanceConfig()
   : delegateBehavior(nullptr)
+  , delegateOnFailedConnection(false)
 {
 }
 
@@ -48,6 +53,7 @@ BehaviorConnectToCube::BehaviorConnectToCube(const Json::Value& config)
   : ICozmoBehavior(config)
 {
   JsonTools::GetValueOptional(config, kDelegateBehaviorIDKey, _iConfig.delegateBehaviorIDString);
+  JsonTools::GetValueOptional(config, kDelegateOnFailedConnectionKey, _iConfig.delegateOnFailedConnection);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,6 +88,7 @@ void BehaviorConnectToCube::GetBehaviorJsonKeys(std::set<const char*>& expectedK
 {
   const char* list[] = {
     kDelegateBehaviorIDKey,
+    kDelegateOnFailedConnectionKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -92,9 +99,9 @@ void BehaviorConnectToCube::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
 
-  // If we're already connected, 
-  if(GetBEI().GetCubeConnectionCoordinator().IsConnectedToCube()){
-    // TODO:(str) may want to do some little dance to indicate he knows he's already connected
+  // If we're already connected interactable, 
+  if(GetBEI().GetCubeConnectionCoordinator().IsConnectedInteractable()){
+    // Go ahead and delegate to our child without making any noise about connecting
     TransitionToConnected();
   } else {
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ConnectToCubeGetIn),
@@ -146,13 +153,38 @@ void BehaviorConnectToCube::TransitionToConnectionFailed()
 {
   SET_STATE(ConnectionFailed);
   // After playing the Failure anim, don't delegate, we're done
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ConnectToCubeFailure));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ConnectToCubeFailure),
+    [this](){
+      if(_iConfig.delegateOnFailedConnection){
+        TransitionToDelegatedWithoutConnection();
+      }
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorConnectToCube::TransitionToConnected()
 {
   SET_STATE(Connected);
+  if(nullptr != _iConfig.delegateBehavior){
+    if(_iConfig.delegateBehavior->WantsToBeActivated()){
+      // When our delegate behavior finishes, don't delegate, just move on silently
+      DelegateIfInControl(_iConfig.delegateBehavior.get());
+    } else {
+      PRINT_NAMED_ERROR("BehaviorConnectToCube.DelegateDidNotWantToBeActivated",
+                        "The child behavior %s of ConnectToCube did not want to be activated",
+                        _iConfig.delegateBehavior->GetDebugLabel().c_str());
+      // Since we don't delegate here, that will be the end of the behavior
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorConnectToCube::TransitionToDelegatedWithoutConnection()
+{
+  SET_STATE(DelegatedWithoutConnection);
+  PRINT_NAMED_WARNING("BehaviorConnectToCube.DelegatedWithoutConnection",
+                      "Connection attempt failed, but config indicated child behaviors with optional connections");
+
   if(nullptr != _iConfig.delegateBehavior){
     if(_iConfig.delegateBehavior->WantsToBeActivated()){
       // When our delegate behavior finishes, don't delegate, just move on silently
@@ -177,9 +209,9 @@ void BehaviorConnectToCube::TransitionToConnectionLost()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorConnectToCube::ConnectedCallback(ECubeConnectionType connectionType)
+void BehaviorConnectToCube::ConnectedCallback(CubeConnectionType connectionType)
 {
-  if(ECubeConnectionType::Interactable == connectionType){
+  if(CubeConnectionType::Interactable == connectionType){
     _dVars.connectedOnLastUpdate = true;
   }
 }

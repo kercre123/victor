@@ -43,6 +43,7 @@ enum uint_8 BehaviorClass {
   LookAround,
   LookAtFaceInFront,
   MoveHeadToAngle,
+  PlaceCubeByCharger,
   PopAWheelie,
   RequestToGoHome,
   SearchForFace,
