@@ -67,7 +67,7 @@ PROXIMITY_SCAN_TURN_DURATION_S = 10.0
 
 #: How close (in millimeters) together two detected contact points need to be for the robot to
 #: consider them part of a continuous wall.
-PROXIMITY_SCAN_BIND_THRESHOLD_MM = 25.0
+PROXIMITY_SCAN_BIND_THRESHOLD_MM = 30.0
 
 #: A delay (in seconds) the program waits after the scan finishes before shutting down.
 #: This allows the user time to explore the mapped 3d environment in the viewer and can be
@@ -88,7 +88,7 @@ EXPLORE_TURN_SPEED_DPS = 90.0
 
 #: Takes a position in 3d space where a collection was detected, and adds it to the map state
 #: by either creating a wall, adding to wall or storing a loose contact point.
-async def add_proximity_contact_to_state(node_position, state):
+async def add_proximity_contact_to_state(node_position: Vector3, state: MapState):
 
     # Comparison function for sorting points by distance.
     def compare_distance(elem):
@@ -153,7 +153,7 @@ async def add_proximity_contact_to_state(node_position, state):
 
 
 #: Takes a position in 3d space and adds it to the map state as an open node
-async def add_proximity_non_contact_to_state(node_position, state):
+async def add_proximity_non_contact_to_state(node_position: Vector3, state: MapState):
     # Check to see if the uncontacted sample is inside of any area considered already explored.
     is_open_unexplored = True
     for ct in state.cleared_territories:
@@ -166,7 +166,7 @@ async def add_proximity_non_contact_to_state(node_position, state):
 
 
 #: Modifies the map state with the details of a proximity reading
-async def analyze_proximity_sample(reading, robot, state):
+async def analyze_proximity_sample(reading: vector.proximity.ProximitySensorData, robot: vector.robot.Robot, state: MapState):
     # Check if the reading meets the engine's metrics for valid, and that its within our specified distance threshold.
     reading_contacted = reading.is_valid and reading.distance.distance_mm < PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM
 
@@ -192,7 +192,7 @@ async def analyze_proximity_sample(reading, robot, state):
 
 
 #: repeatedly collects proximity data sample and converts them to nodes and walls for the map state
-async def collect_proximity_data_loop(robot, future, state):
+async def collect_proximity_data_loop(robot: vector.robot.Robot, future: concurrent.futures.Future, state: MapState):
     try:
         scan_interval = 1.0 / PROXIMITY_SCAN_SAMPLE_FREQUENCY_HZ
 
@@ -213,7 +213,7 @@ async def collect_proximity_data_loop(robot, future, state):
 
 
 #: Updates the map state by rotating 360 degrees and collecting/applying proximity data samples.
-async def scan_area(state, robot):
+async def scan_area(robot: vector.robot.Robot, state: MapState):
     collect_future = concurrent.futures.Future()
 
     # The collect_proximity_data task relies on this external trigger to know when its finished.
@@ -236,7 +236,7 @@ async def scan_area(state, robot):
 
 
 #: Top level call to perform exploration and environment mapping
-async def map_explorer(robot, viewer):
+async def map_explorer(robot: vector.robot.Robot, viewer: OpenGLViewer):
     # Drop the lift, so that it does not block the proximity sensor
     await robot.behavior.set_lift_height(30.0)
 
@@ -247,7 +247,7 @@ async def map_explorer(robot, viewer):
     # Comparison function used for sorting which open nodes are the furthest from all existing
     # walls and loose contacts.
     # (Using 1/r^2 to respond strongly to small numbers of close contact and weaking to many distant contacts)
-    def open_point_sort_func(position):
+    def open_point_sort_func(position: Vector3):
         proximity_sum = 0
         for p in state.contact_nodes:
             proximity_sum = proximity_sum + 1 / (p - position).magnitude_squared
@@ -263,7 +263,7 @@ async def map_explorer(robot, viewer):
         state.open_nodes = [position for position in state.open_nodes if (position - robot.pose.position).magnitude > PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM]
 
         # Collect map data for the robot's current location.
-        await scan_area(state, robot)
+        await scan_area(robot, state)
 
         # Add where the robot is to the map's cleared territories.
         state.cleared_territories.append(ClearedTerritory(robot.pose.position, PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM))
@@ -271,7 +271,7 @@ async def map_explorer(robot, viewer):
         # @TODO: This is currently unreliable.  This whole block should ideally be replaced with the go_to_pose actions when
         # that action's reliability is improved.  Alternatively, the turn&drive commands can be modified to respond to collisions
         # by cancelling rather than hanging indefinitely.  After either change, ACTIVELY_EXPLORE_SPACE should be defaulted True
-        if ACTIVELY_EXPLORE_SPACE:
+        if ACTIVELY_EXPLORE_SPACE and state.open_nodes:
             # Sort the open nodes and find our next navigation point.
             state.open_nodes.sort(key=open_point_sort_func)
             nav_point = state.open_nodes[0]
@@ -292,7 +292,15 @@ async def map_explorer(robot, viewer):
 
             # Turn toward the nav point, and drive to it.
             await robot.behavior.turn_in_place(angle=radians(turn_angle), speed=degrees(EXPLORE_TURN_SPEED_DPS))
-            await robot.behavior.drive_straight(distance=distance_mm(nav_distance), speed=speed_mmps(EXPLORE_DRIVE_SPEED_MMPS))
+            try:
+                # if more than 125% of the expected drive time elapses without the drive_straight concluding, it
+                # likely means the robot encountered a cliff or obstacle.
+                expected_drive_time = nav_distance / EXPLORE_DRIVE_SPEED_MMPS
+                await asyncio.wait_for(robot.behavior.drive_straight(distance=distance_mm(nav_distance), speed=speed_mmps(EXPLORE_DRIVE_SPEED_MMPS)),
+                                       1.25 * expected_drive_time,
+                                       loop=robot.loop)
+            except asyncio.TimeoutError:
+                print('obstacle encountered while moving, continuing exploration from current position')
 
     if PROXIMITY_EXPLORATION_SHUTDOWN_DELAY_S == 0.0:
         while True:
