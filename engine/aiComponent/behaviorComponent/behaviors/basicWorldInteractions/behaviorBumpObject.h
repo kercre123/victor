@@ -44,17 +44,26 @@ private:
   void DoSecondBumpIfDesired();
   
   bool WouldBumpPushSomethingOffCliff( float driveDist_mm ) const;
+  
+  enum class State : uint8_t {
+    Invalid=0,
+    FirstBump,
+    SecondBump,
+  };
 
   struct InstanceConfig {
     InstanceConfig();
     uint16_t minDist_mm;
     uint16_t maxDist_mm;
     float pEvil;
+    float pBumpWhenEvil;
+    float pBumpWhenNotEvil;
   };
 
   struct DynamicVariables {
     DynamicVariables();
     bool unexpectedMovement;
+    State state;
   };
 
   InstanceConfig _iConfig;
