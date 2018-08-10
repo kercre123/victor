@@ -19,7 +19,6 @@ namespace Anki {
 namespace Vector {
 
 class BehaviorDriveOffCharger;
-class BehaviorGoHome;
 class IGatewayInterface;
 namespace external_interface {
   class DriveOffChargerRequest;
@@ -63,8 +62,8 @@ private:
     std::string driveOffChargerBehaviorStr;
     ICozmoBehaviorPtr driveOffChargerBehavior;
 
-    std::string goHomeBehaviorStr;
-    ICozmoBehaviorPtr goHomeBehavior;
+    std::string findAndGoToHomeBehaviorStr;
+    ICozmoBehaviorPtr findAndGoToHomeBehavior;
   };
 
   struct DynamicVariables {

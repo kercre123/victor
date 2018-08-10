@@ -17,8 +17,7 @@ from .messaging import client, protocol
 class SDK_PRIORITY_LEVEL(Enum):
     '''Enum used to specify the priority level that the program requests to run at'''
 
-    #: Runs below level "MandatoryPhysicalReactions" and
-    #: "LowBatteryFindAndGoToHome", and above "TriggerWordDetected".
+    #: Runs below level "MandatoryPhysicalReactions" and above "TriggerWordDetected".
     SDK_HIGH_PRIORITY = 0
 
 

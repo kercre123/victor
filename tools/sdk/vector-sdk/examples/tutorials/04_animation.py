@@ -37,8 +37,9 @@ def main():
         # we recommend using play_anim_trigger above instead.
         # See the remote_control_cozmo.py example in apps for an easy way to see
         # the available animations.
-        print("Playing animation by name")
-        robot.anim.play_animation("anim_weather_snow_01")
+        animation = 'anim_weather_snow_01'
+        print("Playing animation by name: " + animation)
+        robot.anim.play_animation(animation)
 
 
 if __name__ == "__main__":
