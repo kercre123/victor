@@ -35,9 +35,14 @@ namespace Json {
 namespace Anki {
 
 namespace Util {
+
 namespace Data {
   class DataPlatform;
-} // namespace Data
+}
+namespace Dispatch {
+  class Queue;
+}
+
 } // namespace Util
 
 namespace Vector {
@@ -154,9 +159,9 @@ private:
   void OnOpenWebSocket(struct mg_connection* conn);
   void OnReceiveWebSocket(struct mg_connection* conn, const Json::Value& data);
   void OnCloseWebSocket(const struct mg_connection* conn);
-  
-  static void SendToWebSocket(struct mg_connection* conn, const Json::Value& data);
-  
+
+  void SendToWebSocket(struct mg_connection* conn, const Json::Value& data) const;
+
   // todo: OTA update somehow?
 
   struct mg_context* _ctx;
@@ -175,6 +180,8 @@ private:
   
   OnAppToEngineOnDataType _appToEngineOnData;
   OnAppToEngineRequestDataType _appToEngineRequestData;
+  
+  Util::Dispatch::Queue* _dispatchQueue = nullptr;
 };
 
 } // namespace WebService

@@ -27,6 +27,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
@@ -983,6 +984,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
+  
+  _dispatchQueue = Util::Dispatch::Create("WebsocketSender");
 }
 
 
@@ -1550,15 +1553,20 @@ void WebService::HandleWebSocketsClose(const struct mg_connection* conn, void* c
   that->OnCloseWebSocket( conn );
 }
 
-void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data)
-{
-  // todo: deal with threads if this is used outside dev
 
-  std::stringstream ss;
-  ss << data;
-  const std::string& str = ss.str();
-  mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
+// This is always called in the main thread (whether we're sending or receiving)
+void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data) const
+{
+  // Dispatch work onto another thread (note we copy 'data' by value here)
+  Util::Dispatch::Async(_dispatchQueue, [conn, data] {
+    std::stringstream ss;
+    ss << data;
+    const std::string& str = ss.str();
+
+    mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
+  });
 }
+
 
 const std::string& WebService::getConsoleVarsTemplate()
 {
