@@ -783,8 +783,7 @@ bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
     }
     else
     {
-      const f32 timeDiff = currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec;
-      if (timeDiff <= _stopCriteria.noEyeContactTimeout_sec)
+      if (currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec <= _stopCriteria.noEyeContactTimeout_sec)
       {
         return true;
       }
