@@ -137,8 +137,6 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
   const auto speed = _tts_config->GetSpeed();
   const auto shaping = _tts_config->GetShaping();
   const auto pitch = _tts_config->GetPitch();
-  const auto leadingSilence_ms = _tts_config->GetLeadingSilence_ms();
-  const auto trailingSilence_ms = _tts_config->GetTrailingSilence_ms();
 
   LOG_INFO("TextToSpeechProvider.Initialize",
            "language=%s voice=%s speed=%d shaping=%d pitch=%d",
@@ -238,18 +236,6 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
                 pitch, bbError);
   }
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_LEADINGSILENCE, leadingSilence_ms);
-  if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.Initialize.SetLeadingSilence", "Unable to set leading silence %d (error %ld)",
-               leadingSilence_ms, bbError);
-  }
-
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_TRAILINGSILENCE, trailingSilence_ms);
-  if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.Initialize.SetTrailingSilence", "Unable to set trailing silence %d (error %ld)",
-                trailingSilence_ms, bbError);
-  }
-
   _locale = locale;
   _language = language;
 
@@ -283,6 +269,13 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
   const auto speed = Anki::Util::numeric_cast<int>(std::round(adjustedSpeed));
   const auto shaping = _tts_config->GetShaping();
   const auto pitch = _tts_config->GetPitch();
+  const auto leadingSilence_ms = _tts_config->GetLeadingSilence_ms();
+  const auto trailingSilence_ms = _tts_config->GetTrailingSilence_ms();
+  const auto pausePunctuation_ms = _tts_config->GetPausePunctuation_ms();
+  const auto pauseSemicolon_ms = _tts_config->GetPauseSemicolon_ms();
+  const auto pauseComma_ms = _tts_config->GetPauseComma_ms();
+  const auto pauseBracket_ms = _tts_config->GetPauseBracket_ms();
+  const auto pauseSpelling_ms = _tts_config->GetPauseSpelling_ms();
 
   // Reset TTS processing state & error state
   BB_ERROR bbError = BABILE_reset(_BAB_Obj);
@@ -292,21 +285,28 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
 
   BABILE_resetError(_BAB_Obj);
 
+  // Helper macro to set TTS params
+  #define SETPARAM(param, val) \
+  { \
+    bbError = BABILE_setSetting(_BAB_Obj, param, val); \
+    if (BB_OK != bbError) { \
+      LOG_WARNING("TextToSpeechProvider.SetParam", "Unable to set %s to %d (error %ld)", #param, val, bbError); \
+    } \
+  }
+
   // Apply current TTS params
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SPEED, speed);
-  if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to set speed %d (error %ld)", speed, bbError);
-  }
+  SETPARAM(BABIL_PARM_SPEED, speed);
+  SETPARAM(BABIL_PARM_SEL_VOICESHAPE, shaping);
+  SETPARAM(BABIL_PARM_PITCH, pitch);
+  SETPARAM(BABIL_PARM_LEADINGSILENCE, leadingSilence_ms);
+  SETPARAM(BABIL_PARM_TRAILINGSILENCE, trailingSilence_ms);
+  SETPARAM(BABIL_PARM_PAUSE1SILENCE, pausePunctuation_ms);
+  SETPARAM(BABIL_PARM_PAUSE2SILENCE, pauseSemicolon_ms);
+  SETPARAM(BABIL_PARM_PAUSE3SILENCE, pauseComma_ms);
+  SETPARAM(BABIL_PARM_PAUSE4SILENCE, pauseBracket_ms);
+  SETPARAM(BABIL_PARM_PAUSE5SILENCE, pauseSpelling_ms);
 
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_SEL_VOICESHAPE, shaping);
-  if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to set shaping %d (error %ld)", shaping, bbError);
-  }
-
-  bbError = BABILE_setSetting(_BAB_Obj, BABIL_PARM_PITCH, pitch);
-  if (BB_OK != bbError) {
-    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to set pitch %d (error %ld)", pitch, bbError);
-  }
+  #undef SETPARAM
 
   _str = text;
   _strlen = text.size();
