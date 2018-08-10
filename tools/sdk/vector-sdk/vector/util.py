@@ -122,6 +122,69 @@ def angle_z_to_quaternion(angle_z):
     return q0, q1, q2, q3
 
 
+class Vector2:
+    '''Represents a 2D Vector (type/units aren't specified)
+
+    Args:
+        x (float): X component
+        y (float): Y component
+    '''
+
+    __slots__ = ('_x', '_y')
+
+    def __init__(self, x, y):
+        self._x = x
+        self._y = y
+
+    def set_to(self, rhs):
+        """Copy the x and y components of the given vector.
+
+        Args:
+            rhs (:class:`Vector2`): The right-hand-side of this assignment - the
+                source vector to copy into this vector.
+        """
+        self._x = rhs.x
+        self._y = rhs.y
+
+    @property
+    def x(self):
+        '''float: The x component.'''
+        return self._x
+
+    @property
+    def y(self):
+        '''float: The y component.'''
+        return self._y
+
+    @property
+    def x_y(self):
+        '''tuple (float, float): The X, Y elements of the Vector2 (x,y)'''
+        return self._x, self._y
+
+    def __repr__(self):
+        return "<%s x: %.2f y: %.2f>" % (self.__class__.__name__, self.x, self.y)
+
+    def __add__(self, other):
+        if not isinstance(other, Vector2):
+            raise TypeError("Unsupported operand for + expected Vector2")
+        return Vector2(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        if not isinstance(other, Vector2):
+            raise TypeError("Unsupported operand for - expected Vector2")
+        return Vector2(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for * expected number")
+        return Vector2(self.x * other, self.y * other)
+
+    def __truediv__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for / expected number")
+        return Vector2(self.x / other, self.y / other)
+
+
 class Vector3:
     '''Represents a 3D Vector (type/units aren't specified)
 
@@ -137,17 +200,65 @@ class Vector3:
         self._y = y
         self._z = z
 
+    def set_to(self, rhs):
+        """Copy the x, y and z components of the given vector.
+
+        Args:
+            rhs (:class:`Vector3`): The right-hand-side of this assignment - the
+                source vector to copy into this vector.
+        """
+        self._x = rhs.x
+        self._y = rhs.y
+        self._z = rhs.z
+
     @property
     def x(self):
+        '''float: The x component.'''
         return self._x
 
     @property
     def y(self):
+        '''float: The y component.'''
         return self._y
 
     @property
     def z(self):
+        '''float: The z component.'''
         return self._z
+
+    @property
+    def magnitude_squared(self):
+        '''float: The magnitude of the vector'''
+        return self._x**2 + self._y**2 + self._z**2
+
+    @property
+    def magnitude(self):
+        '''float: The magnitude of the vector'''
+        return math.sqrt(self.magnitude_squared)
+
+    @property
+    def normalized(self):
+        ''':class:`Vector3`: Returns a vector with the same direction and unit magnitude'''
+        mag = self.magnitude
+        if mag == 0:
+            return Vector3(0, 0, 0)
+        return Vector3(self._x / mag, self._y / mag, self._z / mag)
+
+    def dot(self, other):
+        ''':class:`Vector3`: Returns the dot product of this and another vector'''
+        if not isinstance(other, Vector3):
+            raise TypeError("Unsupported argument for dot product, expected Vector3")
+        return self._x * other.x + self._y * other.y + self._z * other.z
+
+    def cross(self, other):
+        ''':class:`Vector3`: Returns the cross product of this and another vector'''
+        if not isinstance(other, Vector3):
+            raise TypeError("Unsupported argument for cross product, expected Vector3")
+
+        return Vector3(
+            self._y * other.z - self._z * other.y,
+            self._z * other.x - self._x * other.z,
+            self._x * other.y - self._y * other.x)
 
     @property
     def x_y_z(self):
@@ -156,6 +267,26 @@ class Vector3:
 
     def __repr__(self):
         return f"<{self.__class__.__name__} x: {self.x:.2} y: {self.y:.2} z: {self.z:.2}>"
+
+    def __add__(self, other):
+        if not isinstance(other, Vector3):
+            raise TypeError("Unsupported operand for +, expected Vector3")
+        return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __sub__(self, other):
+        if not isinstance(other, Vector3):
+            raise TypeError("Unsupported operand for -, expected Vector3")
+        return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __mul__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for * expected number")
+        return Vector3(self.x * other, self.y * other, self.z * other)
+
+    def __truediv__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError("Unsupported operand for / expected number")
+        return Vector3(self.x / other, self.y / other, self.z / other)
 
 
 class Angle:
@@ -221,6 +352,142 @@ def radians(radians: float):  # pylint: disable=redefined-outer-name
     return Angle(radians=radians)
 
 
+class Matrix44:
+    """A 4x4 Matrix for representing the rotation and/or position of an object in the world.
+
+    Can be generated from a :class:`Quaternion` for a pure rotation matrix, or
+    combined with a position for a full translation matrix, as done by
+    :meth:`Pose.to_matrix`.
+    """
+    __slots__ = ('m00', 'm10', 'm20', 'm30',
+                 'm01', 'm11', 'm21', 'm31',
+                 'm02', 'm12', 'm22', 'm32',
+                 'm03', 'm13', 'm23', 'm33')
+
+    def __init__(self,
+                 m00, m10, m20, m30,
+                 m01, m11, m21, m31,
+                 m02, m12, m22, m32,
+                 m03, m13, m23, m33):
+        self.m00 = m00
+        self.m10 = m10
+        self.m20 = m20
+        self.m30 = m30
+
+        self.m01 = m01
+        self.m11 = m11
+        self.m21 = m21
+        self.m31 = m31
+
+        self.m02 = m02
+        self.m12 = m12
+        self.m22 = m22
+        self.m32 = m32
+
+        self.m03 = m03
+        self.m13 = m13
+        self.m23 = m23
+        self.m33 = m33
+
+    def __repr__(self):
+        return ("<%s: "
+                "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f "
+                "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f>" % (
+                    self.__class__.__name__, *self.in_row_order))
+
+    @property
+    def tabulated_string(self):
+        """str: A multi-line string formatted with tabs to show the matrix contents."""
+        return ("%.1f\t%.1f\t%.1f\t%.1f\n"
+                "%.1f\t%.1f\t%.1f\t%.1f\n"
+                "%.1f\t%.1f\t%.1f\t%.1f\n"
+                "%.1f\t%.1f\t%.1f\t%.1f" % self.in_row_order)
+
+    @property
+    def in_row_order(self):
+        """tuple of 16 floats: The contents of the matrix in row order."""
+        return self.m00, self.m01, self.m02, self.m03,\
+            self.m10, self.m11, self.m12, self.m13,\
+            self.m20, self.m21, self.m22, self.m23,\
+            self.m30, self.m31, self.m32, self.m33
+
+    @property
+    def in_column_order(self):
+        """tuple of 16 floats: The contents of the matrix in column order."""
+        return self.m00, self.m10, self.m20, self.m30,\
+            self.m01, self.m11, self.m21, self.m31,\
+            self.m02, self.m12, self.m22, self.m32,\
+            self.m03, self.m13, self.m23, self.m33
+
+    @property
+    def forward_xyz(self):
+        """tuple of 3 floats: The x,y,z components representing the matrix's forward vector."""
+        return self.m00, self.m01, self.m02
+
+    @property
+    def left_xyz(self):
+        """tuple of 3 floats: The x,y,z components representing the matrix's left vector."""
+        return self.m10, self.m11, self.m12
+
+    @property
+    def up_xyz(self):
+        """tuple of 3 floats: The x,y,z components representing the matrix's up vector."""
+        return self.m20, self.m21, self.m22
+
+    @property
+    def pos_xyz(self):
+        """tuple of 3 floats: The x,y,z components representing the matrix's position vector."""
+        return self.m30, self.m31, self.m32
+
+    def set_forward(self, x, y, z):
+        """Set the x,y,z components representing the matrix's forward vector.
+
+        Args:
+            x (float): The X component.
+            y (float): The Y component.
+            z (float): The Z component.
+        """
+        self.m00 = x
+        self.m01 = y
+        self.m02 = z
+
+    def set_left(self, x, y, z):
+        """Set the x,y,z components representing the matrix's left vector.
+
+        Args:
+            x (float): The X component.
+            y (float): The Y component.
+            z (float): The Z component.
+        """
+        self.m10 = x
+        self.m11 = y
+        self.m12 = z
+
+    def set_up(self, x, y, z):
+        """Set the x,y,z components representing the matrix's up vector.
+
+        Args:
+            x (float): The X component.
+            y (float): The Y component.
+            z (float): The Z component.
+        """
+        self.m20 = x
+        self.m21 = y
+        self.m22 = z
+
+    def set_pos(self, x, y, z):
+        """Set the x,y,z components representing the matrix's position vector.
+
+        Args:
+            x (float): The X component.
+            y (float): The Y component.
+            z (float): The Z component.
+        """
+        self.m30 = x
+        self.m31 = y
+        self.m32 = z
+
+
 class Quaternion:
     '''Represents the rotation of an object in the world.'''
 
@@ -273,6 +540,52 @@ class Quaternion:
     def q0_q1_q2_q3(self):
         '''tuple of float: Contains all elements of the quaternion (q0,q1,q2,q3)'''
         return self._q0, self._q1, self._q2, self._q3
+
+    def to_matrix(self, pos_x=0.0, pos_y=0.0, pos_z=0.0):
+        """Convert the Quaternion to a 4x4 matrix representing this rotation.
+
+        A position can also be provided to generate a full translation matrix.
+
+        Args:
+            pos_x (float): The x component for the position.
+            pos_y (float): The y component for the position.
+            pos_z (float): The z component for the position.
+
+        Returns:
+            :class:`cozmo.util.Matrix44`: A matrix representing this Quaternion's
+            rotation, with the provided position (which defaults to 0,0,0).
+        """
+        # See https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+        q0q0 = self.q0 * self.q0
+        q1q1 = self.q1 * self.q1
+        q2q2 = self.q2 * self.q2
+        q3q3 = self.q3 * self.q3
+
+        q0x2 = self.q0 * 2.0  # saves 2 multiplies
+        q0q1x2 = q0x2 * self.q1
+        q0q2x2 = q0x2 * self.q2
+        q0q3x2 = q0x2 * self.q3
+        q1x2 = self.q1 * 2.0  # saves 1 multiply
+        q1q2x2 = q1x2 * self.q2
+        q1q3x2 = q1x2 * self.q3
+        q2q3x2 = 2.0 * self.q2 * self.q3
+
+        m00 = (q0q0 + q1q1 - q2q2 - q3q3)
+        m01 = (q1q2x2 + q0q3x2)
+        m02 = (q1q3x2 - q0q2x2)
+
+        m10 = (q1q2x2 - q0q3x2)
+        m11 = (q0q0 - q1q1 + q2q2 - q3q3)
+        m12 = (q0q1x2 + q2q3x2)
+
+        m20 = (q0q2x2 + q1q3x2)
+        m21 = (q2q3x2 - q0q1x2)
+        m22 = (q0q0 - q1q1 - q2q2 + q3q3)
+
+        return Matrix44(m00, m10, m20, pos_x,
+                        m01, m11, m21, pos_y,
+                        m02, m12, m22, pos_z,
+                        0.0, 0.0, 0.0, 1.0)
 
     def __repr__(self):
         return (f"<{self.__class__.__name__} q0: {self.q0:.2} q1: {self.q1:.2}"
@@ -346,6 +659,33 @@ class Pose:
                     res_z,
                     angle_z=res_angle,
                     origin_id=self._origin_id)
+
+    @property
+    def is_valid(self):
+        '''bool: Returns True if this is a valid, usable pose.'''
+        return self.origin_id >= 0
+
+    def is_comparable(self, other_pose):
+        '''Are these two poses comparable.
+
+        Poses are comparable if they're valid and having matching origin IDs.
+
+        Args:
+            other_pose (:class:`vector.util.Pose`): The other pose to compare against.
+        Returns:
+            bool: True if the two poses are comparable, False otherwise.
+        '''
+        return (self.is_valid and other_pose.is_valid and
+                (self.origin_id == other_pose.origin_id))
+
+    def to_matrix(self):
+        """Convert the Pose to a Matrix44.
+
+        Returns:
+            :class:`vector.util.Matrix44`: A matrix representing this Pose's
+            position and rotation.
+        """
+        return self.rotation.to_matrix(*self.position.x_y_z)
 
 
 class ImageRect:
