@@ -67,21 +67,27 @@ structure DeleteRequest {
     string[uint_16] docName
 }
 
+structure DocEcho {
+    string[uint_16] data
+}
+
 union DocRequest {
     WriteRequest write,
     ReadRequest read,
     DeleteRequest deleteReq, // every form of delete is a keyword
+    DocEcho echo,
 }
 
 structure ErrorResponse {
     DocError err,
 }
 
-union DocResponse {
+union dupes_allowed DocResponse {
     WriteResponse write,
     ReadResponse read,
     Void deleteResp,
     ErrorResponse err,
+    DocEcho echo,
 }
 
 }

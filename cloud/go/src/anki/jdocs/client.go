@@ -58,6 +58,8 @@ func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud
 		return c.writeRequest(ctx, req.GetWrite())
 	case cloud.DocRequestTag_DeleteReq:
 		return c.deleteRequest(ctx, req.GetDeleteReq())
+	case cloud.DocRequestTag_Echo:
+		return c.echoRequest(ctx, req.GetEcho())
 	}
 	err := fmt.Errorf("Major error: received unknown tag %d", req.Tag())
 	log.Println(err)
@@ -91,4 +93,13 @@ func (c *conn) deleteRequest(ctx context.Context, cladReq *cloud.DeleteRequest) 
 		return connectErrorResponse, err
 	}
 	return cloud.NewDocResponseWithDeleteResp(&cloud.Void{}), nil
+}
+
+func (c *conn) echoRequest(ctx context.Context, cladReq *cloud.DocEcho) (*cloud.DocResponse, error) {
+	req := &pb.EchoReq{Data: cladReq.Data}
+	resp, err := c.client.Echo(ctx, req)
+	if err != nil {
+		return connectErrorResponse, err
+	}
+	return cloud.NewDocResponseWithEcho(&cloud.DocEcho{Data: resp.Data}), nil
 }
