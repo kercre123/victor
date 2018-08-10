@@ -219,15 +219,14 @@ namespace Vector {
    **************************************************************************/
   
   // Motor speed / accel limits
-  // TODO: These were plucked out of the sky.
-  const f32 MAX_HEAD_SPEED_RAD_PER_S = 1000;
-  const f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 10000;
-  const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
-  const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
+  const f32 MAX_HEAD_SPEED_RAD_PER_S = 10;     // Max head speed observed on PVT
+  const f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 150;   // ~70ms to go from 0-8rad/s on PVT -> 114 + some buffer
+  const f32 MAX_LIFT_SPEED_RAD_PER_S = 25;     // Max speed observed on lift-less PVT
+  const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 500;   // ~50ms to go from 0-25rad/s on lift-less PVT
   
   // How fast (in mm/sec) can a wheel spin at max
   const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
-  const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
+  const f32 MAX_WHEEL_ACCEL_MMPS2 = 2500.f;  // Measured ~80ms to go from 0-220 mm/s on PVT -> 2750 + some buffer
   
   // How fast (in mm/sec) can the robot drive without falling off 
   // (most) straight edge cliffs
