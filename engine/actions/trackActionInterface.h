@@ -207,8 +207,8 @@ private:
     Radians tiltTol                     = -1.f;
     f32     minDist_mm                  = -1.f;
     f32     maxDist_mm                  = -1.f;
-    f32     duration_sec                =  0.f; // _stopCriteria is ignored if this is 0
-    f32     withinTolSince_sec          =  0.f;
+    f32     duration_sec                = 0.f; // _stopCriteria is ignored if this is 0
+    f32     withinTolSince_sec          = 0.f;
     bool    interruptDrivingAnim        = false;
     f32     noEyeContactTimeout_sec     = 0.f;
     f32     timeOfLastEyeContact_sec    = 0.f;
