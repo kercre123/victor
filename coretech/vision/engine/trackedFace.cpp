@@ -91,10 +91,12 @@ namespace Vision {
     DEV_ASSERT(camera.IsCalibrated(), "Camera should be calibrated");
     ray = camera.GetCalibration()->GetInvCalibrationMatrix() * ray;
     ray.MakeUnitLength();
-    
     ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / intraEyeDistance;
-    
     _headPose.SetTranslation(ray);
+
+    RotationMatrix3d rotation(-GetHeadPitch(), -GetHeadRoll(), GetHeadYaw());
+    _headPose.SetRotation(_headPose.GetRotation() * rotation);
+
     _isTranslationSet = true;
     _headPose.SetParent(camera.GetPose());
     
