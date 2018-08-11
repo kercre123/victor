@@ -9,6 +9,9 @@
 # Configure with -DANKI_RESOURCE_SHIPPING=0 to deploy development config files.
 # Default is ANKI_RESOURCE_SHIPPING=0.
 #
+# Configure with -DANKI_USER_DEV=1 to deploy the userdev version of config files
+# Default is ANKI_USER_DEV=0
+#
 # Note use of add_dependencies() to serialize copy operations. This is done to prevent random build failures
 # that occur when parallel processes attempt to create the same directory structure.
 #
@@ -35,6 +38,11 @@ if (ANKI_RESOURCE_SHIPPING)
   set(platform_config_etc_extra platform_config_etc_shipping)
 else()
   set(platform_config_etc_extra platform_config_etc_development)
+endif()
+
+# If this is the special "userdev" build then use its etc files
+if (ANKI_USER_DEV)
+  set(platform_config_etc_extra platform_config_etc_userdev)
 endif()
 
 anki_build_copy_assets(

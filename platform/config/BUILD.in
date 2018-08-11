@@ -26,6 +26,15 @@ asset_project(
 )
 
 asset_project(
+    name = 'platform_config_etc_userdev',
+    srcs = subdir_glob([
+                ('userdev/etc', '**/*'),
+                ],
+                prefix = 'etc'
+            ),
+)
+
+asset_project(
     name = 'platform_config_etc_shipping',
     srcs = subdir_glob([
                 ('shipping/etc', '**/*'),
