@@ -12,6 +12,7 @@
       "behaviorName": "NoCloudAnim",
       "behaviorClass": "AnimSequence",
       "animTriggers": [
+        "NoCloudGetIn",
         "NoCloudIcon"
       ]
     },
