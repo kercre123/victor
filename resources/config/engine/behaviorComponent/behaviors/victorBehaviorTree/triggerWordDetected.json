@@ -7,8 +7,10 @@
 
   "notifyOnErrors": {
     "recentOccurrence": {
-      "numberOfTimes": 2,
-      "amountOfSeconds": 300.0
+      // trigger error notification immediately
+      "numberOfTimes": 1
+      // seconds don't matter with numberOfTimes = 1
+      // "amountOfSeconds": 300.0
     }
   },
   
