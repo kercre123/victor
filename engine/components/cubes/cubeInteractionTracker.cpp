@@ -128,7 +128,9 @@ CubeInteractionTracker::CubeInteractionTracker()
 , _trackingAtHighRate(false)
 , _filterIncrement(kFilterIncrement_idle)
 , _filterDecrement(kFilterDecrement_idle)
+#if ANKI_DEV_CHEATS
 , _timeToUpdateWebViz_s(0.0f)
+#endif
 , _debugStateString("Idle")
 {
   _targetFilter = std::make_unique<BlockWorldFilter>();

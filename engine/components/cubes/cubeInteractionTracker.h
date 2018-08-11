@@ -144,7 +144,9 @@ private:
   float _filterDecrement;
 
 // For WebViz
+#if ANKI_DEV_CHEATS
   float _timeToUpdateWebViz_s;
+#endif
   std::string _debugStateString;
 };
 
