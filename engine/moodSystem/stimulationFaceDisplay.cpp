@@ -29,7 +29,7 @@ namespace Vector {
 
 namespace {
 
-CONSOLE_VAR(bool, kStimFace_enabled, "StimFace", true);
+CONSOLE_VAR(bool, kStimFace_enabled, "StimFace", false);
 CONSOLE_VAR_RANGED(int, kStimFace_ema_N, "StimFace", 20, 0, 100);
 CONSOLE_VAR_RANGED(f32, kStimFace_sendThresh, "StimFace", 0.01f, 0.0f, 1.0f );
 CONSOLE_VAR_RANGED(f32, kStimFace_minSaturation, "StimFace", 0.25f, 0.0f, 1.0f );
