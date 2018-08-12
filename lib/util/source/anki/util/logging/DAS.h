@@ -150,6 +150,23 @@ void sLogDebug(const DasMsg & dasMessage);
 //
 #define DASMSG_FEATURE_START "behavior.feature.start"
 
+//
+// DAS BLE connection events
+// These events are used to indicate start/stop of a BLE connection.
+// If event name or event parameters change, DASManager must be updated to match.
+// Names are defined as a macro, not a constexpr, so they can be expanded by doxygen.
+//
+#define DASMSG_BLE_CONN_ID_START "ble_conn_id.start"
+#define DASMSG_BLE_CONN_ID_STOP "ble_conn_id.stop"
+
+//
+// DAS WIFI connection events
+// These events are used to indicate start/stop of a Wi-Fi connection.
+// If event name or event parameters change, DASManager must be updated to match.
+// Names are defined as a macro, not a constexpr, so they can be expanded by doxygen.
+//
+#define DASMSG_WIFI_CONN_ID_START "wifi_conn_id.start"
+#define DASMSG_WIFI_CONN_ID_STOP "wifi_conn_id.stop"
 
 //
 // DAS message macros

@@ -44,16 +44,19 @@ private:
   DASConfig _dasConfig;
 
   // Global state
+  uint64_t _seq = 0;
   std::string _robot_id;
   std::string _robot_version;
   std::string _boot_id;
   std::string _profile_id;
   std::string _feature_type;
   std::string _feature_run_id;
+  std::string _ble_conn_id;
+  std::string _wifi_conn_id;
+
   std::atomic<TimePoint> _last_flush_time;
   bool _exiting = false;
   bool _uploading = false;
-  uint64_t _seq = 0;
   std::string _logFilePath;
   std::ofstream _logFile;
 
