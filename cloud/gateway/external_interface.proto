@@ -11,6 +11,7 @@ syntax = "proto3";
 package Anki.Vector.external_interface;
 
 import "google/api/annotations.proto";
+import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
 import "settings.proto";
@@ -59,11 +60,17 @@ service ExternalInterface {
       body: "*"
     };
   }
-  
-  // Request control from behavior system
-  rpc SDKBehaviorActivation(SDKActivationRequest) returns (SDKActivationResult) {
+
+  // Integrate with and acquire control of Vector's AI system
+  rpc BehaviorControl(stream BehaviorControlRequest) returns (stream BehaviorControlResponse) {
+    // Cannot be used by the REST interface because it does not support stream-to-stream RPCs
+  }
+
+  // Acquire control of Vector's AI system
+  rpc AssumeBehaviorControl(BehaviorControlRequest) returns (stream BehaviorControlResponse) {
+    // REST users should use this api instead of BehaviorControl
     option (google.api.http) = {
-      post: "/v1/sdk_activation",
+      post: "/v1/assume_behavior_control",
       body: "*"
     };
   }
@@ -141,18 +148,10 @@ service ExternalInterface {
     };
   }
 
-  // TODO: sample rpc, remove once we have more real examples
+  // TODO: remove once app is converted to use event pings
   rpc Pang(Ping) returns (Pong) {
     option (google.api.http) = {
       post: "/v1/pang",
-      body: "*"
-    };
-  }
-
-  // TODO: sample rpc, remove once we have more real examples
-  rpc Bang(Bing) returns (Bong) {
-    option (google.api.http) = {
-      post: "/v1/bang",
       body: "*"
     };
   }

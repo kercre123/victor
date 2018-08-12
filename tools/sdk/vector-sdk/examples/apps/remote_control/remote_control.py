@@ -95,7 +95,7 @@ class RemoteControlVector:
                 self.anim_names.append(anim_name)
 
         default_anims_for_keys = ["anim_turn_left_01",  # 0
-                                  "anim_poked_giggle",  # 1
+                                  "anim_blackjack_victorwin_01",  # 1
                                   "anim_pounce_success_02",  # 2
                                   "vig_alwayshelpful_photo",  # 3
                                   "proto_loco_turn180_01",  # 4

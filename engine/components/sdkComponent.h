@@ -19,6 +19,10 @@
 namespace Anki {
 namespace Vector {
 
+namespace external_interface {
+  class GatewayWrapper;
+}
+
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,8 +43,7 @@ public:
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
   // Event/Message handling
-  template<typename T>
-  void HandleMessage(const T& msg);
+  void HandleMessage(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool SDKWantsControl();
   void SDKBehaviorActivation(bool enabled);

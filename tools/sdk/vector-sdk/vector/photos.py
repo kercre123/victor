@@ -40,3 +40,9 @@ class PhotographComponent(util.Component):
     async def get_photo(self, photo_id):
         req = protocol.PhotoRequest(photo_id=photo_id)
         return await self.interface.Photo(req)
+
+    @sync.Synchronizer.wrap
+    @sync.Synchronizer.disable_log
+    async def get_thumbnail(self, photo_id):
+        req = protocol.ThumbnailRequest(photo_id=photo_id)
+        return await self.interface.Thumbnail(req)

@@ -1,0 +1,50 @@
+// Behavior related messages
+
+syntax = "proto3";
+
+package Anki.Vector.external_interface;
+
+import "messages.proto";
+
+message ControlRelease {}
+
+// Request control of the behavior system at a given priority
+message ControlRequest {
+  enum Priority {
+    UNKNOWN = 0;
+    // Request control above mandatory physical reactions. Not recommended.
+    OVERRIDE_ALL = 10;
+    // Highest priority level. Directly under mandatory physical reactions.
+    TOP_PRIORITY_AI = 20;
+  }
+  Priority priority = 1;
+}
+
+// Messages that can be sent to the behavior stream. Explicitly
+// requesting or releasing control.
+message BehaviorControlRequest {
+  oneof request_type {
+    ControlRelease control_release = 1;
+    ControlRequest control_request = 2;
+  }
+}
+
+// The SDK user is now free to run any actions and behaviors they like.
+// Until a ControlLostResponse is received, they are directly in control
+// of Vector's behavior system.
+message ControlGrantedResponse {}
+
+// This informs the user that they lost control of the behavior system.
+// All direct actions will be unavailable via the sdk until control is regained.
+// Regaining control can be either through a call to ControlRequest, or
+// can be as a result of conditions passed to the original ControlRequest.
+message ControlLostResponse {}
+
+// Responses from the behavior stream.
+message BehaviorControlResponse {
+  oneof response_type {
+    ControlGrantedResponse control_granted_response = 1;
+    ControlLostResponse control_lost_event = 2;
+    KeepAlivePing keep_alive = 3;
+  }
+}

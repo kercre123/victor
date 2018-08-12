@@ -24,7 +24,7 @@ Example:
     .. code-block:: python
 
         def my_function(robot):
-            robot.play_animation("anim_poked_giggle")
+            robot.play_animation("anim_blackjack_victorwin_01")
 
         with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
             viewer = opengl.OpenGLViewer(robot=robot)

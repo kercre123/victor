@@ -829,13 +829,6 @@ message ResponseLocale {
   string locale
 }
 
-
-// Response to request for control from behavior system
-message SDKActivationResult {
-    BehaviorSlot slot,
-    bool enabled,
-}
-
 // Anything that the robot wishes to push to the app that 
 // is not a response to a request from the app.
 // DEPRECATED. Please try to use protobuf's Event instead
@@ -854,7 +847,7 @@ autounion MessageEngineToGame
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
-  SDKActivationResult               SDKActivationResult                = 0x04,
+  // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
   RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted

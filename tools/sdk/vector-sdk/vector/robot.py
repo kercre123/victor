@@ -42,7 +42,7 @@ class Robot:
         # Create the robot connection
         with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
             # Run your commands (for example play animation)
-            robot.play_animation("anim_poked_giggle")
+            robot.play_animation("anim_blackjack_victorwin_01")
 
     2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
     it allows the robot's connection to continue in the context in which it started.
@@ -54,7 +54,7 @@ class Robot:
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
-        robot.play_animation("anim_poked_giggle")
+        robot.play_animation("anim_blackjack_victorwin_01")
         # Disconnect from the Robot
         robot.disconnect()
 
@@ -75,6 +75,7 @@ class Robot:
                  loop: asyncio.BaseEventLoop = None,
                  default_logging: bool = True,
                  behavior_timeout: int = 10,
+                 cache_animation_list: bool = True,
                  enable_vision_mode: bool = False):
         if default_logging:
             util.setup_basic_logging()
@@ -83,7 +84,7 @@ class Robot:
         self.is_loop_owner = False
         self._original_loop = None
         self.loop = loop
-        self.conn = connection.Connection(self, name, ':'.join([ip, port]), cert_file)
+        self.conn = connection.Connection(name, ':'.join([ip, port]), cert_file)
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
@@ -98,6 +99,7 @@ class Robot:
 
         self.behavior_timeout = behavior_timeout
         self.enable_vision_mode = enable_vision_mode
+        self.cache_animation_list = cache_animation_list
         # Robot state/sensor data
         self._pose: util.Pose = None
         self._pose_angle_rad: float = None
@@ -117,63 +119,63 @@ class Robot:
         self.pending = []
 
     @property
-    def robot(self):
+    def robot(self) -> 'Robot':
         return self
 
     @property
-    def anim(self):
+    def anim(self) -> animation.AnimationComponent:
         if self._anim is None:
             raise exceptions.VectorNotReadyException("AnimationComponent is not yet initialized")
         return self._anim
 
     @property
-    def backpack(self):
+    def backpack(self) -> backpack.BackpackComponent:
         if self._backpack is None:
             raise exceptions.VectorNotReadyException("BackpackComponent is not yet initialized")
         return self._backpack
 
     @property
-    def behavior(self):
+    def behavior(self) -> behavior.BehaviorComponent:
         return self._behavior
 
     @property
-    def faces(self):
+    def faces(self) -> faces.FaceComponent:
         if self._faces is None:
             raise exceptions.VectorNotReadyException("FaceComponent is not yet initialized")
         return self._faces
 
     @property
-    def motors(self):
+    def motors(self) -> motors.MotorComponent:
         if self._motors is None:
             raise exceptions.VectorNotReadyException("MotorComponent is not yet initialized")
         return self._motors
 
     @property
-    def oled(self):
+    def oled(self) -> oled_face.OledComponent:
         if self._oled is None:
             raise exceptions.VectorNotReadyException("OledComponent is not yet initialized")
         return self._oled
 
     @property
-    def photos(self):
+    def photos(self) -> photos.PhotographComponent:
         if self._photos is None:
             raise exceptions.VectorNotReadyException("PhotographyComponent is not yet initialized")
         return self._photos
 
     @property
-    def proximity(self):
+    def proximity(self) -> proximity.ProximityComponent:
         '''Component containing state related to object proximity detection
         '''
         return self._proximity
 
     @property
-    def world(self):
+    def world(self) -> world.World:
         if self._world is None:
             raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
         return self._world
 
     @property
-    def pose(self):
+    def pose(self) -> util.Pose:
         ''':class:`vector.util.Pose`: The current pose (position and orientation) of vector'''
         return self._pose
 
@@ -275,7 +277,7 @@ class Robot:
 
             robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
             robot.connect()
-            robot.play_animation("anim_poked_giggle")
+            robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
 
         :param timeout: The time to allow for a connection before a
@@ -288,8 +290,7 @@ class Robot:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
 
-        self.conn.connect(timeout=timeout)
-
+        self.conn.connect(self.loop, timeout=timeout)
         self.events.start(self.conn, self.loop)
 
         # Initialize components
@@ -303,10 +304,11 @@ class Robot:
         self._proximity = proximity.ProximityComponent(self)
         self._world = world.World(self)
 
-        # Load animations so they are ready to play when requested
-        anim_request = self._anim.load_animation_list()
-        if isinstance(anim_request, sync.Synchronizer):
-            anim_request.wait_for_completed()
+        if self.cache_animation_list:
+            # Load animations so they are ready to play when requested
+            anim_request = self._anim.load_animation_list()
+            if isinstance(anim_request, sync.Synchronizer):
+                anim_request.wait_for_completed()
 
         # Enable face detection, to allow Vector to add faces to its world view
         self._faces.enable_vision_mode(enable=self.enable_vision_mode)
@@ -348,7 +350,7 @@ class Robot:
 
             robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
             robot.connect()
-            robot.play_animation("anim_poked_giggle")
+            robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
         """
         if self.is_async:
@@ -360,7 +362,7 @@ class Robot:
             vision_mode.wait_for_completed()
 
         self.events.close()
-        self.loop.run_until_complete(self.conn.close())
+        self.conn.close()
         if self.is_loop_owner:
             try:
                 self.loop.close()
@@ -440,7 +442,7 @@ class AsyncRobot(Robot):
         # Create the robot connection
         with AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
             # Run your commands (for example play animation)
-            robot.play_animation("anim_poked_giggle").wait_for_completed()
+            robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
 
     2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
     it allows the robot's connection to continue in the context in which it started.
@@ -452,7 +454,7 @@ class AsyncRobot(Robot):
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
-        robot.play_animation("anim_poked_giggle").wait_for_completed()
+        robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
         # Disconnect from the Robot
         robot.disconnect()
 

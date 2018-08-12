@@ -224,12 +224,6 @@ message EnrolledNamesResponse {
   LoadedKnownFace faces[uint_8],
 }
 
-// Response to request for control from behavior system
-message SDKActivationResult {
-  uint_32 slot,
-  bool enabled,
-}
-
 structure PoseStruct3d
   {
     // Translation
@@ -370,7 +364,7 @@ union MessageRobotToExternal {
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
-  SDKActivationResult               SDKActivationResult                = 0x04,
+  // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
   RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted

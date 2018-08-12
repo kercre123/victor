@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package Anki.Vector.external_interface;
 
+import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
 import "settings.proto";
@@ -46,90 +47,93 @@ message EventResult {
 message GatewayWrapper {
   oneof oneof_message_type {
     // ------------ messages sent from robot to app ----------------------
-    Event event = 1;
+    Event event                                                      = 1;
 
     // ------------ onboarding requests and responses --------------------
-    OnboardingStateRequest        onboarding_state_request = 2;
-    OnboardingState               onboarding_state = 3;
-    OnboardingContinue            onboarding_continue = 4;
-    OnboardingContinueResponse    onboarding_continue_response = 5;
-    OnboardingSkip                onboarding_skip = 6;
-    OnboardingConnectionComplete  onboarding_connection_complete = 7;
-    OnboardingSkipOnboarding      onboarding_skip_onboarding = 8;
-    OnboardingRestart             onboarding_restart = 9;
+    OnboardingStateRequest        onboarding_state_request           = 2;
+    OnboardingState               onboarding_state                   = 3;
+    OnboardingContinue            onboarding_continue                = 4;
+    OnboardingContinueResponse    onboarding_continue_response       = 5;
+    OnboardingSkip                onboarding_skip                    = 6;
+    OnboardingConnectionComplete  onboarding_connection_complete     = 7;
+    OnboardingSkipOnboarding      onboarding_skip_onboarding         = 8;
+    OnboardingRestart             onboarding_restart                 = 9;
 
     // ------------ test request/response pairs --------------------------
-    // TODO: remove these once we have more examples
-    Ping ping = 20;
-    Pong pong = 21;
-    Bing bing = 22;
-    Bong bong = 23;
+    // TODO: remove these once the app no longer needs them (ping in event stream)
+    Ping                          ping                               = 20;
+    Pong                          pong                               = 21;
 
     // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 30;
-    LatestAttentionTransfer        latest_attention_transfer = 31;
+    LatestAttentionTransfer        latest_attention_transfer         = 31;
 
     // ------------ photos request/response pairs ------------------------
-    PhotosInfoRequest             photos_info_request = 40;
-    PhotosInfoResponse            photos_info_response = 41;
-    PhotoRequest                  photo_request = 42;
-    PhotoPathMessage              photo_path_message = 43;
-    ThumbnailRequest              thumbnail_request = 44;
-    ThumbnailPathMessage          thumbnail_path_message = 45;
-    DeletePhotoRequest            delete_photo_request = 46;
-    DeletePhotoResponse           delete_photo_response = 47;
+    PhotosInfoRequest             photos_info_request                = 40;
+    PhotosInfoResponse            photos_info_response               = 41;
+    PhotoRequest                  photo_request                      = 42;
+    PhotoPathMessage              photo_path_message                 = 43;
+    ThumbnailRequest              thumbnail_request                  = 44;
+    ThumbnailPathMessage          thumbnail_path_message             = 45;
+    DeletePhotoRequest            delete_photo_request               = 46;
+    DeletePhotoResponse           delete_photo_response              = 47;
     // ------------ settings pairs ---------------------------------------
-    PushJdocsRequest              push_jdocs_request  = 60;
-    PushJdocsResponse             push_jdocs_response = 61;
-    PullJdocsRequest              pull_jdocs_request  = 62;
-    PullJdocsResponse             pull_jdocs_response = 63;
-    UpdateSettingsRequest         update_settings_request  = 64;
-    UpdateSettingsResponse        update_settings_response = 65;
+    PushJdocsRequest              push_jdocs_request                 = 60;
+    PushJdocsResponse             push_jdocs_response                = 61;
+    PullJdocsRequest              pull_jdocs_request                 = 62;
+    PullJdocsResponse             pull_jdocs_response                = 63;
+    UpdateSettingsRequest         update_settings_request            = 64;
+    UpdateSettingsResponse        update_settings_response           = 65;
 
     // ------------ sdk behavior request/response pairs --------------------
-    DriveOffChargerRequest        drive_off_charger_request = 70;
-    DriveOffChargerResult         drive_off_charger_result = 71;
-    DriveOnChargerRequest         drive_on_charger_request = 72;
-    DriveOnChargerResult          drive_on_charger_result = 73;
+    DriveOffChargerRequest        drive_off_charger_request          = 70;
+    DriveOffChargerResult         drive_off_charger_result           = 71;
+    DriveOnChargerRequest         drive_on_charger_request           = 72;
+    DriveOnChargerResult          drive_on_charger_result            = 73;
 
     // ------------ movement request/response pairs ----------------------
-    TurnInPlaceRequest            turn_in_place_request = 90;
-    TurnInPlaceResponse           turn_in_place_response = 91;
-    DriveStraightRequest          drive_straight_request = 92;
-    DriveStraightResponse         drive_straight_response = 93;
-    SetHeadAngleRequest           set_head_angle_request = 94;
-    SetHeadAngleResponse          set_head_angle_response = 95;
-    SetLiftHeightRequest          set_lift_height_request = 96;
-    SetLiftHeightResponse         set_lift_height_response = 97;
-    PlayAnimationRequest          play_animation_response = 98;
-    PlayAnimationResult           play_animation_result = 99;
+    TurnInPlaceRequest            turn_in_place_request              = 90;
+    TurnInPlaceResponse           turn_in_place_response             = 91;
+    DriveStraightRequest          drive_straight_request             = 92;
+    DriveStraightResponse         drive_straight_response            = 93;
+    SetHeadAngleRequest           set_head_angle_request             = 94;
+    SetHeadAngleResponse          set_head_angle_response            = 95;
+    SetLiftHeightRequest          set_lift_height_request            = 96;
+    SetLiftHeightResponse         set_lift_height_response           = 97;
+    PlayAnimationRequest          play_animation_response            = 98;
+    PlayAnimationResult           play_animation_result              = 99;
 
     // ------------ status history --------------------
-    RobotHistoryRequest           robot_history_request = 80;
-    RobotHistoryResult            robot_history_result = 81;
+    RobotHistoryRequest           robot_history_request              = 80;
+    RobotHistoryResult            robot_history_result               = 81;
 
     // ------------ cube connections --------------------
-    ConnectCubeRequest            connect_cube_request          = 100;
-    ConnectCubeResponse           connect_cube_response         = 101;
-    DisconnectCubeRequest         disconnect_cube_request       = 102;
-    FlashCubeLightsRequest        flash_cube_lights_request     = 103;
-    ForgetPreferredCubeRequest    forget_preferred_cube_request = 104;
-    SetPreferredCubeRequest       set_preferred_cube_request    = 105;
-    SetCubeLightsRequest          set_cube_lights_request       = 106;
-    CubesAvailableRequest         cubes_available_request       = 107;
-    CubesAvailableResponse        cubes_available_response      = 108;
+    ConnectCubeRequest            connect_cube_request               = 100;
+    ConnectCubeResponse           connect_cube_response              = 101;
+    DisconnectCubeRequest         disconnect_cube_request            = 102;
+    FlashCubeLightsRequest        flash_cube_lights_request          = 103;
+    ForgetPreferredCubeRequest    forget_preferred_cube_request      = 104;
+    SetPreferredCubeRequest       set_preferred_cube_request         = 105;
+    SetCubeLightsRequest          set_cube_lights_request            = 106;
+    CubesAvailableRequest         cubes_available_request            = 107;
+    CubesAvailableResponse        cubes_available_response           = 108;
 
     // ------------ robot stats --------------------
-    BatteryStateRequest             battery_state_request = 110;
-    BatteryStateResponse            battery_state_response = 111;
-    VersionStateRequest             version_state_request = 112;
-    VersionStateResponse            version_state_response = 113;
-    NetworkStateRequest             network_state_request = 114;
-    NetworkStateResponse            network_state_response = 115;
+    BatteryStateRequest             battery_state_request            = 110;
+    BatteryStateResponse            battery_state_response           = 111;
+    VersionStateRequest             version_state_request            = 112;
+    VersionStateResponse            version_state_response           = 113;
+    NetworkStateRequest             network_state_request            = 114;
+    NetworkStateResponse            network_state_response           = 115;
 
     // ------------ text-to-speech pairs ------------
-    SayTextRequest                say_text_request = 120;
-    SayTextResponse               say_text_response = 121;
+    SayTextRequest                say_text_request                   = 120;
+    SayTextResponse               say_text_response                  = 121;
+
+    // ------------ behavior control pairs ----------
+    ControlRequest                control_request                    = 130;
+    ControlRelease                control_release                    = 131;
+    BehaviorControlResponse       behavior_control_response          = 132;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

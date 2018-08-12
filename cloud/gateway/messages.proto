@@ -7,6 +7,10 @@ package Anki.Vector.external_interface;
 import "extensions.proto";
 import "onboardingSteps.proto";
 
+// A null message used by streams to verify that the client is
+// still connected.
+message KeepAlivePing {}
+
 message ResultStatus {
   string description = 1;
 }
@@ -250,17 +254,6 @@ message RobotChangedObservedFaceID {
   int32   new_id = 2;
 }
 
-message SDKActivationRequest {
-  uint32 slot = 1; // TODO Use BehaviorSlot
-  bool enable = 2;
-}
-
-message SDKActivationResult {
-  ResultStatus status = 1;
-  uint32 slot = 2; // TODO Use BehaviorSlot
-  bool enabled = 3;
-}
-
 // Meet Victor
 message AppIntentRequest {
   string intent = 1;
@@ -385,24 +378,16 @@ message DriveOnChargerResult {
   BehaviorResults result = 2;
 }
 
-// TODO: Remove this example code once more code is converted to protobuf
+// TODO: Remove these when pings are part of the event stream, and
+// app team is converted over
 message Ping {
   uint64 ping = 1;
 }
 
-// TODO: Remove this example code once more code is converted to protobuf
+// TODO: Remove these when pings are part of the event stream, and
+// app team is converted over
 message Pong {
   uint64 pong = 1;
-}
-
-// TODO: Remove this example code once more code is converted to protobuf
-message Bing {
-  string bing = 1;
-}
-
-// TODO: Remove this example code once more code is converted to protobuf
-message Bong {
-  string bong = 1;
 }
 
 enum OnboardingStages

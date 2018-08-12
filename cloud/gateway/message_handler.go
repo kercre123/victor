@@ -74,14 +74,6 @@ func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalTo
 }
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoSDKActivationToClad(msg *extint.SDKActivationRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSDKActivationRequest(&gw_clad.SDKActivationRequest{
-		Slot:   msg.Slot,
-		Enable: msg.Enable,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount uint16, chunkIndex uint8, chunkCount uint8, durationMs uint32, interruptRunning bool) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDisplayFaceImageRGBChunk(&gw_clad.DisplayFaceImageRGBChunk{
 		FaceData:         faceData,
@@ -345,7 +337,7 @@ func CladObjectConnectionStateToProto(msg *gw_clad.ObjectConnectionState) *extin
 }
 func CladObjectAvailableToProto(msg *gw_clad.ObjectAvailable) *extint.ObjectAvailable {
 	return &extint.ObjectAvailable{
-		FactoryId:  msg.FactoryId,
+		FactoryId: msg.FactoryId,
 	}
 }
 func CladObjectMovedToProto(msg *gw_clad.ObjectMoved) *extint.ObjectMoved {
@@ -774,54 +766,138 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	return nil
 }
 
-func (m *rpcService) SDKBehaviorActivation(ctx context.Context, in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
-	log.Println("Received rpc request SDKBehaviorActivation(", in, ")")
-	if in.Enable {
-		// Request control from behavior system
-		return SDKBehaviorRequestActivation(in)
+func (c *rpcService) BehaviorRequestToGatewayWrapper(request *extint.BehaviorControlRequest) (*extint.GatewayWrapper, error) {
+	msg := &extint.GatewayWrapper{}
+	switch x := request.RequestType.(type) {
+	case *extint.BehaviorControlRequest_ControlRelease:
+		msg.OneofMessageType = &extint.GatewayWrapper_ControlRelease{
+			ControlRelease: request.GetControlRelease(),
+		}
+	case *extint.BehaviorControlRequest_ControlRequest:
+		msg.OneofMessageType = &extint.GatewayWrapper_ControlRequest{
+			ControlRequest: request.GetControlRequest(),
+		}
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "BehaviorControlRequest.ControlRequest has unexpected type %T", x)
 	}
-
-	return SDKBehaviorRequestDeactivation(in)
+	return msg, nil
 }
 
-// Request control from behavior system.
-func SDKBehaviorRequestActivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
-	// We are enabling the SDK behavior. Wait for the engine-to-game reply
-	// that the SDK behavior was activated.
-	f, sdkActivationResult := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_SDKActivationResult, 1)
+func (c *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) {
+	defer engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ControlRelease{
+			ControlRelease: &extint.ControlRelease{},
+		},
+	})
+	for true {
+		request, err := in.Recv()
+		if err != nil {
+			log.Println(err)
+			close(done)
+			return
+		}
+		log.Println("BehaviorControl Incoming Request:", request)
+
+		msg, err := c.BehaviorRequestToGatewayWrapper(request)
+		if err != nil {
+			log.Println(err)
+			close(done)
+			return
+		}
+		_, err = engineProtoManager.Write(msg)
+		if err != nil {
+			close(done)
+			return
+		}
+	}
+}
+
+func (c *rpcService) BehaviorControlResponseForwarding(wrapper chan extint.GatewayWrapper, responses chan extint.BehaviorControlResponse, done chan struct{}) {
+	for true {
+		select {
+		case <-done:
+			return
+		case msg := <-wrapper:
+			responses <- *msg.GetBehaviorControlResponse()
+		}
+	}
+}
+
+func (c *rpcService) BehaviorControlKeepAlive(responses chan extint.BehaviorControlResponse, done chan struct{}) {
+	ping := extint.BehaviorControlResponse{
+		ResponseType: &extint.BehaviorControlResponse_KeepAlive{
+			KeepAlive: &extint.KeepAlivePing{},
+		},
+	}
+	for true {
+		select {
+		case <-done:
+			return
+		case <-time.After(time.Second):
+			responses <- ping
+		}
+	}
+}
+
+// TODO: name this better
+func (c *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) error {
+	for true {
+		select {
+		case <-done:
+			return nil
+		case response := <-responses:
+			log.Printf("BehaviorControl update: %+v", response)
+			if err := out.Send(&response); err != nil {
+				return err
+			} else if err = out.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (c *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
+	log.Println("Received rpc request BehaviorControl")
+
+	done := make(chan struct{})
+	responses := make(chan extint.BehaviorControlResponse)
+
+	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoSDKActivationToClad(in))
-	if err != nil {
-		return nil, err
-	}
+	go c.BehaviorControlRequestHandler(bidirectionalStream, responses, done)
+	go c.BehaviorControlKeepAlive(responses, done)
+	go c.BehaviorControlResponseForwarding(behaviorStatus, responses, done)
 
-	result := <-sdkActivationResult
-	return &extint.SDKActivationResult{
-		Status: &extint.ResultStatus{
-			Description: "SDKActivationResult returned",
-		},
-		Slot:    result.GetSDKActivationResult().Slot,
-		Enabled: result.GetSDKActivationResult().Enabled,
-	}, nil
+	return c.BehaviorControlResponseHandler(bidirectionalStream, responses, done)
 }
 
-func SDKBehaviorRequestDeactivation(in *extint.SDKActivationRequest) (*extint.SDKActivationResult, error) {
-	// Deactivate the SDK behavior. Note that we don't wait for a reply
-	// so that our SDK program can exit immediately.
-	_, err := engineCladManager.Write(ProtoSDKActivationToClad(in))
+func (c *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
+	log.Println("Received rpc request AssumeBehaviorControl(", in, ")")
+
+	done := make(chan struct{})
+	responses := make(chan extint.BehaviorControlResponse)
+
+	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
+	defer f()
+
+	msg, err := c.BehaviorRequestToGatewayWrapper(in)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// Note: SDKActivationResult contains Slot and Enabled, which we are currently
-	// ignoring when we deactivate the SDK behavior since we are not waiting for
-	// the SDKActivationResult message to return.
-	return &extint.SDKActivationResult{
-		Status: &extint.ResultStatus{
-			Description: "SDKActivationResult returned",
-		},
-	}, nil
+	_, err = engineProtoManager.Write(msg)
+	if err != nil {
+		return err
+	}
+
+	go c.BehaviorControlKeepAlive(responses, done)
+	go c.BehaviorControlResponseForwarding(behaviorStatus, responses, done)
+
+	return c.BehaviorControlResponseHandler(out, responses, done)
 }
 
 func (m *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResult, error) {
@@ -892,26 +968,6 @@ func (m *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, e
 	return pong.GetPong(), nil
 }
 
-// Example sending a string to and receiving a string from the engine
-// TODO: Remove this example code once more code is converted to protobuf
-func (m *rpcService) Bang(ctx context.Context, in *extint.Bing) (*extint.Bong, error) {
-	log.Println("Received rpc request Bing(", in, ")")
-
-	f, result := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Bong{}, 1)
-	defer f()
-
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_Bing{
-			Bing: in,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	bong := <-result
-	return bong.GetBong(), nil
-}
-
 // Request the current robot onboarding status
 func (m *rpcService) GetOnboardingState(ctx context.Context, in *extint.OnboardingStateRequest) (*extint.OnboardingStateResponse, error) {
 	log.Println("Received rpc request GetOnboardingState(", in, ")")
@@ -960,7 +1016,7 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 			OnboardingRestart: in.GetOnboardingRestart(),
 		})
 	default:
-		return nil, status.Errorf(0, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
+		return nil, status.Errorf(codes.InvalidArgument, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
 	}
 }
 

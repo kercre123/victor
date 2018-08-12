@@ -159,7 +159,7 @@ MESSAGES_TO_TEST = [
      TestResultMatches(protocol.MoveLiftResult(status=protocol.ResultStatus(description="Message sent to engine")))),
     # PlayAnimation message
     (Interface.PlayAnimation,
-     protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_poked_giggle'), loops=1),
+     protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_blackjack_victorwin_01'), loops=1),
      TestResultMatches(protocol.PlayAnimationResult(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
     # ListAnimations message
     (Interface.ListAnimations,
@@ -169,10 +169,6 @@ MESSAGES_TO_TEST = [
     (Interface.DisplayFaceImageRGB,
      protocol.DisplayFaceImageRGBRequest(face_data=bytes(vector.color.Color(rgb=[255, 0, 0]).rgb565_bytepair * 17664), duration_ms=1000, interrupt_running=True),
      TestResultMatches(protocol.DisplayFaceImageRGBResult(status=protocol.ResultStatus(description="Message sent to engine")))),
-    # SDKBehaviorActivation message
-    (Interface.SDKBehaviorActivation,
-     protocol.SDKActivationRequest(slot=vector.connection.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY.value, enable=True),
-     TestResultMatches(protocol.SDKActivationResult(status=protocol.ResultStatus(description="SDKActivationResult returned"), slot=vector.connection.SDK_PRIORITY_LEVEL.SDK_HIGH_PRIORITY.value, enabled=True))),
     # UpdateEnrolledFaceByID message
     (Interface.UpdateEnrolledFaceByID,
      protocol.UpdateEnrolledFaceByIDRequest(

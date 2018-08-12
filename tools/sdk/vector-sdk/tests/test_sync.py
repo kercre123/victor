@@ -30,12 +30,12 @@ def main():
     print("------ Synchronous Robot using with ------")
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.events.subscribe('robot_state', test_subscriber)
-        robot.anim.play_animation("anim_poked_giggle")
+        robot.anim.play_animation("anim_blackjack_victorwin_01")
 
     print("------ Synchronous Robot using with ------")
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.events.subscribe('test1', test_subscriber)
-        robot.anim.play_animation("anim_poked_giggle")
+        robot.anim.play_animation("anim_blackjack_victorwin_01")
         robot.events.unsubscribe('test1', test_subscriber)
         robot.events.unsubscribe('test1', test_subscriber)
         robot.motors.set_wheel_motors(100.0, -100.0)
@@ -47,7 +47,7 @@ def main():
     robot.events.subscribe('test1', test_subscriber)
     try:
         robot.connect()
-        robot.anim.play_animation("anim_poked_giggle")
+        robot.anim.play_animation("anim_blackjack_victorwin_01")
         robot.motors.set_wheel_motors(-100.0, 100.0)
     finally:
         robot.disconnect()
@@ -57,7 +57,7 @@ def main():
     print("------ Asynchronous Robot using with ------")
     with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.events.subscribe('robot_state', test_subscriber)
-        robot.anim.play_animation("anim_poked_giggle").wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
         robot.motors.set_wheel_motors(-100.0, 100.0).wait_for_completed()
 
     time.sleep(2)
@@ -67,7 +67,7 @@ def main():
     robot.events.subscribe('robot_state', test_subscriber)
     try:
         robot.connect()
-        robot.anim.play_animation("anim_poked_giggle").wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
         robot.motors.set_wheel_motors(100.0, -100.0).wait_for_completed()
     finally:
         robot.disconnect()
@@ -78,7 +78,7 @@ def main():
     # Reuse the same robot from a previous connection
     try:
         robot.connect()
-        robot.anim.play_animation("anim_poked_giggle").wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
         robot.motors.set_wheel_motors(0.0, 0.0).wait_for_completed()
     finally:
         robot.disconnect()

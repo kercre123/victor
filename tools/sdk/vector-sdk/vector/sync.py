@@ -43,8 +43,8 @@ class Synchronizer:
             self.remove_pending(self)
         return None
 
-    @classmethod
-    def disable_log(cls, func):
+    @staticmethod
+    def disable_log(func):
         '''
         Use this decorator to disable the automatic debug logging of wrap
 

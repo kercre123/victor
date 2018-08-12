@@ -76,8 +76,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   auto sayTextCallback = std::bind(&RobotExternalRequestComponent::SayText, externalRequestComponent, std::placeholders::_1);
 
   // Subscribe to desired simple events
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once more examples are written
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBing, commonCallback)); // TODO: remove this once more examples are written
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once it's not used
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBatteryStateRequest, batteryStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kVersionStateRequest, versionStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
@@ -88,7 +87,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
 }
 
 
-// TODO: remove this once there are real examples of using proto in the engine code
+// TODO: remove this once it's no longer used
 void ProtoMessageHandler::PingPong(const external_interface::Ping& ping) {
   external_interface::Pong* pong = new external_interface::Pong{ ping.ping() + 1 };
   external_interface::GatewayWrapper wrapper;
@@ -97,22 +96,11 @@ void ProtoMessageHandler::PingPong(const external_interface::Ping& ping) {
 }
 
 
-// TODO: remove this once there are real examples of using proto in the engine code
-void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
-  external_interface::Bong* bong = new external_interface::Bong{ bing.bing() + "!" };
-  external_interface::GatewayWrapper wrapper;
-  wrapper.set_allocated_bong(bong);
-  DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
-}
-
 void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
   switch(event.GetData().GetTag())
   {
     case external_interface::GatewayWrapperTag::kPing:
       PingPong(event.GetData().ping());
-      break;
-    case external_interface::GatewayWrapperTag::kBing:
-      BingBong(event.GetData().bing());
       break;
     default:
       PRINT_STREAM_INFO("ProtoMessageHandler.HandleEvents",

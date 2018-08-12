@@ -25,8 +25,12 @@
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/externalInterface/gatewayInterface.h"
+#include "engine/externalInterface/externalMessageRouter.h"
 
 #include "util/logging/logging.h"
+
+#define LOG_CHANNEL "SdkComponent"
 
 namespace Anki {
 namespace Vector {
@@ -53,12 +57,13 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
   // TODO It's preferred, where possible, to use dependentComps rather than caching robot
   // directly (makes it much easier to write unit tests)
   _robot = robot;
-  // Subscribe to messages
-  if( _robot->HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this,  _signalHandles);
+  auto* gi = robot->GetGatewayInterface();
+  if (gi != nullptr)
+  {
+    auto callback = std::bind(&SDKComponent::HandleMessage, this, std::placeholders::_1);
 
-    using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::SDKActivationRequest>();
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kControlRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kControlRelease, callback));
   }
 }
 
@@ -69,20 +74,27 @@ void SDKComponent::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 // Receives a message that external SDK wants an SDK behavior to be activated.
-template<>
-void SDKComponent::HandleMessage(const ExternalInterface::SDKActivationRequest& msg)
+void SDKComponent::HandleMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
-  if (msg.enable) {
-    _sdkWantsControl = true;
+  switch(event.GetData().GetTag()){
+    case external_interface::GatewayWrapperTag::kControlRequest:
+      LOG_INFO("SDKComponent.HandleMessageRequest", "SDK requested control");
+      _sdkWantsControl = true;
 
-    if (_sdkBehaviorActivated) {
-      // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
-      DispatchSDKActivationResult(_sdkBehaviorActivated);
-      return;
-    }
-  }
-  else {
-    _sdkWantsControl = false;
+      if (_sdkBehaviorActivated) {
+        LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
+        // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
+        DispatchSDKActivationResult(_sdkBehaviorActivated);
+        return;
+      }
+      break;
+    case external_interface::GatewayWrapperTag::kControlRelease:
+      LOG_INFO("SDKComponent.HandleMessageRelease", "Releasing SDK control");
+      _sdkWantsControl = false;
+      break;
+    default:
+      LOG_WARNING("SDKComponent::HandleMessageDefault", "Unknown SDK control message");
+      break;
   }
 }
 
@@ -99,12 +111,16 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
 }
 
 void SDKComponent::DispatchSDKActivationResult(bool enabled) {
-  // Communicate to SDK that SDK behavior has been activated or deactivated.
-  // When activated, SDK can control the robot.
-  ExternalInterface::SDKActivationResult sar;
-  sar.slot = BehaviorSlot::SDK_HIGH_PRIORITY; // TODO Allow multiple levels to be used; don't hardcode. Also, this correlates to SDK0. Rename SDK0 to SDK_HIGH_PRIORITY or similar?
-  sar.enabled = enabled;
-  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(sar)));  
+  auto* gi = _robot->GetGatewayInterface();
+  if (enabled) {
+    //TODO: better naming, more readable, and logging
+    auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlGrantedResponse());
+    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+  }
+  else {
+    auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlLostResponse());
+    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+  }
 }
 
 } // namespace Vector

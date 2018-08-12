@@ -66,9 +66,18 @@ def connection_error(rpc_error: RpcError) -> VectorConnectionException:
     return VectorConnectionException(rpc_error)
 
 
-class VectorNotReadyException(VectorException):
-    '''Vector tried to do something before it was ready'''
-
-    def __init__(self, cause):
-        msg = (f"{self.__class__.__doc__}: {cause if cause else 'Unknown error'}")
+class _VectorGenericException(VectorException):
+    def __init__(self, cause=None):
+        msg = (f"{self.__class__.__doc__}\n{cause if cause is not None else ''}")
         super().__init__(msg)
+
+
+class VectorNotReadyException(_VectorGenericException):
+    """Vector tried to do something before it was ready"""
+
+
+class VectorControlException(_VectorGenericException):
+    """Failed to get control of Vector
+
+You may want to try requesting a higher control level
+"""
