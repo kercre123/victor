@@ -60,7 +60,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 // TODO: Expose these as parameters
 #define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
@@ -3420,14 +3420,14 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       return;
     }
 
-    Json::Value toSendToWebViz;
+    auto webSender = WebService::WebVizSender::CreateWebVizSender("navmap", _robot->GetContext()->GetWebService());
 
     const ObjectID& locObject = _robot->GetLocalizedTo();
 
     // Note: only drawing objects in current coordinate frame!
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-    ModifierFcn visualizeHelper = [this,&locObject,&toSendToWebViz](ObservableObject* object)
+    ModifierFcn visualizeHelper = [this,&locObject,webSender](ObservableObject* object)
     {
       if(object->GetID() == _selectedObjectID) {
         // Draw selected object in a different color and draw its pre-action poses
@@ -3461,39 +3461,34 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         object->Visualize();
       }
 
-      if( object->GetFamily() == ObjectFamily::LightCube ) {
-        Json::Value cubeInfo;
-        const auto& pose = object->GetPose();
-        cubeInfo["x"] = pose.GetTranslation().x();
-        cubeInfo["y"] = pose.GetTranslation().y();
-        cubeInfo["z"] = pose.GetTranslation().z();
-        cubeInfo["angle"] = pose.GetRotationAngle<'Z'>().ToFloat();
-        toSendToWebViz["cubes"].append( cubeInfo );
+      if( webSender ) {
+        if( object->GetFamily() == ObjectFamily::LightCube ) {
+          Json::Value cubeInfo;
+          const auto& pose = object->GetPose();
+          cubeInfo["x"] = pose.GetTranslation().x();
+          cubeInfo["y"] = pose.GetTranslation().y();
+          cubeInfo["z"] = pose.GetTranslation().z();
+          cubeInfo["angle"] = pose.GetRotationAngle<'Z'>().ToFloat();
+          webSender->Data()["cubes"].append( cubeInfo );
+        }
       }
     };
 
     FindLocatedObjectHelper(filter, visualizeHelper, false);
 
-    const auto* webService = _robot->GetContext()->GetWebService();
-    if( (webService != nullptr) && !toSendToWebViz.empty() ) {
-      toSendToWebViz["type"] = "MemoryMapCubes";
-      static const std::string kModuleName = "navmap";
-      webService->SendToWebViz( kModuleName, toSendToWebViz );
+    // don't fill type unless there's some actual data (to avoid unnecessary sends)
+    if( webSender && !webSender->Data().empty() ) {
+      webSender->Data()["type"] = "MemoryMapCubes";
     }
-
   } // DrawAllObjects()
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const
   {
-    static const std::string kModuleName = "observedobjects";
-    const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr && webService->IsWebVizClientSubscribed(kModuleName)) {
-      Json::Value data;
-      data["type"] = "RobotDeletedLocatedObject";
-      data["objectID"] = msg.objectID;
-
-      webService->SendToWebViz( kModuleName, data );
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("observedobjects",
+                                                                      _robot->GetContext()->GetWebService()) ) {
+      webSender->Data()["type"] = "RobotDeletedLocatedObject";
+      webSender->Data()["objectID"] = msg.objectID;
     }
 
   } // SendObjectUpdateToWebViz()
@@ -3501,18 +3496,14 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const
   {
-    static const std::string kModuleName = "observedobjects";
-    const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr && webService->IsWebVizClientSubscribed(kModuleName)) {
-      Json::Value data;
-      data["type"] = "RobotObservedObject";
-      data["objectID"] = msg.objectID;
-      data["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
-      data["objectType"] = ObjectTypeToString(msg.objectType);
-      data["isActive"] = msg.isActive;
-      data["timestamp"] = msg.timestamp;
-
-      webService->SendToWebViz( kModuleName, data );
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("observedobjects",
+                                                                      _robot->GetContext()->GetWebService()) ) {
+      webSender->Data()["type"] = "RobotObservedObject";
+      webSender->Data()["objectID"] = msg.objectID;
+      webSender->Data()["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
+      webSender->Data()["objectType"] = ObjectTypeToString(msg.objectType);
+      webSender->Data()["isActive"] = msg.isActive;
+      webSender->Data()["timestamp"] = msg.timestamp;
     }
 
   } // SendObjectUpdateToWebViz()

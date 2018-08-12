@@ -63,7 +63,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
 
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 #define LOG_CHANNEL    "Behaviors"
 
@@ -1703,11 +1703,9 @@ void ICozmoBehavior::SetDebugStateNameToWebViz() const
 {
   const auto* context = GetBEI().GetRobotInfo().GetContext();
   if( context != nullptr ) {
-    const auto* webService = context->GetWebService();
-    if( webService != nullptr ){
-      Json::Value data;
-      data["debugState"] = _debugStateName;
-      webService->SendToWebViz( "behaviors", data );
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("behaviors",
+                                                                      context->GetWebService()) ) {
+      webSender->Data()["debugState"] = _debugStateName;
     }
   }
 }

@@ -26,7 +26,7 @@
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 namespace Anki {
 namespace Vector {
@@ -114,14 +114,12 @@ ActiveFeature ActiveFeatureComponent::GetActiveFeature() const
 
 void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intentSource) const
 {
-  static const std::string kWebVizModuleName = "behaviors";
   if( _activeFeature != ActiveFeature::NoFeature ) {
     if( _context != nullptr ) {
-      const auto* webService = _context->GetWebService();
-      if( webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
-        Json::Value data;
-        data["activeFeature"] = std::string(ActiveFeatureToString(_activeFeature)) + " (" + intentSource + ")";
-        webService->SendToWebViz(kWebVizModuleName, data);
+      if( auto webSender = WebService::WebVizSender::CreateWebVizSender("behaviors",
+                                                                        _context->GetWebService()) ) {
+        webSender->Data()["activeFeature"] = std::string(ActiveFeatureToString(_activeFeature)) +
+                                             " (" + intentSource + ")";
       }
     }
   }

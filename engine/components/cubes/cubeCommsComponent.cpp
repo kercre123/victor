@@ -38,6 +38,7 @@
 #include "util/console/consoleInterface.h"
 
 #include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 namespace Anki {
 namespace Vector {
@@ -835,9 +836,8 @@ void CubeCommsComponent::SendDataToWebViz()
 
   const auto* context = _robot->GetContext();
   if (context != nullptr) {
-    auto* webService = context->GetWebService();
-    if (webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleNameCubes)) {
-      Json::Value toSend = Json::objectValue;
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleNameCubes,
+                                                                      context->GetWebService()) ) {
       Json::Value commInfo = Json::objectValue;
       commInfo["connectionState"] = CubeConnectionStateToString(GetCubeConnectionState());
       commInfo["connectedCube"] = IsConnectedToCube() ? GetCurrentCube() : "(none)";
@@ -853,8 +853,7 @@ void CubeCommsComponent::SendDataToWebViz()
         cubeData.append(blob);
       }
       commInfo["cubeData"] = cubeData;
-      toSend["commInfo"] = commInfo;
-      webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
+      webSender->Data()["commInfo"] = commInfo;
     }
   }
 }

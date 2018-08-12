@@ -27,7 +27,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 
 #include "json/json.h"
@@ -588,11 +588,11 @@ std::vector<std::string> UserIntentComponent::DevGetAppIntentsList() const
 void UserIntentComponent::SendWebVizIntents()
 {
   if( _context != nullptr ) {
-    const auto* webService = _context->GetWebService();
-    static const std::string kWebVizModuleNameIntents = "intents";
-    if (webService->IsWebVizClientSubscribed(kWebVizModuleNameIntents)) {
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("intents",
+                                                                      _context->GetWebService()) ) {
 
-      Json::Value toSend = Json::arrayValue;
+      Json::Value& toSend = webSender->Data();
+      toSend = Json::arrayValue;
 
       {
         Json::Value blob;
@@ -619,9 +619,7 @@ void UserIntentComponent::SendWebVizIntents()
         toSend.append(blob);
         _devLastReceivedAppIntent.clear();
       }
-
-      webService->SendToWebViz( kWebVizModuleNameIntents, toSend );
-    }
+    } // if (webSender ...
   }
 }
 

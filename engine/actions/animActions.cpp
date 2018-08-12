@@ -33,7 +33,7 @@
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 namespace Anki {
 
@@ -194,18 +194,16 @@ namespace Anki {
         }
       }
 
-      auto* webService = GetRobot().GetContext()->GetWebService();
-      if( webService != nullptr ) {
-        Json::Value data;
-        data["clip"] = animClipName;
-        data["group"] = animGroupName;
-        if( animTrigger != AnimationTrigger::Count ) {
-          data["trigger"] = AnimationTriggerToString(animTrigger);
-        }
-        data["mood"] = EnumToString(simpleMood);
-        data["headAngle_deg"] = headAngle_deg;
 
-        webService->SendToWebViz("animationengine", data);
+      if( auto webSender = WebService::WebVizSender::CreateWebVizSender("animationengine",
+                             GetRobot().GetContext()->GetWebService()) ) {
+        webSender->Data()["clip"] = animClipName;
+        webSender->Data()["group"] = animGroupName;
+        if( animTrigger != AnimationTrigger::Count ) {
+          webSender->Data()["trigger"] = AnimationTriggerToString(animTrigger);
+        }
+        webSender->Data()["mood"] = EnumToString(simpleMood);
+        webSender->Data()["headAngle_deg"] = headAngle_deg;
       }
     }
 

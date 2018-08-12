@@ -32,7 +32,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 #define SET_STATE(s) do { \
                           _trackerState = ECITState::s; \
@@ -583,48 +583,41 @@ void CubeInteractionTracker::SendDataToWebViz()
 {
 #if ANKI_DEV_CHEATS
 
-  const CozmoContext* context = nullptr;
-  const WebService::WebService* webService = nullptr;
   if(_robot != nullptr){
-    context = _robot->GetContext();
+    const CozmoContext* context = _robot->GetContext();
     if(nullptr != context){
-      webService = context->GetWebService();
+      if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleNameCubes,
+                                                                        context->GetWebService()) ) {
+        Json::Value citInfo = Json::objectValue;
+
+        // Display Status Info
+        citInfo["trackingState"]     = _debugStateString;
+        if(GetTargetID().IsUnknown()){
+          citInfo["NoTarget"]        = true;
+        }
+        citInfo["visTrackingRate"]   = _trackingAtHighRate ? "High" : "Low";
+        citInfo["userHoldingCube"]   = _targetStatus.isHeld;
+        citInfo["heldProbability"]   = _targetStatus.probabilityIsHeld * 100.0f;
+        citInfo["movedFarRecently"]  = _targetStatus.movedFarRecently;
+        citInfo["movedRecently"]     = _targetStatus.movedRecently;
+        citInfo["visibleRecently"]   = _targetStatus.visibleRecently;
+        citInfo["timeSinceHeld"]     = _currentTimeThisTick_s - _targetStatus.lastHeldTime_s;
+        citInfo["timeSinceMoved"]    = _currentTimeThisTick_s - _targetStatus.lastMovedTime_s;
+        citInfo["timeSinceObserved"] = _currentTimeThisTick_s - _targetStatus.lastObservedTime_s;
+        citInfo["timeSinceTapped"]   = _currentTimeThisTick_s - _targetStatus.lastTappedTime_s;
+
+        if(_targetStatus.visibleRecently){
+          Json::Value targetInfo           = Json::objectValue;
+          targetInfo["distance"]           = _targetStatus.distance_mm;
+          targetInfo["distMeasuredByProx"] = _targetStatus.distMeasuredWithProx;
+          targetInfo["angle"]              = _targetStatus.angleFromRobotFwd_deg;
+          citInfo["targetInfo"]            = targetInfo;
+        }
+
+        webSender->Data()["citInfo"] = citInfo;
+      }
     }
   }
-
-  if(nullptr == webService){
-    return;
-  }
-
-  Json::Value toSend = Json::objectValue;
-  Json::Value citInfo = Json::objectValue;
-
-  // Display Status Info
-  citInfo["trackingState"]     = _debugStateString;
-  if(GetTargetID().IsUnknown()){
-    citInfo["NoTarget"]        = true;
-  }
-  citInfo["visTrackingRate"]   = _trackingAtHighRate ? "High" : "Low";
-  citInfo["userHoldingCube"]   = _targetStatus.isHeld;
-  citInfo["heldProbability"]   = _targetStatus.probabilityIsHeld * 100.0f;
-  citInfo["movedFarRecently"]  = _targetStatus.movedFarRecently;
-  citInfo["movedRecently"]     = _targetStatus.movedRecently;
-  citInfo["visibleRecently"]   = _targetStatus.visibleRecently;
-  citInfo["timeSinceHeld"]     = _currentTimeThisTick_s - _targetStatus.lastHeldTime_s;
-  citInfo["timeSinceMoved"]    = _currentTimeThisTick_s - _targetStatus.lastMovedTime_s;
-  citInfo["timeSinceObserved"] = _currentTimeThisTick_s - _targetStatus.lastObservedTime_s;
-  citInfo["timeSinceTapped"]   = _currentTimeThisTick_s - _targetStatus.lastTappedTime_s;
-
-  if(_targetStatus.visibleRecently){
-    Json::Value targetInfo           = Json::objectValue;
-    targetInfo["distance"]           = _targetStatus.distance_mm;
-    targetInfo["distMeasuredByProx"] = _targetStatus.distMeasuredWithProx;
-    targetInfo["angle"]              = _targetStatus.angleFromRobotFwd_deg;
-    citInfo["targetInfo"]            = targetInfo;
-  }
-  
-  toSend["citInfo"] = citInfo;
-  webService->SendToWebViz(kWebVizModuleNameCubes, toSend);
 
 #endif // ANKI_DEV_CHEATS
 }
