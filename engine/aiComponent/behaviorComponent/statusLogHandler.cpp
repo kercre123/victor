@@ -75,7 +75,7 @@ void StatusLogHandler::SendStatusHistory()
 {
   auto* gi = _context->GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* response = new external_interface::RobotHistoryResult;
+    auto* response = new external_interface::RobotHistoryResponse;
     response->mutable_messages()->Reserve( (int)_statusHistory->size() );
     for( size_t i=0; i<_statusHistory->size(); ++i ) {
       auto* status = response->mutable_messages()->Add();

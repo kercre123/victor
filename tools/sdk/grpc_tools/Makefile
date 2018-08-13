@@ -171,11 +171,7 @@ test_drive_on_charger: .require_ip
 test_ping_pong: .require_ip
 	$(curl_command)/v1/pang -d '{"ping":10}'
 	@echo
-	$(curl_command)/v1/bang -d '{"bing":"SomeThing"}'
-	@echo
 	$(curl_command)/v1/pang -d '{"ping":20}'
-	@echo
-	$(curl_command)/v1/bang -d '{"bing":"zome_Thing"}'
 	@echo
 
 test_onboarding: .require_ip

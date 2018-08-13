@@ -144,36 +144,36 @@ MESSAGES_TO_TEST = [
                                  right_wheel_mmps=0.0,
                                  left_wheel_mmps2=0.0,
                                  right_wheel_mmps2=0.0),
-     TestResultMatches(protocol.DriveWheelsResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.DriveWheelsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # DriveArc message
     (Interface.DriveArc,
      protocol.DriveArcRequest(speed=0.0, accel=0.0, curvature_radius_mm=0),
-     TestResultMatches(protocol.DriveArcResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.DriveArcResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # MoveHead message
     (Interface.MoveHead,
      protocol.MoveHeadRequest(speed_rad_per_sec=0.0),
-     TestResultMatches(protocol.MoveHeadResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.MoveHeadResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # MoveLift message
     (Interface.MoveLift,
      protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
-     TestResultMatches(protocol.MoveLiftResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.MoveLiftResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # PlayAnimation message
     (Interface.PlayAnimation,
      protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_blackjack_victorwin_01'), loops=1),
-     TestResultMatches(protocol.PlayAnimationResult(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
+     TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
     # ListAnimations message
     (Interface.ListAnimations,
      protocol.ListAnimationsRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResult, protocol.ResultStatus(description="Available animations returned"), ['animation_names'])),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_names'])),  # pylint: disable=no-member
     # DisplayFaceImageRGB message
     (Interface.DisplayFaceImageRGB,
      protocol.DisplayFaceImageRGBRequest(face_data=bytes(vector.color.Color(rgb=[255, 0, 0]).rgb565_bytepair * 17664), duration_ms=1000, interrupt_running=True),
-     TestResultMatches(protocol.DisplayFaceImageRGBResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.DisplayFaceImageRGBResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # UpdateEnrolledFaceByID message
     (Interface.UpdateEnrolledFaceByID,
      protocol.UpdateEnrolledFaceByIDRequest(
          face_id=1, old_name="Bobert", new_name="Boberta"),
-     TestResultMatches(protocol.UpdateEnrolledFaceByIDResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.UpdateEnrolledFaceByIDResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # SetFaceToEnroll message
     (Interface.SetFaceToEnroll,
      protocol.SetFaceToEnrollRequest(name="Boberta",
@@ -182,35 +182,35 @@ MESSAGES_TO_TEST = [
                                      save_to_robot=True,
                                      say_name=True,
                                      use_music=True),
-     TestResultMatches(protocol.SetFaceToEnrollResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.SetFaceToEnrollResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # CancelFaceEnrollment message
     (Interface.CancelFaceEnrollment,
      protocol.CancelFaceEnrollmentRequest(),
-     TestResultMatches(protocol.CancelFaceEnrollmentResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.CancelFaceEnrollmentResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # EraseEnrolledFaceByID message
     (Interface.EraseEnrolledFaceByID,
      protocol.EraseEnrolledFaceByIDRequest(face_id=1),
-     TestResultMatches(protocol.EraseEnrolledFaceByIDResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.EraseEnrolledFaceByIDResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # EraseAllEnrolledFaces message
     (Interface.EraseAllEnrolledFaces,
      protocol.EraseAllEnrolledFacesRequest(),
-     TestResultMatches(protocol.EraseAllEnrolledFacesResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.EraseAllEnrolledFacesResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # RequestEnrolledNames message
     (Interface.RequestEnrolledNames,
      protocol.RequestEnrolledNamesRequest(),
-     TestResultMatches(protocol.RequestEnrolledNamesResult(status=protocol.ResultStatus(description="Enrolled names returned"), faces=[]))),
+     TestResultMatches(protocol.RequestEnrolledNamesResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), faces=[]))),  # pylint: disable=no-member
     # EnableVisionMode message
     (client.ExternalInterfaceServicer.EnableVisionMode,
      protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value(
          "VISION_MODE_DETECTING_FACES"), enable=True),
-     TestResultMatches(protocol.EnableVisionModeResult(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.EnableVisionModeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # DriveStraight message
     (client.ExternalInterfaceServicer.DriveStraight,
      protocol.DriveStraightRequest(speed_mmps=0.0,
                                    dist_mm=0.0,
                                    should_play_animation=False),
-     TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
+     TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
     # TurnInPlace message
     (client.ExternalInterfaceServicer.TurnInPlace,
@@ -219,7 +219,7 @@ MESSAGES_TO_TEST = [
                                  accel_rad_per_sec2=0.0,
                                  tol_rad=0.0,
                                  is_absolute=False),
-     TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
+     TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
     # SetHeadAngle message
     (client.ExternalInterfaceServicer.SetHeadAngle,
@@ -227,7 +227,7 @@ MESSAGES_TO_TEST = [
                                   max_speed_rad_per_sec=0.0,
                                   accel_rad_per_sec2=0.0,
                                   duration_sec=0.0),
-     TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
+     TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
     # SetLiftHeight message
     (client.ExternalInterfaceServicer.SetLiftHeight,
@@ -235,40 +235,40 @@ MESSAGES_TO_TEST = [
                                    max_speed_rad_per_sec=0.0,
                                    accel_rad_per_sec2=0.0,
                                    duration_sec=0.0),
-     TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResultStatus(description="Message sent to engine"), result=1))),
+     TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
     # SetBackpackLights message
     (client.ExternalInterfaceServicer.SetBackpackLights,
      protocol.SetBackpackLightsRequest(on_color=[0, 0, 0], off_color=[0, 0, 0], on_period_ms=[250, 250, 250],
                                        off_period_ms=[0, 0, 0], transition_on_period_ms=[0, 0, 0], transition_off_period_ms=[0, 0, 0]),
-     TestResultMatches(protocol.SetBackpackLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.SetBackpackLightsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # ConnectCube message
     (client.ExternalInterfaceServicer.ConnectCube,
      protocol.ConnectCubeRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
-                                             protocol.ResultStatus(description="Response received from engine"),
+                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
                                              ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
     (client.ExternalInterfaceServicer.DisconnectCube,
      protocol.DisconnectCubeRequest(),
-     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # FlashCubeLights message
     (client.ExternalInterfaceServicer.FlashCubeLights,
      protocol.FlashCubeLightsRequest(),
-     TestResultMatches(protocol.FlashCubeLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.FlashCubeLightsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # SetPreferredCube message
     (client.ExternalInterfaceServicer.SetPreferredCube,
      protocol.SetPreferredCubeRequest(factory_id="11:11:11:11:11:11"),
-     TestResultMatches(protocol.SetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.SetPreferredCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # ForgetPreferredCube message
     (client.ExternalInterfaceServicer.ForgetPreferredCube,
      protocol.ForgetPreferredCubeRequest(),
-     TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # SetCubeLights message
     # Note: We don't have the proper object id from the ConnectCube response, but we can test that the message is properly sent
@@ -286,7 +286,7 @@ MESSAGES_TO_TEST = [
          relative_to_y=0.0,
          rotate=False,
          make_relative=protocol.SetCubeLightsRequest.OFF),  # pylint: disable=no-member
-     TestResultMatches(protocol.SetCubeLightsResponse(status=protocol.ResultStatus(description="Message sent to engine")))),
+     TestResultMatches(protocol.SetCubeLightsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # TODO: Enable testcase once issue described below is resolved
     # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to
@@ -295,28 +295,28 @@ MESSAGES_TO_TEST = [
     # (client.ExternalInterfaceServicer.BatteryState,
     #  protocol.BatteryStateRequest(),
     #  TestResultIsTypeWithStatusAndFieldNames(protocol.BatteryStateResponse,
-    #                                          protocol.ResultStatus(description="Message sent to engine"),
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
     #                                          ["battery_level", "battery_volts", "is_charging", "is_on_charger_platform"])),
 
     # VersionState message
     (client.ExternalInterfaceServicer.VersionState,
      protocol.VersionStateRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.VersionStateResponse,
-                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
                                              ["os_version", "engine_build_id"])),
 
     # NetworkState message
     (client.ExternalInterfaceServicer.NetworkState,
      protocol.NetworkStateRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.NetworkStateResponse,
-                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
                                              ["network_stats"])),
 
     # SayText message
     (client.ExternalInterfaceServicer.SayText,
      protocol.SayTextRequest(text="hello", use_vector_voice=True),
      TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
-                                             protocol.ResultStatus(description="Message sent to engine"),
+                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
                                              ["state"])),
 
     # NOTE: Add additional messages here

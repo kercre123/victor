@@ -64,9 +64,6 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   _isInitialized = true;
   _context = context;
 
-  // We'll use this callback for simple events we care about
-  auto commonCallback = std::bind(&ProtoMessageHandler::HandleEvents, this, std::placeholders::_1);
-
   RobotExternalRequestComponent* externalRequestComponent = new RobotExternalRequestComponent();
   externalRequestComponent->Init(_context);
 
@@ -76,7 +73,6 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   auto sayTextCallback = std::bind(&RobotExternalRequestComponent::SayText, externalRequestComponent, std::placeholders::_1);
 
   // Subscribe to desired simple events
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once it's not used
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBatteryStateRequest, batteryStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kVersionStateRequest, versionStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
@@ -84,28 +80,6 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, sayTextCallback));
   
   return RESULT_OK;
-}
-
-
-// TODO: remove this once it's no longer used
-void ProtoMessageHandler::PingPong(const external_interface::Ping& ping) {
-  external_interface::Pong* pong = new external_interface::Pong{ ping.ping() + 1 };
-  external_interface::GatewayWrapper wrapper;
-  wrapper.set_allocated_pong(pong);
-  DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
-}
-
-
-void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
-  switch(event.GetData().GetTag())
-  {
-    case external_interface::GatewayWrapperTag::kPing:
-      PingPong(event.GetData().ping());
-      break;
-    default:
-      PRINT_STREAM_INFO("ProtoMessageHandler.HandleEvents",
-                        "HandleEvents called for unknown message");
-  }
 }
 
 

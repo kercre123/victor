@@ -159,9 +159,9 @@ void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
   SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
-    driveOffChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResult) );
+    auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
+    driveOffChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResponse) );
   }
 }  
 
@@ -169,9 +169,9 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
   SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
-    driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+    auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
+    driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
   }
 }
 
@@ -234,7 +234,7 @@ void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
 
     case RobotActionType::PLAY_ANIMATION:
     {
-      auto* response = new external_interface::PlayAnimationResult;
+      auto* response = new external_interface::PlayAnimationResponse;
       response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
       gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
     }
@@ -273,9 +273,9 @@ void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::Driv
   // If we got this far, we failed to activate the requested behavior.
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
-    driveOffChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResult) );
+    auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
+    driveOffChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResponse) );
   }
 }
 
@@ -291,9 +291,9 @@ void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::Drive
   // If we got this far, we failed to activate the requested behavior.
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
-    driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+    auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
+    driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
   }
 }
 } // namespace Vector

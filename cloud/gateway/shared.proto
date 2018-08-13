@@ -37,9 +37,9 @@ message Event {
 
 message EventRequest {}
 
-message EventResult {
+message EventResponse {
   option (streamed) = true;
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   Event event = 2;
 }
 
@@ -87,9 +87,9 @@ message GatewayWrapper {
 
     // ------------ sdk behavior request/response pairs --------------------
     DriveOffChargerRequest        drive_off_charger_request          = 70;
-    DriveOffChargerResult         drive_off_charger_result           = 71;
+    DriveOffChargerResponse       drive_off_charger_response         = 71;
     DriveOnChargerRequest         drive_on_charger_request           = 72;
-    DriveOnChargerResult          drive_on_charger_result            = 73;
+    DriveOnChargerResponse        drive_on_charger_response          = 73;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest            turn_in_place_request              = 90;
@@ -100,12 +100,12 @@ message GatewayWrapper {
     SetHeadAngleResponse          set_head_angle_response            = 95;
     SetLiftHeightRequest          set_lift_height_request            = 96;
     SetLiftHeightResponse         set_lift_height_response           = 97;
-    PlayAnimationRequest          play_animation_response            = 98;
-    PlayAnimationResult           play_animation_result              = 99;
+    PlayAnimationRequest          play_animation_request             = 98;
+    PlayAnimationResponse         play_animation_response            = 99;
 
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 80;
-    RobotHistoryResult            robot_history_result               = 81;
+    RobotHistoryResponse          robot_history_response             = 81;
 
     // ------------ cube connections --------------------
     ConnectCubeRequest            connect_cube_request               = 100;
@@ -145,7 +145,7 @@ message UserAuthenticationRequest {
 }
 
 message UserAuthenticationResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   enum Code {
     UNAUTHORIZED = 0;
     AUTHORIZED = 1;

@@ -11,8 +11,16 @@ import "onboardingSteps.proto";
 // still connected.
 message KeepAlivePing {}
 
-message ResultStatus {
-  string description = 1;
+message ResponseStatus {
+  enum StatusCode {
+    UNKNOWN = 0;
+    RESPONSE_RECEIVED = 1; // The message has completed as expected
+    REQUEST_PROCESSING = 2; // The message has been sent to the robot
+    FORBIDDEN = 100; // The user was not authorizied
+    NOT_FOUND = 101; // The requested attribute was not found
+    ERROR_UPDATE_IN_PROGRESS = 102; // The current rpc is currently updating values from another call
+  }
+  StatusCode code = 1;
 }
 
 message Animation {
@@ -26,24 +34,24 @@ message DriveWheelsRequest {
   float right_wheel_mmps2 = 4;
 }
 
-message DriveWheelsResult {
-  ResultStatus status = 1;
+message DriveWheelsResponse {
+  ResponseStatus status = 1;
 }
 
 message MoveHeadRequest {
   float speed_rad_per_sec = 1;
 }
 
-message MoveHeadResult {
-  ResultStatus status = 1;
+message MoveHeadResponse {
+  ResponseStatus status = 1;
 }
 
 message MoveLiftRequest {
   float speed_rad_per_sec = 1;
 }
 
-message MoveLiftResult {
-  ResultStatus status = 1;
+message MoveLiftResponse {
+  ResponseStatus status = 1;
 }
 
 message DriveArcRequest {
@@ -52,8 +60,8 @@ message DriveArcRequest {
   int32 curvature_radius_mm = 3;
 }
 
-message DriveArcResult {
-  ResultStatus status = 1;
+message DriveArcResponse {
+  ResponseStatus status = 1;
 }
 
 // TODO: hook up ignore tracks and test that they work in the new world
@@ -65,15 +73,15 @@ message PlayAnimationRequest {
   bool ignore_lift_track = 5;
 }
 
-message PlayAnimationResult {
-  ResultStatus status = 1;
+message PlayAnimationResponse {
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
 message ListAnimationsRequest {}
 
-message ListAnimationsResult {
-  ResultStatus status = 1;
+message ListAnimationsResponse {
+  ResponseStatus status = 1;
   repeated Animation animation_names = 2;
 }
 
@@ -88,8 +96,8 @@ message DisplayFaceImageRGBRequest {
   bool interrupt_running = 3;
 }
 
-message DisplayFaceImageRGBResult {
-  ResultStatus status = 1;
+message DisplayFaceImageRGBResponse {
+  ResponseStatus status = 1;
 }
 
 message MeetVictorFaceScanStarted
@@ -137,7 +145,7 @@ message TimeStampedStatus {
 message RobotHistoryRequest {
 }
 
-message RobotHistoryResult {
+message RobotHistoryResponse {
   repeated TimeStampedStatus messages = 1;
 }
 
@@ -276,8 +284,8 @@ enum FaceEnrollmentResult
   UNKNOWN_FAILURE = 9;
 }
 
-message AppIntentResult {
-  ResultStatus status = 1;
+message AppIntentResponse {
+  ResponseStatus status = 1;
 }
 
 message FaceEnrollmentCompleted {
@@ -289,8 +297,8 @@ message FaceEnrollmentCompleted {
 message CancelFaceEnrollmentRequest {
 }
 
-message CancelFaceEnrollmentResult {
-  ResultStatus status = 1;
+message CancelFaceEnrollmentResponse {
+  ResponseStatus status = 1;
 }
 
 message RequestEnrolledNamesRequest {
@@ -310,8 +318,8 @@ message RobotRenamedEnrolledFace {
     string   name = 2;
 }
 
-message RequestEnrolledNamesResult {
-  ResultStatus status = 1;
+message RequestEnrolledNamesResponse {
+  ResponseStatus status = 1;
   repeated LoadedKnownFace faces = 2;
 }
 
@@ -321,23 +329,23 @@ message UpdateEnrolledFaceByIDRequest {
   string new_name = 3;
 }
 
-message UpdateEnrolledFaceByIDResult {
-  ResultStatus status = 1;
+message UpdateEnrolledFaceByIDResponse {
+  ResponseStatus status = 1;
 }
 
 message EraseEnrolledFaceByIDRequest {
   int32 face_id = 1;
 }
 
-message EraseEnrolledFaceByIDResult {
-  ResultStatus status = 1;
+message EraseEnrolledFaceByIDResponse {
+  ResponseStatus status = 1;
 }
 
 message EraseAllEnrolledFacesRequest {
 }
 
-message EraseAllEnrolledFacesResult {
-  ResultStatus status = 1;
+message EraseAllEnrolledFacesResponse {
+  ResponseStatus status = 1;
 }
 
 message SetFaceToEnrollRequest {
@@ -351,8 +359,8 @@ message SetFaceToEnrollRequest {
   bool    say_name = 5;       // Play say-name/celebration animations on success before completing
   bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
 }
-message SetFaceToEnrollResult {
-  ResultStatus status = 1;
+message SetFaceToEnrollResponse {
+  ResponseStatus status = 1;
 }
 
 enum BehaviorResults
@@ -365,16 +373,16 @@ enum BehaviorResults
 message DriveOffChargerRequest {
 }
 
-message DriveOffChargerResult {
-  ResultStatus status = 1;
+message DriveOffChargerResponse {
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
 message DriveOnChargerRequest {
 }
 
-message DriveOnChargerResult {
-  ResultStatus status = 1;
+message DriveOnChargerResponse {
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -435,7 +443,7 @@ message OnboardingStateRequest {
 }
 
 message OnboardingStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   OnboardingState onboarding_state = 2;
 }
 
@@ -471,7 +479,7 @@ message OnboardingInputRequest {
 }
 
 message OnboardingInputResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   oneof oneof_message_type {
     OnboardingContinueResponse onboarding_continue_response = 2;
   }
@@ -505,7 +513,7 @@ message PhotosInfoRequest {
 }
 
 message PhotosInfoResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   repeated PhotoInfo photo_infos = 2;
 }
 
@@ -519,7 +527,7 @@ message PhotoPathMessage {
 }
 
 message PhotoResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   bool success = 2;
   bytes image = 3;
 }
@@ -534,7 +542,7 @@ message ThumbnailPathMessage {
 }
 
 message ThumbnailResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   bool success = 2;
   bytes image = 3;
 }
@@ -544,7 +552,7 @@ message DeletePhotoRequest {
 }
 
 message DeletePhotoResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   bool success = 2;
 }
 
@@ -576,7 +584,7 @@ message LatestAttentionTransfer {
 }
 
 message LatestAttentionTransferResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   LatestAttentionTransfer latest_attention_transfer = 2;
 }
 
@@ -612,8 +620,8 @@ message EnableVisionModeRequest {
   bool       enable = 2;
 }
 
-message EnableVisionModeResult {
-  ResultStatus status = 1;
+message EnableVisionModeResponse {
+  ResponseStatus status = 1;
 }
 
 // Struct containing all the information relevant to how a 
@@ -648,7 +656,8 @@ message GoToPoseRequest {
 }
 
 message GoToPoseResponse {
-  ActionResult result = 1;
+  ResponseStatus status = 1;
+  ActionResult action_result = 2;
 }
 
 message DriveStraightRequest {
@@ -658,7 +667,7 @@ message DriveStraightRequest {
 }
 
 message DriveStraightResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -676,7 +685,7 @@ message TurnInPlaceRequest {
 }
 
 message TurnInPlaceResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -689,7 +698,7 @@ message SetHeadAngleRequest {
 }
 
 message SetHeadAngleResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -702,7 +711,7 @@ message SetLiftHeightRequest {
 }
 
 message SetLiftHeightResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -717,7 +726,7 @@ message SetBackpackLightsRequest {
 }
 
 message SetBackpackLightsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 enum BatteryLevel {
@@ -745,7 +754,7 @@ message NetworkStats {
 message BatteryStateRequest {}
 
 message BatteryStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BatteryLevel battery_level = 2;
   float battery_volts = 3;
   bool is_charging = 4;
@@ -756,7 +765,7 @@ message BatteryStateResponse {
 message VersionStateRequest {}
 
 message VersionStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   string os_version = 2;
   string engine_build_id = 3;
 }
@@ -764,7 +773,7 @@ message VersionStateResponse {
 message NetworkStateRequest {}
 
 message NetworkStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   NetworkStats network_stats = 2;
 }
 
@@ -783,7 +792,7 @@ message SayTextResponse {
     PLAYING = 3;
     FINISHED = 4;
   }
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   UtteranceState state = 2;
 }
 

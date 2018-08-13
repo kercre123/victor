@@ -79,7 +79,7 @@ message PullJdocsRequest {
 }
 
 message PullJdocsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   repeated NamedJdoc named_jdocs = 2;
 }
 
@@ -88,7 +88,7 @@ message PushJdocsRequest {
 }
 
 message PushJdocsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   ResultCode code = 2;
 }
 
@@ -97,7 +97,7 @@ message UpdateSettingsRequest {
 }
 
 message UpdateSettingsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   ResultCode code = 2;
   Jdoc doc = 3;
 }
