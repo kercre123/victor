@@ -18,6 +18,8 @@
 #define private public
 #define protected public
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "engine/latticePlanner.h"
 #include "engine/robot.h"
 #include "engine/cozmoContext.h"
@@ -101,6 +103,8 @@ protected:
   Robot* _robot = nullptr;
   std::unique_ptr<LatticePlanner> _planner = nullptr;
 
+  const f32 kContinuityCheckTol_mm = 0.001;
+
 };
 
 TEST_F(LatticePlannerTest, Create)
@@ -124,6 +128,7 @@ TEST_F(LatticePlannerTest, PlanOnceEmpty)
 
   bool hasPath = _planner->GetCompletePath(start, path, selectedTargetIdx);
   ASSERT_TRUE(hasPath);
+  ASSERT_TRUE(path.CheckContinuity(kContinuityCheckTol_mm));
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
   EXPECT_GT(path.GetNumSegments(), 1) << "should be more than one action in the path";
@@ -144,6 +149,7 @@ TEST_F(LatticePlannerTest, PlanTwiceEmpty)
 
   bool hasPath = _planner->GetCompletePath(start, path, selectedTargetIdx);
   ASSERT_TRUE(hasPath);
+  ASSERT_TRUE(path.CheckContinuity(kContinuityCheckTol_mm));
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
   int firstPathLength = path.GetNumSegments();
@@ -202,6 +208,7 @@ TEST_F(LatticePlannerTest, PlanWhilePlanning)
 
   bool hasPath = _planner->GetCompletePath(start, path, selectedTargetIdx);
   ASSERT_TRUE(hasPath);
+  ASSERT_TRUE(path.CheckContinuity(kContinuityCheckTol_mm));
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
   EXPECT_GT(path.GetNumSegments(), 1) << "should be more than one action in the path";
@@ -335,6 +342,7 @@ TEST_F(LatticePlannerTest, StopPlanning)
 
   bool hasPath = _planner->GetCompletePath(start, path, selectedTargetIdx);
   ASSERT_TRUE(hasPath);
+  ASSERT_TRUE(path.CheckContinuity(kContinuityCheckTol_mm));
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
   EXPECT_GT(path.GetNumSegments(), 1) << "should be more than one action in the path";
@@ -357,6 +365,8 @@ TEST_F(LatticePlannerTest, MotionProfileSimple1)
 
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
 
   f32 expectedSpeeds[] = {50, 42.42f, 28.28f, IPathPlanner::finalPathSegmentSpeed_mmps};
   for(int i=0; i<path2.GetNumSegments();i++)
@@ -383,6 +393,8 @@ TEST_F(LatticePlannerTest, MotionProfileSimple2)
 
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
 
   f32 expectedSpeeds[] = {50, 2, 50};
   for(int i=0; i<path2.GetNumSegments();i++)
@@ -412,6 +424,8 @@ TEST_F(LatticePlannerTest, MotionProfileMedium1)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
 
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
   f32 expectedSpeeds[] = {24.49f, 24.49f, 2, 50, 2, 50};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
@@ -435,6 +449,8 @@ TEST_F(LatticePlannerTest, MotionProfileSimple3)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
 
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
   f32 expectedSpeeds[] = {31.62f};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
@@ -454,15 +470,17 @@ TEST_F(LatticePlannerTest, MotionProfileMedium3)
 
   Planning::Path path;
   path.AppendLine(0, 0, 50, 0, 50, 10, 10);
-  path.AppendArc(-20, 50, 20, DEG_TO_RAD(180), DEG_TO_RAD(90), 1, 1, 1);
-  path.AppendLine(-20, 70, -50, 70, 50, 10, 10);
+  path.AppendArc(50, 20, 20, DEG_TO_RAD(-90), DEG_TO_RAD(90), 1, 1, 1);
+  path.AppendLine(70, 20, 70, 100, 50, 10, 10);
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
 
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
 
-  f32 expectedSpeeds[] = {35.04f, 24.49f, IPathPlanner::finalPathSegmentSpeed_mmps};
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
+  f32 expectedSpeeds[] = {50.f, 47.2f, 40.f, IPathPlanner::finalPathSegmentSpeed_mmps};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -512,6 +530,8 @@ TEST_F(LatticePlannerTest, MotionProfileMedium2)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
 
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
   f32 expectedSpeeds[] = {100, 100, 100, 39.63f, IPathPlanner::finalPathSegmentSpeed_mmps};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
@@ -538,6 +558,8 @@ TEST_F(LatticePlannerTest, MotionProfileComplex1)
 
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
 
   f32 expectedSpeeds[] = {-2, 100, 100, 20, 2, 27.53f, 27.53f, 2};
   f32 expectedLen[] = {0, 28.77f, 241.93f, 249.99f, 0, 4.14f, 18.96f, 0};
@@ -569,6 +591,8 @@ TEST_F(LatticePlannerTest, MotionProfileComplex2)
 
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
 
   f32 expectedSpeeds[] = {2, 100, 100, 94.88f, 86.20f, 44.68f, 30.39f, 27.53f, IPathPlanner::finalPathSegmentSpeed_mmps};
   f32 expectedLen[] = {0, 28.77f, 491.71f, 24.94f, 39.28f, 135.85f, 26.81f, 4.14f, 18.96f};
@@ -607,6 +631,7 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
 {
   PathMotionProfile motionProfile = PathMotionProfile();
   motionProfile.speed_mmps = 100;
+  motionProfile.reverseSpeed_mmps = 80;
   motionProfile.accel_mmps2 = 200;
   motionProfile.decel_mmps2 = 500;
 
@@ -620,7 +645,9 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
   Planning::Path path2;
   _planner->ApplyMotionProfile(path, motionProfile, path2);
 
-  f32 expectedSpeeds[] = {-100, -2, -100, 100, 100, 20};
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
+  f32 expectedSpeeds[] = {-80, -2, -100, 100, 100, 20};
   for(int i=0; i<path2.GetNumSegments();i++)
   {
     Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
@@ -629,6 +656,107 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
     f32 x1, y1, a1;
     seg.GetEndPose(x1, y1, a1);
     PRINT_NAMED_ERROR("", "%f %f %f %f %f", x, y, x1, y1, RAD_TO_DEG(a1));
+    ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
+  }
+}
+
+// Cap speed on arc because the max wheel speed exceeds MAX_WHEEL_SPEED
+TEST_F(LatticePlannerTest, MotionProfileCapArcSpeed_maxWheelSpeed)
+{
+  PathMotionProfile motionProfile = PathMotionProfile();
+  motionProfile.speed_mmps = MAX_WHEEL_SPEED_MMPS;
+  motionProfile.accel_mmps2 = 200;
+  motionProfile.decel_mmps2 = 500;
+
+  Planning::Path path;
+  path.AppendLine(0, 0, 100, 0, 100, 200, 500);
+  path.AppendArc(100, 300, 300, DEG_TO_RAD(-90), DEG_TO_RAD(90), 100, 200, 500);
+  path.AppendLine(400, 300, 400, 400, 100, 200, 500);
+
+  Planning::Path path2;
+  _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
+  f32 expectedSpeeds[] = {MAX_WHEEL_SPEED_MMPS, 203.7, 203.7, MAX_WHEEL_SPEED_MMPS, 20};
+  for(int i=0; i<path2.GetNumSegments();i++)
+  {
+    Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
+    ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
+  }
+}
+
+
+TEST_F(LatticePlannerTest, MotionProfileCapArcSpeedAndSplit)
+{
+  PathMotionProfile motionProfile = PathMotionProfile();
+  motionProfile.speed_mmps = MAX_WHEEL_SPEED_MMPS;
+  motionProfile.accel_mmps2 = 200;
+  motionProfile.decel_mmps2 = 500;
+
+  Planning::Path path;
+  path.AppendArc(100, 300, 300, DEG_TO_RAD(-90), DEG_TO_RAD(90), 100, 200, 500);
+
+  Planning::Path path2;
+  _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
+  f32 expectedSpeeds[] = {203.7, 20};
+  for(int i=0; i<path2.GetNumSegments();i++)
+  {
+    Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
+    PRINT_NAMED_WARNING("MotionProfileCapArcSpeedAndSplit", "path2 set: %u  %f", i, seg.GetTargetSpeed());
+    ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
+  }
+}
+
+TEST_F(LatticePlannerTest, MotionProfileCapArcSpeedAndSplit2)
+{
+  PathMotionProfile motionProfile = PathMotionProfile();
+  motionProfile.speed_mmps = MAX_WHEEL_SPEED_MMPS;
+  motionProfile.accel_mmps2 = 200;
+  motionProfile.decel_mmps2 = 500;
+
+  Planning::Path path;
+  path.AppendArc(100, 300, 300, DEG_TO_RAD(-90), DEG_TO_RAD(90), 100, 200, 500);
+  path.AppendLine(400, 300, 400, 310, 100, 200, 500);
+
+  Planning::Path path2;
+  _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
+  f32 expectedSpeeds[] = {203.7, 100, 20};
+  for(int i=0; i<path2.GetNumSegments();i++)
+  {
+    Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
+    PRINT_NAMED_WARNING("MotionProfileCapArcSpeedAndSplit", "path2 set: %u  %f", i, seg.GetTargetSpeed());
+    ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
+  }
+}
+
+TEST_F(LatticePlannerTest, MotionProfileCapArcSpeed_allArcPath)
+{
+  PathMotionProfile motionProfile = PathMotionProfile();
+  motionProfile.speed_mmps = MAX_WHEEL_SPEED_MMPS;
+  motionProfile.accel_mmps2 = 200;
+  motionProfile.decel_mmps2 = 500;
+
+  Planning::Path path;
+  path.AppendArc(0, 500, 500, DEG_TO_RAD(-90), DEG_TO_RAD(90), 100, 200, 500);
+  path.AppendArc(200, 500, 300, DEG_TO_RAD(0), DEG_TO_RAD(90), 100, 200, 500);
+  path.AppendArc(200, 700, 100, DEG_TO_RAD(90), DEG_TO_RAD(90), 100, 200, 500);
+
+  Planning::Path path2;
+  _planner->ApplyMotionProfile(path, motionProfile, path2);
+
+  ASSERT_TRUE(path2.CheckContinuity(kContinuityCheckTol_mm));
+
+  f32 expectedSpeeds[] = {209.9, 203.7, 203.7, 177.4, 177.4, 20};
+  for(int i=0; i<path2.GetNumSegments();i++)
+  {
+    Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
     ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
   }
 }
