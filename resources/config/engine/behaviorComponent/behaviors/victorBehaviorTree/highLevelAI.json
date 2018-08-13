@@ -156,6 +156,13 @@
                 "conditionType": "Emotion",
                 "emotion": "Stimulated",
                 "min": 0.7
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "EngineErrorCodeReceived",
+                  "engineErrorCode": "ImageQualityTooDark"
+                }
               }
             ]
           }
@@ -193,6 +200,13 @@
               {
                 "conditionType": "SimpleMood",
                 "mood": "HighStim"
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "EngineErrorCodeReceived",
+                  "engineErrorCode": "ImageQualityTooDark"
+                }
               }
             ]
           }
@@ -208,6 +222,13 @@
               {
                 "conditionType": "SimpleMood",
                 "mood": "HighStim"
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "EngineErrorCodeReceived",
+                  "engineErrorCode": "ImageQualityTooDark"
+                }
               }
             ]
           }
