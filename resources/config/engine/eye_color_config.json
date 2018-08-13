@@ -1,16 +1,16 @@
 {
-  "Teal" :
+  "TipOverTeal" :
     { "Hue" : 0.42, "Saturation" : 1.00 },
-  "Orange" :
+  "OverfitOrange" :
     { "Hue" : 0.05, "Saturation" : 0.95 },
-  "Yellow" :
+  "UncannyYellow" :
     { "Hue" : 0.11, "Saturation" : 1.00 },
-  "LimeGreen" :
+  "NonLinearLime" :
     { "Hue" : 0.21, "Saturation" : 1.00 },
-  "AzureBlue" :
+  "SingularitySapphire" :
     { "Hue" : 0.57, "Saturation" : 1.00 },
-  "Purple" :
+  "FalsePositivePurple" :
     { "Hue" : 0.83, "Saturation" : 0.76 },
-  "MatrixGreen" :
+  "ConfusionMatrixGreen" :
     { "Hue" : 0.30, "Saturation" : 1.00 }
 }

@@ -28,13 +28,13 @@ enum Volume {
 }
 
 enum EyeColor {
-  TEAL         = 0;
-  ORANGE       = 1;
-  YELLOW       = 2;
-  LIME_GREEN   = 3;
-  AZURE_BLUE   = 4;
-  PURPLE       = 5;
-  MATRIX_GREEN = 6;
+  TIP_OVER_TEAL          = 0;
+  OVERFIT_ORANGE         = 1;
+  UNCANNY_YELLOW         = 2;
+  NON_LINEAR_LIME        = 3;
+  SINGULARITY_SAPPHIRE   = 4;
+  FALSE_POSITIVE_PURPLE  = 5;
+  CONFUSION_MATRIX_GREEN = 6;
 }
 
 message RobotSettingsConfig {

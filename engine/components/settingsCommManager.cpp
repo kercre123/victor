@@ -50,7 +50,7 @@ namespace
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
 
   // NOTE: Need to keep kEyeColors in sync with EyeColor in robotSettings.clad
-  constexpr const char* kEyeColors = "Teal,Orange,Yellow,LimeGreen,AzureBlue,Purple,MatrixGreen";
+  constexpr const char* kEyeColors = "TipOverTeal,OverfitOrange,UncannyYellow,NonLinearLime,SingularitySapphire,FalsePositivePurple,ConfusionMatrixGreen";
   CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
   void DebugSetEyeColor(ConsoleFunctionContextRef context)
   {

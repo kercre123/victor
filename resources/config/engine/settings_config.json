@@ -2,7 +2,7 @@
 // as well as their default values.
 {
   "clock_24_hour" : false,
-  "eye_color" : "Teal",
+  "eye_color" : "TipOverTeal",
   "default_location" : "",
   "dist_is_metric" : true,
   "locale" : "en-US",

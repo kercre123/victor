@@ -43,15 +43,14 @@ enum uint_8 MasterVolume
 // Note: Keep these in sync with kEyeColors in settingsCommManager.cpp, for console var
 enum uint_8 EyeColor
 {
-  Teal = 0,
-  Orange,
-  Yellow,
-  LimeGreen,
-  AzureBlue,
-  Purple,
-  MatrixGreen
+  TipOverTeal = 0,
+  OverfitOrange,
+  UncannyYellow,
+  NonLinearLime,
+  SingularitySapphire,
+  FalsePositivePurple,
+  ConfusionMatrixGreen
 }
-
 
 } // namespace Vector
 } // namespace Anki
