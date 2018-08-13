@@ -453,9 +453,6 @@ message OnboardingSkip {
 message OnboardingRetryCharging {
 }
 
-message OnboardingConnectionComplete {
-}
-
 message OnboardingSkipOnboarding {
 }
 
@@ -467,7 +464,7 @@ message OnboardingInputRequest {
     OnboardingContinue onboarding_continue = 1;
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
-    OnboardingConnectionComplete onboarding_connection_complete = 4;
+    // 4 is available
     OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
     OnboardingRestart onboarding_restart = 6;
   }

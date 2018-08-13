@@ -287,7 +287,6 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/onboarding
   Onboarding,
   OnboardingActivateCube,
-  OnboardingAsleep,
   OnboardingComeHere,
   OnboardingComeHereGetOut,
   OnboardingComeHereResume,

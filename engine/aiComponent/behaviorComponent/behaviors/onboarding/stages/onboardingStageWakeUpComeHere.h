@@ -16,6 +16,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "proto/external_interface/onboardingSteps.pb.h"
@@ -32,7 +33,6 @@ public:
   virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const override
   {
     delegates.insert( BEHAVIOR_ID(OnboardingLookAtPhone) );
-    delegates.insert( BEHAVIOR_ID(OnboardingAsleep) );
     delegates.insert( BEHAVIOR_ID(OnboardingWakeUp) );
     delegates.insert( BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
     delegates.insert( BEHAVIOR_ID(OnboardingWaitForTriggerWord) );
@@ -53,7 +53,6 @@ public:
     
     _behaviors.clear();
     _behaviors[Step::LookAtPhone]              = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtPhone) );
-    _behaviors[Step::Asleep]                   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingAsleep) );
     _behaviors[Step::WakingUp]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWakeUp) );
     _behaviors[Step::DriveOffCharger]          = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingSluggishDriveOffCharger) );
     _behaviors[Step::WaitingForTrigger]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForTriggerWord) );
@@ -65,16 +64,22 @@ public:
     _step = Step::LookAtPhone;
     _stepAfterResumeFromCharger = Step::LookAtPhone; // this is state is ignored since it could never happen outside initialization
     _currentBehavior = _behaviors[_step];
-    DebugTransition("Waiting for OnboardingConnectionComplete to wake up");
+    _wakeUpCommandReceived = false;
+    DebugTransition("Waiting for Continue to wake up");
+    
+    bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingLookAtPhone), BEHAVIOR_CLASS(OnboardingLookAtPhone), _phoneBehavior);
   }
   
   virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
   {
     bool accepted = false;
-    if( _step == Step::Asleep ) {
+    if( _step == Step::LookAtPhone ) {
       accepted = (stepNum == external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP);
-      if( accepted ) {
-        TransitionToWakingUp();
+      // Look at phone is handling this to lock in the timing of the get-out and
+      // the face keepalive
+      if( accepted && ANKI_VERIFY(_phoneBehavior != nullptr, "OnboardingStageWakeUp.OnContinue.MissingPhoneBehavior", "") ) {
+        _phoneBehavior->ContinueReceived();
+        _wakeUpCommandReceived = true;
       }
     } else if( _step == Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageWakeUp.UnexpectedOnContinue");
@@ -118,10 +123,12 @@ public:
     } else if( justGotTrigger ) {
       // successful trigger ==> resume from next step
       TransitionToWaitingForComeHere();
-    } else if( (interruptingBehavior == BEHAVIOR_ID(ReactToCliff)) && (_step == Step::ComeHere) ) {
-      // hit a cliff during come here, so something easier this time
+    } else if( (_step == Step::ComeHere) || (_step == Step::ComeHereGetOut) || (_step == Step::ComeHereResume) ) {
+      // hit a cliff or picked up during come here, so something easier this time
       TransitionToComeHereResume();
     } else if( _step == Step::WaitingForTrigger ) {
+      TransitionToWaitingForTrigger();
+    } else if( _step == Step::WaitingForComeHere ) {
       TransitionToWaitingForComeHere();
     }
   }
@@ -132,7 +139,10 @@ public:
     if( _step == Step::Complete ) {
       return;
     } else if( _step == Step::LookAtPhone ) {
-      TransitionToAsleep();
+      if( _wakeUpCommandReceived ) {
+        TransitionToWakingUp();
+      }
+      // else stay asleep
     } else if( _step == Step::WakingUp ) {
       // if on the charger, drive off
       _currentBehavior = _behaviors[Step::DriveOffCharger];
@@ -180,8 +190,6 @@ public:
   {
     switch( _step ) {
       case Step::LookAtPhone:
-        return external_interface::STEP_PHONE_ICON;
-      case Step::Asleep:
         return external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP;
       case Step::WakingUp:
       case Step::DriveOffCharger:
@@ -200,13 +208,6 @@ public:
   }
   
 private:
-  
-  void TransitionToAsleep()
-  {
-    DebugTransition("Asleep. Waiting for continue to wake up");
-    _step = Step::Asleep;
-    _currentBehavior = _behaviors[_step];
-  }
   
   void TransitionToWakingUp()
   {
@@ -265,16 +266,13 @@ private:
       case Step::WaitingForTrigger:
         TransitionToWaitingForTrigger();
         break;
-      case Step::WakingUp:
-        TransitionToWakingUp();
-        break;
       case Step::WaitingForComeHere:
         TransitionToWaitingForComeHere();
         break;
       case Step::ComeHere:
         TransitionToComeHere();
         break;
-      case Step::Asleep:
+      case Step::WakingUp:
       case Step::Complete:
       case Step::ComeHereGetOut:
       case Step::ComeHereResume:
@@ -291,7 +289,6 @@ private:
   
   enum class Step : uint8_t {
     LookAtPhone=0,
-    Asleep,
     WakingUp,
     DriveOffCharger,
     WaitingForTrigger,
@@ -305,6 +302,9 @@ private:
   Step _step;
   IBehavior* _currentBehavior = nullptr;
   Step _stepAfterResumeFromCharger = Step::LookAtPhone;
+  bool _wakeUpCommandReceived = false;
+  
+  std::shared_ptr<BehaviorOnboardingLookAtPhone> _phoneBehavior;
   
   std::unordered_map<Step,IBehavior*> _behaviors;
 };

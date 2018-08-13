@@ -421,21 +421,6 @@ func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.Onboa
 	}, nil
 }
 
-func SendOnboardingConnectionComplete(in *extint.GatewayWrapper_OnboardingConnectionComplete) (*extint.OnboardingInputResponse, error) {
-	log.Println("Received rpc request OnboardingConnectionComplete(", in, ")")
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: in,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &extint.OnboardingInputResponse{
-		Status: &extint.ResultStatus{
-			Description: "Message sent to engine",
-		},
-	}, nil
-}
-
 func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboarding) (*extint.OnboardingInputResponse, error) {
 	log.Println("Received rpc request OnboardingSkipOnboarding(", in, ")")
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
@@ -1002,10 +987,6 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	case *extint.OnboardingInputRequest_OnboardingSkip:
 		return SendOnboardingSkip(&extint.GatewayWrapper_OnboardingSkip{
 			OnboardingSkip: in.GetOnboardingSkip(),
-		})
-	case *extint.OnboardingInputRequest_OnboardingConnectionComplete:
-		return SendOnboardingConnectionComplete(&extint.GatewayWrapper_OnboardingConnectionComplete{
-			OnboardingConnectionComplete: in.GetOnboardingConnectionComplete(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingSkipOnboarding:
 		return SendOnboardingSkipOnboarding(&extint.GatewayWrapper_OnboardingSkipOnboarding{

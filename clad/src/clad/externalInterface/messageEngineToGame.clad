@@ -771,7 +771,8 @@ message BehaviorObjectiveAchieved{
 ///////////////////////////////////////////////////////////////////////////////
 
 message OnboardingState {
-  OnboardingStages stage
+  OnboardingStages stage,
+  bool forceSkipStackReset, // if true, even if the stage is Complete, this won't change the behavior stack
 }
 
 ///////////////////////////////////////////////////////////////////////////////

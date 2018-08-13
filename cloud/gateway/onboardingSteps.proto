@@ -15,13 +15,13 @@ enum OnboardingSteps {
   // interruptions:
   STEP_PHYSICAL_INTERRUPTION             = 1;  // picked up, cliff, on side, etc.
   STEP_LOW_BATTERY                       = 2;  // low battery of some sort. see OnboardingLowBattery
-  STEP_EXPECTING_LOW_BATTERY_RESUME      = 3;  // check the latest OnboardingOnCharger to know when to send this
+  // Available
   STEP_EXPECTING_RESUME_FROM_CHARGER     = 4;  // check the latest OnboardingOnCharger to know when to send this
   STEP_EXPECTING_RESUME_FROM_HABITAT     = 5;  // check the latest OnboardingInHabitat
   STEP_RESUMING                          = 6;  // generic resuming (e.g., driving off charger)
 
   // chronological:
-  STEP_PHONE_ICON                        = 7;  // expecting an OnboardingConnectionComplete from app
+  // (available)
   STEP_EXPECTING_CONTINUE_WAKE_UP        = 8;  // expecting an OnboardingContinue from app
   STEP_WAKING_UP                         = 9;
   STEP_EXPECTING_FIRST_TRIGGER_WORD      = 10;

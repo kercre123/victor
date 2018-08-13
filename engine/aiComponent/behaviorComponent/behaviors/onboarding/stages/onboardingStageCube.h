@@ -36,6 +36,7 @@ namespace {
   const unsigned int kMaxPickUpAttempts = 3;
   const float kMaxSearchDuration_s = 30.0f;
   const uint32_t kMaxAgeForRedoSearch_ms = 5000;
+  const float kMinTimeToConnect_s = 15.0f;
   
   const std::string& kLockName = "onboardingCubeStage";
 }
@@ -54,6 +55,12 @@ public:
     _cubeKnownCondition->SetOwnerDebugLabel( "BehaviorOnboarding" ); // this probably won't work right with webviz
   }
   virtual ~OnboardingStageCube() = default;
+  
+  virtual void Init() override
+  {
+    IOnboardingStage::Init();
+    _initTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
   
   virtual void GetAllDelegates( std::set<BehaviorID>& delegates ) const override
   {
@@ -205,28 +212,37 @@ public:
     if( _step == Step::Complete ) {
       return;
     } else if( _step == Step::LookingForCube ) {
-      // a lot of this logic will change once cube connection is sorted out. For now, we just use the first
-      // cube we see, and play lights on whatever cube we're connected to, if any.
-      // also: things like if an active cube moves etc etc
       const bool seesCube = _cubeKnownCondition->AreConditionsMet(bei);
       EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       if( seesCube ) {
-        const auto& cubes = _cubeKnownCondition->GetObjects( bei );
+        const std::vector<const ObservableObject*>& cubes = _cubeKnownCondition->GetObjects( bei );
         if( !cubes.empty() ) {
           DebugTransition("Found a cube");
-          // pick one for now. it will probably be a seen cube + connected cube, or just a seen cube if we can't connect
-          const auto* cube = cubes.front();
-          _objectID = cube->GetID();
-          TransitionToActivatingCube( bei );
+          // pick the first connected one
+          const ObservableObject* selectedCube = nullptr;
+          for( const auto* cube : cubes ) {
+            _objectID = cube->GetID();
+            const auto* connectedCube = bei.GetBlockWorld().GetConnectedActiveObjectByID(cube->GetID());
+            if( connectedCube != nullptr ) {
+              _objectID = cube->GetID();
+              selectedCube = cube;
+              TransitionToActivatingCube( bei );
+              break;
+            }
+          }
+          if( selectedCube == nullptr ) {
+            // saw a cube, but we're not connected to any.
+            // since we've been trying to connect to the cube since the start of onboarding, we should have
+            // a cube by this point. The exception is if they began in the cube stage, in which case give it
+            // a little time to connect
+            const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+            if( currTime_s - _initTime_s >= kMinTimeToConnect_s ) {
+              SendCantFindCubeAndLookAtUser( bei );
+            }
+          }
         }
       } else if( currTime_ms >= _timeStartedSearching_ms + 1000*kMaxSearchDuration_s ) {
-        auto* gi = bei.GetRobotInfo().GetGatewayInterface();
-        if( gi != nullptr ){
-          DebugTransition("Can't find a cube");
-          auto* cantFindCubeMsg = new external_interface::OnboardingCantFindCube;
-          gi->Broadcast( ExternalMessageRouter::Wrap(cantFindCubeMsg) );
-          TransitionToLookingAtUser();
-        }
+        SendCantFindCubeAndLookAtUser( bei );
       }
     }
   }
@@ -345,8 +361,19 @@ private:
     }
     return false;
   }
+    
+  void SendCantFindCubeAndLookAtUser(BehaviorExternalInterface& bei)
+  {
+    auto* gi = bei.GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ){
+      DebugTransition("Can't find a cube");
+      auto* cantFindCubeMsg = new external_interface::OnboardingCantFindCube;
+      gi->Broadcast( ExternalMessageRouter::Wrap(cantFindCubeMsg) );
+      TransitionToLookingAtUser();
+    }
+  }
   
-  void DebugTransition(const std::string& debugInfo)
+  void DebugTransition(const std::string& debugInfo) const
   {
     PRINT_CH_INFO("Behaviors", "OnboardingStatus.Cube", "%s", debugInfo.c_str());
   }
@@ -369,6 +396,8 @@ private:
   unsigned int _activationAttemptCount;
   unsigned int _pickUpAttemptCount;
   EngineTimeStamp_t _timeStartedSearching_ms;
+  
+  float _initTime_s;
   
   
   std::unordered_map<Step, IBehavior*> _behaviors;

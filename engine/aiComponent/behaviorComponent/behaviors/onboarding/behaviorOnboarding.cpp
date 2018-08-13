@@ -318,6 +318,9 @@ void BehaviorOnboarding::OnBehaviorActivated()
                 OnboardingStagesToString(stage));
   
   if( _dVars.currentStage == OnboardingStages::NotStarted ) {
+    // after ResetOnboarding message is received and has taken effect, send the app the new stage
+    SendStageToApp( _dVars.currentStage );
+    
     // wake up is handled by stage, which gets delegated to in BehaviorUpdate.
     _dVars.wakeUpState = WakeUpState::Complete;
     // no need to activate anything, Update() does that
@@ -397,8 +400,9 @@ void BehaviorOnboarding::BehaviorUpdate()
     const auto lastInterruption = _dVars.lastInterruption;
     _dVars.lastInterruption = BEHAVIOR_ID(Anonymous);
     
+    // ideally we'd guard access to the delegation component here, but it now has to be done within the
+    // for loop bc of an edge case where OnboardingLookAtPhone needs to switch actions when receiving a Continue
     
-    auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
     // this for loop is like a BOUNDED_DO_WHILE and i is unused.
     for( size_t i=0; i<OnboardingStagesNumEntries; ++i ) {
       if( _dVars.state == BehaviorState::InterruptedButComplete ) {
@@ -413,8 +417,10 @@ void BehaviorOnboarding::BehaviorUpdate()
       // maintain the order of ICozmoBehavior: activation, events, completion callbacks, update
       
       if( _dVars.state == BehaviorState::StageNotStarted ) {
+        auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
         GetCurrentStage()->OnBegin( GetBEI() );
       } else if( _dVars.state == BehaviorState::Interrupted ) {
+        auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
         GetCurrentStage()->OnResume( GetBEI(), lastInterruption );
       }
       
@@ -424,10 +430,13 @@ void BehaviorOnboarding::BehaviorUpdate()
           const bool allowedContinue = GetCurrentStage()->OnContinue( GetBEI(), pendingEvent.second.continueNum );
           SendContinueResponse( allowedContinue, pendingEvent.second.continueNum );
         } else if( pendingEvent.second.type == PendingEvent::Skip ) {
+          auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
           GetCurrentStage()->OnSkip( GetBEI() );
         } else if( pendingEvent.second.type == PendingEvent::GameToEngine ) {
+          auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
           GetCurrentStage()->OnMessage( GetBEI(), pendingEvent.second.gameToEngineEvent );
         } else if( pendingEvent.second.type == PendingEvent::EngineToGame ) {
+          auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
           GetCurrentStage()->OnMessage( GetBEI(), pendingEvent.second.engineToGameEvent );
         }
       }
@@ -438,6 +447,7 @@ void BehaviorOnboarding::BehaviorUpdate()
         _dVars.currentStageBehaviorFinished = false;
         // change the lastBehavior so that if the stage requests the same behavior another time, we delegate to it
         _dVars.lastBehavior = nullptr;
+        auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
         GetCurrentStage()->OnBehaviorDeactivated( GetBEI() );
       }
       
@@ -460,6 +470,7 @@ void BehaviorOnboarding::BehaviorUpdate()
       // now get what behavior the stage requests for behavior and step num
       stageBehavior = GetCurrentStage()->GetBehavior( GetBEI() );
       if( stageBehavior != nullptr ) {
+        auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
         requestedStep = GetCurrentStage()->GetExpectedStep();
         if( (stageBehavior != _dVars.lastBehavior) && !stageBehavior->WantsToBeActivated() ) {
           PRINT_NAMED_WARNING( "BehaviorOnboarding.BehaviorUpdate.DoesntWantToActivate",
@@ -582,23 +593,19 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   // broadcast
   if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
-    if( stage != OnboardingStages::Complete ) {
-      // only if it's not Complete, broadcast to the rest of the robot. If it were to broadcast
-      // Complete, the robot would pop out into normal operation, but there's one stage left to
-      // run that accompanies app onboarding, which simply waits some amount of time for a voice
-      // command without doing anything too crazy (like an unprompted fistbump). Since the complete
-      // state is saved to disk, any reboots starting now will boot in normal mode, and any
-      // other app onboarding that begins right after a reboot will have normal robot behavior (so
-      // for now, an unprompted fistbump could occur).
-      ExternalInterface::OnboardingState msg{ stage };
-      ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msg)} );
-    }
+    // if it's Complete, pass a flag to not reset the behavior stack into normal operation.
+    // there's one stage left to run that accompanies app onboarding, which simply waits some amount
+    // of time for a voice command without doing anything too crazy (like an unprompted fistbump).
+    // Since the complete state is saved to disk, any reboots starting now will boot in normal mode, and any
+    // other app onboarding that begins right after a reboot will have normal robot behavior (so
+    // for now, an unprompted fistbump could occur).
+    const bool forceSkipStackReset = (stage == OnboardingStages::Complete);
+    
+    ExternalInterface::OnboardingState msg{ stage, forceSkipStackReset };
+    ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msg)} );
   }
-  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
-    auto* onboardingState = new external_interface::OnboardingState{ CladProtoTypeTranslator::ToProtoEnum(stage) };
-    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-    gi->Broadcast( ExternalMessageRouter::Wrap(onboardingState) );
-  }
+  
+  SendStageToApp( stage );
   
   // save to whiteboard for convenience
   {
@@ -821,6 +828,7 @@ void BehaviorOnboarding::TerminateOnboarding()
     auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
     ExternalInterface::OnboardingState state;
     state.stage = _dVars.currentStage;
+    state.forceSkipStackReset = false; // reset the stack into normal operation
     DEV_ASSERT( _dVars.currentStage == OnboardingStages::Complete, "Expected to be called when complete");
     ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(state)} );
   }
@@ -837,11 +845,11 @@ void BehaviorOnboarding::RequestContinue( int step )
       || (_dVars.state == BehaviorState::StageNotStarted) )
   {
     if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingLowBattery) ) {
-      ANKI_VERIFY( _dVars.lastExpectedStep == external_interface::STEP_EXPECTING_LOW_BATTERY_RESUME,
+      ANKI_VERIFY( _dVars.lastExpectedStep == external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER,
                    "BehaviorOnboarding.Interrupt.ContinueMismatchLowBattery",
-                   "State was %d not STEP_EXPECTING_LOW_BATTERY_RESUME",
+                   "State was %d not STEP_EXPECTING_RESUME_FROM_CHARGER",
                    _dVars.lastExpectedStep );
-      const bool accepted = (step == external_interface::STEP_EXPECTING_LOW_BATTERY_RESUME);
+      const bool accepted = (step == external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER);
       if( accepted ) {
         // the app should only be sending this if the battery is out of low battery mode
         if( GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low ) {
@@ -859,7 +867,7 @@ void BehaviorOnboarding::RequestContinue( int step )
     } else if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
       ANKI_VERIFY( _dVars.lastExpectedStep == external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER,
                   "BehaviorOnboarding.Interrupt.ContinueMismatchLowBattery",
-                  "State was %d not STEP_EXPECTING_LOW_BATTERY_RESUME",
+                  "State was %d not STEP_EXPECTING_RESUME_FROM_CHARGER",
                   _dVars.lastExpectedStep );
       const bool accepted = (step == external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER);
       if( accepted ) {
@@ -1035,7 +1043,7 @@ void BehaviorOnboarding::UpdateBatteryInfo()
       auto* onboardingLowBattery = new external_interface::OnboardingLowBattery{ false };
       gi->Broadcast( ExternalMessageRouter::Wrap(onboardingLowBattery) );
     }
-    SetRobotExpectingStep( external_interface::STEP_EXPECTING_LOW_BATTERY_RESUME );
+    SetRobotExpectingStep( external_interface::STEP_EXPECTING_RESUME_FROM_CHARGER );
     info.sentOutOfLowBattery = true;
     PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus",
                   "Robot is charged now. Waiting on continue");
@@ -1067,7 +1075,7 @@ void BehaviorOnboarding::SendContinueResponse( bool acceptedContinue, int step )
 {
   if( !acceptedContinue ) {
     PRINT_NAMED_WARNING( "BehaviorOnboarding.SendContinueResponse.InvalidContinue",
-                         "Stage '%s' (step '%d') did not accept input step %d",
+                        "OnboardingStatus: Stage '%s' (step '%d') did not accept input step %d",
                          (_dVars.lastBehavior != nullptr) ? _dVars.lastBehavior->GetDebugLabel().c_str() : "[null]",
                          _dVars.lastExpectedStep, step );
   }
@@ -1173,6 +1181,16 @@ int BehaviorOnboarding::GetPhysicalInterruptionMsgType( BehaviorID interruptionI
                 BehaviorIDToString(interruptionID));
   }
   return interruptionType;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::SendStageToApp( const OnboardingStages& stage ) const
+{
+  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+    auto* onboardingState = new external_interface::OnboardingState{ CladProtoTypeTranslator::ToProtoEnum(stage) };
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    gi->Broadcast( ExternalMessageRouter::Wrap(onboardingState) );
+  }
 }
 
 }

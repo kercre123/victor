@@ -115,14 +115,19 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     // listen for messages from the robot that changed onboarding state. don't worry about anything from the app, since it
     // can't tell the robot to change its onboarding state
     auto onOnboardingStage = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& onboardingStageEvt){
-      const auto newState = onboardingStageEvt.GetData().Get_OnboardingState().stage;
+      const auto& msg = onboardingStageEvt.GetData().Get_OnboardingState();
+      const auto newState = msg.stage;
+      // save the stage so the app knows it, but only change the stack if requested, so that, if desired,
+      // onboarding can remain in app onboarding (Complete)
       _stage = newState;
-      if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
-        SetNewBehavior( _behaviors.onboardingBehavior );
-      } else if( newState == OnboardingStages::Complete ) {
-        SetNewBehavior( _behaviors.postOnboardingBehavior );
-      } else if( newState == OnboardingStages::DevDoNothing ) {
-        SetNewBehavior( _behaviors.devBaseBehavior );
+      if( !msg.forceSkipStackReset ) {
+        if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
+          SetNewBehavior( _behaviors.onboardingBehavior );
+        } else if( newState == OnboardingStages::Complete ) {
+          SetNewBehavior( _behaviors.postOnboardingBehavior );
+        } else if( newState == OnboardingStages::DevDoNothing ) {
+          SetNewBehavior( _behaviors.devBaseBehavior );
+        }
       }
     };
 

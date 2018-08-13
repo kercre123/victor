@@ -32,9 +32,9 @@ class IOnboardingStage : private Anki::Util::noncopyable
 public:
   virtual ~IOnboardingStage() = default;
   
-  void Init() {
+  virtual void Init() {
     _triggerEnabled = false;
-    _whitelisted = USER_INTENT(INVALID);
+    _whitelistedIntents = USER_INTENT(INVALID);
   }
   
   // Return what behaviors this stage comprises
@@ -89,8 +89,8 @@ public:
   // this gets checked by BehaviorOnboarding after Update. but before GetBehavior().
   bool GetWakeWordBehavior( UserIntentTag& onlyAllowedTag ) const
   {
-    if( _triggerEnabled && (_whitelisted != USER_INTENT(INVALID)) ) {
-      onlyAllowedTag = _whitelisted;
+    if( _triggerEnabled && (_whitelistedIntents != USER_INTENT(INVALID)) ) {
+      onlyAllowedTag = _whitelistedIntents;
     }
     return _triggerEnabled;
   }
@@ -110,11 +110,11 @@ protected:
   // use these to set whether the trigger word is enabled
   void SetTriggerWordEnabled(bool enabled) { _triggerEnabled = enabled; }
   // if the trigger word is enabled, set whether just one intent is allowed or any intent
-  void SetAllowedIntent( UserIntentTag intentTag ) { _whitelisted = intentTag; }
-  void SetAllowAnyIntent() { _whitelisted = USER_INTENT(INVALID); }
+  void SetAllowedIntent( UserIntentTag intentTag ) { _whitelistedIntents = intentTag; }
+  void SetAllowAnyIntent() { _whitelistedIntents = USER_INTENT(INVALID); }
 private:
   bool _triggerEnabled = false;
-  UserIntentTag _whitelisted = USER_INTENT(INVALID);
+  UserIntentTag _whitelistedIntents = USER_INTENT(INVALID);
 };
 
 } // namespace Vector

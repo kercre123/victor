@@ -14,9 +14,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 
 #include "engine/actions/animActions.h"
-#include "proto/external_interface/shared.pb.h"
-#include "util/console/consoleFunction.h"
-#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Vector {
@@ -37,15 +34,11 @@ BehaviorOnboardingLookAtPhone::DynamicVariables::DynamicVariables()
 BehaviorOnboardingLookAtPhone::BehaviorOnboardingLookAtPhone(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  SetupConsoleFuncs();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::InitBehavior()
 {
-  SubscribeToAppTags({
-    AppToEngineTag::kOnboardingConnectionComplete,
-  });
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,6 +63,8 @@ void BehaviorOnboardingLookAtPhone::OnBehaviorActivated()
   _dVars = DynamicVariables();
   _dVars.hasRun = true;
   if( hasRun ) {
+    // start with the loop action, which has a delayed head keyframe in the UP position, instead
+    // of MoveHeadUp, which has an initial keyframe in the DOWN position, to avoid a head snap
     RunLoopAction();
   } else {
     MoveHeadUp();
@@ -86,15 +81,6 @@ void BehaviorOnboardingLookAtPhone::BehaviorUpdate()
     } else {
       MoveHeadDown();
     }
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::HandleWhileActivated(const AppToEngineEvent& event)
-{
-  if( event.GetData().GetTag() == AppToEngineTag::kOnboardingConnectionComplete ) {
-    _dVars.receivedMessage = true;
-    MoveHeadDown();
   }
 }
   
@@ -124,17 +110,12 @@ void BehaviorOnboardingLookAtPhone::MoveHeadDown()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::SetupConsoleFuncs()
+void BehaviorOnboardingLookAtPhone::ContinueReceived()
 {
-  if( ANKI_DEV_CHEATS ) {
-    if( _iConfig.consoleFuncs.empty() ) {
-      // console func to mimic the app sending OnboardingConnectionComplete
-      auto func = [this](ConsoleFunctionContextRef context) {
-        _dVars.receivedMessage = true;
-        MoveHeadDown();
-      };
-      _iConfig.consoleFuncs.emplace_front( "EndPhoneIcon", std::move(func), "Onboarding", "" );
-    }
+  if( ANKI_VERIFY( IsActivated(), "BehaviorOnboardingLookAtPhone.ContinueReceived.NotActivated", "" ) ) {
+    CancelDelegates(false);
+    _dVars.receivedMessage = true;
+    MoveHeadDown();
   }
 }
 

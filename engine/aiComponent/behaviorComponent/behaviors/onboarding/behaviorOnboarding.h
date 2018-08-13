@@ -109,6 +109,8 @@ private:
   int GetPhysicalInterruptionMsgType( BehaviorID interruptionID ) const;
   
   void OnDelegateComplete();
+  
+  void SendStageToApp( const OnboardingStages& stage ) const;
 
   // before dealing with any stages, make sure the eyes animation wakes up based on the current stage.
   // the initial wake up stage handles its own wake up animations

@@ -55,7 +55,7 @@ message GatewayWrapper {
     OnboardingContinue            onboarding_continue                = 4;
     OnboardingContinueResponse    onboarding_continue_response       = 5;
     OnboardingSkip                onboarding_skip                    = 6;
-    OnboardingConnectionComplete  onboarding_connection_complete     = 7;
+    // Available
     OnboardingSkipOnboarding      onboarding_skip_onboarding         = 8;
     OnboardingRestart             onboarding_restart                 = 9;
 
