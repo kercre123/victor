@@ -560,6 +560,10 @@
     "AnimName": "ag_generic_cantdothat"
   },
   {
+    "CladEvent": "InitialWakeUp",
+    "AnimName": "ag_power_offon_01"
+  },
+  {
     "CladEvent": "InteractWithFaceTrackingIdle",
     "AnimName": "ag_pause_idle"
   },

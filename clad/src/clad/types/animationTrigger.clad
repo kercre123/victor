@@ -137,6 +137,7 @@ enum int_32 AnimationTrigger
   HikingLookAround,             // when Cozmo spins around looking for edges and cubes
   HikingSquintStart,            // when Cozmo is focusing on stuff (normally edges) - start
   ICantDoThat,
+  InitialWakeUp,
   InteractWithFaceTrackingIdle,
   InteractWithFacesInitialNamed,
   InteractWithFacesInitialUnnamed,
