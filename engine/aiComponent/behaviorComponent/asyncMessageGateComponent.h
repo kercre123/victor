@@ -49,7 +49,7 @@ public:
   AsyncMessageGateComponent(IExternalInterface* externalInterface,
                             IGatewayInterface* gatewayInterface,
                             RobotInterface::MessageHandler* robotInterface);
-  virtual ~AsyncMessageGateComponent() {};
+  virtual ~AsyncMessageGateComponent();
 
   //////
   // IDependencyManagedComponent functions

@@ -64,7 +64,7 @@ public:
   
   inline IBehavior* GetTopOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
   inline const IBehavior* GetTopOfStack() const { return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
-  inline IBehavior* GetBottomOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.front();}
+  inline IBehavior* GetBottomOfStack() const { return _behaviorStack.empty() ? nullptr : _behaviorStack.front();}
   inline bool IsInStack(const IBehavior* behavior) { return _stackMetadataMap.find(behavior) != _stackMetadataMap.end();}
   
   // if the passed in behavior is in the stack, return a pointer to the behavior which is above it in the

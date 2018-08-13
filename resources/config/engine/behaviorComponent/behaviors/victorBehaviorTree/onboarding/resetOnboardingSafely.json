@@ -1,0 +1,16 @@
+{
+  "behaviorID"       : "ResetOnboardingSafely",
+  "behaviorClass"    : "DispatcherQueue",
+
+  "behaviors": [
+    "ResetStateInternal",
+    "Onboarding"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "ResetStateInternal",
+      "behaviorClass": "ResetState"
+    }
+  ]
+}

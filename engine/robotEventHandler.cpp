@@ -1243,8 +1243,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 
     robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
   } else {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.PhysicalRobot",
-                        "Refusing to force delocalize physical robot.");
+    robot->Delocalize( robot->GetCarryingComponent().IsCarryingObject() );
   }
 }
 

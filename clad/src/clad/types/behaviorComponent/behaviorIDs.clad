@@ -306,6 +306,7 @@ enum uint_16 BehaviorID {
   OnboardingWaitForComeHere,
   OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
+  ResetOnboardingSafely,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,
@@ -354,6 +355,9 @@ enum uint_16 BehaviorID {
   ReactToUnexpectedMovement,
   StuckOnEdge,
   TriggerWordWithoutIntent,
+
+  // victorBehaviorTree
+  ResetSafely,
 
   // victorBehaviorTree/sdkBehaviors
   SDK0,

@@ -111,8 +111,13 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
+void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior, bool waitUntilNextTick)
 {
+  if( waitUntilNextTick ) {
+    _baseBehaviorOnNextTick = baseBehavior;
+    return;
+  }
+  
   _initializationStage = InitializationStage::StackNotInitialized;
   _baseBehaviorTmp = baseBehavior;
   if(_behaviorStack != nullptr){
@@ -125,6 +130,11 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
 {
+  if( _baseBehaviorOnNextTick != nullptr ) {
+    ResetBehaviorStack(_baseBehaviorOnNextTick);
+    _baseBehaviorOnNextTick = nullptr;
+  }
+  
   auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
   

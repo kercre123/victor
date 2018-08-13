@@ -42,6 +42,7 @@ public:
                                const BehaviorStack* stackComponent ) override;
 private:
   
+  void SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* oldBaseOfStack ) const;
   bool CheckForCycle() const;
   
   size_t _lastTick;

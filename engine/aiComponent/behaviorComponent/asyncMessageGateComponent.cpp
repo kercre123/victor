@@ -40,7 +40,11 @@ AsyncMessageGateComponent::AsyncMessageGateComponent(IExternalInterface* externa
 
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AsyncMessageGateComponent::~AsyncMessageGateComponent()
+{
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AsyncMessageGateComponent::PrepareCache()
 {
