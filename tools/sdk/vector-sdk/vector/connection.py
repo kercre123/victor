@@ -25,6 +25,7 @@ class CONTROL_PRIORITY_LEVEL(Enum):
     #: yet above Trigger-Word Detection.
     TOP_PRIORITY_AI = protocol.ControlRequest.TOP_PRIORITY_AI  # pylint: disable=no-member
 
+
 class _ControlEventManager:
     """This manages every :class:`asyncio.Event` that handle the behavior control
     system.
