@@ -88,7 +88,7 @@
   var canvasContainer;
   var legendContainer;
   var noteDiv;
-  var autoUpdate = true;
+  var autoUpdate = false;
   var waitingOnData = false;
   var is3D = false;
 
@@ -821,7 +821,7 @@
     }
   };
 
-  var kAutoUpdatePeriod_s = 1.0; 
+  var kAutoUpdatePeriod_s = 5.0; 
   var timeTilAutoUpdate = kAutoUpdatePeriod_s;
   myMethods.update = function( dt, elem ) {
     timeTilAutoUpdate -= dt;
