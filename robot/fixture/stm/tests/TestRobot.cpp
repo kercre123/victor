@@ -196,6 +196,27 @@ static void dbg_test_leds_(int on_time_ms, int colorfade)
   rcomLed(leds, RCOM_PRINT_LEVEL_CMD);
 }
 
+static void dbg_test_vext_stress_(int nloops, int loop_wait_ms)
+{
+  if( loop_wait_ms < 0 ) loop_wait_ms = 5000;
+  for(int i=0; i<nloops; i++)
+  {
+    Contacts::setModeTx();
+    Timer::delayMs(35);
+    Contacts::setModeRx();
+    Timer::delayMs(150);
+    cmdSend(CMD_IO_CONTACTS, "getvers", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    cmdSend(CMD_IO_CONTACTS, "getvers", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "testcommand  extra  long  string  to  measure  gate  rise  abcd  1234567890", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "getvers", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    Timer::delayMs(100);
+    
+    Timer::delayMs( loop_wait_ms );
+  }
+}
+
 static void run_debug(int arg[])
 {
   if( arg[0] == 1 )
@@ -206,6 +227,8 @@ static void run_debug(int arg[])
     dbg_test_readlogs_(arg[1], arg[2]);
   if( arg[0] == 4 )
     dbg_test_leds_(arg[1], arg[2]);
+  if( arg[0] == 5 )
+    dbg_test_vext_stress_(arg[1], arg[2]);
   
   if( arg[0] == 14 )
     dbg_test_emr_( arg[1], arg[2] );
