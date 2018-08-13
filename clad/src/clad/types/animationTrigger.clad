@@ -403,11 +403,9 @@ enum int_32 AnimationTrigger
   DEPRECATED_AcknowledgeObject,
   DEPRECATED_AskToBeRightedLeft,
   DEPRECATED_AskToBeRightedRight,
-  DEPRECATED_BlockReact,
   DEPRECATED_ComeHere_SearchForFace,
   DEPRECATED_CubeMovedSense,
   DEPRECATED_CubeMovedUpset,
-  DEPRECATED_DanceMambo,
   DEPRECATED_DizzyReactionHard,
   DEPRECATED_DizzyReactionMedium,
   DEPRECATED_DizzyReactionSoft,
@@ -417,17 +415,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_FacePlantRoll,
   DEPRECATED_FacePlantRollArmUp,
   DEPRECATED_FailedToRightFromFace,
-  DEPRECATED_FeedingEat,
-  DEPRECATED_FeedingInterrupted,
-  DEPRECATED_FeedingPlaceLiftOnCube,
-  DEPRECATED_FrustratedByFailure,
-  DEPRECATED_HikingInterestingEdgeThought, // Cozmo decided something about an interesting edge (probably decided he can't reach it)
-  DEPRECATED_HikingIntro,                  // played when we start hiking. This may be used as Intro anim for hiking activity
-  DEPRECATED_HikingObserve,                // when Cozmo visits interesting edges, pretending he is recognizing the border/object
-  DEPRECATED_HikingReactToNewArea,         // when Cozmo discovers a new area / beacon
-  DEPRECATED_HikingSquintEnd,              // when Cozmo is focusing on stuff (normally edges) - end
-  DEPRECATED_HikingSquintLoop,             // when Cozmo is focusing on stuff (normally edges) - loop
-  DEPRECATED_HikingWakeUpOffCharger,       // when Cozmo wakes up directly into hiking. This may not be needed for final product
   DEPRECATED_LaserAcknowledge,
   DEPRECATED_LaserDriveEnd,
   DEPRECATED_LaserDriveLoop,
@@ -435,19 +422,12 @@ enum int_32 AnimationTrigger
   DEPRECATED_LaserGetOut,
   DEPRECATED_LaserPounce,
   DEPRECATED_LookDownForLaser,
-  DEPRECATED_MajorWin,
   DEPRECATED_NamedFaceInitialGreeting,
   DEPRECATED_NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
   DEPRECATED_NothingToDoBoredIntro,             // Cozmo doesn't have anything to do in freeplay - start of bored game sequence
   DEPRECATED_NothingToDoBoredOutro,             // Cozmo doesn't have anything to do in freeplay - end of bored game sequence
-  DEPRECATED_OnSpeedtapRoundPlayerWinLowIntensity,
   DEPRECATED_SearchForFace_Search,
   DEPRECATED_SearchForFace_FoundFace,
-  DEPRECATED_Singing_80bpm,
-  DEPRECATED_Singing_100bpm,
-  DEPRECATED_Singing_120bpm,
-  DEPRECATED_Singing_GetIn,
-  DEPRECATED_Singing_GetOut,
   DEPRECATED_StackBlocksSuccess,
 
   // Count can specify "none" or "unspecified"

@@ -1,7 +1,7 @@
 {
   "behaviorClass": "AnimSequence",
   "behaviorID": "ExamplePetInitialDetection",
-  "animTriggers": ["DEPRECATED_AcknowledgeObject"],
+  "animTriggers": ["ReactToCubeTapCubeFound"],
   "wantsToBeActivatedCondition": {
     "conditionType" : "PetInitialDetection"
   }  

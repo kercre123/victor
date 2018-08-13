@@ -2,8 +2,8 @@
   "behaviorID": "ExampleProceduralClock",  
   "behaviorClass" : "ProceduralClock",
 
-  "getInAnimTrigger" : "DEPRECATED_MajorWin",
-  "getOutAnimTrigger" : "DEPRECATED_LaserPounce",
+  "getInAnimTrigger" : "ClockGetIn",
+  "getOutAnimTrigger" : "ClockGetOut",
   "displayClockFor_s" : 5,
 
   "clockLayout" : [{  

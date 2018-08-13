@@ -268,7 +268,8 @@ void BehaviorVectorPlaysCubeSpinner::BehaviorUpdate()
         break;
       }
       case CubeSpinnerGame::LockResult::Error:{
-        _dVars.nextResponseAnimation = AnimationTrigger::DEPRECATED_OnSpeedtapRoundPlayerWinLowIntensity;
+        // TODO:(bn) use fail animation here that doesn't move the robot too much
+        _dVars.nextResponseAnimation = AnimationTrigger::Count;
         break;
       }
       case CubeSpinnerGame::LockResult::Complete:{

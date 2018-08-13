@@ -1,7 +1,7 @@
 {
   "behaviorClass": "AnimSequence",
   "behaviorID": "ExampleFacePositionUpdated",
-  "animTriggers": ["DEPRECATED_AcknowledgeObject"],
+  "animTriggers": ["InteractWithFacesInitialUnnamed"],
   "wantsToBeActivatedCondition": {
     "conditionType" : "FacePositionUpdated"
   }

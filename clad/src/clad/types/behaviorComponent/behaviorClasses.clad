@@ -41,7 +41,6 @@ enum uint_8 BehaviorClass {
   FindHome,
   GoHome,
   InteractWithFaces,
-  LookAround,
   LookAtFaceInFront,
   MoveHeadToAngle,
   PlaceCubeByCharger,
@@ -113,19 +112,8 @@ enum uint_8 BehaviorClass {
   Exploring,
   ExploringExamineObstacle,
 
-  // feeding
-  FeedingEat,
-
   // freeplay/exploration
-  ExploreBringCubeToBeacon,
   ExploreLookAroundInPlace,
-  ExploreVisitPossibleMarker,
-  LookInPlaceMemoryMap,
-  ThinkAboutBeacons,
-  VisitInterestingEdge,
-
-  // freeplay/oneShots
-  Singing,
 
   // freeplay/putDownDispatch
   LookForFaceAndCube,

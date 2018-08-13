@@ -8,44 +8,8 @@
         {
           "flatScore": 30
         }
-      },
-      { "behaviorID" : "Hiking_DriveOffCharger",
-        "scoring"      :
-        {
-          "flatScore": 10.0
-        }
-      },
-      { "behaviorID" : "Hiking_FirstLookIntro",
-        "scoring"      :
-        {
-          "flatScore": 9.0
-        }
-      },
-      { "behaviorID" : "Hiking_FirstLookWakeUp",
-        "scoring"      :
-        {
-          "flatScore": 9.0
-        }
-      },
-      { "behaviorID" : "Hiking_RollCube",
-        "scoring"      :
-        {
-          "flatScore": 8.5
-        }
-      },
-      { "behaviorID" : "Hiking_ThinkAboutBeacons",
-        "scoring"      :
-        {
-          "flatScore": 8.0
-        }
-      },
-      { "behaviorID" : "Hiking_BringCubeToBeacon",
-        "scoring"      :
-        {
-          "flatScore": 4.0
-        }
-      },
-      { "behaviorID" : "Hiking_VisitInterestingEdge",
+      },    
+      { "behaviorID" : "Exploring",
         "scoring"      :
         {
           "flatScore": 1.25,
@@ -58,14 +22,8 @@
             ]
           }
         }
-      },
-      { "behaviorID" : "Hiking_LookInPlaceForUnknown",
-        "scoring"      :
-        {
-          "flatScore": 1.1
-        }
-      },
-      { "behaviorID" : "PutDownBlock", // if no beacons are available we want Cozmo to put cubes down
+      },      
+      { "behaviorID" : "PutDownBlock",
         "scoring"      :
         {
           "flatScore": 0.1

@@ -74,15 +74,7 @@ enum uint_16 BehaviorID {
   ExamplePetInitialDetection,
 
   // hiking
-  Hiking_BringCubeToBeacon,
-  Hiking_DriveOffCharger,
-  Hiking_FirstLookIntro,
-  Hiking_FirstLookWakeUp,
   Hiking_LookInPlace360,
-  Hiking_LookInPlaceForUnknown,
-  Hiking_RollCube,
-  Hiking_ThinkAboutBeacons,
-  Hiking_VisitInterestingEdge,
 
   // inProgress
   ReactToBody,

@@ -28,7 +28,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorMoveHeadToAngle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPlaceCubeByCharger.h"
@@ -83,14 +82,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploringExamineObstacle.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreVisitPossibleMarker.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorLookInPlaceMemoryMap.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorThinkAboutBeacons.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorVisitInterestingEdge.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorInspectCube.h"
@@ -292,12 +284,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::InteractWithFaces:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorInteractWithFaces(config));
-      break;
-    }
-    
-    case BehaviorClass::LookAround:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorLookAround(config));
       break;
     }
     
@@ -625,51 +611,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::FeedingEat:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorFeedingEat(config));
-      break;
-    }
-    
-    case BehaviorClass::ExploreBringCubeToBeacon:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreBringCubeToBeacon(config));
-      break;
-    }
-    
     case BehaviorClass::ExploreLookAroundInPlace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorExploreLookAroundInPlace(config));
-      break;
-    }
-    
-    case BehaviorClass::ExploreVisitPossibleMarker:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreVisitPossibleMarker(config));
-      break;
-    }
-    
-    case BehaviorClass::LookInPlaceMemoryMap:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorLookInPlaceMemoryMap(config));
-      break;
-    }
-    
-    case BehaviorClass::ThinkAboutBeacons:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorThinkAboutBeacons(config));
-      break;
-    }
-    
-    case BehaviorClass::VisitInterestingEdge:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVisitInterestingEdge(config));
-      break;
-    }
-    
-    case BehaviorClass::Singing:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorSinging(config));
       break;
     }
     

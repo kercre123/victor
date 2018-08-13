@@ -116,10 +116,6 @@
     "AnimName" : "ag_blackjack_victorwin"
   },
   {
-    "CladEvent": "DEPRECATED_BlockReact",
-    "AnimName": "ag_blockreact"
-  },
-  {
     "CladEvent": "ConnectToCubeFailure",
     "AnimName":  "ag_cubeconnection_connectionfailure"
   },
@@ -320,10 +316,6 @@
     "AnimName": "ag_dancebeat_quit"
   },
   {
-    "CladEvent": "DEPRECATED_DanceMambo",
-    "AnimName": "ag_dancing_mambo"
-  },
-  {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
     "AnimName": "ag_dizzy_reaction_hard"
   },
@@ -464,18 +456,6 @@
     "AnimName": "ag_reacttocliff_turtlerollfail_01"
   },
   {
-    "CladEvent": "DEPRECATED_FeedingEat",
-    "AnimName": "ag_energy_eatingfullyfull"
-  },
-  {
-    "CladEvent": "DEPRECATED_FeedingInterrupted",
-    "AnimName": "ag_energy_interruptions"
-  },
-  {
-    "CladEvent": "DEPRECATED_FeedingPlaceLiftOnCube",
-    "AnimName": "ag_energy_liftoncubelvl1"
-  },
-  {
     "CladEvent": "FistBumpIdle",
     "AnimName": "ag_fistbump_idle"
   },
@@ -498,11 +478,7 @@
   {
     "CladEvent": "FlipDownFromBack",
     "AnimName": "ag_reacttocliff_turtleroll_01"
-  },
-  {
-    "CladEvent": "DEPRECATED_FrustratedByFailure",
-    "AnimName": "ag_reacttoblock_frustrated"
-  },
+  },  
   {
     "CladEvent": "FrustratedByFailureMajor",
     "AnimName": "ag_reacttoblock_frustrated"
@@ -518,42 +494,6 @@
   {
     "CladEvent": "GoToSleepSleeping",
     "AnimName": "ag_gotosleep_sleeping"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingIntro",
-    "AnimName": "ag_hiking_getin"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingObserve",
-    "AnimName": "ag_hiking_observe"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingInterestingEdgeThought",
-    "AnimName": "ag_hiking_interestingedgethought"
-  },
-  {
-    "CladEvent": "HikingLookAround",
-    "AnimName": "ag_hiking_lookaround"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingReactToNewArea",
-    "AnimName": "ag_hiking_rtnewarea"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingSquintEnd",
-    "AnimName": "ag_hiking_edgesquintgetout"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingSquintLoop",
-    "AnimName": "ag_hiking_edgesquintloop"
-  },
-  {
-    "CladEvent": "HikingSquintStart",
-    "AnimName": "ag_hiking_edgesquintgetin"
-  },
-  {
-    "CladEvent": "DEPRECATED_HikingWakeUpOffCharger",
-    "AnimName": "ag_hiking_getin"
   },
   {
     "CladEvent": "ICantDoThat",
@@ -618,10 +558,6 @@
   {
     "CladEvent": "LookInPlaceForFacesHeadMovePause",
     "AnimName": "ag_lookinplaceforfaces_headmovepauses"
-  },
-  {
-    "CladEvent": "DEPRECATED_MajorWin",
-    "AnimName": "ag_majorwin"
   },
   {
     "CladEvent": "MeetVictorGetIn",
@@ -738,11 +674,7 @@
   {
     "CladEvent": "OnboardingWakeWordGetIn",
     "AnimName": "ag_onboarding_wakeword_getin_01"
-  },
-  {
-    "CladEvent": "DEPRECATED_OnSpeedtapRoundPlayerWinLowIntensity",
-    "AnimName": "ag_speedtap_loseround_intensity01"
-  },
+  },  
   {
     "CladEvent": "PettingLevel1",
     "AnimName": "ag_petting_lvl1"
@@ -926,27 +858,7 @@
   {
     "CladEvent": "DEPRECATED_SearchForFace_FoundFace",
     "AnimName": "ag_vc_reaction_nofaceheardyou_getout"
-  },
-  {
-    "CladEvent": "DEPRECATED_Singing_80bpm",
-    "AnimName": "ag_cozmosings_80bpm"
-  },
-  {
-    "CladEvent": "DEPRECATED_Singing_100bpm",
-    "AnimName": "ag_cozmosings_100bpm"
-  },
-  {
-    "CladEvent": "DEPRECATED_Singing_120bpm",
-    "AnimName": "ag_cozmosings_120bpm"
-  },
-  {
-    "CladEvent": "DEPRECATED_Singing_GetIn",
-    "AnimName": "ag_cozmosings_getin"
-  },
-  {
-    "CladEvent": "DEPRECATED_Singing_GetOut",
-    "AnimName": "ag_cozmosings_getout"
-  },
+  },  
   {
     "CladEvent": "BumpObjectSlowGetIn",
     "AnimName": "ag_slowbump_getin"
