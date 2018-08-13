@@ -140,6 +140,8 @@ private:
   
   bool _firstRun = true;
   
+  bool _ignoreMissingTransitions = false;
+  
 public:
   // for unit tests: grab a list of all conditions for each state name
   std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>> TESTONLY_GetAllTransitions( UnitTestKey key ) const;

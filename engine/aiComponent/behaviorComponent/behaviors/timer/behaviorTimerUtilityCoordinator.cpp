@@ -280,7 +280,7 @@ BehaviorTimerUtilityCoordinator::BehaviorTimerUtilityCoordinator(const Json::Val
   // Theoretically we can allow multiple instances, but with current force antic implementation we
   // can't and will assert here
   if( sCoordinator != nullptr ) {
-    PRINT_NAMED_WARNING("BehaviorTimerUtilityCoordinator.Constructor.MultipleInstances", "Multiple coordinator instances");
+    PRINT_NAMED_INFO("BehaviorTimerUtilityCoordinator.Constructor.MultipleInstances", "Multiple coordinator instances");
   }
   sCoordinator = this;
 }
