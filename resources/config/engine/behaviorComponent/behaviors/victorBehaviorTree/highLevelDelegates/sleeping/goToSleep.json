@@ -2,8 +2,9 @@
   "behaviorID" : "GoToSleep",
   "behaviorClass" : "AnimSequence",
 
+  "associatedActiveFeature": "Sleeping",
+
   "animTriggers": [
-    "GoToSleepGetIn",
-    "GoToSleepSleeping"
+    "GoToSleepGetIn"
   ]
 }

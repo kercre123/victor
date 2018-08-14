@@ -12,10 +12,6 @@
 {
   "handledByHighLevelAI": {
 
-    "system_sleep": {
-      "type": "system_sleep"
-    },
-
     "system_charger": {
       "type": "system_charger"
     },
@@ -27,6 +23,10 @@
   },
 
   "handledElsewhere": {
+    "system_sleep": {
+      "type": "system_sleep"
+    },
+
     "set_timer": {
       "type": "set_timer"
     },

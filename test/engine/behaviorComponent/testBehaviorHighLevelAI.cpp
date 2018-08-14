@@ -136,15 +136,10 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
   // There should be one entry per completed intent in completedUserIntents.json
   
   LabeledExceptions exceptionsList = {
-    { "system_sleep",      {"Napping", "NappingOnCharger"} },
     { "system_charger",    {"ObservingOnCharger",
                             "ObservingOnChargerRecentlyPlaced",
-                            "Napping",
-                            "NappingOnCharger",
-                            "WakingUp",
-                            "WakingUpLights",
     } },
-    { "explore_start",     {"Napping", "NappingOnCharger"} },
+    { "explore_start",     {} },
   };
   // OK YOUR JOB IS DONE
   // *********************************************************

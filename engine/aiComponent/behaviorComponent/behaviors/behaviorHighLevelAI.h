@@ -57,8 +57,6 @@ private:
     float socializeKnownFaceCooldown_s;
     float playWithCubeCooldown_s;
     float playWithCubeOnChargerCooldown_s;
-    float goToSleepTimeout_s;
-    float minFaceTimeToAllowSleep_s;
     float maxFaceDistanceToSocialize_mm;
     
     std::unordered_map< PostBehaviorSuggestions, StateID > pbsResumeOverrides;

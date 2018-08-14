@@ -11,6 +11,9 @@
     "minTimeSinceChange_ms": 400
   },
 
+  "associatedActiveFeature": "NoFeature",
+  "behaviorStatToIncrement": "ReactedToSound",
+
   "emotionEventOnActivated": "ReactToSoundAsleep",
 
   "micDirectionReactionBehavior" : "ReactToSoundDirectionAsleep",

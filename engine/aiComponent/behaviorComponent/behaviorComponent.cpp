@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
+#include "engine/aiComponent/behaviorComponent/sleepTracker.h"
 #include "engine/aiComponent/behaviorComponent/userDefinedBehaviorTreeComponent/userDefinedBehaviorTreeComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -201,7 +202,11 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent<AttentionTransferComponent>()) {
     entity->AddDependentComponent(BCComponentID::AttentionTransferComponent, new AttentionTransferComponent);
   }
-  
+
+  if(!entity->HasComponent<SleepTracker>()) {
+    entity->AddDependentComponent(BCComponentID::SleepTracker, new SleepTracker);
+  }
+
   if(!entity->HasComponent<BehaviorsBootLoader>()) {
     const CozmoContext* context = robot.GetContext();
     RobotDataLoader* dataLoader = nullptr;

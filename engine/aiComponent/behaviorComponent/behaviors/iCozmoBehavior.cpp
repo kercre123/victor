@@ -1666,6 +1666,18 @@ void ICozmoBehavior::SmartDisableKeepFaceAlive()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartReEnableKeepFaceAlive()
+{
+  if( ANKI_VERIFY( _keepAliveDisabled,
+                   "ICozmoBehavior.SmartReEnableKeepFaceAlive.NotDisabled",
+                   "Behavior '%s' wants to re-enable face keep alive but has not disabled it (through ICozmoBehavior)",
+                   GetDebugLabel().c_str() ) ) {
+    GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(GetDebugLabel());
+    _keepAliveDisabled = false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)
 {
   auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>();

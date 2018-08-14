@@ -51,7 +51,6 @@ private:
     InstanceConfig();
     IBEIConditionPtr  triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
-    std::vector<ICozmoBehaviorPtr> toSuppressWhenSleeping;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     std::shared_ptr<BehaviorReactToVoiceCommand> reactToVoiceCommandBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;

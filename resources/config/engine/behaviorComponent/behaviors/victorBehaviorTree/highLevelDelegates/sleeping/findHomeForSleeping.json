@@ -1,0 +1,18 @@
+{
+  "behaviorID" : "FindHomeForSleeping",
+  "behaviorClass": "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior" : true,
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OnCharger"
+  },
+  
+  "behaviors" : [
+    "MandatoryPhysicalReactions",
+    // TODO:(bn) different in air reaction?
+    "LowBatteryInAir",
+    "FindAndGoToHome"
+  ]
+  
+}

@@ -495,6 +495,7 @@ protected:
 
   // disable the procedural "keep face alive" in the animation system
   void SmartDisableKeepFaceAlive();
+  void SmartReEnableKeepFaceAlive();
 
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);

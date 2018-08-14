@@ -15,6 +15,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/sleepTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
@@ -80,6 +81,8 @@ void BehaviorSleeping::OnBehaviorActivated()
   GetBEI().GetFaceWorldMutable().ClearAllFaces();
   GetBEI().GetVisionComponent().LoadFaceAlbum();
   
+  GetBehaviorComp<SleepTracker>().SetIsSleeping(true);
+  
   if( _iConfig.shouldEnterPowerSave ) {
     SmartRequestPowerSaveMode();
   }
@@ -96,6 +99,8 @@ void BehaviorSleeping::OnBehaviorDeactivated()
   if( _iConfig.shouldPlayEmergencyGetOut ) {
     PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
   }
+  
+  GetBehaviorComp<SleepTracker>().SetIsSleeping(false);
 }
 
 void BehaviorSleeping::TransitionToSleeping()

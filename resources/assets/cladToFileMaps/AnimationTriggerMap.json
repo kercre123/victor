@@ -1603,5 +1603,17 @@
   {
     "CladEvent": "PRDemoGreeting",
     "AnimName": "ag_greeting_big_hello"
+  },
+  {
+    "CladEvent": "VC_SleepingToListeningGetIn",
+    "AnimName": "ag_wakeword_groggyeyes_getin"
+  },
+  {
+    "CladEvent": "VC_SleepingToListeningLoop",
+    "AnimName": "ag_wakeword_groggyeyes_listenloop"
+  },
+  {
+    "CladEvent": "VC_SleepingToListeningGetOut",
+    "AnimName": "ag_wakeword_groggyeyes_getout"
   }
 ]

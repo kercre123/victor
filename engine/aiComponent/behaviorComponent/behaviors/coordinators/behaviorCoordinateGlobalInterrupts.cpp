@@ -60,16 +60,6 @@ namespace{
                                                                                    BEHAVIOR_CLASS(PopAWheelie),
                                                                                    BEHAVIOR_CLASS(PounceWithProx),
                                                                                    BEHAVIOR_CLASS(RollBlock) }};
-
-  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenSleeping = {{
-    BEHAVIOR_ID(ReactToTouchPetting),
-    BEHAVIOR_ID(TriggerWordDetected),
-    BEHAVIOR_ID(ReactToDarkness)
-  }};
-  static const std::set<BehaviorID> kBehaviorIDsThatMeanSleeping = {{
-    BEHAVIOR_ID(Sleeping),
-    BEHAVIOR_ID(SleepingWakeUp),
-  }};
   
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
     BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
@@ -121,9 +111,6 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.wakeWordBehavior         = BC.FindBehaviorByID(BEHAVIOR_ID(TriggerWordDetected));
   
-  for( const auto& id : kBehaviorIDsToSuppressWhenSleeping ) {
-    _iConfig.toSuppressWhenSleeping.push_back( BC.FindBehaviorByID(id) );
-  }
   for( const auto& id : kBehaviorIDsToSuppressWhenMeetVictor ) {
     _iConfig.toSuppressWhenMeetVictor.push_back( BC.FindBehaviorByID(id) );
   }
@@ -187,32 +174,10 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   bool shouldSuppressTriggerWordBehavior = false;
   bool isBlackjackRunning = false;
 
-  // suppress certain behaviors during sleeping
-  // also allow behaviors on the current stack to suppress the trigger word
   {
-    bool highLevelRunning = false;
-    auto callback = [this, &highLevelRunning, &shouldSuppressTriggerWordBehavior, &isBlackjackRunning](const ICozmoBehavior& behavior) {
-      if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
-        highLevelRunning = true;
-      }
-
+    auto callback = [&isBlackjackRunning](const ICozmoBehavior& behavior) {
       if( behavior.GetClass() == BEHAVIOR_CLASS(BlackJack)){
         isBlackjackRunning = true;
-      }
-
-      if( highLevelRunning
-          && (std::find(kBehaviorIDsThatMeanSleeping.begin(), kBehaviorIDsThatMeanSleeping.end(), behavior.GetID())
-              != kBehaviorIDsThatMeanSleeping.end()) )
-      {
-        // High level AI is running the Sleeping behavior (probably through the Napping state).
-        // Wake word serves as the wakeup for a napping robot, so disable the wake word behavior and let
-        // high level AI resume. It will clear the pending trigger and resume in some other state. (The
-        // wake up animation is the getout for napping). Also petting behaviors,
-        // since those will cause a graceful getout
-        for( const auto& beh : _iConfig.toSuppressWhenSleeping ) {
-          beh->SetDontActivateThisTick(GetDebugLabel());
-        }
-        shouldSuppressTriggerWordBehavior = true;
       }
 
       return true; // Iterate over the entire stack

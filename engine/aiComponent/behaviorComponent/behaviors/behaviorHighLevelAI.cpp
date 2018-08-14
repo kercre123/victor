@@ -128,18 +128,7 @@ bool BehaviorHighLevelAI::IsBehaviorActive( BehaviorID behaviorID ) const
   
 void BehaviorHighLevelAI::BehaviorUpdate()
 {
-  const bool wasSleepingActive = IsBehaviorActive( BEHAVIOR_ID(Sleeping) );
-  
   InternalStatesBehavior::BehaviorUpdate();
-  
-  const bool triggerWordPending = GetBehaviorComp<UserIntentComponent>().IsTriggerWordPending();
-  if( triggerWordPending && wasSleepingActive ) {
-    DEV_ASSERT( !IsBehaviorActive( BEHAVIOR_ID(Sleeping) ), "Expected a transition out of sleeping" );
-    // the global interrupts coordinator is letting us handle the trigger word, since it should wake
-    // the robot. The above behavior robot should have woken the robot
-    GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
-  }
-  
 }
 
 CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()

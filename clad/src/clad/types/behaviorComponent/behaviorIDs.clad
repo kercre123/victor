@@ -237,8 +237,12 @@ enum uint_16 BehaviorID {
   ShortLookAroundForFaceAndCube,
 
   // victorBehaviorTree/highLevelDelegates/sleeping
+  Asleep,
+  FindHomeForSleeping,
   GoToSleep,
-  Sleeping,
+  SleepCycle,
+  SleepingPersonCheck,
+  SleepingTriggerWord,
   SleepingWakeUp,
   SleepingWakeUpLights,
 
@@ -340,7 +344,6 @@ enum uint_16 BehaviorID {
   ReactToFrustrationMajor,
   ReactToGoodBye,
   ReactToGoodMorning,
-  ReactToGoodNight,
   ReactToGreeting,
   ReactToHello,
   ReactToObstacle,

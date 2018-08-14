@@ -1,0 +1,79 @@
+{
+  "behaviorID": "SleepCycle",
+  "behaviorClass": "SleepCycle",
+
+  "delegateID": "CoordinateInHabitat",
+
+  "goToChargerBehavior": "FindHomeForSleeping",
+
+  // NOTE: power save mode turns off the camera, so any conditions relying on vision will likely not work here
+  // (but may fire before power save is enabled)
+  "wakeReasonConditions": [
+    {
+      "reason": "PickedUp",
+      "condition": {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OffTreadsState",
+          "targetState": "OnTreads"
+        }
+      }
+    },
+
+    {
+      "reason": "Touched",
+      "condition": {
+        "conditionType": "RobotTouched",
+        "minTouchTime": 0.1
+      }
+    },
+
+    {
+      // NOTE: in version 1.0, this doesn't really work because the camera is turned off in power save mode
+      // (during sleep). It is possible for it to trigger before the camera turns off, but very unlikely
+      "reason": "LightsOn",
+      "condition": {
+        "conditionType": "IlluminationDetected",
+        "preTriggerStates": ["Darkened"],
+        "preConfirmationTime": 1.0,
+        "preConfirmationMinNum": 3,
+        "postTriggerStates": ["Illuminated"],
+        "postConfirmationTime": 1.0,
+        "postConfirmationMinNum": 3,
+        "matchHoldTime": 5.0
+      }
+    }
+  ],
+
+  // wake from any state (except Awake....)
+  "alwaysWakeReasons": [
+    "SDK",
+    "TimerShouldRing",
+    "VoiceCommand"
+  ],
+
+  // in addition to the "always wakes" conditions
+  "wakeFromStates": [
+    {
+      "fromState": "Comatose",
+      "reasons": []
+    },
+    {
+      "fromState": "DeepSleep",
+      "reasons": [
+        "PickedUp",
+        "Touched"
+      ]
+    },
+    {
+      "fromState": "LightSleep",
+      "reasons": [
+        "PickedUp",
+        "Touched",
+        "Sound",
+        "LightsOn"
+      ]
+    }
+  ]
+  
+}

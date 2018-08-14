@@ -12,8 +12,9 @@
     "ReactToHello",
     "ReactToGoodMorning",
     "ReactToGoodBye",
-    "ReactToGoodNight",
     "ReactToAffirmative"
+
+    // NOTE: "goodnight" greeting is handled by the sleep cycle behavior, not here
   ],
 
   "postBehaviorSuggestion": "Socialize"

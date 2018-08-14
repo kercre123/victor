@@ -118,6 +118,12 @@ TEST_INTENT(UserIntentsTransitions, ShutUp, "shut_up")
   EXPECT_TRUE(res);
 }
 
+TEST_INTENT(UserIntentsTransitions, Sleep, "system_sleep")
+{
+  const bool res = IntentHelper( UserIntent::Createsystem_sleep({}), BehaviorID::GoToSleep, true );
+  EXPECT_TRUE(res);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // the testing of the tests
 TEST(UserIntentsTransitions, CompletedHaveTests)

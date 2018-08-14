@@ -9,6 +9,6 @@
     "LowBatteryMode",
     "ShutUpMode",
     "QuietMode",
-    "CoordinateInHabitat"
+    "SleepCycle"
   ]
 }

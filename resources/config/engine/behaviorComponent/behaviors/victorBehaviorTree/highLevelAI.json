@@ -11,16 +11,17 @@
   "initialState": "ObservingOnCharger",
 
   "resumeReplacements": {
-    "NappingOnCharger" : "ObservingOnCharger",
-    "Napping": "Observing"
   },
   // these are evaluated after resumeReplacements and override them
   "postBehaviorSuggestionResumeOverrides": {
     "Socialize": "Socializing",
     "PlayWithCube": "PlayingWithCube",
     "Nothing": "Observing",
-    "Sleep": "Napping",
-    "SleepOnCharger": "NappingOnCharger"
+
+    // should be handled higher up the tree, but in case we get stuck down here with one of these, just go to
+    // observing
+    "Sleep": "Observing",
+    "SleepOnCharger": "ObservingOnCharger"
   },
 
   "states": [
@@ -71,25 +72,7 @@
     {
       "name": "PlayingWithCube",
       "behavior": "PlayWithCube"
-    },
-    {
-      "name": "Napping",
-      "behavior": "Sleeping",
-      "activateIntent": "system_sleep"
-    },
-    {
-      "name": "NappingOnCharger",
-      "behavior": "Sleeping",
-      "activateIntent": "system_sleep"
-    },
-    {
-      "name": "WakingUp",
-      "behavior": "SleepingWakeUp"
-    },
-    {
-      "name": "WakingUpLights",
-      "behavior": "SleepingWakeUpLights"
-    },
+    },    
     {
       "name": "ReturningToCharger",
       "behavior": "FindAndGoToHome",
@@ -113,15 +96,7 @@
     {
       "name": "NoLongerRecentlyPlaced",
       "begin_s": 150.0
-    },
-    {
-      "name": "WakeUpFromNap",
-      "begin_s": 14400.0
-    },
-    {
-      "name": "NapHasBeenLong",
-      "begin_s": 10800.0
-    },
+    },    
     {
       "name": "FailedToFindCharger",
       "begin_s": 300.0
@@ -231,14 +206,7 @@
               }
             ]
           }
-        },
-        {
-          "to": "NappingOnCharger",
-          "condition": {
-            "conditionType": "SimpleMood",
-            "to": "LowStim"
-          }
-        }
+        }        
       ],
       "exitTransitions": [
         {
@@ -395,13 +363,6 @@
                 "not": { "conditionType": "RobotInHabitat" }
               }
             ]
-          }
-        },
-        {
-          "to": "Napping",
-          "condition": {
-            "conditionType": "SimpleMood",
-            "to": "LowStim"
           }
         }
       ]
@@ -566,259 +527,7 @@
       ]
     },
     
-    {
-      "from": "NappingOnCharger",
-      "interruptingTransitions": [
-        {
-          "to": "WakingUp",
-          "condition": {
-            "conditionType": "Compound",
-            "or": [
-              {
-                "conditionType": "TriggerWordPending"
-              },
-              {
-                "conditionType": "Compound",
-                "not": {
-                  "conditionType": "OnCharger"
-                }
-              },
-              {
-                "customCondition": "WakeUpFromNap"
-              },
-              {
-                "conditionType": "Compound",
-                "and": [
-                  {
-                    "conditionType": "UserIntentActive",
-                    "list": [
-                      {"type": "system_sleep"}
-                    ]
-                  },
-                  {
-                    "conditionType": "AnyStimuli",
-                    "MotionDetected": false,
-                    "FacePositionUpdated": false,
-                    "FaceKnown": false,
-                    "RobotTouched": true,
-                    "RobotShaken": true
-                  }
-                ]
-              },
-              {
-                "conditionType": "Compound",
-                "and": [
-                  {
-                    "conditionType": "AnyStimuli",
-                    "MotionDetected": true,
-                    "FacePositionUpdated": false,
-                    "FaceKnown": false,
-                    "RobotTouched": true,
-                    "RobotShaken": true
-                  },
-                  {
-                    "customCondition": "NapHasBeenLong"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "to": "WakingUpLights",
-          "condition": {
-            "conditionType": "IlluminationDetected",
-            "preTriggerStates": ["Darkened"],
-            "preConfirmationTime": 1.0,
-            "preConfirmationMinNum": 3,
-            "postTriggerStates": ["Illuminated"],
-            "postConfirmationTime": 1.0,
-            "postConfirmationMinNum": 3,
-            "matchHoldTime": 5.0
-          }
-        }
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "WakingUp",
-          "condition": {
-            "conditionType": "Compound",
-            "and": [
-              {
-                "conditionType": "Compound",
-                "or": [
-                  {
-                    "conditionType": "SimpleMood",
-                    "mood": "MedStim"
-                  },
-                  {
-                    "conditionType": "SimpleMood",
-                    "mood": "HighStim"
-                  },
-                  {
-                    "conditionType": "AnyStimuli",
-                    "MotionDetected": false,
-                    "FacePositionUpdated": false,
-                    "FaceKnown": false,
-                    "RobotTouched": true,
-                    "RobotShaken": true
-                  }
-                ]
-              },
-              {
-                "conditionType": "Compound",
-                "not": {
-                  "conditionType": "UserIntentActive",
-                  "list": [
-                    {"type": "system_sleep"}
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "Napping",
-      "interruptingTransitions": [
-        {
-          "to": "WakingUp",
-          "condition": {
-            "conditionType": "Compound",
-            "or": [
-              {
-                "conditionType": "TriggerWordPending"
-              },
-              {
-                "conditionType": "OnCharger"
-              },
-              {
-                "customCondition": "WakeUpFromNap"
-              },
-              {
-                "conditionType": "Compound",
-                "and": [
-                  {
-                    "conditionType": "UserIntentActive",
-                    "list": [
-                      {"type": "system_sleep"}
-                    ]
-                  },
-                  {
-                    "conditionType": "AnyStimuli",
-                    "MotionDetected": false,
-                    "FacePositionUpdated": false,
-                    "FaceKnown": false,
-                    "RobotTouched": true,
-                    "RobotShaken": true
-                  }
-                ]
-              },
-              {
-                "conditionType": "Compound",
-                "and": [
-                  {
-                    "conditionType": "AnyStimuli",
-                    "MotionDetected": true,
-                    "FacePositionUpdated": false,
-                    "FaceKnown": false,
-                    "RobotTouched": true,
-                    "RobotShaken": true
-                  },
-                  {
-                    "customCondition": "NapHasBeenLong"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "to": "WakingUpLights",
-          "condition": {
-            "conditionType": "IlluminationDetected",
-            "preTriggerStates": ["Darkened"],
-            "preConfirmationTime": 1.0,
-            "preConfirmationMinNum": 3,
-            "postTriggerStates": ["Illuminated"],
-            "postConfirmationTime": 1.0,
-            "postConfirmationMinNum": 3,
-            "matchHoldTime": 5.0
-          }
-        }
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "WakingUp",
-          "condition": {
-            "conditionType": "Compound",
-            "and": [
-              {
-                "conditionType": "Compound",
-                "or": [
-                  {
-                    "conditionType": "SimpleMood",
-                    "mood": "MedStim"
-                  },
-                  {
-                    "conditionType": "SimpleMood",
-                    "mood": "HighStim"
-                  },
-                  {
-                    "conditionType": "AnyStimuli",
-                    "MotionDetected": false,
-                    "FacePositionUpdated": false,
-                    "FaceKnown": false,
-                    "RobotTouched": true,
-                    "RobotShaken": true
-                  }
-                ]
-              },
-              {
-                "conditionType": "Compound",
-                "not": {
-                  "conditionType": "UserIntentActive",
-                  "list": [
-                    {"type": "system_sleep"}
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "WakingUp",
-      "exitTransitions": [
-        {
-          "to": "ObservingOnCharger",
-          "condition": {
-            "conditionType": "TrueCondition" 
-          }
-        }
-      ]
-    },
     
-    // Sad to need all this duplication for WakingUp and WakingUpLights, but current design
-    // is such that Sleeping doesn't know _why_ it ended (only High Level AI does), so we
-    // need two different high level behaviors to transition to/from in order to get a
-    // different animation when interrupted by the lights coming on.
-    {
-      "from": "WakingUpLights",
-      "exitTransitions": [
-        {
-          "to": "ObservingOnCharger",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
     {
       "from": "ReturningToCharger",
       "interruptingTransitions": [
@@ -867,7 +576,7 @@
           "emotionEvent": "PlacedOnCharger"
         },
         {
-          "to": "Napping",
+          "to": "Observing",
           "condition": {
             "conditionType": "TrueCondition" 
           }
@@ -921,81 +630,6 @@
       ]
     },
 
-    // go to sleep
-    {
-      "from": [
-        "ObservingDriveOffCharger",
-        "DriveOffChargerIntoSocializing",
-        "Observing",
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
-        "Socializing",
-        "WakingUp",
-        "WakingUpLights",
-        "ReturningToCharger",
-        "FailedToFindCharger",
-        "PlayingWithCube",
-        "Exploring",
-        "ExploringVoiceCommand",
-        "InvestigateHeldCube"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "Napping",
-          "condition": {
-            "conditionType": "Compound",
-            "and": [
-              {
-                "conditionType": "UserIntentPending",
-                "list": [
-                  {"type": "system_sleep"}
-                ]
-              },
-              {
-                "conditionType": "Compound",
-                "not": {
-                  "conditionType": "OnCharger"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "to": "NappingOnCharger",
-          "condition": {
-            "conditionType": "Compound",
-            "and": [
-              {
-                "conditionType": "UserIntentPending",
-                "list": [
-                  {"type": "system_sleep"}
-                ]
-              },
-              {
-                "conditionType": "OnCharger"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "from": [
-        "PlayingWithCube"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "Napping",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {"type": "system_sleep"}
-            ]
-          }
-        }
-      ]
-    },
-
     // explore voice command
     {
       "from": [
@@ -1005,8 +639,6 @@
         "ObservingOnCharger",
         "ObservingOnChargerRecentlyPlaced",
         "Socializing",
-        "WakingUp",
-        "WakingUpLights",
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",

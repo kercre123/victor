@@ -207,6 +207,7 @@ enum uint_8 BehaviorClass {
   SearchWithinBoundingBox,
 
   // sleeping
+  SleepCycle,
   Sleeping,
 
   // timer

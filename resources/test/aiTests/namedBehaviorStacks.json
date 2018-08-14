@@ -9,6 +9,7 @@
     "stack" : [
       "InitNormalOperation",
       "ModeSelector",
+      "SleepCycle",
       "CoordinateInHabitat",
       "HabitatMutedDispatcher",
       "CoordinateGlobalInterrupts",
@@ -22,6 +23,7 @@
     "stack" : [
     "InitNormalOperation",
     "ModeSelector",
+    "SleepCycle",
     "CoordinateInHabitat",
     "HabitatMutedDispatcher",
     "CoordinateGlobalInterrupts",
