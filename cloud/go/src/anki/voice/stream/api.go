@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 )
 
 func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ...Option) *Streamer {
@@ -49,7 +50,10 @@ func (strm *Streamer) Close() error {
 }
 
 func (strm *Streamer) CloseSend() error {
-	return strm.stream.CloseSend()
+	if strm.stream != nil {
+		return strm.stream.CloseSend()
+	}
+	return errors.New("cannot CloseSend on nil stream")
 }
 
 // SetVerbose enables or disables verbose logging
