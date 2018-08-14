@@ -64,9 +64,9 @@ namespace Anki {
  
 namespace Vision {
   class Benchmark;
+  class CameraParamsController;
   class FaceTracker;
   class ImageCache;
-  class ImagingPipeline;
   class MarkerDetector;
   class NeuralNetRunner;
   class PetTracker;
@@ -94,8 +94,8 @@ namespace Vector {
     RobotTimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
     Util::BitFlags32<VisionMode> modesProcessed;
     
-    ImageQuality imageQuality;
-    CameraParams cameraParams;
+    Vision::ImageQuality imageQuality;
+    Vision::CameraParams cameraParams;
     u8 imageMean;
 
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
@@ -201,8 +201,8 @@ namespace Vector {
     // When SavingImages mode is enabled, how to save them
     void SetSaveParameters(const ImageSaverParams& params);
 
-    CameraParams GetCurrentCameraParams() const;
-    Result SetNextCameraParams(const CameraParams& params);
+    Vision::CameraParams GetCurrentCameraParams() const;
+    Result SetNextCameraParams(const Vision::CameraParams& params);
     
     bool CheckMailbox(VisionProcessingResult& result);
     
@@ -210,16 +210,12 @@ namespace Vector {
     void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
-    bool IsExposureValid(s32 exposure) const;
-    
-    bool IsGainValid(f32 gain) const;
-    
     s32 GetMinCameraExposureTime_ms() const { return MIN_CAMERA_EXPOSURE_TIME_MS; }
     s32 GetMaxCameraExposureTime_ms() const { return MAX_CAMERA_EXPOSURE_TIME_MS; }
     
     f32 GetMinCameraGain() const { return MIN_CAMERA_GAIN; }
     f32 GetMaxCameraGain() const { return MAX_CAMERA_GAIN; }
-
+    
     void ClearImageCache();
     
   protected:
@@ -240,10 +236,9 @@ namespace Vector {
     
     Vision::Camera _camera;
     
-    std::unique_ptr<Vision::ImagingPipeline> _imagingPipeline;
-    
-    CameraParams _currentCameraParams{31, 1.0, 2.0, 1.0, 2.0};
-    std::pair<bool,CameraParams> _nextCameraParams{false, _currentCameraParams}; // bool represents if set but not yet sent
+    Vision::CameraParams _currentCameraParams;
+    std::pair<bool,Vision::CameraParams> _nextCameraParams; // bool represents if set but not yet sent
+    std::unique_ptr<Vision::CameraParamsController> _cameraParamsController;
     
     Util::BitFlags32<VisionMode> _mode;
     std::queue<std::pair<VisionMode, bool>> _nextModes;
@@ -314,7 +309,7 @@ namespace Vector {
     static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
     
     
-    // Used for CheckImageQuality below to keep up with regions to use for metering, based on detected markers/faces
+    // Used for UpdateCameraParams below to keep up with regions to use for metering, based on detected markers/faces
     // The TimeStamp is used to keep metering from recent detections briefly, even after we lose them
     using DetectionRectsByMode = std::map<VisionMode, std::vector<Rectangle<s32>>>;
     DetectionRectsByMode _meteringRegions;
@@ -322,8 +317,8 @@ namespace Vector {
     
     void UpdateMeteringRegions(TimeStamp_t t, DetectionRectsByMode&& detections);
     
-    // Uses grayscale
-    Result CheckImageQuality(Vision::ImageCache& imageCache);
+    // Uses color or grayscale
+    Result UpdateCameraParams(Vision::ImageCache& imageCache);
     
     // Will use color if not empty, or gray otherwise
     Result DetectLaserPoints(Vision::ImageCache& imageCache);

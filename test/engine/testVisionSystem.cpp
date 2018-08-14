@@ -490,10 +490,10 @@ TEST(VisionSystem, ImageQuality)
   result = visionSystem.SetNextMode(Vector::VisionMode::Idle, true);
   ASSERT_EQ(RESULT_OK, result);
 
-  result = visionSystem.SetNextMode(Vector::VisionMode::CheckingQuality, true);
+  result = visionSystem.SetNextMode(Vector::VisionMode::AutoExposure, true);
   ASSERT_EQ(RESULT_OK, result);
 
-  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({{Vector::VisionMode::CheckingQuality, Vector::VisionModeSchedule(1)}}));
+  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({{Vector::VisionMode::AutoExposure, Vector::VisionModeSchedule(1)}}));
   ASSERT_EQ(RESULT_OK, result);
 
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
@@ -531,17 +531,17 @@ TEST(VisionSystem, ImageQuality)
 
   for(auto & test : tests)
   {
-    // Fake the exposure parameters so that we are always against the extremes in order
-    // to trigger TooDark and TooBright
-    const Vector::VisionSystem::GammaCurve gammaCurve{};
-    result = visionSystem.SetCameraExposureParams(test.exposureTime_ms, test.exposureGain, gammaCurve);
-    ASSERT_EQ(RESULT_OK, result);
-    
     const std::string fullFileName = Util::FileUtils::FullFilePath({testImageDir, test.subDir});
     const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(fullFileName, false, ".jpg");
 
     for(auto & filename : testFiles)
     {
+      // Fake the exposure parameters so that we are always against the extremes in order
+      // to trigger TooDark and TooBright
+      const Vector::VisionSystem::GammaCurve gammaCurve{};
+      result = visionSystem.SetCameraExposureParams(test.exposureTime_ms, test.exposureGain, gammaCurve);
+      ASSERT_EQ(RESULT_OK, result);
+      
       Vision::ImageRGB img;
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, test.subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);

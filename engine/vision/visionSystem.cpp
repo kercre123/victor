@@ -33,7 +33,7 @@
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "coretech/vision/engine/benchmark.h"
-#include "coretech/vision/engine/cameraImagingPipeline.h"
+#include "coretech/vision/engine/cameraParamsController.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"
@@ -123,7 +123,13 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _lastRollingShutterCorrectionTime(0)
 , _imageCache(new Vision::ImageCache())
 , _context(context)
-, _imagingPipeline(new Vision::ImagingPipeline())
+, _currentCameraParams{31, 1.0, 2.0, 1.0, 2.0}
+, _nextCameraParams{false, _currentCameraParams}
+, _cameraParamsController(new Vision::CameraParamsController(MIN_CAMERA_EXPOSURE_TIME_MS,
+                                                             MAX_CAMERA_EXPOSURE_TIME_MS,
+                                                             MIN_CAMERA_GAIN,
+                                                             MAX_CAMERA_GAIN,
+                                                             _currentCameraParams))
 , _poseOrigin("VisionSystemOrigin")
 , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
 , _petTracker(new Vision::PetTracker())
@@ -196,12 +202,11 @@ Result VisionSystem::Init(const Json::Value& config)
       return RESULT_FAIL;
     }
     
-    const Result result = _imagingPipeline->SetExposureParameters(targetValue,
-                                                                  cyclingTargetValues,
-                                                                  kTargetPercentile,
-                                                                  maxChangeFraction,
-                                                                  subSample);
-    
+    Result result = _cameraParamsController->SetExposureParameters(targetValue,
+                                                                   cyclingTargetValues,
+                                                                   kTargetPercentile,
+                                                                   maxChangeFraction,
+                                                                   subSample);
     if(RESULT_OK == result)
     {
       PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.SetAutoExposureParams",
@@ -211,6 +216,14 @@ Result VisionSystem::Init(const Json::Value& config)
     else
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.SetExposureParametersFailed", "");
+      return result;
+    }
+    
+    result = _cameraParamsController->SetImageQualityParameters(kTooDarkValue,   kHighPercentile,
+                                                                kTooBrightValue, kLowPercentile);
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.SetImageQualityParametersFailed", "");
       return result;
     }
   }
@@ -418,23 +431,14 @@ Result VisionSystem::SetNextMode(VisionMode mode, bool enable)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::SetNextCameraParams(const CameraParams& params)
+Result VisionSystem::SetNextCameraParams(const Vision::CameraParams& params)
 {
-  if(!IsGainValid(params.gain) ||
-     !IsGainValid(params.whiteBalanceGainR) ||
-     !IsGainValid(params.whiteBalanceGainG) ||
-     !IsGainValid(params.whiteBalanceGainB))
+  if(!_cameraParamsController->AreCameraParamsValid(params))
   {
-    PRINT_PERIODIC_CH_INFO(100, kLogChannelName, "VisionSystem.SetNextCameraParams.InvalidGains",
-                           "ExpGain=%f, WB Gains RGB=(%f,%f,%f)",
-                           params.gain, params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
-    return RESULT_FAIL;
-  }
-  
-  if(!IsExposureValid(params.exposureTime_ms))
-  {
-    PRINT_PERIODIC_CH_INFO(100, kLogChannelName, "VisionSystem.SetNextCameraParams.InvalidExposure",
-                           "Exp=%dms", params.exposureTime_ms);
+    PRINT_PERIODIC_CH_INFO(100, kLogChannelName, "VisionSystem.SetNextCameraParams.InvalidParams",
+                           "ExpTime:%dms, ExpGain=%f, WBGains RGB=(%f,%f,%f)",
+                           params.exposureTime_ms, params.gain,
+                           params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
     return RESULT_FAIL;
   }
   
@@ -686,96 +690,79 @@ void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRe
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache)
+Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
 {
 # define DEBUG_IMAGE_HISTOGRAM 0
   
-  const Vision::ImageRGB& inputImage = imageCache.GetRGB();
+  Vision::CameraParamsController::AutoExpMode aeMode = Vision::CameraParamsController::AutoExpMode::Off;
+  if(ShouldProcessVisionMode(VisionMode::AutoExposure))
+  {
+    if(ShouldProcessVisionMode(VisionMode::MinGainAutoExposure))
+    {
+      aeMode = Vision::CameraParamsController::AutoExpMode::MinGain;
+    }
+    else {
+      aeMode = Vision::CameraParamsController::AutoExpMode::MinTime;
+    }
+  }
   
-  // Compute the exposure we would like to have
-  f32 exposureAdjFrac = 1.f;
-  f32 adjR = 1.f;
-  f32 adjB = 1.f;
+  Vision::CameraParamsController::WhiteBalanceMode wbMode = Vision::CameraParamsController::WhiteBalanceMode::Off;
+  if(ShouldProcessVisionMode(VisionMode::WhiteBalance))
+  {
+    wbMode = Vision::CameraParamsController::WhiteBalanceMode::GrayWorld;
+  }
   
-  Result expResult = RESULT_FAIL;
+  bool useCycling = false;
   if(!kMeterFromDetections || _meteringRegions.empty())
   {
     if(imageCache.GetTimeStamp() <= (_lastMeteringTimestamp_ms + kMeteringHoldTime_ms))
     {
       // Don't update auto exposure for a little while after we lose metered regions
-      PRINT_CH_INFO("VisionSystem", "VisionSystem.CheckImageQuality.HoldingExposureAfterRecentMeteredRegions", "");
+      PRINT_CH_INFO("VisionSystem", "VisionSystem.UpdateCameraParams.HoldingExposureAfterRecentMeteredRegions", "");
       return RESULT_OK;
     }
     
-    const bool useCycling = ShouldProcessVisionMode(VisionMode::CyclingExposure);
-    expResult = _imagingPipeline->ComputeExposureAndWhiteBalance(inputImage, useCycling, exposureAdjFrac, adjR, adjB);
+    useCycling = ShouldProcessVisionMode(VisionMode::CyclingExposure);
   }
   else
-  {
-    // Give half the weight to the detections, the other half to the rest of the image
-    
+  {   
     // When we have detections to weight, don't use cycling exposures. Just let the detections drive the exposure.
-    const bool kUseCycling = false;
+    useCycling = false;
     
     _lastMeteringTimestamp_ms = imageCache.GetTimeStamp();
+    _cameraParamsController->ClearMeteringRegions();
     
-    s32 totalMeteringArea = 0;
     for(auto const& entry : _meteringRegions)
     {
       for(auto const& rect : entry.second)
       {
-        totalMeteringArea += rect.Area();
+        _cameraParamsController->AddMeteringRegion(rect);
       }
     }
-    DEV_ASSERT(totalMeteringArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
-    
-    if(2*totalMeteringArea < inputImage.GetNumElements())
-    {
-      const u8 backgroundWeight = Util::numeric_cast<u8>(255.f * static_cast<f32>(totalMeteringArea)/static_cast<f32>(inputImage.GetNumElements()));
-      const u8 roiWeight = 255 - backgroundWeight;
-      
-      Vision::Image weightMask(inputImage.GetNumRows(), inputImage.GetNumCols());
-      weightMask.FillWith(backgroundWeight);
-      
-      for(auto const& entry : _meteringRegions)
-      {
-        for(auto rect : entry.second) // deliberate copy b/c GetROI can modify rect
-        {
-          weightMask.GetROI(rect).FillWith(roiWeight);
-        }
-      }
-      
-      expResult = _imagingPipeline->ComputeExposureAndWhiteBalance(inputImage, weightMask, kUseCycling,
-                                                                   exposureAdjFrac, adjR, adjB);
-      
-      if(DEBUG_IMAGE_HISTOGRAM)
-      {
-        Vision::ImageRGB dispWeights(weightMask);
-        dispWeights.DrawText({1.f,9.f},
-                             "F:" + std::to_string(roiWeight) +
-                             " B:" + std::to_string(backgroundWeight),
-                             NamedColors::RED, 0.5f);
-        _currentResult.debugImageRGBs.emplace_back("HistWeights", dispWeights);
-      }
-    }
-    else
-    {
-      // Detections already make up more than half the image, so they'll already
-      // get more focus. Just expose normally
-      expResult = _imagingPipeline->ComputeExposureAndWhiteBalance(inputImage, kUseCycling,
-                                                                   exposureAdjFrac, adjR, adjB);
-    }
+  }
+  
+  Vision::CameraParams nextParams;
+  Result expResult = RESULT_FAIL;
+  if(imageCache.HasColor())
+  {
+    const Vision::ImageRGB& inputImage = imageCache.GetRGB();
+    expResult = _cameraParamsController->ComputeNextCameraParams(inputImage, aeMode, wbMode, useCycling, nextParams);
+  }
+  else
+  {
+    const Vision::Image& inputImage = imageCache.GetGray();
+    expResult = _cameraParamsController->ComputeNextCameraParams(inputImage, aeMode, useCycling, nextParams);
   }
   
   if(RESULT_OK != expResult)
   {
-    PRINT_NAMED_WARNING("VisionSystem.CheckImageQuality.ComputeNewExposureFailed", "");
+    PRINT_NAMED_WARNING("VisionSystem.UpdateCameraParams.ComputeNewExposureFailed", "");
     return expResult;
   }
   
   if(DEBUG_IMAGE_HISTOGRAM)
   {
-    const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
+    const Vision::ImageBrightnessHistogram& hist = _cameraParamsController->GetHistogram();
     std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kTargetPercentile, kHighPercentile});
     auto valueIter = values.begin();
     
@@ -789,195 +776,9 @@ Result VisionSystem::CheckImageQuality(Vision::ImageCache& imageCache)
     
   } // if(DEBUG_IMAGE_HISTOGRAM)
   
-  // Default: we checked the image quality and it's fine (no longer "Unchecked")
-  // Desired exposure settings are what they already were.
-  _currentResult.imageQuality = ImageQuality::Good;
-  
-  s32 desiredExposureTime_ms = _currentCameraParams.exposureTime_ms;
-  f32 desiredGain = _currentCameraParams.gain;
-  
-  const bool doAutoExposure = ShouldProcessVisionMode(VisionMode::CheckingQuality);
-  const bool doWhiteBalance = ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance);
-  DEV_ASSERT(doAutoExposure || doWhiteBalance, "VisionSystem.CheckImageQuality.NeitherWBnorAEisEnabled");
-  
-  if(!doAutoExposure)
-  {
-    // Auto-exposure is disabled: ignore the computed exposure adjustment
-    exposureAdjFrac = 1.f;
-  }
-  
-  if(!doWhiteBalance)
-  {
-    // White balance is disabled: ignore the computed WB adjustments
-    adjR = 1.f;
-    adjB = 1.f;
-  }
-      
-  enum class AutoExpMode : u8 {
-    MinExposure,  // Prefer keeping exposure low to avoid motion blur
-    MinGain,      // Prefer keeping gain low to make less noisy/grainy images
-  };
-  
-  static AutoExpMode aeMode_prev = (ShouldProcessVisionMode(VisionMode::MinGainAutoExposure) ?
-                                    AutoExpMode::MinGain : AutoExpMode::MinExposure);
-  
-  const AutoExpMode aeMode = (ShouldProcessVisionMode(VisionMode::MinGainAutoExposure) ?
-                              AutoExpMode::MinGain : AutoExpMode::MinExposure);
-  
-  if(aeMode != aeMode_prev)
-  {
-    // Switching modes: try to preserve roughly the same product of gain and exposure
-    const f32 prod = static_cast<f32>(_currentCameraParams.exposureTime_ms) * _currentCameraParams.gain;
-    
-    switch(aeMode)
-    {
-      case AutoExpMode::MinGain:
-      {
-        // Make the new exposure the same fraction of its max that gain currently is.
-        // Then pick a new gain to "match".
-        const f32 frac = _currentCameraParams.gain / GetMaxCameraGain();
-        desiredExposureTime_ms = static_cast<s32>(std::round(frac * static_cast<f32>(GetMaxCameraExposureTime_ms())));
-        desiredExposureTime_ms = std::max(desiredExposureTime_ms, GetMinCameraExposureTime_ms());
-        desiredGain = Util::Clamp(prod/static_cast<f32>(desiredExposureTime_ms),
-                                  GetMinCameraGain(), GetMaxCameraGain());
-        break;
-      }
-        
-      case AutoExpMode::MinExposure:
-      {
-        // Make the new gain the same fraction of its max that exposure currently is.
-        // Then pick a new exposure to "match".
-        const f32 frac = (static_cast<f32>(_currentCameraParams.exposureTime_ms) /
-                          static_cast<f32>(GetMaxCameraExposureTime_ms()));
-        desiredGain = std::max(frac*GetMaxCameraGain(), GetMinCameraGain());
-        desiredExposureTime_ms = Util::Clamp(static_cast<s32>(std::round(prod / desiredGain)),
-                                             GetMinCameraExposureTime_ms(), GetMaxCameraExposureTime_ms());
-        break;
-      }
-    }
-    
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.CheckImageQuality.ToggleExpMode",
-                  "Mode:%s, Gain:%.3f->%.3f, Exp:%d->%dms",
-                  (aeMode_prev == AutoExpMode::MinGain ? "MinGain->MinExp" : "MinExp->MinGain"),
-                  _currentCameraParams.gain, desiredGain,
-                  _currentCameraParams.exposureTime_ms, desiredExposureTime_ms);
-    
-    aeMode_prev = aeMode;
-  }
-  
-  if(Util::IsFltLT(exposureAdjFrac, 1.f))
-  {
-    // Want to bring brightness down
-    bool madeAdjustment = false;
-    switch(aeMode)
-    {
-      case AutoExpMode::MinExposure:
-        if(_currentCameraParams.exposureTime_ms > GetMinCameraExposureTime_ms())
-        {
-          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
-          desiredExposureTime_ms = std::max(GetMinCameraExposureTime_ms(), desiredExposureTime_ms);
-          madeAdjustment = true;
-        }
-        else if(Util::IsFltGT(_currentCameraParams.gain, GetMinCameraGain()))
-        {
-          // Already at min exposure time; reduce gain
-          desiredGain *= exposureAdjFrac;
-          desiredGain = std::max(GetMinCameraGain(), desiredGain);
-          madeAdjustment = true;
-        }
-        break;
-        
-      case AutoExpMode::MinGain:
-        if(Util::IsFltGT(_currentCameraParams.gain, GetMinCameraGain()))
-        {
-          desiredGain *= exposureAdjFrac;
-          desiredGain = std::max(GetMinCameraGain(), desiredGain);
-          madeAdjustment = true;
-        }
-        else if(_currentCameraParams.exposureTime_ms > GetMinCameraExposureTime_ms())
-        {
-          // Already at min gain time; reduce exposure
-          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
-          desiredExposureTime_ms = std::max(GetMinCameraExposureTime_ms(), desiredExposureTime_ms);
-          madeAdjustment = true;
-        }
-        break;
-    }
-    
-    if(!madeAdjustment)
-    {
-      const u8 currentLowValue = _imagingPipeline->GetHistogram().ComputePercentile(kLowPercentile);
-      if(currentLowValue > kTooBrightValue)
-      {
-        // Both exposure and gain are as low as they can go and the low value in the
-        // image is still too high: it's too bright!
-        _currentResult.imageQuality = ImageQuality::TooBright;
-      }
-    }
-  }
-  else if(Util::IsFltGT(exposureAdjFrac, 1.f))
-  {
-    // Want to bring brightness up
-    bool madeAdjustment = false;
-    switch(aeMode)
-    {
-      case AutoExpMode::MinExposure:
-        if(Util::IsFltLT(_currentCameraParams.gain, GetMaxCameraGain()))
-        {
-          desiredGain *= exposureAdjFrac;
-          desiredGain = std::min(GetMaxCameraGain(), desiredGain);
-          madeAdjustment = true;
-        }
-        else if(_currentCameraParams.exposureTime_ms < GetMaxCameraExposureTime_ms())
-        {
-          // Already at max gain; increase exposure
-          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
-          desiredExposureTime_ms = std::min(GetMaxCameraExposureTime_ms(), desiredExposureTime_ms);
-          madeAdjustment = true;
-        }
-        break;
-        
-      case AutoExpMode::MinGain:
-        if(_currentCameraParams.exposureTime_ms < GetMaxCameraExposureTime_ms())
-        {
-          desiredExposureTime_ms = std::round(static_cast<f32>(desiredExposureTime_ms) * exposureAdjFrac);
-          desiredExposureTime_ms = std::min(GetMaxCameraExposureTime_ms(), desiredExposureTime_ms);
-          madeAdjustment = true;
-        }
-        else if(Util::IsFltLT(_currentCameraParams.gain, GetMaxCameraGain()))
-        {
-          // Already at max exposure; increase gain
-          desiredGain *= exposureAdjFrac;
-          desiredGain = std::min(GetMaxCameraGain(), desiredGain);
-          madeAdjustment = true;
-        }
-        break;
-    }
-    
-    if(!madeAdjustment)
-    {
-      const u8 currentHighValue = _imagingPipeline->GetHistogram().ComputePercentile(kHighPercentile);
-      if(currentHighValue < kTooDarkValue)
-      {
-        // Both exposure and gain are as high as they can go and the high value in the
-        // image is still too low: it's too dark!
-        _currentResult.imageQuality = ImageQuality::TooDark;
-      }
-    }
-  }
-  
-  // Put the new camera params in the output result:
-  // (Note that the exposure time/gain don't need to be clamped because of min/max calls above)
-  DEV_ASSERT(IsExposureValid(desiredExposureTime_ms), "VisionSystem.CheckImageQuality.ExposureTimeOOR");
-  DEV_ASSERT(IsGainValid(desiredGain), "VisionSystem.CheckImageQuality.ExposureGainOOR");
-  _currentResult.cameraParams.exposureTime_ms   = desiredExposureTime_ms;
-  _currentResult.cameraParams.gain              = desiredGain;
-  _currentResult.cameraParams.whiteBalanceGainR = Util::Clamp(_currentCameraParams.whiteBalanceGainR * adjR,
-                                                              GetMinCameraGain(), GetMaxCameraGain());
-  _currentResult.cameraParams.whiteBalanceGainG = Util::Clamp(_currentCameraParams.whiteBalanceGainG,
-                                                              GetMinCameraGain(), GetMaxCameraGain()); // Constant!
-  _currentResult.cameraParams.whiteBalanceGainB = Util::Clamp(_currentCameraParams.whiteBalanceGainB * adjB,
-                                                              GetMinCameraGain(), GetMaxCameraGain());
+  // Put the new values in the output result:
+  std::swap(_currentResult.cameraParams, nextParams);
+  _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
   
   return RESULT_OK;
 }
@@ -1608,7 +1409,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Set up the results for this frame:
   VisionProcessingResult result;
   result.timestamp = imageCache.GetTimeStamp();
-  result.imageQuality = ImageQuality::Unchecked;
+  result.imageQuality = Vision::ImageQuality::Unchecked;
   result.cameraParams.exposureTime_ms = -1;
   std::swap(result, _currentResult);
   
@@ -1653,6 +1454,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   {
     _currentCameraParams = _nextCameraParams.second;
     cameraParamsRequested = false;
+    
+    _cameraParamsController->UpdateCurrentCameraParams(_currentCameraParams);
   }
   
   if(IsModeEnabled(VisionMode::Idle))
@@ -1881,20 +1684,20 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   // NOTE: This should come after any detectors that add things to "detectionRects"
   //       since it meters exposure based on those.
-  const bool isWhiteBalancing = ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance);
-  const bool isAutoExposing   = ShouldProcessVisionMode(VisionMode::CheckingQuality);
+  const bool isWhiteBalancing = ShouldProcessVisionMode(VisionMode::WhiteBalance);
+  const bool isAutoExposing   = ShouldProcessVisionMode(VisionMode::AutoExposure);
   if(isAutoExposing || isWhiteBalancing)
   {
-    Tic("CheckingImageQuality");
-    lastResult = CheckImageQuality(imageCache);
-    Toc("CheckingImageQuality");
+    Tic("UpdateCameraParams");
+    lastResult = UpdateCameraParams(imageCache);
+    Toc("UpdateCameraParams");
     
     if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
+      PRINT_NAMED_ERROR("VisionSystem.Update.UpdateCameraParamsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality,      isAutoExposing);
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, isWhiteBalancing);
+      visionModesProcessed.SetBitFlag(VisionMode::AutoExposure,      isAutoExposing);
+      visionModesProcessed.SetBitFlag(VisionMode::WhiteBalance, isWhiteBalancing);
     }
   }
   
@@ -2044,7 +1847,7 @@ bool VisionSystem::IsModeScheduledToEverRun(VisionMode mode) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CameraParams VisionSystem::GetCurrentCameraParams() const
+Vision::CameraParams VisionSystem::GetCurrentCameraParams() const
 {
   // Return nextParams if they have not been set yet otherwise use currentParams
   return (_nextCameraParams.first ? _nextCameraParams.second : _currentCameraParams);
@@ -2063,21 +1866,21 @@ Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
   
   std::vector<u8> gammaVector(gammaCurve.begin(), gammaCurve.end());
   
-  Result result = _imagingPipeline->SetGammaTable(kKneeLocations, gammaVector);
+  Result result = _cameraParamsController->SetGammaTable(kKneeLocations, gammaVector);
   if(RESULT_OK != result)
   {
     PRINT_NAMED_WARNING("VisionSystem.SetCameraExposureParams.BadGammaCurve", "");
   }
   
-  const CameraParams cameraParams(currentExposureTime_ms, currentGain,
-                                  _currentCameraParams.whiteBalanceGainR,
-                                  _currentCameraParams.whiteBalanceGainG,
-                                  _currentCameraParams.whiteBalanceGainB);
+  const Vision::CameraParams cameraParams(currentExposureTime_ms, currentGain,
+                                          _currentCameraParams.whiteBalanceGainR,
+                                          _currentCameraParams.whiteBalanceGainG,
+                                          _currentCameraParams.whiteBalanceGainB);
   
   SetNextCameraParams(cameraParams);
   
   PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
-                "Current Gain:%dms, Current Exposure:%.3f",
+                "Current Exposure Time:%dms, Gain:%.3f",
                 currentExposureTime_ms, currentGain);
 
   return RESULT_OK;
@@ -2119,30 +1922,6 @@ void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
 {
   DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
   _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionSystem::IsExposureValid(s32 exposure) const
-{
-  const bool inRange = Util::InRange(exposure, GetMinCameraExposureTime_ms(), GetMaxCameraExposureTime_ms());
-  if(!inRange)
-  {
-    PRINT_NAMED_WARNING("VisionSystem.IsExposureValid.OOR", "Exposure %dms not in range %dms to %dms",
-                        exposure, GetMinCameraExposureTime_ms(), GetMaxCameraExposureTime_ms());
-  }
-  return inRange;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionSystem::IsGainValid(f32 gain) const
-{
-  const bool inRange = Util::InRange(gain, GetMinCameraGain(), GetMaxCameraGain());
-  if(!inRange)
-  {
-    PRINT_NAMED_WARNING("VisionSystem.IsGainValid.OOR", "Gain %f not in range %f to %f",
-                        gain, GetMinCameraGain(), GetMaxCameraGain());
-  }
-  return inRange;
 }
 
 void VisionSystem::ClearImageCache()

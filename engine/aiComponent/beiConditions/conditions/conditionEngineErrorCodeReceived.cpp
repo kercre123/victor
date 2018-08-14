@@ -45,12 +45,7 @@ ConditionEngineErrorCodeReceived::DynamicVariables::DynamicVariables()
 {
   engineErrorCodeMatches = false;
 }
-
-void ConditionEngineErrorCodeReceived::GetRequiredVisionModes(std::set<VisionModeRequest>& request) const
-{
-  request.insert({ VisionMode::CheckingQuality, EVisionUpdateFrequency::High });
-}
-
+  
 void ConditionEngineErrorCodeReceived::InitInternal( BehaviorExternalInterface& bei )
 {
   _messageHelper.reset( new BEIConditionMessageHelper( this, bei ) );

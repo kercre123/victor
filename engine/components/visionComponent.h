@@ -173,7 +173,7 @@ struct DockingErrorSignal;
     Result UpdateLaserPoints(const VisionProcessingResult& result);
     Result UpdateOverheadEdges(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
-    Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    Result UpdateCameraParams(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
     Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
@@ -306,14 +306,14 @@ struct DockingErrorSignal;
     
     void EnableAutoExposure(bool enable);
     void EnableWhiteBalance(bool enable);
-    void SetAndDisableCameraControl(const CameraParams& params);
+    void SetAndDisableCameraControl(const Vision::CameraParams& params);
     
     s32 GetMinCameraExposureTime_ms() const;
     s32 GetMaxCameraExposureTime_ms() const;
     f32 GetMinCameraGain() const;
     f32 GetMaxCameraGain() const;
     
-    CameraParams GetCurrentCameraParams() const;
+    Vision::CameraParams GetCurrentCameraParams() const;
     
     // Captures image data from HAL, if available, and puts it in image_out
     // Returns true if image was captured, false if not
@@ -394,8 +394,8 @@ struct DockingErrorSignal;
     TimeStamp_t _processingPeriod_ms = 0;  // How fast we are processing frames
     TimeStamp_t _framePeriod_ms = 0;       // How fast we are receiving frames
     
-    ImageQuality _lastImageQuality = ImageQuality::Good;
-    ImageQuality _lastBroadcastImageQuality = ImageQuality::Unchecked;
+    Vision::ImageQuality _lastImageQuality = Vision::ImageQuality::Good;
+    Vision::ImageQuality _lastBroadcastImageQuality = Vision::ImageQuality::Unchecked;
     RobotTimeStamp_t  _currentQualityBeginTime_ms = 0;
     RobotTimeStamp_t  _waitForNextAlert_ms = 0;
     

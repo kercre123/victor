@@ -215,7 +215,7 @@ private:
   std::vector<DebugImage> _debugImages;
   
   // Camera info
-  CameraParams _cameraParams;
+  Vision::CameraParams _cameraParams;
   
   // For saving state
   bool          _saveState = false;

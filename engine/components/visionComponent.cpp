@@ -1053,8 +1053,8 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdateComputedCalibration,  ToVisionModeMask(ComputingCalibration));
         
         // NOTE: Same handler for two modes
-        tryAndReport(&VisionComponent::UpdateImageQuality,        (ToVisionModeMask(CheckingQuality) |
-                                                                   ToVisionModeMask(CheckingWhiteBalance)));
+        tryAndReport(&VisionComponent::UpdateCameraParams,        (ToVisionModeMask(AutoExposure) |
+                                                                   ToVisionModeMask(WhiteBalance)));
         
         tryAndReport(&VisionComponent::UpdateLaserPoints,          ToVisionModeMask(DetectingLaserPoints));
         tryAndReport(&VisionComponent::UpdateSalientPoints,        ToVisionModeMask(Count)); // Use Count here to always call UpdateSalientPoints
@@ -1478,11 +1478,11 @@ namespace Vector {
     const bool usingFixedDrawTime = (kKeepDrawingSalientPointsFor_ms > 0);
     if(usingFixedDrawTime)
     {
-    auto iter = _salientPointsToDraw.begin();
-    while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
-    {
-      iter = _salientPointsToDraw.erase(iter);
-    }
+      auto iter = _salientPointsToDraw.begin();
+      while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
+      {
+        iter = _salientPointsToDraw.erase(iter);
+      }
     }
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
@@ -1589,9 +1589,9 @@ namespace Vector {
     return RESULT_OK;
   }
 
-  Result VisionComponent::UpdateImageQuality(const VisionProcessingResult& procResult)
+  Result VisionComponent::UpdateCameraParams(const VisionProcessingResult& procResult)
   {
-    if(!_robot->IsPhysical() || procResult.imageQuality == ImageQuality::Unchecked)
+    if(!_robot->IsPhysical() || procResult.imageQuality == Vision::ImageQuality::Unchecked)
     {
       // Nothing to do
       return RESULT_OK;
@@ -1606,7 +1606,7 @@ namespace Vector {
       return RESULT_OK;
     }
     
-    const CameraParams& params = procResult.cameraParams;
+    const Vision::CameraParams& params = procResult.cameraParams;
     
     // Note that we set all parameters together. If WB or AE isn't enabled accoding to current VisionModes,
     // their corresponding values should not actually be different in the params.
@@ -1622,7 +1622,7 @@ namespace Vector {
       
       auto cameraService = CameraService::getInstance();
       
-      const bool isWhiteBalanceEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::CheckingWhiteBalance);
+      const bool isWhiteBalanceEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::WhiteBalance);
       if(isWhiteBalanceEnabled)
       {
         cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
@@ -1630,7 +1630,7 @@ namespace Vector {
                                                        params.whiteBalanceGainB);
       }
       
-      const bool isAutoExposureEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::CheckingQuality);
+      const bool isAutoExposureEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::AutoExposure);
       if(isAutoExposureEnabled)
       {
         cameraService->CameraSetParameters(procResult.cameraParams.exposureTime_ms,
@@ -1656,9 +1656,9 @@ namespace Vector {
       // Just switched image qualities
       _currentQualityBeginTime_ms = procResult.timestamp;
       _waitForNextAlert_ms = kImageQualityAlertDuration_ms; // for first alert, use "duration" time
-      _lastBroadcastImageQuality = ImageQuality::Unchecked; // i.e. reset so we definitely broadcast again
+      _lastBroadcastImageQuality = Vision::ImageQuality::Unchecked; // i.e. reset so we definitely broadcast again
     }
-    else if(_lastBroadcastImageQuality != ImageQuality::Good) // Don't keep broadcasting once in Good state
+    else if(_lastBroadcastImageQuality != Vision::ImageQuality::Good) // Don't keep broadcasting once in Good state
     {
       const RobotTimeStamp_t timeWithThisQuality_ms = procResult.timestamp - _currentQualityBeginTime_ms;
 
@@ -1669,20 +1669,20 @@ namespace Vector {
 
         switch(_lastImageQuality)
         {
-          case ImageQuality::Unchecked:
+          case Vision::ImageQuality::Unchecked:
             // can't get here due to IF above (but need case to prevent compiler error without default)
             assert(false);
             break;
 
-          case ImageQuality::Good:
+          case Vision::ImageQuality::Good:
             errorCode = EngineErrorCode::ImageQualityGood;
             break;
 
-          case ImageQuality::TooDark:
+          case Vision::ImageQuality::TooDark:
             errorCode = EngineErrorCode::ImageQualityTooDark;
             break;
 
-          case ImageQuality::TooBright:
+          case Vision::ImageQuality::TooBright:
             errorCode = EngineErrorCode::ImageQualityTooBright;
             break;
         }
@@ -2378,7 +2378,7 @@ namespace Vector {
     _lastProcessedImageTimeStamp_ms = t;
   }
 
-  CameraParams VisionComponent::GetCurrentCameraParams() const
+  Vision::CameraParams VisionComponent::GetCurrentCameraParams() const
   {
     return _visionSystem->GetCurrentCameraParams();
   }
@@ -2387,7 +2387,7 @@ namespace Vector {
   {
     if(_visionSystem)
     {
-      _visionSystem->SetNextMode(VisionMode::CheckingQuality, enable);
+      _visionSystem->SetNextMode(VisionMode::AutoExposure, enable);
     }
   }
 
@@ -2395,11 +2395,11 @@ namespace Vector {
   {
     if(_visionSystem)
     {
-      _visionSystem->SetNextMode(VisionMode::CheckingWhiteBalance, enable);
+      _visionSystem->SetNextMode(VisionMode::WhiteBalance, enable);
     }
   }
 
-  void VisionComponent::SetAndDisableCameraControl(const CameraParams& params)
+  void VisionComponent::SetAndDisableCameraControl(const Vision::CameraParams& params)
   {
     const Result result = _visionSystem->SetNextCameraParams(params);
     if(RESULT_OK != result)

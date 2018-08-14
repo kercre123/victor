@@ -2,7 +2,7 @@
  */
 
 namespace Anki {
-namespace Vector {
+namespace Vision {
 
   structure CameraParams
   {
@@ -14,6 +14,13 @@ namespace Vector {
     float_32 whiteBalanceGainG,
     float_32 whiteBalanceGainB
   }
-      
-} // namespace Vector
+
+  enum uint_8 ImageQuality {
+    Unchecked  = 0,
+    Good,
+    TooDark,
+    TooBright
+  }
+
+} // namespace Vision
 } // namespace Anki

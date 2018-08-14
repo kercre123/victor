@@ -254,10 +254,10 @@ void BehaviorTrackLaser::InitHelper()
   }, kUseDefaultsForUnspecified);
   GetBEI().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
   
-  const CameraParams darkenedParams(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain,
-                                    _dVars.originalCameraSettings.whiteBalanceGainR,
-                                    _dVars.originalCameraSettings.whiteBalanceGainG,
-                                    _dVars.originalCameraSettings.whiteBalanceGainB);
+  const Vision::CameraParams darkenedParams(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain,
+                                            _dVars.originalCameraSettings.whiteBalanceGainR,
+                                            _dVars.originalCameraSettings.whiteBalanceGainG,
+                                            _dVars.originalCameraSettings.whiteBalanceGainB);
   
   GetBEI().GetVisionComponent().SetAndDisableCameraControl(darkenedParams);
 

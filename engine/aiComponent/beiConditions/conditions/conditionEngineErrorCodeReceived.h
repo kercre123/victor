@@ -30,8 +30,6 @@ public:
   ConditionEngineErrorCodeReceived( const Json::Value& config );
   virtual ~ConditionEngineErrorCodeReceived();
 
-  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& request) const override;
-
 protected:
 
   virtual void InitInternal( BehaviorExternalInterface& bei ) override;

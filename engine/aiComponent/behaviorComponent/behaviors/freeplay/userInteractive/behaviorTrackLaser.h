@@ -168,7 +168,7 @@ private:
     State state;
     
     // So that we can restore when done
-    CameraParams originalCameraSettings;
+    Vision::CameraParams originalCameraSettings;
   };
 
   InstanceConfig   _iConfig;

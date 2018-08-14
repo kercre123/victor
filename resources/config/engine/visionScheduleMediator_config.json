@@ -129,7 +129,7 @@
     },
     {
       "mode"         : "CyclingExposure",
-      // Only a schedule of "1" makes sense because this mode piggybacks on ImageQuality's schedule
+      // Only a schedule of "1" makes sense because this mode piggybacks on AutoExposure's schedule
       "low"          : 1,
       "med"          : 1,
       "high"         : 1,
@@ -138,7 +138,7 @@
     },
     {
       "mode"         : "MeteringFromChargerOnly",
-      // Only a schedule of "1" makes sense because this mode piggybacks on ImageQuality's schedule
+      // Only a schedule of "1" makes sense because this mode piggybacks on AutoExposure's schedule
       "low"          : 1,
       "med"          : 1,
       "high"         : 1,
@@ -147,7 +147,7 @@
     },
     {
       "mode"         : "MinGainAutoExposure",
-      // Only a schedule of "1" makes sense because this mode piggybacks on ImageQuality's schedule
+      // Only a schedule of "1" makes sense because this mode piggybacks on AutoExposure's schedule
       "low"          : 1,
       "med"          : 1,
       "high"         : 1,

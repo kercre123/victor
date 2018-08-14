@@ -292,7 +292,7 @@ message DockingErrorSignal
 // VizCameraParams
 message CameraParams
 {
-  Anki::Vector::CameraParams cameraParams
+  Anki::Vision::CameraParams cameraParams
 }
 
 // VizVisionMarker
