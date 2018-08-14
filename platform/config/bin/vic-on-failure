@@ -17,6 +17,9 @@ set -u
 # Do we want to run systemctl restart?
 : ${VIC_ONFAILURE_RESTART:="0"}
 
+# Do we want to run systemctl restart?
+: ${VIC_ONFAILURE_FAULTCODE:="0"}
+
 # What file do we create when restarting services?
 : ${VIC_ONFAILURE_RESTART_FILE:="/tmp/vic-on-failure-restart"}
 
@@ -33,7 +36,7 @@ if [ "${VIC_ONFAILURE_RESTART}" == "1" ]; then
 fi
 
 #
-# Display fault code?
+# Display fault code for anim process?
 #
 if [ "${VIC_ONFAILURE_ANIMFAIL}" == "1" ]; then
   echo "Showing animation fault code"
@@ -41,6 +44,14 @@ if [ "${VIC_ONFAILURE_ANIMFAIL}" == "1" ]; then
   # should it be running
   /bin/systemctl stop early-anim
   /bin/animfail
+fi
+
+#
+# Display fault code for non-anim process?
+#
+if [ "${VIC_ONFAILURE_FAULTCODE}" != "0" ]; then
+  echo "Showing fault code: ${VIC_ONFAILURE_FAULTCODE}"
+  /anki/bin/displayFaultCode ${VIC_ONFAILURE_FAULTCODE}
 fi
 
 #
