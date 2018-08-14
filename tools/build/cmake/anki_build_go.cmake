@@ -28,6 +28,7 @@ macro(__anki_setup_go_environment target_basedir)
   file(RELATIVE_PATH __gobuild_basedir ${CMAKE_CURRENT_BINARY_DIR} "${__gobuild_basedir}")
 
   set(__go_compile_env "CGO_ENABLED=1")
+  list(APPEND __go_compile_env "GOCACHE=off")
   list(APPEND __go_compile_env "GOPATH=${GOPATH}")
   set(__go_build_flags "")
   set(__go_deps "")
