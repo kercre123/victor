@@ -5,6 +5,7 @@ import (
 	"anki/ipc"
 	"anki/jdocs"
 	"anki/log"
+	"anki/robot"
 	"anki/token"
 	"anki/voice"
 	"bytes"
@@ -57,6 +58,9 @@ func testReader(serv ipc.Server, send voice.MsgSender) {
 
 func main() {
 	log.Println("Hello, world!")
+
+	log.Println("Install crash reporter")
+	robot.InstallCrashReporter(log.Tag)
 
 	// if we want to error, we should do it after we get socket connections, to make sure
 	// vic-anim is running and able to handle it
@@ -137,6 +141,9 @@ func main() {
 	options = append(options, cloudproc.WithJdocs(jdocs.WithServer()))
 
 	cloudproc.Run(context.Background(), options...)
+
+	log.Println("Uninstall crash reporter")
+	robot.UninstallCrashReporter()
 
 	log.Println("All processes exited, shutting down")
 }

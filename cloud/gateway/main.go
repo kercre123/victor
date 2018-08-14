@@ -73,6 +73,9 @@ func main() {
 	log.Tag = "vic-gateway"
 	log.Println("Launching vic-gateway")
 
+	log.Println("Install crash reporter")
+	robot.InstallCrashReporter("vic-gateway")
+
 	signalHandler = make(chan os.Signal, 1)
 	signal.Notify(signalHandler, syscall.SIGTERM)
 	go func() {
@@ -193,6 +196,10 @@ func main() {
 		log.Println("Error during Serve:", err)
 		os.Exit(1)
 	}
+
+	log.Println("Uninstall crash reporter")
+	robot.UninstallCrashReporter()
+
 	log.Println("Closing vic-gateway")
 	return
 }

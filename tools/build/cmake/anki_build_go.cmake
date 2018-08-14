@@ -56,12 +56,18 @@ endmacro()
 # set up in `__go_compile_env`, `__go_build_flags`, and `__go_deps`
 macro(__anki_run_go_build target_name extra_deps)
 
-  set(__targ_includes $<TARGET_PROPERTY:${target_name}_fake_dep,INCLUDE_DIRECTORIES>)
-  set(__include_env "CGO_CPPFLAGS=$<$<BOOL:${__targ_includes}>:-I $<JOIN:${__targ_includes}, -I >>")
+  set(__include_dirs $<TARGET_PROPERTY:${target_name}_fake_dep,INCLUDE_DIRECTORIES>)
+  set(__link_libs $<TARGET_PROPERTY:${target_name}_fake_dep,LINK_LIBRARIES>)
+  set(__link_folders $<TARGET_PROPERTY:${target_name},GO_CLINK_FOLDERS>)
+  set(__cgo_cppflags $<TARGET_PROPERTY:${target_name},CGO_CPPFLAGS>)
+  set(__cgo_ldflags $<TARGET_PROPERTY:${target_name},CGO_LDFLAGS>)
 
-  set(__targ_links $<TARGET_PROPERTY:${target_name}_fake_dep,LINK_LIBRARIES>)
-  set(__targ_ldfolders $<TARGET_PROPERTY:${target_name},GO_CLINK_FOLDERS>)
-  set(__link_env CGO_LDFLAGS=${__targ_ldfolders}\ $<$<BOOL:${__targ_links}>:-l$<JOIN:${__targ_links},\ -l>>)
+  set(__cgo_cppflags "${__cgo_cppflags} $<$<BOOL:${__include_dirs}>:-I $<JOIN:${__include_dirs}, -I >>")
+  set(__cgo_ldflags "${__cgo_ldflags} ${__link_folders}\ $<$<BOOL:${__link_libs}>:-l$<JOIN:${__link_libs},\ -l>>")
+
+  set(__cppflags_env "CGO_CPPFLAGS=${__cgo_cppflags}")
+  set(__ldflags_env "CGO_LDFLAGS=${__cgo_ldflags}")
+
   set(__go_platform_ldflags "")
   if (VICOS)
     set(__go_platform_ldflags "-r /anki/lib")
@@ -71,7 +77,7 @@ macro(__anki_run_go_build target_name extra_deps)
 
   add_custom_command(
     OUTPUT ${__gobuild_out}
-    COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__include_env} ${__link_env}
+    COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__cppflags_env} ${__ldflags_env}
                              ${GOROOT}/bin/go build ${__go_build_flags}
                              ${__ldflags_str} ${__go_build_ldflags}
                              ${__gobuild_basedir}
@@ -89,6 +95,8 @@ macro(__anki_build_go_fake_target target_name)
   add_library(${target_name}_fake_dep "${CMAKE_CURRENT_BINARY_DIR}/__dummy.c")
   define_property(TARGET PROPERTY GO_CLINK_FOLDERS BRIEF_DOCS "a" FULL_DOCS "b")
   define_property(TARGET PROPERTY GO_LDFLAGS BRIEF_DOCS "a" FULL_DOCS "b")
+  define_property(TARGET PROPERTY CGO_CPPFLAGS BRIEF_DOCS "a" FULL_DOCS "b")
+  define_property(TARGET PROPERTY CGO_LDFLAGS BRIEF_DOCS "a" FULL_DOCS "b")
   set_target_properties(${target_name}_fake_dep PROPERTIES EXCLUDE_FROM_ALL TRUE
                                                            INCLUDE_DIRECTORIES "")
   anki_build_target_license(${target_name}_fake_dep "ANKI")
@@ -199,17 +207,19 @@ endmacro()
 # specify that a go project should link against another C library
 macro(anki_go_add_c_library target_name c_target)
   target_link_libraries(${target_name}_fake_dep PUBLIC ${c_target})
-  get_target_property(__is_imported ${c_target} IMPORTED)
-  if (${__is_imported})
-    get_target_property(__c_link_location ${c_target} IMPORTED_LOCATION)
-    get_filename_component(__c_link_location ${__c_link_location} DIRECTORY)
-  else()
-    get_target_property(__c_link_location ${c_target} ARCHIVE_OUTPUT_DIRECTORY)
+  if (TARGET ${c_target})
+    get_target_property(__is_imported ${c_target} IMPORTED)
+    if (${__is_imported})
+      get_target_property(__c_link_location ${c_target} IMPORTED_LOCATION)
+      get_filename_component(__c_link_location ${__c_link_location} DIRECTORY)
+    else()
+      get_target_property(__c_link_location ${c_target} ARCHIVE_OUTPUT_DIRECTORY)
+    endif()
+    get_target_property(__current_link_folders ${target_name} GO_CLINK_FOLDERS)
+    set(__current_link_folders "${__current_link_folders} -L${__c_link_location}")
+    set_property(TARGET ${target_name} PROPERTY GO_CLINK_FOLDERS ${__current_link_folders})
+    add_dependencies(${target_name} ${c_target})
   endif()
-  get_target_property(__current_link_folders ${target_name} GO_CLINK_FOLDERS)
-  set(__current_link_folders "${__current_link_folders} -L${__c_link_location}")
-  set_property(TARGET ${target_name} PROPERTY GO_CLINK_FOLDERS ${__current_link_folders})
-  add_dependencies(${target_name} ${c_target})
 endmacro()
 
 macro(anki_go_add_include_dir target_name include_dir)
@@ -218,4 +228,12 @@ endmacro()
 
 macro(anki_go_set_ldflags target_name flags)
   set_target_properties(${target_name} PROPERTIES GO_LDFLAGS "${flags}")
+endmacro()
+
+macro(anki_go_set_cgo_cppflags target_name flags)
+  set_target_properties(${target_name} PROPERTIES CGO_CPPFLAGS "${flags}")
+endmacro()
+
+macro(anki_go_set_cgo_ldflags target_name flags)
+  set_target_properties(${target_name} PROPERTIES CGO_LDFLAGS "${flags}")
 endmacro()

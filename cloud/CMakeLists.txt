@@ -4,6 +4,7 @@ project(cloud)
 include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
+include(breakpad)
 
 # Grab the gateway files
 file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_grpc.srcs.lst" GATEWAY_GRPC_SRCS)
@@ -63,6 +64,22 @@ macro(_add_chipper_flags target_name)
   anki_go_set_ldflags(${target_name} ${chipper_flags})
   anki_go_add_include_dir(${target_name} ${__opus_build_dir}/include/opus)
   anki_go_add_c_library(${target_name} opus)
+endmacro()
+
+macro(_add_crash_reporter_flags target_name)
+  if (VICOS)
+    anki_go_set_cgo_cppflags(${target_name} -DANKI_PLATFORM_VICOS)
+    anki_go_set_cgo_ldflags(${target_name} -stdlib=libc++)
+    anki_go_add_include_dir(${target_name} ${CMAKE_SOURCE_DIR})
+    anki_go_add_c_library(${target_name} victorCrashReports)
+    anki_go_add_c_library(${target_name} breakpad_client)
+    anki_go_add_c_library(${target_name} ankiutil)
+    anki_go_add_c_library(${target_name} log)
+    #
+    # Our build macros don't handle the case where a library (util) has a custom output name (ankiutil).
+    # Add an explicit dependency to ensure that the library is built before our target.
+    add_dependencies(${target_name} util)
+  endif()
 endmacro()
 
 macro(_build_cloud_executable target_name)
@@ -146,6 +163,8 @@ anki_disable_default_build(servbench)
 # cloud process
 _build_cloud_executable(vic-cloud)
 _add_chipper_flags(vic-cloud)
+_add_crash_reporter_flags(vic-cloud)
+
 # copy opusfile to lib dir
 if (VICOS)
   configure_file(${__opus_build_dir}/lib/libopus.so.0.6.1 ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libopus.so.0 COPYONLY)
@@ -198,6 +217,7 @@ add_custom_command(
 
 _build_cloud_executable(vic-gateway)
 _add_chipper_flags(vic-gateway)
+_add_crash_reporter_flags(vic-gateway)
 
 # Install certs for mac build of vic-gateway
 if (MACOSX)
