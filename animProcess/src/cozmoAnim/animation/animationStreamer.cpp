@@ -298,9 +298,11 @@ namespace Vector {
   }
   
   CONSOLE_FUNC(ClearCapturedFaces, "ManualAnimationPlayback");
+
+
  #endif // ANKI_DEV_CHEATS
 
-
+  CONSOLE_VAR(bool, kDontPlayNamedAnimations, "AnimationStreamer.System", false);
 
   //////////
   /// End Manual Playback Console Vars
@@ -489,6 +491,10 @@ namespace Vector {
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms, 
                                                   bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
+    if(kDontPlayNamedAnimations){
+      return RESULT_OK;
+    }
+
     // Special case: stop streaming the current animation
     if(name.empty()) {
       if(DEBUG_ANIMATION_STREAMING) {
