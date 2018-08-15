@@ -1404,12 +1404,12 @@ namespace Anki {
       }
     }
     
-    void DriveToPickupObjectAction::SetPostDockLiftMovingAnimation(Anki::Vector::AnimationTrigger trigger)
+    void DriveToPickupObjectAction::SetPostDockLiftMovingAudioEvent(AudioMetaData::GameEvent::GenericEvent event)
     {
       if(!_pickupAction.expired()) {
-        static_cast<IDockAction*>(_pickupAction.lock().get())->SetPostDockLiftMovingAnimation(trigger);
+        static_cast<IDockAction*>(_pickupAction.lock().get())->SetPostDockLiftMovingAudioEvent(event);
       } else {
-        PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetPostDockLiftMovingAnimation.NullPickupAction", "");
+        PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetPostDockLiftMovingAudioEvent.NullPickupAction", "");
       }
     }
     

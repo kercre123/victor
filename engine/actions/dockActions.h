@@ -44,6 +44,7 @@ namespace Anki {
     class CarryingComponent;
     class DriveToPlaceCarriedObjectAction;
     class DockingComponent;
+    class TriggerAnimationAction;
     class VisionComponent;
     class Robot;
     
@@ -90,9 +91,8 @@ namespace Anki {
       // Set whether or not to place carried object on ground
       void SetPlaceOnGround(bool placeOnGround);
       
-      // Sets the animation to play when lift moves after docking.
-      // The animation should only contain a sound track!
-      void SetPostDockLiftMovingAnimation(AnimationTrigger animTrigger);
+      // Sets the audio event to play when lift moves after docking
+      void SetPostDockLiftMovingAudioEvent(AudioMetaData::GameEvent::GenericEvent event);
       
       void SetDockingMethod(DockingMethod dockingMethod) { _dockingMethod = dockingMethod; }
       
@@ -191,7 +191,10 @@ namespace Anki {
       
       template<typename T>
       void HandleMessage(const T& msg);
-      
+
+      static void SetDockAnimations(const AnimationTrigger& getIn,
+                                    const AnimationTrigger& loop,
+                                    const AnimationTrigger& getOut);      
     protected:
       
       // IDockAction derived classes nearly universally require the same VisionModes. Special cases should
@@ -262,6 +265,7 @@ namespace Anki {
       bool                       _firstTurnTowardsObject         = true;
       DockingComponent*          _dockingComponentPtr            = nullptr;
       CarryingComponent*         _carryingComponentPtr           = nullptr;
+      std::unique_ptr<TriggerAnimationAction> _dockAnim;      
       
     private:
     
@@ -271,6 +275,9 @@ namespace Anki {
       
       // Identify cases where cozmo should squint while docking
       bool ShouldApplyDockingSquint();
+
+      // Manually update the dock animation subaction
+      void UpdateDockingAnim();
       
       // Handler for when lift begins to move so that we can play an accompanying sound
       Signal::SmartHandle        _liftMovingSignalHandle;
@@ -281,14 +288,19 @@ namespace Anki {
       std::vector<Signal::SmartHandle> _signalHandles;
       
       // Name of animation to play when moving lift post-dock
-      AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      GE _liftMovingAudioEvent = GE::Invalid;
+;
       
       bool _shouldSetCubeLights      = false;
       bool _lightsSet                = false;
       bool _visuallyVerifyObjectOnly = false;
-      
-      const std::string _kEyeSquintLayerName = "IDockActionEyeSquintLayer";
-      
+
+      static AnimationTrigger _getInDockTrigger;
+      static AnimationTrigger _loopDockTrigger;
+      static AnimationTrigger _getOutDockTrigger;
+      AnimationTrigger _curDockTrigger    = AnimationTrigger::Count;
+
     }; // class IDockAction
     
     

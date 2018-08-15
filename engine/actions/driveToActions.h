@@ -369,7 +369,7 @@ namespace Anki {
       
       void SetDockingMethod(DockingMethod dockingMethod);
       
-      void SetPostDockLiftMovingAnimation(Anki::Vector::AnimationTrigger trigger);
+      void SetPostDockLiftMovingAudioEvent(AudioMetaData::GameEvent::GenericEvent event);
       
     private:
       std::weak_ptr<IActionRunner> _pickupAction;

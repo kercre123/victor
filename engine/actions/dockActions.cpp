@@ -20,6 +20,7 @@
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -56,6 +57,18 @@ static const f32 kSamePreactionPoseAngleThresh_deg = 30.f;
 namespace Anki {
   namespace Vector {
 
+    void IDockAction::SetDockAnimations(const AnimationTrigger& getIn,
+                                        const AnimationTrigger& loop,
+                                        const AnimationTrigger& getOut)
+    {
+      _getInDockTrigger  = getIn;
+      _loopDockTrigger   = loop;
+      _getOutDockTrigger = getOut;
+    }
+
+    AnimationTrigger IDockAction::_getInDockTrigger = AnimationTrigger::DockStartDefault;
+    AnimationTrigger IDockAction::_loopDockTrigger = AnimationTrigger::DockLoopDefault;
+    AnimationTrigger IDockAction::_getOutDockTrigger = AnimationTrigger::DockEndDefault;
 
     // Which docking method actions should use
     CONSOLE_VAR(u32, kDefaultDockingMethod,"DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
@@ -135,8 +148,6 @@ namespace Anki {
                       _dockObjectID.GetValue());
         GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
-      // Stop squinting
-      GetRobot().GetAnimationComponent().RemoveSquint(_kEyeSquintLayerName, 250);
 
       if(_dockingComponentPtr != nullptr){
         if(_dockingComponentPtr->IsPickingOrPlacing()) {
@@ -149,6 +160,11 @@ namespace Anki {
       if(_faceAndVerifyAction != nullptr)
       {
         _faceAndVerifyAction->PrepForCompletion();
+      }
+      
+      if(_dockAnim != nullptr)
+      {
+        _dockAnim->PrepForCompletion();
       }
     }
 
@@ -228,9 +244,9 @@ namespace Anki {
       _preActionPoseAngleTolerance = angleTolerance;
     }
 
-    void IDockAction::SetPostDockLiftMovingAnimation(AnimationTrigger animTrigger)
+    void IDockAction::SetPostDockLiftMovingAudioEvent(AudioMetaData::GameEvent::GenericEvent event)
     {
-      _liftMovingAnimation = animTrigger;
+      _liftMovingAudioEvent = event;
     }
 
     ActionResult IDockAction::ComputePlacementApproachAngle(const Robot& robot,
@@ -493,7 +509,15 @@ namespace Anki {
     ActionResult IDockAction::Init()
     {
       _waitToVerifyTimeSecs = -1.f;
+      _curDockTrigger = AnimationTrigger::Count;
 
+      // In case of action restart, need to reset the dock animation
+      if(_dockAnim != nullptr)
+      {
+        _dockAnim->PrepForCompletion();
+      }
+      _dockAnim.reset(nullptr);
+      
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_dockObjectID));
 
       if(dockObject == nullptr)
@@ -538,31 +562,37 @@ namespace Anki {
       using namespace RobotInterface;
       auto liftSoundLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
-        if (_liftMovingAnimation != AnimationTrigger::Count) {
-          // Check that the animation only has sound keyframes
-          bool hasKey = GetRobot().GetContext()->GetDataLoader()->GetAnimationTriggerMap()->HasKey(_liftMovingAnimation);
-          if (hasKey) {
+        if(_curDockTrigger != _getOutDockTrigger)
+        {
+          _curDockTrigger = _getOutDockTrigger;
 
-            // Check that the action matches the current action
-            DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
-            if (_dockAction != recvdAction) {
-              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.ActionMismatch",
-                                  "Expected %u, got %u. Ignoring.",
-                                  (u32)_dockAction, (u32)recvdAction);
-              return;
-            }
-
-            // Play the animation
-            PRINT_CH_INFO("Actions", "IDockAction.MovingLiftPostDockHandler",
-                          "Playing animation %s ",
-                          EnumToString(_liftMovingAnimation));
-            IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_liftMovingAnimation, 1, false);
-            GetRobot().GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
-          } else {
-            PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
-                                "Could not find animation %s",
-                                EnumToString(_liftMovingAnimation));
+          // If _dockAnim is not null, cancel it so we can play
+          // the get out anim
+          if(_dockAnim != nullptr)
+          {
+            _dockAnim->Cancel();
+            _dockAnim->PrepForCompletion();
           }
+          _dockAnim.reset(new TriggerAnimationAction(_getOutDockTrigger));
+          _dockAnim->SetRobot(&GetRobot());
+        }
+
+        using GE = AudioMetaData::GameEvent::GenericEvent;
+        if (_liftMovingAudioEvent != GE::Invalid)
+        {
+          // Check that the action matches the current action
+          DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
+          if (_dockAction != recvdAction)
+          {
+            PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.ActionMismatch",
+                                "Expected %u, got %u. Ignoring.",
+                                (u32)_dockAction, (u32)recvdAction);
+            return;
+          }
+
+          using GO = AudioMetaData::GameObjectType;
+          GetRobot().GetAudioClient()->PostEvent(_liftMovingAudioEvent,
+                                                 GO::Behavior);
         }
       };
 
@@ -572,7 +602,8 @@ namespace Anki {
         _liftLoadState = event.GetData().Get_liftLoad().hasLoad ? LiftLoadState::HAS_LOAD : LiftLoadState::HAS_NO_LOAD;;
       };
 
-      _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
+      _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::movingLiftPostDock,
+                                                                               liftSoundLambda);
       _liftLoadSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::liftLoad, liftLoadLambda);
 
       if (GetRobot().HasExternalInterface() )
@@ -656,9 +687,6 @@ namespace Anki {
         _lightsSet = true;
       }
 
-      // If this is a reset clear the squinting
-      GetRobot().GetAnimationComponent().RemoveSquint(_kEyeSquintLayerName, 250);
-
       // Allow actions the opportunity to check or set any properties they need to
       // this allows actions that are part of driveTo or wrappers a chance to check data
       // when they know they're at the pre-dock pose
@@ -741,15 +769,17 @@ namespace Anki {
         // know the robot got the DockWithObject command sent in Init().
         _wasPickingOrPlacing = _dockingComponentPtr->IsPickingOrPlacing();
 
-        if(_wasPickingOrPlacing && ShouldApplyDockingSquint()) {
-          // Apply continuous eye squint if we have just now started picking and placing
-          const f32 DockSquintScaleX = 1.05f;
-          const f32 DockSquintScaleY = 0.35f;
-          const f32 DockSquintUpperLidAngle = -10.f;
-          GetRobot().GetAnimationComponent().AddSquint(_kEyeSquintLayerName,
-                                                       DockSquintScaleX,
-                                                       DockSquintScaleY,
-                                                       DockSquintUpperLidAngle);
+        if(_wasPickingOrPlacing && ShouldApplyDockingSquint())
+        {
+          // If we haven't started playing any dock anim triggers, play the get in
+          if(_curDockTrigger == AnimationTrigger::Count)
+          {
+            _curDockTrigger = _getInDockTrigger;
+            // Init docking anim
+            _dockAnim.reset(new TriggerAnimationAction(_getInDockTrigger));
+            _dockAnim->SetRobot(&GetRobot());
+            UpdateDockingAnim();
+          }
         }
       }
       else if (VerifyDockingComponentValid() &&
@@ -779,6 +809,20 @@ namespace Anki {
 
           actionResult = Verify();
         }
+      }
+      else
+      {
+        // If dock anim is null then it means the get in finished so time
+        // to start the loop
+        if(_dockAnim == nullptr)
+        {
+          _curDockTrigger = _loopDockTrigger;
+          _dockAnim.reset(new TriggerAnimationAction(_loopDockTrigger));
+          _dockAnim->SetRobot(&GetRobot());
+        }
+
+        // Still docking so update dock anim
+        UpdateDockingAnim();       
       }
 
       return actionResult;
@@ -839,6 +883,33 @@ namespace Anki {
       return true;
     }
 
+    void IDockAction::UpdateDockingAnim()
+    {
+      if(_dockAnim != nullptr)
+      {
+        const ActionResult res = _dockAnim->Update();
+        const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(res);
+        // If dock animation isn't running (failed or completed)
+        if(resCat != ActionResultCategory::RUNNING)
+        {
+          // If dock animation action failed print warning
+          if(resCat != ActionResultCategory::SUCCESS)
+          {
+            PRINT_NAMED_WARNING("IDockAction.UpdateDockingAnim.AnimFailed",
+                                "%s [%d]'s dock anim %s [%d] failed %s",
+                                GetName().c_str(),
+                                GetTag(),
+                                _dockAnim->GetName().c_str(),
+                                _dockAnim->GetTag(),
+                                EnumToString(res));
+
+          }
+
+          _dockAnim->PrepForCompletion();
+          _dockAnim.reset(nullptr);
+        }
+      }
+    }
 
     template<>
     void IDockAction::HandleMessage(const ExternalInterface::RobotDeletedLocatedObject& msg)
@@ -1216,7 +1287,8 @@ namespace Anki {
                   RobotActionType::PICK_AND_PLACE_INCOMPLETE)
     {
       _dockingMethod = (DockingMethod)kPickupDockingMethod;
-      SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPickup);
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      SetPostDockLiftMovingAudioEvent(GE::Play__Robot_Vic_Sfx__Lift_High_Up_Short_Excited);
 
       _doLiftLoadCheck = true; // Do lift load check by default
     }
@@ -1689,9 +1761,8 @@ namespace Anki {
     , _relativeCurrentMarker(relativeCurrentMarker)
     {
       SetPlaceOnGround(placeOnGround);
-      SetPostDockLiftMovingAnimation(placeOnGround ?
-                                     AnimationTrigger::SoundOnlyLiftEffortPlaceLow :
-                                     AnimationTrigger::SoundOnlyLiftEffortPlaceHigh);
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      SetPostDockLiftMovingAudioEvent(GE::Play__Robot_Vic_Sfx__Lift_High_Down_Short_Excited);
 
       // Cozmo is carrying an object and wont be able to see on top of the object
       SetShouldCheckForObjectOnTopOf(false);
@@ -2266,7 +2337,8 @@ namespace Anki {
     {
       _dockingMethod = (DockingMethod)kRollDockingMethod;
       _dockAction = DockAction::DA_ROLL_LOW;
-      SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPlaceRoll);
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      SetPostDockLiftMovingAudioEvent(GE::Play__Robot_Vic_Sfx__Lift_High_Down_Long_Excited);
     }
 
     void RollObjectAction::EnableDeepRoll(bool enable)

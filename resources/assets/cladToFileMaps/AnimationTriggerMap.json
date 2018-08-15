@@ -340,6 +340,18 @@
     "AnimName": "ag_dizzy_pickup"
   },
   {
+    "CladEvent": "DockEndDefault",
+    "AnimName": "ag_driving01_enddriving"
+  },
+  {
+    "CladEvent": "DockLoopDefault",
+    "AnimName": "ag_driving01_drivingloop"
+  },
+  {
+    "CladEvent": "DockStartDefault",
+    "AnimName": "ag_driving01_startdriving"
+  },
+  {
     "CladEvent": "DriveEndAngry",
     "AnimName": "ag_driving_upset_end"
   },
