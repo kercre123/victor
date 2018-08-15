@@ -5,7 +5,19 @@
  * Created: June 01 2018
  *
  * Description: Condition that checks the observed scene illumination entering and/or
- * leaving from specified states
+ *              leaving from specified states.
+ * 
+ *              The condition will be true for a specified number of seconds after pre and
+ *              post-transition conditions have been met.
+ * 
+ *              Specify "preTriggerStates" and/or "postTriggerStates" in JSON, as well as 
+ *              accompanying latch parameters (see conditionIlluminationDetect.cpp). If no 
+ *              states are given for a set of triggers, any illumination state will satisfy 
+ *              that requirement.
+ * 
+ *              To fire on entering a state, specify only "preTriggerStates"
+ *              To fire on exiting a state, specify only "postTriggerStates"
+ *              To fire on transitioning, specify both "preTriggerStates and "postTriggerStates"
  * 
  * Copyright: Anki, Inc. 2018
  * 
@@ -46,16 +58,21 @@ private:
 
   struct ConfigParams
   {
-    std::vector<IlluminationState> triggerStates; // Triggered by entering these states
-    f32 confirmationTime_s;                       // Number of seconds state must match to trigger condition
-    u32 confirmationMinNum;                       // Min number of match events to trigger condition
-    bool ignoreUnknown;                           // Whether to ignore Unknown illuminations
+    std::vector<IlluminationState> preStates;     // Transition starts by entering these states
+    f32 preConfirmationTime_s;                    // Number of seconds pre state must match
+    u32 preConfirmationMinNum;                    // Min number of pre-state match events
+    std::vector<IlluminationState> postStates;    // Transition finishes by entering these states
+    f32 postConfirmationTime_s;                   // Number of seconds post state must match
+    u32 postConfirmationMinNum;                   // Min number of post-state match events
+    f32 matchHoldTime_s;                          // Number of seconds to hold the condition true on transition
   };
   
   enum class MatchState
   {
-    WaitingForStart,
-    ConfirmingMatch,
+    WaitingForPre,
+    ConfirmingPre,
+    WaitingForPost,
+    ConfirmingPost,
     MatchConfirmed
   };
   
@@ -72,7 +89,10 @@ private:
 
   void TickStateMachine( const RobotTimeStamp_t& currTime, const IlluminationState& obsState );
   bool IsTimePassed( const RobotTimeStamp_t& t, const f32& dur ) const;
-  bool IsTriggerState( const IlluminationState& state ) const;
+  bool IsTriggerState( const std::vector<IlluminationState>& triggers,
+                       const IlluminationState& state ) const;
+  bool ParseTriggerStates( const Json::Value& config, const char* key,
+                           std::vector<IlluminationState>& triggers );
 };
 
 } // end namespace Vector

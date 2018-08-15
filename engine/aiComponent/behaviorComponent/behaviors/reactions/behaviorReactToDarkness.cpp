@@ -70,17 +70,19 @@ BehaviorReactToDarkness::BehaviorReactToDarkness( const Json::Value& config )
   const u32 lookMinImages = JsonTools::ParseUInt32( config, kLookMinImages,
                                                     "BehaviorReactToDarkness.Constructor" );
   // NOTE These are hard-coded so they don't have to be in the config JSON
+  // Any state is valid for positive pre-transition, so we don't specify any pre parameters
   _iConfig.positiveConfig = IBEICondition::GenerateBaseConditionConfig( BEIConditionType::IlluminationDetected );
-  _iConfig.positiveConfig["triggerStates"].append(EnumToString(IlluminationState::Darkened));
-  _iConfig.positiveConfig["confirmationTime"] = _iConfig.lookWaitTime_s;
-  _iConfig.positiveConfig["confirmationMinNum"] = lookMinImages;
-  _iConfig.positiveConfig["ignoreUnknown"] = false;
+  _iConfig.positiveConfig["postTriggerStates"].append(EnumToString(IlluminationState::Darkened));
+  _iConfig.positiveConfig["postConfirmationTime"] = _iConfig.lookWaitTime_s;
+  _iConfig.positiveConfig["postConfirmationMinNum"] = lookMinImages;
+  _iConfig.positiveConfig["matchHoldTime"] = _iConfig.lookWaitTime_s;
 
+  // Any state is valid for negative pre-transition, so we don't specify any pre parameters
   _iConfig.negativeConfig = IBEICondition::GenerateBaseConditionConfig( BEIConditionType::IlluminationDetected );
-  _iConfig.negativeConfig["triggerStates"].append(EnumToString(IlluminationState::Illuminated));
-  _iConfig.negativeConfig["confirmationTime"] = _iConfig.lookWaitTime_s;
-  _iConfig.negativeConfig["confirmationMinNum"] = lookMinImages;
-  _iConfig.negativeConfig["ignoreUnknown"] = false;
+  _iConfig.negativeConfig["postTriggerStates"].append(EnumToString(IlluminationState::Illuminated));
+  _iConfig.negativeConfig["postConfirmationTime"] = _iConfig.lookWaitTime_s;
+  _iConfig.negativeConfig["postConfirmationMinNum"] = lookMinImages;
+  _iConfig.negativeConfig["matchHoldTime"] = _iConfig.lookWaitTime_s;
 
   _iConfig.homeFilter = std::make_unique<BlockWorldFilter>();
 }
