@@ -36,8 +36,7 @@
 
 
 // Curl request options
-// TO DO: VIC-3352 Enable CURLOPT_SSL_VERIFYPEER for DAS uploads
-#define DAS_CURLOPT_SSL_VERIFYPEER 0
+#define DAS_CURLOPT_SSL_VERIFYPEER 1
 #define DAS_CURLOPT_VERBOSE 0
 
 namespace {
