@@ -718,7 +718,9 @@ namespace Vector {
     {
     public:
       WaitAction(f32 waitTimeInSeconds);
-      
+
+      virtual f32 GetTimeoutInSeconds() const override;
+
     protected:
       
       virtual ActionResult Init() override;

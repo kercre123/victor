@@ -2304,6 +2304,15 @@ namespace Anki {
         return ActionResult::RUNNING;
       }
     }
+
+    f32 WaitAction::GetTimeoutInSeconds() const
+    {
+      const float minTimeout = 2.0f;
+      const float fudgeFactor = 1.2f;
+
+      return std::max( minTimeout, _waitTimeInSeconds * fudgeFactor );
+    }
+
     
 #pragma mark ---- WaitForImagesAction ----
   
