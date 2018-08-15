@@ -8,6 +8,7 @@
 #include "clad/audio/audioMessage.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
+#include "clad/types/backpackAnimationTriggers.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/compositeImageTypes.clad"
 #include "clad/types/controllerChannels.clad"
@@ -604,6 +605,17 @@ message SetLCDBrightnessLevel {
   LCDBrightness level
 }
 
+message BatteryStatus {
+  bool isLow,
+  bool isCharging,
+  bool onChargerContacts,
+  bool isBatteryFull,
+}
+
+message TriggerBackpackAnimation {
+  BackpackAnimationTrigger trigger,
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -754,7 +766,11 @@ union EngineToRobot
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 
-  EngineFullyLoaded engineFullyLoaded = 0xAB,
+  BatteryStatus batteryStatus = 0xAB,
+
+  TriggerBackpackAnimation triggerBackpackAnimation = 0xAC,
+
+  EngineFullyLoaded engineFullyLoaded = 0xAD,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

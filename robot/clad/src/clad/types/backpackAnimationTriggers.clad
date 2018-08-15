@@ -1,0 +1,73 @@
+// File: backapackAnimationTriggers
+// Author: Kevin M. Karol
+// Created: 6/21/18
+// Copyright: Anki, inc. 2018
+
+
+namespace Anki {
+namespace Vector {
+
+enum int_32 BackpackAnimationTrigger
+{
+  // Please keep alphabetical
+
+  Charging,
+  DanceToTheBeat,
+  Idle_09,
+  LowBattery,
+  MeetVictor,
+  Off,
+  Offline,
+  Offline_Off,
+  SpinnerBlueCelebration,
+  SpinnerBlueHoldTarget,
+  SpinnerBlueSelectTarget,
+  SpinnerGreenCelebration,
+  SpinnerGreenHoldTarget,
+  SpinnerGreenSelectTarget,
+  SpinnerPurpleCelebration,
+  SpinnerPurpleHoldTarget,
+  SpinnerPurpleSelectTarget,
+  SpinnerRedCelebration,
+  SpinnerRedHoldTarget,
+  SpinnerRedSelectTarget,
+  SpinnerYellowCelebration,
+  SpinnerYellowHoldTarget,
+  SpinnerYellowSelectTarget,
+  Streaming,
+
+  Count
+}
+
+// CppLite doesn't generate EnumToString so create our own
+enum_concept string EnumToString[BackpackAnimationTrigger] {
+  Charging                  = verbatim "Charging",
+  DanceToTheBeat            = verbatim "DanceToTheBeat",
+  Idle_09                   = verbatim "Idle_09",
+  LowBattery                = verbatim "LowBattery",
+  MeetVictor                = verbatim "MeetVictor",
+  Off                       = verbatim "Off",
+  Offline                   = verbatim "Offline",
+  Offline_Off               = verbatim "Offline_Off",
+  SpinnerBlueCelebration    = verbatim "SpinnerBlueCelebration",
+  SpinnerBlueHoldTarget     = verbatim "SpinnerBlueHoldTarget",
+  SpinnerBlueSelectTarget   = verbatim "SpinnerBlueSelectTarget",
+  SpinnerGreenCelebration   = verbatim "SpinnerGreenCelebration",
+  SpinnerGreenHoldTarget    = verbatim "SpinnerGreenHoldTarget",
+  SpinnerGreenSelectTarget  = verbatim "SpinnerGreenSelectTarget",
+  SpinnerPurpleCelebration  = verbatim "SpinnerPurpleCelebration",
+  SpinnerPurpleHoldTarget   = verbatim "SpinnerPurpleHoldTarget",
+  SpinnerPurpleSelectTarget = verbatim "SpinnerPurpleSelectTarget",
+  SpinnerRedCelebration     = verbatim "SpinnerRedCelebration",
+  SpinnerRedHoldTarget      = verbatim "SpinnerRedHoldTarget",
+  SpinnerRedSelectTarget    = verbatim "SpinnerRedSelectTarget",
+  SpinnerYellowCelebration  = verbatim "SpinnerYellowCelebration",
+  SpinnerYellowHoldTarget   = verbatim "SpinnerYellowHoldTarget",
+  SpinnerYellowSelectTarget = verbatim "SpinnerYellowSelectTarget",
+  Streaming                 = verbatim "Streaming",
+
+  Count                     = verbatim "Count"
+}
+
+} // end namespace Vector
+} // end namespace Anki

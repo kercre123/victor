@@ -22,7 +22,8 @@ namespace Anki {
     class AnimationStreamer;
     class StreamingAnimationModifier;
     class TextToSpeechComponent;
-
+    class BackpackLightComponent;
+    
     namespace Audio {
       class CozmoAudioController;
       class MicrophoneAudioClient;
@@ -62,16 +63,20 @@ public:
   void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
+  const BackpackLightComponent& GetBackpackLightComponent() const { return *_backpackLightComponent.get(); }
+  BackpackLightComponent& GetBackpackLightComponent() { return *_backpackLightComponent.get(); }
+  
 protected:
 
-  bool                                              _isInitialized = false;
-  std::unique_ptr<AnimContext>                      _context;
-  std::unique_ptr<AnimationStreamer>                _animationStreamer;
-  std::unique_ptr<StreamingAnimationModifier>       _streamingAnimationModifier;
-  std::unique_ptr<TextToSpeechComponent>            _ttsComponent;
-  std::unique_ptr<Audio::MicrophoneAudioClient>     _microphoneAudioClient;
-  Audio::CozmoAudioController*                      _audioControllerPtr = nullptr;
-
+  bool                                          _isInitialized = false;
+  std::unique_ptr<AnimContext>                  _context;
+  std::unique_ptr<AnimationStreamer>            _animationStreamer;
+  std::unique_ptr<StreamingAnimationModifier>   _streamingAnimationModifier;
+  std::unique_ptr<TextToSpeechComponent>        _ttsComponent;
+  std::unique_ptr<Audio::MicrophoneAudioClient> _microphoneAudioClient;
+  Audio::CozmoAudioController*                  _audioControllerPtr = nullptr;
+  std::unique_ptr<BackpackLightComponent>       _backpackLightComponent;   
+  
 }; // class AnimEngine
 
 

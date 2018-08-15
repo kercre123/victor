@@ -20,7 +20,7 @@ namespace Vector {
   
 // forware decl:
 struct CubeLights;
-struct LightState;
+struct CubeLightState;
 struct CubeLightKeyframe;
   
 class LedAnimation
@@ -31,7 +31,7 @@ public:
   // This creates a set of keyframes defining an LED animation. By default, the
   // animation links to itself (i.e. it will repeat indefinitely). Link indices
   // are all offset by baseIndex.
-  LedAnimation(const LightState& lightState, const int baseIndex);
+  LedAnimation(const CubeLightState& lightState, const int baseIndex);
   
   ~LedAnimation() = default;
   

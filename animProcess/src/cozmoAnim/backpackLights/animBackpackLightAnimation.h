@@ -15,25 +15,24 @@
 #define __Anki_Cozmo_BackpackLights_BackpackLightAnimation_H__
 
 #include "clad/types/ledTypes.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "coretech/common/shared/types.h"
 #include <array>
+
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
 namespace Vector {
 namespace BackpackLightAnimation {
 
-using BackpackLEDArray = std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>;
-struct BackpackAnimation {  
-  BackpackLEDArray onColors;
-  BackpackLEDArray offColors;
-  BackpackLEDArray onPeriod_ms;
-  BackpackLEDArray offPeriod_ms;
-  BackpackLEDArray transitionOnPeriod_ms;
-  BackpackLEDArray transitionOffPeriod_ms;
-  std::array<s32,(size_t)LEDId::NUM_BACKPACK_LEDS> offset;
-};
-
-bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim);
+  // BackpackAnimation is just a container for the SetBackpackLights message
+  struct BackpackAnimation {
+    RobotInterface::SetBackpackLights lights;
+  };
+  
+  bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim);
 
 } // namespace BackpackLightAnimation
 } // namespace Vector

@@ -104,6 +104,16 @@ public:
   // command audio to be played and it actually gets played on the speaker
   uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
 
+  // Callback parameter is whether or not we will be streaming after
+  // the trigger word is detected
+  void AddTriggerWordDetectedCallback(std::function<void(bool)> callback)
+    { _triggerWordDetectedCallbacks.push_back(callback); }
+
+  // Callback parameter is whether or not the stream was started
+  // True if started, False if stopped
+  void AddStreamUpdatedCallback(std::function<void(bool)> callback)
+    { _streamUpdatedCallbacks.push_back(callback); }
+
   bool HasConnectionToCloud() const;
   
 private:
@@ -142,6 +152,9 @@ private:
   // Members for holding outgoing messages
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
   std::mutex _msgsMutex;
+
+  std::vector<std::function<void(bool)>> _triggerWordDetectedCallbacks;
+  std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();

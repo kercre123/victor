@@ -245,6 +245,19 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _lastBatteryLevelChange_sec = now_sec;
     _batteryLevel = level;
   }
+
+  static RobotInterface::BatteryStatus prevStatus;
+  RobotInterface::BatteryStatus curStatus;
+  curStatus.isLow             = IsBatteryLow();
+  curStatus.isCharging        = IsCharging();
+  curStatus.onChargerContacts = IsOnChargerContacts();
+  curStatus.isBatteryFull     = IsBatteryFull();
+
+  if(curStatus != prevStatus)
+  {
+    prevStatus = curStatus;
+    _robot->SendMessage(RobotInterface::EngineToRobot(std::move(curStatus)));
+  }
   
   const bool wasLowBattery = (oldBatteryLevel == BatteryLevel::Low);
   UpdateSuggestedChargerTime(wasLowBattery, wasCharging);

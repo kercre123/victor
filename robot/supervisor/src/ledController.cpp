@@ -49,36 +49,40 @@ namespace Vector {
     u32 newColor = 0;
     
     // Check for constant color
-    if (ledParams.onFrames == 255 || (ledParams.onColor == ledParams.offColor)) {
+    if (ledParams.onPeriod_ms == std::numeric_limits<u16>::max() ||
+        (ledParams.onColor == ledParams.offColor)) {
       return ledParams.onColor;
     }
     
-    const u16 totalFrames = ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames;
+    const u32 totalTime_ms = ledParams.transitionOnPeriod_ms +
+                             ledParams.onPeriod_ms +
+                             ledParams.transitionOffPeriod_ms +
+                             ledParams.offPeriod_ms;
     
-    s32 phaseFrame = (currentTime - phaseTime) / msPerFrame;
+    s32 phaseTime_ms = (currentTime - phaseTime);
 
     // Apply the offset
-    phaseFrame -= ledParams.offset;
+    phaseTime_ms -= ledParams.offset_ms;
 
     // If it's not time to play yet (because of the offset),
     // just return the off color.
-    if (phaseFrame < 0) {
+    if (phaseTime_ms < 0) {
       return ledParams.offColor;
     }
     
     // Modulo to keep phaseFrames in [0, totalFrames)
-    phaseFrame %= totalFrames;
+    phaseTime_ms %= totalTime_ms;
     
-    if (phaseFrame < ledParams.transitionOnFrames) {
+    if (phaseTime_ms < ledParams.transitionOnPeriod_ms) {
       // In the "on transition" period
-      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
-    } else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames)) {
+      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseTime_ms)/float(ledParams.transitionOnPeriod_ms));
+    } else if (phaseTime_ms < (ledParams.transitionOnPeriod_ms + ledParams.onPeriod_ms)) {
       // In the "on" period
       newColor = ledParams.onColor;
-    } else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames)) {
+    } else if (phaseTime_ms < (ledParams.transitionOnPeriod_ms + ledParams.onPeriod_ms + ledParams.transitionOffPeriod_ms)) {
       // In the "off transition" period
-      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames);
-      newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffFrames));
+      const u16 offPhase = phaseTime_ms - (ledParams.transitionOnPeriod_ms + ledParams.onPeriod_ms);
+      newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffPeriod_ms));
     } else {
       // In the "off" period
       newColor = ledParams.offColor;

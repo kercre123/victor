@@ -16,7 +16,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPromptUserForVoiceCommand__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "clad/cloud/mic.h"
 #include "clad/types/animationTrigger.h"
 

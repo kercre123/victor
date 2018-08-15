@@ -428,6 +428,16 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
     {
       RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
+
+      ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+      const bool willStream = showStreamState->HasValidTriggerResponse();
+      for(auto func : _triggerWordDetectedCallbacks)
+      {
+        if(func != nullptr)
+        {
+          func(willStream);
+        }
+      }
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
@@ -497,6 +507,14 @@ void MicDataSystem::ClearCurrentStreamingJob()
     {
       _currentStreamingJob->SetTimeToRecord(0);
       _currentStreamingJob = nullptr;
+
+      for(auto func : _streamUpdatedCallbacks)
+      {
+        if(func != nullptr)
+        {
+          func(false);
+        }
+      }
     }
   }
 
@@ -536,6 +554,14 @@ void MicDataSystem::AddMicDataJob(std::shared_ptr<MicDataInfo> newJob, bool isSt
   if (isStreamingJob)
   {
     _currentStreamingJob = _micProcessingJobs.back();
+
+    for(auto func : _streamUpdatedCallbacks)
+    {
+      if(func != nullptr)
+      {
+        func(true);
+      }
+    }
   }
 }
 

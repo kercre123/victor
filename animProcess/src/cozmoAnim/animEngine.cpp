@@ -19,6 +19,7 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/streamingAnimationModifier.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
@@ -69,6 +70,7 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
   , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
+  , _backpackLightComponent(std::make_unique<BackpackLightComponent>(_context.get()))
 {
 #if ANKI_CPU_PROFILER_ENABLED
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
@@ -118,7 +120,8 @@ Result AnimEngine::Init()
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
-
+  _backpackLightComponent->Init();
+  
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
@@ -143,6 +146,8 @@ Result AnimEngine::Init()
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
+
+  
   // Make sure OpenCV isn't threading
   Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );
   if( RESULT_OK != cvResult )
@@ -228,6 +233,11 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     _audioControllerPtr->Update();
   }
 
+  if(_backpackLightComponent != nullptr)
+  {
+    _backpackLightComponent->Update();
+  }
+
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -276,7 +286,6 @@ void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
   if (_ttsComponent != nullptr) {
     _ttsComponent->SetLocale(locale);
   }
-
 }
 } // namespace Vector
 } // namespace Anki

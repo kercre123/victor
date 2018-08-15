@@ -10,7 +10,7 @@
 *
 **/
 
-#include "engine/components/backpackLights/backpackLightAnimation.h"
+#include "engine/components/backpackLights/engineBackpackLightAnimation.h"
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {

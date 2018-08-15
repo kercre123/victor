@@ -17,7 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
@@ -482,8 +482,7 @@ void CubeSpinnerGame::TransitionToGamePhase(GamePhase phase)
       break;
     }
     case GamePhase::CycleColorsUntilTap:{
-      const bool shouldLoop = true;
-      _backpackLightComponent.SetBackpackAnimation(targetLightEntry.backpackHoldTargetTrigger, shouldLoop);
+      _backpackLightComponent.SetBackpackAnimation(targetLightEntry.backpackHoldTargetTrigger);
       // Set the target light as the first cycle
       _currentGame.currentCycleLightIdx = _currentGame.targetLightIdx;
       break;
@@ -497,8 +496,7 @@ void CubeSpinnerGame::TransitionToGamePhase(GamePhase phase)
       break;
     }
     case GamePhase::Celebration:{
-      const bool shouldLoop = false;
-      _backpackLightComponent.SetBackpackAnimation(targetLightEntry.backpackCelebrationTrigger, shouldLoop);
+      _backpackLightComponent.SetBackpackAnimation(targetLightEntry.backpackCelebrationTrigger);
       auto* anim = _cubeLightComponent.GetAnimation(targetLightEntry.cubeCelebrationTrigger);
       PlayCubeAnimation(*anim);
       break;

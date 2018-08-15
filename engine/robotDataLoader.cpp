@@ -20,11 +20,11 @@
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
+
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/components/variableSnapshot/variableSnapshotEncoder.h"
@@ -103,7 +103,6 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
 , _animationTriggerMap(new AnimationTriggerMap())
 , _cubeAnimationTriggerMap(new CubeAnimationTriggerMap())
-, _backpackAnimationTriggerMap(new BackpackAnimationTriggerMap())
 , _dasBlacklistedAnimationTriggers()
 {
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
@@ -173,11 +172,6 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
-  }
-
-  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSpritePaths");
     LoadSpritePaths();
     _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
@@ -207,10 +201,6 @@ void RobotDataLoader::LoadNonConfigData()
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerMap");
       LoadCubeAnimationTriggerMap();
-    }
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackAnimationTriggerMap");
-      LoadBackpackAnimationTriggerMap();
     }
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
@@ -299,12 +289,6 @@ void RobotDataLoader::CollectAnimFiles()
     });
   }
 
-  // backpack light animations
-  {
-    WalkAnimationDir("config/engine/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
-      _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
-    });
-  }
 
   if(!FACTORY_TEST)
   {
@@ -362,39 +346,6 @@ void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     _cubeLightAnimations.emplace(path, animDefs);
-  }
-}
-
-
-void RobotDataLoader::LoadBackpackLightAnimations()
-{
-  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-
-  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadBackpackLightAnimationFile, this, std::placeholders::_1);
-  MyDispatchWorker myWorker(loadFileFunc);
-
-  const auto& fileList = _jsonFiles[FileType::BackpackLightAnimation];
-  const auto size = fileList.size();
-  for (int i = 0; i < size; i++) {
-    myWorker.PushJob(fileList[i]);
-  }
-
-  myWorker.Process();
-
-  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  double loadTime = endTime - startTime;
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadBackpackLightAnimations.LoadTime",
-                "Time to load backpack light animations = %.2f ms", loadTime);
-}
-
-void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
-{
-  Json::Value animDefs;
-  const bool success = _platform->readAsJson(path.c_str(), animDefs);
-  if (success && !animDefs.empty()) {
-    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _backpackLightAnimations.emplace(path, animDefs);
   }
 }
 
@@ -941,10 +892,6 @@ void RobotDataLoader::LoadCubeAnimationTriggerMap()
   _cubeAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
 }
 
-void RobotDataLoader::LoadBackpackAnimationTriggerMap()
-{
-  _backpackAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/BackpackAnimationTriggerMap.json", "AnimName");
-}
 
 
 void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()

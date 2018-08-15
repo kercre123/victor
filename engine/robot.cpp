@@ -34,7 +34,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/appCubeConnectionSubscriber.h"
 #include "engine/components/cubes/cubeAccelComponent.h"

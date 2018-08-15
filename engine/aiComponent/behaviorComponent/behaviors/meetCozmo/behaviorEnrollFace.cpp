@@ -31,7 +31,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -1386,8 +1386,7 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
   
   auto& blc = GetBEI().GetBackpackLightComponent();
-  const bool shouldLoop = true;
-  blc.SetBackpackAnimation(_iConfig->backpackAnim, shouldLoop);
+  blc.SetBackpackAnimation(_iConfig->backpackAnim);
 
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to

@@ -70,7 +70,7 @@ public:
 
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
-    
+  
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
   // Note 'Count' and '-1' values indicate to use default

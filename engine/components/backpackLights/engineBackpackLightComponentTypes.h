@@ -22,24 +22,11 @@ namespace Vector {
 
 struct BackpackLightData;
 class BackpackLightComponent;
-
-
-using BackpackLightSourceType = int32_t;
-  
-// Public facing types that can be used when setting a backpack light configuration
-enum class BackpackLightSource : BackpackLightSourceType
-{
-  Behavior,
-  Voice,
-  
-  Count
-};
-
+ 
 using BackpackLightDataRef = std::shared_ptr<BackpackLightData>;
 using BackpackLightDataRefWeak = std::weak_ptr<BackpackLightData>;
 
 using BackpackLightList = std::list<BackpackLightDataRef>;
-using BackpackLightMap = std::map<BackpackLightSourceType, BackpackLightList>;
 
 class BackpackLightDataLocator
 {
@@ -49,7 +36,6 @@ public:
 private:
   friend class BackpackLightComponent;
   
-  BackpackLightMap::iterator          _mapIter;
   BackpackLightList::iterator         _listIter;
   BackpackLightDataRefWeak            _dataPtr;
   

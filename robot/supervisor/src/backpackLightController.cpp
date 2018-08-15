@@ -107,17 +107,17 @@ namespace BackpackLightController {
     memset(&_ledParams[(int)BackpackLightLayer::BPL_USER], 0, sizeof(_ledParams[(int)BackpackLightLayer::BPL_USER]));
 
     // Climbing white lights on init (will be stopped by engine once connected)
-    const u8 kFrameDiff = 20;
+    const u16 kTimeDiff_ms = 600;
     for(u8 i = 0; i < (u8)LEDId::NUM_BACKPACK_LEDS; i++)
     {
       _ledParams[(int)BackpackLightLayer::BPL_USER].lights[i] = {
         .onColor = 0x80808000,
         .offColor = 0,
-        .onFrames = (u8)(kFrameDiff * (i+1)),
-        .offFrames = (u8)(kFrameDiff * ((u8)LEDId::NUM_BACKPACK_LEDS - 1 - i)),
-        .transitionOnFrames = 10,
-        .transitionOffFrames = 10,
-        .offset = (u8)(kFrameDiff * ((u8)LEDId::NUM_BACKPACK_LEDS - 1 - i)),
+        .onPeriod_ms = static_cast<u16>(kTimeDiff_ms * (i+1)),
+        .offPeriod_ms = static_cast<u16>((kTimeDiff_ms * ((u8)LEDId::NUM_BACKPACK_LEDS - 1 - i))),
+        .transitionOnPeriod_ms = 300,
+        .transitionOffPeriod_ms = 300,
+        .offset_ms = static_cast<s16>((kTimeDiff_ms * ((u8)LEDId::NUM_BACKPACK_LEDS - 1 - i)))
       };
     }
 

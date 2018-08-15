@@ -13,7 +13,7 @@
 #ifndef __Anki_Cozmo_Backpack_Light_Animation_Container_H__
 #define __Anki_Cozmo_Backpack_Light_Animation_Container_H__
 
-#include "engine/components/backpackLights/backpackLightAnimation.h"
+#include "cozmoAnim/backpackLights/animBackpackLightAnimation.h"
 #include <unordered_map>
 
 namespace Anki {

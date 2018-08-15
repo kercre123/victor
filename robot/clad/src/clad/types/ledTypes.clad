@@ -46,7 +46,7 @@ enum uint_8 LEDColorShift {
  * frames are assumed to be 30ms for this purpose.
  * Note this structure must align to allow arrays of it
  */
-structure LightState
+structure CubeLightState
 {
   uint_32  onColor = 0,
   uint_32  offColor = 0,
@@ -61,7 +61,7 @@ structure LightState
 
 structure CubeLights
 {
-  LightState lights[4],
+  CubeLightState lights[4],
   bool       rotate = 0,    // Should the pattern rotate through all LEDS on the cube?
   bool       playOnce = 0,  // Play the cube light animation once then stop
 }
@@ -115,6 +115,19 @@ enum uint_8 MakeRelativeMode
 enum int_32 CubeConstants 
 {
   NUM_CUBE_LEDS = 4,
+}
+
+// LightState struct for body backpack lights
+structure LightState
+{
+  uint_32  onColor = 0,
+  uint_32  offColor = 0,
+  uint_16  onPeriod_ms = 0,
+  uint_16  offPeriod_ms = 0,
+  uint_16  transitionOnPeriod_ms = 0,
+  uint_16  transitionOffPeriod_ms = 0,
+  int_16   offset_ms = 0,
+  uint_16  padding = 0
 }
 
 

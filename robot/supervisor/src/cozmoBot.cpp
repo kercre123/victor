@@ -320,13 +320,10 @@ namespace Anki {
         PickAndPlaceController::Update();
         DockingController::Update();
 
-
-
         // Manage the various motion controllers:
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
-
 
         //////////////////////////////////////////////////////////////
         // Power management

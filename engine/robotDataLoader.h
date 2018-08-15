@@ -14,7 +14,6 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 #include "clad/types/animationTrigger.h"
-#include "clad/types/backpackAnimationTriggers.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
@@ -61,7 +60,6 @@ namespace Vector {
 
 // forward declarations
 class AnimationGroupContainer;
-class BackpackLightAnimationContainer;
 class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
@@ -89,20 +87,17 @@ public:
 
   using AnimationTriggerMap = Util::CladEnumToStringMap<AnimationTrigger>;
   using CubeAnimationTriggerMap = Util::CladEnumToStringMap<CubeAnimationTrigger>;
-  using BackpackAnimationTriggerMap = Util::CladEnumToStringMap<BackpackAnimationTrigger>;
 
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }  
   const FileJsonMap& GetCubeLightAnimations() const { return _cubeLightAnimations; }
-  const FileJsonMap& GetBackpackLightAnimations() const { return _backpackLightAnimations; }
 
   CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
 
   AnimationTriggerMap* GetAnimationTriggerMap() const { return _animationTriggerMap.get(); }
   CubeAnimationTriggerMap* GetCubeAnimationTriggerMap() const { return _cubeAnimationTriggerMap.get(); }
-  BackpackAnimationTriggerMap* GetBackpackAnimationTriggerMap() { return _backpackAnimationTriggerMap.get();}
 
   bool HasAnimationForTrigger( AnimationTrigger ev );
   std::string GetAnimationForTrigger( AnimationTrigger ev );
@@ -177,15 +172,12 @@ private:
   void LoadCubeLightAnimations();
   void LoadCubeLightAnimationFile(const std::string& path);
 
-  void LoadBackpackLightAnimations();
-  void LoadBackpackLightAnimationFile(const std::string& path);
   
   void LoadAnimationGroups();
   void LoadAnimationGroupFile(const std::string& path);
   
   void LoadAnimationTriggerMap();
   void LoadCubeAnimationTriggerMap();
-  void LoadBackpackAnimationTriggerMap();
   
   void AddToLoadingRatio(float delta);
 
@@ -227,7 +219,6 @@ private:
       Animation,
       AnimationGroup,
       CubeLightAnimation,
-      BackpackLightAnimation
   };
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
@@ -237,17 +228,14 @@ private:
 
   std::unique_ptr<AnimationTriggerMap>         _animationTriggerMap;
   std::unique_ptr<CubeAnimationTriggerMap>     _cubeAnimationTriggerMap;
-  std::unique_ptr<BackpackAnimationTriggerMap> _backpackAnimationTriggerMap;
 
   TimestampMap _animFileTimestamps;
   TimestampMap _groupAnimFileTimestamps;
   TimestampMap _cubeLightAnimFileTimestamps;
-  TimestampMap _backpackLightAnimFileTimestamps;
 
   std::string _test_anim;
 
   FileJsonMap  _cubeLightAnimations;
-  FileJsonMap _backpackLightAnimations;
 
   // robot configs
   Json::Value _robotMoodConfig;

@@ -10,10 +10,10 @@
  *
  **/
 
-#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
+#include "cozmoAnim/backpackLights/backpackLightAnimationContainer.h"
 
 #include "coretech/common/engine/colorRGBA.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 
 namespace Anki {
 namespace Vector {

@@ -16,7 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/mics/voiceMessageTypes.h"
-#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "components/textToSpeech/textToSpeechWrapper.h"
 #include "clad/audio/audioEventTypes.h"
 

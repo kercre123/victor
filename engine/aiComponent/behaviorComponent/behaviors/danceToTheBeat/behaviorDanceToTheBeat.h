@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 
 #include "clad/types/animationTrigger.h"
 #include "clad/types/backpackAnimationTriggers.h"

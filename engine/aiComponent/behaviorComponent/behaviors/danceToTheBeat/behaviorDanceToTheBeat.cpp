@@ -15,7 +15,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/cozmoContext.h"
@@ -360,8 +359,7 @@ void BehaviorDanceToTheBeat::OnBeat()
   if (_iConfig.useBackpackLights) {
     StopBackpackLights();
     auto& blc = GetBEI().GetBackpackLightComponent();
-    const bool shouldLoop = true;
-    blc.SetBackpackAnimation(_iConfig.backpackAnim, shouldLoop);
+    blc.SetBackpackAnimation(_iConfig.backpackAnim);
   }
   
   // If we're currently listening for beats, then this means

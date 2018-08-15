@@ -24,7 +24,7 @@
 namespace Anki {
 namespace Vector {
   
-LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
+LedAnimation::LedAnimation(const CubeLightState& lightState, const int baseIndex)
 {
   const bool hasOffset = lightState.offset != 0;
 

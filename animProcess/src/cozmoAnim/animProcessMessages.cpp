@@ -23,6 +23,7 @@
 #include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
@@ -476,6 +477,12 @@ void Process_textToSpeechCancel(const RobotInterface::TextToSpeechCancel& msg)
 
 void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetConnectionStatus& msg)
 {
+  using namespace SwitchboardInterface;
+  auto& bc = _animEngine->GetBackpackLightComponent();
+  bc.SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
+                      msg.status == ConnectionStatus::SHOW_PRE_PIN ||
+                      msg.status == ConnectionStatus::SHOW_PIN));
+    
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
@@ -493,6 +500,16 @@ void Process_setLocale(const RobotInterface::SetLocale& msg)
 {
   DEV_ASSERT(_animEngine != nullptr, "AnimProcessMessages.SetLocale.InvalidEngine");
   _animEngine->HandleMessage(msg);
+}
+
+void Process_batteryStatus(const RobotInterface::BatteryStatus& msg)
+{
+  _animEngine->GetBackpackLightComponent().UpdateBatteryStatus(msg);
+}
+
+void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnimation& msg)
+{
+  _animEngine->GetBackpackLightComponent().SetBackpackAnimation(msg.trigger);
 }
 
 void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
@@ -521,7 +538,13 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
       forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
-    
+    case RobotInterface::EngineToRobot::Tag_setBackpackLights:
+    {
+      // Intercept the SetBackpackLights message from engine
+      _animEngine->GetBackpackLightComponent().SetBackpackAnimation({msg.setBackpackLights});
+      break;
+    }
+
 #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
 
     default:

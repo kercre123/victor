@@ -994,7 +994,6 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
   }
 }
 
-
 const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 {
   switch(layer)

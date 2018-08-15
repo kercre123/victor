@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
@@ -346,7 +346,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 
   if(_iConfig.backpackLights){
     BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
-    blc.StartLoopingBackpackAnimation(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
+    blc.StartLoopingBackpackAnimation(kStreamingLights, _dVars.lightsHandle);
   }
 
 

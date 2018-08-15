@@ -16,7 +16,7 @@
 #include "clad/audio/audioEventTypes.h"
 #include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "engine/components/mics/micDirectionTypes.h"
 #include "engine/engineTimeStamp.h"
 

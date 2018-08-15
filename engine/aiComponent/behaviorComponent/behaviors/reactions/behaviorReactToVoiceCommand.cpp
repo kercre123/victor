@@ -31,7 +31,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
 #include "engine/components/movementComponent.h"
@@ -658,7 +658,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
   if ( _iVars.backpackLights )
   {
     BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
-    blc.StartLoopingBackpackAnimation( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
+    blc.StartLoopingBackpackAnimation( kStreamingLights, _dVars.lightsHandle );
   }
 }
 

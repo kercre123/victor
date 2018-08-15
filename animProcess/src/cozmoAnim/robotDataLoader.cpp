@@ -18,7 +18,6 @@
 
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 #include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
@@ -26,6 +25,9 @@
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+
+#include "cozmoAnim/backpackLights/backpackLightAnimationContainer.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -55,6 +57,7 @@ RobotDataLoader::RobotDataLoader(const AnimContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
 , _cannedAnimations(nullptr)
+, _backpackAnimationTriggerMap(new BackpackAnimationTriggerMap())
 {
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
   _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
@@ -147,6 +150,21 @@ void RobotDataLoader::LoadNonConfigData()
     // Load the gathered files into the container
     const auto& fileInfo = animLoader.CollectAnimFiles(paths);
     animLoader.LoadAnimationsIntoContainer(fileInfo, _cannedAnimations.get());
+  }
+
+  // Backpack light animations
+  {
+    // Use the CannedAnimationLoader to collect the backpack light json files
+    CannedAnimationLoader animLoader(_platform,
+                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                     _loadingCompleteRatio, _abortLoad);
+
+    const auto& fileInfo = animLoader.CollectAnimFiles({"config/engine/lights/backpackLights"});
+    LoadBackpackLightAnimations(fileInfo);
+  }
+
+  {
+    LoadBackpackAnimationTriggerMap();
   }
   
   SetupProceduralAnimation();
@@ -289,5 +307,43 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
   return true;
 }
 
+void RobotDataLoader::LoadBackpackAnimationTriggerMap()
+{
+  _backpackAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/BackpackAnimationTriggerMap.json", "AnimName");
+}
+
+void RobotDataLoader::LoadBackpackLightAnimations(const CannedAnimationLoader::AnimDirInfo& fileInfo)
+{
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadBackpackLightAnimationFile,
+                                                          this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+
+  const auto& fileList = fileInfo.jsonFiles;
+  const auto size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+  }
+
+  myWorker.Process();
+
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadBackpackLightAnimations.LoadTime",
+                "Time to load backpack light animations = %.2f ms", loadTime);
+}
+
+void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
+{
+  Json::Value animDefs;
+  const bool success = _platform->readAsJson(path.c_str(), animDefs);
+  if (success && !animDefs.empty()) {
+    _backpackLightAnimations.emplace(path, animDefs);
+  }
+}
+
+  
 }
 }
