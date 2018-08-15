@@ -806,3 +806,48 @@ message StimulationInfo {
   float  max_value                = 7;
 }
 
+
+// ImageRequest
+message ImageRequest {
+  enum ImageSendMode {
+    OFF                          = 0;
+    STREAM                       = 1;
+    SINGLE_SHOT                  = 2;
+    SINGLE_SHOT_WITH_SENSOR_DATA = 3;
+  }
+  ImageSendMode mode = 1;
+}
+
+message ImageChunk {
+  enum ImageEncoding
+  {
+    NONE_IMAGE_ENCODING = 0;
+    RAW_GRAY = 1; // no compression
+    RAW_RGB = 2;  // no compression, just [RGBRGBRG...]
+    YUYV = 3;
+    YUV420SP = 4;
+    BAYER = 5;
+    JPEG_GRAY = 6;
+    JPEG_COLOR = 7;
+    JPEG_COLOR_HALF_WIDTH = 8;
+    JPEG_MINIMIZED_GRAY = 9; // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+    JPEG_MINIMIZED_COLOR = 10; // Minimized grayscale JPEG - no header, no footer, no byte stuffing, with added color data
+  }
+  uint32        frame_time_stamp = 1;
+  uint32        image_id = 2;
+  uint32        width = 3;
+  uint32        height = 4;
+  ImageEncoding image_encoding = 5;
+  uint32        display_index = 6;
+  uint32        image_chunk_count = 7;
+  uint32        chunk_id = 8;
+  bytes         data = 9;
+}
+
+message CameraFeedRequest {}
+
+message CameraFeedResponse {
+  option (streamed) = true;
+  ImageChunk image_chunk = 1;
+}
+

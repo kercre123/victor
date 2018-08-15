@@ -1584,6 +1584,54 @@ func (m *rpcService) SayText(ctx context.Context, in *extint.SayTextRequest) (*e
 	return sayTextResponse, nil
 }
 
+// TODO: Add option to request a single image from the robot(SingleShot) once VIC-5159 is resolved.
+func ImageSendModeRequest(mode extint.ImageRequest_ImageSendMode) error {
+	log.Println("Requesting ImageRequest with mode(", mode, ")")
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ImageRequest{
+			ImageRequest: &extint.ImageRequest{
+				Mode: mode,
+			},
+		},
+	})
+
+	return err
+}
+
+// Long running message for sending camera feed to listening sdk users
+func (m *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
+
+	log.Println("Received rpc request CameraFeed(", in, ")")
+
+	// Enable video stream
+	err := ImageSendModeRequest(extint.ImageRequest_STREAM)
+	if err != nil {
+		return err
+	}
+
+	// Disable video stream
+	defer ImageSendModeRequest(extint.ImageRequest_OFF)
+
+	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 10)
+	defer f()
+
+	for result := range cameraFeedChannel {
+		cameraFeedResponse := &extint.CameraFeedResponse{
+			ImageChunk: result.GetImageChunk(),
+		}
+		if err := stream.Send(cameraFeedResponse); err != nil {
+			return err
+		} else if err = stream.Context().Err(); err != nil {
+			// This is the case where the user disconnects the stream
+			// We should still return the err in case the user doesn't think they disconnected
+			return err
+		}
+	}
+
+	return nil
+}
+
 func newServer() *rpcService {
 	return new(rpcService)
 }

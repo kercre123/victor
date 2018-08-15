@@ -135,6 +135,10 @@ message GatewayWrapper {
     ControlRelease                control_release                    = 131;
     BehaviorControlResponse       behavior_control_response          = 132;
 
+    // ------------ Image chunks sent from the vision component ------------
+    ImageRequest image_request                                       = 140;
+    ImageChunk image_chunk                                           = 141;
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

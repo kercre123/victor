@@ -81,3 +81,7 @@ class VectorControlException(_VectorGenericException):
 
 You may want to try requesting a higher control level
 """
+
+
+class VectorCameraFeedDisabledException(VectorException):
+    """Failed to render video because camera feed was disabled"""

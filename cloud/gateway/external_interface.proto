@@ -354,4 +354,12 @@ service ExternalInterface {
   // Set each the lights on the currently connected cube based on two
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
+
+  // Request a camera feed from the robot
+  rpc CameraFeed(CameraFeedRequest) returns (stream CameraFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/camera_feed",
+      body: "*"
+    };
+  }
 }

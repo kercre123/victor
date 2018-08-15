@@ -595,6 +595,8 @@ public:
   RobotEventHandler& GetRobotEventHandler();
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+  void SetSDKRequestingImage(bool requestingImage) { _sdkRequestingImage = requestingImage; }
+  const bool GetSDKRequestingImage() const { return _sdkRequestingImage; }
 
   void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
   const u32 GetLastSentImageID() const { return _lastSentImageID; }
@@ -721,6 +723,7 @@ protected:
   bool               _isCliffReactionDisabled   = false;
   bool               _gotStateMsgAfterRobotSync = false;
   u32                _lastStatusFlags           = 0;
+  bool               _sdkRequestingImage        = false;
 
   OffTreadsState     _offTreadsState;
   OffTreadsState     _awaitingConfirmationTreadState;

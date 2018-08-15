@@ -2530,6 +2530,13 @@ namespace Vector {
     
   s32 WebotsKeyboardController::UpdateInternal()
   {
+
+    static bool streamStarted = false;
+    if (!streamStarted) {
+      SendImageRequest(ImageSendMode::Stream);
+      streamStarted = true;
+    }
+
     Pose3d goalMarkerPose = GetGoalMarkerPose();
     
     // Update pose marker if different from last time

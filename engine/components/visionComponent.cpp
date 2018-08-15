@@ -28,6 +28,7 @@
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/petWorld.h"
 #include "engine/robot.h"
@@ -66,6 +67,8 @@
 #include "util/bitFlags/bitFlags.h"
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
+
+#include "proto/external_interface/shared.pb.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -1836,10 +1839,12 @@ namespace Vector {
     _camera->AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
   }
 
+
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
-    if(quality == 0 || !_robot->GetContext()->GetVizManager()->IsConnected())
+
+    if((quality == 0) || (_robot->GetImageSendMode() == ImageSendMode::Off))
     {
       // Don't send anything
       return RESULT_OK;
@@ -1858,8 +1863,13 @@ namespace Vector {
     }
 
     ImageChunk m;
-    m.height = img.GetNumRows();
-    m.width  = img.GetNumCols();
+    const bool sdkRequestingImage = _robot->GetSDKRequestingImage();
+    const bool vizConnected = _robot->GetContext()->GetVizManager()->IsConnected();
+    std::string data;
+    external_interface::ImageChunk* imageChunk = nullptr;
+    external_interface::GatewayWrapper wrapper;
+
+    DEV_ASSERT(sdkRequestingImage || vizConnected, "VisionComponent.CompressAndSendImage.CompressWithoutBroadcasting");
 
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
@@ -1874,30 +1884,59 @@ namespace Vector {
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
 
-    // Use the identifier value as the display index
-    m.displayIndex = 0;
+    static u32 imgID = 0;
+    u8 chunkId = 0;
+    u8 imageChunkCount = ceilf((f32)bytesRemainingToSend / kMaxChunkSize);
+    u8 displayIndex;
+    ++imgID;
+
     auto displayIndexIter = _vizDisplayIndexMap.find(identifier);
     if(displayIndexIter == _vizDisplayIndexMap.end())
     {
       // New identifier
-      m.displayIndex = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
-      _vizDisplayIndexMap.emplace(identifier, m.displayIndex); // NOTE: this will increase size() for next time
+      displayIndex = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
+      _vizDisplayIndexMap.emplace(identifier, displayIndex); // NOTE: this will increase size() for next time
     }
     else
     {
-      m.displayIndex = displayIndexIter->second;
+      displayIndex = displayIndexIter->second;
     }
 
-    static u32 imgID = 0;
-    m.imageId = ++imgID;
+    // Construct a clad ImageChunk
+    if(vizConnected) {
+      m.height = img.GetNumRows();
+      m.width  = img.GetNumCols();
 
-    m.frameTimeStamp = img.GetTimestamp();
-    m.chunkId = 0;
-    m.imageChunkCount = ceilf((f32)bytesRemainingToSend / kMaxChunkSize);
-    if(img.GetNumChannels() == 1) {
-      m.imageEncoding = ImageEncoding::JPEGGray;
-    } else {
-      m.imageEncoding = ImageEncoding::JPEGColor;
+      // Use the identifier value as the display index
+      m.displayIndex = displayIndex;
+ 
+      m.imageId = imgID;
+
+      m.frameTimeStamp = img.GetTimestamp();
+      m.imageChunkCount = imageChunkCount;
+      if(img.GetNumChannels() == 1) {
+        m.imageEncoding = ImageEncoding::JPEGGray;
+      } else {
+        m.imageEncoding = ImageEncoding::JPEGColor;
+      }
+    }
+    
+    // Construct a proto ImageChunk
+    if (sdkRequestingImage) {
+      imageChunk = new external_interface::ImageChunk();
+      imageChunk->set_height((u32)img.GetNumRows());
+      imageChunk->set_width((u32)img.GetNumCols());
+
+      imageChunk->set_display_index((u32)displayIndex);
+
+      imageChunk->set_image_id(imgID);
+      imageChunk->set_frame_time_stamp(img.GetTimestamp());
+      imageChunk->set_image_chunk_count((u32)imageChunkCount);
+      if(img.GetNumChannels() == 1) {
+        imageChunk->set_image_encoding(external_interface::ImageChunk_ImageEncoding_JPEG_GRAY);
+      } else {
+        imageChunk->set_image_encoding(external_interface::ImageChunk_ImageEncoding_JPEG_COLOR);
+      }
     }
 
     while (bytesRemainingToSend > 0) {
@@ -1905,19 +1944,33 @@ namespace Vector {
 
       auto startIt = compressedBuffer.begin() + (compressedBuffer.size() - bytesRemainingToSend);
       auto endIt = startIt + chunkSize;
-      m.data = std::vector<u8>(startIt, endIt);
+      
+      if (sdkRequestingImage) {
+        imageChunk->set_chunk_id((u32)chunkId);
+        data.assign(startIt, endIt);
+        imageChunk->set_data(std::move(data));
 
-      if (_robot->GetImageSendMode() != ImageSendMode::Off) {
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        wrapper.set_allocated_image_chunk(imageChunk);
+        _robot->GetGatewayInterface()->Broadcast(wrapper);
+        imageChunk = wrapper.release_image_chunk();
       }
 
-      // Forward the image chunks to Viz as well (Note that this does nothing if
-      // sending images is disabled in VizManager)
-      _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+      if(vizConnected)
+      {      
+        m.chunkId = chunkId;
+        m.data = std::vector<u8>(startIt, endIt);
+        
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        // Forward the image chunks to Viz as well (Note that this does nothing if
+        // sending images is disabled in VizManager)
+        _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+      }
 
       bytesRemainingToSend -= chunkSize;
-      ++m.chunkId;
+      ++chunkId;
     }
+
+    Util::SafeDelete(imageChunk);
 
     return RESULT_OK;
 

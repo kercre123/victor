@@ -10,10 +10,10 @@ import asyncio
 import functools
 import logging
 
-from . import (animation, backpack, behavior, connection,
+from . import (animation, backpack, behavior, camera, connection,
                events, exceptions, faces, motors,
                oled_face, photos, proximity, sync, util,
-               world)
+               viewer, world)
 from .messaging import protocol
 
 MODULE_LOGGER = logging.getLogger(__name__)
@@ -65,7 +65,9 @@ class Robot:
     :param loop: the async loop on which the Vector commands will execute. default=None
     :param default_logging: Disable default logging. default=False
     :param behavior_timeout: The time to wait for control of the robot before failing. default=10
-    :param enable_vision_mode: Turn on face detection. default=False"""
+    :param enable_vision_mode: Turn on face detection. default=False
+    :param enable_camera_feed: Turn camera feed on/off. default=True
+    :param show_viewer: Render camera feed on/off. default=False"""
 
     def __init__(self,
                  name: str,
@@ -76,7 +78,10 @@ class Robot:
                  default_logging: bool = True,
                  behavior_timeout: int = 10,
                  cache_animation_list: bool = True,
-                 enable_vision_mode: bool = False):
+                 enable_vision_mode: bool = False,
+                 enable_camera_feed: bool = True,
+                 show_viewer: bool = False):
+
         if default_logging:
             util.setup_basic_logging()
         self.logger = util.get_class_logger(__name__, self)
@@ -90,11 +95,13 @@ class Robot:
         self._anim: animation.AnimationComponent = None
         self._backpack: backpack.BackpackComponent = None
         self._behavior: behavior.BehaviorComponent = None
+        self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
         self._motors: motors.MotorComponent = None
         self._oled: oled_face.OledComponent = None
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
+        self._viewer: viewer.ViewerComponent = None
         self._world: world.World = None
 
         self.behavior_timeout = behavior_timeout
@@ -118,6 +125,9 @@ class Robot:
         self._status: float = None
         self.pending = []
 
+        self._enable_camera_feed = enable_camera_feed
+        self._show_viewer = show_viewer
+
     @property
     def robot(self) -> 'Robot':
         return self
@@ -137,6 +147,21 @@ class Robot:
     @property
     def behavior(self) -> behavior.BehaviorComponent:
         return self._behavior
+
+    @property
+    def camera(self) -> camera.CameraComponent:
+        """:class:`vector.camera.CameraComponent`: The camera instance used to control
+        Vector's camera feed
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+                image = Image.fromarray(robot.camera.latest_image)
+                image.show()
+        """
+        if self._camera is None:
+            raise exceptions.VectorNotReadyException("CameraComponent is not yet initialized")
+        return self._camera
 
     @property
     def faces(self) -> faces.FaceComponent:
@@ -167,6 +192,21 @@ class Robot:
         '''Component containing state related to object proximity detection
         '''
         return self._proximity
+
+    @property
+    def viewer(self) -> viewer.ViewerComponent:
+        """:class:`vector.viewer.ViewerComponent`: The viewer instance used to render
+        Vector's camera feed
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
+                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.viewer.stop_video()
+        """
+        if self._viewer is None:
+            raise exceptions.VectorNotReadyException("ViewerComponent is not yet initialized")
+        return self._viewer
 
     @property
     def world(self) -> world.World:
@@ -248,6 +288,28 @@ class Robot:
     def status(self):
         return self._status
 
+    @property
+    def enable_camera_feed(self) -> bool:
+        """The camera feed enabled/disabled
+
+        :getter: Returns whether the camera feed is enabled
+        :setter: Enable/disable the camera feeed
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", enable_camera_feed=True) as robot:
+                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.enable_camera_feed = False
+                robot.loop.run_until_complete(utilities.delay_close(5))
+        """
+        return self._enable_camera_feed
+
+    @enable_camera_feed.setter
+    def enable_camera_feed(self, enable) -> None:
+        self._enable_camera_feed = enable
+        if self.enable_camera_feed:
+            self.camera.init_camera_feed()
+
     # Unpack streamed data to robot's internal properties
     def _unpack_robot_state(self, _, msg):
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
@@ -297,11 +359,13 @@ class Robot:
         self._anim = animation.AnimationComponent(self)
         self._backpack = backpack.BackpackComponent(self)
         self._behavior = behavior.BehaviorComponent(self)
+        self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
         self._motors = motors.MotorComponent(self)
         self._oled = oled_face.OledComponent(self)
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
+        self._viewer = viewer.ViewerComponent(self)
         self._world = world.World(self)
 
         if self.cache_animation_list:
@@ -309,6 +373,14 @@ class Robot:
             anim_request = self._anim.load_animation_list()
             if isinstance(anim_request, sync.Synchronizer):
                 anim_request.wait_for_completed()
+
+        # Start camera feed
+        if self.enable_camera_feed:
+            self.camera.init_camera_feed()
+
+        # Start rendering camera feed
+        if self._show_viewer:
+            self.viewer.show_video()
 
         # Enable face detection, to allow Vector to add faces to its world view
         self._faces.enable_vision_mode(enable=self.enable_vision_mode)
@@ -360,6 +432,11 @@ class Robot:
         vision_mode = self._faces.enable_vision_mode(enable=False)
         if isinstance(vision_mode, sync.Synchronizer):
             vision_mode.wait_for_completed()
+
+        # Stop rendering video
+        self.viewer.stop_video()
+        # Shutdown camera feed
+        self.camera.close_camera_feed()
 
         self.events.close()
         self.conn.close()
