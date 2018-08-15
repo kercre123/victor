@@ -169,6 +169,15 @@ void sLogDebug(const DasMsg & dasMessage);
 #define DASMSG_WIFI_CONN_ID_STOP "wifi_conn_id.stop"
 
 //
+// DAS Profile ID events
+// These events are used to indicate start/stop of association with an Anki profile ID.
+// If event name or event parameters change, DASManager must be updated to match.
+// Names are defined as a macro, not a constexpr, so they can be expanded by doxygen.
+//
+#define DASMSG_PROFILE_ID_START "profile_id.start"
+#define DASMSG_PROFILE_ID_STOP "profile_id.stop"
+
+//
 // DAS message macros
 //
 // These macros are used to ensure that developers provide some description of each event defined.

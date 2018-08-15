@@ -273,6 +273,10 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     _wifi_conn_id = values[1]; // s1
   } else if (name == DASMSG_WIFI_CONN_ID_STOP) {
     _wifi_conn_id.clear();
+  } else if (name == DASMSG_PROFILE_ID_START) {
+    _profile_id = values[1]; // s1
+  } else if (name == DASMSG_PROFILE_ID_STOP) {
+    _profile_id.clear();
   }
 
   std::ostringstream ostr;
