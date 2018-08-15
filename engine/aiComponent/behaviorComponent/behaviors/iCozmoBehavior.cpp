@@ -315,7 +315,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _behaviorStatToIncrement.reset(new BehaviorStat);
     const auto& statStr = config[kBehaviorStatToIncrement].asString();
     ANKI_VERIFY( BehaviorStatFromString( statStr, *_behaviorStatToIncrement ),
-                 "ICozmoBehavior.ReadFromJson.InvalidBehaviorStat",
+                 "ICozmoBehavior.ReadFromJson.InvalidBehaviorState",
                  "Behavior stat to increment '%s' invalid in behavior '%s'",
                  statStr.c_str(),
                  GetDebugLabel().c_str() );
@@ -328,7 +328,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     }
   }            
   
-  _disableStreamAfterWakeWord = config.get(kDisableStreamAfterWakeWordKey, false).asBool();
+  _scopedDisableStreamAfterWakeWord = config.get(kDisableStreamAfterWakeWordKey, false).asBool();
   
   return true;
 }
@@ -789,8 +789,8 @@ void ICozmoBehavior::OnActivatedInternal()
     GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
   }
   
-  if (_disableStreamAfterWakeWord) {
-    SmartSuppressStreamAfterWakeWord(true);
+  if (_scopedDisableStreamAfterWakeWord) {
+    SmartAlterStreamStateForCurrentResponse(true);
   }
 
   // Handle Vision Mode Subscriptions
@@ -942,18 +942,18 @@ void ICozmoBehavior::OnDeactivatedInternal()
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( _postBehaviorSuggestion );
   }
 
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( _intentToDeactivate != UserIntentTag::INVALID ) {
-    auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.DeactivateUserIntent( _intentToDeactivate );
     _intentToDeactivate = UserIntentTag::INVALID;
   }
   
-  if (_isSuppressingStreamAfterWakeWord) {
-    SmartSuppressStreamAfterWakeWord(false);
+  if (_scopedDisableStreamAfterWakeWord || _pushedCustomTriggerResponse) {
+    SmartPopResponseToTriggerWord();
   }
-  
-  if (_isSuppressingTriggerWordDetection) {
-    SmartSuppressTriggerWordDetection(false);
+
+  if(uic.IsTriggerWordDisabledByName(GetDebugLabel())){
+    SmartEnableEngineResponseToTriggerWord();
   }
 
   if( !_powerSaveRequest.empty() ) {
@@ -1617,23 +1617,48 @@ UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartSuppressStreamAfterWakeWord(const bool suppress)
+void ICozmoBehavior::SmartDisableEngineResponseToTriggerWord()
 {
-  if( suppress != _isSuppressingStreamAfterWakeWord ) {
-    GetBEI().GetMicComponent().SuppressStreamingAfterWakeWord(suppress, GetDebugLabel());
-    _isSuppressingStreamAfterWakeWord = suppress;
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(!uic.IsTriggerWordDisabledByName(GetDebugLabel())){
+    uic.DisableEngineResponseToTriggerWord(GetDebugLabel(), true);
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartSuppressTriggerWordDetection(const bool suppress)
+void ICozmoBehavior::SmartEnableEngineResponseToTriggerWord()
 {
-  if( suppress != _isSuppressingTriggerWordDetection ) {
-    GetBEI().GetMicComponent().SuppressTriggerWordDetection(suppress, GetDebugLabel());
-    _isSuppressingTriggerWordDetection = suppress;
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(uic.IsTriggerWordDisabledByName(GetDebugLabel())){
+    uic.DisableEngineResponseToTriggerWord(GetDebugLabel(), false);
   }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger, 
+                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
+                                                    bool shouldTriggerWordStartStream)
+{
+  _pushedCustomTriggerResponse = true;
+  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), getInAnimTrigger, postAudioEvent, shouldTriggerWordStartStream);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartPopResponseToTriggerWord()
+{
+  if(_pushedCustomTriggerResponse){
+    GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
+  }
+  _pushedCustomTriggerResponse = false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartAlterStreamStateForCurrentResponse(bool shouldTriggerWordStartStream)
+{
+  GetBehaviorComp<UserIntentComponent>().AlterStreamStateForCurrentResponse(GetDebugLabel(), shouldTriggerWordStartStream);
+  _pushedCustomTriggerResponse = true;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartRequestPowerSaveMode()
 {

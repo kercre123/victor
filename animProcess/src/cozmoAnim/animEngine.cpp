@@ -23,6 +23,7 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
+#include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
 #include "coretech/common/engine/opencvThreading.h"
@@ -127,6 +128,14 @@ Result AnimEngine::Init()
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput);
+
+  // set up audio stream state manager 
+  {
+    _context->GetShowAudioStreamStateManager()->SetAnimationStreamer(_animationStreamer.get());
+    _context->GetShowAudioStreamStateManager()->SetAudioInput(audioInput);
+  }
+
+
 
   AnimProcessMessages::Init(this, _animationStreamer.get(), _streamingAnimationModifier.get(), audioInput, _context.get());
 

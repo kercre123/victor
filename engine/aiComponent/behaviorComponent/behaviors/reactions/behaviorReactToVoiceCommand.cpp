@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -259,7 +260,7 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
   modifiers.wantsToBeActivatedWhenOffTreads       = true;
-  modifiers.behaviorAlwaysDelegates               = true;
+  modifiers.behaviorAlwaysDelegates               = false;
 
   // Since so many voice commands need faces, this helps improve the changes that a behavior following
   // this one will know about faces when the behavior starts
@@ -287,6 +288,15 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
     #endif
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
+{
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
+  auto postAudioEvent = AECH::CreatePostAudioEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
+  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), _iVars.animListeningGetIn, postAudioEvent, true );
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
@@ -357,6 +367,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope() 
+{ 
+  GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
   DEV_ASSERT( ( GetStreamingDuration() >= ( MicData::kStreamingTimeout_ms / 1000.0 ) ),
@@ -383,7 +399,27 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     }
   }
 
-  if ( _dVars.state == EState::Listening )
+
+  if ( _dVars.state == EState::ListeningGetIn )
+  {
+    // Once the animation process's GetIn animation has finished, queue the listening loop animation
+    if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
+          
+      // we don't want to enter EState::Listening until we're in our loop or else
+      // we could end up exiting too soon and looking like garbage
+      if( _iVars.exitAfterGetIn )
+      {
+        OnVictorListeningEnd();
+        return; // and the behavior ends
+      }
+
+      // we now loop indefinitely and wait for the timeout in the update function
+      // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningLoop, 0 ) );
+      _dVars.state = EState::ListeningLoop;
+    }
+  }
+  else if ( _dVars.state == EState::ListeningLoop )
   {
     const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
     if ( isIntentPending )
@@ -420,6 +456,12 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     // note: does nothing if intent is already set
     UpdateUserIntentStatus();
   }
+
+  if(_dVars.state != EState::ListeningGetIn &&
+     !IsControlDelegated()){
+    CancelSelf();
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -576,34 +618,17 @@ void BehaviorReactToVoiceCommand::OnStreamingEnd()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::StartListening()
 {
-  _dVars.state = EState::Listening;
+  _dVars.state = EState::ListeningGetIn;
 
   // to get into our listening state, we need to play our get-in anim followed by our
   // looping animation.
   OnVictorListeningBegin();
-
-  // we don't want to enter EState::Listening until we're in our loop or else
-  // we could end up exiting too soon and looking like garbage
-  auto callback = [this]()
-  {
-    if( _iVars.exitAfterGetIn )
-    {
-      OnVictorListeningEnd();
-      return; // and the behavior ends
-    }
-
-    // we now loop indefinitely and wait for the timeout in the update function
-    // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningLoop, 0 ) );
-  };
-
-  DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetIn ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::StopListening()
 {
-  ASSERT_NAMED_EVENT( _dVars.state == EState::Listening,
+  ASSERT_NAMED_EVENT( _dVars.state == EState::ListeningLoop,
                       "BehaviorReactToVoiceCommand.State",
                       "Transitioning to EState::IntentReceived from invalid state [%hhu]", _dVars.state );
 
@@ -634,12 +659,6 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
   {
     BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
     blc.StartLoopingBackpackAnimation( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
-  }
-
-  if ( GenericEvent::Invalid != _iVars.earConBegin )
-  {
-    // Play earcon begin audio
-    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior );
   }
 }
 
@@ -728,7 +747,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     // in after we've closed our recording stream.
     OnVictorListeningEnd();
 
-    const bool streamingToCloud = GetBEI().GetMicComponent().GetShouldStreamAfterWakeWord();
+    const bool streamingToCloud = GetBehaviorComp<UserIntentComponent>().GetShouldStreamAfterWakeWord();
     if (!streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
       PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinkingCallback.NotStreaming",
                     "We are not streaming to the cloud currently, so no point in continuing with the behavior (since "

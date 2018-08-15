@@ -15,7 +15,10 @@
 
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 
+#include "anki/cozmo/shared/animationTag.h"
 #include "clad/cloud/mic.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/animationTrigger.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -27,6 +30,7 @@
 #include "json/json-forwards.h"
 
 #include <mutex>
+#include <unordered_set>
 
 namespace Anki {
 namespace Vector {
@@ -52,7 +56,49 @@ public:
 
   ~UserIntentComponent();
   
+  virtual void InitDependent( Vector::Robot* robot, const BCCompMap& dependentComps ) override;
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Define how the robot should respond to hearing the trigger word and whether engine/this component
+  // should respond to the trigger word being detected
+  // 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void StartWakeWordlessStreaming( CloudMic::StreamType streamType );
+  
+  // Define how the user intent component should respond to the trigger word being detected
+  void DisableEngineResponseToTriggerWord(const std::string& disablerName, bool disable);
+  bool GetEngineShouldRespondToTriggerWord() const { return _disableTriggerWordNames.empty(); }
+  bool IsTriggerWordDisabledByName(const std::string& disablerName) const 
+  { 
+    return _disableTriggerWordNames.find(disablerName) != _disableTriggerWordNames.end(); 
+  }
+
+  // The animation process handles the initial response when a trigger word is detected - the exact response is
+  // defined by the top SetTriggerWordResponse message in the stack
+  // When responses are popped by id, if it is the top response in the stack the new top of the stack will be sent to the
+  // anim process. Otherwise no user facing change will occur
+  
+  // Note that the animationTrigger passed in here does not follow traditional trigger/group conventions regarding
+  // animations being re-selected each time one is played. A single animation is selected from the group when this
+  // function is called and that animation will persist until this function is called again with the same id/trigger
+  void PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
+                                 const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, bool shouldTriggerWordStartStream = false);
+  void PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName = "", 
+                                 const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, bool shouldTriggerWordStartStream = false);
+  void PopResponseToTriggerWord(const std::string& id);
+
+  // Copies the current response to the trigger word but overrides the shouldTriggerWordStartStream field
+  // Pop this new response in the same way any other response would be popped
+  void AlterStreamStateForCurrentResponse(const std::string& id,  bool shouldTriggerWordStartStream);
+
+  bool GetShouldStreamAfterWakeWord() const 
+  { 
+    return _responseToTriggerWordMap.empty() ? true : _responseToTriggerWordMap.rbegin()->second.shouldTriggerWordStartStream;
+  }
+
+  bool WaitingForTriggerWordGetInToFinish() const { return _waitingForTriggerWordGetInToFinish; }
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Trigger word:
@@ -183,8 +229,11 @@ private:
   void SetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source);
   void SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
 
+  void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
+
   static size_t sActivatedIntentID;
 
+  Robot*                    _robot = nullptr;
   std::unique_ptr<UserIntentMap> _intentMap;
 
   bool _pendingTrigger = false;
@@ -217,7 +266,13 @@ private:
   std::string _devLastReceivedCloudIntent;
   std::string _devLastReceivedAppIntent;
   
-  
+
+  std::unordered_set<std::string> _disableTriggerWordNames;
+
+  // Keep track of who has requested to disable streaming-after-wakeword
+  std::map<std::string, RobotInterface::SetTriggerWordResponse> _responseToTriggerWordMap;
+  AnimationTag _tagForTriggerWordGetInCallbacks;
+  bool _waitingForTriggerWordGetInToFinish = false;
 
 };
 

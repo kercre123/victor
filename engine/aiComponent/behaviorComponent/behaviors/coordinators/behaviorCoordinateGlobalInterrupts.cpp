@@ -174,13 +174,13 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     return;
   }
 
-  bool shouldSuppressTriggerWord = false;
+  bool shouldSuppressTriggerWordBehavior = false;
   
   // suppress certain behaviors during sleeping
   // also allow behaviors on the current stack to suppress the trigger word
   {
     bool highLevelRunning = false;
-    auto callback = [this, &highLevelRunning, &shouldSuppressTriggerWord](const ICozmoBehavior& behavior) {
+    auto callback = [this, &highLevelRunning, &shouldSuppressTriggerWordBehavior](const ICozmoBehavior& behavior) {
       if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
         highLevelRunning = true;
       }
@@ -197,12 +197,9 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         for( const auto& beh : _iConfig.toSuppressWhenSleeping ) {
           beh->SetDontActivateThisTick(GetDebugLabel());
         }
-        shouldSuppressTriggerWord = true;
+        shouldSuppressTriggerWordBehavior = true;
       }
 
-      // allow individual behaviors to suppress streaming
-      // note: could pass in "highLevelRunning" to this function and have the sleeping behaviors suppress themselves
-      shouldSuppressTriggerWord |= behavior.ShouldSuppressTriggerWordResponse();
       return true; // Iterate over the entire stack
     };
 
@@ -213,10 +210,10 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   // timer uses wakeword to suppress alarm
   {
     const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
-    shouldSuppressTriggerWord |= isTimerRinging;
+    shouldSuppressTriggerWordBehavior |= isTimerRinging;
   }
 
-  if ( shouldSuppressTriggerWord )
+  if ( shouldSuppressTriggerWordBehavior )
   {
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
@@ -258,11 +255,15 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
     _iConfig.timerCoordBehavior->SuppressAnticThisTick(tickCount);
   }
-
+  
   // this will suppress the streaming POST-wakeword pending
   // the "do a fist bump" part of "hey victor"
-  const bool shouldSuppressStreaming = shouldSuppressTriggerWord;
-  SmartSuppressStreamAfterWakeWord(shouldSuppressStreaming);
+  const bool shouldSuppressStreaming = shouldSuppressTriggerWordBehavior;
+  if(shouldSuppressStreaming){
+    SmartAlterStreamStateForCurrentResponse(false);
+  }else{
+    SmartPopResponseToTriggerWord();
+  }
 
   {
     auto& uic = GetBehaviorComp<UserIntentComponent>();

@@ -51,17 +51,14 @@ namespace
 {
   const char* kKey_Duration                       = "streamingTimeout";
   const char* kKey_ReadyString                    = "readyPromptText";
-  const char* kKey_EarConBegin                    = "earConAudioEventBegin";
   const char* kKey_EarConEnd                      = "earConAudioEventEnd";
 
   const double kDefaultDuration                   = 10.0;
-  const double kAudioCueDuration                  = 1.0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
   streamingDuration( kDefaultDuration ),
-  earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConEnd( AudioMetaData::GameEvent::GenericEvent::Invalid )
 {
 
@@ -70,7 +67,6 @@ BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
   state( EState::GettingIn ),
-  audioCueBeginTime( 0.0 ),
   streamingBeginTime( 0.0 ),
   ttsGenerationStatus( EGenerationStatus::None )
 {
@@ -86,11 +82,6 @@ BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Valu
   _iVars.readyText = JsonTools::ParseString( config, kKey_ReadyString, "BehaviorKnowledgeGraphQuestion" );
 
   std::string earConString;
-  if ( JsonTools::GetValueOptional( config, kKey_EarConBegin, earConString ) )
-  {
-    _iVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
-  }
-
   if ( JsonTools::GetValueOptional( config, kKey_EarConEnd, earConString ) )
   {
     _iVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
@@ -108,7 +99,6 @@ void BehaviorKnowledgeGraphQuestion::GetBehaviorJsonKeys( std::set<const char*>&
 {
   expectedKeys.insert( kKey_Duration );
   expectedKeys.insert( kKey_ReadyString );
-  expectedKeys.insert( kKey_EarConBegin );
   expectedKeys.insert( kKey_EarConEnd );
 }
 
@@ -148,18 +138,10 @@ bool BehaviorKnowledgeGraphQuestion::WantsToBeActivatedBehavior() const
 void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
-
-  // after the tts is complete, trigger the streaming cues
-  auto ttsCompleteCallback = [this]( bool success )
-  {
-    if ( success )
-    {
-      PlayStreamingCues( true );
-    }
-  };
+  SmartDisableEngineResponseToTriggerWord();
 
   // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
-  if ( _readyTTSWrapper.SetUtteranceText( _iVars.readyText, {}, ttsCompleteCallback ) )
+  if ( _readyTTSWrapper.SetUtteranceText( _iVars.readyText, {} ) )
   {
     auto callback = [this]()
     {
@@ -228,7 +210,7 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
     {
       // once we've finished speaking our ready text, we can start streaming
       // hopefully the ready text is already finished by the time we even get into this state
-      if ( IsReadyToStream() )
+      if ( _readyTTSWrapper.IsFinished() )
       {
         BeginStreamingQuestion();
       }
@@ -246,7 +228,13 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
     {
       // if we've gotten a response from knowledge graph, transition into the response state
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-      const bool timeIsUp = ( currentTime >= ( _dVars.streamingBeginTime + _iVars.streamingDuration ) );
+      if(FLT_NEAR(_dVars.streamingBeginTime, 0.f) &&
+         uic.IsCloudStreamOpen()){
+        _dVars.streamingBeginTime = currentTime;
+      }
+
+      const bool timeIsUp = ( !FLT_NEAR( _dVars.streamingBeginTime, 0.f ) ) &&
+                              ( currentTime >= ( _dVars.streamingBeginTime + _iVars.streamingDuration ) );
       if ( IsResponsePending() || timeIsUp )
       {
         CancelDelegates( false );
@@ -266,24 +254,13 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKnowledgeGraphQuestion::IsReadyToStream()
-{
-  // need to add some buffer time so the mics don't
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-  const bool shouldBeQuietNow = ( currentTime >= _dVars.audioCueBeginTime + kAudioCueDuration );
-
-  return ( _readyTTSWrapper.IsFinished() && shouldBeQuietNow );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
 {
   PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
 
   _dVars.state = EState::Listening;
-  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-
-  GetBEI().GetMicComponent().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
+  
+  GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -292,7 +269,7 @@ void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
   // go into searching state until we can generate our response
   _dVars.state = EState::Searching;
 
-  PlayStreamingCues( false );
+  PlayEarconEnd();
 
   // see if we got a response from knowledge graph
   if ( IsResponsePending() )
@@ -498,28 +475,15 @@ void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::PlayStreamingCues( bool onBegin )
+void BehaviorKnowledgeGraphQuestion::PlayEarconEnd()
 {
   using namespace AudioMetaData::GameEvent;
-
   BehaviorExternalInterface& bei = GetBEI();
 
-  if ( onBegin )
+  if ( GenericEvent::Invalid != _iVars.earConEnd )
   {
-    if ( GenericEvent::Invalid != _iVars.earConBegin )
-    {
-      // Play earcon begin audio
-      bei.GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior );
-      _dVars.audioCueBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-    }
-  }
-  else
-  {
-    if ( GenericEvent::Invalid != _iVars.earConEnd )
-    {
-      // Play earcon end audio
-      bei.GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::Behavior );
-    }
+    // Play earcon end audio
+    bei.GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::Behavior );
   }
 }
 

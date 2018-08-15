@@ -16,9 +16,11 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/animationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -110,6 +112,18 @@ void UserIntentComponent::ClearPendingTriggerWord()
 
 void UserIntentComponent::SetTriggerWordPending()
 {
+  _waitingForTriggerWordGetInToFinish = true;
+  if(!_responseToTriggerWordMap.empty()){
+    auto lastElemIter = _responseToTriggerWordMap.rbegin();
+    _robot->GetAnimationComponent().NotifyComponentOfAnimationStartedByAnimProcess(
+      lastElemIter->second.getInAnimationName, lastElemIter->second.getInAnimationTag);
+  }
+  if(!GetEngineShouldRespondToTriggerWord()){
+    PRINT_NAMED_INFO("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled", 
+                     "Trigger word detection disabled, so ignoring message");
+    return;
+  }
+
   if( _pendingTrigger ) {
     PRINT_NAMED_WARNING("UserIntentComponent.SetPendingTrigger.AlreadyPending",
                         "setting a pending trigger word but the last one hasn't been cleared");
@@ -411,9 +425,19 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
   return true;
 }
 
-void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
+void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& dependentComps )
 {
-  
+  _robot = robot;
+
+  auto callback = [this](){
+    _waitingForTriggerWordGetInToFinish = false;
+  };
+
+  _tagForTriggerWordGetInCallbacks = _robot->GetAnimationComponent().SetTriggerWordGetInCallback(callback);
+}
+
+void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
+{ 
   {
     std::lock_guard<std::mutex> lock{_mutex};
     if( _pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID ) {
@@ -521,6 +545,127 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
         _pendingIntent.reset();
         _wasIntentUnclaimed = true;
       }
+    }
+  }
+}
+
+
+void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType streamType )
+{
+  RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType) };
+  _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
+}
+
+
+void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
+                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
+                                                    bool shouldTriggerWordStartStream)
+{
+  std::string animName;
+  auto* data_ldr = _robot->GetContext()->GetDataLoader();
+  if( data_ldr->HasAnimationForTrigger(getInAnimTrigger) )
+  {
+    const auto groupName = data_ldr->GetAnimationForTrigger(getInAnimTrigger);
+    if( !groupName.empty() ) {
+      animName = _robot->GetAnimationComponent().GetAnimationNameFromGroup(groupName);
+      if(animName.empty()){
+        PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.AnimationNotFound",
+                            "No animation returned for group %s",
+                            groupName.c_str());
+      }
+    }else{
+      PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.GroupNotFound",
+                          "Group not found for trigger %s",
+                          AnimationTriggerToString(getInAnimTrigger));
+    }
+  }
+
+  PushResponseToTriggerWord(id, animName, postAudioEvent, shouldTriggerWordStartStream);
+}
+
+
+void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName, 
+                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
+                                                    bool shouldTriggerWordStartStream)
+{
+  RobotInterface::SetTriggerWordResponse msg;
+  msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
+  msg.postAudioEvent = postAudioEvent;
+  msg.getInAnimationName = getInAnimationName;
+  msg.shouldTriggerWordStartStream = shouldTriggerWordStartStream;
+  PushResponseToTriggerWordInternal(id, std::move(msg));
+}
+
+
+void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
+{
+  auto iter = _responseToTriggerWordMap.find(id);
+  if(iter == _responseToTriggerWordMap.end()){
+    PRINT_NAMED_WARNING("UserIntentComponent.PopResponseToTriggerWord.idNotInStack",
+                        "request to remove id %s, but it has not set a trigger word response",
+                        id.c_str());
+    return;
+  }
+
+  iter = _responseToTriggerWordMap.erase(iter);
+  // Check to see if the top of the stack was removed, and send a new trigger response
+  if(iter == _responseToTriggerWordMap.end()){
+    if(!_responseToTriggerWordMap.empty()){
+      RobotInterface::SetTriggerWordResponse intentionalCopy = _responseToTriggerWordMap.rbegin()->second;
+      _robot->SendMessage(RobotInterface::EngineToRobot(std::move(intentionalCopy)));
+    }else{
+      RobotInterface::SetTriggerWordResponse blankMessage;
+      _robot->SendMessage(RobotInterface::EngineToRobot(std::move(blankMessage)));
+    }
+  }
+}
+
+
+void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& id,  bool shouldTriggerWordStartStream)
+{
+  if(_responseToTriggerWordMap.empty()){
+    PRINT_NAMED_WARNING("UserIntentComponent.AlterStreamStateForCurrentResponse.NoResponseToAlter","");
+    return;
+  }
+
+  auto intentionalCopy = _responseToTriggerWordMap.rbegin()->second;
+  intentionalCopy.shouldTriggerWordStartStream = shouldTriggerWordStartStream;
+  PushResponseToTriggerWordInternal(id, std::move(intentionalCopy));
+
+}
+
+
+void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& id, 
+                                                            RobotInterface::SetTriggerWordResponse&& response)
+{
+  if(_responseToTriggerWordMap.find(id) != _responseToTriggerWordMap.end()){
+    PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.idAlreadyPushedResponse",
+                        "id %s already in use, removing old entry and adding new response to top of the stack",
+                        id.c_str());
+    _responseToTriggerWordMap.erase(id);
+  }
+
+  _responseToTriggerWordMap.emplace(id, response);
+  _robot->SendMessage(RobotInterface::EngineToRobot( std::move(response)) );
+}
+
+
+
+void UserIntentComponent::DisableEngineResponseToTriggerWord( const std::string& disablerName,  bool disable )
+{
+  if(disable){
+     const auto res = _disableTriggerWordNames.insert(disablerName).second;
+     if(!res){
+       PRINT_NAMED_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.AlreadyDisabled", 
+                           "%s is attempting to disable the trigger word response, but it's already locking the trigger word",
+                           disablerName.c_str());
+     }
+  }else{
+    const auto numRemoved = _disableTriggerWordNames.erase(disablerName);
+    if(numRemoved == 0){
+      PRINT_NAMED_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.DisablerNotDisablingTrigger", 
+                          "%s is attempting to enable the trigger word, but it's not disabling it",
+                          disablerName.c_str());
     }
   }
 }

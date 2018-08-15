@@ -51,22 +51,6 @@ public:
   VoiceMessageSystem& GetVoiceMessageSystem() { return *_messageSystem; }
   const VoiceMessageSystem& GetVoiceMessageSystem() const { return *_messageSystem; }
 
-  void StartWakeWordlessStreaming( CloudMic::StreamType streamType );
-  
-  // Request to suppress (or stop suppressing) streaming of audio to the cloud after hearing the wake word. Callers
-  // should supply a string identifying themselves. Once suppressed, streaming remains suppressed until all requesters
-  // re-enable it.
-  void SuppressStreamingAfterWakeWord(const bool shouldSuppress, const std::string& requester);
-  
-  // Request to suppress (or stop suppressing) trigger word ("Hey Vector") detection. Callers should supply a string
-  // identifying themselves. Once suppressed, detection remains suppressed until all requesters re-enable it.
-  void SuppressTriggerWordDetection(const bool shouldSuppress, const std::string& requester);
-  
-  // getters for the above, based on local info, not from the anim process.
-  // These both default to true, which matches the anim process default (micDataProcessor.h)
-  bool GetShouldStreamAfterWakeWord() const { return _suppressStreamAfterWakeWordRequesters.empty(); }
-  bool GetTriggerWordDetectionEnabled() const { return _suppressTriggerWordDetectionRequesters.empty(); }
-
   // set / get the fullness of the audio processing buffer on the robot (float from 0 to 1)
   void  SetBufferFullness(float val);
   float GetBufferFullness() const { return _fullness; }
@@ -75,17 +59,11 @@ private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
-  
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
   Robot*                    _robot;
   float                     _fullness;
   
-  // Keep track of who has requested to disable streaming-after-wakeword
-  std::set<std::string> _suppressStreamAfterWakeWordRequesters;
-  
-  // Keep track of who has requested to disable trigger word detection
-  std::set<std::string> _suppressTriggerWordDetectionRequesters;
 };
 
 } // namespace Vector

@@ -17,6 +17,7 @@
 #include "policy_actions.h"
 #include "se_diag.h"
 
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
@@ -25,6 +26,7 @@
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micImmediateDirection.h"
 #include "cozmoAnim/robotDataLoader.h"
+#include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
 
 #include "util/console/consoleInterface.h"
@@ -110,8 +112,10 @@ CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARG
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
 static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of MicData::data to match RawAudioChunk");
 
-MicDataProcessor::MicDataProcessor(MicDataSystem* micDataSystem, const std::string& writeLocation, const std::string& triggerWordDataDir)
-: _micDataSystem(micDataSystem)
+MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, 
+                                   const std::string& writeLocation, const std::string& triggerWordDataDir)
+: _context(context)
+, _micDataSystem(micDataSystem)
 , _writeLocationDir(writeLocation)
 , _triggerWordDataDir(triggerWordDataDir)
 , _recognizer(std::make_unique<SpeechRecognizerTHF>())
@@ -182,11 +186,14 @@ void MicDataProcessor::InitVAD()
 
 void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float score)
 {
-  // Ignore extra triggers during streaming, or if the trigger detection routine was explicitly disabled
-  if (_micDataSystem->HasStreamingJob() || !_triggerEnabled)
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  // Ignore extra triggers during streaming
+  if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
   {
     return;
   }
+
+  showStreamState->StartTriggerResponseWithGetIn();
 
   RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
@@ -223,8 +230,8 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
              "MicDataProcessor.TriggerWordDetectCallback.AudioProcIdx");
   const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
-  
-  if (_shouldStreamAfterTrigger)
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  if (showStreamState->ShouldStreamAfterTriggerWordResponse())
   {
     // First we create the job responsible for streaming the intent after the trigger
     auto newJob = std::make_shared<MicDataInfo>();

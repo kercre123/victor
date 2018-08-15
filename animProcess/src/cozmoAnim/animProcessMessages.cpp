@@ -27,6 +27,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/showAudioStreamStateManager.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "coretech/common/engine/array2d_impl.h"
@@ -392,24 +393,14 @@ void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::Star
   micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
 }
 
-void Process_setShouldStreamAfterWakeWord(const Anki::Vector::RobotInterface::SetShouldStreamAfterWakeWord& msg)
+void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTriggerWordResponse& msg)
 {
-  auto* micDataSystem = _context->GetMicDataSystem();
-  if(micDataSystem == nullptr){
+  auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
+  if(showStreamStateManager == nullptr){
     return;
   }
 
-  micDataSystem->SetShouldStreamAfterWakeWord(msg.shouldStream);
-}
-
-void Process_setTriggerWordDetectionEnabled(const Anki::Vector::RobotInterface::SetTriggerWordDetectionEnabled& msg)
-{
-  auto* micDataSystem = _context->GetMicDataSystem();
-  if(micDataSystem == nullptr){
-    return;
-  }
-
-  micDataSystem->SetTriggerWordDetectionEnabled(msg.enabled);
+  showStreamStateManager->SetTriggerWordResponse(msg);
 }
 
 void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDetector& msg)

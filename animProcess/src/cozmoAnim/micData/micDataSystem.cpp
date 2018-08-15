@@ -21,6 +21,7 @@
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/showAudioStreamStateManager.h"
 
 #include "audioEngine/plugins/ankiPluginInterface.h"
 
@@ -95,7 +96,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
   const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
   _writeLocationDir = dataWriteLocation;
-  _micDataProcessor.reset(new MicDataProcessor(this, dataWriteLocation, triggerDataDir));
+  _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation, triggerDataDir));
 
   if (!_writeLocationDir.empty())
   {
@@ -143,22 +144,6 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
 }
 
-void MicDataSystem::SetShouldStreamAfterWakeWord(bool shouldStream)
-{
-  if (_micDataProcessor != nullptr)
-  {
-    _micDataProcessor->SetShouldStreamAfterTrigger(shouldStream);
-  }
-}
-
-void MicDataSystem::SetTriggerWordDetectionEnabled(bool enabled)
-{
-  if (_micDataProcessor != nullptr)
-  {
-    _micDataProcessor->SetTriggerWordDetectionEnabled(enabled);
-  }
-}
-
 void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
 {
   if(HasStreamingJob())
@@ -167,6 +152,16 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
                         "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
     return;
   }
+
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  if(!showStreamState->HasValidTriggerResponse())
+  {
+    PRINT_NAMED_WARNING("MicDataSystem.CantStreamToCloud",
+                        "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
+    return;
+  }
+  
+  showStreamState->StartTriggerResponseWithoutGetIn();
 
   MicDataInfo* newJob = new MicDataInfo{};
   newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});

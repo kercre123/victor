@@ -95,7 +95,6 @@ private:
     CloudMic::StreamType streamType;
 
     // earcon is an audible cue to tell the user victor is listening
-    AudioMetaData::GameEvent::GenericEvent earConBegin;
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
 
@@ -126,7 +125,6 @@ private:
 
     EState                    state;
     BackpackLightDataLocator  lightsHandle;
-    float                     streamingBeginTime;
     EIntentStatus             intentStatus;
     bool                      isListening;
     uint8_t                   repromptCount;

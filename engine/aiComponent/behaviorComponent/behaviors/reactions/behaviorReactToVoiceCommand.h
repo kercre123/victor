@@ -58,7 +58,8 @@ protected:
   enum class EState : uint8_t
   {
     GetIn,
-    Listening,
+    ListeningGetIn,
+    ListeningLoop,
     Thinking,
     IntentReceived,
   };
@@ -80,8 +81,11 @@ protected:
 
   virtual void AlwaysHandleInScope( const RobotToEngineEvent& event ) override;
 
+  virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
+
   virtual void BehaviorUpdate() override;
 
   

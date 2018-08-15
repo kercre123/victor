@@ -241,11 +241,6 @@ public:
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
 
-  // if true, mic streaming will be disabled when victor hears the trigger word, and the wake word behavior will be disabled
-  // note: The trigger word will still be pending, and it is up to the behavior to deal with this however it sees fit.
-  // todo: add a data defined way to suppress the trigger word response from .json
-  virtual bool ShouldSuppressTriggerWordResponse() const { return false; }
-
   // if an active feature is associated with this behavior, return true and set it in arguments
   bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
   
@@ -485,12 +480,20 @@ protected:
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
 
-  // Disable streaming after a wake word is detected. Will be automatically re-enabled when the behavior is deactivated.
-  void SmartSuppressStreamAfterWakeWord(const bool suppress);
+  // Disables engine's response to trigger words sent from the animation process
+  void SmartDisableEngineResponseToTriggerWord();
+  void SmartEnableEngineResponseToTriggerWord();
+
+  // Change the response to the trigger word until the behavior is deactivated
+  void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger = AnimationTrigger::Count, 
+                                      const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, 
+                                      bool shouldTriggerWordStartStream = false);
+  void SmartPopResponseToTriggerWord();
+
   
-  // Disable trigger word detection. Will be automatically re-enabled when the behavior is deactivated.
-  void SmartSuppressTriggerWordDetection(const bool suppress);
-  
+  void SmartAlterStreamStateForCurrentResponse(bool shouldTriggerWordStartStream);
+
+
   // Request that the robot enter power save mode
   void SmartRequestPowerSaveMode();
 
@@ -624,11 +627,8 @@ private:
 
   bool _hasSetMotionProfile = false;
 
-  bool _disableStreamAfterWakeWord = false;
-  
-  bool _isSuppressingStreamAfterWakeWord = false;
-  
-  bool _isSuppressingTriggerWordDetection = false;
+  bool _scopedDisableStreamAfterWakeWord = false;
+  bool _pushedCustomTriggerResponse = false;
   
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;

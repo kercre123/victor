@@ -183,14 +183,14 @@ void BehaviorQuietModeCoordinator::BehaviorUpdate()
     CancelSelf();
     return;
   }
-  
+
   // wake word should disable timer
   if( (_iConfig.timerBehavior != nullptr) && (_iConfig.wakeWordBehavior != nullptr) && _iConfig.timerBehavior->IsTimerRinging() ) {
     _iConfig.wakeWordBehavior->SetDontActivateThisTick( GetDebugLabel() );
     // disable streaming when wake work behavior is suppressed
-    SmartSuppressStreamAfterWakeWord( true );
+    SmartPushResponseToTriggerWord();
   } else {
-    SmartSuppressStreamAfterWakeWord( false );
+    SmartPopResponseToTriggerWord();
   }
   
   

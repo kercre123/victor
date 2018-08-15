@@ -14,6 +14,8 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
+
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
@@ -27,7 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageMeetVictor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageWakeUpComeHere.h"
-#include "engine/components/mics/micComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -311,7 +313,7 @@ void BehaviorOnboarding::OnBehaviorActivated()
   _dVars.robotHeardTrigger = (_dVars.currentStage != OnboardingStages::NotStarted);
   
   // default to no trigger word allowed
-  SmartSuppressTriggerWordDetection( true );
+  SmartDisableEngineResponseToTriggerWord();
   PRINT_CH_INFO("Behaviors",
                 "BehaviorOnboarding.OnBehaviorActivated.OnboardingStatus",
                 "Starting onboarding in %s",
@@ -338,6 +340,7 @@ void BehaviorOnboarding::OnBehaviorActivated()
 void BehaviorOnboarding::OnBehaviorDeactivated()
 {
   PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorDeactivated.OnboardingStatus", "Onboarding complete (deactivated)");
+  SmartEnableEngineResponseToTriggerWord();
   SetAllowAnyIntent();
 }
 
@@ -457,11 +460,19 @@ void BehaviorOnboarding::BehaviorUpdate()
       // check stage for options about the trigger word and intents
       UserIntentTag allowedIntentTag = USER_INTENT(INVALID);
       const bool triggerAllowed = GetCurrentStage()->GetWakeWordBehavior( allowedIntentTag );
-      SmartSuppressTriggerWordDetection( !triggerAllowed );
+      if(triggerAllowed){
+        SmartEnableEngineResponseToTriggerWord();
+      }else{
+        SmartDisableEngineResponseToTriggerWord();
+      }
+
       if( triggerAllowed && (allowedIntentTag == USER_INTENT(unmatched_intent)) ) {
-        SmartSuppressStreamAfterWakeWord( true );
+        namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
+        auto postAudioEvent = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On, 
+                                                          AudioMetaData::GameObjectType::Behavior, 0 );
+        GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), AnimationTrigger::VC_ListeningGetIn, postAudioEvent, true );
       } else {
-        SmartSuppressStreamAfterWakeWord( false );
+        SmartPopResponseToTriggerWord();
         SetAllowedIntent( allowedIntentTag );
       }
       
@@ -668,7 +679,7 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
     }
   }
   // start with trigger word disabled and no whitelist
-  SmartSuppressTriggerWordDetection(true);
+  SmartDisableEngineResponseToTriggerWord();
   SetAllowAnyIntent();
   
   // drop all IOnboardingStage objects prior to this one so their destructors run
@@ -806,7 +817,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
   // be activating if it was disabled by the behavior.
   if( interruptionID != BEHAVIOR_ID(TriggerWordDetected) ) {
-    SmartSuppressTriggerWordDetection( true );
+    SmartDisableEngineResponseToTriggerWord();
   }
 }
   

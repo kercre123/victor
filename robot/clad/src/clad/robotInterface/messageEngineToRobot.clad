@@ -424,14 +424,12 @@ message StartWakeWordlessStreaming
   uint_8 streamType
 }
 
-message SetShouldStreamAfterWakeWord
+message SetTriggerWordResponse
 {
-  bool shouldStream,
-}
-
-message SetTriggerWordDetectionEnabled
-{
-  bool enabled,
+  AudioEngine::Multiplexer::PostAudioEvent postAudioEvent,
+  bool shouldTriggerWordStartStream = 0,
+  uint_8 getInAnimationTag = 0,
+  string getInAnimationName,
 }
 
 message ResetBeatDetector
@@ -745,9 +743,8 @@ union EngineToRobot
   StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x97,
   StartPlaybackAudio            playbackAudioStart          = 0x98,
 
-  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x99,
-  SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x9A,
-  SetTriggerWordDetectionEnabled setTriggerWordDetectionEnabled = 0x9B,
+  StartWakeWordlessStreaming    startWakeWordlessStreaming = 0x99,
+  SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
