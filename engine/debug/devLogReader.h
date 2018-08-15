@@ -22,7 +22,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class DevLogReader: Util::noncopyable {
 public:
@@ -84,7 +84,7 @@ private:
   bool CheckTimeAndCallback(uint32_t time_ms);
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

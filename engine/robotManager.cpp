@@ -32,7 +32,7 @@
 #define LOG_CHANNEL "RobotState"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 RobotManager::RobotManager(CozmoContext* context)
 : _robot(nullptr)
@@ -204,5 +204,5 @@ bool RobotManager::ShouldFilterMessage(const RobotInterface::EngineToRobotTag ms
   return false;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

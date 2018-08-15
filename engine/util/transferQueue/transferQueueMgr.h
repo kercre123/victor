@@ -61,7 +61,7 @@ namespace Anki {
     }; // class
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__

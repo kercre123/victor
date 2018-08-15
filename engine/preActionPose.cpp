@@ -22,7 +22,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     const ColorRGBA& PreActionPose::GetVisualizeColor(ActionType type)
     {
@@ -140,5 +140,5 @@ namespace Anki {
     }
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

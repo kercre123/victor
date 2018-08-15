@@ -48,7 +48,7 @@
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMapRenderRate_sec, "MapComponent", 0.25f);
@@ -272,7 +272,7 @@ MapComponent::~MapComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void MapComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   if(_robot->HasExternalInterface())
@@ -313,7 +313,7 @@ void MapComponent::HandleMessage(const ExternalInterface::SetMemoryMapBroadcastF
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap)
   {
     // check for object timeouts in navMap
@@ -396,8 +396,8 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
   UpdateOriginsOfObjects(oldOriginID, newOriginID);
 
   // grab the underlying memory map and merge them
-  INavMap* oldMap = _navMaps[oldOriginID].get();
-  INavMap* newMap = _navMaps[newOriginID].get();
+  auto oldMap = _navMaps[oldOriginID];
+  auto newMap = _navMaps[newOriginID];
 
   // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
   // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
@@ -415,14 +415,14 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
     // set in the container of maps
     _navMaps[newOriginID].reset(emptyMemoryMap);
     // set the pointer to this newly created instance
-    newMap = emptyMemoryMap;
+    newMap.reset(emptyMemoryMap);
   }
 
   // continue the merge as we were going to do, so at least we don't lose the information we were just collecting
   Pose3d oldWrtNew;
   const bool success = oldOrigin.GetWithRespectTo(newOrigin, oldWrtNew);
   DEV_ASSERT(success, "MapComponent.UpdateMapOrigins.BadOldWrtNull");
-  UpdateBroadcastFlags(newMap->Merge(oldMap, oldWrtNew));
+  UpdateBroadcastFlags(newMap->Merge(*oldMap, oldWrtNew));
 
   // switch back to what is becoming the new map
   _currentMapOriginID = newOriginID;
@@ -479,7 +479,7 @@ void MapComponent::UpdateRobotPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::TimeoutObjects()
 {
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap)
   {
     // check for object timeouts in navMap occasionally
@@ -524,7 +524,7 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   curRobotPose.ApplyTo(GroundPlaneROI::GetGroundQuad(), groundPlaneWrtRobot);
 
   // ask memory map to clear
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
 
   NodeTransformFunction transform = [] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
@@ -553,7 +553,7 @@ void MapComponent::FlagInterestingEdgesAsUseless()
   // complexity when raycasting, finding boundaries, readding edges, etc. By flagging Unknown we simply say
   // "there was something here, but we are not sure what it was", which can be good to re-explore the area
 
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
 
   NodeTransformFunction transform = [] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
@@ -572,7 +572,7 @@ void MapComponent::FlagProxObstaclesUsingPose()
 {
   const auto& pose = _robot->GetPose();
 
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if( currentNavMemoryMap == nullptr ) {
     return;
   }
@@ -608,7 +608,7 @@ void MapComponent::FlagProxObstaclesUsingPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MapComponent::FlagProxObstaclesTouchingExplored()
 {
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if( currentNavMemoryMap == nullptr ) {
     return false;
   }
@@ -683,7 +683,7 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
     // create a new memory map in the given origin
     PRINT_NAMED_INFO("MapComponent.CreateLocalizedMemoryMap", "Setting current origin to %i", worldOriginID);
     INavMap* navMemoryMap = NavMapFactory::CreateMemoryMap();
-    _navMaps.emplace( std::make_pair(worldOriginID, std::unique_ptr<INavMap>(navMemoryMap)) );
+    _navMaps.emplace( std::make_pair(worldOriginID, std::shared_ptr<INavMap>(navMemoryMap)) );
     _currentMapOriginID = worldOriginID;
   }
 }
@@ -724,7 +724,7 @@ void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
 void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
 {
   auto* webService = _robot->GetContext()->GetWebService();
-  if( webService == nullptr ) {
+  if( webService == nullptr || !webService->IsWebVizClientSubscribed(kWebVizModuleName)) {
     return;
   }
 
@@ -738,9 +738,9 @@ void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
   }
 
   // chunk the quad messages
-  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  for(u32 seqNum = 0; seqNum * kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
   {
-    auto start = seqNum*kQuadsPerMessage;
+    auto start = seqNum * kQuadsPerMessage;
     auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
     Json::Value toWeb;
     toWeb["type"] = "MemoryMapMessageViz";
@@ -829,18 +829,18 @@ void MapComponent::SetRenderEnabled(bool enabled)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INavMap* MapComponent::GetCurrentMemoryMapHelper() const
+std::shared_ptr<INavMap> MapComponent::GetCurrentMemoryMapHelper() const
 {
   // current map (if any) must match current robot origin
   DEV_ASSERT((PoseOriginList::UnknownOriginID == _currentMapOriginID) ||
       (_robot->GetPoseOriginList().GetCurrentOriginID() == _currentMapOriginID), "MapComponent.GetNavMemoryMap.Bad Origin");
 
 
-  INavMap* curMap = nullptr;
+  std::shared_ptr<INavMap> curMap = nullptr;
   if ( PoseOriginList::UnknownOriginID != _currentMapOriginID ) {
     auto matchPair = _navMaps.find(_currentMapOriginID);
     if ( matchPair != _navMaps.end() ) {
-      curMap = matchPair->second.get();
+      curMap = matchPair->second;
     } else {
       DEV_ASSERT(false, "MapComponent.GetNavMemoryMap.MissingMap");
     }
@@ -952,7 +952,7 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
 
   // find the memory map for the given origin
   const PoseOriginID_t originID = newPose.GetRootID();
-  INavMap* memoryMap = GetCurrentMemoryMap();
+  auto memoryMap = GetCurrentMemoryMap();
   if ( memoryMap )
   {
     // in order to properly handle stacks, do not add the quad to the memory map for objects that are not
@@ -1087,7 +1087,7 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::MarkObjectUnobserved(const ObservableObject& object) { 
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap) {
     const ObjectID id = object.GetID();
     PRINT_CH_INFO("MapComponent", "MapComponent.MarkObjectUnobserved", "Marking observable object %d as unobserved", (int) id );
@@ -1209,7 +1209,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const RobotTimeStamp_t t)
 {
-  INavMap* currentMap = GetCurrentMemoryMap();
+  auto currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
     // NOTE: (MRW) currently using robot pose center, though to be correct we should use the center of the 
@@ -1229,7 +1229,7 @@ void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const Ro
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRegion(const BoundedConvexSet2f& region, const RobotTimeStamp_t t)
 {
-  INavMap* currentMap = GetCurrentMemoryMap();
+  auto currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
     MemoryMapDataPtr clearData = MemoryMapData(INavMap::EContentType::ClearOfObstacle, t).Clone();
@@ -1251,7 +1251,7 @@ void MapComponent::ClearRegion(const BoundedConvexSet2f& region, const RobotTime
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddProxData(const BoundedConvexSet2f& region, const MemoryMapData& data)
 {
-  INavMap* currentMap = GetCurrentMemoryMap();
+  auto currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
     MemoryMapDataPtr newData = data.Clone();
@@ -1277,7 +1277,7 @@ void MapComponent::AddProxData(const BoundedConvexSet2f& region, const MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::RemoveAllProxObstacles()
 {
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap) {
     NodeTransformFunction proxObstacles =
     [] (MemoryMapDataPtr data) -> MemoryMapDataPtr {
@@ -1297,7 +1297,7 @@ void MapComponent::SetUseProxObstaclesInPlanning(bool enable)
 {
   _enableProxCollisions = enable;
 
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap) {
     PRINT_CH_INFO("MapComponent", "MapComponent.SetUseProxObstaclesInPlanning", "Setting prox obstacles as %s collidable", enable ? "" : "NOT" );
     NodeTransformFunction enableProx = [enable] (MemoryMapDataPtr data) {
@@ -1321,7 +1321,7 @@ void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::InsertData(const MemoryMapTypes::MemoryMapRegion& region, const MemoryMapData& data)
 {
-  INavMap* currentMap = GetCurrentMemoryMap();
+  auto currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
     UpdateBroadcastFlags(currentMap->Insert(region, data));
@@ -1331,7 +1331,7 @@ void MapComponent::InsertData(const MemoryMapTypes::MemoryMapRegion& region, con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
 {
-  const INavMap* currentMap = GetCurrentMemoryMap();
+  const auto currentMap = GetCurrentMemoryMap();
   if (currentMap) {
     return currentMap->AnyOf( region, [] (const auto& data) { return data->IsCollisionType(); });
   }
@@ -1341,7 +1341,7 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
 {
-  const INavMap* currentMap = GetCurrentMemoryMap();
+  const auto currentMap = GetCurrentMemoryMap();
   if (currentMap) {
     return currentMap->GetArea( region, [] (const auto& data) { return data->IsCollisionType(); });
   }
@@ -1380,7 +1380,7 @@ Result MapComponent::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameIn
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map)
+void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map)
 {
   // Note1: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
   // modifications. Leave here for legacy purposes. We surely enable it soon, because performance needs
@@ -1442,7 +1442,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   DEV_ASSERT(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
 
   // we are only processing edges for the memory map, so if there's no map, don't do anything
-  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  auto currentNavMemoryMap = GetCurrentMemoryMap();
   if( nullptr == currentNavMemoryMap && !kDebugRenderOverheadEdges )
   {
     return RESULT_OK;

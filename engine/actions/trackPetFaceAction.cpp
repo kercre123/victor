@@ -16,7 +16,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 static const char * const kLogChannelName = "Actions";
   
@@ -122,5 +122,5 @@ ITrackAction::UpdateResult TrackPetFaceAction::UpdateTracking(Radians& absPanAng
 
 } // UpdateTracking()
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

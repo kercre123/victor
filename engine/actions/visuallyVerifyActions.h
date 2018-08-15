@@ -25,7 +25,7 @@
 #include "clad/types/visionModes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   class IVisuallyVerifyAction : public IAction
   {
@@ -132,7 +132,7 @@ namespace Cozmo {
     BlockWorldFilter      _filter;
   };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_VisuallyVerifyActions_H__ */

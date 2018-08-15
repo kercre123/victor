@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/faceWorld.h"
+#include "engine/moodSystem/moodManager.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -29,7 +30,7 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
   
@@ -269,6 +270,8 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
       _dVars.numResumesRemaining = _iConfig.maxNumResumes;
     }
 
+    GetBEI().GetMoodManager().TriggerEmotionEvent("DrivingToFace");
+
     // set pose now (rather than when anim finishes) in case the anim turns the robot
     Pose3d pose = GetBEI().GetRobotInfo().GetPose();
     pose.TranslateForward( distToHead - _iConfig.minDriveToFaceDistance_mm );
@@ -277,6 +280,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
     DelegateIfInControl(action, [this](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
         _dVars.numResumesRemaining = 0;
+        GetBEI().GetMoodManager().TriggerEmotionEvent("DriveToFaceSuccess");
         TransitionToPlayingFinalAnim();
       }
       // else let the behavior end now

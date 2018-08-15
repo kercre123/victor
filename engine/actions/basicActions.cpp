@@ -41,7 +41,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
@@ -1880,14 +1880,14 @@ namespace Anki {
     }
 
     
-    void TurnTowardsFaceAction::SetAction(IActionRunner *action)
+    void TurnTowardsFaceAction::SetAction(IActionRunner *action, bool suppressTrackLocking)
     {
       if(nullptr != _action) {
         _action->PrepForCompletion();
       }
       _action.reset(action);
       if(nullptr != _action) {
-        _action->ShouldSuppressTrackLocking(true);
+        _action->ShouldSuppressTrackLocking(suppressTrackLocking);
       }
       
       if(_action != nullptr && HasRobot()){
@@ -1920,39 +1920,61 @@ namespace Anki {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
                           "setting say name trigger, but we aren't going to say the name. This is useless");
       }
-      _sayNameTriggerCallback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
+      auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
         return trigger;
       };
+      SetSayNameTriggerCallback(std::move(callback));
     }
 
-  void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
+    void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
     {
       if( ! _sayName ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
                           "setting anim trigger for unnamed faces, but we aren't going to say the name.");
       }
-      _noNameTriggerCallback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
+      auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
         return trigger;
       };
+      SetNoNameTriggerCallback(std::move(callback));
+    }
+    
+    void TurnTowardsFaceAction::SetAnyFaceAnimationTrigger(AnimationTrigger trigger)
+    {
+      auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
+        return trigger;
+      };
+      SetAnyFaceTriggerCallback(std::move(callback));
     }
 
-    void TurnTowardsFaceAction::SetSayNameTriggerCallback(AnimTriggerForFaceCallback callback)
+    void TurnTowardsFaceAction::SetSayNameTriggerCallback(AnimTriggerForFaceCallback&& callback)
     {
+      DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
+                 "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
       if( ! _sayName ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
-      _sayNameTriggerCallback = callback;
-    }      
+      _sayNameTriggerCallback = std::move(callback);
+    }
 
-    void TurnTowardsFaceAction::SetNoNameTriggerCallback(AnimTriggerForFaceCallback callback)
+    void TurnTowardsFaceAction::SetNoNameTriggerCallback(AnimTriggerForFaceCallback&& callback)
     {
+      DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
+                 "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
       if( ! _sayName ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
-      _noNameTriggerCallback = callback;
-    }      
+      _noNameTriggerCallback = std::move(callback);
+    }
+    
+    void TurnTowardsFaceAction::SetAnyFaceTriggerCallback(AnimTriggerForFaceCallback&& callback)
+    {
+      DEV_ASSERT((_noNameTriggerCallback == nullptr) && (_sayNameTriggerCallback == nullptr),
+                 "SetAnyFaceTriggerCallback is mutually exclusive with other anim trigger callbacks");
+      DEV_ASSERT(!_sayName, "SetAnyFaceTriggerCallback is mutually exclusive sayname animations");
+      _anyFaceTriggerCallback = std::move(callback);
+    }
 
     void TurnTowardsFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
@@ -2018,7 +2040,7 @@ namespace Anki {
           return ActionResult::NO_FACE;
         }
         else {
-          _state = State::SayingName; // jump to end and play animation (if present)
+          _state = State::PlayingAnimation; // jump to end and play animation (if present)
           return ActionResult::SUCCESS;
         }
       }
@@ -2163,16 +2185,27 @@ namespace Anki {
             // Wait for final action of fine-tune turning to complete.
              // Create action to say name if enabled and we have a name by now.
             result = _action->Update();
-            if(ActionResult::SUCCESS == result && _sayName)
+            // play an animation, possibly a TTS animation, based on what callbacks have been provided
+            const bool playAnim = (_sayName || _anyFaceTriggerCallback);
+            if((ActionResult::SUCCESS == result) && playAnim)
             {
               const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
               if(nullptr != face) {
-                if( face->GetName().empty() ) {
+                if( _anyFaceTriggerCallback ) {
+                  AnimationTrigger anim = _anyFaceTriggerCallback(GetRobot(), _obsFaceID);
+                  if( anim != AnimationTrigger::Count ) {
+                    const bool suppressTrackLocking = false;
+                    SetAction(new TriggerLiftSafeAnimationAction(anim, 1, true, _animTracksToLock), suppressTrackLocking);
+                    _state = State::PlayingAnimation;
+                    result = ActionResult::RUNNING;
+                  }
+                }
+                else if( face->GetName().empty() ) {
                   if( _noNameTriggerCallback ) {
                     AnimationTrigger noNameAnim = _noNameTriggerCallback(GetRobot(), _obsFaceID);
                     if( noNameAnim != AnimationTrigger::Count ) {
-                      SetAction(new TriggerLiftSafeAnimationAction(noNameAnim));
-                      _state = State::SayingName;
+                      SetAction(new TriggerLiftSafeAnimationAction(noNameAnim, 1, true, _animTracksToLock));
+                      _state = State::PlayingAnimation;
                       result = ActionResult::RUNNING;
                     }
                   }
@@ -2183,11 +2216,11 @@ namespace Anki {
                   if( _sayNameTriggerCallback ) {
                     AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
                     if( sayNameAnim != AnimationTrigger::Count ) {
-                      sayText->SetAnimationTrigger( sayNameAnim );
+                      sayText->SetAnimationTrigger( sayNameAnim, _animTracksToLock );
                     }
                   }
                   SetAction(sayText);
-                  _state = State::SayingName;
+                  _state = State::PlayingAnimation;
                   result = ActionResult::RUNNING;
                 }
               }
@@ -2196,7 +2229,7 @@ namespace Anki {
           break;
         }
           
-        case State::SayingName:
+        case State::PlayingAnimation:
         {
           if(nullptr == _action) {
             // No say name action, just done

@@ -26,7 +26,7 @@ namespace Anki {
 namespace Util {
   class RollingFileLogger;
 }
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 struct RobotState;

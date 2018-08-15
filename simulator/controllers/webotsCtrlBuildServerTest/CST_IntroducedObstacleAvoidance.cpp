@@ -2,7 +2,7 @@
 #include "coretech/common/engine/math/rotation.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 enum class TestState {
   Init,
   MoveCubeOutOfWay,
@@ -160,5 +160,5 @@ void CST_IntroducedObstacleAvoidance::HandleRobotObservedObject(const ExternalIn
   }
 }
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki

@@ -29,7 +29,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class AIComponent;
@@ -38,7 +38,6 @@ class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorComponentMessageHandler;
 class BehaviorContainer;
-class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
 class BehaviorManager;
 class BehaviorSystemManager;
@@ -113,7 +112,7 @@ private:
   ComponentPtr _comps;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

@@ -17,7 +17,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class BehaviorID : uint16_t;
 class IBehavior;

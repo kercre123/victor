@@ -18,7 +18,7 @@
 #include "json/json-forwards.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionTriggerWordPending : public IBEICondition
 {
@@ -31,7 +31,7 @@ protected:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionTriggerWordPending_H__

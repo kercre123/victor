@@ -5,7 +5,6 @@
   "associatedActiveFeature": "Blackjack",
 
   "streamType"                     : "Blackjack",
-  "earConAudioEventBegin"          : "Play__Robot_Vic_Sfx__Wake_Word_On",
   "earConAudioEventSuccess"        : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"        : "Play__Robot_Vic_Sfx__Wake_Word_Off",
   "vocalPromptString"              : "Play Another Round?",

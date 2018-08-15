@@ -27,7 +27,7 @@ using namespace std;
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 /**
 * Reads received messages from a file, and passes them on
@@ -77,7 +77,7 @@ protected:
 };
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //BASESTATION_COMMS_COMMSLOGREADER_H_

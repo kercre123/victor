@@ -20,7 +20,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class TrackMotionAction : public ITrackAction
 {
@@ -47,7 +47,7 @@ private:
   
 }; // class TrackMotionAction
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_TrackMotionAction_H__ */

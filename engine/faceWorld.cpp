@@ -36,7 +36,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // How long before deleting an unnamed, unobserved face.
   // NOTE: we never delete _named_ faces.
@@ -66,6 +66,10 @@ namespace Cozmo {
   static const char * const kIsSessionOnlyStringDAS = "0";
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
+  
+  static const std::string kWebVizObservedObjectsName = "observedobjects";
+  static const std::string kWebVizNavMapName = "navmap";
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   FaceWorld::FaceEntry::FaceEntry(const Vision::TrackedFace& faceIn)
@@ -93,7 +97,7 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+  void FaceWorld::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
   {
     _robot = robot;
     if(robot->HasExternalInterface()) {
@@ -996,14 +1000,14 @@ namespace Cozmo {
       return; // ignore half-recognized or invalid faces
     }
 
-    Json::Value data;
-    data["type"] = "RobotDeletedFace";
-    data["faceID"] = msg.faceID;
-
     const auto* webService = _robot->GetContext()->GetWebService();
     if( webService != nullptr ) {
-      webService->SendToWebViz( "observedobjects", data );
-      webService->SendToWebViz( "navmap", data );
+      Json::Value data;
+      data["type"] = "RobotDeletedFace";
+      data["faceID"] = msg.faceID;
+      
+      webService->SendToWebViz( kWebVizObservedObjectsName, data );
+      webService->SendToWebViz( kWebVizNavMapName, data );
     }
 
   }
@@ -1011,44 +1015,45 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedFace& msg ) const
   {
-
     if( msg.faceID <= 0 ) {
       return; // ignore half-recognized or invalid faces
     }
-    Json::Value data;
-    data["type"] = "RobotObservedFace";
-    data["faceID"] = msg.faceID;
-    if( !msg.name.empty() ) {
-      data["name"] = msg.name;
-    }
-    data["timestamp"] = msg.timestamp;
-    data["originID"] = msg.pose.originID;
 
     const auto* webService = _robot->GetContext()->GetWebService();
     if( webService != nullptr ) {
+      const bool isSubscribedObservedObjects = webService->IsWebVizClientSubscribed(kWebVizObservedObjectsName);
+      const bool isSubscribedNavMap = webService->IsWebVizClientSubscribed(kWebVizNavMapName);
+
       // this is used by two modules
-      {
-        const std::string moduleName = "observedobjects";
-        webService->SendToWebViz( moduleName, data );
-      }
+      if (isSubscribedObservedObjects || isSubscribedNavMap) {
+        Json::Value data;
+        data["faceID"] = msg.faceID;
+        if( !msg.name.empty() ) {
+          data["name"] = msg.name;
+        }
+        data["timestamp"] = msg.timestamp;
+        data["originID"] = msg.pose.originID;
 
-      {
-        data["type"] = "MemoryMapFace";
-        auto& pose = data["pose"];
-        Pose3d objPose( msg.pose, _robot->GetPoseOriginList() );
-        pose["x"] = objPose.GetTranslation().x();
-        pose["y"] = objPose.GetTranslation().y();
-        pose["z"] = objPose.GetTranslation().z();
-        pose["qW"] = objPose.GetRotation().GetQuaternion().w();
-        pose["qX"] = objPose.GetRotation().GetQuaternion().x();
-        pose["qY"] = objPose.GetRotation().GetQuaternion().y();
-        pose["qZ"] = objPose.GetRotation().GetQuaternion().z();
-        const std::string moduleName = "navmap";
-        webService->SendToWebViz( moduleName, data );
-      }
+        if (isSubscribedObservedObjects) {
+          data["type"] = "RobotObservedFace";
+          webService->SendToWebViz( kWebVizObservedObjectsName, data );
+        }
 
+        if (isSubscribedNavMap) {
+          data["type"] = "MemoryMapFace";
+          auto& pose = data["pose"];
+          Pose3d objPose( msg.pose, _robot->GetPoseOriginList() );
+          pose["x"] = objPose.GetTranslation().x();
+          pose["y"] = objPose.GetTranslation().y();
+          pose["z"] = objPose.GetTranslation().z();
+          pose["qW"] = objPose.GetRotation().GetQuaternion().w();
+          pose["qX"] = objPose.GetRotation().GetQuaternion().x();
+          pose["qY"] = objPose.GetRotation().GetQuaternion().y();
+          pose["qZ"] = objPose.GetRotation().GetQuaternion().z();
+          webService->SendToWebViz( kWebVizNavMapName, data );
+        }
+      }
     }
-
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1114,5 +1119,5 @@ namespace Cozmo {
   }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

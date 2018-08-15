@@ -32,7 +32,7 @@ namespace Vision {
 class TrackedFace;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 namespace ExternalInterface {
 struct RobotObservedFace;
@@ -115,7 +115,7 @@ private:
     
 }; // BehaviorInteractWithFaces
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__

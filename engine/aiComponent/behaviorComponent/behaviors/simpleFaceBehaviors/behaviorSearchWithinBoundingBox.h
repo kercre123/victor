@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorSearchWithinBoundingBox : public ICozmoBehavior
 {
@@ -78,7 +78,7 @@ private:
   DynamicVariables _dVars;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSearchWithinBoundingBox__

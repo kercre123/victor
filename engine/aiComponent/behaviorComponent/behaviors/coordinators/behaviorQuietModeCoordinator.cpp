@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -29,7 +30,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   const char* const kActiveTimeKey        = "activeTime_s";
@@ -81,7 +82,7 @@ BehaviorQuietModeCoordinator::BehaviorQuietModeCoordinator(const Json::Value& co
 void BehaviorQuietModeCoordinator::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.wakeWordBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ReactToTriggerDirectionAwake) );
+  _iConfig.wakeWordBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(TriggerWordDetected) );
   ANKI_VERIFY( _iConfig.wakeWordBehavior != nullptr,
                "BehaviorQuietModeCoordinator.InitBehavior.InvalidBehavior",
                "Wake word behavior not found" );
@@ -93,6 +94,10 @@ void BehaviorQuietModeCoordinator::InitBehavior()
                  "Behavior ID %s not found",
                  BehaviorTypesWrapper::BehaviorIDToString(entry.behaviorID) );
   }
+  
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
+                                 BEHAVIOR_CLASS(TimerUtilityCoordinator),
+                                 _iConfig.timerBehavior);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,6 +183,16 @@ void BehaviorQuietModeCoordinator::BehaviorUpdate()
     CancelSelf();
     return;
   }
+
+  // wake word should disable timer
+  if( (_iConfig.timerBehavior != nullptr) && (_iConfig.wakeWordBehavior != nullptr) && _iConfig.timerBehavior->IsTimerRinging() ) {
+    _iConfig.wakeWordBehavior->SetDontActivateThisTick( GetDebugLabel() );
+    // disable streaming when wake work behavior is suppressed
+    SmartPushResponseToTriggerWord();
+  } else {
+    SmartPopResponseToTriggerWord();
+  }
+  
   
   // exit quiet mode once enough time has elapsed
   const float timeActivated_s = GetActivatedDuration();

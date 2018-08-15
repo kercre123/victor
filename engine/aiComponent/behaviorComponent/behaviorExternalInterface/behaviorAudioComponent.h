@@ -31,7 +31,7 @@
 #define kBehaviorRound  0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorExternalInterface;
 class BehaviorManager;
@@ -47,7 +47,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const BCCompMap& dependentComps) override;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override { 
     dependencies.insert(BCComponentID::BehaviorExternalInterface);
   };

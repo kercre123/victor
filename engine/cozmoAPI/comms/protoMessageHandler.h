@@ -32,16 +32,12 @@ class StatsAccumulator;
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 class Robot;
 class RobotManager;
 class GameMessagePort;
-namespace external_interface {
-  class Ping;
-  class Bing;
-}
 
 class ProtoMessageHandler : public IGatewayInterface
 {
@@ -67,10 +63,6 @@ public:
 
 private:
   // ============================== Private Member Functions ==============================
-
-  void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void PingPong(const external_interface::Ping& ping); // TODO: remove these once enough example use cases exist
-  void BingBong(const external_interface::Bing& bing);
 
   // As long as there are messages available from the comms object,
   // process them and pass them along.
@@ -112,7 +104,7 @@ private:
   
 #undef MESSAGE_BASECLASS_NAME
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

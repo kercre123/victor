@@ -22,7 +22,7 @@
 #include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Storage for processed prox sensor reading with useful metadata
 struct ProxSensorData

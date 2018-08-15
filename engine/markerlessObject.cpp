@@ -17,7 +17,7 @@
 #include "coretech/common/engine/math/quad_impl.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     const std::vector<Point3f>& MarkerlessObject::GetCanonicalCorners() const
     {
@@ -142,6 +142,6 @@ namespace Anki {
       
     } // GetBoundingBoxXY()
       
-  } // namespace Cozmo
+  } // namespace Vector
   
 } // namespace Anki

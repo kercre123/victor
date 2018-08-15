@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace VoiceCommand {
   class PhraseData;
@@ -64,7 +64,7 @@ private:
   
 }; // class SpeechRecognizer
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_H_

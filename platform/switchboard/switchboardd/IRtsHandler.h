@@ -45,6 +45,7 @@ public:
   virtual void StopPairing() = 0;
   virtual void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) = 0;
   virtual void HandleTimeout() = 0;
+  virtual void ForceDisconnect() = 0;
   
   void SetIsPairing(bool pairing) { _isPairing = pairing; }
   void SetOtaUpdating(bool updating) { _isOtaUpdating = updating; }

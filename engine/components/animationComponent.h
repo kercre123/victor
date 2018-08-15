@@ -37,7 +37,7 @@ class CompositeImage;
 class RGB565ImageBuilder;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class Animation;
@@ -73,7 +73,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::DataAccessor);
@@ -106,6 +106,10 @@ public:
   // Set strictCooldown = true when we do NOT want to simply choose the animation closest
   // to being off cooldown when all animations in the group are on cooldown
   const std::string& GetAnimationNameFromGroup(const std::string& name, bool strictCooldown = false) const;
+  
+  // Tell the animation component that the anim process started an animation on its own so that
+  // engine has up to date information
+  void NotifyComponentOfAnimationStartedByAnimProcess(const std::string& animName, Tag animationTag);
   
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
@@ -230,6 +234,13 @@ public:
   bool                IsAnimating()        const { return _isAnimating;  }
   const std::string&  GetPlayingAnimName() const { return _currAnimName; }
   u8                  GetPlayingAnimTag()  const { return _currAnimTag;  }
+
+  // Allows external components to set up a special callback function that persists across multiple calls
+  // This functionality is currently associated exclusively with the needs of UserIntentComponent's TriggerWordGetIn animation
+  // The animation tag returned is what should be associated with any animations that want to call this callback when they
+  // complete
+  AnimationTag SetTriggerWordGetInCallback(std::function<void()> callbackFunction);
+
 
   // Accessors for latest animState values
   u32 GetAnimState_NumProcAnimFaceKeyframes() const { return _animState.numProcAnimFaceKeyframes; }   
@@ -358,7 +369,10 @@ private:
 
   // Map of animation tags to info needed for handling callbacks when the animation completes
   std::unordered_multimap<Tag, AnimCallbackInfo> _callbackMap;
-
+  // Special tag associated with the userIntentComponent's triggerWordGetInAnimation
+  AnimationTag _tagForTriggerWordGetInCallbacks;
+  std::function<void()> _triggerWordGetInCallbackFunction;
+  
   int _compositeImageID;
 
   std::set<std::string> _focusRequests;
@@ -366,7 +380,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif

@@ -5,7 +5,7 @@
 
 namespace Anki {
 
-  namespace Cozmo {
+  namespace Vector {
 
     namespace Robot {
 
@@ -17,7 +17,7 @@ namespace Anki {
 
     } // namespace Robot
 
-  } // namespace Cozmo
+  } // namespace Vector
 
 } // namespace Anki
 

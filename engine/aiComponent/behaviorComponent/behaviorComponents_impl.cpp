@@ -14,7 +14,7 @@
 #include "util/entityComponent/componentTypeEnumMap.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 namespace Audio{
@@ -25,7 +25,6 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BehaviorComponentMessageHandler;
 class BehaviorContainer;
-class BehaviorEventAnimResponseDirector;
 class BehaviorEventComponent;
 class BehaviorExternalInterface;
 class BehaviorHelperComponent;
@@ -44,7 +43,7 @@ class RobotStatsTracker;
 class AttentionTransferComponent;
 class PowerStateManager;
 
-} // namespace Cozmo
+} // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
 LINK_COMPONENT_TYPE_TO_ENUM(AIComponent,                        BCComponentID, AIComponent)
@@ -52,7 +51,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(AsyncMessageGateComponent,          BCComponentID, A
 LINK_COMPONENT_TYPE_TO_ENUM(Audio::BehaviorAudioComponent,      BCComponentID, BehaviorAudioComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponentMessageHandler,    BCComponentID, BehaviorComponentMessageHandler)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorContainer,                  BCComponentID, BehaviorContainer)
-LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventAnimResponseDirector,  BCComponentID, BehaviorEventAnimResponseDirector)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventComponent,             BCComponentID, BehaviorEventComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorExternalInterface,          BCComponentID, BehaviorExternalInterface)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorHelperComponent,            BCComponentID, BehaviorHelperComponent)
@@ -73,36 +71,35 @@ LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,                  BCComponentID, P
 
 // Translate entity into string
 template<>
-std::string GetEntityNameForEnumType<Cozmo::BCComponentID>(){ return "BehaviorComponent"; }
+std::string GetEntityNameForEnumType<Vector::BCComponentID>(){ return "BehaviorComponent"; }
 
 template<>
-std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID enumID)
+std::string GetComponentStringForID<Vector::BCComponentID>(Vector::BCComponentID enumID)
 {
   switch(enumID){
-    case Cozmo::BCComponentID::AIComponent:                        { return "AIComponent";}
-    case Cozmo::BCComponentID::AsyncMessageComponent:              { return "AsyncMessageComponent";}
-    case Cozmo::BCComponentID::BehaviorAudioComponent:             { return "BehaviorAudioComponent";}
-    case Cozmo::BCComponentID::BehaviorComponentMessageHandler:    { return "BehaviorComponentMessageHandler";}
-    case Cozmo::BCComponentID::BehaviorContainer:                  { return "BehaviorContainer";}
-    case Cozmo::BCComponentID::BehaviorEventAnimResponseDirector:  { return "BehaviorEventAnimResponseDirector";}
-    case Cozmo::BCComponentID::BehaviorEventComponent:             { return "BehaviorEventComponent";}
-    case Cozmo::BCComponentID::BehaviorExternalInterface:          { return "BehaviorExternalInterface";}
-    case Cozmo::BCComponentID::BehaviorHelperComponent:            { return "BehaviorHelperComponent";}
-    case Cozmo::BCComponentID::BehaviorSystemManager:              { return "BehaviorSystemManager";}
-    case Cozmo::BCComponentID::BlockWorld:                         { return "BlockWorld";}
-    case Cozmo::BCComponentID::DelegationComponent:                { return "DelegationComponent";}
-    case Cozmo::BCComponentID::FaceWorld:                          { return "FaceWorld";}
-    case Cozmo::BCComponentID::RobotInfo:                          { return "RobotInfo";}
-    case Cozmo::BCComponentID::UserDefinedBehaviorTreeComponent:   { return "UserDefinedBehaviorTreeComponent";}
-    case Cozmo::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
-    case Cozmo::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
-    case Cozmo::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}
-    case Cozmo::BCComponentID::ActiveBehaviorIterator:             { return "ActiveBehaviorIterator";}
-    case Cozmo::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
-    case Cozmo::BCComponentID::RobotStatsTracker:                  { return "RobotStatsTracker";}
-    case Cozmo::BCComponentID::AttentionTransferComponent:         { return "AttentionTransferComponent";}
-    case Cozmo::BCComponentID::PowerStateManager:                  { return "PowerStateManager";}
-    case Cozmo::BCComponentID::Count:                              { return "Count";}
+    case Vector::BCComponentID::AIComponent:                        { return "AIComponent";}
+    case Vector::BCComponentID::AsyncMessageComponent:              { return "AsyncMessageComponent";}
+    case Vector::BCComponentID::BehaviorAudioComponent:             { return "BehaviorAudioComponent";}
+    case Vector::BCComponentID::BehaviorComponentMessageHandler:    { return "BehaviorComponentMessageHandler";}
+    case Vector::BCComponentID::BehaviorContainer:                  { return "BehaviorContainer";}
+    case Vector::BCComponentID::BehaviorEventComponent:             { return "BehaviorEventComponent";}
+    case Vector::BCComponentID::BehaviorExternalInterface:          { return "BehaviorExternalInterface";}
+    case Vector::BCComponentID::BehaviorHelperComponent:            { return "BehaviorHelperComponent";}
+    case Vector::BCComponentID::BehaviorSystemManager:              { return "BehaviorSystemManager";}
+    case Vector::BCComponentID::BlockWorld:                         { return "BlockWorld";}
+    case Vector::BCComponentID::DelegationComponent:                { return "DelegationComponent";}
+    case Vector::BCComponentID::FaceWorld:                          { return "FaceWorld";}
+    case Vector::BCComponentID::RobotInfo:                          { return "RobotInfo";}
+    case Vector::BCComponentID::UserDefinedBehaviorTreeComponent:   { return "UserDefinedBehaviorTreeComponent";}
+    case Vector::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
+    case Vector::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
+    case Vector::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}
+    case Vector::BCComponentID::ActiveBehaviorIterator:             { return "ActiveBehaviorIterator";}
+    case Vector::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
+    case Vector::BCComponentID::RobotStatsTracker:                  { return "RobotStatsTracker";}
+    case Vector::BCComponentID::AttentionTransferComponent:         { return "AttentionTransferComponent";}
+    case Vector::BCComponentID::PowerStateManager:                  { return "PowerStateManager";}
+    case Vector::BCComponentID::Count:                              { return "Count";}
   }
 }
 

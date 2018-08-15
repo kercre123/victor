@@ -21,7 +21,7 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class BehaviorProceduralClock;
@@ -73,7 +73,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

@@ -21,7 +21,7 @@
 #include "util/signals/simpleSignal.hpp"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BEIConditionMessageHelper::BEIConditionMessageHelper(IBEIConditionEventHandler* handler,
                                                                      BehaviorExternalInterface& bei)

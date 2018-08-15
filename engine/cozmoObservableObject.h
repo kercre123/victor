@@ -27,7 +27,7 @@
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Fwd decl
 class VizManager;
@@ -181,7 +181,7 @@ inline void ObservableObject::SetFactoryID(FactoryID factoryID)
   _factoryID = factoryID;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ObservableObject_H__

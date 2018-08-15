@@ -18,7 +18,7 @@
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDispatchAfterShake : public ICozmoBehavior
 {
@@ -61,7 +61,7 @@ private:
   DynamicVariables _dVars;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

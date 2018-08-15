@@ -20,7 +20,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/salientPointsComponent.h"
@@ -48,7 +47,7 @@ static const int kObsMaxObjectDistance_mm     = 100;   // don't respond if senso
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
@@ -66,7 +65,7 @@ AIComponent::~AIComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void AIComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   const CozmoContext* context = robot->GetContext();
@@ -85,7 +84,6 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,                 new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,               new ContinuityComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,                     faceSelectionComp);
-      _aiComponents->AddDependentComponent(AIComponentID::FreeplayDataTracker,               new FreeplayDataTracker());
       _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,               new AIInformationAnalyzer());
       _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache,        new ObjectInteractionInfoCache(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                            new PuzzleComponent(*robot));
@@ -217,5 +215,5 @@ BehaviorContainer& AIComponent::GetBehaviorContainer()
 }
 #endif
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

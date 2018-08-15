@@ -46,7 +46,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 const char* PerfMetric::kLogChannelName = "PerfMetric";
 
@@ -855,6 +855,6 @@ void PerfMetric::SendStatusToGame() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

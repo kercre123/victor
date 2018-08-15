@@ -2,7 +2,7 @@
   "behaviorClass": "ReactToFrustration",
   "behaviorID": "ExampleFrustration",
 
-  "anim": "DEPRECATED_FrustratedByFailure",
+  "anim": "FrustratedByFailureMajor",
   "finalEmotionEvent": "FinishedMinorFrustration",
 
   "wantsToBeActivatedCondition": {

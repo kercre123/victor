@@ -15,22 +15,18 @@
 #include "clad/types/behaviorComponent/activeFeatures.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "coretech/common/engine/utils/timer.h"
-#include "engine/cozmoContext.h"
+#include "engine/components/jdocsManager.h"
 #include "engine/robot.h"
 #include "lib/util/source/anki/util/entityComponent/dependencyManagedEntity.h"
 #include "util/console/consoleInterface.h"
-#include "util/fileUtils/fileUtils.h"
-#include "util/logging/logging.h"
+
+
+#define LOG_CHANNEL "RobotStatsTracker"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
-
-static const char* kStatsFolder = "robotStats";
-static const char* kJsonStatsFilename = "stats.json";
 
 static const char* kStimCategory = "Stim";
 static const char* kActiveFeatureCategory = "Feature";
@@ -69,7 +65,6 @@ void ResetRobotStats( ConsoleFunctionContextRef context )
 #define CONSOLE_GROUP "RobotStats"
 
 CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
-CONSOLE_VAR_RANGED( f32, kRobotStatsWritePeriod_s, CONSOLE_GROUP, 60.0f, 0.01f, 300.0f );
 
 RobotStatsTracker::RobotStatsTracker()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RobotStatsTracker)
@@ -89,21 +84,17 @@ RobotStatsTracker::~RobotStatsTracker()
 #endif
 }
 
-void RobotStatsTracker::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
-  const auto& context = dependentComps.GetComponent<ContextWrapper>().context;
-  const auto* platform = context->GetDataPlatform();
+  _jdocsManager = &robot->GetComponent<JdocsManager>();
 
-  const std::string& folder = platform->pathToResource( Util::Data::Scope::Persistent, kStatsFolder );
-  if( Util::FileUtils::DirectoryDoesNotExist( folder ) ) {
-    Util::FileUtils::CreateDirectory( folder );
-  }
-
-  _filename = Util::FileUtils::AddTrailingFileSeparator( folder ) + kJsonStatsFilename;
-
-  // if file exists, attempt to read it
-  if( Util::FileUtils::FileExists(_filename) ) {
-    ReadStatsFromFile();
+  // Call the JdocsManager to see if our robot stats jdoc file exists
+  if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_LIFETIME_STATS)) {
+    LOG_INFO("RobotStatsTracker.InitDependent.NoStatsJdocsFile",
+             "Stats jdocs file not found; creating it now");
+    _jdocsManager->ClearJdocBody(external_interface::JdocType::ROBOT_LIFETIME_STATS);
+    static const bool kSaveToDiskImmediately = true;
+    UpdateStatsJdoc(kSaveToDiskImmediately);
   }
 }
 
@@ -153,83 +144,47 @@ void RobotStatsTracker::IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta
 
 void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta)
 {
-  std::string key = prefix + kRobotStatsSeparator + stat;
-  
-  auto it = _stats.find(key);
-  if( it == _stats.end() ) {
-    it = _stats.emplace(key, 0.0).first;
+  const std::string key = prefix + kRobotStatsSeparator + stat;
+
+  auto& statsJson = *_jdocsManager->GetJdocBodyPointer(external_interface::ROBOT_LIFETIME_STATS);
+  if (!statsJson.isMember(key)) {
+    statsJson[key] = 0;
     PRINT_CH_INFO("RobotStats", "RobotStatsTracker.Increase.NewStat",
                   "Beginning to track value '%s'",
                   key.c_str());
   }
 
-  it->second += delta;
+  statsJson[key] = statsJson[key].asUInt64() + delta;
 
-  _dirtySinceWrite = true;
+  _dirtyJdoc = true;
 }
 
 void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
   
-  // check if it's time to write to disk (and we have any new data to write)
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if( _dirtySinceWrite &&
-      (_lastFileWriteTime_s + kRobotStatsWritePeriod_s <= currTime_s ) ) {
-    WriteStatsToFile();
+  // update jdoc if there were change(s) this tick
+  if( _dirtyJdoc ) {
+    static const bool kSaveToDiskImmediately = false;
+    UpdateStatsJdoc(kSaveToDiskImmediately);
+    _dirtyJdoc = false;
   }
 }
 
-void RobotStatsTracker::WriteStatsToFile()
+bool RobotStatsTracker::UpdateStatsJdoc(const bool saveToDiskImmediately)
 {
-  if( !_filename.empty()) {
-    Json::Value toSave = Json::Value(Json::objectValue);
-    
-    for( const auto& stat : _stats ) {
-      toSave[stat.first] = stat.second;
-    }
-    
-    Util::FileUtils::WriteFile( _filename, toSave.toStyledString() );
-  }
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _lastFileWriteTime_s = currTime_s;
-  _dirtySinceWrite = false;
-}
-
-void RobotStatsTracker::ReadStatsFromFile()
-{
-  Json::Value data;
-  Json::Reader dataReader;
-  dataReader.parse(Util::FileUtils::ReadFile(_filename), data);
-
-  if( ANKI_VERIFY( data.isObject(), "RobotStatsTracker.SavedJsonInvalid",
-                   "must be an object" ) ) {
-    for( auto it = data.begin();
-         it != data.end();
-         ++it ) {
-      if( ANKI_VERIFY( it.key().isString() &&
-                       it->isUInt64(),
-                       "RobotStatsTracker.SavedJsonEntryInvalid",
-                       "json error" ) ) {
-        const std::string& key = it.key().asString();
-        uint64_t val = it->asUInt64();
-        
-        _stats.emplace( key, val );
-
-        PRINT_CH_INFO("RobotStats", "RobotStatsTracker.Init.Load",
-                      "Loaded value '%s' = %llu",
-                      key.c_str(),
-                      val);
-      }
-    }
-  }
+  static const Json::Value* jdocBodyPtr = nullptr;
+  const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_LIFETIME_STATS,
+                                                 jdocBodyPtr, saveToDiskImmediately);
+  return success;
 }
 
 void RobotStatsTracker::ResetAllStats()
 {
   PRINT_NAMED_WARNING("RobotStatsTracker.ResetAllStats", "Resetting and wiping all stats");
-  _stats.clear();
-  WriteStatsToFile();
+  _jdocsManager->ClearJdocBody(external_interface::JdocType::ROBOT_LIFETIME_STATS);
+  static const bool kSaveToDiskImmediately = true;
+  UpdateStatsJdoc(kSaveToDiskImmediately);
 }
 
 }

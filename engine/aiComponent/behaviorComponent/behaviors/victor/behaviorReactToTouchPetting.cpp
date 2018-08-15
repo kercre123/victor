@@ -36,7 +36,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // convenience namespace aliases
 using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
@@ -191,6 +191,8 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
   
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;
+  
+  SmartDisableKeepFaceAlive();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

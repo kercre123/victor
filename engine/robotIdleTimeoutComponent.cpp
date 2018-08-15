@@ -23,7 +23,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 RobotIdleTimeoutComponent::RobotIdleTimeoutComponent()
 : IDependencyManagedComponent(this, RobotComponentID::RobotIdleTimeout)
@@ -31,7 +31,7 @@ RobotIdleTimeoutComponent::RobotIdleTimeoutComponent()
 
 }
 
-void RobotIdleTimeoutComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void RobotIdleTimeoutComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   if (_robot->HasExternalInterface())
@@ -115,5 +115,5 @@ IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence()
   return parallelContainer;
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

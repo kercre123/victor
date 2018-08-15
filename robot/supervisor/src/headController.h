@@ -26,7 +26,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace HeadController {
       
       // TODO: Add if/when needed?
@@ -89,7 +89,7 @@ namespace Anki {
       void Stop();
       
     } // namespace HeadController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_HEAD_CONTROLLER_H_

@@ -24,6 +24,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
@@ -39,14 +40,14 @@
 #include "coretech/common/engine/colorRGBA.h"
 
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
-                                          std::to_string(Anki::Cozmo::CameraCalibrator::INVERTED_BOX).c_str());
+                                          std::to_string(Anki::Vector::CameraCalibrator::INVERTED_BOX).c_str());
   
-  Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
+  Anki::Vector::VisionSystem* visionSystem = new Anki::Vector::VisionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
@@ -61,17 +62,17 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   // Turn on _only_ marker detection and camera calibration
-  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::Idle, true);
+  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::Idle, true);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
-  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::DetectingMarkers, true);
+  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::DetectingMarkers, true);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
-  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::ComputingCalibration, true);
+  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::ComputingCalibration, true);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   // Make sure we run on every frame
-  result = visionSystem->PushNextModeSchedule(Anki::Cozmo::AllVisionModesSchedule({{Anki::Cozmo::VisionMode::DetectingMarkers, Anki::Cozmo::VisionModeSchedule(1)}}));
+  result = visionSystem->PushNextModeSchedule(Anki::Vector::AllVisionModesSchedule({{Anki::Vector::VisionMode::DetectingMarkers, Anki::Vector::VisionModeSchedule(1)}}));
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   Anki::Vision::ImageCache imageCache;
@@ -87,11 +88,11 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   
   imageCache.Reset(img);
   
-  Anki::Cozmo::VisionPoseData robotState; // not needed just to detect markers
+  Anki::Vector::VisionPoseData robotState; // not needed just to detect markers
   result = visionSystem->Update(robotState, imageCache);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
-  Anki::Cozmo::VisionProcessingResult processingResult;
+  Anki::Vector::VisionProcessingResult processingResult;
   bool resultAvailable = visionSystem->CheckMailbox(processingResult);
   EXPECT_TRUE(resultAvailable);
   
@@ -152,9 +153,9 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
 TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
-                                          std::to_string(Anki::Cozmo::CameraCalibrator::QBERT).c_str());
+                                          std::to_string(Anki::Vector::CameraCalibrator::QBERT).c_str());
 
-  Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
+  Anki::Vector::VisionSystem* visionSystem = new Anki::Vector::VisionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
@@ -169,17 +170,17 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   // Turn on _only_ marker detection and camera calibration
-  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::Idle, true);
+  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::Idle, true);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
-  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::DetectingMarkers, true);
+  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::DetectingMarkers, true);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
-  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::ComputingCalibration, true);
+  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::ComputingCalibration, true);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   // Make sure we run on every frame
-  result = visionSystem->PushNextModeSchedule(Anki::Cozmo::AllVisionModesSchedule({{Anki::Cozmo::VisionMode::DetectingMarkers, Anki::Cozmo::VisionModeSchedule(1)}}));
+  result = visionSystem->PushNextModeSchedule(Anki::Vector::AllVisionModesSchedule({{Anki::Vector::VisionMode::DetectingMarkers, Anki::Vector::VisionModeSchedule(1)}}));
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   Anki::Vision::ImageCache imageCache;
@@ -194,11 +195,11 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   
   imageCache.Reset(img);
   
-  Anki::Cozmo::VisionPoseData robotState; // not needed just to detect markers
+  Anki::Vector::VisionPoseData robotState; // not needed just to detect markers
   result = visionSystem->Update(robotState, imageCache);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
-  Anki::Cozmo::VisionProcessingResult processingResult;
+  Anki::Vector::VisionProcessingResult processingResult;
   bool resultAvailable = visionSystem->CheckMailbox(processingResult);
   EXPECT_TRUE(resultAvailable);
   
@@ -270,7 +271,7 @@ TEST(VisionSystem, MarkerDetectionTests)
   // Construct a vision system
   // NOTE: We don't just use a MarkerDetector here because the VisionSystem also does CLAHE preprocessing which
   //       is part of this test (e.g. for low light performance)
-  Cozmo::VisionSystem visionSystem(cozmoContext);
+  Vector::VisionSystem visionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(RESULT_OK, result);
@@ -282,14 +283,14 @@ TEST(VisionSystem, MarkerDetectionTests)
   ASSERT_EQ(RESULT_OK, result);
 
   // Turn on _only_ marker detection
-  result = visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
+  result = visionSystem.SetNextMode(Vector::VisionMode::Idle, true);
   ASSERT_EQ(RESULT_OK, result);
 
-  result = visionSystem.SetNextMode(Cozmo::VisionMode::DetectingMarkers, true);
+  result = visionSystem.SetNextMode(Vector::VisionMode::DetectingMarkers, true);
   ASSERT_EQ(RESULT_OK, result);
 
   // Make sure we run on every frame
-  result = visionSystem.PushNextModeSchedule(Cozmo::AllVisionModesSchedule({{Cozmo::VisionMode::DetectingMarkers, Cozmo::VisionModeSchedule(1)}}));
+  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({{Vector::VisionMode::DetectingMarkers, Vector::VisionModeSchedule(1)}}));
   ASSERT_EQ(RESULT_OK, result);
 
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"
@@ -388,12 +389,12 @@ TEST(VisionSystem, MarkerDetectionTests)
 
       imageCache.Reset(img);
 
-      Cozmo::VisionPoseData robotState; // not needed just to detect markers
+      Vector::VisionPoseData robotState; // not needed just to detect markers
       robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
       result = visionSystem.Update(robotState, imageCache);
       ASSERT_EQ(RESULT_OK, result);
 
-      Cozmo::VisionProcessingResult processingResult;
+      Vector::VisionProcessingResult processingResult;
       bool resultAvailable = visionSystem.CheckMailbox(processingResult);
       EXPECT_TRUE(resultAvailable);
 
@@ -471,7 +472,7 @@ TEST(VisionSystem, ImageQuality)
   using namespace Anki;
 
   // Construct a vision system
-  Cozmo::VisionSystem visionSystem(cozmoContext);
+  Vector::VisionSystem visionSystem(cozmoContext);
 
   // Make sure we are running every frame so we don't skip test images!
   Json::Value config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
@@ -486,13 +487,13 @@ TEST(VisionSystem, ImageQuality)
   ASSERT_EQ(RESULT_OK, result);
 
   // Turn on _only_ image quality check
-  result = visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
+  result = visionSystem.SetNextMode(Vector::VisionMode::Idle, true);
   ASSERT_EQ(RESULT_OK, result);
 
-  result = visionSystem.SetNextMode(Cozmo::VisionMode::CheckingQuality, true);
+  result = visionSystem.SetNextMode(Vector::VisionMode::AutoExposure, true);
   ASSERT_EQ(RESULT_OK, result);
 
-  result = visionSystem.PushNextModeSchedule(Cozmo::AllVisionModesSchedule({{Cozmo::VisionMode::CheckingQuality, Cozmo::VisionModeSchedule(1)}}));
+  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({{Vector::VisionMode::AutoExposure, Vector::VisionModeSchedule(1)}}));
   ASSERT_EQ(RESULT_OK, result);
 
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
@@ -501,38 +502,63 @@ TEST(VisionSystem, ImageQuality)
   const std::vector<std::string> testSubDirs = {
     "Good", "TooBright", "TooDark"
   };
+  
+  struct Test {
+    std::string subDir;
+    s32 exposureTime_ms;
+    f32 exposureGain;
+  };
+  
+  const std::vector<Test> tests = {
+    {
+      .subDir = "Good",
+      .exposureTime_ms = 31,
+      .exposureGain = 2.f
+    },
+    {
+      .subDir = "TooBright",
+      .exposureTime_ms = visionSystem.GetMinCameraExposureTime_ms(),
+      .exposureGain = visionSystem.GetMinCameraGain(),
+    },
+    {
+      .subDir = "TooDark",
+      .exposureTime_ms = visionSystem.GetMaxCameraExposureTime_ms(),
+      .exposureGain = visionSystem.GetMaxCameraGain()
+    },
+  };
 
   Vision::ImageCache imageCache;
 
-  // Fake the exposure parameters so that we are always against the extremes in order
-  // to trigger TooDark and TooBright
-  const Cozmo::VisionSystem::GammaCurve gammaCurve{};
-  result = visionSystem.SetCameraExposureParams(1, 1, 1, 2.f, 2.f, 2.f, gammaCurve);
-  ASSERT_EQ(RESULT_OK, result);
-
-  for(auto & subDir : testSubDirs)
+  for(auto & test : tests)
   {
-    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".jpg");
+    const std::string fullFileName = Util::FileUtils::FullFilePath({testImageDir, test.subDir});
+    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(fullFileName, false, ".jpg");
 
     for(auto & filename : testFiles)
     {
+      // Fake the exposure parameters so that we are always against the extremes in order
+      // to trigger TooDark and TooBright
+      const Vector::VisionSystem::GammaCurve gammaCurve{};
+      result = visionSystem.SetCameraExposureParams(test.exposureTime_ms, test.exposureGain, gammaCurve);
+      ASSERT_EQ(RESULT_OK, result);
+      
       Vision::ImageRGB img;
-      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
+      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, test.subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
 
       imageCache.Reset(img);
 
-      Cozmo::VisionPoseData robotState; // not needed for image quality check
+      Vector::VisionPoseData robotState; // not needed for image quality check
       robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
       result = visionSystem.Update(robotState, imageCache);
       ASSERT_EQ(RESULT_OK, result);
 
-      Cozmo::VisionProcessingResult processingResult;
+      Vector::VisionProcessingResult processingResult;
       bool resultAvailable = visionSystem.CheckMailbox(processingResult);
       EXPECT_TRUE(resultAvailable);
 
       // Make sure the detected quality is as expected for this subdir
-      EXPECT_EQ(subDir, EnumToString(processingResult.imageQuality));
+      EXPECT_EQ(test.subDir, EnumToString(processingResult.imageQuality));
 
       PRINT_NAMED_INFO("VisionSystem.ImageQuality", "%s = %s",
                        filename.c_str(), EnumToString(processingResult.imageQuality));
@@ -575,10 +601,10 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
     imageCache.Reset(testImg);
 
     // Create LaserPointDetector and test on image
-    Cozmo::DebugImageList<Anki::Vision::ImageRGB> debugImageList;
-    std::list<Cozmo::ExternalInterface::RobotObservedLaserPoint> points;
+    Vector::DebugImageList<Anki::Vision::ImageRGB> debugImageList;
+    std::list<Vector::ExternalInterface::RobotObservedLaserPoint> points;
 
-    Cozmo::LaserPointDetector detector(nullptr);
+    Vector::LaserPointDetector detector(nullptr);
     result = detector.Detect(imageCache, false, points, debugImageList);
     ASSERT_EQ(RESULT_OK, result);
     EXPECT_EQ(expectedPoints, points.size()) << "Image: "<<imageName;
@@ -614,4 +640,41 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
 
 } // LaserPointDetector
 
+// This test is meant to avoid checking in a vision_config.json or code changes that break the ability to load
+// the neural net model(s) successfully.
+GTEST_TEST(NeuralNets, InitFromConfig)
+{
+  using namespace Anki;
+  
+  // Load vision_config.json file and get NeuralNets section
+  cozmoContext->GetDataLoader()->LoadRobotConfigs();
+  const Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
+  ASSERT_TRUE(config.isMember("NeuralNets"));
+  const Json::Value& neuralNetConfig = config["NeuralNets"];
+  
+  const std::string visionConfigPath = Util::FileUtils::FullFilePath({"config", "engine", "vision"});
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                               visionConfigPath);
+  const std::string cachePath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "vision");
+  const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
+  const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
+  
+  // Make sure "NeuralNetRunner" load succeeds, given all the current params in vision_config.json
+  Vision::NeuralNetRunner neuralNetRunner;
+  const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, neuralNetConfig);
+  ASSERT_EQ(RESULT_OK, loadRunnerResult);
+  
+  ASSERT_TRUE(neuralNetConfig.isMember("graphFile"));
+  const std::string modelFileName = neuralNetConfig["graphFile"].asString();
+  
+  // Make sure we have correct extension
+  const size_t extIndex = modelFileName.find_last_of(".");
+  ASSERT_NE(std::string::npos, extIndex); // must have extension
+  const std::string extension = modelFileName.substr(extIndex, std::string::npos);
+  ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
+  
+  // Make sure model file exists
+  const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
+  ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+}
 

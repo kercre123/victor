@@ -41,7 +41,7 @@ namespace Anki {
     }
   }
   
-namespace Cozmo {
+namespace Vector {
 
 class UiGameController {
 
@@ -391,6 +391,8 @@ protected:
   // Touch or not touch backpack touch sensor
   void TouchBackpackTouchSensor(bool touched);
 
+  void StartFreeplayMode();
+  
   ///
   // @brief      Sets the actual robot pose.
   // @param[in]  newPose  The new pose with translation in millimeters.
@@ -584,7 +586,7 @@ private:
   
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

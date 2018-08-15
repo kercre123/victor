@@ -23,7 +23,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // forward declarations
 class BackpackLightComponent;
@@ -193,7 +193,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //__Engine_AiComponent_BehaviorComponent_Behaviors_CubeSpinnerGame__

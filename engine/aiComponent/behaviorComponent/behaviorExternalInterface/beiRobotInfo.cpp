@@ -20,7 +20,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 
@@ -125,12 +125,6 @@ const GyroData& BEIRobotInfo::GetHeadGyroData() const
 const RobotID_t BEIRobotInfo::GetID() const
 {
   return _robot.GetID();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotTimeStamp_t BEIRobotInfo::GetLastChargingStateChangeTimestamp() const
-{
-  return _robot.GetBatteryComponent().GetLastChargingStateChangeTimestamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -351,5 +345,5 @@ NVStorageComponent& BEIRobotInfo::GetNVStorageComponent() const
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -22,7 +22,7 @@
 #include <errno.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace Factory {
 

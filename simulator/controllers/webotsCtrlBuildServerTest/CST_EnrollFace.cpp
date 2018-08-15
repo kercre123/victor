@@ -25,7 +25,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 enum class TestState {
@@ -388,5 +388,5 @@ void CST_EnrollFace::HandleFaceEnrollmentCompleted(const ExternalInterface::Face
   _faceEnrollmentCompletedMsg = msg;
 }
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki

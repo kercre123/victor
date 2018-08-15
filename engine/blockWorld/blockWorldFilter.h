@@ -29,7 +29,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // Forward declaration
   class ObservableObject;
@@ -291,7 +291,7 @@ namespace Cozmo {
   
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

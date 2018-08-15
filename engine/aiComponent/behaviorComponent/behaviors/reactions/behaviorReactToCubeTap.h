@@ -19,7 +19,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDriveOffCharger;
 enum class AnimationTrigger : int32_t;
@@ -142,7 +142,7 @@ private:
   
 }; // class BehaviorReactToCubeTap
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Victor_Basestation_Behaviors_BehaviorReactToCubeTap_H__

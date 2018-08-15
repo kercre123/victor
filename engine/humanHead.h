@@ -21,9 +21,9 @@
 #include "clad/types/objectFamilies.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
-  class HumanHead : public ObservableObject // Note: Cozmo:: not Vision::
+  class HumanHead : public ObservableObject // Note: Vector:: not Vision::
   {
   public:
     
@@ -68,7 +68,7 @@ namespace Cozmo {
   }
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_HUMAN_HEAD_H

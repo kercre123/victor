@@ -36,7 +36,7 @@
 #include "test/engine/helpers/cubePlacementHelper.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, BehaviorExternalInterface& behaviorExternalInterface)

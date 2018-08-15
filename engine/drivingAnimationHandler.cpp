@@ -28,7 +28,7 @@
 #include "util/helpers/boundedWhile.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     // Which docking method actions should use
     CONSOLE_VAR(bool, kEnableDrivingAnimations, "DrivingAnimationHandler", true);
@@ -64,7 +64,7 @@ namespace Anki {
       _currDrivingAnimations = _moodBasedDrivingAnims.at(SimpleMoodType::Default);
     }
 
-    void DrivingAnimationHandler::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
+    void DrivingAnimationHandler::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) 
     {
       _robot = robot;
       if(_robot->HasExternalInterface()){

@@ -18,7 +18,7 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 UserIntentTag UserIntentTagFromString(const std::string& name)
 {

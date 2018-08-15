@@ -16,7 +16,7 @@
 #include "coretech/common/engine/math/poseOriginList.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 void VisionPoseData::Set(const RobotTimeStamp_t histTimeStamp_in,
                          const HistRobotState&  histState_in,
@@ -78,5 +78,5 @@ bool VisionPoseData::IsHeadAngleSame(const VisionPoseData& other, const Radians&
   return headSame;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

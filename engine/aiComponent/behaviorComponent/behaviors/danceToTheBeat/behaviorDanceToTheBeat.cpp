@@ -15,7 +15,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/cozmoContext.h"
@@ -32,7 +31,7 @@
 #include "util/time/universalTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   
@@ -163,7 +162,7 @@ void BehaviorDanceToTheBeat::GetBehaviorJsonKeys(std::set<const char*>& expected
 bool BehaviorDanceToTheBeat::WantsToBeActivatedBehavior() const
 {
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::Dancing);
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::Dancing);
   if(!featureEnabled)
   {
     return false;
@@ -360,8 +359,7 @@ void BehaviorDanceToTheBeat::OnBeat()
   if (_iConfig.useBackpackLights) {
     StopBackpackLights();
     auto& blc = GetBEI().GetBackpackLightComponent();
-    const bool shouldLoop = true;
-    blc.SetBackpackAnimation(_iConfig.backpackAnim, shouldLoop);
+    blc.SetBackpackAnimation(_iConfig.backpackAnim);
   }
   
   // If we're currently listening for beats, then this means

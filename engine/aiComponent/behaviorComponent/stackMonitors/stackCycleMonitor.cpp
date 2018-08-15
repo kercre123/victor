@@ -13,15 +13,18 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/stackMonitors/stackCycleMonitor.h"
-
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/container/circularBuffer.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   constexpr unsigned int kCapacity = 5; // see comment in NotifyOfChange
@@ -61,8 +64,10 @@ void StackCycleMonitor::NotifyOfChange( BehaviorExternalInterface& bei,
                              "A cycle was detected between %s and %s",
                              behaviorA.c_str(), behaviorB.c_str() );
       }
-      // todo: now might be a good time to switch to a reliable behavior. for now, we just need an easy-to-find
-      // statement in the log to help identify another possible cause of a "frozen robot"
+      auto* oldBaseOfStack = stackComponent->GetBottomOfStack();
+      SwitchToSafeStack( bei, oldBaseOfStack );
+      // start checking over again
+      _recentBehaviors.clear();
     }
   } else {
     // a behavior lasted more than kMaxTicks, so start over
@@ -100,6 +105,38 @@ bool StackCycleMonitor::CheckForCycle() const
     patternMatches &= (behaviorA == _recentBehaviors.back());
   }
   return patternMatches;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* oldBaseOfStack ) const
+{
+  // ideally this would inject the current base of the stack into the new stack, similar to
+  // DevExecuteBehaviorRerun. For now, just check if onboarding was at the base, and run one of two reset queues.
+  const auto& BC = bei.GetBehaviorContainer();
+  BehaviorID behaviorID = BEHAVIOR_ID(ResetSafely); // normal reset behavior
+  if( oldBaseOfStack != nullptr ) {
+    auto onboardingBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(Onboarding) );
+    auto onboardingBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetOnboardingSafely) );
+    if( (onboardingBehavior1.get() == oldBaseOfStack) || (onboardingBehavior2.get() == oldBaseOfStack) ) {
+      behaviorID = BEHAVIOR_ID(ResetOnboardingSafely); // onboarding reset behavior
+    } else {
+      auto normalBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(ModeSelector) );
+      auto normalBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetSafely) );
+      if( !((normalBehavior1.get() == oldBaseOfStack) || (normalBehavior2.get() == oldBaseOfStack)) ) {
+        PRINT_NAMED_WARNING( "StackCycleMonitor.SwitchToSafeStack.UnknownBase",
+                             "Switching to a stack with base ResetSafely, which contains ModeSelector, but the previous base was %s",
+                             oldBaseOfStack->GetDebugLabel().c_str() );
+      }
+    }
+  }
+  
+  ICozmoBehaviorPtr behaviorToRun = BC.FindBehaviorByID( behaviorID );
+  if( behaviorToRun != nullptr ) {
+    auto& bsm = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
+    const bool waitUntilNextTick = true;
+    bsm.ResetBehaviorStack( behaviorToRun.get(), waitUntilNextTick );
+    // note that even if behaviorToRun is already the base of the stack, it will be stopped and restarted
+  }
 }
 
 }

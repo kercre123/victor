@@ -3,7 +3,7 @@
 // and re-run ./tools/ai/generateBehavior.py
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // BehaviorID is a unique identifier for each instance of a behavior
 // so that they can be referenced by other parts of the behavior system
@@ -74,15 +74,7 @@ enum uint_16 BehaviorID {
   ExamplePetInitialDetection,
 
   // hiking
-  Hiking_BringCubeToBeacon,
-  Hiking_DriveOffCharger,
-  Hiking_FirstLookIntro,
-  Hiking_FirstLookWakeUp,
   Hiking_LookInPlace360,
-  Hiking_LookInPlaceForUnknown,
-  Hiking_RollCube,
-  Hiking_ThinkAboutBeacons,
-  Hiking_VisitInterestingEdge,
 
   // inProgress
   ReactToBody,
@@ -133,6 +125,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   SearchWithinBoundingBox,
+  ActiveLookForFaces,
 
   // victorBehaviorTree/highLevelDelegates/exploring
   ConfirmCharger,
@@ -161,8 +154,19 @@ enum uint_16 BehaviorID {
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates
-  InspectCube,
   InteractWithFaces,
+
+  // victorBehaviorTree/highLevelDelegates/investigateCube
+  InspectCube,
+  InteractWithStaticCube,
+  InvestigateCubeConnectionGate,
+  InvestigateHeldCube,
+  InvestigateHeldCubeGetIn,
+  PlaceCubeByCharger,
+  RollBlockIfNotVertical,
+  TurnToLastFace,
+
+  // victorBehaviorTree/highLevelDelegates
   Keepaway,
 
   // victorBehaviorTree/highLevelDelegates/knowledgeGraph
@@ -174,6 +178,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
+  MeetVictorAlreadyKnowYouPrompt,
   RespondToRenameFace,
 
   // victorBehaviorTree/highLevelDelegates/messaging
@@ -209,8 +214,6 @@ enum uint_16 BehaviorID {
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube
-  InvestigateHeldCube,
-  InvestigateHeldCubeGetIn,
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
@@ -262,6 +265,14 @@ enum uint_16 BehaviorID {
   InitNormalOperation,
   InitPRDemo,
   IntentUnmatched,
+
+  // victorBehaviorTree/lowBatteryMode
+  LowBatteryInAir,
+  LowBatteryMode,
+  LowBatteryOffCharger,
+  LowBatteryTriggerWord,
+
+  // victorBehaviorTree
   ModeSelector,
   NoCloud,
   NoWifi,
@@ -270,7 +281,6 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/onboarding
   Onboarding,
   OnboardingActivateCube,
-  OnboardingAsleep,
   OnboardingComeHere,
   OnboardingComeHereGetOut,
   OnboardingComeHereResume,
@@ -289,6 +299,7 @@ enum uint_16 BehaviorID {
   OnboardingWaitForComeHere,
   OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
+  ResetOnboardingSafely,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,
@@ -338,6 +349,9 @@ enum uint_16 BehaviorID {
   StuckOnEdge,
   TriggerWordWithoutIntent,
 
+  // victorBehaviorTree
+  ResetSafely,
+
   // victorBehaviorTree/sdkBehaviors
   SDK0,
 
@@ -364,7 +378,10 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree
   TriggerWordDetected,
+  UserDefinedBehaviorSelector,
+  UserDefinedBehaviorTreeConfirmNewBehavior,
   UserDefinedBehaviorTreeRouter,
+  UserDefinedBehaviorTreeTextToSpeech,
   Wait,
 
   // victorBehaviorTree/weather/genericResponses

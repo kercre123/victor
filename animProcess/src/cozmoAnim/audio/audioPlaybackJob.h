@@ -27,7 +27,7 @@ namespace Anki {
     struct StandardWaveDataContainer;
   }
 
-  namespace Cozmo {
+  namespace Vector {
     namespace Audio {
       class CozmoAudioController;
     }
@@ -35,7 +35,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -85,7 +85,7 @@ private:
 };
 
 } //  namespace Audio
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_AudioPlaybackJob_H__

@@ -20,7 +20,7 @@
 #include "util/transport/connectionStats.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 	RobotExternalRequestComponent::RobotExternalRequestComponent()
 	  : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RobotExternalRequestComponent)
@@ -95,6 +95,19 @@ namespace Cozmo {
 	  external_interface::GatewayWrapper wrapper;
 	  wrapper.set_allocated_say_text_response(response);
 	  robot->GetGatewayInterface()->Broadcast(wrapper);
+	}
+
+	void RobotExternalRequestComponent::ImageRequest(const AnkiEvent<external_interface::GatewayWrapper>& imageRequest) {
+	  Robot* robot = _context->GetRobotManager()->GetRobot();
+	  external_interface::ImageRequest request = imageRequest.GetData().image_request();
+	  ImageSendMode sendMode = ImageSendMode(request.mode());
+	  if (sendMode == ImageSendMode::Off) {
+	    robot->SetSDKRequestingImage(false);
+	  }
+	  else {
+	    robot->SetSDKRequestingImage(true);
+	  }
+	  robot->SetImageSendMode(sendMode);
 	}
 
 } // Cozmo namespace

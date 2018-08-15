@@ -20,7 +20,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 enum class TestState
 {
@@ -166,6 +166,6 @@ void CST_DockActionInterrupts::HandleRobotCompletedAction(const ExternalInterfac
   _lastActionResult = {msg.idTag, msg.result};
 }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

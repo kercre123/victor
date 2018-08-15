@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -31,7 +31,7 @@
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -381,5 +381,5 @@ void BehaviorDevImageCapture::BlinkLight()
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

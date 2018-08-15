@@ -21,7 +21,7 @@ namespace Util {
 namespace Data {
   class DataPlatform;
 } // end namspace Data
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform* platform, const std::string& apprun);

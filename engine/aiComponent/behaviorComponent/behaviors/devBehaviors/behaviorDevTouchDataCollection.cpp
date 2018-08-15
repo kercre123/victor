@@ -23,7 +23,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -99,11 +99,9 @@ void BehaviorDevTouchDataCollection::HandleWhileActivated(const RobotToEngineEve
 
       static size_t ticksNotMeasured = 0;
       if( RobotConfigMatchesExpected(bexi) ) {
-        for(int i=0; i<STATE_MESSAGE_FREQUENCY; ++i) {
-          _dVars.touchValues.push_back(payload.backpackTouchSensorRaw[i]);
-        }
+          _dVars.touchValues.push_back(payload.backpackTouchSensorRaw);
         ticksNotMeasured = 0;
-        if( _dVars.touchValues.size()%600 == 0 ) {
+        if( _dVars.touchValues.size()%100 == 0 ) {
           PRINT_CH_INFO("Behaviors", "TouchDataCollection", "3 seconds collected");
         }
       } else {

@@ -15,7 +15,7 @@
 #include "engine/debug/devLogReader.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class DevLogReaderPrint: public DevLogReader {
 public:
@@ -30,7 +30,7 @@ protected:
 
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

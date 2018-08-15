@@ -21,7 +21,7 @@
 
 namespace Anki {
 
-  namespace Cozmo {
+  namespace Vector {
 
     namespace IMUFilter {
 
@@ -70,7 +70,7 @@ namespace Anki {
       const f32* GetGyroBias();
       
     } // namespace IMUFilter
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // IMU_FILTER_H_

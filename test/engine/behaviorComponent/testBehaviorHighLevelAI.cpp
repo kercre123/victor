@@ -30,13 +30,13 @@
 #include "test/engine/behaviorComponent/testIntentsFramework.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 extern CozmoContext* cozmoContext;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // class that is friends with UnitTestKey and ConditionUserIntentPending
 class TestBehaviorHighLevelAI
@@ -223,7 +223,7 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
   
   // a list of the named completedUserIntents(.json), the behavior that responds to it, and the HLAI state that should follow
   std::vector< std::tuple<std::string, BehaviorID, std::string> > expected = {
-    { "fist_bump",       BEHAVIOR_ID(FistBumpVoiceCommand),   "Socializing" },
+    { "fist_bump",       BEHAVIOR_ID(FistBumpVoiceCommand),   "Observing" },
     { "keep_away",       BEHAVIOR_ID(KeepawayVoiceCommand),   "Socializing" },
     { "roll_cube",       BEHAVIOR_ID(RollCubeVoiceCommand),   "Observing"   },
     { "meet_victor",     BEHAVIOR_ID(MeetVictor),             "Socializing" },

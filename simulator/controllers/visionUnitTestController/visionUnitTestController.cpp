@@ -105,7 +105,7 @@ int main(int argc, char **argv)
   Matlab matlab(false);
   matlab.EvalStringEcho("run(fullfile('..', '..', '..', '..', 'matlab', 'initCozmoPath'));");
 #else
-  Anki::Cozmo::VisionSystem::DetectFiducialMarkersParameters detectionParams;
+  Anki::Vector::VisionSystem::DetectFiducialMarkersParameters detectionParams;
   detectionParams.Initialize();
 #endif
   
@@ -270,7 +270,7 @@ int main(int argc, char **argv)
     currentPose["RobotPose"]["Angle"]     = rotation[3];
     currentPose["RobotPose"]["HeadAngle"] = headAngle;
     
-    std::vector<Cozmo::MessageVisionMarker> markers;
+    std::vector<Vector::MessageVisionMarker> markers;
 
 #if USE_MATLAB_DETECTION
     // Process the image with Matlab to detect the vision markers
@@ -289,7 +289,7 @@ int main(int argc, char **argv)
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
     
     for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
-      Cozmo::MessageVisionMarker msg;
+      Vector::MessageVisionMarker msg;
       msg.timestamp = 0;
       
       matlab.EvalStringEcho("marker = markers{%d}; "

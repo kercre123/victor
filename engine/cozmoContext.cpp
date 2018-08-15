@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ThreadIDInternal : private Util::noncopyable
 {
@@ -88,7 +88,7 @@ void CozmoContext::SetLocale(const std::string& localeString)
 {
   // TODO: VIC-27 - Migrate Audio Local functionality to Victor
   using Locale = Anki::Util::Locale;
-//  using CozmoAudioController = Anki::Cozmo::Audio::CozmoAudioController;
+//  using CozmoAudioController = Anki::Vector::Audio::CozmoAudioController;
 
   if (!localeString.empty()) {
     Locale locale = Locale::LocaleFromString(localeString);
@@ -115,5 +115,5 @@ bool CozmoContext::IsEngineThread() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

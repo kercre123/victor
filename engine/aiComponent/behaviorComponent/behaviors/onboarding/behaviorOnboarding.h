@@ -25,7 +25,7 @@ namespace Util{
   class IConsoleFunction;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorOnboardingDetectHabitat;
 class BehaviorOnboardingInterruptionHead;
@@ -97,10 +97,8 @@ private:
   // Put this behavior in a state where it waits for the BSM to switch behavior stacks
   void TerminateOnboarding();
   
-  void SetTriggerWordEnabled(bool enabled);
   void SetAllowedIntent(UserIntentTag tag);
   void SetAllowAnyIntent();
-  void SetStreamAfterWakeWord(bool stream);
   
   void SendContinueResponse( bool acceptedContinue, int step );
   
@@ -111,6 +109,8 @@ private:
   int GetPhysicalInterruptionMsgType( BehaviorID interruptionID ) const;
   
   void OnDelegateComplete();
+  
+  void SendStageToApp( const OnboardingStages& stage ) const;
 
   // before dealing with any stages, make sure the eyes animation wakes up based on the current stage.
   // the initial wake up stage handles its own wake up animations
@@ -229,7 +229,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboarding__

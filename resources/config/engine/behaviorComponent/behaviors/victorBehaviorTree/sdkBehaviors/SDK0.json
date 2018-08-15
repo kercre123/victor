@@ -5,5 +5,5 @@
   "associatedActiveFeature": "SDK",
 
   "driveOffChargerBehavior": "DriveOffChargerStraight",
-  "goHomeBehavior": "GoHome" 
+  "findAndGoToHomeBehavior": "FindAndGoToHome"
 }

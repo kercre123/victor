@@ -21,7 +21,10 @@
       "behavior": "TriggerWordDetected",
       "audioAllowed": true
     },
-    // todo: TimerUtilityCoordinator?
+    {
+      "behavior": "TimerUtilityCoordinator",
+      "audioAllowed": true
+    },
     {
       "behavior": "BeQuietAnims",
       "audioAllowed": false

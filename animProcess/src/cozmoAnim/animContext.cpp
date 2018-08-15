@@ -6,6 +6,7 @@
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
+#include "cozmoAnim/showAudioStreamStateManager.h"
 
 #include "webServerProcess/src/webService.h"
 
@@ -19,7 +20,7 @@
 #define LOG_CHANNEL "AnimContext"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ThreadIDInternal : private Util::noncopyable
 {
@@ -34,6 +35,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
   , _micDataSystem(new MicData::MicDataSystem(dataPlatform, this))
+  , _showStreamStateManager(new ShowAudioStreamStateManager(this))
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
   , _threadIdHolder(new ThreadIDInternal)
@@ -103,5 +105,5 @@ void AnimContext::SetLocale(const std::string & locale)
     _micDataSystem->UpdateLocale(*_locale);
   }
 }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

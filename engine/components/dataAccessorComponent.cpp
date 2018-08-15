@@ -20,7 +20,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DataAccessorComponent::DataAccessorComponent()
@@ -38,7 +38,7 @@ DataAccessorComponent::~DataAccessorComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void DataAccessorComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   auto* context = dependentComps.GetComponent<ContextWrapper>().context;
   auto& dataLoader = *context->GetDataLoader();
@@ -53,8 +53,10 @@ void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   _variableSnapshotJsonMap = dataLoader.GetVariableSnapshotJsonMap();
   // Copy, but it's fine
   _cupeSpinnerConfig = dataLoader.GetCubeSpinnerConfig();
+  _userDefinedConditionToBehaviorsMap = dataLoader.GetUserDefinedConditionToBehaviorsMap();
+  _userDefinedEditCondition = dataLoader.GetUserDefinedEditCondition();
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

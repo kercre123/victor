@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class QuadTreeProcessor;
 using namespace QuadTreeTypes;

@@ -39,7 +39,7 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using namespace ExternalInterface;
 
@@ -176,7 +176,7 @@ void BehaviorTrackLaser::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
-  const bool featureEnabled = robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::Laser);
+  const bool featureEnabled = robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Vector::FeatureType::Laser);
   if(!featureEnabled)
   {
     return false;
@@ -253,7 +253,13 @@ void BehaviorTrackLaser::InitHelper()
     {VisionMode::ComputingStatistics,  VisionModeSchedule(true)},
   }, kUseDefaultsForUnspecified);
   GetBEI().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
-  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain);
+  
+  const Vision::CameraParams darkenedParams(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain,
+                                            _dVars.originalCameraSettings.whiteBalanceGainR,
+                                            _dVars.originalCameraSettings.whiteBalanceGainG,
+                                            _dVars.originalCameraSettings.whiteBalanceGainB);
+  
+  GetBEI().GetVisionComponent().SetAndDisableCameraControl(darkenedParams);
 
   _dVars.exposureChangedTime_ms = 0;
   _dVars.imageMean = -1;
@@ -827,8 +833,7 @@ void BehaviorTrackLaser::Cleanup()
 
   // Leave the exposure/color settings as they were when we started
   GetBEI().GetVisionComponent().PopCurrentModeSchedule();
-  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(
-    _dVars.originalCameraSettings.exposureTime_ms, _dVars.originalCameraSettings.gain);
+  GetBEI().GetVisionComponent().SetAndDisableCameraControl(_dVars.originalCameraSettings);
   GetBEI().GetVisionComponent().EnableAutoExposure(true);
 
   // Only pop animations if set within this behavior
@@ -850,5 +855,5 @@ void BehaviorTrackLaser::SetState_internal(State state, const std::string& state
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

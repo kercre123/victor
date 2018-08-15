@@ -21,7 +21,7 @@ namespace Util {
 class RandomGenerator;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorCooldownInfo
 {

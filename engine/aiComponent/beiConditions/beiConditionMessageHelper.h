@@ -19,7 +19,7 @@
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace ExternalInterface {
 enum class MessageEngineToGameTag : uint8_t;

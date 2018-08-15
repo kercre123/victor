@@ -27,7 +27,7 @@
 #include "clad/types/lcdTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -57,7 +57,7 @@ PowerStateManager::PowerStateManager()
 {
 }
 
-void PowerStateManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void PowerStateManager::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _context = dependentComps.GetComponent<ContextWrapper>().context;
 }

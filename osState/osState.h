@@ -33,7 +33,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class DesiredCPUFrequency : uint32_t {
   Automatic = 0,
@@ -120,6 +120,8 @@ public:
 
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
+  
+  void GetOSBuildVersion(int& major, int& minor, int& incremental) const;
 
   // Returns "major.minor.build" for reporting to DAS
   const std::string& GetRobotVersion();
@@ -195,7 +197,7 @@ private:
   
 }; // class OSState
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Victor_OSState_H__ */

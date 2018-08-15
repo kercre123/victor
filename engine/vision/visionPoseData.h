@@ -22,7 +22,7 @@
 #include "engine/rollingShutterCorrector.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct VisionPoseData
 {
@@ -96,7 +96,7 @@ void swap(T1&& first, T2&& second)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_VisionPoseData_H__ */

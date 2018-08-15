@@ -55,14 +55,9 @@ static void DebuggerHook(int signum, siginfo_t * info, void * ctx)
   // will return without waiting for dump to complete.
   victor_dump_tombstone_timeout(tid, nullptr, 0, -1);
 
-  /* restore default signal handler so we fault for real when we return */
-  signal(signum, SIG_DFL);
-
-  /* set SA_RESTART so signal will be rethrown */
-  struct sigaction action;
-  sigaction(signum, nullptr, &action);
+  /* Restore original signal handler, but force SA_RESTART so signal will be rethrown */
+  struct sigaction action = gHookStash[signum];
   action.sa_flags |= SA_RESTART;
-  sigemptyset(&action.sa_mask);
   sigaction(signum, &action, nullptr);
 
   //

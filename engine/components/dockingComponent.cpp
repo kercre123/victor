@@ -21,7 +21,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Don't send docking error signal if body is rotating faster than this
 CONSOLE_VAR(f32, kDockingRotatingTooFastThresh_degPerSec, "WasRotatingTooFast.Dock.Body_deg/s", RAD_TO_DEG(0.4f));
@@ -33,7 +33,7 @@ DockingComponent::DockingComponent()
 }
 
 
-void DockingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void DockingComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }
@@ -108,7 +108,7 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
   // the marker can be seen anywhere in the image (same as above function), otherwise the
   // marker's center must be seen at the specified image coordinates
   // with pixel_radius pixels.
-  Result sendResult = _robot->SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f,
+  Result sendResult = _robot->SendRobotMessage<::Anki::Vector::DockWithObject>(0.0f,
                                                                              speed_mmps,
                                                                              accel_mmps2,
                                                                              decel_mmps2,
@@ -122,7 +122,7 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
 
 Result DockingComponent::AbortDocking() const
 {
-  return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::AbortDocking()));
+  return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Vector::AbortDocking()));
 }
 
 void DockingComponent::UpdateDockingErrorSignal(const RobotTimeStamp_t t) const

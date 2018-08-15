@@ -19,7 +19,7 @@
 #include "util/signals/signalHolder.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class Robot;
 class IActionRunner;
@@ -32,7 +32,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -58,7 +58,7 @@ private:
   
 }; // class RobotIdleTimeoutComponent
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

@@ -19,7 +19,7 @@
 #include <assert.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 void CommsRecord::Print()
 {
@@ -185,7 +185,7 @@ void CommsRecorder::ClearMsgPackets()
 }
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif

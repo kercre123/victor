@@ -25,11 +25,11 @@
 #include "util/math/math.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
-CONSOLE_VAR(bool, kStimFace_enabled, "StimFace", true);
+CONSOLE_VAR(bool, kStimFace_enabled, "StimFace", false);
 CONSOLE_VAR_RANGED(int, kStimFace_ema_N, "StimFace", 20, 0, 100);
 CONSOLE_VAR_RANGED(f32, kStimFace_sendThresh, "StimFace", 0.01f, 0.0f, 1.0f );
 CONSOLE_VAR_RANGED(f32, kStimFace_minSaturation, "StimFace", 0.25f, 0.0f, 1.0f );
@@ -45,7 +45,7 @@ StimulationFaceDisplay::~StimulationFaceDisplay()
 {
 }
 
-void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void StimulationFaceDisplay::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _saturationMap = std::make_unique<Util::GraphEvaluator2d>();
 

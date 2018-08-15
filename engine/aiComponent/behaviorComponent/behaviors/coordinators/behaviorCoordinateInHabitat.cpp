@@ -21,7 +21,7 @@
 #include <iterator>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace
 {

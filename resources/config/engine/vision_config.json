@@ -7,8 +7,8 @@
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
     "DetectingOverheadEdges"     : false,
-    "CheckingQuality"            : true,
-    "CheckingWhiteBalance"       : true,
+    "AutoExposure"               : true,
+    "WhiteBalance"               : true,
     "EstimatingFacialExpression" : false,
     "DetectingSmileAmount"       : false,
     "DetectingGaze"              : false,
@@ -28,10 +28,8 @@
     // value to process every Nth frame
     "DetectingPets"          : [true, false],
     "DetectingOverheadEdges" : [false, true],
-    // CheckingQuality and CheckingAWB run every 8 frames but are interleaved so they don't
-    // run at the same time and step on each other's toes
-    "CheckingQuality"        : [false, false, false, false, false, false, false, true],
-    "CheckingWhiteBalance"   : [false, false, false, true, false, false, false, false],
+    "AutoExposure"           : 5,  // NOTE: Should probably be no more frequent than every 5th frame
+    "WhiteBalance"           : 5,  // NOTE: Should probably be no more frequent than every 5th frame
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "RunningNeuralNet"       : 1, // Won't actually run every frame, but as frequently as possible (is asynchronous)
@@ -67,7 +65,7 @@
   {
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
-    "TargetValue"               : 100,   // [0,255] - Try to make targetPercentile have this value
+    "TargetValue"               : 80,    // [0,255] - Try to make targetPercentile have this value
     "TargetPercentile"          : 0.50,  // [0.0, 1.0]
     "CyclingTargetValues"       : [5, 100, 250], // When "cycling" exposure is enabled, the target values to use [0,255]
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
@@ -139,7 +137,7 @@
     //
     // Model definition:
     //
-    "graphFile"           : "person_localization_victor_6x6_92_accuracy.pb", 
+    "graphFile"           : "person_localization_victor_6x6_92_accuracy.tflite", 
     "memoryMapGraph"      : 0,
     "labelsFile"          : "person-labels.txt", 
     "architecture"        : "custom",

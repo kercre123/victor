@@ -18,7 +18,7 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class ObjectType : int32_t;
 class ObservableObject;
@@ -60,7 +60,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_BeiConditions_ConditionObjectKnown_H__

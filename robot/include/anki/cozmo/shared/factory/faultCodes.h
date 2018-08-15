@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace FaultCode {
 
@@ -45,12 +45,14 @@ enum : uint16_t {
   IMU_FAILURE           = 960,
 
   //critical processes
+  NO_GATEWAY            = 921,
   SYSTEMD               = 919,
   NO_ROBOT_COMMS        = 917,
   NO_ENGINE_COMMS       = 915,
   NO_SWITCHBOARD        = 913,
   AUDIO_FAILURE         = 911,
-
+  STOP_BOOT_ANIM_FAILED = 909,
+    
   //Body and external errors
   NO_BODY               = 899, //no response from syscon
 

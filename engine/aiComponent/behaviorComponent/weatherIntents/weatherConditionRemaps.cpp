@@ -17,7 +17,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kInitialTypesKey    = "InitialCladTypes";
@@ -156,5 +156,5 @@ WeatherConditionRemaps::RemapEntry::RemapEntry(const RemapEntry& other)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

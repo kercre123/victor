@@ -17,7 +17,7 @@
 #include "coretech/planning/shared/path.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 DrivePathAction::DrivePathAction(const Planning::Path& path)
@@ -56,6 +56,6 @@ ActionResult DrivePathAction::CheckIfDone()
 }
 
   
-} //namespace Cozmo
+} //namespace Vector
 } //namespace Anki
 

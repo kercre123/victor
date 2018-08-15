@@ -39,14 +39,14 @@ static const f32 ExpectedDetectionPercent   = 90.f;
 //static const s32 ExpectedNumFaceIDsLimit    = 10;
 static const f32 ExpectedFalsePositivePercent = 1.f;
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 // Console vars we want to modify for the tests below
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   extern bool kIgnoreFacesBelowRobot;
   extern f32 kBodyTurnSpeedThreshFace_degs;
   extern f32 kHeadTurnSpeedThreshFace_degs;

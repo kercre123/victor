@@ -30,7 +30,7 @@
 #include <webots/Supervisor.hpp>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
@@ -802,7 +802,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Touch: %u", 
-    payload.state.backpackTouchSensorRaw[STATE_MESSAGE_FREQUENCY-1]
+    payload.state.backpackTouchSensorRaw
   );
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_TOUCH, Anki::NamedColors::GREEN, txt);
 
@@ -1557,5 +1557,5 @@ void VizControllerImpl::ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::M
 }
   
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

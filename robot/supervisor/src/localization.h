@@ -5,7 +5,7 @@
 #include "coretech/common/shared/types.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Localization {
 
       Result Init();

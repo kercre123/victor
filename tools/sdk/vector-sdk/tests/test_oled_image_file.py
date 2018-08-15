@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 '''
-Test showing solid image of cozmo on vector's face for 4 seconds
+Test showing solid image of Cozmo on Vector's face for 4 seconds
 '''
 
 import os
 import sys
+import time
 
 try:
     from PIL import Image
@@ -29,6 +30,7 @@ def main():
         image_file = Image.open(image_path)
         screen_data = vector.oled_face.convert_image_to_screen_data(image_file)
         robot.oled.set_oled_with_screen_data(screen_data, 4.0)
+        time.sleep(5)  # TODO: make set_oled a blocking call until the time passes
 
         print("------ finish testing oled ------")
 

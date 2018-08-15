@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 EmotionScorer::EmotionScorer(const Json::Value& inJson)
@@ -85,6 +85,6 @@ bool EmotionScorer::WriteToJson(Json::Value& outJson) const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

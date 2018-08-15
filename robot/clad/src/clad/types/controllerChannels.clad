@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 ControllerChannel
 {
@@ -15,5 +15,5 @@ enum uint_8 ControllerChannel
   controller_pointTurn
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

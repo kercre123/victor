@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTreeStateHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorCoordinateInHabitat : public BehaviorDispatcherPassThrough
 {
@@ -52,7 +52,7 @@ private:
   InstanceConfig _iConfig;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateInHabitat__

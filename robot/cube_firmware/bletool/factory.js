@@ -7,6 +7,7 @@ var emitter = new EventEmitter();
 const CUBE_SERVICE = 'c6f6c70fd219598bfb4c308e1f22f830';
 
 noble.on('stateChange', function(state) {
+  console.log(state);
   if (state === 'poweredOn') {
     noble.startScanning([CUBE_SERVICE]);  // Only cubes, allow duplicates
   } else {

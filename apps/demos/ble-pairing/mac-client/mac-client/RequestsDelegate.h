@@ -24,8 +24,8 @@ typedef NS_ENUM(NSUInteger, RequestId) {
 
 @protocol RequestDelegate
 
--(void) handleResponse:(RequestId)requestId message:(Anki::Cozmo::ExternalComms::RtsConnection_2)msg;
--(void) handleResponse_3:(RequestId)requestId message:(Anki::Cozmo::ExternalComms::RtsConnection_3)msg;
+-(void) handleResponse:(RequestId)requestId message:(Anki::Vector::ExternalComms::RtsConnection_2)msg;
+-(void) handleResponse_3:(RequestId)requestId message:(Anki::Vector::ExternalComms::RtsConnection_3)msg;
 
 @end
 

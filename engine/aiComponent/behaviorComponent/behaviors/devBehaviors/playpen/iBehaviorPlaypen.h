@@ -29,7 +29,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Macros for setting playpen result codes
 #define PLAYPEN_SET_RESULT(result)  { \

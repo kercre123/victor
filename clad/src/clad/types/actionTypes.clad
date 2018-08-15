@@ -8,7 +8,7 @@
 #include "clad/types/unexpectedMovementTypes.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum no_cpp_class uint_32 ActionConstants {
   INVALID_TAG      =          0,
@@ -60,6 +60,7 @@ enum int_32 RobotActionType {
     PLAY_ANIMATION,
     PLAY_CUBE_ANIMATION,
     POP_A_WHEELIE,
+    RESELECTING_LOOP_ANIMATION,
     ROLL_OBJECT_LOW,           // Possible sub-type of PickAndPlaceAction
     SAY_TEXT,
     SEARCH_FOR_NEARBY_OBJECT,
@@ -145,5 +146,5 @@ enum uint_8 QueueActionPosition {
     IN_PARALLEL
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -36,7 +36,7 @@
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     namespace { // "Private members"
 
@@ -160,7 +160,7 @@ namespace Anki {
     Result CameraService::Update()
     {
       if (nullptr != _engineSupervisor) {
-        if (_engineSupervisor->step(Cozmo::ROBOT_TIME_STEP_MS) == -1) {
+        if (_engineSupervisor->step(Vector::ROBOT_TIME_STEP_MS) == -1) {
           return RESULT_FAIL;
         }
         // AudioUpdate();
@@ -370,5 +370,5 @@ namespace Anki {
       // no-op
       return true;
     }
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

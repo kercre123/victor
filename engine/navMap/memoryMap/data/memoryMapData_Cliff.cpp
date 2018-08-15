@@ -17,7 +17,7 @@ namespace {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapData_Cliff::MemoryMapData_Cliff(const Pose3d& cliffPose, RobotTimeStamp_t t)
@@ -53,5 +53,5 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData_Cliff::GetExternalContentT
   return ExternalInterface::ENodeContentTypeEnum::Cliff;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

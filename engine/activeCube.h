@@ -17,7 +17,7 @@ namespace Anki {
 // Forward Declarations:
 class Camera;
 
-namespace Cozmo {
+namespace Vector {
   
 class ActiveCube : public Block, public ActiveObject
 {
@@ -92,7 +92,7 @@ inline WhichCubeLEDs ActiveCube::MakeTopAndBottomPattern(WhichCubeLEDs topPatter
 }
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ActiveCube_H__

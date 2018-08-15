@@ -20,7 +20,6 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
 
 class RecentOccurrenceTracker;
 
@@ -110,7 +109,6 @@ private:
 };
 
 
-}
 }
 
 #endif

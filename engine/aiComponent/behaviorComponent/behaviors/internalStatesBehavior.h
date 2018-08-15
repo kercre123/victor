@@ -14,7 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_InternalStateBehavior_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 
 #include <set>
@@ -25,7 +25,7 @@ namespace Util {
 class IConsoleFunction;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class UnitTestKey;
   
@@ -139,6 +139,8 @@ private:
   StateID _consoleFuncState = InvalidStateID;
   
   bool _firstRun = true;
+  
+  bool _ignoreMissingTransitions = false;
   
 public:
   // for unit tests: grab a list of all conditions for each state name

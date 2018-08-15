@@ -21,7 +21,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BehaviorPlaypenSoundCheck::BehaviorPlaypenSoundCheck(const Json::Value& config)
 : IBehaviorPlaypen(config)

@@ -23,7 +23,7 @@ namespace Util {
   class IConsoleVariable;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 
 class ConditionConsoleVar : public IBEICondition

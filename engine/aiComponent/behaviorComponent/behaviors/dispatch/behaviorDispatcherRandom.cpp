@@ -18,7 +18,7 @@
 #include "util/random/randomVectorSampler.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const char* kBehaviorsKey = "behaviors";
@@ -202,5 +202,5 @@ void BehaviorDispatcherRandom::DispatcherUpdate()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

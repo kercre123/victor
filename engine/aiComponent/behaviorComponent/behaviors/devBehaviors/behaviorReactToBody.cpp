@@ -27,7 +27,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   const char* const kDriveOffChargerBehaviorKey        = "driveOffChargerBehavior";
@@ -425,5 +425,5 @@ void BehaviorReactToBody::TransitionToCompleted()
   LOG_DEBUG("BehaviorReactToBody::TransitionToCompleted.Finished","");
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

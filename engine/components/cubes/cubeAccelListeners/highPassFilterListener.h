@@ -20,7 +20,7 @@
 #include "coretech/common/engine/math/matrix_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 struct ActiveAccel;
 

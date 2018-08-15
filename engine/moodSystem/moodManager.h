@@ -48,7 +48,7 @@ enum class ParameterType : u32;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 constexpr float kEmotionChangeVerySmall = 0.06f;
 constexpr float kEmotionChangeSmall     = 0.12f;
@@ -84,7 +84,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
     components.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -261,7 +261,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

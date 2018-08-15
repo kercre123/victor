@@ -21,7 +21,7 @@
 #include "pathPlanner.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class MinimalAnglePlanner : public IPathPlanner
 {

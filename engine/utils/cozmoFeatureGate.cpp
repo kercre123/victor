@@ -20,7 +20,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #define FEATURE_OVERRIDES_ENABLED ( REMOTE_CONSOLE_ENABLED )
   
@@ -144,6 +144,7 @@ static const char* kFeatureEnumString =
   "KnowledgeGraph,"
   "Dancing,"
   "CubeBehaviors,"
+  "CubeSpinner,"
   "GreetAfterLongTime,"
   "AttentionTransfer,"
   "PopAWheelie,"

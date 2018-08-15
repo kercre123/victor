@@ -9,9 +9,7 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-// TODO: put this back if/when we start supporting other NeuralNetRunnerModels
-//// The contents of this file are only used when the build is using *neither* TF or TF Lite
-//#if (!defined(USE_TENSORFLOW) || !USE_TENSORFLOW) && (!defined(USE_TENSORFLOW_LITE) || !USE_TENSORFLOW_LITE)
+#if defined(VIC_NEURALNETS_USE_OPENCVDNN)
 
 #include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/image.h"
@@ -373,5 +371,5 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
 } // namespace Vision
 } // namespace Anki
 
-//#endif // #if !defined(USE_TENSORFLOW) || !USE_TENSORFLOW
+#endif /* defined(VIC_NEURALNETS_USE_OPENCVDNN) */
 

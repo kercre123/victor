@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackVisualizer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Fwd Declarations
 class BehaviorPromptUserForVoiceCommand;
@@ -119,7 +119,7 @@ private:
   void SetState_internal(EState state, const std::string& stateName);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBlackJack__

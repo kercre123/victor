@@ -45,7 +45,7 @@
 
 namespace Anki {
 
-  namespace Cozmo {
+  namespace Vector {
 
     // Forward Declarations:
     class Robot;
@@ -304,7 +304,7 @@ namespace Anki {
 
     }; // class IAction
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ACTION_INTERFACE_H

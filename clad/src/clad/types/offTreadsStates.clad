@@ -4,7 +4,7 @@
 // Copyright: Anki Inc (c) 2016
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum int_8 OffTreadsState {
   OnTreads,
@@ -19,5 +19,5 @@ enum int_8 OffTreadsState {
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

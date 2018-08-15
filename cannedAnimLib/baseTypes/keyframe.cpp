@@ -40,7 +40,7 @@ bool has_any_digits(const std::string& s)
 #define CREATE_STREAM_MSG(msgName, sourceMsg)
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
 #pragma mark -
 #pragma mark IKeyFrame
@@ -1110,11 +1110,11 @@ if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
 }                                                                       \
 _streamMsg.lights[__LED_NAME__].onColor = color; \
 _streamMsg.lights[__LED_NAME__].offColor = color; \
-_streamMsg.lights[__LED_NAME__].onFrames = 0; \
-_streamMsg.lights[__LED_NAME__].offFrames = 0; \
-_streamMsg.lights[__LED_NAME__].transitionOnFrames = 0; \
-_streamMsg.lights[__LED_NAME__].transitionOffFrames = 0; \
-_streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
+_streamMsg.lights[__LED_NAME__].onPeriod_ms = 0; \
+_streamMsg.lights[__LED_NAME__].offPeriod_ms = 0; \
+_streamMsg.lights[__LED_NAME__].transitionOnPeriod_ms = 0; \
+_streamMsg.lights[__LED_NAME__].transitionOffPeriod_ms = 0; \
+_streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
 
       GET_COLOR_FROM_JSON(Front,  (int)LEDId::LED_BACKPACK_FRONT);
       GET_COLOR_FROM_JSON(Middle, (int)LEDId::LED_BACKPACK_MIDDLE);
@@ -1456,5 +1456,5 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       }
     #endif
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

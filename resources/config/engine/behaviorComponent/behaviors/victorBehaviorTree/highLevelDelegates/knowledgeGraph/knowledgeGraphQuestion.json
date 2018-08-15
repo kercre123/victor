@@ -11,6 +11,7 @@
 
   "readyPromptText"         : "ready",
   "streamingTimeout"        : 10.0,
-  "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
-  "earConAudioEventEnd"     : "Play__Robot_Vic_Sfx__Wake_Word_Success"
+  "earConAudioEventEnd"     : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+
+  "postBehaviorSuggestion": "Socialize"
 }

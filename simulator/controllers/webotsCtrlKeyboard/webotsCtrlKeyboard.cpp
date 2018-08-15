@@ -48,7 +48,7 @@
 #define ENABLE_NVSTORAGE_WRITE 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   
   // Private members:
@@ -1526,13 +1526,6 @@ namespace Cozmo {
   }
   
   
-  void WebotsKeyboardController::StartFreeplayMode()
-  {
-    using namespace ExternalInterface;
-    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("DevDispatchAfterShake", "1")));
-  }
-  
-  
   void WebotsKeyboardController::SetRollActionParams()
   {
     SendRollActionParams(root_->getField("rollLiftHeight_mm")->getSFFloat(),
@@ -2537,6 +2530,13 @@ namespace Cozmo {
     
   s32 WebotsKeyboardController::UpdateInternal()
   {
+
+    static bool streamStarted = false;
+    if (!streamStarted) {
+      SendImageRequest(ImageSendMode::Stream);
+      streamStarted = true;
+    }
+
     Pose3d goalMarkerPose = GetGoalMarkerPose();
     
     // Update pose marker if different from last time
@@ -2729,7 +2729,7 @@ namespace Cozmo {
   }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 
@@ -2738,7 +2738,7 @@ namespace Cozmo {
 int main(int argc, char **argv)
 {
   using namespace Anki;
-  using namespace Anki::Cozmo;
+  using namespace Anki::Vector;
 
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
@@ -2747,7 +2747,7 @@ int main(int argc, char **argv)
   // initialize logger
   WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
-  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP_MS);
+  Anki::Vector::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP_MS);
   webotsCtrlKeyboard.PreInit();
   webotsCtrlKeyboard.WaitOnKeyboardToConnect();
   

@@ -44,7 +44,7 @@
 #define CONSOLE_GROUP "Behavior.InteractWithFaces"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -227,7 +227,7 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward()
       GetBEI().HasMapComponent()) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
 
-    const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+    const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
     
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
@@ -441,5 +441,5 @@ void BehaviorInteractWithFaces::SelectFaceToTrack() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

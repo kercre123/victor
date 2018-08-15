@@ -15,7 +15,7 @@
 #define __Engine_CubeAccelListeners_ICubeAccelListener_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 struct ActiveAccel;
   

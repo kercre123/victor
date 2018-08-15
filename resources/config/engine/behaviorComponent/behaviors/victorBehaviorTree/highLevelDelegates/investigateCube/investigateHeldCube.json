@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "InvestigateHeldCube",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors": [
+    "DriveOffChargerCube",
+    "InspectCube"
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
+}

@@ -21,7 +21,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 enum class BehaviorObjective : int32_t;
   
@@ -79,7 +79,7 @@ private:
   bool _enableActivatedPenalty = true;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

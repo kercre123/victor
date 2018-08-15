@@ -27,7 +27,7 @@
 #define LOG_CHANNEL "SettingsManager"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 
@@ -56,7 +56,8 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _currentSettings.clear();
   if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_SETTINGS))
   {
-    LOG_WARNING("SettingsManager.InitDependent.NoSettingsJdocsFile", "Settings jdocs file not found; one will be created shortly");
+    LOG_INFO("SettingsManager.InitDependent.NoSettingsJdocsFile",
+             "Settings jdocs file not found; one will be created shortly");
     settingsDirty = true;
   }
   else
@@ -191,7 +192,7 @@ bool SettingsManager::UpdateSettingsJdoc()
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_SETTINGS,
-                                                 _currentSettings, saveToDiskImmediately);
+                                                 &_currentSettings, saveToDiskImmediately);
   return success;
 }
 
@@ -354,5 +355,5 @@ bool SettingsManager::ExecCommand(const std::vector<std::string>& args)
 #endif
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

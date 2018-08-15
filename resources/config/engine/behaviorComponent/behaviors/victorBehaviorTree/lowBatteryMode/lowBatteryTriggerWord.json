@@ -1,0 +1,23 @@
+{
+  "behaviorID" : "LowBatteryTriggerWord",
+  "behaviorClass": "DispatcherQueue",
+ 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "TriggerWordPending"
+  },
+  
+  "behaviors" : [
+    "TriggerWordDetected",
+    "PlayChargerFaceAnim"
+  ],
+  
+  "anonymousBehaviors" : [
+    {
+      "behaviorClass": "AnimSequence",
+      "behaviorName": "PlayChargerFaceAnim",
+      
+      "animTriggers" : ["ChargerDockingSorryButLowBattery"]
+    }
+  ]
+  
+}

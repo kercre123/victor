@@ -18,7 +18,7 @@
 #include "clad/types/offTreadsStates.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionOffTreadsState : public IBEICondition
 {

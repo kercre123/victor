@@ -4,12 +4,16 @@ import (
 	"anki/log"
 	"anki/robot"
 	"anki/token/jwt"
+	"anki/util"
 	"clad/cloud"
+	"context"
 	"fmt"
 	"time"
 
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 type request struct {
@@ -28,7 +32,7 @@ var queue = make(chan request)
 var url = "token-dev.api.anki.com:443"
 var robotESN string
 
-func queueInit(done <-chan struct{}) error {
+func queueInit(ctx context.Context) error {
 	esn, err := robot.ReadESN()
 	if err != nil {
 		if defaultESN == nil {
@@ -40,7 +44,7 @@ func queueInit(done <-chan struct{}) error {
 		esn = defaultESN()
 	}
 	robotESN = esn
-	go queueRoutine(done)
+	go queueRoutine(ctx)
 	return nil
 }
 
@@ -81,7 +85,7 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 	}
 	if existing != nil {
 		if time.Now().After(existing.RefreshTime()) {
-			c, err := getConnection(getTokenMetadata(existing.String()))
+			c, err := getConnection(tokenMetadata(existing.String()))
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
@@ -109,7 +113,8 @@ func authErrorResp(code cloud.TokenError) *cloud.TokenResponse {
 }
 
 func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
-	metadata := getAuthMetadata(session)
+	metadata := util.AppkeyMetadata()
+	metadata["anki-user-session"] = session
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associatePrimary(session, robotESN)
 	}
@@ -122,7 +127,7 @@ func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenRe
 		return authErrorResp(cloud.TokenError_NullToken), nil
 	}
 
-	metadata := getTokenMetadata(existing.String())
+	metadata := tokenMetadata(existing.String())
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associateSecondary(existing.String(), req.SessionToken, req.ClientName, req.AppId)
 	}
@@ -140,6 +145,9 @@ func authRequester(creds credentials.PerRPCCredentials,
 
 	bundle, err := requester(c)
 	if err != nil {
+		if status.Code(err) == codes.InvalidArgument {
+			return authErrorResp(cloud.TokenError_WrongAccount), err
+		}
 		return authErrorResp(cloud.TokenError_Connection), err
 	}
 	_, err = jwt.ParseToken(bundle.Token)
@@ -151,11 +159,11 @@ func authRequester(creds credentials.PerRPCCredentials,
 		JwtToken: bundle.Token}), nil
 }
 
-func queueRoutine(done <-chan struct{}) {
+func queueRoutine(ctx context.Context) {
 	for {
 		var req request
 		select {
-		case <-done:
+		case <-ctx.Done():
 			return
 		case req = <-queue:
 			break

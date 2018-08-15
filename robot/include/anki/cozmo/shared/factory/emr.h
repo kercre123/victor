@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace Factory {
 

@@ -15,7 +15,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Declaration
 namespace {
@@ -524,5 +524,5 @@ Result OverheadEdgesDetector::DetectHelper<ImageRGBTrait>(const Vision::ImageRGB
                                                           const VisionPoseData &crntPoseData,
                                                           VisionProcessingResult &currentResult);
 
-} //namespace Cozmo
+} //namespace Vector
 } //namespace Anki

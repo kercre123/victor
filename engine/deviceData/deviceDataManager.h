@@ -20,7 +20,7 @@
 #include <list>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class DeviceData;
 class IExternalInterface;
@@ -41,7 +41,7 @@ private:
   std::list<::Signal::SmartHandle>  _signalHandles;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_DeviceData_DeviceDataManager_h__

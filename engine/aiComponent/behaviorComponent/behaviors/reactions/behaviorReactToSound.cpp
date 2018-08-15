@@ -39,7 +39,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // a mic power above this will always be considered a valid reaction sound

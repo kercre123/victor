@@ -37,7 +37,7 @@ CONSOLE_VAR(bool, kCanDoubleTapDirtyPoses, "DoubleTap", true);
 CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", false);
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BlockTapFilterComponent::BlockTapFilterComponent()
 : IDependencyManagedComponent(this, RobotComponentID::BlockTapFilter)
@@ -48,7 +48,7 @@ BlockTapFilterComponent::BlockTapFilterComponent()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void BlockTapFilterComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   // Null for unit tests
@@ -134,7 +134,7 @@ void BlockTapFilterComponent::HandleEnableTapFilter(const AnkiEvent<ExternalInte
 {
   if( message.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::EnableBlockTapFilter)
   {
-    const Anki::Cozmo::ExternalInterface::EnableBlockTapFilter& msg = message.GetData().Get_EnableBlockTapFilter();
+    const Anki::Vector::ExternalInterface::EnableBlockTapFilter& msg = message.GetData().Get_EnableBlockTapFilter();
     _enabled = msg.enable;
     PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleEnableTapFilter","on %d",_enabled);
   }
@@ -146,7 +146,7 @@ void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<External
   if( message.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus)
   {
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                                        Anki::Cozmo::ExternalInterface::BlockTapFilterStatus(_enabled,kTapIntensityMin,kTapWaitOffset_ms)));
+                                        Anki::Vector::ExternalInterface::BlockTapFilterStatus(_enabled,kTapIntensityMin,kTapWaitOffset_ms)));
   }
 }
 #endif

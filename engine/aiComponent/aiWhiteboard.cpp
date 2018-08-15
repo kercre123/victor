@@ -39,7 +39,7 @@
 #define DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -114,7 +114,7 @@ AIWhiteboard::~AIWhiteboard()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
+void AIWhiteboard::InitDependent(Vector::Robot* robot, const AICompMap& dependentComps)
 {
   // register to possible object events
   if ( _robot.HasExternalInterface() )
@@ -993,5 +993,5 @@ void AIWhiteboard::SetLastEdgeInformation(const float closestEdgeDist_mm)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

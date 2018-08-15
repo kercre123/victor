@@ -50,7 +50,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace
 {
@@ -307,7 +307,7 @@ void BehaviorLeaveAMessage::TransitionToMailboxFull()
   PlayTextToSpeech( _iVars.ttsErrorMailboxFull );
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #undef PRINT_DEBUG

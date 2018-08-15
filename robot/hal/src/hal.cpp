@@ -26,7 +26,7 @@
 #include <errno.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
 HeadToBody headData_;  //-we own this one.
@@ -44,7 +44,7 @@ namespace { // "Private members"
     .cliffSense = {800, 800, 800, 800}
   };
 #endif
-
+  
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
@@ -189,8 +189,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     if(HAL::GetTimeStamp() - startWait_ms > 2000)
     {
       AnkiError("spine_wait_for_first_frame.timeout","");
-      FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
-      return RESULT_FAIL;
+      break;
     }
 
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
@@ -239,6 +238,13 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     read_count++;
   }
 
+  // If we failed to initialize or we don't have valid syscon
+  // display a fault code
+  if(!initialized || !haveValidSyscon_)
+  {
+    FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
+  }
+
   return (initialized ? RESULT_OK : RESULT_FAIL_IO_TIMEOUT);
 }
 
@@ -247,7 +253,7 @@ Result HAL::Init(const int * shutdownSignal)
   using Result = Anki::Result;
 
   // Set ID
-  robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
+  robotID_ = Anki::Vector::DEFAULT_ROBOT_ID;
 
   InitIMU();
 
@@ -479,8 +485,8 @@ void HAL::Stop()
 
 void ProcessTouchLevel(void)
 {
-  if(bodyData_->touchLevel[0] != 0xFFFF) {
-    lastValidTouchIntensity_ = bodyData_->touchLevel[HAL::BUTTON_CAPACITIVE];
+  if(bodyData_->touchHires[HAL::BUTTON_CAPACITIVE] != 0xFFFF) {
+    lastValidTouchIntensity_ = bodyData_->touchHires[HAL::BUTTON_CAPACITIVE];
   }
 }
 
@@ -568,7 +574,7 @@ u16 HAL::GetButtonState(const ButtonID button_id)
   }
   return bodyData_->touchLevel[button_id];
 }
-
+  
 u16 HAL::GetRawCliffData(const CliffID cliff_id)
 {
   assert(cliff_id < DROP_SENSOR_COUNT);
@@ -660,7 +666,7 @@ HAL::PowerState HAL::PowerGetMode()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 
@@ -671,7 +677,7 @@ extern "C" {
   }
 
   void hal_terminate(void) {
-    Anki::Cozmo::HAL::Shutdown();
+    Anki::Vector::HAL::Shutdown();
   }
 
 }

@@ -36,7 +36,7 @@ class DataPlatform;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 class BatteryComponent;
@@ -97,7 +97,6 @@ public:
   const f32 GetHeadAngle() const;
   const GyroData& GetHeadGyroData() const;
   const RobotID_t GetID() const;
-  RobotTimeStamp_t GetLastChargingStateChangeTimestamp() const;
   RobotTimeStamp_t GetLastImageTimeStamp() const;
   RobotTimeStamp_t GetLastMsgTimestamp() const;
   f32 GetLiftAngle() const;
@@ -167,7 +166,7 @@ private:
   Robot& _robot;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__

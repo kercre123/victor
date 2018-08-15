@@ -34,7 +34,7 @@
 #define __Cozmo_Basestation_VariableSnapshotComponent_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 
@@ -47,7 +47,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComponents) override final;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -92,7 +92,7 @@ private:
   // this data structure points to the Json data loaded by RobotDataLoader
   RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap;
 
-  Cozmo::Robot* _robot;
+  Vector::Robot* _robot;
 };
 
 

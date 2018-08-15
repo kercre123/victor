@@ -23,20 +23,22 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* const kMinDistKey = "minDist_mm";
   const char* const kMaxDistKey = "maxDist_mm";
   const char* const kProbabilityEvilKey = "pEvil";
+  const char* const kProbabilityBumpWhenNotEvilKey = "pBumpWhenNotEvil";
+  const char* const kProbabilityBumpWhenEvilKey = "pBumpWhenEvil";
   
   const float kFirstBumpBuffer_mm = 8.0f; // dist after making contact
   const float kFirstBumpSpeed_mmps = 140.0f;
   
-  const bool kExploringPushObject = false;
+  const bool kExploringPushObject = true;
   
   const float kSecondBumpBuffer_mm = 60.0f; // let the treads spin a bit longer. No worries, unexpected movement is disabled
-  const float kSecondBumpEvilBuffer_mm = 150.0f;
+  const float kSecondBumpEvilBuffer_mm = 200.0f;
   
   const float kPauseDuration_s = 0.6f;
   
@@ -66,6 +68,7 @@ BehaviorBumpObject::InstanceConfig::InstanceConfig()
 BehaviorBumpObject::DynamicVariables::DynamicVariables()
 {
   unexpectedMovement = false;
+  state = State::Invalid;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,6 +80,8 @@ BehaviorBumpObject::BehaviorBumpObject(const Json::Value& config)
   _iConfig.maxDist_mm = config.get( kMaxDistKey, _iConfig.maxDist_mm ).asFloat();
   
   _iConfig.pEvil = config.get( kProbabilityEvilKey, 0.0f ).asFloat();
+  _iConfig.pBumpWhenNotEvil = config.get( kProbabilityBumpWhenNotEvilKey, 0.0f ).asFloat();
+  _iConfig.pBumpWhenEvil = config.get( kProbabilityBumpWhenEvilKey, 0.0f ).asFloat();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,6 +108,8 @@ void BehaviorBumpObject::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
     kMinDistKey,
     kMaxDistKey,
     kProbabilityEvilKey,
+    kProbabilityBumpWhenEvilKey,
+    kProbabilityBumpWhenNotEvilKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -121,6 +128,7 @@ void BehaviorBumpObject::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBumpObject::DoFirstBump()
 {
+  _dVars.state = State::FirstBump;
   auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
   uint16_t proxDist_mm = 0;
   if( !proxSensor.GetLatestDistance_mm( proxDist_mm ) ) {
@@ -179,23 +187,38 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   // todo: inform this choice based on MoodManager::GetEmotionValue( EmotionType::Evil );
   const bool evil = (GetRNG().RandDbl() <= _iConfig.pEvil);
   
+  const bool shouldBump = (evil && (GetRNG().RandDbl() <= _iConfig.pBumpWhenEvil)) ||
+                          (!evil && (GetRNG().RandDbl() <= _iConfig.pBumpWhenNotEvil));
+  
+  if( !shouldBump ) {
+    return; // which ends the behavior
+  }
+  
+  float distForward_mm;
+  
   // if a regular bump would push something off a cliff and we're not evil, dont do it at all.
   // else if a LONG bump would push something off a cliff and we ARE evil, use the longer distance.
-  // otherwise use the regular distance
-  if( !evil && WouldBumpPushSomethingOffCliff(niceDistForward_mm) ) {
-    return;
-  }
-  float distForward_mm;
-  if( evil && WouldBumpPushSomethingOffCliff(evilDistForward_mm) ) {
-    distForward_mm = evilDistForward_mm;
+  // otherwise don't do it at all
+  if( !evil ) {
+    if( WouldBumpPushSomethingOffCliff(niceDistForward_mm) ) {
+      return; // which ends the behavior
+    } else {
+      distForward_mm = niceDistForward_mm;
+    }
   } else {
-    distForward_mm = niceDistForward_mm;
+    if( !WouldBumpPushSomethingOffCliff(evilDistForward_mm) ) {
+      return; // which ends the behavior
+    } else {
+      distForward_mm = evilDistForward_mm;
+    }
   }
+  
+  _dVars.state = State::SecondBump;
   
   auto* action = new CompoundActionSequential();
   
   // animation
-  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::BumpObjectFastGetIn } );
+  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::PokeObjectGetIn } );
   
   // pause a bit
   // todo (VIC-4230) would be a good time to reference a human pose, with a mischievous expression
@@ -205,11 +228,12 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   float speedForward_mmps = MAX_SAFE_WHEEL_SPEED_MMPS;
   action->AddAction( new DriveStraightAction( distForward_mm, speedForward_mmps, true) );
   
-  // retreat animation
-  action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::BumpObjectFastGetOut } );
-  
-  DelegateIfInControl( action, [](const ActionResult& res){
-    // and then the behavior ends
+  DelegateIfInControl( action, [this](const ActionResult& res){
+    // retreat animation
+    auto* retreat = new TriggerLiftSafeAnimationAction{ AnimationTrigger::BumpObjectFastGetOut };
+    DelegateIfInControl( retreat, [](const ActionResult& res){
+      // and then the behavior ends
+    });
   });
 }
   
@@ -217,8 +241,18 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
 void BehaviorBumpObject::BehaviorUpdate()
 {
   if( IsActivated() ) {
-    _dVars.unexpectedMovement |= GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
     // todo: we might consider canceling if this is true often
+    _dVars.unexpectedMovement |= GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
+    
+    if( _dVars.state == State::SecondBump ) {
+      auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+      uint16_t proxDist_mm = 0;
+      if( proxSensor.GetLatestDistance_mm( proxDist_mm ) && (proxDist_mm > 150) ) {
+        // robot lost sight of whatever it's pushing
+        CancelDelegates(true); // run callbacks to play the retreat anim
+      }
+    }
+    
   }
 }
 
@@ -232,7 +266,7 @@ void BehaviorBumpObject::OnBehaviorDeactivated()
 bool BehaviorBumpObject::WouldBumpPushSomethingOffCliff( float driveDist_mm ) const
 {
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto  memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   RobotPointSamplerHelper::RejectIfWouldCrossCliff cliffDetector{ kCliffWidth_mm };
   cliffDetector.SetRobotPosition( Vec2f{robotPose.GetTranslation()} );
   cliffDetector.UpdateCliffs( memoryMap );

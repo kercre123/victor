@@ -28,7 +28,7 @@ namespace Anki {
 namespace Util {
   class LowPassFilterSimple;
 }
-namespace Cozmo {
+namespace Vector {
 
 class BlockWorldFilter;
 class Robot;
@@ -103,9 +103,6 @@ public:
   // charger contacts is always on the platform (NOTE: even if it thinks it's in the air or on it's side)
   bool IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
-  // Return the message timestamp of the last time the value of IsCharging changed
-  RobotTimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
-  
   // Returns how long the "fully charged" state has been active. Returns 0
   // if not currently fully charged.
   float GetFullyChargedTimeSec() const;
@@ -123,6 +120,11 @@ private:
   void SetOnChargeContacts(const bool onChargeContacts);
   void SetIsCharging(const bool isCharging);
   void UpdateOnChargerPlatform();
+  void UpdateSuggestedChargerTime(bool wasLowBattery, bool wasCharging);
+  
+  // If the robot is low battery, this will give a timer of how long it should charge for. Once elapsed,
+  // it will return 0.
+  float GetSuggestedChargerTime() const;
   
   Robot* _robot = nullptr;
   
@@ -136,8 +138,6 @@ private:
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
-  
-  RobotTimeStamp_t _lastChargingChange_ms = 0;
   
   float _lastBatteryLevelChange_sec = 0;
   
@@ -155,6 +155,9 @@ private:
   std::unique_ptr<BlockWorldFilter> _chargerFilter;
   
   std::unique_ptr<Util::LowPassFilterSimple> _batteryVoltsFilter;
+  
+  float _timeRemovedFromCharger_s = 0.f;
+  float _suggestedChargeEndTime_s = 0.f;
 };
 
 

@@ -18,7 +18,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   RetryWrapperAction::RetryWrapperAction(IAction* action,
                                          RetryCallback retryCallback,

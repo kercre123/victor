@@ -33,7 +33,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static constexpr const float kMaxDistanceForShortPlanner_mm = 40.0f;
@@ -45,7 +45,7 @@ static constexpr const float kSendMsgFailedTimeout_s = 1.0f;
 struct PlanParameters
 {
   PlanParameters() = default;
-  PlanParameters(Cozmo::Robot* robot, const std::vector<Pose3d>& poses);
+  PlanParameters(Vector::Robot* robot, const std::vector<Pose3d>& poses);
   void Reset();
   bool IsEqual(const PlanParameters& otherPlan) const;
 
@@ -61,7 +61,7 @@ struct PlanParameters
   PoseOriginID_t commonOriginID = PoseOriginList::UnknownOriginID;
 };
 
-PlanParameters::PlanParameters(Cozmo::Robot* robot, const std::vector<Pose3d>& poses)
+PlanParameters::PlanParameters(Vector::Robot* robot, const std::vector<Pose3d>& poses)
 {
   this->commonOriginID = robot->GetPoseOriginList().GetCurrentOriginID();
 
@@ -106,7 +106,7 @@ PathComponent::~PathComponent()
   Abort();
 }
 
-void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void PathComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   const CozmoContext* context =  _robot->GetContext();

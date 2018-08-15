@@ -9,7 +9,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 namespace ExternalComms {
 
@@ -218,115 +218,115 @@ const char* ExternalCommsTagToString(const ExternalCommsTag tag);
 
 } // namespace ExternalComms
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::RtsConnection_2Tag>
+struct std::hash<Anki::Vector::ExternalComms::RtsConnection_2Tag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnection_2Tag t) const
+  size_t operator()(Anki::Vector::ExternalComms::RtsConnection_2Tag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnection_2Tag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnection_2Tag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::RtsConnection_3Tag>
+struct std::hash<Anki::Vector::ExternalComms::RtsConnection_3Tag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnection_3Tag t) const
+  size_t operator()(Anki::Vector::ExternalComms::RtsConnection_3Tag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnection_3Tag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnection_3Tag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::RtsConnectionTag>
+struct std::hash<Anki::Vector::ExternalComms::RtsConnectionTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnectionTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::RtsConnectionTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnectionTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnectionTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::RtsConnection_1Tag>
+struct std::hash<Anki::Vector::ExternalComms::RtsConnection_1Tag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::RtsConnection_1Tag t) const
+  size_t operator()(Anki::Vector::ExternalComms::RtsConnection_1Tag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::RtsConnection_1Tag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnection_1Tag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::AppGeneralTag>
+struct std::hash<Anki::Vector::ExternalComms::AppGeneralTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::AppGeneralTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::AppGeneralTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::AppGeneralTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::AppGeneralTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::MeetVictorTag>
+struct std::hash<Anki::Vector::ExternalComms::MeetVictorTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::MeetVictorTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::MeetVictorTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::MeetVictorTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::MeetVictorTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::MotorControlTag>
+struct std::hash<Anki::Vector::ExternalComms::MotorControlTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::MotorControlTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::MotorControlTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::MotorControlTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::MotorControlTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::AnimationsTag>
+struct std::hash<Anki::Vector::ExternalComms::AnimationsTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::AnimationsTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::AnimationsTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::AnimationsTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::AnimationsTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::MovementActionTag>
+struct std::hash<Anki::Vector::ExternalComms::MovementActionTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::MovementActionTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::MovementActionTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::MovementActionTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::MovementActionTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::VictorDisplayTag>
+struct std::hash<Anki::Vector::ExternalComms::VictorDisplayTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::VictorDisplayTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::VictorDisplayTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::VictorDisplayTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::VictorDisplayTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::CubesTag>
+struct std::hash<Anki::Vector::ExternalComms::CubesTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::CubesTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::CubesTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::CubesTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::CubesTag>::type>(t);
   }
 };
 
 template<>
-struct std::hash<Anki::Cozmo::ExternalComms::ExternalCommsTag>
+struct std::hash<Anki::Vector::ExternalComms::ExternalCommsTag>
 {
-  size_t operator()(Anki::Cozmo::ExternalComms::ExternalCommsTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::ExternalCommsTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Cozmo::ExternalComms::ExternalCommsTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::ExternalCommsTag>::type>(t);
   }
 };
 

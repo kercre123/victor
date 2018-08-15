@@ -2,13 +2,25 @@
 
 syntax = "proto3";
 
-package Anki.Cozmo.external_interface;
+package Anki.Vector.external_interface;
 
 import "extensions.proto";
 import "onboardingSteps.proto";
 
-message ResultStatus {
-  string description = 1;
+// A null message used by streams to verify that the client is
+// still connected.
+message KeepAlivePing {}
+
+message ResponseStatus {
+  enum StatusCode {
+    UNKNOWN = 0;
+    RESPONSE_RECEIVED = 1; // The message has completed as expected
+    REQUEST_PROCESSING = 2; // The message has been sent to the robot
+    FORBIDDEN = 100; // The user was not authorizied
+    NOT_FOUND = 101; // The requested attribute was not found
+    ERROR_UPDATE_IN_PROGRESS = 102; // The current rpc is currently updating values from another call
+  }
+  StatusCode code = 1;
 }
 
 message Animation {
@@ -22,24 +34,24 @@ message DriveWheelsRequest {
   float right_wheel_mmps2 = 4;
 }
 
-message DriveWheelsResult {
-  ResultStatus status = 1;
+message DriveWheelsResponse {
+  ResponseStatus status = 1;
 }
 
 message MoveHeadRequest {
   float speed_rad_per_sec = 1;
 }
 
-message MoveHeadResult {
-  ResultStatus status = 1;
+message MoveHeadResponse {
+  ResponseStatus status = 1;
 }
 
 message MoveLiftRequest {
   float speed_rad_per_sec = 1;
 }
 
-message MoveLiftResult {
-  ResultStatus status = 1;
+message MoveLiftResponse {
+  ResponseStatus status = 1;
 }
 
 message DriveArcRequest {
@@ -48,8 +60,8 @@ message DriveArcRequest {
   int32 curvature_radius_mm = 3;
 }
 
-message DriveArcResult {
-  ResultStatus status = 1;
+message DriveArcResponse {
+  ResponseStatus status = 1;
 }
 
 // TODO: hook up ignore tracks and test that they work in the new world
@@ -61,15 +73,15 @@ message PlayAnimationRequest {
   bool ignore_lift_track = 5;
 }
 
-message PlayAnimationResult {
-  ResultStatus status = 1;
+message PlayAnimationResponse {
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
 message ListAnimationsRequest {}
 
-message ListAnimationsResult {
-  ResultStatus status = 1;
+message ListAnimationsResponse {
+  ResponseStatus status = 1;
   repeated Animation animation_names = 2;
 }
 
@@ -84,8 +96,8 @@ message DisplayFaceImageRGBRequest {
   bool interrupt_running = 3;
 }
 
-message DisplayFaceImageRGBResult {
-  ResultStatus status = 1;
+message DisplayFaceImageRGBResponse {
+  ResponseStatus status = 1;
 }
 
 message MeetVictorFaceScanStarted
@@ -133,7 +145,7 @@ message TimeStampedStatus {
 message RobotHistoryRequest {
 }
 
-message RobotHistoryResult {
+message RobotHistoryResponse {
   repeated TimeStampedStatus messages = 1;
 }
 
@@ -250,17 +262,6 @@ message RobotChangedObservedFaceID {
   int32   new_id = 2;
 }
 
-message SDKActivationRequest {
-  uint32 slot = 1; // TODO Use BehaviorSlot
-  bool enable = 2;
-}
-
-message SDKActivationResult {
-  ResultStatus status = 1;
-  uint32 slot = 2; // TODO Use BehaviorSlot
-  bool enabled = 3;
-}
-
 // Meet Victor
 message AppIntentRequest {
   string intent = 1;
@@ -283,8 +284,8 @@ enum FaceEnrollmentResult
   UNKNOWN_FAILURE = 9;
 }
 
-message AppIntentResult {
-  ResultStatus status = 1;
+message AppIntentResponse {
+  ResponseStatus status = 1;
 }
 
 message FaceEnrollmentCompleted {
@@ -296,8 +297,8 @@ message FaceEnrollmentCompleted {
 message CancelFaceEnrollmentRequest {
 }
 
-message CancelFaceEnrollmentResult {
-  ResultStatus status = 1;
+message CancelFaceEnrollmentResponse {
+  ResponseStatus status = 1;
 }
 
 message RequestEnrolledNamesRequest {
@@ -317,8 +318,8 @@ message RobotRenamedEnrolledFace {
     string   name = 2;
 }
 
-message RequestEnrolledNamesResult {
-  ResultStatus status = 1;
+message RequestEnrolledNamesResponse {
+  ResponseStatus status = 1;
   repeated LoadedKnownFace faces = 2;
 }
 
@@ -328,23 +329,23 @@ message UpdateEnrolledFaceByIDRequest {
   string new_name = 3;
 }
 
-message UpdateEnrolledFaceByIDResult {
-  ResultStatus status = 1;
+message UpdateEnrolledFaceByIDResponse {
+  ResponseStatus status = 1;
 }
 
 message EraseEnrolledFaceByIDRequest {
   int32 face_id = 1;
 }
 
-message EraseEnrolledFaceByIDResult {
-  ResultStatus status = 1;
+message EraseEnrolledFaceByIDResponse {
+  ResponseStatus status = 1;
 }
 
 message EraseAllEnrolledFacesRequest {
 }
 
-message EraseAllEnrolledFacesResult {
-  ResultStatus status = 1;
+message EraseAllEnrolledFacesResponse {
+  ResponseStatus status = 1;
 }
 
 message SetFaceToEnrollRequest {
@@ -358,8 +359,8 @@ message SetFaceToEnrollRequest {
   bool    say_name = 5;       // Play say-name/celebration animations on success before completing
   bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
 }
-message SetFaceToEnrollResult {
-  ResultStatus status = 1;
+message SetFaceToEnrollResponse {
+  ResponseStatus status = 1;
 }
 
 enum BehaviorResults
@@ -372,37 +373,29 @@ enum BehaviorResults
 message DriveOffChargerRequest {
 }
 
-message DriveOffChargerResult {
-  ResultStatus status = 1;
+message DriveOffChargerResponse {
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
 message DriveOnChargerRequest {
 }
 
-message DriveOnChargerResult {
-  ResultStatus status = 1;
+message DriveOnChargerResponse {
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
-// TODO: Remove this example code once more code is converted to protobuf
+// TODO: Remove these when pings are part of the event stream, and
+// app team is converted over
 message Ping {
   uint64 ping = 1;
 }
 
-// TODO: Remove this example code once more code is converted to protobuf
+// TODO: Remove these when pings are part of the event stream, and
+// app team is converted over
 message Pong {
   uint64 pong = 1;
-}
-
-// TODO: Remove this example code once more code is converted to protobuf
-message Bing {
-  string bing = 1;
-}
-
-// TODO: Remove this example code once more code is converted to protobuf
-message Bong {
-  string bong = 1;
 }
 
 enum OnboardingStages
@@ -450,7 +443,7 @@ message OnboardingStateRequest {
 }
 
 message OnboardingStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   OnboardingState onboarding_state = 2;
 }
 
@@ -468,10 +461,10 @@ message OnboardingSkip {
 message OnboardingRetryCharging {
 }
 
-message OnboardingConnectionComplete {
+message OnboardingSkipOnboarding {
 }
 
-message OnboardingSkipOnboarding {
+message OnboardingRestart {
 }
 
 message OnboardingInputRequest {
@@ -479,13 +472,14 @@ message OnboardingInputRequest {
     OnboardingContinue onboarding_continue = 1;
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
-    OnboardingConnectionComplete onboarding_connection_complete = 4;
+    // 4 is available
     OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
+    OnboardingRestart onboarding_restart = 6;
   }
 }
 
 message OnboardingInputResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   oneof oneof_message_type {
     OnboardingContinueResponse onboarding_continue_response = 2;
   }
@@ -519,7 +513,7 @@ message PhotosInfoRequest {
 }
 
 message PhotosInfoResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   repeated PhotoInfo photo_infos = 2;
 }
 
@@ -533,7 +527,7 @@ message PhotoPathMessage {
 }
 
 message PhotoResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   bool success = 2;
   bytes image = 3;
 }
@@ -548,7 +542,7 @@ message ThumbnailPathMessage {
 }
 
 message ThumbnailResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   bool success = 2;
   bytes image = 3;
 }
@@ -558,7 +552,7 @@ message DeletePhotoRequest {
 }
 
 message DeletePhotoResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   bool success = 2;
 }
 
@@ -590,7 +584,7 @@ message LatestAttentionTransfer {
 }
 
 message LatestAttentionTransferResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   LatestAttentionTransfer latest_attention_transfer = 2;
 }
 
@@ -602,8 +596,8 @@ enum VisionMode {
   VISION_MODE_DETECTING_MOTION = 3;
   VISION_MODE_DETECTING_OVERHEAD_EDGES = 4;
   VISION_MODE_COMPUTING_CALIBRATION = 5;
-  VISION_MODE_CHECKING_QUALITY = 6;
-  VISION_MODE_CHECKING_WHITE_BALANCE = 7;
+  VISION_MODE_AUTO_EXPOSURE = 6;
+  VISION_MODE_WHITE_BALANCE = 7;
   VISION_MODE_COMPUTING_STATISTICS = 8;
   VISION_MODE_DETECTING_PETS = 9;
   VISION_MODE_ESTIMATING_FACIAL_EXPRESSION = 10;  // No effect if DetectingFaces not enabled
@@ -626,8 +620,8 @@ message EnableVisionModeRequest {
   bool       enable = 2;
 }
 
-message EnableVisionModeResult {
-  ResultStatus status = 1;
+message EnableVisionModeResponse {
+  ResponseStatus status = 1;
 }
 
 // Struct containing all the information relevant to how a 
@@ -662,7 +656,8 @@ message GoToPoseRequest {
 }
 
 message GoToPoseResponse {
-  ActionResult result = 1;
+  ResponseStatus status = 1;
+  ActionResult action_result = 2;
 }
 
 message DriveStraightRequest {
@@ -672,7 +667,7 @@ message DriveStraightRequest {
 }
 
 message DriveStraightResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -690,7 +685,7 @@ message TurnInPlaceRequest {
 }
 
 message TurnInPlaceResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -703,7 +698,7 @@ message SetHeadAngleRequest {
 }
 
 message SetHeadAngleResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -716,7 +711,7 @@ message SetLiftHeightRequest {
 }
 
 message SetLiftHeightResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BehaviorResults result = 2;
 }
 
@@ -731,7 +726,7 @@ message SetBackpackLightsRequest {
 }
 
 message SetBackpackLightsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 enum BatteryLevel {
@@ -759,17 +754,18 @@ message NetworkStats {
 message BatteryStateRequest {}
 
 message BatteryStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   BatteryLevel battery_level = 2;
   float battery_volts = 3;
   bool is_charging = 4;
   bool is_on_charger_platform = 5;
+  float suggested_charger_sec = 6;
 }
 
 message VersionStateRequest {}
 
 message VersionStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   string os_version = 2;
   string engine_build_id = 3;
 }
@@ -777,7 +773,7 @@ message VersionStateResponse {
 message NetworkStateRequest {}
 
 message NetworkStateResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   NetworkStats network_stats = 2;
 }
 
@@ -796,7 +792,7 @@ message SayTextResponse {
     PLAYING = 3;
     FINISHED = 4;
   }
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
   UtteranceState state = 2;
 }
 
@@ -808,5 +804,50 @@ message StimulationInfo {
   float  value_before_event       = 5; // matches value if there were no emotion events
   float  min_value                = 6;
   float  max_value                = 7;
+}
+
+
+// ImageRequest
+message ImageRequest {
+  enum ImageSendMode {
+    OFF                          = 0;
+    STREAM                       = 1;
+    SINGLE_SHOT                  = 2;
+    SINGLE_SHOT_WITH_SENSOR_DATA = 3;
+  }
+  ImageSendMode mode = 1;
+}
+
+message ImageChunk {
+  enum ImageEncoding
+  {
+    NONE_IMAGE_ENCODING = 0;
+    RAW_GRAY = 1; // no compression
+    RAW_RGB = 2;  // no compression, just [RGBRGBRG...]
+    YUYV = 3;
+    YUV420SP = 4;
+    BAYER = 5;
+    JPEG_GRAY = 6;
+    JPEG_COLOR = 7;
+    JPEG_COLOR_HALF_WIDTH = 8;
+    JPEG_MINIMIZED_GRAY = 9; // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+    JPEG_MINIMIZED_COLOR = 10; // Minimized grayscale JPEG - no header, no footer, no byte stuffing, with added color data
+  }
+  uint32        frame_time_stamp = 1;
+  uint32        image_id = 2;
+  uint32        width = 3;
+  uint32        height = 4;
+  ImageEncoding image_encoding = 5;
+  uint32        display_index = 6;
+  uint32        image_chunk_count = 7;
+  uint32        chunk_id = 8;
+  bytes         data = 9;
+}
+
+message CameraFeedRequest {}
+
+message CameraFeedResponse {
+  option (streamed) = true;
+  ImageChunk image_chunk = 1;
 }
 

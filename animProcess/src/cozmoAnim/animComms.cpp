@@ -28,7 +28,7 @@
 #define LOG_TRACE(name, format, ...)   {}
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace AnimComms {
 
 namespace { // "Private members"
@@ -179,5 +179,5 @@ u32 GetNextPacketFromRobot(u8* buffer, u32 max_length)
 }
 
 } // namespace AnimComms
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

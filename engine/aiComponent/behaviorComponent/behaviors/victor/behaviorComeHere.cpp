@@ -26,7 +26,7 @@
 #include <math.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kFaceSelectionPriorityKey    = "faceSelectionPriority";
@@ -175,5 +175,5 @@ void BehaviorComeHere::NoFaceFound()
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_ComeHere_SearchForFace));
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

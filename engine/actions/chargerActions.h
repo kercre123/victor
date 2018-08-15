@@ -19,7 +19,7 @@
 #include "engine/actionableObject.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 // Forward Declarations:
 class Robot;
@@ -138,7 +138,7 @@ public:
 }; // class DriveToAndMountChargerAction
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Engine_ChargerActions_H__

@@ -13,11 +13,11 @@
             "tensorflow": {
                 "build_type_id": "anki",
                 "checksums": {
-                    "sha256": "8f4c537b1411d457d7d7cf5928999119554464f4ac98e697ad87d40ab6e04da1"
+                    "sha256": "b9c50d1e18638d5cf827f946a3b2f79cf6569404929fcfcc1fbd8f1c98185859"
                 },
                 "extension": "tar.gz",
                 "package_name": "tensorflow",
-                "version": "1"
+                "version": "28"
             }
         },
         "root_url": "http://10.10.7.40:8081/artifactory"
@@ -53,11 +53,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "3686"
+                "version": "3890"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "80"
+                "version": "83"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

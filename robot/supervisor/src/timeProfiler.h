@@ -33,7 +33,7 @@
 #include "coretech/common/shared/types.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Uncomment to disable time profiling
 //#define ENABLE_TIME_PROFILING
@@ -102,5 +102,5 @@ namespace Cozmo {
     void MarkNextProfile_Internal();
   };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

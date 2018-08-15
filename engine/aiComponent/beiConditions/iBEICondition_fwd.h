@@ -16,7 +16,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IBEICondition;
 

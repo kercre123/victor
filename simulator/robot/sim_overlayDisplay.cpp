@@ -5,7 +5,7 @@
 #include <webots/Supervisor.hpp>
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     namespace Sim {
       extern webots::Supervisor* CozmoBot;
@@ -62,7 +62,7 @@ namespace Anki {
         
       } // namespace OverlayDisplay
     } // namespace Sim
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

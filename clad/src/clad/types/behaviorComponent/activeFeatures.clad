@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 ActiveFeatureType {
 
@@ -55,7 +55,9 @@ enum uint_32 ActiveFeature {
   Keepaway,
   KnowledgeGraph,
   LookAtMe,
+  LowBattery,
   MeetVictor,
+  MoveCube,
   Observing,
   ObservingOnCharger,
   Onboarding,
@@ -103,7 +105,9 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   Keepaway                = verbatim ActiveFeatureType::Play,
   KnowledgeGraph          = verbatim ActiveFeatureType::Utility,
   LookAtMe                = verbatim ActiveFeatureType::Social,
+  LowBattery              = verbatim ActiveFeatureType::Autonomous,
   MeetVictor              = verbatim ActiveFeatureType::Social,
+  MoveCube                = verbatim ActiveFeatureType::Play,
   Observing               = verbatim ActiveFeatureType::Autonomous,
   ObservingOnCharger      = verbatim ActiveFeatureType::Autonomous,
   Onboarding              = verbatim ActiveFeatureType::Onboarding,
@@ -131,5 +135,5 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   WhatsMyName             = verbatim ActiveFeatureType::Social
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

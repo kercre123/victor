@@ -55,7 +55,7 @@ namespace Anki {
   }
   }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class Robot;
@@ -124,8 +124,8 @@ protected:
   std::unique_ptr<ProtoMessageHandler>                      _protoMsgHandler;
   std::unique_ptr<CozmoContext>                             _context;
   std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
-  Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
-  Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
+  Anki::Vector::DebugConsoleManager                          _debugConsoleManager;
+  Anki::Vector::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
   bool                                                      _hasRunFirstUpdate = false;
   bool                                                      _uiWasConnected = false;
@@ -149,7 +149,7 @@ protected:
 }; // class CozmoEngine
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_COZMO_ENGINE_H

@@ -48,13 +48,13 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 }
 }
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 
 

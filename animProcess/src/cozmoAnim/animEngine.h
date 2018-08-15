@@ -17,12 +17,13 @@
 
 // Forward declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     class AnimContext;
     class AnimationStreamer;
     class StreamingAnimationModifier;
     class TextToSpeechComponent;
-
+    class BackpackLightComponent;
+    
     namespace Audio {
       class CozmoAudioController;
       class MicrophoneAudioClient;
@@ -30,7 +31,6 @@ namespace Anki {
     namespace RobotInterface {
       struct SetLocale;
       struct TextToSpeechPrepare;
-      struct TextToSpeechDeliver;
       struct TextToSpeechPlay;
       struct TextToSpeechCancel;
     } // RobotInterface
@@ -43,7 +43,7 @@ namespace Anki {
 } // Anki
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AnimEngine
 {
@@ -60,24 +60,27 @@ public:
   // Message handlers
   void HandleMessage(const RobotInterface::SetLocale& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
+  const BackpackLightComponent& GetBackpackLightComponent() const { return *_backpackLightComponent.get(); }
+  BackpackLightComponent& GetBackpackLightComponent() { return *_backpackLightComponent.get(); }
+  
 protected:
 
-  bool                                              _isInitialized = false;
-  std::unique_ptr<AnimContext>                      _context;
-  std::unique_ptr<AnimationStreamer>                _animationStreamer;
-  std::unique_ptr<StreamingAnimationModifier>       _streamingAnimationModifier;
-  std::unique_ptr<TextToSpeechComponent>            _ttsComponent;
-  std::unique_ptr<Audio::MicrophoneAudioClient>     _microphoneAudioClient;
-  Audio::CozmoAudioController*                      _audioControllerPtr = nullptr;
-
+  bool                                          _isInitialized = false;
+  std::unique_ptr<AnimContext>                  _context;
+  std::unique_ptr<AnimationStreamer>            _animationStreamer;
+  std::unique_ptr<StreamingAnimationModifier>   _streamingAnimationModifier;
+  std::unique_ptr<TextToSpeechComponent>        _ttsComponent;
+  std::unique_ptr<Audio::MicrophoneAudioClient> _microphoneAudioClient;
+  Audio::CozmoAudioController*                  _audioControllerPtr = nullptr;
+  std::unique_ptr<BackpackLightComponent>       _backpackLightComponent;   
+  
 }; // class AnimEngine
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ANIM_ENGINE_H

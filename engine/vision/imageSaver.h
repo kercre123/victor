@@ -22,9 +22,10 @@ namespace Vision {
   class Camera;
   class ImageCache;
   class ImageRGB;
+  class Undistorter;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 struct ImageSaverParams
 {
@@ -38,6 +39,8 @@ struct ImageSaverParams
   float                     thumbnailScale = 0.f;     // in range [0,1], as fraction of size, 0 to disable
   float                     saveScale = 1.f;          // > 0, as fraction of size
   bool                      removeDistortion = false;
+  uint8_t                   medianFilterSize = 0;     // 0 to disable
+  float                     sharpeningAmount = 0.f;   // 0 to disable
   
   ImageSaverParams() = default;
   
@@ -48,7 +51,9 @@ struct ImageSaverParams
                             Vision::ImageCache::Size size = Vision::ImageCache::Size::Full,
                             float                    thumbnailScale = 0.f,
                             float                    saveScale = 1.f,
-                            bool                     removeDistortion = false);
+                            bool                     removeDistortion = false,
+                            uint8_t                  medianFilterSize = 0,
+                            float                    sharpeningAmount = 0.f);
   
 };
   
@@ -56,10 +61,15 @@ class ImageSaver
 {
 public:
   
-  // NOTE: A calibrated camera is required if removeDistortion=true is used
-  ImageSaver(const Vision::Camera& camera);
+  ImageSaver();
   
-  virtual ~ImageSaver() { }
+  virtual ~ImageSaver();
+  
+  // This must be called before calling SetParams with removeDistortion=true, and before CacheUndistortionMaps
+  void SetCalibration(const std::shared_ptr<Vision::CameraCalibration>& camCalib);
+  
+  // Pre-cache maps for undistortion, for a given image size. Will fail if SetCalibration not called yet.
+  Result CacheUndistortionMaps(s32 nrows, s32 ncols);
   
   Result SetParams(const ImageSaverParams& params);
   
@@ -77,16 +87,32 @@ public:
   // Save the specified size image from the cache and a corresponding thumbnail if requested.
   Result Save(Vision::ImageCache& imageCache, const s32 frameNumber);
   
+  // Return the extension for the given quality
+  static const char* GetExtension(int8_t forQuality);
+  static const char* GetThumbnailExtension(int8_t forQuality);
+  
 private: 
   
   using Mode = ImageSaverParams::Mode;
   
-  const Vision::Camera& _camera;
   ImageSaverParams _params;
   
+  std::unique_ptr<Vision::Undistorter> _undistorter;
 };
 
-} // namespace Cozmo
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline const char* ImageSaver::GetExtension(int8_t forQuality)
+{
+  return (forQuality < 0 ? "png" : "jpg");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline const char* ImageSaver::GetThumbnailExtension(int8_t forQuality)
+{
+  return (forQuality < 0 ? "thm.png" : "thm.jpg");
+}
+  
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Engine_Vision_ImageSaver_H__ */

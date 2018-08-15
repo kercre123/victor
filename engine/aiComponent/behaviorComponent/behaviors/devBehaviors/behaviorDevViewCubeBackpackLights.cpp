@@ -15,13 +15,13 @@
 
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kCubeTriggersKey = "cubeTriggers";

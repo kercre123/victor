@@ -18,7 +18,7 @@
 #include "engine/cozmoObservableObject.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Forward decl.
 class ActiveObject;
@@ -27,7 +27,7 @@ class ActiveObject;
 // ObjectType cannot be mapped to a known active object type.
 ActiveObject* CreateActiveObjectByType(ObjectType objType, ActiveID activeID, FactoryID factoryID);
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ActiveObjectHelpers_H__

@@ -30,7 +30,7 @@
 //const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::SayTextAction(const std::string& text,
@@ -60,7 +60,7 @@ SayTextAction::~SayTextAction()
     }
     _ttsCoordinator = nullptr;
   }
-  
+
   // Clean up accompanying animation, if any
   if (_animAction) {
     _animAction->PrepForCompletion();
@@ -87,15 +87,23 @@ void SayTextAction::SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTrack
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::Init()
 {
+  //
+  // If we have an animation, use keyframe trigger, else use manual trigger.
+  // With a keyframe trigger, TTS data is automatically delivered to the audio engine
+  // so there is no need for an explicit 'play' request.
+  //
+  const auto triggerType =
+    ((_animTrigger == AnimationTrigger::Count) ? UtteranceTriggerType::Manual : UtteranceTriggerType::KeyFrame);
+
   _ttsCoordinator = &GetRobot().GetTextToSpeechCoordinator();
   _ttsId = _ttsCoordinator->CreateUtterance(_text,
-                                            UtteranceTriggerType::Manual,
+                                            triggerType,
                                             _style,
                                             _durationScalar,
                                             [this](const UtteranceState& state) { TtsCoordinatorStateCallback(state); });
-  
+
   _actionState = SayTextActionState::Waiting;
-  
+
   // When does this action expire?
   _expiration_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeout_sec;
 
@@ -117,7 +125,7 @@ ActionResult SayTextAction::CheckIfDone()
     LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d has expired", _ttsId);
     return ActionResult::TIMEOUT;
   }
-  
+
   ActionResult result;
   switch (_actionState) {
     case SayTextActionState::Invalid:
@@ -140,7 +148,7 @@ ActionResult SayTextAction::CheckIfDone()
     }
     case SayTextActionState::Running_Anim:
     {
-      // Tick anim while running, will return success when animatoin is completed
+      // Tick anim while running, will return success when animation is completed
       result = _animAction->Update();
       break;
     }
@@ -173,7 +181,7 @@ void SayTextAction::TtsCoordinatorStateCallback(const UtteranceState& state)
     }
   }
 } // TtsCoordinatorStateCallback()
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::GetTtsCoordinatorActionState()
 {
@@ -189,7 +197,7 @@ ActionResult SayTextAction::GetTtsCoordinatorActionState()
   }
 } // GetTtsCoordinatorActionState()
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if 0
 // VIC-2151: Fit-to-duration not supported on victor
@@ -215,5 +223,5 @@ void SayTextAction::UpdateAnimationToFitDuration(const float duration_ms)
 } // UpdateAnimationToFitDuration()
 #endif
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

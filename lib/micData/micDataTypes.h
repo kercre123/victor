@@ -17,7 +17,7 @@
 #include <cstdint>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
   enum class MicDataType {
@@ -61,7 +61,7 @@ namespace MicData {
     float                 latestNoiseFloor = 0.f;
   };
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __MicData_MicDataTypes_H_

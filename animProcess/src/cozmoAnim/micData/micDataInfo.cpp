@@ -25,7 +25,7 @@
 #define LOG_CHANNEL    "MicData"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 namespace {
@@ -359,5 +359,5 @@ void MicDataInfo::DisableDataCollect(MicDataType type)
 }
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

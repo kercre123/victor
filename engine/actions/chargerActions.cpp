@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 #pragma mark ---- MountChargerAction ----
   
@@ -45,6 +45,13 @@ MountChargerAction::~MountChargerAction()
 {
   if (HasRobot() && _playDrivingAnimation) {
     GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+  }
+  
+  if (_mountAction != nullptr) {
+    _mountAction->PrepForCompletion();
+  }
+  if (_driveForRetryAction != nullptr) {
+    _driveForRetryAction->PrepForCompletion();
   }
 }
 
@@ -389,6 +396,6 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

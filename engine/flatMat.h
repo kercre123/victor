@@ -19,7 +19,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     class FlatMat : public MatPiece
     {
@@ -49,7 +49,7 @@ namespace Anki {
       return new FlatMat(_type);
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_FLATMAT_H

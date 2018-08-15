@@ -16,10 +16,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDriveOffCharger;
-class BehaviorGoHome;
 class IGatewayInterface;
 namespace external_interface {
   class DriveOffChargerRequest;
@@ -63,8 +62,8 @@ private:
     std::string driveOffChargerBehaviorStr;
     ICozmoBehaviorPtr driveOffChargerBehavior;
 
-    std::string goHomeBehaviorStr;
-    ICozmoBehaviorPtr goHomeBehavior;
+    std::string findAndGoToHomeBehaviorStr;
+    ICozmoBehaviorPtr findAndGoToHomeBehavior;
   };
 
   struct DynamicVariables {
@@ -78,7 +77,7 @@ private:
   std::vector<Signal::SmartHandle> _signalHandles;
   AnkiEventMgr<external_interface::GatewayWrapper> _eventMgr;
 };
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSDKInterface__

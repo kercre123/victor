@@ -18,7 +18,7 @@
 #include "util/time/universalTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(bool, kPrintUiMessageLatency, "UiComms", false);
   
@@ -99,6 +99,6 @@ void ISocketComms::SetPingTimeoutForDisconnect(uint32_t ms, DisconnectCallback c
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

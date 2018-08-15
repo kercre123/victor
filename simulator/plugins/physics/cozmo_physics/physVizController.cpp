@@ -32,7 +32,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 void PhysVizController::Init() {
@@ -162,7 +162,7 @@ void PhysVizController::Draw(int pass, const char *view)
         /*
         VizColorDef_t::iterator cIt = colorMap_.find(pathColorMap_[pathID]);
         if (cIt != colorMap_.end()) {
-          Anki::Cozmo::VizDefineColor *c = &(cIt->second);
+          Anki::Vector::VizDefineColor *c = &(cIt->second);
           glColor3f(c->r, c->g, c->b);
 
         }
@@ -208,7 +208,7 @@ void PhysVizController::Draw(int pass, const char *view)
       /*
       VizColorDef_t::iterator cIt = colorMap_.find(obj->color);
       if (cIt != colorMap_.end()) {
-        Anki::Cozmo::VizDefineColor *c = &(cIt->second);
+        Anki::Vector::VizDefineColor *c = &(cIt->second);
         glColor3f(c->r, c->g, c->b);
       }
        */
@@ -230,7 +230,7 @@ void PhysVizController::Draw(int pass, const char *view)
           DrawCuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
 
           // Object ID label
-          std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
+          std::string idString = std::to_string(obj->objectID - Anki::Vector::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
           DrawTextAtOffset(idString, 0.6f*obj->x_size_m, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
           DrawTextAtOffset(idString, -0.6f*obj->x_size_m, -0.6f*obj->y_size_m, -0.6f*obj->z_size_m);
           
@@ -249,7 +249,7 @@ void PhysVizController::Draw(int pass, const char *view)
           DrawRamp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
           
           // Object ID label
-          std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
+          std::string idString = std::to_string(obj->objectID - Anki::Vector::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
           DrawTextAtOffset(idString, 0, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
           
           break;
@@ -294,7 +294,7 @@ void PhysVizController::Draw(int pass, const char *view)
         /*
         VizColorDef_t::iterator cIt = colorMap_.find(quad.color);
         if (cIt != colorMap_.end()) {
-          Anki::Cozmo::VizDefineColor *c = &(cIt->second);
+          Anki::Vector::VizDefineColor *c = &(cIt->second);
           glColor3f(c->r, c->g, c->b);
         }
          */
@@ -909,7 +909,7 @@ void PhysVizController::DrawTetrahedronMarker(const float x, const float y, cons
 }
 
 
-void PhysVizController::DrawRobot(Anki::Cozmo::VizRobotMarkerType type)
+void PhysVizController::DrawRobot(Anki::Vector::VizRobotMarkerType type)
 {
 
   // Location of robot origin project up above the head
@@ -1039,5 +1039,5 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
   return (_nextChild > 3);
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

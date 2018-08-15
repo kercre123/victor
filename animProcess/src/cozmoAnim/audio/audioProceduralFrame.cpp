@@ -20,7 +20,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 namespace {
 #define CONSOLE_PATH "Audio.Procedural"

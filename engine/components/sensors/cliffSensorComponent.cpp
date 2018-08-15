@@ -33,7 +33,7 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const std::string kLogDirectory = "cliffSensors";

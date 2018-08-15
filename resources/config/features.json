@@ -28,6 +28,10 @@
     "enabled": true
   },
   {
+    "feature": "CubeSpinner",
+    "enabled": false
+  },
+  {
     "feature": "GreetAfterLongTime",
     "enabled": true
   },

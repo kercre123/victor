@@ -24,7 +24,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 // Utility function to check if the robot is within a threshold of a preAction pose

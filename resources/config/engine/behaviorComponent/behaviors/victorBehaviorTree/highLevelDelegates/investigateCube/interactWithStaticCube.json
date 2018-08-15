@@ -1,0 +1,37 @@
+{
+  "behaviorID": "InteractWithStaticCube",
+  "behaviorClass": "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": false,
+  "actAsSelector": true,
+
+  "behaviors": [
+    "RollBlockIfNotVertical",
+    "RandomInteraction"
+  ],
+
+  "anonymousBehaviors":[
+    {
+      "behaviorName" : "RandomInteraction",
+      "behaviorClass" : "DispatcherRandom",
+
+      "behaviors" : [
+        // {
+        //   "behavior" : "VectorPlaysCubeSpinner",
+        //   "cooldown_s" : 300.0,
+        //   "weight" : 0.1
+        // },
+        {
+          "behavior" : "PlaceCubeByCharger",
+          "cooldown_s" : 300.0,
+          "weight" : 1.0
+        },
+        {
+          "behavior" : "PopAWheelie",
+          "cooldown_s" : 300.0,
+          "weight" : 1.0
+        }
+      ]
+    }
+  ]
+}

@@ -28,6 +28,7 @@
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/petWorld.h"
 #include "engine/robot.h"
@@ -67,6 +68,8 @@
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
+#include "proto/external_interface/shared.pb.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -77,7 +80,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   VisionComponent* s_VisionComponent = nullptr;
 
@@ -168,7 +171,7 @@ namespace Cozmo {
   } // VisionSystem()
 
 
-  void VisionComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+  void VisionComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
   {
     s_VisionComponent = this;
     _robot = robot;
@@ -645,7 +648,7 @@ namespace Cozmo {
     }
 
     // Get most recent pose data in history
-    Anki::Cozmo::HistRobotState lastHistState;
+    Anki::Vector::HistRobotState lastHistState;
     _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
 
     {
@@ -1006,10 +1009,13 @@ namespace Cozmo {
           _vizManager->DisplayCameraImage(result.timestamp);
         }
 
-        using localHandlerType = Result(VisionComponent::*)(const VisionProcessingResult& procResult);
-        auto tryAndReport = [this, &result, &anyFailures]( localHandlerType handler, VisionMode mode )
+#       define ToVisionModeMask(__mode__) result.modesProcessed.GetBitMask(Util::EnumToUnderlying(VisionMode::__mode__))
+        
+        using LocalHandlerType = Result(VisionComponent::*)(const VisionProcessingResult&);
+        using VisionModeMask = std::underlying_type<VisionMode>::type;
+        auto tryAndReport = [this, &result, &anyFailures]( LocalHandlerType handler, VisionModeMask mask )
         {
-          if (!result.modesProcessed.IsBitFlagSet(mode) && (mode != VisionMode::Count))
+          if (!result.modesProcessed.AreAnyBitsInMaskSet(mask) && (mask != ToVisionModeMask(Count)))
           {
             return;
           }
@@ -1017,34 +1023,50 @@ namespace Cozmo {
           // Call the passed in member handler to look at the result
           if (RESULT_OK != (this->*handler)(result))
           {
+            std::string modeStr;
+            for(VisionMode mode=(VisionMode)0; mode < VisionMode::Count; ++mode)
+            {
+              if(mask & Util::EnumToUnderlying(mode))
+              {
+                modeStr += " ";
+                modeStr += EnumToString(mode);
+              }
+            }
+            
             PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.LocalHandlerFailed",
-                              "%s Failed", EnumToString(mode));
+                              "For mode(s):%s", modeStr.c_str());
             anyFailures = true;
           }
         };
-
+        
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,        VisionMode::DetectingMarkers);
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        ToVisionModeMask(DetectingMarkers));
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,                VisionMode::DetectingFaces);
+        tryAndReport(&VisionComponent::UpdateFaces,                ToVisionModeMask(DetectingFaces));
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                 VisionMode::DetectingPets);
+        tryAndReport(&VisionComponent::UpdatePets,                 ToVisionModeMask(DetectingPets));
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,       VisionMode::DetectingMotion);
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,        VisionMode::DetectingOverheadEdges);
-        tryAndReport(&VisionComponent::UpdateComputedCalibration,  VisionMode::ComputingCalibration);
-        tryAndReport(&VisionComponent::UpdateImageQuality,         VisionMode::CheckingQuality);
-        tryAndReport(&VisionComponent::UpdateWhiteBalance,         VisionMode::CheckingWhiteBalance);
-        tryAndReport(&VisionComponent::UpdateLaserPoints,          VisionMode::DetectingLaserPoints);
-        tryAndReport(&VisionComponent::UpdateSalientPoints,        VisionMode::Count); // Use Count here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,      VisionMode::DetectingVisualObstacles);
-        tryAndReport(&VisionComponent::UpdatePhotoManager,         VisionMode::SavingImages);
-        tryAndReport(&VisionComponent::UpdateDetectedIllumination, VisionMode::DetectingIllumination);
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       ToVisionModeMask(DetectingMotion));
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        ToVisionModeMask(DetectingOverheadEdges));
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  ToVisionModeMask(ComputingCalibration));
+        
+        // NOTE: Same handler for two modes
+        tryAndReport(&VisionComponent::UpdateCameraParams,        (ToVisionModeMask(AutoExposure) |
+                                                                   ToVisionModeMask(WhiteBalance)));
+        
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          ToVisionModeMask(DetectingLaserPoints));
+        tryAndReport(&VisionComponent::UpdateSalientPoints,        ToVisionModeMask(Count)); // Use Count here to always call UpdateSalientPoints
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      ToVisionModeMask(DetectingVisualObstacles));
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         ToVisionModeMask(SavingImages));
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, ToVisionModeMask(DetectingIllumination));
+        
+#       undef ToVisionModeMask
+        
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1459,11 +1481,11 @@ namespace Cozmo {
     const bool usingFixedDrawTime = (kKeepDrawingSalientPointsFor_ms > 0);
     if(usingFixedDrawTime)
     {
-    auto iter = _salientPointsToDraw.begin();
-    while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
-    {
-      iter = _salientPointsToDraw.erase(iter);
-    }
+      auto iter = _salientPointsToDraw.begin();
+      while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
+      {
+        iter = _salientPointsToDraw.erase(iter);
+      }
     }
 
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
@@ -1570,19 +1592,66 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  Result VisionComponent::UpdateImageQuality(const VisionProcessingResult& procResult)
+  Result VisionComponent::UpdateCameraParams(const VisionProcessingResult& procResult)
   {
-    if(!_robot->IsPhysical() || procResult.imageQuality == ImageQuality::Unchecked)
+    if(!_robot->IsPhysical() || procResult.imageQuality == Vision::ImageQuality::Unchecked)
     {
       // Nothing to do
       return RESULT_OK;
     }
 
-    // If auto exposure is not enabled don't set camera settings
-    if(_enableAutoExposure)
+    if(CaptureFormatState::None != _captureFormatState)
     {
-      SetExposureSettings(procResult.cameraParams.exposureTime_ms,
-                          procResult.cameraParams.gain);
+      // Disable auto exposure and white balance while switching formats
+      // Even though the vision system is paused, it is possible that we
+      // are just finishing processing an image and don't want to send
+      // auto exposure and white balance messages to the camera
+      return RESULT_OK;
+    }
+    
+    const Vision::CameraParams& params = procResult.cameraParams;
+    
+    // Note that we set all parameters together. If WB or AE isn't enabled accoding to current VisionModes,
+    // their corresponding values should not actually be different in the params.
+    const Result result = _visionSystem->SetNextCameraParams(params);
+      
+    if(RESULT_OK == result)
+    {
+      PRINT_CH_DEBUG("VisionComponent",
+                     "VisionComponent.UpdateImageQuality",
+                     "ExpTime:%dms ExpGain:%f GainR:%f GainG:%f GainB:%f",
+                     params.exposureTime_ms, params.gain,
+                     params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
+      
+      auto cameraService = CameraService::getInstance();
+      
+      const bool isWhiteBalanceEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::WhiteBalance);
+      if(isWhiteBalanceEnabled)
+      {
+        cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
+                                                       params.whiteBalanceGainG,
+                                                       params.whiteBalanceGainB);
+      }
+      
+      const bool isAutoExposureEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::AutoExposure);
+      if(isAutoExposureEnabled)
+      {
+        cameraService->CameraSetParameters(procResult.cameraParams.exposureTime_ms,
+                                           procResult.cameraParams.gain);
+      }
+      
+      _vizManager->SendCameraParams(params);
+      
+      {
+        // Still needed?
+        // TODO: Add WB params to message?
+        using namespace ExternalInterface;
+        const u16 exposure_ms_u16 = Util::numeric_cast<u16>(params.exposureTime_ms);
+        _robot->Broadcast(MessageEngineToGame(CurrentCameraParams(params.gain,
+                                                                  exposure_ms_u16,
+                                                                  isAutoExposureEnabled)));
+      }
+    
     }
 
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
@@ -1590,9 +1659,9 @@ namespace Cozmo {
       // Just switched image qualities
       _currentQualityBeginTime_ms = procResult.timestamp;
       _waitForNextAlert_ms = kImageQualityAlertDuration_ms; // for first alert, use "duration" time
-      _lastBroadcastImageQuality = ImageQuality::Unchecked; // i.e. reset so we definitely broadcast again
+      _lastBroadcastImageQuality = Vision::ImageQuality::Unchecked; // i.e. reset so we definitely broadcast again
     }
-    else if(_lastBroadcastImageQuality != ImageQuality::Good) // Don't keep broadcasting once in Good state
+    else if(_lastBroadcastImageQuality != Vision::ImageQuality::Good) // Don't keep broadcasting once in Good state
     {
       const RobotTimeStamp_t timeWithThisQuality_ms = procResult.timestamp - _currentQualityBeginTime_ms;
 
@@ -1603,20 +1672,20 @@ namespace Cozmo {
 
         switch(_lastImageQuality)
         {
-          case ImageQuality::Unchecked:
+          case Vision::ImageQuality::Unchecked:
             // can't get here due to IF above (but need case to prevent compiler error without default)
             assert(false);
             break;
 
-          case ImageQuality::Good:
+          case Vision::ImageQuality::Good:
             errorCode = EngineErrorCode::ImageQualityGood;
             break;
 
-          case ImageQuality::TooDark:
+          case Vision::ImageQuality::TooDark:
             errorCode = EngineErrorCode::ImageQualityTooDark;
             break;
 
-          case ImageQuality::TooBright:
+          case Vision::ImageQuality::TooBright:
             errorCode = EngineErrorCode::ImageQualityTooBright;
             break;
         }
@@ -1642,18 +1711,6 @@ namespace Cozmo {
     }
 
     _lastImageQuality = procResult.imageQuality;
-
-    return RESULT_OK;
-  }
-
-  Result VisionComponent::UpdateWhiteBalance(const VisionProcessingResult& procResult)
-  {
-    if(_robot->IsPhysical() && _enableWhiteBalance)
-    {
-      SetWhiteBalanceSettings(procResult.cameraParams.whiteBalanceGainR,
-                              procResult.cameraParams.whiteBalanceGainG,
-                              procResult.cameraParams.whiteBalanceGainB);
-    }
 
     return RESULT_OK;
   }
@@ -1782,10 +1839,12 @@ namespace Cozmo {
     _camera->AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
   }
 
+
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
-    if(quality == 0 || !_robot->GetContext()->GetVizManager()->IsConnected())
+
+    if((quality == 0) || (_robot->GetImageSendMode() == ImageSendMode::Off))
     {
       // Don't send anything
       return RESULT_OK;
@@ -1804,8 +1863,13 @@ namespace Cozmo {
     }
 
     ImageChunk m;
-    m.height = img.GetNumRows();
-    m.width  = img.GetNumCols();
+    const bool sdkRequestingImage = _robot->GetSDKRequestingImage();
+    const bool vizConnected = _robot->GetContext()->GetVizManager()->IsConnected();
+    std::string data;
+    external_interface::ImageChunk* imageChunk = nullptr;
+    external_interface::GatewayWrapper wrapper;
+
+    DEV_ASSERT(sdkRequestingImage || vizConnected, "VisionComponent.CompressAndSendImage.CompressWithoutBroadcasting");
 
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
@@ -1820,30 +1884,59 @@ namespace Cozmo {
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
 
-    // Use the identifier value as the display index
-    m.displayIndex = 0;
+    static u32 imgID = 0;
+    u8 chunkId = 0;
+    u8 imageChunkCount = ceilf((f32)bytesRemainingToSend / kMaxChunkSize);
+    u8 displayIndex;
+    ++imgID;
+
     auto displayIndexIter = _vizDisplayIndexMap.find(identifier);
     if(displayIndexIter == _vizDisplayIndexMap.end())
     {
       // New identifier
-      m.displayIndex = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
-      _vizDisplayIndexMap.emplace(identifier, m.displayIndex); // NOTE: this will increase size() for next time
+      displayIndex = Util::numeric_cast<s32>(_vizDisplayIndexMap.size());
+      _vizDisplayIndexMap.emplace(identifier, displayIndex); // NOTE: this will increase size() for next time
     }
     else
     {
-      m.displayIndex = displayIndexIter->second;
+      displayIndex = displayIndexIter->second;
     }
 
-    static u32 imgID = 0;
-    m.imageId = ++imgID;
+    // Construct a clad ImageChunk
+    if(vizConnected) {
+      m.height = img.GetNumRows();
+      m.width  = img.GetNumCols();
 
-    m.frameTimeStamp = img.GetTimestamp();
-    m.chunkId = 0;
-    m.imageChunkCount = ceilf((f32)bytesRemainingToSend / kMaxChunkSize);
-    if(img.GetNumChannels() == 1) {
-      m.imageEncoding = ImageEncoding::JPEGGray;
-    } else {
-      m.imageEncoding = ImageEncoding::JPEGColor;
+      // Use the identifier value as the display index
+      m.displayIndex = displayIndex;
+ 
+      m.imageId = imgID;
+
+      m.frameTimeStamp = img.GetTimestamp();
+      m.imageChunkCount = imageChunkCount;
+      if(img.GetNumChannels() == 1) {
+        m.imageEncoding = ImageEncoding::JPEGGray;
+      } else {
+        m.imageEncoding = ImageEncoding::JPEGColor;
+      }
+    }
+    
+    // Construct a proto ImageChunk
+    if (sdkRequestingImage) {
+      imageChunk = new external_interface::ImageChunk();
+      imageChunk->set_height((u32)img.GetNumRows());
+      imageChunk->set_width((u32)img.GetNumCols());
+
+      imageChunk->set_display_index((u32)displayIndex);
+
+      imageChunk->set_image_id(imgID);
+      imageChunk->set_frame_time_stamp(img.GetTimestamp());
+      imageChunk->set_image_chunk_count((u32)imageChunkCount);
+      if(img.GetNumChannels() == 1) {
+        imageChunk->set_image_encoding(external_interface::ImageChunk_ImageEncoding_JPEG_GRAY);
+      } else {
+        imageChunk->set_image_encoding(external_interface::ImageChunk_ImageEncoding_JPEG_COLOR);
+      }
     }
 
     while (bytesRemainingToSend > 0) {
@@ -1851,19 +1944,33 @@ namespace Cozmo {
 
       auto startIt = compressedBuffer.begin() + (compressedBuffer.size() - bytesRemainingToSend);
       auto endIt = startIt + chunkSize;
-      m.data = std::vector<u8>(startIt, endIt);
+      
+      if (sdkRequestingImage) {
+        imageChunk->set_chunk_id((u32)chunkId);
+        data.assign(startIt, endIt);
+        imageChunk->set_data(std::move(data));
 
-      if (_robot->GetImageSendMode() != ImageSendMode::Off) {
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        wrapper.set_allocated_image_chunk(imageChunk);
+        _robot->GetGatewayInterface()->Broadcast(wrapper);
+        imageChunk = wrapper.release_image_chunk();
       }
 
-      // Forward the image chunks to Viz as well (Note that this does nothing if
-      // sending images is disabled in VizManager)
-      _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+      if(vizConnected)
+      {      
+        m.chunkId = chunkId;
+        m.data = std::vector<u8>(startIt, endIt);
+        
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        // Forward the image chunks to Viz as well (Note that this does nothing if
+        // sending images is disabled in VizManager)
+        _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+      }
 
       bytesRemainingToSend -= chunkSize;
-      ++m.chunkId;
+      ++chunkId;
     }
+
+    Util::SafeDelete(imageChunk);
 
     return RESULT_OK;
 
@@ -2288,16 +2395,22 @@ namespace Cozmo {
 
   bool VisionComponent::IsNameTaken(const std::string& name)
   {
+    return !GetFaceIDsWithName(name).empty();
+  }
+  
+  std::set<Vision::FaceID_t> VisionComponent::GetFaceIDsWithName(const std::string& name)
+  {
     Lock();
     auto namePairList = _visionSystem->GetEnrolledNames();
     Unlock();
 
+    std::set<Vision::FaceID_t> idsWithName;
     for( const auto& nameEntry : namePairList ) {
       if( Anki::Util::StringCaseInsensitiveEquals(nameEntry.name, name) ) {
-        return true;
+        idsWithName.insert(nameEntry.faceID);
       }
     }
-    return false;
+    return idsWithName;
   }
 
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const
@@ -2324,84 +2437,36 @@ namespace Cozmo {
     _lastProcessedImageTimeStamp_ms = t;
   }
 
-  CameraParams VisionComponent::GetCurrentCameraParams() const
+  Vision::CameraParams VisionComponent::GetCurrentCameraParams() const
   {
     return _visionSystem->GetCurrentCameraParams();
   }
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    _enableAutoExposure = enable;
-    _visionSystem->SetNextMode(VisionMode::CheckingQuality, enable);
+    if(_visionSystem)
+    {
+      _visionSystem->SetNextMode(VisionMode::AutoExposure, enable);
+    }
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
   {
-    _enableWhiteBalance = enable;
-    _visionSystem->SetNextMode(VisionMode::CheckingWhiteBalance, enable);
+    if(_visionSystem)
+    {
+      _visionSystem->SetNextMode(VisionMode::WhiteBalance, enable);
+    }
   }
 
-  void VisionComponent::SetAndDisableAutoExposure(u16 exposure_ms, f32 gain)
+  void VisionComponent::SetAndDisableCameraControl(const Vision::CameraParams& params)
   {
-    SetExposureSettings(exposure_ms, gain);
-    EnableAutoExposure(false);
-  }
-
-  void VisionComponent::SetAndDisableWhiteBalance(f32 gainR, f32 gainG, f32 gainB)
-  {
-    SetWhiteBalanceSettings(gainR, gainG, gainB);
+    const Result result = _visionSystem->SetNextCameraParams(params);
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
+    }
     EnableWhiteBalance(false);
-  }
-
-  void VisionComponent::SetExposureSettings(const s32 exposure_ms, const f32 gain)
-  {
-    if(!_visionSystem->IsExposureValid(exposure_ms) || !_visionSystem->IsGainValid(gain))
-    {
-      return;
-    }
-
-    const u16 exposure_ms_u16 = Util::numeric_cast<u16>(exposure_ms);
-
-    PRINT_CH_DEBUG("VisionComponent",
-                   "VisionComponent.SetCameraSettings",
-                   "Exp:%ums Gain:%f",
-                   exposure_ms,
-                   gain);
-
-    _visionSystem->SetNextCameraExposure(exposure_ms, gain);
-
-    _vizManager->SendCameraParams(_visionSystem->GetCurrentCameraParams());
-
-    auto cameraService = CameraService::getInstance();
-    cameraService->CameraSetParameters(exposure_ms_u16, gain);
-
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                        ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));
-  }
-
-  void VisionComponent::SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB)
-  {
-    if(!_visionSystem->IsGainValid(gainR) ||
-       !_visionSystem->IsGainValid(gainG) ||
-       !_visionSystem->IsGainValid(gainB))
-    {
-      PRINT_PERIODIC_CH_INFO(100, "VisionComponent", "VisionComponent.SetWhiteBalance.InvalidGains",
-                             "gainR=%f gainG=%f gainB=%f", gainR, gainG, gainB);
-      return;
-    }
-
-    PRINT_CH_DEBUG("VisionComponent",
-                   "VisionComponent.SetWhiteBalanceSettings",
-                   "GainR:%f GainG:%f GainB:%f",
-                   gainR, gainG, gainB);
-
-    _visionSystem->SetNextCameraWhiteBalance(gainR, gainG, gainB);
-
-    auto cameraService = CameraService::getInstance();
-    cameraService->CameraSetWhiteBalanceParameters(gainR, gainG, gainB);
-
-    _vizManager->SendCameraParams(_visionSystem->GetCurrentCameraParams());
-
+    EnableAutoExposure(false);
   }
 
   s32 VisionComponent::GetMinCameraExposureTime_ms() const
@@ -2689,16 +2754,6 @@ namespace Cozmo {
     // Pause and wait for VisionSystem to finish processing the current image
     // before changing formats since that will release all shared camera memory
     Pause(true);
-
-    // Disable auto exposure and white balance while switching formats
-    // Even though the vision system is paused, it is possible that we
-    // are just finishing processing an image and don't want to send
-    // auto exposure and white balance messages
-    _formatChangeAutoExposure = _enableAutoExposure;
-    EnableAutoExposure(false);
-
-    _formatChangeWhiteBalance = _enableWhiteBalance;
-    EnableWhiteBalance(false);
  
     // Clear the next image so that it doesn't get swapped in to current immediately
     Lock();
@@ -2793,11 +2848,6 @@ namespace Cozmo {
           _currentImageFormat = _desiredImageFormat;
           _desiredImageFormat = ImageEncoding::NoneImageEncoding;
           Pause(false); // now that state/format are updated, un-pause the vision system
-          
-          EnableAutoExposure(_formatChangeAutoExposure);
-          EnableWhiteBalance(_formatChangeWhiteBalance);
-          _formatChangeAutoExposure = false;
-          _formatChangeWhiteBalance = false;
           
           PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
                         "New format: %s, NumRows=%d", ImageEncodingToString(_currentImageFormat), gotNumRows);
@@ -2905,13 +2955,8 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraSettings& payload)
   {
-    EnableAutoExposure(payload.enableAutoExposure);
-
-    // If we are not enabling auto exposure (we are disabling it) then set the exposure and gain
-    if(!payload.enableAutoExposure)
-    {
-      SetExposureSettings(payload.exposure_ms, payload.gain);
-    }
+    // TODO: Re-enable
+    PRINT_NAMED_ERROR("VisionComponent.HandleSetCameraSettings.DEPRECATED", "");
   }
 
   void VisionComponent::SetSaveImageParameters(const ImageSaverParams& params)
@@ -3084,5 +3129,5 @@ namespace Cozmo {
     }
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

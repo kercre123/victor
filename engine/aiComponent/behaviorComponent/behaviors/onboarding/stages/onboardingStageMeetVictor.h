@@ -25,7 +25,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class OnboardingStageMeetVictor : public IOnboardingStage
 {
@@ -58,6 +58,9 @@ public:
     _enrollmentSuccessful = false;
     _step = Step::LookingAround;
     _receivedStartMsg = false;
+    _enrollmentName.clear();
+    _enrollmentEnded = false;
+    _receivedEnrollmentResult = false;
     
     // initial behavior
     _selectedBehavior = _behaviors[Step::LookingAround];
@@ -301,7 +304,7 @@ private:
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageMeetVictor__

@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kBehaviorIDConfigKey = "delegateID";
@@ -135,5 +135,5 @@ void BehaviorDispatcherPassThrough::OnBehaviorDeactivated()
 }
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

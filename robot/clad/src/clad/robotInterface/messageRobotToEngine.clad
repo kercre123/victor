@@ -19,7 +19,7 @@
 #include "clad/robotInterface/factoryMessages.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 
 message SyncRobotAck
@@ -197,6 +197,8 @@ union RobotToEngine {
   // FREE SLOTS 0xCE to 0xD2
 
   // Messages from animation process to engine
+  StartShutdownAnim          startShutdownAnim      = 0xD0,
+
   AnimationAdded             animAdded              = 0xD3,
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
@@ -244,5 +246,5 @@ union RobotToEngine {
 
 
 } // namespace RobotInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

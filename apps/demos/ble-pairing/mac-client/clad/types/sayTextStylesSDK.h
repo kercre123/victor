@@ -14,7 +14,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 // ENUM SayTextVoiceStyleSDK
 enum class SayTextVoiceStyleSDK : uint32_t {
@@ -33,7 +33,7 @@ extern const uint8_t SayTextVoiceStyleSDKVersionHash[16];
 
 constexpr uint32_t SayTextVoiceStyleSDKNumEntries = 4;
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 

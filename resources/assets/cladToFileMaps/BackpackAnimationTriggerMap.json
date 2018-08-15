@@ -4,16 +4,20 @@
       "AnimName": "charging"
   },
   {
-      "CladEvent": "BadCharger",
-      "AnimName": "badCharger"
-  },
-  {
       "CladEvent": "DanceToTheBeat",
       "AnimName": "danceToTheBeat"
   },
   {
+      "CladEvent": "MeetVictor",
+      "AnimName": "meetVictor"
+  },
+  {
       "CladEvent": "Idle_09",
       "AnimName": "idle_09"
+  },
+  {
+      "CladEvent": "LowBattery",
+      "AnimName": "badCharger"
   },
   {
       "CladEvent": "Off",

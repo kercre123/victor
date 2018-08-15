@@ -5,5 +5,8 @@
   "minDist_mm": 0,
   "maxDist_mm": 100,
 
-  "pEvil": 1.0
+  "pEvil": 1.0,
+
+  "pBumpWhenNotEvil": 0.0,
+  "pBumpWhenEvil": 0.2
 }

@@ -25,7 +25,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CubePlacementHelper
 {

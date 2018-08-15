@@ -14,7 +14,7 @@
 #include "util/entityComponent/componentTypeEnumMap.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 namespace Audio{
@@ -73,7 +73,7 @@ class PowerStateManager;
 class JdocsManager;
 class RobotExternalRequestComponent;
 
-} // namespace Cozmo
+} // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
 LINK_COMPONENT_TYPE_TO_ENUM(AppCubeConnectionSubscriber,   RobotComponentID, AppCubeConnectionSubscriber)
@@ -131,65 +131,65 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent,   RobotComponentID, R
 
 // Translate entity into string
 template<>
-std::string GetEntityNameForEnumType<Cozmo::RobotComponentID>(){ return "RobotComponents"; }
+std::string GetEntityNameForEnumType<Vector::RobotComponentID>(){ return "RobotComponents"; }
 
 template<>
-std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotComponentID enumID)
+std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotComponentID enumID)
 {
   switch(enumID){
-    case Cozmo::RobotComponentID::AIComponent:                  { return "AIComponent";}
-    case Cozmo::RobotComponentID::ActionList:                   { return "ActionList";}
-    case Cozmo::RobotComponentID::Animation:                    { return "Animation";}
-    case Cozmo::RobotComponentID::AppCubeConnectionSubscriber:  { return "AppCubeConnectionSubscriber";}
-    case Cozmo::RobotComponentID::Battery:                      { return "Battery";}
-    case Cozmo::RobotComponentID::BeatDetector:                 { return "BeatDetector";}
-    case Cozmo::RobotComponentID::BlockTapFilter:               { return "BlockTapFilter";}
-    case Cozmo::RobotComponentID::BlockWorld:                   { return "BlockWorld";}
-    case Cozmo::RobotComponentID::BackpackLights:               { return "BackpackLights";}
-    case Cozmo::RobotComponentID::Carrying:                     { return "Carrying";}
-    case Cozmo::RobotComponentID::CliffSensor:                  { return "CliffSensor";}
-    case Cozmo::RobotComponentID::CozmoContextWrapper:          { return "CozmoContextWrapper";}
-    case Cozmo::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
-    case Cozmo::RobotComponentID::CubeComms:                    { return "CubeComms";}
-    case Cozmo::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
-    case Cozmo::RobotComponentID::CubeInteractionTracker:       { return "CubeInteractionTracker";}
-    case Cozmo::RobotComponentID::CubeLights:                   { return "CubeLights";}
-    case Cozmo::RobotComponentID::DataAccessor:                 { return "DataAccessor";}
-    case Cozmo::RobotComponentID::Docking:                      { return "Docking";}
-    case Cozmo::RobotComponentID::DrivingAnimationHandler:      { return "DrivingAnimationHandler";}
-    case Cozmo::RobotComponentID::EngineAudioClient:            { return "EngineAudioClient";}
-    case Cozmo::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
-    case Cozmo::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
-    case Cozmo::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
-    case Cozmo::RobotComponentID::JdocsManager:                 { return "JdocsManager";}
-    case Cozmo::RobotComponentID::Map:                          { return "Map";}
-    case Cozmo::RobotComponentID::MicComponent:                 { return "MicComponent"; }
-    case Cozmo::RobotComponentID::MoodManager:                  { return "MoodManager";}
-    case Cozmo::RobotComponentID::StimulationFaceDisplay:       { return "StimulationFaceDisplay";}
-    case Cozmo::RobotComponentID::Movement:                     { return "Movement";}
-    case Cozmo::RobotComponentID::NVStorage:                    { return "NVStorage";}
-    case Cozmo::RobotComponentID::ObjectPoseConfirmer:          { return "ObjectPoseConfirmer";}
-    case Cozmo::RobotComponentID::PathPlanning:                 { return "PathPlanning";}
-    case Cozmo::RobotComponentID::PetWorld:                     { return "PetWorld";}
-    case Cozmo::RobotComponentID::PhotographyManager:           { return "PhotographyManager";}
-    case Cozmo::RobotComponentID::ProxSensor:                   { return "ProxSensor";}
-    case Cozmo::RobotComponentID::PublicStateBroadcaster:       { return "PublicStateBroadcaster";}
-    case Cozmo::RobotComponentID::SDK:                          { return "SDK";}
-    case Cozmo::RobotComponentID::SettingsCommManager:          { return "SettingsCommManager";}
-    case Cozmo::RobotComponentID::SettingsManager:              { return "SettingsManager";}
-    case Cozmo::RobotComponentID::FullRobotPose:                { return "FullRobotPose";}
-    case Cozmo::RobotComponentID::RobotIdleTimeout:             { return "RobotIdleTimeout";}
-    case Cozmo::RobotComponentID::RobotStatsTracker:            { return "RobotStatsTracker";}      
-    case Cozmo::RobotComponentID::RobotToEngineImplMessaging:   { return "RobotToEngineImplMessaging";}
-    case Cozmo::RobotComponentID::StateHistory:                 { return "StateHistory";}
-    case Cozmo::RobotComponentID::TextToSpeechCoordinator:      { return "TextToSpeechCoordinator";}
-    case Cozmo::RobotComponentID::TouchSensor:                  { return "TouchSensor";}
-    case Cozmo::RobotComponentID::VariableSnapshotComponent:    { return "VariableSnapshotComponent"; }
-    case Cozmo::RobotComponentID::Vision:                       { return "Vision";}
-    case Cozmo::RobotComponentID::VisionScheduleMediator:       { return "VisionScheduleMediator";}
-    case Cozmo::RobotComponentID::PowerStateManager:            { return "PowerStateManager";}
-    case Cozmo::RobotComponentID::RobotExternalRequestComponent:{ return "RobotExternalRequestComponent";}
-    case Cozmo::RobotComponentID::Count:                        { return "Count";}
+    case Vector::RobotComponentID::AIComponent:                  { return "AIComponent";}
+    case Vector::RobotComponentID::ActionList:                   { return "ActionList";}
+    case Vector::RobotComponentID::Animation:                    { return "Animation";}
+    case Vector::RobotComponentID::AppCubeConnectionSubscriber:  { return "AppCubeConnectionSubscriber";}
+    case Vector::RobotComponentID::Battery:                      { return "Battery";}
+    case Vector::RobotComponentID::BeatDetector:                 { return "BeatDetector";}
+    case Vector::RobotComponentID::BlockTapFilter:               { return "BlockTapFilter";}
+    case Vector::RobotComponentID::BlockWorld:                   { return "BlockWorld";}
+    case Vector::RobotComponentID::BackpackLights:               { return "BackpackLights";}
+    case Vector::RobotComponentID::Carrying:                     { return "Carrying";}
+    case Vector::RobotComponentID::CliffSensor:                  { return "CliffSensor";}
+    case Vector::RobotComponentID::CozmoContextWrapper:          { return "CozmoContextWrapper";}
+    case Vector::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
+    case Vector::RobotComponentID::CubeComms:                    { return "CubeComms";}
+    case Vector::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
+    case Vector::RobotComponentID::CubeInteractionTracker:       { return "CubeInteractionTracker";}
+    case Vector::RobotComponentID::CubeLights:                   { return "CubeLights";}
+    case Vector::RobotComponentID::DataAccessor:                 { return "DataAccessor";}
+    case Vector::RobotComponentID::Docking:                      { return "Docking";}
+    case Vector::RobotComponentID::DrivingAnimationHandler:      { return "DrivingAnimationHandler";}
+    case Vector::RobotComponentID::EngineAudioClient:            { return "EngineAudioClient";}
+    case Vector::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
+    case Vector::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
+    case Vector::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
+    case Vector::RobotComponentID::JdocsManager:                 { return "JdocsManager";}
+    case Vector::RobotComponentID::Map:                          { return "Map";}
+    case Vector::RobotComponentID::MicComponent:                 { return "MicComponent"; }
+    case Vector::RobotComponentID::MoodManager:                  { return "MoodManager";}
+    case Vector::RobotComponentID::StimulationFaceDisplay:       { return "StimulationFaceDisplay";}
+    case Vector::RobotComponentID::Movement:                     { return "Movement";}
+    case Vector::RobotComponentID::NVStorage:                    { return "NVStorage";}
+    case Vector::RobotComponentID::ObjectPoseConfirmer:          { return "ObjectPoseConfirmer";}
+    case Vector::RobotComponentID::PathPlanning:                 { return "PathPlanning";}
+    case Vector::RobotComponentID::PetWorld:                     { return "PetWorld";}
+    case Vector::RobotComponentID::PhotographyManager:           { return "PhotographyManager";}
+    case Vector::RobotComponentID::ProxSensor:                   { return "ProxSensor";}
+    case Vector::RobotComponentID::PublicStateBroadcaster:       { return "PublicStateBroadcaster";}
+    case Vector::RobotComponentID::SDK:                          { return "SDK";}
+    case Vector::RobotComponentID::SettingsCommManager:          { return "SettingsCommManager";}
+    case Vector::RobotComponentID::SettingsManager:              { return "SettingsManager";}
+    case Vector::RobotComponentID::FullRobotPose:                { return "FullRobotPose";}
+    case Vector::RobotComponentID::RobotIdleTimeout:             { return "RobotIdleTimeout";}
+    case Vector::RobotComponentID::RobotStatsTracker:            { return "RobotStatsTracker";}      
+    case Vector::RobotComponentID::RobotToEngineImplMessaging:   { return "RobotToEngineImplMessaging";}
+    case Vector::RobotComponentID::StateHistory:                 { return "StateHistory";}
+    case Vector::RobotComponentID::TextToSpeechCoordinator:      { return "TextToSpeechCoordinator";}
+    case Vector::RobotComponentID::TouchSensor:                  { return "TouchSensor";}
+    case Vector::RobotComponentID::VariableSnapshotComponent:    { return "VariableSnapshotComponent"; }
+    case Vector::RobotComponentID::Vision:                       { return "Vision";}
+    case Vector::RobotComponentID::VisionScheduleMediator:       { return "VisionScheduleMediator";}
+    case Vector::RobotComponentID::PowerStateManager:            { return "PowerStateManager";}
+    case Vector::RobotComponentID::RobotExternalRequestComponent:{ return "RobotExternalRequestComponent";}
+    case Vector::RobotComponentID::Count:                        { return "Count";}
   }
 }
 

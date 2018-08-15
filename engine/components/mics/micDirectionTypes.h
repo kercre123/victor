@@ -18,7 +18,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   using MicDirectionIndex = uint16_t;
   enum { kInvalidMicDirectionIndex = std::numeric_limits<MicDirectionIndex>::max() };
@@ -56,7 +56,7 @@ namespace Cozmo {
   // arguments = ( micPowerLevel, micConfidenceValue, micDirection )
   using OnMicPowerSampledCallback = std::function<bool(double,MicDirectionConfidence,MicDirectionIndex)>;
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_MicDirectionTypes_H_

@@ -21,7 +21,7 @@
 #include <mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class GameMessagePort : private Util::noncopyable
 {

@@ -18,7 +18,7 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorFindFaces : public ICozmoBehavior
 {
@@ -82,7 +82,7 @@ private:
   const char* StoppingConditionToString(StoppingCondition) const;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__

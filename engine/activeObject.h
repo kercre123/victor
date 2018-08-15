@@ -18,9 +18,9 @@
 #define __Anki_Cozmo_ActiveObject_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
-class ActiveObject : public virtual ObservableObject  // NOTE: Cozmo::ObservableObject, not Vision::
+class ActiveObject : public virtual ObservableObject  // NOTE: Vector::ObservableObject, not Vision::
 {
 public:
   static const s32 NUM_LEDS = 4;
@@ -134,7 +134,7 @@ inline const ActiveObject::LEDstate& ActiveObject::GetLEDState(s32 whichLED) con
   return _ledState[whichLED];
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ActiveObject_H__

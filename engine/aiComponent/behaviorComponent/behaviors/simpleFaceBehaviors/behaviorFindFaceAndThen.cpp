@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorSearchWithinBoundingBox.h"
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/faceWorld.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -30,7 +31,7 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
   
@@ -49,6 +50,7 @@ const char* const kUseBodyDetectorKey            = "useBodyDetector";
 const char* const kAddtlLookTimeIfSawBodyKey     = "additionalLookTimeIfSawBody_s";
 const char* const kAddtlSearchTimeIfSawBodyKey   = "additionalSearchTimeIfSawBody_s";
 const char* const kUpperPortionLookUpPercent     = "upperPortionLookUpPercent";
+const char* const kAnimWhenSeesFaceKey           = "animWhenSeesFace";
   
 const char* const kDebugName = "BehaviorFindFaceAndThen";
 
@@ -122,6 +124,9 @@ BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
     _iConfig.upperPortionLookUpPercent = 0.0f;
   }
   
+  _iConfig.animWhenSeesFace = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimWhenSeesFaceKey, _iConfig.animWhenSeesFace, GetDebugLabel(), false);
+  
   ANKI_VERIFY( _iConfig.exitOnceFound == _iConfig.behaviorOnceFoundID.empty(),
                "BehaviorFindFaceAndThen.Ctor.InvalidBehavior",
                "A 'behavior' must be provided, or set 'exitOnceFound' to false" );
@@ -162,6 +167,7 @@ void BehaviorFindFaceAndThen::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kAddtlLookTimeIfSawBodyKey,
     kAddtlSearchTimeIfSawBodyKey,
     kUpperPortionLookUpPercent,
+    kAnimWhenSeesFaceKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -404,6 +410,11 @@ void BehaviorFindFaceAndThen::TransitionToTurningTowardsFace()
     auto* action = new TurnTowardsFaceAction( _dVars.targetFace );
     action->SetLockOnClosestFaceAfterTurn( true ); // accept any face once turning in the direction of targetFace
     action->SetRequireFaceConfirmation( true );
+    if( _iConfig.animWhenSeesFace != AnimationTrigger::Count ) {
+      action->SetAnyFaceAnimationTrigger( _iConfig.animWhenSeesFace );
+      const u8 tracksToLock = ((u8)AnimTrackFlag::HEAD_TRACK) | ((u8)AnimTrackFlag::LIFT_TRACK) | ((u8)AnimTrackFlag::BODY_TRACK);
+      action->SetAnimTracksToLock( tracksToLock );
+    }
     auto callback = [this]( ActionResult result ){
       if( result == ActionResult::SUCCESS ) {
         TransitionToFollowupBehavior();

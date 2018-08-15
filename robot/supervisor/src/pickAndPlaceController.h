@@ -22,7 +22,7 @@
 #include "clad/types/dockingSignals.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     // Forward declaration
     namespace VisionSystem {
@@ -101,7 +101,7 @@ namespace Anki {
                                const f32 backupDist_mm);
       
     } // namespace PickAndPlaceController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_PICK_AND_PLACE_CONTROLLER_H_

@@ -12,7 +12,7 @@
 #include <math.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   /***************************************************************************
    *
@@ -162,6 +162,13 @@ namespace Cozmo {
 
   const u16 CAMERA_SENSOR_RESOLUTION_WIDTH  = 1280;
   const u16 CAMERA_SENSOR_RESOLUTION_HEIGHT = 720;
+  
+  const f32 MIN_CAMERA_EXPOSURE_TIME_MS = 1;
+  const f32 MAX_CAMERA_EXPOSURE_TIME_MS = 66;
+  
+  // Range for exposure and white balance gains
+  const f32 MIN_CAMERA_GAIN = 0.1f;
+  const f32 MAX_CAMERA_GAIN = 3.8f;
   
   /***************************************************************************
    *
@@ -353,7 +360,7 @@ namespace Cozmo {
   constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
   #endif
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_CONFIG_H

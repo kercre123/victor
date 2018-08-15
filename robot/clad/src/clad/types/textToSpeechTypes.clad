@@ -4,19 +4,54 @@
 // Copyright: Anki Inc (c) 2018
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
-  // Text To Speech processing state
-  enum uint_8 TextToSpeechState
+  //
+  // Text To Speech Trigger Mode
+  //
+  // TTS trigger mode determines when audio data will be enqueued and triggered for playback.
+  //
+  // If trigger mode is "immediate", audio data will be enqueued and triggered automatically
+  // when generated audio becomes playable.  Callers do not need to send an explicit
+  // TextToSpeechPlay request.
+  //
+  // If trigger mode is "manual", audio data will be generated but kept in memory until the caller
+  // sends an explicit TextToSpeechPlay request.
+  //
+  // If trigger mode is "keyframe", audio data will be generated and enqueued automatically, but
+  // will not be triggered by the TTS engine. Callers are expected to trigger playback by playing
+  // an animation sequence containing an embedded TTS audio event.
+  //
+  enum uint_8 TextToSpeechTriggerMode
   {
-    Invalid,    // Initial state
-    Preparing,  // Preparing TTS audio
-    Prepared,   // Prepared TTS audio
-    Delivering, // Delivering TTS audio to wwise
-    Delivered,  // Delivered TTS audio to wwise
-    Playing,    // Accompanying animation in progress
-    Finished    // Utterance finished playing according to AudioEngine
+    Invalid = 0,
+    Immediate,
+    Manual,
+    Keyframe
   }
 
-} // namespace Cozmo
+  //
+  // Text To Speech processing state
+  //
+  // Note that streaming audio samples may be played before they are completely generated.
+  //
+  // When audio generation begins, the TTS engine will send a "Preparing" event.
+  //
+  // When audio generation reaches a playable state, the TTS engine will send a "Playable" event
+  // with estimated duration of audio (in milliseconds).
+  //
+  // When audio generation is complete, the TTS engine will send a "Prepared" event with total
+  // duration of audio (in milliseconds).
+  //
+  enum uint_8 TextToSpeechState
+  {
+    Invalid = 0, // Initial state
+    Preparing,   // Audio generation in progress
+    Playable,    // Audio generation has reached a playable state
+    Prepared,    // Audio generation complete
+    Playing,     // Audio playback in progress
+    Finished     // Audio playback complete
+  }
+
+} // namespace Vector
 } // namespace Anki

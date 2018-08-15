@@ -18,7 +18,7 @@
 #include "engine/aiComponent/faceSelectionComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kFaceSelectionPenaltiesKey = "faceSelectionPenalties";
@@ -145,5 +145,5 @@ void BehaviorAnimSequenceWithFace::OnAnimationsComplete()
   // otherwise do nothing and the behavior should exit
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

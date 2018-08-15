@@ -27,7 +27,7 @@
 #define LATTICE_PLANNER_MULTIPLE_GOALS 1
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 LatticePlanner::LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform)
   : IPathPlanner("LatticePlanner")

@@ -28,7 +28,7 @@ namespace Anki {
 struct Arc;
 class LineSegment;
 
-namespace Cozmo {
+namespace Vector {
 
 class Path;
 class Robot;
@@ -141,7 +141,7 @@ private:
 };
     
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

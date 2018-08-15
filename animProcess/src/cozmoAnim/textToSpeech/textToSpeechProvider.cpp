@@ -27,7 +27,7 @@
 #define LOG_CHANNEL "TextToSpeechProvider"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 TextToSpeechProvider::TextToSpeechProvider(const AnimContext * ctx, const Json::Value& tts_config)
@@ -52,19 +52,28 @@ TextToSpeechProvider::~TextToSpeechProvider()
 
 Result TextToSpeechProvider::SetLocale(const std::string & locale)
 {
+  // Forward to implementation
   DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.SetLocale.InvalidImplementation");
   return _impl->SetLocale(locale);
 }
 
-Result TextToSpeechProvider::CreateAudioData(const std::string& text,
-                                             float durationScalar,
-                                             TextToSpeechProviderData& data)
+Result TextToSpeechProvider::GetFirstAudioData(const std::string & text,
+                                               float durationScalar,
+                                               TextToSpeechProviderData & data,
+                                               bool & done)
 {
-  // Forward call to implementation
-  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.CreateAudioData.InvalidImplementation");
-  return _impl->CreateAudioData(text, durationScalar, data);
+  // Forward to implementation
+  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.GetFirstAudioData.InvalidImplementation");
+  return _impl->GetFirstAudioData(text, durationScalar, data, done);
+}
+
+Result TextToSpeechProvider::GetNextAudioData(TextToSpeechProviderData & data, bool & done)
+{
+  // Forward to implementation
+  DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.GetNextAudioData.InvalidImplementation");
+  return _impl->GetNextAudioData(data, done);
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

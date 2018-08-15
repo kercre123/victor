@@ -68,7 +68,7 @@ constexpr const char * LOG_CHANNEL = "CozmoEngineMain";
 constexpr const int SLEEP_DELAY_US = (10*1000);
 
 // Global singletons
-Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
+Anki::Vector::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
 
 
@@ -99,7 +99,7 @@ void configure_engine(Json::Value& config)
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
   }
   if (!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = Anki::Cozmo::UI_ADVERTISING_PORT;
+    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = Anki::Vector::UI_ADVERTISING_PORT;
   }
 }
 
@@ -175,10 +175,10 @@ static int cozmo_start(const Json::Value& configuration)
   #endif
 
   #if DEV_LOGGER_ENABLED
-  if(!FACTORY_TEST || (FACTORY_TEST && !Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG))
+  if(!FACTORY_TEST || (FACTORY_TEST && !Anki::Vector::Factory::GetEMR()->fields.PACKED_OUT_FLAG))
   {
     // Initialize Developer Logging System
-    using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
+    using DevLoggingSystem = Anki::Vector::DevLoggingSystem;
     const std::string& devlogPath = gDataPlatform->GetCurrentGameLogPath(LOG_PROCNAME);
     DevLoggingSystem::CreateInstance(devlogPath, appRunId);
 
@@ -205,7 +205,7 @@ static int cozmo_start(const Json::Value& configuration)
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(gDataPlatform->GetCachePath("consoleVarsEngine.ini").c_str());
 
-  Anki::Cozmo::CozmoAPI* engineInstance = new Anki::Cozmo::CozmoAPI();
+  Anki::Vector::CozmoAPI* engineInstance = new Anki::Vector::CozmoAPI();
 
   bool engineResult = engineInstance->StartRun(gDataPlatform, config);
   if (!engineResult) {
@@ -241,7 +241,7 @@ static int cozmo_stop()
   Anki::Util::gLoggerProvider = nullptr;
 
 #if DEV_LOGGER_ENABLED
-  Anki::Cozmo::DevLoggingSystem::DestroyInstance();
+  Anki::Vector::DevLoggingSystem::DestroyInstance();
 #endif
 
   sync();

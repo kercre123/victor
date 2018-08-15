@@ -18,7 +18,7 @@
 #include "engine/actions/basicActions.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using namespace ExternalInterface;
 
@@ -160,5 +160,5 @@ void BehaviorReactToRobotOnSide::OnBehaviorDeactivated()
 {
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

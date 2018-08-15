@@ -58,12 +58,6 @@ message DisplayFaceImageRGBChunk {
 message RobotHistoryRequest {
 }
 
-// Request control from behavior system
-message SDKActivationRequest {
-  uint_32 slot, // TODO Use the BehaviorSlot enum
-  bool enable,
-}
-
 // ====================================================
 //                      Meet Victor
 // ====================================================
@@ -137,8 +131,8 @@ enum uint_32 VisionMode {
     DetectingMotion,
     DetectingOverheadEdges,
     ComputingCalibration,
-    CheckingQuality,
-    CheckingWhiteBalance,
+    AutoExposure,
+    WhiteBalance,
     ComputingStatistics,
     DetectingPets,
     EstimatingFacialExpression,  // No effect if DetectingFaces not enabled
@@ -244,7 +238,7 @@ union MessageExternalToRobot {
   MoveLift                       MoveLift                       = 0x04,
   DriveArc                       DriveArc                       = 0x05,
   RobotHistoryRequest            RobotHistoryRequest            = 0x06,
-  SDKActivationRequest           SDKActivationRequest           = 0x07,
+  // Empty slot. Feel free to use
   DisplayFaceImageRGBChunk       DisplayFaceImageRGBChunk       = 0x08,
   AppIntent                      AppIntent                      = 0x09,
   CancelFaceEnrollment           CancelFaceEnrollment           = 0x0A,

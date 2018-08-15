@@ -14,7 +14,7 @@
 #include "util/helpers/variadicMacroHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 // Registration of test controller derived from CozmoSimTestController
@@ -185,7 +185,7 @@ public:
 };
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __COZMO_SIM_TEST_CONTROLLER__H__

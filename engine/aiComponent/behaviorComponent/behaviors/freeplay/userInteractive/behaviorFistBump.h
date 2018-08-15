@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BEIRobotInfo;
 class IFistBumpListener;
@@ -103,7 +103,7 @@ private:
 }; // class BehaviorFistBump
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorFistBump_H__

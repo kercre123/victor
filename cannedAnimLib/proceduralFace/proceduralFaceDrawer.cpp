@@ -22,7 +22,7 @@
 #define NUMERIC_CAST_CLAMPED(x) (u8)(x) // Util::numeric_cast_clamped<u8>(x)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   #define CONSOLE_GROUP "Face.ParameterizedFace"
 
@@ -1122,5 +1122,5 @@ namespace Cozmo {
 
     return dirty;
   } // ApplyScanlines()
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

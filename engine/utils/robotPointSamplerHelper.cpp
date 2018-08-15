@@ -20,7 +20,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const float kMaxCliffIntersectionDist_mm = 10000.0f;
@@ -78,7 +78,7 @@ void RejectIfWouldCrossCliff::SetRobotPosition(const Point2f& pos)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RejectIfWouldCrossCliff::UpdateCliffs( const INavMap* memoryMap )
+void RejectIfWouldCrossCliff::UpdateCliffs( std::shared_ptr<const INavMap> memoryMap )
 {
   _cliffs.clear();
   if( memoryMap == nullptr ) {

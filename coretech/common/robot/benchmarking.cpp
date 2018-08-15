@@ -104,7 +104,7 @@ staticInline u32 GetBenchmarkTime()
 
   return (u32)(time.tv_sec-startSeconds)*1000000 + (u32)time.tv_usec;
 #elif defined (__EDG__)  // MDK-ARM
-  return Anki::Cozmo::HAL::GetMicroCounter();
+  return Anki::Vector::HAL::GetMicroCounter();
 #else
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);

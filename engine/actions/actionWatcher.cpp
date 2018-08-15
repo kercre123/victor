@@ -18,7 +18,7 @@
 #define DEBUG_ACTION_WATCHER 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ActionWatcher::ActionWatcher()
 {

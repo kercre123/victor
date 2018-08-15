@@ -37,7 +37,7 @@
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
     CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
@@ -796,7 +796,7 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, z_dist, angle)));
     }
     
-    void VizManager::SendCameraParams(const CameraParams& params)
+    void VizManager::SendCameraParams(const Vision::CameraParams& params)
     {
       ANKI_CPU_PROFILE("VizManager::SendCameraParams");
       SendMessage(VizInterface::MessageViz(VizInterface::CameraParams(std::move(params))));
@@ -1145,5 +1145,5 @@ namespace Anki {
     }
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

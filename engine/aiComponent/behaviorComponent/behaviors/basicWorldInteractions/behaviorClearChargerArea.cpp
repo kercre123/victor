@@ -31,7 +31,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kMaxNumAttemptsKey = "maxNumAttempts";
@@ -290,5 +290,5 @@ const ObservableObject* BehaviorClearChargerArea::GetCubeInChargerArea() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

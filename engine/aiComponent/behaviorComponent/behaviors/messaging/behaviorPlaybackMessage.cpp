@@ -45,7 +45,7 @@
   PRINT_CH_INFO( "VoiceMessage", "BehaviorPlaybackMessage", format, ##__VA_ARGS__ )
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace
 {
@@ -337,7 +337,7 @@ void BehaviorPlaybackMessage::PlayNextRecipientTTS()
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #undef PRINT_DEBUG

@@ -34,7 +34,7 @@ class VisionPoseData;
 
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class CozmoContext;
@@ -85,7 +85,7 @@ private:
   void GenerateFeatures( Vision::ImageCache& cache );
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Anki_Victor_IlluminationDetector_H__

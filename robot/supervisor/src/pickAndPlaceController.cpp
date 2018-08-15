@@ -28,7 +28,7 @@
 #define SEND_PICKUP_VERIFICATION_SNAPSHOTS 0
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace PickAndPlaceController {
 
       namespace {
@@ -1026,5 +1026,5 @@ namespace Anki {
       }
 
     } // namespace PickAndPlaceController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

@@ -51,15 +51,15 @@ const float kUpdateWebVizPeriod_s = 1.0f;
 const float kDebugTempSubscriptionTimeout_s = 10.0f;
 
 // Console test constants
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber1(1);
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber2(2);
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber3(3);
-static Anki::Cozmo::TestCubeConnectionSubscriber sStaticTestSubscriber4(4);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber1(1);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber2(2);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber3(3);
+static Anki::Vector::TestCubeConnectionSubscriber sStaticTestSubscriber4(4);
 #endif
 }
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CubeConnectionCoordinator::SubscriberRecord::SubscriberRecord(ICubeConnectionSubscriber* const subscriberPtr,
@@ -221,9 +221,9 @@ void CubeConnectionCoordinator::SubscribeToCubeConnection(ICubeConnectionSubscri
 
   // If we're already connected, invoke appropriate callbacks now since they won't be invoked by state transitions
   if(ECoordinatorState::ConnectedBackground == _coordinatorState){
-    subscriber->ConnectedCallback(ECubeConnectionType::Background);
+    subscriber->ConnectedCallback(CubeConnectionType::Background);
   } else if(ECoordinatorState::ConnectedInteractable == _coordinatorState){
-    subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
+    subscriber->ConnectedCallback(CubeConnectionType::Interactable);
   }
 
 #if ANKI_DEV_CHEATS
@@ -335,7 +335,7 @@ void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCom
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Interactable);
+    subscriberRecord.subscriber->ConnectedCallback(CubeConnectionType::Interactable);
   }
 }
 
@@ -398,7 +398,7 @@ void CubeConnectionCoordinator::TransitionToConnectedBackground(const RobotCompM
 
   // Notify subscribers
   for(auto& subscriberRecord : _subscriptionRecords){
-    subscriberRecord.subscriber->ConnectedCallback(ECubeConnectionType::Background);
+    subscriberRecord.subscriber->ConnectedCallback(CubeConnectionType::Background);
   }
 }
 
@@ -546,7 +546,7 @@ void CubeConnectionCoordinator::SendDataToWebViz()
 #if ANKI_DEV_CHEATS
   if(nullptr != _context){
     auto* webService = _context->GetWebService();
-    if(nullptr != webService){
+    if(nullptr != webService && webService->IsWebVizClientSubscribed(kWebVizModuleNameCubes)){
       Json::Value toSend = Json::objectValue;
       Json::Value cccInfo = Json::objectValue;
 
@@ -568,7 +568,7 @@ void CubeConnectionCoordinator::SendDataToWebViz()
       
       // Display current subscribers
       Json::Value subscriberData = Json::arrayValue;
-      for(auto& record : _subscriptionRecords){
+      for(const auto& record : _subscriptionRecords){
         Json::Value subscriberDatum;
         subscriberDatum["SubscriberName"] = record.subscriber->GetCubeConnectionDebugName();
         subscriberDatum["SubscriptionType"] = record.isBackgroundConnection ? "Background" : "Interactable";
@@ -585,5 +585,5 @@ void CubeConnectionCoordinator::SendDataToWebViz()
 #endif // ANKI_DEV_CHEATS
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

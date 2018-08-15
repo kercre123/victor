@@ -22,7 +22,7 @@ namespace Util {
 class AudienceTags;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 

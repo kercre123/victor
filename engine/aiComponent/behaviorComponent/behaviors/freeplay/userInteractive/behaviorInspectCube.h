@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward Declarations
 class BlockWorldFilter;
@@ -48,7 +48,7 @@ private:
     Searching,
     Tracking,
     Keepaway,
-    CubeSetDown,
+    PlayingWithCube,
     GetOutBored,
   }; 
 
@@ -59,9 +59,11 @@ private:
   // Behavior State Machine 
   void TransitionToSearching();
   void UpdateSearching(const TargetStatus& targetStatus);
+  void SearchLoopHelper();
   void TransitionToTracking();
   void UpdateTracking(const TargetStatus& targetStatus);
   void TransitionToKeepaway();
+  void TransitionToPlayingWithCube();
   void TransitionToGetOutTargetLost();
   void TransitionToGetOutBored();
 
@@ -70,8 +72,8 @@ private:
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
-    std::string cubeSetDownBehaviorIDString;
-    std::shared_ptr<ICozmoBehavior> cubeSetDownBehavior;
+    std::string playWithCubeBehaviorIDString;
+    std::shared_ptr<ICozmoBehavior> playWithCubeBehavior;
     std::shared_ptr<ICozmoBehavior> keepawayBehavior;
   };
 
@@ -90,7 +92,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorInspectCube__

@@ -16,7 +16,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     enum class TestState {
       WriteSingleBlob,
@@ -406,6 +406,6 @@ namespace Anki {
     
     // ================ End of message handler callbacks ==================
     
-  } // end namespace Cozmo
+  } // end namespace Vector
 } // end namespace Anki
 

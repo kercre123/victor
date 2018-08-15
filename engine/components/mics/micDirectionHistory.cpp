@@ -29,7 +29,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR_RANGED( uint32_t,       kRTS_PowerAvgNumSamples,   "SoundReaction", 100, 1, 250 );
 CONSOLE_VAR_RANGED( double,         kRTS_WebVizUpdateInterval, "SoundReaction", 0.20, 0.0, 1.0 );
@@ -476,39 +476,42 @@ void MicDirectionHistory::SendMicDataToWebserver()
   {
     if ( nullptr != _webService )
     {
-      const double kWebserverTriggerDisplayTime = 1.5;
-
-      static double sNextUpdateTime = 0.0;
-      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-      
-      if ( ( currentTime >= sNextUpdateTime ) || _webServerData.forceUpdate )
+      static const std::string kWebVizModuleName = "soundreactions";
+      if (_webService->IsWebVizClientSubscribed(kWebVizModuleName))
       {
-        Json::Value webData;
-        webData["time"] = currentTime;
-        webData["confidence"] = _soundTrackingData.latestMicConfidence;
-        webData["dominant"] = _soundTrackingData.latestMicDirection;
-        webData["latestPowerValue"] = _soundTrackingData.latestPowerLevel;
-        webData["latestNoiseFloor"] = _soundTrackingData.latestNoiseFloor;
-        webData["powerScore"] = _soundTrackingData.latestPeakLevel;
-        webData["powerScoreAvg"] = _soundTrackingData.averagePeakLevel;
-        webData["powerScoreThreshold"] = kRTS_AbsolutePowerThreshold;
-        webData["powerScoreMinThreshold"] = kRTS_MinPowerThreshold;
-
-        webData["isTriggered"] = ( currentTime <= ( _webServerData.timeOfReaction + kWebserverTriggerDisplayTime ) );
-        webData["triggerScore"] = _webServerData.powerLevel;
-        webData["triggerConfidence"] = _webServerData.confidence;
-        webData["triggerDirection"] = _webServerData.direction;
-
-        static const std::string moduleName = "soundreactions";
-        _webService->SendToWebViz( moduleName, webData );
-
-        sNextUpdateTime = currentTime + kRTS_WebVizUpdateInterval; // update every Xms
-        _webServerData.forceUpdate = false;
+        static const double kWebserverTriggerDisplayTime = 1.5;
+        
+        static double sNextUpdateTime = 0.0;
+        const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+        
+        if ( ( currentTime >= sNextUpdateTime ) || _webServerData.forceUpdate )
+        {
+          Json::Value webData;
+          webData["time"] = currentTime;
+          webData["confidence"] = _soundTrackingData.latestMicConfidence;
+          webData["dominant"] = _soundTrackingData.latestMicDirection;
+          webData["latestPowerValue"] = _soundTrackingData.latestPowerLevel;
+          webData["latestNoiseFloor"] = _soundTrackingData.latestNoiseFloor;
+          webData["powerScore"] = _soundTrackingData.latestPeakLevel;
+          webData["powerScoreAvg"] = _soundTrackingData.averagePeakLevel;
+          webData["powerScoreThreshold"] = kRTS_AbsolutePowerThreshold;
+          webData["powerScoreMinThreshold"] = kRTS_MinPowerThreshold;
+          
+          webData["isTriggered"] = ( currentTime <= ( _webServerData.timeOfReaction + kWebserverTriggerDisplayTime ) );
+          webData["triggerScore"] = _webServerData.powerLevel;
+          webData["triggerConfidence"] = _webServerData.confidence;
+          webData["triggerDirection"] = _webServerData.direction;
+          
+          _webService->SendToWebViz( kWebVizModuleName, webData );
+          
+          sNextUpdateTime = currentTime + kRTS_WebVizUpdateInterval; // update every Xms
+          _webServerData.forceUpdate = false;
+        }
       }
     }
   }
   #endif
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

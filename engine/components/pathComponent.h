@@ -29,7 +29,7 @@ namespace Anki {
 
 class Pose3d;
 
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 class IActionRunner;
@@ -96,7 +96,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };

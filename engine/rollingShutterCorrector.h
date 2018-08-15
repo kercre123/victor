@@ -26,7 +26,7 @@ namespace Anki {
     class Camera;
   }
 
-  namespace Cozmo {
+  namespace Vector {
   
     class Robot;
     struct VisionPoseData;
@@ -108,7 +108,7 @@ namespace Anki {
       static constexpr f32 rateToPixelProportionalityConst = 22.0;
       
     };
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ROLLING_SHUTTER_CORRECTOR

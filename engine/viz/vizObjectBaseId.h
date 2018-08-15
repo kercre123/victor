@@ -17,12 +17,12 @@
 #include <stdint.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Base IDs for each VizObject type
 extern const uint32_t VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1];
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Cozmo_Basestation_Viz_VizObjectBaseId_H__

@@ -18,7 +18,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kDistToSpeedKey  = "distMM_speedMM_Graph";
@@ -205,5 +205,5 @@ bool BehaviorProxGetToDistance::IsWithinGoalTolerence() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

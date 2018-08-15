@@ -42,7 +42,7 @@
 #include <assert.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   const std::string kWebVizModuleName = "mood";
@@ -96,7 +96,7 @@ MoodManager::~MoodManager()
   }
 }
 
-void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void MoodManager::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   auto& context = dependentComps.GetComponent<ContextWrapper>().context;
@@ -402,35 +402,36 @@ void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::strin
   }
 
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  const auto* webService = context->GetWebService();
+  if( nullptr != webService && webService->IsWebVizClientSubscribed(kWebVizModuleName)) {
 
-  Json::Value data;
-  data["time"] = currentTime_s;
+    Json::Value data;
+    data["time"] = currentTime_s;
 
-  auto& moodData = data["moods"];
+    auto& moodData = data["moods"];
 
-  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
-  {
-    const EmotionType emotionType = (EmotionType)i;
-    const float val = GetEmotionByIndex(i).GetValue();
+    for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+    {
+      const EmotionType emotionType = (EmotionType)i;
+      const float val = GetEmotionByIndex(i).GetValue();
 
-    Json::Value entry;
-    entry["emotion"] = EmotionTypeToString( emotionType );
-    entry["value"] = val;
-    moodData.append( entry );
+      Json::Value entry;
+      entry["emotion"] = EmotionTypeToString( emotionType );
+      entry["value"] = val;
+      moodData.append( entry );
+    }
+
+    if( ! emotionEvent.empty() ) {
+      data["emotionEvent"] = emotionEvent;
+    }
+
+    data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
+
+    webService->SendToWebViz( kWebVizModuleName, data );
   }
 
-  if( ! emotionEvent.empty() ) {
-    data["emotionEvent"] = emotionEvent;
-  }
-
-  data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
-
-  const auto* web = context->GetWebService();
-  if( nullptr != web ) {
-    web->SendToWebViz( kWebVizModuleName, data );
-  }
-
-  _lastWebVizSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastWebVizSendTime_s = currentTime_s;
 }
 
 void MoodManager::HandleActionEnded(const ExternalInterface::RobotCompletedAction& completion)
@@ -459,7 +460,7 @@ void MoodManager::HandleActionEnded(const ExternalInterface::RobotCompletedActio
 template<>
 void MoodManager::HandleMessage(const ExternalInterface::MoodMessage& msg)
 {
-  const Anki::Cozmo::ExternalInterface::MoodMessageUnion& moodMessage = msg.MoodMessageUnion;
+  const Anki::Vector::ExternalInterface::MoodMessageUnion& moodMessage = msg.MoodMessageUnion;
   switch (moodMessage.GetTag())
   {
     case ExternalInterface::MoodMessageUnionTag::GetEmotions:
@@ -467,19 +468,19 @@ void MoodManager::HandleMessage(const ExternalInterface::MoodMessage& msg)
       break;
     case ExternalInterface::MoodMessageUnionTag::SetEmotion:
     {
-      const Anki::Cozmo::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
+      const Anki::Vector::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
       SetEmotion(msg.emotionType, msg.newVal);
       break;
     }
     case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
     {
-      const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
+      const Anki::Vector::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
       AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str(), GetCurrentTimeInSeconds());
       break;
     }
     case ExternalInterface::MoodMessageUnionTag::TriggerEmotionEvent:
     {
-      const Anki::Cozmo::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
+      const Anki::Vector::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
       TriggerEmotionEvent(msg.emotionEventName, GetCurrentTimeInSeconds());
       break;
     }
@@ -517,7 +518,7 @@ void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient
   // disabled for PR demo (let audio use it's own custom settings here)
   if( nullptr != _robot ) {
     const auto* featureGate = _robot->GetContext()->GetFeatureGate();
-    const bool isPrDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+    const bool isPrDemo = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo);
     if(isPrDemo) {
       return;
     }
@@ -954,5 +955,5 @@ void MoodManager::AddEvent(const char* eventName)
 #endif // SEND_MOOD_TO_VIZ_DEBUG
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

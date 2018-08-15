@@ -12,7 +12,7 @@
     "branch": "master"
   },
   "github.com/anki/sai-chipper-voice": {
-    "commit": "d7e656d359c520e16f1350e4babf8c63808b9daf",
+    "commit": "9b6b6666875bbc5aa3674dae0e097272607d11a0",
     "branch": "active"
   },
   "github.com/golang/protobuf": {
@@ -59,7 +59,7 @@
     "commit": "07f5e79768022f9a3265235f0db4ac8c3f675fec"
   },
   "github.com/anki/sai-token-service": {
-    "commit": "2e888bbe7ed7823bb510786539a904eb36528538",
+    "commit": "0323cdc372ee6fd2061233ba06fa6969c7517193",
     "branch": "develop"
   },
   "github.com/dgrijalva/jwt-go": {
@@ -109,5 +109,17 @@
   "github.com/anki/sai-go-accounts": {
     "commit": "d3dfb40cd1259ac834e9c926ea9dc6f823f38b0d",
     "branch": "master"
+  },
+  "golang.org/x/crypto": {
+    "commit": "c126467f60eb25f8f27e5a981f32a87e3965053f",
+    "branch": "master"
+  },
+  "golang.org/x/sys": {
+    "commit": "3dc4335d56c789b04b0ba99b7a37249d9b614314",
+    "branch": "master"
+  },
+  "github.com/anki/sai-jdocs": {
+    "commit": "11a60eebd8ee670e91380148156a000191be7e65",
+    "branch": "develop"
   }
 }

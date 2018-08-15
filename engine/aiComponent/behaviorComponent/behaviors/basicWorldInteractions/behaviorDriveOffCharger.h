@@ -20,7 +20,7 @@
 #include "engine/components/mics/micDirectionTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDriveOffCharger : public ICozmoBehavior
 {
@@ -106,7 +106,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

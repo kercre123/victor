@@ -3,7 +3,7 @@
  */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 LCDBrightness {
   LCDLevelOff = 0,

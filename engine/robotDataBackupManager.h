@@ -36,7 +36,7 @@ namespace Util {
   }
 }
 
-namespace Cozmo {
+namespace Vector {
   
 class Robot;
 class CozmoContext;

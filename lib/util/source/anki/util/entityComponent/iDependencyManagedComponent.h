@@ -22,7 +22,7 @@
 namespace Anki {
 
 // forward declaration - TMP
-namespace Cozmo{
+namespace Vector{
 class Robot;
 }
 template<typename EnumType>
@@ -75,7 +75,7 @@ public:
 
   // TMP - add in robot to make transition to new system easier for comps that previously
   // received robot - theoretically only dependent components should be necessary in the future
-  virtual void InitDependent(Cozmo::Robot* robot, 
+  virtual void InitDependent(Vector::Robot* robot, 
                              const DependencyManagedEntity<EnumType>& dependentComps) {};
 
   // Update dependencies are guaranteed to be updated before this component
@@ -132,7 +132,7 @@ public:
   virtual bool IsUnreliableComponent() const override final { return true;}
   virtual void GetInitDependencies(std::set<EnumType>& dependencies) const override final {}
   virtual void AdditionalInitAccessibleComponents(std::set<EnumType>& components) const override final {};
-  virtual void InitDependent(Cozmo::Robot* robot, 
+  virtual void InitDependent(Vector::Robot* robot, 
                              const DependencyManagedEntity<EnumType>& dependentComps) override final {};
   virtual void GetUpdateDependencies(std::set<EnumType>& dependencies) const override final {};
   virtual void AdditionalUpdateAccessibleComponents(std::set<EnumType>& components) const override final {};

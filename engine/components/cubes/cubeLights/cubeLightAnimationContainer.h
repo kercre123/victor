@@ -20,7 +20,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 class CubeLightAnimationContainer
@@ -37,7 +37,7 @@ private:
   std::unordered_map<std::string, CubeLightAnimation::Animation> _animations;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Cube_Light_Animation_Container_H__

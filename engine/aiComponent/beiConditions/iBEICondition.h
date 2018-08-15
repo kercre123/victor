@@ -27,7 +27,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorExternalInterface;
 class IExternalInterface;
@@ -113,7 +113,7 @@ private:
   static bool _checkDebugFactors;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_StateConceptStrategies_IBEICondition_H__

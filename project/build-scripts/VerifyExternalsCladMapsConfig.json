@@ -16,7 +16,7 @@
     "mapPath"       : "/resources/assets/cladToFileMaps/BackpackAnimationTriggerMap.json",
     "resourceKey" : "AnimName",
 
-    "cladPath"      : "/clad/src/clad/types/backpackAnimationTriggers.clad",
+    "cladPath"      : "/clad/robot/src/clad/types/backpackAnimationTriggers.clad",
     
     "resources": [
       {

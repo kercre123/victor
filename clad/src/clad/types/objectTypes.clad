@@ -4,7 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // TODO: change to int_16 or uint_8
   enum int_32 ObjectType {
@@ -191,5 +191,5 @@ namespace Cozmo {
     Block_ARROW            = 0
   }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

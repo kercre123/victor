@@ -39,7 +39,7 @@ struct LoadedKnownFace;
 class TrackedFace;
 }
   
-namespace Cozmo {
+namespace Vector {
   
   // Forward declarations:
   class Robot;
@@ -69,7 +69,7 @@ namespace Cozmo {
     //////
     // IDependencyManagedComponent functions
     //////
-    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+    virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
         dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
@@ -243,7 +243,7 @@ namespace Cozmo {
     
   }; // class FaceWorld
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_FaceWorld_H__

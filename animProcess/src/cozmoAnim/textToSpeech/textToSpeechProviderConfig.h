@@ -25,7 +25,7 @@ namespace Json {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 class TextToSpeechProviderConfig
@@ -43,6 +43,11 @@ public:
   int GetPitch() const;
   int GetLeadingSilence_ms() const;
   int GetTrailingSilence_ms() const;
+  int GetPausePunctuation_ms() const;
+  int GetPauseSemicolon_ms() const;
+  int GetPauseComma_ms() const;
+  int GetPauseBracket_ms() const;
+  int GetPauseSpelling_ms() const;
 
   //
   // Get base speed, adjusted for length, possibly modified by configuration traits.
@@ -76,7 +81,7 @@ private:
 };
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__cozmo_textToSpeech_textToSpeechProviderConfig_h

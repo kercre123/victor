@@ -16,7 +16,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     enum class TestState {
       MoveLiftUp,
@@ -441,6 +441,6 @@ namespace Anki {
     
     // ================ End of message handler callbacks ==================
     
-  } // end namespace Cozmo
+  } // end namespace Vector
 } // end namespace Anki
 

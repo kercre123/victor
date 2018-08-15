@@ -37,6 +37,17 @@ int GetCVTypeHelper(const float* intputType)
   return CV_32FC2;
 }
 
+// Inline functions will call proper helper based on output type of network
+inline static float QuantizedScalingHelper(const float output, const float scale, const int zero_point)
+{
+  return output;
+}
+
+inline static float QuantizedScalingHelper(const uint8_t output, const float scale, const int zero_point)
+{
+  return scale * (output - zero_point);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 INeuralNetModel::INeuralNetModel(const std::string& cachePath)
 : _cachePath(cachePath)
@@ -112,6 +123,7 @@ template void INeuralNetModel::ClassificationOutputHelper(const uint8_t*, TimeSt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp_t timestamp,
+                                                  const float scale, const int zero_point,
                                                   std::list<Vision::SalientPoint>& salientPoints)
 {
   // Create a detection box for each grid cell that is above threshold
@@ -132,7 +144,7 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
     {
       // Compute the column-major index to get data from the output tensor
       const int outputIndex = j*_params.numGridRows + i;
-      const float score = outputData[outputIndex];
+      const float score = QuantizedScalingHelper(outputData[outputIndex], scale, zero_point);
       
       // Create binary detection image
       if(score > _params.minScore) {
@@ -255,8 +267,10 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
   
   // Explicitly instantiate for float and uint8
   template void INeuralNetModel::LocalizedBinaryOutputHelper(const float* outputData,   TimeStamp_t timestamp,
+                                                             const float scale, const int zero_point,
                                                              std::list<Vision::SalientPoint>& salientPoints);
   template void INeuralNetModel::LocalizedBinaryOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
+                                                             const float scale, const int zero_point,
                                                              std::list<Vision::SalientPoint>& salientPoints);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

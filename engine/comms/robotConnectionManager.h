@@ -21,7 +21,7 @@
 #include <deque>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class RobotManager;
 class RobotConnectionData;
@@ -76,7 +76,7 @@ private:
   LocalUdpClient _udpClient;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

@@ -25,9 +25,9 @@
 #include "test/engine/helpers/messaging/stubRobotMessageHandler.h"
 
 using namespace Anki;
-using namespace Cozmo;
+using namespace Vector;
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 #define EXPECT_STATUS_EQ(x, y) EXPECT_EQ((x), (y)) << "expected " << ERobotDriveToPoseStatusToString(x) \
                                                    << " got " << ERobotDriveToPoseStatusToString(y)
@@ -69,9 +69,9 @@ private:
   // This works because path component doesn't actually have any
   // dependent components.
   //
-  void Update(Anki::Cozmo::PathComponent * pathComponent)
+  void Update(Anki::Vector::PathComponent * pathComponent)
   {
-    static const Anki::Cozmo::RobotCompMap dependentComps;
+    static const Anki::Vector::RobotCompMap dependentComps;
     pathComponent->UpdateDependent(dependentComps);
   }
 

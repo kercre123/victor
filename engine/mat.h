@@ -27,7 +27,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     class MatPiece : public ActionableObject
     {
@@ -108,7 +108,7 @@ namespace Anki {
     
     
        
-  } // namespace Cozmo
+  } // namespace Vector
 
 } // namespace Anki
 

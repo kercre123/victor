@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 enum uint_8 UiConnectionType {
@@ -19,5 +19,5 @@ enum uint_8 UiConnectionType {
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

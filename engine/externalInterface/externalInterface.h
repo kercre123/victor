@@ -19,7 +19,7 @@
 #include <utility>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 //forward declarations
 namespace ExternalInterface {
@@ -87,7 +87,7 @@ protected:
 
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //__Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__

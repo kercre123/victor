@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declaration
 class IBEICondition;
@@ -44,12 +44,13 @@ protected:
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorLeftActivatableScope() override;
 
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
+
 
 private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
     std::shared_ptr<IBEICondition> activateBehaviorCondition;
-    std::shared_ptr<IBEICondition> startEyeAnimationCondition;
     std::string powerOnAnimName;
     std::string powerOffAnimName;
   };
@@ -59,6 +60,7 @@ private:
     bool waitingForAnimationCallback;
     TimeStamp_t timeLastPowerAnimStopped_ms;
     std::string lastAnimPlayedName;
+    bool shouldStartPowerOffAnimaiton;
   };
 
   InstanceConfig _iConfig;
@@ -72,7 +74,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPoweringRobotOff__

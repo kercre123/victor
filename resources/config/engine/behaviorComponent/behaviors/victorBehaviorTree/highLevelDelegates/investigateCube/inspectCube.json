@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "InspectCube",
+  "behaviorID": "InspectCube",
+
+  "PlayWithCubeBehaviorID" : "InvestigateCubeConnectionGate"
+}

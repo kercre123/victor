@@ -20,11 +20,11 @@ def main():
 
     print("------ begin testing animations ------")
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
-        print("playing animation by name: anim_poked_giggle")
-        robot.anim.play_animation("anim_poked_giggle")
+    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
+        print("playing animation by name: anim_blackjack_victorwin_01")
+        robot.anim.play_animation("anim_blackjack_victorwin_01")
 
-    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
         print("------ testing load async animations ------")
 
         print("receiving all loaded animations")
@@ -35,7 +35,7 @@ def main():
             for idx, name in enumerate(anim_names):
                 print("(%d: %s)" % (idx, name), end=" ")
             print()
-        robot.anim.play_animation("anim_poked_giggle").wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
 
         print("------ finish testing animations ------")
 

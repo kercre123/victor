@@ -40,7 +40,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace DockingController {
 
       namespace {
@@ -1490,5 +1490,5 @@ namespace Anki {
       }
 
       } // namespace DockingController
-    } // namespace Cozmo
+    } // namespace Vector
   } // namespace Anki

@@ -19,7 +19,7 @@
 #include "engine/moodSystem/moodManager.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 static const char* kMoodKey   = "mood";
@@ -95,5 +95,5 @@ bool ConditionSimpleMood::AreConditionsMetInternal(BehaviorExternalInterface& be
   return ret;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

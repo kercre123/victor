@@ -39,7 +39,7 @@
 #include "osState/osState.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 u32 _pin = 123456;

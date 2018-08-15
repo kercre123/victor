@@ -32,7 +32,7 @@ namespace Data {
 class DataPlatform;
 }
 }
-namespace Cozmo {
+namespace Vector {
 class BehaviorContainer;
 class CozmoContext;
 namespace ExternalInterface {

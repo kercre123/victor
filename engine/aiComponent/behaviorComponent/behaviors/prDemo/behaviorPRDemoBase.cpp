@@ -23,7 +23,7 @@
 #include "engine/components/mics/micComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -96,7 +96,7 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
 {
 
   // for now we want to disable streaming until we're awake
-  GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( false );
+  SmartAlterStreamStateForCurrentResponse(false);
 
   // also disable face keep-alive
   GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kPRDemoDisableLockName);
@@ -106,7 +106,7 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
   
   if( _iConfig.sleepingBehavior->WantsToBeActivated() ) {
     DelegateIfInControl(_iConfig.sleepingBehavior.get(), [this]() {
-        GetBEI().GetMicComponent().SetShouldStreamAfterWakeWord( true );
+        SmartPopResponseToTriggerWord();
         GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kPRDemoDisableLockName);
         if( _iConfig.wakeUpBehavior->WantsToBeActivated() ) {
           DelegateIfInControl(_iConfig.wakeUpBehavior.get());

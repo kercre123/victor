@@ -47,7 +47,7 @@ namespace Vision{
   class HueSatWrapper;
 }
 
-namespace Cozmo {
+namespace Vector {
   
 // Forward declarations
 namespace ExternalInterface {
@@ -97,9 +97,11 @@ public:
   
   // Allows setting an instance of ProceduralFace to be used as reset values
   static void SetResetData(const ProceduralFace& newResetData);
+  static void SetBlankFaceData(const ProceduralFace& blankFace);
   
-  // Reset parameters to their nominal values
-  void Reset();
+  // Reset parameters to their nominal values. If !withBlankFace, uses the face passed to SetResetData.
+  // If withBlankFace, uses the face passed to SetBlankFaceData
+  void Reset(bool withBlankFace = false);
   
   // Read in available parameters from Json, FlatBuffers or input values
   void SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe);
@@ -239,6 +241,7 @@ private:
   Value Clip(WhichEye eye, Parameter whichParam, Value value) const;
                                                           
   static ProceduralFace* _resetData;
+  static ProceduralFace* _blankFaceData;
   static std::function<void(const char*,Value,Value,Value)> ClipWarnFcn;
   
 }; // class ProceduralFace
@@ -370,7 +373,7 @@ inline Vision::Image* ProceduralFace::GetSaturationImagePtr() {
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ProceduralFace_H__

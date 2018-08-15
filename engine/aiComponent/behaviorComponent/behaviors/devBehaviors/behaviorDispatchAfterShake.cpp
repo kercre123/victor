@@ -18,14 +18,14 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 
 #include "util/console/consoleInterface.h"
 
 #include <set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   
@@ -225,5 +225,5 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

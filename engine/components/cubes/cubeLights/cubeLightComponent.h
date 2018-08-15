@@ -47,7 +47,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ActiveObject;
 class CozmoContext;
@@ -66,7 +66,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -257,10 +257,6 @@ private:
   IGatewayInterface* _gi = nullptr;
   std::set<AppToEngineTag> _appToEngineTags;
   
-  // Whether or not we should send CubeLightsStateTransition messages to game when object lights
-  // change
-  bool _sendTransitionMessages = false;
-  
   // Whether or not the robot is delocalized
   // Used to update the lights when we relocalize
   bool _robotDelocalized = false;
@@ -365,10 +361,6 @@ private:
   // Debug function to play subsequent animation triggers on an object with each call to
   // the function
   void CycleThroughAnimTriggers(const ObjectID& objectID);
-  
-  // Send a message to game to let them know the object's current light values
-  // Will only send if _sendTransitionMessages is true
-  void SendTransitionMessage(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& values);
   
   // Enables or disables the playing of only game layer animations
   void EnableGameLayerOnly(const ObjectID& objectID, bool enable);

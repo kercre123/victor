@@ -28,7 +28,7 @@ class DataPlatform;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class LatticePlannerInternal;
 class Path;

@@ -15,7 +15,7 @@
 //#define CALIB_WHILE_APPLYING_POWER
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace HeadController {
 
     namespace {
@@ -343,7 +343,7 @@ namespace HeadController {
     void PoseAndSpeedFilterUpdate()
     {
       // Get encoder speed measurements
-      f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_HEAD);
+      f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_HEAD);
 
       radSpeed_ = (measuredSpeed *
                    (1.0f - SPEED_FILTERING_COEFF) +
@@ -662,5 +662,5 @@ namespace HeadController {
     }
 
   } // namespace HeadController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

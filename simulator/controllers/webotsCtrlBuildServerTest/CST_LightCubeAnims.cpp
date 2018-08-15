@@ -18,7 +18,7 @@
 #include "util/graphEvaluator/graphEvaluator2d.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class TestState {
   Init,
@@ -294,5 +294,5 @@ void CST_LightCubeAnims::HandleActiveObjectConnectionState(const ExternalInterfa
   }
 }
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki

@@ -23,7 +23,6 @@
 
       "behaviorStatToIncrement": "ReactedToTriggerWord",
 
-      "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
       "backpackLights"          : false,
       "exitAfterGetIn"          : true,
       "animListeningGetIn"      : "OnboardingWakeWordGetIn"

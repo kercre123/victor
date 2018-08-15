@@ -21,10 +21,10 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
-Anki::Cozmo::BehaviorDevTestBlackjackViz* sThis = nullptr;
+Anki::Vector::BehaviorDevTestBlackjackViz* sThis = nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -242,5 +242,5 @@ void BehaviorDevTestBlackjackViz::AnnounceDealerScore()
   _game.GetDealerScore();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

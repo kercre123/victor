@@ -33,7 +33,7 @@
 #define SLIP_MODELLING 2
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Localization {
 
       struct PoseStamp {

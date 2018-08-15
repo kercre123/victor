@@ -16,7 +16,7 @@
 #define DEBUG_WHEEL_CONTROLLER 0
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   namespace WheelController {
 
     // private members
@@ -191,11 +191,11 @@ namespace Anki {
 
         //Sum the error (integrate it). But ONLY, if we are not commading max output already
         //This should prevent the integral term to become to huge
-        if (ABS(power_l_) < Cozmo::HAL::MOTOR_MAX_POWER) {
+        if (ABS(power_l_) < Vector::HAL::MOTOR_MAX_POWER) {
           error_sumL_ = error_sumL_ + errorL;
           error_sumL_ = CLIP(error_sumL_, -MAX_ERROR_SUM_LEFT,MAX_ERROR_SUM_LEFT);
         }
-        if (ABS(power_r_) < Cozmo::HAL::MOTOR_MAX_POWER) {
+        if (ABS(power_r_) < Vector::HAL::MOTOR_MAX_POWER) {
           error_sumR_ = error_sumR_ + errorR;
           error_sumR_ = CLIP(error_sumR_, -MAX_ERROR_SUM_RIGHT,MAX_ERROR_SUM_RIGHT);
         }
@@ -234,8 +234,8 @@ namespace Anki {
     void EncoderSpeedFilterIteration(void)
     {
       // Get encoder speed measurements
-      measuredWheelSpeedL_ = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_LEFT_WHEEL);
-      measuredWheelSpeedR_ = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_RIGHT_WHEEL);
+      measuredWheelSpeedL_ = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LEFT_WHEEL);
+      measuredWheelSpeedR_ = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_RIGHT_WHEEL);
 
       filterWheelSpeedL_ = (measuredWheelSpeedL_ *
                        (1.0f - ENCODER_FILTERING_COEFF) +
@@ -341,5 +341,5 @@ namespace Anki {
     }
 
   } // namespace WheelController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

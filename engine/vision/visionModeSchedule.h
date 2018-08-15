@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class VisionModeSchedule
 {
@@ -91,7 +91,7 @@ private:
 }; // class AllVisionModesSchedule
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_VisionModeSchedule_H__ */

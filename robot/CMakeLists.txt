@@ -111,6 +111,7 @@ elseif (MACOSX)
       SIMULATOR
   )
   set(PLATFORM_SRCS
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_DAS.cpp
       ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal.cpp
       ${CMAKE_SOURCE_DIR}/robot/hal/src/radio.cpp
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp

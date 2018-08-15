@@ -19,7 +19,7 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class BehaviorPickUpCube;

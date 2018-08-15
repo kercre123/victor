@@ -27,13 +27,13 @@
 #define DEBUG_DISPLAY_IMAGES false
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 /****************************************************************
  *                     Helper Functions                         *
  ****************************************************************/
 
-void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::IFeaturesExtractor& extractor,
+void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Vector::IFeaturesExtractor& extractor,
                    const Vision::ImageRGB& image, Vision::Image& outputMask)
 {
   s32 nrows = image.GetNumRows();
@@ -397,5 +397,5 @@ Array2d<RawPixelsClassifier::FeatureType> SinglePixelFeaturesExtraction::Extract
   return Array2d<RawPixelsClassifier::FeatureType>(toRet);
 
 }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

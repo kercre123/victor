@@ -3,7 +3,7 @@
 #include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 #include "json/json.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki;
 
 GTEST_TEST(RecentOccurrenceTracker, JsonDefaults)
 {

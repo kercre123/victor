@@ -24,7 +24,7 @@
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // Fwd Delarations
 class CozmoContext;
@@ -56,6 +56,8 @@ public:
 
   bool IsConnectedInteractable(){ return (ECoordinatorState::ConnectedInteractable          == _coordinatorState ||
                                           ECoordinatorState::ConnectedSwitchingToBackground == _coordinatorState); }
+
+  bool IsConnectedBackground(){ return ECoordinatorState::ConnectedBackground == _coordinatorState; }
 
   // Returns the ActiveID of the currently-connected cube from the cubeCommsComponent, or
   // ObservableObject::InvalidActiveID if there is no connected cube
@@ -151,7 +153,7 @@ private:
   std::string _debugStateString = "Unconnected";
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_CubeConnectionCoordinator_H__

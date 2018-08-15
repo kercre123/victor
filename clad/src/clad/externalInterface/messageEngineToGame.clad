@@ -49,7 +49,7 @@
 #include "util/ankiLab/ankiLabDef.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalInterface {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -728,17 +728,6 @@ message EngineErrorCodeMessage {
   EngineErrorCode errorCode
 }
 
-// Sent when a cube lights change in CubeLightComponent
-message CubeLightsStateTransition {
-  uint_32 objectID,
-  string  factoryID,
-  ObjectType objectType,
-  // Colors are encoded as uint with 5 bits per color
-  // To convert from frames to seconds divide by 30 (30 frames per second)
-  LightState lights[4],
-  bool lightRotation
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Robot flash (non-volatile storage)
 ///////////////////////////////////////////////////////////////////////////////
@@ -782,7 +771,8 @@ message BehaviorObjectiveAchieved{
 ///////////////////////////////////////////////////////////////////////////////
 
 message OnboardingState {
-  OnboardingStages stage
+  OnboardingStages stage,
+  bool forceSkipStackReset, // if true, even if the stage is Complete, this won't change the behavior stack
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -827,11 +817,6 @@ message SupportInfo {
 //  3 - Play__SFX__Cube_Feeding_Success - game is over (also play the stop loop)
 //  4 - Stop__SFX__Cube_Feeding_Loop_Stop - stop looping sfx
 
-message FeedingSFXStageUpdate {
-  uint_8 stage,
-  float_32 chargePercentage = 0.0
-}
-
 enum uint_8 BehaviorStackState {
   NotActive = 0,
   Active
@@ -843,13 +828,6 @@ message AudioBehaviorStackUpdate {
 
 message ResponseLocale {
   string locale
-}
-
-
-// Response to request for control from behavior system
-message SDKActivationResult {
-    BehaviorSlot slot,
-    bool enabled,
 }
 
 // Anything that the robot wishes to push to the app that 
@@ -870,7 +848,7 @@ autounion MessageEngineToGame
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
-  SDKActivationResult               SDKActivationResult                = 0x04,
+  // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
   RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
@@ -883,8 +861,9 @@ autounion MessageEngineToGame
   ObjectTapped                      ObjectTapped                       = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectAccel                       ObjectAccel                        = 0x0F, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
   RobotObservedObject               RobotObservedObject                = 0x10, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  ObjectAvailable                   ObjectAvailable                    = 0x11,
 }
 
 } // namespace ExternalInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

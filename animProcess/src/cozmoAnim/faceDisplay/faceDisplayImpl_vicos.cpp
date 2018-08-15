@@ -18,7 +18,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   FaceDisplayImpl::FaceDisplayImpl()
   {
@@ -51,7 +51,7 @@ namespace Cozmo {
     lcd_set_brightness(level);
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 extern "C" void core_common_on_exit(void)

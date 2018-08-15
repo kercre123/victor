@@ -26,7 +26,7 @@ namespace Anki {
     class ImageRGB;
   }
   
-namespace Cozmo {
+namespace Vector {
   
   class EncodedImage
   {
@@ -99,7 +99,7 @@ namespace Cozmo {
     
   }; // class EncodedImage
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Vision_Basestation_EncodedImage_H__

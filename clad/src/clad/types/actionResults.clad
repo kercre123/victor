@@ -1,7 +1,7 @@
 // All possible reasons actions can fail
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum no_cpp_class uint_8 ActionResultCategory {
   SUCCESS = 0,
@@ -82,5 +82,5 @@ enum uint_32 ActionResult {
 
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

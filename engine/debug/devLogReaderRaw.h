@@ -15,7 +15,7 @@
 #include "engine/debug/devLogReader.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class DevLogReaderRaw: public DevLogReader {
 public:
@@ -27,7 +27,7 @@ protected:
   virtual bool FillLogData(std::ifstream& fileHandle, LogData& logData_out) const override;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

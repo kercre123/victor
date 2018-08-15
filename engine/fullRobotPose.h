@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 class FullRobotPose : public IDependencyManagedComponent<RobotComponentID>
@@ -73,7 +73,7 @@ private:
   #endif
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

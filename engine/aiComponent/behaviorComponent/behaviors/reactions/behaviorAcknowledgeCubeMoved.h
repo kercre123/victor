@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace ExternalInterface {
 struct RobotObservedObject;
@@ -77,7 +77,7 @@ private:
 }; // class BehaviorAcknowledgeCubeMoved
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeCubeMoved_H__

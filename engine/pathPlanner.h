@@ -25,7 +25,7 @@ namespace Anki {
 
 class Pose3d;
 
-namespace Cozmo {
+namespace Vector {
 
 enum class EComputePathStatus {
   Error, // Could not create path as requested
@@ -201,7 +201,7 @@ public:
 };
     
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

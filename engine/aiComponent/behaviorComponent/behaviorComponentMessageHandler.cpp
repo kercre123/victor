@@ -25,7 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/components/animationComponent.h"
-#include "engine/components/mics/micComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -38,15 +38,17 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehaviorRerun);
 static const BehaviorID kWaitBehaviorID = BEHAVIOR_ID(Wait);
 const std::string kWebVizModuleNameBehaviors = "behaviors";
 const std::string kWebVizModuleNameIntents = "intents";
+const std::string kDisableTriggerWordName = "BehaviorComponentMessageHandlerTriggerLock";
 
-static const char* kKeepFaceAliveLockName = "BehaviorMessageHandler";
+// string used as an identifier for 'locking' certain things
+static const char* kLockName = "BehaviorMessageHandler";
 
 // This value is enough for things to settle down. This is many ticks, but it's a only pause after
 // exiting a screen, so doesn't look excessive. Testing shows we need a minimum of 6.
@@ -181,7 +183,7 @@ void BehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependent
     size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
     if( currTick - _tickInfoScreenEnded >= kTicksBeforeEnableFaceKeepalive ) {
       // remove the keepalive lock after the stack has a chance to send its first animation
-      _robot.GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
+      _robot.GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kLockName);
       // reset
       _tickInfoScreenEnded = 0;
     }
@@ -205,7 +207,7 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   
   // Disable neutral eyes while in the dev screens, because symmetry with another call to
   // enable it in this class
-  _robot.GetAnimationComponent().AddKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
+  _robot.GetAnimationComponent().AddKeepFaceAliveDisableLock(kLockName);
 
   // Prevent the Update loop from sending an EnableKeepFaceAlive(true) in case the user is
   // entering and exiting the pairing screen quickly. There's a potential race condition here if the
@@ -213,14 +215,11 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   // since the anim process is also calling EnableKeepFaceAlive(false), it should be ok
   _tickInfoScreenEnded = 0;
   
-  _wasTriggerWordEnabled = _robot.GetMicComponent().GetTriggerWordDetectionEnabled();
-  _wasStreamingEnabled = _robot.GetMicComponent().GetShouldStreamAfterWakeWord();
-  if( _wasTriggerWordEnabled ) {
-    _robot.GetMicComponent().SetTriggerWordDetectionEnabled( false );
-  }
-  if( _wasStreamingEnabled ) {
-    _robot.GetMicComponent().SetShouldStreamAfterWakeWord( false );
-  }
+
+  auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+  uic.DisableEngineResponseToTriggerWord(kDisableTriggerWordName, true);
+
+  uic.AlterStreamStateForCurrentResponse(kLockName, false);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -236,16 +235,13 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
   if( uic.IsTriggerWordPending() ) {
     uic.ClearPendingTriggerWord();
   }
-  uic.DropAnyUserIntent();
+  if( uic.IsAnyUserIntentPending() ) {
+    uic.DropAnyUserIntent();
+  }
   uic.ResetUserIntentUnclaimed();
   
-  auto& micComp = _robot.GetMicComponent();
-  if( micComp.GetTriggerWordDetectionEnabled() != _wasTriggerWordEnabled ){
-    micComp.SetTriggerWordDetectionEnabled( _wasTriggerWordEnabled );
-  }
-  if( micComp.GetShouldStreamAfterWakeWord() != _wasStreamingEnabled ){
-    micComp.SetShouldStreamAfterWakeWord( _wasStreamingEnabled );
-  }
+  uic.DisableEngineResponseToTriggerWord(kDisableTriggerWordName, false);
+  uic.PopResponseToTriggerWord(kLockName);
   
   IBehavior* bootBehavior = bbl.GetBootBehavior();
   bsm.ResetBehaviorStack(bootBehavior);
@@ -456,6 +452,6 @@ void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterfac
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

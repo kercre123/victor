@@ -15,7 +15,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   enum class TestState {
     MoveHead,            // Move head so it can see block
@@ -208,6 +208,6 @@ namespace Cozmo {
   
   // ================ End of message handler callbacks ==================
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

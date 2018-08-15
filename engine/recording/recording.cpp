@@ -32,7 +32,7 @@ using namespace AnkiUtil;
 //using namespace MetaGame;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Constructor
 Recording::Recording()
@@ -176,7 +176,7 @@ RecordingPlaybackStatus Recording::PostTickMessageProcess()
   return RPMS_OK;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // #ifdef COZMO_RECORDING_PLAYBACK

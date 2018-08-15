@@ -20,7 +20,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     class Platform : public MatPiece
     {
@@ -48,7 +48,7 @@ namespace Anki {
     }
     
     
-  } // namespace Cozmo
+  } // namespace Vector
   
 } // namespace Anki
 

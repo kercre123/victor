@@ -27,7 +27,7 @@
 #include <array>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 class ObservableObject;

@@ -1,217 +1,5 @@
 [
   {
-    "CladEvent" : "Blackjack_Vector_Card_Back",
-    "SpriteName" : "blackjack_vector_card_back"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs10",
-    "SpriteName" : "blackjack_vector_clubs10"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs2",
-    "SpriteName" : "blackjack_vector_clubs2"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs3",
-    "SpriteName" : "blackjack_vector_clubs3"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs4",
-    "SpriteName" : "blackjack_vector_clubs4"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs5",
-    "SpriteName" : "blackjack_vector_clubs5"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs6",
-    "SpriteName" : "blackjack_vector_clubs6"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs7",
-    "SpriteName" : "blackjack_vector_clubs7"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs8",
-    "SpriteName" : "blackjack_vector_clubs8"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubs9",
-    "SpriteName" : "blackjack_vector_clubs9"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubsace",
-    "SpriteName" : "blackjack_vector_clubsace"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubsjack",
-    "SpriteName" : "blackjack_vector_clubsjack"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubsking",
-    "SpriteName" : "blackjack_vector_clubsking"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Clubsqueen",
-    "SpriteName" : "blackjack_vector_clubsqueen"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond10",
-    "SpriteName" : "blackjack_vector_diamond10"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond2",
-    "SpriteName" : "blackjack_vector_diamond2"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond3",
-    "SpriteName" : "blackjack_vector_diamond3"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond4",
-    "SpriteName" : "blackjack_vector_diamond4"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond5",
-    "SpriteName" : "blackjack_vector_diamond5"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond6",
-    "SpriteName" : "blackjack_vector_diamond6"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond7",
-    "SpriteName" : "blackjack_vector_diamond7"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond8",
-    "SpriteName" : "blackjack_vector_diamond8"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamond9",
-    "SpriteName" : "blackjack_vector_diamond9"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamondace",
-    "SpriteName" : "blackjack_vector_diamondace"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamondjack",
-    "SpriteName" : "blackjack_vector_diamondjack"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamondking",
-    "SpriteName" : "blackjack_vector_diamondking"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Diamondqueen",
-    "SpriteName" : "blackjack_vector_diamondqueen"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart10",
-    "SpriteName" : "blackjack_vector_heart10"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart2",
-    "SpriteName" : "blackjack_vector_heart2"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart3",
-    "SpriteName" : "blackjack_vector_heart3"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart4",
-    "SpriteName" : "blackjack_vector_heart4"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart5",
-    "SpriteName" : "blackjack_vector_heart5"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart6",
-    "SpriteName" : "blackjack_vector_heart6"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart7",
-    "SpriteName" : "blackjack_vector_heart7"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart8",
-    "SpriteName" : "blackjack_vector_heart8"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heart9",
-    "SpriteName" : "blackjack_vector_heart9"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heartace",
-    "SpriteName" : "blackjack_vector_heartace"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heartjack",
-    "SpriteName" : "blackjack_vector_heartjack"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heartking",
-    "SpriteName" : "blackjack_vector_heartking"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Heartqueen",
-    "SpriteName" : "blackjack_vector_heartqueen"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade10",
-    "SpriteName" : "blackjack_vector_spade10"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade2",
-    "SpriteName" : "blackjack_vector_spade2"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade3",
-    "SpriteName" : "blackjack_vector_spade3"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade4",
-    "SpriteName" : "blackjack_vector_spade4"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade5",
-    "SpriteName" : "blackjack_vector_spade5"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade6",
-    "SpriteName" : "blackjack_vector_spade6"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade7",
-    "SpriteName" : "blackjack_vector_spade7"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade8",
-    "SpriteName" : "blackjack_vector_spade8"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spade9",
-    "SpriteName" : "blackjack_vector_spade9"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spadeace",
-    "SpriteName" : "blackjack_vector_spadeace"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spadejack",
-    "SpriteName" : "blackjack_vector_spadejack"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spadeking",
-    "SpriteName" : "blackjack_vector_spadeking"
-  },
-  {
-    "CladEvent" : "Blackjack_Vector_Spadequeen",
-    "SpriteName" : "blackjack_vector_spadequeen"
-  },
-  {
     "CladEvent" : "Blackjack_Player_Card_Back",
     "SpriteName" : "blackjack_player_card_back"
   },
@@ -424,6 +212,218 @@
     "SpriteName" : "blackjack_player_spadequeen"
   },
   {
+    "CladEvent" : "Blackjack_Vector_Card_Back",
+    "SpriteName" : "blackjack_vector_card_back"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs10",
+    "SpriteName" : "blackjack_vector_clubs10"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs2",
+    "SpriteName" : "blackjack_vector_clubs2"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs3",
+    "SpriteName" : "blackjack_vector_clubs3"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs4",
+    "SpriteName" : "blackjack_vector_clubs4"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs5",
+    "SpriteName" : "blackjack_vector_clubs5"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs6",
+    "SpriteName" : "blackjack_vector_clubs6"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs7",
+    "SpriteName" : "blackjack_vector_clubs7"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs8",
+    "SpriteName" : "blackjack_vector_clubs8"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubs9",
+    "SpriteName" : "blackjack_vector_clubs9"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubsace",
+    "SpriteName" : "blackjack_vector_clubsace"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubsjack",
+    "SpriteName" : "blackjack_vector_clubsjack"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubsking",
+    "SpriteName" : "blackjack_vector_clubsking"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Clubsqueen",
+    "SpriteName" : "blackjack_vector_clubsqueen"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond10",
+    "SpriteName" : "blackjack_vector_diamond10"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond2",
+    "SpriteName" : "blackjack_vector_diamond2"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond3",
+    "SpriteName" : "blackjack_vector_diamond3"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond4",
+    "SpriteName" : "blackjack_vector_diamond4"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond5",
+    "SpriteName" : "blackjack_vector_diamond5"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond6",
+    "SpriteName" : "blackjack_vector_diamond6"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond7",
+    "SpriteName" : "blackjack_vector_diamond7"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond8",
+    "SpriteName" : "blackjack_vector_diamond8"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamond9",
+    "SpriteName" : "blackjack_vector_diamond9"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamondace",
+    "SpriteName" : "blackjack_vector_diamondace"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamondjack",
+    "SpriteName" : "blackjack_vector_diamondjack"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamondking",
+    "SpriteName" : "blackjack_vector_diamondking"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Diamondqueen",
+    "SpriteName" : "blackjack_vector_diamondqueen"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart10",
+    "SpriteName" : "blackjack_vector_heart10"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart2",
+    "SpriteName" : "blackjack_vector_heart2"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart3",
+    "SpriteName" : "blackjack_vector_heart3"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart4",
+    "SpriteName" : "blackjack_vector_heart4"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart5",
+    "SpriteName" : "blackjack_vector_heart5"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart6",
+    "SpriteName" : "blackjack_vector_heart6"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart7",
+    "SpriteName" : "blackjack_vector_heart7"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart8",
+    "SpriteName" : "blackjack_vector_heart8"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heart9",
+    "SpriteName" : "blackjack_vector_heart9"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heartace",
+    "SpriteName" : "blackjack_vector_heartace"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heartjack",
+    "SpriteName" : "blackjack_vector_heartjack"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heartking",
+    "SpriteName" : "blackjack_vector_heartking"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Heartqueen",
+    "SpriteName" : "blackjack_vector_heartqueen"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade10",
+    "SpriteName" : "blackjack_vector_spade10"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade2",
+    "SpriteName" : "blackjack_vector_spade2"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade3",
+    "SpriteName" : "blackjack_vector_spade3"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade4",
+    "SpriteName" : "blackjack_vector_spade4"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade5",
+    "SpriteName" : "blackjack_vector_spade5"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade6",
+    "SpriteName" : "blackjack_vector_spade6"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade7",
+    "SpriteName" : "blackjack_vector_spade7"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade8",
+    "SpriteName" : "blackjack_vector_spade8"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spade9",
+    "SpriteName" : "blackjack_vector_spade9"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spadeace",
+    "SpriteName" : "blackjack_vector_spadeace"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spadejack",
+    "SpriteName" : "blackjack_vector_spadejack"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spadeking",
+    "SpriteName" : "blackjack_vector_spadeking"
+  },
+  {
+    "CladEvent" : "Blackjack_Vector_Spadequeen",
+    "SpriteName" : "blackjack_vector_spadequeen"
+  },
+  {
     "CladEvent" : "Charlieframe",
     "SpriteName" : "charlieframe"
   },
@@ -480,6 +480,10 @@
     "SpriteName" : "empty_sprite"
   },
   {
+    "CladEvent" : "Pairing_Icon_Key",
+    "SpriteName" : "pairing_icon_key"
+  },
+  {
     "CladEvent" : "Weather_Celsius_Indicator",
     "SpriteName" : "weather_celsius_indicator"
   },
@@ -532,26 +536,6 @@
     "SpriteName" : "weather_temp_9"
   },
   {
-    "CladEvent" : "Pairing_Icon_Key",
-    "SpriteName" : "pairing_icon_key"
-  },
-  {
-    "CladEvent" : "Pairing_Icon_Awaiting_App",
-    "SpriteName" : "pairing_icon_awaiting_app"
-  },
-  {
-    "CladEvent" : "Pairing_Icon_Update",
-    "SpriteName" : "pairing_icon_update"
-  },
-  {
-    "CladEvent" : "Pairing_Icon_Update_Error",
-    "SpriteName" : "pairing_icon_update_error"
-  },
-  {
-    "CladEvent" : "Pairing_Icon_Wifi",
-    "SpriteName" : "pairing_icon_wifi"
-  },
-  {
     "CladEvent" : "Blackjack_Player_Back",
     "SpriteName" : "blackjack_player_back"
   },
@@ -582,22 +566,6 @@
   {
     "CladEvent" : "Face_Cloud01",
     "SpriteName" : "face_cloud01"
-  },
-  {
-    "CladEvent" : "Face_Cloud02",
-    "SpriteName" : "face_cloud02"
-  },
-  {
-    "CladEvent" : "Face_Cloud03",
-    "SpriteName" : "face_cloud03"
-  },
-  {
-    "CladEvent" : "Face_Cloud04",
-    "SpriteName" : "face_cloud04"
-  },
-  {
-    "CladEvent" : "Face_Clouds_Mist",
-    "SpriteName" : "face_clouds_mist"
   },
   {
     "CladEvent" : "Face_Flashing_Zeros",
@@ -778,6 +746,22 @@
   {
     "CladEvent" : "Face_Windy01",
     "SpriteName" : "face_windy01"
+  },
+  {
+    "CladEvent" : "Pairing_Icon_Awaiting_App",
+    "SpriteName" : "pairing_icon_awaiting_app"
+  },
+  {
+    "CladEvent" : "Pairing_Icon_Update",
+    "SpriteName" : "pairing_icon_update"
+  },
+  {
+    "CladEvent" : "Pairing_Icon_Update_Error",
+    "SpriteName" : "pairing_icon_update_error"
+  },
+  {
+    "CladEvent" : "Pairing_Icon_Wifi",
+    "SpriteName" : "pairing_icon_wifi"
   },
   {
     "CladEvent" : "Vig_Always_Helpful_Knowledgegraph",

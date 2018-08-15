@@ -18,7 +18,7 @@
 #include "coretech/common/engine/math/matrix.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class GroundPlaneROI
 {
@@ -107,7 +107,7 @@ inline bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWi
 }
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_GroundPlaneROI_H__

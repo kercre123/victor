@@ -5,8 +5,12 @@
 #include "clad/types/textToSpeechTypes.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
+message StartShutdownAnim
+{
+
+}
 
 message AnimationState
 {

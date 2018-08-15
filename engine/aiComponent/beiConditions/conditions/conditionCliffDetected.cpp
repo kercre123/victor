@@ -17,7 +17,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ConditionCliffDetected::ConditionCliffDetected(const Json::Value& config)
 : IBEICondition(config)
@@ -32,5 +32,5 @@ bool ConditionCliffDetected::AreConditionsMetInternal(BehaviorExternalInterface&
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

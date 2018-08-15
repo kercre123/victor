@@ -1,5 +1,5 @@
 /**
- * File: stackVizMonitor.h
+ * File: stackVizMonitor.cpp
  *
  * Author: ross
  * Created: 2018-06 26
@@ -24,7 +24,7 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StackVizMonitor::NotifyOfChange( BehaviorExternalInterface& bei,

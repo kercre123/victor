@@ -14,13 +14,12 @@
 #include "util/entityComponent/componentTypeEnumMap.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class BehaviorComponent;
 class ContinuityComponent;
 class FaceSelectionComponent;
-class FreeplayDataTracker;
 class AIInformationAnalyzer;
 class ObjectInteractionInfoCache;
 class PuzzleComponent;
@@ -28,13 +27,12 @@ class TimerUtility;
 class AIWhiteboard;
 class SalientPointsComponent;
 
-} // namespace Cozmo
+} // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponent,                 AIComponentID, BehaviorComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(ContinuityComponent,               AIComponentID, ContinuityComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceSelectionComponent,            AIComponentID, FaceSelection)
-LINK_COMPONENT_TYPE_TO_ENUM(FreeplayDataTracker,               AIComponentID, FreeplayDataTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(AIInformationAnalyzer,             AIComponentID, InformationAnalyzer)
 LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache,        AIComponentID, ObjectInteractionInfoCache)
 LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,                   AIComponentID, Puzzle)
@@ -44,23 +42,22 @@ LINK_COMPONENT_TYPE_TO_ENUM(SalientPointsComponent,            AIComponentID, Sa
 
 // Translate entity into string
 template<>
-std::string GetEntityNameForEnumType<Cozmo::AIComponentID>(){ return "AIComponents"; }
+std::string GetEntityNameForEnumType<Vector::AIComponentID>(){ return "AIComponents"; }
 
 template<>
-std::string GetComponentStringForID<Cozmo::AIComponentID>(Cozmo::AIComponentID enumID)
+std::string GetComponentStringForID<Vector::AIComponentID>(Vector::AIComponentID enumID)
 {
   switch(enumID){
-    case Cozmo::AIComponentID::BehaviorComponent:                 { return "BehaviorComponent";}
-    case Cozmo::AIComponentID::ContinuityComponent:               { return "ContinuityComponent";}
-    case Cozmo::AIComponentID::FaceSelection:                     { return "FaceSelection";}
-    case Cozmo::AIComponentID::FreeplayDataTracker:               { return "FreeplayDataTracker";}
-    case Cozmo::AIComponentID::InformationAnalyzer:               { return "InformationAnalyzer";}
-    case Cozmo::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
-    case Cozmo::AIComponentID::Puzzle:                            { return "Puzzle";}
-    case Cozmo::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsComponent";}
-    case Cozmo::AIComponentID::TimerUtility:                      { return "TimerUtility";}
-    case Cozmo::AIComponentID::Whiteboard:                        { return "Whiteboard";}
-    case Cozmo::AIComponentID::Count:                             { return "Count";}
+    case Vector::AIComponentID::BehaviorComponent:                 { return "BehaviorComponent";}
+    case Vector::AIComponentID::ContinuityComponent:               { return "ContinuityComponent";}
+    case Vector::AIComponentID::FaceSelection:                     { return "FaceSelection";}
+    case Vector::AIComponentID::InformationAnalyzer:               { return "InformationAnalyzer";}
+    case Vector::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
+    case Vector::AIComponentID::Puzzle:                            { return "Puzzle";}
+    case Vector::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsComponent";}
+    case Vector::AIComponentID::TimerUtility:                      { return "TimerUtility";}
+    case Vector::AIComponentID::Whiteboard:                        { return "Whiteboard";}
+    case Vector::AIComponentID::Count:                             { return "Count";}
   }
 }
 

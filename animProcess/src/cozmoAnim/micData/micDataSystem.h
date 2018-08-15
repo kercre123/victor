@@ -32,7 +32,7 @@
 
 // Declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace CloudMic {
       class Message;
     }
@@ -56,7 +56,7 @@ namespace Anki {
 class LocalUdpServer;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 class MicDataSystem {
@@ -72,8 +72,6 @@ public:
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
-  void SetShouldStreamAfterWakeWord(bool shouldStream);
-  void SetTriggerWordDetectionEnabled(bool enabled);
   void StartWakeWordlessStreaming(CloudMic::StreamType type);
   void FakeTriggerWordDetection();
   void Update(BaseStationTime_t currTime_nanosec);
@@ -94,7 +92,7 @@ public:
   void AudioSaveCallback(const std::string& dest);
 
   BeatInfo GetLatestBeatInfo();
-  const Anki::Cozmo::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
+  const Anki::Vector::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
 
@@ -105,6 +103,18 @@ public:
   // Get the maximum speaker 'latency', which is the max delay between when we
   // command audio to be played and it actually gets played on the speaker
   uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
+
+  // Callback parameter is whether or not we will be streaming after
+  // the trigger word is detected
+  void AddTriggerWordDetectedCallback(std::function<void(bool)> callback)
+    { _triggerWordDetectedCallbacks.push_back(callback); }
+
+  // Callback parameter is whether or not the stream was started
+  // True if started, False if stopped
+  void AddStreamUpdatedCallback(std::function<void(bool)> callback)
+    { _streamUpdatedCallbacks.push_back(callback); }
+
+  bool HasConnectionToCloud() const;
   
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
@@ -143,6 +153,9 @@ private:
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
   std::mutex _msgsMutex;
 
+  std::vector<std::function<void(bool)>> _triggerWordDetectedCallbacks;
+  std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
+
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
@@ -151,7 +164,7 @@ private:
 };
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_MicData_MicDataSystem_H_

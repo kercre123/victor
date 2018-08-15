@@ -45,7 +45,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 
@@ -227,20 +227,22 @@ Result TextToSpeechProviderImpl::SetLocale(const std::string & locale)
   return Initialize(locale);
 }
 
-Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
-                                                 float durationScalar,
-                                                 TextToSpeechProviderData& data)
+
+Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
+                                                   float durationScalar,
+                                                   TextToSpeechProviderData & data,
+                                                   bool & done)
 {
   if (nullptr == _lpBabTTS) {
     /* Log an error, return an error */
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.NoProvider",
+    LOG_ERROR("TextToSpeechProvider.GetFirstAudioData.NoProvider",
               "No provider handle");
     return RESULT_FAIL_INVALID_OBJECT;
   }
 
   if (!_tts_licensed) {
     /* Log a warning, return dummy data */
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData.NoLicense",
+    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData.NoLicense",
                 "No license to generate speech");
     const int sampleRate = AcapelaTTS::GetSampleRate();
     const int numChannels = AcapelaTTS::GetNumChannels();
@@ -256,77 +258,84 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   const int shaping = _tts_config->GetShaping();
   const int pitch = _tts_config->GetPitch();
 
-  LOG_DEBUG("TextToSpeechProvider.CreateAudioData",
+  LOG_DEBUG("TextToSpeechProvider.GetFirstAudioData",
             "size=%zu speed=%d shaping=%d pitch=%d",
             text.size(), speed, shaping, pitch);
 
   // Update TTS engine to use new speed, shaping, pitch
   BabTtsError err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speed);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetSpeed",
+    LOG_ERROR("TextToSpeechProvider.GetFirstAudioData.SetSpeed",
               "Unable to set speed %d (%s)", speed, BabTTS_GetErrorName(err));
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_VOCALTRACT, shaping);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetShaping",
+    LOG_ERROR("TextToSpeechProvider.GetFirstAudioData.SetShaping",
               "Unable to set shaping %d (%s)", shaping, BabTTS_GetErrorName(err));
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_PITCH, pitch);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetPitch",
+    LOG_ERROR("TextToSpeechProvider.GetFirstAudioData.SetPitch",
               "Unable to set pitch %d (%s)", pitch, BabTTS_GetErrorName(err));
     return RESULT_FAIL_INVALID_PARAMETER;
   }
-
-  // Initialize output buffer
-  data.Init(AcapelaTTS::GetSampleRate(), AcapelaTTS::GetNumChannels());
 
   // Start processing text
   DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_SAPI;
   err = BabTTS_InsertText(_lpBabTTS, text.c_str(), dwTextFlags);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.InsertText",
+    LOG_ERROR("TextToSpeechProvider.GetFirstAudioData.InsertText",
               "Unable to insert text (%s)", BabTTS_GetErrorName(err));
     return RESULT_FAIL;
   }
 
-  AudioUtil::AudioChunk& chunk = data.GetChunk();
+  return GetNextAudioData(data, done);
+}
+
+Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & data, bool & done)
+{
+  // Initialize output buffer
+  data.Init(AcapelaTTS::GetSampleRate(), AcapelaTTS::GetNumChannels());
+
+  AudioUtil::AudioChunk & chunk = data.GetChunk();
 
   // Poll output buffer until we run out of data
-  while (1) {
-    short buf[ACAPELA_SAMPLE_BUFSIZ] = {0};
-    DWORD num_samples = 0;
-    err = BabTTS_ReadBuffer(_lpBabTTS, buf, ACAPELA_SAMPLE_BUFSIZ, &num_samples);
-    if (W_BABTTS_NOMOREDATA == err)  {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadBuffer",
-                "%d new samples, no more data", num_samples);
-      for (DWORD i = 0; i < num_samples; ++i) {
-        chunk.push_back(buf[i]);
-      }
-      break;
-    } else if (E_BABTTS_NOERROR == err) {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadBuffer",
-                "%d new samples", num_samples);
-      for (DWORD i = 0; i < num_samples; ++i) {
-        chunk.push_back(buf[i]);
-      }
-    } else {
-      LOG_ERROR("TextToSpeechProvider.CreateAudioData.ReadBuffer",
-                "Error %d (%s)", err, BabTTS_GetErrorName(err));
-      return RESULT_FAIL;
+  short buf[ACAPELA_SAMPLE_BUFSIZ] = {0};
+  DWORD num_samples = 0;
+
+  const BabTtsError err = BabTTS_ReadBuffer(_lpBabTTS, buf, ACAPELA_SAMPLE_BUFSIZ, &num_samples);
+
+  if (E_BABTTS_NOERROR == err) {
+    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData.ReadBuffer",
+              "%d new samples", num_samples);
+    for (DWORD i = 0; i < num_samples; ++i) {
+      chunk.push_back(buf[i]);
     }
+    return RESULT_OK;
   }
 
-  return RESULT_OK;
+  if (W_BABTTS_NOMOREDATA == err)  {
+    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData.ReadBuffer",
+              "%d new samples, no more data", num_samples);
+    for (DWORD i = 0; i < num_samples; ++i) {
+      chunk.push_back(buf[i]);
+    }
+    done = true;
+    return RESULT_OK;
+  }
+
+  LOG_ERROR("TextToSpeechProvider.GetNextAudioData.ReadBuffer",
+            "Error %d (%s)", err, BabTTS_GetErrorName(err));
+  return RESULT_FAIL;
 
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // ANKI_PLATFORM_OSX

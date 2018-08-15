@@ -19,16 +19,21 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/threading/threadPriority.h"
+#include "cozmoAnim/execCommand/exec_command.h"
 
 #include "opencv2/highgui.hpp"
 
 #include <chrono>
 #include <errno.h>
+#include <unistd.h>
 
 #define LOG_CHANNEL "FaceDisplay"
 
+// Whether or not we need to manually stop the boot animation process, vic-bootAnim
+#define MANUALLY_STOP_BOOT_ANIM 0
+
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #if ANKI_CPU_PROFILER_ENABLED
   CONSOLE_VAR_RANGED(float, maxDrawTime_ms,      ANKI_CPU_CONSOLEVARGROUP, 5, 5, 32);
@@ -64,10 +69,21 @@ namespace {
   CONSOLE_FUNC(SetFaceBrightness, "FaceDisplay", int val);
 #endif
 }
-
+  
 FaceDisplay::FaceDisplay()
-  : _displayImpl(new FaceDisplayImpl())
+: _stopBootAnim(false)
 {
+  // Don't try to stop the boot anim in sim
+  // or if we are not supposed to manunually stop it
+  // (systemd will stop it for us)
+#if defined(SIMULATOR) || !MANUALLY_STOP_BOOT_ANIM
+  _stopBootAnim = true;
+#endif
+	
+  // The boot anim process may be using the display so don't actually create
+  // a FaceDisplay until we know for sure that process is no longer running
+  _displayImpl.reset(nullptr);
+  
   // Set up our thread running data
   _faceDrawImg[0].reset(new Vision::ImageRGB565());
   _faceDrawImg[0]->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -76,11 +92,6 @@ FaceDisplay::FaceDisplay()
   _faceDrawThread = std::thread(&FaceDisplay::DrawFaceLoop, this);
 
   _faultCodeThread = std::thread(&FaceDisplay::FaultCodeLoop, this);
-
-#if REMOTE_CONSOLE_ENABLED
-  sDisplayImpl = _displayImpl.get();
-#endif
-
 }
 
 FaceDisplay::~FaceDisplay()
@@ -121,7 +132,10 @@ void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
 
 void FaceDisplay::SetFaceBrightness(LCDBrightness level)
 {
-  _displayImpl->SetFaceBrightness(EnumToUnderlyingType(level));
+  if(_displayImpl != nullptr)
+  {
+    _displayImpl->SetFaceBrightness(EnumToUnderlyingType(level));
+  }
 }
 
 void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)
@@ -136,6 +150,12 @@ void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)
 
 void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB565& img)
 {
+  // Don't update images and pointers while the boot animation is still playing
+  if(!_stopBootAnim)
+  {
+    return;
+  }
+
   std::lock_guard<std::mutex> lock(_faceDrawMutex);
   // Prevent drawing if we have a fault code
   if(_fault == 0)
@@ -217,6 +237,18 @@ void FaceDisplay::DrawFaceLoop()
 
     // Lock because we're about to check and change pointers
     _faceDrawMutex.lock();
+
+    if(_stopBootAnim && _displayImpl == nullptr)
+    {      
+     // Actually create a FaceDisplay which will open a connection to the LCD
+     // now that no other process is using it
+     _displayImpl.reset(new FaceDisplayImpl());
+
+#if REMOTE_CONSOLE_ENABLED
+     sDisplayImpl = _displayImpl.get();
+ #endif
+    }
+    
     if (_faceDrawNextImg != nullptr)
     {
       _faceDrawCurImg = _faceDrawNextImg;
@@ -236,7 +268,11 @@ void FaceDisplay::DrawFaceLoop()
       //       impact to performance, both visually on the robot and dropped frames
       //       in the .gif file
 
-      _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
+      // Only draw to the face once the boot anim has been stopped
+      if(_displayImpl != nullptr && _stopBootAnim)
+      {
+        _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
+      }
 
       // Done with this image, clear the pointer
       {
@@ -325,6 +361,32 @@ void FaceDisplay::FaultCodeLoop()
     }
 
     if (_enableFaultCodeDisplay) {
+
+      if(!_stopBootAnim)
+      {
+        StopBootAnim();
+
+        uint32_t count = 0;
+        // Sleep spin waiting for the boot animation to be stopped
+        // since it is stopped by a background task
+        while(!_stopBootAnim)
+        {
+          static const uint32_t kSleepTime_ms = 10;
+          std::this_thread::sleep_for(std::chrono::milliseconds(kSleepTime_ms));
+
+          static const uint32_t kMaxWait_ms = 5000;
+          if(count++ > (kMaxWait_ms / kSleepTime_ms))
+          {
+            // Something has gone horrible wrong, we have been waiting for the boot anim
+            // to stop for kMaxWait_ms. Time to completely give up and exit
+            PRINT_NAMED_ERROR("FaceDisplay.FaultCodeLoop.WaitingForBootAnimToStop",
+                              "Boot anim hasn't stopped after %dms, exiting",
+                              kMaxWait_ms);
+            exit(1);
+          }
+        }
+      }
+      
       DrawFaultCode(maxFault);
     }
   }
@@ -359,6 +421,43 @@ void FaceDisplay::StopFaultCodeThread()
   }
 }
 
+void FaceDisplay::StopBootAnim()
+{
+  if(!_stopBootAnim)
+  {
+    // Have systemd stop the boot animation process, vic-bootAnim
+    // Will do nothing if it is not running
+    ExecCommandInBackground({"systemctl", "stop", "vic-bootAnim"},
+     [this](int rc)
+      {
+        if(rc != 0)
+        {
+          PRINT_NAMED_WARNING("FaceDisplay.StopBootAnim.StopFailed", "%d", rc);
 
-} // namespace Cozmo
+          // Asking nicely didn't work so try something more aggressive
+          ExecCommandInBackground({"systemctl", "kill", "-s", "9", "vic-bootAnim"},
+            [this](int rc)
+            {
+              // Killing didn't work for some reason so error and show fault code
+              if(rc != 0)
+              {
+                PRINT_NAMED_ERROR("FaceDisplay.StopBootAnim.KillFailed", "%d", rc);
+                FaultCode::DisplayFaultCode(FaultCode::STOP_BOOT_ANIM_FAILED);
+              }
+              else
+              {
+                _stopBootAnim = true;
+              }
+            });
+        }
+        else
+        {
+          _stopBootAnim = true;
+        }
+      });
+  }
+}
+
+
+} // namespace Vector
 } // namespace Anki

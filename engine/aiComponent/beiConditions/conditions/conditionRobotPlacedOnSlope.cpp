@@ -23,7 +23,7 @@
 #include "clad/types/robotStatusAndActions.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionRobotPlacedOnSlope::ConditionRobotPlacedOnSlope(const Json::Value& config)
@@ -78,5 +78,5 @@ bool ConditionRobotPlacedOnSlope::AreConditionsMetInternal(BehaviorExternalInter
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

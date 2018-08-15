@@ -16,6 +16,8 @@ observable events whenever the face is observed, has its ID updated.
 __all__ = ['Face', 'Expression', 'FaceComponent']
 
 from enum import Enum
+import math
+import time
 
 from . import sync, util
 from .messaging import protocol
@@ -61,7 +63,8 @@ class Face:
         self._updated_face_id = None
         self._name = ''
         self._expression = None
-        self._timestamp = None
+        self._last_observed_time: int = None
+        self._last_observed_robot_timestamp: int = None
         self._pose = None
         self._img_rect = None
 
@@ -82,14 +85,25 @@ class Face:
 
     @property
     def face_id(self):
-        '''int: The internal ID assigned to the face.'''
+        ''':return: The internal ID assigned to the face.'''
         return self._face_id if self._updated_face_id is None else self._updated_face_id
 
     @face_id.setter
     def face_id(self, face_id):
+        # True if this face been updated / superseded by a face with a new ID
         if self._face_id is not None:
             raise ValueError(f"Cannot change face ID once set (from {self._face_id} to {face_id})")
         self._face_id = face_id
+
+    @property
+    def has_updated_face_id(self):
+        '''bool: True if this face been updated / superseded by a face with a new ID
+
+        .. code-block:: python
+
+            my_was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
+        '''
+        return self._updated_face_id is not None
 
     @property
     def updated_face_id(self):
@@ -111,9 +125,32 @@ class Face:
         return self._name
 
     @property
+    def last_observed_time(self):
+        """ float: The time the element was last observed by the robot.
+        ``None`` if the element has not yet been observed.
+
+        .. code-block:: python
+
+            my_was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
+        """
+        return self._last_observed_time
+
+    @property
+    def time_since_last_seen(self):
+        """float: time since this element was last seen (math.inf if never)
+
+        .. code-block:: python
+
+            my_last_seen_time = cube.time_since_last_seen
+        """
+        if self._last_observed_time is None:
+            return math.inf
+        return time.time() - self._last_observed_time
+
+    @property
     def timestamp(self):
         '''int: Timestamp of event'''
-        return self._timestamp
+        return self._last_observed_robot_timestamp
 
     @property
     def pose(self):
@@ -172,7 +209,8 @@ class Face:
         '''Unpacks the face observed stream data in to a Face instance'''
         self._face_id = msg.face_id
         self._name = msg.name
-        self._timestamp = msg.timestamp
+        self._last_observed_time = time.time()
+        self._last_observed_robot_timestamp = msg.timestamp
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3,

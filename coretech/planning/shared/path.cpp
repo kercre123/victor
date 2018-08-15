@@ -1174,5 +1174,5 @@ namespace Anki
     }  
     
 
-  } // namespace Cozmo
+  } // namespace Planning
 } // namespace Anki

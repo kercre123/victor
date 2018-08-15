@@ -18,7 +18,7 @@ namespace Anki {
     class RandomGenerator;
   } 
   
-namespace Cozmo {
+namespace Vector {
 
   class ProceduralFaceDrawer
   {
@@ -143,7 +143,7 @@ namespace Cozmo {
   }; // class ProceduralFaceπ
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_ProceduralFaceDrawer_H__

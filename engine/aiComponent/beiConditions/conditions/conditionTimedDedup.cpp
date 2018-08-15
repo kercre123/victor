@@ -22,7 +22,7 @@
 #include "lib/util/source/anki/util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kSubConditionKey  = "subCondition";
@@ -82,5 +82,5 @@ void ConditionTimedDedup::SetActiveInternal(BehaviorExternalInterface& bei, bool
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

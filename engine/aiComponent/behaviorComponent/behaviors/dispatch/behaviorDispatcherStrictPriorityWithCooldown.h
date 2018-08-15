@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorCooldownInfo.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDispatcherStrictPriorityWithCooldown : public IBehaviorDispatcher
 {
@@ -65,7 +65,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

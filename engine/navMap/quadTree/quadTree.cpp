@@ -25,7 +25,7 @@
 #include <sstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class Robot;
 
@@ -469,5 +469,5 @@ inline void QuadTree::ResetBoundingBox()
 }
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

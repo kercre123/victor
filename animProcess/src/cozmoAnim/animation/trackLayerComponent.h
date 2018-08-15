@@ -28,7 +28,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AnimContext;
 class AnimationStreamer;
@@ -87,6 +87,8 @@ public:
   // Keep Victor's face alive, but the same, by posting empty new frames
   // so that noise keeps working
   void KeepFaceTheSame();
+  
+  void SetLastProceduralFaceAsBlank();
 
   // Make Victor squint (will continue to squint until removed)
   void AddSquint(const std::string& name,

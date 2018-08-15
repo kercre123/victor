@@ -26,13 +26,13 @@ namespace Anki {
   namespace Util {
     class RandomGenerator;
   }
-  namespace Cozmo {
+  namespace Vector {
     class AnimContext;
   }
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 //
@@ -43,12 +43,20 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const Cozmo::AnimContext* ctx, const Json::Value& tts_platform_config);
+  TextToSpeechProviderImpl(const Vector::AnimContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
 
   Result SetLocale(const std::string & locale);
 
-  Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
+  // Initialize TTS utterance and get first chunk of TTS audio.
+  // Returns RESULT_OK on success, else error code.
+  // Sets done to true when audio generation is complete.
+  Result GetFirstAudioData(const std::string & text, float durationScalar, TextToSpeechProviderData & data, bool & done);
+
+  // Get next chunk of TTS audio.
+  // Returns RESULT_OK on success, else error code.
+  // Sets done to true when audio generation is complete.
+  Result GetNextAudioData(TextToSpeechProviderData & data, bool & done);
 
 private:
   // Pointer to RNG provided by context
@@ -81,7 +89,7 @@ private:
 }; // class TextToSpeechProviderImpl
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // ANKI_PLATFORM_OSX

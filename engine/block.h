@@ -27,7 +27,7 @@ namespace Anki {
   // Forward Declarations:
   class Camera;
   
-  namespace Cozmo {
+  namespace Vector {
    
     // Forward Declarations:
     class Robot;
@@ -46,7 +46,7 @@ namespace Anki {
 #include "engine/BlockDefinitions.h"
       
       // Enumerated block types
-      using Type = Cozmo::ObjectType;
+      using Type = Vector::ObjectType;
       
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
@@ -356,7 +356,7 @@ namespace Anki {
     }
      */
 
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // __Products_Cozmo__block__

@@ -6,6 +6,7 @@
 
   var list;
   myMethods.init = function(elem) {
+    $('<h3>NOTE: there is a new tab in the engine process (8888) that includes much more information helpful for developers</h3>').appendTo( elem );
     list = $('<div id="animationList"></div>').appendTo(elem);
   };
 

@@ -17,7 +17,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     enum class TestState {
       Init,
@@ -93,6 +93,6 @@ namespace Anki {
       }
       return _result;
     }
-  } // end namespace Cozmo
+  } // end namespace Vector
 } // end namespace Anki
 

@@ -26,7 +26,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class BehaviorExternalInterface;
@@ -76,7 +76,7 @@ public:
   
   // destroy the current behavior stack and setup a new one - provides
   // no gaurentees that other aspects of behavior system or component state are reset
-  void ResetBehaviorStack(IBehavior* baseBehavior);
+  void ResetBehaviorStack(IBehavior* baseBehavior, bool waitUntilNextTick = false);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
@@ -132,6 +132,7 @@ private:
   InitializationStage _initializationStage;
   // Store the base behavior until the stack is initialized
   IBehavior* _baseBehaviorTmp;
+  IBehavior* _baseBehaviorOnNextTick = nullptr;
   
   // - - - - - - - - - - - - - - -
   // others/shared
@@ -154,7 +155,7 @@ private:
   
 }; // class BehaviorSystemManager
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

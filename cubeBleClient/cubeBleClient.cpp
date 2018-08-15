@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 bool CubeBleClient::Init()
@@ -131,5 +131,5 @@ bool CubeBleClient::RequestDisconnectFromCube()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

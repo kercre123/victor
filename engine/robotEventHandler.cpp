@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -62,7 +62,7 @@
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
 
@@ -1243,8 +1243,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 
     robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
   } else {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.PhysicalRobot",
-                        "Refusing to force delocalize physical robot.");
+    robot->Delocalize( robot->GetCarryingComponent().IsCarryingObject() );
   }
 }
 
@@ -1634,15 +1633,6 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetConnectionS
     PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSetConnectionStatus.InvalidRobotID",
                         "Failed to find robot");
   } else {
-    using namespace SwitchboardInterface;
-
-    // Update the pairing light
-    // Turn it on if we are on the START_PAIRING, SHOW_PRE_PIN, or SHOW_PIN screen
-    // Otherwise turn it off
-    robot->GetBackpackLightComponent().SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
-                                                        msg.status == ConnectionStatus::SHOW_PRE_PIN ||
-                                                        msg.status == ConnectionStatus::SHOW_PIN));
-    
     // Forward to robot
     robot->SendRobotMessage<SwitchboardInterface::SetConnectionStatus>(msg.status);
   }
@@ -1663,5 +1653,5 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetBLEPin& msg
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

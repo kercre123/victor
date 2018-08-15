@@ -8,20 +8,20 @@
     // Called once when the module is loaded.
     $(elem).append('<div id="touch-title">Touch Sensor</div>');
 
-    var setUseDVTConfig = $('<input class="touchButton" type="button" value="Use DVT config"/>');
-    var setUseProdConfig = $('<input class="touchButton" type="button" value="Use Production config"/>');
+    var setDisableTouchSensor = $('<input class="touchButton" type="button" value="Enable touch sensor"/>');
+    var setEnableTouchSensor = $('<input class="touchButton" type="button" value="Disable touch sensor"/>');
 
-    setUseDVTConfig.click( function(){
-      var payload = { 'filterConfig' : 'DVT' };
+    setDisableTouchSensor.click( function(){
+      var payload = { 'enabled' : 'false' };
       sendData( payload );
     });
-    setUseDVTConfig.appendTo( elem );
+    setDisableTouchSensor.appendTo( elem );
 
-    setUseProdConfig.click( function(){
-      var payload = { 'filterConfig' : 'Prod' };
+    setEnableTouchSensor.click( function(){
+      var payload = { 'enabled' : 'true' };
       sendData( payload );
     });
-    setUseProdConfig.appendTo( elem );
+    setEnableTouchSensor.appendTo( elem );
     
     touchInfoDiv = $('<h3 id="touchInfo"></h3>').appendTo( elem );
   };
@@ -30,8 +30,10 @@
     // The engine has sent a new json blob.
     touchInfoDiv.empty();
     touchInfoDiv.append('<div class="esnTitle">' + "ESN: " + data["esn"] + '</div>');
-    touchInfoDiv.append('<div class="modeTitle">' + "mode: " + data["mode"] + '</div>');
+    touchInfoDiv.append('<div class="osVersionTitle">' + "OS: " + data["osVersion"] + '</div>');
+    touchInfoDiv.append('<div class="modeTitle">' + "enabled: " + data["enabled"] + '</div>');
     touchInfoDiv.append('<div class="countTitle">' + "count: " + data["count"] + '</div>');
+    touchInfoDiv.append('<div class="countTitle">' + "calibrated: " + data["calibrated"] + '</div>');
   };
 
   myMethods.update = function(dt, elem) { 
@@ -51,6 +53,10 @@
       }
       
       .esnTitle {
+        margin-bottom:10px;
+      }
+      
+      .osVersionTitle {
         margin-bottom:10px;
       }
       

@@ -19,7 +19,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 namespace external_interface {
@@ -48,7 +48,7 @@ private:
   std::vector<Signal::SmartHandle> _signalHandles;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif

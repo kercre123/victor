@@ -36,7 +36,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace ExternalInterface {
   struct RobotObservedObject;
@@ -156,7 +156,7 @@ private:
   void Write(const std::string& s);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDockingTest_H__

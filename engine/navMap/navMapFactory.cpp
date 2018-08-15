@@ -13,7 +13,7 @@
 #include "memoryMap/memoryMap.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace NavMapFactory {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

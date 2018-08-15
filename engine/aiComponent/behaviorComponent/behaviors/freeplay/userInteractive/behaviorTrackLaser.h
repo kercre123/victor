@@ -20,7 +20,7 @@
 #include "clad/types/cameraParams.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTrackLaser : public ICozmoBehavior
 {
@@ -168,7 +168,7 @@ private:
     State state;
     
     // So that we can restore when done
-    CameraParams originalCameraSettings;
+    Vision::CameraParams originalCameraSettings;
   };
 
   InstanceConfig   _iConfig;
@@ -199,7 +199,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Cozmo_Basestation_Behaviors_BehaviorTrackLaser_H__ */

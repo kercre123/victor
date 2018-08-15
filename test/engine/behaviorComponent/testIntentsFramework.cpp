@@ -22,7 +22,7 @@
 
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 namespace{
   // Used to assert that intents are handled quickly enough. Should match the value set in userIntentComponent.cpp 

@@ -25,7 +25,7 @@
 #include <memory>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward declarations
 class Robot;
@@ -53,10 +53,6 @@ private:
   ICozmoBehaviorPtr _rerunBehavior;
   size_t _tickInfoScreenEnded; // ignored if 0
   
-  // caches old values while info screens are up
-  bool _wasTriggerWordEnabled = true;
-  bool _wasStreamingEnabled = true;
-  
   void OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm );
   
   void OnExitInfoFace( BehaviorSystemManager& bsm, BehaviorsBootLoader& bbl, UserIntentComponent& uic );
@@ -71,7 +67,7 @@ private:
   void SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm);
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

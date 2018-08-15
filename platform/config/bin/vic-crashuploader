@@ -36,6 +36,29 @@ else
   echo "Running build number "$buildNumber
 fi
 
+#
+# Collect some robot data
+#
+hostname=""
+if [ -x /bin/hostname ]; then
+  hostname="`/bin/hostname`"
+fi
+
+esn=""
+if [ -x /bin/emr-cat ]; then
+  esn=`/bin/emr-cat esn`""
+fi
+
+os_version=""
+if [ -f /etc/os-version ]; then
+  os_version="`/bin/cat /etc/os-version`"
+fi
+
+anki_version=""
+if [ -f /anki/etc/version ]; then
+  anki_version="`/bin/cat /anki/etc/version`"
+fi
+
 while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null
@@ -52,8 +75,17 @@ do
                 if [ $VIC_UPLOAD_CRASHES -gt 0 ]; then
                     # If file size is greater than zero, attempt to upload it
                     echo "Uploading crash dump file ${i}"
-                    # todo:  Remove -k after we get this to route through anki.com instead of directly to the crash reporting service
-                    if curl -k --data-binary @$i ${VIC_CRASH_UPLOAD_URL} ; then
+                    #
+                    # Upload crash dump plus metadata as multipart form
+                    #
+                    # TODO:  Remove -k after we get this to route through anki.com instead of directly to backtrace
+                    #
+                    form="-F upload_file=@${i}"
+                    form="${form} -F hostname=${hostname}"
+                    form="${form} -F robot.esn=${esn}"
+                    form="${form} -F robot.os_version=${os_version}"
+                    form="${form} -F robot.anki_version=${anki_version}"
+                    if curl -k ${form} ${VIC_CRASH_UPLOAD_URL} ; then
                         echo "Successfully uploaded "$i
 
                         # Rename the file so that we can keep it around for a while before deletion

@@ -34,7 +34,7 @@ namespace Vision {
   class Image;
 }
 
-namespace Cozmo {
+namespace Vector {
   
 class ProceduralFace;
 
@@ -131,7 +131,7 @@ private:
 }; // class ScanlineDistorter
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_ScanlineDistorter_H__ */

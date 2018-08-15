@@ -28,7 +28,7 @@
 #include <assert.h>
 
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 static const std::string kMajorWin = "majorWin";
 static const std::string kMajorWinBeatBox = "majorWinBeatBox";

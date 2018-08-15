@@ -18,7 +18,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDisplayWallTime : public BehaviorProceduralClock
 {
@@ -42,7 +42,7 @@ private:
   bool ShouldDisplayAsMilitaryTime() const;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDisplayWallTime__

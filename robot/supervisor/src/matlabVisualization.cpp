@@ -28,7 +28,7 @@ namespace Anki {
   
   using namespace Embedded;
   
-  namespace Cozmo {
+  namespace Vector {
     
     namespace MatlabVisualization {
 
@@ -267,6 +267,6 @@ namespace Anki {
 
       
     } // namespace MatlabVisualization
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 

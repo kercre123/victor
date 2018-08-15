@@ -19,7 +19,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CarryingComponent::CarryingComponent()
 : IDependencyManagedComponent(this, RobotComponentID::Carrying)
@@ -27,7 +27,7 @@ CarryingComponent::CarryingComponent()
   
 }
 
-void CarryingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void CarryingComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
 }
@@ -43,7 +43,7 @@ Result CarryingComponent::PlaceObjectOnGround()
   
   _robot->GetDockingComponent().SetLastPickOrPlaceSucceeded(false);
   
-  return _robot->SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
+  return _robot->SendRobotMessage<Anki::Vector::PlaceObjectOnGround>(0, 0, 0,
                                                                    DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
                                                                    DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
                                                                    DEFAULT_PATH_MOTION_PROFILE.decel_mmps2);
@@ -51,7 +51,7 @@ Result CarryingComponent::PlaceObjectOnGround()
 
 Result CarryingComponent::SendSetCarryState(CarryState state) const
 {
-  return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryStateUpdate(state)));
+  return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Vector::CarryStateUpdate(state)));
 }
 
 Result CarryingComponent::SetDockObjectAsAttachedToLift()

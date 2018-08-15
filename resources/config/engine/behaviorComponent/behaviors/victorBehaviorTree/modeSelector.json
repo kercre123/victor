@@ -6,6 +6,7 @@
 
   "behaviors": [
     "SingletonPoweringRobotOff",
+    "LowBatteryMode",
     "ShutUpMode",
     "QuietMode",
     "CoordinateInHabitat"

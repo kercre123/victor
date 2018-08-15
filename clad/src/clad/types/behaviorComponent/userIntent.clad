@@ -4,7 +4,7 @@
 // Copyright: Anki, inc. 2018
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 UserIntentSource
 {
@@ -141,5 +141,5 @@ union dupes_allowed UserIntent
   UserIntent_Test_TimeWithUnits test_timeWithUnits,
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

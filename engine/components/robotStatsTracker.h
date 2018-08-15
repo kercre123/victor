@@ -19,13 +19,17 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include "json/json.h"
+
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class ActiveFeature : uint32_t;
 enum class BehaviorStat : uint32_t;
 
+class JdocsManager;
+  
 class RobotStatsTracker : public IDependencyManagedComponent<RobotComponentID>,
                           public UnreliableComponent<BCComponentID>, 
                           private Anki::Util::noncopyable
@@ -52,7 +56,7 @@ public:
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::JdocsManager);
   }
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
@@ -68,14 +72,10 @@ private:
   
   void IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta);
 
-  void WriteStatsToFile();
-  void ReadStatsFromFile();
+  bool UpdateStatsJdoc(const bool saveToDiskImmediately);
 
-  std::map< std::string, uint64_t > _stats;
-
-  float _lastFileWriteTime_s = 0.0f;
-  bool _dirtySinceWrite = false;
-  std::string _filename;
+  bool _dirtyJdoc = false;
+  JdocsManager* _jdocsManager = nullptr;
 };
 
 }

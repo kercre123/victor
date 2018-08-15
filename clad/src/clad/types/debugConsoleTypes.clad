@@ -4,7 +4,7 @@
 // Copyright: Anki, inc. 2015
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 union ConsoleVarUnion {
   float_64 varDouble,
@@ -15,5 +15,5 @@ union ConsoleVarUnion {
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

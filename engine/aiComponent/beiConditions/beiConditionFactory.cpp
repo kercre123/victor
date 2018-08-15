@@ -20,9 +20,11 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionConnectedToCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCubeTapped.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEmotion.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionEngineErrorCodeReceived.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEyeContact.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFaceKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
@@ -63,7 +65,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 namespace {
@@ -230,9 +232,19 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       condition = std::make_shared<ConditionConsoleVar>(config);
       break;
     }
+    case BEIConditionType::ConnectedToCube:
+    {
+      condition = std::make_shared<ConditionConnectedToCube>(config);
+      break;
+    }
     case BEIConditionType::Emotion:
     {
       condition = std::make_shared<ConditionEmotion>(config);
+      break;
+    }
+    case BEIConditionType::EngineErrorCodeReceived:
+    {
+      condition = std::make_shared<ConditionEngineErrorCodeReceived>(config);
       break;
     }
     case BEIConditionType::EyeContact:
@@ -478,5 +490,5 @@ bool BEIConditionFactory::CheckConditionsAreUsed(const CustomBEIConditionHandleL
 }
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

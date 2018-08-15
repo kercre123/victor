@@ -23,7 +23,7 @@
 #define __Cozmo_Basestation_VariableSnapshotComponent__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(bool, kResetDataOnNewBuildVersion, "VariableSnapshotComponent", true);
 
@@ -45,7 +45,7 @@ VariableSnapshotComponent::~VariableSnapshotComponent()
   SaveVariableSnapshots();
 }
 
-void VariableSnapshotComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+void VariableSnapshotComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
   _variableSnapshotJsonMap = _robot->GetDataAccessorComponent().GetVariableSnapshotJsonMap();
@@ -53,7 +53,7 @@ void VariableSnapshotComponent::InitDependent(Cozmo::Robot* robot, const RobotCo
   // if we want to reset data when there is a new build version, check for a new build version
   if(kResetDataOnNewBuildVersion) {
     // get current build version/SHA
-    auto* osState = Anki::Cozmo::OSState::getInstance();
+    auto* osState = Anki::Vector::OSState::getInstance();
     if(nullptr != osState) {
       auto _osBuildVersionPtr = std::make_shared<std::string>(osState->GetOSBuildVersion());
       auto _buildShaPtr = std::make_shared<std::string>(osState->GetBuildSha());

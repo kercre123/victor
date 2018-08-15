@@ -18,7 +18,7 @@
 // Forward declarations
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class ArchiveUtil {
 public:
@@ -38,7 +38,7 @@ private:
 
 };
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

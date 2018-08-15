@@ -20,7 +20,7 @@
 #include <algorithm>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeLightAnimation {
 
 
@@ -300,5 +300,5 @@ const LightPattern& GetLightsOffPattern()
 }
 
 } // namespace CubeLightAnimation
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

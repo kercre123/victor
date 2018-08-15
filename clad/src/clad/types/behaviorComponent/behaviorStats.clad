@@ -12,14 +12,14 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_32 BehaviorStat {
 
   AnimationPlayed,
   AttemptedFistBump,
   AttemptedPounceOnCube,
-  BehaviorActived,
+  BehaviorActivated,
   BlackjackDealerWon,
   BlackjackGameComplete,
   EnrolledFace,
@@ -38,5 +38,5 @@ enum uint_32 BehaviorStat {
   
 } // enum class BehaviorObjectives
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

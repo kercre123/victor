@@ -19,7 +19,7 @@
 #define LOG_CHANNEL "BehaviorSystem"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const int kReactToPetNumTimesObserved = 3;
@@ -61,5 +61,5 @@ bool ConditionPetInitialDetection::AreConditionsMetInternal(BehaviorExternalInte
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

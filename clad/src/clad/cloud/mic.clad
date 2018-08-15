@@ -1,5 +1,7 @@
+#include "clad/cloud/common.clad"
+
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CloudMic {
 
 enum uint_8 StreamType {
@@ -18,7 +20,8 @@ enum uint_8 ErrorType {
 	Token
 }
 
-structure Void {
+structure StreamOpen {
+	string session
 }
 
 structure Hotword {
@@ -46,15 +49,21 @@ structure IntentError {
 }
 
 union dupes_allowed Message {
+	// anim -> cloud
 	Hotword hotword,
 	AudioData audio,
+	Void audioDone,
+
+	// cloud -> anim
 	Void stopSignal,
-	Filename debugFile,
 	Void testStarted,
 	Void streamTimeout,
+
+	// cloud -> engine
+	Filename debugFile,
 	IntentResult result,
 	IntentError error,
-	Void streamOpen
+	StreamOpen streamOpen
 }
 
 

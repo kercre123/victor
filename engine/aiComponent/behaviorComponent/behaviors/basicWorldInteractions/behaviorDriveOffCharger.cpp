@@ -32,7 +32,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 // array of directions in {face, cube, straight, left, right, randomly, micDirection, proceduralStraight}
@@ -419,6 +419,6 @@ BehaviorDriveOffCharger::DriveDirection BehaviorDriveOffCharger::ParseDriveDirec
   return DriveDirection::Straight;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

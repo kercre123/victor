@@ -35,12 +35,17 @@ namespace Json {
 namespace Anki {
 
 namespace Util {
+
 namespace Data {
   class DataPlatform;
-} // namespace Data
+}
+namespace Dispatch {
+  class Queue;
+}
+
 } // namespace Util
 
-namespace Cozmo {
+namespace Vector {
 
 namespace WebService {
 
@@ -154,14 +159,15 @@ private:
   void OnOpenWebSocket(struct mg_connection* conn);
   void OnReceiveWebSocket(struct mg_connection* conn, const Json::Value& data);
   void OnCloseWebSocket(const struct mg_connection* conn);
-  
-  static void SendToWebSocket(struct mg_connection* conn, const Json::Value& data);
-  
+
+  void SendToWebSocket(struct mg_connection* conn, const Json::Value& data) const;
+
   // todo: OTA update somehow?
 
   struct mg_context* _ctx;
   
   std::vector<WebSocketConnectionData> _webSocketConnections;
+  mutable std::mutex s_wsConnectionsMutex;
 
   std::string _consoleVarsUIHTMLTemplate;
 
@@ -175,11 +181,13 @@ private:
   
   OnAppToEngineOnDataType _appToEngineOnData;
   OnAppToEngineRequestDataType _appToEngineRequestData;
+  
+  Util::Dispatch::Queue* _dispatchQueue = nullptr;
 };
 
 } // namespace WebService
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // defined(WEB_SERVICE_H)

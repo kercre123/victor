@@ -20,7 +20,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     static const char* kNameKey = "Name";
     static const char* kWeightKey = "Weight";
@@ -113,5 +113,5 @@ namespace Anki {
       return RESULT_OK;
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

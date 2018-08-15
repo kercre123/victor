@@ -4,7 +4,7 @@
 #include "clad/types/robotStatusAndActions.clad"
  
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 DockingMethod
 {
@@ -138,5 +138,5 @@ structure GoalPose
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

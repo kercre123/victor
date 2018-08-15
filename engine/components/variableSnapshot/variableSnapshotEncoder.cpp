@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace VariableSnapshotEncoder {
 
 // constants that are used in every (de)serializer

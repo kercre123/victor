@@ -22,7 +22,7 @@ namespace Json {
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations:
 namespace RobotInterface {
@@ -79,7 +79,7 @@ private:
 
 }; // class RobotManager
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

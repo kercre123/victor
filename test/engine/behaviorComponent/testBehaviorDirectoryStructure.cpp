@@ -25,10 +25,10 @@
 
 #include <unordered_map>
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 

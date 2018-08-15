@@ -19,7 +19,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ActiveBehaviorIterator::ActiveBehaviorIterator()
   : IDependencyManagedComponent( this, BCComponentID::ActiveBehaviorIterator )

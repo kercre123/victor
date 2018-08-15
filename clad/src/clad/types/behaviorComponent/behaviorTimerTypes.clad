@@ -6,7 +6,7 @@
 // Desc: Named timers shared among behaviors
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorTimerTypes {
@@ -21,5 +21,5 @@ enum uint_8 BehaviorTimerTypes {
   
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

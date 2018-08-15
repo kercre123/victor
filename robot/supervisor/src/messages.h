@@ -34,7 +34,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Messages {
 
       // Return a const reference to the current robot state message
@@ -70,7 +70,7 @@ namespace Anki {
       void ResetInit();
 
     } // namespace Messages
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

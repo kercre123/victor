@@ -25,7 +25,7 @@
 #include <map>
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     // Interface for compound actions, which are fixed sets of actions to be
     // run together or in order (determined by derived type)
@@ -156,7 +156,7 @@ namespace Anki {
       
     }; // class CompoundActionParallel
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_COMPOUND_ACTIONS_H

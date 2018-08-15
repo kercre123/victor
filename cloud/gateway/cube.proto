@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package Anki.Cozmo.external_interface;
+package Anki.Vector.external_interface;
 
 import "messages.proto";
 
@@ -11,17 +11,25 @@ import "messages.proto";
 message ConnectCubeRequest {
 }
 message ConnectCubeResponse {
-  ResultStatus status     = 1;
+  ResponseStatus status     = 1;
   bool         success    = 2;
   uint32       object_id  = 3;
   string       factory_id = 4;
+}
+
+message CubesAvailableRequest {
+}
+
+message CubesAvailableResponse {
+  ResponseStatus status = 1;
+  repeated string factory_ids = 2;
 }
 
 // Requests a disconnection from the currently connected cube.
 message DisconnectCubeRequest {
 }
 message DisconnectCubeResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 // Plays the default cube connection animation on the currently
@@ -30,7 +38,7 @@ message DisconnectCubeResponse {
 message FlashCubeLightsRequest {
 }
 message FlashCubeLightsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 // 'Forget' the robot's preferred cube. This will cause the robot to
@@ -41,7 +49,7 @@ message FlashCubeLightsResponse {
 message ForgetPreferredCubeRequest {
 }
 message ForgetPreferredCubeResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 // Set the robot's preferred cube and save it to disk. The robot
@@ -51,7 +59,7 @@ message SetPreferredCubeRequest {
   string factory_id = 1;
 }
 message SetPreferredCubeResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 // Sets each LED on victor's cube.  Two states are specified
@@ -81,7 +89,7 @@ message SetCubeLightsRequest {
   MakeRelativeMode make_relative            = 12;
 }
 message SetCubeLightsResponse {
-  ResultStatus status = 1;
+  ResponseStatus status = 1;
 }
 
 // @TODO: Add a GetPreferredCube rpc to the proto interface VIC-4642
@@ -118,6 +126,10 @@ enum ObjectFamily {
 // Indicates that a the connection subscribed through ConnectCube has
 // been lost.
 message CubeConnectionLost {
+}
+
+message ObjectAvailable {
+  string factory_id = 1;
 }
 
 // Indicates that a cube has connected or disconnected to the robot.

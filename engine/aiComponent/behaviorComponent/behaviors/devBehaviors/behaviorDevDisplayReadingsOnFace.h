@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorDevDisplayReadingsOnFace : public ICozmoBehavior
 {

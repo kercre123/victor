@@ -24,7 +24,11 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki{
-namespace Cozmo{
+
+// Forward Declarations
+class ObjectID;
+
+namespace Vector{
 
 // Forward Declarations
 class ActiveObject;
@@ -44,20 +48,27 @@ namespace ExternalInterface {
 
 struct TargetStatus {
   TargetStatus();
-  const ObservableObject* object;
-  Pose3d   pose;
-  float distance_mm;
-  float angleFromRobotFwd_deg;
-  float lastObservedTime_s;
-  float lastMovedTime_s;
-  float probabilityIsHeld;
-  bool  isValid; // true if we have target data less than kTargetValidSeenTimeout_ms old.
-  bool  visibleThisFrame;
-  bool  visibleRecently; // true if our current target was seen less than kRecentlyVisibleLimit_s ago
-  bool  movedThisFrame;
-  bool  movedRecently; // true if our current target moved less than kRecentlyMovedLimit_s ago
-  bool  isHeld;
-  bool  tappedDuringLastTick;
+  const  ActiveObject* activeObject; // valid only if connected
+  const  ObservableObject* observableObject; // valid only if located in blockWorld
+  Pose3d prevPose; // Pose on last update
+  float  distance_mm;
+  float  angleFromRobotFwd_deg;
+  float  lastObservedTime_s;
+  float  lastMovedTime_s;
+  float  lastMovedFarTime_s;
+  float  lastHeldTime_s;
+  float  lastTappedTime_s;
+  float  probabilityIsHeld;
+  bool   distMeasuredWithProx;
+  bool   visibleThisFrame;
+  bool   visibleRecently; // true if our current target was seen less than kRecentlyVisibleLimit_s ago
+  bool   observedSinceMovedByRobot;
+  bool   movedThisFrame;
+  bool   movedRecently; // true if our current target moved less than kRecentlyMovedLimit_s ago
+  bool   movedFarThisFrame;
+  bool   movedFarRecently;
+  bool   isHeld;
+  bool   tappedDuringLastTick;
 };
 
 class CubeInteractionTracker : public IDependencyManagedComponent<RobotComponentID>,
@@ -82,7 +93,9 @@ public:
   // CubeConnectionSubscriber Methods
 
   bool IsUserHoldingCube() const;
-  const TargetStatus GetTargetStatus(){ return  _targetStatus; }
+  const TargetStatus GetTargetStatus(){ return _targetStatus; }
+  // returns uninitialized ObjectID if we don't have a target
+  ObjectID GetTargetID(); 
 
 private:
 
@@ -108,6 +121,8 @@ private:
 
   void HandleEngineEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
 
+  void SendDataToWebViz();
+
   ECITState _trackerState;
 
   // Handles for grabbing EngineToGame messages
@@ -122,14 +137,20 @@ private:
 
   float _currentTimeThisTick_s;
   bool  _tapDetectedDuringTick;
-  bool  _connectedTrackAtHighRate;
+  bool  _trackingAtHighRate;
 
   // Filter parameter vars, these vary based on ECITState 
   float _filterIncrement;
   float _filterDecrement;
+
+// For WebViz
+#if ANKI_DEV_CHEATS
+  float _timeToUpdateWebViz_s;
+#endif
+  std::string _debugStateString;
 };
 
-} //namespace Cozmo
+} //namespace Vector
 } //namespace Anki
 
 #endif // __Engine_Components_CubeInteractionTracker_H__

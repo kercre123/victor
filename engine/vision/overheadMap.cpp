@@ -24,7 +24,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #define DEBUG_VISUALIZE false
 #define DEBUG_SAVE_OVERHEAD 0 // how many frames before saving the files, 0 means no saving
@@ -481,5 +481,5 @@ void OverheadMap::UpdateFootprintMask(const Pose3d& robotPose, DebugImageList <A
 
 }
 
-} //namespace Cozmo
+} //namespace Vector
 } //namespace Anki

@@ -13,7 +13,11 @@
 #ifndef ANKI_COZMO_ANIM_DATA_LOADER_H
 #define ANKI_COZMO_ANIM_DATA_LOADER_H
 
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 #include "clad/types/spriteNames.h"
+#include "clad/types/backpackAnimationTriggers.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponentTypes.h"
+#include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/helpers/noncopyable.h"
 #include "coretech/vision/shared/spritePathMap.h"
 
@@ -39,12 +43,13 @@ class SpriteCache;
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class CannedAnimationContainer;
 class Animation;
 class AnimContext;
-
+class BackpackLightAnimationContainer;
+ 
 class RobotDataLoader : private Util::noncopyable
 {
 public:
@@ -77,6 +82,11 @@ public:
 
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
 
+  using BackpackAnimationTriggerMap = Util::CladEnumToStringMap<BackpackAnimationTrigger>;
+  using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
+  const FileJsonMap& GetBackpackLightAnimations() const { return _backpackLightAnimations; }
+  BackpackAnimationTriggerMap* GetBackpackAnimationTriggerMap() { return _backpackAnimationTriggerMap.get();}
+  
 private:
   void LoadSpritePaths();
 
@@ -84,6 +94,10 @@ private:
   
   void SetupProceduralAnimation();
 
+  void LoadBackpackLightAnimations(const CannedAnimationLoader::AnimDirInfo& fileInfo);
+  void LoadBackpackLightAnimationFile(const std::string& path);
+  void LoadBackpackAnimationTriggerMap();
+  
   const AnimContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
@@ -105,6 +119,10 @@ private:
   Json::Value _tts_config;
   Json::Value _ws_config;
   Json::Value _micTriggerConfig;
+
+  std::unique_ptr<BackpackAnimationTriggerMap> _backpackAnimationTriggerMap;
+  FileJsonMap _backpackLightAnimations;
+
   
 };
 

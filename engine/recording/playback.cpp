@@ -31,7 +31,7 @@ using namespace AnkiUtil;
 //using namespace MetaGame;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 #define SOME_VERY_LOW_NUMBER_THAT_IS_TOO_LOW_TO_DESCRIBE_MESSAGE 3
 
@@ -358,7 +358,7 @@ RecordingPlaybackStatus Playback::PostTickMessageProcess()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // #ifdef COZMO_RECORDING_PLAYBACK

@@ -16,7 +16,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
+
+class BehaviorTimerUtilityCoordinator;
 
 class BehaviorQuietModeCoordinator : public ICozmoBehavior
 {
@@ -58,6 +60,7 @@ private:
     float activeTime_s;
     std::vector<BehaviorInfo> behaviors;
     ICozmoBehaviorPtr wakeWordBehavior;
+    std::shared_ptr<BehaviorTimerUtilityCoordinator> timerBehavior;
   };
 
   struct DynamicVariables {
@@ -72,7 +75,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorQuietModeCoordinator__

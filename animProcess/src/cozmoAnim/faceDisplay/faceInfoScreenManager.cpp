@@ -84,7 +84,7 @@ static bool HasVoiceAccess()
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
@@ -123,6 +123,9 @@ namespace {
   // How often connectivity checks are performed while on 
   // Main and Network screens.
   const u32 kIPCheckPeriod_sec = 20;
+
+  // How long the button needs to be pressed for before it should trigger shutdown animation
+  CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
 }
 
 
@@ -605,45 +608,47 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
 
 
-  // always send web server data until we feel this is too much a perf hit
   if (nullptr != _webService)
   {
     using namespace std::chrono;
 
-    // if we send this data every tick, we crash the robot;
-    // only send the web data every X seconds
-    static double nextWebServerUpdateTime = 0.0;
-    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-    if (currentTime > nextWebServerUpdateTime)
+    static const std::string kWebVizModuleName = "micdata";
+    if (_webService->IsWebVizClientSubscribed(kWebVizModuleName))
     {
-      nextWebServerUpdateTime = currentTime + 0.1;
-
-      Json::Value webData;
-      webData["time"] = currentTime;
-      webData["confidence"] = micData.confidence;
-      // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
-      webData["dominant"] = micData.direction;
-      webData["selectedDirection"] = micData.selectedDirection;
-      webData["maxConfidence"] = maxConf;
-      webData["triggerDetected"] = triggerRecognized;
-      webData["delayTime"] = delayTime_ms;
-      webData["latestPowerValue"] = (double)micData.latestPowerValue;
-      webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
-
-      Json::Value& directionValues = webData["directions"];
-      for ( float confidence : micData.confidenceList )
+      // if we send this data every tick, we crash the robot;
+      // only send the web data every X seconds
+      static double nextWebServerUpdateTime = 0.0;
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+      if (currentTime > nextWebServerUpdateTime)
       {
-        directionValues.append(confidence);
+        nextWebServerUpdateTime = currentTime + 0.1;
+        
+        Json::Value webData;
+        webData["time"] = currentTime;
+        webData["confidence"] = micData.confidence;
+        // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
+        webData["dominant"] = micData.direction;
+        webData["selectedDirection"] = micData.selectedDirection;
+        webData["maxConfidence"] = maxConf;
+        webData["triggerDetected"] = triggerRecognized;
+        webData["delayTime"] = delayTime_ms;
+        webData["latestPowerValue"] = (double)micData.latestPowerValue;
+        webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
+        
+        Json::Value& directionValues = webData["directions"];
+        for ( float confidence : micData.confidenceList )
+        {
+          directionValues.append(confidence);
+        }
+        
+        // Beat Detection stuff
+        Json::Value& beatInfo = webData["beatDetector"];
+        const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
+        beatInfo["confidence"] = latestBeat.confidence;
+        beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
+        
+        _webService->SendToWebViz( kWebVizModuleName, webData );
       }
-
-      // Beat Detection stuff
-      Json::Value& beatInfo = webData["beatDetector"];
-      const auto& latestBeat = _context->GetMicDataSystem()->GetLatestBeatInfo();
-      beatInfo["confidence"] = latestBeat.confidence;
-      beatInfo["tempo_bpm"] = latestBeat.tempo_bpm;
-      
-      static const std::string moduleName = "micdata";
-      _webService->SendToWebViz( moduleName, webData );
     }
   }
 
@@ -845,16 +850,19 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   DrawScratch();
 }
 
-void CheckForButtonEvent(bool buttonPressed, 
-                         bool& buttonPressedEvent,
-                         bool& buttonReleasedEvent,
-                         bool& singlePressDetected, 
-                         bool& doublePressDetected)
+void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed, 
+                                                bool& buttonPressedEvent,
+                                                bool& buttonReleasedEvent,
+                                                bool& singlePressDetected, 
+                                                bool& doublePressDetected)
 {
   static u32  lastPressTime_ms   = 0;
   static bool singlePressPending = false;
   static bool doublePressPending = false;
   static bool buttonWasPressed   = false;
+
+  // Whether or not the shutdown message was already sent
+  static bool shutdownSent       = false;
 
   buttonPressedEvent  = !buttonWasPressed && buttonPressed;
   buttonReleasedEvent = buttonWasPressed && !buttonPressed;
@@ -884,10 +892,27 @@ void CheckForButtonEvent(bool buttonPressed,
       doublePressPending = false;
       doublePressDetected = true;
     }
+    shutdownSent = false;
   } else if (singlePressPending && !mightBeDoublePress) {
     lastPressTime_ms = 0;
     singlePressPending = false;
     singlePressDetected = true;
+  }
+
+  // Check if button was held down long enough for shutdown animation to start
+  const bool shouldTriggerShutdown = buttonPressed && 
+                                     (lastPressTime_ms > 0) && 
+                                     (curTime_ms - lastPressTime_ms > kButtonPressDurationForShutdown_ms) &&
+                                     (GetCurrScreenName() == ScreenName::None);
+  if (shouldTriggerShutdown && !shutdownSent) {
+    LOG_INFO("FaceInfoScreenManager.CheckForButtonEvent.StartShutdownAnim", "");
+    RobotInterface::SendAnimToEngine(StartShutdownAnim());
+    lastPressTime_ms    = 0;
+    singlePressPending  = false;
+    singlePressDetected = false;
+    doublePressPending  = false;
+    doublePressDetected = false;
+    shutdownSent        = true;
   }
 }
 
@@ -930,7 +955,8 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       // screens that are normally active during playpen test
       (currScreenName == ScreenName::None ||
        currScreenName == ScreenName::FAC  ||
-       currScreenName == ScreenName::CustomText)) {
+       currScreenName == ScreenName::CustomText ||
+       currScreenName == ScreenName::Pairing)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 
@@ -1212,7 +1238,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {
   char temp[32] = "";
   sprintf(temp,
-          "CLIFF: %4u %4u %4u %4u",
+          "CLF: %4u %4u %4u %4u",
           state.cliffDataRaw[0],
           state.cliffDataRaw[1],
           state.cliffDataRaw[2],
@@ -1235,7 +1261,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 
   sprintf(temp,
           "TOUCH: %u",
-          state.backpackTouchSensorRaw[STATE_MESSAGE_FREQUENCY-1]);
+          state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
   sprintf(temp,
@@ -1537,5 +1563,5 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

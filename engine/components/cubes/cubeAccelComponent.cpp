@@ -34,7 +34,7 @@
 #define LOG_CHANNEL "CubeAccelComponent"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 CubeAccelComponent::CubeAccelComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeAccel)
@@ -42,7 +42,7 @@ CubeAccelComponent::CubeAccelComponent()
 }
 
 
-void CubeAccelComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
+void CubeAccelComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) 
 {
   _robot = robot;
   // Subscribe to messages

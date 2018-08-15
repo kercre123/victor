@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 class MicDataInfo
@@ -79,7 +79,7 @@ private:
 };
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_MicDataInfo_H_

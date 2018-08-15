@@ -36,12 +36,13 @@ class AudioMultiplexer;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 namespace MicData {
   class MicDataSystem;
 }
 class RobotDataLoader;
+class ShowAudioStreamStateManager;
 class ThreadIDInternal;
 
 namespace Audio {
@@ -55,7 +56,7 @@ namespace WebService {
 class WebService;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 // ---------- END FORWARD DECLARATIONS ----------
@@ -64,7 +65,7 @@ class WebService;
 
 // Here begins the actual namespace and interface for AnimContext
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AnimContext : private Util::noncopyable
 {
@@ -82,6 +83,7 @@ public:
   Audio::CozmoAudioController*          GetAudioController() const; // Can return nullptr
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   MicData::MicDataSystem*               GetMicDataSystem() const { return _micDataSystem.get(); }
+  ShowAudioStreamStateManager*          GetShowAudioStreamStateManager() const { return _showStreamStateManager.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
   Audio::AudioPlaybackSystem*           GetAudioPlaybackSystem() const { return _audioPlayer.get(); }
 
@@ -106,6 +108,7 @@ private:
   std::unique_ptr<Util::RandomGenerator>         _random;
   std::unique_ptr<RobotDataLoader>               _dataLoader;
   std::unique_ptr<MicData::MicDataSystem>        _micDataSystem;
+  std::unique_ptr<ShowAudioStreamStateManager>   _showStreamStateManager;
   std::unique_ptr<WebService::WebService>        _webService;
   std::unique_ptr<Audio::AudioPlaybackSystem>    _audioPlayer;
 
@@ -116,7 +119,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_AnimContext_H__

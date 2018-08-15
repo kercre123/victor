@@ -29,14 +29,14 @@ namespace Switchboard {
 
 class EngineMessagingClient {
 public:
-  using EngineMessageSignal = Signal::Signal<void (Anki::Cozmo::ExternalInterface::MessageEngineToGame)>;
+  using EngineMessageSignal = Signal::Signal<void (Anki::Vector::ExternalInterface::MessageEngineToGame)>;
   explicit EngineMessagingClient(struct ev_loop* loop);
   bool Init();
   bool Connect();
   bool Disconnect();
-  void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
+  void SendMessage(const Anki::Vector::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
-  void ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus status);
+  void ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status);
   void HandleWifiScanRequest();
   EngineMessageSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;

@@ -26,7 +26,7 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 using namespace ExternalInterface;
@@ -224,5 +224,5 @@ std::string IBEICondition::MakeUniqueDebugLabel() const
   return ret;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

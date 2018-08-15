@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // forward Declaration
 class BehaviorScoringWrapper;
@@ -56,7 +56,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherScoring_H__

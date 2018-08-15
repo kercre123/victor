@@ -19,7 +19,7 @@ namespace Anki {
 // Macro to make template specialization less verbose
 #define LINK_COMPONENT_TYPE_TO_ENUM(componentType, enumType, enumValue) \
 template<>\
-void GetComponentIDForType<Cozmo::enumType, Cozmo::componentType>(Cozmo::enumType& enumToSet){enumToSet = Cozmo::enumType::enumValue;}
+void GetComponentIDForType<Vector::enumType, Vector::componentType>(Vector::enumType& enumToSet){enumToSet = Vector::enumType::enumValue;}
 
 template<typename EnumType, typename ClassType>
 void GetComponentIDForType(EnumType& enumToSet);

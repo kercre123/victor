@@ -16,7 +16,9 @@ message PostAudioEvent
 {
   Anki::AudioMetaData::GameObjectType           gameObject,
   Anki::AudioMetaData::GameEvent::GenericEvent  audioEvent,
-  uint_16                                       callbackId = 0  // Send all callbacks if this is NOT == 0
+  uint_16                                       callbackId = 0,  // Send all callbacks if this is NOT == 0
+  uint_16                                       padding    = 0
+
 }
 
 message StopAllAudioEvents

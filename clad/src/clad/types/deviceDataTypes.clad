@@ -3,7 +3,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   enum uint_8 DeviceDataType
   {
@@ -20,5 +20,5 @@ namespace Cozmo {
     string dataValue
   }
       
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

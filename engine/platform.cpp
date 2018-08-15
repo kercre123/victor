@@ -22,7 +22,7 @@
 #include "platform.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     static const Point3f& GetPlatformSize(Platform::Type type)
     {
@@ -138,5 +138,5 @@ namespace Anki {
     }
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

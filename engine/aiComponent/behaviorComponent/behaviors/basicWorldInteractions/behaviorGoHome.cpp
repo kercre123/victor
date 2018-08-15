@@ -41,7 +41,7 @@
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorGoHome", "BehaviorGoHome.%s", __func__);
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   const char* kUseCliffSensorsKey        = "useCliffSensorCorrection";
@@ -632,5 +632,5 @@ void BehaviorGoHome::ClearNavMapUpToCharger()
                                         MemoryMapData(MemoryMapTypes::EContentType::ClearOfObstacle, lastTimestamp));
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

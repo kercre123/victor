@@ -20,7 +20,7 @@
       "alwaysDetectFaces": true,
       "timeUntilCancelFaceLooking_s": 2.0,
       "timeUntilCancelFaceSearch_s": 10.0,
-      "searchForFaceBehavior": "ObservingFindFaces",
+      "searchForFaceBehavior": "LookInPlaceHeadUp",
       "shouldLeaveChargerFirst": true, // should already been off the charger at this point
       "driveOffChargerBehavior": "DriveOffChargerStraight",
 

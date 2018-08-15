@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 # define CONSOLE_GROUP_NAME "Vision.MotionDetection"
@@ -1145,6 +1145,6 @@ size_t MotionDetector::GetCentroid(const Vision::Image& motionImg, Point2f& cent
 }
 // GetCentroid()
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

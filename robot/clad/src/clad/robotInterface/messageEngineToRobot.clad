@@ -8,6 +8,7 @@
 #include "clad/audio/audioMessage.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
+#include "clad/types/backpackAnimationTriggers.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/compositeImageTypes.clad"
 #include "clad/types/controllerChannels.clad"
@@ -22,9 +23,10 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/switchboardToRobot.clad"
+#include "clad/types/textToSpeechTypes.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace RobotInterface {
 
@@ -194,6 +196,11 @@ message SyncRobot
 
 }
 
+message EngineFullyLoaded
+{
+
+}
+
 message CalmPowerMode
 {
   bool enable,
@@ -223,7 +230,7 @@ message RollActionParams
    float_32 backupDist_mm,
 }
 
-message PlaypenStart 
+message PlaypenStart
 {
 
 }
@@ -418,14 +425,12 @@ message StartWakeWordlessStreaming
   uint_8 streamType
 }
 
-message SetShouldStreamAfterWakeWord
+message SetTriggerWordResponse
 {
-  bool shouldStream,
-}
-
-message SetTriggerWordDetectionEnabled
-{
-  bool enabled,
+  AudioEngine::Multiplexer::PostAudioEvent postAudioEvent,
+  bool shouldTriggerWordStartStream = 0,
+  uint_8 getInAnimationTag = 0,
+  string getInAnimationName,
 }
 
 message ResetBeatDetector
@@ -544,17 +549,10 @@ message RunDebugConsoleFuncMessage {
 //
 message TextToSpeechPrepare {
   AudioMetaData::SwitchState::Robot_Vic_External_Processing style, // Audio processing style
-  float_32 durationScalar, // Duration adjustment
-  uint_8 ttsID,            // ID of utterance
-  int_8 text[1024]         // Text to be pronounced
-}
-
-//
-// Sent from engine to robot (anim process) to deliver TTS audio to wwise
-//
-message TextToSpeechDeliver {
-  uint_8 ttsID,            // ID of utterance
-  bool playImmediately     // Should the TTS be played immediately when finished, or is it triggered by message/animation?
+  float_32 durationScalar,             // Duration adjustment
+  TextToSpeechTriggerMode triggerMode, // Trigger mode
+  uint_8 ttsID,                        // ID of utterance
+  int_8 text[1024]                     // Text to be pronounced
 }
 
 //
@@ -605,6 +603,17 @@ message SetLocale {
 
 message SetLCDBrightnessLevel {
   LCDBrightness level
+}
+
+message BatteryStatus {
+  bool isLow,
+  bool isCharging,
+  bool onChargerContacts,
+  bool isBatteryFull,
+}
+
+message TriggerBackpackAnimation {
+  BackpackAnimationTrigger trigger,
 }
 
 // ====================================================
@@ -738,7 +747,7 @@ union EngineToRobot
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechPrepare           textToSpeechPrepare         = 0x92,
-  TextToSpeechDeliver           textToSpeechDeliver         = 0x93,
+  // Available                                              = 0x93,
   TextToSpeechPlay              textToSpeechPlay            = 0x94,
   TextToSpeechCancel            textToSpeechCancel          = 0x95,
 
@@ -746,9 +755,8 @@ union EngineToRobot
   StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x97,
   StartPlaybackAudio            playbackAudioStart          = 0x98,
 
-  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x99,
-  SetShouldStreamAfterWakeWord  setShouldStreamAfterWakeWord = 0x9A,
-  SetTriggerWordDetectionEnabled setTriggerWordDetectionEnabled = 0x9B,
+  StartWakeWordlessStreaming    startWakeWordlessStreaming = 0x99,
+  SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
@@ -758,10 +766,16 @@ union EngineToRobot
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 
+  BatteryStatus batteryStatus = 0xAB,
+
+  TriggerBackpackAnimation triggerBackpackAnimation = 0xAC,
+
+  EngineFullyLoaded engineFullyLoaded = 0xAD,
+
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 
 
 } // namespace RobotInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

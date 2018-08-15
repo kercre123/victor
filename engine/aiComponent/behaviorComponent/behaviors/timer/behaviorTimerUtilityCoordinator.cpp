@@ -29,11 +29,12 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/aiComponent/timerUtilityDevFunctions.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kAnticConfigKey   = "anticConfig";
@@ -42,6 +43,7 @@ const char* kMaxValidTimerKey = "maxValidTimer_s";
 const char* kTimerRingingBehaviorKey = "timerRingingBehaviorID";
 
 const char* kCancelTimerEntity = "timer";
+const char* kTimeTouchCancelKey = "touchTimeToCancelTimer_ms";
 
 // antic keys
 const char* kRecurIntervalMinKey = "recurIntervalMin_s";
@@ -49,7 +51,7 @@ const char* kRecurIntervalMaxKey = "recurIntervalMax_s";
 const char* kRuleMinKey = "ruleMin_s";
 const char* kRuleMaxKey = "ruleMax_s";
 
-Anki::Cozmo::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
+Anki::Vector::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
 }
 
 
@@ -250,6 +252,8 @@ BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
   shouldForceAntic = false;
   tickToSuppressAnticFor = 0;
+  touchReleasedSinceStartedRinging = false;
+  robotPlacedDownSinceStartedRinging = false;
 }
 
 
@@ -271,11 +275,12 @@ BehaviorTimerUtilityCoordinator::BehaviorTimerUtilityCoordinator(const Json::Val
   std::string debugStr = "BehaviorTimerUtilityCoordinator.Constructor.MissingConfig.";
   _iParams.minValidTimer_s = JsonTools::ParseUInt32(config, kMinValidTimerKey, debugStr + "MinTimer");
   _iParams.maxValidTimer_s = JsonTools::ParseUInt32(config, kMaxValidTimerKey, debugStr + "MaxTimer");
+  _iParams.touchTimeToCancelTimer_ms = JsonTools::ParseUInt32(config, kTimeTouchCancelKey, debugStr + kTimeTouchCancelKey);
 
   // Theoretically we can allow multiple instances, but with current force antic implementation we
   // can't and will assert here
   if( sCoordinator != nullptr ) {
-    PRINT_NAMED_WARNING("BehaviorTimerUtilityCoordinator.Constructor.MultipleInstances", "Multiple coordinator instances");
+    PRINT_NAMED_INFO("BehaviorTimerUtilityCoordinator.Constructor.MultipleInstances", "Multiple coordinator instances");
   }
   sCoordinator = this;
 }
@@ -295,6 +300,7 @@ void BehaviorTimerUtilityCoordinator::GetBehaviorJsonKeys(std::set<const char*>&
     kMinValidTimerKey,
     kMaxValidTimerKey,
     kTimerRingingBehaviorKey,
+    kTimeTouchCancelKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -440,7 +446,16 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelRinging()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool robotPickedUp = GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads;
-  const bool shouldCancelTimer = robotPickedUp || uic.IsTriggerWordPending();
+  _lParams.robotPlacedDownSinceStartedRinging |= !robotPickedUp;
+  const bool shouldCancelDueToPickedUp = _lParams.robotPlacedDownSinceStartedRinging && robotPickedUp;
+  
+  const bool currPressed = GetBEI().GetTouchSensorComponent().GetIsPressed();
+  const auto touchPressTime = GetBEI().GetTouchSensorComponent().GetTouchPressTime();
+  _lParams.touchReleasedSinceStartedRinging |= !currPressed;
+  const bool shouldCancelDueToTouch = currPressed && _lParams.touchReleasedSinceStartedRinging && 
+                                        (Util::SecToMilliSec(touchPressTime) > _iParams.touchTimeToCancelTimer_ms);
+
+  const bool shouldCancelTimer = shouldCancelDueToPickedUp || shouldCancelDueToTouch || uic.IsTriggerWordPending();
   if(IsTimerRinging() && shouldCancelTimer){
     GetTimerUtility().ClearTimer();
     // Clear the pending trigger word and cancel the ringing timer
@@ -572,6 +587,8 @@ void BehaviorTimerUtilityCoordinator::TransitionToRinging()
   GetTimerUtility().ClearTimer();
   _iParams.timerRingingBehavior->WantsToBeActivated();
   DelegateNow(_iParams.timerRingingBehavior.get());
+  _lParams.touchReleasedSinceStartedRinging = false;
+  _lParams.robotPlacedDownSinceStartedRinging = false;
 }
 
 
@@ -721,5 +738,5 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::Buil
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

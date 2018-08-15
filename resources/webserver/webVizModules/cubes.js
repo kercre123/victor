@@ -120,6 +120,10 @@
     tempSubBackButton.appendTo( elem );
 
     cccInfoDiv = $('<h3 id="cccInfo"></h3>').appendTo( elem );
+
+    $(elem).append('<div id="cit-title">CubeInteractionTracker</div>');
+
+    citInfoDiv = $('<h3 id="citInfo"></h3>').appendTo( elem );
   };
 
   myMethods.onData = function(data, elem) {
@@ -163,7 +167,44 @@
         })
         cccInfoDiv.append('<div class="cccTypeTitle"></div>');
       });
+    } else if (data.hasOwnProperty("citInfo")){
+      citInfo = data["citInfo"];
+      citInfoDiv.empty(); // clear out old data
+      if(citInfo["noTarget"] == true){
+        citInfoDiv.append('<div class="citTypeTitle">' + "NO TARGET" + '</div>');
+      }
+      citInfoDiv.append('<div class="citTypeTitle">' + "Tracking State: " + citInfo["trackingState"] + '</div>');
+      citInfoDiv.append('<div class="citTypeTitle">' + "VSM Tracking Rate Request: " + citInfo["visTrackingRate"] + '</div>');
+      citInfoDiv.append('<div class="citTypeTitle">' + "User Holding Cube: " + citInfo["userHoldingCube"] + '</div>');
+      heldProbability = citInfo["heldProbability"].toFixed(0);
+      citInfoDiv.append('<div class="citTypeTitle">' + "Cube Held Probability: " + heldProbability + "%" + '</div>');
+      citInfoDiv.append('<div class="citTypeTitle">' + "Recently Moved: " + citInfo["movedRecently"] + '</div>');
+      if(citInfo["movedFarRecently"] == true){
+        citInfoDiv.append('<div class="citTypeTitle">' + "Recently Moved Far, assuming is held " + '</div>');
+      }
+      citInfoDiv.append('<div class="citTypeTitle">' + "Recently Visible: " + citInfo["visibleRecently"] + '</div>');
+      if(citInfo["userHoldingCube"] != true){
+        timeSinceHeld = citInfo["timeSinceHeld"].toFixed(2);
+        citInfoDiv.append('<div class="citTypeTitle">' + "Time Since Held: " + timeSinceHeld + '</div>');
+      }
+      if(citInfo["movedRecently"] != true){
+        timeSinceMoved = citInfo["timeSinceMoved"].toFixed(2);
+        citInfoDiv.append('<div class="citTypeTitle">' + "Time Since Moved: " + timeSinceMoved + '</div>');
+      }
+      if(citInfo["visibleRecently"] != true){
+        timeSinceSeen = citInfo["timeSinceObserved"].toFixed(2);
+        citInfoDiv.append('<div class="citTypeTitle">' + "Time Since Seen: " + timeSinceSeen + '</div>');
+      }
+      timeSinceTapped = citInfo["timeSinceTapped"].toFixed(2);
+      citInfoDiv.append('<div class="citTypeTitle">' + "Time Since Tapped: " + timeSinceTapped + '</div>');
+      if(citInfo.hasOwnProperty("targetInfo")){
+        targetInfo = citInfo["targetInfo"];
+        citInfoDiv.append('<div class="citTypeTitle">' + "Dist To Target [mm]: " + targetInfo["distance"] + '</div>');
+        citInfoDiv.append('<div class="citTypeTitle">' + "Dist Measured by prox: " + targetInfo["distMeasuredByProx"] + '</div>');
+        citInfoDiv.append('<div class="citTypeTitle">' + "Angle To Target: " + targetInfo["angle"] + '</div>');
+      }
     }
+
   };
 
   myMethods.update = function(dt, elem) { };
@@ -213,6 +254,16 @@
       
       .subscriberEntry{
         margin-left:10px;
+      }
+
+      #cit-title {
+        font-size: 16px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+
+      .citTypeTitle {
+        margin-bottom:10px;
       }
     `;
   };

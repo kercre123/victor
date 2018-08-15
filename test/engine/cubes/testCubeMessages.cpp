@@ -19,7 +19,7 @@
 
 #include "robot/cube_firmware/app/protocol.h"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 // Ensure that CLAD-defined cube messages match those used in the cube firmware
 TEST(CubeMessages, CompareTags)

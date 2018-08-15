@@ -22,7 +22,7 @@
 #include <shared_mutex>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MemoryMap : public INavMap
@@ -52,7 +52,7 @@ public:
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
   // expected to provide support for merging other subclasses, but only other instances from the same
   // subclass
-  virtual bool Merge(const INavMap* other, const Pose3d& transform) override;
+  virtual bool Merge(const INavMap& other, const Pose3d& transform) override;
   
   // change the content type from typeToReplace into newData if there's a border from any of the neighborsToFillFrom towards typeToReplace
   virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, const MemoryMapDataPtr& newData) override;

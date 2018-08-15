@@ -136,7 +136,7 @@
       "emotionAffectors": [										  
         {
           "emotionType": "Happy",
-          "value": 0.3
+          "value": 0.4
         },
         {
           "emotionType": "Confident",

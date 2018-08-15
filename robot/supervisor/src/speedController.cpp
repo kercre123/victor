@@ -39,7 +39,7 @@
 #define DEBUG_SPEED_CONTROLLER 0
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
   namespace SpeedController {
 
 
@@ -168,11 +168,11 @@ namespace Anki {
     {
       if (userCommandedDesiredVehicleSpeed_ > userCommandedCurrentVehicleSpeed_) {
         // Go faster
-        userCommandedCurrentVehicleSpeed_ += (f32)userCommandedAcceleration_ * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed_ += (f32)userCommandedAcceleration_ * Vector::CONTROL_DT;
         userCommandedCurrentVehicleSpeed_ = MIN(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
       } else if (userCommandedDesiredVehicleSpeed_ < userCommandedCurrentVehicleSpeed_) {
         // Go slower
-        userCommandedCurrentVehicleSpeed_ -= (f32)userCommandedDeceleration_ * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed_ -= (f32)userCommandedDeceleration_ * Vector::CONTROL_DT;
         userCommandedCurrentVehicleSpeed_ = MAX(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
       }
 
@@ -192,5 +192,5 @@ namespace Anki {
     }
 
   } // namespace SpeedController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

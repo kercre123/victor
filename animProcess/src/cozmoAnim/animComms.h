@@ -15,7 +15,7 @@
 #include "coretech/common/shared/types.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace AnimComms {
 
   // Initialize robot comms
@@ -52,7 +52,7 @@ namespace AnimComms {
   bool SendPacketToRobot(const void *buffer, const u32 length);
   
 } // namespace AnimComms
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif  // #ifndef COZMO_ANIM_COMMS_H

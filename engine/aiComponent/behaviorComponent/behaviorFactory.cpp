@@ -10,6 +10,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorGreetAfterLongTime.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
@@ -27,9 +28,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorMoveHeadToAngle.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPlaceCubeByCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRequestToGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorSearchForFace.h"
@@ -81,14 +82,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploringExamineObstacle.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreVisitPossibleMarker.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorLookInPlaceMemoryMap.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorThinkAboutBeacons.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorVisitInterestingEdge.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorInspectCube.h"
@@ -148,6 +142,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorWallTimeCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/userDefinedBehaviorTree/behaviorUserDefinedBehaviorSelector.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/userDefinedBehaviorTree/behaviorUserDefinedBehaviorTreeRouter.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
@@ -162,7 +157,7 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
 {
@@ -181,6 +176,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::HighLevelAI:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorHighLevelAI(config));
+      break;
+    }
+    
+    case BehaviorClass::ResetState:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorResetState(config));
       break;
     }
     
@@ -286,12 +287,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::LookAround:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorLookAround(config));
-      break;
-    }
-    
     case BehaviorClass::LookAtFaceInFront:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorLookAtFaceInFront(config));
@@ -301,6 +296,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::MoveHeadToAngle:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorMoveHeadToAngle(config));
+      break;
+    }
+    
+    case BehaviorClass::PlaceCubeByCharger:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaceCubeByCharger(config));
       break;
     }
     
@@ -610,51 +611,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::FeedingEat:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorFeedingEat(config));
-      break;
-    }
-    
-    case BehaviorClass::ExploreBringCubeToBeacon:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreBringCubeToBeacon(config));
-      break;
-    }
-    
     case BehaviorClass::ExploreLookAroundInPlace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorExploreLookAroundInPlace(config));
-      break;
-    }
-    
-    case BehaviorClass::ExploreVisitPossibleMarker:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreVisitPossibleMarker(config));
-      break;
-    }
-    
-    case BehaviorClass::LookInPlaceMemoryMap:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorLookInPlaceMemoryMap(config));
-      break;
-    }
-    
-    case BehaviorClass::ThinkAboutBeacons:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorThinkAboutBeacons(config));
-      break;
-    }
-    
-    case BehaviorClass::VisitInterestingEdge:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVisitInterestingEdge(config));
-      break;
-    }
-    
-    case BehaviorClass::Singing:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorSinging(config));
       break;
     }
     
@@ -1009,6 +968,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::WallTimeCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorWallTimeCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::UserDefinedBehaviorSelector:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorUserDefinedBehaviorSelector(config));
       break;
     }
     

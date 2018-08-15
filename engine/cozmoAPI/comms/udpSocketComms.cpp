@@ -21,7 +21,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
   
 UdpSocketComms::UdpSocketComms(UiConnectionType connectionType)
@@ -170,6 +170,6 @@ uint32_t UdpSocketComms::GetNumConnectedDevices() const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

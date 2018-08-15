@@ -24,7 +24,7 @@
 #define DEBUG_ANIMATION_GROUP_SELECTION 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 static const char* kAnimationsKeyName = "Animations";
     
@@ -277,5 +277,5 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
   return empty;
 }
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

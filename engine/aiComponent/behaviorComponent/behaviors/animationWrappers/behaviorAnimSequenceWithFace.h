@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorAnimSequenceWithFace : public BehaviorAnimSequence
 {

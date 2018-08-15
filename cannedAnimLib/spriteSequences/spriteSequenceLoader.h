@@ -36,7 +36,7 @@ class SpriteCache;
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 
 class SpriteSequenceLoader : private Util::noncopyable
@@ -76,7 +76,7 @@ private:
                             Vision::SpriteSequence& outSeq) const;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __CannedAnimLib_SpriteSequences_SpriteSequenceLoader_H__

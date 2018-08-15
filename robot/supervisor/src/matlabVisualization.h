@@ -22,7 +22,7 @@
 namespace Anki {
   using namespace Embedded;
   
-  namespace Cozmo {
+  namespace Vector {
     
     namespace MatlabVisualization {
       
@@ -54,7 +54,7 @@ namespace Anki {
       Result SendTrackerPrediction_After(const Quadrilateral<f32>& quad);
       
     } // namespace MatlabVisualization
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_MATLAB_VISUALIZATION_H

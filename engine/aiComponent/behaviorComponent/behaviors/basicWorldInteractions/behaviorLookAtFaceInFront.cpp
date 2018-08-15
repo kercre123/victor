@@ -21,7 +21,7 @@
 #include "engine/faceWorld.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const TimeStamp_t kSeenFaceWindow_ms = 5000;

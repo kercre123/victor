@@ -30,7 +30,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace { // "Private members"
 
@@ -330,5 +330,5 @@ void CubeBleClient::SendLightsOffToCube()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

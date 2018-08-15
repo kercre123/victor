@@ -22,7 +22,7 @@
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     /*
      * HistRobotState
@@ -112,7 +112,7 @@ namespace Anki {
       //////
       // IDependencyManagedComponent functions
       //////
-      virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
+      virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override {};
       virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
       virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
       //////
@@ -247,7 +247,7 @@ namespace Anki {
     }; // class RobotStateHistory
 
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_RobotStateHistory_H__

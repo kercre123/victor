@@ -57,7 +57,7 @@ namespace Vision {
   class TrackedFace;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class Robot;
@@ -83,7 +83,7 @@ struct DockingErrorSignal;
     //////
     // IDependencyManagedComponent functions
     //////
-    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+    virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
       dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
@@ -173,10 +173,9 @@ struct DockingErrorSignal;
     Result UpdateLaserPoints(const VisionProcessingResult& result);
     Result UpdateOverheadEdges(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
-    Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    Result UpdateCameraParams(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
     Result UpdateSalientPoints(const VisionProcessingResult& result);
-    Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
     Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
 
@@ -288,6 +287,11 @@ struct DockingErrorSignal;
     // Returns true if the provided name has been enrolled
     bool IsNameTaken(const std::string& name);
     
+    // Returns the set of IDs with the given name.
+    // Generally there will only be one entry, but its possible we may support multiple enrollments
+    // with the same name.
+    std::set<Vision::FaceID_t> GetFaceIDsWithName(const std::string& name);
+    
     // Load/Save face album data to/from file.
     Result SaveFaceAlbumToFile(const std::string& path);
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
@@ -305,18 +309,16 @@ struct DockingErrorSignal;
     template<typename T>
     void HandleMessage(const T& msg);
     
-    void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
     void EnableAutoExposure(bool enable);
-
-    void SetAndDisableWhiteBalance(f32 gainR, f32 gainG, f32 gainB);
     void EnableWhiteBalance(bool enable);
+    void SetAndDisableCameraControl(const Vision::CameraParams& params);
     
     s32 GetMinCameraExposureTime_ms() const;
     s32 GetMaxCameraExposureTime_ms() const;
     f32 GetMinCameraGain() const;
     f32 GetMaxCameraGain() const;
     
-    CameraParams GetCurrentCameraParams() const;
+    Vision::CameraParams GetCurrentCameraParams() const;
     
     // Captures image data from HAL, if available, and puts it in image_out
     // Returns true if image was captured, false if not
@@ -334,11 +336,11 @@ struct DockingErrorSignal;
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
 
     void EnableSensorRes(bool sensorRes);
+
+  protected:
     
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
-
-  protected:
     
     // helper method --- unpacks bitflags representation into a set of vision modes
     std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
@@ -397,8 +399,8 @@ struct DockingErrorSignal;
     TimeStamp_t _processingPeriod_ms = 0;  // How fast we are processing frames
     TimeStamp_t _framePeriod_ms = 0;       // How fast we are receiving frames
     
-    ImageQuality _lastImageQuality = ImageQuality::Good;
-    ImageQuality _lastBroadcastImageQuality = ImageQuality::Unchecked;
+    Vision::ImageQuality _lastImageQuality = Vision::ImageQuality::Good;
+    Vision::ImageQuality _lastBroadcastImageQuality = Vision::ImageQuality::Unchecked;
     RobotTimeStamp_t  _currentQualityBeginTime_ms = 0;
     RobotTimeStamp_t  _waitForNextAlert_ms = 0;
     
@@ -454,12 +456,6 @@ struct DockingErrorSignal;
     void BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const;
     
     void VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const;
-    
-    // Sets the exposure and gain on the robot
-    void SetExposureSettings(const s32 exposure_ms, const f32 gain);
-
-    // Sets the WhiteBalance gains of the camera
-    void SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB);
 
     // Updates the state of requesting for a camera capture format change
     void UpdateCaptureFormatChange(s32 gotNumRows=0);
@@ -469,11 +465,6 @@ struct DockingErrorSignal;
     // message. This runs on the main thread and should only be used for factory tests.
     // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
     bool _doFactoryDotTest = false;
-    bool _enableAutoExposure = true;
-    bool _enableWhiteBalance = true;
-
-    bool _formatChangeAutoExposure = false;
-    bool _formatChangeWhiteBalance = false;
     
     // Threading for OpenCV
     int _openCvNumThreads = 1;
@@ -549,7 +540,7 @@ struct DockingErrorSignal;
     return _processingPeriod_ms;
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H

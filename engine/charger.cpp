@@ -23,7 +23,7 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
     // === Charger predock pose params ===
     // {angle, x, y}
@@ -239,7 +239,7 @@ namespace Anki {
       return isValid;
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

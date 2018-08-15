@@ -43,7 +43,7 @@
 #include <fstream>
 #include <unistd.h>
 
-Anki::Cozmo::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
+Anki::Vector::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(DataPlatform, ReadWrite)
@@ -74,7 +74,7 @@ TEST(Cozmo, SimpleCozmoTest)
 TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -342,9 +342,9 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
                                         std::list<std::pair<Anki::Vision::Marker::Code, Anki::Quad2f>>&& codesAndCorners,
                                         Anki::RobotTimeStamp_t& fakeTime,
-                                        Anki::Cozmo::Robot& robot,
-                                        Anki::Cozmo::RobotState& stateMsg,
-                                        Anki::Cozmo::VisionProcessingResult& procResult)
+                                        Anki::Vector::Robot& robot,
+                                        Anki::Vector::RobotState& stateMsg,
+                                        Anki::Vector::VisionProcessingResult& procResult)
 {
   using namespace Anki;
 
@@ -381,12 +381,12 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
 }
 
 // Helper method for BlockWorld.UpdateObjectOrigins Test
-static Anki::Result FakeRobotMovement(Anki::Cozmo::Robot& robot,
-                                      Anki::Cozmo::RobotState& stateMsg,
+static Anki::Result FakeRobotMovement(Anki::Vector::Robot& robot,
+                                      Anki::Vector::RobotState& stateMsg,
                                       Anki::RobotTimeStamp_t& fakeTime)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   stateMsg.timestamp = (TimeStamp_t)fakeTime;
   stateMsg.status |= (u16)RobotStatusFlag::ARE_WHEELS_MOVING; // Set moving flag
@@ -400,7 +400,7 @@ static Anki::Result FakeRobotMovement(Anki::Cozmo::Robot& robot,
 TEST(BlockWorld, UpdateObjectOrigins)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -556,8 +556,8 @@ namespace {
 
 // helper for device connection messages, for example when cubes connect/disconnect. Note implementation directly
 // calls the robot handler, rather than simulating actually sending a message
-using namespace Anki::Cozmo;
-void FakeRecvConnectionMessage(Robot& robot, uint32_t activeID, std::string factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
+using namespace Anki::Vector;
+void FakeRecvConnectionMessage(Robot& robot, uint32_t activeID, std::string factoryID, Anki::Vector::ObjectType objectType, bool connected)
 {
   DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
 
@@ -580,7 +580,7 @@ void FakeRecvMovedMessage(Robot& robot, const Anki::ObjectID& objectId)
 TEST(BlockWorld, PoseUpdates)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -776,7 +776,7 @@ TEST(BlockWorld, PoseUpdates)
   // DISCONNECT object3
   {
     const ActiveObject* con3 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj3 );
-    FakeRecvConnectionMessage(robot, con3->GetActiveID(), "BB:BB:BB:BB:BB:BB", Anki::Cozmo::ObjectType::Block_LIGHTCUBE2, false);
+    FakeRecvConnectionMessage(robot, con3->GetActiveID(), "BB:BB:BB:BB:BB:BB", Anki::Vector::ObjectType::Block_LIGHTCUBE2, false);
     ++fakeTime;
   }
 
@@ -801,7 +801,7 @@ TEST(BlockWorld, PoseUpdates)
 TEST(BlockWorld, RejiggerAndObserveAtSameTick)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -1001,7 +1001,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
   // Receiving a state message referencing old origin C should not cause issues
 
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -1173,7 +1173,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
 TEST(BlockWorld, LocalizedObjectDisconnect)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -1307,7 +1307,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
 TEST(BlockWorld, CubeStacks)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -1512,7 +1512,7 @@ TEST(BlockWorld, CubeStacks)
 TEST(BlockWorld, DISABLED_UnobserveCubeStack)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -1601,7 +1601,7 @@ TEST(BlockWorld, DISABLED_UnobserveCubeStack)
 TEST(BlockWorld, CopyObjectsFromZombieOrigins)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Robot robot(1, cozmoContext);
   robot.FakeSyncRobotAck();
@@ -1718,7 +1718,7 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 TEST(Localization, LocalizationDistance)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -1896,7 +1896,7 @@ TEST(Localization, LocalizationDistance)
 TEST(FactoryTest, IdealCameraPose)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   auto calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f);
   const f32 kDotSpacingX_mm = 40.f;
@@ -2000,7 +2000,7 @@ TEST(FactoryTest, IdealCameraPose)
 TEST(FactoryTest, FindDotsInImages)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   struct TestData
   {
@@ -2076,7 +2076,7 @@ TEST(FactoryTest, FindDotsInImages)
 TEST(ActionableObject, PreActionPoseCaching)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   const Pose3d origin(Rotation3d(0, {0,0,1}), {0,0,0});
   const Pose3d robotPose(Rotation3d(0, {0,0,1}), {0,0,0}, origin);
@@ -2123,7 +2123,7 @@ TEST(ActionableObject, PreActionPoseCaching)
 TEST(BlockWorld, ObjectRobotCollisionCheck)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Robot robot(1, cozmoContext);
   robot.FakeSyncRobotAck();
@@ -2202,7 +2202,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
 TEST(Localization, UnexpectedMovement)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
 
   Result lastResult;
 
@@ -2375,15 +2375,15 @@ int main(int argc, char ** argv)
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcePath);
   UiMessageHandler handler(0, nullptr);
   ProtoMessageHandler protoHandler(nullptr);
-  cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, &handler, &protoHandler);
+  cozmoContext = new Anki::Vector::CozmoContext(dataPlatform, &handler, &protoHandler);
 
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   cozmoContext->GetDataLoader()->LoadNonConfigData();
 
   //// should we do this here? clean previously dirty folders?
-  //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");
+  //std::string cache = dataPlatform->pathToResource(Anki::Vector::Data::Scope::Cache, "");
   //Anki::Util::FileUtils::RemoveDirectory(cache);
-  //std::string files = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Output, "");
+  //std::string files = dataPlatform->pathToResource(Anki::Vector::Data::Scope::Output, "");
   //Anki::Util::FileUtils::RemoveDirectory(files);
 
   ::testing::InitGoogleTest(&argc, argv);

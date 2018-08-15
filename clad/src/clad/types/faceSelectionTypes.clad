@@ -12,7 +12,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Enum that specifies the way that score penalties are applied when selecting face
 // enums that are unspecified apply a penalty of 0
@@ -31,5 +31,5 @@ enum uint_8 FaceSelectionPenaltyMultiplier {
   
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

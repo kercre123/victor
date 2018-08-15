@@ -54,7 +54,7 @@ static const f32 kSamePreactionPoseAngleThresh_deg = 30.f;
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
 
     // Which docking method actions should use

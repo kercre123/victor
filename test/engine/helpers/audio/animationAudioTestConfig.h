@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotAnimation {
 class StreamingAnimationTest;
 }
@@ -76,13 +76,13 @@ public:
   const std::vector<TestAudioEvent>& GetAudioEvents() const { return _events; }
   
   // Add Config's events to animation
-  void LoadAudioKeyFrames( Anki::Cozmo::Animation& outAnimation );
+  void LoadAudioKeyFrames( Anki::Vector::Animation& outAnimation );
   
   // Create or write audio into Test Robot Buffer
-  void LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTestBuffer& outBuffer );
+  void LoadAudioBuffer( Anki::Vector::Audio::RobotAudioTestBuffer& outBuffer );
   
   // Add Events and fake audio buffer data to Streaming Animation
-  void LoadStreamingAnimation( Anki::Cozmo::RobotAnimation::StreamingAnimationTest& out_streamingAnimation );
+  void LoadStreamingAnimation( Anki::Vector::RobotAnimation::StreamingAnimationTest& out_streamingAnimation );
   
   
 private:

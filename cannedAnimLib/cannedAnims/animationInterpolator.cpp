@@ -21,7 +21,7 @@
 #include "cannedAnimLib/cannedAnims/animation.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationInterpolator::GetInterpolationMessages(const Animation* animation, 
@@ -53,5 +53,5 @@ bool AnimationInterpolator::ExtractInterpolatedFaceMessage(const Animations::Tra
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -39,7 +39,7 @@ namespace Comms {
   class AdvertisementService;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class CozmoAudienceTags;
 class CozmoExperiments;
@@ -64,7 +64,7 @@ namespace RobotInterface {
   class MessageHandler;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 // ---------- END FORWARD DECLARATIONS ----------
@@ -73,7 +73,7 @@ namespace RobotInterface {
 
 // Here begins the actual namespace and interface for CozmoContext
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext : private Util::noncopyable
 {
@@ -140,7 +140,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_CozmoContext_H__

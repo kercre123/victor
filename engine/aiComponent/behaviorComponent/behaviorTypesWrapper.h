@@ -29,7 +29,7 @@
 #if BEHAVIOR_ID_DEV_MODE
 // forward declare behavior id rather than include
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 enum class BehaviorID : uint16_t;
 enum class BehaviorClass : uint8_t;
 enum class ExecutableBehaviorType : uint8_t;
@@ -41,15 +41,15 @@ const char* EnumToString( const BehaviorID id );
 #endif
 
 #if BEHAVIOR_ID_DEV_MODE
-#define BEHAVIOR_ID(name) Anki::Cozmo::BehaviorTypesWrapper::BehaviorIDFromString(#name)
-#define BEHAVIOR_CLASS(name) Anki::Cozmo::BehaviorTypesWrapper::BehaviorClassFromString(#name)
+#define BEHAVIOR_ID(name) Anki::Vector::BehaviorTypesWrapper::BehaviorIDFromString(#name)
+#define BEHAVIOR_CLASS(name) Anki::Vector::BehaviorTypesWrapper::BehaviorClassFromString(#name)
 #else
-#define BEHAVIOR_ID(name) Anki::Cozmo::BehaviorID::name
-#define BEHAVIOR_CLASS(name) Anki::Cozmo::BehaviorClass::name
+#define BEHAVIOR_ID(name) Anki::Vector::BehaviorID::name
+#define BEHAVIOR_CLASS(name) Anki::Vector::BehaviorClass::name
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace BehaviorTypesWrapper {
 
 BehaviorID BehaviorIDFromString(const std::string& name);

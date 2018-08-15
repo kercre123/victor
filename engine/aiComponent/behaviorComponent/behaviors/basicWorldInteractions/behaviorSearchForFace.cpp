@@ -18,7 +18,7 @@
 #include "engine/faceWorld.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -105,5 +105,5 @@ void BehaviorSearchForFace::SetState_internal(State state, const std::string& st
   SetDebugStateName(stateName);
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

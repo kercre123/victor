@@ -19,7 +19,7 @@
 #include "util/signals/signalHolder.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace RobotInterface {
 class MessageHandler;

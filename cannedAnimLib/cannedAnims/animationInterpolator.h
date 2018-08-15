@@ -24,7 +24,7 @@
 #include "cannedAnimLib/baseTypes/keyframe.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace Animations {
 template<class FRAME_TYPE>
@@ -64,7 +64,7 @@ private:
 };
     
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ANIMATION_INTERPOLATOR_H

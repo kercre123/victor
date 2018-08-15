@@ -4,7 +4,8 @@
  * Author: Andrew Stein
  * Date:   11/30/2015
  *
- * Description: Simple tic/toc style profiler
+ * Description: Simple tic/toc style profiler which can track and log averages, as well as report to DAS.
+ *              See also: ScopedTicToc for even more basic timing.
  *
  *
  * Copyright: Anki, Inc. 2015
@@ -21,6 +22,7 @@
 namespace Anki {
 namespace Vision {
   
+  // Move to coretech common VIC-5101
   class Profiler
   {
   public:
@@ -64,6 +66,8 @@ namespace Vision {
     void SetDasLogFrequency(int64_t dasFrequency_ms) { _timeBetweenDasLogging_ms = dasFrequency_ms; }
     
     // For scoped Tic/Toc pair. Use TicToc() method below. This is just defining the object.
+    // This is similar to the ScopedTicToc object but provides the additional stat tracking
+    // and logging offered by the Profiler class.
     class TicTocObject
     {
     public:

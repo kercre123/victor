@@ -22,7 +22,7 @@
 #include "engine/components/movementComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 namespace{

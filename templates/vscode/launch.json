@@ -28,10 +28,26 @@
     ],
     "configurations": [
         {
+            "name": "switchboard:dbg",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-switchboard",
+            "env": {
+                "LD_LIBRARY_PATH": "/anki/lib",
+                "COZMO_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib"
+            ]
+        },
+        {
             "name": "engine:dbg",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/vic-engine",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
@@ -41,14 +57,14 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform shell systemctl stop vic-engine || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib"
             ]
         },
         {
             "name": "engine:dbg:attach",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/vic-engine",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
@@ -57,14 +73,14 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib",
             ]
         },
         {
             "name": "engine:rel",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/android/Release/bin/vic-engine",
+            "program": "${workspaceRoot}/_build/vicos/Release/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
@@ -74,14 +90,14 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform shell systemctl stop vic-engine || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib"
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/lib"
             ]
         },
         {
             "name": "engine:rel:attach",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceRoot}/_build/android/Release/bin/vic-engine",
+            "program": "${workspaceRoot}/_build/vicos/Release/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
@@ -90,7 +106,7 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/lib",
             ]
         },
         {
@@ -113,7 +129,7 @@
             "name": "anim:dbg",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/vic-anim",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-anim",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ANIM_CONFIG": "/anki/etc/config/platform_config.json"
@@ -123,14 +139,14 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform systemctl stop vic-anim || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib"
             ]
         },
         {
             "name": "anim:dbg:attach",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/vic-anim",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-anim",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ANIM_CONFIG": "/anki/etc/config/platform_config.json"
@@ -139,14 +155,14 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib",
             ]
         },
         {
             "name": "anim:rel:attach",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceRoot}/_build/android/Release/bin/vic-anim",
+            "program": "${workspaceRoot}/_build/vicos/Release/bin/vic-anim",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
                 "VIC_ANIM_CONFIG": "/anki/etc/config/platform_config.json"
@@ -155,14 +171,14 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/lib",
             ]
         },
         {
             "name": "robot:dbg",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/vic-robot",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-robot",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib"
             },
@@ -171,14 +187,14 @@
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
                 "platform systemctl stop vic-robot || true",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib"
             ]
         },
         {
             "name": "robot:dbg:attach",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/vic-robot",
+            "program": "${workspaceRoot}/_build/vicos/Debug/bin/vic-robot",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
             },
@@ -186,14 +202,14 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Debug/lib",
             ]
         },
         {
             "name": "robot:rel:attach",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceRoot}/_build/android/Release/bin/vic-robot",
+            "program": "${workspaceRoot}/_build/vicos/Release/bin/vic-robot",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
             },
@@ -201,7 +217,7 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/lib",
             ]
         },
 
@@ -235,6 +251,12 @@
             "type": "lldb",
             "request": "attach",
             "program": "${workspaceRoot}/simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2"
+        },
+        {
+            "name": "webotsCtrlHandEmitter:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter"
         },
         {
             "name": "webotsCtrlKeyboard:attach",

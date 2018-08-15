@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 // For tool code reading
@@ -58,5 +58,5 @@ FullRobotPose::~FullRobotPose()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

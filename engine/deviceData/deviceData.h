@@ -19,7 +19,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using DeviceDataMap = std::map<DeviceDataType, std::string>;
   
@@ -34,7 +34,7 @@ private:
   DeviceDataMap _dataMap;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_DeviceData_DeviceData_h__

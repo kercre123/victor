@@ -21,7 +21,7 @@
 #define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -191,5 +191,5 @@ void BehaviorSearchWithinBoundingBox::TransitionToMoveToOriginalPose()
 
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

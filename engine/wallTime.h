@@ -21,7 +21,7 @@
 struct tm;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class WallTime : public Util::DynamicSingleton<WallTime>
 {

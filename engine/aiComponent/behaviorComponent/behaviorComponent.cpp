@@ -30,7 +30,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/userDefinedBehaviorTreeComponent/userDefinedBehaviorTreeComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/powerStateManager.h"
@@ -47,7 +46,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponent::BehaviorComponent()
@@ -135,12 +134,6 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
       auto bcPtr = new BehaviorContainer(map);
       entity->AddDependentComponent(BCComponentID::BehaviorContainer, std::move(bcPtr));
     }
-  }
-
-  // Behavior Event Anim Response Director
-  if(!entity->HasComponent<BehaviorEventAnimResponseDirector>()){
-    entity->AddDependentComponent(BCComponentID::BehaviorEventAnimResponseDirector,
-                                  new BehaviorEventAnimResponseDirector());
   }
 
   // Behavior Event Component
@@ -285,5 +278,5 @@ BehaviorContainer& BehaviorComponent::GetBehaviorContainer()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

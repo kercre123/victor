@@ -22,7 +22,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 class IExternalInterface;
@@ -69,7 +69,7 @@ private:
 };
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

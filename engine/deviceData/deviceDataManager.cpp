@@ -19,7 +19,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 DeviceDataManager::DeviceDataManager(IExternalInterface* externalInterface)
 : _deviceData(new DeviceData)
@@ -54,5 +54,5 @@ void DeviceDataManager::HandleMessage(const ExternalInterface::RequestDeviceData
 }
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

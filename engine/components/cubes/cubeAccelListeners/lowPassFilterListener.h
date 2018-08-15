@@ -18,7 +18,7 @@
 #include "coretech/common/engine/math/point.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 struct ActiveAccel;
   

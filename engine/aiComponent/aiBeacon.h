@@ -15,7 +15,7 @@
 #include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class AIWhiteboard;
 
@@ -64,7 +64,7 @@ private:
   float _lastTimeFailedToFindLocation_secs;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

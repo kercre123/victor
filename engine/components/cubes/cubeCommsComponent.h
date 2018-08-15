@@ -24,7 +24,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // forware decl:
 class Robot;
@@ -40,6 +40,9 @@ namespace ExternalInterface {
   class MessageGameToEngine;
   class MessageEngineToGame;
   struct ObjectAvailable;
+}
+namespace external_interface {
+  class GatewayWrapper;
 }
   
 class CubeCommsComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
@@ -57,7 +60,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -143,6 +146,8 @@ private:
   
   // Game to engine event handlers
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  // App to engine event handlers
+  void HandleAppEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
   
   // Handlers for messages from CubeBleClient:
   

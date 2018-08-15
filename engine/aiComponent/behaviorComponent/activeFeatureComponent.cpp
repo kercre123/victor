@@ -26,10 +26,10 @@
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 ActiveFeatureComponent::ActiveFeatureComponent()
   : IDependencyManagedComponent( this, BCComponentID::ActiveFeature )
@@ -116,11 +116,10 @@ void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intent
 {
   if( _activeFeature != ActiveFeature::NoFeature ) {
     if( _context != nullptr ) {
-      const auto* webService = _context->GetWebService();
-      if( webService != nullptr ){
-        Json::Value data;
-        data["activeFeature"] = std::string(ActiveFeatureToString(_activeFeature)) + " (" + intentSource + ")";
-        webService->SendToWebViz("behaviors", data);
+      if( auto webSender = WebService::WebVizSender::CreateWebVizSender("behaviors",
+                                                                        _context->GetWebService()) ) {
+        webSender->Data()["activeFeature"] = std::string(ActiveFeatureToString(_activeFeature)) +
+                                             " (" + intentSource + ")";
       }
     }
   }

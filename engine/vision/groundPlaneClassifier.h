@@ -23,7 +23,7 @@
 #include "engine/vision/visionPoseData.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class CozmoContext;
@@ -98,7 +98,7 @@ public:
  *                     Helper Functions                         *
  ****************************************************************/
 
-void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::IFeaturesExtractor& extractor,
+void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Vector::IFeaturesExtractor& extractor,
                    const Vision::ImageRGB& image, Vision::Image& outputMask);
 
 
@@ -182,7 +182,7 @@ protected:
 };
 
 } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector
 
 
 #endif //__Anki_Cozmo_Basestation_GroundplaneClassifier_h

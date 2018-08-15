@@ -24,7 +24,7 @@
 #include "util/random/rejectionSamplerHelper_fwd.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace RobotPointSamplerHelper {
   class RejectIfInRange;
@@ -135,7 +135,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Behaviors_BehaviorFindHome_H__

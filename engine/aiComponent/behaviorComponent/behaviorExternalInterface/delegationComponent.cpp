@@ -30,7 +30,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 
@@ -199,5 +199,5 @@ size_t DelegationComponent::GetLastTickBehaviorStackChanged() const
   return _bsm->GetLastTickBehaviorStackChanged();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

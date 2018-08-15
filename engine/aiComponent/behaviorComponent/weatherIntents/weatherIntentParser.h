@@ -21,7 +21,7 @@
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 class WeatherIntentParser : private Util::noncopyable
@@ -56,7 +56,7 @@ private:
 
 }; // class WeatherIntentParser
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

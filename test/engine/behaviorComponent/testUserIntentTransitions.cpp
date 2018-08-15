@@ -24,7 +24,7 @@
 #include "test/engine/behaviorComponent/testRegistrar.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 namespace {
 

@@ -19,7 +19,7 @@
 #include "engine/faceWorld.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 }
@@ -75,5 +75,5 @@ void BehaviorTurnToFace::OnBehaviorDeactivated()
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

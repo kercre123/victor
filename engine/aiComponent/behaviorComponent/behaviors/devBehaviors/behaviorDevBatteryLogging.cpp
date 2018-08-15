@@ -39,7 +39,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
 using AMD_GOT = AudioMetaData::GameObjectType;

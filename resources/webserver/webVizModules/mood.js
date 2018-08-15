@@ -3,6 +3,7 @@
   // max width of the chart
   var maxWidth_s = 60.0;
   var yLabelPose = -1.0;
+  var overlappingWidth_s = 1.3;
 
   var defaultDisplayedEmotions = ['Stimulated'];
 
@@ -81,8 +82,8 @@
           + 'min="' + emotionInfo.min + '" '
           + 'max="' + emotionInfo.max + '" ' 
           + 'value="' + emotionInfo.min + '">' ).appendTo( slidersCntr );
-      slider.on( 'input', function() { 
-              onChange( this.value, $(this).attr('data-emotion') ); 
+      slider.on( 'input', function() {
+              onChange( this.value, $(this).attr('data-emotion') );
             })
             .on( 'mousedown', function(e){
               draggingSlider = this;
@@ -199,22 +200,60 @@
     sendData( toSend );
   }
 
+  function PruneOverlapingEvents() {
+    if( gridMarkings.length <= 1 ) {
+      return;
+    }
+
+    var toRemove = []
+
+    var last = gridMarkings[0]['xaxis']['from'];
+    for( var i=1; i<gridMarkings.length; ++i ) {
+      var curr = gridMarkings[i]['xaxis']['from'];
+      if( curr - last <= overlappingWidth_s ) {
+        // just remove the earlier one (not ideal....)
+        toRemove.push(i-1);
+        console.log("removing event '" + gridMarkingLabels[i-1] + "' at index " +
+                    (i-1) + " at t=" + last + " next t=" + curr);
+      }
+      else {
+        last = curr;
+      }
+    }
+
+    toRemove.forEach( function(i) {
+      gridMarkings.splice(i, 1);
+      gridMarkingLabels.splice(i, 1);
+    });
+  }
+
   myMethods.init = function(elem) {
     $(elem).append('<div id="chartContainer"></div>');
     var bottomContainer = $('<div id="bottomContainer"></div>').appendTo(elem);
     var leftControls = $('<div id="leftControls"></div>').appendTo(bottomContainer);
-    leftControls.append('<input type="checkbox" id="showEvents" checked/>' +
-                        '<label for="showEvents">Show events</label>');
+    leftControls.append('<div id="simpleMoodDisplay"></div>');
+    leftControls.append('<div>' +
+                        '<input type="checkbox" id="showEvents" checked/>' +
+                        '<label for="showEvents">Show events</label>' +
+                        '</div>');
+    leftControls.append('<div>' +
+                        '<input type="checkbox" id="hideOverlappingEvents"/>' +
+                        '<label for="hideOverlappingEvents">Hide overlapping events</label>' +
+                        '</div>');
+    leftControls.append('<div>' +
+                        '<input type="checkbox" id="showLegend" checked/>' +
+                        '<label for="showLegend">Show chart legend</label>' +
+                        '</div>');
     leftControls.append('<div id="periodControl"' +
                         '<label for="sendPeriod">Update period (seconds)</label>' +
                         '<input type="text" id="sendPeriod" min="0" max="10.0" value="1.0" size="4"/>' +
                         '</div');
-    leftControls.append('<div id="simpleMoodDisplay"></div>');
     leftControls.append('<div>' +
                         '<input type="checkbox" id="dumpData"/>' +
                         '<label for="dumpData">Dump raw data</label>' +
                         '</div>');
     leftControls.append('<div id="downloadDataDump"></div>');
+    leftControls.append('</div>');
 
     $('#showEvents').change(function() {
       var isChecked =  $(this).is(':checked');
@@ -222,6 +261,17 @@
       chart.getOptions().grid.markings = isChecked ? gridMarkings : undefined;
       chart.setupGrid();
       chart.draw();
+    });
+
+    $('#showLegend').change(function() {
+      var isChecked =  $(this).is(':checked');
+      chart.getOptions().legend.show = isChecked;
+    });
+
+    $('#hideOverlappingEvents').change(function() {
+      if( $(this).is(':checked') ) {
+        PruneOverlapingEvents();
+      }
     });
 
     $('#dumpData').change(function() {
@@ -237,7 +287,7 @@
         $('#downloadDataDump').empty();
         var url = "data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(dumpedData, null, 2));
         var link = $('#downloadDataDump').append('<a id="downloadDataDumpLink" download="mood_data.json"'+
-                                                 ' href=' + url + '>download json</a>'); 
+                                                 ' href=' + url + '>download json</a>');
       }
     });
 
@@ -257,9 +307,9 @@
   };
 
   myMethods.onData = function(data, elem) {
-    
+
     if( first && (typeof data.moods !== 'undefined') ) {
-      
+
       for( var i=0; i<data.moods.length; ++i ) {
         var emo = data.moods[i].emotion;
         emoToIdxMap[emo] = i;
@@ -273,7 +323,7 @@
         plotData.push( newData );
       }
       chart = $.plot("#chartContainer", plotData, chartOptions);
-      
+
       first = false;
     }
 
@@ -292,7 +342,7 @@
 
     for( var i=0; i<data.moods.length; ++i ) {
       var idx = emoToIdxMap[ data.moods[i].emotion ];
-      
+
       moodData[idx].push( [data["time"], parseFloat(data.moods[i].value) ] );
 
       var dt = data["time"] - moodData[idx][0][0];
@@ -303,13 +353,17 @@
     }
 
     UpdateControlsData();
-    
+
     if( "emotionEvent" in data ) {
       gridMarkings.push( { xaxis: {from: data["time"], to: data["time"]},
                            color: "#000",
                            lineWidth: 2
                          });
       gridMarkingLabels.push(data["emotionEvent"]);
+
+      if( $('#hideOverlappingEvents').is(':checked') ) {
+        PruneOverlapingEvents()
+      }
     }
 
     if( gridMarkings.length > 0 ) {
@@ -363,12 +417,12 @@
         $("#vl" + i).hide();
       }
     }
-    
+
   };
 
   myMethods.update = function(dt, elem) {
   }
-  
+
   myMethods.getStyles = function() {
     return `
       #chartContainer {
@@ -376,7 +430,7 @@
         width: 100%;
       }
 
-      .verticalLabel {        
+      .verticalLabel {
         text-align: left;
         transform: rotate(-90deg);
         transform-origin: left;
@@ -399,17 +453,17 @@
       .sliderValueCntr {
         display:inline;
         padding-left:10px;
-       
+
       }
-      .sliderValueCntr::before { 
+      .sliderValueCntr::before {
         content: "";
         width: 0;
         height: 0;
         display:inline-block;
         border-top: 7px solid transparent;
-        border-bottom: 7px solid transparent; 
+        border-bottom: 7px solid transparent;
         vertical-align:middle;
-        border-right:7px solid #6c90d8; 
+        border-right:7px solid #6c90d8;
       }
       button {
         padding: 5px 10px;
@@ -425,7 +479,7 @@
         height:160px;
         padding-top:10px;
       }
-      #bottomContainer > div { 
+      #bottomContainer > div {
         float:left;
         width:250px;
         padding-left:20px;
@@ -442,8 +496,8 @@
         display: inline-block;
         border: 1px solid #ccc;
         padding: 1px;
-        height: 14px; 
-        width: 14px; 
+        height: 14px;
+        width: 14px;
         vertical-align: middle;
         margin-right: 3px;
       }
@@ -453,19 +507,22 @@
         height:10px;
       }
       .legendLabelBoxUnused {
-        width: 18px; 
-        height: 18px; 
-        border-bottom: 1px solid black; 
-        transform: translateY(-10px) translateX(-10px) rotate(-45deg); 
-        -ms-transform: translateY(-10px) translateX(-10px) rotate(-45deg); 
-        -moz-transform: translateY(-10px) translateX(-10px) rotate(-45deg); 
-        -webkit-transform: translateY(-10px) translateX(-10px) rotate(-45deg); 
+        width: 18px;
+        height: 18px;
+        border-bottom: 1px solid black;
+        transform: translateY(-10px) translateX(-10px) rotate(-45deg);
+        -ms-transform: translateY(-10px) translateX(-10px) rotate(-45deg);
+        -moz-transform: translateY(-10px) translateX(-10px) rotate(-45deg);
+        -webkit-transform: translateY(-10px) translateX(-10px) rotate(-45deg);
       }
-      #showEvents {
+      #leftControls > * {
         margin: 0px 3px 10px 0;
       }
       #sendPeriod {
         margin: 0px 3px 10px 0;
+      }
+      #simpleMoodDisplay {
+        font-weight: bold
       }
 
       `;

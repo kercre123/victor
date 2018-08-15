@@ -22,7 +22,7 @@
 #include <type_traits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace
@@ -52,7 +52,7 @@ void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyz
   ANKI_CPU_PROFILE("InfoAnalysisProcCalculateInterestingRegions");
   
   // calculate regions
-  INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  auto memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   INavMap::BorderRegionVector visionEdges, proxEdges;
   
   analyzer._interestingRegions.clear();

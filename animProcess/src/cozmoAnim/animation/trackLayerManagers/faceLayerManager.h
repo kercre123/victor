@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class ProceduralFace;
@@ -101,7 +101,7 @@ public:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_FaceLayerManager_H__ */

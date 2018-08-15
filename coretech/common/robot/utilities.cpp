@@ -235,7 +235,7 @@ namespace Anki
 
       const f32 timeInSeconds = (f32)(time.tv_sec-startSeconds) + ((f32)time.tv_usec / 1000000.0f);
 #elif defined(__EDG__)  // ARM-MDK
-      const f32 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0f;
+      const f32 timeInSeconds = Anki::Vector::HAL::GetMicroCounter() / 1000000.0f;
 #else // Generic Unix
       timespec ts;
       clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -284,7 +284,7 @@ namespace Anki
 
       const f64 timeInSeconds = (f64)(time.tv_sec-startSeconds) + ((f64)time.tv_usec / 1000000.0);
 #elif defined(__EDG__)  // ARM-MDK
-      const f64 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() * (1.0 / 1000000.0);
+      const f64 timeInSeconds = Anki::Vector::HAL::GetMicroCounter() * (1.0 / 1000000.0);
 #else // Generic Unix
       timespec ts;
       clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -324,7 +324,7 @@ namespace Anki
 
       return (u32)(time.tv_sec-startSeconds)*1000000 + (u32)time.tv_usec;
 #elif defined (__EDG__)  // MDK-ARM
-      return Anki::Cozmo::HAL::GetMicroCounter();
+      return Anki::Vector::HAL::GetMicroCounter();
 #else
       timespec ts;
       clock_gettime(CLOCK_MONOTONIC, &ts);

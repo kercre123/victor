@@ -38,7 +38,7 @@
 #include <cctype>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 
@@ -56,6 +56,7 @@ constexpr const char* kBehaviorKey = "behavior";
 constexpr const char* kGetInBehaviorKey = "getInBehavior";
 constexpr const char* kResetBehaviorTimerKey = "resetBehaviorTimer";
 constexpr const char* kCancelSelfKey = "cancelSelf";
+constexpr const char* kIgnoreMissingTransitionsKey = "ignoreMissingTransitions";
 
 static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -165,6 +166,8 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
 {
   
   _useDebugLights = config.get("use_debug_lights", false).asBool();
+  
+  _ignoreMissingTransitions = config.get(kIgnoreMissingTransitionsKey, false).asBool();
 
   // create custom BEI conditions for timers (if any are specified)
   CustomBEIConditionHandleList customTimerHandles = CreateCustomTimerConditions(config);
@@ -248,7 +251,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
                         _states->size());
   }
 
-  if( allToStates.size() != _states->size() ) {
+  if( (allToStates.size() != _states->size()) && !_ignoreMissingTransitions ) {
     PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.UnusedStates",
                         "Some states don't have any incoming transition strategies! %zu to states, but %zu states",
                         allToStates.size(),
@@ -326,7 +329,8 @@ void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expected
     kTransitionDefinitionsKey,
     kInitialStateKey,
     kStateTimerConditionsKey,
-    kEmotionEventKey
+    kEmotionEventKey,
+    kIgnoreMissingTransitionsKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }

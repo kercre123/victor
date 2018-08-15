@@ -27,7 +27,7 @@
 #define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -236,6 +236,6 @@ std::string BehaviorContainer::GetClassString(BehaviorClass behaviorClass) const
   return BehaviorClassToString(behaviorClass);
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

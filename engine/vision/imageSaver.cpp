@@ -10,15 +10,19 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/scopedTicToc.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/imageCache.h"
-#include "engine/components/photographyManager.h"
+#include "coretech/vision/engine/undistorter.h"
 #include "engine/vision/imageSaver.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 
+#include "opencv2/imgproc/imgproc.hpp"
+
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static const char* kLogChannelName = "VisionSystem";
   
@@ -30,7 +34,9 @@ ImageSaverParams::ImageSaverParams(const std::string&       pathIn,
                                    Vision::ImageCache::Size sizeIn,
                                    float                    thumbnailScaleIn,
                                    float                    saveScaleIn,
-                                   bool                     removeDistortionIn)
+                                   bool                     removeDistortionIn,
+                                   uint8_t                  medianFilterSizeIn,
+                                   float                    sharpeningAmountIn)
 : path(pathIn)
 , basename(basenameIn)
 , mode(saveModeIn)
@@ -39,16 +45,37 @@ ImageSaverParams::ImageSaverParams(const std::string&       pathIn,
 , thumbnailScale(thumbnailScaleIn)
 , saveScale(saveScaleIn)
 , removeDistortion(removeDistortionIn)
+, medianFilterSize(medianFilterSizeIn)
+, sharpeningAmount(sharpeningAmountIn)
 {
   
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageSaver::ImageSaver(const Vision::Camera& camera)
-: _camera(camera)
+// Required here in the .cpp b/c of use of unique_ptr and forward declaration of Undistorter
+ImageSaver::ImageSaver() = default;
+ImageSaver::~ImageSaver() = default;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImageSaver::SetCalibration(const std::shared_ptr<Vision::CameraCalibration>& camCalib)
 {
-  
+  if(ANKI_VERIFY(nullptr != camCalib, "ImageSaver.SetCalibration.NullCamCalib", ""))
+  {
+    _undistorter = std::make_unique<Vision::Undistorter>(camCalib);
+  }
 }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result ImageSaver::CacheUndistortionMaps(s32 nrows, s32 ncols)
+  {
+    if(!_undistorter)
+    {
+      PRINT_NAMED_ERROR("ImageSaver.CacheUndistortionMaps.NoUndistorter", "");
+      return RESULT_FAIL;
+    }
+    
+    return _undistorter->CacheUndistortionMaps(nrows, ncols);
+  }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImageSaver::SetParams(const ImageSaverParams& params)
@@ -74,10 +101,10 @@ Result ImageSaver::SetParams(const ImageSaverParams& params)
     return RESULT_FAIL;
   }
   
-  if(params.removeDistortion && !_camera.IsCalibrated())
+  if(params.removeDistortion && !_undistorter)
   {
-    PRINT_NAMED_ERROR("ImageSaver.SetParams.NeedCalibratedCamera",
-                      "Cannot remove disortion unless camera is calibrated");
+    PRINT_NAMED_ERROR("ImageSaver.SetParams.NeedUndistorter",
+                      "Cannot remove distortion unless undistorter is provided");
     return RESULT_FAIL;
   }
   
@@ -108,7 +135,7 @@ bool ImageSaver::ShouldSaveSensorData() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
 {
-  const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "png" : PhotographyManager::GetPhotoExtension()));
+  const std::string fullFilename = GetFullFilename(frameNumber, GetExtension(_params.quality));
   
   PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving image with timestamp %u to %s",
                 imageCache.GetTimeStamp(), fullFilename.c_str());
@@ -117,15 +144,51 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
   Vision::ImageRGB sizedImage = imageCache.GetRGB(_params.size);
   if(_params.removeDistortion)
   {
-    if(ANKI_VERIFY(_camera.IsCalibrated(), "ImageSaver.Save.NoCalibrationForSavingUndistorted", ""))
+    // This should have already been checked during SetParams
+    DEV_ASSERT(nullptr != _undistorter, "ImageSaver.Save.NoUndistorter");
+        
+    ScopedTicToc timer("ImageSaver.RemoveDistortion", kLogChannelName);
+    Vision::ImageRGB undistortedImage;
+    const Result undistortResult = _undistorter->UndistortImage(sizedImage, undistortedImage);
+    if(RESULT_OK != undistortResult)
     {
-      Vision::ImageRGB undistortedImage;
-      sizedImage.Undistort(*_camera.GetCalibration(), undistortedImage);
+      PRINT_NAMED_ERROR("ImageSaver.Save.UndistortFailed", "");
+    } else {
       std::swap(undistortedImage, sizedImage);
     }
-    else
-    {
-      return RESULT_FAIL;
+  }
+  
+  if(_params.medianFilterSize > 0)
+  {
+    ScopedTicToc timer("ImageSaver.MedianFilter", kLogChannelName);
+    
+    Vision::ImageRGB smoothedImage;
+    Result blurResult = RESULT_OK;
+    try {
+      cv::medianBlur(sizedImage.get_CvMat_(), smoothedImage.get_CvMat_(), _params.medianFilterSize);
+    } catch (cv::Exception& e) {
+      PRINT_NAMED_ERROR("ImageSaver.Save.OpenCvMedianBlurFailed",
+                        "%s (ksize=%d)", e.what(), (int)_params.medianFilterSize);
+      blurResult = RESULT_FAIL;
+    }
+    if(RESULT_OK == blurResult) {
+      std::swap(smoothedImage, sizedImage);
+    }
+  }
+  
+  if(Util::IsFltGTZero(_params.sharpeningAmount))
+  {
+    ScopedTicToc timer("ImageSaver.Sharpening", kLogChannelName);
+    
+    Vision::ImageRGB imgBlur;
+    try {
+      cv::GaussianBlur(sizedImage.get_CvMat_(), imgBlur.get_CvMat_(), cv::Size(3,3), 1.0);
+      cv::addWeighted(sizedImage.get_CvMat_(), 1.0 + _params.sharpeningAmount,
+                      imgBlur.get_CvMat_(), -_params.sharpeningAmount, 0.0,
+                      sizedImage.get_CvMat_());
+    } catch (cv::Exception& e) {
+      PRINT_NAMED_ERROR("ImageSaver.Save.SharpenFailed",
+                        "%s", e.what());
     }
   }
   
@@ -139,7 +202,7 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
   Result thumbnailResult = RESULT_OK;
   if((RESULT_OK == saveResult) && Util::IsFltGTZero(_params.thumbnailScale))
   {
-    const std::string fullFilename = GetFullFilename(frameNumber, (_params.quality < 0 ? "thm.png" : PhotographyManager::GetThumbExtension()));
+    const std::string fullFilename = GetFullFilename(frameNumber, GetThumbnailExtension(_params.quality));
     Vision::ImageRGB thumbnail;
     sizedImage.Resize(_params.thumbnailScale);
     thumbnailResult = sizedImage.Save(fullFilename);
@@ -178,7 +241,7 @@ std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *exten
   return fullFilename;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

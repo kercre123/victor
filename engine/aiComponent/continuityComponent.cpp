@@ -19,7 +19,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ContinuityComponent::ContinuityComponent(Robot& robot)
@@ -121,5 +121,5 @@ bool ContinuityComponent::QueueAction(IActionRunner* action)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

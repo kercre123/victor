@@ -14,7 +14,7 @@
 #include <stdint.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Base IDs for each VizObject type
 const uint32_t VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1] = {
@@ -28,6 +28,6 @@ const uint32_t VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1] = {
   std::numeric_limits<uint32_t>::max() - 100 // Last valid object ID allowed
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

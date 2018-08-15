@@ -24,7 +24,7 @@ class DependencyManagedEntity;
 template<typename EnumType>
 class IDependencyManagedComponent;
 
-namespace Cozmo {
+namespace Vector {
 
 // When adding to this enum be sure to also declare a template specialization
 // in the _impl.cpp file mapping the enum to the class type it is associated with
@@ -33,7 +33,6 @@ enum class BCComponentID{
   AsyncMessageComponent,
   BehaviorAudioComponent,
   BehaviorContainer,
-  BehaviorEventAnimResponseDirector,
   BehaviorEventComponent,
   BehaviorExternalInterface,
   BehaviorHelperComponent,
@@ -60,7 +59,7 @@ using BCComp =  IDependencyManagedComponent<BCComponentID>;
 using BCCompMap = DependencyManagedEntity<BCComponentID>;
 using BCCompIDSet = std::set<BCComponentID>;
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__

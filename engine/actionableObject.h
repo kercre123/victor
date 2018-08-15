@@ -26,7 +26,7 @@
 #include "clad/types/objectFamilies.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     // TODO: Move to separate file
     class ActiveLED
@@ -39,7 +39,7 @@ namespace Anki {
       
     };
     
-    class ActionableObject : public virtual ObservableObject // NOTE: Cozmo::ObservableObject, not Vision::
+    class ActionableObject : public virtual ObservableObject // NOTE: Vector::ObservableObject, not Vision::
     {
     public:
       ActionableObject();
@@ -104,7 +104,7 @@ namespace Anki {
       
     }; // class ActionableObject
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_ACTIONABLE_OBJECT_H

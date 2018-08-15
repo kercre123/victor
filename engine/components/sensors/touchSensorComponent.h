@@ -24,7 +24,7 @@
 #include <deque>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IBehaviorPlaypen;
 struct FilterParameters;
@@ -39,15 +39,19 @@ public:
   {
   }
   
-  int ApplyFilter(int input)
+  float ApplyFilter(int input)
   {
+    if(_winSize == 1) {
+      return input;
+    }
+    
     _buffer.push_back(input);
     _sum += _buffer.back();
     if(_buffer.size()==(_winSize+1)) {
       _sum -= _buffer.front();
       _buffer.pop_front();
     }
-    return int( float(_sum)/_buffer.size() );
+    return float(_sum)/float(_buffer.size());
   }
   
 private:
@@ -56,39 +60,95 @@ private:
   int _sum;
 };
 
+
+// helper class with logic to contain touch calibration logic
+class TouchBaselineCalibrator
+{
+public:
+  TouchBaselineCalibrator(int maxAllowedOffsetFromBaseline)
+  : _baseline(-1.0f)
+  , _isCalibrated(false)
+  , _numCalibrationReadings(0)
+  , _numConsecNoTouch(0)
+  , _maxAllowedOffsetFromBaseline(maxAllowedOffsetFromBaseline)
+  {
+  }
+  
+  bool IsCalibrated() const
+  {
+    return _isCalibrated;
+  }
+  
+  void ResetCalibration()
+  {
+    _baseline = -1.0f;
+    _isCalibrated = false;
+    _numConsecNoTouch = 0;
+    _numCalibrationReadings = 0;
+    _numStableBaselineReadings = 0;
+  }
+  
+  void UpdateBaseline(float reading, bool isPickedUp, bool isPressed);
+  
+  float GetBaseline() const
+  {
+    return _baseline;
+  }
+  
+protected:
+  float _baseline;
+  
+  // if not calibrated: fast calibration mode
+  // if     calibrated: slow calibration mode
+  bool _isCalibrated;
+  
+  // when enough raw readings are accumulated within
+  // the baseline, then we can transition to calibrated
+  size_t _numStableBaselineReadings;
+  
+  // number of readings collected so far (while not calibrated)
+  size_t _numCalibrationReadings;
+  
+  // number of readings after the last detected touch
+  size_t _numConsecNoTouch;
+  
+  // highest allowable offset from baseline that can be
+  // accummulated into the filter per tick. This value
+  // is used to prevent soft touches from raising the baseline
+  int _maxAllowedOffsetFromBaseline;
+};
+
 class TouchSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
 public:
   
   // struct to organize the filter-specific parameters
   // used in the dynamic thresholding algorithm for
-  // touch detection.
-  // Note: the default values are determined using the
-  // test harness `TouchSensorTuningPVT` in file
-  // testTouchSensor.cpp
+  // touch detection
   struct FilterParameters
   {
-    int boxFilterSize = 55;
+    // number of values to average over
+    int boxFilterSize;
     
     // constant size difference between detect and undetect levels
-    int dynamicThreshGap = 1;
+    int dynamicThreshGap;
     
     // the offset from the input reading that detect level is set to
-    int dynamicThreshDetectFollowOffset = 2;
+    int dynamicThreshDetectFollowOffset;
     
     // the offset from the input reading that the undetect level is set to
-    int dynamicThreshUndetectFollowOffset = 2;
+    int dynamicThreshUndetectFollowOffset;
     
     // the lowest reachable undetect level offset from baseline
-    int dynamicThreshMaximumDetectOffset = 20;
+    int dynamicThreshMaximumDetectOffset;
     
     // the highest reachable detect level offset from baseline
-    int dynamicThreshMininumUndetectOffset = 8;
+    int dynamicThreshMininumUndetectOffset;
     
     // minimum number of consecutive readings that are below/above detect level
     // before we update the thresholds dynamically
     // note: this counters the impact of noise on the dynamic thresholds
-    int minConsecCountToUpdateThresholds = 6;
+    int minConsecCountToUpdateThresholds;
   };
   
 public:
@@ -149,7 +209,10 @@ public:
     return _lastRawTouchValue;
   }
   
-  bool IsCalibrated() const;
+  bool IsCalibrated() const
+  {
+    return _baselineCalibrator.IsCalibrated();
+  }
   
 private:
   // Let Playpen behaviors have access to Start/Stop recording touch sensor data
@@ -163,23 +226,20 @@ private:
   
   FilterParameters _filterParams;
   
-  static const FilterParameters _kFilterParamsForDVT;
   static const FilterParameters _kFilterParamsForProd;
   
-  // backwards-compatibility flag that uses a different scheme for touch sensor filtering
-  // based on the version of hardware the robot has
-  bool _useFilterLogicForDVT;
+  // flag to guard against using touch sensor logic designed for
+  // PVT hardware on DVT robots. This prevents the robot undefined
+  // behavior as a result of syscon-level changes to touch sensor
+  bool _enabled = true;
 
   // Pointer to a struct that should be populated with touch sensor data when recording
   TouchSensorValues* _dataToRecord = nullptr;
 
   u16 _lastRawTouchValue;
-
-  // number of consecutive cycles seeing "no contact" reading
-  size_t _noContactCounter;
   
-  // calibration value from IIR filtering "no contact" signals
-  float _baselineTouch;
+  // module to help with maintaining the detected baseline
+  TouchBaselineCalibrator _baselineCalibrator;
   
   BoxFilter _boxFilterTouch;
   
@@ -190,8 +250,6 @@ private:
   int _undetectOffsetFromBase;
   
   bool _isPressed;
-  
-  size_t _numConsecCalibReadings;
   
   // counters to debounce the monotonic increase/decrease
   // of the detect and undetect thresholds
@@ -206,7 +264,7 @@ private:
   struct DevLogTouchRow
   {
     int rawTouch;
-    int boxTouch;
+    float boxTouch;
     int calibBaseline;
     
     int detOffsetFromBase;

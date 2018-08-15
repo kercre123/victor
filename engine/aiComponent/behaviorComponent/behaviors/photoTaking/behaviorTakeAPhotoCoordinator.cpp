@@ -27,14 +27,16 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
-  // TODO: Move to console vars or Json config
- static constexpr f32 kReadyToTakePhotoTimeout_sec = 3.f;
- static constexpr f32 kTakingPhotoTimeout_sec      = 6.f;
-
- CONSOLE_VAR(f32, kHeadAngleDeg, "TakeAPhoto", 25.0);
+#define CONSOLE_GROUP "Behaviors.TakeAPhoto"
+  
+CONSOLE_VAR(f32, kHeadAngleDeg,                  CONSOLE_GROUP, 25.0);
+CONSOLE_VAR(f32, kReadyToTakePhotoTimeout_sec,   CONSOLE_GROUP, 3.f);
+CONSOLE_VAR(f32, kTakingPhotoTimeout_sec,        CONSOLE_GROUP, 6.f);
+  
+#undef CONSOLE_GROUP
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,6 +75,7 @@ void BehaviorTakeAPhotoCoordinator::GetBehaviorOperationModifiers(BehaviorOperat
 {
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.visionModesForActiveScope->insert({ VisionMode::SavingImages, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::MinGainAutoExposure, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,6 +83,7 @@ void BehaviorTakeAPhotoCoordinator::GetAllDelegates(std::set<IBehavior*>& delega
 {
   delegates.insert(_iConfig.frameFacesBehavior.get());
   delegates.insert(_iConfig.storageIsFullBehavior.get());
+  delegates.insert(_iConfig.driveOffChargerBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -93,7 +97,7 @@ void BehaviorTakeAPhotoCoordinator::InitBehavior()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.frameFacesBehavior          = BC.FindBehaviorByID(BEHAVIOR_ID(FrameFaces));
   _iConfig.storageIsFullBehavior       = BC.FindBehaviorByID(BEHAVIOR_ID(SingletonICantDoThat));
-
+  _iConfig.driveOffChargerBehavior     = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffChargerFace));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,10 +111,11 @@ void BehaviorTakeAPhotoCoordinator::OnBehaviorActivated()
   if(isStorageFull){
     TransitionToStorageIsFull();
   }else if(intentData != nullptr){
+    const bool robotPickedUp = GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads;
     _dVars.isASelfie = !(intentData->intent.Get_take_a_photo().empty_or_selfie.empty());
     // If we're taking a selfie we need to center the faces first - otherwise just take a photo
-    if(_dVars.isASelfie){
-      TransitionToFrameFaces();
+    if(_dVars.isASelfie && !robotPickedUp){
+      TransitionToDriveOffCharger();
     }else{
       DelegateIfInControl(new MoveHeadToAngleAction(DEG_TO_RAD(kHeadAngleDeg)), [this](){
         TransitionToFocusingAnimation();
@@ -145,6 +150,21 @@ void BehaviorTakeAPhotoCoordinator::TransitionToStorageIsFull()
               "BehaviorTakeAPhotoCoordinator.TransitionToStorageIsFull.DoesNotWantToBeActivated", 
               "");
   DelegateIfInControl(_iConfig.storageIsFullBehavior.get());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTakeAPhotoCoordinator::TransitionToDriveOffCharger()
+{
+  const bool isOnCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
+  if(isOnCharger){
+    ANKI_VERIFY(_iConfig.driveOffChargerBehavior->WantsToBeActivated(), 
+            "BehaviorTakeAPhotoCoordinator.TransitionToDriveOffCharger.DoesNotWantToBeActivated", 
+            "");
+    DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(), 
+                        &BehaviorTakeAPhotoCoordinator::TransitionToFrameFaces);
+  }else{
+    TransitionToFrameFaces();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

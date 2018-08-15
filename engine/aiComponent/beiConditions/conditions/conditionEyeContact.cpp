@@ -19,7 +19,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(u32, kMaxTimeSinceTrackedFaceUpdated_ms, "Behaviors.ConditionEyeContact", 500);
 
@@ -39,5 +39,5 @@ u32 ConditionEyeContact::GetMaxTimeSinceTrackedFaceUpdated_ms() {
   return kMaxTimeSinceTrackedFaceUpdated_ms;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

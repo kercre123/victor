@@ -19,7 +19,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   
 EmotionEvent::EmotionEvent()
@@ -156,6 +156,6 @@ bool EmotionEvent::WriteToJson(Json::Value& outJson) const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

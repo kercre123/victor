@@ -16,7 +16,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class ConditionObjectInitialDetection : public ConditionObjectKnown
 {
@@ -37,7 +37,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_BeiConditions_ConditionObjectInitialDetection_H__

@@ -36,7 +36,7 @@
 #define kLogChannelName "Behaviors"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
@@ -475,6 +475,6 @@ void BehaviorAcknowledgeObject::AddListener(IReactToObjectListener* listener)
 
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

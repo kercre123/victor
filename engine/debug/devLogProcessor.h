@@ -22,7 +22,7 @@
 #include <deque>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class DevLogReaderRaw;
 class DevLogReaderPrint;
@@ -59,7 +59,7 @@ private:
   std::unique_ptr<DevLogReaderPrint>  _printReader;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

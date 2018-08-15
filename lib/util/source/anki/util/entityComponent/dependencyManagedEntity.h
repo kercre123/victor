@@ -25,7 +25,7 @@
 namespace Anki {
 
 // forward declaration - TMP
-namespace Cozmo{
+namespace Vector{
 class Robot;
 }
 
@@ -56,7 +56,7 @@ public:
 
 
   // Init all components in their declared dependency order
-  void InitComponents(Cozmo::Robot* robot); //tmp for pass through
+  void InitComponents(Vector::Robot* robot); //tmp for pass through
 
   // Update all components in their declared dependency order
   void UpdateComponents();
@@ -251,7 +251,7 @@ auto DependencyManagedEntity<EnumType>::GetComponents() -> OrderedDependentVecto
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename EnumType>
-void DependencyManagedEntity<EnumType>::InitComponents(Cozmo::Robot* robot)
+void DependencyManagedEntity<EnumType>::InitComponents(Vector::Robot* robot)
 {
   // Build the cache if necessary
   if(_cachedInitOrder.empty()){

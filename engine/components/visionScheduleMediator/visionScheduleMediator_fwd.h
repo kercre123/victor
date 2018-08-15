@@ -16,7 +16,7 @@
 #include "clad/types/visionModes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   enum class EVisionUpdateFrequency
   {
@@ -35,7 +35,7 @@ namespace Cozmo {
     bool operator<(const VisionModeRequest& rhs) const { return this->mode < rhs.mode; }
   };
       
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Components_visionScheduleMediator_fwd_H__

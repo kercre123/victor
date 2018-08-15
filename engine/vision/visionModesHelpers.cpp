@@ -16,10 +16,10 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(VisionMode);
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

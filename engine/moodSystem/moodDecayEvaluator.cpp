@@ -18,7 +18,7 @@
 #include "util/graphEvaluator/graphEvaluator2d.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kGraphTypeKey = "graphType";

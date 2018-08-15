@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 CliffSensor {
   CLIFF_FL = 0, // Front left
@@ -45,5 +45,5 @@ structure ProxSensorDataRaw {
   uint_8   padding,
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

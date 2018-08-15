@@ -45,6 +45,7 @@ public:
   // Methods
   void BeginPairing();
   void StopPairing();
+  void ForceDisconnect();
   void SetIsPairing(bool pairing);
   void SetOtaUpdating(bool updating);
   void SendOtaProgress(int32_t status, uint64_t progress, uint64_t expectedTotal);
@@ -64,7 +65,7 @@ private:
   bool HandleHandshake(uint16_t version);
   void HandleReset(bool forced);
   void HandleTimeout();
-  void UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state);
+  void UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus state);
 
   // Constants
   const uint8_t kMinMessageSize = 2;

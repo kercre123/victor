@@ -19,7 +19,7 @@
 #define DEBUG_TRACKING_ACTIONS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 static const char * const kLogChannelName = "Actions";
   
@@ -124,5 +124,5 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 
 } // UpdateTracking()
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

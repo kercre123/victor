@@ -3,7 +3,7 @@
 // Copyright: Anki Inc (c) 2015
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // Struct containing all the information relevant to how a 
@@ -23,5 +23,5 @@ structure PathMotionProfile {
     bool         isCustom = 0
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

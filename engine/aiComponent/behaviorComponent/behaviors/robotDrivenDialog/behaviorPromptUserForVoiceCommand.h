@@ -16,12 +16,12 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPromptUserForVoiceCommand__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "clad/cloud/mic.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Fwd Declarations
 class BehaviorTextToSpeechLoop;
@@ -31,6 +31,11 @@ class BehaviorPromptUserForVoiceCommand : public ICozmoBehavior
 public: 
   virtual ~BehaviorPromptUserForVoiceCommand();
 
+  // Expected to be used only if the JSON config did not provide a (re)prompt.
+  // The main prompt must be set by JSON config or this method before the behavior wants to be activated.
+  void SetPrompt(const std::string& text);
+  void SetReprompt(const std::string& text);
+  
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -90,7 +95,6 @@ private:
     CloudMic::StreamType streamType;
 
     // earcon is an audible cue to tell the user victor is listening
-    AudioMetaData::GameEvent::GenericEvent earConBegin;
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
 
@@ -112,7 +116,8 @@ private:
     bool backpackLights;
     bool playListeningGetIn;
     bool playListeningGetOut;
-
+    bool wasPromptSetFromJson;
+    bool wasRepromptSetFromJson;
   };
 
   struct DynamicVariables {
@@ -120,7 +125,6 @@ private:
 
     EState                    state;
     BackpackLightDataLocator  lightsHandle;
-    float                     streamingBeginTime;
     EIntentStatus             intentStatus;
     bool                      isListening;
     uint8_t                   repromptCount;
@@ -131,7 +135,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorPromptUserForVoiceCommand__

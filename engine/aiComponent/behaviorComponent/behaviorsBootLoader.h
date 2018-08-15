@@ -31,7 +31,7 @@ namespace Util {
   class IConsoleFunction;
 }
   
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorContainer;
 class BehaviorSystemManager;
@@ -67,6 +67,8 @@ private:
   
   void InitOnboarding();
   
+  void RestartOnboarding();
+  
   void SetNewBehavior(BehaviorID behavior);
   
   IExternalInterface* _externalInterface = nullptr;
@@ -96,6 +98,7 @@ private:
   
   OnboardingStages _stage;
   
+  int _countUntilResetOnboarding = 0;
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 };
 

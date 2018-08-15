@@ -16,12 +16,12 @@
 #include "clad/audio/audioEventTypes.h"
 #include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "engine/components/mics/micDirectionTypes.h"
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorReactToMicDirection;
 enum class AnimationTrigger : int32_t;
@@ -58,7 +58,8 @@ protected:
   enum class EState : uint8_t
   {
     GetIn,
-    Listening,
+    ListeningGetIn,
+    ListeningLoop,
     Thinking,
     IntentReceived,
   };
@@ -80,8 +81,11 @@ protected:
 
   virtual void AlwaysHandleInScope( const RobotToEngineEvent& event ) override;
 
+  virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
+
   virtual void BehaviorUpdate() override;
 
   
@@ -141,6 +145,11 @@ private:
     bool backpackLights;
     
     bool exitAfterGetIn;
+    
+    // If we are not streaming audio to the cloud, then this causes the behavior to exit after playing the "unheard"
+    // animation. This is to prevent the accumulation of "errors" due to unreceived intents (we would not expect any
+    // intents to come down if we are not streaming)
+    bool exitAfterListeningIfNotStreaming;
 
     // response behavior to hearing the trigger word (or intent)
     std::string reactionBehaviorString;
@@ -187,7 +196,7 @@ private:
 
 }; // class BehaviorReactToVoiceCommand
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__

@@ -24,7 +24,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const float kInvalidObjectCacheUpdateTime_s = -1.0f;
@@ -639,5 +639,5 @@ void ObjectInteractionCacheEntry::Invalidate()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

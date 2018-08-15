@@ -19,7 +19,7 @@
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BEIConditionDebugFactors::Data::Data(int val)
@@ -152,5 +152,5 @@ Json::Value BEIConditionDebugFactors::GetJSON() const
   return ret;
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

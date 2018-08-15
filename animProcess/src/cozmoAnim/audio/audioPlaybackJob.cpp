@@ -24,7 +24,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 using namespace AudioUtil;
@@ -83,5 +83,5 @@ void AudioPlaybackJob::LoadAudioData()
 }
 
 } // Audio
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

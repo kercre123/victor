@@ -13,7 +13,7 @@
 #define __Cozmo_Basestation_AIInformationAnalysisProcessTypes_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace AIInformationAnalysis {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -29,7 +29,7 @@ EProcess EProcessFromString(const char* inString);
 const char* StringFromEProcess(EProcess process);
 
 } // namespace AIInformationAnalysis
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //

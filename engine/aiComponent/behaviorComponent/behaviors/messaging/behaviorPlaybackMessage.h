@@ -19,7 +19,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTextToSpeechLoop;
 
@@ -111,7 +111,7 @@ private:
 
 }; // class BehaviorPlaybackMessage
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorPlaybackMessage_H__

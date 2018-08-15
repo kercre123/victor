@@ -21,7 +21,11 @@
 #include "proto/external_interface/onboardingSteps.pb.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
+  
+namespace {
+  const float kTimeBeforeEnd_s = 2*60.0f;
+}
   
 class OnboardingStageApp : public IOnboardingStage
 {
@@ -42,6 +46,7 @@ public:
   {
     _selectedBehavior = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     _receivedStart = false;
+    _startTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
     // disable trigger word until continue
     DebugTransition("Waiting on continue to begin");
@@ -77,8 +82,13 @@ public:
   virtual void Update( BehaviorExternalInterface& bei ) override
   {
     const auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+    const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( uic.IsAnyUserIntentPending() && !uic.IsUserIntentPending( USER_INTENT(unmatched_intent) ) ) {
       DebugTransition("User intent. Onboarding is done!");
+      _selectedBehavior = nullptr;
+    } else if( currTime - _startTime_s >= kTimeBeforeEnd_s ) {
+      // user may have gotten to the point in app onboarding where it says to do a voice command, so break out
+      DebugTransition("Timeout. Onboarding is done!");
       _selectedBehavior = nullptr;
     }
   }
@@ -100,9 +110,10 @@ private:
   
   IBehavior* _selectedBehavior = nullptr;
   bool _receivedStart = false;
+  float _startTime_s = 0.0f;
 };
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Onboarding_OnboardingStageApp__

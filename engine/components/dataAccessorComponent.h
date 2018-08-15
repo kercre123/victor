@@ -19,6 +19,8 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include "clad/types/behaviorComponent/beiConditionTypes.h"
+
 #include <assert.h>
 
 namespace Anki {
@@ -29,7 +31,7 @@ class SpriteCache;
 class SpriteSequenceContainer;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class DataAccessorComponent : public IDependencyManagedComponent<RobotComponentID>, 
                              private Anki::Util::noncopyable
@@ -41,7 +43,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -63,6 +65,8 @@ public:
 
   const Json::Value& GetCubeSpinnerConfig() const { return _cupeSpinnerConfig; }
 
+  RobotDataLoader::ConditionToBehaviorsMap* GetUserDefinedConditionToBehaviorsMap() const { assert(nullptr != _userDefinedConditionToBehaviorsMap); return _userDefinedConditionToBehaviorsMap; }
+  const BEIConditionType GetUserDefinedEditCondition() const { return _userDefinedEditCondition; };
 private:
   const Vision::SpritePathMap* _spritePaths = nullptr;
   Vision::SpriteCache* _spriteCache = nullptr;
@@ -74,11 +78,13 @@ private:
   const Json::Value* _weatherRemaps = nullptr;
   RobotDataLoader::VariableSnapshotJsonMap* _variableSnapshotJsonMap = nullptr;
   Json::Value _cupeSpinnerConfig;
+  RobotDataLoader::ConditionToBehaviorsMap* _userDefinedConditionToBehaviorsMap = nullptr;
+  BEIConditionType _userDefinedEditCondition;
 
 }; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif

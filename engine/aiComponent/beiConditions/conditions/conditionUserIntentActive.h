@@ -16,7 +16,7 @@
 #include "engine/aiComponent/beiConditions/conditions/iConditionUserIntent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class ConditionUserIntentActive : public IConditionUserIntent
 {
@@ -33,7 +33,7 @@ public:
   static Json::Value GenerateConfig( const Json::Value& config );
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionUserIntentActive_H__

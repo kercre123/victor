@@ -31,7 +31,7 @@ namespace GameParameter {
 enum class ParameterType : uint32_t;
 }
 }
-namespace Cozmo {
+namespace Vector {
 class AnimContext;
 namespace Audio {
 

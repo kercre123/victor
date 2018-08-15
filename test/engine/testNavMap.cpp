@@ -24,7 +24,7 @@
 #include "engine/robot.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 extern CozmoContext* cozmoContext;
 
@@ -41,7 +41,7 @@ TEST( TestNavMap, FillBorder)
   // Only the littleProx1 should be replaced, not littleProx2
   
   Robot robot(0, cozmoContext);
-  INavMap* navMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  INavMap* navMap = robot.GetMapComponent().GetCurrentMemoryMap().get();
   ASSERT_TRUE( navMap != nullptr );
   // use memory map for access into things that are protected in inavmap
   MemoryMap* memoryMap = dynamic_cast<MemoryMap*>( navMap );

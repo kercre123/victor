@@ -49,7 +49,7 @@ else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(u32, kNumLiftRaises,              "LiftLoadTest", 50);
 
@@ -385,5 +385,5 @@ void BehaviorLiftLoadTest::PrintStats()
   Write("=====End LiftLoadTest=====");
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

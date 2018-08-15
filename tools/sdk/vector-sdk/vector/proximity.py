@@ -5,7 +5,7 @@ Copyright(c) 2018 Anki, Inc.
 '''
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ["ProximityComponent"]
+__all__ = ["ProximitySensorData", "ProximityComponent"]
 
 from . import util
 
@@ -27,6 +27,7 @@ class ProximitySensorData:
         '''The distance between the sensor and a detected object
 
         .. code-block:: python
+
            my_distance = robot.proximity.last_sensor_reading.distance
         '''
         return self._distance
@@ -40,6 +41,7 @@ class ProximitySensorData:
         a solid surface.
 
         .. code-block:: python
+
            my_signal_quality = robot.proximity.last_sensor_reading.signal_quality
         '''
         return self._signal_quality
@@ -51,6 +53,7 @@ class ProximitySensorData:
         become unreliable.
 
         .. code-block:: python
+
            my_is_in_valid_range = robot.proximity.last_sensor_reading.is_in_valid_range
         '''
         return self._is_in_valid_range
@@ -61,6 +64,7 @@ class ProximitySensorData:
         to be considered an object in proximity.
 
         .. code-block:: python
+
            my_is_valid_signal_quality = robot.proximity.last_sensor_reading.is_valid_signal_quality
         '''
         return self._is_valid_signal_quality
@@ -72,6 +76,7 @@ class ProximitySensorData:
         detection.
 
         .. code-block:: python
+
            my_is_lift_in_fov = robot.proximity.last_sensor_reading.is_lift_in_fov
         '''
         return self._is_lift_in_fov
@@ -83,6 +88,7 @@ class ProximitySensorData:
         plane.
 
         .. code-block:: python
+
            my_is_too_pitched = robot.proximity.last_sensor_reading.is_too_pitched
         '''
         return self._is_too_pitched
@@ -101,6 +107,7 @@ class ProximitySensorData:
         object proximity detection.
 
         .. code-block:: python
+
            my_is_valid = robot.proximity.last_sensor_reading.is_valid
         '''
         return self._is_in_valid_range and self._is_valid_signal_quality and not self._is_lift_in_fov and not self._is_too_pitched
@@ -116,10 +123,8 @@ class ProximityComponent(util.Component):
     An example of how to extract sensor data:
 
       .. code-block:: python
-         :emphasize-lines: 3,5
 
-         args = vector.util.parse_test_args()
-         with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+         with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
              proximity_data = robot.proximity.last_sensor_reading
              if proximity_data is not None:
                  print('Proximity distance: {0}, engine considers useful: {1}'.format(proximity_data.distance, proximity_data.is_valid))
@@ -135,6 +140,7 @@ class ProximityComponent(util.Component):
         ''':class:`vector.proximity.ProximitySensorData`: The last reported sensor data.
 
         .. code-block:: python
+
            my_last_sensor_reading = robot.proximity.last_sensor_reading
         '''
         return self._last_sensor_reading
@@ -145,6 +151,7 @@ class ProximityComponent(util.Component):
         which is considered useful for object detection.
 
         .. code-block:: python
+
            my_last_valid_sensor_reading = robot.proximity.last_valid_sensor_reading
         '''
         return self._last_valid_sensor_reading

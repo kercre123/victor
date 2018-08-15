@@ -32,7 +32,7 @@
 #include <list>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations
 class Robot;
@@ -47,7 +47,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -146,8 +146,8 @@ public:
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
   
-  const INavMap* GetCurrentMemoryMap() const {return GetCurrentMemoryMapHelper(); }  
-        INavMap* GetCurrentMemoryMap()       {return GetCurrentMemoryMapHelper(); }  
+  std::shared_ptr<const INavMap> GetCurrentMemoryMap() const {return GetCurrentMemoryMapHelper(); }  
+  std::shared_ptr<INavMap> GetCurrentMemoryMap()       {return GetCurrentMemoryMapHelper(); }  
 
 
   // template for all events we subscribe to
@@ -155,7 +155,7 @@ public:
   void HandleMessage(const T& msg);
   
 private:
-  INavMap* GetCurrentMemoryMapHelper() const;
+  std::shared_ptr<INavMap> GetCurrentMemoryMapHelper() const;
   
   // remove current renders for all maps if any
   void ClearRender();
@@ -184,7 +184,7 @@ private:
   Result AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
   
   // review interesting edges within the given quad and decide whether they are still interesting
-  void ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map);
+  void ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map);
   
   // poses we have sent to the memory map for objects we know, in each origin
   struct PoseInMapInfo {
@@ -194,7 +194,7 @@ private:
     bool isInMap; // if true the pose was sent to the map, if false the pose was removed from the map
   };
   
-  using MapTable                  = std::map<PoseOriginID_t, std::unique_ptr<INavMap>>;
+  using MapTable                  = std::map<PoseOriginID_t, std::shared_ptr<INavMap>>;
   using OriginToPoseInMapInfo     = std::map<PoseOriginID_t, PoseInMapInfo>;
   using ObjectIdToPosesPerOrigin  = std::map<int, OriginToPoseInMapInfo>;
   using EventHandles              = std::vector<Signal::SmartHandle>;

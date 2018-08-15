@@ -36,7 +36,7 @@
 
 namespace Anki
 {
-  namespace Cozmo
+  namespace Vector
   {
     // Forward declarations:
     class Robot;
@@ -739,7 +739,7 @@ namespace Anki
       return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns non-const
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

@@ -41,7 +41,7 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -122,7 +122,7 @@ void BehaviorStackBlocks::GetAllDelegates(std::set<IBehavior*>& delegates) const
 bool BehaviorStackBlocks::WantsToBeActivatedBehavior() const
 {
   const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::CubeBehaviors);
+  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::CubeBehaviors);
   if(!featureEnabled)
   {
     return false;
@@ -401,5 +401,5 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

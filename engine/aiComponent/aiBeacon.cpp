@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Beacon
@@ -49,5 +49,5 @@ void AIBeacon::FailedToFindLocation()
   _lastTimeFailedToFindLocation_secs = curTime;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

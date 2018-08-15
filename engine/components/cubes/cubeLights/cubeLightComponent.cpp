@@ -54,8 +54,12 @@
 static constexpr f32 kWhiteBalanceScale = 0.6f;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
+// Convert MS to LED FRAMES
+#define MS_TO_LED_FRAMES(ms)  ((ms) == std::numeric_limits<u32>::max() ?      \
+                                std::numeric_limits<u8>::max() :              \
+                                Util::numeric_cast<u8>(((ms)+CUBE_LED_FRAME_LENGTH_MS-1)/CUBE_LED_FRAME_LENGTH_MS))
   
 bool CubeLightAnimation::ObjectLights::operator==(const CubeLightAnimation::ObjectLights& other) const
 {
@@ -103,7 +107,7 @@ CubeLightComponent::CubeLightComponent()
 }
 
 
-void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void CubeLightComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _cubeLightAnimations = std::make_unique<CubeLightAnimationContainer>(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations());
@@ -115,7 +119,6 @@ void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
     
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeLightsStateTransitionMessages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::FlashCurrentLightsState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::PlayCubeAnim>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopCubeAnim>();
@@ -275,7 +278,6 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
                       LayerToString(layer),
                       objectInfo.first.GetValue());
         
-        SendTransitionMessage(objectInfo.first, prevObjectAnim.curPattern->lights);
         Result res = SetCubeLightAnimation(objectInfo.first, prevObjectAnim.curPattern->lights);
         if(res != RESULT_OK)
         {
@@ -300,7 +302,6 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
       }
       
       // Finally set the lights with the current pattern of the animation
-      SendTransitionMessage(objectInfo.first, objectAnim.curPattern->lights);
       Result res = SetCubeLightAnimation(objectInfo.first, objectAnim.curPattern->lights);
       if(res != RESULT_OK)
       {
@@ -545,7 +546,6 @@ bool CubeLightComponent::PlayLightAnimInternal(const ObjectID& objectID,
     // Update the current layer for this object
     objectInfo.curLayer = layer;
     
-    SendTransitionMessage(objectID, newAnimOnLayer.curPattern->lights);
     Result res = SetCubeLightAnimation(objectID, newAnimOnLayer.curPattern->lights);
     if(res != RESULT_OK)
     {
@@ -994,49 +994,6 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
   }
 }
 
-void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& values)
-{
-  // Convert MS to LED FRAMES
-  #define MS_TO_LED_FRAMES(ms)  ((ms) == std::numeric_limits<u32>::max() ?      \
-                                  std::numeric_limits<u8>::max() :              \
-                                  Util::numeric_cast<u8>(((ms)+CUBE_LED_FRAME_LENGTH_MS-1)/CUBE_LED_FRAME_LENGTH_MS))
-  
-  if(_sendTransitionMessages)
-  {
-    ObservableObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
-    if(obj == nullptr)
-    {
-      PRINT_NAMED_WARNING("CubeLightComponent.SendTransitionMessage.NullObject",
-                          "Got null object using id %d",
-                          objectID.GetValue());
-      return;
-    }
-    
-    ExternalInterface::CubeLightsStateTransition msg;
-    msg.objectID = objectID;
-    msg.factoryID = obj->GetFactoryID();
-    msg.objectType = obj->GetType();
-    
-    LightState lights;
-    for(u8 i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
-    {
-      msg.lights[i].onColor = values.onColors[i];
-      msg.lights[i].offColor = values.offColors[i];
-      msg.lights[i].transitionOnFrames = MS_TO_LED_FRAMES(values.transitionOnPeriod_ms[i]);
-      msg.lights[i].transitionOffFrames = MS_TO_LED_FRAMES(values.transitionOffPeriod_ms[i]);
-      msg.lights[i].onFrames = MS_TO_LED_FRAMES(values.onPeriod_ms[i]);
-      msg.lights[i].offFrames = MS_TO_LED_FRAMES(values.offPeriod_ms[i]);
-      msg.lights[i].offset = MS_TO_LED_FRAMES(values.offset[i]);
-    }
-    
-    msg.lightRotation = values.rotate;
-    
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-  }
-}
-
-
-
 const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 {
   switch(layer)
@@ -1140,28 +1097,6 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::SetActiveObjectL
                   msg.makeRelative,
                   {msg.relativeToX, msg.relativeToY},
                   msg.rotate);
-}
-
-template<>
-void CubeLightComponent::HandleMessage(const ExternalInterface::EnableCubeLightsStateTransitionMessages& msg)
-{
-  _sendTransitionMessages = msg.enable;
-  
-  // Send messages for all objects so that game knows their current lights
-  for(const auto& pair : _objectInfo)
-  {
-    const auto& lightPatterns = pair.second.animationsOnLayer[pair.second.curLayer];
-    CubeLightAnimation::ObjectLights lights;
-    if(lightPatterns.empty())
-    {
-      lights = CubeLightAnimation::GetLightsOffObjectLights();
-    }
-    else
-    {
-      lights = lightPatterns.back().curPattern->lights;
-    }
-    SendTransitionMessage(pair.first, lights);
-  }
 }
 
 template<>
@@ -1438,7 +1373,7 @@ void CubeLightComponent::HandleAppRequest(const AppToEngineEvent& event)
           .transitionOffPeriod_ms = transitionOffPeriodMs,
           .offset                 = offset,
           .rotate                 = request.rotate(),
-          .makeRelative           = (Anki::Cozmo::MakeRelativeMode)((int)request.make_relative()-1),
+          .makeRelative           = (Anki::Vector::MakeRelativeMode)((int)request.make_relative()-1),
           .relativePoint          = {request.relative_to_x(),request.relative_to_y()}
         };
 

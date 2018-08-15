@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 CONSOLE_VAR(bool, kEnableCladLogger, "Logging", true);
 
@@ -62,5 +62,5 @@ void CLADLoggerProvider::Log(Anki::Util::ILoggerProvider::LogLevel logLevel, con
   }
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

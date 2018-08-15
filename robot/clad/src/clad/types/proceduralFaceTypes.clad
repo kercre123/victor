@@ -5,7 +5,7 @@
 // ROBOT_CLAD_SHARED
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // These are the names of procedural eye parameters we can control on Cozmo's face.
 // These parameters are available for both left and right eyes.
@@ -52,5 +52,5 @@ structure ProceduralFaceParameters {
     float_32 rightEye[25]          //   "
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

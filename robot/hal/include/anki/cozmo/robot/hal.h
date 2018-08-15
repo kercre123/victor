@@ -40,7 +40,7 @@
 #define PROCESS_IMU_ON_THREAD 1
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace HAL {
 
 
@@ -313,7 +313,7 @@ void FORCE_HARDFAULT();
 #define HAL_ASSERT(c) do { if(!(c)) FORCE_HARDFAULT(); } while(0)
 
 } // namespace HAL
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H

@@ -28,7 +28,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 AppCubeConnectionSubscriber::AppCubeConnectionSubscriber()
 : IDependencyManagedComponent(this, RobotComponentID::AppCubeConnectionSubscriber)
@@ -76,10 +76,10 @@ std::string AppCubeConnectionSubscriber::GetCubeConnectionDebugName() const {
   return debugName;
 }
 
-void AppCubeConnectionSubscriber::ConnectedCallback(ECubeConnectionType connectionType)
+void AppCubeConnectionSubscriber::ConnectedCallback(CubeConnectionType connectionType)
 {
   switch(connectionType){
-    case ECubeConnectionType::Interactable:
+    case CubeConnectionType::Interactable:
     {
       PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectionAttemptSuccess",
                       "Connection attempt succeeded. Sending message to gateway");
@@ -95,11 +95,17 @@ void AppCubeConnectionSubscriber::ConnectedCallback(ECubeConnectionType connecti
 
       break;
     }
-    case ECubeConnectionType::Background: 
+    case CubeConnectionType::Background: 
     {
       PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectedBackground",
                        "Cube was already connected in background. Waiting for transition to Interactable connection.");
       break;
+    }
+    default:
+    {
+      PRINT_NAMED_WARNING("AppCubeConnectionSubscriber.ConnectedCallback.InvalidConnectionType",
+                          "Receivec connection type: %s which is not handled",
+                          EnumToString(connectionType));
     }
   }
 }

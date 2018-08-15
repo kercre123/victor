@@ -37,6 +37,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/powerStateManager.h"
@@ -62,12 +63,12 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
 
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 #define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
@@ -87,6 +88,7 @@ static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
 static const char* kAssociatedActiveFeature          = "associatedActiveFeature";
 static const char* kBehaviorStatToIncrement          = "behaviorStatToIncrement";
 static const char* kTracksToLockWhileActivatedKey    = "tracksToLockWhileActivated";
+static const char* kDisableStreamAfterWakeWordKey    = "disableStreamAfterWakeWord";
 
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -313,7 +315,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _behaviorStatToIncrement.reset(new BehaviorStat);
     const auto& statStr = config[kBehaviorStatToIncrement].asString();
     ANKI_VERIFY( BehaviorStatFromString( statStr, *_behaviorStatToIncrement ),
-                 "ICozmoBehavior.ReadFromJson.InalidBehaviorStat",
+                 "ICozmoBehavior.ReadFromJson.InvalidBehaviorState",
                  "Behavior stat to increment '%s' invalid in behavior '%s'",
                  statStr.c_str(),
                  GetDebugLabel().c_str() );
@@ -325,6 +327,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       _tracksToLockWhileActivated |= static_cast<u8>(AnimTrackFlagFromString(track.asString()));
     }
   }            
+  
+  _scopedDisableStreamAfterWakeWord = config.get(kDisableStreamAfterWakeWordKey, false).asBool();
   
   return true;
 }
@@ -378,7 +382,8 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kPostBehaviorSuggestionKey,
     kAssociatedActiveFeature,
     kBehaviorStatToIncrement,
-    kTracksToLockWhileActivatedKey
+    kTracksToLockWhileActivatedKey,
+    kDisableStreamAfterWakeWordKey
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
 
@@ -783,6 +788,10 @@ void ICozmoBehavior::OnActivatedInternal()
   if( _respondToTriggerWord ) {
     GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
   }
+  
+  if (_scopedDisableStreamAfterWakeWord) {
+    SmartAlterStreamStateForCurrentResponse(true);
+  }
 
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActiveScope->empty()){
@@ -818,7 +827,7 @@ void ICozmoBehavior::OnActivatedInternal()
     GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(*_behaviorStatToIncrement);
   }
 
-  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActived);
+  GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BehaviorActivated);
 
   {
     using requirements = BehaviorOperationModifiers::CubeConnectionRequirements;
@@ -933,10 +942,18 @@ void ICozmoBehavior::OnDeactivatedInternal()
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( _postBehaviorSuggestion );
   }
 
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( _intentToDeactivate != UserIntentTag::INVALID ) {
-    auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.DeactivateUserIntent( _intentToDeactivate );
     _intentToDeactivate = UserIntentTag::INVALID;
+  }
+  
+  if (_scopedDisableStreamAfterWakeWord || _pushedCustomTriggerResponse) {
+    SmartPopResponseToTriggerWord();
+  }
+
+  if(uic.IsTriggerWordDisabledByName(GetDebugLabel())){
+    SmartEnableEngineResponseToTriggerWord();
   }
 
   if( !_powerSaveRequest.empty() ) {
@@ -1600,6 +1617,49 @@ UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartDisableEngineResponseToTriggerWord()
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(!uic.IsTriggerWordDisabledByName(GetDebugLabel())){
+    uic.DisableEngineResponseToTriggerWord(GetDebugLabel(), true);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartEnableEngineResponseToTriggerWord()
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(uic.IsTriggerWordDisabledByName(GetDebugLabel())){
+    uic.DisableEngineResponseToTriggerWord(GetDebugLabel(), false);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger, 
+                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
+                                                    bool shouldTriggerWordStartStream)
+{
+  _pushedCustomTriggerResponse = true;
+  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), getInAnimTrigger, postAudioEvent, shouldTriggerWordStartStream);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartPopResponseToTriggerWord()
+{
+  if(_pushedCustomTriggerResponse){
+    GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
+  }
+  _pushedCustomTriggerResponse = false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartAlterStreamStateForCurrentResponse(bool shouldTriggerWordStartStream)
+{
+  GetBehaviorComp<UserIntentComponent>().AlterStreamStateForCurrentResponse(GetDebugLabel(), shouldTriggerWordStartStream);
+  _pushedCustomTriggerResponse = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartRequestPowerSaveMode()
 {
   auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
@@ -1668,15 +1728,13 @@ void ICozmoBehavior::SetDebugStateNameToWebViz() const
 {
   const auto* context = GetBEI().GetRobotInfo().GetContext();
   if( context != nullptr ) {
-    const auto* webService = context->GetWebService();
-    if( webService != nullptr ){
-      Json::Value data;
-      data["debugState"] = _debugStateName;
-      webService->SendToWebViz( "behaviors", data );
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("behaviors",
+                                                                      context->GetWebService()) ) {
+      webSender->Data()["debugState"] = _debugStateName;
     }
   }
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

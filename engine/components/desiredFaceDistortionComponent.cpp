@@ -19,7 +19,7 @@
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 // below this amount, don't bother to distort at all. NOTE: may go lower than this slightly with randomness

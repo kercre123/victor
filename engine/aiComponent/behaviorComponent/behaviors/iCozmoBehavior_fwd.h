@@ -18,7 +18,7 @@
 #include "clad/types/actionResults.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class IBehavior;
 class ICozmoBehavior;

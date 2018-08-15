@@ -19,14 +19,14 @@
 // Single origin for all the poses here to use, which will not destruct before anything that uses it
 const Anki::Pose3d origin(0, Anki::Z_AXIS_3D(), {0,0,0}, "Origin");
 
-const Anki::Cozmo::ProxSensorData proxSensorValid = { .distance_mm = 100,
+const Anki::Vector::ProxSensorData proxSensorValid = { .distance_mm = 100,
                                                       .signalQuality = 10,
                                                       .isInValidRange = true,
                                                       .isValidSignalQuality = true,
                                                       .isLiftInFOV = false,
                                                       .isTooPitched = false };
 
-const Anki::Cozmo::ProxSensorData proxSensorNotValid = { .distance_mm = 100,
+const Anki::Vector::ProxSensorData proxSensorNotValid = { .distance_mm = 100,
                                                         .signalQuality = 10,
                                                         .isInValidRange = true,
                                                         .isValidSignalQuality = true,
@@ -35,13 +35,13 @@ const Anki::Cozmo::ProxSensorData proxSensorNotValid = { .distance_mm = 100,
 
 
 const uint8_t noCliffDetectedFlags = 0;
-const uint8_t frontCliffDetectedFlags = (1<<Anki::Util::EnumToUnderlying(Anki::Cozmo::CliffSensor::CLIFF_FL)) | 
-                                        (1<<Anki::Util::EnumToUnderlying(Anki::Cozmo::CliffSensor::CLIFF_FR));
+const uint8_t frontCliffDetectedFlags = (1<<Anki::Util::EnumToUnderlying(Anki::Vector::CliffSensor::CLIFF_FL)) | 
+                                        (1<<Anki::Util::EnumToUnderlying(Anki::Vector::CliffSensor::CLIFF_FR));
 
 TEST(RobotStateHistory, AddGetPose)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
   
   RobotStateHistory hist;
   HistRobotState histState;
@@ -160,7 +160,7 @@ TEST(RobotStateHistory, GroundTruthPose)
 {
   
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
   
   RobotStateHistory hist;
   HistRobotState histState;
@@ -265,7 +265,7 @@ TEST(RobotStateHistory, GroundTruthPose)
 TEST(RobotStateHistory, CullToWindowSizeTest)
 {
   using namespace Anki;
-  using namespace Cozmo;
+  using namespace Vector;
   
   RobotStateHistory hist;
   

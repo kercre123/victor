@@ -23,7 +23,7 @@
 
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace TestModeController {
       
       // "Private Member Variables"
@@ -1189,5 +1189,5 @@ namespace Anki {
       }      
 
     } // namespace TestModeController
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

@@ -20,7 +20,7 @@ namespace Vision {
 
 using SpritePathMap = Util::CladEnumToStringMap<Vision::SpriteName>;
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

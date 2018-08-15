@@ -25,7 +25,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(const Json::Value& config)
 : IBehaviorPlaypen(config)

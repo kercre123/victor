@@ -20,8 +20,9 @@
 #include "engine/smartFaceId.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
+enum class AnimationTrigger : int32_t;
 class BehaviorSearchWithinBoundingBox;
 class ISimpleFaceBehavior;
 
@@ -102,6 +103,8 @@ private:
     bool useBodyDetector;
     std::shared_ptr<BehaviorSearchWithinBoundingBox> behaviorFindFaceInBB;
     float upperPortionLookUpPercent;
+    
+    AnimationTrigger animWhenSeesFace;
   };
 
   struct DynamicVariables {
@@ -149,7 +152,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

@@ -19,7 +19,7 @@
 #include "engine/components/mics/beatDetectorComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionBeatDetected::ConditionBeatDetected(const Json::Value& config)

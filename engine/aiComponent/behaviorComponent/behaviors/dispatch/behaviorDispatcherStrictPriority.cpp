@@ -17,7 +17,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const char* kBehaviorsKey = "behaviors";
@@ -121,5 +121,5 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriority::GetDesiredBehavior()
   return ICozmoBehaviorPtr{};
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

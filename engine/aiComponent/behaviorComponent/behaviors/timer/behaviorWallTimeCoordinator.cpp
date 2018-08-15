@@ -22,7 +22,7 @@
 #include "engine/wallTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 namespace{
@@ -202,5 +202,5 @@ void BehaviorWallTimeCoordinator::StartTTSGeneration()
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

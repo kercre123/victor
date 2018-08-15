@@ -1,0 +1,16 @@
+{
+  "behaviorID"       : "ResetSafely",
+  "behaviorClass"    : "DispatcherQueue",
+
+  "behaviors": [
+    "ResetStateInternal",
+    "ModeSelector"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "ResetStateInternal",
+      "behaviorClass": "ResetState"
+    }
+  ]
+}

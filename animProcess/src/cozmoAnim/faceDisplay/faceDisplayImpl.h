@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class FaceDisplayImpl
 {
@@ -51,7 +51,7 @@ private:
   
 }; // class FaceDisplayImpl
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMOANIM_FACE_DISPLAY_IMPL_H

@@ -29,7 +29,7 @@ namespace CozmoAnim {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class Animation
 {
@@ -167,7 +167,7 @@ Result Animation::AddKeyFrameByTime(const KeyFrameType& kf)
 }
     
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_CANNED_ANIMATION_H

@@ -42,7 +42,7 @@
 #include "engine/utils/cozmoFeatureGate.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   // todo: turn these into params
@@ -270,7 +270,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
       float probBumpNomination = kProbBumpNominalObject;
       
       const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-      const bool prDemo = (featureGate != nullptr) && featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+      const bool prDemo = (featureGate != nullptr) && featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo);
       if( prDemo ) {
         // boris asked for it to bump everything regardless of size
         maxObjectWidth_rad = 1000;
@@ -456,7 +456,7 @@ bool BehaviorExploringExamineObstacle::RobotPathFreeOfObstacle( float dist_mm, b
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploringExamineObstacle.RobotPathFreeOfObstacle.NeedMemoryMap" );
   
   const Pose3d currRobotPose = robotInfo.GetPose();
@@ -497,7 +497,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploringExamineObstacle.WTBAB.NeedMemoryMap" );
   
   const Pose3d currRobotPose = robotInfo.GetPose();
@@ -532,7 +532,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploringExamineObstacle.WTBAB.NeedMemoryMap" );
   
   const Pose3d currRobotPose = robotInfo.GetPose();

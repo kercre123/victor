@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTakeAPhotoCoordinator : public ICozmoBehavior
 {
@@ -46,6 +46,7 @@ private:
     InstanceConfig();
     ICozmoBehaviorPtr frameFacesBehavior;
     ICozmoBehaviorPtr storageIsFullBehavior;
+    ICozmoBehaviorPtr driveOffChargerBehavior;
   };
 
   struct DynamicVariables {
@@ -58,6 +59,7 @@ private:
 
   void TransitionToStorageIsFull();
   void TransitionToFindFaces();
+  void TransitionToDriveOffCharger();
   void TransitionToFrameFaces();
   void TransitionToFocusingAnimation();
   void TransitionToTakePhoto();
@@ -65,7 +67,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorTakeAPhotoCoordinator__

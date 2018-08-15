@@ -31,10 +31,12 @@
       "behaviorClass": "FindFaceAndThen",
       "timeUntilCancelFaceLooking_s": 2.0,
       "timeUntilCancelFaceSearch_s": 10.0,
-      "searchForFaceBehavior": "ObservingFindFaces",
+      "searchForFaceBehavior": "ActiveLookForFaces",
       "shouldLeaveChargerFirst": true,
       "driveOffChargerBehavior": "DriveOffChargerFace",    
       "exitOnceFound": true,
+
+      "animWhenSeesFace": "FoundFace",
 
       "useBodyDetector": true,
       "additionalLookTimeIfSawBody_s": 3.0,

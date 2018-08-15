@@ -18,7 +18,7 @@
 #define DEBUG_FACE_LAYERING 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 template<class FRAME_TYPE>
 ITrackLayerManager<FRAME_TYPE>::ITrackLayerManager(const Util::RandomGenerator& rng)

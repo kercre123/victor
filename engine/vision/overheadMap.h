@@ -22,7 +22,7 @@
 #include <unordered_set>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 
@@ -97,7 +97,7 @@ private:
                                            DebugImageList<Anki::Vision::ImageRGB>& debugImageRGBs) const;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

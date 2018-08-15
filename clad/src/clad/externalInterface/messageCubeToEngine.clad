@@ -5,7 +5,7 @@
 #include "clad/externalInterface/messageEngineToGame.clad"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 structure RawCubeAccel
 {

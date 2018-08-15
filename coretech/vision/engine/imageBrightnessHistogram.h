@@ -30,6 +30,10 @@ namespace Vision {
     // Empty an existing, already-populated histogram
     void Reset();
     
+    // Simply adjust the value of a single bin
+    void IncrementBin(u8 bin);
+    void IncrementBin(u8 bin, s32 byAmount);
+    
     // Populate histogram with data from given image, with optional subsampling.
     // TransformFcn is applied to each pixel value before adding it to the histogram.
     // NOTE: The histogram is NOT cleared before, so you can accumulate multiple images

@@ -65,7 +65,7 @@
 #define DEVICE_ID_FILE "uniqueDeviceID.dat"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 
@@ -146,7 +146,7 @@ static bool das_archive_function(const std::string& inputFilePath)
   const std::string outputFilePath = baseDirectory + filename + kDASArchiveFileExtension;
 
   bool success =
-  ANKI_VERIFY(Anki::Cozmo::ArchiveUtil::CreateArchiveFromFiles(outputFilePath, baseDirectory, {inputFilePath}),
+  ANKI_VERIFY(Anki::Vector::ArchiveUtil::CreateArchiveFromFiles(outputFilePath, baseDirectory, {inputFilePath}),
               "csharp-binding.das_archive_function.CreateArchiveFromFiles.Fail",
               "Unable to create archive at path %s", outputFilePath.c_str());
   if (!success)
@@ -173,7 +173,7 @@ static std::string das_unarchive_function(const std::string& inputFilePath)
 
 
   bool success =
-  ANKI_VERIFY(Anki::Cozmo::ArchiveUtil::CreateFilesFromArchive(inputFilePath, baseDirectory),
+  ANKI_VERIFY(Anki::Vector::ArchiveUtil::CreateFilesFromArchive(inputFilePath, baseDirectory),
               "csharp-binding.das_unarchive_function.CreateFilesFromArchive.Fail",
               "Unable to create files at path %s from archive %s",
               baseDirectory.c_str(), inputFilePath.c_str());
@@ -227,14 +227,14 @@ static void cozmo_disable_das_networking()
 void cozmo_install_google_breakpad(const char* path)
 {
   #ifdef ANDROID
-  Anki::Cozmo::AndroidBinding::InstallGoogleBreakpad(path);
+  Anki::Vector::AndroidBinding::InstallGoogleBreakpad(path);
   #endif
 }
 
 void cozmo_uninstall_google_breakpad()
 {
   #ifdef ANDROID
-  Anki::Cozmo::AndroidBinding::UnInstallGoogleBreakpad();
+  Anki::Vector::AndroidBinding::UnInstallGoogleBreakpad();
   #endif
 }
 
@@ -294,8 +294,8 @@ int cozmo_startup(const char *configuration_data)
 
 #if defined(ANKI_PLATFORM_IOS)
   // init DAS among other things
-  result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
-  Anki::Cozmo::iOSBinding::update_settings_bundle(appRunId.c_str(), DASGetPlatform()->GetDeviceId());
+  result = Anki::Vector::iOSBinding::cozmo_startup(dataPlatform, appRunId);
+  Anki::Vector::iOSBinding::update_settings_bundle(appRunId.c_str(), DASGetPlatform()->GetDeviceId());
 #elif defined(ANKI_PLATFORM_ANDROID) && USE_DAS
   std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, DEVICE_ID_FILE))};
   if (config.get("standalone", false).asBool()) {
@@ -375,7 +375,7 @@ int cozmo_startup(const char *configuration_data)
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsEngine.ini").c_str());
 
-  Cozmo::CozmoAPI* created_engine = new Cozmo::CozmoAPI();
+  Vector::CozmoAPI* created_engine = new Vector::CozmoAPI();
 
   bool engineResult = created_engine->StartRun(dataPlatform, config);
   if (! engineResult) {
@@ -404,9 +404,9 @@ int cozmo_shutdown()
   int result = (int)RESULT_OK;
 
 #if defined(ANKI_PLATFORM_IOS)
-  result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
+  result = Anki::Vector::iOSBinding::cozmo_shutdown();
 #elif defined(ANKI_PLATFORM_ANDROID)
-  result = Anki::Cozmo::AndroidBinding::cozmo_shutdown();
+  result = Anki::Vector::AndroidBinding::cozmo_shutdown();
 #endif
 
   cozmo_disable_das_networking();
@@ -428,7 +428,7 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
   int result = (int)RESULT_OK;
 
 #if defined(ANKI_PLATFORM_IOS)
-  result = Anki::Cozmo::iOSBinding::cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
+  result = Anki::Vector::iOSBinding::cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
 #endif
 
   return result;
@@ -436,7 +436,7 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 
 void cozmo_send_to_clipboard(const char* log) {
 #if defined(ANKI_PLATFORM_IOS)
-  Anki::Cozmo::iOSBinding::cozmo_engine_send_to_clipboard(log);
+  Anki::Vector::iOSBinding::cozmo_engine_send_to_clipboard(log);
 #endif
 }
 

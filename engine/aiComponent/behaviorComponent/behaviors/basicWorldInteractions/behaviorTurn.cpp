@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const char* kTurnClockwiseKey = "shouldTurnClockwise";
@@ -85,6 +85,6 @@ void BehaviorTurn::BehaviorUpdate()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

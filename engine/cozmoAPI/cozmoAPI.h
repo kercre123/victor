@@ -33,7 +33,7 @@ namespace Data {
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class CozmoEngine;
 class GameMessagePort;
@@ -104,7 +104,7 @@ private:
   std::thread _cozmoRunnerThread;
 }; // class CozmoAPI
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_CozmoAPI_h__

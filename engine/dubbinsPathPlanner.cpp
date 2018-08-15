@@ -24,7 +24,7 @@
 #define DUBINS_END_RADIUS_MM 50.f
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 DubbinsPlanner::DubbinsPlanner() : IPathPlanner("Dubbins") {}
 

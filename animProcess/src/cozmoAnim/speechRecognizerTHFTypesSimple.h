@@ -30,7 +30,7 @@ extern "C" {
 #include <utility>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class RecogData
 {
@@ -69,7 +69,7 @@ static RecogDataSP MakeRecogDataSP(Args&& ...args)
   return std::shared_ptr<RecogData>(new RecogData(std::forward<Args>(args)...));
 }
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_H_

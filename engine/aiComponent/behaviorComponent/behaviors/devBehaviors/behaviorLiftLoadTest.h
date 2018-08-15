@@ -27,7 +27,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorLiftLoadTest : public ICozmoBehavior
 {

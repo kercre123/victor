@@ -27,6 +27,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
@@ -47,7 +48,7 @@
 
 #define LOG_CHANNEL "WebService"
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 namespace {
 #ifndef SIMULATOR
@@ -767,7 +768,7 @@ static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
   if (query.substr(0, 5) == "proc=")
   {
     struct mg_context* ctx = mg_get_context(conn);
-    Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+    Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
 
     std::string remainder = query.substr(5);
     std::vector<std::string> args;
@@ -868,7 +869,7 @@ static int ProcessStatus(struct mg_connection *conn, void *cbdata)
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace WebService {
 
 WebService::WebService()
@@ -983,6 +984,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
+  
+  _dispatchQueue = Util::Dispatch::Create("WebsocketSender");
 }
 
 
@@ -1174,10 +1177,10 @@ void WebService::Update()
           {
             const auto& moduleName = requestPtr->_param1;
             const auto& idxStr = requestPtr->_param2;
-            size_t idx = std::stoi( idxStr );
+            const size_t idx = std::stoi( idxStr );
 
             auto sendToClient = [idx, moduleName, this](const Json::Value& toSend){
-              // might crash if webservice is somehow destroyed after the subscriber, but only in dev
+              std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
               if( (idx < _webSocketConnections.size())
                  && (_webSocketConnections[idx].subscribedModules.count( moduleName ) > 0) )
               {
@@ -1462,6 +1465,7 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
 void WebService::SendToWebSockets(const std::string& moduleName, const Json::Value& data) const
 {
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   Json::Value payload;
   bool hasAssigned = false; // don't copy payload unless there is >= 1 client for this module
   for( const auto& connData : _webSocketConnections ) {
@@ -1475,12 +1479,13 @@ void WebService::SendToWebSockets(const std::string& moduleName, const Json::Val
     }
   }
 }
-  
+
 bool WebService::IsWebVizClientSubscribed(const std::string& moduleName) const
 {
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   for( const auto& connData : _webSocketConnections ) {
-    if( (moduleName.empty() && !connData.subscribedModules.empty()) // any module subscribed
-        || (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end()) )
+    if( (connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end())
+        || (moduleName.empty() && !connData.subscribedModules.empty()) ) // any module subscribed
     {
       return true;
     }
@@ -1496,7 +1501,7 @@ int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* 
 void WebService::HandleWebSocketsReady(struct mg_connection* conn, void* cbparams)
 {
   struct mg_context* ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
   DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
   that->OnOpenWebSocket( conn );
 }
@@ -1515,7 +1520,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
     {
       if( (dataLen >= 2) && (data[0] == '{') ) {
         struct mg_context* ctx = mg_get_context(conn);
-        Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+        Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
         DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
 
         Json::Reader reader;
@@ -1545,20 +1550,25 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
 void WebService::HandleWebSocketsClose(const struct mg_connection* conn, void* cbparams)
 {
   struct mg_context* ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  Anki::Vector::WebService::WebService* that = static_cast<Anki::Vector::WebService::WebService*>(mg_get_user_data(ctx));
   DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
   that->OnCloseWebSocket( conn );
 }
 
-void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data)
-{
-  // todo: deal with threads if this is used outside dev
 
-  std::stringstream ss;
-  ss << data;
-  std::string str = ss.str();
-  mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
+// This is always called in the main thread (whether we're sending or receiving)
+void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data) const
+{
+  // Dispatch work onto another thread (note we copy 'data' by value here)
+  Util::Dispatch::Async(_dispatchQueue, [conn, data] {
+    std::stringstream ss;
+    ss << data;
+    const std::string& str = ss.str();
+
+    mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
+  });
 }
+
 
 const std::string& WebService::getConsoleVarsTemplate()
 {
@@ -1569,13 +1579,14 @@ void WebService::OnOpenWebSocket(struct mg_connection* conn)
 {
   ASSERT_NAMED(conn != nullptr, "Can't create connection to n");
   // add a connection to the list that applies to all services
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   _webSocketConnections.push_back({});
   _webSocketConnections.back().conn = conn;
 }
 
 void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Value& data)
 {
-  // todo: deal with threads
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
 
   // find connection
   auto it = std::find_if( _webSocketConnections.begin(), _webSocketConnections.end(), [&conn](const auto& perConnData) {
@@ -1585,7 +1596,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
   if( it != _webSocketConnections.end() ) {
     if( !data["type"].isNull() && !data["module"].isNull() ) {
       const std::string& moduleName = data["module"].asString();
-      size_t idx = it - _webSocketConnections.begin();
+      const size_t idx = it - _webSocketConnections.begin();
 
       if( data["type"].asString() == "subscribe" ) {
         it->subscribedModules.insert( moduleName );
@@ -1627,6 +1638,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
 
 void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 {
+  std::lock_guard<std::mutex> lock(s_wsConnectionsMutex);
   // find connection
   auto it = std::find_if( _webSocketConnections.begin(), _webSocketConnections.end(), [&conn](const auto& perConnData) {
     return perConnData.conn == conn;
@@ -1639,13 +1651,13 @@ void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 }
 
 } // namespace WebService
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #else
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace WebService {
 
   WebService::WebService()
@@ -1689,7 +1701,7 @@ namespace WebService {
   }
 
 } // namespace WebService
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_WEBSERVICE_ENABLED

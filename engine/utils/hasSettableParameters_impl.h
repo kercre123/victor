@@ -20,7 +20,7 @@
 #include "engine/externalInterface/externalInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
  
   using GameToEngTag = ExternalInterface::MessageGameToEngineTag;
   
@@ -160,7 +160,7 @@ namespace Cozmo {
     }
   }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Util_HasSettableParameters_Impl_H__

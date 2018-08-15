@@ -25,7 +25,7 @@
 #include "util/string/stringUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Anonymous namespace to hold onto whether we've forced update firmware yet for
 // the robot that we've connected to. Only used in dev builds.

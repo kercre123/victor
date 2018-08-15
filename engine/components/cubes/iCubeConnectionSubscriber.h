@@ -17,15 +17,12 @@
 
 #include "util/logging/logging.h"
 
+#include "clad/types/cubeConnectionTypes.h"
+
 #include <string>
 
 namespace Anki{
-namespace Cozmo{
-
-enum class ECubeConnectionType{
-  Background,
-  Interactable
-};
+namespace Vector{
 
 class ICubeConnectionSubscriber
 {
@@ -39,7 +36,7 @@ public:
   // 1. A new connection is made successfully
   // 2. An existing connection finishes converting either direction BACKGROUND<->INTERACTABLE 
   // 3. Immediately upon subscription if already connected 
-  virtual void ConnectedCallback(ECubeConnectionType type) {}
+  virtual void ConnectedCallback(CubeConnectionType type) {}
 
   // Called when a connection attempt, either BACKGROUND -or- INTERACTABLE fails
   virtual void ConnectionFailedCallback() {}
@@ -62,8 +59,8 @@ public:
   TestCubeConnectionSubscriber(int id) : _id(id) {}
 
   virtual std::string GetCubeConnectionDebugName() const override {return ("TestSubscriber" + std::to_string(_id));};
-  virtual void ConnectedCallback(ECubeConnectionType connectionType) override {
-    if(ECubeConnectionType::Background == connectionType){
+  virtual void ConnectedCallback(CubeConnectionType connectionType) override {
+    if(CubeConnectionType::Background == connectionType){
       PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectedBackground","");
     } else {
       PRINT_NAMED_INFO("CubeConnectionCoordinatorTest.ConnectedInteractable","");
@@ -79,7 +76,7 @@ private:
 
 #endif // ANKI_DEV_CHEATS
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //__Engine_AiComponent_BehaviorComponent_iCubeConnectionSubscriber_H__

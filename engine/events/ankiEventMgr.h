@@ -25,7 +25,7 @@
 #include <functional>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // Base class for the AnkiEventMgr specialized variations
@@ -143,7 +143,7 @@ public:
   }
 }; // class AnkiEventMgr (Mailbox specialization)
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //  __Anki_Cozmo_Basestation_Events_AnkiEventMgr_H__

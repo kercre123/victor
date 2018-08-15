@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

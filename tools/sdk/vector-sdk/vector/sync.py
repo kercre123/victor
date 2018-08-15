@@ -10,6 +10,7 @@ simpler use cases where everything executes synchronously.
 
 __all__ = ['Synchronizer']
 
+import functools
 import logging
 
 import grpc
@@ -42,8 +43,8 @@ class Synchronizer:
             self.remove_pending(self)
         return None
 
-    @classmethod
-    def disable_log(cls, func):
+    @staticmethod
+    def disable_log(func):
         '''
         Use this decorator to disable the automatic debug logging of wrap
 
@@ -57,6 +58,8 @@ class Synchronizer:
         '''
         Decorator to wrap a function for synchronous usage
         '''
+
+        @functools.wraps(func)
         def log_result(func, logger):
             if not hasattr(func, "disable_log"):
                 async def log(*args, **kwargs):
@@ -70,6 +73,7 @@ class Synchronizer:
                 return log
             return func
 
+        @functools.wraps(func)
         def waitable(*args, **kwargs):
             '''
             Either returns an Synchronizer or finishes processing the function depending on if the

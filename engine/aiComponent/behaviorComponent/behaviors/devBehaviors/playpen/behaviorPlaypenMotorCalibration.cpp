@@ -17,7 +17,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 BehaviorPlaypenMotorCalibration::BehaviorPlaypenMotorCalibration(const Json::Value& config)
 : IBehaviorPlaypen(config)

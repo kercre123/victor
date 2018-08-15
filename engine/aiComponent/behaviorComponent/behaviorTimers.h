@@ -20,7 +20,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTimer;
 enum class BehaviorTimerTypes : uint8_t;
@@ -72,7 +72,7 @@ protected:
   bool _hasBeenReset;
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_BehaviorTimers_H__

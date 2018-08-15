@@ -8,9 +8,10 @@
 
 syntax = "proto3";
 
-package Anki.Cozmo.external_interface;
+package Anki.Vector.external_interface;
 
 import "google/api/annotations.proto";
+import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
 import "settings.proto";
@@ -19,13 +20,13 @@ import "shared.proto";
 // The grpc-defined connection between the SDK and Anki's Vector Robot
 service ExternalInterface {
   // Sets the speed and acceleration for Vector's wheel motors
-  rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResult) {}
+  rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResponse) {}
 
   // Requests that Vector play an animation
-  rpc PlayAnimation(PlayAnimationRequest) returns (PlayAnimationResult) {}
+  rpc PlayAnimation(PlayAnimationRequest) returns (PlayAnimationResponse) {}
 
   // Constructs and returns a list of animations
-  rpc ListAnimations(ListAnimationsRequest) returns (ListAnimationsResult) {
+  rpc ListAnimations(ListAnimationsRequest) returns (ListAnimationsResponse) {
     option (google.api.http) = {
       post: "/v1/list_animations",
       body: "*"
@@ -33,16 +34,16 @@ service ExternalInterface {
   }
 
   // Moves the Head
-  rpc MoveHead(MoveHeadRequest) returns (MoveHeadResult) {}
+  rpc MoveHead(MoveHeadRequest) returns (MoveHeadResponse) {}
 
   // Moves the Lift
-  rpc MoveLift(MoveLiftRequest) returns (MoveLiftResult) {}
+  rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
 
   // Drive arc
-  rpc DriveArc(DriveArcRequest) returns (DriveArcResult) {}
+  rpc DriveArc(DriveArcRequest) returns (DriveArcResponse) {}
   
   // Sets LCD to a solid color
-  rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResult) {
+  rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {
     option (google.api.http) = {
       post: "/v1/display_face_image_rgb",
       body: "*"
@@ -50,7 +51,7 @@ service ExternalInterface {
   }
 
   // Current groundwork for a streaming events endpoint
-  rpc EventStream(EventRequest) returns (stream EventResult) {
+  rpc EventStream(EventRequest) returns (stream EventResponse) {
     option (google.api.http) = {
       post: "/v1/event_stream",
       additional_bindings {
@@ -59,60 +60,66 @@ service ExternalInterface {
       body: "*"
     };
   }
-  
-  // Request control from behavior system
-  rpc SDKBehaviorActivation(SDKActivationRequest) returns (SDKActivationResult) {
+
+  // Integrate with and acquire control of Vector's AI system
+  rpc BehaviorControl(stream BehaviorControlRequest) returns (stream BehaviorControlResponse) {
+    // Cannot be used by the REST interface because it does not support stream-to-stream RPCs
+  }
+
+  // Acquire control of Vector's AI system
+  rpc AssumeBehaviorControl(BehaviorControlRequest) returns (stream BehaviorControlResponse) {
+    // REST users should use this api instead of BehaviorControl
     option (google.api.http) = {
-      post: "/v1/sdk_activation",
+      post: "/v1/assume_behavior_control",
       body: "*"
     };
   }
 
   // Meet Victor
-  rpc AppIntent(AppIntentRequest) returns (AppIntentResult) {
+  rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
     option (google.api.http) = {
       post: "/v1/app_intent",
       body: "*"
     };
   }
-  rpc CancelFaceEnrollment(CancelFaceEnrollmentRequest) returns (CancelFaceEnrollmentResult) {
+  rpc CancelFaceEnrollment(CancelFaceEnrollmentRequest) returns (CancelFaceEnrollmentResponse) {
     option (google.api.http) = {
       post: "/v1/cancel_face_enrollment",
       body: "*"
     };
   }
-  rpc RequestEnrolledNames(RequestEnrolledNamesRequest) returns (RequestEnrolledNamesResult) {
+  rpc RequestEnrolledNames(RequestEnrolledNamesRequest) returns (RequestEnrolledNamesResponse) {
     option (google.api.http) = {
       post: "/v1/request_enrolled_names",
       body: "*"
     };
   }
-  rpc UpdateEnrolledFaceByID(UpdateEnrolledFaceByIDRequest) returns (UpdateEnrolledFaceByIDResult) {
+  rpc UpdateEnrolledFaceByID(UpdateEnrolledFaceByIDRequest) returns (UpdateEnrolledFaceByIDResponse) {
     option (google.api.http) = {
       post: "/v1/update_enrolled_face_by_id",
       body: "*"
     };
   }
-  rpc EraseEnrolledFaceByID(EraseEnrolledFaceByIDRequest) returns (EraseEnrolledFaceByIDResult) {
+  rpc EraseEnrolledFaceByID(EraseEnrolledFaceByIDRequest) returns (EraseEnrolledFaceByIDResponse) {
     option (google.api.http) = {
       post: "/v1/erase_enrolled_face_by_id",
       body: "*"
     };
   }
-  rpc EraseAllEnrolledFaces(EraseAllEnrolledFacesRequest) returns (EraseAllEnrolledFacesResult) {
+  rpc EraseAllEnrolledFaces(EraseAllEnrolledFacesRequest) returns (EraseAllEnrolledFacesResponse) {
     option (google.api.http) = {
       post: "/v1/erase_all_enrolled_faces",
       body: "*"
     };
   }
-  rpc SetFaceToEnroll(SetFaceToEnrollRequest) returns (SetFaceToEnrollResult) {
+  rpc SetFaceToEnroll(SetFaceToEnrollRequest) returns (SetFaceToEnrollResponse) {
     option (google.api.http) = {
       post: "/v1/set_face_to_enroll",
       body: "*"
     };
   }
 
-  rpc EnableVisionMode(EnableVisionModeRequest) returns (EnableVisionModeResult) {
+  rpc EnableVisionMode(EnableVisionModeRequest) returns (EnableVisionModeResponse) {
     option (google.api.http) = {
       post: "/v1/enable_vision_mode",
       body: "*"
@@ -127,32 +134,24 @@ service ExternalInterface {
     };
   }
 
-  rpc DriveOffCharger(DriveOffChargerRequest) returns (DriveOffChargerResult) {
+  rpc DriveOffCharger(DriveOffChargerRequest) returns (DriveOffChargerResponse) {
     option (google.api.http) = {
       post: "/v1/drive_off_charger",
       body: "*"
     };
   }
 
-  rpc DriveOnCharger(DriveOnChargerRequest) returns (DriveOnChargerResult) {
+  rpc DriveOnCharger(DriveOnChargerRequest) returns (DriveOnChargerResponse) {
     option (google.api.http) = {
       post: "/v1/drive_on_charger",
       body: "*"
     };
   }
 
-  // TODO: sample rpc, remove once we have more real examples
+  // TODO: remove once app is converted to use event pings
   rpc Pang(Ping) returns (Pong) {
     option (google.api.http) = {
       post: "/v1/pang",
-      body: "*"
-    };
-  }
-
-  // TODO: sample rpc, remove once we have more real examples
-  rpc Bang(Bing) returns (Bong) {
-    option (google.api.http) = {
-      post: "/v1/bang",
       body: "*"
     };
   }
@@ -206,6 +205,7 @@ service ExternalInterface {
       body: "*"
     };
   }
+
   // Request latest attention transfer message (after connection)
   rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
     option (google.api.http) = {
@@ -214,21 +214,21 @@ service ExternalInterface {
     };
   }
 
-  rpc PullSettings(PullSettingsRequest) returns (PullSettingsResponse) {
+  rpc PullJdocs(PullJdocsRequest) returns (PullJdocsResponse) {
     option (google.api.http) = {
-      post: "/v1/pull_settings",
+      post: "/v1/pull_jdocs",
       body: "*"
     };
   }
 
-  rpc PushSettings(PushSettingsRequest) returns (PushSettingsResponse) {
+  rpc PushJdocs(PushJdocsRequest) returns (PushJdocsResponse) {
     option (google.api.http) = {
-      post: "/v1/push_settings",
+      post: "/v1/push_jdocs",
       body: "*"
     };
   }
 
-  rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResult) {
+  rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
     option (google.api.http) = {
       post: "/v1/status_history",
       body: "*"
@@ -242,17 +242,13 @@ service ExternalInterface {
     };
   }
 
-  rpc DriveStraight(DriveStraightRequest) returns (DriveStraightResponse) {
-  }
+  rpc DriveStraight(DriveStraightRequest) returns (DriveStraightResponse) {}
 
-  rpc TurnInPlace(TurnInPlaceRequest) returns (TurnInPlaceResponse) {
-  }
+  rpc TurnInPlace(TurnInPlaceRequest) returns (TurnInPlaceResponse) {}
 
-  rpc SetHeadAngle(SetHeadAngleRequest) returns (SetHeadAngleResponse) {
-  }
+  rpc SetHeadAngle(SetHeadAngleRequest) returns (SetHeadAngleResponse) {}
 
-  rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {
-  }
+  rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {}
 
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
     option (google.api.http) = {
@@ -317,7 +313,13 @@ service ExternalInterface {
       body: "*"
     };
   }
-
+  
+  rpc CubesAvailable(CubesAvailableRequest) returns (CubesAvailableResponse) {
+    option (google.api.http) = {
+      post: "/v1/cubes_available",
+      body: "*"
+    };
+  }
   // Signal a connected cube to flash its lights using the default cube
   // flash animation.
   rpc FlashCubeLights(FlashCubeLightsRequest) returns (FlashCubeLightsResponse) {
@@ -352,4 +354,12 @@ service ExternalInterface {
   // Set each the lights on the currently connected cube based on two
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
+
+  // Request a camera feed from the robot
+  rpc CameraFeed(CameraFeedRequest) returns (stream CameraFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/camera_feed",
+      body: "*"
+    };
+  }
 }

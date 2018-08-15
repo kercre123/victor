@@ -4,15 +4,16 @@ The main robot class for managing the Vector SDK
 Copyright (c) 2018 Anki, Inc.
 '''
 
-__all__ = ['MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE', 'Robot', 'AsyncRobot']
+__all__ = ['Robot', 'AsyncRobot', 'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE']
 
 import asyncio
+import functools
 import logging
 
-from . import (animation, backpack, behavior, connection,
+from . import (animation, backpack, behavior, camera, connection,
                events, exceptions, faces, motors,
                oled_face, photos, proximity, sync, util,
-               world)
+               viewer, world)
 from .messaging import protocol
 
 MODULE_LOGGER = logging.getLogger(__name__)
@@ -27,6 +28,47 @@ MAX_HEAD_ANGLE = util.degrees(45)
 
 
 class Robot:
+    """The Robot object is responsible for managing the state and connections
+    to a Vector, and is typically the entry-point to running the sdk.
+
+    The majority of the robot will not work until it is properly connected
+    to Vector. There are two ways to get connected:
+
+    1. Using :code:`with`: it works just like opening a file, and will close when
+    the :code:`with` block's indentation ends
+
+    .. code-block:: python
+
+        # Create the robot connection
+        with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            # Run your commands (for example play animation)
+            robot.play_animation("anim_blackjack_victorwin_01")
+
+    2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
+    it allows the robot's connection to continue in the context in which it started.
+
+    .. code-block:: python
+
+        # Create a Robot object
+        robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+        # Connect to the Robot
+        robot.connect()
+        # Run your commands (for example play animation)
+        robot.play_animation("anim_blackjack_victorwin_01")
+        # Disconnect from the Robot
+        robot.disconnect()
+
+    :param name: The name of the Vector. Usually something like "Vector-A1B2".
+    :param ip: the ip address that Victor is currently connected to.
+    :param cert_file: The location of the cert file downloaded from the cloud.
+    :param port: the port on which Vector is listening. default=443
+    :param loop: the async loop on which the Vector commands will execute. default=None
+    :param default_logging: Disable default logging. default=False
+    :param behavior_timeout: The time to wait for control of the robot before failing. default=10
+    :param enable_vision_mode: Turn on face detection. default=False
+    :param enable_camera_feed: Turn camera feed on/off. default=True
+    :param show_viewer: Render camera feed on/off. default=False"""
+
     def __init__(self,
                  name: str,
                  ip: str,
@@ -35,43 +77,11 @@ class Robot:
                  loop: asyncio.BaseEventLoop = None,
                  default_logging: bool = True,
                  behavior_timeout: int = 10,
-                 enable_vision_mode: bool = False):
-        """Create a new Robot Object
+                 cache_animation_list: bool = True,
+                 enable_vision_mode: bool = False,
+                 enable_camera_feed: bool = True,
+                 show_viewer: bool = False):
 
-        This object is responsible for managing the state and connections
-        to Vector, and is typically the entry-point to running the sdk.
-
-        The majority of the robot will not work until it is properly connected
-        to Vector. There are two ways to get connected:
-
-        1. Using :func:`with`: it works just like opening a file, and will close when
-        the :func:`with` block's indentation ends
-
-        .. code-block:: python
-
-            with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
-                robot.play_animation("anim_poked_giggle")
-
-        2. Using :func:`connect()` and :func:`disconnect()` to explicitly open and close the connection:
-        it allows the robot's connection to continue in the context in which it started.
-
-        .. code-block:: python
-
-            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
-            robot.connect()
-            robot.play_animation("anim_poked_giggle")
-            robot.disconnect()
-
-        Args:
-            name (str): The name of the Vector. Usually something like "Vector-A1B2".
-            ip (str): the ip address that Victor is currently connected to.
-            cert_file (str): The location of the cert file downloaded from the cloud.
-            port (str): the port on which Vector is listening. default=443
-            loop (:class:`asyncio.BaseEventLoop`): the async loop on which the Vector commands will execute. default=None
-            default_logging (bool): Disable default logging. default=False
-            behavior_timeout (int): The time to wait for control of the robot before failing. default=10
-            enable_vision_mode (bool): Turn on face detection. default=False
-        """
         if default_logging:
             util.setup_basic_logging()
         self.logger = util.get_class_logger(__name__, self)
@@ -79,21 +89,24 @@ class Robot:
         self.is_loop_owner = False
         self._original_loop = None
         self.loop = loop
-        self.conn = connection.Connection(self, name, ':'.join([ip, port]), cert_file)
+        self.conn = connection.Connection(name, ':'.join([ip, port]), cert_file)
         self.events = events.EventHandler()
         # placeholders for components before they exist
-        self._anim = None
-        self._backpack = None
-        self._behavior = None
-        self._faces = None
-        self._motors = None
-        self._oled = None
-        self._photos = None
-        self._proximity = None
-        self._world = None
+        self._anim: animation.AnimationComponent = None
+        self._backpack: backpack.BackpackComponent = None
+        self._behavior: behavior.BehaviorComponent = None
+        self._camera: camera.CameraComponent = None
+        self._faces: faces.FaceComponent = None
+        self._motors: motors.MotorComponent = None
+        self._oled: oled_face.OledComponent = None
+        self._photos: photos.PhotographComponent = None
+        self._proximity: proximity.ProximityComponent = None
+        self._viewer: viewer.ViewerComponent = None
+        self._world: world.World = None
 
         self.behavior_timeout = behavior_timeout
         self.enable_vision_mode = enable_vision_mode
+        self.cache_animation_list = cache_animation_list
         # Robot state/sensor data
         self._pose: util.Pose = None
         self._pose_angle_rad: float = None
@@ -112,64 +125,97 @@ class Robot:
         self._status: float = None
         self.pending = []
 
+        self._enable_camera_feed = enable_camera_feed
+        self._show_viewer = show_viewer
+
     @property
-    def robot(self):
+    def robot(self) -> 'Robot':
         return self
 
     @property
-    def anim(self):
+    def anim(self) -> animation.AnimationComponent:
         if self._anim is None:
             raise exceptions.VectorNotReadyException("AnimationComponent is not yet initialized")
         return self._anim
 
     @property
-    def backpack(self):
+    def backpack(self) -> backpack.BackpackComponent:
         if self._backpack is None:
             raise exceptions.VectorNotReadyException("BackpackComponent is not yet initialized")
         return self._backpack
 
     @property
-    def behavior(self):
+    def behavior(self) -> behavior.BehaviorComponent:
         return self._behavior
 
     @property
-    def faces(self):
+    def camera(self) -> camera.CameraComponent:
+        """:class:`vector.camera.CameraComponent`: The camera instance used to control
+        Vector's camera feed
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+                image = Image.fromarray(robot.camera.latest_image)
+                image.show()
+        """
+        if self._camera is None:
+            raise exceptions.VectorNotReadyException("CameraComponent is not yet initialized")
+        return self._camera
+
+    @property
+    def faces(self) -> faces.FaceComponent:
         if self._faces is None:
             raise exceptions.VectorNotReadyException("FaceComponent is not yet initialized")
         return self._faces
 
     @property
-    def motors(self):
+    def motors(self) -> motors.MotorComponent:
         if self._motors is None:
             raise exceptions.VectorNotReadyException("MotorComponent is not yet initialized")
         return self._motors
 
     @property
-    def oled(self):
+    def oled(self) -> oled_face.OledComponent:
         if self._oled is None:
             raise exceptions.VectorNotReadyException("OledComponent is not yet initialized")
         return self._oled
 
     @property
-    def photos(self):
+    def photos(self) -> photos.PhotographComponent:
         if self._photos is None:
             raise exceptions.VectorNotReadyException("PhotographyComponent is not yet initialized")
         return self._photos
 
     @property
-    def proximity(self):
+    def proximity(self) -> proximity.ProximityComponent:
         '''Component containing state related to object proximity detection
         '''
         return self._proximity
 
     @property
-    def world(self):
+    def viewer(self) -> viewer.ViewerComponent:
+        """:class:`vector.viewer.ViewerComponent`: The viewer instance used to render
+        Vector's camera feed
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
+                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.viewer.stop_video()
+        """
+        if self._viewer is None:
+            raise exceptions.VectorNotReadyException("ViewerComponent is not yet initialized")
+        return self._viewer
+
+    @property
+    def world(self) -> world.World:
         if self._world is None:
             raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
         return self._world
 
     @property
-    def pose(self):
+    def pose(self) -> util.Pose:
         ''':class:`vector.util.Pose`: The current pose (position and orientation) of vector'''
         return self._pose
 
@@ -242,6 +288,28 @@ class Robot:
     def status(self):
         return self._status
 
+    @property
+    def enable_camera_feed(self) -> bool:
+        """The camera feed enabled/disabled
+
+        :getter: Returns whether the camera feed is enabled
+        :setter: Enable/disable the camera feeed
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", enable_camera_feed=True) as robot:
+                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.enable_camera_feed = False
+                robot.loop.run_until_complete(utilities.delay_close(5))
+        """
+        return self._enable_camera_feed
+
+    @enable_camera_feed.setter
+    def enable_camera_feed(self, enable) -> None:
+        self._enable_camera_feed = enable
+        if self.enable_camera_feed:
+            self.camera.init_camera_feed()
+
     # Unpack streamed data to robot's internal properties
     def _unpack_robot_state(self, _, msg):
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
@@ -264,7 +332,19 @@ class Robot:
         self._status = msg.status
         self._proximity.on_proximity_update(msg.prox_data)
 
-    def connect(self, timeout=10):
+    def connect(self, timeout: int = 10) -> None:
+        """Start the connection to Vector
+
+        .. code-block:: python
+
+            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot.connect()
+            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.disconnect()
+
+        :param timeout: The time to allow for a connection before a
+            :class:`vector.exceptions.VectorTimeoutException` is raised.
+        """
         if self.loop is None:
             self.logger.debug("Creating asyncio loop")
             self.is_loop_owner = True
@@ -272,20 +352,35 @@ class Robot:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
 
-        self.conn.connect(timeout=timeout)
-
+        self.conn.connect(self.loop, timeout=timeout)
         self.events.start(self.conn, self.loop)
 
         # Initialize components
         self._anim = animation.AnimationComponent(self)
         self._backpack = backpack.BackpackComponent(self)
         self._behavior = behavior.BehaviorComponent(self)
+        self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
         self._motors = motors.MotorComponent(self)
         self._oled = oled_face.OledComponent(self)
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
+        self._viewer = viewer.ViewerComponent(self)
         self._world = world.World(self)
+
+        if self.cache_animation_list:
+            # Load animations so they are ready to play when requested
+            anim_request = self._anim.load_animation_list()
+            if isinstance(anim_request, sync.Synchronizer):
+                anim_request.wait_for_completed()
+
+        # Start camera feed
+        if self.enable_camera_feed:
+            self.camera.init_camera_feed()
+
+        # Start rendering camera feed
+        if self._show_viewer:
+            self.viewer.show_video()
 
         # Enable face detection, to allow Vector to add faces to its world view
         self._faces.enable_vision_mode(enable=self.enable_vision_mode)
@@ -320,8 +415,17 @@ class Robot:
         self.events.subscribe("robot_observed_object",
                               self.world.robot_observed_object)
 
-    def disconnect(self, wait_for_tasks=True):
-        if self.is_async and wait_for_tasks:
+    def disconnect(self) -> None:
+        """Close the connection with Vector
+
+        .. code-block:: python
+
+            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot.connect()
+            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.disconnect()
+        """
+        if self.is_async:
             for task in self.pending:
                 task.wait_for_completed()
 
@@ -329,8 +433,13 @@ class Robot:
         if isinstance(vision_mode, sync.Synchronizer):
             vision_mode.wait_for_completed()
 
+        # Stop rendering video
+        self.viewer.stop_video()
+        # Shutdown camera feed
+        self.camera.close_camera_feed()
+
         self.events.close()
-        self.loop.run_until_complete(self.conn.close())
+        self.conn.close()
         if self.is_loop_owner:
             try:
                 self.loop.close()
@@ -347,34 +456,49 @@ class Robot:
         self.disconnect()
 
     @sync.Synchronizer.wrap
-    async def get_battery_state(self):
+    async def get_battery_state(self) -> protocol.BatteryStateResponse:
+        """Check the current state of the battery.
+
+        .. code-block:: python
+
+            battery_state = robot.get_battery_state()
+        """
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.interface.BatteryState(get_battery_state_request)
 
     @sync.Synchronizer.wrap
-    async def get_version_state(self):
+    async def get_version_state(self) -> protocol.VersionStateResponse:
+        """Get the versioning information of the Robot
+
+        .. code-block:: python
+
+            version_state = robot.get_version_state()
+        """
         get_version_state_request = protocol.VersionStateRequest()
         return await self.conn.interface.VersionState(get_version_state_request)
 
     @sync.Synchronizer.wrap
-    async def get_network_state(self):
+    async def get_network_state(self) -> protocol.NetworkStateResponse:
+        """Get the network information of the Robot
+
+        .. code-block:: python
+
+            network_state = robot.get_version_state()
+        """
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.interface.NetworkState(get_network_state_request)
 
     @sync.Synchronizer.wrap
-    async def say_text(self, text, use_vector_voice=True, duration_scalar=1.0):
+    async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         '''Have Vector say text!
 
-        Args:
-            text (string): The words for Vector to say.
-            use_vector_voice (bool): Whether to use Vector's robot voice
+        :param text: The words for Vector to say.
+        :param use_vector_voice: Whether to use Vector's robot voice
                 (otherwise, he uses a generic human male voice).
-            duration_scalar (float): Adjust the relative duration of the
+        :param duration_scalar: Adjust the relative duration of the
                 generated text to speech audio.
 
-        Returns:
-            A :class:`vector.messaging.messages_pb2.SayTextResponse` object that
-            provides the status and utterance state
+        :return: object that provides the status and utterance state
         '''
         say_text_request = protocol.SayTextRequest(text=text,
                                                    use_vector_voice=use_vector_voice,
@@ -383,6 +507,44 @@ class Robot:
 
 
 class AsyncRobot(Robot):
+    """The AsyncRobot object is just like the Robot object, but allows multiple commands
+    to be executed at the same time. To achieve this, all function calls also
+    return a :class:`sync.Synchronizer`
+
+    1. Using :code:`with`: it works just like opening a file, and will close when
+    the :code:`with` block's indentation ends
+
+    .. code-block:: python
+
+        # Create the robot connection
+        with AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            # Run your commands (for example play animation)
+            robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+
+    2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
+    it allows the robot's connection to continue in the context in which it started.
+
+    .. code-block:: python
+
+        # Create a Robot object
+        robot = AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+        # Connect to the Robot
+        robot.connect()
+        # Run your commands (for example play animation)
+        robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+        # Disconnect from the Robot
+        robot.disconnect()
+
+    :param name: The name of the Vector. Usually something like "Vector-A1B2".
+    :param ip: the ip address that Victor is currently connected to.
+    :param cert_file: The location of the cert file downloaded from the cloud.
+    :param port: the port on which Vector is listening. default=443
+    :param loop: the async loop on which the Vector commands will execute. default=None
+    :param default_logging: Disable default logging. default=False
+    :param behavior_timeout: The time to wait for control of the robot before failing. default=10
+    :param enable_vision_mode: Turn on face detection. default=False"""
+
+    @functools.wraps(Robot.__init__)
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs)
         self.is_async = True

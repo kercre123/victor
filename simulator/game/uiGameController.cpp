@@ -27,7 +27,7 @@
 #define LOG_CHANNEL "Keyboard"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
       // Private members:
       namespace {
@@ -2001,6 +2001,12 @@ namespace Anki {
       _touchSensorTouchedField->setSFBool(touched);
     }
     
+    void UiGameController::StartFreeplayMode()
+    {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("DevDispatchAfterShake", "1")));
+    }
+    
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
     {      
       SetNodePose(_robotNode, newPose);
@@ -2219,5 +2225,5 @@ namespace Anki {
       size_t numBytes = message.Pack(buf, message.Size());
       _physicsControllerClient.Send((char*)buf, numBytes);
     }
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

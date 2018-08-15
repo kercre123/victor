@@ -17,7 +17,7 @@
 #include "clad/types/imageTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace ExternalInterface {
 struct RobotObservedObject;

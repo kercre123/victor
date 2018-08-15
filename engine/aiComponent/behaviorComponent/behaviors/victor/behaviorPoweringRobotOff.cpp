@@ -14,17 +14,18 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPoweringRobotOff.h"
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimePowerButtonPressed.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/externalInterface/externalInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
 const char* kPowerButtonActivationKey = "powerButtonHeldToActivate_ms";
-const char* kStartPowerOffKey         = "powerButtonHeldToPowerOffEyes_ms";
 const char* kPowerOnAnimName          = "powerOnAnimName";
 const char* kPowerOffAnimName         = "powerOffAnimName";
 }
@@ -39,13 +40,12 @@ BehaviorPoweringRobotOff::InstanceConfig::InstanceConfig(const Json::Value& conf
   const auto timeActivateBehavior = JsonTools::ParseUInt32(config, kPowerButtonActivationKey, debugName + kPowerButtonActivationKey);
   activateBehaviorCondition = std::shared_ptr<IBEICondition>(new ConditionTimePowerButtonPressed(timeActivateBehavior, "BehaviorPoweringRobotOff"));
 
-  const auto timeStartPowerOff = JsonTools::ParseUInt32(config, kStartPowerOffKey, debugName + kStartPowerOffKey);
-  startEyeAnimationCondition = std::shared_ptr<IBEICondition>(new ConditionTimePowerButtonPressed(timeStartPowerOff, "BehaviorPoweringRobotOff"));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPoweringRobotOff::DynamicVariables::DynamicVariables()
 : timeLastPowerAnimStopped_ms(0)
+, shouldStartPowerOffAnimaiton(false)
 {
 }
 
@@ -54,7 +54,7 @@ BehaviorPoweringRobotOff::BehaviorPoweringRobotOff(const Json::Value& config)
 : ICozmoBehavior(config)
 , _iConfig(config)
 {
-
+  SubscribeToTags({RobotInterface::RobotToEngineTag::startShutdownAnim});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,7 +67,6 @@ BehaviorPoweringRobotOff::~BehaviorPoweringRobotOff()
 void BehaviorPoweringRobotOff::InitBehavior()
 {
   _iConfig.activateBehaviorCondition->Init(GetBEI());
-  _iConfig.startEyeAnimationCondition->Init(GetBEI());
 }
 
 
@@ -97,7 +96,6 @@ void BehaviorPoweringRobotOff::GetBehaviorJsonKeys(std::set<const char*>& expect
   const char* list[] = {
     kPowerOnAnimName,
     kPowerOffAnimName,
-    kStartPowerOffKey,
     kPowerButtonActivationKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
@@ -108,7 +106,6 @@ void BehaviorPoweringRobotOff::GetBehaviorJsonKeys(std::set<const char*>& expect
 void BehaviorPoweringRobotOff::OnBehaviorEnteredActivatableScope()
 {
   _iConfig.activateBehaviorCondition->SetActive(GetBEI(), true);
-  _iConfig.startEyeAnimationCondition->SetActive(GetBEI(), true);
 }
 
 
@@ -127,13 +124,12 @@ void BehaviorPoweringRobotOff::BehaviorUpdate()
     return;
   }
 
-
-  const auto shouldBePoweringOff = _iConfig.startEyeAnimationCondition->AreConditionsMet(GetBEI());
+  _dVars.shouldStartPowerOffAnimaiton &= GetBEI().GetRobotInfo().IsPowerButtonPressed();
   const bool wasPowerOffLastAnimPlayed = _dVars.lastAnimPlayedName == _iConfig.powerOffAnimName;
   const bool wasPowerOnLastAnimPlayed = _dVars.lastAnimPlayedName == _iConfig.powerOnAnimName;
 
   // Don't do anything until the power button has been held down long enough to start powering down
-  if(!shouldBePoweringOff &&
+  if(!_dVars.shouldStartPowerOffAnimaiton &&
      _dVars.lastAnimPlayedName.empty()){
     if(_iConfig.activateBehaviorCondition->AreConditionsMet(GetBEI())){
       return;
@@ -143,7 +139,7 @@ void BehaviorPoweringRobotOff::BehaviorUpdate()
     }
   }
   
-  if(shouldBePoweringOff &&
+  if(_dVars.shouldStartPowerOffAnimaiton &&
      (wasPowerOnLastAnimPlayed || _dVars.lastAnimPlayedName.empty())){
     if(IsControlDelegated()){
       CancelDelegates(false);
@@ -151,7 +147,7 @@ void BehaviorPoweringRobotOff::BehaviorUpdate()
     }else{
       TransitionToPoweringOff();
     }
-  }else if(!shouldBePoweringOff && wasPowerOffLastAnimPlayed){
+  }else if(!_dVars.shouldStartPowerOffAnimaiton && wasPowerOffLastAnimPlayed){
     if(IsControlDelegated()){
       CancelDelegates(false);
       _dVars.waitingForAnimationCallback = true;
@@ -162,7 +158,7 @@ void BehaviorPoweringRobotOff::BehaviorUpdate()
   
   // If user released power button see if eyes are restored and normal behavior should continue
   if(!IsControlDelegated() &&
-     !shouldBePoweringOff &&
+     !_dVars.shouldStartPowerOffAnimaiton &&
      wasPowerOnLastAnimPlayed){
     CancelSelf();
   }
@@ -175,7 +171,14 @@ void BehaviorPoweringRobotOff::BehaviorUpdate()
 void BehaviorPoweringRobotOff::OnBehaviorLeftActivatableScope()
 {
   _iConfig.activateBehaviorCondition->SetActive(GetBEI(), false);
-  _iConfig.startEyeAnimationCondition->SetActive(GetBEI(), false);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPoweringRobotOff::AlwaysHandleInScope(const RobotToEngineEvent& event)  {
+  if(event.GetData().GetTag() == RobotInterface::RobotToEngineTag::startShutdownAnim){
+    _dVars.shouldStartPowerOffAnimaiton = true;
+  }
 }
 
 

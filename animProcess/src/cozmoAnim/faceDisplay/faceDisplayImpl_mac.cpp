@@ -26,7 +26,7 @@
 extern webots::Supervisor animSupervisor;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace { // "Private members"
 
@@ -105,5 +105,5 @@ namespace { // "Private members"
     // not supported for mac
   }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

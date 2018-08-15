@@ -30,7 +30,7 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 using DevLoggingClock = Util::RollingFileLogger::ClockType;
 
@@ -107,7 +107,7 @@ private:
   void CreateAppRunFile(const std::string& appRunTimeString, const std::string& appRunId);
 };
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 

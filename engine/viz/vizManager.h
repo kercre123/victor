@@ -44,7 +44,7 @@ namespace Anki {
     class TrackedFace;
   }
   
-  namespace Cozmo {
+  namespace Vector {
 
   namespace VizInterface {
   class MessageViz;
@@ -365,7 +365,7 @@ namespace Anki {
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle);
       
-      void SendCameraParams(const CameraParams& params);
+      void SendCameraParams(const Vision::CameraParams& params);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
       /*
@@ -775,7 +775,7 @@ namespace Anki {
       }
       DrawPoly(polyID, newCircle, color);
     }
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

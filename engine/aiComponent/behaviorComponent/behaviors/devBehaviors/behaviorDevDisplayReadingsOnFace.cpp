@@ -18,7 +18,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 static const float kMagicNumberSpaceBetweenText = 20.f;
@@ -162,6 +162,6 @@ void BehaviorDevDisplayReadingsOnFace::AlwaysHandleInScope(const EngineToGameEve
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

@@ -30,7 +30,7 @@
 #endif
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace Robot {
 
       // "Private Member Variables"
@@ -320,13 +320,10 @@ namespace Anki {
         PickAndPlaceController::Update();
         DockingController::Update();
 
-
-
         // Manage the various motion controllers:
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
-
 
         //////////////////////////////////////////////////////////////
         // Power management
@@ -393,5 +390,5 @@ namespace Anki {
       } // Robot::step_MainExecution()
 
     } // namespace Robot
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

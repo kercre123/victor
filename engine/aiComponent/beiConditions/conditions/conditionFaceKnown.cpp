@@ -17,7 +17,7 @@
 #include "engine/faceWorld.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace{
   const char* const kMaxFaceDistKey    = "maxFaceDist_mm";
@@ -76,5 +76,5 @@ bool ConditionFaceKnown::AreConditionsMetInternal(BehaviorExternalInterface& beh
   return ret;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

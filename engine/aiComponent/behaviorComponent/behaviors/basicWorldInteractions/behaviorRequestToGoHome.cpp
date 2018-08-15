@@ -28,7 +28,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kNumRequestsKey                = "numRequests";
@@ -303,5 +303,5 @@ void BehaviorRequestToGoHome::LoadConfig(const Json::Value& config)
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

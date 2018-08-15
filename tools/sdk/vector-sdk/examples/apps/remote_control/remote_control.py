@@ -94,16 +94,16 @@ class RemoteControlVector:
             if anim_name not in bad_anim_names:
                 self.anim_names.append(anim_name)
 
-        default_anims_for_keys = ["anim_bored_01",  # 0
-                                  "anim_poked_giggle",  # 1
+        default_anims_for_keys = ["anim_turn_left_01",  # 0
+                                  "anim_blackjack_victorwin_01",  # 1
                                   "anim_pounce_success_02",  # 2
-                                  "anim_bored_event_02",  # 3
-                                  "anim_bored_event_03",  # 4
-                                  "anim_petdetection_cat_01",  # 5
-                                  "anim_petdetection_dog_03",  # 6
+                                  "vig_alwayshelpful_photo",  # 3
+                                  "proto_loco_turn180_01",  # 4
+                                  "anim_wakeword_groggyeyes_listenloop_01",  # 5
+                                  "anim_vc_refuse_repair_01",  # 6
                                   "anim_reacttoface_unidentified_02",  # 7
-                                  "anim_upgrade_reaction_lift_01",  # 8
-                                  "anim_speedtap_wingame_intensity02_01"]  # 9
+                                  "anim_vc_reaction_whatwasthat_01",  # 8
+                                  "anim_lookatdvice_getout"]  # 9
 
         self.anim_index_for_key = [0] * 10
         kI = 0

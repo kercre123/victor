@@ -44,7 +44,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 
 // when the robot is positioned such that its front two cliff
@@ -128,7 +128,7 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTr
 {
   if(msg.treadsState==OffTreadsState::OnTreads) {
     const auto* featureGate = _robot->GetContext()->GetFeatureGate();
-    const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+    const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo);
     if(!inPRDemo) {
       _habitatBelief = HabitatBeliefState::Unknown;
       _detectedWhiteFromCliffs = false;
@@ -184,7 +184,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
 {
 
   const auto* featureGate = _robot->GetContext()->GetFeatureGate();
-  const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::PRDemo);
+  const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo);
   if(inPRDemo) {
     if( _habitatBelief != HabitatBeliefState::NotInHabitat ) {
       SetBelief(HabitatBeliefState::NotInHabitat, "FeatureGate");
@@ -312,7 +312,7 @@ void HabitatDetectorComponent::SendDataToWebViz() const
   const auto* context = _robot->GetContext();
   if (context != nullptr) {
     auto* webService = context->GetWebService();
-    if (webService!= nullptr) {
+    if (webService!= nullptr && webService->IsWebVizClientSubscribed(kWebVizHabitatModuleName)) {
       _toSendJson["habitatState"] = EnumToString(_habitatBelief);
       _toSendJson["stopOnWhiteEnabled"] = _robot->GetCliffSensorComponent().IsStopOnWhiteEnabled() ? "yes" : "no";
       webService->SendToWebViz(kWebVizHabitatModuleName, _toSendJson);

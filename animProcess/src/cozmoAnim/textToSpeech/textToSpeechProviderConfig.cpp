@@ -28,6 +28,11 @@
 #define TTS_DEFAULT_PITCH      100
 #define TTS_LEADINGSILENCE_MS  50
 #define TTS_TRAILINGSILENCE_MS 50
+#define TTS_PAUSEPUNCTUATION_MS 0
+#define TTS_PAUSESEMICOLON_MS   0
+#define TTS_PAUSECOMMA_MS       0
+#define TTS_PAUSEBRACKET_MS     0
+#define TTS_PAUSESPELLING_MS    0
 
 // Configuration keys
 #define TTS_VOICE_KEY   "voice"
@@ -42,20 +47,27 @@
 #define TTS_RANGEMAX_KEY      "rangeMax"
 
 // Console variables
-#if REMOTE_CONSOLE_ENABLED
+#define CONSOLE_GROUP "TextToSpeech"
 
-#define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
+#if REMOTE_CONSOLE_ENABLED
 
 namespace {
   CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, 100, 30, 300);
   CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
   CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
+  CONSOLE_VAR_RANGED(u32, kLeadingSilence_ms, CONSOLE_GROUP, TTS_LEADINGSILENCE_MS, 0, 5000);
+  CONSOLE_VAR_RANGED(u32, kTrailingSilence_ms, CONSOLE_GROUP, TTS_TRAILINGSILENCE_MS, 0, 5000);
+  CONSOLE_VAR_RANGED(u32, kPausePunctuation_ms, CONSOLE_GROUP, TTS_PAUSEPUNCTUATION_MS, 0, 5000);
+  CONSOLE_VAR_RANGED(u32, kPauseSemicolon_ms, CONSOLE_GROUP, TTS_PAUSESEMICOLON_MS, 0, 5000);
+  CONSOLE_VAR_RANGED(u32, kPauseComma_ms, CONSOLE_GROUP, TTS_PAUSECOMMA_MS, 0, 5000);
+  CONSOLE_VAR_RANGED(u32, kPauseBracket_ms, CONSOLE_GROUP, TTS_PAUSEBRACKET_MS, 0, 5000);
+  CONSOLE_VAR_RANGED(u32, kPauseSpelling_ms, CONSOLE_GROUP, TTS_PAUSESPELLING_MS, 0, 5000);
 }
 
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace TextToSpeech {
 
 TextToSpeechProviderConfig::TextToSpeechProviderConfig(const std::string & language,
@@ -124,12 +136,65 @@ int TextToSpeechProviderConfig::GetPitch() const
 
 int TextToSpeechProviderConfig::GetLeadingSilence_ms() const
 {
+#if REMOTE_CONSOLE_ENABLED
+  return kLeadingSilence_ms;
+#else
   return TTS_LEADINGSILENCE_MS;
+#endif
 }
 
 int TextToSpeechProviderConfig::GetTrailingSilence_ms() const
 {
+#if REMOTE_CONSOLE_ENABLED
+  return kTrailingSilence_ms;
+#else
   return TTS_TRAILINGSILENCE_MS;
+#endif
+}
+
+int TextToSpeechProviderConfig::GetPausePunctuation_ms() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kPausePunctuation_ms;
+#else
+  return TTS_PAUSEPUNCTUATION_MS;
+#endif
+}
+
+int TextToSpeechProviderConfig::GetPauseSemicolon_ms() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kPauseSemicolon_ms;
+#else
+  return TTS_PAUSESEMICOLON_MS;
+#endif
+}
+
+int TextToSpeechProviderConfig::GetPauseComma_ms() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kPauseComma_ms;
+#else
+  return TTS_PAUSECOMMA_MS;
+#endif
+}
+
+int TextToSpeechProviderConfig::GetPauseBracket_ms() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kPauseBracket_ms;
+#else
+  return TTS_PAUSEBRACKET_MS;
+#endif
+}
+
+int TextToSpeechProviderConfig::GetPauseSpelling_ms() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kPauseSpelling_ms;
+#else
+  return TTS_PAUSESPELLING_MS;
+#endif
 }
 
 int TextToSpeechProviderConfig::GetSpeed(Anki::Util::RandomGenerator * rng, size_t textLength) const
@@ -161,5 +226,5 @@ TextToSpeechProviderConfig::ConfigTrait::ConfigTrait(const Json::Value & json)
 }
 
 } // end namespace TextToSpeech
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

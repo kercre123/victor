@@ -34,7 +34,7 @@
 #define LOG_CHANNEL "CameraService"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
 
     namespace { // "Private members"
       struct anki_camera_handle* _camera = nullptr;
@@ -311,5 +311,5 @@ namespace Anki {
       int rc = camera_frame_release(_camera, imageID);
       return (rc == 0);
     }
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki

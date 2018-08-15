@@ -21,6 +21,20 @@ void ImageBrightnessHistogram::Reset()
   std::swap(*this, emptyHist);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImageBrightnessHistogram::IncrementBin(u8 bin)
+{
+  ++(_counts[bin]);
+  ++_totalCount;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImageBrightnessHistogram::IncrementBin(u8 bin, s32 byAmount)
+{
+  _counts[bin] += byAmount;
+  _totalCount  += byAmount;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImageBrightnessHistogram::FillFromImage(const Image& img, s32 subSample, TransformFcn transformFcn)
 {

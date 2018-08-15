@@ -23,7 +23,7 @@
 #define ARCHIVE_OLD_LOGS 1
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   static const std::string _kLogTextFileName = "mfgData";
   static const std::string _kLogRootDirName = "factory_test_logs";
@@ -799,5 +799,5 @@ namespace Cozmo {
     return std::string(buf);
   }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

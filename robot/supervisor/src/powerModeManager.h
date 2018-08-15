@@ -17,7 +17,7 @@
 #include "coretech/common/shared/types.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     namespace PowerModeManager {
       
       void EnableActiveMode(bool enable, bool calibOnEnable);
@@ -26,7 +26,7 @@ namespace Anki {
       bool IsActiveModeEnabled();
       
     } // namespace PowerModeManager
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif // COZMO_POWER_MODE_MANAGER_H_

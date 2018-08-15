@@ -15,7 +15,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/movementComponent.h"
@@ -25,11 +24,11 @@
 #include "engine/externalInterface/gatewayInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
-const char* const kGoHomeBehaviorKey = "goHomeBehavior";
+const char* const kFindAndGoToHomeBehaviorKey = "findAndGoToHomeBehavior";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -48,7 +47,7 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
 {
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   _iConfig.driveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey, debugName);
-  _iConfig.goHomeBehaviorStr = JsonTools::ParseString(config, kGoHomeBehaviorKey, debugName);
+  _iConfig.findAndGoToHomeBehaviorStr = JsonTools::ParseString(config, kFindAndGoToHomeBehaviorKey, debugName);
 
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction,
@@ -82,7 +81,7 @@ void BehaviorSDKInterface::GetBehaviorOperationModifiers(BehaviorOperationModifi
 void BehaviorSDKInterface::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.driveOffChargerBehavior.get());
-  delegates.insert(_iConfig.goHomeBehavior.get());
+  delegates.insert(_iConfig.findAndGoToHomeBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -93,9 +92,9 @@ void BehaviorSDKInterface::InitBehavior()
   DEV_ASSERT(_iConfig.driveOffChargerBehavior != nullptr,
              "BehaviorFindFaces.InitBehavior.NullDriveOffChargerBehavior");
 
-  _iConfig.goHomeBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.goHomeBehaviorStr));
-  DEV_ASSERT(_iConfig.goHomeBehavior != nullptr,
-             "BehaviorFindFaces.InitBehavior.NullGoHomeBehavior");
+  _iConfig.findAndGoToHomeBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.findAndGoToHomeBehaviorStr));
+  DEV_ASSERT(_iConfig.findAndGoToHomeBehavior != nullptr,
+             "BehaviorFindFaces.InitBehavior.NullFindAndGoToHomeBehavior");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,7 +102,7 @@ void BehaviorSDKInterface::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
 {
   const char* list[] = {
     kDriveOffChargerBehaviorKey,
-    kGoHomeBehaviorKey,
+    kFindAndGoToHomeBehaviorKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -160,9 +159,9 @@ void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
   SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
-    driveOffChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResult) );
+    auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
+    driveOffChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResponse) );
   }
 }  
 
@@ -170,9 +169,9 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
   SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
-    driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+    auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
+    driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
   }
 }
 
@@ -235,7 +234,7 @@ void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
 
     case RobotActionType::PLAY_ANIMATION:
     {
-      auto* response = new external_interface::PlayAnimationResult;
+      auto* response = new external_interface::PlayAnimationResponse;
       response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
       gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
     }
@@ -274,16 +273,16 @@ void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::Driv
   // If we got this far, we failed to activate the requested behavior.
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOffChargerResult = new external_interface::DriveOffChargerResult;
-    driveOffChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResult) );
+    auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
+    driveOffChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResponse) );
   }
 }
 
-// Delegate to GoHome
+// Delegate to FindAndGoToHome
 void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest) {
-  if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
-    if (DelegateIfInControl(_iConfig.goHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
+  if (_iConfig.findAndGoToHomeBehavior->WantsToBeActivated()) {
+    if (DelegateIfInControl(_iConfig.findAndGoToHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
       SetAllowExternalMovementCommands(false);
       return;
     }
@@ -292,10 +291,10 @@ void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::Drive
   // If we got this far, we failed to activate the requested behavior.
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOnChargerResult = new external_interface::DriveOnChargerResult;
-    driveOnChargerResult->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResult) );
+    auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
+    driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
   }
 }
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

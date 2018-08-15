@@ -68,7 +68,7 @@ class DataPlatform;
 }
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declarations:
 class AppCubeConnectionSubscriber;
@@ -595,6 +595,8 @@ public:
   RobotEventHandler& GetRobotEventHandler();
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+  void SetSDKRequestingImage(bool requestingImage) { _sdkRequestingImage = requestingImage; }
+  const bool GetSDKRequestingImage() const { return _sdkRequestingImage; }
 
   void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
   const u32 GetLastSentImageID() const { return _lastSentImageID; }
@@ -721,6 +723,7 @@ protected:
   bool               _isCliffReactionDisabled   = false;
   bool               _gotStateMsgAfterRobotSync = false;
   u32                _lastStatusFlags           = 0;
+  bool               _sdkRequestingImage        = false;
 
   OffTreadsState     _offTreadsState;
   OffTreadsState     _awaitingConfirmationTreadState;
@@ -735,6 +738,9 @@ protected:
   AccelData        _robotAccelFiltered; // low-pass filtered robot accelerometer data (for each axis)
   float            _robotImuTemperature_degC = 0.f;
 
+  // Whether or not we have sent the engine is fully loaded message
+  bool _sentEngineLoadedMsg = false;
+  
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
   // the public function SetNewPose()
@@ -839,7 +845,7 @@ inline bool Robot::IsLocalized() const {
   return _isLocalized;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_ROBOT_H

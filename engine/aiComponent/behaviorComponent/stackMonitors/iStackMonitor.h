@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorExternalInterface;
 class BehaviorStack;
@@ -33,7 +33,7 @@ public:
                                const BehaviorStack* stackComponent ) = 0;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_StackMonitors_IStackMonitor_H__

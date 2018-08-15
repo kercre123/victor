@@ -24,9 +24,9 @@
 
 namespace Anki {
   
-  namespace Cozmo {
+  namespace Vector {
     
-    class MarkerlessObject : public ObservableObject // Note: Cozmo:: not Vision::
+    class MarkerlessObject : public ObservableObject // Note: Vector:: not Vision::
     {
     public:
       
@@ -81,7 +81,7 @@ namespace Anki {
       return new MarkerlessObject(this->_type);
     }
     
-  } // namespace Cozmo
+  } // namespace Vector
   
 } // namespace Anki
 

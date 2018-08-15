@@ -31,7 +31,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 using namespace AudioUtil;
@@ -220,5 +220,5 @@ void AudioPlaybackSystem::OnAudioPlaybackEnd()
 }
 
 } // Audio
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -36,7 +36,7 @@
 #include "util/random/rejectionSamplerHelper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* const kMinSearchRadiusKey = "minSearchRadius_m";
@@ -555,7 +555,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
   retPoses.reserve( kNumProxPoses + kNumPositionsForSearch*kNumAnglesAtPose );
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto  memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploring.SampleVisitLocations.NeedMemoryMap" );
   
   const ObservableObject* charger = GetCharger();
@@ -599,7 +599,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
+void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INavMap> memoryMap,
                                                        bool tooFarFromCharger,
                                                        bool chargerEqualsRobot,
                                                        const Point2f& chargerPos,
@@ -694,7 +694,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
   }
 }
   
-void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memoryMap,
+void BehaviorExploring::SampleVisitLocationsFacingObstacle( std::shared_ptr<const INavMap> memoryMap,
                                                             const ObservableObject* charger,
                                                             const Point2f& robotPos,
                                                             std::vector<Pose3d>& retPoses ) const

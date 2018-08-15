@@ -25,7 +25,7 @@
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Filename for keeping track of relevent stats for determining which file to use for restoring
 static const std::string kStatsForBackupFile = "statsForBackup.json";

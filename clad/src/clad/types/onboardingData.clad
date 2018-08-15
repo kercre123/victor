@@ -2,11 +2,11 @@
 */
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 structure OnboardingData {
   bool hasCompletedOnboarding = 0
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

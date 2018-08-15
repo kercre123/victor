@@ -7,14 +7,18 @@
 
   "notifyOnErrors": {
     "recentOccurrence": {
-      "numberOfTimes": 2,
-      "amountOfSeconds": 300.0
+      // trigger error notification immediately
+      "numberOfTimes": 1
+      // seconds don't matter with numberOfTimes = 1
+      // "amountOfSeconds": 300.0
     }
   },
   
   "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
   "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
-  "backpackLights"          : false,
+  "backpackLights"          : true,
 
-  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake"
+  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
+  
+  "exitAfterListeningIfNotStreaming" : true
 }

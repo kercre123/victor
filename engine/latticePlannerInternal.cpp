@@ -78,7 +78,7 @@ const f32 TERMINAL_POINT_TURN_DECEL = 10.f;
 const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD(5.f);
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // option to add a small delay for planning to mimic the robot
 CONSOLE_VAR_RANGED( int, kArtificialPlanningDelay_ms, "Planner", 0, 0, 3900 );
@@ -445,7 +445,7 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
 
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
-    INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
+    auto memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
 
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);

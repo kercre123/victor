@@ -26,7 +26,6 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/block.h"
@@ -35,7 +34,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/appCubeConnectionSubscriber.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
@@ -119,7 +118,7 @@
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 CONSOLE_VAR(bool, kFakeRobotBeingHeld, "Robot", false);
 
@@ -135,7 +134,7 @@ CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
 // Robot singleton
 static Robot* _thisRobot = nullptr;
-
+  
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
 //   on the Unity side), then this console func can be removed.
@@ -143,8 +142,11 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
 {
   if (_thisRobot != nullptr) {
     const char* animName = ConsoleArg_Get_String(context, "animName");
-    _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
-                                            new PlayAnimationAction(animName));
+    if (animName) {
+      int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
+      _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
+                                              new PlayAnimationAction(animName, numLoops));
+    }
   }
 }
 
@@ -176,7 +178,7 @@ static void AddAnimation(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName);
+CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName, optional int numLoops);
 CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
 
 // Perform Text to Speech Coordinator from debug console
@@ -401,9 +403,6 @@ Robot::~Robot()
   // and we need to write data out from the touch sensor component out. This explicit destruction
   // can be removed once the DEV_ASSERT is fixed
   _components->RemoveComponent(RobotComponentID::TouchSensor);
-
-  // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
-  GetAIComponent().GetComponent<FreeplayDataTracker>().ForceUpdate();
 
   AbortAll();
 
@@ -637,12 +636,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                       EnumToString(_offTreadsState),
                       awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
 
-  if (offTreadsStateChanged) {
-    // pause the freeplay tracking if we are not on the treads
-    const bool isPaused = (_offTreadsState != OffTreadsState::OnTreads);
-    GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::OffTreads);
-  }
-
   return offTreadsStateChanged;
 }
 
@@ -764,6 +757,9 @@ void Robot::Delocalize(bool isCarryingObject)
 
     }
   }
+
+  // If we don't know where we are, we can't know where we are going.
+  GetPathComponent().Abort();
 
   // notify blockworld
   GetBlockWorld().OnRobotDelocalized(worldOriginID);
@@ -1424,6 +1420,14 @@ Result Robot::Update()
     }
   }
 
+  // Send a message indicating we are fully loaded and capable of running
+  // after the first tick
+  if(!_sentEngineLoadedMsg)
+  {
+    _sentEngineLoadedMsg = true;
+    SendRobotMessage<RobotInterface::EngineFullyLoaded>();
+  }
+  
   return RESULT_OK;
 
 } // Update()
@@ -2144,13 +2148,6 @@ Util::Data::DataPlatform* Robot::GetContextDataPlatform()
 // Message handlers subscribed to in RobotToEngineImplMessaging::InitRobotMessageComponent
 
 template<>
-void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
-{
-  _isCliffReactionDisabled = msg.isStarted;
-  SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(!msg.isStarted)));
-}
-
-template<>
 void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
 {
   const VisionComponent& visionComponent = GetVisionComponent();
@@ -2639,26 +2636,23 @@ RobotState Robot::GetDefaultRobotState()
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
-  
-  std::array<uint16_t, STATE_MESSAGE_FREQUENCY> defaultTouchRawVals;
-  defaultTouchRawVals.fill(0);
 
   const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
                          0, //uint32_t pose_frame_id,
                          1, //uint32_t pose_origin_id,
-                         kDefaultPose, //const Anki::Cozmo::RobotPose &pose,
+                         kDefaultPose, //const Anki::Vector::RobotPose &pose,
                          0.f, //float lwheel_speed_mmps,
                          0.f, //float rwheel_speed_mmps,
                          0.f, //float headAngle
                          0.f, //float liftAngle,
-                         AccelData(), //const Anki::Cozmo::AccelData &accel,
-                         GyroData(), //const Anki::Cozmo::GyroData &gyro,
+                         AccelData(), //const Anki::Vector::AccelData &accel,
+                         GyroData(), //const Anki::Vector::GyroData &gyro,
                          0.f, // float batteryVoltage
                          0.f, // float chargerVoltage
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
-                         std::move(defaultTouchRawVals), // touch intensity value 
+                         0, // touch intensity value 
                          0, // uint8_t cliffDetectedFlags,
                          0, // uint8_t whiteDetectedFlags
                          -1); //int8_t currPathSegment
@@ -2825,7 +2819,7 @@ void Robot::SetBodyColor(const s32 color)
 
 void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 {
-  IDependencyManagedComponent<Anki::Cozmo::RobotComponentID>* explicitUpcast = aiComponent;
+  IDependencyManagedComponent<Anki::Vector::RobotComponentID>* explicitUpcast = aiComponent;
   _components->DevReplaceDependentComponent(RobotComponentID::AIComponent,
                                             explicitUpcast,
                                             shouldManage);
@@ -2916,5 +2910,5 @@ bool Robot::SetLocale(const std::string & locale)
   return true;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

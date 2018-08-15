@@ -20,7 +20,7 @@
 #include <unordered_map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorHighLevelAI : public InternalStatesBehavior
 {

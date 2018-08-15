@@ -6,7 +6,7 @@
 #include "anki/cozmo/robot/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace PowerModeManager {
 
 namespace {
@@ -63,5 +63,5 @@ void Update()
 
 
 } // namespace PowerModeManager
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

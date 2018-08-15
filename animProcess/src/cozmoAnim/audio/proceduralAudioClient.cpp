@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
   
 #define ENABLE_TREAD_LOG 0
@@ -56,7 +56,7 @@ namespace {
   #define CONSOLE_PATH "Audio.Procedural"
   CONSOLE_VAR(bool, kEnableHeadProceduralMovement, CONSOLE_PATH, false);
   CONSOLE_VAR(bool, kEnableLiftProceduralMovement, CONSOLE_PATH, false);
-  CONSOLE_VAR(bool, kEnableTreadProceduralMovement, CONSOLE_PATH, false);
+  CONSOLE_VAR(bool, kEnableTreadProceduralMovement, CONSOLE_PATH, true);
   CONSOLE_VAR_RANGED(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65, 0, 250);

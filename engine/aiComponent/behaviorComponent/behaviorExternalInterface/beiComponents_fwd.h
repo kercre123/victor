@@ -2,7 +2,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class BEIComponentID{
   AIComponent,
@@ -46,7 +46,7 @@ enum class BEIComponentID{
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__

@@ -22,7 +22,7 @@
 namespace Anki {
 
   
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorExternalInterface;
 class BehaviorStack;
@@ -42,13 +42,14 @@ public:
                                const BehaviorStack* stackComponent ) override;
 private:
   
+  void SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* oldBaseOfStack ) const;
   bool CheckForCycle() const;
   
   size_t _lastTick;
   Util::CircularBuffer<const IBehavior*> _recentBehaviors;
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_StackMonitors_StackCycleMonitor_H__

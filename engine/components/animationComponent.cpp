@@ -35,7 +35,7 @@
 #include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
  
 namespace {
   static const char* kLogChannelName = "Animations";
@@ -59,12 +59,13 @@ AnimationComponent::AnimationComponent()
 , _currAnimName("")
 , _currAnimTag(0)
 , _oledImageBuilder(new Vision::RGB565ImageBuilder)
+, _tagForTriggerWordGetInCallbacks(GetNextTag())
 , _compositeImageID(0)
 {
 
 }
 
-void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void AnimationComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;
   _dataAccessor = dependentComps.GetComponentPtr<DataAccessorComponent>();
@@ -242,6 +243,16 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   }
   static const std::string empty("");
   return empty;
+}
+
+  
+void AnimationComponent::NotifyComponentOfAnimationStartedByAnimProcess(const std::string& animName, Tag animationTag)
+{  
+  if(IsPlayingAnimation()){
+    StopAnimByName(_currAnimName);
+  }
+  _currAnimName = animName;
+  _currAnimTag = animationTag;
 }
 
   
@@ -751,6 +762,13 @@ Result AnimationComponent::SetFaceSaturation(float level)
   return res;
 }
 
+AnimationTag AnimationComponent::SetTriggerWordGetInCallback(std::function<void()> callbackFunction)
+{
+  _triggerWordGetInCallbackFunction = callbackFunction;
+  return _tagForTriggerWordGetInCallbacks;
+}
+
+
 // ================ Game message handlers ======================
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailableAnimations& msg)
@@ -910,6 +928,12 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
       _callbackMap.erase(it);
     }
   }
+
+  // Special callback for the trigger word response that persists
+  if(payload.tag == _tagForTriggerWordGetInCallbacks){
+    atLeastOneCallback = true;
+    _triggerWordGetInCallbackFunction();
+  }
     
   if (!atLeastOneCallback &&
       (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM))) {
@@ -994,5 +1018,5 @@ void AnimationComponent::AddAdditionalAnimationCallback(const std::string& name,
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

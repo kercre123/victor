@@ -19,7 +19,7 @@
 #include <limits>
 
 namespace Anki {
-  namespace Cozmo{
+  namespace Vector{
       
     SpeedChooser::SpeedChooser(Robot& robot)
     : _robot(robot)

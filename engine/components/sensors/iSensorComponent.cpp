@@ -21,7 +21,7 @@
 #include "util/logging/rollingFileLogger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const std::string kLogDirectoryBase = "sensorData";

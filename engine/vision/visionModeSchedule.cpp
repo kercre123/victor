@@ -15,7 +15,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 VisionModeSchedule::VisionModeSchedule()
 : VisionModeSchedule(true)
@@ -153,5 +153,5 @@ void AllVisionModesSchedule::SetDefaultSchedule(VisionMode mode, VisionModeSched
   
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

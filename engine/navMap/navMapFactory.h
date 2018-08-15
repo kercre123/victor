@@ -17,7 +17,7 @@
 class Robot;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace NavMapFactory {
 
 // creates the proper nav memory map (through default, config, etc)

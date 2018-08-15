@@ -5,7 +5,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace ExternalComms {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -335,5 +335,5 @@ union ExternalComms {
 }
 
 } // namespace ExternalComms
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

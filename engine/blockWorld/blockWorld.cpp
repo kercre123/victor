@@ -60,7 +60,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
-#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 // TODO: Expose these as parameters
 #define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
@@ -77,7 +77,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1469,8 +1469,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         // some objects should not be updated! (specially those that are not managed through observations)
         // TODO rsam/andrew: I don't like not having to specify true/false for families. Whether a new family
         // gets included or ignored happens silently for filters if we don't static_assert requiring all
-        filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
-        filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+        filter.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
+        filter.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
 
         // When Cozmo is looking at a stack/pyramid from a certain distance, the top cube can toggle rapidly between
         // 'known' and 'dirty' pose state, causing the cube LEDs to flash on and off rapidly. This may cause users
@@ -2409,7 +2409,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_lastPlayAreaSizeEventSec + _playAreaSizeEventIntervalSec < currentTimeSec) {
       _lastPlayAreaSizeEventSec = currentTimeSec;
-      const INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
+      const auto currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
       const double areaM2 = currentNavMemoryMap->GetExploredRegionAreaM2();
       Anki::Util::sInfoF("robot.play_area_size", {}, "%.2f", areaM2);
     }
@@ -3420,14 +3420,14 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       return;
     }
 
-    Json::Value toSendToWebViz;
+    auto webSender = WebService::WebVizSender::CreateWebVizSender("navmap", _robot->GetContext()->GetWebService());
 
     const ObjectID& locObject = _robot->GetLocalizedTo();
 
     // Note: only drawing objects in current coordinate frame!
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-    ModifierFcn visualizeHelper = [this,&locObject,&toSendToWebViz](ObservableObject* object)
+    ModifierFcn visualizeHelper = [this,&locObject,webSender](ObservableObject* object)
     {
       if(object->GetID() == _selectedObjectID) {
         // Draw selected object in a different color and draw its pre-action poses
@@ -3461,39 +3461,34 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         object->Visualize();
       }
 
-      if( object->GetFamily() == ObjectFamily::LightCube ) {
-        Json::Value cubeInfo;
-        const auto& pose = object->GetPose();
-        cubeInfo["x"] = pose.GetTranslation().x();
-        cubeInfo["y"] = pose.GetTranslation().y();
-        cubeInfo["z"] = pose.GetTranslation().z();
-        cubeInfo["angle"] = pose.GetRotationAngle<'Z'>().ToFloat();
-        toSendToWebViz["cubes"].append( cubeInfo );
+      if( webSender ) {
+        if( object->GetFamily() == ObjectFamily::LightCube ) {
+          Json::Value cubeInfo;
+          const auto& pose = object->GetPose();
+          cubeInfo["x"] = pose.GetTranslation().x();
+          cubeInfo["y"] = pose.GetTranslation().y();
+          cubeInfo["z"] = pose.GetTranslation().z();
+          cubeInfo["angle"] = pose.GetRotationAngle<'Z'>().ToFloat();
+          webSender->Data()["cubes"].append( cubeInfo );
+        }
       }
     };
 
     FindLocatedObjectHelper(filter, visualizeHelper, false);
 
-    const auto* webService = _robot->GetContext()->GetWebService();
-    if( (webService != nullptr) && !toSendToWebViz.empty() ) {
-      toSendToWebViz["type"] = "MemoryMapCubes";
-      const std::string moduleName = "navmap";
-      webService->SendToWebViz( moduleName, toSendToWebViz );
+    // don't fill type unless there's some actual data (to avoid unnecessary sends)
+    if( webSender && !webSender->Data().empty() ) {
+      webSender->Data()["type"] = "MemoryMapCubes";
     }
-
   } // DrawAllObjects()
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const
   {
-    Json::Value data;
-    data["type"] = "RobotDeletedLocatedObject";
-    data["objectID"] = msg.objectID;
-
-    const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr ) {
-      const std::string moduleName = "observedobjects";
-      webService->SendToWebViz( moduleName, data );
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("observedobjects",
+                                                                      _robot->GetContext()->GetWebService()) ) {
+      webSender->Data()["type"] = "RobotDeletedLocatedObject";
+      webSender->Data()["objectID"] = msg.objectID;
     }
 
   } // SendObjectUpdateToWebViz()
@@ -3501,21 +3496,17 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const
   {
-    Json::Value data;
-    data["type"] = "RobotObservedObject";
-    data["objectID"] = msg.objectID;
-    data["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
-    data["objectType"] = ObjectTypeToString(msg.objectType);
-    data["isActive"] = msg.isActive;
-    data["timestamp"] = msg.timestamp;
-
-    const auto* webService = _robot->GetContext()->GetWebService();
-    if( webService != nullptr ) {
-      const std::string moduleName = "observedobjects";
-      webService->SendToWebViz( moduleName, data );
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("observedobjects",
+                                                                      _robot->GetContext()->GetWebService()) ) {
+      webSender->Data()["type"] = "RobotObservedObject";
+      webSender->Data()["objectID"] = msg.objectID;
+      webSender->Data()["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
+      webSender->Data()["objectType"] = ObjectTypeToString(msg.objectType);
+      webSender->Data()["isActive"] = msg.isActive;
+      webSender->Data()["timestamp"] = msg.timestamp;
     }
 
   } // SendObjectUpdateToWebViz()
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

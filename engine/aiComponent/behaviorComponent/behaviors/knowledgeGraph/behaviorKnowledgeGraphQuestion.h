@@ -16,13 +16,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/mics/voiceMessageTypes.h"
-#include "engine/components/backpackLights/backpackLightComponentTypes.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "components/textToSpeech/textToSpeechWrapper.h"
 #include "clad/audio/audioEventTypes.h"
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorTextToSpeechLoop;
 
@@ -41,12 +41,6 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
-
-  // wake word will cancel our TTS
-  // note: we're broadly cancelling streaming the entire time we're active; technically we only need to do it
-  //       while we're in the "Responding" state, but I expect this wont play very nice with our wakewordless streaming
-  virtual bool ShouldSuppressTriggerWordResponse() const override { return true; }
-
 
 protected:
 
@@ -75,7 +69,6 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helpers
 
-  bool IsReadyToStream();
   // start streaming mic data to knowledge graph
   void BeginStreamingQuestion();
   // speak back the response we got from knowledge graph
@@ -92,7 +85,7 @@ protected:
   void OnResponseInterrupted();
 
   // streaming cues are backpack lights and audio cues to let the user know when to speak
-  void PlayStreamingCues( bool onBegin );
+  void PlayEarconEnd();
 
 
 private:
@@ -129,7 +122,6 @@ private:
     std::string         readyText; // audio tts to let the user know they can begin speaking
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
 
-    AudioMetaData::GameEvent::GenericEvent earConBegin;
     AudioMetaData::GameEvent::GenericEvent earConEnd;
 
   } _iVars;
@@ -143,7 +135,6 @@ private:
     DynamicVariables();
 
     EState              state;
-    double              audioCueBeginTime; // the time we begun playing the streaming audio cues
     double              streamingBeginTime; // the time we begun actually streaming the mic data
     std::string         responseString; // the text we got back from knowledge graph
     EGenerationStatus   ttsGenerationStatus; // track the status of the reponse tts
@@ -155,7 +146,7 @@ private:
 
 }; // class BehaviorKnowledgeGraphQuestion
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorKnowledgeGraphQuestion_H__

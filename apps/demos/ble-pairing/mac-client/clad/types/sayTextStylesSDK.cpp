@@ -6,7 +6,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 const char* EnumToString(const SayTextVoiceStyleSDK m)
 {
@@ -30,7 +30,7 @@ const uint8_t SayTextVoiceStyleSDKVersionHash[16] = {
     0xa3, 0xac, 0xe5, 0xe7, 0x6f, 0x51, 0x70, 0x2b, 0x69, 0x9a, 0x4d, 0x3c, 0x40, 0x58, 0x30, 0xec 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 

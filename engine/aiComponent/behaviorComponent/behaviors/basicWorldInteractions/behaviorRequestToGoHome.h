@@ -21,7 +21,7 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorRequestToGoHome : public ICozmoBehavior
 {
@@ -116,7 +116,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Behaviors_BehaviorRequestToGoHome_H__

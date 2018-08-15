@@ -23,7 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-
+#include <atomic>
 
 namespace Anki {
 
@@ -31,7 +31,7 @@ namespace Vision {
   class ImageRGB565;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class FaceDisplayImpl;
 class FaceInfoScreenManager;
@@ -53,6 +53,9 @@ public:
   // NB: This should probably only be used by FaceInfoScreenManager::Reboot()
   void EnableFaultCodeDisplay(bool enable) { _enableFaultCodeDisplay = enable; }
 
+  // Stops the boot animation process if it is running
+  void StopBootAnim();
+  
 protected:
   FaceDisplay();
   virtual ~FaceDisplay();
@@ -71,6 +74,10 @@ private:
   std::mutex                            _faceDrawMutex;
   bool                                  _stopDrawFace = false;
 
+  // Whether or not the boot animation process has been stopped
+  // Atomic because it is checked by the face drawing thread
+  std::atomic<bool> _stopBootAnim;
+  
   void DrawFaceLoop();
   void UpdateNextImgPtr();
 
@@ -88,7 +95,7 @@ private:
 
 }; // class FaceDisplay
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMOANIM_FACE_DISPLAY_H

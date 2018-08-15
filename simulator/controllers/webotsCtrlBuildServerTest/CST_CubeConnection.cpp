@@ -6,7 +6,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum class TestState {
   RequestCubeConnection,          // Request to be connected to a cube
@@ -209,5 +209,5 @@ bool CST_CubeConnection::IsAnyCubeConnected()
   return !GetConnectedCube().empty();
 }
 
-}  // namespace Cozmo
+}  // namespace Vector
 }  // namespace Anki

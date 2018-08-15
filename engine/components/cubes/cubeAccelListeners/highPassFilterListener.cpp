@@ -15,7 +15,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeAccelListeners {
 
 HighPassFilterListener::HighPassFilterListener(const Vec3f& coeffs,

@@ -5,7 +5,7 @@
 
 namespace Anki
 {
-  namespace Cozmo
+  namespace Vector
   {
     namespace PathFollower
     {
@@ -80,7 +80,7 @@ namespace Anki
     } // namespace PathFollower
     
    
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 #endif

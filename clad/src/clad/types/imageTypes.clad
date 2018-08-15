@@ -3,7 +3,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 ImageEncoding
 {
@@ -56,18 +56,11 @@ message CameraCalibration
   float_32 distCoeffs[8], // NUM_RADIAL_DISTORTION_COEFFS
 }
 
-enum uint_8 ImageQuality {
-  Unchecked  = 0,
-  Good,
-  TooDark,
-  TooBright
-}
-
 enum uint_8 IlluminationState {
   Unknown = 0,
   Illuminated,
   Darkened
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

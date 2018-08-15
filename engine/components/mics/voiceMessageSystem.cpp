@@ -38,7 +38,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if REMOTE_CONSOLE_ENABLED
@@ -668,5 +668,5 @@ void VoiceMessageSystem::Debug_PrintMessageRecords() const
   #endif
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

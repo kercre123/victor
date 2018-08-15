@@ -23,21 +23,20 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
 
   // JSON keys
   const char* kStreamType                         = "streamType";
-  const char* kEarConBegin                        = "earConAudioEventBegin";
   const char* kEarConSuccess                      = "earConAudioEventSuccess";
   const char* kEarConFail                         = "earConAudioEventNeutral";
   // TODO:(str) Currently not in use. Rework this to use a smarter TurnToFace structure, perhaps LookAtFaceInFront
@@ -66,7 +65,6 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 : streamType( CloudMic::StreamType::Normal )
-, earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , ttsBehaviorID(kDefaultTTSBehaviorID)
@@ -87,7 +85,6 @@ BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::DynamicVariables::DynamicVariables()
 : state(EState::TurnToFace)
-, streamingBeginTime(0)
 , intentStatus(EIntentStatus::NoIntentHeard)
 , isListening(false)
 , repromptCount(0)
@@ -109,10 +106,6 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
   // ear-con vars
   {
     std::string earConString;
-    if(JsonTools::GetValueOptional(config, kEarConBegin, earConString)){
-      _iConfig.earConBegin = AudioMetaData::GameEvent::GenericEventFromString(earConString);
-    }
-
     if(JsonTools::GetValueOptional(config, kEarConSuccess, earConString)){
       _iConfig.earConSuccess = AudioMetaData::GameEvent::GenericEventFromString(earConString);
     }
@@ -127,13 +120,13 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
   // Set up the TextToSpeech Behavior
   JsonTools::GetValueOptional(config, kTextToSpeechBehaviorKey, _iConfig.ttsBehaviorID);
 
-  _iConfig.vocalPromptString = JsonTools::ParseString(config,
-                                                      kVocalPromptKey,
-                                                      "BehaviorPromptUserForVoiceCommand.MissingPromptString");
+  // If prompt string is _not_ set by JSON config, it must be set by a call to SetPrompt()
+  // before the behavior wants to be activated, or an error will occur.
+  _iConfig.wasPromptSetFromJson = JsonTools::GetValueOptional(config, kVocalPromptKey, _iConfig.vocalPromptString);
 
   JsonTools::GetValueOptional(config, kVocalResponseToIntentKey, _iConfig.vocalResponseToIntentString);
   JsonTools::GetValueOptional(config, kVocalResponseToBadIntentKey, _iConfig.vocalResponseToBadIntentString);
-  JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
+  _iConfig.wasRepromptSetFromJson = JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
 
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   JsonTools::GetCladEnumFromJSON(config, kListenGetInOverrideKey, _iConfig.listenGetInOverrideTrigger, 
@@ -152,7 +145,9 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
   JsonTools::GetValueOptional(config, kListeningGetOutKey, _iConfig.playListeningGetOut);
   // Should we repeat the prompt if it fails? If so, how many times
   JsonTools::GetValueOptional(config, kMaxRepromptKey, _iConfig.maxNumReprompts);
-  // play backpack lights from the behavior? else assume anims will handle it
+  // Should behavior have fallback backpack lights - these will stay on the whole behavior lifecycle
+  // while the lights triggered by the anim process to indicate streaming may turn on/off as streams
+  // open/close
   JsonTools::GetValueOptional(config, kProceduralBackpackLights, _iConfig.backpackLights);
 }
 
@@ -164,6 +159,12 @@ BehaviorPromptUserForVoiceCommand::~BehaviorPromptUserForVoiceCommand()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPromptUserForVoiceCommand::WantsToBeActivatedBehavior() const
 {
+  if(!ANKI_VERIFY(!_iConfig.vocalPromptString.empty(), "BehaviorPromptUserForVoiceCommand.MissingPromptString", ""))
+  {
+    // Prompt was not set by JSON config or a call to SetPrompt()
+    return false;
+  }
+  
   return true;
 }
 
@@ -186,7 +187,6 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorOperationModifiers(BehaviorOp
 void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kEarConBegin,
     kEarConSuccess,
     kEarConFail,
     kShouldTurnToFaceKey,
@@ -212,6 +212,34 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::SetPrompt(const std::string &text)
+{
+  // Don't allow programmatic override of Json-configured prompts.
+  // Use a separate indicator 'wasPromptSetFromJson' to allow multiple calls to SetPrompt if
+  //  the prompt was _not_ set by Json config.
+  if(ANKI_VERIFY(!_iConfig.wasPromptSetFromJson,
+                 "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
+                 "Prompt set by Json config. Refusing to override."))
+  {
+    _iConfig.vocalPromptString = text;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::SetReprompt(const std::string &text)
+{
+  // Don't allow programmatic override of Json-configured prompts.
+  // Use a separate indicator 'wasRepromptSetFromJson' to allow multiple calls to SetReprompt if
+  //  the prompt was _not_ set by Json config.
+  if(ANKI_VERIFY(!_iConfig.wasRepromptSetFromJson,
+                 "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
+                 "Prompt set by Json config. Refusing to override."))
+  {
+    _iConfig.vocalRepromptString = text;
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::InitBehavior(){
   BehaviorID ttsID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.ttsBehaviorID);
@@ -305,7 +333,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
   // Turn on backpack lights to indicate streaming
-  static const BackpackLightAnimation::BackpackAnimation kStreamingLights = 
+  static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
   {
     .onColors               = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
     .offColors              = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
@@ -318,65 +346,26 @@ void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 
   if(_iConfig.backpackLights){
     BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
-    blc.StartLoopingBackpackAnimation(kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle);
+    blc.StartLoopingBackpackAnimation(kStreamingLights, _dVars.lightsHandle);
   }
 
-  namespace AEM = Anki::AudioEngine::Multiplexer;
-  if(AudioMetaData::GameEvent::GenericEvent::Invalid != _iConfig.earConBegin){
-    //Trip the earcon. Wait for the earcon to finish playing before we start streaming
-    auto earconCallback = [this](const AEM::AudioCallback& audioCallback)
-    {
-      switch(audioCallback.GetType()){
-        case AEM::CallbackType::Invalid:
-        case AEM::CallbackType::Error:
-        {
-          // Note the error, then fall-through to start streaming anyway
-          PRINT_NAMED_ERROR("PromptUserForVoiceCommand.PlayEarconError",
-                            "Earcon failed to play or errored while playing.");
-        }
-        case AEM::CallbackType::Complete:
-        {
-          GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
-          _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          break;
-        }
-        default:
-        {
-          // Do nothing for AEM::CallbackType::Duration or AEM::CallbackType::Marker
-          break;
-        }
-      }
-    };
-    GetBEI().GetRobotAudioClient().PostEvent(_iConfig.earConBegin, AudioMetaData::GameObjectType::Behavior, earconCallback);
-    _dVars.streamingBeginTime = 0.0f;
-  } else {
-    // If there's no earcon set, just start streaming
-    GetBEI().GetMicComponent().StartWakeWordlessStreaming(_iConfig.streamType);
-    _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
 
   SET_STATE(Listening);
 
   // Start the getIn animation, then go straight into the listening loop from the callback
   auto callback = [this](){
-    ANKI_VERIFY(_dVars.streamingBeginTime != 0.0f,
-                "BehaviorPromptUserForVoiceCommand.StartedStreamingAnimBeforeStreaming",
-                "ListeningGetInAnim is shorter than earcon, streaming anim loop will end before streaming stops");
-    const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float elapsed = (_dVars.streamingBeginTime == 0.0f) ? 0.0f : currentTime_s - _dVars.streamingBeginTime;
-    const float timeout = kMaxRecordTime_s - elapsed;
+    GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming(_iConfig.streamType);
 
     AnimationTrigger listenTrigger = (AnimationTrigger::Count != _iConfig.listenAnimOverrideTrigger) ?
       _iConfig.listenAnimOverrideTrigger : AnimationTrigger::VC_ListeningLoop;
 
     DelegateIfInControl(new TriggerAnimationAction(listenTrigger,
-                                                  0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
-                                                  std::max(timeout, 1.0f)),
+                                                   0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
+                                                   std::max(kMaxRecordTime_s, 1.0f)),
                         &BehaviorPromptUserForVoiceCommand::TransitionToThinking);
   };
 
   if(_iConfig.playListeningGetIn){
-
     AnimationTrigger listenGetInTrigger = (AnimationTrigger::Count != _iConfig.listenGetInOverrideTrigger) ?
       _iConfig.listenGetInOverrideTrigger : AnimationTrigger::VC_ListeningGetIn;
 
@@ -392,10 +381,9 @@ void BehaviorPromptUserForVoiceCommand::TransitionToThinking()
   SET_STATE(Thinking);
 
   // Play the Listening getOut, then close out the streaming stuff in case an intent was just a little late
-  auto callback = [this](){
-    TurnOffBackpackLights();
-    
+  auto callback = [this](){    
     // Play "earCon end"
+    TurnOffBackpackLights();
     Audio::EngineRobotAudioClient& rac = GetBEI().GetRobotAudioClient();
 
     if(EIntentStatus::IntentHeard == _dVars.intentStatus){
@@ -500,5 +488,6 @@ void BehaviorPromptUserForVoiceCommand::TurnOffBackpackLights()
   }
 }
 
-} // namespace Cozmo 
+
+} // namespace Vector 
 } // namespace Anki

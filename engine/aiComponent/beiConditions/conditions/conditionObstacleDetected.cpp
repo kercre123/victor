@@ -18,7 +18,7 @@
 #include "engine/robot.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 //////
 /// React To Sudden Prox Sensor Change
@@ -37,5 +37,5 @@ bool ConditionObstacleDetected::AreConditionsMetInternal(BehaviorExternalInterfa
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

@@ -21,8 +21,6 @@ else()
 
 endif()
 
-include(protobuf)
-
 set(OPENCV_LIBS
     calib3d
     features2d
@@ -34,7 +32,6 @@ set(OPENCV_LIBS
     flann
     imgcodecs
     ml
-    dnn
     videoio)
 
 # Static libs for mac, shared for android
@@ -67,8 +64,6 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
   list(APPEND OPENCV_INCLUDE_PATHS ${MODULE_INCLUDE_PATH})
 
 endforeach()
-
-set(OPENCV_LIBS ${OPENCV_LIBS} ${PROTOBUF_LIBS})
 
 add_library(opencv_interface INTERFACE IMPORTED)
 set_target_properties(opencv_interface PROPERTIES
@@ -106,15 +101,12 @@ anki_build_target_license(libpng "libpng,${CMAKE_SOURCE_DIR}/licenses/libpng.lic
 anki_build_target_license(libtiff "ISC,${CMAKE_SOURCE_DIR}/licenses/libtiff.license")
 anki_build_target_license(libjpeg "BSD-3-like,${CMAKE_SOURCE_DIR}/licenses/libjpeg-turbo.license")
 
-if(VICOS)
-    anki_build_target_license(protobuf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
-else()
+if(MACOSX)
     anki_build_target_license(IlmImf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/openexr.license")
     anki_build_target_license(libjasper "BSD-2,${CMAKE_SOURCE_DIR}/licenses/libjasper.license")
     anki_build_target_license(ippicv  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ipp.license")
     anki_build_target_license(ippiw  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ipp.license")
     anki_build_target_license(ittnotify  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ittnotify.license")
-    anki_build_target_license(protobuf "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
 endif()
 
 message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")

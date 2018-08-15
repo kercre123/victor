@@ -20,7 +20,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kIdleAnimationKey            = "idleAnimation";
@@ -370,5 +370,5 @@ void BehaviorTextToSpeechLoop::Interrupt( bool immediate )
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

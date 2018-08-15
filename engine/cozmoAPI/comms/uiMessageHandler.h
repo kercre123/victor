@@ -36,7 +36,7 @@ namespace Util {
 }
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
 
     class CozmoContext;
@@ -168,7 +168,7 @@ namespace Anki {
     
 #undef MESSAGE_BASECLASS_NAME
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 
 

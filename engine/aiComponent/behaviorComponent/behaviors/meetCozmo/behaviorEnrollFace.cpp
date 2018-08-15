@@ -26,10 +26,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -61,7 +63,7 @@
 #define CONSOLE_GROUP "Behavior.EnrollFace"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -120,6 +122,10 @@ enum class SayWrongNameMode : u8
 // This only matters if kEnrollFace_FailOnWrongFace==false
 CONSOLE_VAR(u8, kEnrollFace_SayWrongNameMode,  CONSOLE_GROUP, Util::EnumToUnderlying(SayWrongNameMode::Long));
   
+// Intents for verbal confirmation of re-enrollment
+static const UserIntentTag kAffirmativeIntent = USER_INTENT(imperative_affirmative);
+static const UserIntentTag kNegativeIntent = USER_INTENT(imperative_negative);
+static const UserIntentTag kPlayAgainIntent = USER_INTENT(blackjack_playagain); // TODO: remove
   
 static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
@@ -145,8 +151,11 @@ struct BehaviorEnrollFace::InstanceConfig
   ICozmoBehaviorPtr driveOffChargerBehavior;
   ICozmoBehaviorPtr putDownBlockBehavior;
   std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
+  std::shared_ptr<BehaviorPromptUserForVoiceCommand> alreadyKnowYouPromptBehavior;
   
   FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
+  
+  BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::MeetVictor;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -173,7 +182,8 @@ struct BehaviorEnrollFace::DynamicVariables
     bool               didEverLeaveCharger = false;
     EngineTimeStamp_t  lastDeactivationTime_ms = 0;
     
-    bool               requestedRescan = false;
+    bool           requestedRescan = false;
+    bool           isManualReEnroll = false;
     
     using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
     std::unique_ptr<EnrollmentSettings> settings;
@@ -291,6 +301,7 @@ void BehaviorEnrollFace::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert( _iConfig->driveOffChargerBehavior.get() );
   delegates.insert( _iConfig->putDownBlockBehavior.get() );
   delegates.insert( _iConfig->ttsBehavior.get() );
+  delegates.insert( _iConfig->alreadyKnowYouPromptBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -377,18 +388,34 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
   else
   {
     // We're enrolling a new face. Make sure:
-    // 1. The name is available
+    // 1. The name is available (if not mark this as a possible re-enrollment by using the saveID matching the name)
     // 2. We have room for a new face
     
-    if(GetBEI().GetVisionComponent().IsNameTaken( _dVars->faceName )
-       && !_dVars->enrollingSpecificID
-       && (_dVars->persistent.state == State::NotStarted) )  // if previously interrupted after enrollment completed, this name is ok
+    if(!_dVars->enrollingSpecificID
+       && (_dVars->persistent.state == State::NotStarted)  // if previously interrupted after enrollment completed, this name is ok
+       && ANKI_VERIFY(!_dVars->persistent.isManualReEnroll,
+                      "BehaviorEnrollFace.InitEnrollmentSettings.ManualReEnrollWithNoSaveID", ""))
     {
-      TransitionToSayingIKnowThatName();
-      return RESULT_FAIL;
+      // See if we already know someone with this name, and if so mark this as a re-enrollment
+      auto faceIDsWithName = GetBEI().GetVisionComponent().GetFaceIDsWithName(_dVars->faceName);
+      if(!faceIDsWithName.empty())
+      {
+        if(ANKI_VERIFY(faceIDsWithName.size() == 1,
+                       "BehaviorEnrollFace.InitEnrollmentSettings.UnexpectedNumIDsWithName",
+                       "Expected exactly one ID for name '%s', not %zu",
+                       _dVars->faceName.c_str(), faceIDsWithName.size()))
+        {
+          // Indicate that this is a re-enrollment of the ID we have that already matches
+          // the specified name. Update persistent settings too, in case we get interrupted.
+          _dVars->saveID = *(faceIDsWithName.begin());
+          _dVars->persistent.settings->saveID = _dVars->saveID;
+        }
+      }
     }
     
-    if(!GetBEI().GetVisionComponent().CanAddNamedFace())
+    // Note: Have to re-check saveID here, b/c it could've just been set via matching name
+    const bool isNewEnrollment = (_dVars->saveID == Vision::UnknownFaceID);
+    if( isNewEnrollment && !GetBEI().GetVisionComponent().CanAddNamedFace())
     {
       // If saveID is not specified, then we're trying to add a new face, so fail
       // if there's no room for new named faces
@@ -411,6 +438,10 @@ void BehaviorEnrollFace::InitBehavior()
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(DefaultTextToSpeechLoop),
                                   BEHAVIOR_CLASS(TextToSpeechLoop),
                                   _iConfig->ttsBehavior );
+  
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(MeetVictorAlreadyKnowYouPrompt),
+                                  BEHAVIOR_CLASS(PromptUserForVoiceCommand),
+                                  _iConfig->alreadyKnowYouPromptBehavior );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -624,6 +655,8 @@ void BehaviorEnrollFace::BehaviorUpdate()
       break;
     }
     
+    case State::AlreadyKnowYouPrompt:
+    case State::AlreadyKnowYouHandle:
     case State::SayingName:
     case State::SayingIKnowThatName:
     case State::SayingWrongName:
@@ -666,14 +699,16 @@ void BehaviorEnrollFace::BehaviorUpdate()
       }
       else
       {
-        const bool lostEnrollee = ((GetBEI().GetRobotInfo().GetLastImageTimeStamp()
-                                    - _dVars->lastFaceSeenTime_ms) > kEnrollFace_TimeoutForReLookForFace_ms);
+        const auto lastImgTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+        const bool lostEnrollee = (lastImgTime_ms - _dVars->lastFaceSeenTime_ms) > kEnrollFace_TimeoutForReLookForFace_ms;
         
         // If we haven't seen the person (and only the one person) in too long, or got picked up
         // or reoriented, go back to looking for them
         if(lostEnrollee)
         {
-          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.LostEnrollee", "");
+          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.LostEnrollee",
+                        "LastSeen:%ums LastImage:%ums",
+                        (TimeStamp_t)_dVars->lastFaceSeenTime_ms, (TimeStamp_t)lastImgTime_ms);
           finishedScanning = true;
           ResetEnrollment();
           TransitionToLookingForFace();
@@ -691,12 +726,19 @@ void BehaviorEnrollFace::BehaviorUpdate()
           {
             ResetEnrollment();
             TransitionToWrongFace(wrongID, wrongName);
+            
+            auto& blc = GetBEI().GetBackpackLightComponent();
+            blc.ClearAllBackpackLightConfigs();
           }
         }
       }
 
       if( finishedScanning )
       {
+        
+        auto& blc = GetBEI().GetBackpackLightComponent();
+        blc.ClearAllBackpackLightConfigs();
+        
         // tell the app we've finished scanning
         if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
           auto* status = new external_interface::MeetVictorFaceScanComplete;
@@ -747,6 +789,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   _dVars->persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  auto& blc = GetBEI().GetBackpackLightComponent();
+  blc.ClearAllBackpackLightConfigs();
 
   // Reset the unexpected movement mode back to what it was when this behavior activated
   auto& moveComp = GetBEI().GetMovementComponent();
@@ -836,6 +881,8 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       case State::PutDownBlock:
       case State::WaitingInPlaceForFace:
       case State::LookingForFace:
+      case State::AlreadyKnowYouPrompt:
+      case State::AlreadyKnowYouHandle:
       case State::ScanningInterrupted:
       case State::SayingName:
       case State::SayingIKnowThatName:
@@ -972,6 +1019,7 @@ void BehaviorEnrollFace::DisableEnrollment()
   _dVars->persistent.lastDeactivationTime_ms = 0;
   _dVars->persistent.numInterruptions = 0;
   _dVars->persistent.wrongFaceStats.clear();
+  _dVars->persistent.isManualReEnroll = false;
   
   // Leave "session-only" face enrollment enabled when we finish
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
@@ -1094,12 +1142,6 @@ void BehaviorEnrollFace::TransitionToWaitInPlaceForFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToLookingForFace()
 {
-  const bool playScanningGetOut = (State::Enrolling == _dVars->persistent.state);
-
-  if( _dVars->timeStartedLookingForFace_ms == 0 ) {
-    _dVars->timeStartedLookingForFace_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  }
-  
   // First time here, always wait in place for a face for a few frames before then getting into
   // a loop of looking for faces. Exception: SayingWrongName, since obviously a face
   // was just being observed so we can immediately turn to a new one.
@@ -1111,7 +1153,12 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
     return;
   }
   
+  const bool playScanningGetOut = (State::Enrolling == _dVars->persistent.state);
   SET_STATE(LookingForFace);
+  
+  if( _dVars->timeStartedLookingForFace_ms == 0 ) {
+    _dVars->timeStartedLookingForFace_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
   
   // Create an action to turn towards the "best" face in FaceWorld
   // Then wait to give the vision system a chance to see faces in that position before enrolling
@@ -1142,59 +1189,171 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                                         &BehaviorEnrollFace::TransitionToLookingForFace);
                   }
                 }
-                else
+                else if( (_dVars->saveID != Vision::UnknownFaceID) && !_dVars->persistent.isManualReEnroll)
                 {
-                  // We've seen a face, so time to start enrolling it
-
-                  // Give ourselves a little more time to finish now that we've seen a face, but
-                  // don't go over the max timeout
-                  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec, _dVars->timeout_sec + kEnrollFace_TimeoutExtraTime_sec);
-
-                  PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
-                                "Found face %d to enroll. Timeout set to %.1fsec",
-                                _dVars->faceID, _dVars->timeout_sec);
-
-                  auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetVictorGetIn);
-
-                  IActionRunner* action = nullptr;
-                  if(CanMoveTreads())
+                  // We have a saveID specified, but this was not a manual re-enroll, meaning it must
+                  // have been initiated verbally. We need to verbally confirm the face we're seeing
+                  // is the same person we've already met before we continue enrollment (if the face is unnamed).
+                  auto* face = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
+                  if(ANKI_VERIFY(nullptr != face,
+                                 "BehaviorEnrollFace.LookingForFace.NullFace",
+                                 "Not re-enrolling, expecting face to be present in FaceWorld"))
                   {
-                    SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(_dVars->faceID);
-                    // Turn towards the person we've chosen to enroll, play the "get in" animation
-                    // to start "scanning" and move towards the person a bit to show intentionality
-                    action = new CompoundActionSequential({
-                      new TurnTowardsFaceAction(smartID, M_PI, false),
-                      new CompoundActionParallel({
-                        getInAnimAction,
-                        new DriveStraightAction(kEnrollFace_DriveForwardIntentDist_mm,
-                                                kEnrollFace_DriveForwardIntentSpeed_mmps, false)
-                      })
-                    });
+                    if(!face->HasName())
+                    {
+                      // We don't recognize the person we're seeing, so we need to prompt.
+                      TransitionToAlreadyKnowYouPrompt();
+                    }
+                    else if(face->GetName() == _dVars->faceName)
+                    {
+                      // We already recognize this person as the name we're supposed to re-enroll: No need to prompt.
+                      TransitionToStartEnrollment();
+                    }
+                    else
+                    {
+                      // This shouldn't happen by virtue of earlier checks, so fail if we somehow got here
+                      PRINT_NAMED_ERROR("BehaviorEnrollFace.LookingForFace.ExpectingUnnamedFace",
+                                        "Not re-enrolling recognized person %s as %s",
+                                        Util::HidePersonallyIdentifiableInfo(face->GetName().c_str()),
+                                        Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
+                      
+                      TransitionToFailedState(State::Failed_UnknownReason, "Failed_UnknownReason");
+                    }
                   }
                   else
                   {
-                    // Just play the get-in if we aren't able to move the treads
-                    action = getInAnimAction;
+                    TransitionToFailedState(State::Failed_UnknownReason, "Failed_UnknownReason");
                   }
-
-                  // tell the app we're beginning enrollment
-                  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
-                    // todo: replace with generic status VIC-1423
-                    auto* status = new external_interface::MeetVictorFaceScanStarted;
-                    GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(status) );
-                  }
-
-                  {
-                    DASMSG(behavior_meet_victor_scan_start, "behavior.meet_victor.scan_start", "Face scanning started in meet victor");
-                    DASMSG_SEND();
-                  }
-
-                  DelegateIfInControl(action, &BehaviorEnrollFace::TransitionToEnrolling);
+                }
+                else
+                {
+                  // We've seen a face, so time to start enrolling it
+                  TransitionToStartEnrollment();
                 }
               });
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToAlreadyKnowYouPrompt()
+{
+  SET_STATE(AlreadyKnowYouPrompt);
+  
+  ANKI_VERIFY(_dVars->faceID != Vision::UnknownFaceID,
+              "BehaviorEnrollFace.TransitionToAlreadyKnowYouPrompt.UnknownFaceID",
+              "FaceID to enroll should be set by now");
+  
+  // TODO: Locale
+  const std::string prompt = "Have we met before " + _dVars->faceName + "?";
+  _iConfig->alreadyKnowYouPromptBehavior->SetPrompt(prompt);
+  
+  ANKI_VERIFY(_iConfig->alreadyKnowYouPromptBehavior->WantsToBeActivated(),
+              "BehaviorEnrollFace.TransitionToAlreadyKnowYouPrompt.PromptBehaviorShouldWantToBeActivated", "");
+    
+  DelegateIfInControl(_iConfig->alreadyKnowYouPromptBehavior.get(),
+                      &BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler()
+{
+  SET_STATE(AlreadyKnowYouHandle);
+  
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  
+  PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.TransitionToAlreadyKnowYouHandler.PromptDone",
+                "Returned from prompt behavior. Intent pending: %s",
+                (uic.IsAnyUserIntentPending() ? "YES" : "NO"));
+  
+  if(uic.IsUserIntentPending(kAffirmativeIntent))
+  {
+    // User tells us we have met before: so this is a re-enrollment (and saveID should be set)!
+    uic.DropUserIntent(kAffirmativeIntent);
+    ANKI_VERIFY(_dVars->saveID != Vision::UnknownFaceID,
+                "BehaviorEnrollFace.TransitionToAlreadyKnowYouHandler.NoSaveID", "");
+    
+    // The prompting process prevents UpdateFaceIDandTime from being called, which means
+    // we could immediately trigger the "lost enrollee" timeout in the Enrolling state.
+    // Fake like we just saw them here to reset that clock:
+    _dVars->lastFaceSeenTime_ms = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
+    
+    TransitionToStartEnrollment();
+    
+    PRINT_CH_INFO(kLogChannelName,
+                  "BehaviorEnrollFace.TransitionToAlreadyKnowYouHandler.Affirmative",
+                  "Got affirmative intent. Transition to Enrolling");
+  }
+  else
+  {
+    PRINT_CH_INFO(kLogChannelName,
+                  "BehaviorEnrollFace.TransitionToAlreadyKnowYouHandler.Negative",
+                  "Got negative intent. Transition to AlreadyKnowName");
+    
+    // If user says they haven't met the robot before (or some "play again" garbage),
+    // drop the user intents on the floor, tell them we already know that name, and fail
+    // (Only supporting one enrolled user per name at the moment)
+    if (uic.IsUserIntentPending(kNegativeIntent)){
+      uic.DropUserIntent(kNegativeIntent);
+    }
+    else if(uic.IsUserIntentPending(kPlayAgainIntent))
+    {
+      uic.DropUserIntent(kPlayAgainIntent);
+    }
+    TransitionToSayingIKnowThatName();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToStartEnrollment()
+{
+  SET_STATE(Enrolling);
+  
+  // Give ourselves a little more time to finish now that we've seen a face, but
+  // don't go over the max timeout
+  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec, _dVars->timeout_sec + kEnrollFace_TimeoutExtraTime_sec);
+  
+  PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
+                "Found face %d to enroll. Timeout set to %.1fsec",
+                _dVars->faceID, _dVars->timeout_sec);
+  
+  auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetVictorGetIn);
+  
+  IActionRunner* action = nullptr;
+  if(CanMoveTreads())
+  {
+    SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(_dVars->faceID);
+    // Turn towards the person we've chosen to enroll, play the "get in" animation
+    // to start "scanning" and move towards the person a bit to show intentionality
+    action = new CompoundActionSequential({
+      new TurnTowardsFaceAction(smartID, M_PI, false),
+      new CompoundActionParallel({
+        getInAnimAction,
+        new DriveStraightAction(kEnrollFace_DriveForwardIntentDist_mm,
+                                kEnrollFace_DriveForwardIntentSpeed_mmps, false)
+      })
+    });
+  }
+  else
+  {
+    // Just play the get-in if we aren't able to move the treads
+    action = getInAnimAction;
+  }
+  
+  // tell the app we're beginning enrollment
+  if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
+    // todo: replace with generic status VIC-1423
+    auto* status = new external_interface::MeetVictorFaceScanStarted;
+    GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(status) );
+  }
+  
+  {
+    DASMSG(behavior_meet_victor_scan_start, "behavior.meet_victor.scan_start", "Face scanning started in meet victor");
+    DASMSG_SEND();
+  }
+  
+  DelegateIfInControl(action, &BehaviorEnrollFace::TransitionToEnrolling);
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToEnrolling()
 {
@@ -1220,11 +1379,14 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   trackAction->SetPanTolerance(DEG_TO_RAD(kEnrollFace_MinTrackingPanAngle_deg));
   trackAction->SetClampSmallAnglesToTolerances(true);
 
-  // Play the scanning animation in parallel while we're tracking
-  const s32 numLoops = 0; // loop forever
-  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFace, numLoops);
+  // Play the scanning animation in parallel while we're tracking. This anim group has multiple
+  // animations chosen at random. It loops forever
+  auto* scanLoop = new ReselectingLoopAnimationAction{ AnimationTrigger::MeetVictorLookFace };
 
   CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
+  
+  auto& blc = GetBEI().GetBackpackLightComponent();
+  blc.SetBackpackAnimation(_iConfig->backpackAnim);
 
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to
@@ -1236,6 +1398,9 @@ void BehaviorEnrollFace::TransitionToEnrolling()
 void BehaviorEnrollFace::TransitionToScanningInterrupted()
 {
   SET_STATE(ScanningInterrupted);
+  
+  auto& blc = GetBEI().GetBackpackLightComponent();
+  blc.ClearAllBackpackLightConfigs();
 
   // Make sure we stop tracking necessary (in case we timed out while tracking)
   CancelDelegates(false);
@@ -1315,6 +1480,22 @@ void BehaviorEnrollFace::TransitionToSayingName()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline bool IsVowel(char c)
+{
+  switch(c)
+  {
+    case 'A': case 'a':
+    case 'E': case 'e':
+    case 'I': case 'i':
+    case 'O': case 'o':
+    case 'U': case 'u':
+      return true;
+    default:
+      return false;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
 {
   SET_STATE(SayingIKnowThatName);
@@ -1327,7 +1508,9 @@ void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
     DelegateIfInControl(actConfusedAnim, [this](ActionResult result) {
       
       // todo: locale
-      const std::string sentence = "eye know " + _dVars->faceName;
+      const std::string a_or_an = (IsVowel(_dVars->faceName.front()) ? "an " : "a ");
+      const std::string sentence = "eye already know " + a_or_an + _dVars->faceName;
+      
       _iConfig->ttsBehavior->SetTextToSay( sentence );
       ANKI_VERIFY( _iConfig->ttsBehavior->WantsToBeActivated(), "BehaviorEnrollFace.TransitionToSayingIKnowThatName.NoTTS","");
       DelegateIfInControl(_iConfig->ttsBehavior.get(), [this]() {
@@ -1942,7 +2125,12 @@ void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEve
                     msg.saveID, msg.observedID, Util::HidePersonallyIdentifiableInfo(msg.name.c_str()));
 
       *(_dVars->persistent.settings) = msg;
+      
       _dVars->persistent.requestedRescan = true;
+      
+      // This is a re-enroll if saveID is provided (and "manual" because this came as a message)
+      _dVars->persistent.isManualReEnroll = (msg.saveID != Vision::UnknownFaceID);
+      
       break;
     }
 
@@ -1990,5 +2178,5 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

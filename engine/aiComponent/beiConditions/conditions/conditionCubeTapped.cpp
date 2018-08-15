@@ -18,7 +18,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace
 {
@@ -83,5 +83,5 @@ void ConditionCubeTapped::HandleObjectTapped( BehaviorExternalInterface& bei, co
   _tapInfo.lastTappedTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

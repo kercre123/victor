@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 
 // Forward declarations
@@ -42,7 +42,7 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::DataAccessor);
   };
@@ -92,7 +92,7 @@ private:
   Robot* _robot = nullptr;
 }; // class TextToSpeechCoordinator
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //__Engine_Components_TextToSpeechCoordinator_H__ 

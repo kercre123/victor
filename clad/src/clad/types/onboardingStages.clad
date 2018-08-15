@@ -3,7 +3,7 @@
 // Copyright: Anki Inc (c) 2018
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 enum uint_8 OnboardingStages
 {

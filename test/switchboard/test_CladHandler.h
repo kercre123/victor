@@ -20,14 +20,14 @@ namespace Anki {
 namespace Switchboard {
   class CladHandler {
     public:
-    using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_2& msg)>;
+    using RtsConnectionSignal = Signal::Signal<void (const Anki::Vector::ExternalComms::RtsConnection_2& msg)>;
     
     RtsConnectionSignal& OnReceiveRtsMessage() {
       return _receiveRtsMessage;
     }
 
-    Anki::Cozmo::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
-      Anki::Cozmo::ExternalComms::ExternalComms extComms;
+    Anki::Vector::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
+      Anki::Vector::ExternalComms::ExternalComms extComms;
 
       const size_t unpackSize = extComms.Unpack(buffer, length);
       if(unpackSize != length) {
@@ -35,9 +35,9 @@ namespace Switchboard {
         Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
       }
       
-      if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
-        Anki::Cozmo::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
-        Anki::Cozmo::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
+      if(extComms.GetTag() == Anki::Vector::ExternalComms::ExternalCommsTag::RtsConnection) {
+        Anki::Vector::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
+        Anki::Vector::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
         
         _receiveRtsMessage.emit(rtsMsg);          
       }
@@ -45,7 +45,7 @@ namespace Switchboard {
       return extComms;
     }
 
-    static std::vector<uint8_t> SendExternalCommsMsg(Anki::Cozmo::ExternalComms::ExternalComms msg) {
+    static std::vector<uint8_t> SendExternalCommsMsg(Anki::Vector::ExternalComms::ExternalComms msg) {
       std::vector<uint8_t> messageData(msg.Size());
 
       const size_t packedSize = msg.Pack(messageData.data(), msg.Size());

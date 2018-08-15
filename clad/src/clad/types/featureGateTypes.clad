@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // when updating this enum, please update the console enum kFeatureEnumString in cozmoFeatureGate.cpp
 enum uint_8 FeatureType {
@@ -11,6 +11,7 @@ enum uint_8 FeatureType {
   KnowledgeGraph,
   Dancing,
   CubeBehaviors,
+  CubeSpinner,
   GreetAfterLongTime,
   AttentionTransfer,
   UserDefinedBehaviorTree,

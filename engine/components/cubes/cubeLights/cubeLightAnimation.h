@@ -24,7 +24,7 @@
 #include <list>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeLightAnimation {
 
 static constexpr int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
@@ -70,7 +70,7 @@ using Animation = std::list<LightPattern>;
 
 
 } // namespace CubeLightAnimation
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Anki_Cozmo_Basestation_Components_CubeLightAnimation_fwd_H__

@@ -25,7 +25,7 @@
 #include <set>
 
 namespace  Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Forward declarations:
 class Robot;
@@ -40,7 +40,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -72,7 +72,7 @@ private:
   
 }; // class PetWorld
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_PetWorld_H__ */

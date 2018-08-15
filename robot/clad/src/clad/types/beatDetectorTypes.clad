@@ -2,7 +2,7 @@
 */
  
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 structure BeatInfo
 {
@@ -12,5 +12,5 @@ structure BeatInfo
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

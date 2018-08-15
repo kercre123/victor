@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 static const char* kConfigKeyDelegateID = "delegateID";
@@ -153,5 +153,5 @@ void BehaviorDispatcherRerun::GetAllDelegates(std::set<IBehavior*>& delegates) c
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

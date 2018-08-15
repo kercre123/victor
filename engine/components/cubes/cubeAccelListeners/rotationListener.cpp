@@ -20,7 +20,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace CubeAccelListeners {
 
 RotationListener::RotationListener(std::weak_ptr<Rotation3d> output)

@@ -31,7 +31,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace Audio {
 
 using namespace AudioEngine;

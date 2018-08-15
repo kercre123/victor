@@ -387,7 +387,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
       
       const float* outputData = outputTensor.tensor<float, 2>().data();
       
-      LocalizedBinaryOutputHelper(outputData, t, salientPoints);
+      LocalizedBinaryOutputHelper(outputData, t, 1.f, 0, salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::AnchorBoxes:

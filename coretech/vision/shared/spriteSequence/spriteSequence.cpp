@@ -131,5 +131,5 @@ bool SpriteSequence::GetModdedIndex(const u32 index, u32& moddedIndex) const
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

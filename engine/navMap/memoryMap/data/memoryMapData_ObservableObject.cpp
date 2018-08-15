@@ -15,7 +15,7 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(const ObservableObject& o, 
@@ -53,5 +53,5 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData_ObservableObject::GetExter
   return ExternalInterface::ENodeContentTypeEnum::ObstacleCube;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

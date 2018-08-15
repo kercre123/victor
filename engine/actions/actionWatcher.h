@@ -22,7 +22,7 @@
 #include <map>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class IActionRunner;
   

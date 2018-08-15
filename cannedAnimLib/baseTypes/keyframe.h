@@ -55,7 +55,7 @@ namespace Anki {
     class SpriteSequenceContainer;
   }
   
-namespace Cozmo {
+namespace Vector {
   // IKeyFrame defines an abstract interface for all KeyFrames below.
   class IKeyFrame
   {
@@ -504,7 +504,7 @@ namespace Cozmo {
     }
     
     
-    Anki::Cozmo::AnimEvent GetAnimEvent() const { return _event_id; }
+    Anki::Vector::AnimEvent GetAnimEvent() const { return _event_id; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -514,7 +514,7 @@ namespace Cozmo {
     
   private:
 
-    Anki::Cozmo::AnimEvent _event_id;
+    Anki::Vector::AnimEvent _event_id;
     
   }; // class EventKeyFrame
   
@@ -690,7 +690,7 @@ namespace Cozmo {
   }; // class TurnToRecordedHeadingKeyFrame
   
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // ANKI_COZMO_CANNED_KEYFRAME_H

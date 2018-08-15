@@ -14,7 +14,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // Only localize to / identify active objects within this distance
 CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 250.f, 50.f, 1000.f);
@@ -99,5 +99,5 @@ bool ObservableObject::IsMoving(TimeStamp_t* t) const
   }
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

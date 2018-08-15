@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class VisionComponent;
 class IGatewayInterface;
@@ -90,8 +90,8 @@ public:
   // Called by VisionComponent when photo has been taken and saved
   void SetLastPhotoTimeStamp(RobotTimeStamp_t timestamp);
 
-  static const char * GetPhotoExtension() { return "jpg"; }
-  static const char * GetThumbExtension() { return "thm.jpg"; }
+  static const char * GetPhotoExtension();
+  static const char * GetThumbExtension();
   
   Robot* GetRobot() const { return _robot; }
   
@@ -156,7 +156,7 @@ private:
 };
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Components_PhotographyManager_H__

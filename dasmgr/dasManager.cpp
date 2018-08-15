@@ -39,8 +39,6 @@ using LogLevel = Anki::Util::LogLevel;
 
 namespace {
 
-
-
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
 }
@@ -256,9 +254,29 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     return "";
   }
 
+  //
+  // DAS manager uses magic event names to track global state.
+  // These event names are declared in a common header (DAS.h)
+  // so they can be shared with other services.
+  //
+  // If magic event names change, this code should be reviewed for compatibility.
+  //
+
   if (name == DASMSG_FEATURE_START) {
     _feature_run_id = values[3]; // s3
     _feature_type = values[4]; // s4
+  } else if (name == DASMSG_BLE_CONN_ID_START) {
+    _ble_conn_id = values[1]; // s1
+  } else if (name == DASMSG_BLE_CONN_ID_STOP) {
+    _ble_conn_id.clear();
+  } else if (name == DASMSG_WIFI_CONN_ID_START) {
+    _wifi_conn_id = values[1]; // s1
+  } else if (name == DASMSG_WIFI_CONN_ID_STOP) {
+    _wifi_conn_id.clear();
+  } else if (name == DASMSG_PROFILE_ID_START) {
+    _profile_id = values[1]; // s1
+  } else if (name == DASMSG_PROFILE_ID_STOP) {
+    _profile_id.clear();
   }
 
   std::ostringstream ostr;
@@ -282,6 +300,16 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
   serialize(ostr, "feature_type", _feature_type);
   ostr << ',';
   serialize(ostr, "feature_run_id", _feature_run_id);
+
+  if (!_ble_conn_id.empty()) {
+    ostr << ',';
+    serialize(ostr, "ble_conn_id", _ble_conn_id);
+  }
+
+  if (!_wifi_conn_id.empty()) {
+    ostr << ',';
+    serialize(ostr, "wifi_conn_id", _wifi_conn_id);
+  }
 
   static const std::vector<std::string> keys =
     {"event", "s1", "s2", "s3", "s4", "i1", "i2", "i3", "i4"};
@@ -317,7 +345,7 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
 
   _eventCount++;
 
-  std::string json = ConvertLogEntryToJson(logEntry);
+  const std::string & json = ConvertLogEntryToJson(logEntry);
   if (json.empty()) {
     return;
   }
@@ -472,7 +500,7 @@ Result DASManager::Run(const bool & shutdown)
 
   LOG_DEBUG("DASManager.Run", "Begin reading loop");
   {
-    auto * osState = Anki::Cozmo::OSState::getInstance();
+    auto * osState = Anki::Vector::OSState::getInstance();
     DEV_ASSERT(osState != nullptr, "DASManager.Run.InvalidOSState");
     if (osState->HasValidEMR()) {
       _robot_id = osState->GetSerialNumberAsString();
@@ -481,7 +509,7 @@ Result DASManager::Run(const bool & shutdown)
     }
     _robot_version = osState->GetRobotVersion();
     _boot_id = osState->GetBootID();
-    Cozmo::OSState::removeInstance();
+    Vector::OSState::removeInstance();
   }
 
   _profile_id = "system";

@@ -18,7 +18,7 @@
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BlockWorldFilter;
 class BehaviorClearChargerArea;
@@ -119,7 +119,7 @@ private:
 };
   
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_Behaviors_BehaviorGoHome_H__

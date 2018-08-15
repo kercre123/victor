@@ -21,7 +21,7 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki{
-namespace Cozmo{
+namespace Vector{
 
 // If UpdatePeriods longer than this become necessary, INCREASE IT. This will also increase
 // the number of frames of the schedule displayed in Webots which will require an appropriate
@@ -44,7 +44,7 @@ VisionScheduleMediator::~VisionScheduleMediator()
 {
 }
 
-void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps)
+void VisionScheduleMediator::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   // Load up data from the JSON config
   auto& config = 
@@ -372,7 +372,7 @@ void VisionScheduleMediator::SendDebugVizMessages(const CozmoContext* context)
   webVizData["patternWidth"] = kMaxUpdatePeriod;
   Json::Value& fullSchedule = webVizData["fullSchedule"]; 
   
-  for(auto& modeDataPair : _modeDataMap) {
+  for(const auto& modeDataPair : _modeDataMap) {
     if(modeDataPair.second.enabled){
       numActiveModes++;
 
@@ -413,5 +413,5 @@ void VisionScheduleMediator::SendDebugVizMessages(const CozmoContext* context)
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

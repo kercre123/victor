@@ -33,7 +33,7 @@ namespace Vision{
 class TrackedFace;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class Robot;
 class FaceWorld;

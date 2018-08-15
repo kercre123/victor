@@ -27,7 +27,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 static const Radians tiltRads(MIN_HEAD_ANGLE);
@@ -259,5 +259,5 @@ void BehaviorPounceWithProx::HandleWhileActivated(const EngineToGameEvent& event
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

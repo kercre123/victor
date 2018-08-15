@@ -15,7 +15,7 @@
 #include "engine/overheadEdge.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void OverheadEdgeChainVector::RemoveChainsShorterThan(const u32 minChainLength)
@@ -85,5 +85,5 @@ void OverheadEdgeChainVector::AddEdgePoint(const OverheadEdgePoint& pointInfo, b
   newCurrentChain.points.emplace_back( pointInfo );
 }
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

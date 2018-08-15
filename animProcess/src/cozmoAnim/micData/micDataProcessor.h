@@ -34,7 +34,7 @@
 
 // Declarations
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     class BeatDetector;
     namespace MicData {
       class MicDataSystem;
@@ -52,12 +52,13 @@ namespace Anki {
 }
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MicData {
 
 class MicDataProcessor {
 public:
-  MicDataProcessor(MicDataSystem* micDataSystem, const std::string& writeLocation, const std::string& triggerWordDataDir);
+  MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, 
+                   const std::string& writeLocation, const std::string& triggerWordDataDir);
   ~MicDataProcessor();
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
@@ -70,10 +71,6 @@ public:
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
   
-  void SetShouldStreamAfterTrigger(bool shouldStream) { _shouldStreamAfterTrigger = shouldStream; }
-  
-  void SetTriggerWordDetectionEnabled(bool enabled) { _triggerEnabled = enabled; }
-
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
   // Note 'Count' and '-1' values indicate to use default
@@ -84,6 +81,7 @@ public:
   void FakeTriggerWordDetection() { TriggerWordDetectCallback(nullptr, 0.f); }
   
 private:
+  const AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;
   std::string _writeLocationDir = "";
   std::string _triggerWordDataDir = "";
@@ -120,8 +118,6 @@ private:
   bool _isSpeakerActive = false;
   bool _wasSpeakerActive = false;
   uint32_t _speakerCooldownCnt = 0;
-  bool _shouldStreamAfterTrigger = true; // if you change the default, change engine's micComponent.h
-  bool _triggerEnabled = true; // if you change the default, change engine's micComponent.h
 
   bool _usingFallbackPolicy = false; // True if we are using the 'fallback' beamforming policy
 
@@ -179,7 +175,7 @@ private:
 };
 
 } // namespace MicData
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_MicDataProcessor_H_

@@ -30,7 +30,7 @@
 #include <cmath>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static constexpr auto kDevLogStepTime_ms = 10;
 static const char* kLogsDirectoryFieldName = "logsDirectory";
@@ -549,7 +549,7 @@ void WebotsDevLogController::HandlePrintLines(const DevLogReader::LogData& logDa
   std::cout << reinterpret_cast<const char*>(logData._data.data());
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 
@@ -566,7 +566,7 @@ int main(int argc, char **argv)
   loggerProvider.SetMinToStderrLevel(Anki::Util::LOG_LEVEL_WARN);
   Anki::Util::gLoggerProvider = &loggerProvider;
 
-  Anki::Cozmo::WebotsDevLogController webotsCtrlDevLog(Anki::Cozmo::kDevLogStepTime_ms);
+  Anki::Vector::WebotsDevLogController webotsCtrlDevLog(Anki::Vector::kDevLogStepTime_ms);
 
   // If log directory is already specified when we start, just go ahead and use it,
   // without needing to press 'L' key

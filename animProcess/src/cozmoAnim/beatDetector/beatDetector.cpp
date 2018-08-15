@@ -18,7 +18,7 @@
 #include "util/time/universalTime.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   // This scale factor gets applied to the output tempo estimate of
@@ -158,6 +158,6 @@ void BeatDetector::Stop()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

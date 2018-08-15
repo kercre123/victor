@@ -37,7 +37,7 @@ namespace Vision {
   class ImageRGB565;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class AnimContext;
 class AnimationStreamer;
@@ -109,6 +109,16 @@ private:
   // Resets the lift and head angles observed thus far.
   // Called everytime the screen changes.
   void ResetObservedHeadAndLiftAngles();
+
+  // Detects various button events
+  // Beyond return pressed and released events it also detects when a single button press
+  // is detected vs. a double button press. Note that a doublePressDetected does not 
+  // coincide with two singlePressDetected's.
+  void CheckForButtonEvent(const bool buttonPressed, 
+                           bool& buttonPressedEvent,
+                           bool& buttonReleasedEvent,
+                           bool& singlePressDetected, 
+                           bool& doublePressDetected);
 
   // Process wheel, head, lift, button motion for menu navigation
   void ProcessMenuNavigation(const RobotState& state);
@@ -188,7 +198,7 @@ private:
 
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_FaceDisplay_FaceInfoScreenManager_H_

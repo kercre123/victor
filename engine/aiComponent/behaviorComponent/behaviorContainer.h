@@ -31,7 +31,7 @@ namespace Json {
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorExternalInterface;
 class IExternalInterface;
@@ -153,7 +153,7 @@ bool BehaviorContainer::FindBehaviorByIDAndDowncast(BehaviorID behaviorID,
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

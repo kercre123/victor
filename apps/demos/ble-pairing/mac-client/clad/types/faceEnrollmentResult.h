@@ -14,7 +14,7 @@
 
 namespace Anki {
 
-namespace Cozmo {
+namespace Vector {
 
 // ENUM FaceEnrollmentResult
 enum class FaceEnrollmentResult : uint8_t {
@@ -38,7 +38,7 @@ extern const uint8_t FaceEnrollmentResultVersionHash[16];
 
 constexpr uint8_t FaceEnrollmentResultNumEntries = 9;
 
-} // namespace Cozmo
+} // namespace Vector
 
 } // namespace Anki
 

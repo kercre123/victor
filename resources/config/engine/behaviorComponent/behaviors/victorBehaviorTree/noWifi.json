@@ -12,6 +12,7 @@
       "behaviorName": "NoWifiAnim",
       "behaviorClass": "AnimSequence",
       "animTriggers": [
+        "NoWifiGetIn",
         "NoWifiSearching",
         "NoWifiIcon"
       ]

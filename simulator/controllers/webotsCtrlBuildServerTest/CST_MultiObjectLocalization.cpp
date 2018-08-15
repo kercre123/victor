@@ -31,7 +31,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
   enum class TestState {
     MoveHead,                    // Look up to see Object A
@@ -339,6 +339,6 @@ namespace Cozmo {
     
   }
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 

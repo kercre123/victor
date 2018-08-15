@@ -17,7 +17,7 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class CozmoContext;
 
@@ -30,7 +30,7 @@ public:
 
   virtual ~ContextWrapper(){}
 
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) override {};
+  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override {};
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
 };

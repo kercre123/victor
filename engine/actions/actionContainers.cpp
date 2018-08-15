@@ -24,7 +24,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
 #pragma mark ---- ActionList ----
     
@@ -40,7 +40,7 @@ namespace Anki {
       Clear();
     }
     
-    void ActionList::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComps) 
+    void ActionList::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) 
     {
       _robot = robot;
     }
@@ -777,6 +777,6 @@ namespace Anki {
     
     
     
-  } // namespace Cozmo
+  } // namespace Vector
 } // namespace Anki
 

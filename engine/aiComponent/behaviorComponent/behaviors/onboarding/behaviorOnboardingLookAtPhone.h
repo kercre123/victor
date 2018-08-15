@@ -22,12 +22,14 @@ namespace Util {
   class IConsoleFunction;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 class BehaviorOnboardingLookAtPhone : public ICozmoBehavior
 {
 public: 
   virtual ~BehaviorOnboardingLookAtPhone() = default;
+  
+  void ContinueReceived();
 
 protected:
 
@@ -43,21 +45,15 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
-  
-  virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
 
 private:
   
   void MoveHeadUp();
   void RunLoopAction();
   void MoveHeadDown();
-  
-  void SetupConsoleFuncs();
 
   struct InstanceConfig {
     InstanceConfig();
-    
-    std::list<Anki::Util::IConsoleFunction> consoleFuncs;
   };
 
   struct DynamicVariables {
@@ -71,7 +67,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone__

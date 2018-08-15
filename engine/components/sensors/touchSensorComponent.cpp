@@ -11,7 +11,9 @@
  **/
 
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "engine/components/batteryComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -24,28 +26,32 @@
 #include "webServerProcess/src/webService.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   const std::string kLogDirectory = "touchSensor";
   
   const std::string kWebVizTouchSensorModuleName = "touch";
-
-  // CONSTANTS
-  const float kMaxTouchIntensityInvalid = 800;      
   
-  const int kMinCountNoTouchForAccumulation = 100; // ~3 seconds of no-touch
+  // Baseline calibration constants:
+  // -- maximum number of readings to wait for until we determine calibrated
+  const int kBaselineMaxCalibReadings = 400;
   
-
-  const int kBaselineMinCalibReadings = 90;
+  // -- number of "valid near baseline" to wait for until considered calibrated
+  const int kBaselineMinReadingsCountForStability = 30;
   
-  const float kBaselineFilterCoeff = 0.05f;
+  // -- coefficient for a IIR filter in fast accumulation mode
+  const float kBaselineFilterCoeffFast = 0.01f;
   
-  const float kBaselineInitial = 500.0f;
+  // -- coefficient for a IIR filter in slow accumulation mode
+  const float kBaselineFilterCoeffSlow = 0.001f;
+  
+  // -- min no-touch cycles since last touch to reenable baseline accumulation
+  const int kBaselineMinCountNoTouch = 100; // ~3 seconds of no-touch
+  
   
   bool devSendTouchSensor = false;
   bool devTouchSensorPressed = false;
-  bool devEnableTouchSensor = true;
   #if ANKI_DEV_CHEATS
   void SetTouchSensor(ConsoleFunctionContextRef context)
   {
@@ -53,12 +59,6 @@ namespace {
     devSendTouchSensor = true;
   }
   CONSOLE_FUNC(SetTouchSensor, "Touch", bool pressed);
-  
-  void EnableTouchSensing(ConsoleFunctionContextRef context)
-  {
-    devEnableTouchSensor = ConsoleArg_Get_Bool(context, "enable");
-  }
-  CONSOLE_FUNC(EnableTouchSensing, "Touch", bool enable);
   #endif
   
   const int kMaxPreTouchSamples = 100; // 100 ticks * 30ms = 3 seconds
@@ -70,28 +70,85 @@ namespace {
   const f32 kSendWebVizDataPeriod_sec = 0.5f;
   f32 _nextSendWebVizDataTime_sec = 0.0f;
   size_t _touchCountForWebviz = 0;
+  Json::Value _toSendJson;
   
 } // end anonymous namespace
-  
-const TouchSensorComponent::FilterParameters TouchSensorComponent::_kFilterParamsForDVT =
+
+void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, bool isPressed)
 {
-    .boxFilterSize = 8,
-    .dynamicThreshGap = 9,
-    .dynamicThreshDetectFollowOffset = 7,
-    .dynamicThreshUndetectFollowOffset = 7,
-    .dynamicThreshMaximumDetectOffset = 50,
-    .dynamicThreshMininumUndetectOffset = 13,
-    .minConsecCountToUpdateThresholds = 8,
-};
+  static float lastBaseline = 0.0f;
   
+  if( isPickedUp ) {
+    _numConsecNoTouch = 0;
+    if(!IsCalibrated()) {
+      _numStableBaselineReadings = 0;
+      lastBaseline = 0.0f;
+    }
+    return;
+  }
+  
+  // check if the incoming readings have settled within an acceptable
+  // range from the baseline in order to be considered "calibrated"
+  const bool isBaselineStable = fabsf(lastBaseline - _baseline) < 0.5;
+  if(!IsCalibrated() && isBaselineStable) {
+    ++_numStableBaselineReadings;
+    if(_numStableBaselineReadings > kBaselineMinReadingsCountForStability) {
+      PRINT_NAMED_INFO("TouchSensorComponent.UpdateBaseline.Calibrated", "%4.2f", _baseline);
+      _isCalibrated = true;
+    }
+  } else if(!IsCalibrated() && !isBaselineStable) {
+    _numStableBaselineReadings = 0;
+    lastBaseline = _baseline;
+  }
+  
+  if(!IsCalibrated()) {
+    // take the first reading as the baseline to help converge faster
+    // otherwise incorporate the reading with fast calibration
+    if(_baseline < 0.0f) {
+      _baseline = reading;
+      lastBaseline = reading;
+    } else {
+      _baseline = kBaselineFilterCoeffFast*reading + (1.0f-kBaselineFilterCoeffFast)*_baseline;
+    }
+    
+    // acts as a escape hatch to just quit trying to calibrate
+    _numCalibrationReadings++;
+    if(_numCalibrationReadings > kBaselineMaxCalibReadings) {
+      PRINT_NAMED_WARNING("TouchSensorComponent.UpdateBaseline.CalibratedWithoutStability", "%4.2f", _baseline);
+      _isCalibrated = true;
+    }
+  } else {
+    // Sometimes when receiving light touches, they are:
+    // 1. classified as NO TOUCH
+    // 2. incorporated into the baseline accumulation
+    // this results in a rising baseline while being touched
+    // this `maybeTouch` guards against this happening
+    const bool maybeTouch = (reading >= (_baseline + _maxAllowedOffsetFromBaseline));
+    
+    // require seeing a minimum number of untouched cycles before
+    // continuing accumulation of values for baseline detect
+    if(!isPressed && !maybeTouch) {
+      _numConsecNoTouch++;
+      if(_numConsecNoTouch >= kBaselineMinCountNoTouch) {
+        DEV_ASSERT_MSG(_baseline > 0.0f, "TouchBaselineCalibrator.BaselineNotFastCalibrated", "");
+        _baseline = kBaselineFilterCoeffSlow*reading + (1.0f-kBaselineFilterCoeffSlow)*_baseline;
+        _numConsecNoTouch = kBaselineMinCountNoTouch;
+      }
+    } else {
+      _numConsecNoTouch = 0;
+    }
+  }
+}
+
+// values chosen manually after inspecting some robots --- parameter sweep not necessary
 const TouchSensorComponent::FilterParameters TouchSensorComponent::_kFilterParamsForProd =
 {
-  .boxFilterSize = 55,
-  .dynamicThreshGap = 1,
-  .dynamicThreshDetectFollowOffset = 2,
-  .dynamicThreshUndetectFollowOffset = 2,
-  .dynamicThreshMaximumDetectOffset = 20,
-  .dynamicThreshMininumUndetectOffset = 8,
+  .boxFilterSize = 1,
+  .dynamicThreshGap = 15,
+  .dynamicThreshDetectFollowOffset = 10,
+  .dynamicThreshUndetectFollowOffset = 19,
+  .dynamicThreshMaximumDetectOffset = 80,
+  .dynamicThreshMininumUndetectOffset =  30,
   .minConsecCountToUpdateThresholds = 6,
 };
 
@@ -100,14 +157,12 @@ TouchSensorComponent::TouchSensorComponent()
 , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::TouchSensor)
 , _filterParams(_kFilterParamsForProd)
 , _lastRawTouchValue(0)
-, _noContactCounter(kMinCountNoTouchForAccumulation)
-, _baselineTouch(kBaselineInitial)
+, _baselineCalibrator(_filterParams.dynamicThreshMininumUndetectOffset)
 , _boxFilterTouch(_filterParams.boxFilterSize)
 , _detectOffsetFromBase(_filterParams.dynamicThreshMininumUndetectOffset+
                         _filterParams.dynamicThreshGap)
 , _undetectOffsetFromBase(_filterParams.dynamicThreshMininumUndetectOffset)
 , _isPressed(false)
-, _numConsecCalibReadings(0)
 , _countAboveDetectLevel(0)
 , _countBelowUndetectLevel(0)
 , _touchPressTime(std::numeric_limits<float>::max())
@@ -125,6 +180,7 @@ TouchSensorComponent::TouchSensorComponent()
     0x00e1006d,
     0x00e10008,
     0x00e1005c,
+    0x00e10052, // data set robot
     0x00e10062,
     0x00e1001f,
     0x00e10032,
@@ -140,14 +196,24 @@ TouchSensorComponent::TouchSensorComponent()
   // backwards compatibility check for robot hardware versions
   auto* osstate = OSState::getInstance();
   u32 esn = osstate->GetSerialNumber();
-  const bool isDVThardware = (esn >= 0x00e00000 && esn <= 0x00e1ffff) &&
-                              exceptionESNWithPVThardware.find(esn)==exceptionESNWithPVThardware.end();
-  if(isDVThardware) {
-    _filterParams = _kFilterParamsForDVT;
-  } else {
-    _filterParams = _kFilterParamsForProd;
-  }
-  _useFilterLogicForDVT = isDVThardware;
+  const bool isValidESN = !(esn >= 0x00e00000 && esn <= 0x00e1ffff);
+  const bool isExceptionESN = exceptionESNWithPVThardware.find(esn)!=exceptionESNWithPVThardware.end();
+  _enabled = isValidESN || isExceptionESN;
+  
+  // send up the OS version (useful to determine if corresponding required syscon changes are present)
+  int major, minor, incremental;
+  osstate->GetOSBuildVersion(major, minor, incremental);
+  std::stringstream osv;
+  osv << major << "." << minor << "." << incremental;
+  
+  // set once
+  _toSendJson["esn"]        = osstate->GetSerialNumberAsString();
+  _toSendJson["osVersion"]  = osv.str();
+  
+  // set multiple times
+  _toSendJson["enabled"]    = _enabled ? "true" : "false";
+  _toSendJson["count"]      = (int)_touchCountForWebviz;
+  _toSendJson["calibrated"] = _baselineCalibrator.IsCalibrated() ? "yes" : "no";
 }
   
 TouchSensorComponent::~TouchSensorComponent()
@@ -167,18 +233,11 @@ void TouchSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
       if (webService != nullptr) {
         // set up handler for incoming payload from WebViz
         auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
-          const std::string& configStr = JsonTools::ParseString(data, "filterConfig", "TouchSensorComponent.WebVizJsonCallback");
-          if(configStr.compare("DVT")==0) {
-            _filterParams = _kFilterParamsForDVT;
-            _useFilterLogicForDVT = true;
-          } else {
-            _filterParams = _kFilterParamsForProd;
-            _useFilterLogicForDVT = false;
-          }
+          const std::string& stateStr = JsonTools::ParseString(data, "enabled", "TouchSensorComponent.WebVizJsonCallback");
+          _enabled = stateStr.compare("true")==0;
           
           // recalibrate and re-init the boxfilter
-          _numConsecCalibReadings = 0;
-          _baselineTouch = kBaselineInitial;
+          _baselineCalibrator.ResetCalibration();
           _boxFilterTouch = BoxFilter(_filterParams.boxFilterSize);
           
           // ack the mode change
@@ -186,9 +245,8 @@ void TouchSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
           if (context != nullptr) {
             auto* webService = context->GetWebService();
             if (webService != nullptr) {
-              Json::Value toSend = Json::objectValue;
-              toSend["mode"] = _useFilterLogicForDVT ? "DVT" : "Prod";
-              webService->SendToWebViz(kWebVizTouchSensorModuleName, toSend);
+              _toSendJson["enabled"] = _enabled ? "true" : "false";
+              webService->SendToWebViz(kWebVizTouchSensorModuleName, _toSendJson);
             }
           }
         };
@@ -200,87 +258,71 @@ void TouchSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
   
 void TouchSensorComponent::DevLogTouchSensorData() const
 {
-  std::string path = _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory);
-  Util::FileUtils::CreateDirectory(path);
-  
-  path += "/";
-  path += "lastTouchDump.csv";
-  
-  std::stringstream output;
-  for(auto& row : _devLogBufferSaved) {
-    output << row.rawTouch << ",";
-    output << row.boxTouch << ",";
-    output << row.calibBaseline << ",";
-    output << row.detOffsetFromBase << ",";
-    output << row.undOffsetFromBase << ",";
-    output << (int)row.isPressed;
-    output << std::endl;
-  }
-  
-  if(!Util::FileUtils::WriteFile(path, output.str())) {
-    PRINT_NAMED_WARNING("TouchSensorComponent.FailedToWrite","%s", path.c_str());
+  if(ANKI_DEV_CHEATS) {
+    std::string path = _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory);
+    Util::FileUtils::CreateDirectory(path);
+    
+    path += "/";
+    path += "lastTouchDump.csv";
+    
+    std::stringstream output;
+    for(auto& row : _devLogBufferSaved) {
+      output << row.rawTouch << ",";
+      output << row.boxTouch << ",";
+      output << row.calibBaseline << ",";
+      output << row.detOffsetFromBase << ",";
+      output << row.undOffsetFromBase << ",";
+      output << (int)row.isPressed;
+      output << std::endl;
+    }
+    
+    if(!Util::FileUtils::WriteFile(path, output.str())) {
+      PRINT_NAMED_WARNING("TouchSensorComponent.FailedToWrite","%s", path.c_str());
+    }
   }
 }
 
 void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
   // send the information for webviz once
-  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if (now_sec > _nextSendWebVizDataTime_sec) {
-    const auto* context = _robot->GetContext();
-    if(context != nullptr) {
-      auto* webService = context->GetWebService();
-      if(webService != nullptr) {
-        Json::Value toSend = Json::objectValue;
-        auto* osstate = OSState::getInstance();
-        toSend["esn"] = osstate->GetSerialNumberAsString();
-        toSend["mode"] = _useFilterLogicForDVT ? "DVT" : "Prod";
-        toSend["count"] = (int)_touchCountForWebviz;
-        webService->SendToWebViz(kWebVizTouchSensorModuleName, toSend);
+  const auto* context = _robot->GetContext();
+  if(context != nullptr) {
+    auto* webService = context->GetWebService();
+    if(webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizTouchSensorModuleName)) {
+      const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (now_sec > _nextSendWebVizDataTime_sec) {
+        _toSendJson["enabled"] = _enabled ? "true" : "false";
+        _toSendJson["count"] = (int)_touchCountForWebviz;
+        _toSendJson["calibrated"] = _baselineCalibrator.IsCalibrated() ? "yes" : "no";
+        webService->SendToWebViz(kWebVizTouchSensorModuleName, _toSendJson);
         _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
       }
     }
   }
+
   
-  if(!devEnableTouchSensor) {
+  // in the process of going from DVT to PVT, the touch sensor hardware changed enough to
+  // require a new scheme of sampling data from the sensor itself. As a result, the DVT
+  // sensors are no longer supported. To guard against undefined behavior, we disable the
+  // sensor in the robotics layer, if we detect here that the robot is not PVT hardware.
+  //
+  // DVT hardware => disabled
+  // PVT hardware => enabled
+  if(!_enabled) {
     return;
   }
   
   if(FACTORY_TEST &&_dataToRecord != nullptr)
   {
-    for(int i=0; i<STATE_MESSAGE_FREQUENCY; ++i) {
-      _dataToRecord->data.push_back(msg.backpackTouchSensorRaw[i]);
-    }
-  }
-
-  // sometimes spurious values that are absurdly high come through the sensor
-  const bool valuesAreValid = std::all_of(msg.backpackTouchSensorRaw.begin(),
-                                          msg.backpackTouchSensorRaw.end(),
-                                          [](const uint16_t& value)->bool {
-                                            return value <= kMaxTouchIntensityInvalid;
-                                          });
-  if(!valuesAreValid) {
-    return;
+    _dataToRecord->data.push_back(msg.backpackTouchSensorRaw);
   }
   
   const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  _lastRawTouchValue = msg.backpackTouchSensorRaw.back();
+  _lastRawTouchValue = msg.backpackTouchSensorRaw;
   
-  // boxfilter on touch sensor values from the robot is treated differently
-  // between DVT and production robots because of a change to the design of
-  // the sensor that necessitates using more values from robot
-  // thus we check the ESN of the robot to use the correct logic based on
-  // the hardware for backwards compatibility
-  int boxFiltVal = 0;
-  if(_useFilterLogicForDVT) {
-    boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw.back());
-  } else {
-    for(int i=0; i<STATE_MESSAGE_FREQUENCY; ++i) {
-      boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw[i]);
-    }
-  }
-  
+  float boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw);
+
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
   bool lastPressed = _isPressed; // after this tick, state may change
@@ -295,20 +337,14 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     }
   }
   
-  if( !IsCalibrated() ) {
-    // note: do not detect touch instances during calibration
-    if(!isPickedUp) {
-      _baselineTouch = kBaselineFilterCoeff*boxFiltVal + (1.0f-kBaselineFilterCoeff)*_baselineTouch;
-      _numConsecCalibReadings++;
-      if(IsCalibrated()) {
-        PRINT_NAMED_INFO("TouchSensorComponent","Calibrated");;
-      }
-    } else {
-      _numConsecCalibReadings = 0;
-    }
+  if( !_baselineCalibrator.IsCalibrated() ) {
+    // note: treat isPressed as false, because we cannot detect touch while uncalibrated
+    _baselineCalibrator.UpdateBaseline(boxFiltVal, isPickedUp, false);
   } else {
     // handle checks for touch input, when calibrated
-    const bool didChange = ProcessWithDynamicThreshold(_baselineTouch, boxFiltVal);
+    bool didChange = ProcessWithDynamicThreshold(std::floor(_baselineCalibrator.GetBaseline()),
+                                                       std::round(boxFiltVal));
+    
     if(didChange) {
       _robot->Broadcast(
         ExternalInterface::MessageEngineToGame(
@@ -318,19 +354,8 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
         _touchCountForWebviz++;
       }
     }
-    // require seeing a minimum number of untouched cycles before
-    // continuing accumulation of values for baseline detect
-    DEV_ASSERT( IsCalibrated(), "TouchSensorComponent.ClassifyingBeforeCalibration");
-    if(!GetIsPressed() && !isPickedUp) {
-      _noContactCounter++;
-      if(_noContactCounter >= kMinCountNoTouchForAccumulation) {
-        _baselineTouch = kBaselineFilterCoeff*boxFiltVal + (1.0f-kBaselineFilterCoeff)*_baselineTouch;
-        _noContactCounter = kMinCountNoTouchForAccumulation;
-      }
-    } else {
-      // if we are picked up OR we are being touched
-      _noContactCounter = 0;
-    }
+    DEV_ASSERT( _baselineCalibrator.IsCalibrated(), "TouchSensorComponent.ClassifyingBeforeCalibration");
+    _baselineCalibrator.UpdateBaseline(boxFiltVal, isPickedUp, GetIsPressed());
   }
   
   // dev-only logging code for touch sensor debugging
@@ -349,12 +374,13 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   //
   // M = kMaxPreTouchSamples
   // N = kMinPostTouchSamples
+  if(ANKI_DEV_CHEATS)
   {
     DevLogTouchRow entry
     {
       _lastRawTouchValue,
       boxFiltVal,
-      (int)_baselineTouch,
+      (int)std::floor(_baselineCalibrator.GetBaseline()),
       _detectOffsetFromBase,
       _undetectOffsetFromBase,
       _isPressed
@@ -469,10 +495,6 @@ bool TouchSensorComponent::ProcessWithDynamicThreshold(const int baseline, const
   }
   
   return lastPressed != _isPressed;
-}
-  
-bool TouchSensorComponent::IsCalibrated() const {
-  return _numConsecCalibReadings >= kBaselineMinCalibReadings;
 }
 
 bool TouchSensorComponent::GetIsPressed() const

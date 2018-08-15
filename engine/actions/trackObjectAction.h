@@ -17,7 +17,7 @@
 #include "engine/actions/trackActionInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class TrackObjectAction : public ITrackAction
 {
@@ -44,7 +44,7 @@ private:
 }; // class TrackObjectAction
 
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_TrackObjectAction_H__ */

@@ -20,7 +20,7 @@
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg,    "Behavior.PutDownBlock", -20.0f);
@@ -123,6 +123,6 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(CarryingComponen
   return action;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

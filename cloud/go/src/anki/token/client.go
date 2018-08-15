@@ -2,7 +2,9 @@ package token
 
 import (
 	"anki/log"
+	"anki/robot"
 	"context"
+	"io/ioutil"
 
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
 	"google.golang.org/grpc"
@@ -38,10 +40,12 @@ func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, erro
 }
 
 func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error) {
-	req := pb.AssociatePrimaryUserRequest{
-		GenerateStsToken: false,
-		RobotId:          robotID,
-		UserSession:      session}
+	req := pb.AssociatePrimaryUserRequest{}
+	cert, err := ioutil.ReadFile(robot.GatewayCert)
+	if err != nil {
+		return nil, err
+	}
+	req.SessionCertificate = cert
 	response, err := c.client.AssociatePrimaryUser(context.Background(), &req)
 	if err != nil {
 		return nil, err
@@ -50,7 +54,7 @@ func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error
 }
 
 func (c *conn) associateSecondary(jwt, session, clientName, appID string) (*pb.TokenBundle, error) {
-	req := pb.AssociateSecondaryClientRequest{Token: jwt,
+	req := pb.AssociateSecondaryClientRequest{
 		UserSession: session,
 		ClientName:  clientName,
 		AppId:       appID}
@@ -63,9 +67,7 @@ func (c *conn) associateSecondary(jwt, session, clientName, appID string) (*pb.T
 
 func (c *conn) refreshToken(existingToken string) (*pb.TokenBundle, error) {
 	req := pb.RefreshTokenRequest{
-		RefreshJwtTokens: true,
-		RefreshStsTokens: false,
-		Token:            existingToken}
+		RefreshJwtTokens: true}
 	response, err := c.client.RefreshToken(context.Background(), &req)
 	if err != nil {
 		return nil, err
@@ -89,31 +91,4 @@ func getDialOptions(creds credentials.PerRPCCredentials) ([]grpc.DialOption, err
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	}
 	return dialOpts, nil
-}
-
-type rpcMetadata map[string]string
-
-func (r *rpcMetadata) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return *r, nil
-}
-
-func (r *rpcMetadata) RequireTransportSecurity() bool {
-	return true
-}
-
-// TODO: make this configurable
-const ankiDevKey = "xiepae8Ach2eequiphee4U"
-
-func getAuthMetadata(sessionToken string) *rpcMetadata {
-	return &rpcMetadata{
-		"anki-user-session": sessionToken,
-		"anki-app-key":      ankiDevKey,
-	}
-}
-
-func getTokenMetadata(jwtToken string) *rpcMetadata {
-	return &rpcMetadata{
-		"anki-access-token": jwtToken,
-		"anki-app-key":      ankiDevKey,
-	}
 }

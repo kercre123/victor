@@ -2,5 +2,10 @@
   "behaviorID" : "PlayWithCubeConnectionGate",
   "behaviorClass" : "ConnectToCube",
 
-  "delegateBehaviorID" : "VectorPlaysCubeSpinner"
+  "delegateBehaviorID" : "VectorPlaysCubeSpinner",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "FeatureGate",
+    "feature" : "CubeSpinner"
+  }
 }

@@ -19,8 +19,8 @@
 #include "physVizController.h"
 #include "physicsController.h"
 
-Anki::Cozmo::PhysVizController physVizController;
-Anki::Cozmo::PhysicsController physicsController;
+Anki::Vector::PhysVizController physVizController;
+Anki::Vector::PhysicsController physicsController;
 
 
 /*

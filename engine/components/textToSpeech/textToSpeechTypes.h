@@ -4,14 +4,14 @@
 #include <cstdint>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 using UtteranceId = uint8_t;
 constexpr UtteranceId kInvalidUtteranceID = 0;
 
 enum class UtteranceState
 {
-  Invalid,
+  Invalid = 0,
   Generating,
   Ready,
   Playing,
@@ -25,7 +25,7 @@ enum class UtteranceTriggerType
   KeyFrame
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif //__Engine_Components_TextToSpeechTypes_H__

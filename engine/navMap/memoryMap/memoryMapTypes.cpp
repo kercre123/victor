@@ -15,7 +15,7 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace MemoryMapTypes {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

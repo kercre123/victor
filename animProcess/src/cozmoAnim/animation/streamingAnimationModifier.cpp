@@ -22,7 +22,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
 const uint8_t kOffsetForEndOfFrame = 1;
@@ -151,6 +151,6 @@ void StreamingAnimationModifier::AddToMapStreamMap(TimeStamp_t relativeStreamTim
 
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

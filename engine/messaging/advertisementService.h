@@ -49,7 +49,7 @@ namespace Anki {
       void Update();
       
       // Exposed so that you can force-add an advertiser via API
-      void ProcessRegistrationMsg(const Cozmo::AdvertisementRegistrationMsg& msg);
+      void ProcessRegistrationMsg(const Vector::AdvertisementRegistrationMsg& msg);
 
       // Clears the list of advertising devices
       void DeregisterAllAdvertisers();
@@ -66,7 +66,7 @@ namespace Anki {
       
       // Map of advertising device id to AdvertisementMsg
       // populated by AdvertisementRegistrationMsg
-      using ConnectionInfoMap = std::map<int, Cozmo::AdvertisementMsg>;
+      using ConnectionInfoMap = std::map<int, Vector::AdvertisementMsg>;
       typedef ConnectionInfoMap::iterator connectionInfoMapIt;
       ConnectionInfoMap connectionInfoMap_;
       

@@ -4,7 +4,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 enum uint_8 SdkStatusType
@@ -15,5 +15,5 @@ enum uint_8 SdkStatusType
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

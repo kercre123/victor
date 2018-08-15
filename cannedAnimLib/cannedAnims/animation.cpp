@@ -24,7 +24,7 @@
 #define DEBUG_ANIMATIONS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 static const char* kNameKey = "Name";
 CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
@@ -94,8 +94,14 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
     }
   }
 
+  
   auto procFaceData = keyframes->ProceduralFaceKeyFrame();
-  if (procFaceData != nullptr) {
+  // These animations contain procedural faces, even though there is a png sequence that should
+  // be displayed
+  // todo: remove this if block once (VIC-4929) is resolved, or these animations no longer contain
+  // procedural faces, whichever comes first
+  const bool blacklistedProcFaces = (_name == "anim_lookatphone_getin_01") || (_name == "anim_lookatphone_getout_01");
+  if (procFaceData != nullptr && !blacklistedProcFaces) {
     for (int pfIdx=0; pfIdx < procFaceData->size(); pfIdx++) {
       const CozmoAnim::ProceduralFace* procFaceKeyframe = procFaceData->Get(pfIdx);
       Result addResult = _proceduralFaceTrack.AddKeyFrameToBack(procFaceKeyframe, name);
@@ -572,5 +578,5 @@ TimeStamp_t Animation::CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_m
   return lastFrameTime_ms;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

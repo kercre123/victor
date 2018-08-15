@@ -30,7 +30,7 @@ namespace Util {
   class RandomGenerator;
 }
 
-namespace Cozmo {
+namespace Vector {
   
   class AnimationGroupContainer
   {
@@ -68,7 +68,7 @@ namespace Cozmo {
     
   }; // class AnimationGroupContainer
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_AnimationGroup_AnimationGroupContainer_H__

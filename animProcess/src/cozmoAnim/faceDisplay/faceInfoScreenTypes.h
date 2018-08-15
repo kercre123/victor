@@ -14,7 +14,7 @@
 #define __AnimProcess_CozmoAnim_FaceDisplay_FaceInfoScreenTypes_H_
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 // The names of all the screens that are supported
 enum class ScreenName {
@@ -45,7 +45,7 @@ enum class ScreenName {
 
 constexpr f32 kDefaultScreenTimeoutDuration_s = 180.f;
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __AnimProcess_CozmoAnim_FaceDisplay_FaceInfoScreenTypes_H_

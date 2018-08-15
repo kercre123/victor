@@ -26,7 +26,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
 {
@@ -76,7 +76,7 @@ private:
   
 };
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 

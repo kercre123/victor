@@ -25,7 +25,7 @@
 #include <limits>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace{
   const char* kMinTouchTimeKey = "minTouchTime";

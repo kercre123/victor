@@ -124,7 +124,7 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
   }
   
   // Note we do the write with response, meaning we expect reliable, in-order delivery
-  if (data.length == Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength) {
+  if (data.length == Anki::Vector::BLECozmoMessage::kMessageExactMessageLength) {
     [self.carPeripheral writeValue:data forCharacteristic:self.toCarCharacteristic
                               type:CBCharacteristicWriteWithResponse];
     self.bytesSent += (UInt32) data.length;
@@ -216,7 +216,7 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
     return NO;
   }
   
-  if ( data.length != Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength ) {
+  if ( data.length != Anki::Vector::BLECozmoMessage::kMessageExactMessageLength ) {
     NSError *e = [NSError errorWithDomain:@"com.anki.drive.BLECozmoConnection.error" code:BLECozmoConnectionErrorCodeMessageSizeIncorrect userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Cozmo message is not correct message length", nil)}];
     if (error != NULL) {
       *error = e;

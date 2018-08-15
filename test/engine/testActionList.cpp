@@ -24,7 +24,7 @@
 
 #include <vector>
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 constexpr uint8_t track1 = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
 constexpr uint8_t track2 = (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK | (u8)AnimTrackFlag::AUDIO_TRACK;
@@ -280,14 +280,14 @@ void CheckTracksUnlocked(Robot& r, u8 track)
   EXPECT_FALSE(r.GetMoveComponent().AreAllTracksLocked(track));
 }
 
-extern Anki::Cozmo::CozmoContext* cozmoContext;
+extern Anki::Vector::CozmoContext* cozmoContext;
 
 //
 // Perform a single update tick of action list.
 //
 static void Update(ActionList& actionList)
 {
-  static const Anki::Cozmo::RobotCompMap dependentComps;
+  static const Anki::Vector::RobotCompMap dependentComps;
   actionList.UpdateDependent(dependentComps);
 }
 

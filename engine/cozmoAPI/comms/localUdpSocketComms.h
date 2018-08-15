@@ -18,7 +18,7 @@
 class LocalUdpServer;
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class LocalUdpSocketComms : public ISocketComms
 {

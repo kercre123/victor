@@ -20,7 +20,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 const char* kObjectTypeKey = "objectType";
@@ -97,5 +97,5 @@ const ObservableObject* BehaviorAnimSequenceWithObject::GetLocatedObject() const
   return object;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

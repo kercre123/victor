@@ -21,7 +21,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 const char* kGetInAnimationKey           = "getIn";
@@ -225,5 +225,5 @@ void BehaviorAnimGetInLoop::TransitionToGetOut()
 }
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

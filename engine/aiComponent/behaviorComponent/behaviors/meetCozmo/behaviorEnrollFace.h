@@ -30,7 +30,7 @@ namespace Vision {
 class TrackedFace;
 }
 
-namespace Cozmo {
+namespace Vector {
 
 // Forward declaration
 class BehaviorTextToSpeechLoop;
@@ -90,6 +90,8 @@ private:
     PutDownBlock,
     WaitingInPlaceForFace,
     LookingForFace,
+    AlreadyKnowYouPrompt,
+    AlreadyKnowYouHandle,
     Enrolling,
     SayingName,
     Success,
@@ -117,6 +119,9 @@ private:
   void TransitionToDriveOffCharger();
   void TransitionToWaitInPlaceForFace();
   void TransitionToLookingForFace();
+  void TransitionToAlreadyKnowYouPrompt();
+  void TransitionToAlreadyKnowYouHandler();
+  void TransitionToStartEnrollment();
   void TransitionToEnrolling();
   void TransitionToScanningInterrupted();
   void TransitionToSayingName();
@@ -160,7 +165,7 @@ private:
   
 }; // class BehaviorEnrollFace
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__

@@ -25,7 +25,7 @@ using namespace std;
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 /**
 * Defines a storage for values read from file
@@ -92,7 +92,7 @@ protected:
 };
 
 
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 #endif //BASESTATION_COMMS_COMMSLOGWRITER_H_

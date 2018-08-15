@@ -20,11 +20,11 @@
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/components/backpackLights/backpackLightAnimationContainer.h"
+
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/backpackLights/backpackLightComponent.h"
+
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/components/variableSnapshot/variableSnapshotEncoder.h"
@@ -53,7 +53,7 @@ namespace {
 CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false);
 
 #if REMOTE_CONSOLE_ENABLED
-static Anki::Cozmo::ThreadedPrintStressTester stressTester;
+static Anki::Vector::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
 const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
@@ -95,7 +95,7 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
@@ -103,7 +103,6 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
 , _animationTriggerMap(new AnimationTriggerMap())
 , _cubeAnimationTriggerMap(new CubeAnimationTriggerMap())
-, _backpackAnimationTriggerMap(new BackpackAnimationTriggerMap())
 , _dasBlacklistedAnimationTriggers()
 {
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
@@ -168,8 +167,8 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadUserDefinedBehaviorTreeConfig");
+    LoadUserDefinedBehaviorTreeConfig();
   }
 
   {
@@ -202,10 +201,6 @@ void RobotDataLoader::LoadNonConfigData()
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerMap");
       LoadCubeAnimationTriggerMap();
-    }
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackAnimationTriggerMap");
-      LoadBackpackAnimationTriggerMap();
     }
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
@@ -294,12 +289,6 @@ void RobotDataLoader::CollectAnimFiles()
     });
   }
 
-  // backpack light animations
-  {
-    WalkAnimationDir("config/engine/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
-      _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
-    });
-  }
 
   if(!FACTORY_TEST)
   {
@@ -357,39 +346,6 @@ void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
   if (success && !animDefs.empty()) {
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     _cubeLightAnimations.emplace(path, animDefs);
-  }
-}
-
-
-void RobotDataLoader::LoadBackpackLightAnimations()
-{
-  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-
-  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadBackpackLightAnimationFile, this, std::placeholders::_1);
-  MyDispatchWorker myWorker(loadFileFunc);
-
-  const auto& fileList = _jsonFiles[FileType::BackpackLightAnimation];
-  const auto size = fileList.size();
-  for (int i = 0; i < size; i++) {
-    myWorker.PushJob(fileList[i]);
-  }
-
-  myWorker.Process();
-
-  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  double loadTime = endTime - startTime;
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadBackpackLightAnimations.LoadTime",
-                "Time to load backpack light animations = %.2f ms", loadTime);
-}
-
-void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
-{
-  Json::Value animDefs;
-  const bool success = _platform->readAsJson(path.c_str(), animDefs);
-  if (success && !animDefs.empty()) {
-    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
-    _backpackLightAnimations.emplace(path, animDefs);
   }
 }
 
@@ -812,6 +768,98 @@ void RobotDataLoader::LoadCubeSpinnerConfig()
   }
 }
 
+void RobotDataLoader::LoadUserDefinedBehaviorTreeConfig()
+{
+  const char* kBehaviorOptionsKey = "behaviorOptions";
+  const char* kConditionTypeKey = "conditionType";
+  const char* kEditModeTriggerIDKey = "editModeTrigger";
+  const char* kMappingOptionsListKey = "conditionToBehaviorMappingOptions";
+
+  Json::Value _userDefinedBehaviorTreeConfig;
+  static const std::string jsonFilename = "config/engine/userDefinedBehaviorTree/conditionToBehaviorMap.json";
+  const bool jsonSuccess = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _userDefinedBehaviorTreeConfig);
+
+  // if json is read properly, load the config data
+  if(!jsonSuccess)
+  {
+    LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+              "LoadUserDefinedBehaviorTreeConfig Json config file %s not found or failed to parse",
+              jsonFilename.c_str());
+  }
+
+  // load the behavior that triggers editing
+  _userDefinedEditCondition = BEIConditionType::Invalid;
+
+  const std::string editBehaviorIdString = JsonTools::ParseString(_userDefinedBehaviorTreeConfig,
+                                                                  kEditModeTriggerIDKey,
+                                                                  "RobotDataLoader.LoadUserDefinedBehaviorTreeConfig.ParseEditConditionStringFailed");
+  const bool editBehaviorIdSuccess = BEIConditionTypeFromString(editBehaviorIdString, _userDefinedEditCondition);
+
+  if(!editBehaviorIdSuccess) {
+    LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+              "LoadUserDefinedBehaviorTreeConfig: Edit behavior %s not a valid BehaviorID.",
+              editBehaviorIdString.c_str());
+    return;
+  }
+
+  // load the map of possible condition to behavior mappings
+  _conditionToBehaviorsMap = std::make_unique<ConditionToBehaviorsMap>();
+
+  for(const Json::Value& mapOptionsJson : _userDefinedBehaviorTreeConfig[kMappingOptionsListKey]) {
+    BEIConditionType beiCondType = BEIConditionType::Invalid;
+    const std::string beiCondTypeString = JsonTools::ParseString(mapOptionsJson,
+                                                                 kConditionTypeKey,
+                                                                 "RobotDataLoader.LoadUserDefinedBehaviorTreeConfig.ParseConditionStringFailed");
+    const bool beiCondTypeParseSuccess = BEIConditionTypeFromString(beiCondTypeString, beiCondType);
+    const bool editConditionMappedToBehaviors = _userDefinedEditCondition == beiCondType;
+
+    // edit condition should not be customizable
+    if(editConditionMappedToBehaviors) {
+      LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+                "LoadUserDefinedBehaviorTreeConfig: edit condition should not be customizable.");
+      return;
+    }
+
+    // if parsing the BEIConditionType works, read the behaviorIds
+    if(!beiCondTypeParseSuccess) {
+      LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+                "LoadUserDefinedBehaviorTreeConfig: %s not a valid BEIConditionType.",
+                beiCondTypeString.c_str());
+      return;
+    }
+
+    // if the BehaviorID strings are parsed to strings successfully, convert them to BehaviorIDs
+    std::vector<std::string> behaviorIdStrings;
+    const bool behaviorIdStringsParseSuccess = JsonTools::GetVectorOptional<std::string>(mapOptionsJson, kBehaviorOptionsKey, behaviorIdStrings);
+
+    if(!behaviorIdStringsParseSuccess) {
+      LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig.ParseBehaviorStringsFailed",
+                "LoadUserDefinedBehaviorTreeConfig: Could not parse list of Json BehaviorID Strings.");
+      return;
+    }
+
+    // if the string->BehaviorID conversion happens successfully, add them into a set
+    std::set<BehaviorID> behaviors;
+    for(const auto& behaviorIdString : behaviorIdStrings) {
+      BehaviorID behaviorId = BehaviorID::Anonymous;
+      const bool behaviorIdSuccess = BehaviorIDFromString(behaviorIdString, behaviorId);
+
+      if(!behaviorIdSuccess) {
+        LOG_ERROR("RobotDataLoader.LoadUserDefinedBehaviorTreeConfig",
+                  "LoadUserDefinedBehaviorTreeConfig: %s not a valid BehaviorID.",
+                  behaviorIdString.c_str());
+        return;
+      }
+
+      behaviors.emplace(behaviorId);
+    }
+
+    // add the set of behaviors into the map
+    _conditionToBehaviorsMap->emplace(beiCondType, behaviors);
+  }
+
+}
+
 std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(const std::vector<const char*> & srcDirs, const std::string& fileExtensions) const
 {
   std::map<std::string, std::string> fileNameToFullPath;
@@ -844,10 +892,6 @@ void RobotDataLoader::LoadCubeAnimationTriggerMap()
   _cubeAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
 }
 
-void RobotDataLoader::LoadBackpackAnimationTriggerMap()
-{
-  _backpackAnimationTriggerMap->Load(_platform, "assets/cladToFileMaps/BackpackAnimationTriggerMap.json", "AnimName");
-}
 
 
 void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()

@@ -19,7 +19,7 @@
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
@@ -277,6 +277,6 @@ bool StaticMoodData::WriteToJson(Json::Value& outJson) const
 }
 
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

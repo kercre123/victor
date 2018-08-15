@@ -22,7 +22,7 @@
 #include "util/helpers/ankiDefines.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
 // Keep Face Alive Layer Names
@@ -135,6 +135,12 @@ void TrackLayerComponent::RemoveKeepFaceAlive(TimeStamp_t streamTime_ms, TimeSta
   
   _audioLayerManager->RemovePersistentLayer(kEyeBlinkLayerName, streamTime_ms, duration_ms);
   _faceLayerManager->RemovePersistentLayer(kEyeBlinkLayerName, streamTime_ms, duration_ms);
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TrackLayerComponent::SetLastProceduralFaceAsBlank()
+{
+  _lastProceduralFace->Reset( true );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

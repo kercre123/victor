@@ -33,7 +33,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CreatePuzzleMazeBehavior(Robot& robot, ICozmoBehaviorPtr& puzzleMazeBehavior, BehaviorExternalInterface& behaviorExternalInterface,

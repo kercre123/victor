@@ -32,7 +32,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 
 ProtoMessageHandler::ProtoMessageHandler(GameMessagePort* gameMessagePort)
@@ -64,60 +64,24 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   _isInitialized = true;
   _context = context;
 
-  // We'll use this callback for simple events we care about
-  auto commonCallback = std::bind(&ProtoMessageHandler::HandleEvents, this, std::placeholders::_1);
-
   RobotExternalRequestComponent* externalRequestComponent = new RobotExternalRequestComponent();
   externalRequestComponent->Init(_context);
 
   auto versionStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetVersionState, externalRequestComponent, std::placeholders::_1);
   auto networkStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetNetworkState, externalRequestComponent, std::placeholders::_1);
   auto batteryStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetBatteryState, externalRequestComponent, std::placeholders::_1);
+  auto imageRequestCallback = std::bind(&RobotExternalRequestComponent::ImageRequest, externalRequestComponent, std::placeholders::_1);
   auto sayTextCallback = std::bind(&RobotExternalRequestComponent::SayText, externalRequestComponent, std::placeholders::_1);
 
   // Subscribe to desired simple events
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kPing, commonCallback)); // TODO: remove this once more examples are written
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBing, commonCallback)); // TODO: remove this once more examples are written
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBatteryStateRequest, batteryStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kVersionStateRequest, versionStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
+  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kImageRequest, imageRequestCallback));
 
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, sayTextCallback));
   
   return RESULT_OK;
-}
-
-
-// TODO: remove this once there are real examples of using proto in the engine code
-void ProtoMessageHandler::PingPong(const external_interface::Ping& ping) {
-  external_interface::Pong* pong = new external_interface::Pong{ ping.ping() + 1 };
-  external_interface::GatewayWrapper wrapper;
-  wrapper.set_allocated_pong(pong);
-  DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
-}
-
-
-// TODO: remove this once there are real examples of using proto in the engine code
-void ProtoMessageHandler::BingBong(const external_interface::Bing& bing) {
-  external_interface::Bong* bong = new external_interface::Bong{ bing.bing() + "!" };
-  external_interface::GatewayWrapper wrapper;
-  wrapper.set_allocated_bong(bong);
-  DeliverToExternal(wrapper); // TODO: make this intelligent (using broadcast or something)
-}
-
-void ProtoMessageHandler::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
-  switch(event.GetData().GetTag())
-  {
-    case external_interface::GatewayWrapperTag::kPing:
-      PingPong(event.GetData().ping());
-      break;
-    case external_interface::GatewayWrapperTag::kBing:
-      BingBong(event.GetData().bing());
-      break;
-    default:
-      PRINT_STREAM_INFO("ProtoMessageHandler.HandleEvents",
-                        "HandleEvents called for unknown message");
-  }
 }
 
 
@@ -284,5 +248,5 @@ const Util::Stats::StatsAccumulator& ProtoMessageHandler::GetLatencyStats() cons
   }
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

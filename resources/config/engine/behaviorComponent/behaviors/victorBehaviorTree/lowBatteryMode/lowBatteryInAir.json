@@ -1,0 +1,40 @@
+{
+  "behaviorClass" : "DispatcherQueue",
+  "behaviorID": "LowBatteryInAir",
+  
+  "associatedActiveFeature": "InTheAir",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "InAir"  
+  },
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "InAir"
+    }
+  },
+
+  "tracksToLockWhileActivated" : [
+    "BODY_TRACK"
+  ],
+
+
+  "behaviors": [
+    "LowBatteryPickupAnim",
+    "Wait"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "LowBatteryPickupAnim",
+      "behaviorClass": "AnimSequence",
+      "animTriggers" : [
+        "ChargerDockingRequestPickup"
+      ]
+    }
+  ]
+
+}

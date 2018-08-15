@@ -34,7 +34,7 @@ namespace Vision{
 class CompositeImageBuilder;
 }
 
-namespace Cozmo {
+namespace Vector {
   
   // Forward declaration
   class ProceduralFace;
@@ -63,7 +63,7 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
-    static const Tag kNotAnimatingTag = ::Anki::Cozmo::kNotAnimatingTag;
+    static const Tag kNotAnimatingTag = ::Anki::Vector::kNotAnimatingTag;
     
     AnimationStreamer(const AnimContext* context);
     
@@ -418,7 +418,7 @@ namespace Cozmo {
   
   }; // class AnimationStreamer
   
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_AnimationStreamer_H__ */

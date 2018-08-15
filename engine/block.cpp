@@ -30,7 +30,7 @@
 #include <iomanip>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
   // === Block predock pose params ===
   // {angle, x, y}
@@ -573,5 +573,5 @@ namespace Cozmo {
 
 
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

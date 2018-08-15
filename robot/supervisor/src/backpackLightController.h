@@ -16,7 +16,7 @@
 #include "clad/types/ledTypes.h"
 
 namespace Anki {
-  namespace Cozmo {
+  namespace Vector {
     
     namespace RobotInterface {
       struct SetBackpackLights;
@@ -49,4 +49,4 @@ namespace Anki {
       
     } // namespace BackpackLightController
   } // namespace Anki
-} // namespace Cozmo
+} // namespace Vector

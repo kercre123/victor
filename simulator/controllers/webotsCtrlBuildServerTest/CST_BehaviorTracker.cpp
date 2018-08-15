@@ -21,7 +21,7 @@
 #include <time.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
     
 enum class TestState {
   StartUpFreeplayMode,
@@ -199,5 +199,5 @@ void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::Beha
 
 // ================ End of message handler callbacks ==================
   
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki

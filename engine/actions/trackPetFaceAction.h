@@ -20,7 +20,7 @@
 #include "clad/types/petTypes.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 class TrackPetFaceAction : public ITrackAction
 {
@@ -55,7 +55,7 @@ private:
   
 }; // class TrackPetFaceAction
     
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 
 #endif /* __Anki_Cozmo_Basestation_TrackPetFaceAction_H__ */
