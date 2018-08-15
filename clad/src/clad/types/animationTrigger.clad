@@ -123,6 +123,7 @@ enum int_32 AnimationTrigger
   ExploringScanCenterFromLeft,
   ExploringScanCenterFromRight,
 
+  FoundFace,
   FistBumpIdle,
   FistBumpRequestOnce,
   FistBumpRequestRetry,
@@ -156,8 +157,10 @@ enum int_32 AnimationTrigger
   LookAtDevice,
   LookAtDeviceGetIn,
   LookAtDeviceGetOut,
+  LookInPlaceForFacesBodyPause_Active,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
+  LookAtUserEndearingly,
   MeetVictorConfusion,
   MeetVictorGetIn,
   MeetVictorLookFace,
@@ -212,6 +215,7 @@ enum int_32 AnimationTrigger
   OnboardingLookAtPhoneUp,
   OnboardingLookAtPhoneLoop,
   OnboardingLookAtPhoneDown,
+  OnboardingLookAtUser,
   OnboardingWakeUp,
   OnboardingWakeWordGetIn,
 

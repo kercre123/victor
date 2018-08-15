@@ -603,23 +603,35 @@ namespace Vector {
       // the initial blind turn to the last face pose.
       void SetMaxFramesToWait(u32 N) { _maxFramesToWait = N; }
 
-      // Sets the animation trigger to use to say the name. Only valid if sayName was true
+      // Sets the animation trigger to use to say the name. Only valid if sayName was true. Cannot be used
+      // with SetAnyFaceAnimationTrigger
       void SetSayNameAnimationTrigger(AnimationTrigger trigger);
       
       // Sets the backup animation to play if the name is not known, but there is a confirmed face. Only valid
       // if sayName is true (this is because we are trying to use an animation to say the name, but if we
-      // don't have a name, we want to use this animation instead)
+      // don't have a name, we want to use this animation instead). Cannot be used with SetAnyFaceAnimationTrigger.
       void SetNoNameAnimationTrigger(AnimationTrigger trigger);
+      
+      // Play an animation after turning to the face
+      // (Mutually exclusive with SetSayNameAnimationTrigger/SetNoNameAnimationTrigger)
+      void SetAnyFaceAnimationTrigger(AnimationTrigger trigger);
 
       // instead of manually specifying a trigger, this function allows a lambda to be called when the face is
       // turned to. It is called right before the animation should be played, only if the face is named. Input
       // is the face we are reacting to, and the return value should be the animation to play. If
-      // AnimationTrigger::Count is returned, no animation will play
+      // AnimationTrigger::Count is returned, no animation will play. Cannot be used with SetAnyFaceTriggerCallback
       using AnimTriggerForFaceCallback = std::function<AnimationTrigger(const Robot& robot, const SmartFaceID& faceID)>;
-      void SetSayNameTriggerCallback(AnimTriggerForFaceCallback callback);      
+      void SetSayNameTriggerCallback(AnimTriggerForFaceCallback&& callback);      
 
-      // same as above, but for the case when the face has no associated name
-      void SetNoNameTriggerCallback(AnimTriggerForFaceCallback callback);
+      // same as above, but for the case when the face has no associated name. Cannot be used with SetAnyFaceTriggerCallback
+      void SetNoNameTriggerCallback(AnimTriggerForFaceCallback&& callback);
+      
+      // same as above, but runs for any face.
+      // (Mutually exclusive with SetSayNameTriggerCallback and SetNoNameTriggerCallback)
+      void SetAnyFaceTriggerCallback(AnimTriggerForFaceCallback&& callback);
+      
+      // For SayName/NoName/AnyFace animations, these tracks will be locked
+      void SetAnimTracksToLock(u8 tracksToLock) { _animTracksToLock = tracksToLock; }
 
       // Sets whether or not we require a face. Default is false (it will play animations and return success
       // even if no face is found). If set to true and no face is found, the action will fail with
@@ -646,7 +658,7 @@ namespace Vector {
         Turning,
         WaitingForFace,
         FineTuning,
-        SayingName, // saying name, or playing noNameAnimTrigger
+        PlayingAnimation, // playing an recognition animation, possibly including TTS for the name
       };
       
       SmartFaceID       _faceID;
@@ -659,14 +671,16 @@ namespace Vector {
       bool              _tracksLocked            = false;
       bool              _requireFaceConfirmation = false;
       bool              _lockOnClosestFace       = false;
+      u8                _animTracksToLock        = (u8) AnimTrackFlag::NO_TRACKS;
 
       AnimTriggerForFaceCallback _sayNameTriggerCallback;
       AnimTriggerForFaceCallback _noNameTriggerCallback;
+      AnimTriggerForFaceCallback _anyFaceTriggerCallback;
       
       std::vector<Signal::SmartHandle> _signalHandles;
 
       void CreateFineTuneAction();
-      void SetAction(IActionRunner* action);
+      void SetAction(IActionRunner* action, bool suppressTrackLocking = true);
       
     }; // TurnTowardsFaceAction
 

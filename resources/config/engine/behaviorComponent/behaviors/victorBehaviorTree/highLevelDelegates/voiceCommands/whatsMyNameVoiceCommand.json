@@ -10,7 +10,7 @@
 
   "timeUntilCancelFaceLooking_s": 2.0,
   "timeUntilCancelFaceSearch_s": 10.0,
-  "searchForFaceBehavior": "ObservingFindFaces",
+  "searchForFaceBehavior": "ActiveLookForFaces",
   "shouldLeaveChargerFirst": false,
 
   "useBodyDetector": true,
@@ -18,6 +18,8 @@
   "additionalSearchTimeIfSawBody_s": 3.0,
 
   "behavior": "WhatsMyNameInternal",
+
+  "animWhenSeesFace": "FoundFace",
   
   "anonymousBehaviors": [
     {

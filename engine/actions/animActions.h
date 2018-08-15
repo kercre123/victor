@@ -161,6 +161,9 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
+      // once called, the action will end as soon as the current loop finishes, and Init() must be called to reset
+      void StopAfterNextLoop();
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -184,6 +187,7 @@ namespace Anki {
       };
       
       AnimParams _animParams;
+      u32        _numLoops;
       const bool _loopForever;
       u32        _numLoopsRemaining;
       std::unique_ptr<TriggerLiftSafeAnimationAction> _subAction;

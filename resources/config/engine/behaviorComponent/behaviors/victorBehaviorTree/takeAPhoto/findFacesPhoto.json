@@ -4,9 +4,10 @@
   "startsWithMicDirection": false,
   "timeUntilCancelFaceLooking_s": 2.0,
   "timeUntilCancelFaceSearch_s": 4.0,
-  "searchForFaceBehavior": "ObservingFindFaces",
+  "searchForFaceBehavior": "ActiveLookForFaces",
   "shouldLeaveChargerFirst": false,
   "exitOnceFound": true,
+  "animWhenSeesFace": "FoundFace",
 
   "useBodyDetector": true,
   "additionalLookTimeIfSawBody_s": 2.0,

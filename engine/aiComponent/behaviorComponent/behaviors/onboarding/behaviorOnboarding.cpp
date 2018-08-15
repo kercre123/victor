@@ -83,6 +83,7 @@ BehaviorOnboarding::DynamicVariables::DynamicVariables()
   lastBehavior = nullptr;
   lastWhitelistedIntent = USER_INTENT(INVALID);
   lastInterruption = BEHAVIOR_ID(Anonymous);
+  lastExpectedStep = external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP;
   
   currentStageBehaviorFinished = false;
   

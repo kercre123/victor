@@ -10,7 +10,7 @@
   "startsWithMicDirection": false,
   "timeUntilCancelFaceLooking_s": 15.0,
   "timeUntilCancelFaceSearch_s": 9999.0, // never end searching if no face is founs
-  "searchForFaceBehavior": "ObservingFindFaces",
+  "searchForFaceBehavior": "LookInPlaceHeadUp",
 
   "behavior": "LookAtMeInternal",
   "timeUntilCancelFollowup_s": 999999.0, // never end once found a face
@@ -29,7 +29,9 @@
       "behaviorClass" : "LookAtMe",
 
       // don't turn as much, so as to not move the motors as much, so as to hear VCs better
-      "panTolerance_deg": 15.0
+      "panTolerance_deg": 15.0,
+
+      "animLoop": "OnboardingLookAtUser"
     }
   ]
 }

@@ -18,6 +18,8 @@
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
 
 class BehaviorLookAtMe : public ISimpleFaceBehavior
 {
@@ -35,16 +37,28 @@ protected:
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
 
 private:
 
   struct InstanceConfig {
     InstanceConfig();
     float panTolerance_deg; // ignored if negative
+    
+    AnimationTrigger animGetIn;
+    AnimationTrigger animLoop;
+    AnimationTrigger animGetOut;
+    unsigned int numLoops;
+    bool playEmergencyGetOut;
   };
 
   struct DynamicVariables {
     DynamicVariables();
+    bool startedGetOut;
+    std::weak_ptr<IActionRunner> trackFaceAction;
+    std::weak_ptr<IActionRunner> loopingAnimAction;
+    std::weak_ptr<IActionRunner> getInAnimAction;
   };
 
   InstanceConfig _iConfig;

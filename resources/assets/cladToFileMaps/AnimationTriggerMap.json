@@ -480,6 +480,10 @@
     "AnimName": "ag_reacttocliff_turtleroll_01"
   },  
   {
+    "CladEvent": "FoundFace",
+    "AnimName": "ag_lookatme_reacttoface"
+  },
+  {
     "CladEvent": "FrustratedByFailureMajor",
     "AnimName": "ag_reacttoblock_frustrated"
   },
@@ -528,6 +532,10 @@
     "AnimName": "ag_lookatdevice_getout"
   },
   {
+    "CladEvent": "LookAtUserEndearingly",
+    "AnimName": "ag_onboarding_eyecontact_loop"
+  },
+  {
     "CladEvent": "DEPRECATED_LaserAcknowledge",
     "AnimName": "ag_laser_react_01"
   },
@@ -550,6 +558,10 @@
   {
     "CladEvent": "DEPRECATED_LaserPounce",
     "AnimName": "ag_pounceonmotionpounce"
+  },
+  {
+    "CladEvent": "LookInPlaceForFacesBodyPause_Active",
+    "AnimName": "ag_lookatme_lookinplaceforfaces"
   },
   {
     "CladEvent": "LookInPlaceForFacesBodyPause",
@@ -650,6 +662,10 @@
   {
     "CladEvent": "OnboardingLookAtPhoneUp",
     "AnimName": "ag_lookatphone_getin"
+  },
+  {
+    "CladEvent": "OnboardingLookAtUser",
+    "AnimName": "ag_onboarding_eyecontact_loop"
   },
   {
     "CladEvent": "OnboardingLookAtPhoneLoop",

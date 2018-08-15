@@ -125,6 +125,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   SearchWithinBoundingBox,
+  ActiveLookForFaces,
 
   // victorBehaviorTree/highLevelDelegates/exploring
   ConfirmCharger,

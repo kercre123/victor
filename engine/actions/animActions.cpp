@@ -331,6 +331,7 @@ namespace Anki {
       : IAction(GetDebugString(animEvent),
                 RobotActionType::RESELECTING_LOOP_ANIMATION,
                 tracksToLock)
+      , _numLoops( numLoops )
       , _loopForever( 0 == numLoops )
       , _numLoopsRemaining( numLoops )
     {
@@ -366,6 +367,7 @@ namespace Anki {
 
     ActionResult ReselectingLoopAnimationAction::Init() {
       ResetSubAction();
+      _numLoopsRemaining = _numLoops;
       return ActionResult::SUCCESS;
     }
     
@@ -398,6 +400,13 @@ namespace Anki {
         return ActionResult::RUNNING;
       } else {
         return subActionResult;
+      }
+    }
+    
+    void ReselectingLoopAnimationAction::StopAfterNextLoop()
+    {
+      if( _numLoopsRemaining > 1 ) {
+        _numLoopsRemaining = 1;
       }
     }
 

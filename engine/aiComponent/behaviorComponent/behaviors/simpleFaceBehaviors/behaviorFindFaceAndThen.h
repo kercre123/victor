@@ -22,6 +22,7 @@
 namespace Anki {
 namespace Vector {
   
+enum class AnimationTrigger : int32_t;
 class BehaviorSearchWithinBoundingBox;
 class ISimpleFaceBehavior;
 
@@ -102,6 +103,8 @@ private:
     bool useBodyDetector;
     std::shared_ptr<BehaviorSearchWithinBoundingBox> behaviorFindFaceInBB;
     float upperPortionLookUpPercent;
+    
+    AnimationTrigger animWhenSeesFace;
   };
 
   struct DynamicVariables {
