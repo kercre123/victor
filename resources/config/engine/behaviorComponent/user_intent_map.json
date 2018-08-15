@@ -172,6 +172,12 @@
       "app_intent": "intent_imperative_lookatme"
     },
     {
+      "user_intent": "imperative_findcube",
+      "cloud_intent": "intent_imperative_findcube",
+      "app_intent": "intent_imperative_findcube",
+      "feature_gate": "FindCube"
+    },
+    {
       "user_intent": "names_ask",
       "cloud_intent": "intent_names_ask",
       "app_intent": "intent_names_ask"

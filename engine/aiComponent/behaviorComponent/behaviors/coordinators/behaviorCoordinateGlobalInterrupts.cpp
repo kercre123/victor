@@ -41,15 +41,25 @@ namespace{
 
   // add behavior _classes_ here if we should disable the prox-based "react to sudden obstacle" behavior while
   // _any_ behavior of that class is running below us on the stack
-  static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(FistBump),
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(BlackJack),
+                                                                           BEHAVIOR_CLASS(FetchCube),
+                                                                           BEHAVIOR_CLASS(FistBump),
                                                                            BEHAVIOR_CLASS(Keepaway),
-                                                                           BEHAVIOR_CLASS(BlackJack),
                                                                            BEHAVIOR_CLASS(InspectCube),
-                                                                           BEHAVIOR_CLASS(RollBlock),
-                                                                           BEHAVIOR_CLASS(PounceWithProx) }};
+                                                                           BEHAVIOR_CLASS(PickUpCube),
+                                                                           BEHAVIOR_CLASS(PopAWheelie),
+                                                                           BEHAVIOR_CLASS(PounceWithProx),
+                                                                           BEHAVIOR_CLASS(RollBlock) }};
   
-  static const std::set<BehaviorClass> kBehaviorClassesToSuppressReactToSound = {{ BEHAVIOR_CLASS(InspectCube),
-                                                                                   BEHAVIOR_CLASS(Keepaway) }};
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressReactToSound = {{ BEHAVIOR_CLASS(BlackJack),
+                                                                                   BEHAVIOR_CLASS(FetchCube),
+                                                                                   BEHAVIOR_CLASS(FistBump),
+                                                                                   BEHAVIOR_CLASS(Keepaway),
+                                                                                   BEHAVIOR_CLASS(InspectCube),
+                                                                                   BEHAVIOR_CLASS(PickUpCube),
+                                                                                   BEHAVIOR_CLASS(PopAWheelie),
+                                                                                   BEHAVIOR_CLASS(PounceWithProx),
+                                                                                   BEHAVIOR_CLASS(RollBlock) }};
 
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenSleeping = {{
     BEHAVIOR_ID(ReactToTouchPetting),

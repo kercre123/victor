@@ -126,6 +126,10 @@ enum int_32 AnimationTrigger
   ExploringScanCenterFromLeft,
   ExploringScanCenterFromRight,
 
+  FetchCubeFailure,
+  FetchCubeFrustrated,
+  FetchCubeSuccess,
+
   FoundFace,
   FistBumpIdle,
   FistBumpRequestOnce,

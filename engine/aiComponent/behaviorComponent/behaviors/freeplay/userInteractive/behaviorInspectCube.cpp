@@ -17,6 +17,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackObjectAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/components/cubes/cubeInteractionTracker.h"
@@ -26,7 +27,10 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "util/math/math.h"
 
-#define SET_STATE(s) SetState_internal(s, #s)
+#define SET_STATE(s) do{ \
+                          _dVars.state = InspectCubeState::s; \
+                          SetDebugStateName(#s); \
+                        } while(0);
 
 #define DEBUG_INSPECT_CUBE_BEHAVIOR 0
 
@@ -63,7 +67,7 @@ BehaviorInspectCube::InstanceConfig::InstanceConfig(const Json::Value& config)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInspectCube::DynamicVariables::DynamicVariables(float startTime_s)
-: state(InspectCubeState::GetIn)
+: state(InspectCubeState::Init)
 , behaviorStartTime_s(startTime_s)
 , searchEndTime_s(0.0f)
 , trackingMinEndTime_s(0.0f)
@@ -89,6 +93,7 @@ void BehaviorInspectCube::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.keepawayBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(Keepaway));
+  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffChargerCube));
 
   if(!_iConfig.playWithCubeBehaviorIDString.empty()){
     BehaviorID behaviorID;
@@ -159,13 +164,6 @@ void BehaviorInspectCube::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInspectCube::SetState_internal(InspectCubeState state, const std::string& stateName)
-{
-  _dVars.state = state;
-  SetDebugStateName(stateName);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::BehaviorUpdate() 
 {
   if( !IsActivated() ) {
@@ -175,30 +173,14 @@ void BehaviorInspectCube::BehaviorUpdate()
   _currentTimeThisTick_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   TargetStatus targetStatus = GetBEI().GetCubeInteractionTracker().GetTargetStatus();
 
-  if( InspectCubeState::Searching == _dVars.state ||
-      InspectCubeState::Tracking == _dVars.state){
+  if(InspectCubeState::Searching == _dVars.state){
     UpdateBoredomTimeouts(targetStatus);
+    UpdateSearching(targetStatus);
   }
 
-  switch(_dVars.state){
-    case InspectCubeState::Searching:
-    {
-      UpdateSearching(targetStatus);
-      break;
-    }
-    case InspectCubeState::Tracking:
-    {
-      UpdateTracking(targetStatus);
-      break;
-    }
-    case InspectCubeState::GetIn:
-    case InspectCubeState::Keepaway:
-    case InspectCubeState::PlayingWithCube:
-    case InspectCubeState::GetOutBored:
-    {
-      //Do Nothing
-      break;
-    }
+  if(InspectCubeState::Tracking == _dVars.state){
+    UpdateBoredomTimeouts(targetStatus);
+    UpdateTracking(targetStatus);
   }
 }
 
@@ -215,9 +197,41 @@ void BehaviorInspectCube::UpdateBoredomTimeouts(const TargetStatus& targetStatus
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorInspectCube::TransitionToGetIn()
+{
+  SET_STATE(GetIn);
+
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubePounceGetIn),
+    [this](){
+      const bool currOnCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
+      const bool currOnChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+      if(currOnCharger || currOnChargerPlatform) {
+        TransitionToDriveOffCharger();
+      }
+      else {
+        TransitionToSearching();
+      }
+    });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorInspectCube::TransitionToDriveOffCharger()
+{
+  SET_STATE(DriveOffCharger);
+
+  if(_iConfig.driveOffChargerBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(),
+                        &BehaviorInspectCube::TransitionToSearching);
+  }
+  else{
+    PRINT_NAMED_ERROR("BehaviorInspectCube.DriveOffChargerBehaviorNotActivatable","");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToSearching()
 {
-  SET_STATE(InspectCubeState::Searching);
+  SET_STATE(Searching);
   CancelDelegates(false);
   TargetStatus targetStatus = GetBEI().GetCubeInteractionTracker().GetTargetStatus();
   if(targetStatus.visibleRecently){
@@ -260,7 +274,7 @@ void BehaviorInspectCube::UpdateSearching(const TargetStatus& targetStatus){
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToTracking()
 {
-  SET_STATE(InspectCubeState::Tracking);
+  SET_STATE(Tracking);
   CancelDelegates(false);
   TargetStatus targetStatus = GetBEI().GetCubeInteractionTracker().GetTargetStatus();
 
@@ -318,7 +332,7 @@ void BehaviorInspectCube::UpdateTracking(const TargetStatus& targetStatus)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToKeepaway()
 {
-  SET_STATE(InspectCubeState::Keepaway);
+  SET_STATE(Keepaway);
   CancelDelegates(false);      
   if(_iConfig.keepawayBehavior->WantsToBeActivated()){
     DelegateIfInControl(_iConfig.keepawayBehavior.get());
@@ -328,7 +342,7 @@ void BehaviorInspectCube::TransitionToKeepaway()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToPlayingWithCube()
 {
-  SET_STATE(InspectCubeState::PlayingWithCube);
+  SET_STATE(PlayingWithCube);
   CancelDelegates(false);
   if(nullptr == _iConfig.playWithCubeBehavior){
     PRINT_CH_INFO(kLogChannelName,
@@ -353,7 +367,7 @@ void BehaviorInspectCube::TransitionToPlayingWithCube()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToGetOutBored()
 {
-  SET_STATE(InspectCubeState::GetOutBored);
+  SET_STATE(GetOutBored);
   CancelDelegates(false);
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubePounceGetOutBored));
 }
@@ -361,7 +375,7 @@ void BehaviorInspectCube::TransitionToGetOutBored()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToGetOutTargetLost()
 {
-  SET_STATE(InspectCubeState::GetOutBored);
+  SET_STATE(GetOutTargetLost);
   CancelDelegates(false);
 
   PRINT_CH_INFO(kLogChannelName,

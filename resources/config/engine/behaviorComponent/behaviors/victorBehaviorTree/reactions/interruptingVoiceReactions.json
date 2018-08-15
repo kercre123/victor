@@ -7,6 +7,7 @@
 
   "behaviors": [
     "DoATrickVoiceCommand",
+    "FindYourCubeVoiceCommand",
     "FistBumpVoiceCommand",
     "RollCubeVoiceCommand",
     "KeepawayVoiceCommand",

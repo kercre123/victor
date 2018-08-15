@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorBumpObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorClearChargerArea.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFetchCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
@@ -260,6 +261,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DriveOffCharger:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveOffCharger(config));
+      break;
+    }
+    
+    case BehaviorClass::FetchCube:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFetchCube(config));
       break;
     }
     

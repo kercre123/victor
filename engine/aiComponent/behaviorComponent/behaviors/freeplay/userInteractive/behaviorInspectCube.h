@@ -44,19 +44,22 @@ protected:
 
 private:
   enum class InspectCubeState{
+    Init,
     GetIn,
+    DriveOffCharger,
     Searching,
     Tracking,
     Keepaway,
     PlayingWithCube,
     GetOutBored,
+    GetOutTargetLost
   }; 
-
-  void SetState_internal(InspectCubeState state, const std::string& stateName);
 
   void UpdateBoredomTimeouts(const TargetStatus& targetStatus);
   
   // Behavior State Machine 
+  void TransitionToGetIn();
+  void TransitionToDriveOffCharger();
   void TransitionToSearching();
   void UpdateSearching(const TargetStatus& targetStatus);
   void SearchLoopHelper();
@@ -73,6 +76,7 @@ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
     std::string playWithCubeBehaviorIDString;
+    std::shared_ptr<ICozmoBehavior> driveOffChargerBehavior;
     std::shared_ptr<ICozmoBehavior> playWithCubeBehavior;
     std::shared_ptr<ICozmoBehavior> keepawayBehavior;
   };

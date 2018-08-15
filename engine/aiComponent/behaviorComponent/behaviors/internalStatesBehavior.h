@@ -108,6 +108,17 @@ private:
   
   void TransitionToState(StateID targetState);
 
+  // Checks if the robot is carrying an object, then if the behavior for the state WantsToBeActivatedWhenCarryingObject,
+  // if the cube needs to be put down, delegates to PutDownBlock behavior and returns true. The completion callback
+  // will resolve the state and delegate to the GetIn or state behavior as necessary. Cannot be interrupted.
+  bool PutDownBlockIfNecessary(State& state);
+
+  // returns true if delegating to a valid GetIn behavior as defined for the state. The completion callback will
+  // resolve the state and delegate to the state behavior as necessary.
+  bool RunStateGetInIfAble(State& state);
+
+  void RunMainStateBehavior(State& state);
+
   // return the "adjusted" time of the current state (time it's been active - time it's been paused because
   // this behavior was interrupted)
   float GetCurrentStateActiveTime_s() const;
@@ -123,6 +134,10 @@ private:
   StateID _currState = InvalidStateID;
 
   StateID _defaultState = InvalidStateID;
+
+  bool _isRunningPutDownBlock = false;
+
+  ICozmoBehaviorPtr _putDownBlockBehavior;
 
   bool _isRunningGetIn = false;
   

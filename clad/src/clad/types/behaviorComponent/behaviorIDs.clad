@@ -99,6 +99,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree
   ComeHereVoiceCommand,
   ConfirmHabitat,
+  ConnectToCube,
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
   CoordinateWhileInAir,
@@ -214,6 +215,8 @@ enum uint_16 BehaviorID {
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube
+  FetchCube,
+  FindFacesFetchCube,
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
@@ -250,6 +253,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,

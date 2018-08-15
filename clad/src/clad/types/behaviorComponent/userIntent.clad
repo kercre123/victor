@@ -107,6 +107,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             greeting_hello,
   UserIntent_Void             imperative_affirmative,
   UserIntent_Void             imperative_come,
+  UserIntent_Void             imperative_findcube,
   UserIntent_Void             imperative_lookatme,
   UserIntent_Void             imperative_negative,
   UserIntent_Void             imperative_quiet,

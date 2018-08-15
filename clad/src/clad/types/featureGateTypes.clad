@@ -6,6 +6,8 @@ enum uint_8 FeatureType {
   Invalid,
   Laser,
   Exploring,
+  FindCube,
+  FetchCube,
   Messaging,
   ReactToIllumination,
   KnowledgeGraph,

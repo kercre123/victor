@@ -468,6 +468,18 @@
     "AnimName": "ag_reacttocliff_turtlerollfail_01"
   },
   {
+    "CladEvent": "FetchCubeFailure",
+    "AnimName": "ag_pounceonmotionfail"
+  },
+  {
+    "CladEvent": "FetchCubeFrustrated",
+    "AnimName": "ag_reacttoblock_frustrated"
+  },
+  {
+    "CladEvent": "FetchCubeSuccess",
+    "AnimName": "ag_greeting_big_hello"
+  },
+  {
     "CladEvent": "FistBumpIdle",
     "AnimName": "ag_fistbump_idle"
   },

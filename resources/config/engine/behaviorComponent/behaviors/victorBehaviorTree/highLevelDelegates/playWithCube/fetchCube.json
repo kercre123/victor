@@ -1,0 +1,5 @@
+{
+  "behaviorID" : "FetchCube",
+  "behaviorClass" : "FetchCube",
+  "associatedActiveFeature" : "FindCube"
+}

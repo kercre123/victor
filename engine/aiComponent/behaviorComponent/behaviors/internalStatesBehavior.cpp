@@ -28,6 +28,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/moodSystem/moodManager.h"
@@ -346,6 +347,8 @@ void InternalStatesBehavior::InitBehavior()
     state.GetAllTransitions(allTransitions);
   }
 
+  _putDownBlockBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PutDownBlock));
+
   // initialize all transitions (from the set so they each only get initialized once)
   for( auto& strategy : allTransitions ) {
     strategy->Init(GetBEI());
@@ -370,6 +373,8 @@ void InternalStatesBehavior::AddState( State&& state )
 
 void InternalStatesBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
+  delegates.insert(_putDownBlockBehavior.get());
+
   for( const auto& statePair : *_states ) {
     if( statePair.second._behavior != nullptr ) {
       delegates.insert(statePair.second._behavior.get());
@@ -502,6 +507,12 @@ void InternalStatesBehavior::BehaviorUpdate()
     return false;
   };
 
+  if( _isRunningPutDownBlock ) {
+    // Don't check any conditions until we've finished putting down the block
+    return;
+  }
+
+  
   // first check the interrupting conditions
   for( const auto& transition : state._transitions[TransitionType::Interrupting] ) {
     if( tryTransition(transition) ) {
@@ -512,24 +523,6 @@ void InternalStatesBehavior::BehaviorUpdate()
   // if we get here, then there must be no interrupting conditions that activated
 
   if( _isRunningGetIn ) {
-    if( !IsControlDelegated() ) {
-      // we were running a get in but it stopped, transition on to the normal state behavior
-      PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Complete",
-                    "%s: in state '%s', finished get in behavior",
-                    GetDebugLabel().c_str(),
-                    state._name.c_str());
-      _isRunningGetIn = false;
-      if( nullptr == state._behavior ) {
-        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.CancelSelf",
-                    "%s: in state '%s', finished get in behavior doesn't have normal behavior, canceling",
-                    GetDebugLabel().c_str(),
-                    state._name.c_str());
-        CancelSelf();
-      }
-      else if( state._behavior->WantsToBeActivated() ) {
-        DelegateIfInControl(state._behavior.get() );
-      }
-    }
     // else, the get in is still running, so don't evaluate non-interrupting conditions (or exit conditions)
     return;
   }
@@ -622,6 +615,10 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   // any transition clears the "get in" that may be playing
   _isRunningGetIn = false;
 
+  // Although state transitions shouldn't be internally driven while putting down a cube, external interrupts could
+  // occur which would leave this state hung if we don't clear it deliberately
+  _isRunningPutDownBlock = false;
+
   if( _currState != InvalidStateID ) {
     State& state = _states->at(_currState);
 
@@ -636,22 +633,9 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
     }
 
     const bool canPlayGetIn = !isResuming || _firstRun;
-    if( canPlayGetIn && state._getInBehavior != nullptr ) {
-      if( state._getInBehavior->WantsToBeActivated() ) {
-        _isRunningGetIn = true;
-        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Delegate",
-                      "%s: transitioning into state '%s', so will delegate to get in '%s'",
-                      GetDebugLabel().c_str(),
-                      state._name.c_str(),
-                      state._getInBehavior->GetDebugLabel().c_str());
-        DelegateIfInControl(state._getInBehavior.get());
-      }
-      else {
-        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Skip",
-                      "%s: transitioning into state '%s', but get in behavior '%s' doesn't want to activate",
-                      GetDebugLabel().c_str(),
-                      state._name.c_str(),
-                      state._getInBehavior->GetDebugLabel().c_str());
+    if( !PutDownBlockIfNecessary(state) ){
+      if( !canPlayGetIn || !RunStateGetInIfAble(state)){
+        RunMainStateBehavior(state);
       }
     }
 
@@ -659,26 +643,87 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
       GetBEI().GetBehaviorTimerManager().GetTimer( state._behaviorTimer  ).Reset();
     }
 
-    if( !IsControlDelegated() ) {
-      if( nullptr == state._behavior ) {
-        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.TransitionToState.CancelSelf",
-                      "%s: in state '%s', finished get in behavior doesn't have normal behavior, canceling",
-                      GetDebugLabel().c_str(),
-                      state._name.c_str());
-        CancelSelf();
-      }
-      else if( state._behavior->WantsToBeActivated() ) {
-        DelegateIfInControl(state._behavior.get() );
-      }
-      else {
-        PRINT_NAMED_WARNING( "InternalStatesBehavior.TransitionToState.NoActivation",
-                             "Transitioning to state %s but behavior %s doesn't want to activate",
-                             state._name.c_str(),
-                             state._behaviorName.c_str() );
-      }
-    }
-    
     _lastTransitionTick = BaseStationTimer::getInstance()->GetTickCount();
+  }
+}
+
+bool InternalStatesBehavior::PutDownBlockIfNecessary(State& state)
+{
+  if( _putDownBlockBehavior->WantsToBeActivated() ) {
+    BehaviorOperationModifiers modifiers;
+    state._behavior->GetBehaviorOperationModifiers(modifiers);
+    if( !modifiers.wantsToBeActivatedWhenCarryingObject ) {
+      _isRunningPutDownBlock = true;
+      DelegateIfInControl(_putDownBlockBehavior.get(),
+        [this, &state](){
+          PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.PutDownBlockBehavior.Complete",
+                        "%s: in state '%s', finished PutDownBlock behavior",
+                        GetDebugLabel().c_str(),
+                        state._name.c_str());
+          _isRunningPutDownBlock = false;
+          if(!RunStateGetInIfAble(state)){
+            RunMainStateBehavior(state);
+          }
+        });
+      _isRunningPutDownBlock = true;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool InternalStatesBehavior::RunStateGetInIfAble(State& state)
+{
+  if(state._getInBehavior != nullptr ) {
+    if( state._getInBehavior->WantsToBeActivated() ) {
+      _isRunningGetIn = true;
+      PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Delegate",
+                    "%s: transitioning into state '%s', so will delegate to get in '%s'",
+                    GetDebugLabel().c_str(),
+                    state._name.c_str(),
+                    state._getInBehavior->GetDebugLabel().c_str());
+      DelegateIfInControl(state._getInBehavior.get(),
+        [this, &state](){
+          PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Complete",
+                        "%s: in state '%s', finished get in behavior",
+                        GetDebugLabel().c_str(),
+                        state._name.c_str());
+          _isRunningGetIn = false;
+          RunMainStateBehavior(state);
+        });
+      return true;
+    }
+    else {
+      PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Skip",
+                    "%s: transitioning into state '%s', but get in behavior '%s' doesn't want to activate",
+                    GetDebugLabel().c_str(),
+                    state._name.c_str(),
+                    state._getInBehavior->GetDebugLabel().c_str());
+      return false;
+    }
+  }
+
+  return false;
+}
+
+void InternalStatesBehavior::RunMainStateBehavior(State& state)
+{
+  if( nullptr == state._behavior ) {
+    PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.TransitionToState.CancelSelf",
+                  "%s: in state '%s', doesn't have normal behavior, canceling",
+                  GetDebugLabel().c_str(),
+                  state._name.c_str());
+    CancelSelf();
+  }
+  else if( state._behavior->WantsToBeActivated() ) {
+    DelegateIfInControl(state._behavior.get() );
+  }
+  else {
+    PRINT_NAMED_WARNING( "InternalStatesBehavior.TransitionToState.NoActivation",
+                          "Transitioning to state %s but behavior %s doesn't want to activate",
+                          state._name.c_str(),
+                          state._behaviorName.c_str() );
   }
 }
 

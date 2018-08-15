@@ -12,6 +12,10 @@
     "enabled": true
   },
   {
+    "feature": "FindCube",
+    "enabled": true
+  },
+  {
     "feature": "Messaging",
     "enabled": false
   },
