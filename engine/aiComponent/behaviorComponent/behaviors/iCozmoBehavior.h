@@ -16,7 +16,6 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -211,9 +210,6 @@ public:
                                              ActionableObject* object,
                                              std::vector<Pose3d>& possiblePoses,
                                              bool& alreadyInPosition);
-
-  // returns required process
-  AIInformationAnalysis::EProcess GetRequiredProcess() const { return _requiredProcess; }
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
   virtual void AddListener(ISubtaskListener* listener)
@@ -512,11 +508,6 @@ protected:
   T& GetBehaviorComp() const {
     return GetBEI().GetAIComponent().GetComponent<BehaviorComponent>(). template GetComponent<T>();
   }
-  
-  // If a behavior requires that an AIInformationProcess is running for the behavior
-  // to operate properly, the behavior should set this variable directly so that
-  // it's checked in WantsToBeActivatedBase
-  AIInformationAnalysis::EProcess _requiredProcess;
   
   bool ShouldStreamline() const { return (_alwaysStreamline); }
     

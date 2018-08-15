@@ -37,9 +37,6 @@ enum class AIComponentID{
   ContinuityComponent,
   // provide a simple interface for selecting the best face to interact with
   FaceSelection,
-  // module to analyze information for the AI in processes common to more than one behavior, for example
-  // border calculation
-  InformationAnalyzer,
   // Component which tracks and caches the best objects to use for certain interactions
   ObjectInteractionInfoCache,
   // Component that maintains the puzzles victor can solve

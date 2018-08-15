@@ -18,7 +18,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -197,7 +196,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditionHandleList& customConditionHandles)
 : IBehavior( MakeUniqueDebugLabelFromConfig( config ) )
-, _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
@@ -842,11 +840,6 @@ void ICozmoBehavior::OnActivatedInternal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
-  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = GetAIComp<AIInformationAnalyzer>();
-    infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
-  }
-
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this,
@@ -866,11 +859,6 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnLeftActivatableScopeInternal()
 {
-  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = GetAIComp<AIInformationAnalyzer>();
-    infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
-  }
-
   const bool hasActivatableScopeVisionModes = !_operationModifiers.visionModesForActivatableScope->empty();
   if (hasActivatableScopeVisionModes) {
     GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
@@ -1005,19 +993,6 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
                            "Behavior %s was [still] asked not to activate during tick %zu by coordinator %s",
                            GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
     return false;
-  }
-
-  // check if required processes are running
-  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
-  {
-    const bool isProcessOn = GetAIComp<AIInformationAnalyzer>().IsProcessRunning(_requiredProcess);
-    if ( !isProcessOn ) {
-      PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
-        "Required process '%s' is not enabled for '%s'",
-        AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-        GetDebugLabel().c_str());
-      return false;
-    }
   }
 
   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

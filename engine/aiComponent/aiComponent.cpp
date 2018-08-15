@@ -15,7 +15,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/radiansMath.h"
 #include "engine/aiComponent/aiWhiteboard.h"
-#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/continuityComponent.h"
@@ -84,7 +83,6 @@ void AIComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depend
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,                 new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,               new ContinuityComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,                     faceSelectionComp);
-      _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,               new AIInformationAnalyzer());
       _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache,        new ObjectInteractionInfoCache(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                            new PuzzleComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsComponent());

@@ -71,7 +71,6 @@ public:
   virtual void InitDependent(Robot* robot, const AICompMap& dependentComps) override;
 
   virtual void GetUpdateDependencies(AICompIDSet& dependencies) const override {
-    dependencies.insert(AIComponentID::InformationAnalyzer);
     dependencies.insert(AIComponentID::ContinuityComponent);
     dependencies.insert(AIComponentID::Whiteboard);
   };
