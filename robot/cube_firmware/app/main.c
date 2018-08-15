@@ -6,25 +6,33 @@
 #include "lights.h"
 #include "accel.h"
 #include "uart.h"
+#include "adc.h"
 #include "animation.h"
 
 int main(void) {
   hal_uart_init();
   hal_led_init();
   hal_acc_init();
+  hal_adc_init();
 
   animation_init(); // Setup animation controller
   return 0;
 }
 
 void deinit(void) {
+  hal_adc_stop();
   hal_acc_stop();
   hal_led_stop();
   hal_uart_stop();
 }
 
+void adc_tick() {
+
+}
+
 void tick(void) {
   animation_tick();
+  hal_adc_tick();
   hal_acc_tick();
 }
 

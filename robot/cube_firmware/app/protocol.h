@@ -14,7 +14,8 @@ enum {
   COMMAND_LIGHT_INDEX = 0,
   COMMAND_LIGHT_KEYFRAMES = 1,
   COMMAND_ACCEL_DATA = 2,
-  COMMAND_ACCEL_FAILURE = 3
+  COMMAND_ACCEL_FAILURE = 3,
+  COMMAND_VOLTAGE_DATA = 4
 };
 
 static const int ACCEL_FRAMES_PER_MSG = 3;
@@ -39,6 +40,12 @@ typedef struct {
   uint8_t   tap_count;
   int16_t   axis[ACCEL_FRAMES_PER_MSG][3];
 } AccelDataCommand;
+
+typedef struct {
+  CubeCommand command;
+  uint8_t     _unused;
+  uint16_t    rail_v1;
+} VoltageCommand;
 
 typedef struct {
   CubeCommand command;

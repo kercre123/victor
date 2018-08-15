@@ -407,6 +407,11 @@
               <FileType>1</FileType>
               <FilePath>.\app\uart.c</FilePath>
             </File>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\adc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

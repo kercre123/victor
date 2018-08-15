@@ -57,23 +57,29 @@ factory.on('connected', (cube) => {
 		var last = null;
 
 		cube.on('data', data => {
-			const ONEG = 0x2000;
-			const ACCEL_THRESH = 0.10; // Much less than a G
 
-			const x = data.readInt16LE(2) / ONEG;
-			const y = data.readInt16LE(4) / ONEG;
-			const z = data.readInt16LE(6) / ONEG;
+			switch (data[0]) {
+				case 4:
+					console.log("Battery:", data.readUInt16LE(2) * 3.6 / 1024.0);
+					break ;
+				case 2:
+					const ONEG = 0x2000;
+					const ACCEL_THRESH = 0.10; // Much less than a G
 
-			const test = Math.abs(x) < ACCEL_THRESH 
-	            && Math.abs(y) < ACCEL_THRESH 
-	            && Math.abs(z-1) < ACCEL_THRESH;
+					const x = data.readInt16LE(2) / ONEG;
+					const y = data.readInt16LE(4) / ONEG;
+					const z = data.readInt16LE(6) / ONEG;
 
-	        if (last !== test) {
-				cube.send(test ? pass : fail);
-	        	last = test;
-	        }
+					const test = Math.abs(x) < ACCEL_THRESH 
+			            && Math.abs(y) < ACCEL_THRESH 
+			            && Math.abs(z-1) < ACCEL_THRESH;
 
-	        console.log("APP_DATA:", data);
+			        if (last !== test) {
+						cube.send(test ? pass : fail);
+			        	last = test;
+			        }
+			        //console.log("ACCEL_DATA:", data);
+			}
 		});
 	}
 
