@@ -177,6 +177,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
+  MeetVictorAlreadyKnowYouPrompt,
   RespondToRenameFace,
 
   // victorBehaviorTree/highLevelDelegates/messaging

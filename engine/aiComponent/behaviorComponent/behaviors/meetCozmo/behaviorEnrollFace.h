@@ -90,6 +90,8 @@ private:
     PutDownBlock,
     WaitingInPlaceForFace,
     LookingForFace,
+    AlreadyKnowYouPrompt,
+    AlreadyKnowYouHandle,
     Enrolling,
     SayingName,
     Success,
@@ -117,6 +119,9 @@ private:
   void TransitionToDriveOffCharger();
   void TransitionToWaitInPlaceForFace();
   void TransitionToLookingForFace();
+  void TransitionToAlreadyKnowYouPrompt();
+  void TransitionToAlreadyKnowYouHandler();
+  void TransitionToStartEnrollment();
   void TransitionToEnrolling();
   void TransitionToScanningInterrupted();
   void TransitionToSayingName();

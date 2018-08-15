@@ -127,13 +127,13 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
   // Set up the TextToSpeech Behavior
   JsonTools::GetValueOptional(config, kTextToSpeechBehaviorKey, _iConfig.ttsBehaviorID);
 
-  _iConfig.vocalPromptString = JsonTools::ParseString(config,
-                                                      kVocalPromptKey,
-                                                      "BehaviorPromptUserForVoiceCommand.MissingPromptString");
+  // If prompt string is _not_ set by JSON config, it must be set by a call to SetPrompt()
+  // before the behavior wants to be activated, or an error will occur.
+  _iConfig.wasPromptSetFromJson = JsonTools::GetValueOptional(config, kVocalPromptKey, _iConfig.vocalPromptString);
 
   JsonTools::GetValueOptional(config, kVocalResponseToIntentKey, _iConfig.vocalResponseToIntentString);
   JsonTools::GetValueOptional(config, kVocalResponseToBadIntentKey, _iConfig.vocalResponseToBadIntentString);
-  JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
+  _iConfig.wasRepromptSetFromJson = JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
 
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   JsonTools::GetCladEnumFromJSON(config, kListenGetInOverrideKey, _iConfig.listenGetInOverrideTrigger, 
@@ -164,6 +164,12 @@ BehaviorPromptUserForVoiceCommand::~BehaviorPromptUserForVoiceCommand()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPromptUserForVoiceCommand::WantsToBeActivatedBehavior() const
 {
+  if(!ANKI_VERIFY(!_iConfig.vocalPromptString.empty(), "BehaviorPromptUserForVoiceCommand.MissingPromptString", ""))
+  {
+    // Prompt was not set by JSON config or a call to SetPrompt()
+    return false;
+  }
+  
   return true;
 }
 
@@ -212,6 +218,34 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::SetPrompt(const std::string &text)
+{
+  // Don't allow programmatic override of Json-configured prompts.
+  // Use a separate indicator 'wasPromptSetFromJson' to allow multiple calls to SetPrompt if
+  //  the prompt was _not_ set by Json config.
+  if(ANKI_VERIFY(!_iConfig.wasPromptSetFromJson,
+                 "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
+                 "Prompt set by Json config. Refusing to override."))
+  {
+    _iConfig.vocalPromptString = text;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPromptUserForVoiceCommand::SetReprompt(const std::string &text)
+{
+  // Don't allow programmatic override of Json-configured prompts.
+  // Use a separate indicator 'wasRepromptSetFromJson' to allow multiple calls to SetReprompt if
+  //  the prompt was _not_ set by Json config.
+  if(ANKI_VERIFY(!_iConfig.wasRepromptSetFromJson,
+                 "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
+                 "Prompt set by Json config. Refusing to override."))
+  {
+    _iConfig.vocalRepromptString = text;
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::InitBehavior(){
   BehaviorID ttsID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.ttsBehaviorID);

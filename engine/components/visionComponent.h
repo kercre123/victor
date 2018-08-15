@@ -287,6 +287,11 @@ struct DockingErrorSignal;
     // Returns true if the provided name has been enrolled
     bool IsNameTaken(const std::string& name);
     
+    // Returns the set of IDs with the given name.
+    // Generally there will only be one entry, but its possible we may support multiple enrollments
+    // with the same name.
+    std::set<Vision::FaceID_t> GetFaceIDsWithName(const std::string& name);
+    
     // Load/Save face album data to/from file.
     Result SaveFaceAlbumToFile(const std::string& path);
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs

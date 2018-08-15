@@ -2342,16 +2342,22 @@ namespace Vector {
 
   bool VisionComponent::IsNameTaken(const std::string& name)
   {
+    return !GetFaceIDsWithName(name).empty();
+  }
+  
+  std::set<Vision::FaceID_t> VisionComponent::GetFaceIDsWithName(const std::string& name)
+  {
     Lock();
     auto namePairList = _visionSystem->GetEnrolledNames();
     Unlock();
 
+    std::set<Vision::FaceID_t> idsWithName;
     for( const auto& nameEntry : namePairList ) {
       if( Anki::Util::StringCaseInsensitiveEquals(nameEntry.name, name) ) {
-        return true;
+        idsWithName.insert(nameEntry.faceID);
       }
     }
-    return false;
+    return idsWithName;
   }
 
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const

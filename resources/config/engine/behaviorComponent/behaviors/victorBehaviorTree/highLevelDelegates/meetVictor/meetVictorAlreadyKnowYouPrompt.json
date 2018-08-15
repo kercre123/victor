@@ -1,0 +1,16 @@
+{
+  "behaviorID" : "MeetVictorAlreadyKnowYouPrompt",
+  "behaviorClass" : "PromptUserForVoiceCommand",
+ 
+  "associatedActiveFeature": "MeetVictor",
+
+  "streamType"                     : "Blackjack",
+  "earConAudioEventBegin"          : "Play__Robot_Vic_Sfx__Wake_Word_On",
+  "earConAudioEventSuccess"        : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+  "earConAudioEventNeutral"        : "Play__Robot_Vic_Sfx__Wake_Word_Off",
+  "maxNumberOfReprompts"           : 1,
+  "stopListeningOnIntents"         : true,
+  "playListeningGetIn"             : false,
+  "playListeningGetOut"            : false,
+  "backpackLights"                 : true
+}

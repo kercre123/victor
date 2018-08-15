@@ -31,6 +31,11 @@ class BehaviorPromptUserForVoiceCommand : public ICozmoBehavior
 public: 
   virtual ~BehaviorPromptUserForVoiceCommand();
 
+  // Expected to be used only if the JSON config did not provide a (re)prompt.
+  // The main prompt must be set by JSON config or this method before the behavior wants to be activated.
+  void SetPrompt(const std::string& text);
+  void SetReprompt(const std::string& text);
+  
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -112,7 +117,8 @@ private:
     bool backpackLights;
     bool playListeningGetIn;
     bool playListeningGetOut;
-
+    bool wasPromptSetFromJson;
+    bool wasRepromptSetFromJson;
   };
 
   struct DynamicVariables {
