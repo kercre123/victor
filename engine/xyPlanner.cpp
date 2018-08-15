@@ -531,6 +531,26 @@ std::vector<Planning::PathSegment> XYPlanner::SmoothCorners(const std::vector<Po
   return turns;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Planning::Path XYPlanner::SmoothJoinPaths(const Planning::Path& path1, const Planning::Path& path2) const
+{
+  const auto getCost = [this] (const Planning::PathSegment& seg ) -> float {
+    switch (seg.GetType()) {
+      case Planning::PST_POINT_TURN: { return GetPointPenalty( CreatePoint2f(seg), 0. ); }
+      case Planning::PST_LINE:       { return GetLinePenalty( CreateLineSegment(seg), 0.); }
+      case Planning::PST_ARC:        { return GetArcPenalty( CreateArc(seg), 0.f ); }
+      default:                       { return 0.f; }
+    }
+  };
+
+  std::vector<Point2f> newPlan;
+
+  for (int i = 0; i < path.GetNumSegments(); ++i) {
+    if ( !isSafe(path.GetSegmentConstRef(i)) ) { return false; }
+  } 
+
+  return BuildPath(newPlan);
+}
 
 } // Cozmo
 } // Anki

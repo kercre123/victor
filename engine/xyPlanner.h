@@ -88,6 +88,9 @@ private:
   // convert a set of way points to a smooth path
   Planning::Path BuildPath(const std::vector<Point2f>& plan) const;
 
+  // merge and smooth two paths together
+  Planning::Path SmoothJoinPaths(const Planning::Path& path1, const Planning::Path& path2) const;
+
   // builds a simplified list of waypoints from closed set
   std::vector<Point2f> GenerateWayPoints(const std::vector<Point2f>& plan) const;
 
