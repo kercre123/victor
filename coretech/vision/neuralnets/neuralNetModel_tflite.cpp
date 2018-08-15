@@ -187,12 +187,49 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
 {
   // Scale image, subtract mean, divide by standard deviation and store in the interpreter's input tensor
   ScaleImage(img);
-  
-  const auto invokeResult = _interpreter->Invoke();
-  if (kTfLiteOk != invokeResult)
+
+  if (_params.benchmarkRuns == 0){
+    const auto invokeResult = _interpreter->Invoke();
+    if (kTfLiteOk != invokeResult)
+    {
+      PRINT_NAMED_ERROR("NeuralNetModel.Run.FailedToInvoke", "");
+      return RESULT_FAIL;
+    }
+  }
+  else
   {
-    PRINT_NAMED_ERROR("NeuralNetModel.Run.FailedToInvoke", "");
-    return RESULT_FAIL;
+    tflite::profiling::Profiler profiler;
+    
+    _interpreter->SetProfiler(&profiler);
+
+    profiler.StartProfiling();
+    {
+      tflite::profiling::ScopedProfile profile(&profiler, "benchmarkRuns");
+      for (uint32_t i = 0; i < _params.benchmarkRuns; ++i)
+      {
+        const auto invokeResult = _interpreter->Invoke();
+        if (kTfLiteOk != invokeResult) {
+          PRINT_NAMED_ERROR("NeuralNetModel.Run.FailedToInvokeBenchmark", "");
+          return RESULT_FAIL;
+        }
+      }
+    }
+    profiler.StopProfiling();
+    // TODO: Upgrade to TF r1.10 in order to build profile_summarizer.cc for detailed timing
+    auto profile_events = profiler.GetProfileEvents();
+    for (auto const& e : profile_events) 
+    {
+      auto op_index = e->event_metadata;
+      const auto node_and_registration =
+          _interpreter->node_and_registration(op_index);
+      const TfLiteRegistration registration = node_and_registration->second;
+      LOG_INFO("Profiling", "Num Runs: %d, Avg: %f ms, Node: %u, OpCode: %i, %s \n",
+              _params.benchmarkRuns, 
+              (e->end_timestamp_us - e->begin_timestamp_us) / (1000.0 * _params.benchmarkRuns),
+              op_index, registration.builtin_code,
+              EnumNameBuiltinOperator(
+                static_cast<tflite::BuiltinOperator>(registration.builtin_code)));
+    }
   }
   
   switch(_params.outputType)
