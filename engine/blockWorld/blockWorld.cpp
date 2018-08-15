@@ -2409,7 +2409,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_lastPlayAreaSizeEventSec + _playAreaSizeEventIntervalSec < currentTimeSec) {
       _lastPlayAreaSizeEventSec = currentTimeSec;
-      const INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
+      const auto currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
       const double areaM2 = currentNavMemoryMap->GetExploredRegionAreaM2();
       Anki::Util::sInfoF("robot.play_area_size", {}, "%.2f", areaM2);
     }

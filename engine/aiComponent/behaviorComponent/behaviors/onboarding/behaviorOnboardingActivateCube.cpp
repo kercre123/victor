@@ -166,7 +166,7 @@ bool BehaviorOnboardingActivateCube::ShouldBackUpFromCube( float& howMuchToDrive
 {
   float dist = GetDistToCube();
   if( dist < kTooCloseDist_mm ) {
-    const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+    const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
     if( memoryMap != nullptr ) {
       const float distBackwards = dist - kNominalCubeDist_mm;
       // line segment extending |distBackwards| behind robot

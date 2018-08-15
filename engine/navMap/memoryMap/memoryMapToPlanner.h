@@ -34,13 +34,13 @@ void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::
 void TestNavMemoryMapToPlanner(Robot& robot);
 
 // Gets all convex polys by edge node type in the current memory map
-void GetConvexHullsByType(INavMap* memoryMap,
+void GetConvexHullsByType(std::shared_ptr<INavMap> memoryMap,
                     const MemoryMapTypes::FullContentArray& outerTypes,
                     const MemoryMapTypes::EContentType innerType,
                     std::vector<ConvexPolygon>& convexHulls);
                                         
 // get strict poly without CH calculation
-void GetBorderPoly(INavMap* memoryMap,
+void GetBorderPoly(std::shared_ptr<INavMap> memoryMap,
                    const MemoryMapTypes::FullContentArray& outerTypes,
                    const MemoryMapTypes::EContentType innerType,
                    std::vector<Poly2f>& outPoly);

@@ -55,7 +55,7 @@ public:
   
   // This method caches cliff pointers, so must be called every time you want to use this condition
   // with the latest memory map data
-  void UpdateCliffs( const INavMap* memoryMap );
+  void UpdateCliffs( std::shared_ptr<const INavMap> memoryMap );
   
   virtual bool operator()( const Point2f& sampledPos ) override;
   
@@ -118,7 +118,7 @@ class RejectIfCollidesWithMemoryMap : public Anki::Util::RejectionSamplingCondit
 public:
   explicit RejectIfCollidesWithMemoryMap( const MemoryMapTypes::FullContentArray& collisionTypes );
   
-  void SetMemoryMap( const INavMap* memoryMap ) { _memoryMap = memoryMap; }
+  void SetMemoryMap( std::shared_ptr<const INavMap> memoryMap ) { _memoryMap = memoryMap; }
   
   // If not set, any sample that collides is rejected. If set, it is accepted with probability p
   void SetAcceptanceProbability( float p, Util::RandomGenerator& rng );
@@ -126,7 +126,7 @@ public:
   virtual bool operator()( const Poly2f& sampledPoly ) override;
   
 private:
-  const INavMap* _memoryMap = nullptr;
+  std::shared_ptr<const INavMap> _memoryMap = nullptr; // BAD! Nothing guarantees that this is current
   const MemoryMapTypes::FullContentArray& _collisionTypes;
   Util::RandomGenerator* _rng = nullptr;
   float _pAccept = 0.0f;

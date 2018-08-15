@@ -393,7 +393,7 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
   const int kNumAnglesAtPose = 6;       // How many poses at each position to generate
   outPoses.reserve(kNumPositionsForSearch * kNumAnglesAtPose);
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorFindHome.GenerateSearchPoses.NeedMemoryMap" );
   
   // Update cliff positions

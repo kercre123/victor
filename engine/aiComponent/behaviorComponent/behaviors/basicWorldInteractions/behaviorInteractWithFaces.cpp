@@ -227,7 +227,7 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward()
       GetBEI().HasMapComponent()) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
 
-    const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+    const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
     
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 

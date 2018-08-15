@@ -445,7 +445,7 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
 
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
-    INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
+    auto memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
 
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);

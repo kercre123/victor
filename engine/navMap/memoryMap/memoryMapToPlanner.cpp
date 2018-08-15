@@ -201,7 +201,7 @@ void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void GetConvexHullsByType(INavMap* memoryMap,
+void GetConvexHullsByType(std::shared_ptr<INavMap> memoryMap,
                     const MemoryMapTypes::FullContentArray& outerTypes,
                     const MemoryMapTypes::EContentType innerType,
                     std::vector<ConvexPolygon>& convexHulls)
@@ -230,7 +230,7 @@ void GetConvexHullsByType(INavMap* memoryMap,
   }
 }
 
-void GetBorderPoly(INavMap* memoryMap,
+void GetBorderPoly(std::shared_ptr<INavMap> memoryMap,
                    const MemoryMapTypes::FullContentArray& outerTypes,
                    const MemoryMapTypes::EContentType innerType,
                    std::vector<Poly2f>& outPolys)
@@ -326,7 +326,7 @@ void TestNavMemoryMapToPlanner(Robot& robot)
       
   std::vector<ConvexPolygon> cHullsInteresting;
   std::vector<ConvexPolygon> cHullsNotInteresting;
-  INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  auto memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, cHullsInteresting);
   GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, cHullsNotInteresting);
 

@@ -118,13 +118,12 @@ MemoryMap::MemoryMap()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
+bool MemoryMap::Merge(const INavMap& other, const Pose3d& transform)
 {
-  DEV_ASSERT(other != nullptr, "MemoryMap.Merge.NullMap");
-  DEV_ASSERT(dynamic_cast<const MemoryMap*>(other), "MemoryMap.Merge.UnsupportedClass");
-  const MemoryMap* otherMap = static_cast<const MemoryMap*>(other);
+  DEV_ASSERT(dynamic_cast<const MemoryMap*>(&other), "MemoryMap.Merge.UnsupportedClass");
+  const MemoryMap& otherMap = static_cast<const MemoryMap&>(other);
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.Merge( otherMap->_quadTree, transform ) );
+  return MONITOR_PERFORMANCE( _quadTree.Merge( otherMap._quadTree, transform ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -125,7 +125,7 @@ protected:
   // although this methods allows merging any INavMap into any INavMap, subclasses are not
   // expected to provide support for merging other subclasses, but only other instances from the same
   // subclass
-  virtual bool Merge(const INavMap* other, const Pose3d& transform) = 0;
+  virtual bool Merge(const INavMap& other, const Pose3d& transform) = 0;
  
   // attempt to apply a transformation function to all nodes in the tree
   virtual bool TransformContent(NodeTransformFunction transform) = 0;

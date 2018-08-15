@@ -758,6 +758,9 @@ void Robot::Delocalize(bool isCarryingObject)
     }
   }
 
+  // If we don't know where we are, we can't know where we are going.
+  GetPathComponent().Abort();
+
   // notify blockworld
   GetBlockWorld().OnRobotDelocalized(worldOriginID);
 

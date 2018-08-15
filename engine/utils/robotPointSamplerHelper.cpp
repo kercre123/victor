@@ -78,7 +78,7 @@ void RejectIfWouldCrossCliff::SetRobotPosition(const Point2f& pos)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RejectIfWouldCrossCliff::UpdateCliffs( const INavMap* memoryMap )
+void RejectIfWouldCrossCliff::UpdateCliffs( std::shared_ptr<const INavMap> memoryMap )
 {
   _cliffs.clear();
   if( memoryMap == nullptr ) {

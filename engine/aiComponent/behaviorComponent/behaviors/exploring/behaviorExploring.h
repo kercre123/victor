@@ -91,7 +91,7 @@ private:
   // also lie within some distance to the charger, using rejection sampling. Some other criteria apply,
   // such as not being on the other side of a cliff obstacle, etc. After kNumSampleSteps samples,
   // retPoses contains however many samples have been accepted (which might be none!)
-  void SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
+  void SampleVisitLocationsOpenSpace( std::shared_ptr<const INavMap> memoryMap,
                                       bool tooFarFromCharger,
                                       bool chargerEqualsRobot,
                                       const Point2f& chargerPos,
@@ -99,7 +99,7 @@ private:
                                       std::vector<Pose3d>& retPoses ) const;
   
   // samples UP TO kNumProxPoses that are slightly offset from an unexplored prox obstacle and facing it
-  void SampleVisitLocationsFacingObstacle( const INavMap* memoryMap,
+  void SampleVisitLocationsFacingObstacle( std::shared_ptr<const INavMap> memoryMap,
                                            const ObservableObject* charger,
                                            const Point2f& robotPos,
                                            std::vector<Pose3d>& retPoses ) const;

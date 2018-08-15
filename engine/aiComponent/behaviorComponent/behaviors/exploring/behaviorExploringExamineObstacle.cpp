@@ -456,7 +456,7 @@ bool BehaviorExploringExamineObstacle::RobotPathFreeOfObstacle( float dist_mm, b
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploringExamineObstacle.RobotPathFreeOfObstacle.NeedMemoryMap" );
   
   const Pose3d currRobotPose = robotInfo.GetPose();
@@ -497,7 +497,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploringExamineObstacle.WTBAB.NeedMemoryMap" );
   
   const Pose3d currRobotPose = robotInfo.GetPose();
@@ -532,7 +532,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploringExamineObstacle.WTBAB.NeedMemoryMap" );
   
   const Pose3d currRobotPose = robotInfo.GetPose();

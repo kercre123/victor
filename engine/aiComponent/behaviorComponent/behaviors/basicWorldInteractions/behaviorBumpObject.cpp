@@ -266,7 +266,7 @@ void BehaviorBumpObject::OnBehaviorDeactivated()
 bool BehaviorBumpObject::WouldBumpPushSomethingOffCliff( float driveDist_mm ) const
 {
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-  const auto* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
+  const auto  memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   RobotPointSamplerHelper::RejectIfWouldCrossCliff cliffDetector{ kCliffWidth_mm };
   cliffDetector.SetRobotPosition( Vec2f{robotPose.GetTranslation()} );
   cliffDetector.UpdateCliffs( memoryMap );
