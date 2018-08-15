@@ -29,14 +29,7 @@ def install_vicos_sdk(version):
     }
 
     platform_name = platform.system().lower()
-
-    subver_tag = ''
-    if platform_name == 'linux':
-        import lsb_release
-        subver = lsb_release.get_lsb_information().get('RELEASE')
-        subver_tag = '-ubuntu-{}'.format(subver)
-
-    platform_tag = '{}{}'.format(platform_map.get(platform_name), subver_tag)
+    platform_tag = platform_map.get(platform_name)
 
     url_prefix = "https://sai-general.s3.amazonaws.com/build-assets/"
     platform_name = platform.system().lower()
