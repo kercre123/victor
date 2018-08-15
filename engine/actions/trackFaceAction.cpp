@@ -123,6 +123,38 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
   return UpdateResult::NewInfo;
 
 } // UpdateTracking()
+
+bool TrackFaceAction::ContinueCriteriaMet(const f32 currentTime_sec)
+{
+  if (Util::IsFltGTZero(_stopCriteria.noEyeContactTimeout_sec))
+  {
+    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_stopCriteria.eyeContactWithinLast_ms);
+    if (eyeContact)
+    {
+      _stopCriteria.timeOfLastEyeContact_sec = currentTime_sec;
+      return true;
+    }
+    else
+    {
+      if (currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec <= _stopCriteria.noEyeContactTimeout_sec)
+      {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void TrackFaceAction::SetStopCriteriaWithEyeContactOverride(const f32 duration_sec, const f32 noEyeContactTimeout_sec,
+                                                            const TimeStamp_t eyeContactWithinLast_ms)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
+  _stopCriteria.duration_sec = duration_sec;
+  _stopCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
+  _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
+
+  _stopCriteria.withinTolSince_sec = -1.f;
+}
   
 } // namespace Cozmo
 } // namespace Anki

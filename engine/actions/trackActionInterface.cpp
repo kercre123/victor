@@ -260,16 +260,6 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.withinTolSince_sec = -1.f;
 }
 
-void ITrackAction::SetStopCriteriaWithEyeContactOverride(const f32 duration_sec, const f32 noEyeContactTimeout_sec,
-                                                         const TimeStamp_t eyeContactWithinLast_ms)
-{
-  DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
-  _stopCriteria.duration_sec = duration_sec;
-  _stopCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
-  _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
-
-  _stopCriteria.withinTolSince_sec = -1.f;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMode(Mode newMode)
@@ -770,27 +760,6 @@ bool ITrackAction::UpdateSmallAngleClamping()
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ITrackAction::ContinueCriteriaMet(const f32 currentTime_sec)
-{
-  if (Util::IsFltGTZero(_stopCriteria.noEyeContactTimeout_sec))
-  {
-    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_stopCriteria.eyeContactWithinLast_ms);
-    if (eyeContact)
-    {
-      _stopCriteria.timeOfLastEyeContact_sec = currentTime_sec;
-      return true;
-    }
-    else
-    {
-      if (currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec <= _stopCriteria.noEyeContactTimeout_sec)
-      {
-        return true;
-      }
-    }
-  }
-  return false;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,

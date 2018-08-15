@@ -62,8 +62,6 @@ public:
   // Set time to 0 to disable (default).
   void SetStopCriteria(const Radians& panTol, const Radians& tiltTol, f32 minDist_mm, f32 maxDist_mm, f32 time_sec,
                        bool interruptDrivingAnim = false);
-  void SetStopCriteriaWithEyeContactOverride(const f32 duration_sec, const f32 noEyeContactTimeout_sec,
-                                             const TimeStamp_t eyeContactWithinLast_ms);
   
   // Set how long the tracker will run without seeing whatever it is trying to track.
   // Set to 0 to disable timeout (default).
@@ -148,6 +146,8 @@ protected:
   virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) = 0;
   
   virtual bool InterruptInternal() override final;
+
+  virtual bool ContinueCriteriaMet(const f32 currentTime_sec) {return false;};
   
 private:
 
@@ -158,7 +158,6 @@ private:
                        const f32 dist_mm, const f32 currentTime_sec);
   bool IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                           const f32 dist_mm, const f32 currentTime_sec) const;
-  bool ContinueCriteriaMet(const f32 currentTime_sec);
   bool TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                   const f32 dist_mm, const f32 currentTime_sec);
   
@@ -210,9 +209,6 @@ private:
     f32     duration_sec                = 0.f; // _stopCriteria is ignored if this is 0
     f32     withinTolSince_sec          = 0.f;
     bool    interruptDrivingAnim        = false;
-    f32     noEyeContactTimeout_sec     = 0.f;
-    f32     timeOfLastEyeContact_sec    = 0.f;
-    TimeStamp_t eyeContactWithinLast_ms = 0;
   } _stopCriteria;
 
   bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }
