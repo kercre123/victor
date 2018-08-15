@@ -118,7 +118,31 @@
           "emotionType" : "Stimulated",
           "value" : 0.1
         }
-      ]
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 0.1,
+            "y" : 0.0
+          },
+          {
+            "x" : 0.1,
+            "y" : 0.2
+          },
+          {
+            "x" : 10,
+            "y" : 0.5
+          },
+          {
+            "x" : 60,
+            "y" : 1
+          }
+        ]
+      }
     },
     {
       "name" : "DanceToTheBeat",
