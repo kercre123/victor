@@ -65,8 +65,14 @@ macro(__anki_run_go_build target_name extra_deps)
 
   set(__cgo_cppflags "${__cgo_cppflags} $<$<BOOL:${__include_dirs}>:-I $<JOIN:${__include_dirs}, -I >>")
   set(__cgo_ldflags "${__cgo_ldflags} ${__link_folders}\ $<$<BOOL:${__link_libs}>:-l$<JOIN:${__link_libs},\ -l>>")
+  set(__cgo_cxxflags "-std=c++14")
+  if (VICOS)
+    set(__cgo_cxxflags "${__cgo_cxxflags} -stdlib=libc++")
+    set(__cgo_ldflags "${__cgo_ldflags} -stdlib=libc++")
+  endif()
 
   set(__cppflags_env "CGO_CPPFLAGS=${__cgo_cppflags}")
+  set(__cxxflags_env "CGO_CXXFLAGS=${__cgo_cxxflags}")
   set(__ldflags_env "CGO_LDFLAGS=${__cgo_ldflags}")
 
   set(__go_platform_ldflags "")
@@ -78,7 +84,7 @@ macro(__anki_run_go_build target_name extra_deps)
 
   add_custom_command(
     OUTPUT ${__gobuild_out}
-    COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__cppflags_env} ${__ldflags_env}
+    COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__cppflags_env} ${__ldflags_env} ${__cxxflags_env}
                              ${GOROOT}/bin/go build ${__go_build_flags}
                              ${__ldflags_str} ${__go_build_ldflags}
                              ${__gobuild_basedir}

@@ -58,6 +58,7 @@ func testReader(serv ipc.Server, send voice.MsgSender) {
 
 func main() {
 	log.Println("Hello, world!")
+	log.Das("vic.cloud.hello.world", (&log.DasFields{}).SetStrings("one").SetInts(1))
 
 	log.Println("Install crash reporter")
 	robot.InstallCrashReporter(log.Tag)
