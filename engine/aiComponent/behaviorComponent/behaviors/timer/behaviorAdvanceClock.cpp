@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorAdvanceClock.h"
 
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/components/animationComponent.h"
 
 namespace Anki {
 namespace Vector {
@@ -63,9 +64,25 @@ void BehaviorAdvanceClock::SetAdvanceClockParams(int startTime_sec, int endTime_
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAdvanceClock::TransitionToShowClockInternal()
 {
-
   for(int i = 0; i <= GetTotalNumberOfUpdates(); i++){
     BuildAndDisplayProceduralClock(i, i*ANIM_TIME_STEP_MS);   
+  }
+
+  {
+    AudioEngine::Multiplexer::PostAudioEvent audioMessage;
+    audioMessage.gameObject = Anki::AudioMetaData::GameObjectType::Animation;
+    audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Timer_Run_Down_Loop_Play;
+
+    RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
+    GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), 0);
+  }
+  {
+    AudioEngine::Multiplexer::PostAudioEvent audioMessage;
+    audioMessage.gameObject = Anki::AudioMetaData::GameObjectType::Animation;
+    audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Vic_Sfx__Timer_Run_Down_Loop_Stop;
+
+    RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
+    GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), Util::SecToMilliSec(static_cast<float>(GetTimeDisplayClock_sec())));
   }
 }
 

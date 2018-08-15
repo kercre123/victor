@@ -7,6 +7,7 @@
   "getInAnimTrigger" : "TimerCancelGetIn",
   "getOutAnimTrigger" : "TimerCancelTimer",
   "displayClockFor_s" : 3,
+  "shouldPlayAudioOnClockUpdates" : false,
 
   "clockLayout" : [{
     "layerName" : "Clock_Display",
