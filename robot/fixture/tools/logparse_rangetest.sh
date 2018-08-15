@@ -27,52 +27,107 @@
 #...
 
 directory="$(dirname ${BASH_SOURCE[0]})"
-rm -f $directory/lift*.csv $directory/head*.csv
+rm -f $directory/data_*.csv
 
-columnNames=("pwr" "POS-start" "POS-passive" "POS-delta" "UP-speed" "DN-speed" "UP-avg" "DN-avg" "UP-travel" "DN-travel")
-declare -a liftdat
-declare -a headdat
-for val in "${columnNames[@]}"; do liftdat+=(""); headdat+=(""); done
+gDebug=0;
+gCurrentFile="";
+gCurrentLine=0;
+gDataSel=0; #dataset selector
 
-function write_liftdat()
+columnIndex=( "0"    "1"     "2"       "3"     "4"     "5"    "6"   "7"    "8"      "9"    "10" "11"   "12"    "13"      "14"    "15"    "16"   "17"  "18"   "19"     "20"   "21" "22"     "23"    "24")
+columnGroups=("LIFT" "POS"   ""        ""      "SPEED" ""     "AVG" ""     "TRAVEL" ""     ""   "HEAD" "POS"   ""        ""      "SPEED" ""     "AVG" ""     "TRAVEL" ""     ""   ""       ""      "")
+columnNames=( "pwr"  "start" "passive" "delta" "up"    "down" "up"  "down" "up"     "down" ""   "pwr"  "start" "passive" "delta" "up"    "down" "up"  "down" "up"     "down" ""   "result" "line#" "file")
+declare -a dathigh
+declare -a datlow
+for val in "${columnNames[@]}"; do dathigh+=(""); datlow+=(""); done
+
+#function aryClear() { #usage: aryClear myArray[@]
+#  declare -a ary1=("${!1}"); #echo "${ary1[@]}"
+#  for i in "${!ary1[@]}"; do ary1[$i]=""; done
+#}
+
+function dClear() { 
+  if [ $gDataSel -gt 0 ]; then 
+    for i in "${!dathigh[@]}"; do dathigh[$i]=""; done
+    dathigh[10]=" "; dathigh[21]=" ";
+  else
+    for i in "${!datlow[@]}"; do datlow[$i]=""; done
+    datlow[10]=" "; datlow[21]=" ";
+  fi
+}
+
+function dSetResult()  { result=$1;                               dathigh[22]=$result;       datlow[22]=$result; }
+function dSetLineNum() { linenum=$1; if [ $gDataSel -gt 0 ]; then dathigh[23]=$linenum; fi;  datlow[23]=$linenum; }
+function dSetFile()    { fname=$1;   if [ $gDataSel -gt 0 ]; then dathigh[24]=$fname;   fi;  datlow[24]=$fname; }
+function dSetLiftPwr() { pwr=$1; if [ $gDataSel -gt 0 ]; then dathigh[0]=$pwr;  else datlow[0]=$pwr; fi }
+function dSetHeadPwr() { pwr=$1; if [ $gDataSel -gt 0 ]; then dathigh[11]=$pwr; else datlow[11]=$pwr; fi }
+
+function dSetLiftPos() {
+  start=$1; passv=$2; delta=$3;
+  if [ $gDataSel -gt 0 ]; then dathigh[1]=$start; else datlow[1]=$start; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[2]=$passv; else datlow[2]=$passv; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[3]=$delta; else datlow[3]=$delta; fi
+}
+
+function dSetLiftUp() {
+  speed=$1; spdavg=$2; travel=$3;
+  if [ $gDataSel -gt 0 ]; then dathigh[4]=$speed;  else datlow[4]=$speed; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[6]=$spdavg; else datlow[6]=$spdavg; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[8]=$travel; else datlow[8]=$travel; fi
+}
+
+function dSetLiftDn() {
+  speed=$1; spdavg=$2; travel=$3;
+  if [ $gDataSel -gt 0 ]; then dathigh[5]=$speed;  else datlow[5]=$speed; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[7]=$spdavg; else datlow[7]=$spdavg; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[9]=$travel; else datlow[9]=$travel; fi
+}
+
+function dSetHeadPos() {
+  start=$1; passv=$2; delta=$3;
+  if [ $gDataSel -gt 0 ]; then dathigh[12]=$start; else datlow[12]=$start; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[13]=$passv; else datlow[13]=$passv; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[14]=$delta; else datlow[14]=$delta; fi
+}
+
+function dSetHeadUp() {
+  speed=$1; spdavg=$2; travel=$3;
+  if [ $gDataSel -gt 0 ]; then dathigh[15]=$speed;  else datlow[15]=$speed; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[17]=$spdavg; else datlow[17]=$spdavg; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[19]=$travel; else datlow[19]=$travel; fi
+}
+
+function dSetHeadDn() {
+  speed=$1; spdavg=$2; travel=$3;
+  if [ $gDataSel -gt 0 ]; then dathigh[16]=$speed;  else datlow[16]=$speed; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[18]=$spdavg; else datlow[18]=$spdavg; fi
+  if [ $gDataSel -gt 0 ]; then dathigh[20]=$travel; else datlow[20]=$travel; fi
+}
+
+function dWriteSel()
 {
-  result=$1; row=""; blanks=0;
-  for val in "${liftdat[@]}"; do
+  dsel=$1; row=""; blanks=0; declare -a datary;
+  if [ $dsel -gt 0 ]; then datary=("${dathigh[@]}"); else datary=("${datlow[@]}"); fi
+  
+  for val in "${datary[@]}"; do
     row="$row,$val";
     if [ "$val" == "" ]; then blanks=$((blanks+1)); fi
   done
   
-  if [ "${liftdat[0]}" == "" ]; then liftdat[0]="-1"; fi
-  outfile=$(printf "lift_%03i.csv" "${liftdat[0]}")
+  if [ $dsel -gt 0 ]; then fappend="high"; else fappend="low"; fi
+  outfile=$(printf "data_%s.csv" "$fappend")
+  
   if [ ! -e "$outfile" ]; then
-    row1=""; #first row is column labels
-    for val in "${columnNames[@]}"; do row1="$row1,$val"; done
-    echo "$row1,result,blanks" >> $outfile
+    row1=""; row2=""; #first rows are column lables
+    for val in "${columnGroups[@]}"; do row1="$row1,$val"; done
+    for val in "${columnNames[@]}"; do row2="$row2,$val"; done
+    echo "$row1,ECHECK" >> $outfile
+    echo "$row2,blanks" >> $outfile
   fi
   
-  echo "$row,$result,$blanks" >> $outfile
-  for i in "${!liftdat[@]}"; do liftdat[$i]=""; done #clear
+  echo "$row,$blanks" >> $outfile
 }
-
-function write_headdat()
-{
-  result=$1; row=""; blanks=0;
-  for val in "${headdat[@]}"; do
-    row="$row,$val";
-    if [ "$val" == "" ]; then blanks=$((blanks+1)); fi
-  done
-  
-  if [ "${headdat[0]}" == "" ]; then headdat[0]="-1"; fi
-  outfile=$(printf "head_%03i.csv" "${headdat[0]}")
-  if [ ! -e "$outfile" ]; then
-    row1=""; #first row is column labels
-    for val in "${columnNames[@]}"; do row1="$row1,$val"; done
-    echo "$row1,result,blanks" >> $outfile
-  fi
-  
-  echo "$row,$result,$blanks" >> $outfile
-  for i in "${!headdat[@]}"; do headdat[$i]=""; done #clear
-}
+function dWrite() { dWriteSel "0"; dWriteSel "1"; }
 
 function parse_line()
 {
@@ -85,61 +140,75 @@ function parse_line()
   
   if [[ "$line" == *"LIFT"* ]]; then
     if [[ "$line" == *"LIFT range test"* ]]; then
-      liftdat[0]=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
+      #NOTE: this is the first log line of any dataset. use to re-sync
+      power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
+      if [ "$power" -ge 65 ]; then gDataSel=1; else gDataSel=0; fi
+      if [ $gDebug -gt 0 ]; then echo "  found ds=$gDataSel"; fi
+      dClear
+      dSetLiftPwr $power
+      dSetLineNum $gCurrentLine
+      dSetFile $gCurrentFile
     elif [[ "$line" == *"LIFT POS"* ]]; then
-      liftdat[1]=$(echo $line | grep -oP 'start:\K[+-]*([0-9]+)');
-      liftdat[2]=$(echo $line | grep -oP 'passive:\K[+-]*([0-9]+)');
-      liftdat[3]=$(echo $line | grep -oP 'delta:\K[+-]*([0-9]+)');
+      posStart=$(echo $line | grep -oP 'start:\K[+-]*([0-9]+)');
+      posPassv=$(echo $line | grep -oP 'passive:\K[+-]*([0-9]+)');
+      posDelta=$(echo $line | grep -oP 'delta:\K[+-]*([0-9]+)');
+      dSetLiftPos $posStart $posPassv $posDelta
     elif [[ "$line" == *"LIFT UP"* ]]; then
-      liftdat[4]=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
-      liftdat[6]=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
-      liftdat[8]=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dSetLiftUp $speed $spdavg $travel
     elif [[ "$line" == *"LIFT DN"* ]]; then
-      liftdat[5]=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
-      liftdat[7]=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
-      liftdat[9]=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
-      #write_liftdat -1
+      speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dSetLiftDn $speed $spdavg $travel
     fi
   
   elif [[ "$line" == *"HEAD"* ]]; then
     if [[ "$line" == *"HEAD range test"* ]]; then
-      headdat[0]=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
+      power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
+      dSetHeadPwr $power
     elif [[ "$line" == *"HEAD POS"* ]]; then
-      headdat[1]=$(echo $line | grep -oP 'start:\K[+-]*([0-9]+)');
-      headdat[2]=$(echo $line | grep -oP 'passive:\K[+-]*([0-9]+)');
-      headdat[3]=$(echo $line | grep -oP 'delta:\K[+-]*([0-9]+)');
+      posStart=$(echo $line | grep -oP 'start:\K[+-]*([0-9]+)');
+      posPassv=$(echo $line | grep -oP 'passive:\K[+-]*([0-9]+)');
+      posDelta=$(echo $line | grep -oP 'delta:\K[+-]*([0-9]+)');
+      dSetHeadPos $posStart $posPassv $posDelta
     elif [[ "$line" == *"HEAD UP"* ]]; then
-      headdat[4]=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
-      headdat[6]=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
-      headdat[8]=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dSetHeadUp $speed $spdavg $travel
     elif [[ "$line" == *"HEAD DN"* ]]; then
-      headdat[5]=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
-      headdat[7]=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
-      headdat[9]=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
-      #write_headdat -1
+      speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dSetHeadDn $speed $spdavg $travel
     fi
   
   elif [[ "$line" == *"[RESULT:"* ]]; then
     result=$(echo "$line" | grep -oP 'RESULT:\K[0-9]+');
-    write_liftdat $result
-    write_headdat $result
+    dSetResult $result
+    if [ $gDebug -gt 0 ]; then echo "  writing result=$result"; fi
+    dWrite
+    dClear
   fi
 }
 
 gFileCnt=0; gLineCnt=0;
 function parse_file()
 {
-  infile=$1;
-  echo processing "$infile"
-  dos2unix --quiet "$infile"
-  lineCnt=0
+  gCurrentFile=$1;
+  gCurrentLine=0;
+  echo processing "$gCurrentFile"
+  dos2unix --quiet "$gCurrentFile"
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
-    lineCnt=$((lineCnt+1))
+    gCurrentLine=$((gCurrentLine+1))
     parse_line "$line"
-  done < "$infile"
+  done < "$gCurrentFile"
   
   gFileCnt=$(($gFileCnt+1))
-  gLineCnt=$(($gLineCnt+$lineCnt))
+  gLineCnt=$(($gLineCnt+$gCurrentLine))
 }
 
 #parse logfiles (*.log or *.txt formats)
