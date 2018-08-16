@@ -13,11 +13,10 @@ class Head:
     return await asyncio.sleep(t)
 
   def RealAngle(self): #pythagorean theorem to find angle, all numbers in mm
-    #125.36mm=(dist from head center gear to lift front) + (cube length) + (space between robot lift and cube)
-    # + (distance from cube platform to cube infront of robot)
-    adjacentDist =  40.36 + 44.0 + 1 + 40
-     #94mm=(height of cube platform) + (height of cube image) - (dist form center head gear to treads)
-    oppositeDist =  (112.0 + 32.0) - 50
+    #125.36mm=(dist from head center gear to lift front) + (cube length *2) + (space between robot lift and cube)
+    adjacentDist =  40.36 + 44.0 + 44 + 1
+     #94mm=(camera view height when image is first visible) - (dist form center head gear to treads)
+    oppositeDist = 100 - 50
     toa = math.degrees(math.atan(oppositeDist/adjacentDist))
     return toa
 
@@ -29,24 +28,27 @@ class Head:
       count +=1
       robot.behavior.set_head_angle(degrees(0.0), 2.0, 4.0)
       robot.behavior.set_head_angle(degrees(count), 2.0, 4.0)
-      robot.loop.run_until_complete(self.wait_async(0.5))
+      robot.loop.run_until_complete(self.wait_async(1))
       visible = cube._is_visible
       deg =  math.degrees(robot.head_angle_rad)
-      diff = abs(count - deg)
+      while visible:
+        print(str(deg))
       if count > 45:
         return 0
-    CameraAngleCheck(self)
     return deg
 
   def HeadAngleTest(self, robot, cube):
+    robot.viewer.show_video()
     passed = 0
     total = 5
     realAngle = self.RealAngle()
-    for i in range(5):
+    angles = []
+    for i in range(total):
       robotAngle = self.SetHeadAngle(robot, cube)
-      rangeMin = realAngle - 2
-      rangeMax = realAngle + 2
+      rangeMin = realAngle - 2.5
+      rangeMax = realAngle + 2.5
       if robotAngle >= rangeMin and robotAngle <= rangeMax:
         passed += 1
-    headAngleTuple = (passed, total)
-    return headAngleTuple
+      angles.append(robotAngle)
+    headAngleResultTuple = (passed, total)
+    return headAngleResultTuple, angles, realAngle

@@ -15,36 +15,48 @@ from vector.util import degrees, distance_mm, speed_mmps
 BATTERY_LEVEL_LOW = 1
 BATTERY_LEVEL_FULL = 3
 CUBE_CONNECT_RETRY = 3
-TIME_LIMIT = 45
+TIME_LIMIT = 30
 
 try:
     TREAD_CUBE_ADDR = os.environ['TREAD_CUBE_ADDR']
 except KeyError:
     print("Please set the environment variable TREAD_CUBE_ADDR")
 try:
-    ANGLE_CUBE_ADDR = os.environ['ANGLE_CUBE_ADDR']
+    HEAD_CUBE_ADDR = os.environ['HEAD_CUBE_ADDR']
 except KeyError:
-    print("Please set the environment variable ANGLE_CUBE_ADDR")
+    print("Please set the environment variable HEAD_CUBE_ADDR")
+# try:
+#     LIFT_CUBE_ADDR = os.environ['LIFT_CUBE_ADDR']
+# except KeyError:
+#     print("Please set the environment variable LIFT_CUBE_ADDR")
 
 def Main():
   args = vector.util.parse_test_args()
-  robot = vector.Robot(args.name, args.ip, str(args.cert), port="443")
+  robot = vector.Robot(args.name, args.ip, str(args.cert), port="443", show_viewer=True)
   robot.connect()
+  robot.world.disconnect_cube()
   robot.behavior.set_head_angle(degrees(0.0))
+  robot.behavior.set_lift_height(0.0)
 
-  initialConnect = ConnectCube(robot, TREAD_CUBE_ADDR)
-  cube = CorrectCube(initialConnect, TREAD_CUBE_ADDR)
-  if cube != 0:
-    treads = treadTest.Treads()
-    driveTestTuple = treads.TreadTest(robot, cube)
+  # initialConnect = ConnectCube(robot, TREAD_CUBE_ADDR)
+  # cube = CorrectCube(robot, initialConnect, TREAD_CUBE_ADDR)
+  # if cube != 0:
+  #   treads = treadTest.Treads()
+  #   driveTestTuple = treads.TreadTest(robot, cube)
 
-  initialConnect = ConnectCube(robot, ANGLE_CUBE_ADDR)
-  cube = CorrectCube(initialConnect, ANGLE_CUBE_ADDR)
+
+  cube = ConnectCube(robot, HEAD_CUBE_ADDR)
+  # connectionResult = robot.world.connect_cube()
+  # connected_cubes = robot.world.connected_light_cubes
+  # cube = connected_cubes[0]
   if cube != 0:
     head = headTest.Head()
-    headAngleTuple = head.HeadAngleTest(robot, cube)
+    headAngleTuple, angles, realAngle = head.HeadAngleTest(robot, cube)
 
-  TurnOffDisconnectCube(robot)
+  TurnOffDisconnectCube(robot, cube)
+  print(headAngleTuple)
+  print(realAngle)
+  print(angles)
 
 async def wait_async(t):
       return await asyncio.sleep(t)
@@ -58,18 +70,18 @@ def ConnectCube(robot, address):
   #set correct cube connection bool
   if len(connected_cubes) == 0:
     cubeConnected = False
-  else:
-    #turn off cube lights and disconnect from
-    #cube if connected
+  else: #turn off cube lights and disconnect from cube if connected
     cubeConnected = True
     connected_cubes[0].set_lights_off()
-    robot.disconnect_cube()
+    robot.world.disconnect_cube()
+
 
   #make sure cube is disconnected as it can take a while
   while cubeConnected:
     connected_cubes = robot.world.connected_light_cubes
     if len(connected_cubes) == 0:
       cubeConnected = False
+      break;
     robot.loop.run_until_complete(wait_async(5))
     countDisconnect +=5
     if countDisconnect >= TIME_LIMIT:
@@ -83,38 +95,23 @@ def ConnectCube(robot, address):
     connected_cubes = robot.world.connected_light_cubes
     if len(connected_cubes) != 0:
       cubeConnected = True
+      break
     robot.loop.run_until_complete(wait_async(5))
     countConnect +=5
     if countConnect >= TIME_LIMIT:
       break;
-  if countConnect >=TIME_LIMIT or countDisconnect >=TIME_LIMIT:
-    return 0
-  else:
-    connected_cubes = robot.world.connected_light_cubes
+
+  connected_cubes = robot.world.connected_light_cubes
+  if len(connected_cubes) != 0:
     cube = connected_cubes[0]
-    cube.set_light_corners(vector.lights.blue_light,
-                          vector.lights.green_light,
-                          vector.lights.blue_light,
-                          vector.lights.green_light)
-
-def CorrectCube(cube, address):
-  try:
-    if cube.__factory_id != address:
-      for t in range(CUBE_CONNECT_RETRY):
-      cube = ConnectCube(robot,address)
-  except:
-      for t in range(CUBE_CONNECT_RETRY):
-        cube = ConnectCube(robot,address)
-
-  equal = False
-   try:
-    if cube.__factory_id == address:
-      equal = True
+    if cube._factory_id == address:
+      cube.set_light_corners(vector.lights.blue_light,
+                             vector.lights.green_light,
+                             vector.lights.blue_light,
+                             vector.lights.green_light)
       return cube
-    else:
-      return 0
-   except:
-      return 0
+  else:
+    return 0
 
 def GotoCharger(robot):
   charging = False
@@ -135,7 +132,7 @@ def Reset(robot):
     subprocess.call("./restart_vector.sh", shell = True)
     robot.connect()
 
-def TurnOffDisconnectCube(robot):
+def TurnOffDisconnectCube(robot, cube):
   cubeConnected = True
   connected_cubes = robot.world.connected_light_cubes
   if len(connected_cubes) == 0:
@@ -143,7 +140,7 @@ def TurnOffDisconnectCube(robot):
   else:
     cubeConnected = True
     cube.set_lights_off()
-    robot.disconnect_cube()
+    robot.world.disconnect_cube()
 
   count = 0
   while cubeConnected:
@@ -152,7 +149,7 @@ def TurnOffDisconnectCube(robot):
       cubeConnected = False
     robot.loop.run_until_complete(wait_async(5))
     count +=5
-    if count >=TIME_LIMIT;
+    if count >=TIME_LIMIT:
       break
 
 if __name__ == "__main__":
