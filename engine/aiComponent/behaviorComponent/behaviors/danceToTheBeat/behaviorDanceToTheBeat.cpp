@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorDanceToTheBeat.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/dataAccessorComponent.h"
@@ -40,19 +41,15 @@ namespace {
   // amount to account for messaging/tick latency/timing.
   const float kLatencyCorrectionTime_sec = 0.050f;
   
-  // Maximum number of beats that can make up a single "dance phrase"
-  const uint32_t kMaxBeatsPerDancePhrase = 32;
-  
   const char* kCooldown_key = "cooldown_s";
   const char* kUseBackpackLights_key = "useBackpackLights";
-  const char* kCanListenForBeatsDuringGetIn_key = "canListenForBeatsDuringGetIn";
-  const char* kGetInAnim_key   = "getInAnim";
-  const char* kGetOutAnim_key  = "getOutAnim";
-  const char* kQuitAnim_key    = "quitAnim";
-  const char* kIdleAnim_key    = "idleAnim";
-  const char* kEyeHoldAnim_key = "eyeHoldAnim";
-  const char* kBackpackAnim_key = "backpackAnim";
-  const char* kDancePhraseConfigs_key  = "dancePhraseConfigs";
+  const char* kBackpackAnim_key  = "backpackAnim";
+  const char* kEyeHoldAnim_key   = "eyeHoldAnim";
+  const char* kGetInAnim_key     = "getInAnim";
+  const char* kGetOutAnim_key    = "getOutAnim";
+  const char* kGetReadyAnim_key  = "getReadyAnim";
+  const char* kListeningAnim_key = "listeningAnim";
+  const char* kDanceSessions_key = "danceSessions";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,75 +65,40 @@ BehaviorDanceToTheBeat::BehaviorDanceToTheBeat(const Json::Value& config)
 BehaviorDanceToTheBeat::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
   : cooldown_sec(JsonTools::ParseFloat(config, kCooldown_key, debugName))
   , useBackpackLights(JsonTools::ParseBool(config, kUseBackpackLights_key, debugName))
-  , canListenForBeatsDuringGetIn(JsonTools::ParseBool(config, kCanListenForBeatsDuringGetIn_key, debugName))
 {
-  JsonTools::GetCladEnumFromJSON(config, kGetInAnim_key,    getInAnim,    debugName);
-  JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,   getOutAnim,   debugName);
-  JsonTools::GetCladEnumFromJSON(config, kQuitAnim_key,     quitAnim,     debugName);
-  JsonTools::GetCladEnumFromJSON(config, kIdleAnim_key,     idleAnim,     debugName);
-  JsonTools::GetCladEnumFromJSON(config, kEyeHoldAnim_key,  eyeHoldAnim,  debugName);
-  JsonTools::GetCladEnumFromJSON(config, kBackpackAnim_key, backpackAnim, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kBackpackAnim_key,  backpackAnim,  debugName);
+  JsonTools::GetCladEnumFromJSON(config, kEyeHoldAnim_key,   eyeHoldAnim,   debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetInAnim_key,     getInAnim,     debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,    getOutAnim,    debugName);
+  JsonTools::GetCladEnumFromJSON(config, kGetReadyAnim_key,  getReadyAnim,  debugName);
+  JsonTools::GetCladEnumFromJSON(config, kListeningAnim_key, listeningAnim, debugName);
   
-  const auto& animConfig = config[kDancePhraseConfigs_key];
-  ANKI_VERIFY(!animConfig.isNull(), "BehaviorDanceToTheBeat.InstanceConfig.NullDancePhraseConfig", "");
-  for (const auto& json : animConfig) {
-    DancePhraseConfig dancePhraseConfig;
-    dancePhraseConfig.minBeats    = JsonTools::ParseUInt32(json, "minBeats", debugName);
-    dancePhraseConfig.maxBeats    = JsonTools::ParseUInt32(json, "maxBeats", debugName);
-    dancePhraseConfig.multipleOf  = JsonTools::ParseUInt32(json, "multipleOf", debugName);
-    dancePhraseConfig.canListenForBeats = JsonTools::ParseBool(json, "canListenForBeats", debugName);
-    std::vector<std::string> tmp;
-    if (JsonTools::GetVectorOptional(json, "anims", tmp)) {
-      for (auto& animStr : tmp) {
-        dancePhraseConfig.anims.emplace_back(std::move(animStr),
-                                             dancePhraseConfig.canListenForBeats);
-      }
-    }
-    dancePhraseConfigs.push_back(std::move(dancePhraseConfig));
+  const auto& danceSessionConfig = config[kDanceSessions_key];
+  DEV_ASSERT(!danceSessionConfig.isNull() && danceSessionConfig.isArray() && !danceSessionConfig.empty(),
+             "BehaviorDanceToTheBeat.InstanceConfig.EmptyOrInvalidDanceSessionList");
+  for (const auto& json : danceSessionConfig) {
+    danceSessionConfigs.emplace_back(json);
+    DEV_ASSERT(danceSessionConfigs.back().IsValid(), "BehaviorDanceToTheBeat.InstanceConfig.InvalidDanceSessionConfig");
   }
-  
-  ANKI_VERIFY(CheckValid(), "BehaviorDanceToTheBeat.InstanceConfig.InvalidConfig", "");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeat::InstanceConfig::CheckValid()
 {
   isValid = true;
-  if (dancePhraseConfigs.empty()) {
-    isValid = false;
-    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.NoDancePhraseConfigs",
-                        "Invalid config - no dance phrase config entries");
-  }
-  bool prevCanListenForBeats = canListenForBeatsDuringGetIn;
-  for (const auto& config : dancePhraseConfigs) {
-    if (config.anims.empty()) {
-      isValid = false;
-      PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.NoAnimsInConfig",
-                          "Invalid config - no animations specified in dance phrase");
-    }
-    // minBeats and maxBeats must be valid and multiples of multipleOf
-    const bool beatsValid = (config.maxBeats <= kMaxBeatsPerDancePhrase) &&
-                            (config.minBeats <= config.maxBeats) &&
-                            ((config.minBeats % config.multipleOf) == 0) &&
-                            ((config.maxBeats % config.multipleOf) == 0);
-    if (!beatsValid) {
-      isValid = false;
-      PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.InvalidDancePhraseConfig",
-                          "Invalid minBeats, maxBeats, or multipleOf (minBeats %d, maxBeats %d, multipleOf %d). Max allowed %d.",
-                          config.minBeats, config.maxBeats, config.multipleOf, kMaxBeatsPerDancePhrase);
-    }
-
-    const bool canListenForBeatsThisPhrase = config.canListenForBeats;
-    if (canListenForBeatsThisPhrase &&
-        !prevCanListenForBeats) {
-      isValid = false;
-      PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.InvalidListenForBeats",
-                          "CanListenForBeats is true for this phrase, but a previous canListenForBeats was false. Not allowed! "
-                          "Can only go from 'listening' to 'not listening' and never the other way around");
-    }
-    prevCanListenForBeats = canListenForBeatsThisPhrase;
-  }
   
+  if (danceSessionConfigs.empty()) {
+    isValid = false;
+    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.NoDanceSessions",
+                        "Invalid config - no dance session config entries");
+  }
+
+  for (const auto& session : danceSessionConfigs) {
+    if (!session.IsValid()) {
+      isValid = false;
+    }
+  }
+
   return isValid;
 }
   
@@ -146,14 +108,13 @@ void BehaviorDanceToTheBeat::GetBehaviorJsonKeys(std::set<const char*>& expected
   const char* list[] = {
     kCooldown_key,
     kUseBackpackLights_key,
-    kCanListenForBeatsDuringGetIn_key,
+    kBackpackAnim_key,
+    kEyeHoldAnim_key,
     kGetInAnim_key,
     kGetOutAnim_key,
-    kQuitAnim_key,
-    kIdleAnim_key,
-    kEyeHoldAnim_key,
-    kBackpackAnim_key,
-    kDancePhraseConfigs_key,
+    kGetReadyAnim_key,
+    kListeningAnim_key,
+    kDanceSessions_key,
   };
   expectedKeys.insert(std::begin(list), std::end(list));
 }
@@ -178,19 +139,17 @@ bool BehaviorDanceToTheBeat::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDanceToTheBeat::InitBehavior()
 {
-  // Reach into the animation container and grab the "beat delay"
-  // for each animation.
-  for (auto& dancePhraseConfig : _iConfig.dancePhraseConfigs) {
-    for (auto it = dancePhraseConfig.anims.begin() ; it < dancePhraseConfig.anims.end() ; ) {
-      if (!ANKI_VERIFY(GetAnimationBeatDelay_sec(it->animName, it->beatDelay_sec),
-                       "BehaviorDanceToTheBeat.InitBehavior.FailedGettingAnimBeatDelay",
-                       "Failed to retrieve the 'beat delay' from animation %s. Removing from the list of anims to play.",
-                       it->animName.c_str())) {
-        it = dancePhraseConfig.anims.erase(it);
-      } else {
-        ++it;
-      }
-    }
+  // Initialize "dance sessions"
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
+  const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
+  if (animContainer == nullptr) {
+    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.InitBehavior.NullAnimContainer",
+                      "Null CannedAnimationContainer!");
+    return;
+  }
+  for (auto& session : _iConfig.danceSessionConfigs) {
+    const bool success = session.Init(*animContainer);
+    DEV_ASSERT(success, "BehaviorDanceToTheBeat.InitBehavior.FailedInitializingDanceSession");
   }
   
   // Double check that the config is still valid
@@ -210,39 +169,18 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
   // Reset dynamic variables:
   _dVars = DynamicVariables();
   
-  // grab the next beat time here and wait to play the anim until the appropriate time
+  // Pre-generate the queue of all animations to play for each dance session
+  for (const auto& sessionConfig : _iConfig.danceSessionConfigs) {
+    _dVars.danceSessionAnims.push_back(sessionConfig.GenerateAnimSequence());
+  }
+  
+  // Record the starting tempo
   auto& beatDetector = GetBEI().GetBeatDetectorComponent();
-  _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
-  _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
-  
-  // For each dance phrase config entry, randomly draw the specified number
-  // of animations from the list and add them to the queue.
-  const auto& rng = GetRNG();
-  for (const auto& config : _iConfig.dancePhraseConfigs) {
-    // generate a random number in [minBeats, maxBeats] that is a multiple of 'multipleOf'
-    int nAnims = config.multipleOf * rng.RandIntInRange(config.minBeats / config.multipleOf,
-                                                        config.maxBeats / config.multipleOf);
-    BOUNDED_WHILE(kMaxBeatsPerDancePhrase, nAnims-- > 0) {
-      // randomly draw from the anims list
-      const auto index = static_cast<size_t>(rng.RandIntInRange(0, (int) config.anims.size() - 1));
-      const auto& anim = config.anims[index];
-      _dVars.animsToPlay.push(anim);
-    }
-  }
-  
-  _dVars.listeningForBeats = _iConfig.canListenForBeatsDuringGetIn;
-  
-  // Register an OnBeat callback with BeatDetectorComponent if we
-  // are to listen for beats during the behavior:
-  if (_dVars.listeningForBeats) {
-    _dVars.onBeatCallbackId = beatDetector.RegisterOnBeatCallback(std::bind(&BehaviorDanceToTheBeat::OnBeat, this));
-  }
-  
-  // Start off the behavior by playing the get-in anim
+  _dVars.initialTempo_bpm = beatDetector.GetCurrTempo_bpm();
+
+  // Play the get-in animation then transition to listening mode
   DelegateIfInControl(new TriggerAnimationAction(_iConfig.getInAnim),
-                      [this](){
-                        SetNextAnimTriggerTime();
-                      });
+                      &BehaviorDanceToTheBeat::TransitionToListening);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -251,11 +189,14 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
-  
+
   _lastRunningBasestationTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
-  
+
+  if (_dVars.state != State::Dancing) {
+    // Nothing to do in Update if we are not dancing.
+    return;
+  }
+
   // If we are currently listening for beats, double check that a beat
   // is still detected. If not, we should bail out of the behavior.
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
@@ -267,7 +208,8 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
     CancelSelf();
     return;
   }
-  
+
+  const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
   // If we're not listening for beats, we need to call OnBeat() 'manually'
   // when the next 'extrapolated' beat occurs.
   if (!_dVars.listeningForBeats) {
@@ -277,23 +219,32 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
     // Unregister the OnBeat callback since we no longer need it
     UnregisterOnBeatCallback();
   }
-  
+
   if (_dVars.nextAnimTriggerTime_sec > 0.f &&
       now_sec >= _dVars.nextAnimTriggerTime_sec) {
     // Time to play the next animation in the queue
-    DEV_ASSERT(!_dVars.animsToPlay.empty(), "BehaviorDanceToTheBeat.BehaviorUpdate.NoAnimsInQueue");
-    const auto& thisAnim = _dVars.animsToPlay.front();
-    auto* animAction = new PlayAnimationAction(thisAnim.animName);
+    DEV_ASSERT(!_dVars.danceSessionAnims.empty() && !_dVars.danceSessionAnims.front().empty(),
+               "BehaviorDanceToTheBeat.BehaviorUpdate.NoAnimsInQueue");
+    auto& thisDanceSession = _dVars.danceSessionAnims.front();
+    const auto& thisAnim = thisDanceSession.front();
+    auto* animAction = new PlayAnimationAction(thisAnim.GetAnimName());
     // If this animation is not marked "canListenForBeats", then stop listening for beats
-    if (!thisAnim.canListenForBeats) {
+    if (!thisAnim.CanListenForBeats()) {
       _dVars.listeningForBeats = false;
     }
-    _dVars.animsToPlay.pop();
-    if (_dVars.animsToPlay.empty()) {
-      // No more animations to play after this one. Play this
-      // animation then the getout.
+    thisDanceSession.pop_front();
+    if (thisDanceSession.empty()) {
+      // No more animations to play after this one. Remove this dance session from the list, and if there are none
+      // remaining then play the get-out after. Otherwise transition into listening after this anim.
       DelegateNow(animAction, [this](){
-        DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutAnim));
+        _dVars.danceSessionAnims.pop_front();
+        if (_dVars.danceSessionAnims.empty()) {
+          // No more dancing sessions, so play the getout.
+          DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutAnim));
+        } else {
+          // There are still remaining dance sessions, so go back to the listening phase
+          TransitionToListening();
+        }
       });
       _dVars.nextAnimTriggerTime_sec = -1.f;
     } else {
@@ -304,9 +255,8 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
       SetNextAnimTriggerTime();
     }
   }
-  
-  // If we have no animation queued and we're not currently doing
-  // anything, it's time to quit.
+
+  // If we have no animation queued and we're not currently doing anything, it's time to quit.
   if (!IsControlDelegated() &&
       _dVars.nextAnimTriggerTime_sec <= 0.f) {
     CancelSelf();
@@ -321,22 +271,72 @@ void BehaviorDanceToTheBeat::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeat::TransitionToListening()
+{
+  DEV_ASSERT(!_dVars.danceSessionAnims.empty(), "BehaviorDanceToTheBeat.TransitionToListening.NoDanceAnimsRemaining");
+  
+  _dVars.state = State::Listening;
+  _dVars.listeningForBeats = true;
+ 
+  StopBackpackLights();
+  
+  // Start listening loop.
+  const float kListeningTime_sec = 8.f;
+  
+  // First, wait for kListeningTime_sec at least, while looping the "listening" anim. After that, play the "get ready"
+  // anim and transition into dancing.
+  
+  auto* listenForBeatsAction = new CompoundActionParallel();
+  listenForBeatsAction->SetShouldEndWhenFirstActionCompletes(true);
+  listenForBeatsAction->AddAction(new TriggerAnimationAction(_iConfig.listeningAnim, 0)); // loop indefinitely
+  listenForBeatsAction->AddAction(new WaitAction(kListeningTime_sec)); // wait a minimum amount of time to acquire the beat
+  
+  auto* compoundAction = new CompoundActionSequential();
+  compoundAction->AddAction(listenForBeatsAction);
+  compoundAction->AddAction(new TriggerAnimationAction(_iConfig.getReadyAnim));
+  
+  DelegateIfInControl(listenForBeatsAction,
+                      &BehaviorDanceToTheBeat::TransitionToDancing);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDanceToTheBeat::TransitionToDancing()
+{
+  _dVars.state = State::Dancing;
+
+  auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  // grab the next beat time here and wait to play the anim until the appropriate time
+  _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
+  _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
+
+  // Register an OnBeat callback with BeatDetectorComponent if we are to listen for beats during the dancing:
+  if (_dVars.listeningForBeats) {
+    _dVars.onBeatCallbackId = beatDetector.RegisterOnBeatCallback(std::bind(&BehaviorDanceToTheBeat::OnBeat, this));
+  }
+
+  // Kick off the dancing animations by setting the next trigger time.
+  SetNextAnimTriggerTime();
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDanceToTheBeat::SetNextAnimTriggerTime()
 {
-  if (_dVars.animsToPlay.empty()) {
+  if (_dVars.danceSessionAnims.empty() || _dVars.danceSessionAnims.front().empty()) {
     _dVars.nextAnimTriggerTime_sec = -1.f;
     DEV_ASSERT(false, "BehaviorDanceToTheBeat.SetNextAnimTriggerTime.NoAnimsInQueue");
     return;
   }
-  
+
   const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
-  
-  const auto& nextAnim = _dVars.animsToPlay.front();
-  
+
+  const auto& thisDanceSession = _dVars.danceSessionAnims.front();
+  const auto& nextAnim = thisDanceSession.front();
+
   // Must start the animation beatDelay_sec before the next beat. Also include
   // the latency correction factor to account for messaging/tick times, etc.
-  _dVars.nextAnimTriggerTime_sec = _dVars.nextBeatTime_sec - nextAnim.beatDelay_sec - kLatencyCorrectionTime_sec;
-  
+  _dVars.nextAnimTriggerTime_sec = _dVars.nextBeatTime_sec - nextAnim.GetBeatDelay_sec() - kLatencyCorrectionTime_sec;
+
   // Make sure the animation trigger time is somewhere in the future
   BOUNDED_WHILE(1000, _dVars.nextAnimTriggerTime_sec < now_sec) {
     _dVars.nextAnimTriggerTime_sec += _dVars.beatPeriod_sec;
@@ -351,34 +351,32 @@ void BehaviorDanceToTheBeat::OnBeat()
     return;
   }
   
+  DEV_ASSERT(_dVars.state == State::Dancing, "BehaviorDanceToTheBeat.OnBeat.ShouldBeDancing");
+
   PRINT_NAMED_INFO("BehaviorDanceToTheBeat.OnBeat",
                    "OnBeat() called. Currently%s listening for new beats. Current universal time (sec): %.3f",
                    _dVars.listeningForBeats ? "" : " NOT",
                    Util::Time::UniversalTime::GetCurrentTimeInSeconds());
-  
+
   if (_iConfig.useBackpackLights) {
     StopBackpackLights();
     auto& blc = GetBEI().GetBackpackLightComponent();
     blc.SetBackpackAnimation(_iConfig.backpackAnim);
   }
-  
-  // If we're currently listening for beats, then this means
-  // we have new information from the BeatDetectorComponent.
+
+  // If we're currently listening for beats, then this means we have new information from the BeatDetectorComponent.
   if (_dVars.listeningForBeats) {
-    // Update some stuff now that we have new beat information from
-    // BeatDetectorComponent.
+    // Update some stuff now that we have new beat information from BeatDetectorComponent.
     const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
     _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
     _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
-    
-    // Update the next animation trigger time if we still have
-    // animations in the queue.
-    if (!_dVars.animsToPlay.empty()) {
+
+    // Update the next animation trigger time if we still have animations in the queue.
+    if (!_dVars.danceSessionAnims.empty() && !_dVars.danceSessionAnims.front().empty()) {
       SetNextAnimTriggerTime();
     }
   } else {
-    // We are not currently listening for beats, so just manually
-    // extrapolate the next beat time.
+    // We are not currently listening for beats, so just manually extrapolate the next beat time.
     _dVars.nextBeatTime_sec += _dVars.beatPeriod_sec;
   }
 }
@@ -402,51 +400,7 @@ void BehaviorDanceToTheBeat::UnregisterOnBeatCallback()
   }
   _dVars.onBeatCallbackId = -1;
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDanceToTheBeat::GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec)
-{
-  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
-  const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
-  if (animContainer == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationBeatDelay_sec.NullAnimContainer",
-                      "Null CannedAnimationContainer!");
-    return false;
-  }
-  
-  const auto* anim = animContainer->GetAnimation(animName);
-  if (anim == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationBeatDelay_sec.AnimNotFound",
-                      "Animation with name %s not found in CannedAnimationContainer",
-                      animName.c_str());
-    return false;
-  }
-  
-  const auto& eventTrack = anim->GetTrack<EventKeyFrame>();
-  const auto* firstEventKeyframe = eventTrack.GetFirstKeyFrame();
-  const auto* lastEventKeyframe = eventTrack.GetLastKeyFrame();
-  if (eventTrack.IsEmpty() ||
-      firstEventKeyframe == nullptr ||
-      lastEventKeyframe == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationBeatDelay_sec.EmptyEventTrack",
-                      "Empty event track or null event keyframe found for anim with name %s",
-                      animName.c_str());
-    return false;
-  }
-  if ((firstEventKeyframe != lastEventKeyframe) ||
-      (firstEventKeyframe->GetAnimEvent() != AnimEvent::DANCE_BEAT_SYNC)) {
-    PRINT_NAMED_ERROR("BehaviorDanceToTheBeat.GetAnimationBeatDelay_sec.InvalidEventTrack",
-                      "anim %s: Should have only one event keyframe, and it should be of type DANCE_BEAT_SYNC",
-                      animName.c_str());
-    return false;
-  }
-
-  beatDelay_sec = Util::MilliSecToSec(static_cast<float>(firstEventKeyframe->GetTriggerTime_ms()));
-  return true;
-}
   
 
 }
 }
-

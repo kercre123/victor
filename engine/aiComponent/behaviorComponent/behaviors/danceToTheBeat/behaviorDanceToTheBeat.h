@@ -14,6 +14,7 @@
 #define __Engine_Behaviors_BehaviorDanceToTheBeat_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/danceToTheBeatConfig.h"
 
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 
@@ -46,35 +47,10 @@ protected:
 private:
   using base = ICozmoBehavior;
   
-  // DanceAnimMetadata stores information about dance animations.
-  // Each dance animation is short, and meant to last only a single
-  // beat. The beatDelay_sec indicates when in the animation the
-  // musical beat should land, and is determined by an event keyframe
-  // in the animation itself.
-  struct DanceAnimMetadata {
-    DanceAnimMetadata(std::string&& name, const bool canListenForBeats)
-      : animName(std::move(name))
-      , canListenForBeats(canListenForBeats) {}
-    std::string animName;
-    float beatDelay_sec = 0.f;
-    bool canListenForBeats = false;
-  };
-  
-  // A DancePhrase is made up of one or more possible dance animations
-  // that can be strung together and played on sequential musical beats.
-  // DancePhraseConfig specifies the rules by which dance phrases are
-  // generated when the behavior is run.
-  //
-  // When the behavior begins, animations are randomly drawn from the
-  // list in accordance with the min/max beats. The number of animations
-  // that make up the phrase is random, but is always between 'minBeats'
-  // and 'maxBeats', and is always a multiple of 'multipleOf'.
-  struct DancePhraseConfig {
-    uint32_t minBeats    = 0;
-    uint32_t maxBeats    = 0;
-    uint32_t multipleOf  = 1;
-    bool canListenForBeats = false;
-    std::vector<DanceAnimMetadata> anims;
+  enum class State {
+    Init,
+    Listening,
+    Dancing
   };
   
   struct InstanceConfig {
@@ -89,20 +65,23 @@ private:
     float cooldown_sec = 0.f;
     
     const bool useBackpackLights;
-    const bool canListenForBeatsDuringGetIn;
     
     BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::Count;
     
-    AnimationTrigger getInAnim   = AnimationTrigger::Count;
-    AnimationTrigger getOutAnim  = AnimationTrigger::Count;
-    AnimationTrigger quitAnim    = AnimationTrigger::Count;
-    AnimationTrigger idleAnim    = AnimationTrigger::Count;
-    AnimationTrigger eyeHoldAnim = AnimationTrigger::Count;
+    AnimationTrigger eyeHoldAnim    = AnimationTrigger::Count;
+    AnimationTrigger getInAnim      = AnimationTrigger::Count;
+    AnimationTrigger getOutAnim     = AnimationTrigger::Count;
+    AnimationTrigger getReadyAnim   = AnimationTrigger::Count;
+    AnimationTrigger listeningAnim  = AnimationTrigger::Count;
     
-    std::vector<DancePhraseConfig> dancePhraseConfigs;
+    std::vector<DanceSession> danceSessionConfigs;
   };
   
   struct DynamicVariables {
+    State state = State::Init;
+    
+    float initialTempo_bpm = -1.f;
+    
     float beatPeriod_sec = -1.f;
     float nextBeatTime_sec = -1.f;
     float nextAnimTriggerTime_sec = -1.f;
@@ -117,12 +96,16 @@ private:
     // value of less than 0 indicates that no callback is registered.
     int onBeatCallbackId = -1;
     
-    // The queue of animations to play
-    std::queue<DanceAnimMetadata> animsToPlay;
+    // The queue of animations to play. One queue per dance session.
+    std::deque<std::deque<DanceAnimMetadata>> danceSessionAnims;
   };
   
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
+  
+  void TransitionToListening();
+  
+  void TransitionToDancing();
   
   void SetNextAnimTriggerTime();
   
@@ -132,14 +115,6 @@ private:
   void StopBackpackLights();
   
   void UnregisterOnBeatCallback();
-  
-  // Populates beatDelay_sec with the time into the given animation where
-  // the beat should land. For example, a value of 0.100 would mean that
-  // the musical beat should fall 100 ms into the animation.
-  //
-  // Returns true if we successfully found the beat delay, emits an error
-  // and returns false otherwise.
-  bool GetAnimationBeatDelay_sec(const std::string& animName, float& beatDelay_sec);
 
   // Note, this time uses BasestationTimer, not UniversalTime
   float _lastRunningBasestationTime_sec = -1.f;

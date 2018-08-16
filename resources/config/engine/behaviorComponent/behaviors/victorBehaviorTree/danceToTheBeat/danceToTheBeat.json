@@ -13,17 +13,17 @@
   
   "useBackpackLights" : true,
   
-  "canListenForBeatsDuringGetIn" : true,
-  
-  "getInAnim"   : "Count",
-  "getOutAnim"  : "DanceBeatGetOut",
-  "quitAnim"    : "DanceBeatQuit",
-  "idleAnim"    : "DanceBeatIdle",
-  "eyeHoldAnim" : "DanceBeatEyeHold",
-  
   "backpackAnim" : "DanceToTheBeat",
   
-  // Dance phrase configuration:
+  "eyeHoldAnim"   : "DanceBeatEyeHold",
+  "getInAnim"     : "DanceBeatGetIn",
+  "getOutAnim"    : "DanceBeatGetOut",
+  "getReadyAnim"  : "DanceBeatGetReady",
+  "listeningAnim" : "DanceBeatListening",
+  
+  // Dance session configuration:
+  //
+  // A dance session is made up of one or more "dance phrases".
   //
   // A DancePhrase is made up of one or more possible dance animations
   // that can be strung together and played on sequential musical beats.
@@ -35,71 +35,101 @@
   // that make up the phrase is random, but is always between 'minBeats'
   // and 'maxBeats', and is always a multiple of 'multipleOf'.
   
-  "dancePhraseConfigs" : [
-    {
-      "minBeats"    : 6,
-      "maxBeats"    : 10,
-      "multipleOf"  : 1,
-      "canListenForBeats" : true,
-      "anims" : [
-        "anim_dancebeat_eyebeat_01"
-      ]
-    },
-    {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
-      "multipleOf"  : 1,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headnod_01",
-        "anim_dancebeat_headnod_down_01"
-      ]
-    },
-    {
-      "minBeats"    : 6,
-      "maxBeats"    : 8,
-      "multipleOf"  : 1,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headnod_01",
-        "anim_dancebeat_headnod_down_01",
-        "anim_dancebeat_headlift_01"
-      ]
-    },
-    {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
-      "multipleOf"  : 1,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headliftbody_left_small_01",
-        "anim_dancebeat_headliftbody_right_small_01"
-      ]
-    },
-    {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
-      "multipleOf"  : 1,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headliftbody_left_med_01",
-        "anim_dancebeat_headliftbody_right_med_01",
-        "anim_dancebeat_headliftbody_fwd_01",
-        "anim_dancebeat_headliftbody_back_01"
-      ]
-    },
-    {
-      "minBeats"    : 4,
-      "maxBeats"    : 6,
-      "multipleOf"  : 1,
-      "canListenForBeats" : false,
-      "anims" : [
-        "anim_dancebeat_headliftbody_left_large_01",
-        "anim_dancebeat_headliftbody_right_large_01",
-        "anim_dancebeat_headliftbody_fwd_01",
-        "anim_dancebeat_headliftbody_back_01"
-      ]
-    }
+  "danceSessions" : [  
+    [
+      {
+        "minBeats"    : 6,
+        "maxBeats"    : 10,
+        "multipleOf"  : 1,
+        "canListenForBeats" : true,
+        "anims" : [
+          "anim_dancebeat_eyebeat_01",
+          "anim_dancebeat_eyebeat_right_01"
+        ]
+      },
+      {
+        "minBeats"    : 4,
+        "maxBeats"    : 6,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headnod_down_01"
+        ]
+      },
+      {
+        "minBeats"    : 6,
+        "maxBeats"    : 8,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headnod_01",
+          "anim_dancebeat_headlift_01"
+        ]
+      },
+      {
+        "minBeats"    : 4,
+        "maxBeats"    : 6,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headliftbody_left_small_01",
+          "anim_dancebeat_headliftbody_right_small_01"
+        ]
+      },
+      {
+        "minBeats"    : 4,
+        "maxBeats"    : 6,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headliftbody_left_med_01",
+          "anim_dancebeat_headliftbody_right_med_01",
+          "anim_dancebeat_headliftbody_fwd_01",
+          "anim_dancebeat_headliftbody_back_01"
+        ]
+      },
+      {
+        "minBeats"    : 4,
+        "maxBeats"    : 6,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headliftbody_left_med_01",
+          "anim_dancebeat_headliftbody_right_med_01",
+          "anim_dancebeat_headliftbody_fwd_01",
+          "anim_dancebeat_headliftbody_back_01"
+        ]
+      }
+    ],
+  
+  
+    [
+      {
+        "minBeats"    : 10,
+        "maxBeats"    : 16,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headliftbody_left_med_01",
+          "anim_dancebeat_headliftbody_right_med_01",
+          "anim_dancebeat_headliftbody_fwd_01",
+          "anim_dancebeat_headliftbody_back_01"
+        ]
+      },
+      {
+        "minBeats"    : 10,
+        "maxBeats"    : 16,
+        "multipleOf"  : 1,
+        "canListenForBeats" : false,
+        "anims" : [
+          "anim_dancebeat_headliftbody_left_large_01",
+          "anim_dancebeat_headliftbody_right_large_01",
+          "anim_dancebeat_headliftbody_fwd_01",
+          "anim_dancebeat_headliftbody_back_01"
+        ]
+      }
+    ]
+  
   ]
   
 }

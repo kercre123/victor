@@ -308,12 +308,12 @@
     "AnimName": "ag_dancebeat_getout"
   },
   {
-    "CladEvent": "DanceBeatIdle",
-    "AnimName": "ag_dancebeat_idle"
+    "CladEvent": "DanceBeatGetReady",
+    "AnimName": "ag_dancebeat_getready"
   },
   {
-    "CladEvent": "DanceBeatQuit",
-    "AnimName": "ag_dancebeat_quit"
+    "CladEvent": "DanceBeatListening",
+    "AnimName": "ag_dancebeat_listening"
   },
   {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
