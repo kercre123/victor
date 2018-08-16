@@ -832,13 +832,15 @@ bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTi
         // Been within tolerance for long enough to stop yet?
         if( currentTime_sec - _stopCriteria.withinTolSince_sec > _stopCriteria.duration_sec)
         {
-          PRINT_CH_INFO(kLogChannelName, "ITrackAction.AreStopCriteriaMet.MetCriteria",
-                        "Within tolerances for > %.1fsec (panTol=%.1fdeg tiltTol=%.1fdeg distTol=[%.1f,%.1f]",
-                        _stopCriteria.duration_sec,
-                        _stopCriteria.panTol.getDegrees(),
-                        _stopCriteria.tiltTol.getDegrees(),
-                        _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
-
+          if(DEBUG_TRACKING_ACTIONS)
+          {
+            PRINT_CH_INFO(kLogChannelName, "ITrackAction.AreStopCriteriaMet.MetCriteria",
+                          "Within tolerances for > %.1fsec (panTol=%.1fdeg tiltTol=%.1fdeg distTol=[%.1f,%.1f]",
+                          _stopCriteria.duration_sec,
+                          _stopCriteria.panTol.getDegrees(),
+                          _stopCriteria.tiltTol.getDegrees(),
+                          _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
+          }
           return true;
         }
       }
