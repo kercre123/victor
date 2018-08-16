@@ -892,7 +892,7 @@ void TestRobotRange(void)
     //lift travel ~450-500 in each direction
     //head travel ~800-850 in each direction
     robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
-    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
+    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2100 };
     TestRobotRange(1, &lift, &head );
   } else if( !IS_FIXMODE_PACKOUT() ) {
     //lift: travel 195-200, speed 760-1600
