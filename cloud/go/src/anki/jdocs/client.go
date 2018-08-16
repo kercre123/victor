@@ -2,6 +2,7 @@ package jdocs
 
 import (
 	"anki/log"
+	"anki/token"
 	"clad/cloud"
 	"context"
 	"fmt"
@@ -17,6 +18,7 @@ const jdocsURL = "jdocs-dev.api.anki.com:443"
 type conn struct {
 	conn   *grpc.ClientConn
 	client pb.JdocsClient
+	tok    token.Accessor
 }
 
 var (
@@ -46,7 +48,8 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 
 	ret := &conn{
 		conn:   rpcConn,
-		client: rpcClient}
+		client: rpcClient,
+		tok:    opts.tokener}
 	return ret, nil
 }
 
@@ -58,13 +61,15 @@ func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud
 		return c.writeRequest(ctx, req.GetWrite())
 	case cloud.DocRequestTag_DeleteReq:
 		return c.deleteRequest(ctx, req.GetDeleteReq())
+	case cloud.DocRequestTag_User:
+		return c.userRequest()
 	}
 	err := fmt.Errorf("Major error: received unknown tag %d", req.Tag())
 	log.Println(err)
 	return nil, err
 }
 
-var connectErrorResponse = cloud.NewDocResponseWithErr(&cloud.ErrorResponse{cloud.DocError_ErrorConnecting})
+var connectErrorResponse = cloud.NewDocResponseWithErr(&cloud.ErrorResponse{Err: cloud.DocError_ErrorConnecting})
 
 func (c *conn) writeRequest(ctx context.Context, cladReq *cloud.WriteRequest) (*cloud.DocResponse, error) {
 	req := (*cladWriteReq)(cladReq).toProto()
@@ -91,4 +96,12 @@ func (c *conn) deleteRequest(ctx context.Context, cladReq *cloud.DeleteRequest) 
 		return connectErrorResponse, err
 	}
 	return cloud.NewDocResponseWithDeleteResp(&cloud.Void{}), nil
+}
+
+func (c *conn) userRequest() (*cloud.DocResponse, error) {
+	var user string
+	if c.tok != nil {
+		user = c.tok.UserID()
+	}
+	return cloud.NewDocResponseWithUser(&cloud.UserResponse{UserId: user}), nil
 }

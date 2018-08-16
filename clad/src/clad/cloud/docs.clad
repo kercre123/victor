@@ -71,10 +71,15 @@ union DocRequest {
     WriteRequest write,
     ReadRequest read,
     DeleteRequest deleteReq, // every form of delete is a keyword
+    Void user,
 }
 
 structure ErrorResponse {
     DocError err,
+}
+
+structure UserResponse {
+    string userId,
 }
 
 union DocResponse {
@@ -82,6 +87,7 @@ union DocResponse {
     ReadResponse read,
     Void deleteResp,
     ErrorResponse err,
+    UserResponse user,
 }
 
 }

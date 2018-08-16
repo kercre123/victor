@@ -1,6 +1,7 @@
 package token
 
 import (
+	"anki/token/jwt"
 	"anki/util"
 	"clad/cloud"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 
 type Accessor interface {
 	Credentials() (credentials.PerRPCCredentials, error)
+	UserID() string
 }
 
 type accessor struct{}
@@ -25,6 +27,14 @@ func (accessor) Credentials() (credentials.PerRPCCredentials, error) {
 		return nil, fmt.Errorf("jwt error code %d", jwt.Error)
 	}
 	return tokenMetadata(resp.GetJwt().JwtToken), nil
+}
+
+func (accessor) UserID() string {
+	token := jwt.GetToken()
+	if token == nil {
+		return ""
+	}
+	return token.UserID()
 }
 
 func GetAccessor() Accessor {

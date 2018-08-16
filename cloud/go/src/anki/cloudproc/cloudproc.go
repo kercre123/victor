@@ -25,8 +25,13 @@ func Run(ctx context.Context, procOptions ...Option) {
 			}
 		})
 	}
+	// start token service synchronously since everything else depends on it
+	if err := token.Init(); err != nil {
+		log.Println("Fatal error initializing token service:", err)
+		return
+	}
+	addHandlers(token.GetDevHandlers)
 	launchProcess(&wg, func() {
-		addHandlers(token.GetDevHandlers)
 		token.Run(ctx, opts.tokenOpts...)
 	})
 	tokener := token.GetAccessor()

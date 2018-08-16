@@ -10,6 +10,18 @@ import (
 	"fmt"
 )
 
+// Init initializes the token service in advance of other services that depend on it
+var initialized = false
+
+func Init() error {
+	if err := jwt.Init(); err != nil {
+		log.Println("Error initializing jwt store:", err)
+		return err
+	}
+	initialized = true
+	return nil
+}
+
 // Run starts the token service for other code/processes to connect to and
 // request tokens
 func Run(ctx context.Context, optionValues ...Option) {
@@ -18,9 +30,10 @@ func Run(ctx context.Context, optionValues ...Option) {
 		o(&opts)
 	}
 
-	if err := jwt.Init(); err != nil {
-		log.Println("Error initializing jwt store:", err)
-		return
+	if !initialized {
+		if err := jwt.Init(); err != nil {
+			return
+		}
 	}
 
 	if err := queueInit(ctx); err != nil {
