@@ -33,6 +33,8 @@ public:
   virtual ~TrackFaceAction();
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
+  void SetStopCriteriaWithEyeContactOverride(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
+                                             const TimeStamp_t eyeContactWithinLast_ms);
   
 protected:
   
@@ -46,6 +48,13 @@ protected:
   virtual void OnRobotSet() override final;
 
 private:
+  virtual bool AreContinueCriteriaMet(const f32 currentTime_sec) override;
+  struct {
+    f32     noEyeContactTimeout_sec     = 0.f;
+    f32     timeOfLastEyeContact_sec    = 0.f;
+    TimeStamp_t eyeContactWithinLast_ms = 0;
+  } _eyeContactCriteria;
+
   // store face id as non-smart until robot is accessible
   FaceID               _tmpFaceID;
   

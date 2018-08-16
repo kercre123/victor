@@ -23,7 +23,7 @@
     
       "behaviors": [    
         {
-          "behavior": "ObservingEyeContact",
+          "behavior": "TrackingEyeContact",
           "cooldown_s": 15.0
         },
         {

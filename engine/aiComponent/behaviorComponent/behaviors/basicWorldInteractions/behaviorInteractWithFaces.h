@@ -60,6 +60,8 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
@@ -77,8 +79,15 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
-    float minTimeToTrackFace_s;
-    float maxTimeToTrackFace_s;
+    float minTimeToTrackFaceLowerBound_s;
+    float minTimeToTrackFaceUpperBound_s;
+
+    float maxTimeToTrackFaceLowerBound_s;
+    float maxTimeToTrackFaceUpperBound_s;
+
+    float noEyeContactTimeout_s;
+    float trackingTimeout_s;
+    TimeStamp_t eyeContactWithinLast_ms;
 
     float minClampPeriod_s;
     float maxClampPeriod_s;

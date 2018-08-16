@@ -15,6 +15,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
 
@@ -123,6 +124,37 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
   return UpdateResult::NewInfo;
 
 } // UpdateTracking()
+
+bool TrackFaceAction::AreContinueCriteriaMet(const f32 currentTime_sec)
+{
+  if (Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
+  {
+    // TODO it would ideal to make sure we only use eye contact from the
+    // face we're tracking VIC-5557
+    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_eyeContactCriteria.eyeContactWithinLast_ms);
+    if (eyeContact)
+    {
+      _eyeContactCriteria.timeOfLastEyeContact_sec = currentTime_sec;
+      return true;
+    }
+    else if (currentTime_sec - _eyeContactCriteria.timeOfLastEyeContact_sec <= _eyeContactCriteria.noEyeContactTimeout_sec)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+void TrackFaceAction::SetStopCriteriaWithEyeContactOverride(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
+                                                            const TimeStamp_t eyeContactWithinLast_ms)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
+  const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _stopCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;
+
+  _eyeContactCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
+  _eyeContactCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
+}
   
 } // namespace Vector
 } // namespace Anki

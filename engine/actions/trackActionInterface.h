@@ -146,13 +146,41 @@ protected:
   virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) = 0;
   
   virtual bool InterruptInternal() override final;
+
+  // This method is intended to be overridden by child
+  // classes. With the goal of having the child class
+  // incorporate appliation specific logic to override
+  // the stop criteria in this base class. For an example
+  // see TrackFaceAction.
+  virtual bool AreContinueCriteriaMet(const f32 currentTime_sec) {return false;};
+
+  // Stop criteria is only valid if duration_sec is non-zero or
+  // earliestStoppingTime_sec is greater than zero.
+  struct {
+    Radians panTol                      = -1.f;
+    Radians tiltTol                     = -1.f;
+    f32     minDist_mm                  = -1.f;
+    f32     maxDist_mm                  = -1.f;
+    f32     duration_sec                = 0.f;
+    f32     withinTolSince_sec          = 0.f;
+    bool    interruptDrivingAnim        = false;
+    // This is the earliest time that tracking will attempt
+    // to stop. It will continue to track if  and only if the
+    // ContinueCriteriaMet method returns true.
+    f32     earliestStoppingTime_sec    = -1.f;
+  } _stopCriteria;
   
 private:
 
   // sets internal values to track clamping small angles. Returns true if we should clamp, false otherwise
   bool UpdateSmallAngleClamping();
   
-  bool StopCriteriaMetAndTimeToStop(f32 relPanAngle_rad, f32 relTiltAngle_rad, f32 dist_mm, f32 currentTime_sec);
+  bool AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                          const f32 dist_mm, const f32 currentTime_sec);
+  bool IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                          const f32 dist_mm, const f32 currentTime_sec) const;
+  bool IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                    const f32 dist_mm, const f32 currentTime_sec);
   
   Mode     _mode = Mode::HeadAndBody;
   float    _updateTimeout_sec = 0.0f;
@@ -193,19 +221,9 @@ private:
   f32      _nextTimeToClampSmallAngles_s = -1.0f;
 
   const std::string _kKeepFaceAliveITrackActionName = "ITrackAction";
-  
-  struct {
-    Radians panTol              = 0.f;
-    Radians tiltTol             = 0.f;
-    f32     minDist_mm          = 0.f;
-    f32     maxDist_mm          = 0.f;
-    f32     duration_sec        = 0.f; // _stopCriteria is ignored if this is 0
-    f32     withinTolSince_sec  = 0.f;
-    bool    interruptDrivingAnim = false;
-  } _stopCriteria;
-  
-  bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }
-  
+
+  bool HaveStopCriteria() const;
+
   // Helper for storing the return result if we are using driving animations and just
   // returning result immediately if not
   ActionResult CheckIfDoneReturnHelper(ActionResult result, bool stopCriteriaMet);
