@@ -28,5 +28,5 @@
   "stopBehaviorOnAnyFace": true,
   "stopBehaviorOnNamedFace": true,
   
-  "lookInPlaceAnimTrigger": "HikingLookAround"
+  "lookInPlaceAnimTrigger": "LookAround"
 }

@@ -7,7 +7,7 @@ PROTO WebotsKeyboardController [
   # Animation to send
   field SFString animationToSendName "anim_neutral_eyes_01"
   field SFInt32  animationNumLoops 1
-  field SFString idleAnimationName "ProceduralLive"
+  field SFString idleAnimationName ""
   field SFFloat  faceHue 0.566  # should be 0-1 
   
   # Should we enter 'freeplay' mode immediately upon startup?

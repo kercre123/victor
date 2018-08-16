@@ -52,7 +52,7 @@
       // dont start if a cube is known, or stop if a cube is seen 
       "stopBehaviorOnCube": true,
       
-      "lookInPlaceAnimTrigger": "HikingLookAround"
+      "lookInPlaceAnimTrigger": "LookAround"
       
     }
   ],

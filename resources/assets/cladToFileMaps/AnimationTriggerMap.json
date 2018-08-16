@@ -604,6 +604,10 @@
     "AnimName": "ag_pounceonmotionpounce"
   },
   {
+    "CladEvent": "LookAround",
+    "AnimName": "ag_lookinplaceforfaces_bodymovepause"
+  },
+  {
     "CladEvent": "LookInPlaceForFacesBodyPause_Active",
     "AnimName": "ag_lookatme_lookinplaceforfaces"
   },

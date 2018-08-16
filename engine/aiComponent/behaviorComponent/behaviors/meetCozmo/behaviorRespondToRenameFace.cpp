@@ -24,7 +24,7 @@ namespace Anki {
 namespace Vector {
   
 namespace JsonKeys {
-  static const char * const AnimationTriggerKey = "animationTrigger";
+  // static const char * const AnimationTriggerKey = "animationTrigger";
 }
   
 
@@ -36,18 +36,18 @@ BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(const Json::Value& conf
 {
   SubscribeToTags({EngineToGameTag::RobotRenamedEnrolledFace});
   
-  const std::string& animTriggerString = config.get(JsonKeys::AnimationTriggerKey, "MeetCozmoRenameFaceSayName").asString();
-  _animTrigger = AnimationTriggerFromString(animTriggerString.c_str());
+  //  const std::string& animTriggerString = config.get(JsonKeys::AnimationTriggerKey, "MeetCozmoRenameFaceSayName").asString();
+  //  _animTrigger = AnimationTriggerFromString(animTriggerString.c_str());
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondToRenameFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  const char* list[] = {
-    JsonKeys::AnimationTriggerKey,
-  };
-  expectedKeys.insert( std::begin(list), std::end(list) );
+  //  const char* list[] = {
+  //    JsonKeys::AnimationTriggerKey,
+  //  };
+  //  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,10 +79,10 @@ void BehaviorRespondToRenameFace::OnBehaviorActivated()
     return;
   }
   
-  PRINT_CH_INFO("Behaviors", "BehaviorRespondToRenameFace.InitInternal",
-                "Responding to rename of %s with %s",
-                Util::HidePersonallyIdentifiableInfo(_name.c_str()),
-                EnumToString(_animTrigger));
+  //  PRINT_CH_INFO("Behaviors", "BehaviorRespondToRenameFace.InitInternal",
+  //                "Responding to rename of %s with %s",
+  //                Util::HidePersonallyIdentifiableInfo(_name.c_str()),
+  //                EnumToString(_animTrigger));
   
   // TODO: Try to turn towards a/the face first COZMO-7991
   //  For some reason the following didn't work (action immediately completed) and I ran

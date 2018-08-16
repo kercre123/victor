@@ -15,6 +15,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
@@ -29,6 +30,7 @@
 
 
 using namespace Anki::Vector;
+extern CozmoContext* cozmoContext;
 
 static const std::string kMajorWin = "majorWin";
 static const std::string kMajorWinBeatBox = "majorWinBeatBox";
@@ -532,4 +534,13 @@ TEST(AnimationGroup, GetDefaultAnimationNameOfTwo)
   
   EXPECT_TRUE(!foundMajorWin);
   EXPECT_TRUE(foundMajorWinBeatBox);
+}
+
+TEST(AnimationGroup, AllCLADTriggersHaveGroups)
+{
+  auto* data = cozmoContext->GetDataLoader();
+  for( size_t i=0; i< AnimationTriggerNumEntries - 1; ++i ) {
+    const auto trigger = static_cast<AnimationTrigger>(i);
+    EXPECT_TRUE( data->HasAnimationForTrigger(trigger) ) << "Could not find anim group for trigger " << AnimationTriggerToString(trigger);
+  }
 }

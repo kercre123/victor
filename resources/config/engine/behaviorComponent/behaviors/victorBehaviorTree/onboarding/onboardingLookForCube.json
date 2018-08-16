@@ -26,6 +26,6 @@
   "stopBehaviorOnNamedFace": false,
   "stopBehaviorOnCube": false, // parent will cancel us
   
-  "lookInPlaceAnimTrigger": "HikingLookAround"
+  "lookInPlaceAnimTrigger": "LookAround"
   
 }

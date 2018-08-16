@@ -40,7 +40,7 @@ private:
   
   std::string      _name;
   Vision::FaceID_t _faceID;
-  AnimationTrigger _animTrigger; // set by Json config
+  // AnimationTrigger _animTrigger; // set by Json config
   
 }; // class BehaviorReactToRenameFace
   

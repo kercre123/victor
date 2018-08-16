@@ -148,8 +148,6 @@ enum int_32 AnimationTrigger
   GoToSleepOff,
   GoToSleepSleeping,
 
-  HikingLookAround,             // when Cozmo spins around looking for edges and cubes
-  HikingSquintStart,            // when Cozmo is focusing on stuff (normally edges) - start
   ICantDoThat,
   InitialWakeUp,
   InteractWithFaceTrackingIdle,
@@ -167,6 +165,7 @@ enum int_32 AnimationTrigger
   KnowledgeGraphGetOut,
   KnowledgeGraphSuccessReaction,
 
+  LookAround,
   LookAtDevice,
   LookAtDeviceGetIn,
   LookAtDeviceGetOut,
@@ -182,10 +181,6 @@ enum int_32 AnimationTrigger
   MeetVictorSayNameAgain,
   MeetVictorSawWrongFace,
   MeetVictorDuplicateName,
-
-  MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
-  MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
-  MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
 
   MessagingMessageGetIn,
   MessagingMessageLoop,
@@ -266,7 +261,6 @@ enum int_32 AnimationTrigger
 
   PRDemoGreeting,
 
-  ProceduralLive,
   PutDownBlockKeepAlive,
   PutDownBlockPutDown,
   ReactToBlockPickupSuccess,
@@ -303,7 +297,6 @@ enum int_32 AnimationTrigger
   ReactToMotionLeftGetout,
   ReactToMotionRightGetout,
   ReactToMotionUpGetout,
-  ReactToMotorCalibration,
   ReactToObstacle,
   ReactToOnLeftSide,
   ReactToOnRightSide,
@@ -409,10 +402,6 @@ enum int_32 AnimationTrigger
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually
   GreetAfterLongTime,
-  ANTICIPATED_ReactToSoundOffChargerAsleepAmbient,
-  ANTICIPATED_ReactToSoundOffChargerObserveAmbient,
-  ANTICIPATED_ReactToSoundOnChargerAsleepAmbient,
-  ANTICIPATED_ReactToSoundOnChargerObserveAmbient,
 
   // Animation triggers we believe are no longer needed in Victor
   DEPRECATED_AcknowledgeFaceNamed,
