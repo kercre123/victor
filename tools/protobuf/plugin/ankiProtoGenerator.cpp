@@ -54,10 +54,19 @@ bool AnkiProtoGenerator::Generate( const FileDescriptor* file,
     // to use the pure protobuf methods will result in fewer copies)
     bool shouldGenCtors = shouldGenTags || (numOneOfs == 0 && numFields > 0);
     if( shouldGenCtors ) {
+      // also don't gen ctors if the oneof has multiple fields of the same type
+      std::set<std::string> fieldTypes;
       for( int i=0; i<message->field_count(); ++i ) {
         if( message->field(i)->is_repeated() ) {
           shouldGenCtors = false;
           break;
+        } else if( shouldGenTags ) {
+          const auto& typeName = GetVariableType( message->field(i) );
+          if( fieldTypes.find(typeName) != fieldTypes.end() ) {
+            shouldGenCtors = false;
+            break;
+          }
+          fieldTypes.insert(typeName);
         }
       }
     }
