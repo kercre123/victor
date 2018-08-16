@@ -114,7 +114,7 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
     SuppressInitialPickupReactionIfAppropriate();
   }else{
     if(_areTreadsLocked){
-      GetBEI().GetMovementComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel());
+      SmartUnLockTracks(GetDebugLabel());
       _areTreadsLocked = false;
     }
   }
@@ -129,7 +129,7 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
 void BehaviorCoordinateWhileInAir::LockTracksIfAppropriate()
 {
   if(!_areTreadsLocked){
-    GetBEI().GetMovementComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel(), GetDebugLabel());
+    SmartLockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel(), GetDebugLabel());
     _areTreadsLocked = true;
   }
 }
