@@ -122,7 +122,7 @@ private:
 
   std::unique_ptr<BackpackAnimationTriggerMap> _backpackAnimationTriggerMap;
   FileJsonMap _backpackLightAnimations;
-
+  std::mutex _backpackLoadingMutex;
   
 };
 

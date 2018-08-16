@@ -340,6 +340,7 @@ void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
   Json::Value animDefs;
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   if (success && !animDefs.empty()) {
+    std::lock_guard<std::mutex> guard(_backpackLoadingMutex);
     _backpackLightAnimations.emplace(path, animDefs);
   }
 }
