@@ -2,7 +2,6 @@
 import asyncio
 import math
 import os
-import random
 import sys
 import time
 
@@ -39,7 +38,7 @@ class Treads:
 
   #get distance robot thinks it is, see if distance driven is how far robot actually went
   def TreadTest(self, robot, cube):
-    distDrive = [100, -100, 30, -30, 50]
+    distDrive = [100, -70, 30, -40, -20]
     passedDrive = 0
     curCubeDist = self.CubeDistance(robot, cube)
     for dist in distDrive:
