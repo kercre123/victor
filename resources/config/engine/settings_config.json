@@ -8,7 +8,7 @@
   },
   "eye_color" :
   {
-    "defaultValue" : "TipOverTeal",
+    "defaultValue" : 0,
     "updateCloudOnChange" : false
   },
   "default_location" :
@@ -28,7 +28,7 @@
   },
   "master_volume" :
   {
-    "defaultValue" : "Medium",
+    "defaultValue" : 3,
     "updateCloudOnChange" : false
   },
   "temp_is_fahrenheit" :

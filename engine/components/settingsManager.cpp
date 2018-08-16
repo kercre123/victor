@@ -40,7 +40,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsManager::SettingsManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsManager)
-  , _hasPendingSettingsRequest( false )
+, _hasPendingSettingsRequest( false )
 {
 }
 
@@ -84,13 +84,26 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _currentSettings.clear();
   if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_SETTINGS))
   {
-    LOG_INFO("SettingsManager.InitDependent.NoSettingsJdocsFile",
-             "Settings jdocs file not found; one will be created shortly");
+    LOG_INFO("SettingsManager.InitDependent.NoSettingsJdocFile",
+             "Settings jdoc file not found; one will be created shortly");
     settingsDirty = true;
   }
   else
   {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
+
+    // Temporary migration code:  Since we're now saving proto enums as numbers, not strings
+    // If the enum setting is a string, reset its value to [the default] number (below)
+    std::string key = RobotSettingToString(RobotSetting::eye_color);
+    if (_currentSettings.isMember(key) && (_currentSettings[key].isString()))
+    {
+      _currentSettings.removeMember(key);
+    }
+    key = RobotSettingToString(RobotSetting::master_volume);
+    if (_currentSettings.isMember(key) && (_currentSettings[key].isString()))
+    {
+      _currentSettings.removeMember(key);
+    }
   }
 
   // Ensure current settings has each of the defined settings;
@@ -208,7 +221,7 @@ std::string SettingsManager::GetRobotSettingAsString(const RobotSetting key) con
   const std::string& keyString = EnumToString(key);
   if (!_currentSettings.isMember(keyString))
   {
-    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", keyString.c_str());
+    LOG_ERROR("SettingsManager.GetRobotSettingAsString.InvalidKey", "Invalid key %s", keyString.c_str());
     return "Invalid";
   }
 
@@ -222,11 +235,25 @@ bool SettingsManager::GetRobotSettingAsBool(const RobotSetting key) const
   const std::string& keyString = EnumToString(key);
   if (!_currentSettings.isMember(keyString))
   {
-    LOG_ERROR("SettingsManager.GetRobotSetting.InvalidKey", "Invalid key %s", keyString.c_str());
+    LOG_ERROR("SettingsManager.GetRobotSettingAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
     return false;
   }
 
   return _currentSettings[keyString].asBool();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint32_t SettingsManager::GetRobotSettingAsUInt(const RobotSetting key) const
+{
+  const std::string& keyString = EnumToString(key);
+  if (!_currentSettings.isMember(keyString))
+  {
+    LOG_ERROR("SettingsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
+    return false;
+  }
+  
+  return _currentSettings[keyString].asUInt();
 }
 
 
@@ -259,7 +286,7 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
   {
     if (force || !it->second.isLatentApplication)
     {
-      LOG_DEBUG("SettingsManager.EyeColor", "Applying Robot Setting '%s'", RobotSettingToString(robotSetting));
+      LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'", RobotSettingToString(robotSetting));
       success = (this->*(it->second.applicationFunction))();
     }
     else
@@ -269,8 +296,8 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
 
     if (!success)
     {
-      LOG_ERROR("SettingsManager.ApplyRobotSetting", "Error setting %s to %s",
-                RobotSettingToString(robotSetting), _currentSettings[RobotSettingToString(robotSetting)].asString().c_str());
+      LOG_ERROR("SettingsManager.ApplyRobotSetting", "Error setting %s to %i",
+                RobotSettingToString(robotSetting), _currentSettings[RobotSettingToString(robotSetting)].asUInt());
     }
   }
   return success;
@@ -281,17 +308,17 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
 bool SettingsManager::ApplySettingMasterVolume()
 {
   static const std::string& key = RobotSettingToString(RobotSetting::master_volume);
-  const std::string& value = _currentSettings[key].asString();
-  MasterVolume masterVolume;
-  const bool valueIsValid = EnumFromString(value, masterVolume);
-  if (!valueIsValid)
+  const auto& value = _currentSettings[key].asUInt();
+  if (!external_interface::Volume_IsValid(value))
   {
-    LOG_ERROR("SettingsManager.ApplySettingMasterVolume", "Invalid master volume value %s", value.c_str());
+    LOG_ERROR("SettingsManager.ApplySettingMasterVolume.Invalid", "Invalid master volume value %i", value);
     return false;
   }
+  const auto& volumeName = external_interface::Volume_Name(static_cast<external_interface::Volume>(value));
+  LOG_INFO("SettingsManager.ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", volumeName.c_str());
 
-  LOG_INFO("ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", value.c_str());
-  _robot->GetAudioClient()->SetRobotMasterVolume(masterVolume);
+  const auto volume = static_cast<MasterVolume>(value); // Cast to CLAD enum (to be cleaned up later)
+  _robot->GetAudioClient()->SetRobotMasterVolume(volume);
 
   return true;
 }
@@ -301,18 +328,17 @@ bool SettingsManager::ApplySettingMasterVolume()
 bool SettingsManager::ApplySettingEyeColor()
 {
   static const std::string& key = RobotSettingToString(RobotSetting::eye_color);
-  const std::string& value = _currentSettings[key].asString();
-  EyeColor eyeColorUnused;
-  const bool valueIsValid = EnumFromString(value, eyeColorUnused);
-  if (!valueIsValid)
+  const auto& value = _currentSettings[key].asUInt();
+  if (!external_interface::EyeColor_IsValid(value))
   {
-    LOG_ERROR("SettingsManager.ApplySettingEyeColor", "Invalid eye color value %s", value.c_str());
+    LOG_ERROR("SettingsManager.ApplySettingEyeColor.Invalid", "Invalid eye color value %i", value);
     return false;
   }
+  const auto& eyeColorName = external_interface::EyeColor_Name(static_cast<external_interface::EyeColor>(value));
+  LOG_INFO("SettingsManager.ApplySettingEyeColor.Apply", "Setting robot eye color to %s", eyeColorName.c_str());
 
-  LOG_INFO("ApplySettingEyeColor.Apply", "Setting robot eye color to %s", value.c_str());
   const auto& config = _robot->GetContext()->GetDataLoader()->GetEyeColorConfig();
-  const auto& eyeColorData = config[value];
+  const auto& eyeColorData = config[eyeColorName];
   const float hue = eyeColorData["Hue"].asFloat();
   const float saturation = eyeColorData["Saturation"].asFloat();
 

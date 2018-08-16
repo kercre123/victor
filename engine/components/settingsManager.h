@@ -59,9 +59,10 @@ public:
                        const Json::Value& valueJson,
                        const bool updateSettingsJdoc);
 
-  // Return the setting value (currently only strings or bools supported)
+  // Return the setting value (currently strings, bools, uints supported)
   std::string GetRobotSettingAsString(const RobotSetting key) const;
   bool        GetRobotSettingAsBool  (const RobotSetting key) const;
+  uint32_t    GetRobotSettingAsUInt  (const RobotSetting key) const;
 
   bool UpdateSettingsJdoc();
 

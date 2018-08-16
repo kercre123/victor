@@ -42,9 +42,8 @@ namespace
   CONSOLE_VAR_ENUM(u8, kMasterVolumeLevel, kConsoleGroup, 0, kMasterVolumeLevels);
   void DebugSetMasterVolume(ConsoleFunctionContextRef context)
   {
-    const std::string& volumeSettingValue = MasterVolumeToString(static_cast<MasterVolume>(kMasterVolumeLevel));
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::master_volume,
-                                                           Json::Value(volumeSettingValue),
+                                                           Json::Value(kMasterVolumeLevel),
                                                            kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
@@ -54,9 +53,8 @@ namespace
   CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
   void DebugSetEyeColor(ConsoleFunctionContextRef context)
   {
-    const std::string& eyeColorValue = EyeColorToString(static_cast<EyeColor>(kEyeColor));
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::eye_color,
-                                                           Json::Value(eyeColorValue),
+                                                           Json::Value(kEyeColor),
                                                            kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetEyeColor, kConsoleGroup);
@@ -223,18 +221,11 @@ bool SettingsCommManager::ToggleRobotSettingHelper(const RobotSetting robotSetti
 void SettingsCommManager::RefreshConsoleVars()
 {
 #if REMOTE_CONSOLE_ENABLED
-  const auto& masterVolumeValue = _settingsManager->GetRobotSettingAsString(RobotSetting::master_volume);
-  MasterVolume masterVolume;
-  if (EnumFromString(masterVolumeValue, masterVolume))
-  {
-    kMasterVolumeLevel = static_cast<u8>(masterVolume);
-  }
-  const auto& eyeColorValue = _settingsManager->GetRobotSettingAsString(RobotSetting::eye_color);
-  EyeColor eyeColor;
-  if (EnumFromString(eyeColorValue, eyeColor))
-  {
-    kEyeColor = static_cast<u8>(eyeColor);
-  }
+  const auto& masterVolumeValue = _settingsManager->GetRobotSettingAsUInt(RobotSetting::master_volume);
+  kMasterVolumeLevel = static_cast<u8>(masterVolumeValue);
+
+  const auto& eyeColorValue = _settingsManager->GetRobotSettingAsUInt(RobotSetting::eye_color);
+  kEyeColor = static_cast<u8>(eyeColorValue);
 #endif
 }
 
@@ -329,9 +320,7 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   }
   if (settings.oneof_eye_color_case() == external_interface::RobotSettingsConfig::OneofEyeColorCase::kEyeColor)
   {
-    // Cast the protobuf3 enum to our CLAD enum, then call into CLAD to get the string version
-    // todo:  replace the clad enum completely, when we get protobuf versions of enum-to-string, string-to-enum
-    const std::string& eyeColor = EnumToString(static_cast<EyeColor>(settings.eye_color()));
+    const auto eyeColor = static_cast<uint32_t>(settings.eye_color());
     updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::eye_color,
                                                           Json::Value(eyeColor));
   }
@@ -352,9 +341,7 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   }
   if (settings.oneof_master_volume_case() == external_interface::RobotSettingsConfig::OneofMasterVolumeCase::kMasterVolume)
   {
-    // Cast the protobuf3 enum to our CLAD enum, then call into CLAD to get the string version
-    // todo:  replace the clad enum completely, when we get protobuf versions of enum-to-string, string-to-enum
-    const std::string masterVolume = EnumToString(static_cast<MasterVolume>(settings.master_volume()));
+    const auto masterVolume = static_cast<uint32_t>(settings.master_volume());
     updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::master_volume,
                                                           Json::Value(masterVolume));
   }
