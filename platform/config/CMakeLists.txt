@@ -12,6 +12,9 @@
 # Configure with -DANKI_USER_DEV=1 to deploy the userdev version of config files
 # Default is ANKI_USER_DEV=0
 #
+# Configure with -DANKI_BETA=1 to deploy the beta version of config files
+# Default is ANKI_BETA=0
+#
 # Note use of add_dependencies() to serialize copy operations. This is done to prevent random build failures
 # that occur when parallel processes attempt to create the same directory structure.
 #
@@ -43,6 +46,11 @@ endif()
 # If this is the special "userdev" build then use its etc files
 if (ANKI_USER_DEV)
   set(platform_config_etc_extra platform_config_etc_userdev)
+endif()
+
+# If this is the special "beta" build then use its etc files
+if (ANKI_BETA)
+  set(platform_config_etc_extra platform_config_etc_beta)
 endif()
 
 anki_build_copy_assets(
