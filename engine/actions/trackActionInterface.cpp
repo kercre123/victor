@@ -648,7 +648,7 @@ ActionResult ITrackAction::CheckIfDone()
       // Can't meet stop criteria based on predicted updates (as opposed to actual observations)
       if(updateResult != UpdateResult::PredictedInfo)
       {
-        const bool shouldStop = TimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
+        const bool shouldStop = IsTimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
         if(shouldStop)
         {
           return CheckIfDoneReturnHelper(ActionResult::SUCCESS, true);
@@ -766,12 +766,12 @@ bool ITrackAction::HaveStopCriteria() const {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
-                              const f32 distance_mm, const f32 currentTime_sec)
+bool ITrackAction::IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                                const f32 distance_mm, const f32 currentTime_sec)
 {
-  const bool stopCriteriaMet = StopCriteriaMet(relPanAngle_rad, relTiltAngle_rad,
-                                               distance_mm, currentTime_sec);
-  const bool continueCriteriaMet = ContinueCriteriaMet(currentTime_sec);
+  const bool stopCriteriaMet = AreStopCriteriaMet(relPanAngle_rad, relTiltAngle_rad,
+                                                  distance_mm, currentTime_sec);
+  const bool continueCriteriaMet = AreContinueCriteriaMet(currentTime_sec);
   return (stopCriteriaMet && !continueCriteriaMet);
 }
 
@@ -812,8 +812,8 @@ bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTi
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
-                                   const f32 distance_mm, const f32 currentTime_sec)
+bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                                      const f32 distance_mm, const f32 currentTime_sec)
 {
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
@@ -832,7 +832,7 @@ bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltA
         // Been within tolerance for long enough to stop yet?
         if( currentTime_sec - _stopCriteria.withinTolSince_sec > _stopCriteria.duration_sec)
         {
-          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.AreStopCriteriaMet",
                         "Within tolerances for > %.1fsec (panTol=%.1fdeg tiltTol=%.1fdeg distTol=[%.1f,%.1f]",
                         _stopCriteria.duration_sec,
                         _stopCriteria.panTol.getDegrees(),
@@ -846,7 +846,7 @@ bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltA
       {
         if(DEBUG_TRACKING_ACTIONS)
         {
-          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.AreStopCriteriaMet",
                         "[%d] Setting start of stop criteria being met to t=%.1fsec",
                         GetTag(),
                         currentTime_sec);

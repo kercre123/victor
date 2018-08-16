@@ -147,7 +147,7 @@ protected:
   
   virtual bool InterruptInternal() override final;
 
-  virtual bool ContinueCriteriaMet(const f32 currentTime_sec) {return false;};
+  virtual bool AreContinueCriteriaMet(const f32 currentTime_sec) {return false;};
 
   // Stop criteria is only valid if duration_sec is non-zero or
   // earliestStoppingTime_sec is greater than zero.
@@ -170,12 +170,12 @@ private:
   // sets internal values to track clamping small angles. Returns true if we should clamp, false otherwise
   bool UpdateSmallAngleClamping();
   
-  bool StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
-                       const f32 dist_mm, const f32 currentTime_sec);
+  bool AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                          const f32 dist_mm, const f32 currentTime_sec);
   bool IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                           const f32 dist_mm, const f32 currentTime_sec) const;
-  bool TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
-                  const f32 dist_mm, const f32 currentTime_sec);
+  bool IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
+                    const f32 dist_mm, const f32 currentTime_sec);
   
   Mode     _mode = Mode::HeadAndBody;
   float    _updateTimeout_sec = 0.0f;

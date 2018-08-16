@@ -47,7 +47,7 @@ protected:
   virtual void OnRobotSet() override final;
 
 private:
-  virtual bool ContinueCriteriaMet(const f32 currentTime_sec) override;
+  virtual bool AreContinueCriteriaMet(const f32 currentTime_sec) override;
   struct {
     f32     noEyeContactTimeout_sec     = 0.f;
     f32     timeOfLastEyeContact_sec    = 0.f;

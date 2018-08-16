@@ -125,7 +125,7 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 
 } // UpdateTracking()
 
-bool TrackFaceAction::ContinueCriteriaMet(const f32 currentTime_sec)
+bool TrackFaceAction::AreContinueCriteriaMet(const f32 currentTime_sec)
 {
   if (Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
   {
