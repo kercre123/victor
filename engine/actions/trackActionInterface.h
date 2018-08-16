@@ -147,6 +147,11 @@ protected:
   
   virtual bool InterruptInternal() override final;
 
+  // This method is intended to be overridden by child
+  // classes. With the goal of having the child class
+  // incorporate appliation specific logic to override
+  // the stop criteria in this base class. For an example
+  // see TrackFaceAction.
   virtual bool AreContinueCriteriaMet(const f32 currentTime_sec) {return false;};
 
   // Stop criteria is only valid if duration_sec is non-zero or
