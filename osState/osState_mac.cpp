@@ -91,6 +91,7 @@ OSState::OSState()
   _robotVersion = "0.0.0";
   _ipAddress = "127.0.0.1";
   _ssid = "AnkiNetwork";
+  _hasValidIPAddress = true;
 
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
   _cpuTemp_C = 0;

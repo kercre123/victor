@@ -549,6 +549,11 @@ void OSState::UpdateWifiInfo()
   const char* const if_name = "wlan0";
   _ipAddress = GetIPV4AddressForInterface(if_name);
   _ssid = GetWiFiSSIDForInterface(if_name);
+
+  // Check for IP "validity"
+  const bool isEmpty = _ipAddress.empty();
+  const bool isLinkLocalIP = (_ipAddress.length() > 7) && _ipAddress.compare(0,7,"169.254") == 0;
+  _hasValidIPAddress = !isEmpty && !isLinkLocalIP;
 }
 
 const std::string& OSState::GetIPAddress(bool update)

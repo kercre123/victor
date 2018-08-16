@@ -94,6 +94,10 @@ public:
   // Returns our ip address
   const std::string& GetIPAddress(bool update = false);
 
+  // Returns whether or not the IP address is "valid"
+  // which currently just means it exists and it's not a link-local IP
+  bool HasValidIPAddress() const { return _hasValidIPAddress; }
+
   // Returns the SSID of the connected wifi network
   const std::string& GetSSID(bool update = false);
 
@@ -194,6 +198,7 @@ private:
   std::string _buildSha        = "";
   std::string _bootID          = "";
   bool        _isUserSpaceSecure = false;
+  bool        _hasValidIPAddress = false;
   
 }; // class OSState
 

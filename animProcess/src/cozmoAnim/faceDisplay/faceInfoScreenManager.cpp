@@ -1174,7 +1174,7 @@ void FaceInfoScreenManager::DrawMain()
 
 #if ANKI_DEV_CHEATS
   const std::string sha      = "SHA: "  + osstate->GetBuildSha();
- #endif
+#endif
 
   std::string ip             = osstate->GetIPAddress();
   if (ip.empty()) {
@@ -1187,7 +1187,7 @@ void FaceInfoScreenManager::DrawMain()
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
-                             { {"IP: "}, {ip, (_hasOTAAccess ? NamedColors::GREEN : NamedColors::RED)} },
+                             { {"IP: "}, {ip, (osstate->HasValidIPAddress() ? NamedColors::GREEN : NamedColors::RED)} },
 #endif
 #if ANKI_DEV_CHEATS
 			     {sha},
@@ -1224,7 +1224,7 @@ void FaceInfoScreenManager::DrawNetwork()
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
-                             { {"IP: "}, {ip, (_hasOTAAccess ? NamedColors::GREEN : NamedColors::RED)} },
+                             { {"IP: "}, {ip, (osstate->HasValidIPAddress() ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
                              { {"AUTH:  "}, authStatus },
                              { {"OTA:   "}, otaStatus },
