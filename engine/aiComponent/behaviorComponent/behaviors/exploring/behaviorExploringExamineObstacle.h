@@ -70,6 +70,7 @@ private:
     ReturnToCenterEnd,
     ReferenceHuman,
     Bumping,
+    QuickAnim,
   };
 
   struct InstanceConfig {

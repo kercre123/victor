@@ -126,6 +126,7 @@ enum int_32 AnimationTrigger
   ExploringHuhFar,
   ExploringLookAround,
   ExploringLookAtHuman,
+  ExploringQuickScan,
   ExploringScanToLeft,
   ExploringScanToRight,
   ExploringScanCenterFromLeft,

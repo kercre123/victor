@@ -61,6 +61,8 @@ namespace {
   const float kProbBumpNominalObject = 0.8f;
   const float kProbReferenceBeforeBump = 0.5f;
   
+  const float kProbScan = 0.7f;
+  
   const float kMinDistForFarReaction_mm = 80.0f;
   
   // [1-100]:JPEG quality, -1: use PNG
@@ -233,21 +235,31 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
   }
   
   // if we're here, we either skipped or have finished the initial approach maneuver
+  if( _dVars.state == State::QuickAnim ) {
+    CancelSelf();
+    return;
+  }
   auto action = std::make_unique<CompoundActionSequential>();
   if( (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle) ) {
     
-    SET_STATE( FirstTurn );
-    
-    AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
-                                ? AnimationTrigger::ExploringScanToLeft
-                                : AnimationTrigger::ExploringScanToRight;
-    action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
-    
-    // we manually trigger the audio since the looping scan animation doesn't always precede a
-    // followup animation that could be used to stop the audio
-    const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
-    GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
-    _dVars.playingScanSound = true;
+    if( GetRNG().RandDbl() < kProbScan ) {
+      
+      SET_STATE( FirstTurn );
+      
+      AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
+                                  ? AnimationTrigger::ExploringScanToLeft
+                                  : AnimationTrigger::ExploringScanToRight;
+      action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
+      
+      // we manually trigger the audio since the looping scan animation doesn't always precede a
+      // followup animation that could be used to stop the audio
+      const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
+      GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+      _dVars.playingScanSound = true;
+    } else {
+      SET_STATE( QuickAnim );
+      action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::ExploringQuickScan } );
+    }
     
   } else if( (_dVars.state == State::FirstTurn)
              || (_dVars.state == State::SecondTurn)
