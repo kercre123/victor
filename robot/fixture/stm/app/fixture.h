@@ -227,6 +227,7 @@ typedef int error_t;
 #define ERROR_SENSOR_CLIFF_BR             354 // cliff sensor malfunction (back right)
 #define ERROR_SENSOR_TOF                  355 // distance sensor malfunction
 #define ERROR_SENSOR_TOUCH                356 // touch sensor malfunction
+#define ERROR_SENSOR_CLIFF_ALL            357 // all cliff sensor readings invalid. check electrical (bus short?). Try power cycle.
 
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed

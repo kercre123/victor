@@ -535,6 +535,7 @@ void TestRobotSensors(void)
     ConsolePrintf("cliff,fL,%i,fR,%i,bL,%i,bR,%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
     ConsolePrintf("..cnt,fL,%i,fR,%i,bL,%i,bR,%i\n", cnt.fL, cnt.fR, cnt.bL, cnt.bR);
     
+    if( cnt.fL<2 && cnt.fR<2 && cnt.bL<2 && cnt.bR<2 ) throw ERROR_SENSOR_CLIFF_ALL; //all-zero data. hmm...
     if( cnt.fL < NN_ok )  throw ERROR_SENSOR_CLIFF_FL;
     if( cnt.fR < NN_ok )  throw ERROR_SENSOR_CLIFF_FR;
     if( cnt.bL < NN_ok )  throw ERROR_SENSOR_CLIFF_BL;
