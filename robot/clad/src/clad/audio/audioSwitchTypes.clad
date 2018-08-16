@@ -179,6 +179,15 @@ enum uint_32 Robot_Vic_Stim_Switch
   Stim_04 = 446181665,
 }
 
+enum uint_32 Robot_Vic_Stim_Switch_Old_Reference_Only
+{
+  Invalid = 0,
+  Stim_01 = 446181668,
+  Stim_02 = 446181671,
+  Stim_03 = 446181670,
+  Stim_04 = 446181665,
+}
+
 enum uint_32 Robot_Vic_Tread_Drive
 {
   Invalid = 0,
@@ -219,6 +228,7 @@ enum uint_32 SwitchGroupType
   Robot_Vic_Mvmt_Size = 1553011127,
   Robot_Vic_Scrn_Procedural_Shift_Length = 1706342803,
   Robot_Vic_Stim_Switch = 2087220263,
+  Robot_Vic_Stim_Switch_Old_Reference_Only = 2717392740,
   Robot_Vic_Tread_Drive = 4283612440,
   Robot_Vic_Tread_Speed = 724346585,
   Sparked = 62349551,
