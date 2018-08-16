@@ -1,12 +1,44 @@
 // This serves to define the settings stored on the robot,
-// as well as their default values.
+// as well as their default values and other information.
 {
-  "clock_24_hour" : false,
-  "eye_color" : "TipOverTeal",
-  "default_location" : "",
-  "dist_is_metric" : true,
-  "locale" : "en-US",
-  "master_volume" : "Medium",
-  "temp_is_fahrenheit" : true,
-  "time_zone" : "America/Los_Angeles"
+  "clock_24_hour" :
+  {
+    "defaultValue": false,
+    "updateCloudOnChange" : true
+  },
+  "eye_color" :
+  {
+    "defaultValue" : "TipOverTeal",
+    "updateCloudOnChange" : false
+  },
+  "default_location" :
+  {
+    "defaultValue" : "San Francisco, California",
+    "updateCloudOnChange" : true
+  },
+  "dist_is_metric" :
+  {
+    "defaultValue" : true,
+    "updateCloudOnChange" : true
+  },
+  "locale" :
+  {
+    "defaultValue" : "en-US",
+    "updateCloudOnChange" : true
+  },
+  "master_volume" :
+  {
+    "defaultValue" : "Medium",
+    "updateCloudOnChange" : false
+  },
+  "temp_is_fahrenheit" :
+  {
+    "defaultValue" : true,
+    "updateCloudOnChange" : true
+  },
+  "time_zone" :
+  {
+    "defaultValue" : "America/Los_Angeles",
+    "updateCloudOnChange" : true
+  }
 }

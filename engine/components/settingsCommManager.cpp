@@ -292,7 +292,7 @@ void SettingsCommManager::OnRequestPushJdocs(const external_interface::PushJdocs
     // Convert the single jdoc STRING to a JSON::Value object
     Json::Reader reader;
     Json::Value docBodyJson;
-    bool success = reader.parse(namedJdoc.doc().json_doc(), docBodyJson);
+    const bool success = reader.parse(namedJdoc.doc().json_doc(), docBodyJson);
     if (!success)
     {
       LOG_ERROR("SettingsCommManager.OnRequestPushJdocs.JsonError",

@@ -32,6 +32,8 @@ namespace Anki {
 namespace Vector {
 
 namespace {
+  static const char* kConfigDefaultValueKey = "defaultValue";
+  //static const char* kConfigupdateCloudOnChangeKey = "updateCloudOnChange";
   const size_t kMaxTicksToClear = 3;
 }
 
@@ -49,6 +51,8 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _robot = robot;
   _jdocsManager = &robot->GetComponent<JdocsManager>();
   _audioClient = robot->GetAudioClient();
+
+  _settingsConfig = &robot->GetContext()->GetDataLoader()->GetSettingsConfig();
 
   // let's register for callbacks we care about
   {
@@ -72,9 +76,6 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
     }));
   }
 
-  // Get the default settings config
-  const auto& defaultSettings = robot->GetContext()->GetDataLoader()->GetSettingsConfig();
-
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "SettingsManager.InitDependent.DataPlatformIsNull");
 
@@ -92,17 +93,17 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
   }
 
-  // Ensure current settings has each of the default settings;
+  // Ensure current settings has each of the defined settings;
   // if not, initialize each missing setting to default value
-  for (Json::ValueConstIterator it = defaultSettings.begin(); it != defaultSettings.end(); ++it)
+  for (Json::ValueConstIterator it = _settingsConfig->begin(); it != _settingsConfig->end(); ++it)
   {
     if (!_currentSettings.isMember(it.name()))
     {
       const Json::Value& item = (*it);
-      _currentSettings[it.name()] = item;
+      _currentSettings[it.name()] = item[kConfigDefaultValueKey];
       settingsDirty = true;
       LOG_INFO("SettingsManager.InitDependent.AddDefaultItem", "Adding setting with key %s and default value %s",
-               it.name().c_str(), item.asString().c_str());
+               it.name().c_str(), item[kConfigDefaultValueKey].asString().c_str());
     }
   }
 
@@ -111,7 +112,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   std::vector<std::string> keysToRemove;
   for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
   {
-    if (!defaultSettings.isMember(it.name()))
+    if (!_settingsConfig->isMember(it.name()))
     {
       keysToRemove.push_back(it.name());
     }

@@ -291,6 +291,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       default:
         PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
         receivedStopMessage = true;
+        break;
     }
   }
 

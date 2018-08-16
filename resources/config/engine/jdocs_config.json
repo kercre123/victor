@@ -5,24 +5,32 @@
       "docName" : "vic.RobotSettings",
       "savedOnDisk" : true,
       "delayedDiskSavePeriod_s" : 0,
+      "warnOnCloudVersionLater" : true,
+      "errorOnCloudVersionLater" : false,
       "bodyOwnedByJdocManager" : false
     },
     "ROBOT_LIFETIME_STATS" : {
       "docName" : "vic.RobotLifetimeStats",
       "savedOnDisk" : true,
-      "delayedDiskSavePeriod_s" : 10,
+      "delayedDiskSavePeriod_s" : 60,
+      "warnOnCloudVersionLater" : false,
+      "errorOnCloudVersionLater" : true,
       "bodyOwnedByJdocManager" : true
     },
     "ACCOUNT_SETTINGS" : {
       "docName" : "vic.AccountSettings",
       "savedOnDisk" : false,
       "delayedDiskSavePeriod_s" : 0,
+      "warnOnCloudVersionLater" : false,
+      "errorOnCloudVersionLater" : false,
       "bodyOwnedByJdocManager" : false
     },
     "USER_ENTITLEMENTS" : {
       "docName" : "vic.UserEntitlements",
       "savedOnDisk" : false,
       "delayedDiskSavePeriod_s" : 0,
+      "warnOnCloudVersionLater" : false,
+      "errorOnCloudVersionLater" : false,
       "bodyOwnedByJdocManager" : false
     }
   }
