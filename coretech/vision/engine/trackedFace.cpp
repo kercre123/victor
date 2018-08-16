@@ -94,6 +94,13 @@ namespace Vision {
     ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / intraEyeDistance;
     _headPose.SetTranslation(ray);
 
+    // The okao coordindate system is based around the face instead of around the robot
+    // and is different than the anki coordindate system. Specifically the x-axis points
+    // out of the detected faces nose, the z-axis points of the top of the detected faces
+    // head, and the y-axis points out of the left ear of the detected face. Thus the
+    // Yaw angle maps without change onto our coordinate system, while the roll and pitch
+    // need to be switched and negated to map correctly from the okao coordinate system
+    // to the anki coordindate system.
     RotationMatrix3d rotation(-GetHeadPitch(), -GetHeadRoll(), GetHeadYaw());
     _headPose.SetRotation(_headPose.GetRotation() * rotation);
 
