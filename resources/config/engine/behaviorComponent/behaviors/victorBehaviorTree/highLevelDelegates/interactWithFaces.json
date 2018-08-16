@@ -9,7 +9,7 @@
   "minTimeToTrackFaceLowerBound_s": 8.0,
   "minTimeToTrackFaceUpperBound_s": 10.0,
   // This is the max time the robot will track
-  // if eye contact is mainted the entire time
+  // if eye contact is maintained the entire time
   "maxTimeToTrackFaceLowerBound_s": 40.0,
   "maxTimeToTrackFaceUpperBound_s": 60.0,
 
