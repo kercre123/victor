@@ -109,18 +109,22 @@ func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numCh
 
 func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.GatewayWrapper) {
 	if chanList, ok := manager.ManagedChannels[tag]; ok {
-		log.Printf("Sending %s to listener\n", tag)
+		if logVerbose {
+			log.Printf("Sending %s to listeners\n", tag)
+		}
 		var wg sync.WaitGroup
 		for idx, listener := range chanList {
 			wg.Add(1)
 			go func(idx int, listener chan<- extint.GatewayWrapper, msg extint.GatewayWrapper) {
+				defer wg.Done()
 				select {
 				case listener <- msg:
-					log.Printf("Sent %d:%s\n", idx, tag)
+					if logVerbose {
+						log.Printf("Sent to listener #%d: %s\n", idx, tag)
+					}
 				case <-time.After(100 * time.Millisecond):
 					log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				}
-				wg.Done()
 			}(idx, listener, msg)
 		}
 		wg.Wait()
@@ -232,18 +236,22 @@ func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardRespo
 func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardResponse) {
 	tag := msg.Tag()
 	if chanList, ok := manager.ManagedChannels[tag]; ok {
-		log.Println("Sending", tag, "to listener")
+		if logVerbose {
+			log.Printf("Sending %s to listeners\n", tag)
+		}
 		var wg sync.WaitGroup
 		for idx, listener := range chanList {
 			wg.Add(1)
 			go func(idx int, listener chan<- gw_clad.SwitchboardResponse, msg gw_clad.SwitchboardResponse) {
+				defer wg.Done()
 				select {
 				case listener <- msg:
-					log.Printf("Sent %d:%s\n", idx, tag)
+					if logVerbose {
+						log.Printf("Sent to listener #%d: %s\n", idx, tag)
+					}
 				case <-time.After(100 * time.Millisecond):
 					log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				}
-				wg.Done()
 			}(idx, listener, msg)
 		}
 		wg.Wait()
@@ -306,18 +314,22 @@ func (manager *EngineCladIpcManager) CreateChannel(tag gw_clad.MessageRobotToExt
 func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToExternal) {
 	tag := msg.Tag()
 	if chanList, ok := manager.ManagedChannels[tag]; ok {
-		log.Println("Sending", tag, "to listener")
+		if logVerbose {
+			log.Printf("Sending %s to listeners\n", tag)
+		}
 		var wg sync.WaitGroup
 		for idx, listener := range chanList {
 			wg.Add(1)
 			go func(idx int, listener chan<- gw_clad.MessageRobotToExternal, msg gw_clad.MessageRobotToExternal) {
+				defer wg.Done()
 				select {
 				case listener <- msg:
-					log.Printf("Sent %d:%s\n", idx, tag)
+					if logVerbose {
+						log.Printf("Sent to listener #%d: %s\n", idx, tag)
+					}
 				case <-time.After(100 * time.Millisecond):
 					log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				}
-				wg.Done()
 			}(idx, listener, msg)
 		}
 		wg.Wait()

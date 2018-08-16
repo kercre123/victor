@@ -33,10 +33,20 @@ message Event {
     RobotState                       robot_state                         = 17;
     ObjectAvailable                  object_available                    = 18;
     CubeBattery                      cube_battery                        = 19;
+    KeepAlivePing                    keep_alive                          = 20;
   }
 }
 
-message EventRequest {}
+message FilterList {
+  repeated string list = 1;
+}
+
+message EventRequest {
+  oneof list_type {
+    FilterList white_list = 1;
+    FilterList black_list = 2;
+  }
+}
 
 message EventResponse {
   option (streamed) = true;

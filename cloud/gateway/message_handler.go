@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io/ioutil"
 	"math"
+	"reflect"
 	"time"
 
 	"anki/log"
@@ -11,6 +12,7 @@ import (
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -727,6 +729,59 @@ func (m *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEn
 	}, nil
 }
 
+func (c *rpcService) EventKeepAlive(responses chan<- extint.GatewayWrapper, done chan struct{}) {
+	ping := extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_Event{
+			Event: &extint.Event{
+				EventType: &extint.Event_KeepAlive{
+					KeepAlive: &extint.KeepAlivePing{},
+				},
+			},
+		},
+	}
+	for true {
+		select {
+		case <-done:
+			return
+		case <-time.After(time.Second):
+			responses <- ping
+		}
+	}
+}
+
+func isMember(needle string, haystack []string) bool {
+	for _, word := range haystack {
+		if word == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) bool {
+	if whiteList == nil && blackList == nil {
+		return true
+	}
+	props := &proto.Properties{}
+	val := reflect.ValueOf(event.GetEventType())
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	props.Parse(val.Type().Field(0).Tag.Get("protobuf"))
+	responseType := props.OrigName
+
+	if responseType == "keep_alive" {
+		return true
+	}
+	if whiteList != nil && isMember(responseType, whiteList.List) {
+		return true
+	}
+	if blackList != nil && !isMember(responseType, blackList.List) {
+		return true
+	}
+	return false
+}
+
 // Long running message for sending events to listening sdk users
 func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
@@ -734,18 +789,31 @@ func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.External
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 16)
 	defer f()
 
+	done := make(chan struct{})
+	go c.EventKeepAlive(eventsChannel, done)
+	defer close(done)
+
+	whiteList := in.GetWhiteList()
+	blackList := in.GetBlackList()
+
 	for response := range eventsChannel {
-		log.Printf("Got response: %+v", response)
-		eventResponse := &extint.EventResponse{
-			Event: response.GetEvent(),
-		}
-		log.Printf("Made event: %+v", eventResponse)
-		if err := stream.Send(eventResponse); err != nil {
-			return err
-		} else if err = stream.Context().Err(); err != nil {
-			// This is the case where the user disconnects the stream
-			// We should still return the err in case the user doesn't think they disconnected
-			return err
+		event := response.GetEvent()
+		if checkFilters(event, whiteList, blackList) {
+			if logVerbose {
+				log.Printf("Sending event: %+v\n", event)
+			}
+			eventResponse := &extint.EventResponse{
+				Event: event,
+			}
+			if err := stream.Send(eventResponse); err != nil {
+				log.Println("Closing stream:", err)
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				log.Println("Closing stream:", err)
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
 		}
 	}
 	return nil
