@@ -127,20 +127,17 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 
 bool TrackFaceAction::ContinueCriteriaMet(const f32 currentTime_sec)
 {
-  if (Util::IsFltGTZero(_stopCriteria.noEyeContactTimeout_sec))
+  if (Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
   {
     const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_stopCriteria.eyeContactWithinLast_ms);
     if (eyeContact)
     {
-      _stopCriteria.timeOfLastEyeContact_sec = currentTime_sec;
+      _eyeContactCriteria.timeOfLastEyeContact_sec = currentTime_sec;
       return true;
     }
-    else
+    else if (currentTime_sec - _eyeContactCriteria.timeOfLastEyeContact_sec <= _eyeContactCriteria.noEyeContactTimeout_sec)
     {
-      if (currentTime_sec - _stopCriteria.timeOfLastEyeContact_sec <= _stopCriteria.noEyeContactTimeout_sec)
-      {
-        return true;
-      }
+      return true;
     }
   }
   return false;
@@ -150,13 +147,11 @@ void TrackFaceAction::SetStopCriteriaWithEyeContactOverride(const f32 minTimeToT
                                                             const TimeStamp_t eyeContactWithinLast_ms)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
-  _stopCriteria.duration_sec = duration_sec;
-  _stopCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
-  _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
   const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _stopCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;
 
-  _stopCriteria.withinTolSince_sec = -1.f;
+  _eyeContactCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
+  _eyeContactCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
 }
   
 } // namespace Cozmo
