@@ -38,6 +38,8 @@ namespace {
 static const int kMaxPickUpAttempts = 2;
 static const int kMaxPutDownAttmepts = 2;
 
+static const char* kTurnToUserOnSuccessKey = "turnToUserOnSuccess";
+
 static const Vec3f kCubeRelChargerTargetPos = {20.f, 100.f, 0.f};
 }
 
@@ -45,6 +47,8 @@ static const Vec3f kCubeRelChargerTargetPos = {20.f, 100.f, 0.f};
 BehaviorPlaceCubeByCharger::InstanceConfig::InstanceConfig()
 : chargerFilter(std::make_unique<BlockWorldFilter>())
 , cubesFilter(std::make_unique<BlockWorldFilter>())
+, turnToUserBeforeSuccessReaction(false)
+, turnToUserAfterSuccessReaction(false)
 { 
   chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
@@ -64,14 +68,29 @@ BehaviorPlaceCubeByCharger::BehaviorPlaceCubeByCharger(const Json::Value& config
 : ICozmoBehavior(config)
 , _iConfig()
 {
+  std::string turnToUserString;
+  if(JsonTools::GetValueOptional(config, kTurnToUserOnSuccessKey, turnToUserString)){
+    if(turnToUserString == "BeforeReaction"){
+      _iConfig.turnToUserBeforeSuccessReaction = true;
+    }
+    else if(turnToUserString == "AfterReaction"){
+      _iConfig.turnToUserAfterSuccessReaction = true;
+    }
+    else{
+      PRINT_NAMED_ERROR("BehaviorPlaceCubeByCharger.InvalidJsonConfig",
+                        "'%s' not a valid selection for 'TurnToUserOnSuccess' use 'BeforeReaction' or 'AfterReaction'",
+                        turnToUserString.c_str());
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlaceCubeByCharger::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  // const char* list[] = {
-  // };
-  // expectedKeys.insert( std::begin(list), std::end(list) );
+  const char* list[] = {
+    kTurnToUserOnSuccessKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -120,7 +139,7 @@ void BehaviorPlaceCubeByCharger::BehaviorUpdate()
   if(PlaceCubeState::SearchForCharger == _dVars.state){
     if(RobotKnowsWhereChargerIs()){
       CancelDelegates(false);
-      TransitionToPlacingCubeByCharger();
+      TransitionToReactToCharger();
     }
   }
 }
@@ -156,10 +175,12 @@ void BehaviorPlaceCubeByCharger::AttemptToPickUpCube()
                           if (GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()) {
                             // Succeeded in picking up cube
                             if(!RobotKnowsWhereChargerIs()){
+                              PRINT_NAMED_INFO("BehaviorPlaceCubeByCharger.RobotDoesntKnowWhereChargerIs",
+                                              "No charger found yet, searching for charger");
                               TransitionToSearchForCharger();
                             }
                             else {
-                              TransitionToPlacingCubeByCharger();
+                              TransitionToConfirmCharger();
                             }
                           } 
                           else { 
@@ -177,6 +198,26 @@ void BehaviorPlaceCubeByCharger::AttemptToPickUpCube()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPlaceCubeByCharger::TransitionToConfirmCharger()
+{
+  SET_STATE(ConfirmCharger);
+  bool visuallyVerify = true;
+  TurnTowardsObjectAction* visualCheckAction = new TurnTowardsObjectAction(_dVars.chargerID,
+                                                                            Radians{M_PI_F},
+                                                                            visuallyVerify);
+  DelegateIfInControl(visualCheckAction,
+    [this](ActionResult result){
+      if(ActionResult::SUCCESS == result){
+        TransitionToReactToCharger();
+      }
+      else{
+        TransitionToSearchForCharger();
+      }
+    });
+
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlaceCubeByCharger::TransitionToSearchForCharger()
@@ -196,15 +237,20 @@ void BehaviorPlaceCubeByCharger::TransitionToSearchForCharger()
     new TurnInPlaceAction(DEG_TO_RAD(30.0f), isAbsolute)
   });
 
-  DelegateIfInControl(searchAction,
-                      [this](){
-                        if(RobotKnowsWhereChargerIs()){
-                          TransitionToPlacingCubeByCharger();
-                        }
-                        else{
-                          TransitionToPuttingCubeBack();
-                        }
-                      });
+  DelegateIfInControl(searchAction, &BehaviorPlaceCubeByCharger::TransitionToReactToCharger);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPlaceCubeByCharger::TransitionToReactToCharger()
+{
+  SET_STATE(ReactToCharger)
+  if(RobotKnowsWhereChargerIs()){
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlaceCubeByChargerReactToCharger),
+                        &BehaviorPlaceCubeByCharger::TransitionToPlacingCubeByCharger);
+  }
+  else{
+    TransitionToPuttingCubeBack();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -304,14 +350,20 @@ void BehaviorPlaceCubeByCharger::TransitionToGetOutSucceeded()
   // Turn to original cube pose
   auto turnToOldCubePoseCallback = [this]()
   {
-    if(_iConfig.turnToLastFaceBehavior->WantsToBeActivated()){
+    if(_iConfig.turnToUserBeforeSuccessReaction && _iConfig.turnToLastFaceBehavior->WantsToBeActivated()){
       DelegateIfInControl(_iConfig.turnToLastFaceBehavior.get(),
         [this](){
           DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlaceCubeByChargerSuccess));
         });
     }
     else{
-      DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlaceCubeByChargerSuccess));
+      DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlaceCubeByChargerSuccess),
+        [this](){
+          if(_iConfig.turnToUserAfterSuccessReaction && _iConfig.turnToLastFaceBehavior->WantsToBeActivated()){
+            DelegateIfInControl(_iConfig.turnToLastFaceBehavior.get());
+          }
+          // else let the behavior end do to non-delegation
+        });
     }
   };
   auto turnToOldCubePoseAction = new TurnTowardsPoseAction(_dVars.cubeStartPosition);
@@ -325,8 +377,6 @@ bool BehaviorPlaceCubeByCharger::RobotKnowsWhereChargerIs()
   const auto* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.chargerFilter);
 
   if (charger == nullptr) {
-    PRINT_NAMED_INFO("BehaviorPlaceCubeByCharger.RobotDoesntKnowWhereChargerIs",
-                     "No charger found yet, searching or exiting");
     return false;
   }
 

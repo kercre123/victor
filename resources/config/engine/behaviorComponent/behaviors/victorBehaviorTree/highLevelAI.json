@@ -62,8 +62,7 @@
     },
     {
       "name": "InvestigateHeldCube",
-      "behavior": "InvestigateHeldCube",
-      "getInBehavior": "InvestigateHeldCubeGetIn"
+      "behavior": "InvestigateHeldCube"
     },
     {
       "name": "Socializing",

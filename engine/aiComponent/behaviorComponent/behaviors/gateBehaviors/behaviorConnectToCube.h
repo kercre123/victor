@@ -32,8 +32,11 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     // Subscribe in OnActivated, unsubscribe in OnDeactivated
-    // NOTE: if specific timing of robot/cube animations is required, this will need to be reworked
     modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
+
+    // Connect in background so that we can delay light display until after "attempting" to connect. This allows
+    // much tighter alignment of connection anims and cube lights without the time cost of waiting to connect 
+    modifiers.connectToCubeInBackground = true;
     modifiers.ensuresCubeConnectionAtDelegation = true;
   };
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
@@ -79,6 +82,8 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     EState state;
+    bool connectedInBackground;
+    bool subscribedInteractable;
     bool connectedOnLastUpdate;
     bool connectionFailedOnLastUpdate;
   };

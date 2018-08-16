@@ -1,8 +1,0 @@
-{
-  "behaviorID": "InvestigateHeldCubeGetIn",
-  "behaviorClass": "AnimSequence",
-
-  "associatedActiveFeature": "NoFeature",
-
-  "animTriggers":["CubePounceGetIn"]
-}

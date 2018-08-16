@@ -65,6 +65,7 @@ private:
   {
     DoingInitialReaction,
     PickingUpCube,
+    DoingRetryReaction,
     DoingFinalReaction
   };
 
@@ -85,6 +86,7 @@ private:
   
   void TransitionToDoingInitialReaction();
   void TransitionToPickingUpCube();
+  void TransitionToRetryReaction();
   void TransitionToSuccessReaction();
 
 

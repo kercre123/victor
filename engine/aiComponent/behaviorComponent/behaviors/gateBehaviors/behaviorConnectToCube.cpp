@@ -43,6 +43,8 @@ BehaviorConnectToCube::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorConnectToCube::DynamicVariables::DynamicVariables()
   : state(EState::Connecting)
+  , connectedInBackground(false)
+  , subscribedInteractable(false)
   , connectedOnLastUpdate(false)
   , connectionFailedOnLastUpdate(false)
 {
@@ -117,6 +119,12 @@ void BehaviorConnectToCube::BehaviorUpdate()
   }
 
   if(EState::Connecting == _dVars.state){
+    // Only once we've started the connection process, check if we've achieved a background connection
+    if(_dVars.connectedInBackground && !_dVars.subscribedInteractable){
+      // Once we've got a connection, switch the subscription to foreground to enable lights
+      GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection(this);
+    }
+
     // Check in between each loop of the connecting animation so that we play at least one connection loop
     if(!IsControlDelegated()){
       if(_dVars.connectedOnLastUpdate){
@@ -138,6 +146,8 @@ void BehaviorConnectToCube::TransitionToConnecting()
   // TODO get appropriate animations
   // Loop the Connecting animation until we succeed or fail
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ConnectToCubeLoop));
+  // Convert our extant background connection to foreground
+  GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection(this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -211,7 +221,11 @@ void BehaviorConnectToCube::TransitionToConnectionLost()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorConnectToCube::ConnectedCallback(CubeConnectionType connectionType)
 {
-  if(CubeConnectionType::Interactable == connectionType){
+  if(CubeConnectionType::Background == connectionType){
+    _dVars.connectedInBackground = true;
+  }
+  else if(CubeConnectionType::Interactable == connectionType){
+    _dVars.connectedInBackground = false;
     _dVars.connectedOnLastUpdate = true;
   }
 }

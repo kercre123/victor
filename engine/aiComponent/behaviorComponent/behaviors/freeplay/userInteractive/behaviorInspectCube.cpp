@@ -15,6 +15,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/actions/trackObjectAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -44,7 +45,6 @@ static const char* kPlayWithCubeDelegateKey = "PlayWithCubeBehaviorID";
 // Internal Tunable params 
 static const float kSearchGetOutTimeout_s            = 5.0f;
 static const float kTrackingUnseenSearchTimeout_s    = 2.0f;
-static const float kTrackingMinTime_s                = 4.0f;
 static const float kTrackingNotHeldPlayTime_s        = 0.3f;
 static const float kBoredGetOutTimeout_s             = 30.0f;
 
@@ -70,7 +70,6 @@ BehaviorInspectCube::DynamicVariables::DynamicVariables(float startTime_s)
 : state(InspectCubeState::Init)
 , behaviorStartTime_s(startTime_s)
 , searchEndTime_s(0.0f)
-, trackingMinEndTime_s(0.0f)
 {
 }
 
@@ -118,7 +117,7 @@ bool BehaviorInspectCube::WantsToBeActivatedBehavior() const
 void BehaviorInspectCube::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = true;
-  modifiers.wantsToBeActivatedWhenOnCharger = false;
+  modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
 
@@ -132,6 +131,7 @@ void BehaviorInspectCube::GetBehaviorOperationModifiers(BehaviorOperationModifie
 void BehaviorInspectCube::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.keepawayBehavior.get());
+  delegates.insert(_iConfig.driveOffChargerBehavior.get());
   if(nullptr != _iConfig.playWithCubeBehavior){
     delegates.insert(_iConfig.playWithCubeBehavior.get());
   }
@@ -160,7 +160,7 @@ void BehaviorInspectCube::OnBehaviorActivated()
   }
 #endif
 
-  TransitionToSearching();
+  TransitionToGetIn();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,7 +201,7 @@ void BehaviorInspectCube::TransitionToGetIn()
 {
   SET_STATE(GetIn);
 
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubePounceGetIn),
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::InvestigateHeldCubeGetIn),
     [this](){
       const bool currOnCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
       const bool currOnChargerPlatform = GetBEI().GetRobotInfo().IsOnChargerPlatform();
@@ -290,9 +290,15 @@ void BehaviorInspectCube::TransitionToTracking()
   trackAction->SetClampSmallAnglesToTolerances(true);
   trackAction->SetClampSmallAnglesPeriod(kMinTrackingClampPeriod_s, kMaxTrackingClampPeriod_s);
 
+  auto* trackAnimAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::InvestigateHeldCubeTrackingLoop);
+
+  auto compoundAction = new CompoundActionParallel({
+    trackAction,
+    trackAnimAction
+  });
+
   // If the TrackObjectAction returns, it has lost its target. Go to searching
-  DelegateIfInControl(trackAction, &BehaviorInspectCube::TransitionToSearching); 
-  _dVars.trackingMinEndTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTrackingMinTime_s;
+  DelegateIfInControl(compoundAction, &BehaviorInspectCube::TransitionToSearching); 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -353,7 +359,10 @@ void BehaviorInspectCube::TransitionToPlayingWithCube()
   }
 
   if(_iConfig.playWithCubeBehavior->WantsToBeActivated()){
-    DelegateIfInControl(_iConfig.playWithCubeBehavior.get());
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::InvestigateHeldCubeOnSetDown),
+      [this](){
+        DelegateIfInControl(_iConfig.playWithCubeBehavior.get());
+      });
     PRINT_CH_INFO(kLogChannelName,
                   "BehaviorInspectCube.DelegatingToPlayWithCubeBehavior", "");
   }
@@ -369,7 +378,7 @@ void BehaviorInspectCube::TransitionToGetOutBored()
 {
   SET_STATE(GetOutBored);
   CancelDelegates(false);
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubePounceGetOutBored));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::InvestigateHeldCubeGetOutBored));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -382,7 +391,7 @@ void BehaviorInspectCube::TransitionToGetOutTargetLost()
                 "BehaviorInspectCube.TargetLost", 
                 "CubeInteractionTracker Reported target as invalid, exiting");
   // TODO:(str) replace this with a "Where'd ma cube get off to?" anim
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubePounceGetOutBored));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::InvestigateHeldCubeGetOutCubeLost));
 }
 
 }

@@ -544,6 +544,26 @@
     "AnimName": "ag_gotosleep_sleeping"
   },
   {
+    "CladEvent": "InvestigateHeldCubeGetIn",
+    "AnimName": "ag_inspectheldcube_getin"
+  },
+  {
+    "CladEvent": "InvestigateHeldCubeGetOutBored",
+    "AnimName": "ag_inspectheldcube_timeout"
+  },
+  {
+    "CladEvent": "InvestigateHeldCubeGetOutCubeLost",
+    "AnimName": "ag_inspectheldcube_cubemissing"
+  },
+  {
+    "CladEvent": "InvestigateHeldCubeOnSetDown",
+    "AnimName": "ag_inspectheldcube_cubeonground"
+  },
+  {
+    "CladEvent": "InvestigateHeldCubeTrackingLoop",
+    "AnimName": "ag_inspectheldcube_loop"
+  },
+  {
     "CladEvent": "ICantDoThat",
     "AnimName": "ag_generic_cantdothat"
   },
@@ -781,15 +801,27 @@
   },
   {
     "CladEvent":"PickupCubePreperation",
-    "AnimName": "ag_reacttoblock_react_short"
+    "AnimName": "ag_rollcube_initial"
+  },
+  {
+    "CladEvent":"PickupCubeRetry",
+    "AnimName": "ag_rollcube_retry"
+  },
+  {
+    "CladEvent":"PickupCubeSuccess",
+    "AnimName": "ag_pickupcube_success"
   },
   {
     "CladEvent":"PlaceCubeByChargerFail",
-    "AnimName": "ag_pounceonmotionfail"
+    "AnimName": "ag_reacttoblock_dropfail"
+  },
+  {
+    "CladEvent":"PlaceCubeByChargerReactToCharger",
+    "AnimName": "ag_reacttoblock_reacttocharger"
   },
   {
     "CladEvent":"PlaceCubeByChargerSuccess",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_reacttoblock_dropsuccess"
   },
   {
     "CladEvent": "PlanningGetIn",
@@ -842,10 +874,6 @@
   {
     "CladEvent": "PutDownBlockPutDown",
     "AnimName": "ag_putdownblock"
-  },
-  {
-    "CladEvent": "ReactToBlockPickupSuccess",
-    "AnimName": "ag_pickupcube_success"
   },
   {
     "CladEvent": "ReactToCliff",

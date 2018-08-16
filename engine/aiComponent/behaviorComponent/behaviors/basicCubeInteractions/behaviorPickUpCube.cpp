@@ -154,7 +154,12 @@ void BehaviorPickUpCube::TransitionToPickingUpCube()
     }else if((IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY) &&
              (_dVars.pickupRetryCount < _iConfig.pickupRetryCount)){
       _dVars.pickupRetryCount++;
-      TransitionToPickingUpCube();
+      if(!ShouldStreamline()){
+        TransitionToRetryReaction();
+      }
+      else{
+        TransitionToPickingUpCube();
+      }
     }else{
       auto& blockWorld = GetBEI().GetBlockWorld();
       const ObservableObject* pickupObj = blockWorld.GetLocatedObjectByID(_dVars.targetBlockID);
@@ -167,13 +172,21 @@ void BehaviorPickUpCube::TransitionToPickingUpCube()
   });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPickUpCube::TransitionToRetryReaction()
+{
+  DEBUG_SET_STATE(DoingRetryReaction);
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PickupCubeRetry),
+                      &BehaviorPickUpCube::TransitionToPickingUpCube);
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToSuccessReaction()
 {
   if(!ShouldStreamline()){
     DEBUG_SET_STATE(DoingFinalReaction);
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToBlockPickupSuccess));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PickupCubeSuccess));
   }
 }
 

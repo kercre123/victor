@@ -154,6 +154,12 @@ enum int_32 AnimationTrigger
   InteractWithFacesInitialNamed,
   InteractWithFacesInitialUnnamed,
 
+  InvestigateHeldCubeGetIn,
+  InvestigateHeldCubeGetOutBored,
+  InvestigateHeldCubeGetOutCubeLost,
+  InvestigateHeldCubeOnSetDown,
+  InvestigateHeldCubeTrackingLoop,
+
   KnowledgeGraphGetIn,
   KnowledgeGraphListening,
   KnowledgeGraphSearchingGetIn,
@@ -238,11 +244,14 @@ enum int_32 AnimationTrigger
   PettingBlissLoop,
   PettingBlissGetout,
   PickupCubePreperation,
+  PickupCubeRetry,
+  PickupCubeSuccess,
   PokeObjectGetIn,
   PokeObjectDriveLoop,
   PokeObjectGetOut,
   
   PlaceCubeByChargerFail,
+  PlaceCubeByChargerReactToCharger,
   PlaceCubeByChargerSuccess,
   
   PlanningGetIn,
@@ -263,7 +272,6 @@ enum int_32 AnimationTrigger
 
   PutDownBlockKeepAlive,
   PutDownBlockPutDown,
-  ReactToBlockPickupSuccess,
   ReactToCliff,
   ReactToCliffBack,
   ReactToCliffBackLeft,

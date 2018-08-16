@@ -51,7 +51,9 @@ private:
 
   enum class PlaceCubeState{
     PickUpCube,
+    ConfirmCharger,
     SearchForCharger,
+    ReactToCharger,
     PlaceCubeByCharger,
     PutCubeBack,
     GetOutSuccess,
@@ -64,6 +66,8 @@ private:
     std::shared_ptr<ICozmoBehavior>     turnToLastFaceBehavior;
     std::unique_ptr<BlockWorldFilter>   chargerFilter;
     std::unique_ptr<BlockWorldFilter>   cubesFilter;
+    bool turnToUserBeforeSuccessReaction;
+    bool turnToUserAfterSuccessReaction;
   };
 
   struct DynamicVariables {
@@ -77,7 +81,9 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
+  void TransitionToConfirmCharger();
   void TransitionToSearchForCharger();
+  void TransitionToReactToCharger();
   void TransitionToPickUpCube();
   void TransitionToPlacingCubeByCharger();
   void TransitionToPuttingCubeBack();

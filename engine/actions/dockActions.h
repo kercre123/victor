@@ -259,7 +259,7 @@ namespace Anki {
       u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       f32                        _preDockPoseDistOffsetX_mm      = 0;
-      bool                       _checkForObjectOnTopOf          = true;
+      bool                       _checkForObjectOnTopOf          = false;
       bool                       _doLiftLoadCheck                = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
       bool                       _firstTurnTowardsObject         = true;

@@ -86,7 +86,6 @@ private:
     InspectCubeState state; 
     float            behaviorStartTime_s;
     float            searchEndTime_s;
-    float            trackingMinEndTime_s;
   };
 
   InstanceConfig _iConfig;
