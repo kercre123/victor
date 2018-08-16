@@ -92,6 +92,30 @@ void PrintWallTimeToLog(ConsoleFunctionContextRef context)
   }
 
 }
+
+static int sFakeWallTime = -1;
+
+void SetFakeWallTime24HourUTC(ConsoleFunctionContextRef context)
+{
+  int time = ConsoleArg_Get_Int32(context, "fakeTime");
+  if( time >= 0 &&
+      time < 2400 &&
+      time % 100 < 60 ) {
+    sFakeWallTime = time;
+  }
+  else {
+    PRINT_NAMED_WARNING("WallTime.SetFakeWallTime.InvalidTime",
+                        "time %d is invalid, set in 24 hour format in UTC (e.g. 1830)",
+                        time);
+  }
+}
+
+void ClearFakeWallTime(ConsoleFunctionContextRef context)
+{
+  sFakeWallTime = -1;
+}
+
+
 #endif // REMOTE_CONSOLE_ENABLED
 
 }
@@ -100,6 +124,8 @@ void PrintWallTimeToLog(ConsoleFunctionContextRef context)
 
 CONSOLE_FUNC( PrintWallTimeToLog, CONSOLE_GROUP );
 CONSOLE_VAR(bool, kFakeWallTimeIsSynced, CONSOLE_GROUP, false);
+CONSOLE_FUNC( SetFakeWallTime24HourUTC, CONSOLE_GROUP, int fakeTime );
+CONSOLE_FUNC( ClearFakeWallTime, CONSOLE_GROUP );
 
 WallTime::WallTime()
 {
@@ -180,6 +206,20 @@ WallTime::TimePoint_t WallTime::GetEpochTime()
 
 WallTime::TimePoint_t WallTime::GetApproximateTime()
 {
+
+#if REMOTE_CONSOLE_ENABLED
+  if( sFakeWallTime >= 0 ) {
+
+    int hours = sFakeWallTime / 100;
+    int minutes = sFakeWallTime % 100;
+    
+    TimePoint_t ret = GetEpochTime();
+    ret += std::chrono::hours(hours);
+    ret += std::chrono::minutes(minutes);
+    return ret;
+  }
+#endif
+  
   return std::chrono::system_clock::now();
 }
 
