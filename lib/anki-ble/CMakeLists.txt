@@ -27,6 +27,7 @@ PUBLIC
 target_compile_definitions(anki-ble
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
+  USE_ANDROID_LOGGING=1
 )
 
 target_include_directories(anki-ble

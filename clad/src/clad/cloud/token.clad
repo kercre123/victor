@@ -10,12 +10,12 @@ enum uint_8 TokenError {
 }
 
 structure AuthRequest {
-	string sessionToken
+	string[uint_16] sessionToken
 }
 
 structure AuthResponse {
-	string appToken,
-	string jwtToken,
+	string[uint_16] appToken,
+	string[uint_16] jwtToken,
 	TokenError error
 }
 
@@ -29,7 +29,7 @@ structure JwtRequest {
 }
 
 structure JwtResponse {
-	string jwtToken,
+	string[uint_16] jwtToken,
 	TokenError error
 }
 

@@ -34,6 +34,7 @@ private:
   std::queue<Anki::Vector::ExternalComms::RtsConnection_3> _queue;
   RtsComms* _securePairing;
   KeyExchange* _keyExchange;
+  bool _reconnect = false;
 
   //
   int ClientEncrypt(uint8_t* buffer, int length, uint8_t* output, uint64_t* outputLength);

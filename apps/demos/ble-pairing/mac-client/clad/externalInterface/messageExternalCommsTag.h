@@ -83,15 +83,6 @@ enum class RtsConnection_3Tag : uint8_t {
 
 const char* RtsConnection_3TagToString(const RtsConnection_3Tag tag);
 
-enum class RtsConnectionTag : uint8_t {
-  Error           = 0x0, // 0
-  RtsConnection_2 = 0x2, // 2
-  RtsConnection_3 = 0x3, // 3
-  INVALID         = 255
-};
-
-const char* RtsConnectionTagToString(const RtsConnectionTag tag);
-
 enum class RtsConnection_1Tag : uint8_t {
   Error                      = 0x0,  // 0
   RtsConnRequest             = 0x1,  // 1
@@ -121,96 +112,19 @@ enum class RtsConnection_1Tag : uint8_t {
 
 const char* RtsConnection_1TagToString(const RtsConnection_1Tag tag);
 
-enum class AppGeneralTag : uint8_t {
-  Error               = 0x0, // 0
-  RobotStatusRequest  = 0x1, // 1
-  RobotStatusResponse = 0x2, // 2
-  INVALID             = 255
+enum class RtsConnectionTag : uint8_t {
+  Error           = 0x0, // 0
+  RtsConnection_2 = 0x2, // 2
+  RtsConnection_3 = 0x3, // 3
+  INVALID         = 255
 };
 
-const char* AppGeneralTagToString(const AppGeneralTag tag);
-
-enum class MeetVictorTag : uint8_t {
-  Error                      = 0x0, // 0
-  AppIntent                  = 0x1, // 1
-  MeetVictorStarted          = 0x2, // 2
-  MeetVictorFaceScanStarted  = 0x3, // 3
-  MeetVictorFaceScanComplete = 0x4, // 4
-  FaceEnrollmentCompleted    = 0x5, // 5
-  CancelFaceEnrollment       = 0x6, // 6
-  RequestEnrolledNames       = 0x7, // 7
-  EnrolledNamesResponse      = 0x8, // 8
-  UpdateEnrolledFaceByID     = 0x9, // 9
-  EraseEnrolledFaceByID      = 0xa, // 10
-  EraseAllEnrolledFaces      = 0xb, // 11
-  SetFaceToEnroll            = 0xc, // 12
-  INVALID                    = 255
-};
-
-const char* MeetVictorTagToString(const MeetVictorTag tag);
-
-enum class MotorControlTag : uint8_t {
-  Error       = 0x0, // 0
-  DriveWheels = 0x1, // 1
-  DriveArc    = 0x2, // 2
-  MoveHead    = 0x3, // 3
-  MoveLift    = 0x4, // 4
-  INVALID     = 255
-};
-
-const char* MotorControlTagToString(const MotorControlTag tag);
-
-enum class AnimationsTag : uint8_t {
-  PlayAnimation              = 0x0, // 0
-  RequestAvailableAnimations = 0x1, // 1
-  SayText                    = 0x2, // 2
-  AnimationAvailable         = 0x3, // 3
-  TransferFile               = 0x4, // 4
-  INVALID                    = 255
-};
-
-const char* AnimationsTagToString(const AnimationsTag tag);
-
-enum class MovementActionTag : uint8_t {
-  Error                   = 0x0, // 0
-  DriveOffChargerContacts = 0x1, // 1
-  DriveStraight           = 0x2, // 2
-  TurnInPlace             = 0x3, // 3
-  SetHeadAngle            = 0x4, // 4
-  SetLiftHeight           = 0x5, // 5
-  INVALID                 = 255
-};
-
-const char* MovementActionTagToString(const MovementActionTag tag);
-
-enum class VictorDisplayTag : uint8_t {
-  Error               = 0x0, // 0
-  SetBackpackLEDs     = 0x1, // 1
-  DisplayFaceImageRGB = 0x2, // 2
-  INVALID             = 255
-};
-
-const char* VictorDisplayTagToString(const VictorDisplayTag tag);
-
-enum class CubesTag : uint8_t {
-  Error                  = 0x0, // 0
-  SetAllActiveObjectLEDs = 0x1, // 1
-  INVALID                = 255
-};
-
-const char* CubesTagToString(const CubesTag tag);
+const char* RtsConnectionTagToString(const RtsConnectionTag tag);
 
 enum class ExternalCommsTag : uint8_t {
   Error           = 0x0, // 0
   RtsConnection_1 = 0x1, // 1
   RtsConnection   = 0x4, // 4
-  AppGeneral      = 0x2, // 2
-  MeetVictor      = 0x3, // 3
-  MotorControl    = 0x5, // 5
-  MovementAction  = 0x6, // 6
-  Animations      = 0x7, // 7
-  VictorDisplay   = 0x8, // 8
-  Cubes           = 0x9, // 9
   INVALID         = 255
 };
 
@@ -241,15 +155,6 @@ struct std::hash<Anki::Vector::ExternalComms::RtsConnection_3Tag>
 };
 
 template<>
-struct std::hash<Anki::Vector::ExternalComms::RtsConnectionTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::RtsConnectionTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnectionTag>::type>(t);
-  }
-};
-
-template<>
 struct std::hash<Anki::Vector::ExternalComms::RtsConnection_1Tag>
 {
   size_t operator()(Anki::Vector::ExternalComms::RtsConnection_1Tag t) const
@@ -259,65 +164,11 @@ struct std::hash<Anki::Vector::ExternalComms::RtsConnection_1Tag>
 };
 
 template<>
-struct std::hash<Anki::Vector::ExternalComms::AppGeneralTag>
+struct std::hash<Anki::Vector::ExternalComms::RtsConnectionTag>
 {
-  size_t operator()(Anki::Vector::ExternalComms::AppGeneralTag t) const
+  size_t operator()(Anki::Vector::ExternalComms::RtsConnectionTag t) const
   {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::AppGeneralTag>::type>(t);
-  }
-};
-
-template<>
-struct std::hash<Anki::Vector::ExternalComms::MeetVictorTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::MeetVictorTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::MeetVictorTag>::type>(t);
-  }
-};
-
-template<>
-struct std::hash<Anki::Vector::ExternalComms::MotorControlTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::MotorControlTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::MotorControlTag>::type>(t);
-  }
-};
-
-template<>
-struct std::hash<Anki::Vector::ExternalComms::AnimationsTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::AnimationsTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::AnimationsTag>::type>(t);
-  }
-};
-
-template<>
-struct std::hash<Anki::Vector::ExternalComms::MovementActionTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::MovementActionTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::MovementActionTag>::type>(t);
-  }
-};
-
-template<>
-struct std::hash<Anki::Vector::ExternalComms::VictorDisplayTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::VictorDisplayTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::VictorDisplayTag>::type>(t);
-  }
-};
-
-template<>
-struct std::hash<Anki::Vector::ExternalComms::CubesTag>
-{
-  size_t operator()(Anki::Vector::ExternalComms::CubesTag t) const
-  {
-    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::CubesTag>::type>(t);
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnectionTag>::type>(t);
   }
 };
 

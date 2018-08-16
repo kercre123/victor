@@ -24,6 +24,11 @@
 // Define this to enable logs
 #define LOG_CHANNEL                    "LocalUdpClient"
 
+#ifdef VICOS
+// todo: restore logging when vicos toolchain is available -PRA (approved by BRC)
+#undef LOG_CHANNEL
+#endif
+
 #ifdef  LOG_CHANNEL
 #define LOG_ERROR(name, format, ...)   CORETECH_LOG_ERROR(name, format, ##__VA_ARGS__)
 #define LOG_WARNING(name, format, ...) CORETECH_LOG_WARNING(name, format, ##__VA_ARGS__)

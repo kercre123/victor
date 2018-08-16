@@ -10,7 +10,8 @@ _state(MessageState::TestRaw),
 _handShake(false),
 _connected(false),
 _securePairing(nullptr),
-_keyExchange(nullptr) {
+_keyExchange(nullptr),
+_reconnect(false) {
   _cladHandler = new CladHandlerV3();
   _cladHandler->OnReceiveRtsMessage().SubscribeForever(std::bind(&Test_INetworkStreamV3::ReceiveMessage, this, std::placeholders::_1));
 }
@@ -88,16 +89,30 @@ void Test_INetworkStreamV3::Update() {
       case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsConnRequest: {
         Anki::Vector::ExternalComms::RtsConnRequest m = msg.Get_RtsConnRequest();
         const uint8_t pinDigits = 6;
-        _keyExchange = new KeyExchange(pinDigits);
+        if(!_reconnect) {
+          _keyExchange = new KeyExchange(pinDigits);
+        }
         _keyExchange->SetRemotePublicKey((const uint8_t*)m.publicKey.begin());
-        uint8_t* publicKeyPtr = _keyExchange->GenerateKeys();
+        uint8_t* publicKeyPtr;
+        
+        if(_reconnect) {
+          publicKeyPtr = _keyExchange->GetPublicKey();
+        } else {
+          publicKeyPtr = _keyExchange->GenerateKeys();
+        }
+      
         std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKey;
         std::copy(publicKeyPtr, 
                   publicKeyPtr + crypto_kx_PUBLICKEYBYTES, 
                   publicKey.begin());
 
-        SendRtsMessage<Vector::ExternalComms::RtsConnResponse>
-          (Vector::ExternalComms::RtsConnType::FirstTimePair, publicKey);
+        if(_reconnect) {
+          SendRtsMessage<Vector::ExternalComms::RtsConnResponse>
+            (Cozmo::ExternalComms::RtsConnType::Reconnection, publicKey);
+        } else {
+          SendRtsMessage<Vector::ExternalComms::RtsConnResponse>
+            (Cozmo::ExternalComms::RtsConnType::FirstTimePair, publicKey);
+        }
         break;
       }
       case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsNonceMessage: {
@@ -113,13 +128,15 @@ void Test_INetworkStreamV3::Update() {
                   m.toDeviceNonce.end(), 
                   _DecryptNonce);
 
-        std::copy(_keyExchange->GetEncryptKey(), 
-                  _keyExchange->GetEncryptKey() + crypto_kx_SESSIONKEYBYTES, 
-                  _EncryptKey);
+        if(!_reconnect) {
+          std::copy(_keyExchange->GetEncryptKey(), 
+                    _keyExchange->GetEncryptKey() + crypto_kx_SESSIONKEYBYTES, 
+                    _EncryptKey);
 
-        std::copy(_keyExchange->GetDecryptKey(), 
-                  _keyExchange->GetDecryptKey() + crypto_kx_SESSIONKEYBYTES, 
-                  _DecryptKey);
+          std::copy(_keyExchange->GetDecryptKey(), 
+                    _keyExchange->GetDecryptKey() + crypto_kx_SESSIONKEYBYTES, 
+                    _DecryptKey);
+        }
 
         SendRtsMessage<Vector::ExternalComms::RtsAck>
           ((uint8_t)Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsNonceMessage);
@@ -135,12 +152,31 @@ void Test_INetworkStreamV3::Update() {
         break;
       }
       case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsChallengeSuccessMessage: {
+        if(_reconnect) {
+          Log::Write("Reconnection worked!");
+        }
         _connected = true;
         break;
       }
       default:
         break;
     }
+  }
+
+  if(_connected && !_reconnect) {
+    _state = MessageState::TestRaw;
+    _handShake = true;
+    _reconnect = true;
+    delete _securePairing;
+    _securePairing = new RtsComms(
+      this,                 // 
+      ev_default_loop(0),   // ev loop
+      nullptr,              // engineClient (don't need--only for updating face)
+      nullptr,              // tokenClient
+      false,                // is pairing
+      false,                // is ota-ing
+      false);               // has cloud owner
+    _securePairing->BeginPairing();
   }
 }
 

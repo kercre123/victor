@@ -26,12 +26,16 @@ long long RtsHandlerV2::sTimeStarted;
 RtsHandlerV2::RtsHandlerV2(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<TokenClient> tokenClient,
+    std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
-    bool isOtaUpdating) :
-IRtsHandler(isPairing, isOtaUpdating),
+    bool isOtaUpdating,
+    bool hasOwner) :
+IRtsHandler(isPairing, isOtaUpdating, hasOwner, tokenClient),
 _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
+_taskExecutor(taskExecutor),
 _pin(""),
 _challengeAttempts(0),
 _numPinDigits(0),
@@ -64,9 +68,6 @@ _wifiConnectTimeout_s(15)
   // Initialize the message handler
   _cladHandler = std::make_unique<ExternalCommsCladHandlerV2>();
   SubscribeToCladMessages();
-
-  // Initialize the task executor
-  _taskExecutor = std::make_unique<TaskExecutor>(_loop);
 
   // Initialize ev timer
   _handleInternet.signal = &_internetTimerSignal;
@@ -150,7 +151,23 @@ void RtsHandlerV2::HandleRtsConnResponse(const Anki::Vector::ExternalComms::RtsC
     Anki::Vector::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
 
     if(connResponse.connectionType == Anki::Vector::ExternalComms::RtsConnType::FirstTimePair) {
-      if(_isPairing && !_isOtaUpdating) {
+      bool cloudAuth = false;
+
+      #ifdef ANKI_SWITCHBOARD_CLOUD_AUTH
+      cloudAuth = true;
+      #endif
+
+      if(_hasOwner && cloudAuth) {
+        //
+        // Because RTSv3 requires cloud authorization if there is already an owner,
+        // and because RTSv2 does not support that functionality, we must require all
+        // initial pairs to be done with RTSv3+ if the robot already has a cloud account
+        // owner.
+        //
+        Log::Write("Client tried to initial pair with V2 of protocol. Disconnecting.");
+        Reset(true);
+      }
+      else if(_isPairing && !_isOtaUpdating) {
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
         _state = RtsPairingPhase::AwaitingNonceAck;
       } else {

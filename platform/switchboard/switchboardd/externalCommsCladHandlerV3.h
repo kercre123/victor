@@ -75,6 +75,10 @@ namespace Switchboard {
       return _receiveRtsForceDisconnect;
     }
 
+    RtsConnectionSignal& OnReceiveRtsCloudSessionRequest() {
+      return _receiveRtsCloudSessionRequest;
+    }
+
     // RtsSsh
     RtsConnectionSignal& OnReceiveRtsSsh() {
       return _DEV_ReceiveSshKey;
@@ -88,10 +92,15 @@ namespace Switchboard {
     Anki::Vector::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
       Anki::Vector::ExternalComms::ExternalComms extComms;
 
+      if(length == 5 && buffer[0] == 1) {
+        // for now, just ignore handshake
+        return extComms;
+      }
+
       const size_t unpackSize = extComms.Unpack(buffer, length);
       if(unpackSize != length) {
         // bugs
-        Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
+        Log::Write("externalCommsCladHandler - Somehow our bytes didn't unpack to the proper size.");
       }
       
       if(extComms.GetTag() == Anki::Vector::ExternalComms::ExternalCommsTag::RtsConnection) {
@@ -158,6 +167,10 @@ namespace Switchboard {
             _receiveRtsForceDisconnect.emit(rtsMsg);
             break;
           }
+          case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsCloudSessionRequest: {
+            _receiveRtsCloudSessionRequest.emit(rtsMsg);
+            break;
+          }
           // RtsSsh
           case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsSshRequest: {
             // only handle ssh message in debug build
@@ -201,6 +214,7 @@ namespace Switchboard {
       RtsConnectionSignal _receiveRtsOtaCancelRequest;
       RtsConnectionSignal _receiveRtsLogRequest;
       RtsConnectionSignal _receiveRtsForceDisconnect;
+      RtsConnectionSignal _receiveRtsCloudSessionRequest;
 
       // RtsSsh 
       RtsConnectionSignal _DEV_ReceiveSshKey;

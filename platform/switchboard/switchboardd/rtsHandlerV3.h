@@ -14,6 +14,7 @@
 
 #include "switchboardd/IRtsHandler.h"
 #include "switchboardd/engineMessagingClient.h"
+#include "switchboardd/tokenClient.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/externalCommsCladHandlerV3.h"
@@ -27,8 +28,11 @@ public:
   RtsHandlerV3(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<TokenClient> tokenClient,
+    std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
-    bool isOtaUpdating);
+    bool isOtaUpdating,
+    bool hasOwner);
 
   ~RtsHandlerV3();
 
@@ -56,6 +60,8 @@ private:
   static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 
   void Reset(bool forced=false);
+  void SaveSessionKeys();
+  bool IsAuthenticated();
 
   void SendPublicKey();
   void SendNonce();
@@ -76,6 +82,9 @@ private:
   void HandleInternetTimerTick();
   void HandleOtaRequest();
   void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
+  void HandleCloudSessionAuthResponse(Anki::Vector::TokenError error, std::string appToken, std::string jwtToken);
+
+  void ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken);
 
   void IncrementAbnormalityCount();
   void IncrementChallengeCount();
@@ -86,8 +95,9 @@ private:
   INetworkStream* _stream;
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
-  std::unique_ptr<TaskExecutor> _taskExecutor;
+  std::shared_ptr<TaskExecutor> _taskExecutor;
   std::unique_ptr<ExternalCommsCladHandlerV3> _cladHandler;
+  std::vector<std::weak_ptr<TokenResponseHandle>> _tokenClientHandles;
 
   const uint8_t kMaxMatchAttempts = 5;
   const uint8_t kMaxPairingAttempts = 3;
@@ -105,6 +115,11 @@ private:
   uint32_t _abnormalityCount;
   uint8_t _inetTimerCount;
   uint8_t _wifiConnectTimeout_s;
+
+  bool _isFirstTimePair = false;
+  bool _hasCloudAuthed = false;
+  bool _sessionReadyToSave = false;
+  RtsClientData _clientSession;
 
   Signal::SmartHandle _onReceivePlainTextHandle;
   Signal::SmartHandle _onReceiveEncryptedHandle;
@@ -164,6 +179,9 @@ private:
 
   Signal::SmartHandle _rtsLogRequestHandle;
   void HandleRtsLogRequest(const Vector::ExternalComms::RtsConnection_3& msg);
+
+  Signal::SmartHandle _rtsCloudSessionHandle;
+  void HandleRtsCloudSessionRequest(const Vector::ExternalComms::RtsConnection_3& msg);
 
   Signal::SmartHandle _rtsForceDisconnectHandle;
   void HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConnection_3& msg);

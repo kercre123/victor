@@ -84,6 +84,11 @@ namespace Switchboard {
     Anki::Vector::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
       Anki::Vector::ExternalComms::ExternalComms extComms;
 
+      if(length == 5 && buffer[0] == 1) {
+        // for now, just ignore handshake
+        return extComms;
+      }
+
       const size_t unpackSize = extComms.Unpack(buffer, length);
       if(unpackSize != length) {
         // bugs

@@ -16,6 +16,7 @@
 #include "ev++.h"
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/engineMessagingClient.h"
+#include "switchboardd/tokenClient.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/IRtsHandler.h"
 #include "switchboardd/taskExecutor.h"
@@ -29,8 +30,11 @@ public:
   RtsComms(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<TokenClient> tokenClient,
+    std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
-    bool isOtaUpdating);
+    bool isOtaUpdating,
+    bool hasCloudOwner);
 
   ~RtsComms();
 
@@ -48,6 +52,7 @@ public:
   void ForceDisconnect();
   void SetIsPairing(bool pairing);
   void SetOtaUpdating(bool updating);
+  void SetHasOwner(bool hasOwner);
   void SendOtaProgress(int32_t status, uint64_t progress, uint64_t expectedTotal);
   std::string GetPin() { return _pin; }
 
@@ -77,8 +82,11 @@ private:
   INetworkStream* _stream;
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
+  std::shared_ptr<TokenClient> _tokenClient;
+  std::shared_ptr<TaskExecutor> _taskExecutor;
   bool _isPairing = false;
   bool _isOtaUpdating = false;
+  bool _hasCloudOwner = false;
   uint8_t _totalPairingAttempts;
 
   StringSignal _updatedPinSignal;
@@ -105,7 +113,6 @@ private:
   IRtsHandler* _rtsHandler;
   uint32_t _rtsVersion;
   RtsPairingPhase _state = RtsPairingPhase::Initial;
-  std::unique_ptr<TaskExecutor> _taskExecutor;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Static methods

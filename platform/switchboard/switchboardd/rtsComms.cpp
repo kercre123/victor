@@ -20,14 +20,20 @@ namespace Switchboard {
 RtsComms::RtsComms(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<TokenClient> tokenClient,
+    std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
-    bool isOtaUpdating) :
+    bool isOtaUpdating,
+    bool hasCloudOwner) :
 _pin(""),
 _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
+_tokenClient(tokenClient),
+_taskExecutor(taskExecutor),
 _isPairing(isPairing),
 _isOtaUpdating(isOtaUpdating),
+_hasCloudOwner(hasCloudOwner),
 _totalPairingAttempts(0),
 _rtsHandler(nullptr),
 _rtsVersion(0)
@@ -41,9 +47,6 @@ _rtsVersion(0)
   _onPairingTimeoutReceived = _pairingTimeoutSignal.ScopedSubscribe(std::bind(&RtsComms::HandleTimeout, this));
   _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
   ev_timer_init(&_handleTimeoutTimer.timer, &RtsComms::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
-
-  // Initialize the task executor
-  _taskExecutor = std::make_unique<TaskExecutor>(_loop);
 }
 
 RtsComms::~RtsComms() {
@@ -53,6 +56,8 @@ RtsComms::~RtsComms() {
   }
 
   ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+
+  Log::Write("Destroying RTS Comms");
 }
 
 void RtsComms::BeginPairing() {  
@@ -108,6 +113,14 @@ void RtsComms::SetOtaUpdating(bool updating) {
   }
 }
 
+void RtsComms::SetHasOwner(bool hasOwner) { 
+  _hasCloudOwner = hasOwner; 
+
+  if(_rtsHandler) {
+    _rtsHandler->SetHasOwner(_hasCloudOwner);
+  }
+}
+
 void RtsComms::SendHandshake() {
   if(_state != RtsPairingPhase::Initial) {
     return;
@@ -154,13 +167,20 @@ void RtsComms::UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus s
 }
 
 void RtsComms::HandleReset(bool forced) {
-  // [see: VIC-4306]
-  // This "Wake" was added because deleting `IRtsHandler` object 
-  // in scope of its own execution was causing a memory corruption, 
-  // although the root cause was never discovered.
-  // VIC-4306 is a ticket to track the actual discovering and 
-  // fixing of the root cause.
-  _taskExecutor->Wake([this, forced]() {    
+  //
+  // Reviewing the logic and order of events, there should
+  // be no need for Wake() (or even WakeSync()). In fact, adding
+  // "Wake" caused a race condition that would 99% of the time lead
+  // to corruption of memory.
+  // 
+  // old:
+  //  [see: VIC-4306]
+  //  This "Wake" was added because deleting `IRtsHandler` object 
+  //  in scope of its own execution was causing a memory corruption, 
+  //  although the root cause was never discovered.
+  //  VIC-4306 is a ticket to track the actual discovering and 
+  //  fixing of the root cause.
+  _taskExecutor->WakeSync([this, forced]() {    
     _state = RtsPairingPhase::Initial;
 
     // Put us back in initial state
@@ -229,8 +249,11 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
               _rtsHandler = (IRtsHandler*)new RtsHandlerV3(_stream, 
                               _loop,
                               _engineClient,
+                              _tokenClient,
+                              _taskExecutor,
                               _isPairing,
-                              _isOtaUpdating);
+                              _isOtaUpdating,
+                              _hasCloudOwner);
 
               RtsHandlerV3* _v3 = static_cast<RtsHandlerV3*>(_rtsHandler);
               _pinHandle = _v3->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
@@ -255,8 +278,11 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
               _rtsHandler = (IRtsHandler*)new RtsHandlerV2(_stream, 
                               _loop,
                               _engineClient,
+                              _tokenClient,
+                              _taskExecutor,
                               _isPairing,
-                              _isOtaUpdating);
+                              _isOtaUpdating,
+                              _hasCloudOwner);
 
               RtsHandlerV2* _v2 = static_cast<RtsHandlerV2*>(_rtsHandler);
               _pinHandle = _v2->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){

@@ -27,8 +27,11 @@ public:
   RtsHandlerV2(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<TokenClient> tokenClient,
+    std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
-    bool isOtaUpdating);
+    bool isOtaUpdating,
+    bool hasOwner);
 
   ~RtsHandlerV2();
 
@@ -86,7 +89,7 @@ private:
   INetworkStream* _stream;
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
-  std::unique_ptr<TaskExecutor> _taskExecutor;
+  std::shared_ptr<TaskExecutor> _taskExecutor;
   std::unique_ptr<ExternalCommsCladHandlerV2> _cladHandler;
 
   const uint8_t kMaxMatchAttempts = 5;

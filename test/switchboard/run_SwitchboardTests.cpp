@@ -259,6 +259,8 @@ bool Test_ChristenNameGeneration() {
 }
 
 bool Test_SecurePairing() {
+  RtsKeys oldKeys = SavedSessionManager::LoadRtsKeys();
+
   // Create objects for testing
   Test_INetworkStream* netStream = new Test_INetworkStream();
 
@@ -266,8 +268,10 @@ bool Test_SecurePairing() {
     netStream,            // 
     ev_default_loop(0),   // ev loop
     nullptr,              // engineClient (don't need--only for updating face)
+    nullptr,              // tokenClient
     false,                // is pairing
-    false);               // is ota-ing
+    false,                // is ota-ing
+    false);               // has cloud owner
 
   // Start Test loop
   // Right now this tests will just be a simple runthrough of the
@@ -276,6 +280,7 @@ bool Test_SecurePairing() {
   netStream->Test(securePairing);
 
   // cleanup
+  SavedSessionManager::SaveRtsKeys(oldKeys);
   delete netStream;
   delete securePairing;
 
@@ -283,6 +288,8 @@ bool Test_SecurePairing() {
 }
 
 bool Test_SecurePairingV3() {
+  RtsKeys oldKeys = SavedSessionManager::LoadRtsKeys();
+
   // Create objects for testing
   Test_INetworkStreamV3* netStream = new Test_INetworkStreamV3();
 
@@ -290,8 +297,10 @@ bool Test_SecurePairingV3() {
     netStream,            // 
     ev_default_loop(0),   // ev loop
     nullptr,              // engineClient (don't need--only for updating face)
+    nullptr,              // tokenClient
     false,                // is pairing
-    false);               // is ota-ing
+    false,                // is ota-ing
+    false);               // has cloud owner
 
   // Start Test loop
   // Right now this tests will just be a simple runthrough of the
@@ -300,6 +309,7 @@ bool Test_SecurePairingV3() {
   netStream->Test(securePairing);
 
   // cleanup
+  SavedSessionManager::SaveRtsKeys(oldKeys);
   delete netStream;
   delete securePairing;
 

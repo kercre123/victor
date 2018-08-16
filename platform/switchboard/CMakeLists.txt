@@ -44,6 +44,11 @@ PRIVATE
   anki-ble
 )
 
+target_compile_options(switchboard
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
 target_compile_definitions(switchboard
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
@@ -66,6 +71,11 @@ target_include_directories(switchboard
 
 anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
 anki_build_target_license(vic-switchboard "ANKI")
+
+target_compile_options(vic-switchboard
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
 
 target_link_libraries(vic-switchboard
   PRIVATE

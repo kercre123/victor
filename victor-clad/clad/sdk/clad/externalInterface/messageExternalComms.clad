@@ -28,6 +28,16 @@ enum uint_8 RtsConnType {
     Reconnection,
 }
 
+enum uint_8 RtsCloudStatus {
+    UnknownError,
+    ConnectionError,
+    WrongAccount,
+    InvalidSessionToken,
+    AuthorizedAsPrimary,
+    AuthorizedAsSecondary,
+    Reauthorized,
+}
+
 message RtsWifiScanResult {
     uint_8      authType,
     uint_8      signalStrength,
@@ -226,13 +236,13 @@ message RtsFileDownload {
 }
 
 message RtsCloudSessionRequest {
-    string      sessionToken[uint_8],
+    string[uint_16]      sessionToken,
 }
 
 message RtsCloudSessionResponse {
-    bool        success,
-    uint_8      statusCode,
-    string      clientTokenGuid[uint_8],
+    bool                  success,
+    RtsCloudStatus        statusCode,
+    string[uint_16]       clientTokenGuid,
 }
 
 message Error {
@@ -310,6 +320,33 @@ union RtsConnection_3 {
     RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  // * new in V3
 }
 
+// The factory set of supported messages
+union RtsConnection_1 {
+    Error                           Error                       = 0x00,
+    RtsConnRequest                  RtsConnRequest              = 0x01,
+    RtsConnResponse                 RtsConnResponse             = 0x02,
+    RtsNonceMessage                 RtsNonceMessage             = 0x03,
+    RtsChallengeMessage             RtsChallengeMessage         = 0x04,
+    RtsChallengeSuccessMessage      RtsChallengeSuccessMessage  = 0x05,
+    RtsWifiConnectRequest           RtsWifiConnectRequest       = 0x06,
+    RtsWifiConnectResponse          RtsWifiConnectResponse      = 0x07,
+    RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
+    RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
+    RtsStatusRequest                RtsStatusRequest            = 0x0A,
+    RtsStatusResponse               RtsStatusResponse           = 0x0B,
+    RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
+    RtsWifiScanResponse             RtsWifiScanResponse         = 0x0D,
+    RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
+    RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
+    RtsCancelPairing                RtsCancelPairing            = 0x10,
+    RtsForceDisconnect              RtsForceDisconnect          = 0x11,
+    RtsAck                          RtsAck                      = 0x12,
+    RtsWifiAccessPointRequest       RtsWifiAccessPointRequest   = 0x13,
+    RtsWifiAccessPointResponse      RtsWifiAccessPointResponse  = 0x14,
+    RtsSshRequest                   RtsSshRequest               = 0x15,
+    RtsSshResponse                  RtsSshResponse              = 0x16,
+}
+
 // The post-factory set of versions
 union RtsConnection {
     Error                           Error                       = 0x00,
@@ -330,7 +367,7 @@ message DeprecatedAndReserved {
 union ExternalComms {
     Error                       Error                       = 0x00,
     // Skipping 0x01 so that enum values match old Rts protocols
-    DeprecatedAndReserved       DeprecatedAndReserved       = 0x01,
+    RtsConnection_1             RtsConnection_1             = 0x01,
     RtsConnection               RtsConnection               = 0x04,
 }
 

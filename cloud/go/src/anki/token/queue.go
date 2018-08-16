@@ -118,7 +118,7 @@ func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associatePrimary(session, robotESN)
 	}
-	return authRequester(metadata, requester)
+	return authRequester(metadata, requester, true)
 }
 
 func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenResponse, error) {
@@ -131,11 +131,12 @@ func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenRe
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associateSecondary(existing.String(), req.SessionToken, req.ClientName, req.AppId)
 	}
-	return authRequester(metadata, requester)
+	return authRequester(metadata, requester, false)
 }
 
 func authRequester(creds credentials.PerRPCCredentials,
-	requester func(c *conn) (*pb.TokenBundle, error)) (*cloud.TokenResponse, error) {
+	requester func(c *conn) (*pb.TokenBundle, error),
+	parseJwt bool) (*cloud.TokenResponse, error) {
 
 	c, err := getConnection(creds)
 	if err != nil {
@@ -150,9 +151,11 @@ func authRequester(creds credentials.PerRPCCredentials,
 		}
 		return authErrorResp(cloud.TokenError_Connection), err
 	}
-	_, err = jwt.ParseToken(bundle.Token)
-	if err != nil {
-		return authErrorResp(cloud.TokenError_InvalidToken), err
+	if parseJwt {
+		_, err = jwt.ParseToken(bundle.Token)
+		if err != nil {
+			return authErrorResp(cloud.TokenError_InvalidToken), err
+		}
 	}
 	return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{
 		AppToken: bundle.ClientToken,

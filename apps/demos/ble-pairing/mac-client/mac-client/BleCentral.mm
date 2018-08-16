@@ -36,6 +36,7 @@ BleCentral* centralContext;
   printf("  ota-start <url>                              Start Ota update with provided URL string argument.\n");
   printf("  ota-progress                                 Get current Ota download progress.\n");
   printf("  ota-cancel                                   Cancel an on-going Ota download.\n");
+  printf("  anki-auth <session_token>                    Send Anki session token to robot.\n");
   printf("  status                                       Get Vector's general status.\n");
   printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
   printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
@@ -928,6 +929,18 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         [self HandleReceiveAccessPointResponse:msg];
         break;
       }
+      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsCloudSessionResponse: {
+        Anki::Vector::ExternalComms::RtsCloudSessionResponse msg = rtsMsg.Get_RtsCloudSessionResponse();
+        
+        if(_currentCommand == "anki-auth" && !_readyForNextCommand) {
+          printf("Success: %s\nStatus: %d\nAppToken: %s\n\n",
+                 msg.success?"true":"false", msg.statusCode, msg.clientTokenGuid.c_str());
+          
+          _readyForNextCommand = true;
+        }
+        
+        break;
+      }
       case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsOtaUpdateResponse: {
         Anki::Vector::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
         _otaStatusCode = msg.status;
@@ -1490,6 +1503,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         Clad::SendRtsMessage_3<Anki::Vector::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, forgetAll, ssid);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Vector::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
+      } else if(strcmp(words[0].c_str(), "anki-auth") == 0) {
+        Clad::SendRtsMessage_3<Anki::Vector::ExternalComms::RtsCloudSessionRequest>(self, _commVersion, words[1]);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
         std::string url = "http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota";
         if(words.size() > 1) {

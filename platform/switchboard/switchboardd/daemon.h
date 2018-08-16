@@ -24,6 +24,7 @@
 #include "switchboardd/rtsComms.h"
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/taskExecutor.h"
+#include "switchboardd/tokenClient.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/gatewayMessagingServer.h"
 
@@ -44,17 +45,24 @@ namespace Switchboard {
         _isPairing(false),
         _isOtaUpdating(false),
         _connectionFailureCounter(kFailureCountToLog),
+        _tokenConnectionFailureCounter(kFailureCountToLog),
         _taskExecutor(nullptr),
         _bleClient(nullptr),
         _securePairing(nullptr),
         _engineMessagingClient(nullptr),
         _gatewayMessagingServer(nullptr),
         _isUpdateEngineServiceRunning(false),
-        _shouldRestartPairing(false)
+        _shouldRestartPairing(false),
+        _isTokenClientFullyInitialized(false),
+        _hasCloudOwner(false)
       {}
 
       void Start();
       void Stop();
+
+      bool IsTokenClientFullyInitialized() {
+        return _isTokenClientFullyInitialized;
+      }
     
     private:
       const std::string kSwitchboardRunPath = "/run/vic-switchboard";
@@ -68,15 +76,16 @@ namespace Switchboard {
       const std::string kUpdateEngineServicePath = "/lib/systemd/system/update-engine.service";
 
       static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
+      static void HandleTokenTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
       void HandleReboot();
 
       using EvTimerSignal = Signal::Signal<void ()>;
 
-      void Christen();
       void InitializeEngineComms();
       void InitializeGatewayComms();
+      void InitializeCloudComms();
       void InitializeBleComms();
       void StartPairing();
       void OnConnected(int connId, INetworkStream* stream);
@@ -88,6 +97,7 @@ namespace Switchboard {
       void OnCompletedPairing();
       void OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGame message);
       bool TryConnectToEngineServer();
+      bool TryConnectToTokenServer();
       bool TryConnectToAnkiBluetoothDaemon();
       void HandleOtaUpdateExit(int rc);
       void HandleOtaUpdateProgress();
@@ -121,9 +131,11 @@ namespace Switchboard {
       bool _isPairing;
       bool _isOtaUpdating;
       uint32_t _connectionFailureCounter;
+      uint32_t _tokenConnectionFailureCounter;
 
       ev_timer _engineTimer;
       ev_timer _ankibtdTimer;
+      ev_timer _tokenTimer;
 
       struct ev_TimerStruct {
         ev_timer timer;
@@ -132,13 +144,16 @@ namespace Switchboard {
 
       struct ev_TimerStruct _pairingTimer;
 
-      std::unique_ptr<TaskExecutor> _taskExecutor;
+      std::shared_ptr<TaskExecutor> _taskExecutor;
       std::unique_ptr<BleClient> _bleClient;
       std::unique_ptr<RtsComms> _securePairing;
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
       std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
+      std::shared_ptr<TokenClient> _tokenClient;
       bool _isUpdateEngineServiceRunning;
       bool _shouldRestartPairing;
+      bool _isTokenClientFullyInitialized;
+      bool _hasCloudOwner = false;
   };
 }
 }

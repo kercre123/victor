@@ -188,20 +188,6 @@ case Anki::Vector::ExternalComms::RtsConnection_3::Tag::RtsCloudSessionResponse:
 }
 switch(msg.GetTag()) {
 default:
-  ProcessBadTag_RtsConnection(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::RtsConnection::Tag::Error:
-  Process_Error(msg.Get_Error());
-  break;
-case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_2:
-  Process_RtsConnection_2(msg.Get_RtsConnection_2());
-  break;
-case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_3:
-  Process_RtsConnection_3(msg.Get_RtsConnection_3());
-  break;
-}
-switch(msg.GetTag()) {
-default:
   ProcessBadTag_RtsConnection_1(msg.GetTag());
   break;
 case Anki::Vector::ExternalComms::RtsConnection_1::Tag::Error:
@@ -276,148 +262,16 @@ case Anki::Vector::ExternalComms::RtsConnection_1::Tag::RtsSshResponse:
 }
 switch(msg.GetTag()) {
 default:
-  ProcessBadTag_AppGeneral(msg.GetTag());
+  ProcessBadTag_RtsConnection(msg.GetTag());
   break;
-case Anki::Vector::ExternalComms::AppGeneral::Tag::Error:
+case Anki::Vector::ExternalComms::RtsConnection::Tag::Error:
   Process_Error(msg.Get_Error());
   break;
-case Anki::Vector::ExternalComms::AppGeneral::Tag::RobotStatusRequest:
-  Process_RobotStatusRequest(msg.Get_RobotStatusRequest());
+case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_2:
+  Process_RtsConnection_2(msg.Get_RtsConnection_2());
   break;
-case Anki::Vector::ExternalComms::AppGeneral::Tag::RobotStatusResponse:
-  Process_RobotStatusResponse(msg.Get_RobotStatusResponse());
-  break;
-}
-switch(msg.GetTag()) {
-default:
-  ProcessBadTag_MeetVictor(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::Error:
-  Process_Error(msg.Get_Error());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::AppIntent:
-  Process_AppIntent(msg.Get_AppIntent());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::MeetVictorStarted:
-  Process_MeetVictorStarted(msg.Get_MeetVictorStarted());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::MeetVictorFaceScanStarted:
-  Process_MeetVictorFaceScanStarted(msg.Get_MeetVictorFaceScanStarted());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::MeetVictorFaceScanComplete:
-  Process_MeetVictorFaceScanComplete(msg.Get_MeetVictorFaceScanComplete());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::FaceEnrollmentCompleted:
-  Process_FaceEnrollmentCompleted(msg.Get_FaceEnrollmentCompleted());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::CancelFaceEnrollment:
-  Process_CancelFaceEnrollment(msg.Get_CancelFaceEnrollment());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::RequestEnrolledNames:
-  Process_RequestEnrolledNames(msg.Get_RequestEnrolledNames());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::EnrolledNamesResponse:
-  Process_EnrolledNamesResponse(msg.Get_EnrolledNamesResponse());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::UpdateEnrolledFaceByID:
-  Process_UpdateEnrolledFaceByID(msg.Get_UpdateEnrolledFaceByID());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::EraseEnrolledFaceByID:
-  Process_EraseEnrolledFaceByID(msg.Get_EraseEnrolledFaceByID());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::EraseAllEnrolledFaces:
-  Process_EraseAllEnrolledFaces(msg.Get_EraseAllEnrolledFaces());
-  break;
-case Anki::Vector::ExternalComms::MeetVictor::Tag::SetFaceToEnroll:
-  Process_SetFaceToEnroll(msg.Get_SetFaceToEnroll());
-  break;
-}
-switch(msg.GetTag()) {
-default:
-  ProcessBadTag_MotorControl(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::MotorControl::Tag::Error:
-  Process_Error(msg.Get_Error());
-  break;
-case Anki::Vector::ExternalComms::MotorControl::Tag::DriveWheels:
-  Process_DriveWheels(msg.Get_DriveWheels());
-  break;
-case Anki::Vector::ExternalComms::MotorControl::Tag::DriveArc:
-  Process_DriveArc(msg.Get_DriveArc());
-  break;
-case Anki::Vector::ExternalComms::MotorControl::Tag::MoveHead:
-  Process_MoveHead(msg.Get_MoveHead());
-  break;
-case Anki::Vector::ExternalComms::MotorControl::Tag::MoveLift:
-  Process_MoveLift(msg.Get_MoveLift());
-  break;
-}
-switch(msg.GetTag()) {
-default:
-  ProcessBadTag_Animations(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::Animations::Tag::PlayAnimation:
-  Process_PlayAnimation(msg.Get_PlayAnimation());
-  break;
-case Anki::Vector::ExternalComms::Animations::Tag::RequestAvailableAnimations:
-  Process_RequestAvailableAnimations(msg.Get_RequestAvailableAnimations());
-  break;
-case Anki::Vector::ExternalComms::Animations::Tag::SayText:
-  Process_SayText(msg.Get_SayText());
-  break;
-case Anki::Vector::ExternalComms::Animations::Tag::AnimationAvailable:
-  Process_AnimationAvailable(msg.Get_AnimationAvailable());
-  break;
-case Anki::Vector::ExternalComms::Animations::Tag::TransferFile:
-  Process_TransferFile(msg.Get_TransferFile());
-  break;
-}
-switch(msg.GetTag()) {
-default:
-  ProcessBadTag_MovementAction(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::MovementAction::Tag::Error:
-  Process_Error(msg.Get_Error());
-  break;
-case Anki::Vector::ExternalComms::MovementAction::Tag::DriveOffChargerContacts:
-  Process_DriveOffChargerContacts(msg.Get_DriveOffChargerContacts());
-  break;
-case Anki::Vector::ExternalComms::MovementAction::Tag::DriveStraight:
-  Process_DriveStraight(msg.Get_DriveStraight());
-  break;
-case Anki::Vector::ExternalComms::MovementAction::Tag::TurnInPlace:
-  Process_TurnInPlace(msg.Get_TurnInPlace());
-  break;
-case Anki::Vector::ExternalComms::MovementAction::Tag::SetHeadAngle:
-  Process_SetHeadAngle(msg.Get_SetHeadAngle());
-  break;
-case Anki::Vector::ExternalComms::MovementAction::Tag::SetLiftHeight:
-  Process_SetLiftHeight(msg.Get_SetLiftHeight());
-  break;
-}
-switch(msg.GetTag()) {
-default:
-  ProcessBadTag_VictorDisplay(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::VictorDisplay::Tag::Error:
-  Process_Error(msg.Get_Error());
-  break;
-case Anki::Vector::ExternalComms::VictorDisplay::Tag::SetBackpackLEDs:
-  Process_SetBackpackLEDs(msg.Get_SetBackpackLEDs());
-  break;
-case Anki::Vector::ExternalComms::VictorDisplay::Tag::DisplayFaceImageRGB:
-  Process_DisplayFaceImageRGB(msg.Get_DisplayFaceImageRGB());
-  break;
-}
-switch(msg.GetTag()) {
-default:
-  ProcessBadTag_Cubes(msg.GetTag());
-  break;
-case Anki::Vector::ExternalComms::Cubes::Tag::Error:
-  Process_Error(msg.Get_Error());
-  break;
-case Anki::Vector::ExternalComms::Cubes::Tag::SetAllActiveObjectLEDs:
-  Process_SetAllActiveObjectLEDs(msg.Get_SetAllActiveObjectLEDs());
+case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_3:
+  Process_RtsConnection_3(msg.Get_RtsConnection_3());
   break;
 }
 switch(msg.GetTag()) {
@@ -432,26 +286,5 @@ case Anki::Vector::ExternalComms::ExternalComms::Tag::RtsConnection_1:
   break;
 case Anki::Vector::ExternalComms::ExternalComms::Tag::RtsConnection:
   Process_RtsConnection(msg.Get_RtsConnection());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::AppGeneral:
-  Process_AppGeneral(msg.Get_AppGeneral());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::MeetVictor:
-  Process_MeetVictor(msg.Get_MeetVictor());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::MotorControl:
-  Process_MotorControl(msg.Get_MotorControl());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::MovementAction:
-  Process_MovementAction(msg.Get_MovementAction());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::Animations:
-  Process_Animations(msg.Get_Animations());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::VictorDisplay:
-  Process_VictorDisplay(msg.Get_VictorDisplay());
-  break;
-case Anki::Vector::ExternalComms::ExternalComms::Tag::Cubes:
-  Process_Cubes(msg.Get_Cubes());
   break;
 }

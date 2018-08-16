@@ -26,12 +26,16 @@ long long RtsHandlerV3::sTimeStarted;
 RtsHandlerV3::RtsHandlerV3(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<TokenClient> tokenClient,
+    std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
-    bool isOtaUpdating) :
-IRtsHandler(isPairing, isOtaUpdating),
+    bool isOtaUpdating,
+    bool hasOwner) :
+IRtsHandler(isPairing, isOtaUpdating, hasOwner, tokenClient),
 _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
+_taskExecutor(taskExecutor),
 _pin(""),
 _challengeAttempts(0),
 _numPinDigits(0),
@@ -65,9 +69,6 @@ _wifiConnectTimeout_s(15)
   _cladHandler = std::make_unique<ExternalCommsCladHandlerV3>();
   SubscribeToCladMessages();
 
-  // Initialize the task executor
-  _taskExecutor = std::make_unique<TaskExecutor>(_loop);
-
   // Initialize ev timer
   _handleInternet.signal = &_internetTimerSignal;
   ev_timer_init(&_handleInternet.timer, &RtsHandlerV3::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
@@ -79,6 +80,14 @@ RtsHandlerV3::~RtsHandlerV3() {
   _onReceivePlainTextHandle = nullptr;
   _onReceiveEncryptedHandle = nullptr;
   _onFailedDecryptionHandle = nullptr;
+
+  // Unsubscribe from all pending TokenClient requests
+  for(auto const& handle:_tokenClientHandles) {
+    if(!handle.expired()) {
+      std::shared_ptr<TokenResponseHandle> sharedHandle = handle.lock();
+      sharedHandle->Cancel();
+    }
+  }
 
   ev_timer_stop(_loop, &_handleInternet.timer);
 }
@@ -130,8 +139,55 @@ void RtsHandlerV3::SubscribeToCladMessages() {
   _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsCancelPairing, this, std::placeholders::_1));
   _rtsLogRequestHandle = _cladHandler->OnReceiveRtsLogRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsLogRequest, this, std::placeholders::_1));
+  _rtsCloudSessionHandle = _cladHandler->OnReceiveRtsCloudSessionRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsCloudSessionRequest, this, std::placeholders::_1));
   _rtsForceDisconnectHandle = _cladHandler->OnReceiveRtsForceDisconnect().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsForceDisconnect, this, std::placeholders::_1)); 
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsAck, this, std::placeholders::_1));
+}
+
+bool RtsHandlerV3::IsAuthenticated() {
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return false;
+  }
+
+  // for now, early-out unless flag is set
+  #ifndef ANKI_SWITCHBOARD_CLOUD_AUTH
+  Log::Write("&&& Skipping cloud auth.");
+  return true;
+  #else
+  // Must be cloud authed for first time pair.
+  #endif
+
+  if(_isFirstTimePair) {
+    Log::Write("&&& Has cloud authed? %s", _hasCloudAuthed?"yes":"no");
+    return _hasCloudAuthed;
+  } else {
+    return true;
+  }
+}
+
+void RtsHandlerV3::SaveSessionKeys() {
+  if(!_sessionReadyToSave) {
+    Log::Write("Tried to save session keys without valid keys.");
+    return;
+  }
+
+  // we already have session keys for client with same public key,
+  // so delete old keys
+  _rtsKeys.clients.erase(
+    std::remove_if(_rtsKeys.clients.begin(), _rtsKeys.clients.end(), 
+      [this](RtsClientData c) {
+      Log::Write("Deleting previously saved keys for same client.");
+      return memcmp(&c.publicKey, &_clientSession.publicKey, sizeof(_clientSession.publicKey)) == 0;
+    }),
+    _rtsKeys.clients.end());
+
+  _rtsKeys.clients.push_back(_clientSession);
+
+  Log::Write("We have [%d] keys saved.", _rtsKeys.clients.size());
+
+  // Only save on fully authed connection
+  // this should be when cloud has been authed
+  SaveKeys();
 }
 
 //
@@ -158,7 +214,8 @@ void RtsHandlerV3::HandleRtsConnResponse(const Anki::Vector::ExternalComms::RtsC
         Log::Write("Client tried to initial pair while not in pairing mode.");
       }
     } else {
-      bool hasClient = false;;
+      bool hasClient = false;
+      _isFirstTimePair = false;
 
       for(int i = 0; i < _rtsKeys.clients.size(); i++) {
         if(memcmp((uint8_t*)connResponse.publicKey.data(), (uint8_t*)&(_rtsKeys.clients[i].publicKey), crypto_kx_PUBLICKEYBYTES) == 0) {
@@ -203,7 +260,7 @@ void RtsHandlerV3::HandleRtsChallengeMessage(const Vector::ExternalComms::RtsCon
 }
 
 void RtsHandlerV3::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -247,7 +304,7 @@ void RtsHandlerV3::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
 }
 
 void RtsHandlerV3::HandleRtsWifiIpRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -266,7 +323,7 @@ void RtsHandlerV3::HandleRtsWifiIpRequest(const Vector::ExternalComms::RtsConnec
 }
 
 void RtsHandlerV3::HandleRtsStatusRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -278,7 +335,7 @@ void RtsHandlerV3::HandleRtsStatusRequest(const Vector::ExternalComms::RtsConnec
 }
 
 void RtsHandlerV3::HandleRtsWifiScanRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -291,7 +348,7 @@ void RtsHandlerV3::HandleRtsWifiScanRequest(const Vector::ExternalComms::RtsConn
 }
 
 void RtsHandlerV3::HandleRtsWifiForgetRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -321,7 +378,7 @@ void RtsHandlerV3::HandleRtsWifiForgetRequest(const Vector::ExternalComms::RtsCo
 }
 
 void RtsHandlerV3::HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -335,7 +392,7 @@ void RtsHandlerV3::HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsCon
 }
 
 void RtsHandlerV3::HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -352,7 +409,7 @@ void RtsHandlerV3::HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsCon
 }
 
 void RtsHandlerV3::HandleRtsWifiAccessPointRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -384,6 +441,114 @@ void RtsHandlerV3::HandleRtsWifiAccessPointRequest(const Vector::ExternalComms::
   }
 }
 
+void RtsHandlerV3::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
+  RtsCloudStatus status;
+  switch(authError) {
+    case Anki::Vector::TokenError::NoError:
+      Log::Write("CloudAuth - Successfully authorized account with vic-cloud.");
+      status = isPrimary? RtsCloudStatus::AuthorizedAsPrimary : RtsCloudStatus::AuthorizedAsSecondary;
+
+      if(_isFirstTimePair) {
+        Log::Write("Saving session keys.");
+        SaveSessionKeys();
+      }
+      _hasCloudAuthed = true;
+      _hasOwner = true;
+      break;
+    case Anki::Vector::TokenError::InvalidToken:
+      Log::Error("CloudAuth - vic-cloud received invalid token.");
+      status = RtsCloudStatus::InvalidSessionToken;
+      break;
+    case Anki::Vector::TokenError::Connection:
+      Log::Error("CloudAuth - vic-cloud could not connect to server.");
+      status = RtsCloudStatus::ConnectionError;
+      break;
+    case Anki::Vector::TokenError::WrongAccount:
+      Log::Error("CloudAuth - Tried to authorize with wrong Anki account.");
+      status = RtsCloudStatus::WrongAccount;
+      break;
+    case Anki::Vector::TokenError::NullToken:
+      Log::Error("CloudAuth - vic-cloud has null token.");
+      status = RtsCloudStatus::UnknownError;
+      break;
+    default:
+      Log::Error("CloudAuth - vic-cloud unknown error.");
+      appToken = "";
+      break;
+  }
+
+  //
+  // todo: Send Gateway msg to refresh client hash JDOCS
+  //
+
+  // Send HandleRtsResponse
+  SendRtsMessage<RtsCloudSessionResponse>(
+    authError==Anki::Vector::TokenError::NoError, 
+    status,
+    appToken);
+  Log::Error("Finished processing???");
+}
+
+void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
+  // Handle Cloud Session Request
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return;
+  }
+  
+  Anki::Vector::ExternalComms::RtsCloudSessionRequest cloudReq = 
+    msg.Get_RtsCloudSessionRequest();
+  std::string sessionToken = cloudReq.sessionToken;
+
+  Log::Write("Received cloud session authorization request.");
+
+  std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(
+    [this, sessionToken](Anki::Vector::TokenError error, std::string jwtToken) {
+      bool isPrimary = false;
+      Log::Write("CloudRequest JWT Response Handler");
+
+      switch(error) {
+        case Anki::Vector::TokenError::NullToken: {
+          // Primary association
+          isPrimary = true;
+          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendAuthRequest(sessionToken, 
+            [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
+            ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
+          });
+          _tokenClientHandles.push_back(authHandle);
+        }
+        break;
+        case Anki::Vector::TokenError::NoError: {
+          // Secondary association
+          isPrimary = false;
+          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendSecondaryAuthRequest(sessionToken, "", "",
+            [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
+            Log::Write("CloudReequest Auth Response Handler");
+            ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
+          });
+          _tokenClientHandles.push_back(authHandle);
+        }
+        break;
+        case Anki::Vector::TokenError::InvalidToken: {
+          // We received an invalid token
+          Log::Error("Received invalid token for JwtRequest");
+          bool success = false;
+          SendRtsMessage<RtsCloudSessionResponse>(success, RtsCloudStatus::InvalidSessionToken, "");
+        }
+        break;
+        case Anki::Vector::TokenError::Connection:
+        default: {
+          // Could not connect/authorize to server
+          Log::Error("Received connection error msg for JwtRequest");
+          bool success = false;
+          SendRtsMessage<RtsCloudSessionResponse>(success, RtsCloudStatus::ConnectionError, "");
+        }
+        break;
+      }
+  });
+
+  _tokenClientHandles.push_back(tokenHandle);
+}
+
 void RtsHandlerV3::HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConnection_3& msg) {
   if(!(AssertState(RtsCommsType::Encrypted) || 
     AssertState(RtsCommsType::Unencrypted))) {
@@ -394,7 +559,7 @@ void RtsHandlerV3::HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConn
 }
 
 void RtsHandlerV3::HandleRtsLogRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -439,6 +604,7 @@ void RtsHandlerV3::HandleRtsAck(const Vector::ExternalComms::RtsConnection_3& ms
 
 void RtsHandlerV3::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLength) {
   // Handle initial pair request from client
+  _isFirstTimePair = true;
 
   // Generate a random number with kNumPinDigits digits
   _pin = _keyExchange->GeneratePin();
@@ -456,24 +622,10 @@ void RtsHandlerV3::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLengt
   // Save keys to file
   // For now only save one client
 
-  RtsClientData client;
-
-  memcpy(&client.publicKey, publicKey, sizeof(client.publicKey));
-  memcpy(&client.sessionRx, _keyExchange->GetDecryptKey(), sizeof(client.sessionRx));
-  memcpy(&client.sessionTx, _keyExchange->GetEncryptKey(), sizeof(client.sessionTx));
-
-  // we already have session keys for client with same public key,
-  // so delete old keys
-  _rtsKeys.clients.erase(
-    std::remove_if(_rtsKeys.clients.begin(), _rtsKeys.clients.end(), 
-      [client](RtsClientData c) {
-      return memcmp(&c.publicKey, &client.publicKey, sizeof(client.publicKey)) == 0;
-    }),
-    _rtsKeys.clients.end());
-
-  _rtsKeys.clients.push_back(client);
-
-  SaveKeys();
+  memcpy(&_clientSession.publicKey, publicKey, sizeof(_clientSession.publicKey));
+  memcpy(&_clientSession.sessionRx, _keyExchange->GetDecryptKey(), sizeof(_clientSession.sessionRx));
+  memcpy(&_clientSession.sessionTx, _keyExchange->GetEncryptKey(), sizeof(_clientSession.sessionTx));
+  _sessionReadyToSave = true;
 
   // Send nonce
   SendNonce();
@@ -512,6 +664,17 @@ void RtsHandlerV3::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_
   if(success) {
     // Inform client that we are good to go and
     // update our state
+    bool cloudAuth = true;
+
+    #ifndef ANKI_SWITCHBOARD_CLOUD_AUTH
+    cloudAuth = false;
+    #endif
+
+    if(_isFirstTimePair && (!_hasOwner || !cloudAuth)) {
+      // If no cloud owner, save our session
+      SaveSessionKeys();
+    }
+
     SendChallengeSuccess();
     _state = RtsPairingPhase::ConfirmedSharedSecret;
     Log::Green("Challenge answer was accepted. Encrypted channel established.");
@@ -606,7 +769,7 @@ void RtsHandlerV3::SendChallengeSuccess() {
 }
 
 void RtsHandlerV3::SendStatusResponse() {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -621,17 +784,13 @@ void RtsHandlerV3::SendStatusResponse() {
 
   std::string buildNoString(buildNo);
 
-  // todo: will be filled in later with info 
-  // from vic-cloud process comms
-  bool hasOwner = false;
-
-  SendRtsMessage<RtsStatusResponse_3>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating, hasOwner);
+  SendRtsMessage<RtsStatusResponse_3>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating, _hasOwner);
 
   Log::Write("Send status response.");
 }
 
 void RtsHandlerV3::SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -640,7 +799,7 @@ void RtsHandlerV3::SendWifiAccessPointResponse(bool success, std::string ssid, s
 }
 
 void RtsHandlerV3::SendWifiScanResult() {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -666,7 +825,7 @@ void RtsHandlerV3::SendWifiScanResult() {
 }
 
 void RtsHandlerV3::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -676,7 +835,7 @@ void RtsHandlerV3::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
 }
 
 void RtsHandlerV3::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
 
@@ -708,7 +867,7 @@ void RtsHandlerV3::SendCancelPairing() {
 }
 
 void RtsHandlerV3::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!IsAuthenticated()) {
     return;
   }
   // Send Ota Progress

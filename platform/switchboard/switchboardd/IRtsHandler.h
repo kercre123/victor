@@ -16,6 +16,7 @@
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/pairingMessages.h"
+#include "switchboardd/tokenClient.h"
 #include "switchboardd/log.h"
 
 namespace Anki {
@@ -49,15 +50,19 @@ public:
   
   void SetIsPairing(bool pairing) { _isPairing = pairing; }
   void SetOtaUpdating(bool updating) { _isOtaUpdating = updating; }
+  void SetHasOwner(bool hasOwner) { _hasOwner = hasOwner; }
+
 
 protected:
-  IRtsHandler(const bool pairing, const bool updating)
+  IRtsHandler(const bool pairing, const bool updating, bool hasOwner, std::shared_ptr<TokenClient> tokenClient)
   : _isPairing(pairing)
-  , _isOtaUpdating(updating) {}
+  , _isOtaUpdating(updating)
+  , _tokenClient(tokenClient)
+  , _hasOwner(hasOwner) {}
 
   inline bool AssertState(RtsCommsType state) {
     return state == _type;
-  }
+  } 
 
   bool LoadKeys();
 
@@ -72,6 +77,8 @@ protected:
   RtsKeys _rtsKeys;
   bool _isPairing;
   bool _isOtaUpdating;
+  std::shared_ptr<TokenClient> _tokenClient;
+  bool _hasOwner;
 };
 
 } // Switchboard

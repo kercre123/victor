@@ -50,11 +50,19 @@ struct RtsKeys {
 
 class SavedSessionManager {
 public:
+  static void MigrateKeys();
   static RtsKeys LoadRtsKeys();
   static void SaveRtsKeys(RtsKeys& keys);
+  static std::string GetRobotName();
   static const std::string kRtsKeyPath;
+  static const std::string kRtsKeyDataPath;
+  static const std::string kRtsKeyDataFile;
 
 private:
+  static bool HasMigrated();
+  static RtsKeys LoadRtsKeysFactory();
+  static bool MakeDirectory(std::string directory);
+
   static const std::string kSaveFolder;
   static const std::ios_base::openmode kWriteMode;
   static const std::ios_base::openmode kReadMode;
