@@ -185,14 +185,19 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   }
 
   bool shouldSuppressTriggerWordBehavior = false;
-  
+  bool isBlackjackRunning = false;
+
   // suppress certain behaviors during sleeping
   // also allow behaviors on the current stack to suppress the trigger word
   {
     bool highLevelRunning = false;
-    auto callback = [this, &highLevelRunning, &shouldSuppressTriggerWordBehavior](const ICozmoBehavior& behavior) {
+    auto callback = [this, &highLevelRunning, &shouldSuppressTriggerWordBehavior, &isBlackjackRunning](const ICozmoBehavior& behavior) {
       if( behavior.GetID() == BEHAVIOR_ID(HighLevelAI) ) {
         highLevelRunning = true;
+      }
+
+      if( behavior.GetClass() == BEHAVIOR_CLASS(BlackJack)){
+        isBlackjackRunning = true;
       }
 
       if( highLevelRunning
@@ -313,6 +318,13 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   {
     if( _iConfig.behaviorsThatShouldntReactToSoundAwake.AreBehaviorsActivated() ) {
       _iConfig.reactToSoundAwakeBehavior->SetDontActivateThisTick(GetDebugLabel());
+    }
+  }
+
+  // Vector should not respond to cliffs while playing blackjack
+  {
+    if(isBlackjackRunning){
+      _iConfig.reactToCliffBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }
   
