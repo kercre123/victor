@@ -17,6 +17,7 @@ alias victor_stop='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_
 
 alias victor_build_shipping='GET_GIT_ROOT; source ${GIT_PROJ_ROOT}/project/victor/scripts/usefulALiases.sh; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_shipping.sh'
 alias victor_build_userdev='GET_GIT_ROOT; source ${GIT_PROJ_ROOT}/project/victor/scripts/usefulALiases.sh; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_userdev.sh'
+alias victor_build_beta='GET_GIT_ROOT; source ${GIT_PROJ_ROOT}/project/victor/scripts/usefulALiases.sh; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_beta.sh'
 alias victor_build_release='GET_GIT_ROOT; source ${GIT_PROJ_ROOT}/project/victor/scripts/usefulALiases.sh; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_release.sh'
 alias victor_build_debug='GET_GIT_ROOT; source ${GIT_PROJ_ROOT}/project/victor/scripts/usefulALiases.sh; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_debug.sh'
 alias victor_build_debugo2='GET_GIT_ROOT; source ${GIT_PROJ_ROOT}/project/victor/scripts/usefulALiases.sh; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_debugo2.sh'
