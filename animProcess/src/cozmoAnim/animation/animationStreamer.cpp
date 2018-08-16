@@ -185,7 +185,7 @@ namespace Vector {
   static const u32 kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms = 2 * ANIM_TIME_STEP_MS;
     
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
-  const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
+  const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 3.0f;
 
   // Default KeepFaceAliveParams
   #define SET_DEFAULT(param, value) {KeepFaceAliveParameter::param, static_cast<f32>(value)}
