@@ -410,7 +410,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
       if( _iVars.exitAfterGetIn )
       {
         OnVictorListeningEnd();
-        return; // and the behavior ends
+        CancelSelf();
       }
 
       // we now loop indefinitely and wait for the timeout in the update function
