@@ -90,8 +90,9 @@ declare -a treadDatLow;
 for val in "${treadHeader2[@]}"; do treadDatHigh+=(""); treadDatLow+=(""); done
 gTreadHigh=0; #dataset selector
 
-function dTreadClear() { 
-  if [ $gTreadHigh -gt 0 ]; then 
+function dTreadClearSel() { 
+  local dsel=$1
+  if [ $dsel -gt 0 ]; then 
     for i in "${!treadDatHigh[@]}"; do treadDatHigh[$i]=""; done
     treadDatHigh[7]=" ";
     treadDatHigh[15]=" ";
@@ -104,7 +105,7 @@ function dTreadClear() {
 
 function dTreadSetResult()  { local result=$1;                                 treadDatHigh[16]=$result;       treadDatLow[16]=$result; }
 function dTreadSetLineNum() { local linenum=$1; if [ $gTreadHigh -gt 0 ]; then treadDatHigh[17]=$linenum; fi;  treadDatLow[17]=$linenum; }
-function dTreadSetFile()    { local fname=$1;   if [ $gTreadHigh -gt 0 ]; then treadDatHigh[18]=$fname;   fi;  treadDatLow[18]=$fname; }
+function dTreadSetFile()    { local fname=$1;                                  treadDatHigh[18]=$fname;        treadDatLow[18]=$fname; }
 function dTreadSetPwrLeft() { local pwr=$1;     if [ $gTreadHigh -gt 0 ]; then treadDatHigh[0]=$pwr;      else treadDatLow[0]=$pwr; fi }
 function dTreadSetPwrRight() { local pwr=$1;    if [ $gTreadHigh -gt 0 ]; then treadDatHigh[8]=$pwr;      else treadDatLow[8]=$pwr; fi }
 
@@ -159,7 +160,6 @@ function dTreadWriteSel()
   
   echo "$row,$blanks" >> $outfile
 }
-function dTreadWrite() { dTreadWriteSel "0"; dTreadWriteSel "1"; }
 
 function TreadParseLine()
 {
@@ -171,10 +171,10 @@ function TreadParseLine()
       local power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
       if [ "$power" -ge 95 ]; then gTreadHigh=1; else gTreadHigh=0; fi
       if [ $gDebug -gt 0 ]; then echo "  found ds=$gTreadHigh"; fi
-      dTreadClear
+      dTreadClearSel $gTreadHigh
+      dTreadClearSel "0"
       dTreadSetPwrLeft $power
       dTreadSetLineNum $gCurrentLine
-      dTreadSetFile $gCurrentFile
     elif [[ "$line" == *"LEFT  FWD"* ]]; then
       local speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
       local spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
@@ -200,15 +200,18 @@ function TreadParseLine()
       local speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
       local spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
       local travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
-      dTreadSetFwdLeft $speed $spdavg $travel
+      dTreadSetRevRight $speed $spdavg $travel
     fi
   
   elif [[ "$line" == *"[RESULT:"* ]]; then
     local result=$(echo "$line" | grep -oP 'RESULT:\K[0-9]+');
     dTreadSetResult $result
     if [ $gDebug -gt 0 ]; then echo "  writing result=$result"; fi
-    dTreadWrite
-    dTreadClear
+    dTreadSetFile "$gCurrentFile"
+    dTreadWriteSel "0"
+    dTreadWriteSel "1"
+    dTreadClearSel "0"
+    dTreadClearSel "1"
   fi
 }
 
@@ -224,8 +227,9 @@ declare -a rangeDatLow;
 for val in "${rangeHeader2[@]}"; do rangeDatHigh+=(""); rangeDatLow+=(""); done
 gRangeHigh=0; #dataset selector
 
-function dRangeClear() { 
-  if [ $gRangeHigh -gt 0 ]; then 
+function dRangeClearSel() { 
+  local dsel=$1
+  if [ $dsel -gt 0 ]; then 
     for i in "${!rangeDatHigh[@]}"; do rangeDatHigh[$i]=""; done
     rangeDatHigh[10]=" ";
     rangeDatHigh[21]=" ";
@@ -238,7 +242,7 @@ function dRangeClear() {
 
 function dRangeSetResult()  { local result=$1;                                 rangeDatHigh[22]=$result;       rangeDatLow[22]=$result; }
 function dRangeSetLineNum() { local linenum=$1; if [ $gRangeHigh -gt 0 ]; then rangeDatHigh[23]=$linenum; fi;  rangeDatLow[23]=$linenum; }
-function dRangeSetFile()    { local fname=$1;   if [ $gRangeHigh -gt 0 ]; then rangeDatHigh[24]=$fname;   fi;  rangeDatLow[24]=$fname; }
+function dRangeSetFile()    { local fname=$1;                                  rangeDatHigh[24]=$fname;        rangeDatLow[24]=$fname; }
 function dRangeSetPwrLift() { local pwr=$1;     if [ $gRangeHigh -gt 0 ]; then rangeDatHigh[0]=$pwr;      else rangeDatLow[0]=$pwr; fi }
 function dRangeSetPwrHead() { local pwr=$1;     if [ $gRangeHigh -gt 0 ]; then rangeDatHigh[11]=$pwr;     else rangeDatLow[11]=$pwr; fi }
 
@@ -307,7 +311,6 @@ function dRangeWriteSel()
   
   echo "$row,$blanks" >> $outfile
 }
-function dRangeWrite() { dRangeWriteSel "0"; dRangeWriteSel "1"; }
 
 function RangeParseLine()
 {
@@ -324,10 +327,10 @@ function RangeParseLine()
       local power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
       if [ "$power" -ge 65 ]; then gRangeHigh=1; else gRangeHigh=0; fi
       if [ $gDebug -gt 0 ]; then echo "  found ds=$gRangeHigh"; fi
-      dRangeClear
+      dRangeClearSel $gRangeHigh
+      dRangeClearSel "0"
       dRangeSetPwrLift $power
       dRangeSetLineNum $gCurrentLine
-      dRangeSetFile $gCurrentFile
     elif [[ "$line" == *"LIFT POS"* ]]; then
       local posStart=$(echo $line | grep -oP 'start:\K[+-]*([0-9]+)');
       local posPassv=$(echo $line | grep -oP 'passive:\K[+-]*([0-9]+)');
@@ -370,8 +373,11 @@ function RangeParseLine()
     local result=$(echo "$line" | grep -oP 'RESULT:\K[0-9]+');
     dRangeSetResult $result
     if [ $gDebug -gt 0 ]; then echo "  writing result=$result"; fi
-    dRangeWrite
-    dRangeClear
+    dRangeSetFile "$gCurrentFile"
+    dRangeWriteSel "0"
+    dRangeWriteSel "1"
+    dRangeClearSel "0"
+    dRangeClearSel "1"
   fi
 }
 
