@@ -119,6 +119,21 @@ endif
 		exit 1; \
 	fi
 
+download_cert:
+ifeq ("$(ANKI_ROBOT_SERIAL)","")
+	$(error Could not find ANKI_ROBOT_SERIAL environment variable)
+endif
+	curl https://session-certs.token.global.anki-services.com/vic/$(ANKI_ROBOT_SERIAL) > trust.cert
+	@if grep -xq "\-----BEGIN CERTIFICATE-----" trust.cert; \
+	then \
+		echo "Download successful!"; \
+	else \
+		echo "Download failed!\n"; \
+		cat trust.cert ; \
+		echo "\n\nVerify that your robot has been logged in properly, and the certificate is in the cloud"; \
+		exit 1; \
+	fi
+
 create_certs_mac: .PHONY
 	cp trust.conf temp_trust.conf
 	echo "DNS.1 = $(MAC_VECTOR_HOSTNAME)" >> temp_trust.conf
