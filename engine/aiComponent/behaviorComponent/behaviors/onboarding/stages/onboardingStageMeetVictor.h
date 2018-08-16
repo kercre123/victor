@@ -136,11 +136,7 @@ public:
   
   virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    if( (interruptingBehavior == BEHAVIOR_ID(OnboardingPlacedOnCharger)) && !_enrollmentSuccessful ) {
-      // resume from the beginning
-      DebugTransition("Interruption will resume from the beginning");
-      _step = Step::LookingAround;
-    }
+    ResetFromInterruption(interruptingBehavior);
     // always resume, even if enrollment finished, in case they place the robot on the charger but still
     // want to rename their name
     return false;
@@ -148,6 +144,7 @@ public:
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
+    ResetFromInterruption(interruptingBehavior);
     DebugTransition("Resuming");
     _selectedBehavior = _behaviors[_step];
     const bool triggerEnabled = _step == Step::LookingAround || _step == Step::WaitForReScan;
@@ -191,6 +188,8 @@ public:
   virtual void GetAdditionalMessages( std::set<EngineToGameTag>& tags ) const override
   {
     tags.insert( EngineToGameTag::FaceEnrollmentCompleted );
+    tags.insert( EngineToGameTag::MeetVictorFaceScanStarted );
+    tags.insert( EngineToGameTag::MeetVictorNameSaved );
   }
   
   virtual void OnMessage( BehaviorExternalInterface& bei, const EngineToGameEvent& event ) override
@@ -211,6 +210,10 @@ public:
         _receivedEnrollmentResult = true;
         TryEndingMeetVictor();
       }
+    } else if( event.GetData().GetTag() == EngineToGameTag::MeetVictorFaceScanStarted ) {
+      SetTriggerWordEnabled( false );
+    } else if( event.GetData().GetTag() == EngineToGameTag::MeetVictorNameSaved ) {
+      _enrollmentSuccessful = true;
     }
   }
   
@@ -249,6 +252,27 @@ private:
       } else {
         TransitionToWaitForReScan();
       }
+    }
+  }
+  
+  void ResetFromInterruption(BehaviorID interruptingBehavior)
+  {
+    static const std::set<BehaviorID> interruptionsThatReset = {
+      //BEHAVIOR_ID(SingletonPoweringRobotOff)
+      //BEHAVIOR_ID(OnboardingPhysicalReactions)
+      BEHAVIOR_ID(OnboardingLowBattery),
+      //BEHAVIOR_ID(OnboardingDetectHabitat)
+      //BEHAVIOR_ID(OnboardingPickedUp),
+      BEHAVIOR_ID(DriveOffChargerStraight),
+      BEHAVIOR_ID(OnboardingPlacedOnCharger),
+      //BEHAVIOR_ID(OnboardingFirstTriggerWord)
+      //BEHAVIOR_ID(TriggerWordDetected),
+    };
+    
+    if( (interruptionsThatReset.find(interruptingBehavior) != interruptionsThatReset.end()) && !_enrollmentSuccessful ) {
+      // resume from the beginning
+      DebugTransition("Interruption will resume from the beginning");
+      _step = Step::LookingAround;
     }
   }
   

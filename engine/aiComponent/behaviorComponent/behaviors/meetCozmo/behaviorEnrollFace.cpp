@@ -580,7 +580,10 @@ void BehaviorEnrollFace::BehaviorUpdate()
   if( !IsActivated() ) {
     if( _dVars->persistent.state != State::NotStarted ) {
       // interrupted
-      if( _dVars->persistent.lastDeactivationTime_ms > 0 ) {
+      if( GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
+        SET_STATE( NotStarted );
+        DisableEnrollment();
+      } else if( _dVars->persistent.lastDeactivationTime_ms > 0 ) {
         EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         if( currTime_ms - _dVars->persistent.lastDeactivationTime_ms > kEnrollFace_MaxInterruptionBeforeReset_ms ) {
           DisableEnrollment();
@@ -1660,6 +1663,11 @@ void BehaviorEnrollFace::TransitionToSavingToRobot()
   const Result saveResult = GetBEI().GetVisionComponent().SaveFaceAlbum();
   if(RESULT_OK == saveResult)
   {
+    if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      ExternalInterface::MeetVictorNameSaved msg;
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msg)} );
+    }
+    
     TransitionToSayingName();
   }
   else

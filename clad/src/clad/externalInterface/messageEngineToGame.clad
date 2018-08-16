@@ -481,6 +481,9 @@ message MeetVictorFaceScanComplete
 {
 }
 
+message MeetVictorNameSaved {
+}
+
 // NOTE: This is separate from deleting an _observed_ face.
 message RobotErasedEnrolledFace {
     int_32 faceID,

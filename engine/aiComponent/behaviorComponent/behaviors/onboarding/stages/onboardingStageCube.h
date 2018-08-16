@@ -109,6 +109,7 @@ public:
     _pickUpAttemptCount = 0;
     _timeStartedSearching_ms = 0;
     _objectID.UnSet();
+    _addedDrivingAnims = false;
   }
   
   virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
@@ -178,8 +179,10 @@ public:
   
   virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.RemoveDrivingAnimations( kLockName );
+    if( _addedDrivingAnims ) {
+      auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
+      drivingAnimHandler.RemoveDrivingAnimations( kLockName );
+    }
     
     // interruptions at any step do not end this stage
     return false;
@@ -314,12 +317,15 @@ private:
   {
     DebugTransition("Picking up cube");
     
-    auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.PushDrivingAnimations({
-      AnimationTrigger::OnboardingCubeDriveGetIn,
-      AnimationTrigger::OnboardingCubeDriveLoop,
-      AnimationTrigger::OnboardingCubeDriveGetOut
-    }, kLockName);
+    if( !_addedDrivingAnims ) {
+      auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
+      drivingAnimHandler.PushDrivingAnimations({
+        AnimationTrigger::OnboardingCubeDriveGetIn,
+        AnimationTrigger::OnboardingCubeDriveLoop,
+        AnimationTrigger::OnboardingCubeDriveGetOut
+      }, kLockName);
+    }
+    _addedDrivingAnims = true;
     
     _pickUpBehavior->SetTargetID( _objectID );
     _step = Step::PickingUpCube;
@@ -339,8 +345,10 @@ private:
   
   void TransitionToComplete( BehaviorExternalInterface& bei )
   {
-    auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.RemoveDrivingAnimations( kLockName );
+    if( _addedDrivingAnims ) {
+      auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
+      drivingAnimHandler.RemoveDrivingAnimations( kLockName );
+    }
     
     DebugTransition("Complete");
     _step = Step::Complete;
@@ -396,6 +404,7 @@ private:
   unsigned int _activationAttemptCount;
   unsigned int _pickUpAttemptCount;
   EngineTimeStamp_t _timeStartedSearching_ms;
+  bool _addedDrivingAnims;
   
   float _initTime_s;
   

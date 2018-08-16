@@ -1087,7 +1087,8 @@ void BehaviorOnboarding::SendContinueResponse( bool acceptedContinue, int step )
 {
   if( !acceptedContinue ) {
     PRINT_NAMED_WARNING( "BehaviorOnboarding.SendContinueResponse.InvalidContinue",
-                        "OnboardingStatus: Stage '%s' (step '%d') did not accept input step %d",
+                         "OnboardingStatus: Stage %s, behavior '%s' (step '%d') did not accept input step %d",
+                         OnboardingStagesToString(_dVars.currentStage),
                          (_dVars.lastBehavior != nullptr) ? _dVars.lastBehavior->GetDebugLabel().c_str() : "[null]",
                          _dVars.lastExpectedStep, step );
   }

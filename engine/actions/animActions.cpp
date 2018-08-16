@@ -368,6 +368,7 @@ namespace Anki {
     ActionResult ReselectingLoopAnimationAction::Init() {
       ResetSubAction();
       _numLoopsRemaining = _numLoops;
+      _loopForever = (0 == _numLoops);
       return ActionResult::SUCCESS;
     }
     
@@ -408,6 +409,7 @@ namespace Anki {
       if( _numLoopsRemaining > 1 ) {
         _numLoopsRemaining = 1;
       }
+      _loopForever = false;
     }
 
 

@@ -149,6 +149,7 @@ enum uint_8 BehaviorClass {
   ObservingWithoutTurn,
 
   // onboarding
+  LookForCubePatiently,
   Onboarding,
   OnboardingActivateCube,
   OnboardingDetectHabitat,

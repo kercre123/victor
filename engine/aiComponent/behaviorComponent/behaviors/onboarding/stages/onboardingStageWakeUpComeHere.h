@@ -248,6 +248,7 @@ private:
     DebugTransition("Running come here getout");
     _step = Step::ComeHereGetOut;
     _currentBehavior = _behaviors[_step];
+    SetTriggerWordEnabled(false);
   }
   
   void TransitionToComeHereResume()

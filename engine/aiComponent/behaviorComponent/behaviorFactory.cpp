@@ -101,6 +101,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorLookForCubePatiently.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingActivateCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingDetectHabitat.h"
@@ -718,6 +719,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ObservingWithoutTurn:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorObservingWithoutTurn(config));
+      break;
+    }
+    
+    case BehaviorClass::LookForCubePatiently:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLookForCubePatiently(config));
       break;
     }
     

@@ -188,7 +188,7 @@ namespace Anki {
       
       AnimParams _animParams;
       u32        _numLoops;
-      const bool _loopForever;
+      bool       _loopForever;
       u32        _numLoopsRemaining;
       std::unique_ptr<TriggerLiftSafeAnimationAction> _subAction;
       
