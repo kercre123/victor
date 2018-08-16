@@ -32,7 +32,7 @@ public:
   virtual ~TrackFaceAction();
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
-  void SetStopCriteriaWithEyeContactOverride(const f32 duration_sec, const f32 noEyeContactTimeout_sec,
+  void SetStopCriteriaWithEyeContactOverride(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
                                              const TimeStamp_t eyeContactWithinLast_ms);
   
 protected:

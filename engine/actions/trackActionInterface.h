@@ -157,6 +157,7 @@ protected:
     f32     duration_sec                = 0.f; // _stopCriteria is ignored if this is 0
     f32     withinTolSince_sec          = 0.f;
     bool    interruptDrivingAnim        = false;
+    f32     earliestStoppingTime_sec    = -1.f; // earliestStoppingTime
   } _stopCriteria;
   
 private:
@@ -211,9 +212,8 @@ private:
 
   const std::string _kKeepFaceAliveITrackActionName = "ITrackAction";
 
+  bool HaveStopCriteria() const;
 
-  bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }
-  
   // Helper for storing the return result if we are using driving animations and just
   // returning result immediately if not
   ActionResult CheckIfDoneReturnHelper(ActionResult result, bool stopCriteriaMet);

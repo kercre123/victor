@@ -15,6 +15,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
 
@@ -145,13 +146,15 @@ bool TrackFaceAction::ContinueCriteriaMet(const f32 currentTime_sec)
   return false;
 }
 
-void TrackFaceAction::SetStopCriteriaWithEyeContactOverride(const f32 duration_sec, const f32 noEyeContactTimeout_sec,
+void TrackFaceAction::SetStopCriteriaWithEyeContactOverride(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
                                                             const TimeStamp_t eyeContactWithinLast_ms)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
   _stopCriteria.duration_sec = duration_sec;
   _stopCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
   _stopCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
+  const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _stopCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;
 
   _stopCriteria.withinTolSince_sec = -1.f;
 }

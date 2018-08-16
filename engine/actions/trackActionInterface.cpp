@@ -760,6 +760,10 @@ bool ITrackAction::UpdateSmallAngleClamping()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ITrackAction::HaveStopCriteria() const {
+  return (Util::IsFltGTZero(_stopCriteria.duration_sec) || Util::IsFltGTZero(_stopCriteria.earliestStoppingTime_sec)); 
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::TimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
@@ -814,6 +818,10 @@ bool ITrackAction::StopCriteriaMet(const f32 relPanAngle_rad, const f32 relTiltA
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
   {
+    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && _stopCriteria.earliestStoppingTime_sec > currentTime_sec)
+    {
+      return true;
+    }
     const bool isWithinTol = IsWithinTolerances(relPanAngle_rad, relTiltAngle_rad, distance_mm,
                                                 currentTime_sec);
     if(isWithinTol)
