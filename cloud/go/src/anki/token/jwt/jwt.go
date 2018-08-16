@@ -1,10 +1,10 @@
 package jwt
 
 import (
+	"anki/log"
 	"anki/robot"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"time"

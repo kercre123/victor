@@ -2,10 +2,10 @@ package cloudproc
 
 import (
 	"anki/jdocs"
+	"anki/log"
 	"anki/token"
 	"anki/voice"
 	"context"
-	"log"
 	"sync"
 )
 
