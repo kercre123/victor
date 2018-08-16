@@ -49,6 +49,14 @@ namespace {
   const u32 kObjectAvailableMessagePeriod_ms = 1000;
   const u32 kObjectAvailableMessagePeriod_cycles = kObjectAvailableMessagePeriod_ms / CUBE_TIME_STEP_MS;
   
+  // Length of time in between transmission of battery voltage messages
+  const u32 kBatteryVoltageMessagePeriod_ms = 1000;
+  const u32 kBatteryVoltageMessagePeriod_cycles = kBatteryVoltageMessagePeriod_ms / CUBE_TIME_STEP_MS;
+  
+  // To convert between battery voltage and the cube firmware's raw ADC counts (used to simulate how the physical cube
+  // sends battery voltage to engine). The raw ADC value follows the equation: actualVolts = railVoltageCnts * 3.6 / 1024
+  const float kBatteryVoltsToRawCnts = 1024.f / 3.6f;
+  
   constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   
   webots::Receiver* receiver_;
@@ -98,6 +106,10 @@ namespace {
   ObjectType objectType_ = ObjectType::UnknownObject;  
   
   Util::RandomGenerator randGen_;
+  
+  // Pointer to webots field which contains the current battery voltage of the cube (this is to be able to simulate a
+  // low cube battery condition)
+  webots::Field* batteryVoltsField_ = nullptr;
   
 } // private namespace
 
@@ -216,6 +228,10 @@ Result Init()
   ledColorField_ = selfNode->getField("ledColors");
   assert(ledColorField_ != nullptr);
   
+  // Field for battery voltage
+  batteryVoltsField_ = selfNode->getField("batteryVolts");
+  assert(batteryVoltsField_ != nullptr);
+  
   // Get radio emitter
   emitter_ = active_object_controller.getEmitter("emitter");
   assert(emitter_ != nullptr);
@@ -314,7 +330,8 @@ bool CheckForTap(f32 accelX, f32 accelY, f32 accelZ)
 }
 
 
-Result Update() {
+Result Update()
+{
   if (active_object_controller.step(CUBE_TIME_STEP_MS) != -1) {
     
     // Read incoming messages
@@ -336,6 +353,16 @@ Result Update() {
                                                            objectType_,
                                                            0));
       objAvailableSendCtr = kObjectAvailableMessagePeriod_cycles;
+    }
+    
+    // Send BatteryVoltage message if it's time
+    static u32 batteryVoltageSendCtr = kBatteryVoltageMessagePeriod_cycles;
+    if (batteryVoltageSendCtr-- == 0) {
+      const auto batteryVolts = batteryVoltsField_->getSFFloat();
+      CubeVoltageData msg;
+      msg.railVoltageCnts = static_cast<decltype(msg.railVoltageCnts)>(batteryVolts * kBatteryVoltsToRawCnts);
+      SendMessageHelper(emitter_, msg);
+      batteryVoltageSendCtr = kBatteryVoltageMessagePeriod_cycles;
     }
     
     // Update cube LED animations

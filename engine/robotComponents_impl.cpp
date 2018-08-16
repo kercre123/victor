@@ -40,6 +40,7 @@ class ObjectPoseConfirmer;
 class CubeLightComponent;
 class BackpackLightComponent;
 class CubeAccelComponent;
+class CubeBatteryComponent;
 class CubeCommsComponent;
 class CubeConnectionCoordinator;
 class CubeInteractionTracker;
@@ -96,6 +97,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(ObjectPoseConfirmer,           RobotComponentID, Obj
 LINK_COMPONENT_TYPE_TO_ENUM(CubeLightComponent,            RobotComponentID, CubeLights)
 LINK_COMPONENT_TYPE_TO_ENUM(BackpackLightComponent,        RobotComponentID, BackpackLights)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeAccelComponent,            RobotComponentID, CubeAccel)
+LINK_COMPONENT_TYPE_TO_ENUM(CubeBatteryComponent,          RobotComponentID, CubeBattery)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeCommsComponent,            RobotComponentID, CubeComms)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeConnectionCoordinator,     RobotComponentID, CubeConnectionCoordinator)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeInteractionTracker,        RobotComponentID, CubeInteractionTracker)
@@ -150,6 +152,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     case Vector::RobotComponentID::CliffSensor:                  { return "CliffSensor";}
     case Vector::RobotComponentID::CozmoContextWrapper:          { return "CozmoContextWrapper";}
     case Vector::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
+    case Vector::RobotComponentID::CubeBattery:                  { return "CubeBattery";}
     case Vector::RobotComponentID::CubeComms:                    { return "CubeComms";}
     case Vector::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
     case Vector::RobotComponentID::CubeInteractionTracker:       { return "CubeInteractionTracker";}

@@ -14,6 +14,7 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeBatteryComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
 #include "engine/activeObject.h"
@@ -551,6 +552,11 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
       _robot->GetCubeAccelComponent().HandleCubeAccelData(activeId, msg.Get_accelData());
       break;
     }
+    case MessageCubeToEngineTag::voltageData:
+    {
+      _robot->GetCubeBatteryComponent().HandleCubeVoltageData(factoryId, msg.Get_voltageData());
+      break;
+    }
     default:
     {
       PRINT_NAMED_ERROR("CubeCommsComponent.HandleCubeMessage.UnhandledTag",
@@ -839,7 +845,12 @@ void CubeCommsComponent::SendDataToWebViz()
     if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleNameCubes,
                                                                       context->GetWebService()) ) {
       Json::Value commInfo = Json::objectValue;
-      commInfo["connectionState"] = CubeConnectionStateToString(GetCubeConnectionState());
+      std::string connectionState = CubeConnectionStateToString(GetCubeConnectionState());
+      if (IsConnectedToCube()) {
+        const auto& batteryVoltsStr = std::to_string(_robot->GetCubeBatteryComponent().GetCubeBatteryVoltage(GetCurrentCube()));
+        connectionState += " (battery: " + batteryVoltsStr + "V)";
+      }
+      commInfo["connectionState"] = connectionState;
       commInfo["connectedCube"] = IsConnectedToCube() ? GetCurrentCube() : "(none)";
       commInfo["preferredCube"] = _preferredCubeFactoryId.empty() ? "(none)" : _preferredCubeFactoryId;
 

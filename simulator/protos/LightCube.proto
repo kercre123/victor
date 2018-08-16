@@ -11,6 +11,8 @@ PROTO LightCube [
   # Maps to CLAD ObjectType
   field SFString   objectType "Block_LIGHTCUBE1"
   
+  field SFFloat    batteryVolts 1.5
+  
   # If empty, factoryID is a randomly generated string indicating
   # a 6-byte unique identifier in hex (e.g. "ED:BB:02:DE:85:23").
   # See activeBlock.cpp

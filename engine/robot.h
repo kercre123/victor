@@ -81,6 +81,7 @@ class BlockTapFilterComponent;
 class BlockWorld;
 class CozmoContext;
 class CubeAccelComponent;
+class CubeBatteryComponent;
 class CubeCommsComponent;
 class CubeConnectionCoordinator;
 class CubeInteractionTracker;
@@ -247,6 +248,9 @@ public:
 
   inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>();}
   inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>();}
+  
+  inline CubeBatteryComponent& GetCubeBatteryComponent() {return GetComponent<CubeBatteryComponent>();}
+  inline const CubeBatteryComponent& GetCubeBatteryComponent() const {return GetComponent<CubeBatteryComponent>();}
 
   inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>();}
   inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>();}

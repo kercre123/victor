@@ -38,6 +38,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/appCubeConnectionSubscriber.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeBatteryComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeInteractionTracker.h"
@@ -326,6 +327,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::CubeLights,                 new CubeLightComponent());
     _components->AddDependentComponent(RobotComponentID::BackpackLights,             new BackpackLightComponent());
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
+    _components->AddDependentComponent(RobotComponentID::CubeBattery,                new CubeBatteryComponent());
     _components->AddDependentComponent(RobotComponentID::CubeComms,                  new CubeCommsComponent());
     _components->AddDependentComponent(RobotComponentID::CubeConnectionCoordinator,  new CubeConnectionCoordinator());
     _components->AddDependentComponent(RobotComponentID::CubeInteractionTracker,     new CubeInteractionTracker());

@@ -18,13 +18,21 @@ message CubeAccelData
   RawCubeAccel accelReadings[3], // 3 buffered accelerometer readings on the 3 axes
 }
 
+message CubeVoltageData
+{
+  uint_8 unused = 0,
+  
+  // raw voltage value. to convert to volts: railVoltageCnts * 3.6 / 1024 (see VIC-5511).
+  uint_16 railVoltageCnts, 
+}
 
 union MessageCubeToEngine
 {
-  CubeAccelData accelData = 2, // tag must match COMMAND_ACCEL_DATA in cube firmware
+  CubeAccelData   accelData   = 2, // tag must match COMMAND_ACCEL_DATA in cube firmware
+  CubeVoltageData voltageData = 4, // tag must match COMMAND_VOLTAGE_DATA in cube firmware
   
   // For sim only, to emulate BLE advertising:
-  ExternalInterface::ObjectAvailable  available = 3,
+  ExternalInterface::ObjectAvailable  available = 5,
 }
 
 

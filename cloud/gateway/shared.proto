@@ -32,6 +32,7 @@ message Event {
     PhotoTaken                       photo_taken                         = 16;
     RobotState                       robot_state                         = 17;
     ObjectAvailable                  object_available                    = 18;
+    CubeBattery                      cube_battery                        = 19;
   }
 }
 

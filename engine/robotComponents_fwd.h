@@ -42,6 +42,7 @@ enum class RobotComponentID{
   CliffSensor,
   CozmoContextWrapper,
   CubeAccel,
+  CubeBattery,
   CubeComms,
   CubeConnectionCoordinator,
   CubeInteractionTracker,
