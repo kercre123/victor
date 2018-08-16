@@ -123,6 +123,9 @@ private:
     bool sawBodyDuringState;
     Vision::SalientPoint lastPersonDetected;
     float timeEndFaceFromBodyBehavior_s;
+
+    // track faces that failed so we don't keep trying to look at them
+    std::vector<SmartFaceID> failedFaces;
   };
 
   InstanceConfig   _iConfig;

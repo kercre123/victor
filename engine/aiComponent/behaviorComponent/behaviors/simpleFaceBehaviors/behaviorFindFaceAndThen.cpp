@@ -129,7 +129,7 @@ BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
   
   ANKI_VERIFY( _iConfig.exitOnceFound == _iConfig.behaviorOnceFoundID.empty(),
                "BehaviorFindFaceAndThen.Ctor.InvalidBehavior",
-               "A 'behavior' must be provided, or set 'exitOnceFound' to false" );
+               "A 'behavior' must be provided, or set 'exitOnceFound' to true" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -419,6 +419,20 @@ void BehaviorFindFaceAndThen::TransitionToTurningTowardsFace()
       if( result == ActionResult::SUCCESS ) {
         TransitionToFollowupBehavior();
       } else {
+
+        if( IActionRunner::GetActionResultCategory( result ) == ActionResultCategory::ABORT ) {
+          // mark this as a "bad" face (reset only when the behavior activates again)
+          if( _dVars.targetFace.IsValid() ) {
+            PRINT_CH_INFO( "Behaviors", "BehaviorFindFaceAndThen.TurnTowardsFace.Failure.AddFailedFace",
+                           "%s: failed to turn towards face '%s' with result %s, skipping this face",
+                           GetDebugLabel().c_str(),
+                           _dVars.targetFace.GetDebugStr().c_str(),
+                           ActionResultToString(result) );
+
+            _dVars.failedFaces.push_back( _dVars.targetFace );
+          }
+        }
+
         TransitionToFindingFaceInCurrentDirection();
       }
     };
@@ -519,8 +533,19 @@ bool BehaviorFindFaceAndThen::GetRecentFaceSince( RobotTimeStamp_t sinceTime_ms,
   if( lastFaceInCurrentOrigin ) {
     timeLastFaceObserved = Anki::Util::Max( sinceTime_ms, timeLastFaceObserved );
     const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDs(timeLastFaceObserved);
-    if( facesObserved.size() > 0 ) {
-      retFace = GetBEI().GetFaceWorld().GetSmartFaceID( *facesObserved.begin() );
+    for( const auto& faceID : facesObserved ) {
+      bool faceOK = true;
+      for( const auto& smartFace : _dVars.failedFaces ) {
+        if( smartFace.MatchesFaceID(faceID) ) {
+          // skip this face
+          faceOK = false;
+          break;
+        }
+      }
+      if( faceOK ) {
+        retFace = GetBEI().GetFaceWorld().GetSmartFaceID( faceID );
+        break;
+      }
     }
   }
   
