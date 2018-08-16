@@ -4,11 +4,11 @@
             "External_Dependencies": {
                 "build_type_id": "protocCppPlugin",
                 "checksums": {
-                    "sha256": "b1777860763a7cbadcb3351a3ae0f90b25a0d63c5d71b38899e5ac3064de50c3"
+                    "sha256": "8066ef0b6d39b621a6e9a0b70e9a1c394f5f18b3032a5ddff37677da8f4b27cf"
                 },
                 "extension": "tar.gz",
                 "package_name": "protocCppPlugin",
-                "version": "1"
+                "version": "2"
             },
             "tensorflow": {
                 "build_type_id": "anki",
