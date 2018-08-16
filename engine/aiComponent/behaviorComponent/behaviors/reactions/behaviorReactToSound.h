@@ -127,7 +127,11 @@ private:
   } _iVars;
 
   EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
+
+  // these are the values that we're reacting to
   MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;
+  double                                _triggeredMicPower        = 0.0;
+  MicDirectionConfidence                _triggeredConfidence      = 0;
 
   EngineTimeStamp_t                     _triggerDetectedTime      = 0;
 };

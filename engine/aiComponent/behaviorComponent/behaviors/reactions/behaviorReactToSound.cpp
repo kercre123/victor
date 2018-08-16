@@ -29,6 +29,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 #include <algorithm>
@@ -275,10 +276,16 @@ bool BehaviorReactToSound::CanReactToSound() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::RespondToSound()
 {
-  // normally we would play an animation, but currently we don't have animation ready, so for now we'll just turn to sound
   if ( kInvalidMicDirectionIndex != _triggeredDirection )
   {
     PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Responding to sound from direction [%d]", _triggeredDirection );
+
+    // Send das message ONLY when we're reacting to a valid sound
+    DASMSG( robot_reacted_to_sound, "robot.reacted_to_sound", "Robot is reacting to a valid sound" );
+    DASMSG_SET( i1, _triggeredMicPower, "The log10 of the mic power level" );
+    DASMSG_SET( i2, _triggeredConfidence, "The direction confidence returned by SE" );
+    DASMSG_SET( i3, _triggeredDirection, "The direction the sound came from (0 in front, clockwise, 12 is unknown)" );
+    DASMSG_SEND();
 
     if ( _iVars.reactionBehavior->WantsToBeActivated() )
     {
@@ -312,6 +319,10 @@ bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionC
       const bool hasValidDirection = ( kInvalidMicDirectionIndex != direction );
       if ( !isDirectionSame && hasValidDirection )
       {
+        // store these for das events
+        _triggeredMicPower = power;
+        _triggeredConfidence = confidence;
+
         SetTriggerDirection( direction );
         PRINT_DEBUG( "Heard valid sound from direction [%d]", direction );
 
