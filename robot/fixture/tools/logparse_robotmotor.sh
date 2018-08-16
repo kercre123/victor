@@ -46,11 +46,11 @@
 #...
 
 #cli usage: logparse_robotmotor [range] [tread]
-gArgCnt=0; gDebug=0; gParseRange=0; gParseTread=0; gHelp=0;
+gArgCnt=0; gDebug=0; gParseTread=0; gParseRange=0; gHelp=0;
 for arg in "$@"; do
   if [ "$(echo ${arg} | xargs)" == "debug" ]; then gDebug=1; fi
-  if [ "$(echo ${arg} | xargs)" == "range" ]; then gParseRange=1; fi
   if [ "$(echo ${arg} | xargs)" == "tread" ]; then gParseTread=1; fi
+  if [ "$(echo ${arg} | xargs)" == "range" ]; then gParseRange=1; fi
   #if [ "$(echo ${arg} | xargs)" == "--help" ]; then gHelp=1; fi
   if [ "$arg" == "--help" ]; then gHelp=1; fi
   if [ $gDebug -gt 0 ]; then echo arg[$gArgCnt] raw:\""${arg}"\"; fi # trimmed:\""$(echo ${arg} | xargs)"\"; fi
@@ -63,8 +63,8 @@ if [[ $gHelp -gt 0 || ( ! $gParseRange -gt 0 && ! $gParseTread -gt 0) ]]; then
   echo "BREIF: parses logfiles from ROBOT fixtures to collect motor test data"
   echo "Options:"
   echo "  --help     display this help message"
-  echo "  range      parse range data for Head + Lift motors"
   echo "  tread      parse tread data for Left + Right treads"
+  echo "  range      parse range data for Head + Lift motors"
   echo "  debug      enable debug printing"
   echo ""
   if [ $gHelp -gt 0 ]; then exit 0; fi
@@ -73,10 +73,144 @@ fi
 
 #globals
 directory="$(dirname ${BASH_SOURCE[0]})"
-filebase_range="robotmotor_range";
 filebase_tread="robotmotor_tread";
+filebase_range="robotmotor_range";
 gCurrentFile="";
 gCurrentLine=0;
+
+#---------------------------------------------------------------------------------------------------------------
+#                       Tread Stuffs (Left,Right)
+#---------------------------------------------------------------------------------------------------------------
+
+#     offset: 0      1       2     3     4     5        6     7    8       9       10    11    12    13       14    15  16       17      18
+treadHeader1=("LEFT" "SPEED" ""    "AVG" ""    "TRAVEL" ""    ""   "RIGHT" "SPEED" ""    "AVG" ""    "TRAVEL" ""    ""  ""       ""      "")
+treadHeader2=("pwr"  "fwd"   "rev" "fwd" "rev" "fwd"    "rev" ""   "pwr"   "fwd"   "rev" "fwd" "rev" "fwd"    "rev" ""  "result" "line#" "file")
+declare -a treadDatHigh;
+declare -a treadDatLow;
+for val in "${treadHeader2[@]}"; do treadDatHigh+=(""); treadDatLow+=(""); done
+gTreadHigh=0; #dataset selector
+
+function dTreadClear() { 
+  if [ $gTreadHigh -gt 0 ]; then 
+    for i in "${!treadDatHigh[@]}"; do treadDatHigh[$i]=""; done
+    treadDatHigh[7]=" ";
+    treadDatHigh[15]=" ";
+  else
+    for i in "${!treadDatLow[@]}"; do treadDatLow[$i]=""; done
+    treadDatLow[7]=" ";
+    treadDatLow[15]=" ";
+  fi
+}
+
+function dTreadSetResult()  { local result=$1;                                 treadDatHigh[16]=$result;       treadDatLow[16]=$result; }
+function dTreadSetLineNum() { local linenum=$1; if [ $gTreadHigh -gt 0 ]; then treadDatHigh[17]=$linenum; fi;  treadDatLow[17]=$linenum; }
+function dTreadSetFile()    { local fname=$1;   if [ $gTreadHigh -gt 0 ]; then treadDatHigh[18]=$fname;   fi;  treadDatLow[18]=$fname; }
+function dTreadSetPwrLeft() { local pwr=$1;     if [ $gTreadHigh -gt 0 ]; then treadDatHigh[0]=$pwr;      else treadDatLow[0]=$pwr; fi }
+function dTreadSetPwrRight() { local pwr=$1;    if [ $gTreadHigh -gt 0 ]; then treadDatHigh[8]=$pwr;      else treadDatLow[8]=$pwr; fi }
+
+function dTreadSetFwdLeft() {
+  local speed=$1 spdavg=$2 travel=$3
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[1]=$speed;  else treadDatLow[1]=$speed; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[3]=$spdavg; else treadDatLow[3]=$spdavg; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[5]=$travel; else treadDatLow[5]=$travel; fi
+}
+
+function dTreadSetRevLeft() {
+  local speed=$1 spdavg=$2 travel=$3
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[2]=$speed;  else treadDatLow[2]=$speed; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[4]=$spdavg; else treadDatLow[4]=$spdavg; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[6]=$travel; else treadDatLow[6]=$travel; fi
+}
+
+function dTreadSetFwdRight() {
+  local speed=$1 spdavg=$2 travel=$3
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[9]=$speed;   else treadDatLow[9]=$speed; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[11]=$spdavg; else treadDatLow[11]=$spdavg; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[13]=$travel; else treadDatLow[13]=$travel; fi
+}
+
+function dTreadSetRevRight() {
+  local speed=$1 spdavg=$2 travel=$3
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[10]=$speed;  else treadDatLow[10]=$speed; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[12]=$spdavg; else treadDatLow[12]=$spdavg; fi
+  if [ $gTreadHigh -gt 0 ]; then treadDatHigh[14]=$travel; else treadDatLow[14]=$travel; fi
+}
+
+function dTreadWriteSel()
+{
+  local dsel=$1 row="" blanks=0 datary=()
+  if [ $dsel -gt 0 ]; then datary=("${treadDatHigh[@]}"); else datary=("${treadDatLow[@]}"); fi
+  
+  for val in "${datary[@]}"; do
+    row="$row,$val";
+    if [ "$val" == "" ]; then blanks=$((blanks+1)); fi
+  done
+  
+  if [ $dsel -gt 0 ]; then fappend="high"; else fappend="low"; fi
+  outfile=$(printf "%s_%s.csv" "$filebase_tread" "$fappend")
+  
+  if [ ! -e "$outfile" ]; then
+    row1=""; row2=""; #first rows are column lables
+    for val in "${treadHeader1[@]}"; do row1="$row1,$val"; done
+    for val in "${treadHeader2[@]}"; do row2="$row2,$val"; done
+    echo "$row1,ECHECK" >> $outfile
+    echo "$row2,blanks" >> $outfile
+  fi
+  
+  echo "$row,$blanks" >> $outfile
+}
+function dTreadWrite() { dTreadWriteSel "0"; dTreadWriteSel "1"; }
+
+function TreadParseLine()
+{
+  local line=$1
+  
+  if [[ "$line" == *"LEFT"* ]]; then
+    if [[ "$line" == *"LEFT tread test"* ]]; then
+      #NOTE: this is the first log line of any dataset. use to re-sync
+      local power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
+      if [ "$power" -ge 95 ]; then gTreadHigh=1; else gTreadHigh=0; fi
+      if [ $gDebug -gt 0 ]; then echo "  found ds=$gTreadHigh"; fi
+      dTreadClear
+      dTreadSetPwrLeft $power
+      dTreadSetLineNum $gCurrentLine
+      dTreadSetFile $gCurrentFile
+    elif [[ "$line" == *"LEFT  FWD"* ]]; then
+      local speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      local spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      local travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dTreadSetFwdLeft $speed $spdavg $travel
+    elif [[ "$line" == *"LEFT  REV"* ]]; then
+      local speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      local spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      local travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dTreadSetRevLeft $speed $spdavg $travel
+    fi
+  
+  elif [[ "$line" == *"RIGHT"* ]]; then
+    if [[ "$line" == *"RIGHT tread test"* ]]; then
+      local power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
+      dTreadSetPwrRight $power
+    elif [[ "$line" == *"RIGHT FWD"* ]]; then
+      local speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      local spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      local travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dTreadSetFwdRight $speed $spdavg $travel
+    elif [[ "$line" == *"RIGHT REV"* ]]; then
+      local speed=$(echo $line | grep -oP 'speed:\K[+-]*([0-9]+)');
+      local spdavg=$(echo $line | grep -oP 'avg:\K[+-]*([0-9]+)');
+      local travel=$(echo $line | grep -oP 'travel:\K[+-]*([0-9]+)');
+      dTreadSetFwdLeft $speed $spdavg $travel
+    fi
+  
+  elif [[ "$line" == *"[RESULT:"* ]]; then
+    local result=$(echo "$line" | grep -oP 'RESULT:\K[0-9]+');
+    dTreadSetResult $result
+    if [ $gDebug -gt 0 ]; then echo "  writing result=$result"; fi
+    dTreadWrite
+    dTreadClear
+  fi
+}
 
 #---------------------------------------------------------------------------------------------------------------
 #                       Range Stuffs (Lift,Head)
@@ -251,13 +385,20 @@ function parse_file()
   gCurrentFile=$1;
   gCurrentLine=0;
   
+  echo processing "$gCurrentFile"
   dos2unix --quiet "$gCurrentFile"
   local numlines=$(wc -l < "$gCurrentFile")
-  echo processing "$gCurrentFile" - $numlines lines
   
   while IFS='' read -r line || [[ -n "$line" ]]; do
     gCurrentLine=$((gCurrentLine+1))
+    if [ $gParseTread -gt 0 ]; then TreadParseLine "$line"; fi
     if [ $gParseRange -gt 0 ]; then RangeParseLine "$line"; fi
+    
+    #show progress
+    if [ $(($gCurrentLine % 100)) -eq 0 ]; then
+      local percent=$((100*$gCurrentLine/$numlines))
+      echo -ne "progress: $percent% $gCurrentLine/$numlines lines\r"
+    fi
   done < "$gCurrentFile"
   
   gFileCnt=$(($gFileCnt+1))
@@ -265,7 +406,8 @@ function parse_file()
 }
 
 #clean output files
-rm -f $directory/$filebase_range*.csv $directory/$filebase_tread*.csv
+if [ $gParseTread -gt 0 ]; then rm -f $directory/$filebase_tread*.csv; fi
+if [ $gParseRange -gt 0 ]; then rm -f $directory/$filebase_range*.csv; fi
 
 #parse logfiles (*.log or *.txt formats)
 Tstart=$(($(date +%s%N)/1000000))
