@@ -19,6 +19,7 @@
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/signalHolder.h"
 
 #include "clad/types/robotSettingsTypes.h"
 
@@ -31,7 +32,8 @@ namespace Vector {
 class JdocsManager;
 
 class SettingsManager : public IDependencyManagedComponent<RobotComponentID>,
-                        private Anki::Util::noncopyable
+                        private Anki::Util::noncopyable,
+                        private Util::SignalHolder
 {
 public:
   SettingsManager();
@@ -43,6 +45,7 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::JdocsManager);
+    dependencies.insert(RobotComponentID::AIComponent);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
   };
@@ -61,24 +64,65 @@ public:
   bool        GetRobotSettingAsBool  (const RobotSetting key) const;
 
   bool UpdateSettingsJdoc();
+
+  //////
+  // Some user settings need to be triggered from behaviors; these function help in dealing with latent setting change
+  // requests.
+
+  // test whether or not we have a pending request for a latent settings update
+  bool IsSettingsUpdateRequestPending() const;
+  bool IsSettingsUpdateRequestPending(RobotSetting setting) const;
+  RobotSetting GetPendingSettingsUpdate() const;
+
+  // claiming the pending update request tells the system that "somebody" is going to take care of this update so
+  // there's no need to force the update if it's not set in time
+  // ** note: if you claim a pending event, it is up to you to clear it when you're done!
+  bool ClaimPendingSettingsUpdate(RobotSetting setting);
+  // applying the update actually applies the settings change that was requested
+  // note: does nothing if the requested setting was not formerly pending
+  bool ApplyPendingSettingsUpdate(RobotSetting setting, bool clearRequest = true);
+  // this will clear out the pending request to allow new requests to be made
+  // ** note: if you claim a pending event, it is up to you to clear it when you're done!
+  void ClearPendingSettingsUpdate();
+  //////
   
 private:
 
   void ApplyAllCurrentSettings();
-  bool ApplyRobotSetting(const RobotSetting robotSetting);
+  bool ApplyRobotSetting(const RobotSetting robotSetting, bool force = true);
   bool ApplySettingMasterVolume();
   bool ApplySettingEyeColor();
   bool ApplySettingLocale();
   bool ApplySettingTimeZone();
   bool ExecCommand(const std::vector<std::string>& args);
 
+  // request that the specified RobotSetting is not immediately applied, but some other source will apply it
+  bool RequestLatentSettingsUpdate( RobotSetting setting );
+  void OnSettingsUpdateNotClaimed(RobotSetting setting);
+
   Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   bool                      _applySettingsNextTick = false;
-  using SettingSetter = bool (SettingsManager::*)();
+
+  using SettingSetterFunction = bool (SettingsManager::*)();
+  struct SettingSetter
+  {
+    bool                    isLatentApplication;
+    SettingSetterFunction   applicationFunction;
+  };
   using SettingSetters = std::map<RobotSetting, SettingSetter>;
   SettingSetters            _settingSetters;
+
+  struct LatentSettingsRequest
+  {
+    RobotSetting            setting;
+    size_t                  tickRequested;
+    bool                    isClaimed;
+  };
+
+  bool                      _hasPendingSettingsRequest;
+  LatentSettingsRequest     _settingsUpdateRequest;
 
   JdocsManager*                  _jdocsManager = nullptr;
   Audio::EngineRobotAudioClient* _audioClient = nullptr;

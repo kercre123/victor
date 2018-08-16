@@ -17,7 +17,9 @@
 #include "engine/components/settingsCommManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/robotInterface/messageHandler.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -29,11 +31,14 @@
 namespace Anki {
 namespace Vector {
 
-
+namespace {
+  const size_t kMaxTicksToClear = 3;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsManager::SettingsManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsManager)
+  , _hasPendingSettingsRequest( false )
 {
 }
 
@@ -44,6 +49,28 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _robot = robot;
   _jdocsManager = &robot->GetComponent<JdocsManager>();
   _audioClient = robot->GetAudioClient();
+
+  // let's register for callbacks we care about
+  {
+    using namespace RobotInterface;
+    MessageHandler* messageHandler = robot->GetRobotMessageHandler();
+
+    // eye color settings are triggered via the AnimEvent::CHANGE_EYE_COLOR animation event
+    // listen for this event, and if we have a pending request for an eye_color change, we can trigger it
+    // this allows us to trigger the request then play the animation in whatever way we'd like (vs. forcing other systems
+    // to listen for the callback explicitly)
+    AddSignalHandle(messageHandler->Subscribe(RobotToEngineTag::animEvent, [this]( const AnkiEvent<RobotToEngine>& event)
+    {
+      const AnimationEvent& animEvent = event.GetData().Get_animEvent();
+      if (animEvent.event_id == AnimEvent::CHANGE_EYE_COLOR)
+      {
+        if (IsSettingsUpdateRequestPending(RobotSetting::eye_color))
+        {
+          ApplyPendingSettingsUpdate(RobotSetting::eye_color, false);
+        }
+      }
+    }));
+  }
 
   // Get the default settings config
   const auto& defaultSettings = robot->GetContext()->GetDataLoader()->GetSettingsConfig();
@@ -103,10 +130,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
-  _settingSetters[RobotSetting::master_volume] = &SettingsManager::ApplySettingMasterVolume;
-  _settingSetters[RobotSetting::eye_color]     = &SettingsManager::ApplySettingEyeColor;
-  _settingSetters[RobotSetting::locale]        = &SettingsManager::ApplySettingLocale;
-  _settingSetters[RobotSetting::time_zone]     = &SettingsManager::ApplySettingTimeZone;
+  _settingSetters[RobotSetting::master_volume] = { false, &SettingsManager::ApplySettingMasterVolume };
+  _settingSetters[RobotSetting::eye_color]     = { true,  &SettingsManager::ApplySettingEyeColor };
+  _settingSetters[RobotSetting::locale]        = { false, &SettingsManager::ApplySettingLocale };
+  _settingSetters[RobotSetting::time_zone]     = { false, &SettingsManager::ApplySettingTimeZone };
 
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
@@ -125,8 +152,23 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
     auto& settingsCommManager = _robot->GetComponent<SettingsCommManager>();
     settingsCommManager.RefreshConsoleVars();
   }
-}
 
+  if (_hasPendingSettingsRequest && !_settingsUpdateRequest.isClaimed)
+  {
+    const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+    const size_t dt = currTick - _settingsUpdateRequest.tickRequested;
+    if (dt >= kMaxTicksToClear)
+    {
+      LOG_INFO("SettingsManager.UpdateDependent",
+               "Setting update request '%s' has been pending for %zu ticks, forcing a clear",
+               RobotSettingToString(_settingsUpdateRequest.setting),
+               dt);
+
+      OnSettingsUpdateNotClaimed(_settingsUpdateRequest.setting);
+      ClearPendingSettingsUpdate();
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
@@ -143,7 +185,7 @@ bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
   const Json::Value prevValue = _currentSettings[key];
   _currentSettings[key] = valueJson;
 
-  bool success = ApplyRobotSetting(robotSetting);
+  bool success = ApplyRobotSetting(robotSetting, false);
   if (!success)
   {
     _currentSettings[key] = prevValue;  // Restore previous good value
@@ -206,16 +248,23 @@ void SettingsManager::ApplyAllCurrentSettings()
   }
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting)
+bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool force)
 {
   // Actually apply the setting; note that some things don't need to be "applied"
   bool success = true;
   const auto it = _settingSetters.find(robotSetting);
   if (it != _settingSetters.end())
   {
-    success = (this->*(it->second))();
+    if (force || !it->second.isLatentApplication)
+    {
+      LOG_DEBUG("SettingsManager.EyeColor", "Applying Robot Setting '%s'", RobotSettingToString(robotSetting));
+      success = (this->*(it->second.applicationFunction))();
+    }
+    else
+    {
+      success = RequestLatentSettingsUpdate(robotSetting);
+    }
 
     if (!success)
     {
@@ -298,6 +347,119 @@ bool SettingsManager::ApplySettingTimeZone()
 #else
   return true;
 #endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::RequestLatentSettingsUpdate(RobotSetting setting)
+{
+  bool success = false;
+
+  // if we don't already have a request pending, or
+  // if our current pending request hasn't been claimed yet, simply override it
+  if (!IsSettingsUpdateRequestPending() || !_settingsUpdateRequest.isClaimed)
+  {
+    LOG_DEBUG("SettingsManager.RequestLatentSettingsUpdate", "Requesting update to setting '%s'", RobotSettingToString(setting));
+
+    // create new request
+    _settingsUpdateRequest =
+    {
+      .setting        = setting,
+      .tickRequested  = BaseStationTimer::getInstance()->GetTickCount(),
+      .isClaimed      = false
+    };
+
+    _hasPendingSettingsRequest = success = true;
+  }
+  else
+  {
+    LOG_ERROR("SettingsManager.RequestLatentSettingsUpdate",
+              "Requesting to change setting '%s' while previous claimed request '%s' was pending",
+              RobotSettingToString(setting), RobotSettingToString(_settingsUpdateRequest.setting));
+  }
+
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::IsSettingsUpdateRequestPending() const
+{
+  return _hasPendingSettingsRequest;
+}
+
+bool SettingsManager::IsSettingsUpdateRequestPending(RobotSetting setting) const
+{
+  return IsSettingsUpdateRequestPending() && (setting == _settingsUpdateRequest.setting);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotSetting SettingsManager::GetPendingSettingsUpdate() const
+{
+  return _settingsUpdateRequest.setting;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsManager::ClearPendingSettingsUpdate()
+{
+  _hasPendingSettingsRequest = false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ClaimPendingSettingsUpdate(RobotSetting setting)
+{
+  bool success = false;
+
+  if (IsSettingsUpdateRequestPending(setting))
+  {
+    if (!_settingsUpdateRequest.isClaimed)
+    {
+      _settingsUpdateRequest.isClaimed = success = true;
+    }
+    else
+    {
+      LOG_ERROR("SettingsManager.ClaimPendingSettingsUpdate",
+                "Attempted to consume setting '%s', but setting was previously consumed",
+                RobotSettingToString(setting));
+    }
+  }
+  else
+  {
+    LOG_ERROR("SettingsManager.ClaimPendingSettingsUpdate",
+              "Attempted to consume setting '%s', but setting was not pending",
+              RobotSettingToString(setting));
+  }
+
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplyPendingSettingsUpdate(RobotSetting setting, bool clearRequest)
+{
+  bool success = false;
+
+  if (IsSettingsUpdateRequestPending(setting))
+  {
+    success = ApplyRobotSetting(setting, true);
+
+    // if we were told to clear the request, or it has never been claimed, go ahead and clear it
+    if (clearRequest || !_settingsUpdateRequest.isClaimed)
+    {
+      ClearPendingSettingsUpdate();
+    }
+  }
+  else
+  {
+    LOG_DEBUG("SettingsManager.ApplyPendingSettingsUpdate",
+              "Attempted to apply latent setting '%s', but setting was not pending",
+              RobotSettingToString(setting));
+  }
+
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsManager::OnSettingsUpdateNotClaimed(RobotSetting setting)
+{
+  ApplyRobotSetting(setting, true);
 }
 
 

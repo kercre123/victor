@@ -17,6 +17,7 @@
     "ReactToTouchPetting",
     "ReactToObstacle",
     "InterruptingVoiceReactions",
+    "ChangeEyeColor",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "WhileInAirDispatcher",

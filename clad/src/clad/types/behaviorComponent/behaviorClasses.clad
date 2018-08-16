@@ -201,6 +201,9 @@ enum uint_8 BehaviorClass {
   SayName,
   SearchWithinBoundingBox,
 
+  // robot settings
+  EyeColor,
+
   // sleeping
   Sleeping,
 

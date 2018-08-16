@@ -368,6 +368,9 @@ enum uint_16 BehaviorID {
   FrameFaces,
   TakeAPhotoCoordinator,
 
+  // settings behaviors
+  ChangeEyeColor,
+
   // victorBehaviorTree/timer
   DemoTimerUtilityCoordinator,
   SingletonAnticShowClock,

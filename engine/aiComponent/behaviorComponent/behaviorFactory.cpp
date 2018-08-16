@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/appBehaviors/behaviorEyeColor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/attentionTransfer/behaviorAttentionTransferIfNeeded.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPutDownBlock.h"
@@ -759,6 +760,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TakeAPhotoCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTakeAPhotoCoordinator(config));
+      break;
+    }
+
+    case BehaviorClass::EyeColor:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorEyeColor(config));
       break;
     }
     

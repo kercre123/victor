@@ -48,6 +48,7 @@ enum uint_8 BEIConditionType {
   RobotShaken,
   RobotTouched,
   SalientPointDetected,
+  SettingsUpdatePending,
   SimpleMood,
   StuckOnEdge,
   TimedDedup,

@@ -420,6 +420,22 @@
     "AnimName": "ag_driving01_startdriving"
   },
   {
+    "CladEvent": "EyeColorIdle",
+    "AnimName": "ag_eyecolorreact_idle"
+  },
+  {
+    "CladEvent": "EyeColorGetIn",
+    "AnimName": "ag_eyecolorreact_getin"
+  },
+  {
+    "CladEvent": "EyeColorGetOut",
+    "AnimName": "ag_eyecolorreact_getout"
+  },
+  {
+    "CladEvent": "EyeColorSwitch",
+    "AnimName": "ag_eyecolorreact_switch"
+  },
+  {
     "CladEvent": "EyeContactLookLoop",
     "AnimName": "ag_eyecontact_lookloop"
   },

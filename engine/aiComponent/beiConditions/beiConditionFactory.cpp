@@ -46,6 +46,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouched.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionSettingsUpdatePending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSimpleMood.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionStuckOnEdge.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
@@ -335,6 +336,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::SalientPointDetected:
     {
       condition = std::make_shared<ConditionSalientPointDetected>(config);
+      break;
+    }
+    case BEIConditionType::SettingsUpdatePending:
+    {
+      condition = std::make_shared<ConditionSettingsUpdatePending>(config);
       break;
     }
     case BEIConditionType::SimpleMood:
