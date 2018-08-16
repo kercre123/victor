@@ -149,15 +149,20 @@ protected:
 
   virtual bool ContinueCriteriaMet(const f32 currentTime_sec) {return false;};
 
+  // Stop criteria is only valid if duration_sec is non-zero or
+  // earliestStoppingTime_sec is greater than zero.
   struct {
     Radians panTol                      = -1.f;
     Radians tiltTol                     = -1.f;
     f32     minDist_mm                  = -1.f;
     f32     maxDist_mm                  = -1.f;
-    f32     duration_sec                = 0.f; // _stopCriteria is ignored if this is 0
+    f32     duration_sec                = 0.f;
     f32     withinTolSince_sec          = 0.f;
     bool    interruptDrivingAnim        = false;
-    f32     earliestStoppingTime_sec    = -1.f; // earliestStoppingTime
+    // This is the earliest time that tracking will attempt
+    // to stop. It will continue to track if  and only if the
+    // ContinueCriteriaMet method returns true.
+    f32     earliestStoppingTime_sec    = -1.f;
   } _stopCriteria;
   
 private:
