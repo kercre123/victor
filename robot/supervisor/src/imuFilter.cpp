@@ -701,12 +701,10 @@ namespace Anki {
         gyro_[2] = imu_data_.rate_z - gyro_bias_filt[2];
 
 #ifndef SIMULATOR
-        // COZMO V1: Correct for observed sensitivity error on z axis of gyro (COZMO-14182)
-        // It has been observed that the z axis gyro usually reports about a 1.8% higher
+        // VECTOR: Correct for observed sensitivity error on z axis of gyro (VIC-285)
+        // It has been observed that the z axis gyro usually reports about a 1.03% higher
         // rate than it is actually experiencing, so simply scale it here.
-
-        // Similar correction needed for Victor?
-        // gyro_[2] *= 0.982f;
+         gyro_[2] *= 0.989f;
 #endif
 
 
