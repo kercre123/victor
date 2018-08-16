@@ -421,15 +421,15 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
 
   const float randomMaxTimeToTrack_s = Util::numeric_cast<float>(
     GetRNG().RandDblInRange(_iConfig.maxTimeToTrackFaceLowerBound_s, _iConfig.maxTimeToTrackFaceUpperBound_s));
-  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.MaxTrackTime", "will track for at most %f seconds",
-    randomMaxTimeToTrack_s);
+  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TransitionToTrackingFace.MaxTrackTime",
+    "will track for at most %f seconds", randomMaxTimeToTrack_s);
   _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() +
     randomMaxTimeToTrack_s;
 
   const float randomMinTimeToTrack_s = Util::numeric_cast<float>(
     GetRNG().RandDblInRange(_iConfig.minTimeToTrackFaceLowerBound_s, _iConfig.minTimeToTrackFaceUpperBound_s));
-  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.MinTrackTime", "will track for at least %f seconds",
-    randomMinTimeToTrack_s);
+  PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TransitionToTrackingFace.MinTrackTime",
+    "will track for at least %f seconds", randomMinTimeToTrack_s);
 
 
   CompoundActionParallel* action = new CompoundActionParallel();
