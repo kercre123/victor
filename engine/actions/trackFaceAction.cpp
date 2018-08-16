@@ -129,7 +129,9 @@ bool TrackFaceAction::ContinueCriteriaMet(const f32 currentTime_sec)
 {
   if (Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
   {
-    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_stopCriteria.eyeContactWithinLast_ms);
+    // TODO it would ideal to make sure we only use eye contact from the
+    // face we're tracking VIC-5557
+    const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_eyeContactCriteria.eyeContactWithinLast_ms);
     if (eyeContact)
     {
       _eyeContactCriteria.timeOfLastEyeContact_sec = currentTime_sec;
