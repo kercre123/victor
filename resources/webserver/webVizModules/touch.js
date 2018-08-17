@@ -8,8 +8,8 @@
     // Called once when the module is loaded.
     $(elem).append('<div id="touch-title">Touch Sensor</div>');
 
-    var setDisableTouchSensor = $('<input class="touchButton" type="button" value="Enable touch sensor"/>');
-    var setEnableTouchSensor = $('<input class="touchButton" type="button" value="Disable touch sensor"/>');
+    var setDisableTouchSensor = $('<input class="touchButton" type="button" value="Disable touch sensor"/>');
+    var setEnableTouchSensor = $('<input class="touchButton" type="button" value="Enable touch sensor"/>');
 
     setDisableTouchSensor.click( function(){
       var payload = { 'enabled' : 'false' };
