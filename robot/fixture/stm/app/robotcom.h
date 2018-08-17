@@ -83,7 +83,8 @@ typedef struct {
 } robot_bsv_t;
 
 typedef union {
-  int32_t val[4];
+  int32_t val[5];
+  struct { int32_t dat[4]; int32_t failureCode; } meta; //syscon-reported hw failures (1x uint16)
   struct { int32_t raw; int32_t temp; } bat; //battery: raw-adc, temperature (2x int16)
   struct { int32_t fL; int32_t fR; int32_t bL; int32_t bR; } cliff; //cliff sensors: front/back L/R (4x uint16)
   struct { int32_t pos; int32_t speed; int32_t delta; } enc; //encoder: position, speed, [delta,spine-only] (2[3]x int32)

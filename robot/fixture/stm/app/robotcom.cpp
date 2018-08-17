@@ -705,6 +705,7 @@ static inline void spine_get_sr_(robot_sr_t* out_sr, uint8_t sensor)
   if( pkt != NULL )
   {
     BodyToHead *b2h = (BodyToHead*)&pkt->payload;
+    out_sr->meta.failureCode = b2h->failureCode;
     switch(sensor)
     {
       case RCOM_SENSOR_BATTERY:
