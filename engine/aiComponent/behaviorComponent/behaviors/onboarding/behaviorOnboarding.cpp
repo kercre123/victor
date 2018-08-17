@@ -235,15 +235,20 @@ void BehaviorOnboarding::InitBehavior()
     }
   }
   
-  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingPickedUp),
-                                                              BEHAVIOR_CLASS(OnboardingInterruptionHead),
-                                                              _iConfig.pickedUpBehavior);
-  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingPlacedOnCharger),
-                                                              BEHAVIOR_CLASS(OnboardingInterruptionHead),
-                                                              _iConfig.onChargerBehavior);
-  GetBEI().GetBehaviorContainer().FindBehaviorByIDAndDowncast(BEHAVIOR_ID(OnboardingDetectHabitat),
-                                                              BEHAVIOR_CLASS(OnboardingDetectHabitat),
-                                                              _iConfig.detectHabitatBehavior);
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPickedUp),
+                                  BEHAVIOR_CLASS(OnboardingInterruptionHead),
+                                  _iConfig.pickedUpBehavior );
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPlacedOnCharger),
+                                  BEHAVIOR_CLASS(OnboardingInterruptionHead),
+                                  _iConfig.onChargerBehavior );
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingDetectHabitat),
+                                  BEHAVIOR_CLASS(OnboardingDetectHabitat),
+                                  _iConfig.detectHabitatBehavior );
+  
+  _iConfig.normalReactToRobotOnBackBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ReactToRobotOnBack) );
+  _iConfig.specialReactToRobotOnBackBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingPopAWheelieRecovery) );
   
   {
     _iConfig.wakeUpBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( _iConfig.wakeUpID );
@@ -694,6 +699,22 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
 {
   DEV_ASSERT( _iConfig.interruptions.size() == _iConfig.interruptionIDs.size(),
               "BehaviorOnboarding.CheckAndDelegateInterruptions.SizeMismatch" );
+  
+  if( (_dVars.currentStage == OnboardingStages::FinishedMeetVictor)
+      && (_dVars.lastExpectedStep == external_interface::STEP_CUBE_TRICK) )
+  {
+    // hack: suppress the normal react to robot on back behavior so that it doesn't trigger app
+    // messages. During this step, the popawheelie-specific ReactToRobotOnBackInternal will right
+    // the robot if the normalReactToRobotOnBackBehavior is prevented from activating.
+    _iConfig.normalReactToRobotOnBackBehavior->SetDontActivateThisTick( GetDebugLabel() );
+    
+    // Also, since the robot OffTreadsState will often flicker into InAir during PopAWheelie,
+    // prevent the pickup behavior from running while the special react to on back behavior is running
+    if( _iConfig.specialReactToRobotOnBackBehavior->IsActivated() ) {
+      _iConfig.pickedUpBehavior->SetDontActivateThisTick( GetDebugLabel() );
+    }
+  }
+  
   for( size_t i=0; i<_iConfig.interruptions.size(); ++i ) {
     
     const auto& interruption = _iConfig.interruptions[i];

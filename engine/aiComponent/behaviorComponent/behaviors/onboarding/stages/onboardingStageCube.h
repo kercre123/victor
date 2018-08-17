@@ -4,7 +4,7 @@
  * Author: ross
  * Created: 2018-06-07
  *
- * Description: Onboarding logic unit for cube, which finds a cube, sees it, "activates" it, and picks it up
+ * Description: Onboarding logic unit for cube, which finds a cube, sees it, "activates" it, and pops a wheelie
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -16,7 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "coretech/common/engine/robotTimeStamp.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingActivateCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -33,10 +33,10 @@ namespace Vector {
   
 namespace {
   const unsigned int kMaxActivationAttempts = 2;
-  const unsigned int kMaxPickUpAttempts = 3;
+  const unsigned int kMaxWheelieAttempts = 3;
   const float kMaxSearchDuration_s = 30.0f;
   const uint32_t kMaxAgeForRedoSearch_ms = 5000;
-  const float kMinTimeToConnect_s = 15.0f;
+  const float kMinTimeToConnect_s = 20.0f;
   
   const std::string& kLockName = "onboardingCubeStage";
 }
@@ -67,10 +67,7 @@ public:
     delegates.insert( BEHAVIOR_ID(OnboardingLookAtUser) );
     delegates.insert( BEHAVIOR_ID(OnboardingLookForCube) );
     delegates.insert( BEHAVIOR_ID(OnboardingActivateCube) );
-    delegates.insert( BEHAVIOR_ID(OnboardingPickUpCube) );
-    // todo: different celebration than what PickUp does
-    // design says "super stoked then calms down"
-    delegates.insert( BEHAVIOR_ID(PutDownBlock) );
+    delegates.insert( BEHAVIOR_ID(OnboardingPopAWheelieDispatcher) );
   }
   
   IBehavior* GetBehavior( BehaviorExternalInterface& bei ) override
@@ -86,16 +83,14 @@ public:
     _behaviors[Step::LookingAtUser]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     _behaviors[Step::LookingForCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookForCube) );
     _behaviors[Step::ActivatingCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingActivateCube) );
-    _behaviors[Step::PickingUpCube]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingPickUpCube) );
-    _behaviors[Step::PuttingCubeDown]  = GetBehaviorByID( bei, BEHAVIOR_ID(PutDownBlock) );
+    _behaviors[Step::CubeTrick]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingPopAWheelieDispatcher) );
     
-    bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPickUpCube),
-                                                            BEHAVIOR_CLASS(PickUpCube),
-                                                            _pickUpBehavior );
+    bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPopAWheelie),
+                                                            BEHAVIOR_CLASS(PopAWheelie),
+                                                            _cubeTrickBehavior );
     bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingActivateCube),
                                                             BEHAVIOR_CLASS(OnboardingActivateCube),
                                                             _activationBehavior );
-    _putDownBehavior = bei.GetBehaviorContainer().FindBehaviorByID( BEHAVIOR_ID(PutDownBlock) );
     
     // initial behavior
     TransitionToLookingAtUser();
@@ -106,7 +101,7 @@ public:
     _cubeKnownCondition->Init( bei );
     
     _activationAttemptCount = 0;
-    _pickUpAttemptCount = 0;
+    _attemptCount = 0;
     _timeStartedSearching_ms = 0;
     _objectID.UnSet();
     _addedDrivingAnims = false;
@@ -137,7 +132,7 @@ public:
     if( _step == Step::ActivatingCube ) {
       ++_activationAttemptCount;
       if( _activationBehavior->WasSuccessful() ) {
-        TransitionToPickingUpCube( bei );
+        TransitionToDoingCubeTrick( bei );
       } else {
         if( _activationAttemptCount <= kMaxActivationAttempts ) {
           TransitionToLookingForCube( bei );
@@ -147,31 +142,29 @@ public:
           // visually verify the cube, but just in case, move on
           PRINT_NAMED_WARNING( "OnboardingStageCube.OnBehaviorDeactivated.NoActivation",
                                "Cube activation repeatedly failed" );
-          TransitionToPickingUpCube( bei );
+          TransitionToDoingCubeTrick( bei );
           
         }
       }
-    } else if( _step == Step::PickingUpCube ) {
-      ++_pickUpAttemptCount;
-      const bool isCarrying = bei.GetRobotInfo().IsCarryingObject();
-      if( !isCarrying && (_pickUpAttemptCount <= kMaxPickUpAttempts) ) {
+    } else if( _step == Step::CubeTrick ) {
+      ++_attemptCount;
+      const bool wheelieSuccess = _cubeTrickBehavior->WasLastActivationSuccessful();
+      if( !wheelieSuccess && (_attemptCount <= kMaxWheelieAttempts) ) {
         if( HasCubeBeenSeenRecently( bei ) ) {
           // try using this cube again
-          TransitionToPickingUpCube( bei );
+          TransitionToDoingCubeTrick( bei );
         } else {
           TransitionToLookingForCube( bei );
         }
       } else {
         // success! or silent (to the app) failure!
-        if( !isCarrying ) {
-          DebugTransition( "Pickup failed too many times. Complete." );
+        if( !wheelieSuccess ) {
+          DebugTransition( "Trick failed too many times. Complete." );
         } else {
-          DebugTransition( "Pickup Success." );
+          DebugTransition( "Trick Success." );
         }
-        TransitionToPuttingDownCube( bei );
+        TransitionToComplete( bei );
       }
-    } else if( _step == Step::PuttingCubeDown ) {
-      TransitionToComplete( bei );
     }
     
     
@@ -198,14 +191,16 @@ public:
       } else {
         TransitionToActivatingCube( bei );
       }
-    } else if( _step == Step::PickingUpCube ) {
-      if( !HasCubeBeenSeenRecently( bei ) ) {
+    } else if( _step == Step::CubeTrick ) {
+      const bool wheelieSuccess = _cubeTrickBehavior->WasLastActivationSuccessful();
+      if( wheelieSuccess ) {
+        DebugTransition( "Resumed after a successful trick" );
+        TransitionToComplete( bei );
+      } else if( !HasCubeBeenSeenRecently( bei ) ) {
         TransitionToLookingForCube( bei );
       } else {
-        TransitionToPickingUpCube( bei );
+        TransitionToDoingCubeTrick( bei );
       }
-    } else if( _step == Step::PuttingCubeDown ) {
-      TransitionToPuttingDownCube( bei );
     }
     
   }
@@ -258,8 +253,7 @@ public:
       case Step::LookingForCube:
         return external_interface::STEP_CUBE_SEARCH;
       case Step::ActivatingCube:
-      case Step::PickingUpCube:
-      case Step::PuttingCubeDown:
+      case Step::CubeTrick:
         return external_interface::STEP_CUBE_TRICK;
       case Step::Invalid:
       case Step::Complete:
@@ -305,7 +299,7 @@ private:
     _selectedBehavior = _behaviors[_step];
     if( !_selectedBehavior->WantsToBeActivated() ) {
       // this can happen if it already ran to completion
-      TransitionToPickingUpCube( bei );
+      TransitionToDoingCubeTrick( bei );
     } else {
       DebugTransition("Activating cube");
       // only require confirmation on first attempt
@@ -313,9 +307,9 @@ private:
     }
   }
   
-  void TransitionToPickingUpCube( BehaviorExternalInterface& bei )
+  void TransitionToDoingCubeTrick( BehaviorExternalInterface& bei )
   {
-    DebugTransition("Picking up cube");
+    DebugTransition("Doing cube trick");
     
     if( !_addedDrivingAnims ) {
       auto& drivingAnimHandler = bei.GetRobotInfo().GetDrivingAnimationHandler();
@@ -327,20 +321,9 @@ private:
     }
     _addedDrivingAnims = true;
     
-    _pickUpBehavior->SetTargetID( _objectID );
-    _step = Step::PickingUpCube;
+    _cubeTrickBehavior->SetTargetID( _objectID );
+    _step = Step::CubeTrick;
     _selectedBehavior = _behaviors[_step];
-  }
-  
-  void TransitionToPuttingDownCube( BehaviorExternalInterface& bei )
-  {
-    if( (_putDownBehavior != nullptr) && _putDownBehavior->WantsToBeActivated() ) {
-      DebugTransition("Putting down cube");
-      _step = Step::PuttingCubeDown;
-      _selectedBehavior = _behaviors[_step];
-    } else {
-      TransitionToComplete( bei );
-    }
   }
   
   void TransitionToComplete( BehaviorExternalInterface& bei )
@@ -391,8 +374,7 @@ private:
     LookingAtUser,
     LookingForCube,
     ActivatingCube,
-    PickingUpCube,
-    PuttingCubeDown,
+    CubeTrick,
     Complete,
   };
   
@@ -402,7 +384,7 @@ private:
   ObjectID _objectID;
   
   unsigned int _activationAttemptCount;
-  unsigned int _pickUpAttemptCount;
+  unsigned int _attemptCount;
   EngineTimeStamp_t _timeStartedSearching_ms;
   bool _addedDrivingAnims;
   
@@ -410,9 +392,8 @@ private:
   
   
   std::unordered_map<Step, IBehavior*> _behaviors;
-  std::shared_ptr<BehaviorPickUpCube> _pickUpBehavior;
+  std::shared_ptr<BehaviorPopAWheelie> _cubeTrickBehavior;
   std::shared_ptr<BehaviorOnboardingActivateCube> _activationBehavior;
-  ICozmoBehaviorPtr _putDownBehavior;
   
   std::unique_ptr<ConditionObjectKnown> _cubeKnownCondition;
 };

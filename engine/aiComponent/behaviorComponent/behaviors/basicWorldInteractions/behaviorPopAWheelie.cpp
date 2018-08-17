@@ -35,8 +35,8 @@ namespace Anki {
 namespace Vector {
 
 namespace{
-CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
-
+  const char* const kNumRetriesKey = "numRetries";
+  const char* const kSayNameKey = "sayName";
 } // end namespace
 
 
@@ -52,6 +52,8 @@ BehaviorPopAWheelie::DynamicVariables::DynamicVariables()
 {
   numPopAWheelieActionRetries = 0;
   hasDisabledcliff = false;
+  idSetExternally = false;
+  successful = false;
 }
 
 
@@ -59,19 +61,23 @@ BehaviorPopAWheelie::DynamicVariables::DynamicVariables()
 BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  _iConfig.numRetries = config.get( kNumRetriesKey, 1 ).asUInt();
+  _iConfig.sayName = config.get( kSayNameKey, true ).asUInt();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPopAWheelie::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kNumRetriesKey,
+    kSayNameKey,
+  };
+  expectedKeys.insert(std::begin(list), std::end(list));
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPopAWheelie::WantsToBeActivatedBehavior() const
 {
-  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::CubeBehaviors);
-  if(!featureEnabled)
-  {
-    return false;
-  }
-
   UpdateTargetBlock();
   
   return _dVars.targetBlock.IsSet();
@@ -81,13 +87,12 @@ bool BehaviorPopAWheelie::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::OnBehaviorActivated()
 {
-  if(!ShouldStreamline() && _dVars.lastBlockReactedTo != _dVars.targetBlock){
+  _dVars.successful = false;
+  if(!ShouldStreamline() && (_dVars.lastBlockReactedTo != _dVars.targetBlock)){
     TransitionToReactingToBlock();
   }else{
     TransitionToPerformingAction();
   }
-  
-  
 }
 
   
@@ -101,8 +106,10 @@ void BehaviorPopAWheelie::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::UpdateTargetBlock() const
 {
-  _dVars.targetBlock = GetAIComp<ObjectInteractionInfoCache>().
-       GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
+  if( !_dVars.idSetExternally ) {
+    auto& cache = GetAIComp<ObjectInteractionInfoCache>();
+    _dVars.targetBlock = cache.GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
+  }
 }
 
   
@@ -147,20 +154,23 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   if(isRetry) {
     ++_dVars.numPopAWheelieActionRetries;
     PRINT_NAMED_INFO("BehaviorPopAWheelie.TransitionToPerformingAction.Retrying",
-                     "Retry %d of %d", _dVars.numPopAWheelieActionRetries, kBPW_MaxRetries);
+                     "Retry %d of %d", _dVars.numPopAWheelieActionRetries, _iConfig.numRetries);
   } else {
     _dVars.numPopAWheelieActionRetries = 0;
   }
   
   // Only turn towards face if this is _not_ a retry
-  const Radians maxTurnToFaceAngle( (isRetry || ShouldStreamline() ? 0 : DEG_TO_RAD(90)) );
+  const Radians maxTurnToFaceAngle( ((isRetry || ShouldStreamline() || !_iConfig.sayName) ? 0 : DEG_TO_RAD(90)) );
 
   DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_dVars.targetBlock,
                                                                          false,
                                                                          0,
-                                                                         maxTurnToFaceAngle);
-  goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
-  goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
+                                                                         maxTurnToFaceAngle,
+                                                                         _iConfig.sayName);
+  if( _iConfig.sayName ) {
+    goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
+    goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
+  }
   
   // once we get to the predock pose, before docking, disable the cliff sensor and associated reactions so
   // that we play the correct animation instead of getting interrupted)  
@@ -173,7 +183,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
 
 
   DelegateIfInControl(goPopAWheelie,
-              [&, this](const ExternalInterface::RobotCompletedAction& msg) {                
+              [&, this](const ExternalInterface::RobotCompletedAction& msg) {
                 switch(IActionRunner::GetActionResultCategory(msg.result))
                 {
                   case ActionResultCategory::SUCCESS:
@@ -181,11 +191,12 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                     _dVars.lastBlockReactedTo.UnSet();
                     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
+                    _dVars.successful = true;
                     break;
                   }
                   case ActionResultCategory::RETRY:
                   {
-                    if(_dVars.numPopAWheelieActionRetries < kBPW_MaxRetries)
+                    if(_dVars.numPopAWheelieActionRetries < _iConfig.numRetries)
                     {
                       SetupRetryAction(msg);
                       break;
@@ -262,6 +273,7 @@ void BehaviorPopAWheelie::SetupRetryAction(const ExternalInterface::RobotComplet
 void BehaviorPopAWheelie::ResetBehavior()
 {
   _dVars.targetBlock.UnSet();
+  _dVars.idSetExternally = false;
 
   if( _dVars.hasDisabledcliff ) {
     _dVars.hasDisabledcliff = false;

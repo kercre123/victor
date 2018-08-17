@@ -27,13 +27,22 @@ class ObservableObject;
 
 class BehaviorPopAWheelie : public ICozmoBehavior
 {
+public:
+  void SetTargetID(const ObjectID& targetID){
+    _dVars.targetBlock = targetID;
+    _dVars.idSetExternally = true;
+  }
+  
+  // The return value gets set just prior to deactivation if successful
+  bool WasLastActivationSuccessful() const { return _dVars.successful; }
+  
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPopAWheelie(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   
@@ -47,6 +56,8 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
+    unsigned int numRetries;
+    bool sayName;
   };
 
   struct DynamicVariables {
@@ -57,6 +68,8 @@ private:
     ObjectID         lastBlockReactedTo;
     s32              numPopAWheelieActionRetries;
     bool             hasDisabledcliff;
+    bool             idSetExternally;
+    bool             successful;
   };
 
   InstanceConfig   _iConfig;

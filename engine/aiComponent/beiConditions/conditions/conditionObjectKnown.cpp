@@ -115,7 +115,10 @@ bool ConditionObjectKnown::AreConditionsMetInternal(BehaviorExternalInterface& b
       // always add this one so there's a timestamp to compare against, but only mark it as
       // matchedThisTickOnly if the object is new or newer
       newInfo.emplace_back( matchTime, matchID );
-      if( (matchTime > 0) && ((it == _lastObjects.end()) || (it->observedTime < matchTime)) ) {
+      const bool newCube = (it == _lastObjects.end()) && (matchTime == currTimeStamp);
+      const bool updatedCube = (it != _lastObjects.end()) && (it->observedTime < matchTime);
+      const bool matchedThisTick = newCube || updatedCube;
+      if( (matchTime > 0) && matchedThisTick ) {
         ret = true;
         newInfo.back().matchedThisTickOnly = true;
       }

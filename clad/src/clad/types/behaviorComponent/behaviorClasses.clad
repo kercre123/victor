@@ -25,6 +25,9 @@ enum uint_8 BehaviorClass {
   AnimSequenceWithObject,
   TextToSpeechLoop,
 
+  // appBehaviors
+  EyeColor,
+
   // attentionTransfer
   AttentionTransferIfNeeded,
 
@@ -202,9 +205,6 @@ enum uint_8 BehaviorClass {
   LookAtMe,
   SayName,
   SearchWithinBoundingBox,
-
-  // robot settings
-  EyeColor,
 
   // sleeping
   Sleeping,

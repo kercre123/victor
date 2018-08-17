@@ -1,0 +1,9 @@
+{
+  "behaviorID": "OnboardingPopAWheelie",
+  "behaviorClass": "PopAWheelie",
+  
+  // retries are handled by stage logic
+  "numRetries": 0,
+  // onboarding flow means it just said the name, so dont do it again
+  "sayName": false
+}

@@ -1,0 +1,9 @@
+{
+  "behaviorID": "OnboardingPopAWheelieRecovery",
+  "behaviorClass": "ReactToRobotOnBack",
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
+}

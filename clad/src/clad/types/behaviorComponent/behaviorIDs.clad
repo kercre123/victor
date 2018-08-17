@@ -82,6 +82,9 @@ enum uint_16 BehaviorID {
   // puzzles
   PuzzleMaze,
 
+  // victorBehaviorTree/appBehaviors
+  ChangeEyeColor,
+
   // victorBehaviorTree/blackjack
   BlackJack,
   BlackJackHandleRTPResponses,
@@ -158,11 +161,9 @@ enum uint_16 BehaviorID {
   InteractWithFaces,
 
   // victorBehaviorTree/highLevelDelegates/investigateCube
-  InspectCube,
   InteractWithStaticCube,
   InvestigateCubeConnectionGate,
   InvestigateHeldCube,
-  InvestigateHeldCubeGetIn,
   PlaceCubeByCharger,
   RollBlockIfNotVertical,
   TurnToLastFace,
@@ -206,6 +207,7 @@ enum uint_16 BehaviorID {
   ObservingOnChargerIdle,
   ObservingOnChargerIdleAnim,
   ReactToMotion,
+  TrackingEyeContact,
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
@@ -248,7 +250,6 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates
   TrackCube,
   TrackCubeTest,
-  TrackingEyeContact,
   TrackFaceTest,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
@@ -297,9 +298,11 @@ enum uint_16 BehaviorID {
   OnboardingLookForCube,
   OnboardingLowBattery,
   OnboardingPhysicalReactions,
-  OnboardingPickUpCube,
   OnboardingPickedUp,
   OnboardingPlacedOnCharger,
+  OnboardingPopAWheelie,
+  OnboardingPopAWheelieDispatcher,
+  OnboardingPopAWheelieRecovery,
   OnboardingSluggishDriveOffCharger,
   OnboardingWaitForComeHere,
   OnboardingWaitForTriggerWord,
@@ -369,9 +372,6 @@ enum uint_16 BehaviorID {
   FindFacesPhoto,
   FrameFaces,
   TakeAPhotoCoordinator,
-
-  // settings behaviors
-  ChangeEyeColor,
 
   // victorBehaviorTree/timer
   DemoTimerUtilityCoordinator,

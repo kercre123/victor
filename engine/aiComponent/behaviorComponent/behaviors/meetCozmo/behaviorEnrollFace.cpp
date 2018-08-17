@@ -1560,7 +1560,8 @@ void BehaviorEnrollFace::TransitionToWrongFace( FaceID_t faceID, const std::stri
   //  const u32 kNumLoops = 1;
   //  action->AddAction(TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorGetIn));
   //  action->AddAction(TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorLookFace, kNumLoops));
-  //  action->AddAction(TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorSawWrongFace));
+  
+  action->AddAction(new TriggerLiftSafeAnimationAction{AnimationTrigger::MeetVictorSawWrongFace});
   
   std::string text;
   

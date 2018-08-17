@@ -225,6 +225,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::EyeColor:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorEyeColor(config));
+      break;
+    }
+    
     case BehaviorClass::AttentionTransferIfNeeded:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAttentionTransferIfNeeded(config));
@@ -768,12 +774,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TakeAPhotoCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTakeAPhotoCoordinator(config));
-      break;
-    }
-
-    case BehaviorClass::EyeColor:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorEyeColor(config));
       break;
     }
     

@@ -1,0 +1,12 @@
+{
+  "behaviorID": "OnboardingPopAWheelieDispatcher",
+  "behaviorClass": "DispatcherStrictPriority",
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    // this instance has its own react to robot on back so that BehaviorOnboarding can disable the normal one.
+    // that prevents the interruption from messaging the app.
+    "OnboardingPopAWheelieRecovery",
+    "OnboardingPopAWheelie"
+  ]
+}

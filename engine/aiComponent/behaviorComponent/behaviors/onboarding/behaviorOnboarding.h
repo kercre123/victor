@@ -178,6 +178,9 @@ private:
     std::shared_ptr<BehaviorOnboardingInterruptionHead> onChargerBehavior;
     std::shared_ptr<BehaviorOnboardingDetectHabitat> detectHabitatBehavior;
     
+    ICozmoBehaviorPtr normalReactToRobotOnBackBehavior;
+    ICozmoBehaviorPtr specialReactToRobotOnBackBehavior;
+    
     std::unordered_map<OnboardingStages,StagePtr> stages;
     
     std::list<Anki::Util::IConsoleFunction> consoleFuncs;
