@@ -400,68 +400,70 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
   }
 
 
-  if ( _dVars.state == EState::ListeningGetIn )
+  if ( IsActivated() )
   {
-    // Once the animation process's GetIn animation has finished, queue the listening loop animation
-    if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
-          
-      // we don't want to enter EState::Listening until we're in our loop or else
-      // we could end up exiting too soon and looking like garbage
-      if( _iVars.exitAfterGetIn )
-      {
-        OnVictorListeningEnd();
-        CancelSelf();
-      }
+    if ( _dVars.state == EState::ListeningGetIn )
+    {
+      // Once the animation process's GetIn animation has finished, queue the listening loop animation
+      if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
 
-      // we now loop indefinitely and wait for the timeout in the update function
-      // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningLoop, 0 ) );
-      _dVars.state = EState::ListeningLoop;
+        // we don't want to enter EState::Listening until we're in our loop or else
+        // we could end up exiting too soon and looking like garbage
+        if( _iVars.exitAfterGetIn )
+        {
+          OnVictorListeningEnd();
+          CancelSelf();
+        }
+
+        // we now loop indefinitely and wait for the timeout in the update function
+        // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
+        DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningLoop, 0 ) );
+        _dVars.state = EState::ListeningLoop;
+      }
     }
-  }
-  else if ( _dVars.state == EState::ListeningLoop )
-  {
-    const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-    if ( isIntentPending )
+    else if ( _dVars.state == EState::ListeningLoop )
     {
-      // kill delegates, we'll handle next steps with callbacks
-      // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
-      PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
-                    "Stopping listening because an intent is pending");
-      CancelDelegates( false );
-      StopListening();
-    }
-    else
-    {
-      // there are a few ways we can timeout from the Listening state;
-      // + error received
-      // + streaming never started
-      // + streaming started but no intent came back
-      const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-      const double listeningTimeout = GetListeningTimeout();
-      if ( currTime_s >= listeningTimeout )
+      const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
+      if ( isIntentPending )
       {
-        PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
-                       "Stopping listening because of a(n) %s",
-                       GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
+        // kill delegates, we'll handle next steps with callbacks
+        // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
+        PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
+                      "Stopping listening because an intent is pending");
         CancelDelegates( false );
         StopListening();
       }
+      else
+      {
+        // there are a few ways we can timeout from the Listening state;
+        // + error received
+        // + streaming never started
+        // + streaming started but no intent came back
+        const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+        const double listeningTimeout = GetListeningTimeout();
+        if ( currTime_s >= listeningTimeout )
+        {
+          PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
+                         "Stopping listening because of a(n) %s",
+                         GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
+          CancelDelegates( false );
+          StopListening();
+        }
+      }
+    }
+    else if ( _dVars.state == EState::Thinking )
+    {
+      // we may receive an intent AFTER we're done listening for various reasons,
+      // so poll for it while we're in the thinking state
+      // note: does nothing if intent is already set
+      UpdateUserIntentStatus();
+    }
+
+    if ( ( _dVars.state != EState::ListeningGetIn ) && !IsControlDelegated() )
+    {
+      CancelSelf();
     }
   }
-  else if ( _dVars.state == EState::Thinking )
-  {
-    // we may receive an intent AFTER we're done listening for various reasons,
-    // so poll for it while we're in the thinking state
-    // note: does nothing if intent is already set
-    UpdateUserIntentStatus();
-  }
-
-  if(_dVars.state != EState::ListeningGetIn &&
-     !IsControlDelegated()){
-    CancelSelf();
-  }
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
