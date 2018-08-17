@@ -495,6 +495,7 @@ void TestRobotInfo(void)
   robot_get_batt_mv(0,false); //no error check
 }
 
+#include "../../syscon/schema/messages.h" //#include "messages.h"
 void TestRobotSensors(void)
 {
   robot_sr_t *psr;
@@ -504,6 +505,7 @@ void TestRobotSensors(void)
   //robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
   
   ConsolePrintf("Sensor Testing...\n");
+  int failCode = BOOT_FAIL_NONE;
   
   //BATTERY (ADC input)
   {
@@ -534,6 +536,14 @@ void TestRobotSensors(void)
     robot_sr_t cliff = psr[NN_cliff>>1];
     ConsolePrintf("cliff,fL,%i,fR,%i,bL,%i,bR,%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
     ConsolePrintf("..cnt,fL,%i,fR,%i,bL,%i,bR,%i\n", cnt.fL, cnt.fR, cnt.bL, cnt.bR);
+    
+    //check syscon-reported failures
+    failCode = cliff.meta.failureCode;
+    ConsolePrintf("cliff,failureCode,%04x\n", failCode);
+    if( failCode == BOOT_FAIL_CLIFF1 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_FL;
+    if( failCode == BOOT_FAIL_CLIFF2 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_FR;
+    if( failCode == BOOT_FAIL_CLIFF3 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_BL;
+    if( failCode == BOOT_FAIL_CLIFF4 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_BR;
     
     if( cnt.fL<2 && cnt.fR<2 && cnt.bL<2 && cnt.bR<2 ) throw ERROR_SENSOR_CLIFF_ALL; //all-zero data. hmm...
     if( cnt.fL < NN_ok )  throw ERROR_SENSOR_CLIFF_FL;
@@ -573,9 +583,20 @@ void TestRobotSensors(void)
     robot_sr_t prox = psr[NN_tof>>1];
     ConsolePrintf("prox,mm,%i,sigRate,%i,spad,%i,ambientRate,%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
     
+    //check syscon-reported failures
+    failCode = prox.meta.failureCode;
+    ConsolePrintf("tof,failureCode,%04x\n", failCode);
+    if( failCode == BOOT_FAIL_TOF )
+      throw ERROR_SENSOR_TOF_BOOT_FAIL;
+    
     if( ecount > emax )
       throw ERROR_SENSOR_TOF;
   }
+  
+  //Unhandled FailureCode
+  ConsolePrintf("robotsensor,failureCode,%04x\n", failCode);
+  if( failCode != BOOT_FAIL_NONE )
+    throw ERROR_SENSOR_UNHANDLED_FAILURE;
 }
 
 typedef struct { 

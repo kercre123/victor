@@ -228,6 +228,12 @@ typedef int error_t;
 #define ERROR_SENSOR_TOF                  355 // distance sensor malfunction
 #define ERROR_SENSOR_TOUCH                356 // touch sensor malfunction
 #define ERROR_SENSOR_CLIFF_ALL            357 // all cliff sensor readings invalid. check electrical (bus short?). Try power cycle.
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_FL   358 // cliff sensor failed to boot (front left)  problem with bus communication or sensor power
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_FR   359 // cliff sensor failed to boot (front right) problem with bus communication or sensor power
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_BL   360 // cliff sensor failed to boot (back left)   problem with bus communication or sensor power
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_BR   361 // cliff sensor failed to boot (back right)  problem with bus communication or sensor power
+#define ERROR_SENSOR_TOF_BOOT_FAIL        362 // distance sensor failed to boot. problem with bus communication or sensor power
+#define ERROR_SENSOR_UNHANDLED_FAILURE    363 // unknown sensor error reported by body firmware. check for shorts and sensor power.
 
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
