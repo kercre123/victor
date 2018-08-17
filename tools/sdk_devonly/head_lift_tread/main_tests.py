@@ -51,9 +51,7 @@ def Main():
     headAngleTuple, angles, realAngle = head.HeadAngleTest(robot, cube)
 
   TurnOffDisconnectCube(robot, cube)
-  print(headAngleTuple)
-  print(realAngle)
-  print(angles)
+
 
 async def wait_async(t):
       return await asyncio.sleep(t)
