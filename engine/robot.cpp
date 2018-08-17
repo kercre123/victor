@@ -1504,10 +1504,14 @@ void Robot::SetHeadAngle(const f32& angle)
     GetVisionComponent().GetCamera().SetPose(GetCameraPose(GetComponent<FullRobotPose>().GetHeadAngle()));
     if(clippedHeadAngle != angle){
       LOG_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
-                  "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)",
+                  "Angle %.3frad / %.1f",
                   angle, RAD_TO_DEG(angle));
     }
   }
+  
+  // note: moving the motor inside bounds shouldn't erase previous state
+  _isHeadMotorOutOfBounds |= angle < (MIN_HEAD_ANGLE-HEAD_ANGLE_LIMIT_MARGIN) ||
+                             angle > (MAX_HEAD_ANGLE+HEAD_ANGLE_LIMIT_MARGIN);
 
 } // SetHeadAngle()
 
@@ -1515,11 +1519,19 @@ void Robot::SetHeadAngle(const f32& angle)
 void Robot::SetHeadCalibrated(bool isCalibrated)
 {
   _isHeadCalibrated = isCalibrated;
+  if(_isHeadCalibrated) {
+    // clears the out of bounds flag when set to calibrated
+    _isHeadMotorOutOfBounds = false;
+  }
 }
 
 void Robot::SetLiftCalibrated(bool isCalibrated)
 {
   _isLiftCalibrated = isCalibrated;
+  if(_isLiftCalibrated) {
+    // clears the out of bounds flag when set to calibrated
+    _isLiftMotorOutOfBounds = false;
+  }
 }
 
 bool Robot::IsHeadCalibrated() const
@@ -1545,6 +1557,10 @@ void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
 
 void Robot::SetLiftAngle(const f32& angle)
 {
+  // note: moving the motor inside bounds shouldn't erase previous state
+  _isLiftMotorOutOfBounds |=  angle < (MIN_LIFT_ANGLE-LIFT_ANGLE_LIMIT_MARGIN) ||
+                              angle > (MAX_LIFT_ANGLE+LIFT_ANGLE_LIMIT_MARGIN);
+  
   // TODO: Add lift angle limits?
   GetComponent<FullRobotPose>().SetLiftAngle(angle);
 

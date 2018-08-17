@@ -289,6 +289,18 @@ bool BEIRobotInfo::IsLiftCalibrated() const
 {
   return _robot.IsLiftCalibrated();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsHeadMotorOutOfBounds() const
+{
+  return _robot.IsHeadMotorOutOfBounds();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsLiftMotorOutOfBounds() const
+{
+  return _robot.IsLiftMotorOutOfBounds();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsOnChargerContacts() const

@@ -18,6 +18,7 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
 
 namespace Anki {
 namespace Vector {
@@ -77,15 +78,23 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
 
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnFace ) {
     auto& robotInfo = GetBEI().GetRobotInfo();
-    AnimationTrigger anim;
-    if(robotInfo.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
-      anim = AnimationTrigger::DEPRECATED_FacePlantRoll;
-    }else{
-      anim = AnimationTrigger::DEPRECATED_FacePlantRollArmUp;
+    
+    if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
+      AnimationTrigger anim;
+      if(robotInfo.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
+        anim = AnimationTrigger::DEPRECATED_FacePlantRoll;
+      }else{
+        anim = AnimationTrigger::DEPRECATED_FacePlantRollArmUp;
+      }
+      DelegateIfInControl(new TriggerAnimationAction(anim),
+                          &BehaviorReactToRobotOnFace::DelayThenCheckState);
+    } else {
+      const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
+      PRINT_NAMED_INFO("BehaviorReactToRobotOnFace.FlipOverIfNeeded.CalibratingHead",
+                       "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
+      DelegateIfInControl(new CalibrateMotorAction(true, false),
+                          &BehaviorReactToRobotOnFace::DelayThenCheckState);
     }
-
-    DelegateIfInControl(new TriggerAnimationAction(anim),
-                &BehaviorReactToRobotOnFace::DelayThenCheckState);
   }
 }
 

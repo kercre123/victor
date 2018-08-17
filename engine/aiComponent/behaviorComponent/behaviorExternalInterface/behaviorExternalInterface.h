@@ -61,6 +61,7 @@ class MovementComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
 class PhotographyManager;
+class PowerStateManager;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
 class SDKComponent;
@@ -151,6 +152,7 @@ public:
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             PhotographyManager*            photographyManager,
+            PowerStateManager*             powerStateManager,
             ProxSensorComponent*           proxSensor,
             PublicStateBroadcaster*        publicStateBroadcaster,
             SDKComponent*                  sdkComponent,
@@ -255,6 +257,9 @@ public:
   inline bool HasBeatDetectorComponent() const { return GetComponentWrapper(BEIComponentID::BeatDetector).IsComponentValid();}
   BeatDetectorComponent& GetBeatDetectorComponent() const {return GetComponentWrapper(BEIComponentID::BeatDetector).GetComponent<BeatDetectorComponent>();}
 
+  inline bool HasPowerStateManager() const { return GetComponentWrapper(BEIComponentID::PowerStateManager).IsComponentValid();}
+  PowerStateManager& GetPowerStateManager() const {return GetComponentWrapper(BEIComponentID::PowerStateManager).GetComponent<PowerStateManager>();}
+  
   inline bool HasTextToSpeechCoordinator() const { return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).IsComponentValid();}
   TextToSpeechCoordinator& GetTextToSpeechCoordinator() const {return GetComponentWrapper(BEIComponentID::TextToSpeechCoordinator).GetComponent<TextToSpeechCoordinator>();}
 
@@ -298,6 +303,7 @@ private:
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        PhotographyManager*            photographyManager,
+                       PowerStateManager*             powerStateManager,
                        ProxSensorComponent*           proxSensor,
                        PublicStateBroadcaster*        publicStateBroadcaster,
                        SDKComponent*                  sdkComponent,

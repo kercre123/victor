@@ -65,6 +65,7 @@ namespace Vector {
   // issue with moving the lift when it is at a limit. The lift arm
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
+  const f32 LIFT_PROTO_MIN_HEIGHT                 = 20.4f;
   const f32 LIFT_HEIGHT_LOWDOCK                   = 32.f; // For interfacing with a cube that is on the ground.
   const f32 LIFT_HEIGHT_HIGHDOCK                  = 76.f; // For interfacing with a cube that is stacked on top of another cube.
   const f32 LIFT_HEIGHT_CARRY                     = 92.f; // Cube carrying height.
@@ -129,6 +130,13 @@ namespace Vector {
                                                      - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH)
   #define ConvertLiftAngleToLiftHeightMM(angle_rad) ((sinf(angle_rad) * LIFT_ARM_LENGTH) \
                                                     + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END)
+  
+  const f32 MIN_LIFT_ANGLE = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_LOWDOCK);
+  
+  const f32 MAX_LIFT_ANGLE = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_CARRY);
+  
+  // deadband around the min and max lift-angles beyond which we are considered not calibrated
+  const f32 LIFT_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(5.f);
   
   /***************************************************************************
    *

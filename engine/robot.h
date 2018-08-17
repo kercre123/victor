@@ -447,6 +447,9 @@ public:
 
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;
+  
+  bool IsHeadMotorOutOfBounds() const { return _isHeadMotorOutOfBounds; }
+  bool IsLiftMotorOutOfBounds() const { return _isLiftMotorOutOfBounds; }
 
   // #notImplemented
   //    // Get 3D bounding box of the robot at its current pose or a given pose
@@ -719,6 +722,12 @@ protected:
   // engine connects to robot
   bool             _isHeadCalibrated = true;
   bool             _isLiftCalibrated = true;
+  
+  // flags that represent whether the motor values exceeded
+  // the expected range of the respective motors. If it is
+  // out of bounds, it'll trigger a calibration
+  bool             _isHeadMotorOutOfBounds = false;
+  bool             _isLiftMotorOutOfBounds = false;
 
   // Charge base ID that is being docked to
   ObjectID         _chargerID;
