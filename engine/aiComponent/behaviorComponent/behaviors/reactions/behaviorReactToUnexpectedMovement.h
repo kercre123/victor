@@ -29,23 +29,33 @@ private:
   friend class BehaviorFactory;
   BehaviorReactToUnexpectedMovement(const Json::Value& config);
 
+  // Updates the internal tracking history of how frequently this behavior is being activated
+  // while the robot is in a similar pose.
+  void UpdateActivationHistory();
+
+  bool HasBeenReactivatedFrequently() const;
+
+  void ResetActivationHistory();
+
   struct InstanceConfig {
-      InstanceConfig() {};
-      InstanceConfig(const Json::Value& config, const std::string& debugName);
+    InstanceConfig() {};
+    InstanceConfig(const Json::Value& config, const std::string& debugName);
 
-      float repeatedActivationCheckWindow_sec = 0.f;
-      size_t numRepeatedActivationsAllowed = 0;
+    float repeatedActivationCheckWindow_sec = 0.f;
+    size_t numRepeatedActivationsAllowed = 0;
+    Radians yawAngleWindow_rad = Radians(0.f);
 
-      float retreatDistance_mm = 0.f;
-      float retreatSpeed_mmps = 0.f;
+    float retreatDistance_mm = 0.f;
+    float retreatSpeed_mmps = 0.f;
   };
   
   struct DynamicVariables {
-      DynamicVariables() {};
-      struct Persistent {
-          std::set<float> activatedTimes; // set of basestation times at which we've been activated
-      };
-      Persistent persistent;
+    DynamicVariables() {};
+    struct Persistent {
+      std::vector<float> activatedTimes_sec; // set of basestation times at which we've been activated
+      std::vector<Radians> yawAnglesAtActivation_rad; // set of yaw angles when we've been activated
+    };
+    Persistent persistent;
   };
 
   InstanceConfig   _iConfig;
