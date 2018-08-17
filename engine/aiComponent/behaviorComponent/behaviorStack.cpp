@@ -386,7 +386,12 @@ BehaviorStack::StackMetadataEntry::StackMetadataEntry(IBehavior* behavior, int i
   if(behavior != nullptr){
     behavior->GetAllDelegates(delegates);
     for(auto& delegate: delegates){
-      RecursivelyGatherLinkedBehaviors(delegate, linkedActivationScope);
+      if( ANKI_VERIFY( delegate != nullptr,
+                       "BehaviorStack.DelegateTree.NullDelegate",
+                       "Behavior '%s' claims that it may delegate to null",
+                       behavior->GetDebugLabel().c_str() ) ) {
+        RecursivelyGatherLinkedBehaviors(delegate, linkedActivationScope);
+      }
     }
   }
 }
