@@ -11,6 +11,8 @@
   "emotionEventOnActivated": "BeQuietVoiceCommand",
 
   "activeTime_s": 3600.0,
+  
+  "timeToPowerSave_s": 15.0,
 
   "behaviors": [
     {

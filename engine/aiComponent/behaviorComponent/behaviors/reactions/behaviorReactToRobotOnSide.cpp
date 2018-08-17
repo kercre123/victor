@@ -75,6 +75,8 @@ void BehaviorReactToRobotOnSide::OnBehaviorActivated()
   // clear bored animation timer
   _timeToPerformBoredAnim_s = -1.0f;
   
+  ICozmoBehavior::SmartRequestPowerSaveMode();
+  
   ReactToBeingOnSide();
 }
 

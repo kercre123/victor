@@ -37,6 +37,7 @@ namespace {
   const char* const kBehaviorsKey         = "behaviors";
   const char* const kBehaviorKey          = "behavior";
   const char* const kAudioAllowedKey      = "audioAllowed";
+  const char* const kTimeToPowerSaveKey   = "timeToPowerSave_s";
 
   const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
 }
@@ -53,6 +54,7 @@ BehaviorQuietModeCoordinator::DynamicVariables::DynamicVariables()
 {
   audioActive = true;
   wasFixed = false;
+  requestedPowerSave = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -60,6 +62,7 @@ BehaviorQuietModeCoordinator::BehaviorQuietModeCoordinator(const Json::Value& co
  : ICozmoBehavior(config)
 {
   _iConfig.activeTime_s = JsonTools::ParseFloat(config, kActiveTimeKey, GetDebugLabel());
+  _iConfig.timeToPowerSave_s = JsonTools::ParseFloat(config, kTimeToPowerSaveKey, GetDebugLabel());
   
   const auto& behaviors = config[kBehaviorsKey];
   if( behaviors.isArray() ) {
@@ -132,6 +135,7 @@ void BehaviorQuietModeCoordinator::GetBehaviorJsonKeys(std::set<const char*>& ex
     kBehaviorKey,
     kAudioAllowedKey,
     kActiveTimeKey,
+    kTimeToPowerSaveKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -205,6 +209,11 @@ void BehaviorQuietModeCoordinator::BehaviorUpdate()
   if( GetBEI().GetRobotInfo().GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold ) {
     CancelSelf();
     return;
+  }
+  
+  if(timeActivated_s > _iConfig.timeToPowerSave_s && !_dVars.requestedPowerSave) {
+    ICozmoBehavior::SmartRequestPowerSaveMode();
+    _dVars.requestedPowerSave = true;
   }
   
   // if we're here, quiet mode is stll active. go through the behavior list like a DispatcherStrictPriority would

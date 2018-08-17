@@ -58,6 +58,7 @@ private:
     InstanceConfig();
     
     float activeTime_s;
+    float timeToPowerSave_s;
     std::vector<BehaviorInfo> behaviors;
     ICozmoBehaviorPtr wakeWordBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerBehavior;
@@ -68,6 +69,7 @@ private:
     
     bool audioActive;
     bool wasFixed;
+    bool requestedPowerSave;
   };
 
   InstanceConfig _iConfig;

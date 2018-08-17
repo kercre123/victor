@@ -47,6 +47,7 @@ void BehaviorStuckOnEdge::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStuckOnEdge::OnBehaviorActivated()
 {
+  ICozmoBehavior::SmartRequestPowerSaveMode();
   TriggerGetInAnim();
 }
 
