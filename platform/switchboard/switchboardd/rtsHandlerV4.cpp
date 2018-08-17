@@ -611,7 +611,7 @@ void RtsHandlerV4::HandleRtsLogRequest(const Vector::ExternalComms::RtsConnectio
     return;
   }
 
-  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"});
+  int exitCode = ExecCommand({"/anki/bin/diagnostics-logger"});
 
   std::vector<uint8_t> logBytes;
 
