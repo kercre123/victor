@@ -17,6 +17,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBecameTrueThisTick.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionBeingHeld.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
@@ -406,6 +407,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::OffTreadsState:
     {
       condition = std::make_shared<ConditionOffTreadsState>(config);
+      break;
+    }
+    case BEIConditionType::BeingHeld:
+    {
+      condition = std::make_shared<ConditionBeingHeld>(config);
       break;
     }
     case BEIConditionType::CliffDetected:

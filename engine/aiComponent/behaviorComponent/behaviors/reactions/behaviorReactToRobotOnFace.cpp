@@ -71,6 +71,10 @@ void BehaviorReactToRobotOnFace::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
 {
+  if (GetBEI().GetRobotInfo().IsBeingHeld()) {
+    CancelSelf();
+  }
+
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnFace ) {
     auto& robotInfo = GetBEI().GetRobotInfo();
     AnimationTrigger anim;

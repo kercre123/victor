@@ -997,6 +997,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
+  _isBeingHeld = IS_STATUS_FLAG_SET(IS_BEING_HELD);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
   // Save the entire flag for sending to game

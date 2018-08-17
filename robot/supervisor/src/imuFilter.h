@@ -55,6 +55,10 @@ namespace Anki {
       // Pickup detect is reset when the robot stops moving.
       bool IsPickedUp();
 
+      // Returns true if gyro activity indicates that the robot is being held.
+      // This can only be true if IsPickedUp() is also true.
+      bool IsBeingHeld();
+      
       // Returns true if falling detected
       bool IsFalling();
       

@@ -623,7 +623,7 @@ namespace Anki {
         if (potentialBurnoutStartTime_ms_ == 0) {
           potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-          if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
+          if (IsInPosition() || IMUFilter::IsBeingHeld() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             AnkiInfo("LiftController.MotorBurnoutProtection.GoingLimp", "");
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);

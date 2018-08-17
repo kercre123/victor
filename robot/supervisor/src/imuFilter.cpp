@@ -96,18 +96,14 @@ namespace Anki {
         // ==== Pickup detection ===
         bool pickupDetectEnabled_       = true;
         bool pickedUp_                  = false;
+        bool isMotionDetected_          = false;
 
         const f32 PICKUP_WHILE_MOVING_ACC_THRESH[3]  = {5000, 5000, 12000};  // mm/s^2
         const f32 PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH = DEG_TO_RAD_F32(10.f);  // rad/s
-        const f32 REMAIN_PICKEDUP_GYRO_THRESH        = DEG_TO_RAD_F32(0.5f); // rad/s
         const f32 UNEXPECTED_ROTATION_SPEED_THRESH   = DEG_TO_RAD_F32(20.f); //rad/s
         const u8 PICKUP_COUNT_WHILE_MOVING           = 40;
         const u8 PICKUP_COUNT_WHILE_MOTIONLESS       = 20;
         u8 potentialPickupCnt_                       = 0;
-
-        const f32 PUTDOWN_HYSTERESIS = 500.f;
-        const u8  PUTDOWN_COUNT      = 40;
-        u8 putdownCnt_               = 0;
 
         const u8 NUM_CLIFF_SENSORS_FOR_CHANGE_DETECT_PICKUP = 3;
 
@@ -118,12 +114,11 @@ namespace Anki {
 
         // Motion detection
         u32 lastMotionDetectedTime_ms = 0;
-        const u32 MOTION_DETECT_TIMEOUT_MS = 250;
+        const u32 MOTION_DETECT_TIMEOUT_MS = 200;
         const f32 ACCEL_MOTION_THRESH = 10;  // mm/s^2
-        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(2.f);            // Gyro motion threshold post-calibration
+        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(0.5f);           // Gyro motion threshold post-calibration
         const f32 GYRO_MOTION_PRECALIB_THRESHOLD = DEG_TO_RAD_F32(10.f);  // Gyro motion threshold pre-calibration
                                                                           // (Max bias according to BMI160 datasheet is +/- 10 deg/s)
-        f32 gyroMotionThresh_ = GYRO_MOTION_PRECALIB_THRESHOLD;
 
         // Recorded buffer
         bool isRecording_ = false;
@@ -297,7 +292,6 @@ namespace Anki {
 
       void ResetPickupVars() {
         potentialPickupCnt_ = 0;
-        putdownCnt_ = 0;
         external_accel_disturbance_cnt[0] = external_accel_disturbance_cnt[1] = external_accel_disturbance_cnt[2] = 0;
       }
 
@@ -425,14 +419,6 @@ namespace Anki {
                (abs_accel_robot_frame_filt[2] > PICKUP_WHILE_MOVING_ACC_THRESH[2]);
       }
 
-      // Conservative check for unintended acceleration that are
-      // valid even while the motors are moving.
-      bool CheckPutdown() {
-        return  (abs_accel_robot_frame_filt[0] < PICKUP_WHILE_MOVING_ACC_THRESH[0] - PUTDOWN_HYSTERESIS) ||
-                (abs_accel_robot_frame_filt[1] < PICKUP_WHILE_MOVING_ACC_THRESH[1] - PUTDOWN_HYSTERESIS) ||
-                (abs_accel_robot_frame_filt[2] < PICKUP_WHILE_MOVING_ACC_THRESH[2] - PUTDOWN_HYSTERESIS);
-      }
-
       bool AreMotorsMoving() {
         return  WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving()
                 || HeadController::IsMoving() || !HeadController::IsInPosition()
@@ -456,22 +442,12 @@ namespace Anki {
 
 
         if (IsPickedUp()) {
-          // Sensitive check for motion to determine if it's still being held by a person
-          bool gyroBasedRemainPickedUp = (ABS(gyro_robot_frame_filt[0]) > REMAIN_PICKEDUP_GYRO_THRESH) ||
-                                         (ABS(gyro_robot_frame_filt[1]) > REMAIN_PICKEDUP_GYRO_THRESH) ||
-                                         (ABS(gyro_robot_frame_filt[2]) > REMAIN_PICKEDUP_GYRO_THRESH);
-
           // Picked up flag is reset only when the robot has
           // stopped moving, detects no cliffs, and has been set upright.
           if (!cliffBasedPickupDetect &&
-              !gyroBasedRemainPickedUp &&
-              CheckPutdown() &&
+              !isMotionDetected_ &&
               (accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2)) {
-            if (++putdownCnt_ > PUTDOWN_COUNT) {
-              SetPickupDetect(false);
-            }
-          } else {
-            putdownCnt_ = 0;
+            SetPickupDetect(false);
           }
 
         } else {
@@ -578,24 +554,22 @@ namespace Anki {
         }
       }
 
-
       // Update the last time motion was detected
-      bool DetectMotion()
+      void DetectMotion()
       {
         u32 currTime = HAL::GetTimeStamp();
 
         if (AreMotorsMoving() ||
 
             (IsBiasFilterComplete() &&
-            (ABS(gyro_[0]) > gyroMotionThresh_ ||
-             ABS(gyro_[1]) > gyroMotionThresh_ ||
-             ABS(gyro_[2]) > gyroMotionThresh_)) ||
+            (ABS(gyro_[0]) > GYRO_MOTION_THRESHOLD ||
+             ABS(gyro_[1]) > GYRO_MOTION_THRESHOLD ||
+             ABS(gyro_[2]) > GYRO_MOTION_THRESHOLD)) ||
 
             (!IsBiasFilterComplete() &&
-             (ABS(imu_data_.rate_x) > gyroMotionThresh_ ||
-              ABS(imu_data_.rate_y) > gyroMotionThresh_ ||
-              ABS(imu_data_.rate_z) > gyroMotionThresh_)) ||
-
+             (ABS(imu_data_.rate_x) > GYRO_MOTION_PRECALIB_THRESHOLD ||
+              ABS(imu_data_.rate_y) > GYRO_MOTION_PRECALIB_THRESHOLD ||
+              ABS(imu_data_.rate_z) > GYRO_MOTION_PRECALIB_THRESHOLD)) ||
 
             ABS(accel_robot_frame_high_pass[0]) > ACCEL_MOTION_THRESH ||
             ABS(accel_robot_frame_high_pass[1]) > ACCEL_MOTION_THRESH ||
@@ -608,30 +582,7 @@ namespace Anki {
         // ...
 
 
-/*
-        // Measure peak readings every 2 seconds
-        static f32 max_gyro[3] = {0,0,0};
-        for (int i=0; i<3; ++i) {
-          if(ABS(gyro_robot_frame_filt[i]) > max_gyro[i]) {
-            max_gyro[i] = ABS(gyro_robot_frame_filt[i]);
-          }
-        }
-
-        static u32 measurement_cycles = 0;
-        if (measurement_cycles++ == 400) {
-          AnkiDebug( "IMUFilter", "Max gyro: %f %f %f",
-                    max_gyro[0],
-                    max_gyro[1],
-                    max_gyro[2]);
-
-          measurement_cycles = 0;
-          for (int i=0; i<3; ++i) {
-            max_gyro[i] = 0;
-          }
-        }
-*/
-
-        return (lastMotionDetectedTime_ms + MOTION_DETECT_TIMEOUT_MS) >= currTime;
+        isMotionDetected_ = (lastMotionDetectedTime_ms + MOTION_DETECT_TIMEOUT_MS) >= currTime;
 
       }
 
@@ -709,7 +660,9 @@ namespace Anki {
 
 
         // Update gyro bias filter
-        if (!DetectMotion()) {
+        DetectMotion();
+
+        if (!isMotionDetected_) {
 
           if (biasFiltCnt_ == 0) {
             // Initialize bias filter
@@ -743,7 +696,6 @@ namespace Anki {
                        RAD_TO_DEG_F32(gyro_bias_filt[1]),
                        RAD_TO_DEG_F32(gyro_bias_filt[2]));
               gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF_NORMAL;
-              gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
             else if ( (fabsf(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
                       (fabsf(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
@@ -955,6 +907,11 @@ namespace Anki {
       bool IsPickedUp()
       {
         return pickedUp_ || falling_;
+      }
+
+      bool IsBeingHeld()
+      {
+        return IsPickedUp() && isMotionDetected_;
       }
 
       bool IsFalling()

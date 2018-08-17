@@ -829,11 +829,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.videoFrameRateHz, payload.imageProcFrameRateHz);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Status: %5s %5s %7s %7s",
+  sprintf(txt, "Status: %5s %5s %6s %4s %4s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKUP" : "",
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_BEING_HELD ? "HELD" : "",
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALL" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "   %8s %10s %7s %4s",

@@ -71,6 +71,10 @@ void BehaviorReactToRobotOnBack::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
 {
+  if (GetBEI().GetRobotInfo().IsBeingHeld()) {
+    CancelSelf();
+  }
+
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnBack ) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
     // Check if cliff detected

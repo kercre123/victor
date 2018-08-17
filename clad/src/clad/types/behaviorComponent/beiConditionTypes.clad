@@ -24,6 +24,7 @@ enum uint_8 BEIConditionType {
   BecameTrueThisTick,
   BeatDetected,
   BehaviorTimer,
+  BeingHeld,
   Emotion,
   EngineErrorCodeReceived,
   EyeContact,

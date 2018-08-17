@@ -136,6 +136,7 @@ public:
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;
   bool IsPickedUp() const;
+  bool IsBeingHeld() const;
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
   
   bool IsCarryingObject() const;

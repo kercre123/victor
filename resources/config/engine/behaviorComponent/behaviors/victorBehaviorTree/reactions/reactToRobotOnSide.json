@@ -4,6 +4,11 @@
   
   "associatedActiveFeature": "ReactToRobotOnSide",
 
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "BeingHeld",
+    "shouldBeHeld" : false
+  },
+
   "wantsToCancelSelfCondition": {
     "conditionType": "OffTreadsState",
     "targetState": "OnTreads"

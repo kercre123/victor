@@ -315,6 +315,12 @@ bool BEIRobotInfo::IsPickedUp() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsBeingHeld() const
+{
+  return _robot.IsBeingHeld();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsPoseInWorldOrigin(const Pose3d& pose) const
 {
   return _robot.IsPoseInWorldOrigin(pose);

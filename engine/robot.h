@@ -489,7 +489,12 @@ public:
 
   EncodedImage& GetEncodedImage() { return _encodedImage; }
 
+  // Returns true if robot is not in the OnTreads position
   bool IsPickedUp() const { return _isPickedUp; }
+
+  // Returns true if being moved enough to believe robot is being held by a person.
+  // Note: Can only be true if IsPickedUp() is also true.
+  bool IsBeingHeld() const { return _isBeingHeld; }
 
   // =========== IMU Data =============
 
@@ -724,6 +729,7 @@ protected:
   bool               _powerButtonPressed        = false;
   EngineTimeStamp_t  _timePowerButtonPressed_ms = 0;
   bool               _isPickedUp                = false;
+  bool               _isBeingHeld               = false;
   bool               _isCliffReactionDisabled   = false;
   bool               _gotStateMsgAfterRobotSync = false;
   u32                _lastStatusFlags           = 0;
