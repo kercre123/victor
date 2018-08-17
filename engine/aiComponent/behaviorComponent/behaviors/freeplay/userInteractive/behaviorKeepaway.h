@@ -19,6 +19,7 @@ namespace Vector{
 
 // Forward Declarations
 class BlockWorldFilter;
+struct TargetStatus;
 
 class BehaviorKeepaway : public ICozmoBehavior
 {
@@ -33,7 +34,7 @@ public:
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = false;
-    modifiers.behaviorAlwaysDelegates = false;
+    modifiers.behaviorAlwaysDelegates = true;
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
   }
@@ -61,11 +62,11 @@ private:
     Ready
   };
 
-  void SetState_internal(KeepawayState state, const std::string& stateName);
+  void UpdateTargetStatus();
+  void CheckGetOutTimeOuts();
 
+  void TransitionToGetIn();
   void TransitionToSearching();
-  void UpdateSearching();
-
   void TransitionToStalking();
   void UpdateStalking();
 
@@ -73,41 +74,31 @@ private:
   void TransitionToPouncing();
   void TransitionToFakeOut();
   void TransitionToReacting();
-  void TransitionToGetOut();
+  void TransitionToGetOutBored();
 
-  bool CheckTargetStatus();
-  bool CheckTargetObject();
-  void UpdateTargetVisibility();
-  void UpdateTargetAngle();
-  void UpdateTargetDistance();
-  void UpdateTargetMotion();
-  bool TargetHasMoved(const ObservableObject* object);
   bool PitchIndicatesPounceSuccess() const;
 
-  void StartIdleAnimation(const AnimationTrigger& idleAnimationTrigger);
+  void StartIdleAnimation();
   void StopIdleAnimation();
 
   float GetCurrentTimeInSeconds() const;
 
-  struct TargetStatus {
+  struct KeepawayTarget {
     bool isValid = false;
     bool isVisible = false;
     bool isInPlay = false;
     bool isOffCenter = false;
     bool isNotMoving = false;
     bool isInPounceRange = false;
-    bool isInInstaPounceRange = false;
+    bool isInMousetrapRange = false;
   };
 
   struct InstanceConfig{
     InstanceConfig(const Json::Value& config);
-    std::unique_ptr<BlockWorldFilter> keepawayTargetFilter;
-    float   naturalGameEndTimeout_s;
     float   targetUnmovedGameEndTimeout_s;
     float   noVisibleTargetGameEndTimeout_s;
-    float   noPointsEarnedTimeout_s;
     float   targetVisibleTimeout_s;
-    float   animDistanceOffset_mm;
+    float   globalOffsetDist_mm;
     float   inPlayDistance_mm;
     float   outOfPlayDistance_mm;
     float   allowablePointingError_deg;
@@ -123,11 +114,16 @@ private:
     float   basePounceChance;
     float   pounceChanceIncrement;
     float   nominalPounceDistance_mm;
-    float   instaPounceDistance_mm;
+    float   mousetrapPounceDistance_mm;
+    float   probBackupInsteadOfMousetrap;
     float   pounceSuccessPitchDiff_deg;
+    float   excitementIncPerHit;
+    float   maxProbExitExcited;
+    float   frustrationIncPerMiss;
+    float   maxProbExitFrustrated;
+    float   minProbToExit;
     bool    useProxForDistance;
-    uint8_t pointsToWin;
-    
+      
     std::vector<std::string> floatNames; // autofilled names of the above floats
   };
 
@@ -135,24 +131,17 @@ private:
     DynamicVariables(const InstanceConfig& iConfig);
     KeepawayState    state;
     ObjectID         targetID;
-    TargetStatus     target;
+    KeepawayTarget   target;
     PounceReadyState pounceReadyState;
     float            gameStartTime_s;
-    float            targetLastValidTime_s;
-    float            targetLastObservedTime_s;
-    float            targetLastMovedTime_s;
-    Pose3d           targetPrevPose;
-    float            targetDistance;
     float            creepTime;
     float            pounceChance;
     float            pounceTime;
     float            pounceSuccessPitch_deg;
-    uint8_t          victorPoints;
-    uint8_t          userPoints;
+    float            frustrationExcitementScale;
     bool             isIdling;
     bool             victorGotLastPoint;
     bool             gameOver;
-    bool             victorIsBored;
    };
 
   InstanceConfig _iConfig;

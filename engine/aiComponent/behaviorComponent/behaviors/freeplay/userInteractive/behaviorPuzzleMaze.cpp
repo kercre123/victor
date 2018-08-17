@@ -484,7 +484,7 @@ void BehaviorPuzzleMaze::BehaviorUpdate()
     case MazeState::GetOut:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(AnimationTrigger::CubePounceGetOut, MazeState::Complete);
+        StartAnimation(AnimationTrigger::CubePounceGetOutBored, MazeState::Complete);
       }
       break;
     }

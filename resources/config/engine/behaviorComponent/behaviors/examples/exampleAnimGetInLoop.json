@@ -3,7 +3,7 @@
   "behaviorClass"    : "AnimGetInLoop",
   "getIn"            : "CubePounceGetIn",
   "loopAnimation"    : "CubePounceIdleLiftUp",
-  "getOut"           : "CubePounceGetOut",
-  "emergencyGetOut"  : "CubePounceGetOut"
+  "getOut"           : "CubePounceGetOutBored",
+  "emergencyGetOut"  : "CubePounceGetOutBored"
   //"loopEndCondition" : ""
 }

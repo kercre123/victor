@@ -236,6 +236,22 @@
     "AnimName": "ag_reacttoblock_blockgone_01"
   },
   {
+    "CladEvent": "CubePounceBackup",
+    "AnimName": "ag_keepaway_backup"
+  },
+  {
+    "CladEvent": "CubePounceDriveGetIn",
+    "AnimName": "ag_keepaway_driving_getin"
+  },
+  {
+    "CladEvent": "CubePounceDriveGetOut",
+    "AnimName": "ag_keepaway_driving_getout"
+  },
+  {
+    "CladEvent": "CubePounceDriveLoop",
+    "AnimName": "ag_keepaway_driving_loop"
+  },
+  {
     "CladEvent": "CubePounceFake",
     "AnimName": "ag_keepaway_fakeout"
   },
@@ -266,10 +282,6 @@
   {
     "CladEvent": "CubePounceGetIn",
     "AnimName": "ag_keepaway_getin_02"
-  },
-  {
-    "CladEvent": "CubePounceGetOut",
-    "AnimName": "ag_keepaway_getout"
   },
   {
     "CladEvent": "CubePounceGetOutBored",
