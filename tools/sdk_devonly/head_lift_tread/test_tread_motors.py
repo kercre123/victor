@@ -44,10 +44,10 @@ class Treads:
     for dist in distDrive:
         self.Drive(robot, dist)
         cubeDist = self.CubeDistance(robot, cube)
-        dist = math.fabs(curCubeDist-cubeDist)
+        distDiff = math.fabs(curCubeDist-cubeDist)
         rangeMax =  abs(dist) + 4
         rangeMin = abs(dist) - 4
-        if dist >= rangeMin and dist <= rangeMax:
+        if distDiff >= rangeMin and distDiff <= rangeMax:
             passedDrive += 1
     driveTestTuple = (passedDrive, 5)
     return driveTestTuple

@@ -25,10 +25,10 @@ try:
     HEAD_CUBE_ADDR = os.environ['HEAD_CUBE_ADDR']
 except KeyError:
     print("Please set the environment variable HEAD_CUBE_ADDR")
-# try:
-#     LIFT_CUBE_ADDR = os.environ['LIFT_CUBE_ADDR']
-# except KeyError:
-#     print("Please set the environment variable LIFT_CUBE_ADDR")
+try:
+    LIFT_CUBE_ADDR = os.environ['LIFT_CUBE_ADDR']
+except KeyError:
+    print("Please set the environment variable LIFT_CUBE_ADDR")
 
 def Main():
   args = vector.util.parse_test_args()
@@ -38,17 +38,14 @@ def Main():
   robot.behavior.set_head_angle(degrees(0.0))
   robot.behavior.set_lift_height(0.0)
 
-  # initialConnect = ConnectCube(robot, TREAD_CUBE_ADDR)
-  # cube = CorrectCube(robot, initialConnect, TREAD_CUBE_ADDR)
-  # if cube != 0:
-  #   treads = treadTest.Treads()
-  #   driveTestTuple = treads.TreadTest(robot, cube)
-
+  cube = ConnectCube(robot, TREAD_CUBE_ADDR)
+  if cube != 0:
+    treads = treadTest.Treads()
+    driveTestTuple = treads.TreadTest(robot, cube)
+  robot.behavior.set_head_angle(degrees(0.0))
+  robot.behavior.set_lift_height(0.0)
 
   cube = ConnectCube(robot, HEAD_CUBE_ADDR)
-  # connectionResult = robot.world.connect_cube()
-  # connected_cubes = robot.world.connected_light_cubes
-  # cube = connected_cubes[0]
   if cube != 0:
     head = headTest.Head()
     headAngleTuple, angles, realAngle = head.HeadAngleTest(robot, cube)

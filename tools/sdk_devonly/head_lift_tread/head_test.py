@@ -14,7 +14,7 @@ class Head:
 
   def RealAngle(self): #pythagorean theorem to find angle, all numbers in mm
     #125.36mm=(dist from head center gear to lift front) + (cube length *2) + (space between robot lift and cube)
-    adjacentDist =  40.36 + 44.0 + 44 + 1
+    adjacentDist =  40.36 + 44.0 + 44.0 + 1
      #94mm=(camera view height when image is first visible) - (dist form center head gear to treads)
     oppositeDist = 100 - 50
     toa = math.degrees(math.atan(oppositeDist/adjacentDist))
@@ -31,8 +31,6 @@ class Head:
       robot.loop.run_until_complete(self.wait_async(1))
       visible = cube._is_visible
       deg =  math.degrees(robot.head_angle_rad)
-      while visible:
-        print(str(deg))
       if count > 45:
         return 0
     return deg
