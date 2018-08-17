@@ -65,8 +65,7 @@ CozmoBot2 {
 }
 WebotsKeyboardController {
   behaviorName "ModeSelector"
-  intent "{\"intent\": \"intent_play_specific\", \"params\": {\"entity_behavior\": \"fist_bump\"}}"
-  intent "{\"intent\":\"intent_clock_settimer\",\"params\": {\"timer_duration\":\"20\",\"unit\":\"s\"}}"
+  intent "{\"intent\":\"intent_clock_settimer_extend\",\"params\": {\"timer_duration\":\"30\",\"unit\":\"s\"}}"
   emotionVal 0.1
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
