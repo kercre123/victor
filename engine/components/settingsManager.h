@@ -95,6 +95,8 @@ private:
   bool ApplySettingEyeColor();
   bool ApplySettingLocale();
   bool ApplySettingTimeZone();
+  bool ValidateSettingMasterVolume();
+  bool ValidateSettingEyeColor();
   bool ExecCommand(const std::vector<std::string>& args);
 
   // request that the specified RobotSetting is not immediately applied, but some other source will apply it
@@ -107,11 +109,12 @@ private:
   const Json::Value*        _settingsConfig;
   bool                      _applySettingsNextTick = false;
 
-  using SettingSetterFunction = bool (SettingsManager::*)();
+  using SettingFunction = bool (SettingsManager::*)();
   struct SettingSetter
   {
     bool                    isLatentApplication;
-    SettingSetterFunction   applicationFunction;
+    SettingFunction         validationFunction;
+    SettingFunction         applicationFunction;
   };
   using SettingSetters = std::map<RobotSetting, SettingSetter>;
   SettingSetters            _settingSetters;

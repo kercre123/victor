@@ -144,10 +144,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
-  _settingSetters[RobotSetting::master_volume] = { false, &SettingsManager::ApplySettingMasterVolume };
-  _settingSetters[RobotSetting::eye_color]     = { true,  &SettingsManager::ApplySettingEyeColor };
-  _settingSetters[RobotSetting::locale]        = { false, &SettingsManager::ApplySettingLocale };
-  _settingSetters[RobotSetting::time_zone]     = { false, &SettingsManager::ApplySettingTimeZone };
+  _settingSetters[RobotSetting::master_volume] = { false, &SettingsManager::ValidateSettingMasterVolume, &SettingsManager::ApplySettingMasterVolume };
+  _settingSetters[RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
+  _settingSetters[RobotSetting::locale]        = { false, nullptr,                                       &SettingsManager::ApplySettingLocale       };
+  _settingSetters[RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
 
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
@@ -284,6 +284,18 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
   const auto it = _settingSetters.find(robotSetting);
   if (it != _settingSetters.end())
   {
+    const auto validationFunc = it->second.validationFunction;
+    if (validationFunc != nullptr)
+    {
+      success = (this->*(validationFunc))();
+      if (!success)
+      {
+        LOG_ERROR("SettingsManager.ApplyRobotSetting.ValidateFunctionFailed", "Error attempting to apply %s setting",
+                  RobotSettingToString(robotSetting));
+        return false;
+      }
+    }
+
     if (force || !it->second.isLatentApplication)
     {
       LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'", RobotSettingToString(robotSetting));
@@ -296,8 +308,8 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
 
     if (!success)
     {
-      LOG_ERROR("SettingsManager.ApplyRobotSetting", "Error setting %s to %i",
-                RobotSettingToString(robotSetting), _currentSettings[RobotSettingToString(robotSetting)].asUInt());
+      LOG_ERROR("SettingsManager.ApplyRobotSetting.ApplyFunctionFailed", "Error attempting to apply %s setting",
+                RobotSettingToString(robotSetting));
     }
   }
   return success;
@@ -305,7 +317,7 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplySettingMasterVolume()
+bool SettingsManager::ValidateSettingMasterVolume()
 {
   static const std::string& key = RobotSettingToString(RobotSetting::master_volume);
   const auto& value = _currentSettings[key].asUInt();
@@ -314,6 +326,15 @@ bool SettingsManager::ApplySettingMasterVolume()
     LOG_ERROR("SettingsManager.ApplySettingMasterVolume.Invalid", "Invalid master volume value %i", value);
     return false;
   }
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplySettingMasterVolume()
+{
+  static const std::string& key = RobotSettingToString(RobotSetting::master_volume);
+  const auto& value = _currentSettings[key].asUInt();
   const auto& volumeName = external_interface::Volume_Name(static_cast<external_interface::Volume>(value));
   LOG_INFO("SettingsManager.ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", volumeName.c_str());
 
@@ -325,7 +346,7 @@ bool SettingsManager::ApplySettingMasterVolume()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplySettingEyeColor()
+bool SettingsManager::ValidateSettingEyeColor()
 {
   static const std::string& key = RobotSettingToString(RobotSetting::eye_color);
   const auto& value = _currentSettings[key].asUInt();
@@ -334,6 +355,16 @@ bool SettingsManager::ApplySettingEyeColor()
     LOG_ERROR("SettingsManager.ApplySettingEyeColor.Invalid", "Invalid eye color value %i", value);
     return false;
   }
+
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplySettingEyeColor()
+{
+  static const std::string& key = RobotSettingToString(RobotSetting::eye_color);
+  const auto& value = _currentSettings[key].asUInt();
   const auto& eyeColorName = external_interface::EyeColor_Name(static_cast<external_interface::EyeColor>(value));
   LOG_INFO("SettingsManager.ApplySettingEyeColor.Apply", "Setting robot eye color to %s", eyeColorName.c_str());
 
@@ -355,7 +386,12 @@ bool SettingsManager::ApplySettingLocale()
   static const std::string& key = RobotSettingToString(RobotSetting::locale);
   const std::string& value = _currentSettings[key].asString();
   DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
-  return _robot->SetLocale(value);
+  const bool success = _robot->SetLocale(value);
+  if (!success)
+  {
+    LOG_ERROR("SettingsManager.ApplySettingLocale", "Error setting locale to %s", value.c_str());
+  }
+  return success;
 }
 
 
@@ -370,8 +406,16 @@ bool SettingsManager::ApplySettingTimeZone()
   command.push_back("/usr/bin/timedatectl");
   command.push_back("set-timezone");
   command.push_back(value);
-  return ExecCommand(command);
+  const bool success = ExecCommand(command);
+  if (!success)
+  {
+    LOG_ERROR("SettingsManager.ApplySettingTimeZone.TimeZoneError",
+              "Error setting time zone to %s ", value.c_str());
+  }
+  return success;
 #else
+  LOG_WARNING("SettingsManager.ApplySettingTimeZone.NotInWebots",
+              "Applying time zone setting is not supported in webots");
   return true;
 #endif
 }

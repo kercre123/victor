@@ -126,7 +126,8 @@ namespace
     static const bool isFahrenheitFlags[kNumLocales] = {true, false, false, false};
     const bool isFahrenheit = isFahrenheitFlags[localeIndex];
     s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
-                                                           Json::Value(isFahrenheit));
+                                                           Json::Value(isFahrenheit),
+                                                           kUpdateSettingsJdoc);
     kDebugDemoLocaleIndex = localeIndex;
   }
   CONSOLE_FUNC(DebugDemoSetLocaleIndex, kConsoleGroup, int localeIndex);
@@ -205,7 +206,7 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting rob
               "Error setting key %s to value %s", EnumToString(robotSetting), settingJson.asString().c_str());
   }
 
-  return true;
+  return success;
 }
 
 
