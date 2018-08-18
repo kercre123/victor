@@ -133,7 +133,10 @@ func main() {
 		log.Println("Error creating server tls:", err)
 		os.Exit(1)
 	}
-	grpcServer := grpc.NewServer(grpc.Creds(creds))
+	grpcServer := grpc.NewServer(
+		grpc.Creds(creds),
+		grpc.UnaryInterceptor(AuthInterceptor),
+	)
 	extint.RegisterExternalInterfaceServer(grpcServer, newServer())
 	ctx := context.Background()
 

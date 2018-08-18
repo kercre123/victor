@@ -7,7 +7,3 @@ const (
 	SocketPath             = "/tmp/"
 	IsSwitchboardAvailable = false
 )
-
-func verifyAuthToken(_ interface{}) error {
-	return nil
-}

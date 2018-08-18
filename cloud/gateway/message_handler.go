@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"io/ioutil"
 	"math"
 	"reflect"
+	"strings"
 	"time"
 
 	"anki/log"
@@ -14,11 +16,49 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/metadata"
 )
 
 const faceImagePixelsPerChunk = 600
+
+func readAuthToken(ctx context.Context) (interface{}, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to extract context metadata")
+	}
+	log.Printf("Received metadata: %+v", md)
+
+	if len(md["Authorization"]) == 0 {
+		return nil, grpc.Errorf(codes.Unauthenticated, "No auth token")
+	}
+	authHeader := md["Authorization"][0]
+	if !ok {
+		return nil, grpc.Errorf(codes.Unauthenticated, "No auth token")
+	}
+	if strings.HasPrefix(authHeader, "Basic ") {
+		_, err := base64.StdEncoding.DecodeString(authHeader[6:])
+		if err != nil {
+			return nil, grpc.Errorf(codes.Unauthenticated, "Failed to decode auth token (Base64)")
+		}
+		// todo
+	} else if strings.HasPrefix(authHeader, "Bearer ") {
+		return authHeader[7:], nil
+	}
+	return nil, grpc.Errorf(codes.Unauthenticated, "Invalid auth type")
+}
+
+func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	_, err := readAuthToken(ctx)
+	if err != nil {
+		// return nil, err
+	}
+
+	// TODO: verify token
+
+	return handler(ctx, req)
+}
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
@@ -457,6 +497,12 @@ func SendOnboardingRestart(in *extint.GatewayWrapper_OnboardingRestart) (*extint
 // This must implement all the rpc functions defined in the external_interface proto file.
 type rpcService struct{}
 
+func (m *rpcService) ProtocolVersion(ctx context.Context, in *extint.ProtocolVersionRequest) (*extint.ProtocolVersionResponse, error) {
+	return &extint.ProtocolVersionResponse{
+		Result: extint.ProtocolVersionResponse_SUCCESS,
+	}, nil
+}
+
 func (m *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
 	log.Println("Received rpc request DriveWheels(", in, ")")
 	_, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
@@ -521,7 +567,7 @@ func (m *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimatio
 				done = true
 			}
 		case <-time.After(5 * time.Second):
-			return nil, status.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
+			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
 		}
 	}
 
@@ -831,7 +877,7 @@ func (c *rpcService) BehaviorRequestToGatewayWrapper(request *extint.BehaviorCon
 			ControlRequest: request.GetControlRequest(),
 		}
 	default:
-		return nil, status.Errorf(codes.InvalidArgument, "BehaviorControlRequest.ControlRequest has unexpected type %T", x)
+		return nil, grpc.Errorf(codes.InvalidArgument, "BehaviorControlRequest.ControlRequest has unexpected type %T", x)
 	}
 	return msg, nil
 }
@@ -1052,7 +1098,7 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 			OnboardingRestart: in.GetOnboardingRestart(),
 		})
 	default:
-		return nil, status.Errorf(codes.InvalidArgument, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
+		return nil, grpc.Errorf(codes.InvalidArgument, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
 	}
 }
 

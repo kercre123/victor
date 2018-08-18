@@ -134,6 +134,10 @@ certs_mac: create_certs_mac
 example_curl: .require_ip
 	@echo $(curl_command)/v1/event_stream -d '{}'
 
+test_curl_version: .require_ip
+	$(curl_command)/v1/protocol_version -d '{}'
+	@echo
+
 test_curl_events: .require_ip
 	$(curl_command)/v1/event_stream -d '{}'
 	@echo

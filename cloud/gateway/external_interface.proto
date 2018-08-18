@@ -19,6 +19,14 @@ import "shared.proto";
 
 // The grpc-defined connection between the SDK and Anki's Vector Robot
 service ExternalInterface {
+  // Check the supported protocol version
+  rpc ProtocolVersion(ProtocolVersionRequest) returns (ProtocolVersionResponse) {
+    option (google.api.http) = {
+      post: "/v1/protocol_version",
+      body: "*"
+    };
+  }
+
   // Sets the speed and acceleration for Vector's wheel motors
   rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResponse) {}
 
