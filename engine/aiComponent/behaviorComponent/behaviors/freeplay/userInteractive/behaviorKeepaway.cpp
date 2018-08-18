@@ -91,6 +91,11 @@ BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
   SET_FLOAT_HELPER(maxProbExitFrustrated);
   SET_FLOAT_HELPER(minProbToExit);
 
+  SET_FLOAT_HELPER(baseProbReact);
+  SET_FLOAT_HELPER(minProbToReact);
+  SET_FLOAT_HELPER(probReactIncrement);
+  SET_FLOAT_HELPER(probReactMax);
+
   useProxForDistance = JsonTools::ParseBool(config, kUseProxForDistance, kDebugName);
 }
 
@@ -106,6 +111,8 @@ BehaviorKeepaway::DynamicVariables::DynamicVariables(const InstanceConfig& iConf
 , pounceTime(0.0f)
 , pounceSuccessPitch_deg(0.0f)
 , frustrationExcitementScale(1.0f)
+, probReactToHit(0.0f)
+, probReactToMiss(0.0f)
 , isIdling(0)
 , victorGotLastPoint(false)
 , gameOver(false)
@@ -144,6 +151,10 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
   MakeMemberTunable(_iConfig.frustrationIncPerMiss, "frustrationIncPerMiss", kDebugName);
   MakeMemberTunable(_iConfig.maxProbExitFrustrated, "maxProbExitFrustrated", kDebugName);
   MakeMemberTunable(_iConfig.minProbToExit, "minProbToExit", kDebugName);
+  MakeMemberTunable(_iConfig.baseProbReact, "baseProbReact", kDebugName);
+  MakeMemberTunable(_iConfig.minProbToReact, "minProbToReact", kDebugName);
+  MakeMemberTunable(_iConfig.probReactIncrement, "probReactIncrement", kDebugName);
+  MakeMemberTunable(_iConfig.probReactMax, "probReactMax", kDebugName);
   MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance", kDebugName);
 }
   
@@ -174,6 +185,8 @@ void BehaviorKeepaway::OnBehaviorActivated()
 {
   // reset state for new game
   _dVars = DynamicVariables(_iConfig);
+  _dVars.probReactToHit = _iConfig.baseProbReact;
+  _dVars.probReactToMiss = _iConfig.baseProbReact;
 
   // Initialize time stamps for various timeouts
   _dVars.gameStartTime_s = GetCurrentTimeInSeconds();
@@ -526,10 +539,32 @@ void BehaviorKeepaway::TransitionToReacting()
     // No Delegation. Behavior will end after winResponse.
     DelegateIfInControl(new TriggerAnimationAction(winResponseAnim));
   } else {
-    AnimationTrigger pointResponseAnim = _dVars.victorGotLastPoint ? 
-                                          AnimationTrigger::CubePounceWinHand :
-                                          AnimationTrigger::CubePounceLoseHand;
-    DelegateIfInControl(new TriggerAnimationAction(pointResponseAnim), &BehaviorKeepaway::TransitionToStalking);
+    if(_dVars.victorGotLastPoint){
+      if(GetRNG().RandDblInRange(_iConfig.minProbToReact, 1.0f) < _dVars.probReactToHit){
+        _dVars.probReactToHit = _iConfig.baseProbReact;
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceWinHand),
+                            &BehaviorKeepaway::TransitionToStalking);
+      }
+      else{
+        _dVars.probReactToHit = Anki::Util::Min(_dVars.probReactToHit + _iConfig.probReactIncrement,
+                                                _iConfig.probReactMax);
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetReady),
+                            &BehaviorKeepaway::TransitionToStalking);
+      }
+    }
+    else{
+      if(GetRNG().RandDblInRange(_iConfig.minProbToReact, 1.0f) < _dVars.probReactToMiss){
+        _dVars.probReactToMiss = _iConfig.baseProbReact;
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceLoseHand),
+                            &BehaviorKeepaway::TransitionToStalking);
+      }
+      else{
+        _dVars.probReactToMiss = Anki::Util::Min(_dVars.probReactToMiss + _iConfig.probReactIncrement,
+                                                 _iConfig.probReactMax);
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetReady),
+                            &BehaviorKeepaway::TransitionToStalking);
+      }
+    }
   }
 }
 

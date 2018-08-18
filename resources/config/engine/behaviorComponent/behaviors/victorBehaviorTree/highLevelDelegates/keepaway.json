@@ -34,7 +34,15 @@
   "maxProbExitExcited":               0.5, // Max probability of exiting due to excitement
   "frustrationIncPerMiss":            0.05,// How much should we shift toward frutstrated per hit
   "maxProbExitFrustrated":            0.5, // Max probability of exiting due to frustration
-  "minProbToExit":                 0.15, // Exit probability < this will NEVER exit
+  "minProbToExit":                    0.15, // Exit probability < this will NEVER exit
+
+  // Probability of reacting to any given hit/miss can be adjusted. if he rando decides not to react,
+  // he'll increase the probability of reacting next time and then go back to idle directly. If he reacts,
+  // the probabilty of reacting next time is set back to "baseProbReact".
+  "baseProbReact":                    0.0, // Base Probability of reacting to a hit/miss. 1.0 always react
+  "minProbToReact":                   0.2, // React probability < this will NEVER react
+  "probReactIncrement":               0.15, // How much to increase probability of reacting per hit/miss
+  "probReactMax":                     1.0, // cap the probability of reacting at this value
 
   "useProxForDistance":               true
 }

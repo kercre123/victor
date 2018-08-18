@@ -122,6 +122,10 @@ private:
     float   frustrationIncPerMiss;
     float   maxProbExitFrustrated;
     float   minProbToExit;
+    float   baseProbReact;
+    float   minProbToReact;
+    float   probReactIncrement;
+    float   probReactMax;
     bool    useProxForDistance;
       
     std::vector<std::string> floatNames; // autofilled names of the above floats
@@ -139,6 +143,8 @@ private:
     float            pounceTime;
     float            pounceSuccessPitch_deg;
     float            frustrationExcitementScale;
+    float            probReactToHit;
+    float            probReactToMiss;
     bool             isIdling;
     bool             victorGotLastPoint;
     bool             gameOver;
