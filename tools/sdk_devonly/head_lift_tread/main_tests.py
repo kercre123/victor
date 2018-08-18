@@ -3,7 +3,8 @@ import asyncio
 import os
 import subprocess
 import sys
-import test_tread_motors as treadTest
+import tread_test as treadTest
+import lift_test as liftTest
 import head_test as headTest
 import time
 
@@ -34,23 +35,42 @@ def Main():
   args = vector.util.parse_test_args()
   robot = vector.Robot(args.name, args.ip, str(args.cert), port="443", show_viewer=True)
   robot.connect()
+  robot.viewer.show_video()
   robot.world.disconnect_cube()
   robot.behavior.set_head_angle(degrees(0.0))
   robot.behavior.set_lift_height(0.0)
 
-  cube = ConnectCube(robot, TREAD_CUBE_ADDR)
+  for i in range(CUBE_CONNECT_RETRY):
+    cube = ConnectCube(robot, TREAD_CUBE_ADDR)
+    if cube != 0 and cube._factory_id == TREAD_CUBE_ADDR:
+      break
   if cube != 0:
     treads = treadTest.Treads()
-    driveTestTuple = treads.TreadTest(robot, cube)
-  robot.behavior.set_head_angle(degrees(0.0))
-  robot.behavior.set_lift_height(0.0)
+    driveTestTuple, distsTupleArray = treads.TreadTest(robot, cube)
 
-  cube = ConnectCube(robot, HEAD_CUBE_ADDR)
-  if cube != 0:
-    head = headTest.Head()
-    headAngleTuple, angles, realAngle = head.HeadAngleTest(robot, cube)
+  for i in range(CUBE_CONNECT_RETRY):
+    cube = ConnectCube(robot, TREAD_CUBE_ADDR)
+    if cube != 0 and cube._factory_id == TREAD_CUBE_ADDR:
+      robot.behavior.go_to_pose(cube._pose)
+      break
+  for i in range(CUBE_CONNECT_RETRY):
+    cube = ConnectCube(robot, LIFT_CUBE_ADDR)
+    if cube != 0 and cube._factory_id == LIFT_CUBE_ADDR:
+      break
+    cube = ConnectCube(robot, LIFT_CUBE_ADDR)
+    if cube != 0:
+      lift = liftTest.Lift()
+      liftHeightTuple, heightArray, realHeight = lift.LiftHeightTest(robot, cube)
 
-  TurnOffDisconnectCube(robot, cube)
+  # for i in range(CUBE_CONNECT_RETRY):
+  #   cube = ConnectCube(robot, HEAD_CUBE_ADDR)
+  #   if cube != 0 and cube._factory_id == HEAD_CUBE_ADDR:
+  #     break
+  # if cube != 0:
+  #   head = headTest.Head()
+  #   headAngleTuple, anglesArray, realAngle = head.HeadAngleTest(robot, cube)
+
+  # TurnOffDisconnectCube(robot)
 
 
 async def wait_async(t):
@@ -80,7 +100,7 @@ def ConnectCube(robot, address):
     robot.loop.run_until_complete(wait_async(5))
     countDisconnect +=5
     if countDisconnect >= TIME_LIMIT:
-      break;
+      break
   #change prefered cube so robot will connect to differenct cube
   robot.world.forget_preferred_cube()
   robot.world.set_preferred_cube(address)
@@ -94,7 +114,7 @@ def ConnectCube(robot, address):
     robot.loop.run_until_complete(wait_async(5))
     countConnect +=5
     if countConnect >= TIME_LIMIT:
-      break;
+      break
 
   connected_cubes = robot.world.connected_light_cubes
   if len(connected_cubes) != 0:
@@ -105,6 +125,7 @@ def ConnectCube(robot, address):
                              vector.lights.blue_light,
                              vector.lights.green_light)
       return cube
+    return 0
   else:
     return 0
 
@@ -127,14 +148,14 @@ def Reset(robot):
     subprocess.call("./restart_vector.sh", shell = True)
     robot.connect()
 
-def TurnOffDisconnectCube(robot, cube):
+def TurnOffDisconnectCube(robot):
   cubeConnected = True
   connected_cubes = robot.world.connected_light_cubes
   if len(connected_cubes) == 0:
     cubeConnected = False
   else:
     cubeConnected = True
-    cube.set_lights_off()
+    connected_cubes[0].set_lights_off()
     robot.world.disconnect_cube()
 
   count = 0

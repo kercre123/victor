@@ -4,7 +4,7 @@ import math
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.getcwd())),'sdk/vector-sdk'))
 import vector
 from vector.util import degrees
 
@@ -36,11 +36,12 @@ class Head:
     return deg
 
   def HeadAngleTest(self, robot, cube):
-    robot.viewer.show_video()
     passed = 0
     total = 5
     realAngle = self.RealAngle()
     angles = []
+    robot.behavior.set_head_angle(degrees(0.0))
+    robot.behavior.set_lift_height(0.0)
     for i in range(total):
       robotAngle = self.SetHeadAngle(robot, cube)
       rangeMin = realAngle - 2.5
@@ -49,4 +50,6 @@ class Head:
         passed += 1
       angles.append(robotAngle)
     headAngleResultTuple = (passed, total)
+    robot.behavior.set_head_angle(degrees(0.0))
+    robot.behavior.set_lift_height(0.0)
     return headAngleResultTuple, angles, realAngle
