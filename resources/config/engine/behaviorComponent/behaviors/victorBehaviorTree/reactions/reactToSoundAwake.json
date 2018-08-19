@@ -17,5 +17,12 @@
   "emotionEventOnActivated": "ReactToSoundAwake",
 
   "micDirectionReactionBehavior" : "ReactToSoundDirectionAwake",
-  "FromSleep" : false
+  "FromSleep" : false,
+
+  // a mic power above this will always be considered a valid reaction sound
+  "micAbsolutePowerThreshold": 2.90,
+
+  // a mic power above this will require a confidence of at least kRTS_ConfidenceThresholdAtMinPower to be considered a valid reaction sound
+  "micMinPowerThreshold": 1.50,
+  "micConfidenceThresholdAtMinPower": 5000
 }

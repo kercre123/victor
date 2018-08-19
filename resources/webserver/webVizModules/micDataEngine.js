@@ -136,6 +136,8 @@
         chart.draw();
       }
     });
+
+    $(elem).append('<p>NOTE: trigger values are for display purposes only (true values live in instance jsons)</p>');
   };
 
 

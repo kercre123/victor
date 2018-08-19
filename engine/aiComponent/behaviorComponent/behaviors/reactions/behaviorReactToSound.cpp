@@ -43,11 +43,6 @@ namespace Anki {
 namespace Vector {
 
 
-// a mic power above this will always be considered a valid reaction sound
-CONSOLE_VAR( double,                       kRTS_AbsolutePowerThreshold,           "SoundReaction", 2.90 );
-// a mic power above this will require a confidence of at least kRTS_ConfidenceThresholdAtMinPower to be considered a valid reaction sound
-CONSOLE_VAR( double,                       kRTS_MinPowerThreshold,                "SoundReaction", 1.50 );
-CONSOLE_VAR( MicDirectionConfidence,       kRTS_ConfidenceThresholdAtMinPower,    "SoundReaction", 5000 );
 CONSOLE_VAR( float,                        kRTS_MaxReactionTime,                  "SoundReaction", 1.00f ); // we have this much time to respond to a sound
 
 
@@ -100,6 +95,9 @@ namespace {
 
   const char* const kFromSleepKey = "FromSleep";
   const char* const kMicDirectionReactionBehavior = "micDirectionReactionBehavior";
+  const char* const kAbsolutePowerThresholdKey = "micAbsolutePowerThreshold";
+  const char* const kMinPowerThresholdKey = "micMinPowerThreshold";
+  const char* const kConfidenceThresholdAtMinPowerKey = "micConfidenceThresholdAtMinPower";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,10 +111,16 @@ BehaviorReactToSound::InstanceConfig::InstanceConfig() :
 BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
   ICozmoBehavior( config )
 {
+  const char* debugKey = "BehaviorReactToSound.Params.ObservationStatus";
+  
   // whether or not we're responding from the asleep or awake/observing state will be determined via json config.
   // this allows us to have different state "tree/graphs" for when victor is in the sleep or awake behavior state.
-  const bool isSleeping = JsonTools::ParseBool( config, kFromSleepKey, "BehaviorReactToSound.Params.ObservationStatus" );
+  const bool isSleeping = JsonTools::ParseBool( config, kFromSleepKey, debugKey );
   _observationStatus = ( isSleeping ? EObservationStatus::EObservationStatus_Asleep : EObservationStatus::EObservationStatus_Awake );
+
+  _iVars.absolutePowerThreshold = JsonTools::ParseFloat( config, kAbsolutePowerThresholdKey, debugKey);
+  _iVars.minPowerThreshold = JsonTools::ParseFloat( config, kMinPowerThresholdKey, debugKey);
+  _iVars.confidenceThresholdAtMinPower = JsonTools::ParseUInt32( config, kConfidenceThresholdAtMinPowerKey, debugKey);
 
   // get the reaction behavior
   _iVars.reactionBehaviorString = JsonTools::ParseString( config, kMicDirectionReactionBehavior, "BehaviorReactToSound" );
@@ -153,6 +157,9 @@ void BehaviorReactToSound::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
   const char* list[] = {
     kFromSleepKey,
     kMicDirectionReactionBehavior,
+    kAbsolutePowerThresholdKey,
+    kMinPowerThresholdKey,
+    kConfidenceThresholdAtMinPowerKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -306,9 +313,9 @@ bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionC
 {
   if ( !IsActivated() && CanReactToSound() )
   {
-    const bool powerThresholdReached = ( power >= kRTS_AbsolutePowerThreshold );
-    const bool powerConfidenceThresholdReached = ( power >= kRTS_MinPowerThreshold );
-    const bool confidenceThresholdReached = ( confidence >= kRTS_ConfidenceThresholdAtMinPower );
+    const bool powerThresholdReached = ( power >= _iVars.absolutePowerThreshold );
+    const bool powerConfidenceThresholdReached = ( power >= _iVars.minPowerThreshold );
+    const bool confidenceThresholdReached = ( confidence >= _iVars.confidenceThresholdAtMinPower );
 
     // we want to react in the following cases:
     // + power is above a specific high threshold (kRTS_AbsolutePowerThreshold)
@@ -324,7 +331,7 @@ bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionC
         _triggeredConfidence = confidence;
 
         SetTriggerDirection( direction );
-        PRINT_DEBUG( "Heard valid sound from direction [%d]", direction );
+        PRINT_DEBUG( "Heard valid sound from direction [%d] (power=%f, confidence=%u)", direction, power, confidence );
 
         return true;
       }

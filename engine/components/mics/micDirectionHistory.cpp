@@ -33,8 +33,10 @@ namespace Vector {
 
 CONSOLE_VAR_RANGED( uint32_t,       kRTS_PowerAvgNumSamples,   "SoundReaction", 100, 1, 250 );
 CONSOLE_VAR_RANGED( double,         kRTS_WebVizUpdateInterval, "SoundReaction", 0.20, 0.0, 1.0 );
-CONSOLE_VAR_EXTERN( double,         kRTS_AbsolutePowerThreshold );
-CONSOLE_VAR_EXTERN( double,         kRTS_MinPowerThreshold );
+
+// NOTE: these are only for display purposes now (actual values live in instance jsons)
+CONSOLE_VAR( double,                kRTS_AbsolutePowerThreshold_display,           "SoundReaction", 2.90 );
+CONSOLE_VAR( double,                kRTS_MinPowerThreshold_display,                "SoundReaction", 1.50 );
 
 static_assert(std::is_same<decltype(RobotInterface::MicDirection::timestamp), TimeStamp_t>::value,
               "Expecting type of MicDirection::timestamp to match TimeStamp_t");
@@ -494,8 +496,8 @@ void MicDirectionHistory::SendMicDataToWebserver()
           webData["latestNoiseFloor"] = _soundTrackingData.latestNoiseFloor;
           webData["powerScore"] = _soundTrackingData.latestPeakLevel;
           webData["powerScoreAvg"] = _soundTrackingData.averagePeakLevel;
-          webData["powerScoreThreshold"] = kRTS_AbsolutePowerThreshold;
-          webData["powerScoreMinThreshold"] = kRTS_MinPowerThreshold;
+          webData["powerScoreThreshold"] = kRTS_AbsolutePowerThreshold_display;
+          webData["powerScoreMinThreshold"] = kRTS_MinPowerThreshold_display;
           
           webData["isTriggered"] = ( currentTime <= ( _webServerData.timeOfReaction + kWebserverTriggerDisplayTime ) );
           webData["triggerScore"] = _webServerData.powerLevel;

@@ -14,5 +14,13 @@
   "emotionEventOnActivated": "ReactToSoundAsleep",
 
   "micDirectionReactionBehavior" : "ReactToSoundDirectionAsleep",
-  "FromSleep" : true
+  "FromSleep" : true,
+
+  // from sleep, only use absolute "loud" sound to wake up
+  "micAbsolutePowerThreshold": 3.10,
+
+  // impossibly high (this wont work during power save anyway)
+  "micMinPowerThreshold": 999.9,
+  "micConfidenceThresholdAtMinPower": 0
+
 }

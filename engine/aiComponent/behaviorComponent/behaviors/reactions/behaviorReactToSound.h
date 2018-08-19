@@ -122,6 +122,10 @@ private:
     std::string reactionBehaviorString;
     std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
 
+    float absolutePowerThreshold;
+    float minPowerThreshold;
+    MicDirectionConfidence confidenceThresholdAtMinPower;
+
     SoundReactorId  reactorId;
 
   } _iVars;
