@@ -415,13 +415,12 @@ void BatteryComponent::UpdateSuggestedChargerTime(bool wasLowBattery, bool wasCh
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool isLowBattery = (_batteryLevel == BatteryLevel::Low);
   
-  if( isLowBattery && !wasLowBattery ) {
-    // Just became low battery. reset vars so the logic below works
+  if( isLowBattery && !wasLowBattery && (_timeRemovedFromCharger_s == 0.0f) ) {
+    // Just became low battery. reset end time so the countdown starts below
     _suggestedChargeEndTime_s = 0.0f;
-    _timeRemovedFromCharger_s = 0.0f;
   }
   
-  const bool countdownStarted = (_suggestedChargeEndTime_s != 0.0f);
+  bool countdownStarted = (_suggestedChargeEndTime_s != 0.0f);
   
   if( countdownStarted && (currTime_s >= _suggestedChargeEndTime_s) ) {
     // countdown finished
@@ -433,6 +432,7 @@ void BatteryComponent::UpdateSuggestedChargerTime(bool wasLowBattery, bool wasCh
     }
     _suggestedChargeEndTime_s = 0.0f;
     _timeRemovedFromCharger_s = 0.0f;
+    countdownStarted = false;
   }
   
   if( IsCharging() ) {
@@ -469,7 +469,13 @@ float BatteryComponent::GetSuggestedChargerTime() const
       return 0.0f;
     }
   } else {
-    return Anki::Util::Max( _suggestedChargeEndTime_s - currTime_s, 0.0f );
+    if( !IsCharging()) {
+      // currently off the charger. keep timer fixed
+      const float fixedTime = (_suggestedChargeEndTime_s - _timeRemovedFromCharger_s);
+      return Anki::Util::Clamp(fixedTime, 0.0f, kRequiredChargeTime_s);
+    } else {
+      return Anki::Util::Max( _suggestedChargeEndTime_s - currTime_s, 0.0f );
+    }
   }
 }
 

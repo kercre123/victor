@@ -158,6 +158,10 @@ test_robot_state_stream: .require_ip
 	$(curl_command)/v1/robot_state_stream -d '{}'
 	@echo
 
+test_curl_battery_state: .require_ip
+	$(curl_command)/v1/battery_state -d '{}'
+	@echo
+
 test_eye_colors: .require_ip
 	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 0}}'
 	@echo
