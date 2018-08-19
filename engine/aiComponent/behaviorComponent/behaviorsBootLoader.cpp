@@ -36,6 +36,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 
@@ -286,6 +287,9 @@ void BehaviorsBootLoader::RestartOnboarding()
   // when it starts change the stage within BehaviorOnboarding, pause a few ticks, then flag to start onboarding again.
   SetNewBehavior( BEHAVIOR_ID(Wait) );
   _countUntilResetOnboarding = 20;
+  
+  DASMSG(onboarding_restart, "onboarding.restart", "User requested to start onboarding from the beginning");
+  DASMSG_SEND();
 }
 
 }

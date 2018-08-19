@@ -53,13 +53,18 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
 
   if( behaviorIterator.GetLastTickBehaviorStackChanged() == currTick ) {
 
+    _isTutorial = false;
+    
     // get the feature at the end of the stack
     ActiveFeature newFeature = ActiveFeature::NoFeature;
-    auto callback = [&newFeature](const ICozmoBehavior& behavior) {
+    auto callback = [&newFeature, this](const ICozmoBehavior& behavior) {
       ActiveFeature feature = ActiveFeature::NoFeature;
       if( behavior.GetAssociatedActiveFeature(feature) &&
           feature != ActiveFeature::NoFeature ) {
         newFeature = feature;
+        if( newFeature == ActiveFeature::Onboarding ) {
+          _isTutorial = true;
+        }
       }
       return true; // iterate the entire stack
     };
@@ -142,7 +147,10 @@ void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, c
 
   if( newFeature != ActiveFeature::NoFeature ) {
     const std::string& uuid = Util::GetUUIDString();
-    const ActiveFeatureType& featureType = GetActiveFeatureType(newFeature, ActiveFeatureType::System);
+    // override the active feature's ActiveFeatureType if the feature is part of onboarding
+    const ActiveFeatureType& featureType = _isTutorial
+                                           ? ActiveFeatureType::Onboarding
+                                           : GetActiveFeatureType(newFeature, ActiveFeatureType::System);
 
     // NOTE: this event is inspected by the DAS Manager to determine the feature id and type columns, so be
     // especially careful if changing it

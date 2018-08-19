@@ -17,6 +17,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/engineTimeStamp.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
@@ -195,6 +196,7 @@ private:
     BehaviorState state;
     
     OnboardingStages currentStage;
+    EngineTimeStamp_t timeOfLastStageChange;
     
     IBehavior* lastBehavior;
     UserIntentTag lastWhitelistedIntent;

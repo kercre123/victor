@@ -72,6 +72,9 @@ private:
   const CozmoContext* _context = nullptr;
 
   std::unique_ptr<StatusLogHandler> _statusLogHandler;
+  
+  // whether the current stack contains a behavior with with the ActiveFeature Onboarding
+  bool _isTutorial = false;
 };
 
 }

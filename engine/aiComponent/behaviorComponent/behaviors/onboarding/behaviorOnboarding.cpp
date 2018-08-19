@@ -38,6 +38,7 @@
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
@@ -79,6 +80,7 @@ BehaviorOnboarding::DynamicVariables::DynamicVariables()
   state = BehaviorState::StageNotStarted;
   
   currentStage = OnboardingStages::NotStarted;
+  timeOfLastStageChange = 0;
   
   lastBehavior = nullptr;
   lastWhitelistedIntent = USER_INTENT(INVALID);
@@ -317,6 +319,7 @@ void BehaviorOnboarding::OnBehaviorActivated()
   // robot has already woken up and heard trigger if starting in any stage other than the first.
   _dVars.robotWokeUp = (_dVars.currentStage != OnboardingStages::NotStarted);
   _dVars.robotHeardTrigger = (_dVars.currentStage != OnboardingStages::NotStarted);
+  _dVars.timeOfLastStageChange = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   // default to no trigger word allowed
   SmartDisableEngineResponseToTriggerWord();
@@ -633,8 +636,16 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
   // log
   PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.MoveToStage.OnboardingStatus", "Onboarding moving to stage %s", OnboardingStagesToString(stage));
   
+  // das msg
+  const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  DASMSG(onboarding_next_stage, "onboarding.next_stage", "Changed stage in onboarding");
+  DASMSG_SET(i1, (int)stage, "Stage number");
+  DASMSG_SET(i2, (TimeStamp_t)(currTime - _dVars.timeOfLastStageChange), "Time spent in stage (ms)");
+  DASMSG_SEND();
+  
   // actually change to the next stage
   _dVars.currentStage = stage;
+  _dVars.timeOfLastStageChange = currTime;
   if( _dVars.currentStage == OnboardingStages::DevDoNothing ) {
     // don't set up events for that dev stage since it doesn't have an associated IOnboardingStage
     _dVars.state = BehaviorState::WaitingForTermination;
@@ -951,6 +962,10 @@ void BehaviorOnboarding::RequestSkip()
                                                     std::forward_as_tuple() );
     itInserted->second.type = PendingEvent::Skip;
     itInserted->second.time_s = time_s;
+    
+    DASMSG(onboarding_skip_stage, "onboarding.skip_stage", "Skipped the stage in onboarding");
+    DASMSG_SET(i1, (int)_dVars.currentStage, "Current stage number");
+    DASMSG_SEND();
   }
 }
   
@@ -967,6 +982,10 @@ void BehaviorOnboarding::RequestSkipRobotOnboarding()
     TerminateOnboarding();
     GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(kKeepFaceAliveLockName);
   });
+  
+  DASMSG(onboarding_skip_onboarding, "onboarding.skip_onboarding", "Skipped all of onboarding");
+  DASMSG_SET(i1, (int)_dVars.currentStage, "Current stage number");
+  DASMSG_SEND();
   
 };
  
