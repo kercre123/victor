@@ -125,7 +125,7 @@ f32 HAL::MotorGetSpeed(MotorID motor)
   // Every frame, syscon sends the last detected speed as a two part number:
   // `delta` encoder counts, and `time` span for those counts.
   // syscon only changes the value when counts are detected
-  // if no counts for ~25ms, will report 0/0
+  // if no counts for ~125ms (i.e. MAX_ENCODER_FRAMES), will report 0/0
   if (bodyData_->motor[m].time != 0) {
     float countsPerTick = (float)bodyData_->motor[m].delta / bodyData_->motor[m].time;
     return (countsPerTick / HAL_SEC_PER_TICK) * HAL_MOTOR_POSITION_SCALE[m];

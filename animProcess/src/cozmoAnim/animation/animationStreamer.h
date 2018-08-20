@@ -378,13 +378,14 @@ namespace Vector {
     
     void StopTracks(const u8 whichTracks);
     
-    void StopTracksInUse() {
-      // In case we are aborting an animation, stop any tracks that were in use
-      // (For now, this just means motor-based tracks.) Note that we don't
-      // stop tracks we weren't using, in case we were, for example, playing
-      // a head animation while driving a path.
-      StopTracks(_tracksInUse);
-    }
+    // In case we are aborting an animation, stop any tracks that were in use
+    // (For now, this just means motor-based tracks.) Note that we don't
+    // stop tracks we weren't using, in case we were, for example, playing
+    // a head animation while driving a path.
+    // If we're just calling this at the normal end of an animation then
+    // head and lift tracks are not stopped so that they settle at the last
+    // commanded keyframe.
+    void StopTracksInUse(bool aborting = true);
         
     // pass the started/stopped animation name to webviz
     void SendAnimationToWebViz( bool starting ) const;

@@ -1810,7 +1810,7 @@ namespace Vector {
             _startOfAnimationSent &&
             !_endOfAnimationSent)
         {
-          StopTracksInUse();
+          StopTracksInUse(false);
           lastResult = SendEndOfAnimation();
           if (_animAudioClient->HasActiveEvents()) {
             PRINT_NAMED_WARNING("AnimationStreamer.ExtractMessagesFromStreamingAnim.EndOfAnimation.ActiveAudioEvent",
@@ -2083,6 +2083,13 @@ namespace Vector {
     }
   }
   
+  void AnimationStreamer::StopTracksInUse(bool aborting) {     
+      if (!aborting) {
+        // The anim has terminated normally so just let head and lift settle to final positions
+        _tracksInUse &= ~((u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
+      }
+      StopTracks(_tracksInUse);
+    }
 
   void AnimationStreamer::SendAnimationToWebViz( bool starting ) const
   {

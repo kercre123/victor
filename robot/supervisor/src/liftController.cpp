@@ -126,6 +126,11 @@ namespace Anki {
         // Current speed
         f32 radSpeed_ = 0;
 
+        // Number of tics that no encoders counts must be received
+        // before the raw speed is considered 0.
+        const u32 ZERO_SPEED_ENCODER_TIC_THRESH = 5;
+        u32 numTicsNoEncoderCounts_ = 0;
+
         // Currently applied power
         f32 power_ = 0;
 
@@ -445,21 +450,34 @@ namespace Anki {
 
       void PoseAndSpeedFilterUpdate()
       {
+        // Update position
+        const f32 currHalPos = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
+        currentAngle_ += (currHalPos - prevHalPos_);
+
         // Get encoder speed measurements
         f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
 
+        // If currHalPos matches prevHalPos for more than
+        // ZERO_SPEED_ENCODER_TIC_THRESH tics in a row, then assume
+        // zero speed
+        if (currHalPos == prevHalPos_ && measuredSpeed != 0.f) { 
+          if (++numTicsNoEncoderCounts_ >= ZERO_SPEED_ENCODER_TIC_THRESH) {
+            measuredSpeed = 0.f;
+            numTicsNoEncoderCounts_ = ZERO_SPEED_ENCODER_TIC_THRESH;
+          }
+        } else {
+          numTicsNoEncoderCounts_ = 0;
+        }
+        
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
                      (radSpeed_ * SPEED_FILTERING_COEFF));
 
-        // Update position
-        currentAngle_ += (HAL::MotorGetPosition(MotorID::MOTOR_LIFT) - prevHalPos_);
-
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebug( "LiftController", "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
               measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MotorID::MOTOR_LIFT), prevHalPos_, power_);
-#endif
-        prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
+#endif      
+        prevHalPos_ = currHalPos;
       }
 
       void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
@@ -519,20 +537,13 @@ namespace Anki {
           return;
         }
 
+        // Convert desired height into the necessary angle:
         desiredHeight_ = newDesiredHeight;
         desiredAngle_ = ConvertLiftHeightToLiftAngleRad(desiredHeight_);
 
-        // Convert desired height into the necessary angle:
-#if(DEBUG_LIFT_CONTROLLER)
-        AnkiDebug( "LiftController", "LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s", desiredHeight_, GetHeightMM(), duration_seconds);
-#endif
-
-
         f32 startRadSpeed = radSpeed_;
         f32 startRad = currDesiredAngle_;
-        if (!inPosition_) {
-          vpg_.Step(startRadSpeed, startRad);
-        } else {
+        if (inPosition_) {
           // If already in position, reset angleErrorSum_.
           // Small and short lift motions can be overpowered by the unwinding of
           // accumulated error and not render well/consistently.
