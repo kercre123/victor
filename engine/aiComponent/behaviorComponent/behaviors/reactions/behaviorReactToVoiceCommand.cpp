@@ -76,6 +76,8 @@ namespace {
   const char* kProceduralBackpackLights            = "backpackLights";
   const char* kNotifyOnErrors                      = "notifyOnErrors";
   const char* kAnimListeningGetIn                  = "animListeningGetIn";
+  const char* kAnimListeningLoop                   = "animListeningLoop";
+  const char* kAnimListeningGetOut                 = "animListeningGetOut";
   const char* kExitAfterGetInKey                   = "exitAfterGetIn";
   const char* kExitAfterListeningIfNotStreamingKey = "exitAfterListeningIfNotStreaming";
   const char* kPushResponseKey                     = "pushResponse";
@@ -107,6 +109,8 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   animListeningGetIn( AnimationTrigger::VC_ListeningGetIn ),
+  animListeningLoop( AnimationTrigger::VC_ListeningLoop ),
+  animListeningGetOut( AnimationTrigger::VC_ListeningGetOut ),
   backpackLights( true ),
   exitAfterGetIn( false ),
   exitAfterListeningIfNotStreaming( false ),
@@ -165,7 +169,25 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
                  "Get-in %s is not a valid animation trigger",
                  animGetIn.c_str() );
   }
-  
+
+  std::string animLoop;
+  if( JsonTools::GetValueOptional( config, kAnimListeningLoop, animLoop ) && !animLoop.empty() )
+  {
+    ANKI_VERIFY( AnimationTriggerFromString(animLoop, _iVars.animListeningLoop),
+                 "BehaviorReactToVoiceCommand.Ctor.InvalidLoop",
+                 "Get-in %s is not a valid animation trigger",
+                 animLoop.c_str() );
+  }
+
+  std::string animGetOut;
+  if( JsonTools::GetValueOptional( config, kAnimListeningGetOut, animGetOut ) && !animGetOut.empty() )
+  {
+    ANKI_VERIFY( AnimationTriggerFromString(animGetOut, _iVars.animListeningGetOut),
+                 "BehaviorReactToVoiceCommand.Ctor.InvalidGetOut",
+                 "Get-in %s is not a valid animation trigger",
+                 animGetOut.c_str() );
+  }
+
   JsonTools::GetValueOptional( config, kExitAfterGetInKey, _iVars.exitAfterGetIn );
 
   JsonTools::GetValueOptional( config, kExitAfterListeningIfNotStreamingKey, _iVars.exitAfterListeningIfNotStreaming );
@@ -201,6 +223,8 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kIntentBehaviorKey,
     kNotifyOnErrors,
     kAnimListeningGetIn,
+    kAnimListeningLoop,
+    kAnimListeningGetOut,
     kExitAfterGetInKey,
     kExitAfterListeningIfNotStreamingKey,
     kPushResponseKey,
@@ -430,7 +454,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 
         // we now loop indefinitely and wait for the timeout in the update function
         // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-        DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningLoop, 0 ) );
+        DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
         _dVars.state = EState::ListeningLoop;
       }
     }
@@ -814,7 +838,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
   };
 
   // we need to get out of our listening loop anim before we react
-  DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_ListeningGetOut ), callback );
+  DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetOut ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

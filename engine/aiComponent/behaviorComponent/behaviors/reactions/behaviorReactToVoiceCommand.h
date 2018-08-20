@@ -143,6 +143,8 @@ private:
     bool pushResponse;
     
     AnimationTrigger animListeningGetIn;
+    AnimationTrigger animListeningLoop;
+    AnimationTrigger animListeningGetOut;
 
     bool backpackLights;
     
