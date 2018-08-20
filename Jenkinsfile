@@ -17,6 +17,15 @@ def getListOfOnlineNodesForLabel(label) {
   return nodes
 }
 
+enum buildConfig {
+    SHIPPING, DEBUG, RELEASE
+
+    @Override
+    public String toString() {
+        return name().toLowerCase()
+    }
+}
+
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
 
@@ -45,8 +54,7 @@ stage('Parallel Build') {
                     }
                     withEnv(["HOME=${env.WORKSPACE}"]) {
                         if (env.CHANGE_ID) {
-                            echo "Using PR specific build steps..."
-                            buildPRStepsVicOS type: 'Debug'
+                            buildPRStepsVicOS type: buildConfig.DEBUG
                         } else {
                             stage('Build Engine') {
                                 sh './project/victor/build-victor.sh -c Release -O2 -j8'
@@ -60,40 +68,8 @@ stage('Parallel Build') {
                     sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
                 }
             }
-            stage('Zip Deployables') {
-                sh './project/buildServer/steps/zipDeployables.sh'
-            }
-            stage('Pushing VicOS artifacts to artifactory') {
-                def vicosFileSpec = """{
-                                          "files": [
-                                            {
-                                              "pattern": "_build/vicos/Release/CMakeCache.txt",
-                                              "target": "victor-engine/${env.BRANCH_NAME}/"
-                                            },
-                                            {
-                                              "pattern": "_build/vicos/Release/CMakeFiles/*",
-                                              "target": "victor-engine/${env.BRANCH_NAME}/"
-                                            },
-                                            {
-                                                "pattern": "_build/vicos/Release/bin/*",
-                                                "target": "victor-engine/${env.BRANCH_NAME}/"
-                                            },
-                                            {
-                                                "pattern": "_build/vicos/Release/bin/*.full",
-                                                "target": "victor-engine/${env.BRANCH_NAME}/vicos/release/"
-                                            },
-                                            {
-                                                "pattern": "_build/vicos/Release/lib/*.so.full",
-                                                "target": "victor-engine/${env.BRANCH_NAME}/vicos/release/"
-                                            },
-                                            {
-                                                "pattern": "_build/deployables*.tar.gz",
-                                                "target": "victor-engine/${env.BRANCH_NAME}/"
-                                            }
-                                          ]
-                                        }"""
-                server.upload(vicosFileSpec)
-            }
+            buildPRStepsVicOS type: buildConfig.SHIPPING
+            deployArtifacts type: buildConfig.DEBUG
         }
     },
     macosx: {
