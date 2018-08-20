@@ -1,6 +1,6 @@
 # Webots Simulator Setup
 
-We are currently using [Webots version R2018a rev 2](https://cyberbotics.com/archive/mac/webots-R2018a-rev2.dmg). A license is required to run the Webots simulator. Submit a ticket to the Helpdesk to request a license. 
+We are currently using [Webots version R2018a rev 2](https://cyberbotics.com/archive/mac/webots-R2018a-rev2.dmg) (a list of versions we currently support is available [here](supportedWebotsVersions.txt)). A license is required to run the Webots simulator. Submit a ticket to the Helpdesk to request a license. 
 
 ## Setup
 
