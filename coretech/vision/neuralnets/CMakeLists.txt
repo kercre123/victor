@@ -145,7 +145,7 @@ else()
 endif()
 
 anki_build_cxx_executable(${TARGET_NAME} ${ANKI_SRCLIST_DIR})
-anki_build_target_license(${TARGET_NAME} "ANKI")
+anki_build_target_license(${TARGET_NAME} "ANKI" "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/tensorflow.license")
 
 target_compile_options(${TARGET_NAME}
   PRIVATE 

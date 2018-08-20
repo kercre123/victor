@@ -1,6 +1,7 @@
 #
 # breakpad.cmake
 #
+if (NOT TARGET minidump_stackwalk)
 set(BREAKPAD_PATH "${CMAKE_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad")
 set(BREAKPAD_INCLUDE_PATHS "${BREAKPAD_PATH}/include")
 set(BREAKPAD_LICENSE "BSD-4,${CMAKE_SOURCE_DIR}/licenses/breakpad.license")
@@ -67,3 +68,4 @@ macro(copy_breakpad_exes)
   add_custom_target(copy_breakpad_exes ALL DEPENDS ${OUTPUT_FILES})
 
 endmacro()
+endif()

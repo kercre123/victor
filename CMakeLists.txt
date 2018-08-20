@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.6)
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/audio/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
 )
@@ -140,6 +141,10 @@ set(CLEAN_CLAD_TARGETS TRUE)
 
 import(util "lib/util")
 include(audio) # See ./cmake/audio.cmake for definitions and lib
+include(wwise) # for Wwise targets
+include(protobuf) # for protobuf target
+include(breakpad) # for breakpad targets
+import(util "lib/util")
 import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")
 

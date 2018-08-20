@@ -5,7 +5,7 @@ include(anki_build_cxx)
 include(anki_build_strip)
 
 anki_build_cxx_library(util ${ANKI_SRCLIST_DIR})
-anki_build_target_license(util "ANKI" "RSA,${CMAKE_SOURCE_DIR}/licenses/md5.license" "MPL-2.0" "CC0")
+anki_build_target_license(util "ANKI" "RSA,${CMAKE_SOURCE_DIR}/licenses/md5.license" "CC0,${CMAKE_SOURCE_DIR}/licenses/simple-signal.license")
 
 #
 # Create output files named 'libankiutil' to prevent collision with MacOS 'libutil'.

@@ -14,7 +14,7 @@ endif()
 include(anki_build_cxx)
 
 anki_build_cxx_library(cti_common ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(cti_common "ANKI" "CC0,${CMAKE_SOURCE_DIR}/licenses/CC0.license")
+anki_build_target_license(cti_common "ANKI" "CC0,${CMAKE_SOURCE_DIR}/licenses/simple-signal.license")
 
 target_compile_definitions(cti_common
   PUBLIC

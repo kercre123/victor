@@ -14,6 +14,10 @@ else()
   set(MESSAGE_STATUS STATUS)
 endif()
 
+file(WRITE ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html
+      "<!DOCTYPE html><html><body>\n"
+      "<h1>License Data for Vector 1.0.0</h1><p>\n")
+
 file(STRINGS ${CMAKE_SOURCE_DIR}/docs/development/licenses.md license_file ENCODING UTF-8)
 list(REMOVE_AT license_file 0)
 foreach(line ${license_file})
@@ -128,7 +132,12 @@ function(anki_build_target_license target)
     if(file)
       # output to binary directory
       if(IS_ABSOLUTE ${file})
+        # copy license to folder
         file(COPY ${file} DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license})
+
+        # create html link to folder/file
+        get_filename_component(filename ${file} NAME)
+        file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "<a href=\"${target}-${license}/${filename}\"\>${target} ${license}</a><br/>\n")
       else()
         message(FATAL_ERROR "${target} target is using a relative path, ${file}, for it's ${license} license")
         return()
@@ -168,6 +177,34 @@ function(check_licenses)
 
   # check all dependencies have license set
   foreach(target ${all_dependencies})
+
+    set(system_lib FALSE)
+    # split full name and partial name matches to avoid over-matching anything with a m or z
+    # and simplify matching .so files with version numbers
+    # also handle special case, extra linker options (-wl) on the link line
+
+    foreach(lib asound c curl cutils dl log m z zlib)
+      if(${target} STREQUAL ${lib})
+        set(system_lib TRUE)
+      endif()
+    endforeach()
+
+    foreach(lib libcutils libglib libgio libgobject libffi libdl libz libresolv libgmodule libpcre
+                Accelerate AppKit AudioToolbox AudioUnit CoreAudio CoreBluetooth CoreFoundation
+                OpenCL OpenGL Foundation GLUT Security 
+                "-Wl" "-ldl"
+                ankiutil                     # hack: because of other hacks
+                Controller CppController ode # webots
+                opus                         # cloud
+                gtest                        # special case, imported library can't have our checks
+                babile                       # special case, imported library can't have our checks
+                libtensorflow-lite.a         # handled elsewhere
+                )
+      if(${target} MATCHES ${lib})
+        set(system_lib TRUE)
+      endif()
+    endforeach()
+
     if(TARGET ${target})
       get_property(type TARGET ${target} PROPERTY TYPE)
       if(${type} STREQUAL "UTILITY")
@@ -180,7 +217,7 @@ function(check_licenses)
         get_property(isset TARGET ${target} PROPERTY APPROVED_LICENSE)
 
         if(1)
-          if(NOT isset)
+          if(NOT (isset OR system_lib))
             message(${MESSAGE_STATUS} "WARNING: licensing information missing or not approved for ${target} target")
           endif()
 
@@ -208,28 +245,14 @@ function(check_licenses)
     else()
       # linker option is not a known target, i.e. a system library or missing cmake configuration
 
-      # split full name and partial name matches to avoid over-matching anything with a m or z
-      # and simplify matching .so files with version numbers
-      # also handle special case, extra linker options (-wl) on the link line
-
-      foreach(lib "-Wl" asound c curl cutils dl "-ldl" log m z zlib)
-        if(target STREQUAL ${lib})
-          set(found TRUE)
-        endif()
-      endforeach()
-
-      foreach(lib libcutils libglib libgio libgobject libffi libdl libz libresolv libgmodule libpcre
-                  AudioToolbox AudioUnit CoreAudio CoreFoundation Foundation)
-        if(target MATCHES ${lib})
-          set(found TRUE)
-        endif()
-      endforeach()
-      if(NOT found)
+      if(NOT system_lib)
         message("${target} is not a recognised system lib and does not have cmake configuration including licensing information.")
       endif()
 
     endif()
   endforeach()
+
+  file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "</p></body></html>")
 endfunction()
 
 # end-of-license checking code
@@ -256,7 +279,7 @@ function(guess_license_for_file filename licenses_result)
           contents MATCHES "matt michini" OR contents MATCHES "jarrod hatfield" OR
           contents MATCHES "al chaussee" OR contents MATCHES "greg nagel" OR
           contents MATCHES "paul aluri")
-      list(APPEND licenses "ANKI")
+      list(APPEND licenses "Anki")
     endif()
 
     if(contents MATCHES "frank thilo")

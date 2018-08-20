@@ -30,7 +30,6 @@ if (VICOS)
 
   foreach(lib ${TEXT2SPEECH_LIBS})
     add_library(${lib} STATIC IMPORTED)
-    # anki_build_target_license(${lib} "BSD-4,${CMAKE_SOURCE_DIR}/licenses/acapela.license")
     set_target_properties(${lib}
       PROPERTIES
       IMPORTED_LOCATION "${TEXT2SPEECH_LIB_DIR}/lib${lib}.a"

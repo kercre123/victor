@@ -66,6 +66,7 @@ Licenses may be:
 - Stop:       You must obtain Legal approval to use any code licensed under these licenses.
 - Reviewing:  It's use is under review
 - Commercial: Under special conditions
+- Ignore:     Licenses that do not require attribution (for example: MS dot net license)
 
 |Identifier   |Use       |Description                                                 | URL                                                                     |
 |:-----------:|:--------:| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -115,7 +116,7 @@ Licenses may be:
 |IPA          |          |IPA Font License                                            |https://opensource.org/licenses/IPA                                      |
 |IPL-1.0      |Caution   |IBM Public License, Version 1.0                             |https://opensource.org/licenses/IPL-1.0                                  |
 |ISC:wraptext |          |                                                            |                                                                         |
-|ISC          |          |ISC License (ISC)                                           |https://en.wikipedia.org/wiki/ISC_license                                |
+|ISC          |GO        |ISC License (ISC)                                           |https://en.wikipedia.org/wiki/ISC_license                                |
 |jabberpl     |          |Jabber Open Source License                                  |https://opensource.org/licenses/jabberpl                                 |
 |libpng       |Go        |                                                            |https://en.wikipedia.org/wiki/Libpng_License                             |
 |LGPL-2.0     |          |                                                            |                                                                         |
@@ -133,8 +134,9 @@ Licenses may be:
 |MPL-1.0      |          |Mozilla Public License, Version 1.0                         |https://opensource.org/licenses/MPL-1.0                                  |
 |MPL-1.1      |Caution   |Mozilla Public License, Version 1.1                         |https://opensource.org/licenses/MPL-1.1                                  |
 |MPL-2.0      |Caution   |Mozilla Public License, Version 2.0                         |https://en.wikipedia.org/wiki/MPL_License                                |
-|MS-PL        |          |Microsoft Public License (MS-PL)                            |https://opensource.org/licenses/MS-PL                                    |
+|MS-PL        |Go        |Microsoft Public License (MS-PL)                            |https://opensource.org/licenses/MS-PL                                    |
 |MS-RL        |          |Microsoft Reciprocal License (MS-RL)                        |https://opensource.org/licenses/MS-RL                                    |
+|MS License   |Ignore    |MICROSOFT .NET LIBRARY SOFTWARE LICENSE TERMS               |https://www.microsoft.com/net/dotnet_library_license.htm                 |
 |Multics      |          |Multics License                                             |https://opensource.org/licenses/Multics                                  |
 |NASA-1.3     |          |NASA Open Source Agreement, Version 1.3                     |https://opensource.org/licenses/NASA-1.3                                 |
 |Naumen       |          |NAUMEN Public License                                       |https://opensource.org/licenses/Naumen                                   |

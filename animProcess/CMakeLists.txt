@@ -83,7 +83,7 @@ target_include_directories(victor_anim
 if (VICOS)
 
   anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
-  anki_build_target_license(vic-anim "ANKI")
+  anki_build_target_license(vic-anim "ANKI" "Commercial,${CMAKE_SOURCE_DIR}/licenses/acapela.license")
 
   target_link_libraries(vic-anim
     PRIVATE
@@ -116,6 +116,8 @@ if (VICOS)
     PRIVATE
     robot_core
   )
+
+  anki_build_target_license(vic-bootAnim "ANKI")
 
   anki_build_strip(TARGET vic-bootAnim)
 
