@@ -448,6 +448,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
   
   // loop animation forever to keep the eyes moving
   action->AddAction(new TriggerAnimationAction(AnimationTrigger::InteractWithFaceTrackingIdle, 0));
+  action->SetShouldEndWhenFirstActionCompletes(true);
   
   DelegateIfInControl(action, &BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent);
 }
