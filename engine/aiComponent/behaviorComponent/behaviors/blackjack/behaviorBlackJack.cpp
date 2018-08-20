@@ -328,7 +328,7 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
 
   if(_game.DealerBusted()){
     // Announce score and bust
-    _dVars.outcome = EOutcome::VictorLoses;
+    _dVars.outcome = EOutcome::VictorBusts;
     std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerTied()){
@@ -385,14 +385,17 @@ void BehaviorBlackJack::TransitionToEndGame(){
     }
     case EOutcome::VictorLosesBlackJack:
     {
-      // TEMP for demo. used to be BlackJack_VictorBlackJackLose
+      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBlackJackLose);
+      break;
+    }
+    case EOutcome::VictorBusts:
+    {
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBust);
       break;
     }
     case EOutcome::VictorLoses:
     {
-      // TEMP for demo. used to be BlackJack_VictorLose
-      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBust);
+      endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorLose);
       break;
     }
   }

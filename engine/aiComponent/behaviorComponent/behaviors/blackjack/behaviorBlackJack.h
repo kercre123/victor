@@ -77,6 +77,7 @@ private:
     VictorWins,
     VictorWinsBlackJack,
     VictorLoses,
+    VictorBusts,
     VictorLosesBlackJack
   };
 
