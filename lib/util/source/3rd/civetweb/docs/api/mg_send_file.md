@@ -19,7 +19,10 @@ The function `mg_send_file()` sends the contents of a file over a connection to 
 
 ### See Also
 
-* [`mg_printf();`](mg_printf.md)
+* [`mg_send_file_body();`](mg_send_file_body.md)
 * [`mg_send_mime_file();`](mg_send_mime_file.md)
 * [`mg_send_mime_file2();`](mg_send_mime_file2.md)
+* [`mg_printf();`](mg_printf.md)
 * [`mg_write();`](mg_write.md)
+
+

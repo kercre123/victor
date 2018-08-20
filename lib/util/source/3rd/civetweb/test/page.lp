@@ -5,7 +5,7 @@ Content-Type: text/html
 
 
 <p>This is another example of a Lua server page, served by
-<a href="http://sourceforge.net/projects/civetweb/">Civetweb web server</a>.
+<a href="https://github.com/civetweb/civetweb/">CivetWeb web server</a>.
 </p><p>
 The following features are available:
 <ul>
@@ -41,18 +41,28 @@ The following features are available:
       timestamp NOT NULL,
       method NOT NULL,
       uri NOT NULL,
-      addr
+      addr,
+      civetwebversion,
+      luaversion,
+      aux
     );
   ]])
 
+  -- Add colums to table created with older version
+  db:exec("ALTER TABLE requests ADD COLUMN civetwebversion;")
+  db:exec("ALTER TABLE requests ADD COLUMN luaversion;")
+  db:exec("ALTER TABLE requests ADD COLUMN aux;")
+
   -- Add entry about this request
   local stmt = db:prepare(
-    'INSERT INTO requests VALUES(NULL, datetime("now"), ?, ?, ?);');
+    'INSERT INTO requests VALUES(NULL, datetime("now"), ?, ?, ?, ?, ?, ?);');
   stmt:bind_values(mg.request_info.request_method,
                    mg.request_info.uri,
-                   mg.request_info.remote_port)
-  stmt:step()
-  stmt:finalize()
+                   mg.request_info.remote_port,
+                   mg.version,
+                   _VERSION,
+                   ""
+                   )
 
   -- Show all previous records
   mg.write('Previous requests:\n')

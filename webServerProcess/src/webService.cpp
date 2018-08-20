@@ -932,6 +932,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 //    "vector.anki.com",
     "websocket_timeout_ms",
     "3600000", // 1 hour
+    "request_timeout_ms",
+    "1000",
 //https://ankiinc.atlassian.net/browse/VIC-1554
 //#if defined(NDEBUG)
 //    "global_auth_file",
