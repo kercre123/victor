@@ -10,7 +10,7 @@
 *
 **/
 
-#include "components/textToSpeech/textToSpeechCoordinator.h"
+#include "textToSpeechCoordinator.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -146,14 +146,6 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
                                                        const float durationScalar,
                                                        const UtteranceUpdatedCallback callback)
 {
-  uint8_t utteranceID = GetNextID();
-
-  // TODO:(str) we will eventually need to support anim keyframe driven tts
-  // Remove when the TTSCoordinator can handle that case
-  ANKI_VERIFY(UtteranceTriggerType::KeyFrame != triggerType,
-              "TextToSpeechCoordinator.KeyframeDrivenTTS.NotYetSupported",
-              "Keyframe driven TTS should not be used with the TTSCoordinator until it is fully supported");
-
   RobotInterface::TextToSpeechPrepare msg;
   const size_t maxTextLength = msg.text.max_size() - 1;
 
@@ -168,6 +160,7 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   }
 
   // Compose a request to prepare TTS audio
+  const uint8_t utteranceID = GetNextID();
   msg.ttsID = utteranceID;
   msg.style = style;
   msg.triggerMode = GetTriggerMode(triggerType);
