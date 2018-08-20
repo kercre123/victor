@@ -146,7 +146,18 @@ void lcd_clear_screen(void) {
   lcd_draw_frame(&frame);
 }
 
+static int lcd_check_fb(void) {
+  lcd_fd = lcd_fb_init();
+  if (lcd_fd > 0) {
+    lcd_use_fb = TRUE;
+    return 0; // use framebuffer device
+  }
+  return -1;
+}
+
 void lcd_draw_frame(const LcdFrame* frame) {
+   if (!lcd_use_fb)
+      (void)lcd_check_fb();
    if (lcd_use_fb) {
       lseek(lcd_fd, 0, SEEK_SET);
       (void)write(lcd_fd, frame->data, sizeof(frame->data));
@@ -158,6 +169,8 @@ void lcd_draw_frame(const LcdFrame* frame) {
 }
 
 void lcd_draw_frame2(const uint16_t* frame, size_t size) {
+   if (!lcd_use_fb)
+      (void)lcd_check_fb();
    if (lcd_use_fb) {
       lseek(lcd_fd, 0, SEEK_SET);
       (void)write(lcd_fd, frame, size);
@@ -202,9 +215,7 @@ int lcd_init(void) {
 
   lcd_set_brightness(10);
 
-  lcd_fd = lcd_fb_init();
-  if (lcd_fd > 0) {
-    lcd_use_fb = TRUE;
+  if (lcd_check_fb() == 0) {
     return 0; // use framebuffer device
   }
 
@@ -235,7 +246,6 @@ void lcd_shutdown(void) {
 
   if (lcd_use_fb) {
     close(lcd_fd);
-    return;
   }
 
   if (lcd_fd) {
