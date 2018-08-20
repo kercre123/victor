@@ -191,8 +191,11 @@ void BehaviorWallTimeCoordinator::StartTTSGeneration()
   {
     _dVars.utteranceState = utteranceState;
   };
-    
-  std::string textOfTime = std::to_string(currentHours) + ":" + std::to_string(currentMins);
+  
+  const std::string hourStr = currentHours < 10 ? "0" + std::to_string(currentHours) : std::to_string(currentHours);
+  const std::string minStr  = currentMins  < 10 ? "0" + std::to_string(currentMins)  : std::to_string(currentMins);
+
+  std::string textOfTime = hourStr + ":" + minStr;
   const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
   const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
 
