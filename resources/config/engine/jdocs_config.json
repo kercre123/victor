@@ -7,6 +7,7 @@
       "delayedDiskSavePeriod_s" : 0,
       "warnOnCloudVersionLater" : true,
       "errorOnCloudVersionLater" : false,
+      "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     },
     "ROBOT_LIFETIME_STATS" : {
@@ -15,6 +16,7 @@
       "delayedDiskSavePeriod_s" : 60,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : true,
+      "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : true
     },
     "ACCOUNT_SETTINGS" : {
@@ -23,6 +25,7 @@
       "delayedDiskSavePeriod_s" : 0,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : false,
+      "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     },
     "USER_ENTITLEMENTS" : {
@@ -31,6 +34,7 @@
       "delayedDiskSavePeriod_s" : 0,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : false,
+      "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     }
   }

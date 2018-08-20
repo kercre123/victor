@@ -72,7 +72,8 @@ private:
   
   void IncreaseHelper(const std::string& prefix, const std::string& stat, uint64_t delta);
 
-  bool UpdateStatsJdoc(const bool saveToDiskImmediately);
+  bool UpdateStatsJdoc(const bool saveToDiskImmediately,
+                       const bool saveToCloudImmediately = false);
 
   bool _dirtyJdoc = false;
   JdocsManager* _jdocsManager = nullptr;

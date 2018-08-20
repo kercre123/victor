@@ -278,7 +278,6 @@ void SettingsCommManager::OnRequestPushJdocs(const external_interface::PushJdocs
   {
     const auto& namedJdoc = pushJdocsRequest.named_jdocs(i);
     const auto& jdocType = namedJdoc.jdoc_type();
-    static const bool saveToDiskImmediately = true;
     // TOOD: Pass in/resolve version number, etc.
 
     // Convert the single jdoc STRING to a JSON::Value object
@@ -300,7 +299,9 @@ void SettingsCommManager::OnRequestPushJdocs(const external_interface::PushJdocs
       LOG_WARNING("SettingsCommManager.OnRequestPushJdocs.PushDirectionIssue",
                   "WARNING: robot lifetime stats jdoc is being pushed to robot");
     }
-    _jdocsManager->UpdateJdoc(jdocType, &docBodyJson, saveToDiskImmediately);
+    static const bool saveToDiskImmediately = true;
+    static const bool saveToCloudImmeidately = true;
+    _jdocsManager->UpdateJdoc(jdocType, &docBodyJson, saveToDiskImmediately, saveToCloudImmeidately);
   }
   auto* pushJdocsResp = new external_interface::PushJdocsResponse();
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushJdocsResp));
@@ -313,54 +314,94 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   LOG_INFO("SettingsCommManager.OnRequestUpdateSettings", "Update settings request");
   const auto& settings = updateSettingsRequest.settings();
   bool updateSettingsJdoc = false;
+  bool saveToCloudImmediately = false;
 
   if (settings.oneof_clock_24_hour_case() == external_interface::RobotSettingsConfig::OneofClock24HourCase::kClock24Hour)
   {
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,
-                                                          Json::Value(settings.clock_24_hour()));
+    if (HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,
+                                        Json::Value(settings.clock_24_hour())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::clock_24_hour);
+    }
   }
+
   if (settings.oneof_eye_color_case() == external_interface::RobotSettingsConfig::OneofEyeColorCase::kEyeColor)
   {
     const auto eyeColor = static_cast<uint32_t>(settings.eye_color());
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::eye_color,
-                                                          Json::Value(eyeColor));
+    if (HandleRobotSettingChangeRequest(RobotSetting::eye_color,
+                                        Json::Value(eyeColor)))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::eye_color);
+    }
   }
+
   if (settings.oneof_default_location_case() == external_interface::RobotSettingsConfig::OneofDefaultLocationCase::kDefaultLocation)
   {
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::default_location,
-                                                          Json::Value(settings.default_location()));
+    if (HandleRobotSettingChangeRequest(RobotSetting::default_location,
+                                        Json::Value(settings.default_location())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::default_location);
+    }
   }
+
   if (settings.oneof_dist_is_metric_case() == external_interface::RobotSettingsConfig::OneofDistIsMetricCase::kDistIsMetric)
   {
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::dist_is_metric,
-                                                          Json::Value(settings.dist_is_metric()));
+    if (HandleRobotSettingChangeRequest(RobotSetting::dist_is_metric,
+                                        Json::Value(settings.dist_is_metric())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::dist_is_metric);
+    }
   }
+
   if (settings.oneof_locale_case() ==  external_interface::RobotSettingsConfig::OneofLocaleCase::kLocale)
   {
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::locale,
-                                                          Json::Value(settings.locale()));
+    if (HandleRobotSettingChangeRequest(RobotSetting::locale,
+                                        Json::Value(settings.locale())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::locale);
+    }
   }
+
   if (settings.oneof_master_volume_case() == external_interface::RobotSettingsConfig::OneofMasterVolumeCase::kMasterVolume)
   {
     const auto masterVolume = static_cast<uint32_t>(settings.master_volume());
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::master_volume,
-                                                          Json::Value(masterVolume));
+    if (HandleRobotSettingChangeRequest(RobotSetting::master_volume,
+                                        Json::Value(masterVolume)))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::master_volume);
+    }
   }
+
   if (settings.oneof_temp_is_fahrenheit_case() == external_interface::RobotSettingsConfig::OneofTempIsFahrenheitCase::kTempIsFahrenheit)
   {
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
-                                                          Json::Value(settings.temp_is_fahrenheit()));
+    if (HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
+                                       Json::Value(settings.temp_is_fahrenheit())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::temp_is_fahrenheit);
+    }
   }
+
   if (settings.oneof_time_zone_case() == external_interface::RobotSettingsConfig::OneofTimeZoneCase::kTimeZone)
   {
-    updateSettingsJdoc |= HandleRobotSettingChangeRequest((RobotSetting::time_zone),
-                                                          Json::Value(settings.time_zone()));
+    if (HandleRobotSettingChangeRequest((RobotSetting::time_zone),
+                                         Json::Value(settings.time_zone())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::time_zone);
+    }
   }
 
   // The request can handle multiple settings changes, but we only update the jdoc once, for efficiency
   if (updateSettingsJdoc)
   {
-    _settingsManager->UpdateSettingsJdoc();
+    _settingsManager->UpdateSettingsJdoc(saveToCloudImmediately);
   }
 
   auto* response = new external_interface::UpdateSettingsResponse();

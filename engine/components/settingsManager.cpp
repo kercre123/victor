@@ -33,7 +33,7 @@ namespace Vector {
 
 namespace {
   static const char* kConfigDefaultValueKey = "defaultValue";
-  //static const char* kConfigupdateCloudOnChangeKey = "updateCloudOnChange";
+  static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
   const size_t kMaxTicksToClear = 3;
 }
 
@@ -140,7 +140,8 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
   if (settingsDirty)
   {
-    UpdateSettingsJdoc();
+    static bool const kSaveToCloudImmediately = false;
+    UpdateSettingsJdoc(kSaveToCloudImmediately);
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
@@ -208,7 +209,8 @@ bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
 
   if (updateSettingsJdoc)
   {
-    success = UpdateSettingsJdoc();
+    const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(robotSetting);
+    success = UpdateSettingsJdoc(saveToCloudImmediately);
   }
 
   return success;
@@ -258,11 +260,23 @@ uint32_t SettingsManager::GetRobotSettingAsUInt(const RobotSetting key) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::UpdateSettingsJdoc()
+bool SettingsManager::DoesSettingUpdateCloudImmediately(const RobotSetting key) const
+{
+  const std::string& keyString = EnumToString(key);
+  const auto& config = (*_settingsConfig)[keyString];
+  const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
+  return saveToCloudImmediately;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::UpdateSettingsJdoc(const bool saveToCloudImmediately)
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_SETTINGS,
-                                                 &_currentSettings, saveToDiskImmediately);
+                                                 &_currentSettings,
+                                                 saveToDiskImmediately,
+                                                 saveToCloudImmediately);
   return success;
 }
 

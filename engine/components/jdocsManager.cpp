@@ -27,12 +27,15 @@
 
 namespace Anki {
 namespace Vector {
-    
-    
+
+
+// Set until I get more stuff actualy working
+#define DISABLE_JDOCS_CLOUD_INTERACTION
+
 namespace
 {
   static const std::string kJdocsManagerFolder = "jdocs";
-  
+
   static const char* kManagedJdocsKey = "managedJdocs";
   static const char* kSavedOnDiskKey = "savedOnDisk";
   static const char* kDocNameKey = "docName";
@@ -45,6 +48,7 @@ namespace
   static const char* kBodyOwnedByJdocsManagerKey = "bodyOwnedByJdocManager";
   static const char* kWarnOnCloudVersionLaterKey = "warnOnCloudVersionLater";
   static const char* kErrorOnCloudVersionLaterKey = "errorOnCloudVersionLater";
+  static const char* kJdocFormatVersionKey = "jdocFormatVersion";
 
   static const std::string emptyString;
   static const Json::Value emptyJson;
@@ -123,7 +127,6 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
   const auto& config = robot->GetContext()->GetDataLoader()->GetJdocsConfig();
   const auto& jdocsConfig = config[kManagedJdocsKey];
   const auto& memberNames = jdocsConfig.getMemberNames();
-  std::vector<JDocs::ReadItem> itemsToRequest;
 
   for (const auto& name : memberNames)
   {
@@ -145,7 +148,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     }
     JdocInfo jdocInfo;
     jdocInfo._jdocVersion = 0;
-    jdocInfo._jdocFormatVersion = 0;
+    jdocInfo._jdocFormatVersion = jdocConfig[kJdocFormatVersionKey].asUInt64();
     jdocInfo._jdocClientMetadata = "";
     jdocInfo._jdocBody = {};
     jdocInfo._jdocName = jdocConfig[kDocNameKey].asString();
@@ -181,24 +184,18 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
         jdocItem._needsCreation = true;
       }
     }
-
-    itemsToRequest.emplace_back(jdocItem._jdocName, 0); // 0 means 'get latest'
   }
 
-  // Now ask the jdocs server to get the latest versions it has of each of these jdocs
-#if 0 // Disabled for now
-  std::string userID, thing;
-  GetUserAndThingIDs(userID, thing);
-  const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{userID, thing, itemsToRequest});
-  SendJdocsRequest(readReq);
-#endif
+  // Now queue up a reqeust to the jdocs server (vic-cloud) for the userID
+  const auto userReq = JDocs::DocRequest::Createuser(Void{});
+  SendJdocsRequest(userReq);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::GetUserAndThingIDs(std::string& userID, std::string& thingID) const
 {
-  userID = "55555"; // todo user id.  Just using bogus one for now
+  userID = _userID;
   auto *osstate = OSState::getInstance();
   thingID = "vic:" + osstate->GetSerialNumberAsString();
 }
@@ -222,12 +219,18 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
       const bool nowConnected = ConnectToJdocsServer();
       if (nowConnected)
       {
-        // If there are any jdoc operations waiting to be sent, send them now:
-        while (!_unsentDocRequestQueue.empty())
+        // Now that we're connected, verify that the first jdoc request queued
+        // is THE 'get user id' request, and send that one (only).
+        if (_unsentDocRequestQueue.empty() ||
+            _unsentDocRequestQueue.front().GetTag() != JDocs::DocRequestTag::user)
         {
-          SendJdocsRequest(_unsentDocRequestQueue.front());
-          _unsentDocRequestQueue.pop();
+          LOG_ERROR("JdocsManager.UpdateDependent.QueueError",
+                    "First item in unsent queue should be the 'get user id' item");
         }
+#ifndef DISABLE_JDOCS_CLOUD_INTERACTION
+        SendJdocsRequest(_unsentDocRequestQueue.front());
+        _unsentDocRequestQueue.pop();
+#endif
       }
     }
 #endif
@@ -348,7 +351,8 @@ bool JdocsManager::GetJdoc(const external_interface::JdocType jdocTypeKey,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
                               const Json::Value* jdocBody,
-                              const bool saveToDiskImmediately)
+                              const bool saveToDiskImmediately,
+                              const bool saveToCloudImmediately)
 {
   const auto& it = _jdocs.find(jdocTypeKey);
   if (it == _jdocs.end())
@@ -510,14 +514,28 @@ bool JdocsManager::ConnectToJdocsServer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::SendJdocsRequest(const JDocs::DocRequest& docRequest)
 {
-  // If we're not connected to the jdocs server, put the request in another queue
-  // (on connection, we'll send them)
-  if (!_udpClient.IsConnected())
+  // If we're not connected to the jdocs server, or we haven't received userID yet,
+  // put the request in another queue (on connection, we'll send them)
+  if (!_udpClient.IsConnected() ||
+      (_userID.empty() && (docRequest.GetTag() != JDocs::DocRequestTag::user)))
   {
+    const auto unsentQueueSize = _unsentDocRequestQueue.size();
+    static const size_t kMaxUnsentQueueSize = 100;
+    if (unsentQueueSize >= kMaxUnsentQueueSize)
+    {
+      LOG_ERROR("JdocsManager.SendJdocsRequest",
+                "Unsent queue size is at max at %zu items; IGNORING jdocs request operation!",
+                unsentQueueSize);
+      // TODO:  Think later about what we actually want to do in this situation
+      // (Running without being logged in)
+      return false;
+    }
+
     _unsentDocRequestQueue.push(docRequest);
     LOG_INFO("JdocsManager.SendJdocsRequest",
              "Jdocs server not connected; adding to unsent requests (size now %zu)",
-             _unsentDocRequestQueue.size());
+             unsentQueueSize + 1);
+
     return true;
   }
 
@@ -560,29 +578,31 @@ void JdocsManager::UpdateJdocsServerResponses()
     {
       case JDocs::DocResponseTag::write:
       {
-        LOG_INFO("JdocsManager.UpdateJdocsServerResponses.Write", "Received write response");
         HandleWriteResponse(docRequest.Get_write(), response.Get_write());
       }
       break;
 
       case JDocs::DocResponseTag::read:
       {
-        LOG_INFO("JdocsManager.UpdateJdocsServerResponses.Read", "Received read response");
         HandleReadResponse(docRequest.Get_read(), response.Get_read());
       }
       break;
 
       case JDocs::DocResponseTag::deleteResp:
       {
-        LOG_INFO("JdocsManager.UpdateJdocsServerResponses.DeleteResp", "Received deleteResp response");
         HandleDeleteResponse(docRequest.Get_deleteReq(), response.Get_deleteResp());
       }
       break;
 
       case JDocs::DocResponseTag::err:
       {
-        LOG_INFO("JdocsManager.UpdateJdocsServerResponses.Err", "Received err response");
         HandleErrResponse(response.Get_err());
+      }
+      break;
+
+      case JDocs::DocResponseTag::user:
+      {
+        HandleUserResponse(response.Get_user());
       }
       break;
 
@@ -606,6 +626,8 @@ void JdocsManager::UpdateJdocsServerResponses()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, const JDocs::WriteResponse& writeResponse)
 {
+  LOG_INFO("JdocsManager.HandleWriteResponse", "Received write response:  Status %s, latest version %llu",
+           EnumToString(writeResponse.status), writeResponse.latestVersion);
   // todo:  Handle case: On startup, we asked for jdoc, didn't exist, so sent one up.  handle the response to that
   // todo:  handle case: Regular update (e.g. RobotSettings change)
 }
@@ -614,6 +636,8 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, const JDocs::ReadResponse& readResponse)
 {
+  LOG_INFO("JdocsManager.HandleReadResponse.Read", "Received read response");
+
   // Note: Currently this only happens after startup, when we're getting all 'latest jdocs'
   // ...if/when we do other read requests, we may have to add flags/logic to differentiate
   DEV_ASSERT_MSG(readRequest.items.size() == readResponse.items.size(),
@@ -718,6 +742,62 @@ void JdocsManager::HandleErrResponse(const JDocs::ErrorResponse& errorResponse)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
+{
+  _userID = userResponse.userId;
+  if (_userID.empty())
+  {
+    LOG_ERROR("JdocsManager.HandleUserResponse.Error", "Received user response from jdocs server, but ID is empty (not logged in?)");
+    return;
+  }
+
+  LOG_INFO("JdocsManager.HandleUserResponse", "Received user response from jdocs server, with userID: '%s'",
+            _userID.c_str());
+
+  // Now ask the jdocs server to get the latest versions it has of each of these jdocs
+  std::vector<JDocs::ReadItem> itemsToRequest;
+  for (const auto& jdoc : _jdocs)
+  {
+    itemsToRequest.emplace_back(jdoc.second._jdocName, 0); // 0 means 'get latest'
+  }
+
+  std::string userID, thing;
+  GetUserAndThingIDs(userID, thing);
+  const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{userID, thing, itemsToRequest});
+  SendJdocsRequest(readReq);
+
+  // Finally, if there are any jdoc operations waiting to be sent,
+  // send them now, and for each one, fill in the missing userID
+  while (!_unsentDocRequestQueue.empty())
+  {
+    auto unsentRequest = _unsentDocRequestQueue.front();
+    _unsentDocRequestQueue.pop();
+
+    if (unsentRequest.GetTag() == JDocs::DocRequestTag::read)
+    {
+      auto readReq = unsentRequest.Get_read();
+      readReq.account = _userID;
+      unsentRequest.Set_read(readReq);
+    }
+    else if (unsentRequest.GetTag() == JDocs::DocRequestTag::write)
+    {
+      auto writeReq = unsentRequest.Get_write();
+      writeReq.account = _userID;
+      unsentRequest.Set_write(writeReq);
+    }
+    else if (unsentRequest.GetTag() == JDocs::DocRequestTag::deleteReq)
+    {
+      auto deleteReq = unsentRequest.Get_deleteReq();
+      deleteReq.account = _userID;
+      unsentRequest.Set_deleteReq(deleteReq);
+    }
+
+    SendJdocsRequest(unsentRequest);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isNewJdocInCloud,
                                      const std::string& userID, const std::string& thing)
 {
@@ -730,6 +810,8 @@ void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocType
     DEV_ASSERT(jdoc.doc_version() == 0, "Error: Non-zero jdoc version for one not found in the cloud");
   }
 
+  LOG_INFO("JdocsManager.SubmitJdocToCloud", "Submitted jdoc to cloud: %s, doc version %llu, fmt version %llu",
+           external_interface::JdocType_Name(jdocTypeKey).c_str(), jdoc.doc_version(), jdoc.fmt_version());
   JDocs::Doc jdocForCloud;
   jdocForCloud.docVersion = isNewJdocInCloud ? 0 : jdoc.doc_version();  // Zero means 'create new'
   jdocForCloud.fmtVersion = jdoc.fmt_version();
@@ -767,7 +849,6 @@ bool JdocsManager::CopyJdocFromCloud(const external_interface::JdocType jdocType
               "Failed to parse json string for jdoc %s body, received from cloud",
               jdocItem._jdocName.c_str());
   }
-  jdocItem._jdocBody = doc.jsonDoc;
 
   if (!jdocItem._bodyOwnedByJM)
   {

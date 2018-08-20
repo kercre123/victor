@@ -89,7 +89,8 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
   _jdocsManager = &robot->GetComponent<JdocsManager>();
 
   // Call the JdocsManager to see if our robot stats jdoc file exists
-  if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_LIFETIME_STATS)) {
+  if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_LIFETIME_STATS))
+  {
     LOG_INFO("RobotStatsTracker.InitDependent.NoStatsJdocsFile",
              "Stats jdocs file not found; creating it now");
     _jdocsManager->ClearJdocBody(external_interface::JdocType::ROBOT_LIFETIME_STATS);
@@ -163,19 +164,23 @@ void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
   
-  // update jdoc if there were change(s) this tick
-  if( _dirtyJdoc ) {
+  // Update jdoc if there were change(s) this tick
+  if (_dirtyJdoc)
+  {
     static const bool kSaveToDiskImmediately = false;
     UpdateStatsJdoc(kSaveToDiskImmediately);
     _dirtyJdoc = false;
   }
 }
 
-bool RobotStatsTracker::UpdateStatsJdoc(const bool saveToDiskImmediately)
+bool RobotStatsTracker::UpdateStatsJdoc(const bool saveToDiskImmediately,
+                                        const bool saveToCloudImmediately)
 {
   static const Json::Value* jdocBodyPtr = nullptr;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_LIFETIME_STATS,
-                                                 jdocBodyPtr, saveToDiskImmediately);
+                                                 jdocBodyPtr,
+                                                 saveToDiskImmediately,
+                                                 saveToCloudImmediately);
   return success;
 }
 
@@ -184,7 +189,8 @@ void RobotStatsTracker::ResetAllStats()
   PRINT_NAMED_WARNING("RobotStatsTracker.ResetAllStats", "Resetting and wiping all stats");
   _jdocsManager->ClearJdocBody(external_interface::JdocType::ROBOT_LIFETIME_STATS);
   static const bool kSaveToDiskImmediately = true;
-  UpdateStatsJdoc(kSaveToDiskImmediately);
+  static const bool kSaveToCloudImmediately = true;
+  UpdateStatsJdoc(kSaveToDiskImmediately, kSaveToCloudImmediately);
 }
 
 }

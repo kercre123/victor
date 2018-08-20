@@ -63,7 +63,8 @@ public:
                                     external_interface::Jdoc& jdocOut) const;
   bool                   UpdateJdoc(const external_interface::JdocType jdocTypeKey,
                                     const Json::Value* jdocBody,
-                                    const bool saveToDiskImmediately);
+                                    const bool saveToDiskImmediately,
+                                    const bool saveToCloudImmediately);
   bool                ClearJdocBody(const external_interface::JdocType jdocTypeKey);
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
@@ -82,6 +83,7 @@ private:
   void HandleReadResponse(const JDocs::ReadRequest& readRequest, const JDocs::ReadResponse& readResponse);
   void HandleDeleteResponse(const JDocs::DeleteRequest& deleteRequest, const Void& voidResponse);
   void HandleErrResponse(const JDocs::ErrorResponse& errorResponse);
+  void HandleUserResponse(const JDocs::UserResponse& userResponse);
   void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isNewJdocInCloud,
                          const std::string& userID, const std::string& thing);
   bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc,
@@ -93,12 +95,13 @@ private:
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath;
   LocalUdpClient            _udpClient;
+  std::string               _userID;
 
   struct JdocInfo
   {
     // Start of jdoc contents
-    uint64_t                  _jdocVersion;       // Major version of jdoc; ONLY THE CLOUD server can change this
-    uint64_t                  _jdocFormatVersion; // Format version of jdoc
+    uint64_t                  _jdocVersion;       // Major version of jdoc; ONLY the cloud server can change this
+    uint64_t                  _jdocFormatVersion; // Format version of jdoc; cloud server CANNOT change this
     std::string               _jdocClientMetadata; // (I think this may contain minor version at some point)
     Json::Value               _jdocBody;          // Body of jdoc in the form of JSON object
     // End of jdoc contents

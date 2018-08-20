@@ -63,8 +63,10 @@ public:
   std::string GetRobotSettingAsString(const RobotSetting key) const;
   bool        GetRobotSettingAsBool  (const RobotSetting key) const;
   uint32_t    GetRobotSettingAsUInt  (const RobotSetting key) const;
+  
+  bool DoesSettingUpdateCloudImmediately(const RobotSetting key) const;
 
-  bool UpdateSettingsJdoc();
+  bool UpdateSettingsJdoc(const bool saveToCloudImmediately);
 
   //////
   // Some user settings need to be triggered from behaviors; these function help in dealing with latent setting change
@@ -86,7 +88,7 @@ public:
   // ** note: if you claim a pending event, it is up to you to clear it when you're done!
   void ClearPendingSettingsUpdate();
   //////
-  
+
 private:
 
   void ApplyAllCurrentSettings();
