@@ -163,6 +163,7 @@ BehaviorOnboarding::BehaviorOnboarding(const Json::Value& config)
     AppToEngineTag::kOnboardingContinue,
     AppToEngineTag::kOnboardingSkip,
     AppToEngineTag::kOnboardingSkipOnboarding,
+    AppToEngineTag::kOnboardingGetStep,
   });
 }
 
@@ -568,6 +569,13 @@ void BehaviorOnboarding::AlwaysHandleInScope(const AppToEngineEvent& event)
     RequestSkip();
   } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingSkipOnboarding ) {
     RequestSkipRobotOnboarding();
+  } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kOnboardingGetStep ) {
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      external_interface::OnboardingSteps stepEnum{ static_cast<external_interface::OnboardingSteps>(_dVars.lastExpectedStep) };
+      auto* onboardingStepResponse = new external_interface::OnboardingStepResponse{ stepEnum };
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingStepResponse) );
+    }
   }
 }
 

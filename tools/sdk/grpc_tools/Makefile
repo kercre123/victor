@@ -205,6 +205,8 @@ test_ping_pong: .require_ip
 test_onboarding: .require_ip
 	$(curl_command)/v1/get_onboarding_state -d '{}'
 	@echo
+	$(curl_command)/v1/send_onboarding_input -d '{"onboarding_get_step":{}}'
+	@echo
 	$(curl_command)/v1/send_onboarding_input -d '{"onboarding_continue":{}}'
 	@echo
 

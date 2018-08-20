@@ -467,12 +467,19 @@ message OnboardingSkipOnboarding {
 message OnboardingRestart {
 }
 
+message OnboardingGetStep {
+}
+
+message OnboardingStepResponse {
+  OnboardingSteps step_number = 1;
+}
+
 message OnboardingInputRequest {
   oneof oneof_message_type {
     OnboardingContinue onboarding_continue = 1;
     OnboardingSkip onboarding_skip = 2;
     OnboardingRetryCharging onboarding_retry_charging = 3;
-    // 4 is available
+    OnboardingGetStep onboarding_get_step = 4;
     OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
     OnboardingRestart onboarding_restart = 6;
   }
@@ -481,7 +488,8 @@ message OnboardingInputRequest {
 message OnboardingInputResponse {
   ResponseStatus status = 1;
   oneof oneof_message_type {
-    OnboardingContinueResponse onboarding_continue_response = 2;
+    OnboardingContinueResponse   onboarding_continue_response    = 2;
+    OnboardingStepResponse       onboarding_step_response        = 3;
   }
 }
 

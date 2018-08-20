@@ -448,6 +448,26 @@ func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*exti
 	}, nil
 }
 
+func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingStepResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	getStepResponse := <-responseChan
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingStepResponse{
+			OnboardingStepResponse: getStepResponse.GetOnboardingStepResponse(),
+		},
+	}, nil
+}
+
 func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
 	log.Println("Received rpc request OnboardingSkip(", in, ")")
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
@@ -1096,6 +1116,10 @@ func (m *rpcService) SendOnboardingInput(ctx context.Context, in *extint.Onboard
 	case *extint.OnboardingInputRequest_OnboardingRestart:
 		return SendOnboardingRestart(&extint.GatewayWrapper_OnboardingRestart{
 			OnboardingRestart: in.GetOnboardingRestart(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingGetStep:
+		return SendOnboardingGetStep(&extint.GatewayWrapper_OnboardingGetStep{
+			OnboardingGetStep: in.GetOnboardingGetStep(),
 		})
 	default:
 		return nil, grpc.Errorf(codes.InvalidArgument, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)
