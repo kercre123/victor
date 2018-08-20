@@ -148,6 +148,9 @@ fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
+# link custom client-side git hooks
+${TOPLEVEL}/tools/hooks/install-git-hooks.sh
+
 #
 # Validate configuration
 #
