@@ -394,28 +394,10 @@ void BehaviorOnboarding::BehaviorUpdate()
   int requestedStep = external_interface::STEP_INVALID;
   
   IBehavior* stageBehavior = nullptr;
+  
+  const auto lastInterruption = _dVars.lastInterruption;
   if( !CheckAndDelegateInterruptions() ) {
     // no interruptions want to run or are running
-    
-    // if OnboardingPlacedOnCharger or OnboardingPickedUp ended, message the app
-    if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      // only send if not low battery, since UpdateLowBattery handles that case
-      if( !_dVars.batteryInfo.lowBattery && (gi != nullptr) ) {
-        auto* onboardingOnCharger = new external_interface::OnboardingOnCharger{ false, false, -1.0f };
-        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "No longer placed on charger");
-        gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
-      }
-    } else if( kBehaviorsThatPauseFlow.find(_dVars.lastInterruption) != kBehaviorsThatPauseFlow.end() ) {
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      if( gi != nullptr ) {
-        auto* msg = new external_interface::OnboardingPhysicalInterruption{ external_interface::ONBOARDING_INTERRUPTION_NONE };
-        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Put back down, resuming");
-        gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
-      }
-    }
-    const auto lastInterruption = _dVars.lastInterruption;
-    _dVars.lastInterruption = BEHAVIOR_ID(Anonymous);
     
     // ideally we'd guard access to the delegation component here, but it now has to be done within the
     // for loop bc of an edge case where OnboardingLookAtPhone needs to switch actions when receiving a Continue
@@ -750,6 +732,10 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
     }
   }
   
+  // no interruption is runnign or wants to activate
+  NotifyOfInterruptionChange( BEHAVIOR_ID(Anonymous) );
+  _dVars.lastInterruption = BEHAVIOR_ID(Anonymous);
+  
   return false;
 }
 
@@ -777,10 +763,6 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
     }
   }
   
-  // currently some interruption behaviors can end and immediately want to activate, so check whether
-  // something has changed to prevent giving the app the same message multiple times
-  const bool interruptionChanged = (_dVars.lastInterruption != interruptionID);
-  
   // tell picked up and on charger whether or not the robot is "groggy" (whether it received a trigger word)
   if( interruptionID == BEHAVIOR_ID(OnboardingPickedUp) ) {
     _iConfig.pickedUpBehavior->SetPlayGroggyAnimations( !_dVars.robotHeardTrigger );
@@ -792,13 +774,51 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
     _dVars.robotHeardTrigger = true;
   }
   
+  NotifyOfInterruptionChange(interruptionID);
+  
   _dVars.lastInterruption = interruptionID;
   _dVars.lastBehavior = nullptr;
   _dVars.currentStageBehaviorFinished = false;
   DelegateIfInControl( interruption.get() );
   
   
-  // notify app of certain interruptions:
+  // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
+  // be activating if it was disabled by the behavior.
+  if( interruptionID != BEHAVIOR_ID(OnboardingTriggerWord) ) {
+    SmartDisableEngineResponseToTriggerWord();
+  }
+}
+  
+void BehaviorOnboarding::NotifyOfInterruptionChange( BehaviorID interruptionID )
+{
+  // currently some interruption behaviors can end and immediately want to activate, so check whether
+  // something has changed to prevent giving the app the same message multiple times
+  const bool interruptionChanged = (_dVars.lastInterruption != interruptionID);
+  
+  if( interruptionChanged ) {
+    // _dVars.lastInterruption is ending
+    
+    // if OnboardingPlacedOnCharger or OnboardingPickedUp ended, message the app
+    if( _dVars.lastInterruption == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      // only send if not low battery, since UpdateLowBattery handles that case
+      if( !_dVars.batteryInfo.lowBattery && (gi != nullptr) ) {
+        auto* onboardingOnCharger = new external_interface::OnboardingOnCharger{ false, false, -1.0f };
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "No longer placed on charger");
+        gi->Broadcast( ExternalMessageRouter::Wrap(onboardingOnCharger) );
+      }
+    } else if( kBehaviorsThatPauseFlow.find(_dVars.lastInterruption) != kBehaviorsThatPauseFlow.end() ) {
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        auto* msg = new external_interface::OnboardingPhysicalInterruption{ external_interface::ONBOARDING_INTERRUPTION_NONE };
+        PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.Interrupt.OnboardingStatus", "Put back down, resuming");
+        gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
+      }
+    }
+  }
+  
+  
+  // notify app of certain new interruptions:
   // SingletonPoweringRobotOff   : send OnboardingPhysicalInterruption. todo: power off messages
   // OnboardingPhysicalReactions : OnboardingPhysicalInterruption
   // OnboardingLowBattery        : start charging countdown logic
@@ -851,12 +871,6 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
       auto* msg = new external_interface::OnboardingHabitatDetected;
       gi->Broadcast( ExternalMessageRouter::Wrap(msg) );
     }
-  }
-  
-  // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
-  // be activating if it was disabled by the behavior.
-  if( interruptionID != BEHAVIOR_ID(OnboardingTriggerWord) ) {
-    SmartDisableEngineResponseToTriggerWord();
   }
 }
   

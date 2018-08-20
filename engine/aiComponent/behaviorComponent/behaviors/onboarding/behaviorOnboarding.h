@@ -113,6 +113,9 @@ private:
   // messages the app for some interruptions so they can dim the screen or show a modal, etc.
   void Interrupt( ICozmoBehaviorPtr interruption, BehaviorID interruptionID );
   
+  // Send app relevant messages for interruptions starting, ending, or changing
+  void NotifyOfInterruptionChange( BehaviorID interruptionID );
+  
   // App or devtool queues an event for continue/skip
   void RequestContinue( int step );
   void RequestSkip();
