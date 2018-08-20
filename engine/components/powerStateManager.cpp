@@ -24,6 +24,9 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
+#include "coretech/common/engine/utils/timer.h"
+#include "webServerProcess/src/webService.h"
+
 #include "clad/types/lcdTypes.h"
 
 namespace Anki {
@@ -48,6 +51,9 @@ static constexpr const DesiredCPUFrequency kCPUFreqNormal = DesiredCPUFrequency:
 
 static constexpr const float kMicBufferLowMark = 0.1f;
 static constexpr const float kMicBufferHighMark = 0.6f;
+  
+const std::string kWebVizPowerModule = "power";
+const f32 kSendWebVizDataPeriod_sec = 0.5f;
 
 }
 
@@ -60,6 +66,23 @@ PowerStateManager::PowerStateManager()
 void PowerStateManager::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
 {
   _context = dependentComps.GetComponent<ContextWrapper>().context;
+
+  // webviz controls for externally setting power save
+  if (ANKI_DEV_CHEATS) {
+    if (_context != nullptr) {
+      auto* webService = _context->GetWebService();
+      if (webService != nullptr) {
+        auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+          if( data["enablePowerSave"].asString().compare("true")==0 ) {
+            RequestPowerSaveMode("WebViz");
+          } else {
+            RemovePowerSaveModeRequest("WebViz");
+          }
+        };
+        _signalHandles.emplace_back(webService->OnWebVizData(kWebVizPowerModule).ScopedSubscribe(onData));
+      }
+    }
+  }
 }
 
 void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
@@ -103,6 +126,31 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
                      micBufferLevel);
       OSState::getInstance()->SetDesiredCPUFrequency(kCPUFreqSaveLow);
       _cpuThrottleLow = true;
+    }
+  }
+  
+  
+  // Send info to web viz occasionally
+  if (ANKI_DEV_CHEATS) {
+    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (now_sec > _nextSendWebVizDataTime_sec) {
+      if (_context != nullptr) {
+        auto* webService = _context->GetWebService();
+        if (webService!= nullptr && webService->IsWebVizClientSubscribed(kWebVizPowerModule)) {
+          Json::Value toSend;
+          toSend["powerSaveEnabled"] = InPowerSaveMode() ? "true" : "false";
+          
+          std::stringstream ss;
+          ss << "[";
+          for(auto& requester : _powerSaveRequests) {
+            ss << requester << ", ";
+          }
+          ss << "]";
+          toSend["powerSaveRequesters"] = ss.str();
+          webService->SendToWebViz(kWebVizPowerModule, toSend);
+        }
+      }
+      _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
     }
   }
 }

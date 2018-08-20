@@ -19,6 +19,8 @@
 #include "util/helpers/noncopyable.h"
 #include "engine/contextWrapper.h"
 
+#include "util/signals/simpleSignal_fwd.h"
+
 #include <set>
 
 namespace Anki {
@@ -81,6 +83,8 @@ public:
   using UnreliableComponent<BCComponentID>::AdditionalUpdateAccessibleComponents;
 
 private:
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
 
   std::multiset<std::string> _powerSaveRequests;
   bool _inPowerSaveMode = false;
@@ -103,6 +107,8 @@ private:
   CameraState _cameraState = CameraState::Running;
 
   bool _cpuThrottleLow = true;
+  
+  float _nextSendWebVizDataTime_sec = 0.0f;
 };
 
 }
