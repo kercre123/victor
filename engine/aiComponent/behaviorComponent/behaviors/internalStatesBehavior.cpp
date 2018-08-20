@@ -181,14 +181,14 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   // Parse the state config again to create the actual states
   for( const auto& stateConfig : config[kStateConfgKey] ) {
     State state(stateConfig);
-    PRINT_CH_DEBUG("Behaviors", "HighLevelAI.LoadStateFromConfig",
+    PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.LoadStateFromConfig",
                    "%s",
                    state._name.c_str());
     AddState(std::move(state));
   }
 
   DEV_ASSERT( _states->size() == _stateNameToID.size(),
-              "HighLevelAI.StateConfig.InternalError.NotAllStatesDefined");
+              "InternalStatesBehavior.StateConfig.InternalError.NotAllStatesDefined");
 
   ////////////////////////////////////////////////////////////////////////////////
   // Define transitions from json
@@ -246,20 +246,20 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   }
 
   if( allFromStates.size() != _states->size() ) {
-    PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.DeadEndStates",
+    PRINT_NAMED_WARNING("InternalStatesBehavior.TransitionDefinitions.DeadEndStates",
                         "Some states don't have any outgoing transition strategies! %zu from states, but %zu states",
                         allFromStates.size(),
                         _states->size());
   }
 
   if( (allToStates.size() != _states->size()) && !_ignoreMissingTransitions ) {
-    PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.UnusedStates",
+    PRINT_NAMED_WARNING("InternalStatesBehavior.TransitionDefinitions.UnusedStates",
                         "Some states don't have any incoming transition strategies! %zu to states, but %zu states",
                         allToStates.size(),
                         _states->size());
   }
 
-  PRINT_CH_INFO("Behaviors", "HighLevelAI.StatesCreated",
+  PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.StatesCreated",
                 "Created %zu states",
                 _states->size());
 
@@ -354,7 +354,7 @@ void InternalStatesBehavior::InitBehavior()
     strategy->Init(GetBEI());
   }
 
-  PRINT_CH_INFO("Behaviors", "HighLevelAI.Init",
+  PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.Init",
                 "initialized %zu states",
                 _states->size());
 }
@@ -601,11 +601,11 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   }
   else {
     DEV_ASSERT( !IsControlDelegated() || targetState == InvalidStateID,
-                "HighLevelAI.TransitionToState.WasInCountButHadDelegate" );
+                "InternalStatesBehavior.TransitionToState.WasInCountButHadDelegate" );
   }
           
   // TODO:(bn) channel for high level ai?
-  PRINT_CH_INFO("Unfiltered", "HighLevelAI.TransitionToState",
+  PRINT_CH_INFO("Unfiltered", "InternalStatesBehavior.TransitionToState",
                 "Transition from state '%s' -> '%s'",
                 _currState  != InvalidStateID ? _states->at(_currState )._name.c_str() : "<NONE>",
                 targetState != InvalidStateID ? _states->at(targetState)._name.c_str() : "<NONE>");
@@ -779,7 +779,7 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
   }
   else {
     _behavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _behaviorName ) );
-    DEV_ASSERT_MSG(_behavior != nullptr, "HighLevelAI.State.NoBehavior",
+    DEV_ASSERT_MSG(_behavior != nullptr, "InternalStatesBehavior.State.NoBehavior",
                    "State '%s' cannot find behavior '%s'",
                    _name.c_str(),
                    _behaviorName.c_str());
@@ -787,7 +787,7 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
   
   if( !_getInBehaviorName.empty() ) {
     _getInBehavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _getInBehaviorName ) );
-    DEV_ASSERT_MSG(_getInBehavior != nullptr, "HighLevelAI.State.NoGetInBehavior",
+    DEV_ASSERT_MSG(_getInBehavior != nullptr, "InternalStatesBehavior.State.NoGetInBehavior",
                    "State '%s' cannot find getInBehavior '%s'",
                    _name.c_str(),
                    _getInBehaviorName.c_str());
@@ -998,13 +998,13 @@ InternalStatesBehavior::StateID InternalStatesBehavior::ParseStateFromJson(const
                                                                            const std::string& key)
 {
   if( ANKI_VERIFY( config[key].isString(),
-                   "HighLevelAI.ParseStateFromJson.InvalidJson",
+                   "InternalStatesBehavior.ParseStateFromJson.InvalidJson",
                    "key '%s' not present in json",
                    key.c_str() ) ) {
     return GetStateID( config[key].asString() );
   }
   else {
-    JsonTools::PrintJsonError(config, "HighLevelAI.ParseStateFromJson.InvalidJson", 2);
+    JsonTools::PrintJsonError(config, "InternalStatesBehavior.ParseStateFromJson.InvalidJson", 2);
   }
   return InvalidStateID;
 }
