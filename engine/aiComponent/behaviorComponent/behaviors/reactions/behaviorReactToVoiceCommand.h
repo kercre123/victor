@@ -140,6 +140,8 @@ private:
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
     
+    bool pushResponse;
+    
     AnimationTrigger animListeningGetIn;
 
     bool backpackLights;

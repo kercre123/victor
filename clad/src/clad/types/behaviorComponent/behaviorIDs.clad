@@ -304,6 +304,7 @@ enum uint_16 BehaviorID {
   OnboardingPopAWheelieDispatcher,
   OnboardingPopAWheelieRecovery,
   OnboardingSluggishDriveOffCharger,
+  OnboardingTriggerWord,
   OnboardingWaitForComeHere,
   OnboardingWaitForTriggerWord,
   OnboardingWakeUp,

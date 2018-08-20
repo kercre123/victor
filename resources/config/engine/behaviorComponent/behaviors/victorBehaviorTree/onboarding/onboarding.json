@@ -13,7 +13,7 @@
     "DriveOffChargerStraight",    // is suppressed during first stage and only runs after continue messages
     "OnboardingPlacedOnCharger",  // is suppressed during first stage
     "OnboardingFirstTriggerWord", // only runs once, or never if booting after the first stage
-    "TriggerWordDetected"         // may sometimes be suppressed
+    "OnboardingTriggerWord"       // may sometimes be suppressed
   ],
 
   // for stages after the initial wakeup stage

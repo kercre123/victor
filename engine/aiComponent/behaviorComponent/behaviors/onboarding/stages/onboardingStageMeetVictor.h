@@ -266,7 +266,7 @@ private:
       BEHAVIOR_ID(DriveOffChargerStraight),
       BEHAVIOR_ID(OnboardingPlacedOnCharger),
       //BEHAVIOR_ID(OnboardingFirstTriggerWord)
-      //BEHAVIOR_ID(TriggerWordDetected),
+      //BEHAVIOR_ID(OnboardingTriggerWord),
     };
     
     if( (interruptionsThatReset.find(interruptingBehavior) != interruptionsThatReset.end()) && !_enrollmentSuccessful ) {

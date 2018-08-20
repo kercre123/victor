@@ -78,7 +78,8 @@ namespace {
   const char* kAnimListeningGetIn                  = "animListeningGetIn";
   const char* kExitAfterGetInKey                   = "exitAfterGetIn";
   const char* kExitAfterListeningIfNotStreamingKey = "exitAfterListeningIfNotStreaming";
-
+  const char* kPushResponseKey                     = "pushResponse";
+  
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
   // the behavior will always "listen" for at least this long once it hears the wakeword, even if we receive
@@ -169,6 +170,8 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 
   JsonTools::GetValueOptional( config, kExitAfterListeningIfNotStreamingKey, _iVars.exitAfterListeningIfNotStreaming );
   
+  _iVars.pushResponse = config.get(kPushResponseKey, true).asBool();
+  
   if( !config[kNotifyOnErrors].isNull() )
   {
     int numErrorsToTriggerAnim;
@@ -200,6 +203,7 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kAnimListeningGetIn,
     kExitAfterGetInKey,
     kExitAfterListeningIfNotStreamingKey,
+    kPushResponseKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -292,9 +296,12 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
 {
-  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
-  auto postAudioEvent = AECH::CreatePostAudioEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
-  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), _iVars.animListeningGetIn, postAudioEvent, true );
+  // don't push a custom response if disabled via config, in case, e.g., a parent wants control of the response
+  if( _iVars.pushResponse ) {
+    namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+    auto postAudioEvent = AECH::CreatePostAudioEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
+    GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), _iVars.animListeningGetIn, postAudioEvent, true );
+  }
 }
 
 
@@ -368,8 +375,10 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope() 
-{ 
-  GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
+{
+  if( _iVars.pushResponse ) {
+    GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

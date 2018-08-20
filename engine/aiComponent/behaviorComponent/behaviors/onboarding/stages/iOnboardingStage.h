@@ -62,7 +62,7 @@ public:
   // The most recent behavior retrieved from GetBehavior finished
   virtual void OnBehaviorDeactivated( BehaviorExternalInterface& bei ) = 0;
   
-  // called when this stage is interrupted, passing the interrupting behavior (e.g., TriggerWordDetected).
+  // called when this stage is interrupted, passing the interrupting behavior (e.g., OnboardingTriggerWord).
   // Return true if the stage should be considered complete despite the interruption. If true, it will
   // move to the next stage without resuming when the interruption is complete, and if false, it resume.
   virtual bool OnInterrupted( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) { return false; }

@@ -430,7 +430,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     {
       RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
 
-      const bool willStream = HasStreamingJob();
+      ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+      const bool willStream = HasStreamingJob() && showStreamState->ShouldStreamAfterTriggerWordResponse();
       for(auto func : _triggerWordDetectedCallbacks)
       {
         if(func != nullptr)

@@ -87,6 +87,8 @@ BehaviorOnboarding::DynamicVariables::DynamicVariables()
   lastInterruption = BEHAVIOR_ID(Anonymous);
   lastExpectedStep = external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP;
   
+  wakeWordState = WakeWordState::NotSet;
+  
   currentStageBehaviorFinished = false;
   
   devConsoleStagePending = false;
@@ -322,8 +324,10 @@ void BehaviorOnboarding::OnBehaviorActivated()
   _dVars.robotHeardTrigger = (_dVars.currentStage != OnboardingStages::NotStarted);
   _dVars.timeOfLastStageChange = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
-  // default to no trigger word allowed
-  SmartDisableEngineResponseToTriggerWord();
+  
+  SetWakeWordState( WakeWordState::TriggerDisabled );
+  
+  
   PRINT_CH_INFO("Behaviors",
                 "BehaviorOnboarding.OnBehaviorActivated.OnboardingStatus",
                 "Starting onboarding in %s",
@@ -470,21 +474,15 @@ void BehaviorOnboarding::BehaviorUpdate()
       // check stage for options about the trigger word and intents
       UserIntentTag allowedIntentTag = USER_INTENT(INVALID);
       const bool triggerAllowed = GetCurrentStage()->GetWakeWordBehavior( allowedIntentTag );
-      if(triggerAllowed){
-        SmartEnableEngineResponseToTriggerWord();
-      }else{
-        SmartDisableEngineResponseToTriggerWord();
-      }
-
       if( triggerAllowed && (allowedIntentTag == USER_INTENT(unmatched_intent)) ) {
-        namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
-        auto postAudioEvent = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On, 
-                                                          AudioMetaData::GameObjectType::Behavior, 0 );
-        GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), AnimationTrigger::VC_ListeningGetIn, postAudioEvent, true );
+        // this is sloppy, but the only time unmatched_intent is the whitelisted intent is when the special response is used
+        SetWakeWordState( WakeWordState::SpecialTriggerEnabledCloudDisabled );
+      } else if( triggerAllowed ) {
+        SetWakeWordState( WakeWordState::TriggerEnabled );
       } else {
-        SmartPopResponseToTriggerWord();
-        SetAllowedIntent( allowedIntentTag );
+        SetWakeWordState( WakeWordState::TriggerDisabled );
       }
+      SetAllowedIntent( allowedIntentTag );
       
       _dVars.state = BehaviorState::StageRunning;
       
@@ -704,7 +702,7 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
     }
   }
   // start with trigger word disabled and no whitelist
-  SmartDisableEngineResponseToTriggerWord();
+  SetWakeWordState( WakeWordState::TriggerDisabled );
   SetAllowAnyIntent();
   
   // drop all IOnboardingStage objects prior to this one so their destructors run
@@ -789,7 +787,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   } else if( interruptionID == BEHAVIOR_ID(OnboardingPlacedOnCharger) ) {
     _iConfig.onChargerBehavior->SetPlayGroggyAnimations( !_dVars.robotHeardTrigger );
   } else if( (interruptionID == BEHAVIOR_ID(OnboardingFirstTriggerWord))
-             || (interruptionID == BEHAVIOR_ID(TriggerWordDetected)) )
+             || (interruptionID == BEHAVIOR_ID(OnboardingTriggerWord)) )
   {
     _dVars.robotHeardTrigger = true;
   }
@@ -809,7 +807,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   // DriveOffChargerStraight     : no message
   // OnboardingPickedUp          : send OnboardingPhysicalInterruption
   // OnboardingFirstTriggerWord  : will send normal messages (WakeWordBegin/End)
-  // TriggerWordDetected         : will send normal messages (WakeWordBegin/End)
+  // OnboardingTriggerWord       : will send normal messages (WakeWordBegin/End)
   if( interruptionID == BEHAVIOR_ID(DriveOffChargerStraight) ) {
     // generic resuming state
     SetRobotExpectingStep( external_interface::STEP_RESUMING );
@@ -857,7 +855,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   
   // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
   // be activating if it was disabled by the behavior.
-  if( interruptionID != BEHAVIOR_ID(TriggerWordDetected) ) {
+  if( interruptionID != BEHAVIOR_ID(OnboardingTriggerWord) ) {
     SmartDisableEngineResponseToTriggerWord();
   }
 }
@@ -1252,6 +1250,45 @@ void BehaviorOnboarding::SendStageToApp( const OnboardingStages& stage ) const
     auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
     gi->Broadcast( ExternalMessageRouter::Wrap(onboardingState) );
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
+{
+  
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  
+  if( wakeWordState != _dVars.wakeWordState ) {
+    if( _dVars.wakeWordState != WakeWordState::NotSet ) {
+      SmartPopResponseToTriggerWord();
+    }
+    _dVars.wakeWordState = wakeWordState;
+    
+    if( wakeWordState == WakeWordState::TriggerDisabled ) {
+      
+      // no trigger word allowed
+      SmartDisableEngineResponseToTriggerWord();
+      SmartPushResponseToTriggerWord();
+      
+    } else if( wakeWordState == WakeWordState::SpecialTriggerEnabledCloudDisabled ) {
+      
+      SmartEnableEngineResponseToTriggerWord();
+      const auto postAudioEvent
+        = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
+                                      AudioMetaData::GameObjectType::Behavior, 0 );
+      SmartPushResponseToTriggerWord(AnimationTrigger::OnboardingWakeWordGetIn, postAudioEvent, false );
+      
+    } else if( wakeWordState == WakeWordState::TriggerEnabled ) {
+      
+      SmartEnableEngineResponseToTriggerWord();
+      const auto postAudioEvent
+        = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
+                                      AudioMetaData::GameObjectType::Behavior, 0 );
+      SmartPushResponseToTriggerWord(AnimationTrigger::VC_ListeningGetIn, postAudioEvent, true );
+      
+    }
+  }
+  
 }
 
 }

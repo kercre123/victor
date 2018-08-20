@@ -67,6 +67,30 @@ protected:
   virtual void AlwaysHandleInScope(const AppToEngineEvent& event) override;
 
 private:
+  
+  // before dealing with any stages, make sure the eyes animation wakes up based on the current stage.
+  // the initial wake up stage handles its own wake up animations
+  enum class WakeUpState : uint8_t {
+    Asleep=0,
+    WakingUp,
+    Complete,
+  };
+  
+  enum class BehaviorState : uint8_t {
+    StageNotStarted=0,
+    StageRunning,
+    Interrupted,
+    InterruptedButComplete, // stage is done, but don't progress until the interruption finishes
+    WaitingForTermination,
+  };
+  
+  enum class WakeWordState : uint8_t {
+    NotSet=0,
+    TriggerDisabled,
+    SpecialTriggerEnabledCloudDisabled,
+    TriggerEnabled
+  };
+  
   using StagePtr = std::shared_ptr<IOnboardingStage>;
   
   // returns the current stage logic class, even if it is interrupted
@@ -105,6 +129,8 @@ private:
   
   void SetRobotExpectingStep( int step );
   
+  void SetWakeWordState( WakeWordState wakeWordState );
+  
   bool CanInterruptionActivate( BehaviorID interruptionID ) const;
   
   int GetPhysicalInterruptionMsgType( BehaviorID interruptionID ) const;
@@ -113,22 +139,6 @@ private:
   
   void SendStageToApp( const OnboardingStages& stage ) const;
 
-  // before dealing with any stages, make sure the eyes animation wakes up based on the current stage.
-  // the initial wake up stage handles its own wake up animations
-  enum class WakeUpState : uint8_t {
-    Asleep=0,
-    WakingUp,
-    Complete,
-  };
-  
-  enum class BehaviorState : uint8_t {
-    StageNotStarted=0,
-    StageRunning,
-    Interrupted,
-    InterruptedButComplete, // stage is done, but don't progress until the interruption finishes
-    WaitingForTermination,
-  };
-  
   // all events are queued so that their order is the same whether its an app event or dev tools event.
   // this holds the event data.
   struct PendingEvent {
@@ -203,6 +213,7 @@ private:
     int lastExpectedStep;
     BehaviorID lastInterruption;
     
+    WakeWordState wakeWordState;
     
     // pending requests from the app, devtools, or messages requested by the stage. While app and
     // engine messages are received in a known order, dev events are not, and so to make sure the dev

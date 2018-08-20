@@ -25,7 +25,7 @@
 
       "backpackLights"          : false,
       "exitAfterGetIn"          : true,
-      "animListeningGetIn"      : "OnboardingWakeWordGetIn"
+      "pushResponse"            : false
     }
   ]
 
