@@ -115,6 +115,8 @@ public:
     { _streamUpdatedCallbacks.push_back(callback); }
 
   bool HasConnectionToCloud() const;
+
+  void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
   
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
@@ -124,7 +126,9 @@ private:
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
   mutable std::recursive_mutex _dataRecordJobMutex;
+  BaseStationTime_t _streamBeginTime_ns = 0;
   bool _currentlyStreaming = false;
+  bool _streamingComplete = false;
 #if ANKI_DEV_CHEATS
   bool _fakeStreamingState = false;
 #endif
@@ -155,6 +159,12 @@ private:
 
   std::vector<std::function<void(bool)>> _triggerWordDetectedCallbacks;
   std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
+
+  bool _batteryLow = false;
+
+  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
+  // sending any data to the cloud; this lasts for a set duration
+  bool ShouldSimulateStreaming() const { return _batteryLow; };
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();

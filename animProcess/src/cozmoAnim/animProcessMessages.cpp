@@ -505,6 +505,7 @@ void Process_setLocale(const RobotInterface::SetLocale& msg)
 void Process_batteryStatus(const RobotInterface::BatteryStatus& msg)
 {
   _animEngine->GetBackpackLightComponent().UpdateBatteryStatus(msg);
+  _context->GetMicDataSystem()->SetBatteryLowStatus(msg.isLow);
 }
 
 void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnimation& msg)

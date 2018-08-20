@@ -355,7 +355,12 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       if (_udpServer->HasClient())
       {
         _currentlyStreaming = true;
+        _streamingComplete = ShouldSimulateStreaming();
         _streamingAudioIndex = 0;
+
+        // even though this isn't necessarily the exact frame the backpack lights begin (since that's done in a different
+        // thread), it doesn't make a noticeable difference since this is an arbitrary number and doesn't need to be precise
+        _streamBeginTime_ns = currTime_nanosec;
 
         // Send out the message announcing the trigger word has been detected
         auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString()};
@@ -375,38 +380,55 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     if (_currentlyStreaming)
     {
       // Are we done with what we want to stream?
-      static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
-      const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
-      if (receivedStopMessage || didTimeout)
+      if (!_streamingComplete)
       {
-        ClearCurrentStreamingJob();
-        if (didTimeout)
+        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
+        const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
+        if (receivedStopMessage || didTimeout)
         {
-          SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
-        }
-        PRINT_NAMED_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
-        #if ANKI_DEV_CHEATS
-          _fakeStreamingState = false;
-        #endif
-      }
-      else
-      {
-      #if ANKI_DEV_CHEATS
-        if (!_fakeStreamingState)
-      #endif
-        {
-          // Copy any new data that has been pushed onto the currently streaming job
-          AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(_streamingAudioIndex);
-          _streamingAudioIndex += newAudio.size();
-
-          // Send the audio to any clients we've got
-          if (_udpServer->HasClient())
+          _streamingComplete = true;
+          if (didTimeout)
           {
-            for(const auto& audioChunk : newAudio)
+            SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
+          }
+          PRINT_NAMED_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
+          #if ANKI_DEV_CHEATS
+            _fakeStreamingState = false;
+          #endif
+        }
+        else
+        {
+        #if ANKI_DEV_CHEATS
+          if (!_fakeStreamingState)
+        #endif
+          {
+            // Copy any new data that has been pushed onto the currently streaming job
+            AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(_streamingAudioIndex);
+            _streamingAudioIndex += newAudio.size();
+
+            // Send the audio to any clients we've got
+            if (_udpServer->HasClient())
             {
-              SendUdpMessage(CloudMic::Message::Createaudio(CloudMic::AudioData{audioChunk}));
+              for(const auto& audioChunk : newAudio)
+              {
+                SendUdpMessage(CloudMic::Message::Createaudio(CloudMic::AudioData{audioChunk}));
+              }
             }
           }
+        }
+      }
+
+      // we want to extend the streaming state so that it at least appears to be streaming for a minimum duration
+      // here we hold onto the streaming job until we've reached that minimum duration
+      // note: the streaming job will not actually be recording, we're simply holding it so we don't start a new job
+      if (_streamingComplete)
+      {
+        // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
+        constexpr BaseStationTime_t minStreamDuration_ns = kStreamingMinDuration_ms * 1000 * 1000;
+        const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
+        if (currTime_nanosec >= minStreamEnd_ns)
+        {
+          ClearCurrentStreamingJob();
         }
       }
     }
