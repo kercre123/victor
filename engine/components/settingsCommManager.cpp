@@ -401,7 +401,8 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   // The request can handle multiple settings changes, but we only update the jdoc once, for efficiency
   if (updateSettingsJdoc)
   {
-    _settingsManager->UpdateSettingsJdoc(saveToCloudImmediately);
+    const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
+    _settingsManager->UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
   }
 
   auto* response = new external_interface::UpdateSettingsResponse();

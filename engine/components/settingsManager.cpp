@@ -104,6 +104,18 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
     {
       _currentSettings.removeMember(key);
     }
+    // End temporary migration code
+
+    if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ROBOT_SETTINGS))
+    {
+      // TODO (this needs its own ticket):
+      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
+      //   and new format versions.  Also put it in a function, and call that ALSO in the
+      //   case of migration triggered when pulling a new version of jdoc from the cloud.
+      //   consider another callback, similar to the 'overwritten' callback, but for this
+      //   format migration.
+      // Not doing this now because we're not changing format versions yet.
+    }
   }
 
   // Ensure current settings has each of the defined settings;
@@ -140,8 +152,9 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
   if (settingsDirty)
   {
-    static bool const kSaveToCloudImmediately = false;
-    UpdateSettingsJdoc(kSaveToCloudImmediately);
+    static const bool kSaveToCloudImmediately = false;
+    static const bool kSetCloudDirtyIfNotImmediate = true;
+    UpdateSettingsJdoc(kSaveToCloudImmediately, kSetCloudDirtyIfNotImmediate);
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
@@ -149,6 +162,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _settingSetters[RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
   _settingSetters[RobotSetting::locale]        = { false, nullptr,                                       &SettingsManager::ApplySettingLocale       };
   _settingSetters[RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
+
+  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
+    ApplyAllCurrentSettings();
+  });
 
   // Finally, set a flag so we will apply all of the settings
   // we just loaded and/or set, in the first update
@@ -210,7 +227,8 @@ bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
   if (updateSettingsJdoc)
   {
     const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(robotSetting);
-    success = UpdateSettingsJdoc(saveToCloudImmediately);
+    const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
+    success = UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
   }
 
   return success;
@@ -270,13 +288,15 @@ bool SettingsManager::DoesSettingUpdateCloudImmediately(const RobotSetting key) 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::UpdateSettingsJdoc(const bool saveToCloudImmediately)
+bool SettingsManager::UpdateSettingsJdoc(const bool saveToCloudImmediately,
+                                         const bool setCloudDirtyIfNotImmediate)
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_SETTINGS,
                                                  &_currentSettings,
                                                  saveToDiskImmediately,
-                                                 saveToCloudImmediately);
+                                                 saveToCloudImmediately,
+                                                 setCloudDirtyIfNotImmediate);
   return success;
 }
 
@@ -284,11 +304,13 @@ bool SettingsManager::UpdateSettingsJdoc(const bool saveToCloudImmediately)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsManager::ApplyAllCurrentSettings()
 {
+  LOG_INFO("SettingsManager.ApplyAllCurrentSettings", "Applying all current robot settings");
   for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
   {
     ApplyRobotSetting(RobotSettingFromString(it.name()));
   }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool force)

@@ -66,7 +66,8 @@ public:
   
   bool DoesSettingUpdateCloudImmediately(const RobotSetting key) const;
 
-  bool UpdateSettingsJdoc(const bool saveToCloudImmediately);
+  bool UpdateSettingsJdoc(const bool saveToCloudImmediately,
+                          const bool setCloudDirtyIfNotImmediate);
 
   //////
   // Some user settings need to be triggered from behaviors; these function help in dealing with latent setting change

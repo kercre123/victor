@@ -4,36 +4,40 @@
     "ROBOT_SETTINGS" : {
       "docName" : "vic.RobotSettings",
       "savedOnDisk" : true,
-      "delayedDiskSavePeriod_s" : 0,
+      "diskSavePeriod_s" : 0,
       "warnOnCloudVersionLater" : true,
       "errorOnCloudVersionLater" : false,
+      "cloudSavePeriod_s" : 0,
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     },
     "ROBOT_LIFETIME_STATS" : {
       "docName" : "vic.RobotLifetimeStats",
       "savedOnDisk" : true,
-      "delayedDiskSavePeriod_s" : 60,
+      "diskSavePeriod_s" : 60,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : true,
+      "cloudSavePeriod_s" : 3600,
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : true
     },
     "ACCOUNT_SETTINGS" : {
       "docName" : "vic.AccountSettings",
       "savedOnDisk" : false,
-      "delayedDiskSavePeriod_s" : 0,
+      "diskSavePeriod_s" : 0,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : false,
+      "cloudSavePeriod_s" : 0,
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     },
     "USER_ENTITLEMENTS" : {
       "docName" : "vic.UserEntitlements",
       "savedOnDisk" : false,
-      "delayedDiskSavePeriod_s" : 0,
+      "diskSavePeriod_s" : 0,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : false,
+      "cloudSavePeriod_s" : 0,
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     }

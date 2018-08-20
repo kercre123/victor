@@ -55,6 +55,7 @@ public:
   //////
   
   bool            JdocNeedsCreation(const external_interface::JdocType jdocTypeKey) const;
+  bool           JdocNeedsMigration(const external_interface::JdocType jdocTypeKey) const;
   const std::string&    GetJdocName(const external_interface::JdocType jdocTypeKey) const;
   const uint64_t  GetJdocDocVersion(const external_interface::JdocType jdocTypeKey) const;
   const Json::Value&    GetJdocBody(const external_interface::JdocType jdocTypeKey) const;
@@ -64,11 +65,16 @@ public:
   bool                   UpdateJdoc(const external_interface::JdocType jdocTypeKey,
                                     const Json::Value* jdocBody,
                                     const bool saveToDiskImmediately,
-                                    const bool saveToCloudImmediately);
+                                    const bool saveToCloudImmediately,
+                                    const bool setCloudDirtyIfNotImmediate = true);
   bool                ClearJdocBody(const external_interface::JdocType jdocTypeKey);
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
   void GetUserAndThingIDs(std::string& userID, std::string& thingID) const;
+
+  using OverwriteNotificationCallback = std::function<void(void)>;
+  void RegisterOverwriteNotificationCallback(const external_interface::JdocType jdocTypeKey,
+                                             const OverwriteNotificationCallback cb);
 
 private:
 
@@ -78,16 +84,15 @@ private:
 
   bool ConnectToJdocsServer();
   bool SendUdpMessage(const JDocs::DocRequest& msg);
+  void UpdatePeriodicCloudSaves(const float currTime_s);
   void UpdateJdocsServerResponses();
   void HandleWriteResponse(const JDocs::WriteRequest& writeRequest, const JDocs::WriteResponse& writeResponse);
   void HandleReadResponse(const JDocs::ReadRequest& readRequest, const JDocs::ReadResponse& readResponse);
   void HandleDeleteResponse(const JDocs::DeleteRequest& deleteRequest, const Void& voidResponse);
   void HandleErrResponse(const JDocs::ErrorResponse& errorResponse);
   void HandleUserResponse(const JDocs::UserResponse& userResponse);
-  void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isNewJdocInCloud,
-                         const std::string& userID, const std::string& thing);
-  bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc,
-                         const bool saveToDiskImmediately);
+  void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isNewJdocInCloud);
+  bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc);
 
   external_interface::JdocType JdocTypeFromDocName(const std::string& docName) const;
 
@@ -96,6 +101,7 @@ private:
   std::string               _savePath;
   LocalUdpClient            _udpClient;
   std::string               _userID;
+  std::string               _thingID;
 
   struct JdocInfo
   {
@@ -108,6 +114,7 @@ private:
 
     std::string               _jdocName;          // Official name; used in cloud API
     bool                      _needsCreation;     // True if this jdoc needs to be created (by another subsystem)
+    bool                      _needsMigration;    // True if this jdoc needs a format version migration
 
     bool                      _savedOnDisk;       // True if we keep a copy on disk
     std::string               _jdocFullPath;      // Full path of file on disk if applicable
@@ -116,9 +123,14 @@ private:
     float                     _nextDiskSaveTime;  // Time of next disk save ("at this time or after")
 
     bool                      _bodyOwnedByJM;     // True when JdocsManager owns the jdoc body (otherwise it's a copy)
-    
+
     bool                      _warnOnCloudVersionLater;
     bool                      _errorOnCloudVersionLater;
+    bool                      _cloudDirty;        // True when cloud copy of the jdoc needs to be updated
+    int                       _cloudSavePeriod_s; // Cloud save period, or 0 for always save immediately
+    float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
+
+    OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
   };
 
   using Jdocs = std::map<external_interface::JdocType, JdocInfo>;
