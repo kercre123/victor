@@ -170,6 +170,11 @@ void RtsHandlerV3::SaveSessionKeys() {
     Log::Write("Tried to save session keys without valid keys.");
     return;
   }
+  
+  // if there is no owner yet, only allow one session to be saved
+  if(!_hasOwner) {
+    _rtsKeys.clients.clear();
+  }
 
   // we already have session keys for client with same public key,
   // so delete old keys
