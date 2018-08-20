@@ -19,7 +19,7 @@ import sys
 try:
     import cv2
 except ImportError as exc:
-    sys.exit("pip3 install opencv-python")
+    sys.exit("Cannot import opencv-python: Do `pip3 install opencv-python` to install")
 
 from . import util
 from .messaging import protocol
@@ -27,7 +27,7 @@ from .messaging import protocol
 try:
     import numpy as np
 except ImportError as exc:
-    sys.exit("pip3 install numpy")
+    sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
 
 
 class CameraComponent(util.Component):

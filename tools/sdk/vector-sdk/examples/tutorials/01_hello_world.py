@@ -25,6 +25,7 @@ import vector
 def main():
     args = vector.util.parse_test_args()
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+        print("Say 'Hello World'...")
         robot.say_text("Hello World")
 
 

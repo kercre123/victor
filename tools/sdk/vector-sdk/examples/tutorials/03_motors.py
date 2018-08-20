@@ -28,30 +28,43 @@ import vector
 def main():
     args = vector.util.parse_test_args()
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+        robot.behavior.drive_off_charger()
+
         # Tell the head motor to start lowering the head (at 5 radians per second)
+        print("Lower Vector's head...")
         robot.motors.set_head_motor(-5.0)
+
         # Tell the lift motor to start lowering the lift (at 5 radians per second)
+        print("Lower Vector's lift...")
         robot.motors.set_lift_motor(-5.0)
+
         # Tell Vector to drive the left wheel at 25 mmps (millimeters per second),
         # and the right wheel at 50 mmps (so Vector will drive Forwards while also
         # turning to the left
-        robot.motors.set_wheel_motors(25, 50)
+        print("Set Vector's wheel motors...")
+        #robot.motors.set_wheel_motors(25, 50)
 
         # wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
 
         # Tell the head motor to start raising the head (at 5 radians per second)
+        print("Raise Vector's head...")
         robot.motors.set_head_motor(5)
+
         # Tell the lift motor to start raising the lift (at 5 radians per second)
+        print("Raise Vector's lift...")
         robot.motors.set_lift_motor(5)
+
         # Tell Vector to drive the left wheel at 50 mmps (millimeters per second),
         # and the right wheel at -50 mmps (so Vector will turn in-place to the right)
-        robot.motors.set_wheel_motors(50, -50)
+        print("Set Vector's wheel motors...")
+        #robot.motors.set_wheel_motors(50, -50)
 
         # Wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
 
         # Stop the wheels
+        print("Stop Vector's wheels...")
         robot.motors.set_wheel_motors(0, 0)
 
 

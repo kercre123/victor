@@ -79,7 +79,7 @@ class VectorNotReadyException(_VectorGenericException):
 class VectorControlException(_VectorGenericException):
     """Failed to get control of Vector
 
-You may want to try requesting a higher control level
+Please verify that Vector is connected to the internet, and consider trying to request a higher control level.
 """
 
 

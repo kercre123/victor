@@ -110,6 +110,8 @@ class BehaviorComponent(util.Component):
 
         Vector will drive for the specified distance (forwards or backwards)
 
+        Vector must be off of the charger for this movement action.
+
         Args:
             distance (vector.util.Distance): The distance to drive
                 (>0 for forwards, <0 for backwards)
@@ -129,6 +131,8 @@ class BehaviorComponent(util.Component):
     @sync.Synchronizer.wrap
     async def turn_in_place(self, angle, speed=util.Angle(0.0), accel=util.Angle(0.0), angle_tolerance=util.Angle(0.0), is_absolute=0):
         '''Turn the robot around its current position.
+
+        Vector must be off of the charger for this movement action.
 
         Args:
             angle (vector.util.Angle): The angle to turn. Positive

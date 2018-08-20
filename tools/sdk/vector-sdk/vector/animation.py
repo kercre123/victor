@@ -57,6 +57,8 @@ class AnimationComponent(util.Component):
     async def play_animation(self, anim, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):
         '''Starts an animation playing on a robot.
 
+        Vector must be off of the charger to play an animation.
+
         Warning: Specific animations may be renamed or removed in future updates of the app.
             If you want your program to work more reliably across all versions
             we recommend using :meth:`play_animation_trigger` instead. TODO: implement play_animation_trigger

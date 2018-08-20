@@ -24,7 +24,10 @@ def main():
     args = vector.util.parse_test_args()
 
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+        print("Drive Vector onto charger...")
         robot.behavior.drive_on_charger()
+
+        print("Drive Vector off of charger...")
         robot.behavior.drive_off_charger()
 
 

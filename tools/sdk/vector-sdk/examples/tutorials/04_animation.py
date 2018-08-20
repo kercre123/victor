@@ -25,6 +25,8 @@ import vector
 def main():
     args = vector.util.parse_test_args()
     with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+        robot.behavior.drive_off_charger()
+        
         # Play an animation via a Trigger - see list of available triggers here:
         # TODO show list of animation triggers
         # A trigger can pick from several appropriate animations for variety.

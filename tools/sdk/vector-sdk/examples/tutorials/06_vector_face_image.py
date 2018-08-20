@@ -46,6 +46,8 @@ def main():
 
         # Convert the image to the format used by the oled screen
         screen_data = vector.oled_face.convert_image_to_screen_data(image_file)
+
+        print("Display image on Vector's face...")
         robot.oled.set_oled_with_screen_data(screen_data, 4.0)
         time.sleep(5)
 

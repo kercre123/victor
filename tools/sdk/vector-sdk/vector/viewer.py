@@ -14,7 +14,7 @@ import time
 try:
     import cv2
 except ImportError as exc:
-    sys.exit("pip3 install opencv-python")
+    sys.exit("Cannot import opencv-python: Do `pip3 install opencv-python` to install")
 
 from .exceptions import VectorCameraFeedDisabledException
 from . import util
