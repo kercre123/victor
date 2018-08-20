@@ -1,11 +1,9 @@
 Embedding CivetWeb
 =========
 
-CivetWeb is primarily designed so applications can easily add HTTP and HTTPS server as well as WebSocket (WS and WSS) server functionality.
-For example, a C/C++ application could use CivetWeb to enable a web service and configuration interface, to add a HTML5 data visualization interface, for automation or remote control, as a protocol gateway or as a HTTP/WebSocket client for firewall traversal.
+CivetWeb is primarily designed so applications can easily add HTTP and HTTPS server as well as WebSocket functionality.  For example, an application server could use CivetWeb to enable a web service interface for automation or remote control.
 
-It can also be used as a stand-alone executable. It can deliver static files and offers built-in server side Lua, JavaScript and CGI support. Some instructions how to build the stand-alone server can be found in [Building.md](https://github.com/civetweb/civetweb/blob/master/docs/Building.md).
-
+However, it can also be used as a stand-alone executable. It can deliver static files and offers built-in server side Lua, JavaScript and CGI support. Some instructions how to build the stand-alone server can be found in [Building.md](https://github.com/civetweb/civetweb/blob/master/docs/Building.md).
 
 Files
 ------
@@ -13,12 +11,11 @@ Files
 There is just a small set of files to compile in to the application,
 but if a library is desired, see [Building.md](https://github.com/CivetWeb/CivetWeb/blob/master/docs/Building.md)
 
-
 #### Regarding the INL file extension
 The *INL* file extension represents code that is statically included inline in a source file.  Slightly different from C++ where it means "inline" code which is technically not the same as static code. CivetWeb overloads this extension for the sake of clarity as opposed to having .c extensions on files that should not be directly compiled.
 
-
 #### HTTP Server Source Files
+
 These files constitute the CivetWeb library.  They do not contain a `main` function,
 but all functions required to run a HTTP server.
 
@@ -27,33 +24,29 @@ but all functions required to run a HTTP server.
   - C implementation
     - src/civetweb.c
     - src/md5.inl (MD5 calculation)
-    - src/sha1.inl (SHA calculation)
-    - src/handle\_form.inl (HTML form handling functions)
-    - src/timer.inl (optional timer support)
+    - src/handle_form.inl (HTML form handling functions)
   - Optional: C++ wrapper
     - include/CivetServer.h (C++ interface)
     - src/CivetServer.cpp (C++ wrapper implementation)
   - Optional: Third party components
-    - src/third\_party/* (third party components, mainly used for the standalone server)
-    - src/mod\_*.inl (modules to access third party components from civetweb)
+    - src/third_party/* (third party components, mainly used for the standalone server)
+    - src/mod_*.inl (modules to access third party components from civetweb)
 
-
-Note: The C++ wrapper uses the official C interface (civetweb.h) without adding any features to the server itself. Several features available in the C interface are missing in the C++ interface. While all features should be accessible using the C interface, this is not a design goal of the C++ interface.
-
+Note: The C++ wrapper uses the official C interface (civetweb.h) and does not add new features to the server. Some features available in the C interface might be missing in the C++ interface.
 
 #### Additional Source Files for Executables
+
 These files can be used to build a server executable. They contain a `main` function
 starting the HTTP server.
 
-  - Stand-alone C server
+  - Stand-alone C Server
       - src/main.c
-  - Reference embedded C server
-      - examples/embedded\_c/embedded\_c.c
-  - Reference embedded C++ server
-      - examples/embedded\_cpp/embedded\_cpp.cpp
+  - Reference embedded C Server
+      - examples/embedded_c/embedded_c.c
+  - Reference embedded C++ Server
+      - examples/embedded_cpp/embedded_cpp.cpp
 
 Note: The "embedded" example is actively maintained, updated, extended and tested. Other examples in the examples/ folder might be outdated and remain there for reference.
-
 
 Quick Start
 ------
@@ -73,33 +66,9 @@ By default, the server will automatically serve up files like a normal HTTP serv
     Not all CivetWeb features available in C are also available in C++.
   - Create CivetHandlers for each URI.
   - Register the handlers with `CivetServer::addHandler()`
-  - `CivetServer` starts on construction and stops on destruction.
-  - Use constructor *options* to select the port and document root among other things.
+  - `CivetServer` starts on contruction and stops on destruction.
+  - Use contructor *options* to select the port and document root among other things.
   - Use constructor *callbacks* to add your own hooks.
-
-Alternative quick start: Have a look at the examples embedded\_c and embedded\_cpp
-
-
-Feature selection
-------
-
-CivetWeb is highly customizable at build time, in addition to configuration at start time.
-
-##### start time options
-Start time options are passed to `mg_start`. They are documented in the [UserManual.md](https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md).
-
-##### callbacks
-Pointers to callback functions are passed to `mg_start` as well. They are documented in [civetweb.h](https://github.com/civetweb/civetweb/blob/master/include/civetweb.h) and the callbacks [API documentation](https://github.com/civetweb/civetweb/blob/master/docs/api/mg_callbacks.md).
-
-##### compiler defines
-Several features can be turned "on" or "off" by setting compile defines. CivetWeb builds with a reasonable default feature set. Optional features not including in the default can be added by adding a `USE\_<feature>` define. Default features can be removed by adding a `NO_<feature>` define. E.g., to build with Lua support, set `#define USE_LUA` (-DUSE_LUA), to build without CGI support set `#define NO_CGI` (-DNO_CGI). A list of feature defines is available in [Building.md](https://github.com/civetweb/civetweb/blob/master/docs/Building.md) - some versions may have additional, undocumented feature defines. Undocumented defines may become unavailable in future versions without notice.
-
-##### externally provided functions
-In some special cases, it might be meaningful to completely replace an internal function in [civetweb.c](https://github.com/civetweb/civetweb/blob/master/src/civetweb.c) with your own implementation.
-Since CivetWeb is free and open source software covered by the MIT license, you can feel free to just edit civetweb.c according to your needs.
-However, this might be annoying when updating the server, pulling new features or bug fixes from the main repository. For some selected functions, it is possible to provide your own implementation using a `MG_EXTERNAL_FUNCTION_<internal_function_name>` define. For details on this mechanism, please look directly into the source code [civetweb.c](https://github.com/civetweb/civetweb/blob/master/src/civetweb.c). Interfaces and even names of internal functions may change without notice - when you use these defines, you have to check this every time you update CivetWeb. It might still be less effort than to apply your patches every time.
-This customization option is currently in an evaluation phase. In case you need additional function defines, please create an issue on GitHub explaining your use case, to discuss if this would be an appropriate solution - in general, other customization options are preferred.
-
 
 Lua Support
 ------
@@ -108,15 +77,15 @@ Lua is a server side include functionality.  Files ending in .lua will be proces
 
 ##### Add the following CFLAGS
 
-  - `-DLUA_COMPAT_ALL`
-  - `-DUSE_LUA`
-  - `-DUSE_LUA_SQLITE3`
-  - `-DUSE_LUA_FILE_SYSTEM`
+  - -DLUA_COMPAT_ALL
+  - -DUSE_LUA
+  - -DUSE_LUA_SQLITE3
+  - -DUSE_LUA_FILE_SYSTEM
 
 ##### Add the following sources
 
-  - src/mod\_lua.inl
-  - src/third\_party/lua-5.2.4/src
+  - src/mod_lua.inl
+  - src/third_party/lua-5.2.4/src
      + lapi.c
      + lauxlib.c
      + lbaselib.c
@@ -149,11 +118,11 @@ Lua is a server side include functionality.  Files ending in .lua will be proces
      + lundump.c
      + lvm.c
      + lzio.c
-  - src/third\_party/sqlite3.c
-  - src/third\_party/sqlite3.h
-  - src/third\_party/lsqlite3.c
-  - src/third\_party/lfs.c
-  - src/third\_party/lfs.h
+  - src/third_party/sqlite3.c
+  - src/third_party/sqlite3.h
+  - src/third_party/lsqlite3.c
+  - src/third_party/lfs.c
+  - src/third_party/lfs.h
 
 This build is valid for Lua version Lua 5.2. It is also possible to build with Lua 5.1 (including LuaJIT) or Lua 5.3.
 
@@ -187,8 +156,8 @@ is configurable via `num_threads` configuration option. That number puts a
 limit on number of simultaneous requests that can be handled by CivetWeb.
 If you embed CivetWeb into a program that uses SSL outside CivetWeb as well,
 you may need to initialize SSL before calling `mg_start()`, and set the pre-
-processor define `SSL_ALREADY_INITIALIZED`. This is not required if SSL is
-used only within CivetWeb.
+processor define SSL_ALREADY_INITIALIZED. This is not required if SSL is used
+only within CivetWeb.
 
 When master thread accepts new a connection, a new accepted socket (described
 by `struct socket`) it placed into the accepted sockets queue,
@@ -205,13 +174,11 @@ which is `SOMAXCONN` and depends on the platform.
 Worker threads are running in an infinite loop, which in a simplified form
 looks something like this:
 
-```C
     static void *worker_thread() {
       while (consume_socket()) {
         process_new_connection();
       }
     }
-```
 
 Function `consume_socket()` gets a new accepted socket from the CivetWeb socket
 queue, atomically removing it from the queue. If the queue is empty,
@@ -230,54 +197,4 @@ threads use blocking IO on accepted sockets for reading and writing data.
 All accepted sockets have `SO_RCVTIMEO` and `SO_SNDTIMEO` socket options set
 (controlled by the `request_timeout_ms` CivetWeb option, 30 seconds default)
 which specifies a read/write timeout on client connections.
-
-
-A minimal example
-------
-
-Initializing a HTTP server
-```C
-{
-    /* Server context handle */
-    struct mg_context *ctx;
-
-    /* Initialize the library */
-    mg_init_library(0);
-
-    /* Start the server */
-    ctx = mg_start(NULL, 0, NULL);
-
-    /* Add some handler */
-    mg_set_request_handler(ctx, "/hello", handler, "Hello world");
-
-    ... Run the application ...
-    
-    /* Stop the server */
-    mg_stop(ctx);
-
-    /* Un-initialize the library */
-    mg_exit_library();
-}
-```
-
-A simple callback
-```C
-static int
-handler(struct mg_connection *conn, void *ignored)
-{
-	const char *msg = "Hello world";
-	unsigned long len = (unsigned long)strlen(msg);
-
-	mg_printf(conn,
-	          "HTTP/1.1 200 OK\r\n"
-	          "Content-Length: %lu\r\n"
-	          "Content-Type: text/plain\r\n"
-	          "Connection: close\r\n\r\n",
-	          len);
-
-	mg_write(conn, msg, len);
-
-	return 200;
-}
-```
 

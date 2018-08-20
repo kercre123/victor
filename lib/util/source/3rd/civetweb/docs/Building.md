@@ -6,10 +6,10 @@ See [Embedding.md](https://github.com/civetweb/civetweb/blob/master/docs/Embeddi
 
 #### Where to get the source code?
 
-The latest development version can be found at
+The latest version can be found at
 https://github.com/civetweb/civetweb
 
-Tested and released versions can be found at
+Released versions can be found at
 https://github.com/civetweb/civetweb/releases
 
 
@@ -74,7 +74,6 @@ make clean
 ```
 Clean up files generated during the build
 
-
 ## Setting build options
 
 Make options can be set on the command line with the make command like so.
@@ -83,58 +82,26 @@ make build WITH_LUA=1
 ```
 
 
-| Make Options                | Description                                       |
-| --------------------------- | ------------------------------------------------- |
-| `WITH_LUA=1`                | build with Lua support                            |
-| `WITH_DUKTAPE=1`            | build with server-side JavaScript support         |
-| `WITH_IPV6=1`               | with IPV6 support                                 |
-| `WITH_WEBSOCKET=1`          | build with web socket support                     |
-| `WITH_SERVER_STATS=1`       | build with support for server statistics          |
-| `WITH_EXPERIMENTAL=1`       | include experimental features (version depending) |
-| `WITH_ALL=1`                | Include all of the above features                 |
-| `WITH_DEBUG=1`              | build with GDB debug support                      |
-| `WITH_CPP=1`                | build libraries with c++ classes                  |
-| `CONFIG_FILE=file`          | use 'file' as the config file                     |
-| `CONFIG_FILE2=file`         | use 'file' as the backup config file              |
-| `HTMLDIR=/path`             | place to install initial web pages                |
-| `DOCUMENT_ROOT=/path`       | default document root                             |
-| `PORTS=8080`                | listening ports override when installing          |
-| `SSL_LIB=libssl.so.0`       | use versioned SSL library                         |
-| `CRYPTO_LIB=libcrypto.so.0` | system versioned CRYPTO library                   |
-| `PREFIX=/usr/local`         | sets the install directory                        |
-| `COPT='-DNO_SSL'`           | method to insert compile flags                    |
+| Make Options              | Description                              |
+| ------------------------- | ---------------------------------------- |
+| WITH_LUA=1                | build with Lua support                   |
+| WITH_DEBUG=1              | build with GDB debug support             |
+| WITH_IPV6=1               | with IPV6 support                        |
+| WITH_WEBSOCKET=1          | build with web socket support            |
+| WITH_CPP=1                | build libraries with c++ classes         |
+| CONFIG_FILE=file          | use 'file' as the config file            |
+| CONFIG_FILE2=file         | use 'file' as the backup config file     |
+| HTMLDIR=/path             | place to install initial web pages       |
+| DOCUMENT_ROOT=/path       | HTMLDIR override, config option, install |
+|                           | nothing is installed here.               |
+| PORTS=8080                | listening ports override when installing |
+| SSL_LIB=libssl.so.0       | use versioned SSL library                |
+| CRYPTO_LIB=libcrypto.so.0 | system versioned CRYPTO library          |
+| PREFIX=/usr/local         | sets the install directory               |
+| COPT='-DNO_SSL'           | method to insert compile flags           |
 
 Note that the WITH_* options used for *make* are not identical to the
 preprocessor defines in the source code - usually USE_* is used there.
-
-
-## Changing PREFIX
-
-To change the target destination pass the `PREFIX` option to the command `make install` (not `make build`). Example usage:
-
-```
-$ make build
-$ make -n install PREFIX=/opt/civetweb
-```
-Note: The `-n` corresponds to the `--dry-run` option (it does not make any changes): You can see where `make install` would install. Example output of the above command:
-
-```
-$ make -n install PREFIX=/opt/civetweb
-install -d -m 755  "/opt/civetweb/share/doc/civetweb"
-install -m 644 resources/itworks.html /opt/civetweb/share/doc/civetweb/index.html
-install -m 644 resources/civetweb_64x64.png /opt/civetweb/share/doc/civetweb/
-install -d -m 755  "/opt/civetweb/etc"
-install -m 644 resources/civetweb.conf  "/opt/civetweb/etc/"
-sed -i 's#^document_root.*$#document_root /opt/civetweb/share/doc/civetweb#' "/opt/civetweb/etc/civetweb.conf"
-sed -i 's#^listening_ports.*$#listening_ports 8080#' "/opt/civetweb/etc/civetweb.conf"
-install -d -m 755  "/opt/civetweb/share/doc/civetweb"
-install -m 644 *.md "/opt/civetweb/share/doc/civetweb"
-install -d -m 755 "/opt/civetweb/bin"
-install -m 755 civetweb "/opt/civetweb/bin/"
-```
-
-If the output looks good: Just remove the `-n` option to actually install the software on your system.
-
 
 ## Setting compile flags
 
@@ -143,33 +110,17 @@ Compile flags can be set using the *COPT* make option like so.
 make build COPT="-DNDEBUG -DNO_CGI"
 ```
 
-| Compile Flags                | Description                                               |
-| ---------------------------- | --------------------------------------------------------- |
-| `NDEBUG`                     | strip off all debug code                                  |
-| `DEBUG`                      | build debug version (very noisy)                          |
-|                              |                                                           |
-| `NO_FILES`                   | do not serve files from a directory                       |
-| `NO_SSL`                     | disable SSL functionality                                 |
-| `NO_CGI`                     | disable CGI support                                       |
-| `NO_CACHING`                 | disable caching functionality                             |
-|                              |                                                           |
-| `USE_IPV6`                   | enable IPv6 support                                       |
-| `USE_WEBSOCKET`              | enable websocket support                                  |
-| `USE_LUA`                    | enable Lua support                                        |
-| `USE_DUKTAPE`                | enable server-side JavaScript (using Duktape library)     |
-| `USE_SERVER_STATS`           | enable server statistics support                          |
-| `USE_ZLIB`                   | enable on-the-fly compression of files (using zlib)       |
-| `MG_EXPERIMENTAL_INTERFACES` | include experimental interfaces                           |
-| `MG_LEGACY_INTERFACE`        | include obsolete interfaces (candidates for deletion)     |
-|                              |                                                           |
-| `NO_SSL_DL`                  | link against system libssl library                        |
-| `SQLITE_DISABLE_LFS`         | disables large files (Lua only)                           |
-| `SSL_ALREADY_INITIALIZED`    | do not initialize libcrypto                               |
-| `OPENSSL_API_1_1`            | Use OpenSSL V1.1.x interface                              |
-
-
-Note: If `make` is used (with this [Makefile](https://github.com/civetweb/civetweb/blob/master/Makefile)), you should not pass the `USE_<feature>` flags using `COPT`, but use the `WITH_<feature>` syntax above, since additional features may also use additional source code files.
-
+| Compile Flags             | Description                          |
+| ------------------------- | ------------------------------------ |
+| NDEBUG                    | strip off all debug code             |
+| DEBUG                     | build debug version (very noisy)     |
+| NO_CGI                    | disable CGI support                  |
+| NO_CACHING                | disable caching functionality        |
+| NO_SSL                    | disable SSL functionality            |
+| NO_SSL_DL                 | link against system libssl library   |
+| NO_FILES                  | do not serve files from a directory  |
+| SQLITE_DISABLE_LFS        | disables large files (Lua only)      |
+| SSL_ALREADY_INITIALIZED   | do not initialize libcrypto          |
 
 ## Cross Compiling
 
@@ -211,8 +162,9 @@ Building with Buildroot
 Building on Android
 ---------
 
-This is a small guide to help you run civetweb on Android, originally
-tested on the HTC Wildfire.
+This is a small guide to help you run civetweb on Android. Currently it is
+tested on the HTC Wildfire. If you have managed to run it on other devices
+as well, please comment or drop an email in the mailing list.
 Note: You do not need root access to run civetweb on Android.
 
 - Download the source from the Downloads page.
@@ -225,12 +177,15 @@ Note: You do not need root access to run civetweb on Android.
 - To test if the server is running fine, visit your web-browser and
   navigate to `http://127.0.0.1:8080` You should see the `Index of /` page.
 
+![screenshot](https://a248.e.akamai.net/camo.github.com/b88428bf009a2b6141000937ab684e04cc8586af/687474703a2f2f692e696d6775722e636f6d2f62676f6b702e706e67)
+
 
 Notes:
 
 - `jni` stands for Java Native Interface. Read up on Android NDK if you want
   to know how to interact with the native C functions of civetweb in Android
   Java applications.
-
+- TODO: A Java application that interacts with the native binary or a
+  shared library.
 
 

@@ -21,15 +21,15 @@
 #define DOCUMENT_ROOT "."
 #ifdef NO_SSL
 #ifdef USE_IPV6
-#define PORT "[::]:8888,8884"
+#define PORT "[::]:8888"
 #else
-#define PORT "8888,8884"
+#define PORT "8888"
 #endif
 #else
 #ifdef USE_IPV6
 #define PORT "[::]:8888r,[::]:8843s,8884"
 #else
-#define PORT "8888r,8843s,8884"
+#define PORT "8888r,8843s"
 #endif
 #endif
 #define EXAMPLE_URI "/example"
@@ -77,23 +77,15 @@ ExampleHandler(struct mg_connection *conn, void *cbdata)
 	          "<p>To see a page from the CookieHandler handler <a "
 	          "href=\"cookie\">click cookie</a></p>");
 	mg_printf(conn,
-	          "<p>To see a page from the PostResponser handler <a "
-	          "href=\"postresponse\">click post response</a></p>");
-	mg_printf(conn,
 	          "<p>To see an example for parsing files on the fly <a "
 	          "href=\"on_the_fly_form\">click form</a> (form for "
 	          "uploading files)</p>");
 
 #ifdef USE_WEBSOCKET
 	mg_printf(conn,
-	          "<p>To test the websocket handler <a href=\"/websocket\">click "
+	          "<p>To test websocket handler <a href=\"/websocket\">click "
 	          "websocket</a></p>");
 #endif
-
-	mg_printf(conn,
-	          "<p>To test the authentication handler <a href=\"/auth\">click "
-	          "auth</a></p>");
-
 	mg_printf(conn, "<p>To exit <a href=\"%s\">click exit</a></p>", EXIT_URI);
 	mg_printf(conn, "</body></html>\n");
 	return 1;
@@ -150,7 +142,7 @@ BXHandler(struct mg_connection *conn, void *cbdata)
 	          "close\r\n\r\n");
 	mg_printf(conn, "<html><body>");
 	mg_printf(conn, "<h2>This is the BX handler %p!!!</h2>", cbdata);
-	mg_printf(conn, "<p>The actual uri is %s</p>", req_info->local_uri);
+	mg_printf(conn, "<p>The actual uri is %s</p>", req_info->uri);
 	mg_printf(conn, "</body></html>\n");
 	return 1;
 }
@@ -170,7 +162,7 @@ FooHandler(struct mg_connection *conn, void *cbdata)
 	mg_printf(conn,
 	          "<p>The request was:<br><pre>%s %s HTTP/%s</pre></p>",
 	          req_info->request_method,
-	          req_info->local_uri,
+	          req_info->uri,
 	          req_info->http_version);
 	mg_printf(conn, "</body></html>\n");
 	return 1;
@@ -236,9 +228,9 @@ field_found(const char *key,
 #else
 		snprintf(path, pathlen, "/tmp/%s", filename);
 #endif
-		return MG_FORM_FIELD_STORAGE_STORE;
+		return FORM_FIELD_STORAGE_STORE;
 	}
-	return MG_FORM_FIELD_STORAGE_GET;
+	return FORM_FIELD_STORAGE_GET;
 }
 
 
@@ -354,9 +346,9 @@ field_disp_read_on_the_fly(const char *key,
 		context->file[context->index - 1].name[127] = 0;
 		context->file[context->index - 1].length = 0;
 		md5_init(&(context->file[context->index - 1].chksum));
-		return MG_FORM_FIELD_STORAGE_GET;
+		return FORM_FIELD_STORAGE_GET;
 	}
-	return MG_FORM_FIELD_STORAGE_ABORT;
+	return FORM_FIELD_STORAGE_ABORT;
 }
 
 
@@ -453,7 +445,7 @@ CookieHandler(struct mg_connection *conn, void *cbdata)
 
 	mg_printf(conn, "<html><body>");
 	mg_printf(conn, "<h2>This is the CookieHandler.</h2>");
-	mg_printf(conn, "<p>The actual uri is %s</p>", req_info->local_uri);
+	mg_printf(conn, "<p>The actual uri is %s</p>", req_info->uri);
 
 	if (first_str[0] == 0) {
 		mg_printf(conn, "<p>This is the first time, you opened this page</p>");
@@ -463,132 +455,6 @@ CookieHandler(struct mg_connection *conn, void *cbdata)
 	}
 
 	mg_printf(conn, "</body></html>\n");
-	return 1;
-}
-
-
-int
-PostResponser(struct mg_connection *conn, void *cbdata)
-{
-	long long r_total = 0;
-	int r, s;
-
-	char buf[2048];
-
-	const struct mg_request_info *ri = mg_get_request_info(conn);
-
-	if (strcmp(ri->request_method, "POST")) {
-		char buf[1024];
-		int ret = mg_get_request_link(conn, buf, sizeof(buf));
-
-		mg_printf(conn,
-		          "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n");
-		mg_printf(conn, "Content-Type: text/plain\r\n\r\n");
-		mg_printf(conn,
-		          "%s method not allowed in the POST handler\n",
-		          ri->request_method);
-		if (ret >= 0) {
-			mg_printf(conn,
-			          "use a web tool to send a POST request to %s\n",
-			          buf);
-		}
-		return 1;
-	}
-
-	if (ri->content_length >= 0) {
-		/* We know the content length in advance */
-	} else {
-		/* We must read until we find the end (chunked encoding
-		 * or connection close), indicated my mg_read returning 0 */
-	}
-
-	mg_printf(conn,
-	          "HTTP/1.1 200 OK\r\nConnection: "
-	          "close\r\nTransfer-Encoding: chunked\r\n");
-	mg_printf(conn, "Content-Type: text/plain\r\n\r\n");
-
-	r = mg_read(conn, buf, sizeof(buf));
-	while (r > 0) {
-		r_total += r;
-		s = mg_send_chunk(conn, buf, r);
-		if (r != s) {
-			/* Send error */
-			break;
-		}
-		r = mg_read(conn, buf, sizeof(buf));
-	}
-	mg_printf(conn, "0\r\n");
-
-	return 1;
-}
-
-
-int
-AuthStartHandler(struct mg_connection *conn, void *cbdata)
-{
-	static unsigned long long firstload = 0;
-	const char *passfile = "password_example_file.txt";
-	const char *realm = "password_example";
-	const char *user = "user";
-	char passwd[64];
-
-	if (firstload == 0) {
-
-		/* Set a random password (4 digit number - bad idea from a security
-		 * point of view, but this is an API demo, not a security tutorial),
-		 * and store it in some directory within the document root (extremely
-		 * bad idea, but this is still not a security tutorial).
-		 * The reason we create a new password every time the server starts
-		 * is just for demonstration - we don't want the browser to store the
-		 * password, so when we repeat the test we start with a new password.
-		 */
-		firstload = (unsigned long long)time(NULL);
-		sprintf(passwd, "%04u", (unsigned int)(firstload % 10000));
-		mg_modify_passwords_file(passfile, realm, user, passwd);
-
-		/* Just tell the user the new password generated for this test. */
-		mg_printf(conn,
-		          "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-		          "close\r\n\r\n");
-
-		mg_printf(conn, "<!DOCTYPE html>\n");
-		mg_printf(conn, "<html>\n<head>\n");
-		mg_printf(conn, "<meta charset=\"UTF-8\">\n");
-		mg_printf(conn, "<title>Auth handlerexample</title>\n");
-		mg_printf(conn, "</head>\n");
-
-		mg_printf(conn, "<body>\n");
-		mg_printf(conn,
-		          "<p>The first time you visit this page, it's free!</p>\n");
-		mg_printf(conn,
-		          "<p>Next time, use username \"%s\" and password \"%s\"</p>\n",
-		          user,
-		          passwd);
-		mg_printf(conn, "</body>\n</html>\n");
-
-		return 1;
-	}
-
-	if (mg_check_digest_access_authentication(conn, realm, passfile) <= 0) {
-		/* No valid authorization */
-		mg_send_digest_access_authentication_request(conn, realm);
-		return 1;
-	}
-
-	mg_printf(conn,
-	          "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-	          "close\r\n\r\n");
-
-	mg_printf(conn, "<!DOCTYPE html>\n");
-	mg_printf(conn, "<html>\n<head>\n");
-	mg_printf(conn, "<meta charset=\"UTF-8\">\n");
-	mg_printf(conn, "<title>Auth handlerexample</title>\n");
-	mg_printf(conn, "</head>\n");
-
-	mg_printf(conn, "<body>\n");
-	mg_printf(conn, "<p>This is the password protected contents</p>\n");
-	mg_printf(conn, "</body>\n</html>\n");
-
 	return 1;
 }
 
@@ -699,7 +565,7 @@ WebSocketReadyHandler(struct mg_connection *conn, void *cbdata)
 	const char *text = "Hello from the websocket ready handler";
 	struct t_ws_client *client = mg_get_user_connection_data(conn);
 
-	mg_websocket_write(conn, MG_WEBSOCKET_OPCODE_TEXT, text, strlen(text));
+	mg_websocket_write(conn, WEBSOCKET_OPCODE_TEXT, text, strlen(text));
 	fprintf(stdout, "Greeting message sent to websocket client\r\n\r\n");
 	ASSERT(client->conn == conn);
 	ASSERT(client->state == 1);
@@ -719,31 +585,7 @@ WebsocketDataHandler(struct mg_connection *conn,
 	ASSERT(client->conn == conn);
 	ASSERT(client->state >= 1);
 
-	fprintf(stdout, "Websocket got %lu bytes of ", (unsigned long)len);
-	switch (((unsigned char)bits) & 0x0F) {
-	case MG_WEBSOCKET_OPCODE_CONTINUATION:
-		fprintf(stdout, "continuation");
-		break;
-	case MG_WEBSOCKET_OPCODE_TEXT:
-		fprintf(stdout, "text");
-		break;
-	case MG_WEBSOCKET_OPCODE_BINARY:
-		fprintf(stdout, "binary");
-		break;
-	case MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE:
-		fprintf(stdout, "close");
-		break;
-	case MG_WEBSOCKET_OPCODE_PING:
-		fprintf(stdout, "ping");
-		break;
-	case MG_WEBSOCKET_OPCODE_PONG:
-		fprintf(stdout, "pong");
-		break;
-	default:
-		fprintf(stdout, "unknown(%1xh)", ((unsigned char)bits) & 0x0F);
-		break;
-	}
-	fprintf(stdout, " data:\r\n");
+	fprintf(stdout, "Websocket got data:\r\n");
 	fwrite(data, len, 1, stdout);
 	fprintf(stdout, "\r\n\r\n");
 
@@ -765,7 +607,7 @@ WebSocketCloseHandler(const struct mg_connection *conn, void *cbdata)
 	mg_unlock_context(ctx);
 
 	fprintf(stdout,
-	        "Client dropped from the set of webserver connections\r\n\r\n");
+	        "Client droped from the set of webserver connections\r\n\r\n");
 }
 
 
@@ -782,7 +624,7 @@ InformWebsockets(struct mg_context *ctx)
 	for (i = 0; i < MAX_WS_CLIENTS; i++) {
 		if (ws_clients[i].state == 2) {
 			mg_websocket_write(ws_clients[i].conn,
-			                   MG_WEBSOCKET_OPCODE_TEXT,
+			                   WEBSOCKET_OPCODE_TEXT,
 			                   text,
 			                   strlen(text));
 		}
@@ -912,8 +754,6 @@ main(int argc, char *argv[])
 	    "DES-CBC3-SHA:AES128-SHA:AES128-GCM-SHA256",
 #endif
 #endif
-	    "enable_auth_domain_check",
-	    "no",
 	    0};
 	struct mg_callbacks callbacks;
 	struct mg_context *ctx;
@@ -978,10 +818,10 @@ main(int argc, char *argv[])
 	mg_set_request_handler(ctx, "/B/A$", BXHandler, (void *)1);
 	mg_set_request_handler(ctx, "/B/B$", BXHandler, (void *)2);
 
-	/* Add handler for all files with .foo extension */
+	/* Add handler for all files with .foo extention */
 	mg_set_request_handler(ctx, "**.foo$", FooHandler, 0);
 
-	/* Add handler for /close extension */
+	/* Add handler for /close extention */
 	mg_set_request_handler(ctx, "/close", CloseHandler, 0);
 
 	/* Add handler for /form  (serve a file outside the document root) */
@@ -1009,15 +849,8 @@ main(int argc, char *argv[])
 	/* Add handler for /cookie example */
 	mg_set_request_handler(ctx, "/cookie", CookieHandler, 0);
 
-	/* Add handler for /postresponse example */
-	mg_set_request_handler(ctx, "/postresponse", PostResponser, 0);
-
 	/* Add HTTP site to open a websocket connection */
 	mg_set_request_handler(ctx, "/websocket", WebSocketStartHandler, 0);
-
-	/* Add HTTP site with auth */
-	mg_set_request_handler(ctx, "/auth", AuthStartHandler, 0);
-
 
 #ifdef USE_WEBSOCKET
 	/* WS site for the websocket connection */

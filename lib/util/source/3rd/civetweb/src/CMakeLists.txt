@@ -1,59 +1,54 @@
 # The C API library
-set( LIB_TYPE "STATIC" )
-if (BUILD_SHARED_LIBS)
-  set( LIB_TYPE "SHARED" )
-endif()
-add_library(civetweb-c-library ${LIB_TYPE} civetweb.c)
-set_target_properties(civetweb-c-library PROPERTIES
+add_library(c-library civetweb.c)
+set_target_properties(c-library PROPERTIES
   OUTPUT_NAME "civetweb"
   VERSION ${CIVETWEB_VERSION}
   SOVERSION ${CIVETWEB_VERSION}
 )
+anki_build_target_license(c-library "MIT,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/civetweb/LICENSE.md")
 if (BUILD_SHARED_LIBS)
-  target_compile_definitions(civetweb-c-library PRIVATE CIVETWEB_DLL_EXPORTS)
+  target_compile_definitions(c-library PRIVATE CIVETWEB_DLL_EXPORTS)
 endif()
 target_include_directories(
-  civetweb-c-library PUBLIC
+  c-library PUBLIC
   ${PROJECT_SOURCE_DIR}/include)
-install(
-  TARGETS civetweb-c-library
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  COMPONENT civetweb-c-library)
-install(FILES
-  ${PROJECT_SOURCE_DIR}/include/civetweb.h
-  DESTINATION include
-  COMPONENT civetweb-c-library)
+
+# BRC: Remove install process until we need this
+#install(
+#  TARGETS c-library
+#  ARCHIVE DESTINATION lib
+#  LIBRARY DESTINATION lib
+#  RUNTIME DESTINATION bin
+#  COMPONENT c-library)
+#install(FILES
+#  ${PROJECT_SOURCE_DIR}/include/civetweb.h
+#  DESTINATION include
+#  COMPONENT c-library)
 
 # Need Windows sockets if available
 find_package(WinSock)
 if (WINSOCK_FOUND)
-  target_link_libraries(civetweb-c-library WINSOCK::WINSOCK)
+  target_link_libraries(c-library WINSOCK::WINSOCK)
 endif()
 
 # We need threading
 find_package(Threads)
-target_link_libraries(civetweb-c-library ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(c-library ${CMAKE_THREAD_LIBS_INIT})
 
 # Need the realtime library if we're using timers
 find_package(LibRt)
 if (CIVETWEB_ENABLE_WEBSOCKETS AND CIVETWEB_ENABLE_LUA AND LIBRT_FOUND)
-  target_link_libraries(civetweb-c-library LIBRT::LIBRT)
+  target_link_libraries(c-library LIBRT::LIBRT)
 endif()
 
 # We need to link OpenSSL if not dynamically loading
-if (CIVETWEB_ENABLE_SSL)
-  if (CIVETWEB_ENABLE_SSL_DYNAMIC_LOADING)
-    find_package(LibDl)
-    if (LIBDL_FOUND)
-      target_link_libraries(civetweb-c-library -ldl)
-    endif()
-  else()
-    find_package(OpenSSL)
-    include_directories(${OPENSSL_INCLUDE_DIR})
-    message(STATUS "OpenSSL include directory: ${OPENSSL_INCLUDE_DIR}")
-    target_link_libraries(civetweb-c-library ${OPENSSL_LIBRARIES})
+if (CIVETWEB_ENABLE_SLL AND NOT CIVETWEB_ENABLE_OPENSLL_DYNAMIC_LOADING)
+  find_package(OpenSSL)
+  target_link_libraries(c-library ${OPENSSL_LIBRARIES})
+else()
+  find_package(LibDl)
+  if (LIBDL_FOUND)
+    target_link_libraries(c-library -ldl)
   endif()
 endif()
 
@@ -107,7 +102,7 @@ if (CIVETWEB_ENABLE_LUA)
     link_directories("${LUA_INSTALL_DIR}/lib")
     include_directories("${LUA_INSTALL_DIR}/include")
     set(LUA_LIBRARIES "${LUA_INSTALL_DIR}/lib/liblua.a")
-    add_dependencies(civetweb-c-library lua)
+    add_dependencies(c-library lua)
   else()
     find_package(Lua)
   endif()
@@ -135,7 +130,7 @@ if (CIVETWEB_ENABLE_LUA)
   link_directories("${LUA_FILESYSTEM_INSTALL_DIR}/lib")
   include_directories("${LUA_FILESYSTEM_INSTALL_DIR}/include")
   set(LUA_LIBRARIES "${LUA_LIBRARIES};${LUA_FILESYSTEM_INSTALL_DIR}/lib/libluafilesystem.a")
-  add_dependencies(civetweb-c-library luafilesystem)
+  add_dependencies(c-library luafilesystem)
 
   # Lua SQLite Support
   if (${CIVETWEB_LUA_SQLITE_VERSION} VERSION_EQUAL "0.9.3")
@@ -167,7 +162,7 @@ if (CIVETWEB_ENABLE_LUA)
   unset(INSTALL_DIR)
   link_directories("${LUA_SQLITE_INSTALL_DIR}/lib")
   set(LUA_LIBRARIES "${LUA_LIBRARIES};${LUA_SQLITE_INSTALL_DIR}/lib/libluasqlite.a")
-  add_dependencies(civetweb-c-library luasqlite)
+  add_dependencies(c-library luasqlite)
 
   # Lua XML Support
   if (${CIVETWEB_LUA_XML_VERSION} VERSION_EQUAL "1.8.0")
@@ -178,20 +173,9 @@ if (CIVETWEB_ENABLE_LUA)
     message(FATAL_ERROR "The Lua XML archive filename is unknown for version ${CIVETWEB_LUA_XML_VERSION}")
   endif()
   ExternalProject_Add(luaxml
-# Old:
-#    URL "http://viremo.eludi.net/LuaXML/${LUA_XML_FILENAME}"
-#    URL_MD5 ${CIVETWEB_LUA_XML_MD5_HASH}
-#    PREFIX "${CIVETWEB_THIRD_PARTY_DIR}"
-#
-# TODO: find current sourde
-# viremo.eludi.net does no longer exist
-# An extended version is available at https://github.com/n1tehawk/LuaXML
-# but the last commit there was in 2015
-#
-    URL "https://github.com/n1tehawk/LuaXML/archive/v1.8.0.zip"
+    URL "http://viremo.eludi.net/LuaXML/${LUA_XML_FILENAME}"
+    URL_MD5 ${CIVETWEB_LUA_XML_MD5_HASH}
     PREFIX "${CIVETWEB_THIRD_PARTY_DIR}"
-#
-# TODO: fix this patch command (needs someone with deeper CMake know how)
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/luaxml/CMakeLists.txt" <SOURCE_DIR>/CMakeLists.txt
     CMAKE_ARGS
@@ -208,7 +192,7 @@ if (CIVETWEB_ENABLE_LUA)
   unset(INSTALL_DIR)
   link_directories("${LUA_XML_INSTALL_DIR}/lib")
   set(LUA_LIBRARIES "${LUA_LIBRARIES};${LUA_XML_INSTALL_DIR}/lib/libluaxml.a")
-  add_dependencies(civetweb-c-library luaxml)
+  add_dependencies(c-library luaxml)
 
   # SQLite Support
   string (REGEX MATCHALL "[0-9]+" SQLITE_VERSION_MATCHES ${CIVETWEB_SQLITE_VERSION})
@@ -237,37 +221,42 @@ if (CIVETWEB_ENABLE_LUA)
   link_directories("${SQLITE_INSTALL_DIR}/lib")
   include_directories("${SQLITE_INSTALL_DIR}/include")
   set(LUA_LIBRARIES "${LUA_LIBRARIES};${SQLITE_INSTALL_DIR}/lib/libsqlite.a")
-  add_dependencies(civetweb-c-library sqlite)
+  add_dependencies(c-library sqlite)
 
   # Link all the Lua libraries
-  target_link_libraries(civetweb-c-library ${LUA_LIBRARIES})
+  target_link_libraries(c-library ${LUA_LIBRARIES})
 endif()
 
+#
 # The web server executable
-if (CIVETWEB_ENABLE_SERVER_EXECUTABLE)
-    add_executable(civetweb-c-executable main.c)
-    set_target_properties(civetweb-c-executable PROPERTIES
-        OUTPUT_NAME "civetweb"
-    )
-    if (CIVETWEB_INSTALL_EXECUTABLE)
-        install(
-            TARGETS civetweb-c-executable
-            ARCHIVE DESTINATION lib
-            LIBRARY DESTINATION lib
-            RUNTIME DESTINATION bin
-            COMPONENT server)
-    endif()
-    if (BUILD_SHARED_LIBS)
-        target_compile_definitions(civetweb-c-executable PRIVATE CIVETWEB_DLL_IMPORTS)
-    endif()
-    target_include_directories(
-        civetweb-c-executable PUBLIC
-        ${PROJECT_SOURCE_DIR}/include)
-    target_link_libraries(civetweb-c-executable civetweb-c-library)
-    if (LIBRT_FOUND)
-        target_link_libraries(civetweb-c-executable LIBRT::LIBRT)
-    endif()
-endif()
+#
+# <anki> Don't build it unless we need it </anki>
+#
+
+option(CIVETWEB_ENABLE_EXE "Build standalone server executable" OFF)
+
+if (CIVETWEB_ENABLE_EXE)
+  add_executable(c-executable main.c)
+  set_target_properties(c-executable PROPERTIES
+    OUTPUT_NAME "civetweb"
+  )
+  install(
+    TARGETS c-executable
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    COMPONENT server)
+  if (BUILD_SHARED_LIBS)
+    target_compile_definitions(c-executable PRIVATE CIVETWEB_DLL_IMPORTS)
+  endif()
+  target_include_directories(
+    c-executable PUBLIC
+    ${PROJECT_SOURCE_DIR}/include)
+  target_link_libraries(c-executable c-library)
+  if (LIBRT_FOUND)
+    target_link_libraries(c-executable LIBRT::LIBRT)
+  endif()
+endif(CIVETWEB_ENABLE_EXE)
 
 if (CIVETWEB_ENABLE_LUA)
   add_library(lua-library third_party/lfs.c third_party/lsqlite3.c third_party/LuaXML_lib.c third_party/sqlite3.c)
@@ -284,12 +273,12 @@ if (CIVETWEB_ENABLE_LUA)
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
-    COMPONENT lua-library)
+    COMPONENT lua-library)  
 endif()
 
 # The C++ API library
 if (CIVETWEB_ENABLE_CXX)
-  add_library(civetweb-cpp ${LIB_TYPE} CivetServer.cpp)
+  add_library(civetweb-cpp CivetServer.cpp)
   set_target_properties(civetweb-cpp PROPERTIES
     OUTPUT_NAME "civetweb-cpp"
     VERSION ${CIVETWEB_VERSION}

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -ev
 
 source ci/travis/lua_env.sh

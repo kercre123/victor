@@ -2,9 +2,9 @@
 Overview
 =====
 
-CivetWeb is small and easy to use web server.
+Civetweb is small and easy to use web server.
 It may be embedded into C/C++ host applications or used as a stand-alone
-server. See `Embedding.md` for information on embedding CivetWeb into
+server. See `Embedding.md` for information on embedding civetweb into
 host applications.
 
 The stand-alone server is self-contained, and does not require any external
@@ -14,74 +14,72 @@ software to run. Some Windows users may need to install the
 Installation
 ----
 
-On Windows, UNIX and Mac, the CivetWeb stand-alone executable may be started
+On Windows, UNIX and Mac, the civetweb stand-alone executable may be started
 from the command line.
-Running `CivetWeb` in a terminal, optionally followed by configuration parameters
-(`CivetWeb [OPTIONS]`) or a configuration file name (`CivetWeb [config_file_name]`),
+Running `civetweb` in a terminal, optionally followed by configuration parameters
+(`civetweb [OPTIONS]`) or a configuration file name (`civetweb [config_file_name]`),
 starts the web server.
 
-For UNIX and Mac, CivetWeb does not detach from the terminal.
+For UNIX and Mac, civetweb does not detach from the terminal.
 Pressing `Ctrl-C` keys will stop the server.
 
-On Windows, CivetWeb iconifies itself to the system tray icon when started.
+On Windows, civetweb iconifies itself to the system tray icon when started.
 Right-click on the icon pops up a menu, where it is possible to stop
-CivetWeb, or configure it, or install it as Windows service.
+civetweb, or configure it, or install it as Windows service.
 
 When started without options, the server exposes the local directory at
 [http](http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) port 8080.
-Thus, the easiest way to share a folder on Windows is to copy `CivetWeb.exe`
+Thus, the easiest way to share a folder on Windows is to copy `civetweb.exe`
 to this folder, double-click the exe, and launch a browser at
 [http://localhost:8080](http://localhost:8080). Note that 'localhost' should
 be changed to a machine's name if a folder is accessed from other computer.
 
-When started, CivetWeb first searches for the configuration file.
+When started, civetweb first searches for the configuration file.
 If configuration file is specified explicitly in the command line, i.e.
-`CivetWeb path_to_config_file`, then specified configuration file is used.
-Otherwise, CivetWeb would search for file `CivetWeb.conf` in the same directory
+`civetweb path_to_config_file`, then specified configuration file is used.
+Otherwise, civetweb would search for file `civetweb.conf` in the same directory
 the executable is located, and use it. This configuration file is optional.
 
 The configuration file is a sequence of lines, each line containing one
 command line argument name and the corresponding value.
 Empty lines, and lines beginning with `#`, are ignored.
-Here is the example of `CivetWeb.conf` file:
+Here is the example of `civetweb.conf` file:
 
     document_root c:\www
     listening_ports 80,443s
-    ssl_certificate c:\CivetWeb\ssl_cert.pem
+    ssl_certificate c:\civetweb\ssl_cert.pem
 
 When a configuration file is used, additional command line arguments may
 override the configuration file settings.
 All command line arguments must start with `-`.
 
-For example: The above `CivetWeb.conf` file is used, and CivetWeb started as
-`CivetWeb -document_root D:\web`. Then the `D:\web` directory will be served
+For example: The above `civetweb.conf` file is used, and civetweb started as
+`civetweb -document_root D:\web`. Then the `D:\web` directory will be served
 as document root, because command line options take priority over the
 configuration file. The configuration options section below provides a good
-overview of the CivetWeb features.
+overview of the Civetweb features.
 
 Note that configuration options on the command line must start with `-`,
 but their names are the same as in the config file. All option names are
 listed in the next section. Thus, the following two setups are equivalent:
 
     # Using command line arguments
-    $ CivetWeb -listening_ports 1234 -document_root /var/www
+    $ civetweb -listening_ports 1234 -document_root /var/www
 
     # Using config file
-    $ cat CivetWeb.conf
+    $ cat civetweb.conf
     listening_ports 1234
     document_root /var/www
-    $ CivetWeb
+    $ civetweb
 
-CivetWeb can also be used to modify `.htpasswd` passwords files:
+Civetweb can also be used to modify `.htpasswd` passwords files:
 
-    CivetWeb -A <htpasswd_file> <realm> <user> <passwd>
+    civetweb -A <htpasswd_file> <realm> <user> <passwd>
 
-
-# Pattern matching
-
-CivetWeb uses shell-like glob patterns for several configuration options,
-e.g., CGI, SSI and Lua script files are recognized by the file name pattern. 
-Pattern match starts at the beginning of the string, so essentially
+Unlike other web servers, civetweb does not require CGI scripts to be located
+in a special directory. CGI scripts can be anywhere. CGI (and SSI) files are
+recognized by the file name pattern. Civetweb uses shell-like glob
+patterns. Pattern match starts at the beginning of the string, so essentially
 patterns are prefix patterns. Syntax is as follows:
 
      **      Matches everything
@@ -96,17 +94,11 @@ All other characters in the pattern match themselves. Examples:
     /foo         Any string that begins with /foo
     **a$|**b$    Any string that ends with a or b
 
-
 # Configuration Options
 
-Below is a list of configuration options understood by CivetWeb.
+Below is a list of configuration options understood by Civetweb.
 Every option is followed by it's default value. If a default value is not
 present, then the default is empty.
-
-## Options from `civetweb.c`
-
-The following options are supported in `civetweb.c`. They can be used for
-the stand-alone executable as well as for applications embedding CivetWeb.
 
 ### cgi\_pattern `**.cgi$|**.pl$|**.php$`
 All files that match `cgi_pattern` are treated as CGI files. Default pattern
@@ -127,16 +119,16 @@ DELETE requests might still be handled by Lua scripts and CGI paged.
 ### cgi\_interpreter
 Path to an executable to use as CGI interpreter for __all__ CGI scripts
 regardless of the script file extension. If this option is not set (which is
-the default), CivetWeb looks at first line of a CGI script,
+the default), Civetweb looks at first line of a CGI script,
 [shebang line](http://en.wikipedia.org/wiki/Shebang_(Unix\)), for an
 interpreter (not only on Linux and Mac but also for Windows).
 
 For example, if both PHP and Perl CGIs are used, then
 `#!/path/to/php-cgi.exe` and `#!/path/to/perl.exe` must be first lines of the
 respective CGI scripts. Note that paths should be either full file paths,
-or file paths relative to the current working directory of the CivetWeb
-server. If CivetWeb is started by mouse double-click on Windows, the current
-working directory is the directory where the CivetWeb executable is located.
+or file paths relative to the current working directory of the civetweb
+server. If civetweb is started by mouse double-click on Windows, the current
+working directory is the directory where the civetweb executable is located.
 
 If all CGIs use the same interpreter, for example they are all PHP, it is
 more efficient to set `cgi_interpreter` to the path to `php-cgi.exe`.
@@ -153,11 +145,6 @@ Authorization realm used for HTTP digest authentication. This domain is
 used in the encoding of the `.htpasswd` authorization files as well.
 Changing the domain retroactively will render the existing passwords useless.
 
-### enable\_auth\_domain\_check `yes`
-When using absolute URLs, verify the host is identical to the authentication\_domain. If enabled, requests to absolute URLs will only be processed 
-if they are directed to the domain. If disabled, absolute URLs to any host
-will be accepted.
-
 ### ssi\_pattern `**.shtml$|**.shtm$`
 All files that match `ssi_pattern` are treated as Server Side Includes (SSI).
 
@@ -168,10 +155,10 @@ of code throughout a website, for example, headers and footers.
 
 In order for a webpage to recognize an SSI-enabled HTML file, the filename
 should end with a special extension, by default the extension should be
-either `.shtml` or `.shtm`. These extensions may be changed using the
+either `.shtml` or `.shtm`. These extentions may be changed using the
 `ssi_pattern` option.
 
-Unknown SSI directives are silently ignored by CivetWeb. Currently, two SSI
+Unknown SSI directives are silently ignored by civetweb. Currently, two SSI
 directives are supported, `<!--#include ...>` and
 `<!--#exec "command">`. Note that the `<!--#include ...>` directive supports
 three path specifications:
@@ -234,7 +221,7 @@ password in digest format:
     user:realm:digest
     test:test.com:ce0220efc2dd2fad6185e1f1af5a4327
 
-Password files may be generated using `CivetWeb -A` as explained above, or
+Password files may be generated using `civetweb -A` as explained above, or
 online tools e.g. [this generator](http://www.askapache.com/online-tools/htpasswd-generator).
 
 ### index\_files `index.xhtml,index.html,index.htm,index.cgi,index.shtml,index.php`
@@ -263,7 +250,7 @@ a timeout > 0 is set.
 
 ### access\_control\_list
 An Access Control List (ACL) allows restrictions to be put on the list of IP
-addresses which have access to the web server. In the case of the CivetWeb
+addresses which have access to the web server. In the case of the Civetweb
 web server, the ACL is a comma separated list of IP subnets, where each
 subnet is pre-pended by either a `-` or a `+` sign. A plus sign means allow,
 where a minus sign means deny. If a subnet mask is omitted, such as `-1.2.3.4`,
@@ -308,27 +295,14 @@ all interfaces, both IPv4 and IPv6, use either the configuration
 `80,[::]:80` (create one socket for IPv4 and one for IPv6 only),
 or `+80` (create one socket for both, IPv4 and IPv6). 
 The `+`-notation to use IPv4 and IPv6 will only work in no network
-interface is specified. Depending on your operating system version
-and IPv6 network environment, some configurations might not work
-as expected, so you have to test to find the configuration most 
-suitable for your needs. In case `+80` does not work for your
-environment, you need to use `80,[::]:80`.
+interface is specified. Depending on your IPv6 network environment,
+some configurations might not work (properly), so you have to test
+to find the configuration most suitable for your needs.
 
 It is possible to use network interface addresses (e.g., `192.0.2.3:80`,
 `[2001:0db8::1234]:80`). To get a list of available network interface
 addresses, use `ipconfig` (in a `cmd` window in Windows) or `ifconfig` 
 (in a Linux shell).
-Alternatively, you could use the hostname for an interface. Check the 
-hosts file of your operating system for a proper hostname 
-(for Windows, usually found in C:\Windows\System32\drivers\etc\, 
-for most Linux distributions: /etc/hosts). E.g., to bind the IPv6 
-local host, you could use `ip6-localhost:80`. This translates to 
-`[::1]:80`. Beside the hosts file, there are several other name
-resolution services. Using your hostname might bind you to the
-localhost or an external interface. You could also try `hostname.local`,
-if the proper network services are installed (Zeroconf, mDNS, Bonjour, 
-Avahi). When using a hostname, you need to test in your particular network
-environment - in some cases, you might need to resort to a fixed IP address.
 
 ### document\_root `.`
 A directory to serve. By default, the current working directory is served.
@@ -344,49 +318,45 @@ and it must have both, private key and certificate, see for example
 A description how to create a certificate can be found in doc/OpenSSL.md
 
 ### num\_threads `50`
-Number of worker threads. CivetWeb handles each incoming connection in a
+Number of worker threads. Civetweb handles each incoming connection in a
 separate thread. Therefore, the value of this option is effectively the number
-of concurrent HTTP connections CivetWeb can handle.
+of concurrent HTTP connections Civetweb can handle.
 
 ### run\_as\_user
 Switch to given user credentials after startup. Usually, this option is
-required when CivetWeb needs to bind on privileged ports on UNIX. To do
-that, CivetWeb needs to be started as root. From a security point of view,
+required when civetweb needs to bind on privileged ports on UNIX. To do
+that, civetweb needs to be started as root. From a security point of view,
 running as root is not advisable, therefore this option can be used to drop
 privileges. Example:
 
-    CivetWeb -listening_ports 80 -run_as_user webserver
+    civetweb -listening_ports 80 -run_as_user webserver
 
 ### url\_rewrite\_patterns
 Comma-separated list of URL rewrites in the form of
-`uri_pattern=file_or_directory_path`. When CivetWeb receives any request,
+`uri_pattern=file_or_directory_path`. When Civetweb receives any request,
 it constructs the file name to show by combining `document_root` and the URI.
 However, if the rewrite option is used and `uri_pattern` matches the
 requested URI, then `document_root` is ignored. Instead,
 `file_or_directory_path` is used, which should be a full path name or
 a path relative to the web server's current working directory. Note that
-`uri_pattern`, as all CivetWeb patterns, is a prefix pattern.
+`uri_pattern`, as all civetweb patterns, is a prefix pattern.
 
 This makes it possible to serve many directories outside from `document_root`,
 redirect all requests to scripts, and do other tricky things. For example,
 to redirect all accesses to `.doc` files to a special script, do:
 
-    CivetWeb -url_rewrite_patterns **.doc$=/path/to/cgi-bin/handle_doc.cgi
+    civetweb -url_rewrite_patterns **.doc$=/path/to/cgi-bin/handle_doc.cgi
 
 Or, to imitate support for user home directories, do:
 
-    CivetWeb -url_rewrite_patterns /~joe/=/home/joe/,/~bill=/home/bill/
+    civetweb -url_rewrite_patterns /~joe/=/home/joe/,/~bill=/home/bill/
 
 ### hide\_files\_patterns
 A pattern for the files to hide. Files that match the pattern will not
 show up in directory listing and return `404 Not Found` if requested. Pattern
 must be for a file name only, not including directory names. Example:
 
-    CivetWeb -hide_files_patterns secret.txt|**.hide
-
-Note: hide\_file\_patterns uses the pattern described above. If you want to
-hide all files with a certain extension, make sure to use **.extension
-(not just *.extension).
+    civetweb -hide_files_patterns secret.txt|*.hide
 
 ### request\_timeout\_ms `30000`
 Timeout for network read and network write operations, in milliseconds.
@@ -411,11 +381,6 @@ Currently keep\_alive\_timeout\_ms is ignored if enable\_keep\_alive is no,
 but future versions my drop the enable\_keep\_alive configuration value and
 automatically use keep-alive if keep\_alive\_timeout\_ms is not 0.
 
-### cgi\_timeout\_ms
-Maximum allowed runtime for CGI scripts.  CGI processes are terminated by
-the server after this time.  The default is "no timeout", so scripts may
-run or block for undefined time.
-
 ### linger\_timeout\_ms
 Set TCP socket linger timeout before closing sockets (SO\_LINGER option).
 The configured value is a timeout in milliseconds. Setting the value to 0
@@ -424,31 +389,9 @@ Setting the value to -1 will turn off linger.
 If the value is not set (or set to -2), CivetWeb will not set the linger
 option at all.
 
-Note: For consistency with other timeout configurations, the value is 
-configured in milliseconds. However, the TCP socket layer usually only
-offers a timeout in seconds, so the value should be an integer multiple
-of 1000.
-
-### websocket\_timeout\_ms
-Timeout for network read and network write operations for websockets, WS(S),
-in milliseconds. If this value is not set, the value of request\_timeout\_ms
-is used for HTTP(S) as well as for WS(S). In case websocket\_timeout\_ms is
-set, HTTP(S) and WS(S) can use different timeouts.
-
-Note: This configuration value only exists, if the server has been built 
-with websocket support enabled.
-
-### enable_websocket_ping_pong `no`
-If this configuration value is set to `yes`, the server will send a
-websocket PING message to a websocket client, once the timeout set by
-websocket\_timeout\_ms expires. Clients (Web browsers) supporting this
-feature will reply with a PONG message.
-
-If this configuration value is set to `no`, the websocket server will
-close the connection, once the timeout expires.
-
-Note: This configuration value only exists, if the server has been built 
-with websocket support enabled.
+Note: For consistency with other timeouts, the value is configured in
+milliseconds. However, the TCP socket layer usually only offers a timeout in 
+seconds, so the value should be an integer multiple of 1000.
 
 ### lua\_preload\_file
 This configuration option can be used to specify a Lua script file, which
@@ -480,54 +423,20 @@ files, ...), check for external resources, remove old log files, etc.
 
 The Lua state remains open until the server is stopped.
 In the future, some callback functions will be available to notify the
-script on changes of the server state. See example lua script :
-[background.lua](https://github.com/civetweb/civetweb/blob/master/test/background.lua).
+script on changes of the server state.
 
-Additional functions available in background script :
-sleep, root path, script name, isterminated
-
-### lua\_background\_script\_params `param1=1,param2=2`
-Can add dynamic parameters to background script.
-Parameters mapped to global 'mg' table 'params' field.
 
 ### websocket\_root
-In case CivetWeb is built with Lua and websocket support, Lua scripts may
+In case civetweb is built with Lua and websocket support, Lua scripts may
 be used for websockets as well. Since websockets use a different URL scheme
 (ws, wss) than other http pages (http, https), the Lua scripts used for
 websockets may also be served from a different directory. By default,
-the document\_root is used as websocket\_root as well.
+the document_root is used as websocket_root as well.
 
-
-### access\_control\_allow\_origin `*`
+### access\_control\_allow\_origin
 Access-Control-Allow-Origin header field, used for cross-origin resource
 sharing (CORS).
 See the [Wikipedia page on CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing).
-
-
-### access\_control\_allow\_methods `*`
-Access-Control-Allow-Methods header field, used for cross-origin resource
-sharing (CORS) pre-flight requests.
-See the [Wikipedia page on CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing).
-
-If set to an empty string, pre-flights will not be supported directly by the server,
-but scripts may still support pre-flights by handling the OPTIONS method properly.
-If set to "*", the pre-flight will allow whatever method has been requested.
-If set to a comma separated list of valid HTTP methods, the pre-flight will return
-exactly this list as allowed method.
-If set in any other way, the result is unspecified.
-
-
-### access\_control\_allow\_headers `*`
-Access-Control-Allow-Headers header field, used for cross-origin resource
-sharing (CORS) pre-flight requests.
-See the [Wikipedia page on CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing).
-
-If set to an empty string, pre-flights will not allow additional headers.
-If set to "*", the pre-flight will allow whatever headers have been requested.
-If set to a comma separated list of valid HTTP headers, the pre-flight will return
-exactly this list as allowed headers.
-If set in any other way, the result is unspecified.
-
 
 ### error\_pages
 This option may be used to specify a directory for user defined error pages.
@@ -535,7 +444,7 @@ The error pages may be specified for an individual http status code (e.g.,
 404 - page requested by the client not found), a group of http status codes
 (e.g., 4xx - all client errors) or all errors. The corresponding error pages
 must be called error404.ext, error4xx.ext or error.ext, whereas the file
-extension may be one of the extensions specified for the index_files option.
+extention may be one of the extentions specified for the index_files option.
 See the [Wikipedia page on HTTP status codes](http://en.wikipedia.org/wiki/HTTP_status_code).
 
 ### tcp\_nodelay `0`
@@ -559,18 +468,6 @@ A value >0 corresponds to a maximum allowed caching time in seconds.
 This value should not exceed one year (RFC 2616, Section 14.21).
 A value of 0 will send "do not cache" headers for all static files.
 For values <0 and values >31622400, the behavior is undefined.
-
-### strict\_transport\_security\_max\_age
-
-Set the `Strict-Transport-Security` header, and set the `max-age` value.
-This instructs web browsers to interact with the server only using HTTPS,
-never by HTTP. If set, it will be sent for every request handled directly
-by the server, except scripts (CGI, Lua, ..) and callbacks. They must 
-send HTTP headers on their own.
-
-The time is specified in seconds. If this configuration is not set, 
-or set to -1, no `Strict-Transport-Security` header will be sent.
-For values <-1 and values >31622400, the behavior is undefined.
 
 ### decode\_url `yes`
 URL encoded request strings are decoded in the server, unless it is disabled
@@ -637,68 +534,9 @@ This option can be used to enable or disable the use of the Linux `sendfile` sys
 ### case\_sensitive `no`
 This option can be uset to enable case URLs for Windows servers. It is only available for Windows systems. Windows file systems are not case sensitive, but they still store the file name including case. If this option is set to `yes`, the comparison for URIs and Windows file names will be case sensitive.
 
-### allow\_index\_script\_resource `no`
-Index scripts (like `index.cgi` or `index.lua`) may have script handled resources.
-
-It this feature is activated, that /some/path/file.ext might be handled by:
-  1. /some/path/file.ext (with PATH\_INFO='/', if ext = cgi)
-  2. /some/path/index.lua with mg.request\_info.path\_info='/file.ext'
-  3. /some/path/index.cgi with PATH\_INFO='/file.ext'
-  4. /some/path/index.php with PATH\_INFO='/file.ext'
-  5. /some/index.lua with mg.request\_info.path\_info=='/path/file.ext'
-  6. /some/index.cgi with PATH\_INFO='/path/file.ext'
-  7. /some/index.php with PATH\_INFO='/path/file.ext'
-  8. /index.lua with mg.request\_info.path\_info=='/some/path/file.ext'
-  9. /index.cgi with PATH\_INFO='/some/path/file.ext'
-  10. /index.php with PATH\_INFO='/some/path/file.ext'
-
-Note: This example is valid, if the default configuration values for `index_files`, `cgi_pattern` and `lua_script_pattern` are used, and the server is built with CGI and Lua support enabled.
-
-If this feature is not activated, only the first file (/some/path/file.cgi) will be accepted.
-
-Note: This parameter affects only index scripts. A path like /here/script.cgi/handle/this.ext will call /here/script.cgi with PATH\_INFO='/handle/this.ext', no matter if this option is set to `yes` or `no`. 
-
-This feature can be used to completely hide the script extension from the URL.
-
-### additional\_header
-Send additional HTTP response header line for every request.
-The full header line including key and value must be specified, excluding the carriage return line feed.
-
-Example (used as command line option): 
-`-additional_header "X-Frame-Options: SAMEORIGIN"`
-
-This option can be specified multiple times. All specified header lines will be sent.
-
-## Options from `main.c`
-
-The following options are supported in `main.c`, the additional source file for
-the stand-alone executable. These options are not supported by other applications
-embedding `civetweb.c`, unless they are added explicitly.
-
-The options "title", "icon" and "website" are 
-
-### title
-Use the configured string as a server name.  For Windows, this will be shown as
-the window title.
-
-### icon
-For Windows, show this icon file in the systray, replacing the CivetWeb standard
-icon.  This option has no effect for Linux.
-
-### website
-For Windows, use this website as a link in the systray, replacing the default
-link for CivetWeb.
-
-### add\_domain
-Option to load an additional configuration file, specifying an additional domain
-to host.  To add multiple additional domains, use the add\_domain option 
-multiple times with one configuration file for each domain.  
-A domain configuration file may have the same options as the main server, with
-some exceptions.  The options are passed to the `mg_start_domain` API function.
-
 
 # Lua Scripts and Lua Server Pages
-Pre-built Windows and Mac CivetWeb binaries have built-in Lua scripting
+Pre-built Windows and Mac civetweb binaries have built-in Lua scripting
 support as well as support for Lua Server Pages.
 
 Lua scripts (default extension: *.lua) use plain Lua syntax.
@@ -723,32 +561,17 @@ page, one can write:
       URI is <?=mg.request_info.uri?>
     </p>
 
-From version 1.11, CivetWeb supports "Kepler Syntax" in addition to the
-traditional Lua pages syntax of CivetWeb. Kepler Syntax uses `<?lua ?>`
-or `<% %>` blocks for script elements (corresponding to `<? ?>` above)
-and `<?lua= ?>` or `<%= %>` for variable content (corresponding to `<?= ?>`).
+Lua is known for it's speed and small size. Civetweb currently uses Lua
+version 5.2.4. The documentation for it can be found in the
+[Lua 5.2 reference manual](http://www.lua.org/manual/5.2/).
 
-    <ul>
-       <% for key, value in pairs(mg.request_info) do %>
-       <li> <%= key %>: <%= value %> </li>
-       <% end %>
-    </ul>
-    
-Currently the extended "Kepler Syntax" is available only for HTML (see 
-note on HTTP headers below).
-
-Lua is known for it's speed and small size. The default Lua version for
-CivetWeb is Lua 5.2.4. The documentation for it can be found in the
-[Lua 5.2 reference manual](http://www.lua.org/manual/5.2/). However,
-CivetWeb can be built with Lua 5.1, 5.2, 5.3, 5.4 (currently pre-release)
-and LuaJIT.
 
 Note that this example uses function `mg.write()`, which sends data to the
 web client. Using `mg.write()` is the way to generate web content from inside
 Lua code. In addition to `mg.write()`, all standard Lua library functions
 are accessible from the Lua code (please check the reference manual for
 details). Lua functions working on files (e.g., `io.open`) use a path
-relative to the working path of the CivetWeb process. The web server content
+relative to the working path of the civetweb process. The web server content
 is located in the path `mg.document_root`.
 Information on the request is available in the `mg.request_info`
 object, like the request method, all HTTP headers, etcetera.
@@ -759,60 +582,51 @@ is an example for a plain Lua script.
 [page2.lp](https://github.com/civetweb/civetweb/blob/master/test/page2.lp)
 is an example for a Lua Server Page.
 
-[page4kepler.lp](https://github.com/civetweb/civetweb/blob/master/test/page4kepler.lp)
-is a Lua Server Page showing "Kepler Syntax" in addition to traditional CivetWeb
-Lua Server Pages syntax.
-
-These examples show the content of the `mg.request_info` object as the page
+Both examples show the content of the `mg.request_info` object as the page
 content. Please refer to `struct mg_request_info` definition in
-[CivetWeb.h](https://github.com/civetweb/civetweb/blob/master/include/civetweb.h)
+[civetweb.h](https://github.com/civetweb/civetweb/blob/master/include/civetweb.h)
 to see additional information on the elements of the `mg.request_info` object.
 
-CivetWeb also provides access to the [SQlite3 database](http://www.sqlite.org/)
+Civetweb also provides access to the [SQlite3 database](http://www.sqlite.org/)
 through the [LuaSQLite3 interface](http://lua.sqlite.org/index.cgi/doc/tip/doc/lsqlite3.wiki)
 in Lua. Examples are given in
 [page.lua](https://github.com/civetweb/civetweb/blob/master/test/page.lua) and
 [page.lp](https://github.com/civetweb/civetweb/blob/master/test/page.lp).
 
 
-
-CivetWeb exports the following functions to Lua:
+Civetweb exports the following functions to Lua:
 
 mg (table):
 
-    mg.read()                   -- reads a chunk from POST data, returns it as a string
-    mg.write(str)               -- writes string to the client
-    mg.include(filename, [pathtype]) -- include another Lua Page file (Lua Pages only)
-                                -- pathtype can be "abs", "rel"/"file" or "virt[ual]"
-                                -- like defined for SSI #include
-    mg.redirect(uri)            -- internal redirect to a given URI
-    mg.onerror(msg)             -- error handler, can be overridden
-    mg.version                  -- a string that holds CivetWeb version
-    mg.document_root            -- a string that holds the document root directory
-    mg.auth_domain              -- a string that holds the HTTP authentication domain
-    mg.get_var(str, varname)    -- extract variable from (query) string
-    mg.get_cookie(str, cookie)  -- extract cookie from a string
-    mg.get_mime_type(filename)  -- get MIME type of a file
-    mg.get_info(infotype)       -- get server status information
-    mg.send_file(filename)      -- send a file, including all required HTTP headers
-    mg.send_file_body(filename) -- send a file, excluding HTTP headers
-    mg.url_encode(str)          -- URL encode a string
-    mg.url_decode(str, [form])  -- URL decode a string. If form=true, replace + by space.
-    mg.base64_encode(str)       -- BASE64 encode a string
-    mg.base64_decode(str)       -- BASE64 decode a string
-    mg.md5(str)                 -- return the MD5 hash of a string
-    mg.keep_alive(bool)         -- allow/forbid to use http keep-alive for this request
-    mg.request_info             -- a table with the following request information
-         .remote_addr           -- IP address of the client as string
-         .remote_port           -- remote port number
-         .server_port           -- server port number
-         .request_method        -- HTTP method (e.g.: GET, POST)
-         .http_version          -- HTTP protocol version (e.g.: 1.1)
-         .uri                   -- resource name
-         .query_string          -- query string if present, nil otherwise
-         .script_name           -- name of the Lua script
-         .https                 -- true if accessed by https://, false otherwise
-         .remote_user           -- user name if authenticated, nil otherwise
+    mg.read()                  -- reads a chunk from POST data, returns it as a string
+    mg.write(str)              -- writes string to the client
+    mg.include(path)           -- sources another Lua file
+    mg.redirect(uri)           -- internal redirect to a given URI
+    mg.onerror(msg)            -- error handler, can be overridden
+    mg.version                 -- a string that holds Civetweb version
+    mg.document_root           -- a string that holds the document root directory
+    mg.auth_domain             -- a string that holds the HTTP authentication domain
+    mg.get_var(str, varname)   -- extract variable from (query) string
+    mg.get_cookie(str, cookie) -- extract cookie from a string
+    mg.get_mime_type(filename) -- get MIME type of a file
+    mg.send_file(filename)     -- send a file, including MIME type
+    mg.url_encode(str)         -- URL encode a string
+    mg.url_decode(str, [form]) -- URL decode a string. If form=true, replace + by space.
+    mg.base64_encode(str)      -- BASE64 encode a string
+    mg.base64_decode(str)      -- BASE64 decode a string
+    mg.md5(str)                -- return the MD5 hash of a string
+    mg.keep_alive(bool)        -- allow/forbid to use http keep-alive for this request
+    mg.request_info            -- a table with the following request information
+         .remote_addr          -- IP address of the client as string
+         .remote_port          -- remote port number
+         .server_port          -- server port number
+         .request_method       -- HTTP method (e.g.: GET, POST)
+         .http_version         -- HTTP protocol version (e.g.: 1.1)
+         .uri                  -- resource name
+         .query_string         -- query string if present, nil otherwise
+         .script_name          -- name of the Lua script
+         .https                -- true if accessed by https://, false otherwise
+         .remote_user          -- user name if authenticated, nil otherwise
 
 connect (function):
 
@@ -834,48 +648,20 @@ connect (function):
     end
 
 
-All filename arguments are either absolute or relative to the CivetWeb working
-directory (not the document root or the Lua script/page file).
-    
-To serve a Lua Page, CivetWeb creates a Lua context. That context is used for
+**IMPORTANT: Civetweb does not send HTTP headers for Lua pages. Therefore,
+every Lua Page must begin with a HTTP reply line and headers**, like this:
+
+    <? print('HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n') ?>
+    <html><body>
+      ... the rest of the web page ...
+
+To serve a Lua Page, civetweb creates a Lua context. That context is used for
 all Lua blocks within the page. That means, all Lua blocks on the same page
 share the same context. If one block defines a variable, for example, that
-variable is visible in all blocks that follow.
-
-
-**Important note on HTTP headers:**
-
-Lua scripts MUST send HTTP headers themselves, e.g.:
-
-    mg.write('HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n')
-
-Lua Server Pages CAN send HTTP reply headers, like this:
-
-    HTTP/1.0 200 OK
-    Content-Type: text/html
-        
-    <html><body>
-      ... the rest of the web page ...
-
-or using Lua code:
-
-    <? mg.write('HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n') ?>
-    <html><body>
-      ... the rest of the web page ...
-
-or Lua Server Pages generating HTML content MAY skip the HTTP header lines.
-In this case, CivetWeb automatically creates a "200 OK"/"Content-Type: text/html"
-reply header. In this case, the document should start with "<!DOCTYPE html>" 
-or "<html".
-
-Currently the extended "Kepler Syntax" is available only for text/html pages
-not sending their own HTTP headers. Thus, "Kepler Syntax" can only be used for
-HTML pages, while traditional CivetWeb syntax can be used to send a content-type
-header and generate any kind of file.
-
+variable is visible in all block that follow.
 
 ## Websockets for Lua
-CivetWeb offers support for websockets in Lua as well. In contrast to plain
+Civetweb offers support for websockets in Lua as well. In contrast to plain
 Lua scripts and Lua server pages, Lua websocket scripts are shared by all clients.
 
 Lua websocket scripts must define a few functions:
@@ -895,47 +681,12 @@ An example is shown in
 [websocket.lua](https://github.com/civetweb/civetweb/blob/master/test/websocket.lua).
 
 
-# Using CGI
-
-Unlike some other web servers, CivetWeb does not require CGI scripts to be located
-in a special directory. CGI scripts files are recognized by the file name pattern
-and can be anywhere.
-
-When using CGI, make sure your CGI file names match the `cgi\_pattern` parameter
-configured for the server.
-Furthermore, you must either configure a `cgi\_interpreter` to be used for all
-CGI scripts, or all scripts must start with `#!` followed by the CGI
-interpreter executable, e.g.: `#!/path/to/perl.exe` or `#!/bin/sh`.
-
-See `cgi\_pattern` and `cgi\_interpreter` for more details.
-
-It is possible to disable CGI completely by building the server with
-the `NO\_CGI` define. Setting this define is required for operating 
-systems not supporting `fork/exec` or `CreateProcess` (since CGI is
-based on creating child processes, it will not be available on such
-operating systems for principle reasons).
-
-Every CGI request will spawn a new child process. Data sent from the
-HTTP client to the server is passed to stdin of the child process,
-while data written to stdout by the child process is sent back to the
-HTTP client.
-
-In case a CGI script cannot handle a particular request, it might
-write a short error message to stderr instead of writing to stdout.
-This error message is added to the server error log.
-
-A script should not write to stderr after writing a reply header
-to stdout. In case CGI libraries are writing to stderr (e.g., for
-logging/debugging), the CGI script should redirect stderr to a 
-user defined log file at the beginning of the script.
-
-
 # Common Problems
 - PHP doesn't work - getting empty page, or 'File not found' error. The
   reason for that is wrong paths to the interpreter. Remember that with PHP,
   the correct interpreter is `php-cgi.exe` (`php-cgi` on UNIX).
   Solution: specify the full path to the PHP interpreter, e.g.:
-    `CivetWeb -cgi_interpreter /full/path/to/php-cgi`
+    `civetweb -cgi_interpreter /full/path/to/php-cgi`
 
 - `php-cgi` is unavailable, for example on Mac OS X. As long as the `php` binary is installed, you can run CGI programs in command line mode (see the example below). Note that in this mode, `$_GET` and friends will be unavailable, and you'll have to parse the query string manually using [parse_str](http://php.net/manual/en/function.parse-str.php) and the `QUERY_STRING` environmental variable.
 
@@ -945,14 +696,13 @@ user defined log file at the beginning of the script.
         echo "Hello World!\n";
         ?>
 
-- CivetWeb fails to start. If CivetWeb exits immediately when started, this
+- Civetweb fails to start. If Civetweb exits immediately when started, this
   usually indicates a syntax error in the configuration file
   (named `civetweb.conf` by default) or the command-line arguments.
-  Syntax checking is omitted from CivetWeb to keep its size low. However,
+  Syntax checking is omitted from Civetweb to keep its size low. However,
   the Manual should be of help. Note: the syntax changes from time to time,
   so updating the config file might be necessary after executable update.
 
 - Embedding with OpenSSL on Windows might fail because of calling convention.
-  To force CivetWeb to use `__stdcall` convention, add `/Gz` compilation
+  To force Civetweb to use `__stdcall` convention, add `/Gz` compilation
   flag in Visual Studio compiler.
-

@@ -3,7 +3,6 @@ civetweb
 civetweb_test
 libcivetweb.a
 libcivetweb.so
-libcivetweb.so.*
 *-cache
 out
 *.dmg
@@ -113,8 +112,6 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
-*.VC.db
-*.VC.VC.opendb
 
 # Visual Studio profiler
 *.psess

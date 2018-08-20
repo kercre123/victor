@@ -1,4 +1,4 @@
-#!/usr/bin/env /bash
+#! /bin/bash
 set -ev
 
 # this script installs a lua / luarocks environment in .travis/lua

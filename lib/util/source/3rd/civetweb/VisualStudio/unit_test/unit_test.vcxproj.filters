@@ -18,45 +18,45 @@
     <ClInclude Include="..\..\include\civetweb.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\public_server.h">
+    <ClInclude Include="..\..\test\public_server.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\public_func.h">
+    <ClInclude Include="..\..\test\public_func.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\private_exe.h">
+    <ClInclude Include="..\..\test\private_exe.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\private.h">
+    <ClInclude Include="..\..\test\private.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\timertest.h">
+    <ClInclude Include="..\..\test\timertest.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\shared.h">
+    <ClInclude Include="..\..\test\shared.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unittest\civetweb_check.h">
+    <ClInclude Include="..\..\test\civetweb_check.h">
       <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\unittest\timertest.c">
-      <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\unittest\public_server.c">
+    <ClCompile Include="..\..\test\public_server.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\unittest\public_func.c">
+    <ClCompile Include="..\..\test\public_func.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\unittest\private.c">
+    <ClCompile Include="..\..\test\private.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\unittest\private_exe.c">
+    <ClCompile Include="..\..\test\private_exe.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\unittest\shared.c">
+    <ClCompile Include="..\..\test\timertest.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>    
+    <ClCompile Include="..\..\test\shared.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\civetweb.c">

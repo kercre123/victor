@@ -29,17 +29,10 @@ ifeq ($(WITH_LUA_VERSION), 502)
   LUA_VERSION_KNOWN = 1
 endif
 ifeq ($(WITH_LUA_VERSION), 503)
-  $(info Lua: Using version 5.3.4)
-  LUA_DIR = src/third_party/lua-5.3.4/src
+  $(info Lua: Using version 5.3.3)
+  LUA_DIR = src/third_party/lua-5.3.3/src
   LUA_SHARED_LIB_FLAG = -llua5.3
   LUA_CFLAGS = -DLUA_COMPAT_5_2 -DLUA_VERSION_MAKEFILE=503
-  LUA_VERSION_KNOWN = 1
-endif
-ifeq ($(WITH_LUA_VERSION), 504)
-  $(info Lua: Using version 5.4.0-work1)
-  LUA_DIR = src/third_party/lua-5.4.0-work1/src
-  LUA_SHARED_LIB_FLAG = -llua5.4
-  LUA_CFLAGS = -DLUA_COMPAT_5_2 -DLUA_VERSION_MAKEFILE=504
   LUA_VERSION_KNOWN = 1
 endif
 
@@ -94,20 +87,12 @@ else
     lzio.c
 
 ifeq ($(WITH_LUA_VERSION), 502)
-    LUA_SOURCE_FILES += \
-    lbitlib.c  \
+    LUA_SOURCE_FILES += lbitlib.c  \
     lcorolib.c  \
     lctype.c
 endif
 ifeq ($(WITH_LUA_VERSION), 503)
-    LUA_SOURCE_FILES += \
-    lbitlib.c  \
-    lcorolib.c  \
-    lctype.c  \
-    lutf8lib.c
-endif
-ifeq ($(WITH_LUA_VERSION), 504)
-    LUA_SOURCE_FILES += \
+    LUA_SOURCE_FILES += lbitlib.c  \
     lcorolib.c  \
     lctype.c  \
     lutf8lib.c
@@ -123,7 +108,6 @@ LUA_OBJECTS = $(LUA_SOURCES:.c=.o)
 OBJECTS += $(LUA_OBJECTS)
 CFLAGS += $(LUA_CFLAGS)
 SOURCE_DIRS = $(LUA_DIR)
-BUILD_DIRS += $(BUILD_DIR)/$(LUA_DIR)
 
 
 ifneq ($(WITH_LUA_VERSION), 501)

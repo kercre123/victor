@@ -24,9 +24,22 @@ include(AddCXXCompilerFlag)
 include(DetermineTargetArchitecture)
 include(CMakeDependentOption)
 
+# <anki>
+# Work around missing CMAKE_SIZEOF_VOID_P
+#
+# Resolves build error
+#   FindWinSock.cmake:77 (if):
+#   if given arguments:
+#     "x86_64" "STREQUAL" "AMD64" "AND" "EQUAL" "4"
+# </anki>
+if (NOT DEFINED CMAKE_SIZEOF_VOID_P)
+  include(CheckTypeSize)
+  check_type_size("void*"  CMAKE_SIZEOF_VOID_P)
+endif()
+
 # Set up the project
 project (civetweb)
-set(CIVETWEB_VERSION "1.11.0" CACHE STRING "The version of the civetweb library")
+set(CIVETWEB_VERSION "1.9.1" CACHE STRING "The version of the civetweb library")
 string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" CIVETWEB_VERSION_MATCH "${CIVETWEB_VERSION}")
 if ("${CIVETWEB_VERSION_MATCH}" STREQUAL "")
   message(FATAL_ERROR "Must specify a semantic version: major.minor.patch")
@@ -37,7 +50,7 @@ set(CIVETWEB_VERSION_PATCH "${CMAKE_MATCH_3}")
 determine_target_architecture(CIVETWEB_ARCHITECTURE)
 
 # Detect the platform reliably
-if(NOT MACOSX AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (NOT DARWIN AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    SET(DARWIN YES)
 elseif(NOT BSD AND ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     SET(FREEBSD YES)
@@ -45,21 +58,20 @@ elseif(NOT LINUX AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     SET(LINUX YES)
 endif()
 
-# CTest automation
-option(CIVETWEB_BUILD_TESTING "Enable automated testing of civetweb" OFF)
-message(STATUS "Enabling tests in the build - ${CIVETWEB_BUILD_TESTING}")
-
 # C++ wrappers
 option(CIVETWEB_ENABLE_THIRD_PARTY_OUTPUT "Shows the output of third party dependency processing" OFF)
+
+# Max Request Size
+set(CIVETWEB_MAX_REQUEST_SIZE 16384 CACHE STRING
+  "The largest amount of content bytes allowed in a request")
+set_property(CACHE CIVETWEB_MAX_REQUEST_SIZE PROPERTY VALUE ${CIVETWEB_MAX_REQUEST_SIZE})
+message(STATUS "Max Request Size - ${CIVETWEB_MAX_REQUEST_SIZE}")
 
 # Thread Stack Size
 set(CIVETWEB_THREAD_STACK_SIZE 102400 CACHE STRING
   "The stack size in bytes for each thread created")
 set_property(CACHE CIVETWEB_THREAD_STACK_SIZE PROPERTY VALUE ${CIVETWEB_THREAD_STACK_SIZE})
 message(STATUS "Thread Stack Size - ${CIVETWEB_THREAD_STACK_SIZE}")
-
-option(CIVETWEB_ENABLE_SERVER_EXECUTABLE "Enable building of the server executable" OFF)
-message(STATUS "Enabling server executable - ${CIVETWEB_ENABLE_SERVER_EXECUTABLE}")
 
 # Serve no files from the web server
 option(CIVETWEB_SERVE_NO_FILES "Configures the server to serve no static files" OFF)
@@ -86,54 +98,23 @@ message(STATUS "IP Version 6 - ${CIVETWEB_ENABLE_IPV6}")
 option(CIVETWEB_ENABLE_WEBSOCKETS "Enable websockets connections" ON)
 message(STATUS "Websockets support - ${CIVETWEB_ENABLE_WEBSOCKETS}")
 
-# Server statistics support
-option(CIVETWEB_ENABLE_SERVER_STATS "Enable server statistics" OFF)
-message(STATUS "Server statistics support - ${CIVETWEB_ENABLE_SERVER_STATS}")
-
 # Memory debugging
 option(CIVETWEB_ENABLE_MEMORY_DEBUGGING "Enable the memory debugging features" OFF)
 message(STATUS "Memory Debugging - ${CIVETWEB_ENABLE_MEMORY_DEBUGGING}")
-
-# ASAN in debug mode (-fsanitize=address, etc)
-# <anki> 
-# Address sanitization OFF unless enabled
-#
-# Resolves link errors:
-#   undefined reference to '__ubsan_handle_sub_overflow'
-#   undefined reference to '__ubsan_handle_out_of_bounds'
-#  ...
-# </anki>
-option(CIVETWEB_ENABLE_ASAN "Enable ASAN in debug mode" OFF)
-message(STATUS "ASAN in debug mode - ${CIVETWEB_ENABLE_ASAN}")
-
-# ARCH flag
-option(CIVETWEB_ARCH "Force 32/64 bit architecture" OFF)
-message(STATUS "Force x32 / x64 architecture - ${CIVETWEB_ARCH}")
 
 # LUA CGI support
 option(CIVETWEB_ENABLE_LUA "Enable Lua CGIs" OFF)
 message(STATUS "Lua CGI support - ${CIVETWEB_ENABLE_LUA}")
 
-# Enable installing CivetWeb executables
-option(CIVETWEB_INSTALL_EXECUTABLE "Enable installing CivetWeb executable" OFF)
-mark_as_advanced(FORCE CIVETWEB_INSTALL_EXECUTABLE) # Advanced users can disable
-message(STATUS "Executable installation - ${CIVETWEB_INSTALL_EXECUTABLE}")
-
 # Allow builds to complete with warnings (do not set -Werror)
-# CivetWeb Linux support is stable:
-# Builds for GCC 4.6 and clang 3.4 are free from warnings.
-# However, GCC introduced a couple of new, partially idiotic warnings,
-# that can not be disabled using a #pragma directive.
-# It seems unreasonable to have all GCC versions warning free, but only
-# some selected ones.
-option(CIVETWEB_ALLOW_WARNINGS "Do not stop build if there are warnings" ON)
-message(STATUS "Build if there are warnings - ${CIVETWEB_ALLOW_WARNINGS}")
-
-if (NOT CIVETWEB_ALLOW_WARNINGS)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    message(FATAL_ERROR "Cannot compile with warning as errors, until this GCC bug is solved: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53431")
-  endif()
+if (LINUX)
+# CivetWeb Linux support is stable: Builds must be free from warnings.
+  option(CIVETWEB_ALLOW_WARNINGS "Do not stop build if there are warnings" OFF)
+else()
+# CivetWeb Linux support for other systems is in a setup phase.
+  option(CIVETWEB_ALLOW_WARNINGS "Do not stop build if there are warnings" ON)
 endif()
+message(STATUS "Build if there are warnings - ${CIVETWEB_ALLOW_WARNINGS}")
 
 # Link to the shared LUA library
 cmake_dependent_option(
@@ -221,18 +202,6 @@ message(STATUS "Duktape CGI support - ${CIVETWEB_ENABLE_DUKTAPE}")
 option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" OFF)
 message(STATUS "SSL support - ${CIVETWEB_ENABLE_SSL}")
 
-# OpenSSL 1.1 API
-option(CIVETWEB_SSL_OPENSSL_API_1_1 "Use the OpenSSL 1.1 API" OFF)
-message(STATUS "Compile for OpenSSL 1.1 API - ${CIVETWEB_SSL_OPENSSL_API_1_1}")
-
-# Dynamically load or link the SSL libraries
-cmake_dependent_option(
-  CIVETWEB_ENABLE_SSL_DYNAMIC_LOADING "Dynamically loads the SSL library rather than linking it" ON
-  CIVETWEB_ENABLE_SSL OFF)
-if (CIVETWEB_ENABLE_SSL)
-  message(STATUS "Dynamically load SSL libraries - ${CIVETWEB_ENABLE_SSL_DYNAMIC_LOADING}")
-endif()
-
 # <anki>
 # Link-time optimization OFF unless enabled
 #
@@ -244,6 +213,17 @@ endif()
 option(CIVETWEB_ALLOW_LTO "Allow link-time optimization" OFF)
 message(STATUS "Allow link-time optimization - ${CIVETWEB_ALLOW_LTO}")
 
+# <anki> 
+# Address sanitization OFF unless enabled
+#
+# Resolves link errors:
+#   undefined reference to '__ubsan_handle_sub_overflow'
+#   undefined reference to '__ubsan_handle_out_of_bounds'
+#  ...
+# </anki>
+option(CIVETWEB_ALLOW_SANITIZE "Allow address sanitization" OFF)
+message(STATUS "Allow address sanitization - ${CIVETWEB_ALLOW_SANITIZE}")
+
 # <anki>
 # Unit tests OFF unless enabled
 #
@@ -252,6 +232,14 @@ message(STATUS "Allow link-time optimization - ${CIVETWEB_ALLOW_LTO}")
 # </anki>
 option(CIVETWEB_BUILD_TESTING "Enable unit tests" OFF)
 message(STATUS "Enable unit tests - ${CIVETWEB_BUILD_TESTING}")
+
+# Dynamically load or link the SSL libraries
+cmake_dependent_option(
+  CIVETWEB_ENABLE_SSL_DYNAMIC_LOADING "Dynamically loads the SSL library rather than linking it" ON
+  CIVETWEB_ENABLE_SSL OFF)
+if (CIVETWEB_ENABLE_SSL)
+  message(STATUS "Dynamically load SSL libraries - ${CIVETWEB_ENABLE_SSL_DYNAMIC_LOADING}")
+endif()
 
 # Third Party Download location
 set(CIVETWEB_THIRD_PARTY_DIR "${CMAKE_BINARY_DIR}/third_party" CACHE STRING
@@ -311,44 +299,35 @@ if ("${CIVETWEB_C_STANDARD}" STREQUAL "auto")
 else()
   add_c_compiler_flag(-std=${CIVETWEB_C_STANDARD})
 endif()
-
-#Warnings: enable everything
 add_c_compiler_flag(-Wall)
 add_c_compiler_flag(-Wextra)
 add_c_compiler_flag(-Wshadow)
 add_c_compiler_flag(-Wconversion)
 add_c_compiler_flag(-Wmissing-prototypes)
 add_c_compiler_flag(-Weverything)
-add_c_compiler_flag(-Wparentheses)
-add_c_compiler_flag(/W4) # VisualStudio highest warning level
-
-#Warnings: Disable some warnings
-add_c_compiler_flag(-Wno-padded) # padding in structures by compiler
-add_c_compiler_flag(-Wno-unused-macros) # so what?
-Check_C_Compiler_Flag( HAVE_NO_RESERVED_ID_MACROS -Wno-reserved-id-macros)
-if (HAVE_NO_RESERVED_ID_MACROS)
-add_c_compiler_flag(-Wno-reserved-id-macros) # for system headers
-endif (HAVE_NO_RESERVED_ID_MACROS)
-add_c_compiler_flag(-Wno-format-nonliteral) # printf(myFormatStringVar, ...)
-add_c_compiler_flag(-Wno-date-time) # using __DATE__ once
-add_c_compiler_flag(-Wno-cast-qual) # const cast
+add_c_compiler_flag(/W4)
+add_c_compiler_flag(-Wno-padded)
 add_c_compiler_flag(/Wd4820) # padding
-
+add_c_compiler_flag(-Wno-unused-macros)
+add_c_compiler_flag(-Wno-format-nonliteral)
+add_c_compiler_flag(-Wparentheses)
 if (MINGW)
   add_c_compiler_flag(-Wno-format)
 endif()
 if (NOT CIVETWEB_ALLOW_WARNINGS)
   add_c_compiler_flag(-Werror)
-  add_c_compiler_flag(/WX)
 # <ANKI CHANGE>
 # shawn: hide spurious warnings for civetweb on switchboard
 else ()
   add_c_compiler_flag(-Wno-missing-variable-declarations)
+  add_c_compiler_flag(-Wno-date-time)
+  add_c_compiler_flag(-Wno-cast-qual)
   add_c_compiler_flag(-Wno-shorten-64-to-32)
   add_c_compiler_flag(-Wno-comma)
-  add_c_compiler_flag(-Wno-format)
+  add_c_compiler_flag(-Wno-reserved-id-macro)
 # </ANKI CHANGE>
 endif()
+add_c_compiler_flag(/WX)
 add_c_compiler_flag(-pedantic-errors)
 add_c_compiler_flag(-fvisibility=hidden)
 add_c_compiler_flag(-fstack-protector-strong RELEASE)
@@ -357,12 +336,13 @@ if (CIVETWEB_ALLOW_LTO)
   add_c_compiler_flag(-flto RELEASE)
 endif()
 
-if (${CIVETWEB_ENABLE_ASAN})
-add_c_compiler_flag(-fsanitize=undefined DEBUG)
-add_c_compiler_flag(-fsanitize=address DEBUG)
+if (CIVETWEB_ALLOW_SANITIZE)
+  add_c_compiler_flag(-fsanitize=undefined DEBUG)
+  add_c_compiler_flag(-fsanitize=address DEBUG)
+endif()
+
 if (HAVE_C_FLAG_FSANITIZE_ADDRESS)
   add_c_compiler_flag(-static-asan DEBUG)
-endif()
 endif()
 add_c_compiler_flag(-fstack-protector-all DEBUG)
 if (MINGW)
@@ -420,27 +400,26 @@ if (CIVETWEB_ENABLE_CXX)
   endif()
   if (NOT CIVETWEB_ALLOW_WARNINGS)
     add_cxx_compiler_flag(-Werror)
-    add_cxx_compiler_flag(/WX)
   # <ANKI CHANGE>
   # shawn: hide spurious warnings for civetweb on switchboard
   else ()
     add_cxx_compiler_flag(-Wno-missing-variable-declarations)
     add_cxx_compiler_flag(-Wno-date-time)
+    add_cxx_compiler_flag(-Wno-cast-qual)
     add_cxx_compiler_flag(-Wno-shorten-64-to-32)
     add_cxx_compiler_flag(-Wno-comma)
-    add_cxx_compiler_flag(-Wno-format)
+    add_cxx_compiler_flag(-Wno-reserved-id-macro)
   # </ANKI CHANGE>
   endif()
+  add_cxx_compiler_flag(/WX)
   add_cxx_compiler_flag(-pedantic-errors)
   add_cxx_compiler_flag(-fvisibility=hidden)
   add_cxx_compiler_flag(-fstack-protector-strong RELEASE)
   add_cxx_compiler_flag(-flto RELEASE)
-  if (${CIVETWEB_ENABLE_ASAN})
   add_cxx_compiler_flag(-fsanitize=undefined DEBUG)
   add_cxx_compiler_flag(-fsanitize=address DEBUG)
   if (HAVE_CXX_FLAG_FSANITIZE_ADDRESS)
     add_cxx_compiler_flag(-static-asan DEBUG)
-  endif()
   endif()
   add_cxx_compiler_flag(-fstack-protector-all DEBUG)
   if (MINGW)
@@ -455,17 +434,12 @@ endif()
 # Set up the definitions
 if (${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug")
   add_definitions(-DDEBUG)
-  add_definitions(-O0)
-  add_definitions(-g)
 endif()
 if (CIVETWEB_ENABLE_IPV6)
   add_definitions(-DUSE_IPV6)
 endif()
 if (CIVETWEB_ENABLE_WEBSOCKETS)
   add_definitions(-DUSE_WEBSOCKET)
-endif()
-if (CIVETWEB_ENABLE_SERVER_STATS)
-  add_definitions(-DUSE_SERVER_STATS)
 endif()
 if (CIVETWEB_SERVE_NO_FILES)
   add_definitions(-DNO_FILES)
@@ -497,26 +471,17 @@ else()
     add_definitions(-DCRYPTO_LIB="${CIVETWEB_SSL_CRYPTO_LIB}")
   endif()
 endif()
-if(CIVETWEB_SSL_OPENSSL_API_1_1)
-  add_definitions(-DOPENSSL_API_1_1)
-endif()
 add_definitions(-DUSE_STACK_SIZE=${CIVETWEB_THREAD_STACK_SIZE})
-
-# Set 32 or 64 bit environment
-if (${CMAKE_ARCH} MATCHES "[Xx]86")
-add_c_compiler_flag(-m32)
-endif()
-if (${CMAKE_ARCH} MATCHES "[Xx]64")
-add_c_compiler_flag(-m64)
-endif()
-# TODO: add support for -march
+add_definitions(-DMAX_REQUEST_SIZE=${CIVETWEB_MAX_REQUEST_SIZE})
 
 # Build the targets
 add_subdirectory(src)
 
 # Enable the testing of the library/executable
 if (CIVETWEB_BUILD_TESTING)
+
   include(CTest)
+
   # Check unit testing framework Version
   set(CIVETWEB_CHECK_VERSION 0.11.0 CACHE STRING
     "The version of Check unit testing framework to build and include statically")
@@ -533,13 +498,13 @@ if (CIVETWEB_BUILD_TESTING)
   mark_as_advanced(CIVETWEB_CHECK_MD5_HASH)
 
   # Build the testing
-  add_subdirectory(unittest)
+  add_subdirectory(test)
 endif()
 
 # Set up CPack
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_VENDOR "civetweb Contributors")
-set(CPACK_PACKAGE_CONTACT "civetweb@users.noreply.github.com")
+set(CPACK_PACKAGE_CONTACT "civetweb@github.com")
 set(CPACK_PACKAGE_VERSION_MAJOR "${CIVETWEB_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${CIVETWEB_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${CIVETWEB_VERSION_PATCH}")
@@ -570,6 +535,5 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_PACKAGE_DEPENDS}")
 include(CPack)
 
 # <anki> Declare alias for external use </anki>
-add_library(civetweb ALIAS civetweb-c-library)
-anki_build_target_license(civetweb-c-library "civetweb,${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
+add_library(civetweb ALIAS c-library)
 

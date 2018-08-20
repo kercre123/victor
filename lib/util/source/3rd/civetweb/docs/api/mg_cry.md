@@ -6,7 +6,7 @@
 
 | Parameter | Type | Description |
 | :--- | :--- | :--- |
-|**`conn`**|`const struct mg_connection *`|The connection on which a problem occurred|
+|**`conn`**|`const struct mg_connection *`|The connection on which a problem occured|
 |**`fmt`**|`const char *`|Format string without a line return|
 |**`...`**|*various*|Parameters depending on the format string|
 

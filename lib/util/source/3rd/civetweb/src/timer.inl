@@ -1,6 +1,6 @@
 /* This file is part of the CivetWeb web server.
  * See https://github.com/civetweb/civetweb/
- * (C) 2014-2018 by the CivetWeb authors, MIT license.
+ * (C) 2014-2017 by the CivetWeb authors, MIT license.
  */
 
 #if !defined(MAX_TIMERS)
@@ -24,7 +24,7 @@ struct ttimers {
 };
 
 
-TIMER_API double
+static double
 timer_getcurrenttime(void)
 {
 #if defined(_WIN32)
@@ -51,7 +51,7 @@ timer_getcurrenttime(void)
 }
 
 
-TIMER_API int
+static int
 timer_add(struct mg_context *ctx,
           double next_time,
           double period,
@@ -158,7 +158,7 @@ timer_thread_run(void *thread_func_param)
  * A faster loop (smaller sleep value) increases CPU load,
  * a slower loop (higher sleep value) decreases timer accuracy.
  */
-#if defined(_WIN32)
+#ifdef _WIN32
 		Sleep(10);
 #else
 		usleep(10000);
@@ -166,14 +166,11 @@ timer_thread_run(void *thread_func_param)
 
 		d = timer_getcurrenttime();
 	}
-
-	pthread_mutex_lock(&ctx->timers->mutex);
 	ctx->timers->timer_count = 0;
-	pthread_mutex_unlock(&ctx->timers->mutex);
 }
 
 
-#if defined(_WIN32)
+#ifdef _WIN32
 static unsigned __stdcall timer_thread(void *thread_func_param)
 {
 	timer_thread_run(thread_func_param);
@@ -183,38 +180,18 @@ static unsigned __stdcall timer_thread(void *thread_func_param)
 static void *
 timer_thread(void *thread_func_param)
 {
-	struct sigaction sa;
-
-	/* Ignore SIGPIPE */
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &sa, NULL);
-
 	timer_thread_run(thread_func_param);
 	return NULL;
 }
 #endif /* _WIN32 */
 
 
-TIMER_API int
+static int
 timers_init(struct mg_context *ctx)
 {
-	/* Initialize timers data structure */
-	ctx->timers =
-	    (struct ttimers *)mg_calloc_ctx(sizeof(struct ttimers), 1, ctx);
+	ctx->timers = (struct ttimers *)mg_calloc(sizeof(struct ttimers), 1);
+	(void)pthread_mutex_init(&ctx->timers->mutex, NULL);
 
-	if (!ctx->timers) {
-		return -1;
-	}
-
-	/* Initialize mutex */
-	if (0 != pthread_mutex_init(&ctx->timers->mutex, NULL)) {
-		mg_free((void *)(ctx->timers));
-		return -1;
-	}
-
-	/* For some systems timer_getcurrenttime does some initialization
-	 * during the first call. Call it once now, ignore the result. */
 	(void)timer_getcurrenttime();
 
 	/* Start timer thread */
@@ -224,23 +201,13 @@ timers_init(struct mg_context *ctx)
 }
 
 
-TIMER_API void
+static void
 timers_exit(struct mg_context *ctx)
 {
 	if (ctx->timers) {
 		pthread_mutex_lock(&ctx->timers->mutex);
 		ctx->timers->timer_count = 0;
-
-		mg_join_thread(ctx->timers->threadid);
-
-		/* TODO: Do we really need to unlock the mutex, before
-		 * destroying it, if it's destroyed by the thread currently
-		 * owning the mutex? */
-		pthread_mutex_unlock(&ctx->timers->mutex);
 		(void)pthread_mutex_destroy(&ctx->timers->mutex);
 		mg_free(ctx->timers);
 	}
 }
-
-
-/* End of timer.inl */
