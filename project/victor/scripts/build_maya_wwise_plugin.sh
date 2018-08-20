@@ -18,7 +18,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Print location of plugin .bundle
-PLUGIN_BUILD_PATH="${TOPLEVEL}/_build/mac/Release/lib/AnkiMayaWwisePlugin.bundle"
+PLUGIN_BUILD_PATH="${TOPLEVEL}/_build/mac/Release/lib/AnkiMayaWWisePlugIn.bundle"
 echo "Maya Wwise Plugin build success!!"
 echo "Plugin is located at '${PLUGIN_BUILD_PATH}'"
 
