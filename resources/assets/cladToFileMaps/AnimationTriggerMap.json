@@ -353,15 +353,15 @@
   },
   {
     "CladEvent": "DockEndDefault",
-    "AnimName": "ag_driving01_enddriving"
+    "AnimName": "ag_cubedocking_drive_getout"
   },
   {
     "CladEvent": "DockLoopDefault",
-    "AnimName": "ag_driving01_drivingloop"
+    "AnimName": "ag_cubedocking_drive_loop"
   },
   {
     "CladEvent": "DockStartDefault",
-    "AnimName": "ag_driving01_startdriving"
+    "AnimName": "ag_cubedocking_drive_getin"
   },
   {
     "CladEvent": "DriveEndAngry",
