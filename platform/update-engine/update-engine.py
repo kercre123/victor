@@ -14,10 +14,12 @@ import zlib
 import shutil
 import ConfigParser
 import socket
+import re
 from select import select
 from hashlib import sha256
 from collections import OrderedDict
 from fcntl import fcntl, F_GETFL, F_SETFL
+from distutils.version import LooseVersion
 
 sys.path.append("/usr/bin")
 import update_payload
@@ -585,6 +587,23 @@ def handle_factory(manifest, tar_stream):
         with open(os.path.join(BOOT_DEVICE, "aboot"), "wb") as dst:
             dst.write(src.read())
 
+def validate_new_os_version(current_os_version, new_os_version, cmdline):
+    allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
+    if allow_downgrade and "anki.dev" in cmdline:
+        return
+    os_version_regex = re.compile('^\d{1,}\.\d{1,}\.\d{1,}(d|ud)?$')
+    m = os_version_regex.match(new_os_version)
+    if not m:
+        die(216, "OS version " + new_os_version + " does not match regular expression")
+    new_os_version_suffix = m.groups()[0]
+    m = os_version_regex.match(current_os_version)
+    current_os_version_suffix = m.groups()[0]
+    if new_os_version_suffix != current_os_version_suffix:
+        die(216, "Update from " + current_os_version + " to " + new_os_version + " not allowed")
+    if LooseVersion(new_os_version) < LooseVersion(current_os_version):
+        die(216, "Downgrade from " + current_os_version + " to " + new_os_version + " not allowed")
+    return
+
 def update_from_url(url):
     "Updates the inactive slot from the given URL"
     # Figure out slots
@@ -599,7 +618,8 @@ def update_from_url(url):
     stream = open_url_stream(url)
     content_length = stream.info().getheaders("Content-Length")[0]
     write_status(EXPECTED_DOWNLOAD_SIZE_FILE, content_length)
-    next_boot_os_version = get_prop("ro.anki.version")
+    current_os_version = get_prop("ro.anki.version")
+    next_boot_os_version = current_os_version
     is_factory_update = False
     with make_tar_stream(stream) as tar_stream:
         # Get the manifest
@@ -625,6 +645,7 @@ def update_from_url(url):
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
         next_boot_os_version = manifest.get("META", "update_version")
+        validate_new_os_version(current_os_version, next_boot_os_version, cmdline)
         if DEBUG:
             print("Updating to version {}".format(next_boot_os_version))
         if "anki.dev" in cmdline:

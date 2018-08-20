@@ -27,7 +27,7 @@ Codes in this document must not change after release, they are add only.
 | 213  | Wrong serial number                   |
 | 214  | Dev / Prod mismatch                   |
 | 215  | Socket Timeout (network stall)        |
-| 216  |                                       |
+| 216  | Downgrade not allowed                 |
 | 217  |                                       |
 | 218  |                                       |
 | 219  | Other Exception                       |
