@@ -1,8 +1,10 @@
 package robot
 
 import (
+	"anki/log"
 	"encoding/binary"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -27,9 +29,14 @@ func ReadESN() (string, error) {
 	return fmt.Sprintf("%08x", numEsn), nil
 }
 
+var osVersion string
+
 // OSVersion returns a string representation of the OS version, like:
 // v0.10.1252d_os0.10.1252d-79470cd-201806271633
 func OSVersion() string {
+	if osVersion != "" {
+		return osVersion
+	}
 	runCmd := func(cmd string, params ...string) string {
 		buf, err := exec.Command(cmd, params...).Output()
 		if err != nil {
@@ -43,7 +50,8 @@ func OSVersion() string {
 
 	for _, arg := range propArgs {
 		if str := runCmd("getprop", arg); str != "" {
-			return str
+			osVersion = str
+			return osVersion
 		}
 	}
 	return ""
@@ -58,4 +66,18 @@ func OSUserAgent() grpc.DialOption {
 		return nil
 	}
 	return grpc.WithUserAgent("Victor/" + ver)
+}
+
+var bootID string
+
+// BootID returns the unique ID generated on each robot bootup
+func BootID() string {
+	if bootID == "" {
+		if buf, err := ioutil.ReadFile("/proc/sys/kernel/random/boot_id"); err != nil {
+			log.IfVicos("Error reading boot ID:", err)
+		} else {
+			bootID = string(buf)
+		}
+	}
+	return bootID
 }

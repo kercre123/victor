@@ -1,3 +1,5 @@
+// +build vicos
+
 package log
 
 import "fmt"
@@ -23,4 +25,8 @@ func Printf(format string, a ...interface{}) (int, error) {
 	str := fmt.Sprintf(format, a...)
 	ret := C.android_log(C.ANDROID_LOG_INFO, C.CString(Tag), C.CString(str))
 	return int(ret), nil
+}
+
+func init() {
+	logVicos = Println
 }

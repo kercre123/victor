@@ -56,6 +56,7 @@ func (strm *Streamer) openStream(creds credentials.PerRPCCredentials, sessionID 
 	}
 	opts = append(opts, chipper.WithSessionID(sessionID))
 	opts = append(opts, chipper.WithFirmwareVersion(robot.OSVersion()))
+	opts = append(opts, chipper.WithBootID(robot.BootID()))
 	conn, err := chipper.NewConn(strm.ctx, strm.opts.url, strm.opts.secret, opts...)
 	if err != nil {
 		log.Println("Error getting chipper connection:", err)

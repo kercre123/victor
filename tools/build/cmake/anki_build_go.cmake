@@ -32,13 +32,14 @@ macro(__anki_setup_go_environment target_basedir)
   list(APPEND __go_compile_env "GOPATH=${GOPATH}")
   set(__go_build_flags "")
   set(__go_deps "")
+  set(__go_build_tags "")
 
   list(GET __gobuild_out 0 __gobuild_primary_out)
 
   list(APPEND __go_build_flags "-o" "${__gobuild_primary_out}")
 
   if (ANKI_DEV_CHEATS EQUAL 0)
-    list(APPEND __go_build_flags "-tags" "'shipping'")
+    list(APPEND __go_build_tags "shipping")
   endif()
 
   if (VICOS)
@@ -50,6 +51,7 @@ macro(__anki_setup_go_environment target_basedir)
     list(APPEND __go_compile_env "CXX=${VICOS_CXX_COMPILER}")
     list(APPEND __go_compile_env "CGO_FLAGS=\"-g -march=armv7-a\"")
     list(APPEND __go_build_flags "-pkgdir" "${CMAKE_CURRENT_BINARY_DIR}/pkgdir")
+    list(APPEND __go_build_tags "vicos")
   endif()
 endmacro()
 
@@ -74,6 +76,20 @@ macro(__anki_run_go_build target_name extra_deps)
   set(__cppflags_env "CGO_CPPFLAGS=${__cgo_cppflags}")
   set(__cxxflags_env "CGO_CXXFLAGS=${__cgo_cxxflags}")
   set(__ldflags_env "CGO_LDFLAGS=${__cgo_ldflags}")
+
+  if (__go_build_tags)
+    # fun with spaces - in order to form a string like 'one two' (with single quotes) and not have it be escaped
+    # when placed on the command line, we need to prepend/append the single quotes into the list items
+    list(GET __go_build_tags 0 __gobuild_temp)
+    list(REMOVE_AT __go_build_tags 0)
+    set(__gobuild_temp "\'${__gobuild_temp}")
+    list(INSERT __go_build_tags 0 ${__gobuild_temp})
+    list(GET __go_build_tags -1 __gobuild_temp)
+    list(REMOVE_AT __go_build_tags -1)
+    set(__gobuild_temp "${__gobuild_temp}\'")
+    list(APPEND __go_build_tags ${__gobuild_temp})
+    list(APPEND __go_build_flags "-tags" ${__go_build_tags})
+  endif()
 
   set(__go_platform_ldflags "")
   if (VICOS)
