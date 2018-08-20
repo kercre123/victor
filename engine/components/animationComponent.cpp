@@ -414,6 +414,12 @@ void AnimationComponent::AlterStreamingAnimationAtTime(RobotInterface::EngineToR
       alterMsg.postAudioEvent = std::move(msg.Get_postAudioEvent());
       break;
     }
+    case RobotInterface::EngineToRobotTag::textToSpeechPlay:
+    {
+      alterMsg.textToSpeechPlay = std::move(msg.Get_textToSpeechPlay());
+      break;
+    }
+
     default:
     {
       PRINT_NAMED_ERROR("AnimationComponent.AlterStreamingAnimationAtTime.UnsupportedMessageType",

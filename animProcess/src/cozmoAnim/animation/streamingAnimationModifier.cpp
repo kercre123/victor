@@ -18,6 +18,7 @@
 #include "clad/robotInterface/messageEngineToRobotTag.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
@@ -28,13 +29,14 @@ namespace{
 const uint8_t kOffsetForEndOfFrame = 1;
 }
 
-StreamingAnimationModifier::StreamingAnimationModifier(AnimationStreamer* streamer, Audio::EngineRobotAudioInput* audioInput)
+StreamingAnimationModifier::StreamingAnimationModifier(AnimationStreamer* streamer, Audio::EngineRobotAudioInput* audioInput, TextToSpeechComponent* ttsComponent)
 {
   auto newAnimationCallback = [this](){
     _streamTimeToMessageMap.clear();
   };
   streamer->AddNewAnimationCallback(newAnimationCallback);
   _audioInput = audioInput;
+  _ttsComponent = ttsComponent;
 }
 
 StreamingAnimationModifier::~StreamingAnimationModifier()
@@ -108,6 +110,13 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
+    case RobotInterface::EngineToRobotTag::textToSpeechPlay:
+    {
+      RobotInterface::EngineToRobot alterationMessage(std::move(msg.textToSpeechPlay));
+      AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
+      break;
+    }
+
     default:
     {
       PRINT_NAMED_ERROR("AnimationComponent.AlterStreamingAnimationAtTime.UnsupportedMessageType",
@@ -134,6 +143,12 @@ void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* strea
         _audioInput->HandleMessage(msg.postAudioEvent);
       }
       break;
+    }
+    case (uint32_t)RobotInterface::EngineToRobotTag::textToSpeechPlay:
+    {
+      if(_ttsComponent != nullptr){
+        _ttsComponent->HandleMessage(msg.textToSpeechPlay);
+      }
     }
     default:
     {

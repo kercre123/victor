@@ -157,6 +157,11 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadWeatherConditionTTSMap");
+    LoadWeatherConditionTTSMap();
+  }
+
+  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadVariableSnapshotJsonMap");
     LoadVariableSnapshotJsonMap();
   }
@@ -728,6 +733,51 @@ void RobotDataLoader::LoadWeatherRemaps()
     PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherRemaps.ErrorReadingFile","");
   }
 }
+
+void RobotDataLoader::LoadWeatherConditionTTSMap()
+{
+  _weatherConditionTTSMap = std::make_unique<WeatherConditionTTSMap>();
+  static const std::string jsonFilename = "config/engine/behaviorComponent/weather/condition_to_tts.json";
+  
+  Json::Value conditionList;
+  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, conditionList);
+  if(!success || !conditionList.isArray())
+  {
+    PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherConditionTTSMap.ErrorReadingFile","");
+    return;
+  }
+
+  const char* kConditionKey = "Condition";
+  const char* kWhatToSayKey = "Say";
+  WeatherConditionType condition = WeatherConditionType::Count;
+  for(const auto& entry: conditionList){
+    if(!entry.isMember(kConditionKey)){
+      PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherConditionTTSMap.EntryDoesNotContainCondition","");
+      continue;
+    }
+    if(!entry.isMember(kWhatToSayKey)){
+      PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherConditionTTSMap.EntryDoesNotContainSayKey","");
+      continue;
+    }
+    const bool conditionExists = WeatherConditionTypeFromString(entry[kConditionKey].asString(), condition);
+    if(!conditionExists){
+      PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherConditionTTSMap.InvalidWeatherCondition",
+                          "Condition %s not found in weather condition enum",
+                          entry[kConditionKey].asString().c_str());
+      continue;
+    }
+    _weatherConditionTTSMap->emplace(std::move(condition), entry[kWhatToSayKey].asString());
+  }
+
+  if(_weatherConditionTTSMap->size() != static_cast<int>(WeatherConditionType::Count)){
+    PRINT_NAMED_WARNING("RobotDataLoader.LoadWeatherConditionTTSMap.MissingConditions",
+                        "There are %d weather conditions, but only %zu TTS entries",
+                        static_cast<int>(WeatherConditionType::Count), 
+                        _weatherConditionTTSMap->size());
+  }
+
+}
+
 
 void RobotDataLoader::LoadVariableSnapshotJsonMap()
 {

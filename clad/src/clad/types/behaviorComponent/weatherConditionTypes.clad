@@ -16,8 +16,8 @@ enum uint_8 WeatherConditionType {
   Thunderstorms,
   Windy,
 
+  // Must be last element for iteration puproses
   Count
-
 }
 
 } // namespace Vector

@@ -130,7 +130,7 @@ Result AnimEngine::Init()
 
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
-  _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput);
+  _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput, _ttsComponent.get());
 
   // set up audio stream state manager 
   {

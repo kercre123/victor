@@ -29,6 +29,7 @@ struct EngineToRobot;
 }
 
 class AnimationStreamer;
+class TextToSpeechComponent;
 
 namespace Audio {
 class EngineRobotAudioInput;
@@ -37,7 +38,9 @@ class EngineRobotAudioInput;
 class StreamingAnimationModifier
 {
 public:
-  StreamingAnimationModifier(AnimationStreamer* streamer, Audio::EngineRobotAudioInput* audioInput);
+  StreamingAnimationModifier(AnimationStreamer* streamer, 
+                             Audio::EngineRobotAudioInput* audioInput, 
+                             TextToSpeechComponent* ttsComponent);
   virtual ~StreamingAnimationModifier();
 
   // Messages applied before update will be displayed to users that tick (e.g. display a new image)
@@ -50,6 +53,7 @@ public:
 private:
   std::multimap<TimeStamp_t, RobotInterface::EngineToRobot> _streamTimeToMessageMap;
   Audio::EngineRobotAudioInput* _audioInput = nullptr;
+  TextToSpeechComponent* _ttsComponent = nullptr;
 
   void ApplyMessagesHelper(AnimationStreamer* streamer, TimeStamp_t streamTime_ms);
   void ApplyMessageToStreamer(AnimationStreamer* streamer, const RobotInterface::EngineToRobot& msg);

@@ -25,8 +25,10 @@ class CompositeImage;
   
 namespace Vector {
 
+// Fwd Declarations
 class BehaviorTextToSpeechLoop;
 class WeatherIntentParser;
+enum class UtteranceState;
 
 class BehaviorDisplayWeather : public ICozmoBehavior
 {
@@ -45,11 +47,13 @@ protected:
 
   
   virtual bool WantsToBeActivatedBehavior() const override;
-  virtual void OnBehaviorActivated() override;
   virtual void InitBehavior() override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
-  void DisplayWeatherResponse();
+  using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& layoutConfig,
@@ -68,19 +72,29 @@ private:
     // layouts stored least -> greatest pos followed by least -> greatest neg
     std::vector<Vision::CompositeImage> temperatureLayouts;
     std::unique_ptr<WeatherIntentParser> intentParser;
+    ICozmoBehaviorPtr                    lookAtFaceInFront;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    Vision::CompositeImage* temperatureImg = nullptr;
+    Vision::CompositeImage* temperatureImg;
+    UserIntentPtr           currentIntent;
+    uint8_t utteranceID;
+    UtteranceState  utteranceState;
+    bool shouldSayTemperature;
+    bool playingWeatherResponse;
   };
 
   std::unique_ptr<InstanceConfig> _iConfig;
   DynamicVariables _dVars;
 
+  void TransitionToDisplayWeatherResponse();
+  void TransitionToFindFaceInFront();
+
   bool GenerateTemperatureImage(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg) const;
   void ParseDisplayTempTimesFromAnim();
-  
+  void StartTTSGeneration();
+
 };
 
 } // namespace Vector

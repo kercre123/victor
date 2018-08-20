@@ -590,7 +590,8 @@ message AlterStreamingAnimationAtTime {
   uint_8  internalTag, // Indicates which message below is set
   SetFullAnimTrackLockState setFullAnimTrackLockState,
   uint_8 padding[1],
-  AudioEngine::Multiplexer::PostAudioEvent postAudioEvent
+  AudioEngine::Multiplexer::PostAudioEvent postAudioEvent,
+  TextToSpeechPlay textToSpeechPlay
 }
 
 //

@@ -151,11 +151,13 @@ public:
 
   // weather response map
   using WeatherResponseMap = std::unordered_map<std::string, WeatherConditionType>;
+  using WeatherConditionTTSMap = std::unordered_map<WeatherConditionType, std::string>;
 
   // variable snapshot json map
   using VariableSnapshotJsonMap = std::unordered_map<VariableSnapshotId, Json::Value>;
 
   const WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap.get();}
+  const WeatherConditionTTSMap* GetWeatherConditionTTSMap() const { assert(_weatherConditionTTSMap); return _weatherConditionTTSMap.get();}
   const Json::Value& GetWeatherRemaps() const { return _weatherRemaps;}
   const Json::Value* GetWeatherRemapsPtr() const { return &_weatherRemaps;}
   VariableSnapshotJsonMap*  GetVariableSnapshotJsonMap() const { assert(_variableSnapshotJsonMap); return _variableSnapshotJsonMap.get(); }
@@ -196,6 +198,7 @@ private:
 
   void LoadWeatherResponseMaps();
   void LoadWeatherRemaps();
+  void LoadWeatherConditionTTSMap();
 
   void LoadVariableSnapshotJsonMap();
   
@@ -264,6 +267,7 @@ private:
   std::unique_ptr<CompLayoutMap> _compLayoutMap;
 
   std::unique_ptr<WeatherResponseMap>      _weatherResponseMap;
+  std::unique_ptr<WeatherConditionTTSMap>  _weatherConditionTTSMap;
   Json::Value                              _weatherRemaps;
   std::unique_ptr<VariableSnapshotJsonMap> _variableSnapshotJsonMap;
 

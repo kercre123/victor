@@ -375,6 +375,10 @@ void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+  
   DEV_ASSERT( ( GetStreamingDuration() >= ( MicData::kStreamingTimeout_ms / 1000.0 ) ),
               "BehaviorReactToVoiceCommand: Behavior streaming timeout is less than mic streaming timeout" );
 

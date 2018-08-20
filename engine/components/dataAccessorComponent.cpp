@@ -50,6 +50,7 @@ void DataAccessorComponent::InitDependent(Vector::Robot* robot, const RobotCompM
   _cannedAnimationContainer = dataLoader.GetCannedAnimationContainer();
   _weatherResponseMap = dataLoader.GetWeatherResponseMap();
   _weatherRemaps = dataLoader.GetWeatherRemapsPtr();
+  _weatherConditionTTSMap = dataLoader.GetWeatherConditionTTSMap();
   _variableSnapshotJsonMap = dataLoader.GetVariableSnapshotJsonMap();
   // Copy, but it's fine
   _cupeSpinnerConfig = dataLoader.GetCubeSpinnerConfig();

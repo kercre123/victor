@@ -13,6 +13,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
+
+#include "clad/audio/audioSwitchTypes.h"
+#include "components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
@@ -22,6 +25,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/settingsManager.h"
+#include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
@@ -81,6 +85,12 @@ BehaviorDisplayWeather::InstanceConfig::InstanceConfig(const Json::Value& layout
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDisplayWeather::DynamicVariables::DynamicVariables()
 {
+  temperatureImg = nullptr;
+  currentIntent = nullptr;
+  utteranceID = 0;
+  utteranceState = UtteranceState::Invalid;
+  shouldSayTemperature = false;
+  playingWeatherResponse = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,6 +144,7 @@ void BehaviorDisplayWeather::GetBehaviorJsonKeys(std::set<const char*>& expected
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
+  delegates.insert(_iConfig->lookAtFaceInFront.get());
 }
 
 
@@ -235,6 +246,10 @@ void BehaviorDisplayWeather::InitBehavior()
   );
 
   ParseDisplayTempTimesFromAnim();
+  
+  auto& behaviorContainer = GetBEI().GetBehaviorContainer();
+  _iConfig->lookAtFaceInFront   = behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(SingletonFindFaceInFrontWallTime));
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -245,22 +260,55 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
-  UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
-  DEV_ASSERT(intentData != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+  _dVars.currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
+  DEV_ASSERT(_dVars.currentIntent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
-  DisplayWeatherResponse();
+  StartTTSGeneration();
+  TransitionToFindFaceInFront();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::BehaviorUpdate()
+{
+  if(!IsActivated() || IsControlDelegated() || _dVars.playingWeatherResponse){
+    return;
+  }
+
+  if(!_dVars.shouldSayTemperature || 
+     (_dVars.utteranceState == UtteranceState::Ready)){
+    TransitionToDisplayWeatherResponse();
+    _dVars.playingWeatherResponse = true;
+  }
+}
+
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::OnBehaviorDeactivated()
+{
+  GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::TransitionToFindFaceInFront()
+{
+  ANKI_VERIFY(_iConfig->lookAtFaceInFront->WantsToBeActivated(),
+              "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
+  // We should see a face during this behavior if there's one in front of us to center on
+  Pose3d unused;
+  const RobotTimeStamp_t lastTimeObserved_ms = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
+  DelegateIfInControl(_iConfig->lookAtFaceInFront.get(), [this, lastTimeObserved_ms](){
+    Pose3d unused;
+    const RobotTimeStamp_t nextTimeSeen = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
+    _dVars.shouldSayTemperature = (nextTimeSeen == lastTimeObserved_ms);
+  });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDisplayWeather::DisplayWeatherResponse()
+void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
 {
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
-
-  UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
-  DEV_ASSERT(intentData != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
-
-  const auto& weatherResponse = intentData->intent.Get_weather_response();
+  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
 
   auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
     CancelSelf();
@@ -295,6 +343,14 @@ void BehaviorDisplayWeather::DisplayWeatherResponse()
   GetBEI().GetAnimationComponent().UpdateCompositeImage(*_dVars.temperatureImg, _iConfig->timeTempShouldAppear_ms);
   GetBEI().GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::Weather_Temperature,
                                                             _iConfig->timeTempShouldDisappear_ms);
+
+  // Play TTS if appropriate
+  if(_dVars.shouldSayTemperature){
+    RobotInterface::TextToSpeechPlay ttsPlay;
+    ttsPlay.ttsID = _dVars.utteranceID;
+    RobotInterface::EngineToRobot wrapper(std::move(ttsPlay));
+    GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), _iConfig->timeTempShouldAppear_ms);
+  }
 }
 
 
@@ -434,6 +490,35 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
                       "Expected 2 keyframes in event track, but track has %d",
                       track.TrackLength());
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::StartTTSGeneration()
+{
+
+  auto callback = [this](const UtteranceState& utteranceState)
+  {
+    _dVars.utteranceState = utteranceState;
+  };
+
+  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
+  const auto condition = _iConfig->intentParser->GetCondition(weatherResponse);
+
+  int temperature = 0;
+  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
+  const auto& ttsMap = GetBEI().GetDataAccessorComponent().GetWeatherConditionTTSMap();
+  const auto& ttsIter = ttsMap->find(condition);
+  if(success && ttsIter != ttsMap->end()){
+      std::string conditionText = std::to_string(temperature)  + " degrees " + ttsIter->second;
+      const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
+      const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
+
+      _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(conditionText, triggerType, style,
+                                                                                 1.0f, callback);
+  }
+
+
 }
 
 
