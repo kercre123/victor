@@ -22,6 +22,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/helpers/boundedWhile.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -320,7 +321,15 @@ void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
     TogglePowerSaveSetting( components, PowerSaveSetting::ProxSensorNavMap, true );
   }
 
+  if( !_inPowerSaveMode ) {
+    DASMSG(power_save_start, "engine.power_save.start", "Sent when engine beigns trying to save power");
+    DASMSG_SEND();
+  }
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   _inPowerSaveMode = true;
+  _timePowerSaveToggled_s = currTime_s;
 }
 
 void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
@@ -335,7 +344,17 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
     TogglePowerSaveSetting( components, setting, false );
   }
 
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  if( _inPowerSaveMode && _timePowerSaveToggled_s >= 0.0f ) {
+    const int delta_s = (int) std::round( currTime_s - _timePowerSaveToggled_s );
+    DASMSG(power_save_end, "engine.power_save.end", "Engine stopped trying to save power");
+    DASMSG_SET(i1, delta_s, "Number of seconds spent in power save");
+    DASMSG_SEND();
+  }
+
   _inPowerSaveMode = false;
+  _timePowerSaveToggled_s = currTime_s;
 }
 
 }

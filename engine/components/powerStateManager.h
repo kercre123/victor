@@ -89,6 +89,8 @@ private:
   std::multiset<std::string> _powerSaveRequests;
   bool _inPowerSaveMode = false;
 
+  float _timePowerSaveToggled_s = -1.0f;
+
   void EnterPowerSave(const RobotCompMap& components);
   void ExitPowerSave(const RobotCompMap& components);
 
