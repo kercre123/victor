@@ -768,6 +768,18 @@ message BatteryStateResponse {
   bool is_charging = 4;
   bool is_on_charger_platform = 5;
   float suggested_charger_sec = 6;
+  CubeBattery cube_battery = 7;
+}
+
+message CubeBattery {
+  enum CubeBatteryLevel {
+    Low    = 0;
+    Normal = 1;
+  }
+  CubeBatteryLevel level = 1;
+  string           factory_id = 2;
+  float            battery_volts = 3;
+  float            time_since_last_reading_sec = 4;
 }
 
 message VersionStateRequest {}

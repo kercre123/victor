@@ -23,9 +23,15 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include <memory>
+
 namespace Anki {
 namespace Vector {
 
+namespace external_interface {
+  class CubeBattery;
+}
+  
 struct CubeVoltageData;
 class IGatewayInterface;
 class Robot;
@@ -51,6 +57,11 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
+  // Returns an allocated message containing the most recent/relevant cube battery information. If a cube is currently
+  // connected, it will return battery information for that cube. Otherwise, it will return battery info (if available)
+  // from the most recently heard-from cube. Otherwise, it will return nullptr.
+  std::unique_ptr<external_interface::CubeBattery> GetCubeBatteryMsg();
+  
   // Get the last reported battery voltage for the given cube. Returns -1 and prints a warning if we have not received
   // a voltage message from the given cube.
   float GetCubeBatteryVoltage(const BleFactoryId& factoryId);
@@ -64,7 +75,13 @@ private:
   
   IGatewayInterface* _gi = nullptr;
 
-  std::map<BleFactoryId, float> _cubeBatteryVoltages;
+  struct CubeBatteryInfo {
+    float batteryVolts = -1.f;
+    float timeOfLastReading_sec = -1.f; // basestation timer
+    int numConsecutiveLowReadings = 0;
+  };
+  
+  std::map<BleFactoryId, CubeBatteryInfo> _cubeBatteryInfo;
   
 };
 

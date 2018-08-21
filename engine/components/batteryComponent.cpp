@@ -18,6 +18,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/cubes/cubeBatteryComponent.h"
 #include "engine/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -398,13 +399,18 @@ void BatteryComponent::UpdateOnChargerPlatform()
   }
 }
 
-external_interface::GatewayWrapper BatteryComponent::GetBatteryState(const external_interface::BatteryStateRequest& request) {
-  external_interface::BatteryStateResponse* response = new external_interface::BatteryStateResponse{NULL, 
-                                                                                                    (external_interface::BatteryLevel)GetBatteryLevel(),
-                                                                                                    GetBatteryVolts(),
-                                                                                                    IsCharging(),
-                                                                                                    IsOnChargerPlatform(),
-                                                                                                    GetSuggestedChargerTime()};
+external_interface::GatewayWrapper BatteryComponent::GetBatteryState(const external_interface::BatteryStateRequest& request)
+{
+  auto* cubeBatteryMsg = _robot->GetCubeBatteryComponent().GetCubeBatteryMsg().release();
+  auto* response = new external_interface::BatteryStateResponse {
+    nullptr,
+    (external_interface::BatteryLevel) GetBatteryLevel(),
+    GetBatteryVolts(),
+    IsCharging(),
+    IsOnChargerPlatform(),
+    GetSuggestedChargerTime(),
+    cubeBatteryMsg
+  };
   external_interface::GatewayWrapper wrapper;
   wrapper.set_allocated_battery_state_response(response);
   return wrapper;

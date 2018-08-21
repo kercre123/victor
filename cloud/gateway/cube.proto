@@ -188,16 +188,6 @@ message RobotObservedObject {
     uint32       is_active                = 8;
 }
 
-message CubeBattery {
-  enum CubeBatteryLevel {
-    Low    = 0;
-    Normal = 1;
-  }
-  CubeBatteryLevel level = 1;
-  string           factory_id      = 2;
-  float            battery_volts    = 3;
-}
-
 message ObjectEvent {
   oneof object_event_type {
     ObjectAvailable       object_available        = 1;

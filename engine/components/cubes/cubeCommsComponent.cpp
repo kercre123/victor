@@ -344,6 +344,16 @@ ActiveID CubeCommsComponent::GetConnectedCubeActiveId() const
   }
   return activeId;
 }
+  
+  
+BleFactoryId CubeCommsComponent::GetConnectedCubeFactoryId() const
+{
+  BleFactoryId factoryId = "";
+  if (IsConnectedToCube()) {
+    factoryId = GetCurrentCube();
+  }
+  return factoryId;
+}
 
 
 bool CubeCommsComponent::StartScanningForCubes(const bool autoConnectAfterScan)

@@ -92,6 +92,9 @@ public:
   // will always attempt to connect to this cube if it is available.
   void SetPreferredCube(const BleFactoryId& factoryId);
   
+  // Return the factory ID of the preferred cube, or an empty string if there is none.
+  BleFactoryId GetPreferredCube() const { return _preferredCubeFactoryId; }
+  
   // 'Forget' the robot's preferred cube. This will cause the robot to
   // connect to the cube with the highest RSSI (signal strength) next
   // time a connection is requested. Saves this preference to disk.
@@ -100,9 +103,12 @@ public:
   // Send CubeLights message to the currently connected cube
   bool SendCubeLights(const CubeLights& cubeLights);
   
-  // Returns the ActiveID of the currently-connection cube, or
+  // Returns the ActiveID of the currently-connected cube, or
   // ObservableObject::InvalidActiveID if there is no connected cube
   ActiveID GetConnectedCubeActiveId() const;
+  
+  // Returns the FactoryId of the currently-connected cube, or empty string if there is no connected cube
+  BleFactoryId GetConnectedCubeFactoryId() const;
   
   // Set whether or not to broadcast ObjectAvailable messages to game
   void SetBroadcastObjectAvailable(const bool enable = true) { _broadcastObjectAvailableMsg = enable; }

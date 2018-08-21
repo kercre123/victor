@@ -35,6 +35,9 @@ namespace {
   
   // According to hardware team, this is a rough indication of when the cube is "low battery"
   const float kCubeLowBatteryThresh_volts = 1.1f;
+  
+  // After this many consecutive low battery readings, send a message out indicating "low battery"
+  const int kMaxNumConsecutiveLowReadings = 5;
 }
   
 CubeBatteryComponent::CubeBatteryComponent()
@@ -58,16 +61,62 @@ void CubeBatteryComponent::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 
+std::unique_ptr<external_interface::CubeBattery> CubeBatteryComponent::GetCubeBatteryMsg()
+{
+  if (_robot == nullptr) {
+    return nullptr;
+  }
+  
+  const auto& cubeComms = _robot->GetCubeCommsComponent();
+  
+  BleFactoryId cubeToSend = "";
+  if (cubeComms.IsConnectedToCube()) {
+    const auto& connectedCube = cubeComms.GetConnectedCubeFactoryId();
+    if (_cubeBatteryInfo.find(connectedCube) != _cubeBatteryInfo.end()) {
+      cubeToSend = connectedCube;
+    }
+  } else {
+    // Not currently connected to any cube, so send information of the most recently heard-from cube
+    auto mostRecentIt = std::max_element(_cubeBatteryInfo.begin(),
+                                         _cubeBatteryInfo.end(),
+                                         [](const std::pair<BleFactoryId, CubeBatteryInfo>& p1,
+                                            const std::pair<BleFactoryId, CubeBatteryInfo>& p2) {
+                                           return p1.second.timeOfLastReading_sec < p2.second.timeOfLastReading_sec;
+                                         });
+    if (mostRecentIt != _cubeBatteryInfo.end()) {
+      cubeToSend = mostRecentIt->first;
+    }
+  }
+  
+  if (cubeToSend.empty()) {
+    return nullptr;
+  }
+  
+  // Create the message
+  const auto& cubeInfo = _cubeBatteryInfo[cubeToSend];
+  using namespace external_interface;
+  auto msg = std::make_unique<CubeBattery>();
+  msg->set_level((cubeInfo.batteryVolts > kCubeLowBatteryThresh_volts) ?
+                 CubeBattery_CubeBatteryLevel_Normal :
+                 CubeBattery_CubeBatteryLevel_Low);
+  msg->set_factory_id(cubeToSend);
+  msg->set_battery_volts(cubeInfo.batteryVolts);
+  const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  msg->set_time_since_last_reading_sec(now_sec - cubeInfo.timeOfLastReading_sec);
+  return msg;
+}
+
+
 float CubeBatteryComponent::GetCubeBatteryVoltage(const BleFactoryId& factoryId)
 {
-  const auto cubeIt = _cubeBatteryVoltages.find(factoryId);
-  if (cubeIt == _cubeBatteryVoltages.end()) {
+  const auto cubeIt = _cubeBatteryInfo.find(factoryId);
+  if (cubeIt == _cubeBatteryInfo.end()) {
     PRINT_NAMED_WARNING("CubeBatteryComponent.GetCubeBatteryVoltage.CubeNotFound",
                         "We have never received a battery voltage message from cube with factory ID %s",
                         factoryId.c_str());
     return -1.f;
   }
-  return cubeIt->second;
+  return cubeIt->second.batteryVolts;
 }
 
 
@@ -85,33 +134,30 @@ void CubeBatteryComponent::HandleCubeVoltageData(const BleFactoryId& factoryId,
     return;
   }
   
+  auto& battInfo = _cubeBatteryInfo[factoryId];
+  
+  battInfo.batteryVolts = batteryVolts;
+  battInfo.timeOfLastReading_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
   // Send a "cube low battery" message if we have crossed the low battery threshold
   const bool isLowBattery = batteryVolts < kCubeLowBatteryThresh_volts;
   if (isLowBattery) {
-    float prevVolts = -1.f;
-    if (_cubeBatteryVoltages.find(factoryId) != _cubeBatteryVoltages.end()) {
-      prevVolts = _cubeBatteryVoltages[factoryId];
-    }
+    ++battInfo.numConsecutiveLowReadings;
     
-    if (prevVolts < 0.f || prevVolts >= kCubeLowBatteryThresh_volts) {
-      // Either this is the first voltgae reading from this cube and it is low, or we have crossed the low voltage
-      // threshold. So send the "low battery" message.
+    // If we have received too many consecutive low battery readings, send the "low battery" message
+    if (battInfo.numConsecutiveLowReadings == kMaxNumConsecutiveLowReadings) {
       PRINT_NAMED_WARNING("CubeBatteryComponent.HandleCubeVoltageData.LowCubeBattery",
                           "Low cube battery detected. Voltage %.3f, factoryId %s",
                           batteryVolts, factoryId.c_str());
       
       // Send gateway message
-      using namespace external_interface;
-      auto* cubeBatteryMsg = new CubeBattery{
-        CubeBattery::CubeBatteryLevel::CubeBattery_CubeBatteryLevel_Low,
-        factoryId,
-        batteryVolts
-      };
+      auto* cubeBatteryMsg = GetCubeBatteryMsg().release();
+      DEV_ASSERT(cubeBatteryMsg != nullptr, "CubeBatteryComponent::HandleCubeVoltageData.NullCubeBatteryMsg");
       _gi->Broadcast(ExternalMessageRouter::Wrap(cubeBatteryMsg));
     }
+  } else {
+    battInfo.numConsecutiveLowReadings = 0;
   }
-  
-  _cubeBatteryVoltages[factoryId] = batteryVolts;
 }
   
 
