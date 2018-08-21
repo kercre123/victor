@@ -605,12 +605,16 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   }
           
   // TODO:(bn) channel for high level ai?
+  const std::string& oldStateStr = (_currState  != InvalidStateID) ? _states->at(_currState )._name : "<NONE>";
+  const std::string& newStateStr = (targetState != InvalidStateID) ? _states->at(targetState)._name : "<NONE>";
   PRINT_CH_INFO("Unfiltered", "InternalStatesBehavior.TransitionToState",
                 "Transition from state '%s' -> '%s'",
-                _currState  != InvalidStateID ? _states->at(_currState )._name.c_str() : "<NONE>",
-                targetState != InvalidStateID ? _states->at(targetState)._name.c_str() : "<NONE>");
+                oldStateStr.c_str(), newStateStr.c_str());
+  // tell subclass for debug/das
+  OnStateNameChange( oldStateStr, newStateStr );
   
   _currState = targetState;
+  
 
   // any transition clears the "get in" that may be playing
   _isRunningGetIn = false;

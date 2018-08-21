@@ -48,6 +48,8 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual void OverrideResumeState( StateID& resumeState ) override;
+  
+  virtual void OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const override;
 
 private:
   

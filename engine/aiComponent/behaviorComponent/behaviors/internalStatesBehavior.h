@@ -58,6 +58,9 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OverrideResumeState( StateID& resumeState ) {}
   
+  // for debug/DAS
+  virtual void OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const {}
+  
   // helpers
   
   // asserts if not found

@@ -64,6 +64,7 @@ private:
     DynamicVariables();
     bool unexpectedMovement;
     State state;
+    int bumpedAgain; // for DAS only: -1 for no, 0 for non evil, 1 for evil
   };
 
   InstanceConfig _iConfig;

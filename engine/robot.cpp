@@ -988,6 +988,14 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const OffTreadsState prevOffTreadsState = _offTreadsState;
   const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);
   const bool isDelocalizing = wasTreadsStateUpdated && (prevOffTreadsState == OffTreadsState::OnTreads || _offTreadsState == OffTreadsState::OnTreads);
+  
+  if (wasTreadsStateUpdated)
+  {
+    DASMSG(robot_offtreadsstatechanged, "robot.offtreadsstatechanged", "The robot off treads state changed");
+    DASMSG_SET(s1, OffTreadsStateToString(_offTreadsState), "New state");
+    DASMSG_SET(s2, OffTreadsStateToString(prevOffTreadsState), "Previous state");
+    DASMSG_SEND();
+  }
 
   // this flag can have a small delay with respect to when we actually picked up the block, since Engine notifies
   // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what

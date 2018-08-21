@@ -28,6 +28,7 @@
 #include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
@@ -268,6 +269,16 @@ void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
       GetAIComp<AIWhiteboard>().ClearPostBehaviorSuggestions();
     }
   }
+}
+
+void BehaviorHighLevelAI::OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const
+{
+  // send a DAS msg. A lot of this is captured by the feature start/ending, but if a state holds more than one feature,
+  // or if some states are transient, this helps to understand the whole behavior
+  DASMSG(behavior_hlai_change, "behavior.hlai.change", "HLAI changed its state");
+  DASMSG_SET(s1, newStateName, "The new state name");
+  DASMSG_SET(s2, oldStateName, "The old state name");
+  DASMSG_SEND();
 }
 
 }

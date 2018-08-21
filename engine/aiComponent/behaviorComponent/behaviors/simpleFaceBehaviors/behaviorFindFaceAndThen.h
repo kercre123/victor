@@ -126,6 +126,11 @@ private:
 
     // track faces that failed so we don't keep trying to look at them
     std::vector<SmartFaceID> failedFaces;
+    
+    // for DAS
+    bool sawBody;
+    bool sawFace;
+    bool sentEvent;
   };
 
   InstanceConfig   _iConfig;
@@ -151,6 +156,8 @@ private:
   void RunSearchFaceBehavior();
   
   void SetState_internal(State state, const std::string& stateName);
+  
+  void SendCompletionDASEvent();
 
 };
 

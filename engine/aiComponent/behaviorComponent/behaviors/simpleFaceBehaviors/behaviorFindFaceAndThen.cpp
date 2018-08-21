@@ -24,6 +24,7 @@
 #include "engine/faceWorld.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -81,7 +82,10 @@ BehaviorFindFaceAndThen::DynamicVariables::DynamicVariables()
   sawBodyDuringState     = false;
   timeEndFaceFromBodyBehavior_s = 0.0f;
   targetFace.Reset();
-  lastPersonDetected = Vision::SalientPoint();
+  lastPersonDetected     = Vision::SalientPoint();
+  sawBody                = false;
+  sawFace                = false;
+  sentEvent              = false;
 }
 
 
@@ -255,11 +259,12 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
          || (_dVars.currentState == State::FindFaceInCurrentDirection)
          || (_dVars.currentState == State::SearchForFace) ) )
   {
-    // wait a bit longer after this state started to make sure the image received is in this direction
+    // add a bit more time to when we consider bodies in this direction to make sure the body is actually is in this direction
     const RobotTimeStamp_t time_ms = _dVars.timeAtStateChange + kTimeToWaitForImage_ms;
     sawBodyWhenLookingForFace = GetRecentBodySince( time_ms, _dVars.lastPersonDetected );
     if( sawBodyWhenLookingForFace ) {
       PRINT_CH_INFO( "Behaviors", "BehaviorFindFaceAndThen.BehaviorUpdate.PersonDetected", "Detected a person" );
+      _dVars.sawBody = true;
     }
   }
   
@@ -362,6 +367,8 @@ void BehaviorFindFaceAndThen::OnBehaviorDeactivated()
   if( !_iConfig.exitOnceFound ) {
     _dVars.targetFace.Reset();
   }
+  // if a parent behavior cancelled us before seeing a face, send info this run
+  SendCompletionDASEvent();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -476,6 +483,10 @@ void BehaviorFindFaceAndThen::TransitionToSearchingForFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
 {
+  _dVars.sawFace = true;
+  // send the event now instead of deactivation so it occurs before the followup behavior, if there exists one
+  SendCompletionDASEvent();
+  
   if( _iConfig.behaviorOnceFound == nullptr ) {
     // config requests no action
     CancelSelf();
@@ -658,8 +669,22 @@ void BehaviorFindFaceAndThen::SetState_internal(State state, const std::string& 
   _dVars.currentState = state;
   SetDebugStateName(stateName);
 }
-  
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaceAndThen::SendCompletionDASEvent()
+{
+  if( _dVars.sentEvent ) {
+    // only send one event
+    return;
+  }
+  DASMSG(behavior_findfaceduration, "behavior.findfaceduration", "Info about how long it took a voice command to find a face");
+  DASMSG_SET(i1, (int) Util::SecToMilliSec(GetActivatedDuration()), "Time spent looking (ms)");
+  DASMSG_SET(i2, (int)_dVars.sawFace, "Whether a face was seen / voice command successful [may not be accurate for takeaphoto]" );
+  DASMSG_SET(i3, (int)_dVars.sawBody, "Whether a body was detected when looking for a face" );
+  DASMSG_SEND();
+  
+  _dVars.sentEvent = true;
+}
   
 }
 }

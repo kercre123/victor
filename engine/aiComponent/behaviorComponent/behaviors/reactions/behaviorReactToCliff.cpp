@@ -32,6 +32,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #include <limits>
 
@@ -179,6 +180,16 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 
   if(_dVars.quitReaction) {
     return;
+  }
+  
+  // send DAS event for activation. don't send it if quitReaction is false, because the user likely didn't notice
+  {
+    DASMSG(behavior_cliffreaction, "behaviors.cliffreaction", "The robot reacted to a cliff");
+    DASMSG_SET(i1, _dVars.persistent.cliffValsAtStart[0], "Sensor value 1");
+    DASMSG_SET(i2, _dVars.persistent.cliffValsAtStart[1], "Sensor value 2");
+    DASMSG_SET(i3, _dVars.persistent.cliffValsAtStart[2], "Sensor value 3");
+    DASMSG_SET(i4, _dVars.persistent.cliffValsAtStart[3], "Sensor value 4");
+    DASMSG_SEND();
   }
 
   GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::ReactedToCliff);

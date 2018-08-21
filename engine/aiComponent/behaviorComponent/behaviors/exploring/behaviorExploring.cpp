@@ -31,6 +31,7 @@
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/utils/robotPointSamplerHelper.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
 #include "util/random/rejectionSamplerHelper.h"
@@ -133,6 +134,7 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   hasTakenPitStop = false;
   timeFinishedConfirmCharger_s = -1.0f;
   timeFinishedConfirmCube_s = -1.0f;
+  endReason = "";
   
   devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
 }
@@ -271,17 +273,32 @@ void BehaviorExploring::OnBehaviorActivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploring::OnBehaviorDeactivated()
+{
+  if( !_dVars.endReason.empty() ) {
+    DASMSG(behavior_exploring_end, "behavior.exploring.end",
+           "Exploring ended (not just an interruption) and the reason why");
+    DASMSG_SET(s1, _dVars.endReason, "The reason");
+    DASMSG_SEND();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::BehaviorUpdate() 
 {
   if( !IsActivated() ) {
     return;
   }
   if( _dVars.state == State::Complete ) {
+    if( _dVars.endReason.empty() ) {
+      _dVars.endReason = "Unknown";
+    }
     CancelSelf();
     return;
   }
   if( GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
     // user must have placed it on the charger
+    _dVars.endReason = "OnCharger";
     CancelSelf();
     return;
   }
@@ -298,6 +315,7 @@ void BehaviorExploring::BehaviorUpdate()
       PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.InterruptedMultiple",
                           "Could not start a path without interruption after %d attempts",
                           _dVars.numDriveAttemps);
+      _dVars.endReason = "MultipleInterruptions";
       CancelSelf();
     }
     return;
@@ -307,6 +325,7 @@ void BehaviorExploring::BehaviorUpdate()
   PrepRobotForProx();
   const bool isChargerPositionKnown = IsChargerPositionKnown();
   if( !isChargerPositionKnown && !_iConfig.allowNoCharger ) {
+    _dVars.endReason = "ChargerUnknown";
     CancelSelf();
   }
   
@@ -435,6 +454,7 @@ void BehaviorExploring::SampleAndDrive()
   if( _dVars.sampledPoses.empty() ) {
     // flag to CancelSelf, making sure CancelSelf doesn't happen on the same tick as activation
     _dVars.state = State::Complete;
+    _dVars.endReason = "NoSamplePoses";
     return;
   }
   
@@ -495,6 +515,7 @@ void BehaviorExploring::TransitionToDriving()
         PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath",
                          "Could not plan a path after %d attempts",
                          _dVars.numDriveAttemps);
+        _dVars.endReason = "CouldNotPlan";
         CancelSelf();
       }
     } else {

@@ -20,6 +20,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/utils/robotPointSamplerHelper.h"
+#include "util/logging/DAS.h"
 
 
 namespace Anki {
@@ -69,6 +70,7 @@ BehaviorBumpObject::DynamicVariables::DynamicVariables()
 {
   unexpectedMovement = false;
   state = State::Invalid;
+  bumpedAgain = -1;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -194,6 +196,8 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
     return; // which ends the behavior
   }
   
+  _dVars.bumpedAgain = (int)evil;
+  
   float distForward_mm;
   
   // if a regular bump would push something off a cliff and we're not evil, dont do it at all.
@@ -260,6 +264,11 @@ void BehaviorBumpObject::BehaviorUpdate()
 void BehaviorBumpObject::OnBehaviorDeactivated()
 {
   GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations( GetDebugLabel() );
+  
+  DASMSG(behavior_exploring_poked_object, "behavior.exploring.poke", "The robot intentionally poked something");
+  DASMSG_SET(i1, 1 + (int)(_dVars.bumpedAgain >= 0), "Number of pokes");
+  DASMSG_SET(i2, _dVars.bumpedAgain, "If there was a second poke, whether it was evil");
+  DASMSG_SEND();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

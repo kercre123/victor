@@ -36,6 +36,7 @@
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -450,7 +451,17 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
   action->AddAction(new TriggerAnimationAction(AnimationTrigger::InteractWithFaceTrackingIdle, 0));
   action->SetShouldEndWhenFirstActionCompletes(true);
   
-  DelegateIfInControl(action, &BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent);
+  EngineTimeStamp_t eyeContactStart_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  DelegateIfInControl(action, [this,eyeContactStart_ms]() {
+    // send info on eye contact duration
+    TimeStamp_t duration_ms = TimeStamp_t(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - eyeContactStart_ms);
+    DASMSG(behavior_interactwithfaces_trackingended, "behavior.interactwithfaces.trackingended", "Face tracking ended");
+    DASMSG_SET(i1, duration_ms, "Duration (ms) of tracking, which is related to the duration of eye contact");
+    DASMSG_SEND();
+    
+    TransitionToTriggerEmotionEvent();
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

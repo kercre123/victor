@@ -49,6 +49,7 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
 private:
@@ -147,6 +148,7 @@ private:
     bool hasTakenPitStop;
     float timeFinishedConfirmCharger_s;
     float timeFinishedConfirmCube_s;
+    std::string endReason; // for DAS
     
     size_t devWarnIfNotInterruptedByTick;
   };
