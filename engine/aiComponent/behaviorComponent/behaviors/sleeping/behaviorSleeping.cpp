@@ -15,6 +15,8 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/components/visionComponent.h"
+#include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -71,6 +73,13 @@ void BehaviorSleeping::OnBehaviorActivated()
 {
   _dVars.animIsPlaying = false;
 
+  // Each time we go to sleep, re-load the album of named faces. This will clear out
+  // any session-only faces which the robot "forgets" between awake "sessions",
+  // and keeps the number of faces he knows about in check (and not growing without bound)
+  // In addition, clear all faces in FaceWorld.
+  GetBEI().GetFaceWorldMutable().ClearAllFaces();
+  GetBEI().GetVisionComponent().LoadFaceAlbum();
+  
   if( _iConfig.shouldEnterPowerSave ) {
     SmartRequestPowerSaveMode();
   }

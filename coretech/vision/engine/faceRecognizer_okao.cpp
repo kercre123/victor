@@ -2707,11 +2707,15 @@ namespace Vision {
       return RESULT_FAIL;
     }
 
+    // Loading a new album, even an "empty" or nonexistent one, clears any existing named or session-only faces.
+    EraseAllFaces();
+    
     if(!Util::FileUtils::DirectoryExists(albumName))
     {
       PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.LoadAlbum.DoesNotExist",
                     "Album %s does not exist yet: no faces enrolled yet",
                     albumName.c_str());
+      
       return RESULT_OK;
     }
     
@@ -2721,7 +2725,7 @@ namespace Vision {
     if(!fs.is_open()) {
       // At this point, we've verified the album directory exists, so we should be able to load the data.bin file
       PRINT_NAMED_WARNING("FaceRecognizer.LoadAlbum.FileOpenFail", "Filename: %s", dataFilename.c_str());
-      result = RESULT_FAIL;
+      return RESULT_FAIL;
     } else {
 
       // Stop eating new lines in binary mode!!!
@@ -2741,7 +2745,7 @@ namespace Vision {
 
       if(serializedAlbum.size() != fileLength) {
         PRINT_NAMED_WARNING("FaceRecognizer.LoadAlbum.FileReadFail", "Filename: %s", dataFilename.c_str());
-        result = RESULT_FAIL;
+        return RESULT_FAIL;
       } else {
         // Temporary data structures to load into, so we can check they are consistent
         // before using them
@@ -2760,7 +2764,7 @@ namespace Vision {
           jsonFile.close();
           if(! success) {
             PRINT_NAMED_WARNING("FaceRecognizer.LoadAlbum.EnrollDataFileReadFail", "");
-            result = RESULT_FAIL;
+            return RESULT_FAIL;
           }
           else
           {
@@ -2770,7 +2774,7 @@ namespace Vision {
                 PRINT_NAMED_WARNING("FaceRecognizer.LoadAlbum.BadFaceIdString",
                                     "Could not find member for string %s with value %d",
                                     idStr.c_str(), faceID);
-                result = RESULT_FAIL;
+                return RESULT_FAIL;
               } else {
                 EnrolledFaceEntry entry(faceID, json[idStr]);
                 EmplaceLoadedKnownFace(entry, namesAndIDs, "LoadAlbum.LoadedEnrollmentData");
@@ -2779,9 +2783,9 @@ namespace Vision {
               }
             }
           }
+          
+          result = UseLoadedAlbumAndEnrollData(loadedAlbum, loadedEnrollmentData);
         }
-
-        result = UseLoadedAlbumAndEnrollData(loadedAlbum, loadedEnrollmentData);
       }
     }
 

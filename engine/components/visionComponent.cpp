@@ -1392,17 +1392,18 @@ namespace Vector {
 
       if(kDisplayDetectionsInMirrorMode)
       {
+        const auto& faceID = faceDetection.GetID();
         const auto& rect = faceDetection.GetRect();
         const auto& name = faceDetection.GetName();
 
-        std::function<void (Vision::ImageRGB&)> modFcn = [rect, name](Vision::ImageRGB& img)
+        std::function<void (Vision::ImageRGB&)> modFcn = [faceID, rect, name](Vision::ImageRGB& img)
         {
           img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
                        NamedColors::YELLOW, 3);
-          if(!name.empty())
-          {
-            img.DrawText({1.f, img.GetNumRows()-1}, name, NamedColors::YELLOW, 0.6f, true);
-          }
+          
+          std::string dispName(name.empty() ? "<unknown>" : name);
+          dispName += "[" + std::to_string(faceID) + "]";
+          img.DrawText({1.f, img.GetNumRows()-1}, dispName, NamedColors::YELLOW, 0.6f, true);
         };
 
         AddDrawScreenModifier(modFcn);
@@ -2283,8 +2284,10 @@ namespace Vector {
   
   Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces)
   {
+    Lock();
     Result result = _visionSystem->LoadFaceAlbum(path, loadedFaces);
-
+    Unlock();
+    
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",
                           "AlbumFile: %s", path.c_str());
@@ -2353,6 +2356,7 @@ namespace Vector {
 
   void VisionComponent::EraseAllFaces()
   {
+    _robot->GetFaceWorld().ClearAllFaces();
     Lock();
     _visionSystem->EraseAllFaces();
     Unlock();
