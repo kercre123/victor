@@ -126,8 +126,9 @@ void AppCubeConnectionSubscriber::ConnectionLostCallback()
   PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectionLostCallback.LostConnection",
                    "Lost connection to cube. Sending message to gateway");
 
-  auto* connectResultMsg = new external_interface::CubeConnectionLost;
-  _gi->Broadcast(ExternalMessageRouter::Wrap(connectResultMsg));
+  auto* message = new external_interface::CubeConnectionLost;
+  auto* objectEvent = new external_interface::ObjectEvent{ message };
+  _gi->Broadcast(ExternalMessageRouter::Wrap(objectEvent));
 }
 
 

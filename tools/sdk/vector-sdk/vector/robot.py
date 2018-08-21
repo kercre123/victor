@@ -387,33 +387,6 @@ class Robot:
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe("robot_state", self._unpack_robot_state)
-        # Subscribe to a callback that updates the world view
-        self.events.subscribe("robot_observed_face",
-                              self.world.add_update_face_to_world_view)
-        # Subscribe to a callback that updates a face's id
-        self.events.subscribe("robot_changed_observed_face_id",
-                              self.world.update_face_id)
-
-        # @TODO: these events subscriptions should be moved to objects.py rather than living on the robot
-
-        # Subscribe to callbacks that is triggered when an object connects or disconnects
-        self.events.subscribe("object_connection_state",
-                              self.world.object_connection_state)
-        # Subscribe to callbacks that is triggered when an object is in motion
-        self.events.subscribe("object_moved",
-                              self.world.object_moved)
-        # Subscribe to callbacks that is triggered when an object stops moving
-        self.events.subscribe("object_stopped_moving",
-                              self.world.object_stopped_moving)
-        # Subscribe to callbacks that is triggered when an object is rotated toward a new up axis
-        self.events.subscribe("object_up_axis_changed",
-                              self.world.object_up_axis_changed)
-        # Subscribe to callbacks that is triggered when an object is tapped
-        self.events.subscribe("object_tapped",
-                              self.world.object_tapped)
-        # Subscribe to callbacks that is triggered when the robot observes an object
-        self.events.subscribe("robot_observed_object",
-                              self.world.robot_observed_object)
 
     def disconnect(self) -> None:
         """Close the connection with Vector

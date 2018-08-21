@@ -35,6 +35,18 @@ class World(util.Component):
         self.light_cube = {objects.LightCube1Type: self.light_cube_factory(robot=robot, world=self)}
         self._objects = {}
 
+        # Subscribe to a callback that updates the world view
+        robot.events.subscribe("robot_observed_face",
+                               self.add_update_face_to_world_view)
+        # Subscribe to a callback that updates a face's id
+        robot.events.subscribe("robot_changed_observed_face_id",
+                               self.update_face_id)
+
+        # Subscribe to callbacks related to objects
+        robot.events.subscribe("object_event",
+                               self.on_object_event)
+
+
     @property
     def visible_faces(self):
         '''generator: yields each face that Vector can currently see.
@@ -139,7 +151,24 @@ class World(util.Component):
         req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
         return await self.interface.SetPreferredCube(req)
 
-    def object_connection_state(self, _, msg):
+    def on_object_event(self, _, msg):
+        object_event_type = msg.WhichOneof("object_event_type")
+
+        object_event_handlers = {
+            "object_connection_state": self._on_object_connection_state,
+            "object_moved": self._on_object_moved,
+            "object_stopped_moving": self._on_object_stopped_moving,
+            "object_up_axis_changed": self._on_object_up_axis_changed,
+            "object_tapped": self._on_object_tapped,
+            "robot_observed_object": self._on_robot_observed_object}
+
+        if object_event_type in object_event_handlers:
+            handler = object_event_handlers[object_event_type]
+            handler(object_event_type, getattr(msg, object_event_type))
+        else:
+            self.logger.warning('An object_event was recieved with unknown type:{0}'.format(object_event_type))
+
+    def _on_object_connection_state(self, _, msg):
         self.logger.debug('Got Object Connection State Message ( object_id: {0}, factory_id: {1}, object_type: {2}, connected: {3} )'.format(msg.object_id, msg.factory_id, msg.object_type, msg.connected))
         # Currently only one lightcube id is supported
         if msg.object_type == objects.LightCube1Type:
@@ -150,7 +179,7 @@ class World(util.Component):
         else:
             self.logger.warning('An object without the expected LightCube type is sending a connection state update, object_id:{0}, factory_id:{1}'.format(msg.object_id, msg.factory_id))
 
-    def object_moved(self, _, msg):
+    def _on_object_moved(self, _, msg):
         self.logger.debug('Got Object Moved Message ( timestamp: {0}, object_id: {1} )'.format(msg.timestamp, msg.object_id))
 
         if msg.object_id in self._objects:
@@ -158,7 +187,7 @@ class World(util.Component):
         else:
             self.logger.warning('An object not currently tracked by the world moved with id {0}'.format(msg.object_id))
 
-    def object_stopped_moving(self, _, msg):
+    def _on_object_stopped_moving(self, _, msg):
         self.logger.debug('Got Object Stopped Moving Message ( timestamp: {0}, object_id: {1} )'.format(msg.timestamp, msg.object_id))
 
         if msg.object_id in self._objects:
@@ -166,7 +195,7 @@ class World(util.Component):
         else:
             self.logger.warning('An object not currently tracked by the world stopped moving with id {0}'.format(msg.object_id))
 
-    def object_up_axis_changed(self, _, msg):
+    def _on_object_up_axis_changed(self, _, msg):
         self.logger.debug('Got Object Up Axis Changed Message ( timestamp: {0}, object_id: {1}, up_axis: {2} )'.format(msg.timestamp, msg.object_id, msg.up_axis))
 
         if msg.object_id in self._objects:
@@ -174,7 +203,7 @@ class World(util.Component):
         else:
             self.logger.warning('Up Axis changed on an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
-    def object_tapped(self, _, msg):
+    def _on_object_tapped(self, _, msg):
         self.logger.debug('Got Object Tapped Message ( timestamp: {0}, object_id: {1} )'.format(msg.timestamp, msg.object_id))
 
         if msg.object_id in self._objects:
@@ -182,7 +211,7 @@ class World(util.Component):
         else:
             self.logger.warning('Tapped an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
-    def robot_observed_object(self, _, msg):
+    def _on_robot_observed_object(self, _, msg):
         self.logger.debug('Got Robot Observed Object Message ( timestamp: {0}, object_family: {1}, object_type: {2}, object_id: {3}, img_rect: {4}, pose: {5}, top_face_orientation_rad: {6}, is_active: {7} )'.format(msg.timestamp, msg.object_family, msg.object_type, msg.object_id, msg.img_rect, msg.pose, msg.top_face_orientation_rad, msg.is_active))
 
         # is_active refers to whether an object has a battery, which is a given for the cube

@@ -34,20 +34,12 @@ message Event {
     RobotObservedFace                robot_observed_face                 = 5;
     RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
     SettingsUpdate                   settings_update                     = 7;
-    // @TODO: Create an ObjectEvents wrapper for all the object proto events VIC-4644
-    ObjectConnectionState            object_connection_state             = 8;
-    ObjectMoved                      object_moved                        = 9;
-    ObjectStoppedMoving              object_stopped_moving               = 10;
-    ObjectUpAxisChanged              object_up_axis_changed              = 11;
-    ObjectTapped                     object_tapped                       = 12;
-    RobotObservedObject              robot_observed_object               = 13;
-    CubeConnectionLost               cube_connection_lost                = 14;
-    StimulationInfo                  stimulation_info                    = 15;
-    PhotoTaken                       photo_taken                         = 16;
-    RobotState                       robot_state                         = 17;
-    ObjectAvailable                  object_available                    = 18;
-    CubeBattery                      cube_battery                        = 19;
-    KeepAlivePing                    keep_alive                          = 20;
+    ObjectEvent                      object_event                        = 8;
+    StimulationInfo                  stimulation_info                    = 9;
+    PhotoTaken                       photo_taken                         = 10;
+    RobotState                       robot_state                         = 11;
+    CubeBattery                      cube_battery                        = 12;
+    KeepAlivePing                    keep_alive                          = 13;
   }
 }
 

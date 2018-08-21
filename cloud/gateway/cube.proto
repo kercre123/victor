@@ -197,3 +197,16 @@ message CubeBattery {
   string           factory_id      = 2;
   float            battery_volts    = 3;
 }
+
+message ObjectEvent {
+  oneof object_event_type {
+    ObjectAvailable       object_available        = 1;
+    ObjectConnectionState object_connection_state = 2;
+    ObjectMoved           object_moved            = 3;
+    ObjectStoppedMoving   object_stopped_moving   = 4;
+    ObjectUpAxisChanged   object_up_axis_changed  = 5;
+    ObjectTapped          object_tapped           = 6;
+    RobotObservedObject   robot_observed_object   = 7;
+    CubeConnectionLost    cube_connection_lost    = 8;
+  }
+}
