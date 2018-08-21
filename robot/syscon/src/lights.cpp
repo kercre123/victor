@@ -83,7 +83,7 @@ void Lights::enable() {
 }
 
 void Lights::disable(void) {
-  receive((const uint8_t*)default_value);
+  //receive((const uint8_t*)default_value);
   enabled = false;
 }
 

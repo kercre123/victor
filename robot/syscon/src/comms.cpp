@@ -276,6 +276,17 @@ static void ProcessMessage(InboundPacket& packet) {
         // Prevent system from waking itself up for 1 second
         missed_frames = 0;
         Power::setMode(POWER_STOP);
+        // TEMPORARY SIGNALLING CODE
+        #ifndef BOOTLOADER
+        static const uint8_t alert_lights[] = {
+          0xFF, 0xFF, 0x00,
+          0xFF, 0xFF, 0x00,
+          0xFF, 0xFF, 0x00,
+          0xFF, 0xFF, 0x00,
+        };
+
+        Lights::receive(alert_lights);
+        #endif
         break ;
       case PAYLOAD_MODE_CHANGE:
         break ;

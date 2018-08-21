@@ -15,7 +15,7 @@ TIM16 Touch Sense 1
 TIM17 Backpack LEDs
 */
 
-//#define DEBUG
+#define DEBUG
 
 static const uint32_t SYSTEM_CLOCK = 48000000;
 static const uint32_t CONTACT_BAUDRATE = 115200;

@@ -82,13 +82,19 @@ __VectorTable   DCD     0                              ; Top of Stack
                 DCD     USART1_IRQHandler              ; USART1
                 DCD     USART2_IRQHandler              ; USART2
 
-                AREA    |.text|, CODE, READONLY
+                AREA    |.text|, CODE, READWRITE
 
                 ALIGN
 
 
                 EXPORT SoftReset
-SoftReset       BX  R0
+                IMPORT EraseFlash
+SoftReset       CPSID I
+                ;LDR R0, =EraseFlash
+                ;BX  R0
+                LDR R0, =0x08000004
+                LDR R1, [R0]
+                BX  R1
 
 ;*******************************************************************************
 ; User Stack and Heap initialization

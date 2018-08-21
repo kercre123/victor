@@ -12,6 +12,7 @@
 
 #ifndef BOOTLOADER
 #include "contacts.h"
+#include "lights.h"
 #endif
 
 static const int SELECTED_CHANNELS = 0
@@ -354,6 +355,17 @@ void Analog::tick(void) {
     static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     if (adc_values[ADC_VMAIN] < LOW_VOLTAGE_POWER_DOWN_POINT) {
       if (--power_down_timer <= 0) {
+        // TEMPORARY SIGNALLING CODE
+        #ifndef BOOTLOADER
+        static const uint8_t alert_lights[] = {
+          0x00, 0xFF, 0x00,
+          0x00, 0xFF, 0x00,
+          0x00, 0xFF, 0x00,
+          0x00, 0xFF, 0x00,
+        };
+
+        Lights::receive(alert_lights);
+        #endif
         Power::setMode(POWER_STOP);
       }
     } else {
@@ -402,6 +414,18 @@ void Analog::tick(void) {
   // VMain / VBat trap
   if (disable_vmain) {
     Power::setMode(POWER_STOP);
+
+    // TEMPORARY SIGNALLING CODE
+    #ifndef BOOTLOADER
+    static const uint8_t alert_lights[] = {
+      0xFF, 0x00, 0x00,
+      0xFF, 0x00, 0x00,
+      0xFF, 0x00, 0x00,
+      0xFF, 0x00, 0x00,
+    };
+
+    Lights::receive(alert_lights);
+    #endif
     return ;
   }
 
@@ -439,7 +463,18 @@ void Analog::tick(void) {
       BODY_TX::mode(MODE_INPUT);
 
       Power::setMode(POWER_STOP);
-    } else {
+
+      #ifndef BOOTLOADER
+      static const uint8_t alert_lights[] = {
+        0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF,
+      };
+
+      Lights::receive(alert_lights);
+      #endif
+      } else {
       Power::setMode(POWER_ACTIVE);
     }
   } else {
