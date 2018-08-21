@@ -30,6 +30,7 @@ namespace {
 
 static const char* kStimCategory = "Stim";
 static const char* kActiveFeatureCategory = "Feature";
+static const char* kActiveFeatureTypeCategory = "FeatureType";
 static const char* kBehaviorStatCategory = "BStat";
 static const char* kFacesCategory = "Face";
 static const char* kOdomCategory = "Odom";
@@ -117,6 +118,12 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
 {
   IncreaseHelper(kActiveFeatureCategory + std::string(kRobotStatsSeparator) + intentSource,
                  ActiveFeatureToString(feature), 1);
+
+  // also log usage by type, to serve as a "summary"
+  ActiveFeatureType featureType = GetActiveFeatureType(feature, ActiveFeatureType::Invalid);
+  if( featureType != ActiveFeatureType::Invalid ) {
+    IncreaseHelper( kActiveFeatureTypeCategory, ActiveFeatureTypeToString(featureType), 1);
+  }
 }
 
 

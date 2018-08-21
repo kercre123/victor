@@ -9,6 +9,8 @@ namespace Vector {
 
 enum uint_8 ActiveFeatureType {
 
+  Invalid = 0,
+
   // system features that don't fit elsewhere
   System,
 
