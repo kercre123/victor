@@ -114,6 +114,7 @@ void BehaviorPoweringRobotOff::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
+  SmartPushResponseToTriggerWord();
 }
 
 
