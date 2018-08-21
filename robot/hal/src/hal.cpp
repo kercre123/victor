@@ -470,6 +470,23 @@ Result HAL::Step(void)
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
 
+  // Monitor body temperature (For debugging only)
+  if (bodyData_ != nullptr) {
+    static u32 lastReportedBodyTempTime_ms = 0;
+    static s16 lastReportedBodyTemp_C = 0;
+    TimeStamp_t currTime_ms = HAL::GetTimeStamp();
+    u16 currTemp = bodyData_->battery.temperature;
+
+    if (currTemp > 50 &&
+        currTemp != lastReportedBodyTemp_C &&
+        (currTime_ms - lastReportedBodyTempTime_ms > 5000)) {
+      AnkiWarn("HAL.Step.BodyTemp", "%dC", currTemp);
+      lastReportedBodyTempTime_ms = currTime_ms;
+      lastReportedBodyTemp_C = currTemp;
+    }
+  }
+
+
   PrintConsoleOutput();
 
   EventStop(EventType::HAL_STEP);
