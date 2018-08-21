@@ -28,9 +28,6 @@
 namespace Anki {
 namespace Vision {
   
-  // Forward declaration
-  class Camera;
-  
   class TrackedFace
   {
   public:
@@ -91,8 +88,9 @@ namespace Vision {
     
     // Returns true if the face has eyes set and populates the left and right centers
     // Returns false and does not change leftCen/rightCen if eyes were never set
+    // GetIntraEyeDistance will undistort the eye locations according to the camera's calibration (if available)
+    //  to compute a more accurate distance.
     bool GetEyeCenters(Point2f& leftCen, Point2f& rightCen) const;
-    f32  GetIntraEyeDistance() const;
     
     void SetRect(Rectangle<f32>&& rect);
     
@@ -109,10 +107,6 @@ namespace Vision {
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
     void SetIsFacingCamera(bool tf);
-    
-    // Returns true if real eye detections were used to update the translation, false
-    // if fake eye centers (based on detection rectangle) were used.
-    bool UpdateTranslation(const Vision::Camera& camera);
     
     // Return the histogram over all expressions (sums to 100)
     using FacialExpressionValues = std::array<u8, (size_t)FacialExpression::Count>;
@@ -293,6 +287,7 @@ namespace Vision {
   
   inline void TrackedFace::SetHeadPose(Pose3d &pose) {
     _headPose = pose;
+    _isTranslationSet = true;
   }
   
   

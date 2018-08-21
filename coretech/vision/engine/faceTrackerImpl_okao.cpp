@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
@@ -52,10 +53,20 @@ namespace Vision {
     // because this runs on a different thread and has no robot/context.
     static const uint32_t kRandomSeed = 1;
   }
+  
+  // Assuming a max face detection of 3m, focal length of 300 and distanceBetweenEyes_mm of 62
+  // then the smallest distance between eyes in pixels will be ~6
+  static const f32 MinDistBetweenEyes_pixels = 6;
+  
+  // Average distance between human eyes, used to estimate translation
+  static const f32 DistanceBetweenEyes_mm = 62.f;
 
   // Use this to trigger a reinitialization on next Update()
   #if REMOTE_CONSOLE_ENABLED
-  CONSOLE_VAR(bool, kReinitDetector, "Vision.FaceDetectorCommon", false);
+  CONSOLE_VAR(bool, kReinitDetector,              "Vision.FaceDetectorCommon", false);
+  CONSOLE_VAR(bool, kUseUndistortionForFacePose,  "Vision.FaceDetectorCommon", true);
+  CONSOLE_VAR(bool, kAdjustEyeDistByYaw,          "Vision.FaceDetectorCommon", true);
+  CONSOLE_VAR(bool, kKeepUndistortedFaceFeatures, "Vision.FaceDetectorCommon", false);
   #endif // REMOTE_CONSOLE_ENABLED
 
   namespace DetectParams {
@@ -68,6 +79,8 @@ namespace Vision {
     CONSOLE_VAR_ENUM(s32,                    kSearchDensity,        "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::SearchDensity::Normal), Okao::GetConsoleString<Okao::SearchDensity>().c_str());
     CONSOLE_VAR_RANGED(s32,                  kFaceThreshold,        "Vision.FaceDetectorCommon", 500, 1, 1000);
     CONSOLE_VAR_ENUM(s32,                    kDetectionMode,        "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::DetectionMode::Movie), Okao::GetConsoleString<Okao::DetectionMode>().c_str());
+    
+    
     // Movie only
     CONSOLE_VAR_RANGED(s32,                  kSearchInitialCycle,   "Vision.FaceDetectorMovie", 2, 1, 45);
     CONSOLE_VAR_RANGED(s32,                  kSearchNewCycle,       "Vision.FaceDetectorMovie", 2, 1, 45);
@@ -83,6 +96,7 @@ namespace Vision {
     CONSOLE_VAR(     bool,                   kEnablePoseExtension,  "Vision.FaceDetectorMovie", true);
     CONSOLE_VAR(     bool,                   kUseHeadTracking,      "Vision.FaceDetectorMovie", true);
     CONSOLE_VAR(     bool,                   kDirectionMask,        "Vision.FaceDetectorMovie", false);
+    
   }
 
   FaceTracker::Impl::Impl(const Camera& camera,
@@ -454,7 +468,8 @@ namespace Vision {
     _recognizer.SetIsSynchronous(isSynchronous);
   }
   
-  static inline void SetFeatureHelper(const POINT* faceParts, std::vector<s32>&& indices,
+  template<class PointType>
+  static inline void SetFeatureHelper(const PointType* faceParts, std::vector<s32>&& indices,
                                       TrackedFace::FeatureName whichFeature,
                                       TrackedFace& face)
   {
@@ -497,7 +512,7 @@ namespace Vision {
       }
       return false;
     }
-    
+
     okaoResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
                                    _facialParts, _facialPartConfs);
     if(OKAO_NORMAL != okaoResult) {
@@ -529,36 +544,7 @@ namespace Vision {
       PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
       PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
     }, TrackedFace::FeatureName::UpperLip, face);
-    
-    
-    // Fill in head orientation
-    INT32 roll_deg=0, pitch_deg=0, yaw_deg=0;
-    okaoResult = OKAO_PT_GetFaceDirection(_okaoPartDetectionResultHandle, &pitch_deg, &yaw_deg, &roll_deg);
-    if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetFaceDirectionFail",
-                          "FaceLib Result Code=%d", okaoResult);
-      return RESULT_FAIL;
-    }
-    
-    //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
-    //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
-    //                 roll_deg, pitch_deg, yaw_deg);
-    
-    face.SetHeadOrientation(DEG_TO_RAD(roll_deg),
-                            DEG_TO_RAD(pitch_deg),
-                            DEG_TO_RAD(yaw_deg));
-    
-    if(std::abs(roll_deg)  <= FaceEnrollParams::kLookingStraightMaxAngle_deg &&
-       std::abs(pitch_deg) <= FaceEnrollParams::kLookingStraightMaxAngle_deg &&
-       std::abs(yaw_deg)   <= FaceEnrollParams::kLookingStraightMaxAngle_deg)
-    {
-      face.SetIsFacingCamera(true);
-    }
-    else
-    {
-      face.SetIsFacingCamera(false);
-    }
-    
+
     return true;
   }
   
@@ -713,6 +699,277 @@ namespace Vision {
     return eyeContact;
   }
   
+  static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,
+                              const CameraCalibration& scaledCalib)
+  {
+    // Get unit vector along camera ray from the point between the eyes in the image
+    Point2f eyeMidPoint(leftEye);
+    eyeMidPoint += rightEye;
+    eyeMidPoint *= 0.5f;
+    
+    Vec3f ray(eyeMidPoint.x(), eyeMidPoint.y(), 1.f);
+    ray = scaledCalib.GetInvCalibrationMatrix() * ray;
+    ray.MakeUnitLength();
+    
+    ray *= scaledCalib.GetFocalLength_x() * DistanceBetweenEyes_mm / intraEyeDist;
+    
+    return ray;
+  }
+  
+  Result FaceTracker::Impl::SetFacePoseWithoutParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist)
+  {
+    // Without face parts detected (which includes eyes), use fake eye centers for finding pose
+    auto const& rect = face.GetRect();
+    DEV_ASSERT(rect.Area() > 0, "FaceTrackerImpl.SetFacePoseWithoutParts.InvalidFaceFectangle");
+    const Point2f leftEye( rect.GetXmid() - .25f*rect.GetWidth(),
+                          rect.GetYmid() - .125f*rect.GetHeight() );
+    const Point2f rightEye( rect.GetXmid() + .25f*rect.GetWidth(),
+                           rect.GetYmid() - .125f*rect.GetHeight() );
+    
+    intraEyeDist = std::max((rightEye - leftEye).Length(), MinDistBetweenEyes_pixels);
+   
+    const CameraCalibration& scaledCalib = _camera.GetCalibration()->GetScaled(nrows, ncols);
+    
+    // Use the eye positions and raw intra-eye distance to compute the head's translation
+    const Vec3f& T = GetTranslation(leftEye, rightEye, intraEyeDist, scaledCalib);
+    Pose3d headPose = face.GetHeadPose();
+    headPose.SetTranslation(T);
+    headPose.SetParent(_camera.GetPose());
+    face.SetHeadPose(headPose);
+    
+    // We don't know anything about orientation without parts, so don't update it and assume
+    // _not_ facing the camera (without actual evidence that we are)
+    face.SetIsFacingCamera(false);
+    
+    return RESULT_OK;
+  }
+  
+  Result FaceTracker::Impl::SetFacePoseFromParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist)
+  {
+    // Init outputs to zero in case anything goes wrong
+    intraEyeDist = 0.f;
+    
+    if(!ANKI_VERIFY(_camera.IsCalibrated(), "FaceTrackerImpl.SetFacePoseFromParts.CameraNotCalibrated", ""))
+    {
+      return RESULT_FAIL;
+    }
+    
+    // Little local (likely inlineable) helper to check if the offset has been set yet, for readability purposes
+    auto IsFirstPointOffsetSet = [](INT32 offset) -> bool {
+      return (offset != -1);
+    };
+    
+    // Index of first landmark point within (INT32*)HPTRESULT.
+    static INT32 kFirstPointOffset = -1;
+    if(!IsFirstPointOffsetSet(kFirstPointOffset))
+    {
+      // The first time through, empirically determime where the first point is in the void* data structure
+      // we get from OKAO. We have already called OKAO_PT_GetResult to populate _facialParts, so we can look for
+      // where those values are located within the data structure. The reason we don't just hard-code this, is
+      // that we observed a difference b/w the Mac and Android/ARM OKAO libs in how this data structure is
+      // organized/packed, so it feels safer to have this as "self documenting" code.
+      const INT32* pt = (INT32*)_okaoPartDetectionResultHandle;
+      for(INT32 i=0; i<PT_POINT_KIND_MAX; ++i)
+      {
+        if(!IsFirstPointOffsetSet(kFirstPointOffset))
+        {
+          // Not set yet: see if we have found the first point in the HPTRESULT yet
+          if( (pt[i] == _facialParts[0].x) && (pt[i+1] == _facialParts[0].y) )
+          {
+            PRINT_NAMED_INFO("FaceTrackerImpl.SetFacePoseFromParts.SetFirstPointOffset", "kFirstPointOffset=%d", i);
+            kFirstPointOffset = i;
+            break;
+          }
+        }
+      }
+      
+      if(ANKI_DEV_CHEATS && IsFirstPointOffsetSet(kFirstPointOffset))
+      {
+        // Sanity check the FirstPointOffset we just found (all following facialParts points should match too)
+        pt = (INT32*)_okaoPartDetectionResultHandle + kFirstPointOffset;
+        for(INT32 i=0; i<PT_POINT_KIND_MAX; ++i, pt += 2)
+        {
+          if(!ANKI_VERIFY((*pt == _facialParts[i].x) && (*(pt+1) == _facialParts[i].y),
+                          "FaceTrackerImpl.SetFacePoseFromParts.PointMisMatch",
+                          "Point in HPTRESULT data structure (%d,%d) does not match expected (%d,%d)",
+                          *pt, *(pt+1), _facialParts[i].x, _facialParts[i].y))
+          {
+            return RESULT_FAIL;
+          }
+        }
+      }
+    }
+    
+    if(!ANKI_VERIFY(IsFirstPointOffsetSet(kFirstPointOffset),
+                    "FaceTrackerImpl.SetFacePoseFromParts.FirstPointOffSetNotSet", ""))
+    {
+      return RESULT_FAIL;
+    }
+    
+    // What I'm about to do is terrible. But OKAO forced my hand by making their HPTRESULT a void* and
+    // having it be the only way to get the roll, pitch, and yaw of the face.
+    // I'm going to undistort the points internally so that I can pass an undistorted HPTRESULT to
+    // GetFaceDirection in order to estimate an improved set of rotation angles.
+    INT32* pt = (INT32*)_okaoPartDetectionResultHandle + kFirstPointOffset;
+    std::vector<cv::Point2f> distortedPoints(PT_POINT_KIND_MAX);
+    for(INT32 i=0; i<PT_POINT_KIND_MAX; ++i)
+    {
+      auto & distortedPoint = distortedPoints[i];
+      distortedPoint.x = (f32) (*pt);
+      ++pt;
+      distortedPoint.y = (f32) (*pt);
+      ++pt;
+      
+      // This is to check that we have the kFirstPointOffset set correctly (as well as the assumption
+      // that the rest of the x/y entries are contiguous after that)
+      DEV_ASSERT( (distortedPoint.x == _facialParts[i].x) && (distortedPoint.y == _facialParts[i].y),
+                 "FaceTrackerImpl.SetFacePoseFromParts.BadPointIndexing");
+    }
+    
+    // Undistort the part locations
+    auto const& calib = _camera.GetCalibration()->GetScaled(nrows, ncols);
+    std::vector<cv::Point2f> undistortedPoints(distortedPoints.size());
+    
+    cv::Matx<f32,3,3> K = calib.GetCalibrationMatrix().get_CvMatx_();
+    const std::vector<f32>& distCoeffs = calib.GetDistortionCoeffs();
+    
+    try
+    {
+      cv::undistortPoints(distortedPoints, undistortedPoints, K, distCoeffs, cv::noArray(), K);
+    }
+    catch(const cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.SetFacePoseFromParts.UndistortFailed",
+                        "OpenCV Error: %s", e.what());
+      return RESULT_FAIL;
+    }
+        
+    if(kUseUndistortionForFacePose)
+    {
+      // Fill the HPTRESULT with the undistorted points
+      pt = (INT32*)_okaoPartDetectionResultHandle + kFirstPointOffset;
+      for(auto const& undistortedPoint : undistortedPoints)
+      {
+        *pt = std::round(undistortedPoint.x);
+        ++pt;
+        *pt = std::round(undistortedPoint.y);
+        ++pt;
+      }
+    }
+    
+    // Fill in head orientation, using undistorted landmark locations so we are more accurate
+    INT32 roll_deg=0, pitch_deg=0, yaw_deg=0;
+    INT32 okaoDirResult = OKAO_PT_GetFaceDirection(_okaoPartDetectionResultHandle, &pitch_deg, &yaw_deg, &roll_deg);
+    
+    // Get the undistorted eye locations to use for computing translation below
+    POINT undistortedParts[PT_POINT_KIND_MAX];
+    INT32 undistortedConfs[PT_POINT_KIND_MAX];
+    INT32 okaoGetResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
+                                            undistortedParts, undistortedConfs);
+    
+    // Put back the original distorted points since the remainder of their usage also needs
+    // corresponding image data, which we have _not_ undistorted (to save the computation)
+    pt = (INT32*)_okaoPartDetectionResultHandle + kFirstPointOffset;
+    for(auto const& distortedPoint : distortedPoints)
+    {
+      *pt = distortedPoint.x;
+      ++pt;
+      *pt = distortedPoint.y;
+      ++pt;
+    }
+
+    // Handle errors here, _after_ restoring distorted points
+    if(OKAO_NORMAL != okaoDirResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.SetFacePoseFromParts.FaceLibGetFaceDirectionFail",
+                          "FaceLib Result Code=%d", okaoDirResult);
+      return RESULT_FAIL;
+    }
+    if(OKAO_NORMAL != okaoGetResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.SetFacePoseFromParts.FaceLibGetResultFail",
+                          "FaceLib Result Code=%d", okaoGetResult);
+      return RESULT_FAIL;
+    }
+    
+    face.SetHeadOrientation(DEG_TO_RAD(roll_deg),
+                            DEG_TO_RAD(pitch_deg),
+                            DEG_TO_RAD(yaw_deg));
+    
+    if(std::abs(roll_deg)  <= FaceEnrollParams::kLookingStraightMaxAngle_deg &&
+       std::abs(pitch_deg) <= FaceEnrollParams::kLookingStraightMaxAngle_deg &&
+       std::abs(yaw_deg)   <= FaceEnrollParams::kLookingStraightMaxAngle_deg)
+    {
+      face.SetIsFacingCamera(true);
+    }
+    else
+    {
+      face.SetIsFacingCamera(false);
+    }
+    
+    // Compute initial intra-eye distance
+    const Point2f leftEye(undistortedParts[PT_POINT_LEFT_EYE].x, undistortedParts[PT_POINT_LEFT_EYE].y);
+    const Point2f rightEye(undistortedParts[PT_POINT_RIGHT_EYE].x, undistortedParts[PT_POINT_RIGHT_EYE].y);
+    intraEyeDist = std::max((leftEye-rightEye).Length(), MinDistBetweenEyes_pixels);
+    
+    if(kAdjustEyeDistByYaw)
+    {
+      // Adjust intra-eye distance to take yaw into account
+      f32 yawAdjFrac = std::cos(face.GetHeadYaw().ToFloat());
+      
+      if(!Util::IsNearZero(yawAdjFrac))
+      {
+        intraEyeDist /= yawAdjFrac;
+      }
+    }
+    
+    // Use the eye positions and yaw-adjusted intra-eye distance to compute the head's translation
+    const Vec3f& T = GetTranslation(leftEye, rightEye, intraEyeDist, calib);
+    Pose3d headPose = face.GetHeadPose();
+    headPose.SetTranslation(T);
+    
+    // The okao coordindate system is based around the face instead of around the robot
+    // and is different than the anki coordindate system. Specifically the x-axis points
+    // out of the detected faces nose, the z-axis points of the top of the detected faces
+    // head, and the y-axis points out of the left ear of the detected face. Thus the
+    // Yaw angle maps without change onto our coordinate system, while the roll and pitch
+    // need to be switched and negated to map correctly from the okao coordinate system
+    // to the anki coordindate system.
+    const RotationMatrix3d rotation(-face.GetHeadPitch(), -face.GetHeadRoll(), face.GetHeadYaw());
+    headPose.SetRotation(headPose.GetRotation() * rotation);
+
+    headPose.SetParent(_camera.GetPose());
+    face.SetHeadPose(headPose);
+    
+    if(kKeepUndistortedFaceFeatures)
+    {
+      // Set face's eyes to their undistorted locations
+      face.SetEyeCenters(Point2f(undistortedPoints[PT_POINT_LEFT_EYE].x,
+                                 undistortedPoints[PT_POINT_LEFT_EYE].y),
+                         Point2f(undistortedPoints[PT_POINT_RIGHT_EYE].x,
+                                 undistortedPoints[PT_POINT_RIGHT_EYE].y));
+      
+      // Set other facial features to their undistorted locations
+      SetFeatureHelper(undistortedPoints.data(), {
+        PT_POINT_LEFT_EYE_OUT, PT_POINT_LEFT_EYE, PT_POINT_LEFT_EYE_IN
+      }, TrackedFace::FeatureName::LeftEye, face);
+      
+      SetFeatureHelper(undistortedPoints.data(), {
+        PT_POINT_RIGHT_EYE_IN, PT_POINT_RIGHT_EYE, PT_POINT_RIGHT_EYE_OUT
+      }, TrackedFace::FeatureName::RightEye, face);
+      
+      SetFeatureHelper(undistortedPoints.data(), {
+        PT_POINT_NOSE_LEFT, PT_POINT_NOSE_RIGHT
+      }, TrackedFace::FeatureName::Nose, face);
+      
+      SetFeatureHelper(undistortedPoints.data(), {
+        PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
+        PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
+      }, TrackedFace::FeatureName::UpperLip, face);
+    }
+    
+    return RESULT_OK;
+  }
+  
+  
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    std::list<TrackedFace>& faces,
                                    std::list<UpdatedFaceID>& updatedIDs)
@@ -849,8 +1106,18 @@ namespace Vision {
       const bool facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
       Toc("FacePartDetection");
       
+      // Will be computed from detected eyes if face parts are found, or "faked" using
+      // face detection rectangle otherwise;
+      f32 intraEyeDist = -1.f;
+      
       if(facePartsFound)
       {
+        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
+        
+        //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
+        //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
+        //                 roll_deg, pitch_deg, yaw_deg);
+        
         if(_detectEmotion)
         {
           // Expression detection
@@ -890,10 +1157,18 @@ namespace Vision {
           }
         }
         
+        if(_detectGaze)
+        {
+          // This needs to happen after setting the pose.
+          // There is a assert in there that should catch if the pose is uninitialized but
+          // won't catch on going cases of the dependence.
+          face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
+        }
+        
         //
         // Face Recognition:
         //
-        const bool enableEnrollment = IsEnrollable(detectionInfo, face);
+        const bool enableEnrollment = IsEnrollable(detectionInfo, face, intraEyeDist);
         
         // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
@@ -921,7 +1196,13 @@ namespace Vision {
         //                            -detectionInfo.nID, numDetections);
         //        }
         
-      } // if(facePartsFound)
+      }
+      else
+      {
+        // NOTE: Without parts, we do not do eye contact, gaze, face recognition, etc.
+        
+        SetFacePoseWithoutParts(nHeight, nWidth, face, intraEyeDist);
+      }
       
       // Get whatever is the latest recognition information for the current tracker ID
       s32 enrollmentCompleted = 0;
@@ -974,19 +1255,6 @@ namespace Vision {
         face.SetNumEnrollments(enrollmentCompleted);
         
         face.SetRecognitionDebugInfo(recognitionData.GetDebugMatchingInfo());
-      }
-
-      // Use a camera from the robot's pose history to estimate the head's
-      // 3D translation, w.r.t. that camera. Also puts the face's pose in
-      // the camera's pose chain. This needs to happen before Detecting
-      // Eye Contact, there is a assert in there that should catch it
-      // if the pose is uninitialized but won't catch on going cases of the
-      // dependence.
-      face.UpdateTranslation(_camera);
-
-      if(_detectGaze && facePartsFound)
-      {
-        face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
       }
       
     } // FOR each face
@@ -1059,7 +1327,7 @@ namespace Vision {
   }
 
 
-  bool FaceTracker::Impl::IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face)
+  bool FaceTracker::Impl::IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face, const f32 intraEyeDist)
   {
 #   define DEBUG_ENROLLABILITY 0
     
@@ -1069,22 +1337,20 @@ namespace Vision {
     
     if(detectionInfo.nConfidence > kMinDetectionConfidence)
     {
-      const f32 d = face.GetIntraEyeDistance();
-      
       switch(_enrollPose)
       {
         case FaceEnrollmentPose::LookingStraight:
         {
           if(detectionInfo.nPose == POSE_YAW_FRONT &&
              face.IsFacingCamera() &&
-             d >= kFarDistanceBetweenEyesMin)
+             intraEyeDist >= kFarDistanceBetweenEyesMin)
           {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
             PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraight",
                               "EyeDist=%.1f (vs. %.1f)",
-                              d, kFarDistanceBetweenEyesMin);
+                              intraEyeDist, kFarDistanceBetweenEyesMin);
           }
           break;
         }
@@ -1092,8 +1358,8 @@ namespace Vision {
         case FaceEnrollmentPose::LookingStraightClose:
         {
           // Close enough and not too much head angle
-          if(d >= kCloseDistanceBetweenEyesMin &&
-             d <= kCloseDistanceBetweenEyesMax &&
+          if(intraEyeDist >= kCloseDistanceBetweenEyesMin &&
+             intraEyeDist <= kCloseDistanceBetweenEyesMax &&
              detectionInfo.nPose == POSE_YAW_FRONT &&
              face.IsFacingCamera())
           {
@@ -1102,7 +1368,7 @@ namespace Vision {
           else if(DEBUG_ENROLLABILITY) {
             PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightClose",
                               "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              d, kCloseDistanceBetweenEyesMin, kCloseDistanceBetweenEyesMax,
+                              intraEyeDist, kCloseDistanceBetweenEyesMin, kCloseDistanceBetweenEyesMax,
                               face.GetHeadRoll().getDegrees(),
                               face.GetHeadPitch().getDegrees(),
                               face.GetHeadYaw().getDegrees());
@@ -1113,8 +1379,8 @@ namespace Vision {
         case FaceEnrollmentPose::LookingStraightFar:
         {
           // Far enough and not too much head angle
-          if(d >= kFarDistanceBetweenEyesMin &&
-             d <= kFarDistanceBetweenEyesMax &&
+          if(intraEyeDist >= kFarDistanceBetweenEyesMin &&
+             intraEyeDist <= kFarDistanceBetweenEyesMax &&
              detectionInfo.nPose == POSE_YAW_FRONT &&
              face.IsFacingCamera())
           {
@@ -1123,7 +1389,7 @@ namespace Vision {
           else if(DEBUG_ENROLLABILITY) {
             PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightFar",
                               "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              d, kFarDistanceBetweenEyesMin, kFarDistanceBetweenEyesMax,
+                              intraEyeDist, kFarDistanceBetweenEyesMin, kFarDistanceBetweenEyesMax,
                               face.GetHeadRoll().getDegrees(),
                               face.GetHeadPitch().getDegrees(),
                               face.GetHeadYaw().getDegrees());
@@ -1176,7 +1442,7 @@ namespace Vision {
         case FaceEnrollmentPose::LookingUp:
         {
           // Looking up enough, but not too much. "No" pitch/roll.
-          if(detectionInfo.nPose == POSE_YAW_FRONT && d >= kFarDistanceBetweenEyesMax &&
+          if(detectionInfo.nPose == POSE_YAW_FRONT && intraEyeDist >= kFarDistanceBetweenEyesMax &&
              //std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
              //std::abs(face.GetHeadYaw().getDegrees()) <= kLookingStraightMaxAngle_deg &&
              face.GetHeadPitch().getDegrees() >= kLookingUpMinAngle_deg &&
@@ -1197,7 +1463,7 @@ namespace Vision {
         case FaceEnrollmentPose::LookingDown:
         {
           // Looking up enough, but not too much. "No" pitch/roll.
-          if(detectionInfo.nPose == POSE_YAW_FRONT && d >= kFarDistanceBetweenEyesMax &&
+          if(detectionInfo.nPose == POSE_YAW_FRONT && intraEyeDist >= kFarDistanceBetweenEyesMax &&
              //std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
              //std::abs(face.GetHeadYaw().getDegrees()) <= kLookingStraightMaxAngle_deg &&
              face.GetHeadPitch().getDegrees() <= -kLookingDownMinAngle_deg &&

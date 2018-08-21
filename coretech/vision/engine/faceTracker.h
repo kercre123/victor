@@ -29,6 +29,7 @@ namespace Json {
 namespace Anki {
 namespace Vision {
   
+  class Camera;
   class Image;
   
   class FaceTracker

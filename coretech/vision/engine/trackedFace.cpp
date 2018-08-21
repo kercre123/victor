@@ -11,17 +11,10 @@
  **/
 
 #include "coretech/vision/engine/trackedFace.h"
-#include "coretech/vision/engine/camera.h"
 #include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Vision {
-  
-  static const f32 DistanceBetweenEyes_mm = 62.f;
-  
-  // Assuming a max face detection of 3m, focal length of 300 and distanceBetweenEyes_mm of 62
-  // then the smallest distance between eyes in pixels will be ~6
-  static const f32 MinDistBetweenEyes_pixels = 6;
   
   TrackedFace::TrackedFace()
   : _smileAmount(false, 0.f, 0.f)
@@ -31,85 +24,7 @@ namespace Vision {
   {
     
   }
-  
-  f32 TrackedFace::GetIntraEyeDistance() const
-  {
-    f32 imageDist = (_leftEyeCen - _rightEyeCen).Length();
 
-    f32 yaw  = std::cos(GetHeadYaw().ToFloat());
-    
-    if(NEAR_ZERO(yaw))
-    {
-      yaw = 1;
-    }
-    
-    if(NEAR_ZERO(imageDist))
-    {
-      PRINT_NAMED_WARNING("TrackedFace.GetIntraEyeDistance.ZeroEyeDist",
-                          "LeftEyeCen (%f %f) RightEyeCen (%f %f) Dist %f",
-                          _leftEyeCen.x(),
-                          _leftEyeCen.y(),
-                          _rightEyeCen.x(),
-                          _rightEyeCen.y(),
-                          imageDist);
-      imageDist = MinDistBetweenEyes_pixels;
-    }
-    
-    return imageDist / yaw;
-  }
-  
-  bool TrackedFace::UpdateTranslation(const Vision::Camera& camera)
-  {
-    bool usedRealCenters = true;
-    Point2f leftEye, rightEye;
-    f32 intraEyeDistance = 0;
-    if(!GetEyeCenters(leftEye, rightEye))
-    {
-      // No eyes set: Use fake eye centers
-      DEV_ASSERT(_rect.Area() > 0, "Invalid face rectangle");
-      Point2f leftEye(GetRect().GetXmid() - .25f*GetRect().GetWidth(),
-                      GetRect().GetYmid() - .125f*GetRect().GetHeight());
-      Point2f rightEye(GetRect().GetXmid() + .25f*GetRect().GetWidth(),
-                       GetRect().GetYmid() - .125f*GetRect().GetHeight());
-
-      usedRealCenters = false;
-      intraEyeDistance = std::max((rightEye - leftEye).Length(), MinDistBetweenEyes_pixels);
-    }
-    else
-    {
-      intraEyeDistance = GetIntraEyeDistance();
-    }
-    
-    DEV_ASSERT(!NEAR_ZERO(intraEyeDistance), "IntraEyeDistance is near zero");
-      
-    // Get unit vector along camera ray from the point between the eyes in the image
-    Point2f eyeMidPoint(leftEye);
-    eyeMidPoint += rightEye;
-    eyeMidPoint *= 0.5f;
-    
-    Point3f ray(eyeMidPoint.x(), eyeMidPoint.y(), 1.f);
-    DEV_ASSERT(camera.IsCalibrated(), "Camera should be calibrated");
-    ray = camera.GetCalibration()->GetInvCalibrationMatrix() * ray;
-    ray.MakeUnitLength();
-    ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / intraEyeDistance;
-    _headPose.SetTranslation(ray);
-
-    // The okao coordindate system is based around the face instead of around the robot
-    // and is different than the anki coordindate system. Specifically the x-axis points
-    // out of the detected faces nose, the z-axis points of the top of the detected faces
-    // head, and the y-axis points out of the left ear of the detected face. Thus the
-    // Yaw angle maps without change onto our coordinate system, while the roll and pitch
-    // need to be switched and negated to map correctly from the okao coordinate system
-    // to the anki coordindate system.
-    RotationMatrix3d rotation(-GetHeadPitch(), -GetHeadRoll(), GetHeadYaw());
-    _headPose.SetRotation(_headPose.GetRotation() * rotation);
-
-    _isTranslationSet = true;
-    _headPose.SetParent(camera.GetPose());
-    
-    return usedRealCenters;
-  }
-  
   const TrackedFace::FacialExpressionValues& TrackedFace::GetExpressionValues() const
   {
     return _expression;

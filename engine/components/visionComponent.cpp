@@ -99,6 +99,8 @@ namespace Vector {
   // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
   CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 50);
 
+  CONSOLE_VAR(bool, kSendUndistortedImages, "Vision.General", false);
+  
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
   CONSOLE_VAR(f32,  kMinCameraGain,                   "Vision.PreProcessing", 0.1f);
@@ -1840,6 +1842,20 @@ namespace Vector {
     _camera->AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
   }
 
+  Vision::ImageRGB GetUndistorted(const Vision::ImageRGB& img, const Vision::Camera& camera)
+  {
+    Vision::ImageRGB img_undistort;
+    img.Undistort(*camera.GetCalibration(), img_undistort);
+    return img_undistort;
+  }
+  
+  
+  Vision::Image GetUndistorted(const Vision::Image& img, const Vision::Camera& camera)
+  {
+    Vision::Image img_undistort;
+    img.Undistort(*camera.GetCalibration(), img_undistort);
+    return img_undistort;
+  }
 
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
@@ -1876,8 +1892,18 @@ namespace Vector {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
 
-    // Convert to BGR so that imencode works
-    img.ConvertToShowableFormat(sMat);
+    if(kSendUndistortedImages)
+    {
+      auto img_undistort = GetUndistorted(img, *_camera);
+      
+      // Convert to BGR so that imencode works
+      img_undistort.ConvertToShowableFormat(sMat);
+    }
+    else
+    {
+      // Convert to BGR so that imencode works
+      img.ConvertToShowableFormat(sMat);
+    }
 
     std::vector<u8> compressedBuffer;
     cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);

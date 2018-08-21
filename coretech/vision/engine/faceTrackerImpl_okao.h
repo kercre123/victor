@@ -121,7 +121,11 @@ namespace Vision {
     bool DetectEyeContact(const TrackedFace& face,
                           const TimeStamp_t& frameOrig);
   
-    bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face);
+    bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face, const f32 intraEyeDist);
+    
+    // Setting the pose of the face uses the camera's pose as its parent
+    Result SetFacePoseFromParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist);
+    Result SetFacePoseWithoutParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist);
     
     bool _isInitialized = false;
     bool _detectEmotion = false;
