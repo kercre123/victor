@@ -95,6 +95,8 @@ namespace {
   const char* kAutomaticGovernor = "interactive";
   const char* kManualGovernor = "userspace";
 
+  const char* const kWifiInterfaceName = "wlan0";
+  
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
   uint32_t _cpuTemp_C;        // Temperature in Celsius
@@ -544,23 +546,11 @@ static std::string GetWiFiSSIDForInterface(const char* if_name) {
   return std::string(essid);
 }
 
-void OSState::UpdateWifiInfo()
-{
-  const char* const if_name = "wlan0";
-  _ipAddress = GetIPV4AddressForInterface(if_name);
-  _ssid = GetWiFiSSIDForInterface(if_name);
-
-  // Check for IP "validity"
-  const bool isEmpty = _ipAddress.empty();
-  const bool isLinkLocalIP = (_ipAddress.length() > 7) && _ipAddress.compare(0,7,"169.254") == 0;
-  _hasValidIPAddress = !isEmpty && !isLinkLocalIP;
-}
-
 const std::string& OSState::GetIPAddress(bool update)
 {
   if(_ipAddress.empty() || update)
   {
-    UpdateWifiInfo();
+    _ipAddress = GetIPV4AddressForInterface(kWifiInterfaceName);
   }
 
   return _ipAddress;
@@ -570,10 +560,22 @@ const std::string& OSState::GetSSID(bool update)
 {
   if(_ssid.empty() || update)
   {
-    UpdateWifiInfo();
+    _ssid = GetWiFiSSIDForInterface(kWifiInterfaceName);
   }
 
   return _ssid;
+}
+
+bool OSState::IsValidIPAddress(const std::string& ip) const
+{
+  struct sockaddr_in sa;
+  const int result = inet_pton(AF_INET, ip.c_str(), &(sa.sin_addr));
+  if(result != 0)
+  {
+    const bool isLinkLocalIP = (ip.length() > 7) && ip.compare(0,7,"169.254") == 0;
+    return !isLinkLocalIP;
+  }
+  return false;
 }
 
 std::string OSState::GetMACAddress() const

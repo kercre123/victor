@@ -32,7 +32,7 @@ namespace Anki {
 namespace Vector {
 
 CONSOLE_VAR(u32, kOfflineTimeBeforeLights_ms, "Backpacklights", (1000*60*2));
-CONSOLE_VAR(u32, kOfflineCheckFreq_ms,        "Backpacklights", 10000);
+CONSOLE_VAR(u32, kOfflineCheckFreq_ms,        "Backpacklights", 5000);
   
 enum class BackpackLightSourcePrivate : BackpackLightSourceType
 {
@@ -57,6 +57,15 @@ BackpackLightComponent::BackpackLightComponent(const AnimContext* context)
   _context->GetMicDataSystem()->AddTriggerWordDetectedCallback([this](bool willStream)
     {
       _willStreamOpen = willStream;
+
+      UpdateOfflineCheck(true);
+      
+      // If we are offline then trigger the offline lights
+      // immediately upon trigger word detected
+      if(_offlineAtTime_ms > 0)
+      {
+        _offlineAtTime_ms = 1;
+      }
     });
   
   _context->GetMicDataSystem()->AddStreamUpdatedCallback([this](bool streamStart)
@@ -81,10 +90,16 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   const AnimTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
  
   // Check which, if any, backpack lights should be displayed
-  // Low Battery, Offline, Streaming, Charging, or Nothing
+  // Streaming, Low Battery, Offline, Charging, or Nothing
   BackpackAnimationTrigger trigger = BackpackAnimationTrigger::Off;
 
-  if(_isBatteryLow && !_isBatteryCharging)
+  
+  // If we are currently streaming to the cloud
+  if(isCloudStreamOpen)
+  {
+    trigger = BackpackAnimationTrigger::Streaming;
+  }
+  else if(_isBatteryLow && !_isBatteryCharging)
   {
     trigger = BackpackAnimationTrigger::LowBattery;
   }
@@ -93,11 +108,6 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
           ((TimeStamp_t)curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
   {
     trigger = BackpackAnimationTrigger::Offline; 
-  }
-  // If we are currently streaming to the cloud
-  else if(isCloudStreamOpen)
-  {
-    trigger = BackpackAnimationTrigger::Streaming;
   }
   // If we are on the charger and charging
   else if(_isOnChargerContacts &&
@@ -414,36 +424,25 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
   }
 }
 
-// TODO: Rework offline check to just check if connected to AP and have ip address
-// VIC-5437
-void BackpackLightComponent::UpdateOfflineCheck()
+void BackpackLightComponent::UpdateOfflineCheck(bool force)
 {
   static AnimTimeStamp_t lastCheck_ms = 0;
   const AnimTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-  auto offlineCheck = [this, curTime_ms]() {
-    const bool hasVoiceAccess = Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
-    if(_offlineAtTime_ms == 0 && !hasVoiceAccess)
+  if((curTime_ms - lastCheck_ms > kOfflineCheckFreq_ms) || force)
+  {
+    lastCheck_ms = curTime_ms;
+    const std::string& ip = OSState::getInstance()->GetIPAddress(true);
+    const bool isValidIP = OSState::getInstance()->IsValidIPAddress(ip);
+
+    if(_offlineAtTime_ms == 0 && !isValidIP)
     {
       _offlineAtTime_ms = (TimeStamp_t)curTime_ms;
     }
-    else if(_offlineAtTime_ms > 0 && hasVoiceAccess)
+    else if(_offlineAtTime_ms > 0 && isValidIP)
     {
       _offlineAtTime_ms = 0;
     }
-  };
-
-  const bool valid = _offlineCheckFuture.valid();
-  std::future_status status = std::future_status::ready;
-  if(valid)
-  {
-    status = _offlineCheckFuture.wait_for(std::chrono::milliseconds(0));
-  }
-  if(status == std::future_status::ready &&
-     curTime_ms - lastCheck_ms > kOfflineCheckFreq_ms)
-  {
-    lastCheck_ms = curTime_ms;
-    _offlineCheckFuture = std::async(std::launch::async, offlineCheck);  
   }
 }
 

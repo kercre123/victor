@@ -95,8 +95,8 @@ public:
   const std::string& GetIPAddress(bool update = false);
 
   // Returns whether or not the IP address is "valid"
-  // which currently just means it exists and it's not a link-local IP
-  bool HasValidIPAddress() const { return _hasValidIPAddress; }
+  // which currently just means it is an ipv4 address and it's not a link-local IP
+  bool IsValidIPAddress(const std::string& ip) const;
 
   // Returns the SSID of the connected wifi network
   const std::string& GetSSID(bool update = false);

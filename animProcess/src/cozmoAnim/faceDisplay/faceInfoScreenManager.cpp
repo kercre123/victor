@@ -1187,7 +1187,7 @@ void FaceInfoScreenManager::DrawMain()
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
-                             { {"IP: "}, {ip, (osstate->HasValidIPAddress() ? NamedColors::GREEN : NamedColors::RED)} },
+                             { {"IP: "}, {ip, (osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED)} },
 #endif
 #if ANKI_DEV_CHEATS
 			     {sha},
@@ -1224,7 +1224,7 @@ void FaceInfoScreenManager::DrawNetwork()
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
-                             { {"IP: "}, {ip, (osstate->HasValidIPAddress() ? NamedColors::GREEN : NamedColors::RED)} },
+                             { {"IP: "}, {ip, (osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
                              { {"AUTH:  "}, authStatus },
                              { {"OTA:   "}, otaStatus },

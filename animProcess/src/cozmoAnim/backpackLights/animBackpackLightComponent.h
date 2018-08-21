@@ -96,7 +96,7 @@ private:
   void UpdateSystemLightState(bool isCloudStreamOpen);
 
   // Updates the offline connectivity check if neccessary
-  void UpdateOfflineCheck();
+  void UpdateOfflineCheck(bool force = false);
   
   const AnimContext* _context = nullptr;
 

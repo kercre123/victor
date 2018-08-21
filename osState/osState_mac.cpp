@@ -334,6 +334,18 @@ const std::string& OSState::GetSSID(bool update)
   return _ssid;
 }
 
+bool OSState::IsValidIPAddress(const std::string& ip) const
+{
+  struct sockaddr_in sa;
+  const int result = inet_pton(AF_INET, ip.c_str(), &(sa.sin_addr));
+  if(result != 0)
+  {
+    const bool isLinkLocalIP = (ip.length() > 7) && ip.compare(0,7,"169.254") == 0;
+    return !isLinkLocalIP;
+  }
+  return false;
+}
+
 uint64_t OSState::GetWifiTxBytes() const
 {
   return 0;
