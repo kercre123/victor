@@ -137,9 +137,9 @@
     //
     // Model definition:
     //
-    "graphFile"           : "person_localization_victor_6x6_92_accuracy.tflite", 
+    "graphFile"           : "dfp_victor_6x6_tiny_128x128_36b906234ae4405dbf479d42d87787da.tflite",
     "memoryMapGraph"      : 0,
-    "labelsFile"          : "person-labels.txt", 
+    "labelsFile"          : "person-labels.txt",
     "architecture"        : "custom",
     "inputLayerName"      : "input_1",
     "outputLayerNames"    : "output_node0",
@@ -148,8 +148,8 @@
     "numGridCols"         : 6,
     "useFloatInput"       : 1,
     "useGrayscale"        : 0,
-    "inputWidth"          : 128, 
-    "inputHeight"         : 128, 
+    "inputWidth"          : 128,
+    "inputHeight"         : 128,
     "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
     "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
     "minScore"            : 0.5,
