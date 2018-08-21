@@ -114,6 +114,8 @@ bool check_select_timeout(spine_ctx_t spine)
   static u8 selectTimeoutCount = 0;
   if(selectTimeoutCount >= 5)
   {
+    AnkiError("spine.check_select_timeout.timeoutCountReached","");
+    FaultCode::DisplayFaultCode(FaultCode::SPINE_SELECT_TIMEOUT);
     return true;
   }
 
@@ -127,6 +129,7 @@ bool check_select_timeout(spine_ctx_t spine)
   if(s == 0)
   {
     selectTimeoutCount++;
+    AnkiWarn("spine.check_select_timeout.selectTimedout", "%u", selectTimeoutCount);
     return true;
   }
   return false;

@@ -55,7 +55,8 @@ enum : uint16_t {
     
   //Body and external errors
   NO_BODY               = 899, //no response from syscon
-
+  SPINE_SELECT_TIMEOUT  = 898,
+    
   //Sensor Errors
   TOUCH_SENSOR          = 895,
   TOF                   = 894,
