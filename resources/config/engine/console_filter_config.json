@@ -62,7 +62,7 @@
     ],
     "levels":
     [
-      { "level" : "event", "enabled" : false },
+      { "level" : "event", "enabled" : true },
       { "level" : "debug", "enabled" : false }
     ]
   },

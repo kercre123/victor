@@ -23,11 +23,12 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
-#include "util/logging/channelFilter.h"
-#include "util/logging/logging.h"
-#include "util/logging/printfLoggerProvider.h"
-#include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/global/globalDefinitions.h"
+#include "util/logging/channelFilter.h"
+#include "util/logging/eventProviderLoggingAdapter.h"
+#include "util/logging/logging.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
+#include "util/logging/printfLoggerProvider.h"
 #include "util/time/stopWatch.h"
 
 #if ANKI_DEV_CHEATS
@@ -88,7 +89,7 @@ int main(int argc, char **argv)
 #endif
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,
+  Util::PrintfLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,
                                                                                         params.colorizeStderrOutput);
   std::vector<Util::IFormattedLoggerProvider*> loggerVec;
   loggerVec.push_back(printfLoggerProvider);
@@ -103,7 +104,11 @@ int main(int argc, char **argv)
   Anki::Util::MultiFormattedLoggerProvider loggerProvider(loggerVec);
 
   loggerProvider.SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
+
+  auto* eventProvider = new Anki::Util::EventProviderLoggingAdapter( &loggerProvider );
+
   Anki::Util::gLoggerProvider = &loggerProvider;
+  Anki::Util::gEventProvider = eventProvider;
   Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
 
   // - console filter for logs
@@ -218,5 +223,9 @@ int main(int argc, char **argv)
 #endif
 
   Anki::Util::gLoggerProvider = nullptr;
+
+  Anki::Util::gEventProvider = nullptr;
+  delete eventProvider;
+
   return 0;
 }
