@@ -288,6 +288,7 @@ class Robot:
     def status(self):
         return self._status
 
+    #TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
     @property
     def enable_camera_feed(self) -> bool:
         """The camera feed enabled/disabled

@@ -98,9 +98,9 @@ class RemoteControlVector:
                                   "anim_blackjack_victorwin_01",  # 1
                                   "anim_pounce_success_02",  # 2
                                   "vig_alwayshelpful_photo",  # 3
-                                  "proto_loco_turn180_01",  # 4
+                                  "anim_weather_snow_01",  # 4
                                   "anim_wakeword_groggyeyes_listenloop_01",  # 5
-                                  "anim_vc_refuse_repair_01",  # 6
+                                  "anim_fistbump_success_01",  # 6
                                   "anim_reacttoface_unidentified_02",  # 7
                                   "anim_vc_reaction_whatwasthat_01",  # 8
                                   "anim_lookatdvice_getout"]  # 9
@@ -524,8 +524,13 @@ def handle_index_page():
 
 
 def get_annotated_image():
-    # TODO: Send annotated image(add annotate module) once camera feed is added
-    return _default_camera_image
+    # TODO: Update to use annotated image (add annotate module)
+    image = flask_app.remote_control_vector.vector.camera.latest_image
+    if image is None:
+        return _default_camera_image
+
+    image = Image.fromarray(image)
+    return image
 
 
 def streaming_video():
@@ -655,11 +660,6 @@ def run():
     args = util.parse_test_args()
 
     with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
-
-        # TODO: Enable image stream once camera feed is added
-        # Turn on image receiving by the camera
-        # robot.camera.image_stream_enabled = True
-
         flask_app.remote_control_vector = RemoteControlVector(robot)
         flask_helpers.run_flask(flask_app)
 

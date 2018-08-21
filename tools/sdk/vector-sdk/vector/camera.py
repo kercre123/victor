@@ -61,9 +61,18 @@ class CameraComponent(util.Component):
         self._last_chunk_id: int = -1
         self._camera_feed_task: asyncio.Task = None
 
+    # TODO For Cozmo, latest_image was of Cozmo type CameraImage. np.ndarray is less friendly to work with. Should we change it and maybe bury np.ndarray to a less accessible location, like CameraImage.raw_image?
     @property
     def latest_image(self) -> np.ndarray:
-        """:class:`numpy.ndarray`: The most recent processed image received from the robot."""
+        """:class:`numpy.ndarray`: The most recent processed image received from the robot, represented as an N-dimensional array of bytes.
+
+        .. code-block:: python
+
+            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+                image = Image.fromarray(robot.camera.latest_image)
+                image.show()
+        """
+
         return self._latest_image
 
     @latest_image.setter
