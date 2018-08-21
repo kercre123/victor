@@ -53,12 +53,23 @@ func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error
 	return response.Data, nil
 }
 
-func (c *conn) associateSecondary(jwt, session, clientName, appID string) (*pb.TokenBundle, error) {
+func (c *conn) associateSecondary(session, clientName, appID string) (*pb.TokenBundle, error) {
 	req := pb.AssociateSecondaryClientRequest{
 		UserSession: session,
 		ClientName:  clientName,
 		AppId:       appID}
 	response, err := c.client.AssociateSecondaryClient(context.Background(), &req)
+	if err != nil {
+		return nil, err
+	}
+	return response.Data, nil
+}
+
+func (c *conn) reassociatePrimary(clientName, appID string) (*pb.TokenBundle, error) {
+	req := pb.ReassociatePrimaryUserRequest{
+		ClientName: clientName,
+		AppId:      appID}
+	response, err := c.client.ReassociatePrimaryUser(context.Background(), &req)
 	if err != nil {
 		return nil, err
 	}

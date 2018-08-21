@@ -19,6 +19,12 @@ structure AuthResponse {
 	TokenError error
 }
 
+structure ReassociateRequest {
+	string sessionToken,
+	string clientName,
+	string appId,
+}
+
 structure SecondaryAuthRequest {
 	string sessionToken,
 	string clientName,
@@ -36,11 +42,12 @@ structure JwtResponse {
 union TokenRequest {
 	AuthRequest auth,
 	SecondaryAuthRequest secondary,
-	JwtRequest jwt
+	ReassociateRequest reassociate,
+	JwtRequest jwt,
 }
 
 union TokenResponse {
-	AuthResponse auth, // used for both primary & secondary auth responses
+	AuthResponse auth, // used for primary, secondary, reassociate auth responses
 	JwtResponse jwt
 }
 

@@ -56,6 +56,8 @@ func handleQueueRequest(req *request) error {
 		resp, err = handleAuthRequest(req.m.GetAuth().SessionToken)
 	case cloud.TokenRequestTag_Secondary:
 		resp, err = handleSecondaryAuthRequest(req.m.GetSecondary())
+	case cloud.TokenRequestTag_Reassociate:
+		resp, err = handleReassociateRequest(req.m.GetReassociate())
 	case cloud.TokenRequestTag_Jwt:
 		resp, err = handleJwtRequest()
 	}
@@ -112,9 +114,14 @@ func authErrorResp(code cloud.TokenError) *cloud.TokenResponse {
 	return cloud.NewTokenResponseWithAuth(&cloud.AuthResponse{Error: code})
 }
 
-func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
+func sessionMetadata(sessionToken string) credentials.PerRPCCredentials {
 	metadata := util.AppkeyMetadata()
-	metadata["anki-user-session"] = session
+	metadata["anki-user-session"] = sessionToken
+	return metadata
+}
+
+func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
+	metadata := sessionMetadata(session)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associatePrimary(session, robotESN)
 	}
@@ -129,7 +136,15 @@ func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenRe
 
 	metadata := tokenMetadata(existing.String())
 	requester := func(c *conn) (*pb.TokenBundle, error) {
-		return c.associateSecondary(existing.String(), req.SessionToken, req.ClientName, req.AppId)
+		return c.associateSecondary(req.SessionToken, req.ClientName, req.AppId)
+	}
+	return authRequester(metadata, requester, false)
+}
+
+func handleReassociateRequest(req *cloud.ReassociateRequest) (*cloud.TokenResponse, error) {
+	metadata := sessionMetadata(req.SessionToken)
+	requester := func(c *conn) (*pb.TokenBundle, error) {
+		return c.reassociatePrimary(req.ClientName, req.AppId)
 	}
 	return authRequester(metadata, requester, false)
 }
