@@ -47,10 +47,6 @@ void Flash::writeFlash(const void* targ, const void* src, int size) {
   lockFlash();
 }
 
-extern "C" void EraseFlash() {
-  Flash::eraseApplication();
-}
-
 void Flash::eraseApplication(void) {
   unlockFlash();
   FLASH->CR |= FLASH_CR_PER;
