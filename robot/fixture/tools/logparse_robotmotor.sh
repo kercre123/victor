@@ -407,6 +407,8 @@ function parse_file()
     fi
   done < "$gCurrentFile"
   
+  echo -ne "                                                 \r" #clear progress meter
+  
   gFileCnt=$(($gFileCnt+1))
   gLineCnt=$(($gLineCnt+$gCurrentLine))
 }

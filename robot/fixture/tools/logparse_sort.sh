@@ -102,6 +102,7 @@ function parse_file()
     fi
     
   done < "$infile"
+  echo -ne "                                                 \r" #clear progress meter
   if [ $started -gt 0 ]; then echo "----ERROR missing end tag" ; do_stop ; fi
   
   gFileCnt=$(($gFileCnt+1))

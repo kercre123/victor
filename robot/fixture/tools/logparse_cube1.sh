@@ -154,6 +154,7 @@ function parse_file()
     fi
     
   done < "$infile"
+  echo -ne "                                                 \r" #clear progress meter
   write_row "$infile" -1
   
   gFileCnt=$(($gFileCnt+1))
