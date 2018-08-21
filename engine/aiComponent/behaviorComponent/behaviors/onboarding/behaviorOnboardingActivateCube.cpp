@@ -39,7 +39,7 @@ namespace {
   
   const float kVerifyActionTimeout_s = 3.0f;
   
-  const std::string kCubeActivationAnimation = "anim_cube_psychic_01";
+  const std::string kCubeActivationAnimation = "anim_onboarding_cube_psychic_01";
   
   static_assert( kTooFarDist_mm > kNominalCubeDist_mm, "");
   static_assert( kTooCloseDist_mm < kNominalCubeDist_mm, "");

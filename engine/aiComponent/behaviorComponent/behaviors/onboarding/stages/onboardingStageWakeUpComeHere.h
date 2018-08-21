@@ -108,7 +108,11 @@ public:
   
   virtual void OnResume( BehaviorExternalInterface& bei, BehaviorID interruptingBehavior ) override
   {
-    const bool justGotTrigger = (_step == Step::WaitingForTrigger) && (interruptingBehavior == BEHAVIOR_ID(OnboardingFirstTriggerWord));
+    // we should only expect OnboardingFirstTriggerWord under normal circumstances, but if you used the console
+    // var ResetOnboarding, that behavior won't want to run
+    const bool isTriggerBehavior = (interruptingBehavior == BEHAVIOR_ID(OnboardingFirstTriggerWord))
+                                   || (interruptingBehavior == BEHAVIOR_ID(OnboardingTriggerWord));
+    const bool justGotTrigger = (_step == Step::WaitingForTrigger) && isTriggerBehavior;
     auto* driveOffCharger = _behaviors[Step::DriveOffCharger];
     if( driveOffCharger->WantsToBeActivated() ) {
       DebugTransition("Driving off charger");

@@ -37,6 +37,7 @@ namespace Vector {
 namespace{
   const char* const kNumRetriesKey = "numRetries";
   const char* const kSayNameKey = "sayName";
+  const char* const kPlayCubeReactionKey = "playCubeReaction";
 } // end namespace
 
 
@@ -62,7 +63,8 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   _iConfig.numRetries = config.get( kNumRetriesKey, 1 ).asUInt();
-  _iConfig.sayName = config.get( kSayNameKey, true ).asUInt();
+  _iConfig.sayName = config.get( kSayNameKey, true ).asBool();
+  _iConfig.playCubeReaction = config.get( kPlayCubeReactionKey, true ).asBool();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,6 +73,7 @@ void BehaviorPopAWheelie::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
   const char* list[] = {
     kNumRetriesKey,
     kSayNameKey,
+    kPlayCubeReactionKey,
   };
   expectedKeys.insert(std::begin(list), std::end(list));
 }
@@ -119,10 +122,13 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock()
   DEBUG_SET_STATE(ReactingToBlock);
 
   // Turn towards the object and then react to it before performing the pop a wheelie action
-  DelegateIfInControl(new CompoundActionSequential({
-      new TurnTowardsObjectAction(_dVars.targetBlock),
-      new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieInitial),
-    }),
+  auto* action = new CompoundActionSequential();
+  action->AddAction( new TurnTowardsObjectAction(_dVars.targetBlock) );
+  if( _iConfig.playCubeReaction ) {
+    action->AddAction( new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieInitial) );
+  }
+  
+  DelegateIfInControl(action,
     [this](const ActionResult& res){
       if(res == ActionResult::SUCCESS)
       {

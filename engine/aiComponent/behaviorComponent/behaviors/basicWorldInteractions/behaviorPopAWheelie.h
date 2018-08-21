@@ -58,6 +58,7 @@ private:
     InstanceConfig();
     unsigned int numRetries;
     bool sayName;
+    bool playCubeReaction;
   };
 
   struct DynamicVariables {

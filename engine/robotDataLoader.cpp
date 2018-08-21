@@ -84,7 +84,7 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_spinner_tap_01.bin",
   
   // Onboarding
-  "assets/animations/anim_cube_reacttocube.bin",
+  "assets/animations/anim_onboarding_cube_reacttocube.bin",
   
   // Robot power on/off
   "assets/animations/anim_power_offon_01.bin",

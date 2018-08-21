@@ -852,7 +852,7 @@ func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) 
 func (c *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
 
-	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 16)
+	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 512)
 	defer f()
 
 	done := make(chan struct{})

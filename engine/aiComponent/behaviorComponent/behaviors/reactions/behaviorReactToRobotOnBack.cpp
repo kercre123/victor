@@ -26,7 +26,10 @@ namespace Vector {
 
 using namespace ExternalInterface;
 
-static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
+namespace {
+  static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
+  const char* const kExitIfHeldKey = "exitIfHeld";
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -34,6 +37,7 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config
   : ICozmoBehavior(config)
 {
   _offTreadsCondition = std::make_shared<ConditionOffTreadsState>( OffTreadsState::OnBack, GetDebugLabel() );
+  _exitIfHeld = config.get( kExitIfHeldKey, true ).asBool();
 }
 
 
@@ -67,11 +71,16 @@ void BehaviorReactToRobotOnBack::OnBehaviorActivated()
   FlipDownIfNeeded();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnBack::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert(kExitIfHeldKey);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
 {
-  if (GetBEI().GetRobotInfo().IsBeingHeld()) {
+  if ( _exitIfHeld && GetBEI().GetRobotInfo().IsBeingHeld()) {
     CancelSelf();
   }
 

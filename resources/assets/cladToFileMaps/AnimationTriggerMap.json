@@ -729,7 +729,7 @@
   },
   {
     "CladEvent": "OnboardingCubeHuh",
-    "AnimName": "ag_explorer_huh_far"
+    "AnimName": "ag_rollcube_initial"
   },
   {
     "CladEvent": "OnboardingDriveOffCharger",

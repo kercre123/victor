@@ -5,5 +5,7 @@
   "wantsToCancelSelfCondition": {
     "conditionType": "OffTreadsState",
     "targetState": "OnTreads"
-  }
+  },
+
+  "exitIfHeld": false
 }

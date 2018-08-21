@@ -5,5 +5,7 @@
   // retries are handled by stage logic
   "numRetries": 0,
   // onboarding flow means it just said the name, so dont do it again
-  "sayName": false
+  "sayName": false,
+  // the cube stage does this prior to activation
+  "playCubeReaction": false
 }
