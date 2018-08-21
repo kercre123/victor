@@ -42,7 +42,7 @@ static const float kStimFixedPoint = 1000.0f;
 static const float kOdomFixedPoint = 100000.0f;
 
 #if REMOTE_CONSOLE_ENABLED
-// hack to allow a console func to reset the stats
+// hacks to allow console funcs to interact
 static std::function<void(void)> sRobotStatsResetAllFunction;
 
 void ResetRobotStats( ConsoleFunctionContextRef context )
@@ -60,6 +60,17 @@ void ResetRobotStats( ConsoleFunctionContextRef context )
     }
   }
 }
+
+static std::function<void(void)> sRobotStatsFlushFunction;
+
+void FlushRobotStatsToDisk( ConsoleFunctionContextRef context )
+{
+  if( sRobotStatsFlushFunction ) {
+    sRobotStatsFlushFunction();
+  }
+}
+
+
 #endif // REMOTE_CONSOLE_ENABLED
 
 }
@@ -69,6 +80,7 @@ void ResetRobotStats( ConsoleFunctionContextRef context )
 CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 60.0f );
 
 CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
+CONSOLE_FUNC( FlushRobotStatsToDisk, CONSOLE_GROUP );
 
 RobotStatsTracker::RobotStatsTracker()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RobotStatsTracker)
@@ -78,6 +90,13 @@ RobotStatsTracker::RobotStatsTracker()
   if( !sRobotStatsResetAllFunction ) {
     sRobotStatsResetAllFunction = [this](){ ResetAllStats(); };
   }
+  if( !sRobotStatsFlushFunction ) {
+    sRobotStatsFlushFunction = [this](){
+      const bool saveToDiskImmediately = true;
+      const bool saveToCloudImmediately = false;
+      UpdateStatsJdoc(saveToDiskImmediately, saveToCloudImmediately);
+    };
+  }
 #endif
 }
 
@@ -85,6 +104,7 @@ RobotStatsTracker::~RobotStatsTracker()
 {
 #if REMOTE_CONSOLE_ENABLED
   sRobotStatsResetAllFunction = nullptr;
+  sRobotStatsFlushFunction = nullptr;
 #endif
 }
 
