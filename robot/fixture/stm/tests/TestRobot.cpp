@@ -727,11 +727,11 @@ void TestRobotTreads(void)
   #else
   
   //full power: speed 1760-1980, travel 790-1160
-  TestRobotTreads_(1, 127, 1500, 600);
+  TestRobotTreads_( /*high*/ 1, /*pwr*/ 127, /*min_speed*/ 1500, /*min_travel*/ 600 );
   
   //low power (72): speed 870-1070, travel 400-550
   if( !IS_FIXMODE_PACKOUT() )
-    TestRobotTreads_(0, 75, 750, 300);
+    TestRobotTreads_( /*high*/ 0, /*pwr*/ 75, /*min_speed*/ 750, /*min_travel*/ 300 );
   
   #endif
 }
