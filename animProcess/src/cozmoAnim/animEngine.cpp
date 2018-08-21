@@ -135,7 +135,6 @@ Result AnimEngine::Init()
   // set up audio stream state manager 
   {
     _context->GetShowAudioStreamStateManager()->SetAnimationStreamer(_animationStreamer.get());
-    _context->GetShowAudioStreamStateManager()->SetAudioInput(audioInput);
   }
 
 
