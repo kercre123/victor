@@ -15,11 +15,11 @@
 #include "clad/types/behaviorComponent/activeFeatures.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/components/jdocsManager.h"
 #include "engine/robot.h"
-#include "lib/util/source/anki/util/entityComponent/dependencyManagedEntity.h"
 #include "util/console/consoleInterface.h"
-
+#include "util/entityComponent/dependencyManagedEntity.h"
 
 #define LOG_CHANNEL "RobotStatsTracker"
 
@@ -34,6 +34,7 @@ static const char* kActiveFeatureTypeCategory = "FeatureType";
 static const char* kBehaviorStatCategory = "BStat";
 static const char* kFacesCategory = "Face";
 static const char* kOdomCategory = "Odom";
+static const char* kLifetimeAliveCategory = "Alive";
 
 static const char* kRobotStatsSeparator = ".";
 
@@ -64,6 +65,8 @@ void ResetRobotStats( ConsoleFunctionContextRef context )
 }
 
 #define CONSOLE_GROUP "RobotStats"
+
+CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 60.0f );
 
 CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
 
@@ -98,6 +101,13 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
     static const bool kSaveToDiskImmediately = true;
     UpdateStatsJdoc(kSaveToDiskImmediately);
   }
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto currWallTime = WallTime::getInstance()->GetApproximateTime();
+  // start alive tracking counter now
+  _lastTimeAliveUpdated_s = currTime_s;
+  _lastAliveWallTime = currWallTime;
+
 }
 
 void RobotStatsTracker::IncreaseStimulationSeconds(float delta)
@@ -170,6 +180,20 @@ void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::str
 void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // VIC-5804  TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  if( _lastTimeAliveUpdated_s + kRobotStats_AliveUpdatePeriod_s <= currTime_s ) {
+    auto currWallTime = WallTime::getInstance()->GetApproximateTime();
+    auto wallTimeSinceUpdate = currWallTime - _lastAliveWallTime;
+    auto deltaSeconds = std::chrono::duration_cast<std::chrono::seconds>(wallTimeSinceUpdate).count();
+    if( deltaSeconds > 0 ) {
+      IncreaseHelper( kLifetimeAliveCategory, "seconds", deltaSeconds );
+    }
+
+    _lastTimeAliveUpdated_s = currTime_s;
+    _lastAliveWallTime = currWallTime;
+  }
   
   // Update jdoc if there were change(s) this tick
   if (_dirtyJdoc)
