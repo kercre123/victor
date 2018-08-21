@@ -23,12 +23,14 @@
 #include "clad/types/emotionTypes.h"
 #include "clad/types/simpleMoodTypes.h"
 
-#include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/moodSystem/emotion.h"
 #include "engine/moodSystem/moodDebug.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotDataLoader.h"
 
+#include "util/entityComponent/dependencyManagedEntity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -73,7 +75,9 @@ class CozmoContext;
 class Robot;
 class StaticMoodData;
   
-class MoodManager : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
+class MoodManager : public IDependencyManagedComponent<RobotComponentID>,
+                    public UnreliableComponent<BCComponentID>,
+                    private Util::noncopyable
 {
 public:
   using MoodEventTimes = std::map<std::string, float>;
@@ -97,6 +101,14 @@ public:
   }
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
+
+  // Prevent hiding function warnings by exposing the (valid) unreliable component methods
+  using UnreliableComponent<BCComponentID>::InitDependent;
+  using UnreliableComponent<BCComponentID>::AdditionalInitAccessibleComponents;
+  using UnreliableComponent<BCComponentID>::GetInitDependencies;
+  using UnreliableComponent<BCComponentID>::UpdateDependent;
+  using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+  using UnreliableComponent<BCComponentID>::AdditionalUpdateAccessibleComponents;
   //////
   // end IDependencyManagedComponent functions
   //////

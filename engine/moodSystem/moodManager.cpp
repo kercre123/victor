@@ -80,7 +80,8 @@ float MoodManager::GetCurrentTimeInSeconds()
 
 
 MoodManager::MoodManager()
-: IDependencyManagedComponent(this, RobotComponentID::MoodManager)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::MoodManager)
+, UnreliableComponent<BCComponentID>(this, BCComponentID::MoodManager)
 , _lastUpdateTime(0.0f)
 , _fixedEmotions{}
 , _simpleMoodAudioParameter(AudioParameterType::Invalid)

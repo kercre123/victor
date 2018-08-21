@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 
+#include "clad/types/simpleMoodTypes.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -22,11 +23,13 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
+#include "engine/moodSystem/moodManager.h"
 #include "proto/external_interface/messages.pb.h"
-#include "util/logging/logging.h"
 #include "util/logging/DAS.h"
+#include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 #include "webServerProcess/src/webVizSender.h"
+
 
 namespace Anki {
 namespace Vector {
@@ -101,7 +104,9 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
         }
       }
 
-      OnFeatureChanged( newFeature, _activeFeature, intentSource );
+      const SimpleMoodType simpleMood = dependentComps.GetComponent<MoodManager>().GetSimpleMood();
+
+      OnFeatureChanged( newFeature, _activeFeature, intentSource, simpleMood );
 
       if( newFeature != ActiveFeature::NoFeature ) {
         dependentComps.GetComponent<RobotStatsTracker>().IncrementActiveFeature(newFeature, intentSource);
@@ -130,7 +135,10 @@ void ActiveFeatureComponent::SendActiveFeatureToWebViz(const std::string& intent
   }
 }
 
-void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, const ActiveFeature& oldFeature, const std::string& source)
+void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature,
+                                              const ActiveFeature& oldFeature,
+                                              const std::string& source,
+                                              const SimpleMoodType& simpleMood)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
@@ -151,6 +159,15 @@ void ActiveFeatureComponent::OnFeatureChanged(const ActiveFeature& newFeature, c
     const ActiveFeatureType& featureType = _isTutorial
                                            ? ActiveFeatureType::Onboarding
                                            : GetActiveFeatureType(newFeature, ActiveFeatureType::System);
+
+    // before sending the official feature start event, send a "pre_start" event which will still be tracked
+    // under the previous feature run ID
+    DASMSG(behavior_feature_pre_start, "behavior.feature.pre_start", "A new feature will activate (next message)");
+    DASMSG_SET(s1, ActiveFeatureToString(newFeature), "The feature that will start");
+    DASMSG_SET(s2, SimpleMoodTypeToString(simpleMood), "The current simple mood");
+    DASMSG_SET(s3, uuid, "The UUID the new feature will use for its feature run ID");
+    DASMSG_SET(s4, ActiveFeatureTypeToString(featureType), "The type of that new feature");
+    DASMSG_SEND();
 
     // NOTE: this event is inspected by the DAS Manager to determine the feature id and type columns, so be
     // especially careful if changing it

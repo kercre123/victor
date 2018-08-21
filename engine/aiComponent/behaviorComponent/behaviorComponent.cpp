@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 
+#include "engine/moodSystem/moodManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
@@ -97,6 +98,11 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent<PowerStateManager>()) {
     entity->AddDependentComponent(BCComponentID::PowerStateManager,
       robot.GetComponentPtr<PowerStateManager>(), false);
+  }
+
+  if(!entity->HasComponent<MoodManager>()) {
+    entity->AddDependentComponent(BCComponentID::MoodManager,
+      robot.GetComponentPtr<MoodManager>(), false);
   }
 
   //////

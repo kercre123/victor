@@ -28,6 +28,7 @@ namespace Vector {
 
 class CozmoContext;
 class StatusLogHandler;
+enum class SimpleMoodType : uint8_t;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ActiveFeatureComponent : public IDependencyManagedComponent<BCComponentID>
@@ -50,6 +51,7 @@ public:
   
   virtual void AdditionalUpdateAccessibleComponents(BCCompIDSet& components) const override {
     components.insert(BCComponentID::RobotStatsTracker);
+    components.insert(BCComponentID::MoodManager);
   }
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
 
@@ -58,7 +60,10 @@ public:
 
 private:
   
-  void OnFeatureChanged(const ActiveFeature& newFeature, const ActiveFeature& oldFeature, const std::string& source);
+  void OnFeatureChanged(const ActiveFeature& newFeature,
+                        const ActiveFeature& oldFeature,
+                        const std::string& source,
+                        const SimpleMoodType& simpleMood);
 
   void SendActiveFeatureToWebViz(const std::string& intentSource) const;
   
