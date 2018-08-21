@@ -258,6 +258,9 @@ private:
   std::vector<std::string> _pendingAppEvents;
 
   double _cumlPosStimDeltaToAdd = 0.0;
+
+  float _lastSimpleMoodStartTime_s = 0.0f;
+  SimpleMoodType _lastSimpleMood = SimpleMoodType::Count;
 };
   
 

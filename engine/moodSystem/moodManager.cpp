@@ -36,6 +36,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "webServerProcess/src/webService.h"
@@ -381,6 +382,25 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   }
   _lastStimValue = stimulatedValue;
 
+  const SimpleMoodType simpleMood = GetSimpleMood();
+  if( simpleMood != _lastSimpleMood ) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+    if( _lastSimpleMood != SimpleMoodType::Count ) {
+      const float delta_s = currTime_s - _lastSimpleMoodStartTime_s;
+
+      DASMSG(simple_mood_transition, "mood.simple_mood_transition",
+             "The underlying mood values now result in a different simple mood");
+      DASMSG_SET(s1, SimpleMoodTypeToString(simpleMood), "New simple mood");
+      DASMSG_SET(s2, SimpleMoodTypeToString(_lastSimpleMood), "Old simple mood");
+      DASMSG_SET(i1, (int)delta_s, "time spent in previous simple mood (in seconds)");
+      DASMSG_SEND();
+    }
+
+    _lastSimpleMoodStartTime_s = currTime_s;
+    _lastSimpleMood = simpleMood;
+  }
+
   #if SEND_MOOD_TO_VIZ_DEBUG
   robotMood.recentEvents = std::move(_eventNames);
   _eventNames.clear();
@@ -651,13 +671,23 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     
     bool modified = false;
 
+    std::map<EmotionType, int> eventEmotionDeltas;
+
     const std::vector<EmotionAffector>& emotionAffectors = emotionEvent->GetAffectors();
     for (const EmotionAffector& emotionAffector : emotionAffectors)
     {
       const float penalizedDeltaValue = emotionAffector.GetValue() * repetitionPenalty;
       if( !IsEmotionFixed( emotionAffector.GetType() ) ) {
         modified = true;
-        GetEmotion(emotionAffector.GetType()).Add(penalizedDeltaValue);
+
+        auto& emotion = GetEmotion(emotionAffector.GetType());
+
+        const float before = emotion.GetValue();
+        emotion.Add(penalizedDeltaValue);
+        const float after = emotion.GetValue();
+
+        // use 1000x fixed point
+        eventEmotionDeltas[ emotionAffector.GetType() ] = std::round( (after - before) * 1000 );
         
         if( emotionAffector.GetType() == EmotionType::Stimulated ) {
           // for stats tracking in the update loop
@@ -680,11 +710,21 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
 
       SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );
 
-      // Trying to answer the question of why emotions are changing
-      std::ostringstream stream;
-      std::for_each(_emotions, _emotions+((size_t)(EmotionType::Count)),
-                    [&stream](const Emotion &iter){ stream<<iter.GetValue(); stream<<","; });
-      Anki::Util::sInfo("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
+      DASMSG(mood_event, "mood.event", "An emotion event triggered");
+      DASMSG_SET(s1, eventName, "name of the emotion event (json defined)");
+      if( eventEmotionDeltas.find( EmotionType::Stimulated ) != eventEmotionDeltas.end() ) {
+        DASMSG_SET(i1, eventEmotionDeltas[EmotionType::Stimulated], "Stimulated delta * 1000");
+      }
+      if( eventEmotionDeltas.find( EmotionType::Confident ) != eventEmotionDeltas.end() ) {
+        DASMSG_SET(i2, eventEmotionDeltas[EmotionType::Confident], "Confident delta * 1000");
+      }
+      if( eventEmotionDeltas.find( EmotionType::Social ) != eventEmotionDeltas.end() ) {
+        DASMSG_SET(i3, eventEmotionDeltas[EmotionType::Social], "Social delta * 1000");
+      }
+      if( eventEmotionDeltas.find( EmotionType::Happy ) != eventEmotionDeltas.end() ) {
+        DASMSG_SET(i4, eventEmotionDeltas[EmotionType::Happy], "Happy delta * 1000");
+      }
+      DASMSG_SEND();
 
       // and update webviz after, with the name of the event that happened
       if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
