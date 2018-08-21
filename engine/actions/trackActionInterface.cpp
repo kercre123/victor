@@ -818,7 +818,7 @@ bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTi
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
   {
-    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && _stopCriteria.earliestStoppingTime_sec > currentTime_sec)
+    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && currentTime_sec > _stopCriteria.earliestStoppingTime_sec)
     {
       return true;
     }
