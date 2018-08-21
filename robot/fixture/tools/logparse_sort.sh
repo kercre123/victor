@@ -68,7 +68,8 @@ function parse_file()
   infile=$1;
   Tfilestart=$(($(date +%s%N)/1000000))
   echo processing "$infile"
-  #dos2unix "$infile"
+  #dos2unix --quiet "$infile"
+  local numlines=$(wc -l < "$infile")
   
   #parse file
   fileappend=0; lineCnt=0
@@ -92,6 +93,12 @@ function parse_file()
       if [ ! $started -gt 0 ]; then do_start $lineCnt "$line" "$infile" ; fi #tag sequence error
       result=$(echo "$line" | grep -oP 'RESULT:\K[0-9]+');
       tally "result" "1";
+    fi
+    
+    #show progress
+    if [ $(($lineCnt % 100)) -eq 0 ]; then
+      local percent=$((100*$lineCnt/$numlines))
+      echo -ne "progress: $percent% $lineCnt/$numlines lines\r"
     fi
     
   done < "$infile"

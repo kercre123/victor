@@ -122,7 +122,9 @@ function parse_file()
 {
   infile=$1;
   echo processing "$infile"
-  dos2unix "$infile"
+  dos2unix --quiet "$infile"
+  local numlines=$(wc -l < "$infile")
+  
   lineCnt=0
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
     lineCnt=$((lineCnt+1))
@@ -144,6 +146,13 @@ function parse_file()
         log_current "$led" "$current" "$infile" "$line" "$lineCnt"
       fi
     fi
+    
+    #show progress
+    if [ $(($lineCnt % 100)) -eq 0 ]; then
+      local percent=$((100*$lineCnt/$numlines))
+      echo -ne "progress: $percent% $lineCnt/$numlines lines\r"
+    fi
+    
   done < "$infile"
   write_row "$infile" -1
   
