@@ -153,37 +153,54 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
     return;
   }
 
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-  if(!showStreamState->HasValidTriggerResponse())
+  // we want to start the stream AFTER the audio is complete so that it is not captured in the stream
+  auto callback = [this,type]( bool success )
   {
-    PRINT_NAMED_WARNING("MicDataSystem.CantStreamToCloud",
-                        "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
-    return;
+    // if we didn't succeed, it means that we didn't have a wake word response setup
+    if(success){
+      // it would be highly unlikely that we started another streaming job while waiting for the earcon,
+      // but doesn't hurt to check
+      if(!HasStreamingJob()){
+        MicDataInfo* newJob = new MicDataInfo{};
+        newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+        newJob->_writeNameBase = ""; //use autogen names
+        newJob->_numMaxFiles = 100;
+        newJob->_type = type;
+        bool saveToFile = false;
+    #if ANKI_DEV_CHEATS
+        saveToFile = true;
+        if(kMicData_SaveRawFullIntent_Wakewordless){
+          newJob->EnableDataCollect(MicDataType::Raw, true);
+        }
+        newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
+    #endif
+        newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+        newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+
+        const bool isStreamingJob = true;
+        AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
+
+        PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
+                         "Starting Wake Wordless streaming");
+      }
+      else{
+        PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
+                            "Started streaming job while waiting for StartTriggerResponseWithoutGetIn callback");
+        SetWillStream(false);
+      }
+    }
+    else{
+      PRINT_NAMED_WARNING("MicDataSystem.CantStreamToCloud",
+                          "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
+      SetWillStream(false);
+    }
+  };
+
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  if(showStreamState->HasValidTriggerResponse()){
+    SetWillStream(true);
   }
-  
-  showStreamState->StartTriggerResponseWithoutGetIn();
-
-  MicDataInfo* newJob = new MicDataInfo{};
-  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
-  newJob->_writeNameBase = ""; //use autogen names
-  newJob->_numMaxFiles = 100;
-  newJob->_type = type;
-  bool saveToFile = false;
-#if ANKI_DEV_CHEATS
-  saveToFile = true;
-  if(kMicData_SaveRawFullIntent_Wakewordless){
-    newJob->EnableDataCollect(MicDataType::Raw, true);
-  }
-  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
-#endif
-  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
-
-  const bool isStreamingJob = true;
-  AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
-
-  PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
-                   "Starting Wake Wordless streaming");
+  showStreamState->StartTriggerResponseWithoutGetIn(callback);
 }
 
 void MicDataSystem::FakeTriggerWordDetection()
@@ -454,13 +471,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       const bool willStream = HasStreamingJob() && showStreamState->ShouldStreamAfterTriggerWordResponse();
-      for(auto func : _triggerWordDetectedCallbacks)
-      {
-        if(func != nullptr)
-        {
-          func(willStream);
-        }
-      }
+      SetWillStream(willStream);
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
@@ -519,6 +530,17 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 #endif
+}
+
+void MicDataSystem::SetWillStream(bool willStream) const
+{
+  for(auto func : _triggerWordDetectedCallbacks)
+  {
+    if(func != nullptr)
+    {
+      func(willStream);
+    }
+  }
 }
 
 void MicDataSystem::ClearCurrentStreamingJob()

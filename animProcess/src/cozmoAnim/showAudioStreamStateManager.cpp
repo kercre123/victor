@@ -14,7 +14,10 @@
 
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/robotDataLoader.h"
+
+#include "audioEngine/audioTypeTranslator.h"
 
 namespace Anki {
 namespace Vector {
@@ -41,9 +44,12 @@ void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::S
 }
 
 
-void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn()
+void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn(OnTriggerAudioCompleteCallback callback)
 {
   if(!HasValidTriggerResponse()){
+    if(callback){
+      callback(false);
+    }
     return;
   }
 
@@ -54,15 +60,46 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn()
     PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
                       "Animation not found for get in %s", _getInAnimName.c_str());
   }
-  StartTriggerResponseWithoutGetIn();
+  StartTriggerResponseWithoutGetIn(std::move(callback));
 }
 
-void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn()
+
+void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback callback)
 {
+  using namespace AudioEngine;
+
   if(!HasValidTriggerResponse()){
+    if(callback){
+      callback(false);
+    }
     return;
   }
-  _audioInput->HandleMessage(_postAudioEvent);
+
+  Audio::CozmoAudioController* controller = _context->GetAudioController();
+  if(nullptr != controller){
+    AudioCallbackContext* audioCallbackContext = nullptr;
+    if(callback){
+      audioCallbackContext = new AudioCallbackContext();
+      audioCallbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
+      audioCallbackContext->SetExecuteAsync( false ); // Execute callbacks synchronously (on main thread)
+      audioCallbackContext->SetEventCallbackFunc([callbackFunc = std::move(callback)]
+                                                 (const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo)
+      {
+        callbackFunc(true);
+      });
+    }
+
+    controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
+                               ToAudioGameObject(_postAudioEvent.gameObject),
+                               audioCallbackContext);
+  }
+  else
+  {
+    // even though we don't have a valid audio controller, we still had a valid trigger response so return true
+    if(callback){
+      callback(true);
+    }
+  }
 }
 
 
