@@ -102,7 +102,8 @@ _HackHeap       LDR     R7, =0x20000000     ; Setup heap
                 MOVS    R0, #0x00
                 STR     R0, [R7, #0x00]
                 STR     R0, [R7, #0x04]
-                STR     R0, [R7, #0x08]
+                LDR     R1, =0x10000
+                STR     R1, [R7, #0x08]
                 STR     R0, [R7, #0x0C]
                 STR     R0, [R7, #0x10]
                 LDR     R1, =0x1FFFF7B8
@@ -119,9 +120,6 @@ _HackHeap       LDR     R7, =0x20000000     ; Setup heap
                 STR     R0, [R7, #0x38]
                 STR     R0, [R7, #0x3C]
                 STR     R0, [R7, #0x40]
-
-                MOVS    R1, #0x01           ; Patch the heap
-                STRB    R1, [R7, #0x0A]     ; Was on charger
                 
                 ; This is scary, but it will "work?"
                 
@@ -129,6 +127,8 @@ _HackHeap       LDR     R7, =0x20000000     ; Setup heap
                 BLX     R0
                 LDR     R0, =0x08001229     ; Analog::init()
                 BLX     R0
+                
+                MOVS    R1, #0x01
                 STRB    R1, [R7, #0x0F]     ; Has booted
                 STRB    R1, [R7, #0x10]     ; Allow Power
 
