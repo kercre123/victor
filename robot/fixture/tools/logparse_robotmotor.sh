@@ -325,7 +325,7 @@ function RangeParseLine()
     if [[ "$line" == *"LIFT range test"* ]]; then
       #NOTE: this is the first log line of any dataset. use to re-sync
       local power=$(echo $line | grep -oP 'power \K[+-]*([0-9]+)');
-      if [ "$power" -ge 65 ]; then gRangeHigh=1; else gRangeHigh=0; fi
+      if [ "$power" -ge 70 ]; then gRangeHigh=1; else gRangeHigh=0; fi
       if [ $gDebug -gt 0 ]; then echo "  found ds=$gRangeHigh"; fi
       dRangeClearSel $gRangeHigh
       dRangeClearSel "0"
