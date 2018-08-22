@@ -782,7 +782,7 @@ bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTi
     if ( Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f) &&
          Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f) &&
          Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) &&
-         Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) )
+         Util::IsFltNear(_stopCriteria.maxDist_mm, -1.f) )
     {
       // This means that no tolerances were set thus we shouldn't return
       // true, instead return false.
@@ -799,7 +799,7 @@ bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTi
       isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle_rad), _stopCriteria.tiltTol.ToFloat());
     }
     bool isWithinDistTol = true;
-    if (!Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && !Util::IsFltNear(_stopCriteria.minDist_mm, -1.f))
+    if (!Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && !Util::IsFltNear(_stopCriteria.maxDist_mm, -1.f))
     {
       isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
     }
