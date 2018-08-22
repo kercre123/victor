@@ -90,13 +90,14 @@ __VectorTable   DCD     0                              ; Top of Stack
                 EXPORT SoftReset
 SoftReset       CPSID I
                 LDR     R6, =0x08000000
+                LDR     R0, [R6, #0x00]     ; Setup Stack
+                MSR     MSP, R0
                 LDR     R0, [R6, #0x28]     ; Test for legacy bootloader
                 CMP     R0, #0
                 BNE     _NewSoftReset
 
                 LDR     R7, =0x20000000     ; Setup heap
                 MOVS    R0, #0x00
-
                 STR     R0, [R7, #0x00]
                 STR     R0, [R7, #0x04]
                 LDR     R1, =0x10000
@@ -118,9 +119,7 @@ SoftReset       CPSID I
                 STR     R0, [R7, #0x38]
                 STR     R0, [R7, #0x3C]
 
-                LDR     R0, [R6, #0x00]     ; Setup Stack
-                MSR     MSP, R0
-                LDR     R0, =0x08001950     ; Branch to main
+                LDR     R0, =0x08001951     ; Branch to main
                 BX      R0
 
 _NewSoftReset   LDR     R0, [R6, #0x04]

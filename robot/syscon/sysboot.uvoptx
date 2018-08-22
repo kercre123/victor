@@ -185,57 +185,9 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\boot\startup_stm32f030x8.s</Filename>
+          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\boot\startup_stm32f030x8.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\sysboot\boot/startup_stm32f030x8.s\237</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>84</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134218430</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\boot\main.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\sysboot\boot/main.cpp\84</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>85</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134218434</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\boot\main.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\sysboot\boot/main.cpp\85</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>162</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134217958</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\boot\startup_stm32f030x8.s</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\sysboot\boot/startup_stm32f030x8.s\162</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -254,7 +206,7 @@
         <Mm>
           <WinNumber>1</WinNumber>
           <SubType>0</SubType>
-          <ItemText>0</ItemText>
+          <ItemText>0x20000000</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>
@@ -306,7 +258,7 @@
       <GroupNumber>1</GroupNumber>
       <FileNumber>1</FileNumber>
       <FileType>8</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\boot\main.cpp</PathWithFileName>
