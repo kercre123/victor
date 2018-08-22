@@ -772,7 +772,7 @@ bool ITrackAction::IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngl
   // This logic can certainly be improved but we are trying to support two
   // different use cases. In one case we want to continue if certain
   // conditions are met, and in the other case we want to stop if certain
-  // conditions are met.
+  // conditions are met. VIC-5821
   if (_useStopCriteria)
   {
     return AreStopCriteriaMet(relPanAngle_rad, relTiltAngle_rad, distance_mm,
