@@ -83,6 +83,45 @@ enum class RtsConnection_3Tag : uint8_t {
 
 const char* RtsConnection_3TagToString(const RtsConnection_3Tag tag);
 
+enum class RtsConnection_4Tag : uint8_t {
+  Error                      = 0x0,  // 0
+  RtsConnRequest             = 0x1,  // 1
+  RtsConnResponse            = 0x2,  // 2
+  RtsNonceMessage            = 0x3,  // 3
+  RtsChallengeMessage        = 0x4,  // 4
+  RtsChallengeSuccessMessage = 0x5,  // 5
+  RtsWifiConnectRequest      = 0x6,  // 6
+  RtsWifiConnectResponse_3   = 0x7,  // 7
+  RtsWifiIpRequest           = 0x8,  // 8
+  RtsWifiIpResponse          = 0x9,  // 9
+  RtsStatusRequest           = 0xa,  // 10
+  RtsStatusResponse_4        = 0xb,  // 11
+  RtsWifiScanRequest         = 0xc,  // 12
+  RtsWifiScanResponse_3      = 0xd,  // 13
+  RtsOtaUpdateRequest        = 0xe,  // 14
+  RtsOtaUpdateResponse       = 0xf,  // 15
+  RtsCancelPairing           = 0x10, // 16
+  RtsForceDisconnect         = 0x11, // 17
+  RtsAck                     = 0x12, // 18
+  RtsWifiAccessPointRequest  = 0x13, // 19
+  RtsWifiAccessPointResponse = 0x14, // 20
+  RtsSshRequest              = 0x15, // 21
+  RtsSshResponse             = 0x16, // 22
+  RtsOtaCancelRequest        = 0x17, // 23
+  RtsLogRequest              = 0x18, // 24
+  RtsLogResponse             = 0x19, // 25
+  RtsFileDownload            = 0x1a, // 26
+  RtsWifiForgetRequest       = 0x1b, // 27
+  RtsWifiForgetResponse      = 0x1c, // 28
+  RtsCloudSessionRequest     = 0x1d, // 29
+  RtsCloudSessionResponse    = 0x1e, // 30
+  RtsAppConnectionIdRequest  = 0x1f, // 31
+  RtsAppConnectionIdResponse = 0x20, // 32
+  INVALID                    = 255
+};
+
+const char* RtsConnection_4TagToString(const RtsConnection_4Tag tag);
+
 enum class RtsConnection_1Tag : uint8_t {
   Error                      = 0x0,  // 0
   RtsConnRequest             = 0x1,  // 1
@@ -116,6 +155,7 @@ enum class RtsConnectionTag : uint8_t {
   Error           = 0x0, // 0
   RtsConnection_2 = 0x2, // 2
   RtsConnection_3 = 0x3, // 3
+  RtsConnection_4 = 0x4, // 4
   INVALID         = 255
 };
 
@@ -151,6 +191,15 @@ struct std::hash<Anki::Vector::ExternalComms::RtsConnection_3Tag>
   size_t operator()(Anki::Vector::ExternalComms::RtsConnection_3Tag t) const
   {
     return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnection_3Tag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Vector::ExternalComms::RtsConnection_4Tag>
+{
+  size_t operator()(Anki::Vector::ExternalComms::RtsConnection_4Tag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Vector::ExternalComms::RtsConnection_4Tag>::type>(t);
   }
 };
 

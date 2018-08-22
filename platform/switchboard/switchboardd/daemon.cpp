@@ -111,7 +111,7 @@ void Daemon::InitializeEngineComms() {
 }
 
 void Daemon::InitializeGatewayComms() {
-  _gatewayMessagingServer = std::make_shared<GatewayMessagingServer>(_loop);
+  _gatewayMessagingServer = std::make_shared<GatewayMessagingServer>(_loop, _tokenClient);
   _gatewayMessagingServer->Init();
 }
 
@@ -233,7 +233,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     _connectionId = connId;
 
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _tokenClient, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
+      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
