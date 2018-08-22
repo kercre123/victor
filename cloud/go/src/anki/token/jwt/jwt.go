@@ -34,6 +34,7 @@ func ParseToken(token string) (Token, error) {
 		return nil, err
 	}
 	currentToken = tok
+	logUserID(tok)
 	return tokWrapper{tok}, nil
 }
 
@@ -82,6 +83,7 @@ func jwtInit() error {
 			return err
 		}
 		currentToken = tok
+		logUserID(tok)
 	}
 	return nil
 }
@@ -110,6 +112,15 @@ func saveToken(token string) error {
 		return err
 	}
 	return ioutil.WriteFile(tokenFile(), []byte(token), 0777)
+}
+
+func logUserID(token *model.Token) {
+	if token == nil {
+		return
+	}
+	if user := token.UserId; user != "" {
+		log.Das("profile_id.start", (&log.DasFields{}).SetStrings(user))
+	}
 }
 
 type tokWrapper struct {
