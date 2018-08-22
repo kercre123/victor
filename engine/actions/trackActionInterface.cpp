@@ -779,6 +779,15 @@ bool ITrackAction::IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngl
 bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                                       const f32 distance_mm, const f32 currentTime_sec) const
 {
+    if ( Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f) &&
+         Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f) &&
+         Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) &&
+         Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) )
+    {
+      // This means that no tolerances were set thus we shouldn't return
+      // true, instead return false.
+      return false;
+    }
     bool isWithinPanTol = true;
     if (!Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f))
     {
@@ -818,9 +827,13 @@ bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTi
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
   {
-    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && _stopCriteria.earliestStoppingTime_sec > currentTime_sec)
+    // If the current time is less than the earliest stopping time,
+    // we will always return false. Once current time is larger than
+    // the earliest stopping time, we apply the rest of the stop
+    // criteria
+    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && (currentTime_sec < _stopCriteria.earliestStoppingTime_sec))
     {
-      return true;
+      return false;
     }
     const bool isWithinTol = IsWithinTolerances(relPanAngle_rad, relTiltAngle_rad, distance_mm,
                                                 currentTime_sec);
