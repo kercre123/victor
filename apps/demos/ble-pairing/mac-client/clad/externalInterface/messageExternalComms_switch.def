@@ -188,6 +188,110 @@ case Anki::Vector::ExternalComms::RtsConnection_3::Tag::RtsCloudSessionResponse:
 }
 switch(msg.GetTag()) {
 default:
+  ProcessBadTag_RtsConnection_4(msg.GetTag());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::Error:
+  Process_Error(msg.Get_Error());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsConnRequest:
+  Process_RtsConnRequest(msg.Get_RtsConnRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsConnResponse:
+  Process_RtsConnResponse(msg.Get_RtsConnResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsNonceMessage:
+  Process_RtsNonceMessage(msg.Get_RtsNonceMessage());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsChallengeMessage:
+  Process_RtsChallengeMessage(msg.Get_RtsChallengeMessage());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsChallengeSuccessMessage:
+  Process_RtsChallengeSuccessMessage(msg.Get_RtsChallengeSuccessMessage());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiConnectRequest:
+  Process_RtsWifiConnectRequest(msg.Get_RtsWifiConnectRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiConnectResponse_3:
+  Process_RtsWifiConnectResponse_3(msg.Get_RtsWifiConnectResponse_3());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiIpRequest:
+  Process_RtsWifiIpRequest(msg.Get_RtsWifiIpRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiIpResponse:
+  Process_RtsWifiIpResponse(msg.Get_RtsWifiIpResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsStatusRequest:
+  Process_RtsStatusRequest(msg.Get_RtsStatusRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsStatusResponse_4:
+  Process_RtsStatusResponse_4(msg.Get_RtsStatusResponse_4());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiScanRequest:
+  Process_RtsWifiScanRequest(msg.Get_RtsWifiScanRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiScanResponse_3:
+  Process_RtsWifiScanResponse_3(msg.Get_RtsWifiScanResponse_3());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsOtaUpdateRequest:
+  Process_RtsOtaUpdateRequest(msg.Get_RtsOtaUpdateRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsOtaUpdateResponse:
+  Process_RtsOtaUpdateResponse(msg.Get_RtsOtaUpdateResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsCancelPairing:
+  Process_RtsCancelPairing(msg.Get_RtsCancelPairing());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsForceDisconnect:
+  Process_RtsForceDisconnect(msg.Get_RtsForceDisconnect());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsAck:
+  Process_RtsAck(msg.Get_RtsAck());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiAccessPointRequest:
+  Process_RtsWifiAccessPointRequest(msg.Get_RtsWifiAccessPointRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiAccessPointResponse:
+  Process_RtsWifiAccessPointResponse(msg.Get_RtsWifiAccessPointResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsSshRequest:
+  Process_RtsSshRequest(msg.Get_RtsSshRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsSshResponse:
+  Process_RtsSshResponse(msg.Get_RtsSshResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsOtaCancelRequest:
+  Process_RtsOtaCancelRequest(msg.Get_RtsOtaCancelRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsLogRequest:
+  Process_RtsLogRequest(msg.Get_RtsLogRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsLogResponse:
+  Process_RtsLogResponse(msg.Get_RtsLogResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsFileDownload:
+  Process_RtsFileDownload(msg.Get_RtsFileDownload());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiForgetRequest:
+  Process_RtsWifiForgetRequest(msg.Get_RtsWifiForgetRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsWifiForgetResponse:
+  Process_RtsWifiForgetResponse(msg.Get_RtsWifiForgetResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsCloudSessionRequest:
+  Process_RtsCloudSessionRequest(msg.Get_RtsCloudSessionRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsCloudSessionResponse:
+  Process_RtsCloudSessionResponse(msg.Get_RtsCloudSessionResponse());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsAppConnectionIdRequest:
+  Process_RtsAppConnectionIdRequest(msg.Get_RtsAppConnectionIdRequest());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection_4::Tag::RtsAppConnectionIdResponse:
+  Process_RtsAppConnectionIdResponse(msg.Get_RtsAppConnectionIdResponse());
+  break;
+}
+switch(msg.GetTag()) {
+default:
   ProcessBadTag_RtsConnection_1(msg.GetTag());
   break;
 case Anki::Vector::ExternalComms::RtsConnection_1::Tag::Error:
@@ -272,6 +376,9 @@ case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_2:
   break;
 case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_3:
   Process_RtsConnection_3(msg.Get_RtsConnection_3());
+  break;
+case Anki::Vector::ExternalComms::RtsConnection::Tag::RtsConnection_4:
+  Process_RtsConnection_4(msg.Get_RtsConnection_4());
   break;
 }
 switch(msg.GetTag()) {

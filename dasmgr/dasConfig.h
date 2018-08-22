@@ -30,7 +30,8 @@ public:
             const std::string& storage_path,
             size_t storage_quota,
             const std::string& backup_path,
-            size_t backup_quota);
+            size_t backup_quota,
+            const std::string & globals_path);
 
   // DAS endpoint URL
   const std::string & GetURL() const { return _url; }
@@ -52,13 +53,20 @@ public:
   size_t GetStorageQuota() const { return _storage_quota; }
 
   // Where should we store the JSON log files when we are shutting down.
-  // We epxect this to be an on-disk location that we can backup to
+  // We expect this to be an on-disk location that we can backup to
   // before a reboot.
   const std::string & GetBackupPath() const { return _backup_path; }
 
   // How much space can we use at the backup location before we have to stop accepting
   // new log files
   size_t GetBackupQuota() const { return _backup_quota; }
+
+  // Where should we store persistent global variables?
+  // We expect this to be an on-disk location that we can read at
+  // startup and write at shutdown. We expect this storage to persist
+  // when the robot reboots. If robot's persistent data is cleared,
+  // these values are lost.
+  const std::string & GetGlobalsPath() const { return _globals_path; }
 
   // Helper methods to parse DAS configuration file.
   // Helper methods return nullptr on error.
@@ -71,7 +79,8 @@ public:
   //     "storage_path": string,
   //     "storage_quota": uint,
   //     "backup_path": string,
-  //     "backup_quota": uint
+  //     "backup_quota": uint,
+  //     "globals_path": string
   //   }
   // }
   //
@@ -86,6 +95,7 @@ private:
   size_t _storage_quota;
   std::string _backup_path;
   size_t _backup_quota;
+  std::string _globals_path;
 };
 
 } // end namespace Victor

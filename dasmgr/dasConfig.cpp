@@ -21,14 +21,16 @@ DASConfig::DASConfig(const std::string & url,
                      const std::string& storage_path,
                      size_t storage_quota,
                      const std::string& backup_path,
-                     size_t backup_quota) :
+                     size_t backup_quota,
+                     const std::string& globals_path) :
   _url(url),
   _file_threshold_size(file_threshold_size),
   _flush_interval(flush_interval),
   _storage_path(storage_path),
   _storage_quota(storage_quota),
   _backup_path(backup_path),
-  _backup_quota(backup_quota)
+  _backup_quota(backup_quota),
+  _globals_path(globals_path)
 {
 }
 
@@ -89,13 +91,20 @@ std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const Json::Value & json)
     return nullptr;
   }
 
+  const auto & globals_path = dasConfig["globals_path"];
+  if (!globals_path.isString()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidGlobalsPath", "Invalid globals_path attribute");
+    return nullptr;
+  }
+
   return std::make_unique<DASConfig>(url.asString(),
                                      file_threshold_size.asUInt(),
                                      flush_interval.asUInt(),
                                      storage_path.asString(),
                                      storage_quota.asUInt(),
                                      backup_path.asString(),
-                                     backup_quota.asUInt());
+                                     backup_quota.asUInt(),
+                                     globals_path.asString());
 
 }
 

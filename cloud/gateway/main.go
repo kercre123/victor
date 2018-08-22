@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"runtime"
 	"strings"
 	"syscall"
 
 	"anki/log"
 	"anki/robot"
-	gw_clad "clad/gateway"
 	extint "proto/external_interface"
 
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -112,17 +112,17 @@ func main() {
 	}
 	addr := fmt.Sprintf("localhost:%d", Port)
 
-	engineCladManager.ManagedChannels = make(map[gw_clad.MessageRobotToExternalTag]([]chan<- gw_clad.MessageRobotToExternal))
-	closeEngineClad := engineCladManager.Connect(SocketPath, cladDomainSocket)
+	engineCladManager.Init()
+	closeEngineClad := engineCladManager.Connect(path.Join(SocketPath, cladDomainSocket), "client")
 	defer closeEngineClad()
 
-	engineProtoManager.ManagedChannels = make(map[string]([]chan<- extint.GatewayWrapper))
-	closeEngineProto := engineProtoManager.Connect(SocketPath, protoDomainSocket)
+	engineProtoManager.Init()
+	closeEngineProto := engineProtoManager.Connect(path.Join(SocketPath, protoDomainSocket), "client")
 	defer closeEngineProto()
 
 	if IsSwitchboardAvailable {
-		switchboardManager.ManagedChannels = make(map[gw_clad.SwitchboardResponseTag]([]chan<- gw_clad.SwitchboardResponse))
-		closeSwitchboardClad := switchboardManager.Connect(SocketPath, switchboardDomainSocket)
+		switchboardManager.Init()
+		closeSwitchboardClad := switchboardManager.Connect(path.Join(SocketPath, switchboardDomainSocket), "client")
 		defer closeSwitchboardClad()
 	}
 

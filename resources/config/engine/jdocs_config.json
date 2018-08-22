@@ -20,26 +20,26 @@
       "cloudSavePeriod_s" : 3600,
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : true
-    },
-    "ACCOUNT_SETTINGS" : {
-      "docName" : "vic.AccountSettings",
-      "savedOnDisk" : false,
-      "diskSavePeriod_s" : 0,
-      "warnOnCloudVersionLater" : false,
-      "errorOnCloudVersionLater" : false,
-      "cloudSavePeriod_s" : 0,
-      "jdocFormatVersion" : 1,
-      "bodyOwnedByJdocManager" : false
-    },
-    "USER_ENTITLEMENTS" : {
-      "docName" : "vic.UserEntitlements",
-      "savedOnDisk" : false,
-      "diskSavePeriod_s" : 0,
-      "warnOnCloudVersionLater" : false,
-      "errorOnCloudVersionLater" : false,
-      "cloudSavePeriod_s" : 0,
-      "jdocFormatVersion" : 1,
-      "bodyOwnedByJdocManager" : false
+//    },
+//    "ACCOUNT_SETTINGS" : {
+//      "docName" : "vic.AccountSettings",
+//      "savedOnDisk" : false,
+//      "diskSavePeriod_s" : 0,
+//      "warnOnCloudVersionLater" : false,
+//      "errorOnCloudVersionLater" : false,
+//      "cloudSavePeriod_s" : 0,
+//      "jdocFormatVersion" : 1,
+//      "bodyOwnedByJdocManager" : false
+//    },
+//    "USER_ENTITLEMENTS" : {
+//      "docName" : "vic.UserEntitlements",
+//      "savedOnDisk" : false,
+//      "diskSavePeriod_s" : 0,
+//      "warnOnCloudVersionLater" : false,
+//      "errorOnCloudVersionLater" : false,
+//      "cloudSavePeriod_s" : 0,
+//      "jdocFormatVersion" : 1,
+//      "bodyOwnedByJdocManager" : false
     }
   }
 }

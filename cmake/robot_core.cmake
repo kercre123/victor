@@ -1,4 +1,6 @@
 if (VICOS)
+  if(NOT TARGET robot_core)
+
   file(GLOB ROBOT_CORE_SRCS ${CMAKE_SOURCE_DIR}/robot/core/src/*.c)
   file(GLOB ROBOT_CORE_INCS ${CMAKE_SOURCE_DIR}/robot/core/inc/*.h)
 
@@ -24,4 +26,5 @@ if (VICOS)
     anki_build_target_license(${LIB} "ANKI")
 
   endforeach()
+endif()
 endif()

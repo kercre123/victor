@@ -81,12 +81,12 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
   // Call the JdocsManager to see if our robot settings jdoc file exists
   bool settingsDirty = false;
+  const bool jdocNeedsCreation = _jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_SETTINGS);
   _currentSettings.clear();
-  if (_jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_SETTINGS))
+  if (jdocNeedsCreation)
   {
     LOG_INFO("SettingsManager.InitDependent.NoSettingsJdocFile",
              "Settings jdoc file not found; one will be created shortly");
-    settingsDirty = true;
   }
   else
   {
@@ -108,7 +108,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
     if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ROBOT_SETTINGS))
     {
-      // TODO (this needs its own ticket):
+      // TODO (this has its own ticket, VIC-5669):
       //   Handle format migration (from loaded jdoc file) here.  We need to know the old
       //   and new format versions.  Also put it in a function, and call that ALSO in the
       //   case of migration triggered when pulling a new version of jdoc from the cloud.
@@ -153,7 +153,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   if (settingsDirty)
   {
     static const bool kSaveToCloudImmediately = false;
-    static const bool kSetCloudDirtyIfNotImmediate = true;
+    static const bool kSetCloudDirtyIfNotImmediate = !jdocNeedsCreation;
     UpdateSettingsJdoc(kSaveToCloudImmediately, kSetCloudDirtyIfNotImmediate);
   }
 
@@ -164,6 +164,7 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _settingSetters[RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
 
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
+    _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
     ApplyAllCurrentSettings();
   });
 

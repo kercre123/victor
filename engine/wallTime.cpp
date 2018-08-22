@@ -209,17 +209,17 @@ WallTime::TimePoint_t WallTime::GetApproximateTime()
 
 #if REMOTE_CONSOLE_ENABLED
   if( sFakeWallTime >= 0 ) {
-
-    int hours = sFakeWallTime / 100;
-    int minutes = sFakeWallTime % 100;
-    
-    TimePoint_t ret = GetEpochTime();
-    ret += std::chrono::hours(hours);
-    ret += std::chrono::minutes(minutes);
-    return ret;
+    time_t now = time(nullptr);
+    struct tm fake_tm = {0};
+    (void) gmtime_r(&now, &fake_tm);
+    fake_tm.tm_sec = 0;
+    fake_tm.tm_hour = sFakeWallTime / 100;
+    fake_tm.tm_min = sFakeWallTime % 100;
+    time_t fake_now = timegm(&fake_tm);
+    return std::chrono::system_clock::from_time_t(fake_now);
   }
 #endif
-  
+
   return std::chrono::system_clock::now();
 }
 

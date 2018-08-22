@@ -101,21 +101,22 @@ func (p *Process) AddIntentWriter(s MsgSender) {
 }
 
 type strmReceiver struct {
-	intent chan *cloud.IntentResult
+	stream *stream.Streamer
+	intent chan cloudIntent
 	err    chan cloudError
-	open   chan string
+	open   chan cloudOpen
 }
 
 func (c *strmReceiver) OnIntent(r *cloud.IntentResult) {
-	c.intent <- r
+	c.intent <- cloudIntent{c, r}
 }
 
 func (c *strmReceiver) OnError(kind cloud.ErrorType, err error) {
-	c.err <- cloudError{kind, err}
+	c.err <- cloudError{c, kind, err}
 }
 
 func (c *strmReceiver) OnStreamOpen(session string) {
-	c.open <- session
+	c.open <- cloudOpen{c, session}
 }
 
 // Run starts the cloud process, which will run until stopped on the given channel
@@ -130,9 +131,9 @@ func (p *Process) Run(ctx context.Context, options ...Option) {
 	}
 
 	cloudChans := &strmReceiver{
-		intent: make(chan *cloud.IntentResult),
+		intent: make(chan cloudIntent),
 		err:    make(chan cloudError),
-		open:   make(chan string),
+		open:   make(chan cloudOpen),
 	}
 
 	var strm *stream.Streamer
@@ -195,7 +196,9 @@ procloop:
 					}, mode))
 				}
 				logVerbose("Got hotword event", serverMode)
-				strm = stream.NewStreamer(ctx, cloudChans, p.StreamSize(), strmopts...)
+				newReceiver := *cloudChans
+				strm = stream.NewStreamer(ctx, &newReceiver, p.StreamSize(), strmopts...)
+				newReceiver.stream = strm
 
 			case cloud.MessageTag_DebugFile:
 				p.writeResponse(msg.msg)
@@ -220,12 +223,17 @@ procloop:
 			}
 
 		case intent := <-cloudChans.intent:
-			logVerbose("Received intent from cloud:", intent)
+			if intent.recvr.stream != strm {
+				log.Println("Ignoring result from prior stream:", intent.result)
+				continue
+			}
+			logVerbose("Received intent from cloud:", intent.result)
+
 			// we got an answer from the cloud, tell mic to stop...
 			p.signalMicStop()
 
 			// send intent to AI
-			p.writeResponse(cloud.NewMessageWithResult(intent))
+			p.writeResponse(cloud.NewMessageWithResult(intent.result))
 
 			// stop streaming until we get another hotword event
 			if err := strm.Close(); err != nil {
@@ -234,7 +242,11 @@ procloop:
 			strm = nil
 
 		case err := <-cloudChans.err:
-			logVerbose("Received error from cloud:", err)
+			if err.recvr.stream != strm {
+				log.Println("Ignoring error from prior stream:", err)
+				continue
+			}
+			logVerbose("Received error from cloud:", err.err)
 			p.signalMicStop()
 			p.writeError(err.kind, err.err)
 			if err := strm.Close(); err != nil {
@@ -242,8 +254,12 @@ procloop:
 			}
 			strm = nil
 
-		case sess := <-cloudChans.open:
-			p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.StreamOpen{sess}))
+		case open := <-cloudChans.open:
+			if open.recvr.stream != strm {
+				log.Println("Ignoring stream open from prior stream:", open.session)
+				continue
+			}
+			p.writeResponse(cloud.NewMessageWithStreamOpen(&cloud.StreamOpen{open.session}))
 
 		case <-ctx.Done():
 			logVerbose("Received stop notification")
@@ -344,6 +360,17 @@ var modeMap = map[cloud.StreamType]pb.RobotMode{
 }
 
 type cloudError struct {
-	kind cloud.ErrorType
-	err  error
+	recvr *strmReceiver
+	kind  cloud.ErrorType
+	err   error
+}
+
+type cloudIntent struct {
+	recvr  *strmReceiver
+	result *cloud.IntentResult
+}
+
+type cloudOpen struct {
+	recvr   *strmReceiver
+	session string
 }

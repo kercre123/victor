@@ -158,6 +158,18 @@ message RtsStatusResponse_3 {
     bool        hasOwner,
 }
 
+message RtsStatusResponse_4 {
+    string      wifiSsidHex,
+    uint_8      wifiState,
+    bool        accessPoint,
+    uint_8      bleState,
+    uint_8      batteryState,
+    string      version,
+    string      esn,
+    bool        otaInProgress,
+    bool        hasOwner,
+}
+
 message RtsWifiScanRequest {
     //
 }
@@ -245,6 +257,14 @@ message RtsCloudSessionResponse {
     string[uint_16]       clientTokenGuid,
 }
 
+message RtsAppConnectionIdRequest {
+    string[uint_16]       connectionId,
+}
+
+message RtsAppConnectionIdResponse {
+    //
+}
+
 message Error {
     //
 }
@@ -320,6 +340,43 @@ union RtsConnection_3 {
     RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  // * new in V3
 }
 
+// Rts Version 4
+union RtsConnection_4 {
+    Error                           Error                       = 0x00,
+    RtsConnRequest                  RtsConnRequest              = 0x01,
+    RtsConnResponse                 RtsConnResponse             = 0x02,
+    RtsNonceMessage                 RtsNonceMessage             = 0x03,
+    RtsChallengeMessage             RtsChallengeMessage         = 0x04,
+    RtsChallengeSuccessMessage      RtsChallengeSuccessMessage  = 0x05,
+    RtsWifiConnectRequest           RtsWifiConnectRequest       = 0x06,
+    RtsWifiConnectResponse_3        RtsWifiConnectResponse_3    = 0x07,
+    RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
+    RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
+    RtsStatusRequest                RtsStatusRequest            = 0x0A,
+    RtsStatusResponse_4             RtsStatusResponse_4         = 0x0B,  // includes esn field   
+    RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
+    RtsWifiScanResponse_3           RtsWifiScanResponse_3       = 0x0D,
+    RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
+    RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
+    RtsCancelPairing                RtsCancelPairing            = 0x10,
+    RtsForceDisconnect              RtsForceDisconnect          = 0x11,
+    RtsAck                          RtsAck                      = 0x12,
+    RtsWifiAccessPointRequest       RtsWifiAccessPointRequest   = 0x13,
+    RtsWifiAccessPointResponse      RtsWifiAccessPointResponse  = 0x14,
+    RtsSshRequest                   RtsSshRequest               = 0x15,
+    RtsSshResponse                  RtsSshResponse              = 0x16,
+    RtsOtaCancelRequest             RtsOtaCancelRequest         = 0x17,     
+    RtsLogRequest                   RtsLogRequest               = 0x18,     
+    RtsLogResponse                  RtsLogResponse              = 0x19,     
+    RtsFileDownload                 RtsFileDownload             = 0x1A,
+    RtsWifiForgetRequest            RtsWifiForgetRequest        = 0x1B,  
+    RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  
+    RtsCloudSessionRequest          RtsCloudSessionRequest      = 0x1D,  
+    RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  
+    RtsAppConnectionIdRequest       RtsAppConnectionIdRequest   = 0x1F,  // * new in V3
+    RtsAppConnectionIdResponse      RtsAppConnectionIdResponse  = 0x20,  // * new in V3
+}
+
 // The factory set of supported messages
 union RtsConnection_1 {
     Error                           Error                       = 0x00,
@@ -354,6 +411,7 @@ union RtsConnection {
     //                              Reserved                    = 0x01, 
     RtsConnection_2                 RtsConnection_2             = 0x02,
     RtsConnection_3                 RtsConnection_3             = 0x03,
+    RtsConnection_4                 RtsConnection_4             = 0x04,
 }
 
 message DeprecatedAndReserved {

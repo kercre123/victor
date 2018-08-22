@@ -552,14 +552,6 @@
     "SpriteName" : "blackjack_vector_flipover"
   },
   {
-    "CladEvent" : "Face_Bored_Event_02",
-    "SpriteName" : "face_bored_event_02"
-  },
-  {
-    "CladEvent" : "Face_Bored_Event_04",
-    "SpriteName" : "face_bored_event_04"
-  },
-  {
     "CladEvent" : "Face_Chargerdocking_Severerequest",
     "SpriteName" : "face_chargerdocking_severerequest"
   },

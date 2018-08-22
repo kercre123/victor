@@ -13,6 +13,7 @@
 #include "DAS/DAS.h"
 #include "osState/osState.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
@@ -38,7 +39,6 @@ using LogLevel = Anki::Util::LogLevel;
 // Local constants
 
 namespace {
-
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
 }
@@ -480,6 +480,98 @@ std::string DASManager::GetPathNameForNextJsonLogFile()
   return Util::FileUtils::FullFilePath({_dasConfig.GetStoragePath(), filename});
 }
 
+void DASManager::LoadGlobalState(const std::string & globals_path)
+{
+  // Read json from file
+  Json::Reader reader;
+  Json::Value json;
+  std::ifstream ifs(globals_path);
+
+  if (!reader.parse(ifs, json)) {
+    const auto & errors = reader.getFormattedErrorMessages();
+    LOG_ERROR("DASManager.LoadGlobalState", "Failed to parse [%s] (%s)",
+      globals_path.c_str(), errors.c_str());
+    return;
+  }
+
+  // Read values from json
+  const auto & dasGlobals = json["dasGlobals"];
+  if (!dasGlobals.isObject()) {
+    LOG_ERROR("DASManager.LoadGlobalState", "Invalid json object");
+    return;
+  }
+
+  const auto & profile_id = dasGlobals["profile_id"];
+  if (profile_id.isString()) {
+    _profile_id = profile_id.asString();
+  }
+}
+
+void DASManager::LoadGlobalState()
+{
+  // Programmatic defaults
+  _feature_type = "system";
+  _feature_run_id = Anki::Util::GetUUIDString();
+
+  // Get persistent values from OS
+  {
+    auto * osState = Anki::Vector::OSState::getInstance();
+    DEV_ASSERT(osState != nullptr, "DASManager.LoadGlobalState.InvalidOSState");
+    if (osState->HasValidEMR()) {
+      _robot_id = osState->GetSerialNumberAsString();
+    } else {
+      LOG_ERROR("DASManager.LoadGlobalState.InvalidEMR", "INVALID EMR - NO ESN");
+    }
+    _robot_version = osState->GetRobotVersion();
+    _boot_id = osState->GetBootID();
+    Vector::OSState::removeInstance();
+  }
+
+  // Get persistent values from DASGlobals.json
+  const std::string & globals_path = _dasConfig.GetGlobalsPath();
+  if (!globals_path.empty() && Util::FileUtils::FileExists(globals_path)) {
+    LoadGlobalState(globals_path);
+  }
+
+}
+
+void DASManager::SaveGlobalState(const std::string & globals_path)
+{
+  // Construct json container
+  Json::Value json;
+  json["dasGlobals"]["profile_id"] = _profile_id;
+
+  // Write json to temp file
+  const auto & tmp = globals_path + ".tmp";
+  if (Util::FileUtils::FileExists(tmp)) {
+    Util::FileUtils::DeleteFile(tmp);
+  }
+
+  try {
+    Json::StyledWriter writer;
+    std::ofstream ofs(tmp);
+    ofs << writer.write(json);
+  } catch (const std::exception & ex) {
+    LOG_ERROR("DASManager.SaveGlobalState", "Unable to write %s (%s)", tmp.c_str(), ex.what());
+    return;
+  }
+
+  // Move temp file into place
+  // Yes, the arguments are MoveFile(dest, src)
+  const bool ok = Util::FileUtils::MoveFile(globals_path, tmp);
+  if (!ok) {
+    LOG_ERROR("DASManager.SaveGlobalState", "Unable to move %s to %s", tmp.c_str(), globals_path.c_str());
+  }
+}
+
+void DASManager::SaveGlobalState()
+{
+  const std::string & globals_path = _dasConfig.GetGlobalsPath();
+  if (!globals_path.empty()) {
+    SaveGlobalState(globals_path);
+  }
+}
+
 //
 // Process log entries until shutdown flag becomes true.
 // The shutdown flag is declared const because this function
@@ -498,23 +590,7 @@ Result DASManager::Run(const bool & shutdown)
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
-  LOG_DEBUG("DASManager.Run", "Begin reading loop");
-  {
-    auto * osState = Anki::Vector::OSState::getInstance();
-    DEV_ASSERT(osState != nullptr, "DASManager.Run.InvalidOSState");
-    if (osState->HasValidEMR()) {
-      _robot_id = osState->GetSerialNumberAsString();
-    } else {
-      LOG_ERROR("DASManager.Run.InvalidEMR", "INVALID EMR - NO ESN");
-    }
-    _robot_version = osState->GetRobotVersion();
-    _boot_id = osState->GetBootID();
-    Vector::OSState::removeInstance();
-  }
-
-  _profile_id = "system";
-  _feature_type = "system";
-  _feature_run_id = Anki::Util::GetUUIDString();
+  LoadGlobalState();
 
   // Log global parameters so we can match up log data with DAS records
   LOG_INFO("DASManager.Run", "robot_id=%s robot_version=%s boot_id=%s feature_run_id=%s",
@@ -525,6 +601,7 @@ Result DASManager::Run(const bool & shutdown)
   // https://android.googlesource.com/platform/system/core/+/master/liblog/README
   //
 
+
   // Open the log buffer
   struct logger_list * log = android_logger_list_open(LOG_ID_MAIN, ANDROID_LOG_RDONLY, 0, 0);
   if (log == nullptr) {
@@ -532,6 +609,8 @@ Result DASManager::Run(const bool & shutdown)
     LOG_ERROR("DASManager.Run", "Unable to open android logger (errno %d)", errno);
     return RESULT_FAIL_FILE_OPEN;
   }
+
+  LOG_DEBUG("DASManager.Run", "Begin reading loop");
 
   //
   // Read log records until shutdown flag becomes true.
@@ -591,6 +670,8 @@ Result DASManager::Run(const bool & shutdown)
 
   // Report final stats
   ProcessStats();
+
+  SaveGlobalState();
 
   LOG_DEBUG("DASManager.Run", "Done(result %d)", result);
   return result;

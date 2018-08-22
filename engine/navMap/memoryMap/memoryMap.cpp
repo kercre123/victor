@@ -243,11 +243,20 @@ bool MemoryMap::AnyOf(const MemoryMapRegion& r, NodePredicate f) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MemoryMap::GetArea(const MemoryMapRegion& region, NodePredicate pred) const
+float MemoryMap::GetArea(const MemoryMapRegion& region, const NodePredicate& pred) const
 {
   float retv = 0.f;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += powf(node.GetSideLen(),2);} }, region);
+  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += Util::Square(node.GetSideLen());} }, region);
+  return retv;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float MemoryMap::GetArea(const NodePredicate& pred) const
+{
+  float retv = 0.f;
+  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
+  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += Util::Square(node.GetSideLen());} });
   return retv;
 }
 

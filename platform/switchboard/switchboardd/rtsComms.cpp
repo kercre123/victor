@@ -12,6 +12,7 @@
 
 #include "switchboardd/rtsHandlerV2.h"
 #include "switchboardd/rtsHandlerV3.h"
+#include "switchboardd/rtsHandlerV4.h"
 #include "switchboardd/rtsComms.h"
 
 namespace Anki {
@@ -20,6 +21,7 @@ namespace Switchboard {
 RtsComms::RtsComms(INetworkStream* stream, 
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<GatewayMessagingServer> gatewayServer,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
@@ -29,6 +31,7 @@ _pin(""),
 _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
+_gatewayServer(gatewayServer),
 _tokenClient(tokenClient),
 _taskExecutor(taskExecutor),
 _isPairing(isPairing),
@@ -38,6 +41,9 @@ _totalPairingAttempts(0),
 _rtsHandler(nullptr),
 _rtsVersion(0)
 {
+  // Initialize safe handle
+  _safeHandle = SafeHandle::Create();
+
   // Register with stream events
   _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
     std::bind(&RtsComms::HandleMessageReceived,
@@ -168,19 +174,17 @@ void RtsComms::UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus s
 
 void RtsComms::HandleReset(bool forced) {
   //
-  // Reviewing the logic and order of events, there should
-  // be no need for Wake() (or even WakeSync()). In fact, adding
-  // "Wake" caused a race condition that would 99% of the time lead
-  // to corruption of memory.
-  // 
-  // old:
-  //  [see: VIC-4306]
-  //  This "Wake" was added because deleting `IRtsHandler` object 
-  //  in scope of its own execution was causing a memory corruption, 
-  //  although the root cause was never discovered.
-  //  VIC-4306 is a ticket to track the actual discovering and 
-  //  fixing of the root cause.
-  _taskExecutor->WakeSync([this, forced]() {    
+  // 'Wake' is necessary to prevent RtsComms from being destroyed in its own scope
+  // the SafeHandle weak_ptr allows us to know if RtsComms was destroyed before 
+  // the callback is executed.
+  //
+  std::weak_ptr<SafeHandle> weakSafeHandle(_safeHandle);
+  _taskExecutor->Wake([this, weakSafeHandle, forced]() {    
+    auto handle = weakSafeHandle.lock();
+    if(!handle) {
+      return;
+    }
+
     _state = RtsPairingPhase::Initial;
 
     // Put us back in initial state
@@ -246,30 +250,31 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
           Log::Write("Starting RtsHandler");
           switch(_rtsVersion) {
             case PairingProtocolVersion::CURRENT: {
-              _rtsHandler = (IRtsHandler*)new RtsHandlerV3(_stream, 
+              _rtsHandler = (IRtsHandler*)new RtsHandlerV4(_stream, 
                               _loop,
                               _engineClient,
                               _tokenClient,
+                              _gatewayServer,
                               _taskExecutor,
                               _isPairing,
                               _isOtaUpdating,
                               _hasCloudOwner);
 
-              RtsHandlerV3* _v3 = static_cast<RtsHandlerV3*>(_rtsHandler);
-              _pinHandle = _v3->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
+              RtsHandlerV4* _v4 = static_cast<RtsHandlerV4*>(_rtsHandler);
+              _pinHandle = _v4->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
                 _pin = s;
                 this->OnUpdatedPinEvent().emit(s);
               });
-              _otaHandle = _v3->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
+              _otaHandle = _v4->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
                 this->OnOtaUpdateRequestEvent().emit(s);
               });
-              _endHandle = _v3->OnStopPairingEvent().ScopedSubscribe([this](){
+              _endHandle = _v4->OnStopPairingEvent().ScopedSubscribe([this](){
                 this->OnStopPairingEvent().emit();
               });
-              _completedPairingHandle = _v3->OnCompletedPairingEvent().ScopedSubscribe([this](){
+              _completedPairingHandle = _v4->OnCompletedPairingEvent().ScopedSubscribe([this](){
                 this->OnCompletedPairingEvent().emit();
               });
-              _resetHandle = _v3->OnResetEvent().ScopedSubscribe(
+              _resetHandle = _v4->OnResetEvent().ScopedSubscribe(
                 std::bind(&RtsComms::HandleReset, this, std::placeholders::_1));
 
               break;
@@ -302,6 +307,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                 std::bind(&RtsComms::HandleReset, this, std::placeholders::_1));
               break;
             }
+            case PairingProtocolVersion::V3:
             default: {
               // this case should never happen,
               // because handleHandshake is true

@@ -71,6 +71,8 @@ public:
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
   void GetUserAndThingIDs(std::string& userID, std::string& thingID) const;
+  void DebugFakeUserLogOut();
+  void DebugCheckForUser();
 
   using OverwriteNotificationCallback = std::function<void(void)>;
   void RegisterOverwriteNotificationCallback(const external_interface::JdocType jdocTypeKey,
@@ -102,6 +104,7 @@ private:
   LocalUdpClient            _udpClient;
   std::string               _userID;
   std::string               _thingID;
+  bool                      _gotLatestCloudJdocsAtStartup = false;
 
   struct JdocInfo
   {

@@ -95,6 +95,13 @@ private:
   // We don't want to overwrite existing files, get the next index to use
   uint32_t GetNextIndexForJsonFile();
   std::string GetPathNameForNextJsonLogFile();
+
+  void LoadGlobalState(const std::string & globals_path);
+  void LoadGlobalState();
+
+  void SaveGlobalState(const std::string & globals_path);
+  void SaveGlobalState();
+
 };
 
 } // end namespace Victor
