@@ -324,7 +324,7 @@ void PathComponent::OnPathComplete()
 {
   _hasStoppedBeforeExecuting = true;
   _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
-  if( !_isReplanning && !_plannerActive ) {
+  if( !_plannerActive ) {
     // If the planner isn't running (or replanning) then we should be done
     SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
   }
@@ -563,6 +563,8 @@ void PathComponent::UpdatePlanning()
       PRINT_CH_INFO("Planner", "PathComponent.Update.Planner.CompleteNoPlan",
                     "Running planner complete with no plan");
 
+      _plannerActive = false;
+      
       if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath ||
           _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToBeginPath ||
           _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToCancelPath ||
