@@ -989,6 +989,14 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);
   const bool isDelocalizing = wasTreadsStateUpdated && (prevOffTreadsState == OffTreadsState::OnTreads || _offTreadsState == OffTreadsState::OnTreads);
   
+  if( isDelocalizing && (prevOffTreadsState == OffTreadsState::OnTreads) )
+  {
+    // Robot is delocalized, and not because it was put back down. Tell the map component to send relevant info about the
+    // previous map. This is commanded here instead of map component's CreateLocalizedMemoryMap so that the map info from when
+    // the robot is in the air is not sent when the robot is put back down, since MapComponent doesn't (need to) track OffTreadsState
+    GetMapComponent().SendDASInfoAboutCurrentMap();
+  }
+  
   if (wasTreadsStateUpdated)
   {
     DASMSG(robot_offtreadsstatechanged, "robot.offtreadsstatechanged", "The robot off treads state changed");

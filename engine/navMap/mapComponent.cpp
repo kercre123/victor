@@ -41,6 +41,7 @@
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #include "webServerProcess/src/webService.h"
 
@@ -394,10 +395,12 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
   // before we merge the object information from the memory maps, apply rejiggering also to their
   // reported poses
   UpdateOriginsOfObjects(oldOriginID, newOriginID);
+  
+  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   // grab the underlying memory map and merge them
-  auto oldMap = _navMaps[oldOriginID];
-  auto newMap = _navMaps[newOriginID];
+  auto& oldMap = _navMaps[oldOriginID].map;
+  auto& newMap = _navMaps[newOriginID].map;
 
   // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
   // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
@@ -413,7 +416,9 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
     INavMap* emptyMemoryMap = NavMapFactory::CreateMemoryMap();
 
     // set in the container of maps
-    _navMaps[newOriginID].reset(emptyMemoryMap);
+    _navMaps[newOriginID].map.reset(emptyMemoryMap);
+    _navMaps[newOriginID].activationTime_ms = currTime_ms;
+    _navMaps[newOriginID].activeDuration_ms = 0;
     // set the pointer to this newly created instance
     newMap.reset(emptyMemoryMap);
   }
@@ -426,6 +431,11 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
 
   // switch back to what is becoming the new map
   _currentMapOriginID = newOriginID;
+  
+  // mark the time that this origin was re-activated, and bump the new origin's active time with that of the
+  // old origin's, since they have been merged into _currentMapOriginID.
+  _navMaps[_currentMapOriginID].activeDuration_ms += _navMaps[oldOriginID].activeDuration_ms;
+  _navMaps[_currentMapOriginID].activationTime_ms = currTime_ms;
 
   // now we can delete what is become the old map, since we have merged its data into the new one
   _navMaps.erase( oldOriginID ); // smart pointer will delete memory
@@ -662,7 +672,7 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
       // PRINT_CH_DEBUG("MapComponent", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
       PRINT_NAMED_INFO("MapComponent.memory_map.deleting_zombie_map", "%d", worldOriginID );
       iter = _navMaps.erase(iter);
-
+      
       // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
       for( auto& posesForObjectIt : _reportedPoses ) {
         OriginToPoseInMapInfo& posesPerOriginForObject = posesForObjectIt.second;
@@ -680,10 +690,24 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
   // do not support this by not creating one at all if the origin is null
   if ( PoseOriginList::UnknownOriginID != worldOriginID )
   {
+    
+    const EngineTimeStamp_t currTimeStamp_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    if ( _currentMapOriginID != PoseOriginList::UnknownOriginID )
+    {
+      // increment the time that the previous _currentMapOriginID was active
+      _navMaps[_currentMapOriginID].activeDuration_ms += TimeStamp_t(currTimeStamp_ms - _navMaps[_currentMapOriginID].activationTime_ms);
+    }
+    
+    
     // create a new memory map in the given origin
     PRINT_NAMED_INFO("MapComponent.CreateLocalizedMemoryMap", "Setting current origin to %i", worldOriginID);
     INavMap* navMemoryMap = NavMapFactory::CreateMemoryMap();
-    _navMaps.emplace( std::make_pair(worldOriginID, std::shared_ptr<INavMap>(navMemoryMap)) );
+    MapInfo mapInfo;
+    mapInfo.map = std::shared_ptr<INavMap>(navMemoryMap);
+    mapInfo.activeDuration_ms = 0;
+    mapInfo.activationTime_ms = currTimeStamp_ms;
+    
+    _navMaps.emplace( worldOriginID, std::move(mapInfo) );
     _currentMapOriginID = worldOriginID;
   }
 }
@@ -808,7 +832,7 @@ void MapComponent::ClearRender()
     {
       // get map Identifier
       MemoryMapTypes::MapBroadcastData data;
-      memMapPair.second->GetBroadcastInfo(data);
+      memMapPair.second.map->GetBroadcastInfo(data);
 
       // clear map from VizManager
       _robot->GetContext()->GetVizManager()->EraseQuadVector(data.mapInfo.identifier);
@@ -840,7 +864,7 @@ std::shared_ptr<INavMap> MapComponent::GetCurrentMemoryMapHelper() const
   if ( PoseOriginList::UnknownOriginID != _currentMapOriginID ) {
     auto matchPair = _navMaps.find(_currentMapOriginID);
     if ( matchPair != _navMaps.end() ) {
-      curMap = matchPair->second;
+      curMap = matchPair->second.map;
     } else {
       DEV_ASSERT(false, "MapComponent.GetNavMemoryMap.MissingMap");
     }
@@ -1078,7 +1102,7 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
       return data;
     };
 
-    UpdateBroadcastFlags(matchPair->second->TransformContent(transform));
+    UpdateBroadcastFlags(matchPair->second.map->TransformContent(transform));
   } else {
     // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
     DEV_ASSERT(matchPair == _navMaps.end(), "MapComponent.RemoveObservableObject.NoMapForOrigin");
@@ -1344,6 +1368,22 @@ float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
   const auto currentMap = GetCurrentMemoryMap();
   if (currentMap) {
     return currentMap->GetArea( region, [] (const auto& data) { return data->IsCollisionType(); });
+  }
+  return 0.f;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float MapComponent::GetCollisionArea() const
+{
+  const auto currentMap = GetCurrentMemoryMap();
+  return GetCollisionArea( currentMap );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float MapComponent::GetCollisionArea(const std::shared_ptr<const INavMap>& memoryMap) const
+{
+  if (memoryMap) {
+    return memoryMap->GetArea( [] (const auto& data) { return data->IsCollisionType(); });
   }
   return 0.f;
 }
@@ -1975,6 +2015,40 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   _robot->GetAIComponent().GetComponent<AIWhiteboard>().SetLastEdgeInformation(closestPointDist_mm);
 
   return RESULT_OK;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const
+{
+  if ( mapOriginID != PoseOriginList::UnknownOriginID )
+  {
+    const auto it = _navMaps.find(mapOriginID);
+    if ( ANKI_VERIFY( (it != _navMaps.end()) && (it->second.map != nullptr),
+                      "MapComponent.SendDASInfoAboutMap.NotFound",
+                      "Could not find orgin %u, or the map is null",
+                      mapOriginID ) )
+    {
+      const float explored_mm2 = 1e6f * it->second.map->GetExploredRegionAreaM2();
+      const float collision_mm2 = GetCollisionArea( it->second.map );
+      TimeStamp_t activeDuration_ms = 0;
+      if ( mapOriginID == _currentMapOriginID )
+      {
+        // still active, so need to append the time since activated to the duration
+        const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const EngineTimeStamp_t& activationTime = it->second.activationTime_ms;
+        activeDuration_ms = it->second.activeDuration_ms + TimeStamp_t(currTime_ms - activationTime);
+      } else {
+        // inactive. just use the cached activation time
+        activeDuration_ms = it->second.activeDuration_ms;
+      }
+      
+      DASMSG(robot_delocalized_env, "robot.delocalized_env", "When the robot is delocalized, information about the environment");
+      DASMSG_SET(i1, (int64_t)explored_mm2, "Total surface area known (mm2)");
+      DASMSG_SET(i2, (int64_t)collision_mm2, "Total surface area that is an obstacle (mm2), a subset of i1");
+      DASMSG_SET(i3, (int64_t)activeDuration_ms, "Duration (ms) of the map, perhaps after multiple delocalizations" );
+      DASMSG_SEND();
+    }
+  }
 }
 
 

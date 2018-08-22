@@ -81,8 +81,9 @@ public:
   // checks if the given region intersects with a node of the given types
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const = 0;
   
-  // returns the accumulated area of cells that satisfy the predicate
-  virtual float GetArea(const MemoryMapRegion& region, NodePredicate func) const = 0;
+  // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
+  virtual float GetArea(const MemoryMapRegion& region, const NodePredicate& func) const = 0;
+  virtual float GetArea(const NodePredicate& func) const = 0;
   
   // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
   // returns true if any node that intersects with the provided regions evaluates `func` as true.

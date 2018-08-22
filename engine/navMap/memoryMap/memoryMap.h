@@ -101,8 +101,9 @@ public:
   virtual bool AnyOf(const Poly2f& p, NodePredicate f)             const override;
   virtual bool AnyOf(const MemoryMapRegion& p, NodePredicate f) const override;
 
-  // returns the accumulated area of cells that satisfy the predicate
-  virtual float GetArea(const MemoryMapRegion& p, NodePredicate f) const override;
+  // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
+  virtual float GetArea(const MemoryMapRegion& p, const NodePredicate& f) const override;
+  virtual float GetArea(const NodePredicate& f) const override;
 
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;
