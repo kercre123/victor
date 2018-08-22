@@ -101,7 +101,8 @@ SoftReset       CPSID I
                 STR     R0, [R7, #0x04]
                 LDR     R1, =0x10000
                 STR     R1, [R7, #0x08]
-                STR     R0, [R7, #0x0C]
+                MOVS    R1, #0x01           ; Why yes, sir, we have booted.
+                STR     R1, [R7, #0x0C]
                 STR     R0, [R7, #0x10]
                 LDR     R1, =0x1FFFF7B8
                 STR     R1, [R7, #0x14]
