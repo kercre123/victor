@@ -128,7 +128,7 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 bool TrackFaceAction::AreContinueCriteriaMet(const f32 currentTime_sec)
 {
   if (Util::IsFltGTZero(_eyeContactCriteria.earliestStoppingTime_sec) &&
-        Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
+      Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
   {
     // Always update the time of last eye contact before we do anything else
     // TODO it would ideal to make sure we only use eye contact from the
