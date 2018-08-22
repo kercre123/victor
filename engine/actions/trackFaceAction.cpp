@@ -173,7 +173,7 @@ bool TrackFaceAction::AreContinueCriteriaMet(const f32 currentTime_sec)
 void TrackFaceAction::SetEyeContactContinueCriteria(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
                                                     const TimeStamp_t eyeContactWithinLast_ms)
 {
-  DEV_ASSERT(!HasStarted(), "ITrackAction.Set.ActionAlreadyStarted");
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetEyeContactContinueCriteria.ActionAlreadyStarted");
 
   // This call configures AreContinueCriteriaMet to be called
   // when determining whether to continue/stop tracking instead
