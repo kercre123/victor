@@ -94,7 +94,7 @@ public:
 
   bool GetShouldStreamAfterWakeWord() const 
   { 
-    return _responseToTriggerWordMap.empty() ? true : _responseToTriggerWordMap.rbegin()->second.shouldTriggerWordStartStream;
+    return _responseToTriggerWordMap.empty() ? true : _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordStartStream;
   }
 
   bool WaitingForTriggerWordGetInToFinish() const { return _waitingForTriggerWordGetInToFinish; }
@@ -270,7 +270,15 @@ private:
   std::unordered_set<std::string> _disableTriggerWordNames;
 
   // Keep track of who has requested to disable streaming-after-wakeword
-  std::map<std::string, RobotInterface::SetTriggerWordResponse> _responseToTriggerWordMap;
+  struct TriggerWordResponseEntry{
+    TriggerWordResponseEntry(const std::string& id, RobotInterface::SetTriggerWordResponse&& responseExternal)
+    : setID(id)
+    , response(responseExternal){}
+    std::string setID;
+    RobotInterface::SetTriggerWordResponse response;
+  };
+
+  std::vector<TriggerWordResponseEntry> _responseToTriggerWordMap;
   AnimationTag _tagForTriggerWordGetInCallbacks;
   bool _waitingForTriggerWordGetInToFinish = false;
 

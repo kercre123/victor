@@ -118,7 +118,7 @@ void UserIntentComponent::SetTriggerWordPending()
     // for playing anims and compare tags
     auto lastElemIter = _responseToTriggerWordMap.rbegin();
     _robot->GetAnimationComponent().NotifyComponentOfAnimationStartedByAnimProcess(
-      lastElemIter->second.getInAnimationName, lastElemIter->second.getInAnimationTag);
+      lastElemIter->response.getInAnimationName, lastElemIter->response.getInAnimationTag);
   }
   if(!GetEngineShouldRespondToTriggerWord()){
     PRINT_NAMED_INFO("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled", 
@@ -601,7 +601,10 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
 
 void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
 {
-  auto iter = _responseToTriggerWordMap.find(id);
+  auto compareFunc = [&id](const TriggerWordResponseEntry& entry){
+    return entry.setID == id;
+  };
+  auto iter = std::find_if(_responseToTriggerWordMap.begin(), _responseToTriggerWordMap.end(), compareFunc);
   if(iter == _responseToTriggerWordMap.end()){
     PRINT_NAMED_WARNING("UserIntentComponent.PopResponseToTriggerWord.idNotInStack",
                         "request to remove id %s, but it has not set a trigger word response",
@@ -613,7 +616,7 @@ void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
   // Check to see if the top of the stack was removed, and send a new trigger response
   if(iter == _responseToTriggerWordMap.end()){
     if(!_responseToTriggerWordMap.empty()){
-      RobotInterface::SetTriggerWordResponse intentionalCopy = _responseToTriggerWordMap.rbegin()->second;
+      RobotInterface::SetTriggerWordResponse intentionalCopy = _responseToTriggerWordMap.rbegin()->response;
       _robot->SendMessage(RobotInterface::EngineToRobot(std::move(intentionalCopy)));
     }else{
       RobotInterface::SetTriggerWordResponse blankMessage;
@@ -630,9 +633,12 @@ void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& 
     return;
   }
 
-  auto intentionalCopy = _responseToTriggerWordMap.rbegin()->second;
+  auto intentionalCopy = _responseToTriggerWordMap.rbegin()->response;
   intentionalCopy.shouldTriggerWordStartStream = shouldTriggerWordStartStream;
-  PushResponseToTriggerWordInternal(id, std::move(intentionalCopy));
+  if(_responseToTriggerWordMap.rbegin()->setID != id ||
+     intentionalCopy != _responseToTriggerWordMap.rbegin()->response){
+    PushResponseToTriggerWordInternal(id, std::move(intentionalCopy));
+  }
 
 }
 
@@ -640,14 +646,19 @@ void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& 
 void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& id, 
                                                             RobotInterface::SetTriggerWordResponse&& response)
 {
-  if(_responseToTriggerWordMap.find(id) != _responseToTriggerWordMap.end()){
+  auto compareFunc = [&id](const TriggerWordResponseEntry& entry){
+    return entry.setID == id;
+  };
+  auto iter = std::find_if(_responseToTriggerWordMap.begin(), _responseToTriggerWordMap.end(), compareFunc);
+
+  if(iter != _responseToTriggerWordMap.end()){
     PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.idAlreadyPushedResponse",
                         "id %s already in use, removing old entry and adding new response to top of the stack",
                         id.c_str());
-    _responseToTriggerWordMap.erase(id);
+    _responseToTriggerWordMap.erase(iter);
   }
 
-  _responseToTriggerWordMap.emplace(id, response);
+  _responseToTriggerWordMap.emplace_back(TriggerWordResponseEntry(id, std::move(response)));
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(response)) );
 }
 
