@@ -33,6 +33,9 @@ public:
     _dVars.idSetExternally = true;
   }
   
+  // True starting at the end of predock and ending when the wheelie animation complete
+  bool IsPoppingWheelie() const { return _dVars.isPoppingWheelie; }
+  
   // The return value gets set just prior to deactivation if successful
   bool WasLastActivationSuccessful() const { return _dVars.successful; }
   
@@ -71,6 +74,7 @@ private:
     bool             hasDisabledcliff;
     bool             idSetExternally;
     bool             successful;
+    bool             isPoppingWheelie;
   };
 
   InstanceConfig   _iConfig;

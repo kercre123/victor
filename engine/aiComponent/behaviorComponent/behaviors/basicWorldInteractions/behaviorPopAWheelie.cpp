@@ -55,6 +55,7 @@ BehaviorPopAWheelie::DynamicVariables::DynamicVariables()
   hasDisabledcliff = false;
   idSetExternally = false;
   successful = false;
+  isPoppingWheelie = false;
 }
 
 
@@ -183,6 +184,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   auto disableCliff = [this](Robot& robot) {
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _dVars.hasDisabledcliff = true;
+    _dVars.isPoppingWheelie = true;
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   };
   goPopAWheelie->SetPreDockCallback(disableCliff);
@@ -192,6 +194,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
               [&, this](const ExternalInterface::RobotCompletedAction& msg) {
                 switch(IActionRunner::GetActionResultCategory(msg.result))
                 {
+                  _dVars.isPoppingWheelie = false;
                   case ActionResultCategory::SUCCESS:
                   {
                     _dVars.lastBlockReactedTo.UnSet();

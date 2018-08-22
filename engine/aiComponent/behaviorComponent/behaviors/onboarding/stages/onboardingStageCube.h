@@ -67,7 +67,7 @@ public:
     delegates.insert( BEHAVIOR_ID(OnboardingLookAtUser) );
     delegates.insert( BEHAVIOR_ID(OnboardingLookForCube) );
     delegates.insert( BEHAVIOR_ID(OnboardingActivateCube) );
-    delegates.insert( BEHAVIOR_ID(OnboardingPopAWheelieDispatcher) );
+    delegates.insert( BEHAVIOR_ID(OnboardingPopAWheelie) );
   }
   
   IBehavior* GetBehavior( BehaviorExternalInterface& bei ) override
@@ -83,7 +83,7 @@ public:
     _behaviors[Step::LookingAtUser]    = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     _behaviors[Step::LookingForCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookForCube) );
     _behaviors[Step::ActivatingCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingActivateCube) );
-    _behaviors[Step::CubeTrick]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingPopAWheelieDispatcher) );
+    _behaviors[Step::CubeTrick]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingPopAWheelie) );
     
     bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPopAWheelie),
                                                             BEHAVIOR_CLASS(PopAWheelie),
