@@ -29,9 +29,6 @@ namespace Anki {
 namespace Vector {
 
 
-// Set until I get more stuff actualy working
-#define DISABLE_JDOCS_CLOUD_INTERACTION
-
 namespace
 {
   static const std::string kJdocsManagerFolder = "jdocs";
@@ -53,6 +50,8 @@ namespace
 
   static const std::string emptyString;
   static const Json::Value emptyJson;
+  
+  static const std::string kNotLoggedIn = "NotLoggedIn";
 
   JdocsManager* s_JdocsManager = nullptr;
 
@@ -86,6 +85,18 @@ namespace
     }
   }
   CONSOLE_FUNC(DebugDeleteAllJdocsInCloud, kConsoleGroup);
+
+  void DebugFakeUserLogOut(ConsoleFunctionContextRef context)
+  {
+    s_JdocsManager->DebugFakeUserLogOut();
+  }
+  CONSOLE_FUNC(DebugFakeUserLogOut, kConsoleGroup);
+
+  void DebugCheckForUser(ConsoleFunctionContextRef context)
+  {
+    s_JdocsManager->DebugCheckForUser();
+  }
+  CONSOLE_FUNC(DebugCheckForUser, kConsoleGroup);
 
 #endif  // REMOTE_CONSOLE_ENABLED
 }
@@ -131,6 +142,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
   const auto& config = robot->GetContext()->GetDataLoader()->GetJdocsConfig();
   const auto& jdocsConfig = config[kManagedJdocsKey];
   const auto& memberNames = jdocsConfig.getMemberNames();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   for (const auto& name : memberNames)
   {
@@ -160,7 +172,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     jdocInfo._needsMigration = false;
     jdocInfo._savedOnDisk = jdocConfig[kSavedOnDiskKey].asBool();
     jdocInfo._diskFileDirty = false;
-    jdocInfo._diskSavePeriod_s = jdocConfig[kDiskSavePeriodKey].asInt();
+    jdocInfo._diskSavePeriod_s = currTime_s + jdocConfig[kDiskSavePeriodKey].asInt();
     jdocInfo._nextDiskSaveTime = jdocInfo._diskSavePeriod_s;
     jdocInfo._bodyOwnedByJM = jdocConfig[kBodyOwnedByJdocsManagerKey].asBool();
     jdocInfo._warnOnCloudVersionLater = jdocConfig[kWarnOnCloudVersionLaterKey].asBool();
@@ -228,6 +240,26 @@ void JdocsManager::GetUserAndThingIDs(std::string& userID, std::string& thingID)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::DebugFakeUserLogOut()
+{
+  LOG_INFO("JdocsManager.DebugFakeUserLogOut", "Simulating user log out for jdocs manager");
+  _userID = kNotLoggedIn;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::DebugCheckForUser()
+{
+  LOG_INFO("JdocsManager.DebugCheckForUser", "Re-requesting user id from vic-cloud");
+  _userID = emptyString;  // Reset user ID so we can make the request again
+
+  // Now queue up a reqeust to the jdocs server (vic-cloud) for the userID
+  const auto userReq = JDocs::DocRequest::Createuser(Void{});
+  SendJdocsRequest(userReq);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::RegisterOverwriteNotificationCallback(const external_interface::JdocType jdocTypeKey,
                                                          const OverwriteNotificationCallback cb)
 {
@@ -269,10 +301,8 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
           LOG_ERROR("JdocsManager.UpdateDependent.QueueError",
                     "First item in unsent queue should be the 'get user id' item");
         }
-#ifndef DISABLE_JDOCS_CLOUD_INTERACTION
         SendJdocsRequest(_unsentDocRequestQueue.front());
         _unsentDocRequestQueue.pop();
-#endif
       }
     }
 #endif
@@ -280,7 +310,7 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   if (_udpClient.IsConnected())
   {
-    if (!_userID.empty())
+    if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
     {
       UpdatePeriodicCloudSaves(currTime_s);
     }
@@ -466,13 +496,22 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
   {
     if (saveToDiskImmediately)
     {
-      SaveJdocFile(jdocTypeKey);
+      // If we're saving to cloud now (above), don't save to disk, because
+      // when we receive the WriteResponse, we'll save to disk then (and
+      // with an updated doc version).  So avoid doing two saves.
+      // Note:  Can't set diskFileDirty flag, because then the periodic
+      // save would pick it up and do the save.
+      if (!saveToCloudImmediately || (_userID == kNotLoggedIn))
+      {
+        SaveJdocFile(jdocTypeKey);
+      }
     }
     else
     {
       jdocItem._diskFileDirty = true;
     }
   }
+
   return true;
 }
 
@@ -552,6 +591,8 @@ void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey)
 
   jdocItem._needsCreation = false;
   jdocItem._diskFileDirty = false;
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  jdocItem._nextDiskSaveTime = currTime_s + jdocItem._diskSavePeriod_s;
 }
 
 
@@ -564,7 +605,6 @@ void JdocsManager::UpdatePeriodicFileSaves(const float currTime_s)
     if (jdoc._savedOnDisk && jdoc._diskFileDirty && currTime_s > jdoc._nextDiskSaveTime)
     {
       SaveJdocFile(jdocPair.first);
-      jdoc._nextDiskSaveTime = currTime_s + jdoc._diskSavePeriod_s;
     }
   }
 }
@@ -585,29 +625,41 @@ bool JdocsManager::ConnectToJdocsServer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::SendJdocsRequest(const JDocs::DocRequest& docRequest)
 {
+#ifdef SIMULATOR
+  // No webots support for vic-cloud jdoc requests
+  return false;
+#endif
+
   // If we're not connected to the jdocs server, or we haven't received userID yet,
   // put the request in another queue (on connection, we'll send them)
+  // (Except: allow the 'user id request' to go through)
   if (!_udpClient.IsConnected() ||
       (_userID.empty() && (docRequest.GetTag() != JDocs::DocRequestTag::user)))
   {
     const auto unsentQueueSize = _unsentDocRequestQueue.size();
-    static const size_t kMaxUnsentQueueSize = 100;
+    static const size_t kMaxUnsentQueueSize = 20;
     if (unsentQueueSize >= kMaxUnsentQueueSize)
     {
       LOG_ERROR("JdocsManager.SendJdocsRequest",
                 "Unsent queue size is at max at %zu items; IGNORING jdocs request operation!",
                 unsentQueueSize);
-      // TODO:  Think later about what we actually want to do in this situation
-      // (Running without being logged in)
       return false;
     }
 
     _unsentDocRequestQueue.push(docRequest);
     LOG_INFO("JdocsManager.SendJdocsRequest",
-             "Jdocs server not connected; adding to unsent requests (size now %zu)",
-             unsentQueueSize + 1);
+             "Jdocs server not connected; adding request with tag %i to unsent requests (size now %zu)",
+             static_cast<int>(docRequest.GetTag()), unsentQueueSize + 1);
 
     return true;
+  }
+
+  // If we know there is no user logged in to the robot, just ignore entirely
+  if (_userID == kNotLoggedIn)
+  {
+    LOG_INFO("JdocsManager.SendJdocsRequest.Ignore",
+             "Ignoring jdocs request to cloud because user is not logged in");
+    return false;
   }
 
   const bool sendSuccessful = SendUdpMessage(docRequest);
@@ -718,26 +770,35 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
            writeRequest.docName.c_str(), EnumToString(writeResponse.status), writeResponse.latestVersion);
   const auto jdocType = JdocTypeFromDocName(writeRequest.docName);
   auto& jdoc = _jdocs[jdocType];
+  bool saveToDisk = true;
+
   if (writeResponse.status == JDocs::WriteStatus::Accepted)
   {
     // Cloud has accepted the new or updated jdoc, and incremented the cloud-managed
     // version number, so update that version number in our jdoc in memory
     jdoc._jdocVersion = writeResponse.latestVersion;
-
-    if (jdoc._savedOnDisk)
-    {
-      // TODO:  We're also saving to disk (often) just before we submit the write request;
-      // this save is needed (because of the changed doc version), but can I make it so we're
-      // not saving to disk so much?
-      SaveJdocFile(jdocType);
-    }
   }
   else if (writeResponse.status == JDocs::WriteStatus::RejectedDocVersion)
   {
-    LOG_WARNING("JdocsManager.HandleWriteResponse.RejectedDocVersion",
-                "Submitted jdoc's version %llu does not match the version in the cloud (%llu); update not allowed",
+    if (writeRequest.doc.docVersion > writeResponse.latestVersion)
+    {
+      LOG_ERROR("JdocsManager.HandleWriteResponse.RejectedDocVersion",
+                "Submitted jdoc's version %llu is later than the version in the cloud (%llu); this should not be possible",
                 writeRequest.doc.docVersion, writeResponse.latestVersion);
-    // TODO Not sure what to do here for now
+    }
+    else // writeRequest.doc.docVersion < writeResponse.latestVersion
+    {
+      LOG_WARNING("JdocsManager.HandleWriteResponse.RejectedDocVersion",
+                  "Submitted jdoc's version %llu is earlier than the version in the cloud (%llu); update not allowed; resubmitting with latest cloud version",
+                  writeRequest.doc.docVersion, writeResponse.latestVersion);
+
+      // Let's just re-submit the jdoc, using the latest version number we got from cloud
+      jdoc._jdocVersion = writeResponse.latestVersion;
+      static const bool kIsNewJdocInCloud = false;
+      SubmitJdocToCloud(jdocType, kIsNewJdocInCloud);
+      
+      saveToDisk = false; // Let's wait until we succeed
+    }
   }
   else if (writeResponse.status == JDocs::WriteStatus::RejectedFmtVersion)
   {
@@ -751,6 +812,14 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
   {
     LOG_ERROR("JodcsManager.HandleWriteResponse.Error", "Error returned from write jdoc attempt");
     // Not sure (yet) what to do if we get this
+  }
+
+  if (saveToDisk)
+  {
+    if (jdoc._savedOnDisk)
+    {
+      SaveJdocFile(jdocType);
+    }
   }
 }
 
@@ -766,6 +835,9 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
                  "JdocsManager.HandleReadResponse.Mismatch",
                  "Mismatch of number of items in jdocs read request vs. response (%zu vs %zu)",
                  readRequest.items.size(), readResponse.items.size());
+
+  // The first Read request is always for 'get all latest jdocs'
+  _gotLatestCloudJdocsAtStartup = true;
 
   int index = 0;
   for (const auto& responseItem : readResponse.items)
@@ -886,6 +958,14 @@ void JdocsManager::HandleErrResponse(const JDocs::ErrorResponse& errorResponse)
 {
   LOG_ERROR("JdocsManager.HandleErrResponse", "Received error response from jdocs server, with error: %s",
             EnumToString(errorResponse.err));
+
+  if (errorResponse.err == JDocs::DocError::ErrorConnecting)
+  {
+    // If we sent the User request, and robot is not logged in, then instead
+    // of getting a UserResponse, we actually get ErrorResponse (here), so
+    // mark us as not logged in
+    _userID = kNotLoggedIn;
+  }
 }
 
 
@@ -896,6 +976,7 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   if (_userID.empty())
   {
     LOG_ERROR("JdocsManager.HandleUserResponse.Error", "Received user response from jdocs server, but ID is empty (not logged in?)");
+    _userID = kNotLoggedIn;
     return;
   }
 
