@@ -178,7 +178,7 @@ void TrackFaceAction::SetEyeContactContinueCriteria(const f32 minTimeToTrack_sec
   // This call configures AreContinueCriteriaMet to be called
   // when determining whether to continue/stop tracking instead
   // of AreStopCriteriaMet.
-  SetUseContinueCriteria();
+  UseContinueCriteria(true);
 
   const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _eyeContactCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;

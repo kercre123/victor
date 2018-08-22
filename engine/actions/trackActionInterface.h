@@ -146,8 +146,7 @@ protected:
   // followed by UseContinueCriteria, stop criteria will not be used and instead
   // continue criteria will be. VIC-5821 further describes these potential
   // issues.
-  void SetUseContinueCriteria() {_useStopCriteria = false;};
-  void SetUseStopCriteria() {_useStopCriteria = true;};
+  void UseContinueCriteria(bool useContinueCriteria) { _useStopCriteria = !useContinueCriteria; }
   
   // Implementation-specific method for computing the absolute angles needed
   // to turn and face whatever is being tracked and the distance to target.
