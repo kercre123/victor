@@ -584,13 +584,18 @@ static void HandleRobotStateUpdate(const Anki::Vector::RobotState& robotState)
 
   FaceInfoScreenManager::getInstance()->Update(robotState);
 
+  static bool buttonWasPressed = false;
+  const bool buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
+  const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
+  buttonWasPressed = buttonIsPressed;
+
 #if ANKI_DEV_CHEATS
   auto * micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem != nullptr)
   {
     const auto liftHeight_mm = ConvertLiftAngleToLiftHeightMM(robotState.liftAngle);
     const bool isMicFace = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::MicDirectionClock;
-    if (isMicFace && LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm)
+    if (buttonReleasedEvent || (isMicFace && LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm))
     {
       micDataSystem->SetForceRecordClip(true);
     }
