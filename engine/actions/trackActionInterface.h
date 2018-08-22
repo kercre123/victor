@@ -203,7 +203,8 @@ private:
 
   // This member varaible determines whether the tracker should use stop
   // criteria or continue criteria, the children classes are expected
-  // to override this as neccesary. See TrackFaceAction for example.
+  // to override via public setters as neccesary. See TrackFaceAction
+  // for example.
   bool _useStopCriteria = true;
   
   // When driving animations are used, we have to wait until the End animation is complete
