@@ -175,10 +175,10 @@ void TrackFaceAction::SetEyeContactContinueCriteria(const f32 minTimeToTrack_sec
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.Set.ActionAlreadyStarted");
 
-  // We need to set this member variable to tell the parent class
-  // ITrackAction to call AreContinueCriteriaMet to determine whether
-  // to continue tracking instead of AreStopCriteriaMet
-  _useStopCriteria = false;
+  // This call configures AreContinueCriteriaMet to be called
+  // when determining whether to continue/stop tracking instead
+  // of AreStopCriteriaMet.
+  SetUseContinueCriteria();
 
   const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _eyeContactCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;

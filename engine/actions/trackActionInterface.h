@@ -140,10 +140,14 @@ protected:
     ShouldStop
   };
 
-  // This member varaible determines whether the tracker should use stop
-  // criteria or continue criteria, the children classes are expected
-  // to override this as neccesary. See TrackFaceAction for example.
-  bool _useStopCriteria = true;
+  // These are the methods that children classes should call to use the stop/continue
+  // criteria of their choice. However, as it is implemented right now you can have
+  // some unintended consquences. As an example if SetStopCriteria is called
+  // followed by UseContinueCriteria, stop criteria will not be used and instead
+  // continue criteria will be. VIC-5821 further describes these potential
+  // issues.
+  void SetUseContinueCriteria() {_useStopCriteria = false;};
+  void SetUseStopCriteria() {_useStopCriteria = true;};
   
   // Implementation-specific method for computing the absolute angles needed
   // to turn and face whatever is being tracked and the distance to target.
@@ -200,6 +204,11 @@ private:
   bool     _shouldPlayDrivingAnimation = false;
 
   const std::string _kEyeShiftLayerName = "ITrackActionEyeShiftLayer";
+
+  // This member varaible determines whether the tracker should use stop
+  // criteria or continue criteria, the children classes are expected
+  // to override this as neccesary. See TrackFaceAction for example.
+  bool _useStopCriteria = true;
   
   // When driving animations are used, we have to wait until the End animation is complete
   // before returning whatever actual final result for the action we wanted. In the mean time
