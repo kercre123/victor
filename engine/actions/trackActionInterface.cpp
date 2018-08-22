@@ -762,17 +762,28 @@ bool ITrackAction::UpdateSmallAngleClamping()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::HaveStopCriteria() const {
-  return (Util::IsFltGTZero(_stopCriteria.duration_sec) || Util::IsFltGTZero(_stopCriteria.earliestStoppingTime_sec)); 
+  return Util::IsFltGTZero(_stopCriteria.duration_sec);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                                 const f32 distance_mm, const f32 currentTime_sec)
 {
-  const bool stopCriteriaMet = AreStopCriteriaMet(relPanAngle_rad, relTiltAngle_rad,
-                                                  distance_mm, currentTime_sec);
-  const bool continueCriteriaMet = AreContinueCriteriaMet(currentTime_sec);
-  return (stopCriteriaMet && !continueCriteriaMet);
+  // This logic can certainly be improved but we are trying to support two
+  // different use cases. In one case we want to continue if certain
+  // conditions are met, and in the other case we want to stop if certain
+  // conditions are met.
+  if (_useStopCriteria)
+  {
+    return AreStopCriteriaMet(relPanAngle_rad, relTiltAngle_rad, distance_mm,
+                              currentTime_sec);
+  }
+  else
+  {
+    // Since continue criteria are the opposite of stopping criteria
+    // we invert the logic to match whether we should stop or not
+    return ( !AreContinueCriteriaMet(currentTime_sec) );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -827,14 +838,6 @@ bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTi
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
   {
-    // If the current time is less than the earliest stopping time,
-    // we will always return false. Once current time is larger than
-    // the earliest stopping time, we apply the rest of the stop
-    // criteria.
-    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && (currentTime_sec < _stopCriteria.earliestStoppingTime_sec))
-    {
-      return false;
-    }
     const bool isWithinTol = IsWithinTolerances(relPanAngle_rad, relTiltAngle_rad, distance_mm,
                                                 currentTime_sec);
     if(isWithinTol)

@@ -139,6 +139,11 @@ protected:
     PredictedInfo,
     ShouldStop
   };
+
+  // This member varaible determines whether the tracker should use stop
+  // criteria or continue criteria, the children classes are expected
+  // to override this as neccesary. See TrackFaceAction for example.
+  bool _useStopCriteria = true;
   
   // Implementation-specific method for computing the absolute angles needed
   // to turn and face whatever is being tracked and the distance to target.
@@ -168,7 +173,6 @@ protected:
     // to apply the other stop criteria. It will continue
     // to track if  and only if the ContinueCriteriaMet
     // method returns true.
-    f32     earliestStoppingTime_sec    = -1.f;
   } _stopCriteria;
   
 private:
