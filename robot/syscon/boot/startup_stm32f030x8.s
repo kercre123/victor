@@ -83,7 +83,7 @@ __EIN           DCD     0xFFFFFFFF                     ; EIN(0)
                 DCD     0xFFFFFFFF                     ; EIN(1)
                 DCD     0xFFFFFFFF                     ; EIN(2)
                 DCD     0xFFFFFFFF                     ; EIN(3)
-                DCD     0                              ; Reserved
+                DCD     1                              ; Bootloader Revision
                 DCD     SVC_Handler                    ; SVCall Handler
                 DCD     0                              ; Reserved
                 DCD     0                              ; Reserved
