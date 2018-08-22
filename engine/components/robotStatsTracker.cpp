@@ -35,6 +35,7 @@ static const char* kBehaviorStatCategory = "BStat";
 static const char* kFacesCategory = "Face";
 static const char* kOdomCategory = "Odom";
 static const char* kLifetimeAliveCategory = "Alive";
+static const char* kPettingDurationCategory = "Pet";
 
 static const char* kRobotStatsSeparator = ".";
 
@@ -154,6 +155,12 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
   if( featureType != ActiveFeatureType::Invalid ) {
     IncreaseHelper( kActiveFeatureTypeCategory, ActiveFeatureTypeToString(featureType), 1);
   }
+}
+
+void RobotStatsTracker::IncrementPettingDuration(const float secondsPet)
+{
+  const int time_ms = (int)std::round(secondsPet * 1000.0f);
+  IncreaseHelper(kPettingDurationCategory, "ms", time_ms);
 }
 
 

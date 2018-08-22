@@ -45,6 +45,9 @@ public:
   
   void IncrementActiveFeature(const ActiveFeature& feature, const std::string& intentSource);
 
+  // specifically for petting duration
+  void IncrementPettingDuration(const float secondsPet);
+
   void IncrementBehaviorStat(const BehaviorStat& stat);
 
   void IncrementNamedFacesPerDay();

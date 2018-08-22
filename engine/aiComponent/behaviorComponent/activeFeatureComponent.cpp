@@ -108,6 +108,13 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
 
       OnFeatureChanged( newFeature, _activeFeature, intentSource, simpleMood );
 
+      if( _activeFeature == ActiveFeature::Petting &&
+          newFeature != ActiveFeature::Petting ) {
+        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        const float timeActive = currTime_s - _lastFeatureActivatedTime_s;
+        dependentComps.GetComponent<RobotStatsTracker>().IncrementPettingDuration( timeActive );
+      }
+
       if( newFeature != ActiveFeature::NoFeature ) {
         dependentComps.GetComponent<RobotStatsTracker>().IncrementActiveFeature(newFeature, intentSource);
       }
