@@ -83,6 +83,23 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendSecondaryAuthRequest(std::
   return handle;
 }
 
+std::shared_ptr<TokenResponseHandle> TokenClient::SendReassociateAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
+  std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
+
+  _taskExecutor->Wake([this, handle, callback, sessionToken, clientName, appId]() {
+    // add callback to queue
+    _authCallbacks.push(callback);
+    _authHandles.push(handle);
+
+    Anki::Vector::TokenRequest tokenRequest = 
+      Anki::Vector::TokenRequest(Anki::Vector::ReassociateRequest(sessionToken, clientName, appId));
+
+    SendMessage(tokenRequest);
+  });
+
+  return handle;
+}
+
 std::shared_ptr<TokenResponseHandle> TokenClient::SendJwtRequest(JwtRequestCallback callback) {
   std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
 
