@@ -102,8 +102,7 @@ SoftReset       CPSID I
                 STR     R0, [R7, #0x04]
                 LDR     R1, =0x10000
                 STR     R1, [R7, #0x08]
-                MOVS    R1, #0x01           ; Why yes, sir, we have booted.
-                STR     R1, [R7, #0x0C]
+                STR     R0, [R7, #0x0C]
                 STR     R0, [R7, #0x10]
                 LDR     R1, =0x1FFFF7B8
                 STR     R1, [R7, #0x14]
@@ -118,6 +117,10 @@ SoftReset       CPSID I
                 STR     R0, [R7, #0x34]
                 STR     R0, [R7, #0x38]
                 STR     R0, [R7, #0x3C]
+
+                MOVS    R1, #0x01           ; Patch the heap
+                STRB    R1, [R7, #0x0F]     ; Has booted
+                STRB    R1, [R7, #0x10]     ; Allow Power
 
                 LDR     R0, =0x08001951     ; Branch to main
                 BX      R0
