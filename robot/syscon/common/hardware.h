@@ -107,4 +107,7 @@ static inline void leds_off(void) {
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
 }
 
+#define DFU_ENTRY_POINT (0xC0C35473)
+#define DFU_FLAG (*(uint32_t*)0x20001FFC)
+
 #endif

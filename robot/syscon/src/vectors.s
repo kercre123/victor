@@ -88,7 +88,52 @@ __VectorTable   DCD     0                              ; Top of Stack
 
 
                 EXPORT SoftReset
-SoftReset       BX  R0
+SoftReset       CPSID I
+                LDR     R6, =0x08000000
+                LDR     R0, [R6, #0x00]     ; Setup Stack
+                MSR     MSP, R0
+                LDR     R0, [R6, #0x28]     ; Test for legacy bootloader
+                CMP     R0, #0
+                BEQ     _HackHeap
+                LDR     R0, [R6, #0x04]
+                BX      R0
+
+_HackHeap       LDR     R7, =0x20000000     ; Setup heap
+                MOVS    R0, #0x00
+                STR     R0, [R7, #0x00]
+                STR     R0, [R7, #0x04]
+                LDR     R1, =0x10000
+                STR     R1, [R7, #0x08]
+                STR     R0, [R7, #0x0C]
+                STR     R0, [R7, #0x10]
+                LDR     R1, =0x1FFFF7B8
+                STR     R1, [R7, #0x14]
+                STR     R0, [R7, #0x18]
+                STR     R0, [R7, #0x1C]
+                STR     R0, [R7, #0x20]
+                STR     R0, [R7, #0x24]
+                STR     R0, [R7, #0x28]
+                STR     R0, [R7, #0x2C]
+                MOVS    R1, #200
+                STR     R1, [R7, #0x30]
+                STR     R0, [R7, #0x34]
+                STR     R0, [R7, #0x38]
+                STR     R0, [R7, #0x3C]
+                STR     R0, [R7, #0x40]
+                
+                ; This is scary, but it will "work?"
+                
+                LDR     R0, =0x080011d1     ; Power::init()
+                BLX     R0
+                LDR     R0, =0x08001229     ; Analog::init()
+                BLX     R0
+                
+                MOVS    R1, #0x01
+                STRB    R1, [R7, #0x0F]     ; Has booted
+                STRB    R1, [R7, #0x10]     ; Allow Power
+
+                LDR     R0, =0x0800195B     ; Branch to main
+                BX      R0
 
 ;*******************************************************************************
 ; User Stack and Heap initialization

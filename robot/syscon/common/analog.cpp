@@ -45,6 +45,8 @@ static bool on_charger = false;
 
 // Assume we started on the charger
 static bool allow_power;
+static bool has_booted;
+
 static int vext_debounce;
 static int32_t temperature;
 static bool last_vext = true;
@@ -116,7 +118,8 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   #ifdef BOOTLOADER
-  allow_power = false;
+  has_booted = DFU_ENTRY_POINT == DFU_FLAG;
+  allow_power = has_booted;
   #else
   allow_power = true;
   #endif
@@ -270,9 +273,7 @@ void Analog::tick(void) {
     last_vext = vext_now;
   }
 
-  #ifdef BOOTLOADER
-  static bool has_booted = false;
-  
+  #ifdef BOOTLOADER 
   if (!has_booted && (button_now || on_charger)) {
     has_booted = true;
     Power::setMode(POWER_CALM);

@@ -14,7 +14,7 @@
 
 #include "contacts.h"
 
-extern "C" void SoftReset(const uint32_t reset);
+extern "C" void SoftReset();
 
 static const uint32_t APB1_CLOCKS = 0
               | RCC_APB1ENR_USART2EN
@@ -39,7 +39,10 @@ static const uint32_t APB2_CLOCKS = 0
 static PowerMode currentState = POWER_UNINIT;
 static PowerMode desiredState = POWER_CALM;
 
+static void enterBootloader(void);
+
 void Power::init(void) {
+  DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
 }
@@ -66,10 +69,6 @@ static void markForErase(void) {
 }
 
 static void enterBootloader(void) {
-  __disable_irq();
-
-  NVIC->ICER[0]  = ~0;  // Disable all interrupts
-
   // Shut down the motors
   Motors::stop();
 
@@ -133,8 +132,15 @@ static void enterBootloader(void) {
   // Set to flash handler
   SYSCFG->CFGR1 = 0;
 
+  markForErase();
+
   // Pass control back to the reset handler
-  SoftReset(*(uint32_t*)0x08000004);
+  __disable_irq();
+  DFU_FLAG = DFU_ENTRY_POINT;
+  NVIC->ICER[0] = ~0; // Disable all interrupts
+  NVIC->ICPR[0] = ~0; // Clear all pending interrupts
+
+  SoftReset();
 }
 
 void Power::wakeUp() {
@@ -181,7 +187,6 @@ void Power::tick(void) {
     } 
 
     if (desired == POWER_ERASE) {
-      markForErase();
       enterBootloader();
       return ;
     }
