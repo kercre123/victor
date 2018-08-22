@@ -114,6 +114,8 @@ void UserIntentComponent::SetTriggerWordPending()
 {
   _waitingForTriggerWordGetInToFinish = true;
   if(!_responseToTriggerWordMap.empty()){
+    // TODO: VIC-5733 This also needs to either check if _responseToTriggerWordMap contains an empty anim, or listen
+    // for playing anims and compare tags
     auto lastElemIter = _responseToTriggerWordMap.rbegin();
     _robot->GetAnimationComponent().NotifyComponentOfAnimationStartedByAnimProcess(
       lastElemIter->second.getInAnimationName, lastElemIter->second.getInAnimationTag);

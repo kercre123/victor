@@ -186,12 +186,15 @@ void MicDataProcessor::InitVAD()
 
 void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float score)
 {
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
-  if (_micDataSystem->HasStreamingJob())
+  if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
   {
     return;
   }
-  
+
+  showStreamState->StartTriggerResponseWithGetIn();
+
   RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
 
@@ -201,15 +204,6 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   twDetectedMessage.direction = currentDirection;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
-  
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-  // If we don't have a valid trigger response for anim process to play, don't play it
-  if (!showStreamState->HasValidTriggerResponse())
-  {
-    return;
-  }
-
-  showStreamState->StartTriggerResponseWithGetIn();
 
   // Tell signal essence software to lock in on the current direction if it's known
   // NOTE: This is disabled for now as we've gotten better accuracy with the direction of the intent
