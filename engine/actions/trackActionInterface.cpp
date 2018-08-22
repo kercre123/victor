@@ -830,7 +830,7 @@ bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTi
     // If the current time is less than the earliest stopping time,
     // we will always return false. Once current time is larger than
     // the earliest stopping time, we apply the rest of the stop
-    // criteria
+    // criteria.
     if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && (currentTime_sec < _stopCriteria.earliestStoppingTime_sec))
     {
       return false;

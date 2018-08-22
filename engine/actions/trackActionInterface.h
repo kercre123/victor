@@ -165,8 +165,9 @@ protected:
     f32     withinTolSince_sec          = 0.f;
     bool    interruptDrivingAnim        = false;
     // This is the earliest time that tracking will attempt
-    // to stop. It will continue to track if  and only if the
-    // ContinueCriteriaMet method returns true.
+    // to apply the other stop criteria. It will continue
+    // to track if  and only if the ContinueCriteriaMet
+    // method returns true.
     f32     earliestStoppingTime_sec    = -1.f;
   } _stopCriteria;
   
