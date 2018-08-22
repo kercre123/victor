@@ -94,14 +94,15 @@ SoftReset       CPSID I
                 MSR     MSP, R0
                 LDR     R0, [R6, #0x28]     ; Test for legacy bootloader
                 CMP     R0, #0
-                BNE     _NewSoftReset
+                BEQ     _HackHeap
+                LDR     R0, [R6, #0x04]
+                BX      R0
 
-                LDR     R7, =0x20000000     ; Setup heap
+_HackHeap       LDR     R7, =0x20000000     ; Setup heap
                 MOVS    R0, #0x00
                 STR     R0, [R7, #0x00]
                 STR     R0, [R7, #0x04]
-                LDR     R1, =0x10000
-                STR     R1, [R7, #0x08]
+                STR     R0, [R7, #0x08]
                 STR     R0, [R7, #0x0C]
                 STR     R0, [R7, #0x10]
                 LDR     R1, =0x1FFFF7B8
@@ -112,20 +113,26 @@ SoftReset       CPSID I
                 STR     R0, [R7, #0x24]
                 STR     R0, [R7, #0x28]
                 STR     R0, [R7, #0x2C]
-                MOVS    R1, #0xC8
+                MOVS    R1, #200
                 STR     R1, [R7, #0x30]
                 STR     R0, [R7, #0x34]
                 STR     R0, [R7, #0x38]
                 STR     R0, [R7, #0x3C]
+                STR     R0, [R7, #0x40]
 
                 MOVS    R1, #0x01           ; Patch the heap
+                STRB    R1, [R7, #0x0A]     ; Was on charger
+                
+                ; This is scary, but it will "work?"
+                
+                LDR     R0, =0x080011d1     ; Power::init()
+                BLX     R0
+                LDR     R0, =0x08001229     ; Analog::init()
+                BLX     R0
                 STRB    R1, [R7, #0x0F]     ; Has booted
                 STRB    R1, [R7, #0x10]     ; Allow Power
 
-                LDR     R0, =0x08001951     ; Branch to main
-                BX      R0
-
-_NewSoftReset   LDR     R0, [R6, #0x04]
+                LDR     R0, =0x0800195B     ; Branch to main
                 BX      R0
 
 ;*******************************************************************************
