@@ -42,6 +42,7 @@ static PowerMode desiredState = POWER_CALM;
 static void enterBootloader(void);
 
 void Power::init(void) {
+  DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
 }
@@ -135,6 +136,7 @@ static void enterBootloader(void) {
 
   // Pass control back to the reset handler
   __disable_irq();
+  DFU_FLAG = DFU_ENTRY_POINT;
   NVIC->ICER[0] = ~0; // Disable all interrupts
   NVIC->ICPR[0] = ~0; // Clear all pending interrupts
 

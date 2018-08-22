@@ -111,14 +111,6 @@ __EIN           DCD     0xFFFFFFFF                     ; EIN(0)
                 DCD     0                              ; Reserved
                 DCD     0                              ; Reserved
                 DCD     TIM14_IRQHandler               ; TIM14
-                DCD     TIM15_IRQHandler               ; TIM15
-                DCD     TIM16_IRQHandler               ; TIM16
-                DCD     TIM17_IRQHandler               ; TIM17
-                DCD     I2C1_IRQHandler                ; I2C1
-                DCD     I2C2_IRQHandler                ; I2C2
-                DCD     SPI1_IRQHandler                ; SPI1
-                DCD     SPI2_IRQHandler                ; SPI2
-                DCD     USART1_IRQHandler              ; USART1
 
 __Vectors_End
 
@@ -195,14 +187,6 @@ Default_Handler PROC
                 EXPORT  TIM1_CC_IRQHandler             [WEAK]
                 EXPORT  TIM3_IRQHandler                [WEAK]
                 EXPORT  TIM14_IRQHandler               [WEAK]
-                EXPORT  TIM15_IRQHandler               [WEAK]
-                EXPORT  TIM16_IRQHandler               [WEAK]
-                EXPORT  TIM17_IRQHandler               [WEAK]
-                EXPORT  I2C1_IRQHandler                [WEAK]
-                EXPORT  I2C2_IRQHandler                [WEAK]
-                EXPORT  SPI1_IRQHandler                [WEAK]
-                EXPORT  SPI2_IRQHandler                [WEAK]
-                EXPORT  USART1_IRQHandler              [WEAK]
 
 
 NMI_Handler
@@ -225,14 +209,6 @@ TIM1_BRK_UP_TRG_COM_IRQHandler
 TIM1_CC_IRQHandler
 TIM3_IRQHandler
 TIM14_IRQHandler
-TIM15_IRQHandler
-TIM16_IRQHandler
-TIM17_IRQHandler
-I2C1_IRQHandler
-I2C2_IRQHandler
-SPI1_IRQHandler
-SPI2_IRQHandler
-USART1_IRQHandler
 
                 B       .
 
