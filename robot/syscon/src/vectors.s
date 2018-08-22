@@ -88,10 +88,7 @@ __VectorTable   DCD     0                              ; Top of Stack
 
 
                 EXPORT SoftReset
-                IMPORT EraseFlash
 SoftReset       CPSID I
-                ;LDR R0, =EraseFlash
-                ;BX  R0
                 LDR R0, =0x08000004
                 LDR R1, [R0]
                 BX  R1
