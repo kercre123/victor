@@ -1645,12 +1645,21 @@ void ICozmoBehavior::SmartRequestPowerSaveMode()
                         GetDebugLabel().c_str(),
                         _powerSaveRequest.c_str());
     // remove the duplicate request to be safe
-    powerSaveManager.RemovePowerSaveModeRequest(_powerSaveRequest);
-    _powerSaveRequest.clear();
+    SmartRemovePowerSaveModeRequest();
   }
 
   _powerSaveRequest = GetDebugLabel();
   powerSaveManager.RequestPowerSaveMode(_powerSaveRequest);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartRemovePowerSaveModeRequest()
+{
+  if( !_powerSaveRequest.empty() ) {
+    auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
+    powerSaveManager.RemovePowerSaveModeRequest(_powerSaveRequest);
+    _powerSaveRequest.clear();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

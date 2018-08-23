@@ -960,6 +960,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetCliffSensorComponent().NotifyOfRobotState(msg);
   GetProxSensorComponent().NotifyOfRobotState(msg);
   GetTouchSensorComponent().NotifyOfRobotState(msg);
+  GetPowerStateManager().NotifyOfRobotState(msg);
 
   // update current path segment in the path component
   GetPathComponent().UpdateCurrentPathSegment(msg.currPathSegment);

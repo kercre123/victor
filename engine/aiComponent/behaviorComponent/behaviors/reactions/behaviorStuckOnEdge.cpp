@@ -17,12 +17,21 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Vector {
 
-static const u8 kTracksToLock = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+namespace {
+  const u8 kTracksToLock = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+
+  const float kMotionDetectGyroThresh_radps         = DEG_TO_RAD(5.f);
+  const float kMotionDetectDurationThresh_sec       = 0.15f;
+  const float kDisablePowerSaveOnMotionDuration_sec = 1.f;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStuckOnEdge::BehaviorStuckOnEdge(const Json::Value& config)
@@ -47,7 +56,7 @@ void BehaviorStuckOnEdge::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStuckOnEdge::OnBehaviorActivated()
 {
-  ICozmoBehavior::SmartRequestPowerSaveMode();
+  _dVars = DynamicVariables();
   TriggerGetInAnim();
 }
 
@@ -58,11 +67,49 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
     return;
   }
 
-  bool isPickedUp =  GetBEI().GetRobotInfo().IsPickedUp();
-  bool noCliffs   = !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
+  // Check if gyro motion detected this tic
+  const GyroData gyroData = GetBEI().GetRobotInfo().GetHeadGyroData();
+  const bool gyroMotionDetected = std::fabs(gyroData.x) > kMotionDetectGyroThresh_radps ||
+                                  std::fabs(gyroData.y) > kMotionDetectGyroThresh_radps ||
+                                  std::fabs(gyroData.z) > kMotionDetectGyroThresh_radps;
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
+  const bool inPowerSaveMode = powerSaveManager.InPowerSaveMode();
+  const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
+
+  // Check if we need to toggle power save mode but only when no motors are moving
+  const bool motorsMoving = GetBEI().GetRobotInfo().GetMoveComponent().IsMoving();
+  if (!motorsMoving) {
+    if (inPowerSaveMode) {
+      // If motion detected while in power save mode, temporarily deactivated power save mode
+      // so that we can check cliff sensors to see if we're on solid ground again.
+      if (gyroMotionDetected) {
+        if (_dVars.startOfMotionDetectedTime_s == 0.f) {
+          _dVars.startOfMotionDetectedTime_s = currTime_s;
+        }
+        if (currTime_s - _dVars.startOfMotionDetectedTime_s > kMotionDetectDurationThresh_sec) {
+          PRINT_NAMED_INFO("BehaviorStuckOnEdge.BehaviorUpdate.RemovePowerSaveModeRequest","");
+          ICozmoBehavior::SmartRemovePowerSaveModeRequest();
+          _dVars.startOfMotionDetectedTime_s = 0.f;
+          _dVars.enablePowerSaveModeTime_s = currTime_s + kDisablePowerSaveOnMotionDuration_sec;
+        }
+      } else {
+        _dVars.startOfMotionDetectedTime_s = 0.f;
+      }
+    } else if (!gyroMotionDetected && (currTime_s > _dVars.enablePowerSaveModeTime_s)) {
+      PRINT_NAMED_INFO("BehaviorStuckOnEdge.BehaviorUpdate.RequestPowerSaveMode","");
+      ICozmoBehavior::SmartRequestPowerSaveMode();
+    }
+  }
+
+  // Check if we should cancel behavior based on pickup or no more cliffs detected
+  const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+  const bool noCliffs   = !inSysconCalmMode && !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
   if (isPickedUp || noCliffs) {
     CancelSelf();
   }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -99,6 +99,7 @@ class ObjectPoseConfirmer;
 enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
+class PowerStateManager;
 class RobotEventHandler;
 class RobotGyroDriftDetector;
 class RobotIdleTimeoutComponent;
@@ -290,6 +291,9 @@ public:
 
   inline const CliffSensorComponent& GetCliffSensorComponent() const { return GetComponent<CliffSensorComponent>(); }
   inline       CliffSensorComponent& GetCliffSensorComponent()       { return GetComponent<CliffSensorComponent>(); }
+
+  inline const PowerStateManager& GetPowerStateManager() const { return GetComponent<PowerStateManager>(); }
+  inline       PowerStateManager& GetPowerStateManager()       { return GetComponent<PowerStateManager>(); }
 
   inline const ProxSensorComponent& GetProxSensorComponent() const { return GetComponent<ProxSensorComponent>(); }
   inline       ProxSensorComponent& GetProxSensorComponent()       { return GetComponent<ProxSensorComponent>(); }

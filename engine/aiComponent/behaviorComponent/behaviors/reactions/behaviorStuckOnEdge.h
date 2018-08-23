@@ -50,7 +50,15 @@ private:
     IBEIConditionPtr  stuckOnEdgeCondition;
   };
 
+  struct DynamicVariables {
+    DynamicVariables() = default;
+    
+    float startOfMotionDetectedTime_s = 0.0f;
+    float enablePowerSaveModeTime_s = 0.0f;
+  };
+
   InstanceConfig _iConfig;
+  DynamicVariables _dVars;
 };
 
 }

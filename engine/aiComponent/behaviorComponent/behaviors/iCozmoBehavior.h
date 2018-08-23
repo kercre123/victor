@@ -493,6 +493,9 @@ protected:
   // Request that the robot enter power save mode
   void SmartRequestPowerSaveMode();
 
+  // Request that the robot exit power save mode
+  void SmartRemovePowerSaveModeRequest();
+
   // disable the procedural "keep face alive" in the animation system
   void SmartDisableKeepFaceAlive();
   void SmartReEnableKeepFaceAlive();
