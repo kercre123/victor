@@ -96,11 +96,19 @@ ActionResult SayTextAction::Init()
     ((_animTrigger == AnimationTrigger::Count) ? UtteranceTriggerType::Manual : UtteranceTriggerType::KeyFrame);
 
   _ttsCoordinator = &GetRobot().GetTextToSpeechCoordinator();
+  _callbackPtr = std::make_shared<CallbackType>(std::bind(&SayTextAction::TtsCoordinatorStateCallback, this, std::placeholders::_1));
+  std::weak_ptr<CallbackType> weakCallback = _callbackPtr;
+  auto ttsCallback = [weakCallback](const UtteranceState& state) {
+    // SayTextAction may have been aborted and destroyed before the callback fires
+    if( auto callback = weakCallback.lock() ) {
+      (*callback)(state);
+    }
+  };
   _ttsId = _ttsCoordinator->CreateUtterance(_text,
                                             triggerType,
                                             _style,
                                             _durationScalar,
-                                            [this](const UtteranceState& state) { TtsCoordinatorStateCallback(state); });
+                                            ttsCallback);
 
   _actionState = SayTextActionState::Waiting;
 

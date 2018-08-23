@@ -101,6 +101,9 @@ private:
   void TtsCoordinatorStateCallback(const UtteranceState& state);
   ActionResult GetTtsCoordinatorActionState();
   
+  using CallbackType = std::function<void(const UtteranceState& state)>;
+  std::shared_ptr<CallbackType> _callbackPtr;
+  
   // VIC-2151: Fit-to-duration not supported on victor
   // DEPRECATED: This feature has been moved to behaviors using TextToSpeechCoordinator
   // Append animation by stitching animation trigger group animations together until the animation's duration is
