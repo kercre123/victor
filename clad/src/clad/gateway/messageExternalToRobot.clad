@@ -229,6 +229,26 @@ message SetBackpackLEDs {
   int_32   offset[3]
 }
 
+enum uint_8 AlignmentType {
+  LIFT_FINGER = 0, // Fingers aligned with object
+  LIFT_PLATE,      // Lift plate aligned with object
+  BODY,            // Front of body aligned with object
+  CUSTOM
+}
+
+// AlignWithObject
+// "Docks" to object so that it is aligned with it at the specified AligmentType or distance
+// If alignmentType is CUSTOM, distanceFromMarker_mm is used, otherwise distanceFromMarker_mm is ignored
+message AlignWithObject {
+    int_32 objectID,
+    PathMotionProfile motionProf,
+    float_32 distanceFromMarker_mm,
+    float_32 approachAngle_rad,
+    bool useApproachAngle,
+    bool usePreDockPose,
+    AlignmentType alignmentType
+}
+
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
@@ -255,6 +275,7 @@ union MessageExternalToRobot {
   SetHeadAngle                   SetHeadAngle                   = 0x15,
   SetLiftHeight                  SetLiftHeight                  = 0x16,
   SetBackpackLEDs                SetBackpackLEDs                = 0x17,
+  AlignWithObject                AlignWithObject                = 0x18,
 }
 
 } // Gateway

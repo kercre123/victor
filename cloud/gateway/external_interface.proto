@@ -142,6 +142,13 @@ service ExternalInterface {
     };
   }
 
+  rpc DockWithCube(DockWithCubeRequest) returns (DockWithCubeResponse) {
+    option (google.api.http) = {
+      post: "/v1/dock_with_cube",
+      body: "*"
+    };
+  }
+
   rpc DriveOffCharger(DriveOffChargerRequest) returns (DriveOffChargerResponse) {
     option (google.api.http) = {
       post: "/v1/drive_off_charger",

@@ -1,4 +1,4 @@
-'''
+"""
 Behaviors represent a complex task which requires Vector's
 internal logic to determine how long it will take. This
 may include combinations of animation, path planning or
@@ -9,14 +9,14 @@ The :class:`BehaviorComponent` class in this module contains
 functions for all the behaviors.
 
 Copyright (c) 2018 Anki, Inc.
-'''
+"""
 
 # TODO:
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["BehaviorComponent"]
 
 
-from . import sync, util
+from . import objects, sync, util
 from .messaging import protocol
 
 
@@ -26,58 +26,40 @@ class BehaviorComponent(util.Component):
         self._current_priority = None
         self._is_active = False
 
-    @property
-    def current_priority(self):
-        return self._current_priority
+        self._motion_profile_map = {}
 
     @property
-    def is_active(self):
-        return self._is_active
+    def motion_profile_map(self) -> dict:
+        return self._motion_profile_map
 
-    @sync.Synchronizer.wrap
-    async def drive_off_charger(self):
-        drive_off_charger_request = protocol.DriveOffChargerRequest()
-        return await self.interface.DriveOffCharger(drive_off_charger_request)
+    @motion_profile_map.setter
+    def motion_profile_map(self, motion_profile_map: dict):
+        """Tells Vector how to drive when receiving navigation and movement actions
+        such as go_to_pose and dock_with_cube.
 
-    @sync.Synchronizer.wrap
-    async def drive_on_charger(self):
-        drive_on_charger_request = protocol.DriveOnChargerRequest()
-        return await self.interface.DriveOnCharger(drive_on_charger_request)
+        :param motion_prof_map: Provide custom speed, acceleration and deceleration
+            values with which the robot goes to the given pose.
+            speed_mmps (float)
+            accel_mmps2 (float)
+            decel_mmps2 (float)
+            point_turn_speed_rad_per_sec (float)
+            point_turn_accel_rad_per_sec2 (float)
+            point_turn_decel_rad_per_sec2 (float)
+            dock_speed_mmps (float)
+            dock_accel_mmps2 (float)
+            dock_decel_mmps2 (float)
+            reverse_speed_mmps (float)
+            is_custom (bool)
+        """
+        self._motion_profile_map = motion_profile_map
 
-    @sync.Synchronizer.wrap
-    async def go_to_pose(self, pose, relative_to_robot=False, motion_prof_map=None):
-        '''Tells Vector to drive to the specified pose and orientation.
-
-        If relative_to_robot is set to True, the given pose will assume the
-        robot's pose as its origin.
-
-        Since the robot understands position by monitoring its tread movement,
-        it does not understand movement in the z axis. This means that the only
-        applicable elements of pose in this situation are position.x position.y
-        and rotation.angle_z.
-
-        Args:
-            pose: (:class:`anki_vector.util.Pose`): The destination pose.
-            relative_to_robot (bool): Whether the given pose is relative to
-                the robot's pose.
-            motion_prof_map (dict): Provide custom speed, acceleration and deceleration
-                values with which the robot goes to the given pose.
-                speed_mmps (float)
-                accel_mmps2 (float)
-                decel_mmps2 (float)
-                point_turn_speed_rad_per_sec (float)
-                point_turn_accel_rad_per_sec2 (float)
-                point_turn_decel_rad_per_sec2 (float)
-                dock_speed_mmps (float)
-                dock_accel_mmps2 (float)
-                dock_decel_mmps2 (float)
-                reverse_speed_mmps (float)
-                is_custom (bool)
+    def _motion_profile_for_proto(self) -> protocol.PathMotionProfile:
+        """Packages the current motion profile into a proto object
 
         Returns:
-            A :class:`anki_vector.messaging.external_interface_pb2.GoToPoseResult` object which
-            provides an action result.
-        '''
+            A profile object describing motion which can be passed with any proto action message.
+        """
+        # TODO: This should be made into its own class
         default_motion_profile = {
             "speed_mmps": 100.0,
             "accel_mmps2": 200.0,
@@ -89,19 +71,97 @@ class BehaviorComponent(util.Component):
             "dock_accel_mmps2": 200.0,
             "dock_decel_mmps2": 500.0,
             "reverse_speed_mmps": 80.0,
-            "is_custom": 0
+            "is_custom": 1 if self._motion_profile_map else 0
         }
-        if motion_prof_map is None:
-            motion_prof_map = {}
+        default_motion_profile.update(self._motion_profile_map)
+
+        return protocol.PathMotionProfile(**default_motion_profile)
+
+    @property
+    def current_priority(self):
+        return self._current_priority
+
+    @property
+    def is_active(self):
+        return self._is_active
+
+    # Navigation actions
+    @sync.Synchronizer.wrap
+    async def drive_off_charger(self):
+        drive_off_charger_request = protocol.DriveOffChargerRequest()
+        return await self.interface.DriveOffCharger(drive_off_charger_request)
+
+    @sync.Synchronizer.wrap
+    async def drive_on_charger(self):
+        drive_on_charger_request = protocol.DriveOnChargerRequest()
+        return await self.interface.DriveOnCharger(drive_on_charger_request)
+
+    @sync.Synchronizer.wrap
+    async def go_to_pose(self,
+                         pose: util.Pose,
+                         relative_to_robot: bool = False) -> protocol.GoToPoseResponse:
+        """Tells Vector to drive to the specified pose and orientation.
+
+        If relative_to_robot is set to True, the given pose will assume the
+        robot's pose as its origin.
+
+        Since the robot understands position by monitoring its tread movement,
+        it does not understand movement in the z axis. This means that the only
+        applicable elements of pose in this situation are position.x position.y
+        and rotation.angle_z.
+
+        :param pose: The destination pose.
+        :param relative_to_robot: Whether the given pose is relative to
+                                  the robot's pose.
+        :param num_retries: Number of times to re-attempt action in case of a failure.
+
+        Returns:
+            An object which provides an action result.
+        """
         if relative_to_robot and self.robot.pose:
             pose = self.robot.pose.define_pose_relative_this(pose)
-        default_motion_profile.update(motion_prof_map)
-        motion_prof = protocol.PathMotionProfile(**default_motion_profile)
+
+        motion_prof = self._motion_profile_for_proto()
         go_to_pose_request = protocol.GoToPoseRequest(x_mm=pose.position.x,
                                                       y_mm=pose.position.y,
                                                       rad=pose.rotation.angle_z.radians,
                                                       motion_prof=motion_prof)
         return await self.interface.GoToPose(go_to_pose_request)
+
+    @sync.Synchronizer.wrap
+    async def dock_with_cube(self,
+                             target_object: objects.LightCube,
+                             approach_angle: util.Angle = None,
+                             alignment_type: protocol.AlignmentType = protocol.ALIGNMENT_TYPE_LIFT_PLATE,
+                             distance_from_marker: util.Distance = None) -> protocol.DockWithCubeResponse:
+        """Tells Vector to dock with a light cube with a given approach angle and distance.
+
+        :param target_object: The LightCube object to dock with.
+        :param approach_angle: Angle to approach the dock with.
+        :param alignment_type: Which part of the robot to align with the object.
+        :param distance_from_marker: How far from the object to approach (0 to dock)
+        :param num_retries: Number of times to re-attempt action in case of a failure.
+
+        Returns:
+            An object providing an action result.
+
+        .. code-block:: python
+
+            connected_cubes = robot.world.connected_light_cubes
+            if connected_cubes:
+                robot.behavior.dock_with_cube(object_id=connected_cube[0])
+        """
+        motion_prof = self._motion_profile_for_proto()
+
+        dock_request = protocol.DockWithCubeRequest(object_id=target_object.object_id, alignment_type=alignment_type, motion_prof=motion_prof)
+        if approach_angle is not None:
+            dock_request.use_approach_angle = True
+            dock_request.use_pre_dock_pose = True
+            dock_request.approach_angle = approach_angle.radians
+        if distance_from_marker is not None:
+            dock_request.distance_from_marker = distance_from_marker.distance_mm
+
+        return await self.interface.DockWithCube(dock_request)
 
     # Movement actions
     @sync.Synchronizer.wrap
