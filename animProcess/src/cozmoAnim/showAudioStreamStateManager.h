@@ -52,6 +52,8 @@ public:
   // Indicates whether voice data should be streamed to the cloud after the trigger response has indicated to
   // the user that streaming may be happening
   bool ShouldStreamAfterTriggerWordResponse() const;
+  
+  bool ShouldSimulateStreamAfterTriggerWord() const;
 
 private:
   const AnimContext* _context = nullptr;
@@ -59,6 +61,7 @@ private:
 
   Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
   bool _shouldTriggerWordStartStream;
+  bool _shouldTriggerWordSimulateStream;
   uint8_t _getInAnimationTag;
   std::string _getInAnimName;
 };

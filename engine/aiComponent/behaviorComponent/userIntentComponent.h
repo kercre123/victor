@@ -19,6 +19,7 @@
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -83,9 +84,11 @@ public:
   // animations being re-selected each time one is played. A single animation is selected from the group when this
   // function is called and that animation will persist until this function is called again with the same id/trigger
   void PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
-                                 const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, bool shouldTriggerWordStartStream = false);
+                                 const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
+                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
   void PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName = "", 
-                                 const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, bool shouldTriggerWordStartStream = false);
+                                 const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
+                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
   void PopResponseToTriggerWord(const std::string& id);
 
   // Copies the current response to the trigger word but overrides the shouldTriggerWordStartStream field

@@ -569,7 +569,7 @@ void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType strea
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
-                                                    bool shouldTriggerWordStartStream)
+                                                    StreamAndLightEffect streamAndLightEffect)
 {
   std::string animName;
   auto* data_ldr = _robot->GetContext()->GetDataLoader();
@@ -590,19 +590,25 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
     }
   }
 
-  PushResponseToTriggerWord(id, animName, postAudioEvent, shouldTriggerWordStartStream);
+  PushResponseToTriggerWord(id, animName, postAudioEvent, streamAndLightEffect);
 }
 
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName, 
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
-                                                    bool shouldTriggerWordStartStream)
+                                                    StreamAndLightEffect streamAndLightEffect)
 {
+  // anim process will open a stream if shouldStream, but will skip sending anything to the cloud
+  // if simulatedStreaming. So, to get a streaming light without streaming, use StreamingDisabledButWithLight
+  const bool simulatedStreaming = (streamAndLightEffect == StreamAndLightEffect::StreamingDisabledButWithLight);
+  const bool shouldStream = (streamAndLightEffect == StreamAndLightEffect::StreamingEnabled) || simulatedStreaming;
+  
   RobotInterface::SetTriggerWordResponse msg;
   msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
   msg.postAudioEvent = postAudioEvent;
   msg.getInAnimationName = getInAnimationName;
-  msg.shouldTriggerWordStartStream = shouldTriggerWordStartStream;
+  msg.shouldTriggerWordStartStream = shouldStream;
+  msg.shouldTriggerWordSimulateStream = simulatedStreaming;
   PushResponseToTriggerWordInternal(id, std::move(msg));
 }
 

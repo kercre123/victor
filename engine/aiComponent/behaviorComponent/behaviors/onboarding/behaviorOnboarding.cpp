@@ -1296,11 +1296,14 @@ void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
       
     } else if( wakeWordState == WakeWordState::SpecialTriggerEnabledCloudDisabled ) {
       
+      // no streaming, but fake streaming
       SmartEnableEngineResponseToTriggerWord();
       const auto postAudioEvent
         = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
                                       AudioMetaData::GameObjectType::Behavior, 0 );
-      SmartPushResponseToTriggerWord(AnimationTrigger::OnboardingWakeWordGetIn, postAudioEvent, false );
+      SmartPushResponseToTriggerWord(AnimationTrigger::OnboardingWakeWordGetIn,
+                                     postAudioEvent,
+                                     StreamAndLightEffect::StreamingDisabledButWithLight );
       
     } else if( wakeWordState == WakeWordState::TriggerEnabled ) {
       
@@ -1308,7 +1311,7 @@ void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
       const auto postAudioEvent
         = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
                                       AudioMetaData::GameObjectType::Behavior, 0 );
-      SmartPushResponseToTriggerWord(AnimationTrigger::VC_ListeningGetIn, postAudioEvent, true );
+      SmartPushResponseToTriggerWord(AnimationTrigger::VC_ListeningGetIn, postAudioEvent, StreamAndLightEffect::StreamingEnabled );
       
     }
   }

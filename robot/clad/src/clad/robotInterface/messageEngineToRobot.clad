@@ -429,6 +429,7 @@ message SetTriggerWordResponse
 {
   AudioEngine::Multiplexer::PostAudioEvent postAudioEvent,
   bool shouldTriggerWordStartStream = 0,
+  bool shouldTriggerWordSimulateStream = 0,
   uint_8 getInAnimationTag = 0,
   string getInAnimationName,
 }

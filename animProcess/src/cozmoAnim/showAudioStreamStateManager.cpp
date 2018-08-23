@@ -39,6 +39,7 @@ void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::S
 {
   _postAudioEvent = msg.postAudioEvent;
   _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
+  _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
   _getInAnimationTag = msg.getInAnimationTag;
   _getInAnimName = std::string(msg.getInAnimationName, msg.getInAnimationName_length);
 }
@@ -112,6 +113,11 @@ bool ShowAudioStreamStateManager::HasValidTriggerResponse() const
 bool ShowAudioStreamStateManager::ShouldStreamAfterTriggerWordResponse() const 
 { 
   return HasValidTriggerResponse() && _shouldTriggerWordStartStream;
+}
+
+bool ShowAudioStreamStateManager::ShouldSimulateStreamAfterTriggerWord() const
+{
+  return HasValidTriggerResponse() && _shouldTriggerWordSimulateStream;
 }
 
 

@@ -165,7 +165,7 @@ private:
   void SetWillStream(bool willStream) const;
   // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
   // sending any data to the cloud; this lasts for a set duration
-  bool ShouldSimulateStreaming() const { return _batteryLow; };
+  bool ShouldSimulateStreaming() const;
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();

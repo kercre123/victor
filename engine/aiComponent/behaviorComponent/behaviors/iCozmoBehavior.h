@@ -33,6 +33,7 @@
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
+#include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "clad/types/robotCompletedAction.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
@@ -483,7 +484,7 @@ protected:
   // Change the response to the trigger word until the behavior is deactivated
   void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger = AnimationTrigger::Count, 
                                       const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, 
-                                      bool shouldTriggerWordStartStream = false);
+                                      StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
   void SmartPopResponseToTriggerWord();
 
   

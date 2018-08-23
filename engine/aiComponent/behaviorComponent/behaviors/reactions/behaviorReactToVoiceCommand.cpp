@@ -341,7 +341,10 @@ void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
   if( _iVars.pushResponse ) {
     namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
     auto postAudioEvent = AECH::CreatePostAudioEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
-    GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), _iVars.animListeningGetIn, postAudioEvent, true );
+    GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord( GetDebugLabel(),
+                                                                      _iVars.animListeningGetIn,
+                                                                      postAudioEvent,
+                                                                      StreamAndLightEffect::StreamingEnabled );
   }
 }
 

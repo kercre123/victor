@@ -700,6 +700,17 @@ bool MicDataSystem::HasConnectionToCloud() const
 {
   return _udpServer->HasClient();
 }
+  
+bool MicDataSystem::ShouldSimulateStreaming() const
+{
+  if( _batteryLow ) {
+    return true;
+  } else {
+    ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+    const bool fakeIt = showStreamState->ShouldSimulateStreamAfterTriggerWord();
+    return fakeIt;
+  }
+}
 
 } // namespace MicData
 } // namespace Vector
