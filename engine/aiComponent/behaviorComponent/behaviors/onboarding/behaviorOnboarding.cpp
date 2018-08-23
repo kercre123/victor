@@ -30,6 +30,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageMeetVictor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/onboardingStageWakeUpComeHere.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -1265,6 +1266,15 @@ void BehaviorOnboarding::SendStageToApp( const OnboardingStages& stage ) const
     gi->Broadcast( ExternalMessageRouter::Wrap(onboardingState) );
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::ConnectionLostCallback()
+{
+  // cube connection dropped. try again
+  const bool connectInBackground = true;
+  GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection( this, connectInBackground );
+}
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
