@@ -282,10 +282,12 @@ void CubeConnectionCoordinator::CheckForConnectionLoss(const RobotCompMap& depen
   if(!dependentComps.GetComponent<CubeCommsComponent>().IsConnectedToCube()){
     PRINT_NAMED_WARNING("CubeConnectionCoordinator.ConnectionDropped",
                         "Connection lost unexpectedly. Notifying subscribers and dumping subscription record");
+    
+    std::set<ICubeConnectionSubscriber*> subscribersRemovedThisTick;
     for(auto& subscriberRecord : _subscriptionRecords){
-      subscriberRecord.subscriber->ConnectionLostCallback();
       // Track the subscribers getting dumped, the subscription record will be wiped to avoid errant state
       _subscribersDumpedByConnectionLoss.insert(subscriberRecord.subscriber);
+      subscribersRemovedThisTick.insert(subscriberRecord.subscriber);
     }
 
     // Clear out antequated state
@@ -302,6 +304,12 @@ void CubeConnectionCoordinator::CheckForConnectionLoss(const RobotCompMap& depen
     dependentComps.GetComponent<CubeLightComponent>().EnableStatusAnims(false);
 
     SET_STATE(UnConnected);
+    
+    // do a separate pass through the list instead of the previous loop over _subscriptionRecords,
+    // since that could be modified by ConnectionLostCallback() if, e.g., the subscriber wants to reconnect
+    for(auto* subscriber : subscribersRemovedThisTick){
+      subscriber->ConnectionLostCallback();
+    }
   }
 }
 

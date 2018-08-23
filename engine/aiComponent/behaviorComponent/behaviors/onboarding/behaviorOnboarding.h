@@ -65,6 +65,8 @@ protected:
   
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
   virtual void AlwaysHandleInScope(const AppToEngineEvent& event) override;
+  
+  virtual void ConnectionLostCallback() override;
 
 private:
   
