@@ -762,7 +762,11 @@ bool ITrackAction::UpdateSmallAngleClamping()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::HaveStopCriteria() const {
-  return Util::IsFltGTZero(_stopCriteria.duration_sec);
+  const bool atLeastOneTolerance = ( !Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f) ||
+                                     !Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f) ||
+                                     !Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) ||
+                                     !Util::IsFltNear(_stopCriteria.maxDist_mm, -1.f) );
+  return (Util::IsFltGTZero(_stopCriteria.duration_sec) && atLeastOneTolerance);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -790,15 +794,6 @@ bool ITrackAction::IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngl
 bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                                       const f32 distance_mm, const f32 currentTime_sec) const
 {
-    if ( Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f) &&
-         Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f) &&
-         Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) &&
-         Util::IsFltNear(_stopCriteria.maxDist_mm, -1.f) )
-    {
-      // This means that no tolerances were set thus we shouldn't return
-      // true, instead return false.
-      return false;
-    }
     bool isWithinPanTol = true;
     if (!Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f))
     {
