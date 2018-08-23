@@ -27,6 +27,7 @@
 #include "proto/external_interface/shared.pb.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #include <sstream>
 #include <iomanip>
@@ -383,6 +384,9 @@ void PhotographyManager::SetLastPhotoTimeStamp(RobotTimeStamp_t timestamp)
     _lastRequestedPhotoHandle = 0;
 
     SavePhotosFile();
+    
+    static const bool kSucceeded = true;
+    SendDASEvent(kSucceeded, "");
   }
 }
 
@@ -520,6 +524,17 @@ bool PhotographyManager::DeletePhotoByID(const int id, const bool savePhotosFile
     SavePhotosFile();
   }
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PhotographyManager::SendDASEvent(const bool succeeded, const std::string& failReason)
+{
+  DASMSG(take_a_photo_end, "behavior.take_a_photo.end", "User attempted to take a photo or selfie");
+  DASMSG_SET(s1, succeeded ? "Success" : "Fail", "Completion status (success or fail)");
+  DASMSG_SET(s2, failReason, "The reason the photo attempt failed");
+  DASMSG_SET(i1, _photoInfos.size(), "The number of photos stored, after the attempt");
+  DASMSG_SEND();
 }
 
 

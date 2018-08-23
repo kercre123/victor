@@ -110,6 +110,8 @@ void BehaviorTakeAPhotoCoordinator::OnBehaviorActivated()
 
   if(isStorageFull){
     TransitionToStorageIsFull();
+    static const bool kSucceeded = false;
+    GetBEI().GetPhotographyManager().SendDASEvent(kSucceeded, "TooManyPhotos");
   }else if(intentData != nullptr){
     const bool robotPickedUp = GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads;
     _dVars.isASelfie = !(intentData->intent.Get_take_a_photo().empty_or_selfie.empty());
@@ -183,6 +185,8 @@ void BehaviorTakeAPhotoCoordinator::TransitionToFrameFaces()
                           PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.TransitionToFrameFaces.NoFacesFound",
                                         "Did not see any faces - playing \"I don't know\" animation");
                           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_IntentNeutral));
+                          static const bool kSucceeded = false;
+                          GetBEI().GetPhotographyManager().SendDASEvent(kSucceeded, "UnableToFindFace");
                         }
                       });
 }

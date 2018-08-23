@@ -94,8 +94,10 @@ public:
   static const char * GetThumbExtension();
   
   Robot* GetRobot() const { return _robot; }
-  
+
   void DeleteAllPhotos();
+
+  void SendDASEvent(const bool succeeded, const std::string& failReason);
 
 private:
 
