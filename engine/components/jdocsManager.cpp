@@ -20,6 +20,7 @@
 #include "engine/robotDataLoader.h"
 #include "osState/osState.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -777,6 +778,12 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
     // Cloud has accepted the new or updated jdoc, and incremented the cloud-managed
     // version number, so update that version number in our jdoc in memory
     jdoc._jdocVersion = writeResponse.latestVersion;
+    
+    if (jdocType == external_interface::JdocType::ROBOT_SETTINGS)
+    {
+      DASMSG(robot_settings_passed_to_cloud_jdoc, "robot.settings.passed_to_cloud_jdoc", "The robot settings jdoc was submitted to cloud");
+      DASMSG_SEND();
+    }
   }
   else if (writeResponse.status == JDocs::WriteStatus::RejectedDocVersion)
   {

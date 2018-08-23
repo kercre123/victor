@@ -23,6 +23,7 @@
 #include "engine/externalInterface/externalMessageRouter.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 
 #define LOG_CHANNEL "SettingsCommManager"
@@ -415,6 +416,10 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   {
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
     _settingsManager->UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+
+    DASMSG(robot_settings_updated, "robot.settings.updated", "A robot setting(s) was updated");
+    DASMSG_SET(s1, "app", "Where changes came from (app or voice)");
+    DASMSG_SEND();
   }
 
   auto* response = new external_interface::UpdateSettingsResponse();
