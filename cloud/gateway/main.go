@@ -3,13 +3,13 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"runtime"
 	"strings"
 	"syscall"
@@ -21,16 +21,14 @@ import (
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 )
 
 // Enables logs about the requests coming and going from the gateway.
 // Most useful for debugging the json output being sent to the app.
 const (
-	logVerbose              = false
-	cladDomainSocket        = "_engine_gateway_server_"
-	protoDomainSocket       = "_engine_gateway_proto_server_"
-	switchboardDomainSocket = "_switchboard_gateway_server_"
+	logVerbose = false
 )
 
 var (
@@ -40,14 +38,49 @@ var (
 	demoCertPool       *x509.CertPool
 	switchboardManager SwitchboardIpcManager
 	engineProtoManager EngineProtoIpcManager
+	tokenManager       ClientTokenManager
 
 	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineCladManager EngineCladIpcManager
 )
 
+func checkAuth(_ http.ResponseWriter, r *http.Request) (string, error) {
+	if r.URL.EscapedPath() == "/Anki.Vector.external_interface.ExternalInterface/UserAuthentication" {
+		return "WiFi User Auth Bypass", nil
+	}
+	auth, ok := r.Header["Authorization"]
+
+	if !ok {
+		return "", grpc.Errorf(codes.Unauthenticated, "No auth token")
+	}
+	if len(auth) != 1 {
+		return "", grpc.Errorf(codes.Unauthenticated, "Too many auth tokens")
+	}
+	authHeader := auth[0]
+	if strings.HasPrefix(authHeader, "Basic ") {
+		_, err := base64.StdEncoding.DecodeString(authHeader[6:])
+		if err != nil {
+			return "", grpc.Errorf(codes.Unauthenticated, "Failed to decode auth token (Base64)")
+		}
+		// todo
+	} else if !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", grpc.Errorf(codes.Unauthenticated, "Unknown auth header type")
+	}
+	clientToken := authHeader[7:]
+
+	return tokenManager.CheckToken(clientToken)
+}
+
 func verboseHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			name, err := checkAuth(w, r) // Note: we only check here because json will forward to grpc, and doesn't need the same auth
+			if err != nil {
+				// TODO: uncomment this to turn on auth
+				// http.Error(w, grpc.ErrorDesc(err), 401)
+				// return
+			}
+			log.Printf("Authorized connection from '%s'\n", name)
 			LogRequest(r, "grpc")
 			wrap := WrappedResponseWriter{w, "grpc"}
 			grpcServer.ServeHTTP(&wrap, r)
@@ -62,11 +95,26 @@ func verboseHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http
 func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			_, err := checkAuth(w, r) // Note: we only check here because json will forward to grpc, and doesn't need the same auth
+			if err != nil {
+				// TODO: uncomment this to turn on auth
+				// http.Error(w, grpc.ErrorDesc(err), http.StatusUnauthorized)
+				// return
+			}
 			grpcServer.ServeHTTP(w, r)
 		} else {
 			otherHandler.ServeHTTP(w, r)
 		}
 	})
+}
+
+func cleanExit() {
+	log.Println("Uninstall crash reporter")
+	robot.UninstallCrashReporter()
+
+	log.Println("Closed vic-gateway")
+
+	os.Exit(0)
 }
 
 func main() {
@@ -81,7 +129,7 @@ func main() {
 	go func() {
 		sig := <-signalHandler
 		log.Println("Received signal:", sig)
-		os.Exit(0)
+		cleanExit()
 	}()
 
 	if _, err := os.Stat(robot.GatewayCert); os.IsNotExist(err) {
@@ -113,17 +161,17 @@ func main() {
 	addr := fmt.Sprintf("localhost:%d", Port)
 
 	engineCladManager.Init()
-	closeEngineClad := engineCladManager.Connect(path.Join(SocketPath, cladDomainSocket), "client")
-	defer closeEngineClad()
+	defer engineCladManager.Close()
 
 	engineProtoManager.Init()
-	closeEngineProto := engineProtoManager.Connect(path.Join(SocketPath, protoDomainSocket), "client")
-	defer closeEngineProto()
+	defer engineProtoManager.Close()
 
-	if IsSwitchboardAvailable {
+	if IsOnRobot {
 		switchboardManager.Init()
-		closeSwitchboardClad := switchboardManager.Connect(path.Join(SocketPath, switchboardDomainSocket), "client")
-		defer closeSwitchboardClad()
+		defer switchboardManager.Close()
+
+		tokenManager.Init()
+		defer tokenManager.Close()
 	}
 
 	log.Println("Sockets successfully created")
@@ -135,7 +183,6 @@ func main() {
 	}
 	grpcServer := grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(AuthInterceptor),
 	)
 	extint.RegisterExternalInterfaceServer(grpcServer, newServer())
 	ctx := context.Background()
@@ -188,8 +235,9 @@ func main() {
 
 	go engineCladManager.ProcessMessages()
 	go engineProtoManager.ProcessMessages()
-	if IsSwitchboardAvailable {
+	if IsOnRobot {
 		go switchboardManager.ProcessMessages()
+		go tokenManager.StartUpdateListener()
 	}
 
 	log.Println("Listening on Port:", Port)
@@ -200,9 +248,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Println("Uninstall crash reporter")
-	robot.UninstallCrashReporter()
-
-	log.Println("Closing vic-gateway")
-	return
+	cleanExit()
 }

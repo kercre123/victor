@@ -3,7 +3,7 @@
 package main
 
 const (
-	Port                   = 8443
-	SocketPath             = "/tmp/"
-	IsSwitchboardAvailable = false
+	Port       = 8443
+	SocketPath = "/tmp/"
+	IsOnRobot  = false
 )

@@ -4,6 +4,7 @@ import (
 	"anki/ipc"
 	"bytes"
 	"encoding/binary"
+	"path"
 	"reflect"
 	"runtime"
 	"sync"
@@ -18,6 +19,12 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+const (
+	cladDomainSocket        = "_engine_gateway_server_"
+	protoDomainSocket       = "_engine_gateway_proto_server_"
+	switchboardDomainSocket = "_switchboard_gateway_server_"
+)
+
 // Note: If there is a function that can be shared, use the engine manager.
 //       The only reason I duplicated the functions so far was interfaces
 //       were strangely causing the deleteFromMap to fail. - shawn 7/17/18
@@ -26,17 +33,21 @@ type IpcManager struct {
 	conn      ipc.Conn
 }
 
-func (manager *IpcManager) Connect(path string, name string) func() error {
+func (manager *IpcManager) Connect(path string, name string) {
 	for {
 		conn, err := ipc.NewUnixgramClient(path, name)
 		if err != nil {
 			log.Printf("Couldn't create sockets for %s & %s_%s - retrying: %s", path, path, name, err.Error())
-			time.Sleep(time.Second)
+			time.Sleep(5 * time.Second)
 		} else {
 			manager.conn = conn
-			return manager.conn.Close
+			return
 		}
 	}
+}
+
+func (manager *IpcManager) Close() error {
+	return manager.conn.Close()
 }
 
 type EngineProtoIpcManager struct {
@@ -47,6 +58,7 @@ type EngineProtoIpcManager struct {
 
 func (manager *EngineProtoIpcManager) Init() {
 	manager.managedChannels = make(map[string]([]chan<- extint.GatewayWrapper))
+	manager.Connect(path.Join(SocketPath, protoDomainSocket), "client")
 }
 
 func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
@@ -181,6 +193,7 @@ type SwitchboardIpcManager struct {
 
 func (manager *SwitchboardIpcManager) Init() {
 	manager.managedChannels = make(map[gw_clad.SwitchboardResponseTag]([]chan<- gw_clad.SwitchboardResponse))
+	manager.Connect(path.Join(SocketPath, switchboardDomainSocket), "client")
 }
 
 func (manager *SwitchboardIpcManager) ProcessMessages() {
@@ -302,6 +315,7 @@ type EngineCladIpcManager struct {
 
 func (manager *EngineCladIpcManager) Init() {
 	manager.managedChannels = make(map[gw_clad.MessageRobotToExternalTag]([]chan<- gw_clad.MessageRobotToExternal))
+	manager.Connect(path.Join(SocketPath, cladDomainSocket), "client")
 }
 
 func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) (int, error) {

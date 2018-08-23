@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/binary"
 	"io/ioutil"
 	"math"
 	"reflect"
-	"strings"
 	"time"
 
 	"anki/log"
@@ -18,46 +16,9 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 )
 
 const faceImagePixelsPerChunk = 600
-
-func readAuthToken(ctx context.Context) (interface{}, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to extract context metadata")
-	}
-
-	if len(md["Authorization"]) == 0 {
-		return nil, grpc.Errorf(codes.Unauthenticated, "No auth token")
-	}
-	authHeader := md["Authorization"][0]
-	if !ok {
-		return nil, grpc.Errorf(codes.Unauthenticated, "No auth token")
-	}
-	if strings.HasPrefix(authHeader, "Basic ") {
-		_, err := base64.StdEncoding.DecodeString(authHeader[6:])
-		if err != nil {
-			return nil, grpc.Errorf(codes.Unauthenticated, "Failed to decode auth token (Base64)")
-		}
-		// todo
-	} else if strings.HasPrefix(authHeader, "Bearer ") {
-		return authHeader[7:], nil
-	}
-	return nil, grpc.Errorf(codes.Unauthenticated, "Invalid auth type")
-}
-
-func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	_, err := readAuthToken(ctx)
-	if err != nil {
-		// return nil, err
-	}
-
-	// TODO: verify token
-
-	return handler(ctx, req)
-}
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {

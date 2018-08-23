@@ -100,7 +100,9 @@ class _ControlEventManager:
 
         This will return control to the rest of the behavior system.
         """
-        self._granted_event.clear()
+        self._has_control = False
+        self._granted_event.set()
+        self._lost_event.set()
         self._is_shutdown = True
         self._request_event.set()
 
@@ -209,7 +211,14 @@ class Connection:
         trusted_certs = None
         with open(self.cert_file, 'rb') as cert:
             trusted_certs = cert.read()
-        credentials = aiogrpc.ssl_channel_credentials(root_certificates=trusted_certs)
+
+        # Pin the robot certificate for opening the channel
+        channel_credentials = aiogrpc.ssl_channel_credentials(root_certificates=trusted_certs)
+        # Add authorization header for all the calls
+        call_credentials = aiogrpc.access_token_call_credentials("8675309")  # TODO: get real credentials here or nothing will work
+
+        credentials = aiogrpc.composite_channel_credentials(channel_credentials, call_credentials)
+
         self._logger.info(f"Connecting to {self.host} for {self.name} using {self.cert_file}")
         self._channel = aiogrpc.secure_channel(self.host, credentials,
                                                options=(("grpc.ssl_target_name_override", self.name,),))
@@ -243,6 +252,8 @@ class Connection:
                     self._control_events.update(False)
         except futures.CancelledError:
             self._logger.debug('Behavior handler task was cancelled. This is expected during disconnection.')
+        except Exception as e:
+            self._logger.error(e) # TODO: better handle errors due to auth failure
 
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.
