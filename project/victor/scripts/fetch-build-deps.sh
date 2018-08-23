@@ -19,8 +19,6 @@ function vlog()
 
 pushd "${TOPLEVEL}" > /dev/null 2>&1
 
-$GIT config --global url."git@github.com:".insteadOf https://github.com
-
 OS_NAME=$(uname -s)
 case $OS_NAME in
     "Darwin")
