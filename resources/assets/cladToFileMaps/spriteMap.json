@@ -668,6 +668,10 @@
     "SpriteName" : "face_nowifi_trouble_icon"
   },
   {
+    "CladEvent" : "Face_Powersavemode",
+    "SpriteName" : "face_powersavemode"
+  },
+  {
     "CladEvent" : "Face_Rain",
     "SpriteName" : "face_rain"
   },
