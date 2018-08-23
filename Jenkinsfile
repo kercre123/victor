@@ -18,58 +18,54 @@ def getListOfOnlineNodesForLabel(label) {
 }
 
 enum buildConfig {
-    SHIPPING, DEBUG, RELEASE
+    SHIPPING, DEBUG, RELEASE, MASTER
 
-    @Override
-    public String toString() {
+    public String getBuildType() {
         return name().toLowerCase()
+    }
+
+    public String getArtifactType() {
+        def firstChar = name()[0]
+        def restOfStringLowerCased = this.getBuildType().substring(1)
+        return firstChar + restOfStringLowerCased
     }
 }
 
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
 
-stage('Parallel Build') {
-    parallel docker: {
+def primaryStageName = ''
+
+if (env.CHANGE_ID) {
+    primaryStageName = 'Pull Request'
+} else {
+    primaryStageName = 'Master'
+}
+
+stage("${primaryStageName} Build") {
+    parallel debug: {
         node('victor-slaves') {
-            stage('Build Docker Image') {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: scm.branches,
-                    doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-                    extensions: scm.extensions,
-                    userRemoteConfigs: scm.userRemoteConfigs
-                ])
-                docker.build('victor-build-img:latest')
+            withDockerEnv {
+                buildPRStepsVicOS type: buildConfig.DEBUG.getArtifactType()
+                sh 'mv _build/vicos/Debug _build/vicos/Release'
+                deployArtifacts type: buildConfig.DEBUG.getArtifactType(), artifactoryServer: server
             }
-            stage('Build Victor Engine') {
-                def victorBuildImage = docker.image('victor-build-img:latest')
-                victorBuildImage.inside("-v /etc/passwd:/etc/passwd -v ${env.HOME}/.ssh:${env.HOME}/.ssh") {
-                    stage('Update submodules') {
-                        sh 'git submodule update --init --recursive'
-                        sh 'git submodule update --recursive'
-                    }
-                    stage('json lint') {
-                        sh './lib/util/tools/build/jsonLint/jsonLint.sh resources'
-                    }
-                    withEnv(["HOME=${env.WORKSPACE}"]) {
-                        if (env.CHANGE_ID) {
-                            buildPRStepsVicOS type: buildConfig.DEBUG
-                        } else {
-                            stage('Build Engine') {
-                                sh './project/victor/build-victor.sh -c Release -O2 -j8'
-                            }
-                        }
-                    }
-                }
+        }
+    },
+    shipping: {
+        node('victor-slaves') {
+            withDockerEnv {
+                buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
-            withEnv(['PLATFORM=vicos', 'CONFIGURATION=release']) {
-                stage("Build Vicos ${CONFIGURATION}") {
-                    sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
-                }
+        }
+    },
+    release: {
+        node('victor-slaves') {
+            withDockerEnv {
+                buildPRStepsVicOS type: buildConfig.RELEASE.getBuildType()
+                deployArtifacts type: buildConfig.RELEASE.getArtifactType(), artifactoryServer: server
             }
-            buildPRStepsVicOS type: buildConfig.SHIPPING
-            deployArtifacts type: buildConfig.DEBUG
         }
     },
     macosx: {
@@ -102,12 +98,12 @@ stage('Parallel Build') {
                 }
                 stage('Pushing MacOS artifacts to Artifactory') {
                     def macosFileSpec = """{
-                      "files": [
+                    "files": [
                         {
-                          "pattern": "_build/mac/Debug/webots_out*.tar.gz",
-                          "target": "victor-engine/${env.BRANCH_NAME}/"
+                        "pattern": "_build/mac/Debug/webots_out*.tar.gz",
+                        "target": "victor-engine/${env.BRANCH_NAME}/"
                         }
-                     ]
+                    ]
                     }"""
                     server.upload(macosFileSpec)
                 }
