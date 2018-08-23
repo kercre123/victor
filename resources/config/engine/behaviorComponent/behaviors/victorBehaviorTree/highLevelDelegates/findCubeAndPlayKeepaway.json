@@ -1,0 +1,9 @@
+{
+  "behaviorID" : "FindCubeAndPlayKeepaway",
+  "behaviorClass" : "FindCubeAndThen",
+  "associatedActiveFeature" : "Keepaway",
+
+  "followUpBehaviorID" : "Keepaway",
+
+  "postBehaviorSuggestion" : "Socialize"
+}

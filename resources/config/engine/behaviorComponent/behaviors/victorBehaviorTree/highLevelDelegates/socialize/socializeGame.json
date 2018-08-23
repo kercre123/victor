@@ -9,7 +9,7 @@
       "weight": 0.4
     },
     {
-      "behavior": "Keepaway",
+      "behavior": "FindCubeAndPlayKeepaway",
       "cooldown_s": 500.0,
       "weight": 0.4
     }

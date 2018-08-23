@@ -43,10 +43,12 @@ namespace{
 static const DrivingAnimationHandler::DrivingAnimations kKeepawayDrivingAnims { AnimationTrigger::CubePounceDriveGetIn,
                                                                                 AnimationTrigger::CubePounceDriveLoop,
                                                                                 AnimationTrigger::CubePounceDriveGetOut };
+const char* kMinPouncesForSoloPlayKey = "minPouncesForSoloPlay";
+const char* kMaxPouncesForSoloPlayKey = "maxPouncesForSoloPlay";
 const char* kDebugName = "BehaviorKeepaway";
 const char* kLogChannelName = "Behaviors";
 // Distance past nominalPounceDist that we allow victor to creep. Helps ensure he eventually pounces.
-const float kCreepOverlapDist_mm = 3.0f;
+const float kCreepOverlapDist_mm = 8.0f;
 const char* kUseProxForDistance = "useProxForDistance";
 }
 
@@ -61,7 +63,10 @@ BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
       floatNames.emplace_back( QUOTE(__name__) );\
     }\
   } while(0)
-  
+
+  minPouncesForSoloPlay = JsonTools::ParseInt8(config, kMinPouncesForSoloPlayKey, kDebugName);
+  maxPouncesForSoloPlay = JsonTools::ParseInt8(config, kMaxPouncesForSoloPlayKey, kDebugName); 
+
   SET_FLOAT_HELPER(targetUnmovedGameEndTimeout_s);
   SET_FLOAT_HELPER(noVisibleTargetGameEndTimeout_s);
   SET_FLOAT_HELPER(targetVisibleTimeout_s);
@@ -113,9 +118,12 @@ BehaviorKeepaway::DynamicVariables::DynamicVariables(const InstanceConfig& iConf
 , frustrationExcitementScale(1.0f)
 , probReactToHit(0.0f)
 , probReactToMiss(0.0f)
+, pounceCount(0)
+, pounceCountToExit(1)
 , isIdling(0)
 , victorGotLastPoint(false)
 , gameOver(false)
+, soloExitAfterNextPounce(false)
 {
 }
 
@@ -126,6 +134,8 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
 , _dVars(_iConfig)
 {
   // Add configurable params as ConsoleVars
+  MakeMemberTunable(_iConfig.minPouncesForSoloPlay, "minPouncesForSoloPlay", kDebugName);
+  MakeMemberTunable(_iConfig.maxPouncesForSoloPlay, "maxPouncesForSoloPlay", kDebugName);
   MakeMemberTunable(_iConfig.targetUnmovedGameEndTimeout_s, "targetUnmovedGameEndTimeout_s", kDebugName);
   MakeMemberTunable(_iConfig.noVisibleTargetGameEndTimeout_s, "noVisibleTargetGameEndTimeout_s", kDebugName);
   MakeMemberTunable(_iConfig.targetVisibleTimeout_s, "targetVisibleTimeout_s", kDebugName);
@@ -161,6 +171,8 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKeepaway::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
+  expectedKeys.insert( kMinPouncesForSoloPlayKey );
+  expectedKeys.insert( kMaxPouncesForSoloPlayKey );
   expectedKeys.insert( kUseProxForDistance );
   for( const auto& str : _iConfig.floatNames ) {
     expectedKeys.insert( str.c_str() );
@@ -187,6 +199,7 @@ void BehaviorKeepaway::OnBehaviorActivated()
   _dVars = DynamicVariables(_iConfig);
   _dVars.probReactToHit = _iConfig.baseProbReact;
   _dVars.probReactToMiss = _iConfig.baseProbReact;
+  _dVars.pounceCountToExit = GetRNG().RandIntInRange(_iConfig.minPouncesForSoloPlay, _iConfig.maxPouncesForSoloPlay);
 
   // Initialize time stamps for various timeouts
   _dVars.gameStartTime_s = GetCurrentTimeInSeconds();
@@ -214,7 +227,8 @@ void BehaviorKeepaway::BehaviorUpdate()
     return;
   }
 
-  if(KeepawayState::GetOut != _dVars.state){
+  if(KeepawayState::GetOut != _dVars.state ||
+     KeepawayState::GetOutSolo != _dVars.state){
     UpdateTargetStatus();
   }
 
@@ -284,8 +298,20 @@ void BehaviorKeepaway::CheckGetOutTimeOuts()
 
   if(status.visibleRecently){
     // Don't end on a move timeout if the target is not visible
-    if( (_iConfig.targetUnmovedGameEndTimeout_s > 0.0f) &&
-        ( (GetCurrentTimeInSeconds() - status.lastMovedTime_s) > _iConfig.targetUnmovedGameEndTimeout_s) ){
+    float timeSinceMoved = GetCurrentTimeInSeconds() - status.lastMovedTime_s;
+    float timeSinceGameStart = GetCurrentTimeInSeconds() - _dVars.gameStartTime_s;
+
+    // Don't do a movement timeout if the cube hasn't moved since starting. This typically indicates that he is
+    // pouncing on a cube without an opponent
+    if(timeSinceMoved > timeSinceGameStart){
+      // just keep playing until we exit from too much success, or someone engages 
+      if(_dVars.pounceCount == _dVars.pounceCountToExit - 1){
+        _dVars.soloExitAfterNextPounce = true;
+        return;
+      }
+    }
+    else if( ( _iConfig.targetUnmovedGameEndTimeout_s > 0.0f ) &&
+           ( timeSinceMoved > _iConfig.targetUnmovedGameEndTimeout_s) ){
       victorIsBored = true;
       PRINT_CH_INFO(kLogChannelName,
                     "BehaviorKeepaway.GameEndTimeout", 
@@ -374,7 +400,12 @@ void BehaviorKeepaway::UpdateStalking()
 
     if(_dVars.target.isOffCenter){
       StopIdleAnimation();
-      DelegateIfInControl(new TurnTowardsObjectAction(_dVars.targetID), &BehaviorKeepaway::StartIdleAnimation);
+      SmartDisableKeepFaceAlive();
+      DelegateIfInControl(new TurnTowardsObjectAction(_dVars.targetID),
+        [this](){
+          SmartReEnableKeepFaceAlive();
+          StartIdleAnimation();
+        });
       return;
     }
 
@@ -408,7 +439,7 @@ void BehaviorKeepaway::UpdateStalking()
           } else {
             TransitionToFakeOut();
           }
-        } else if (_dVars.target.isNotMoving && (GetCurrentTimeInSeconds() > _dVars.creepTime)){
+        } else if (!_dVars.target.isInPounceRange && _dVars.target.isNotMoving && (GetCurrentTimeInSeconds() > _dVars.creepTime)){
           TransitionToCreeping();
         }
         break;
@@ -473,6 +504,7 @@ void BehaviorKeepaway::TransitionToPouncing()
   AnimationTrigger pounceTrigger = _dVars.target.isInMousetrapRange ? 
                                    AnimationTrigger::CubePouncePounceClose :
                                    AnimationTrigger::CubePouncePounceNormal;
+  ++_dVars.pounceCount;
   DelegateIfInControl(new TriggerAnimationAction(pounceTrigger), &BehaviorKeepaway::TransitionToReacting);
 }
 
@@ -494,6 +526,13 @@ void BehaviorKeepaway::TransitionToReacting()
   SET_STATE(Reacting);
   StopIdleAnimation();
   CancelDelegates(false);
+
+  // Watch for a solo play exit signal
+  if(_dVars.soloExitAfterNextPounce){
+    TransitionToSoloGetOut();
+    // Bypass the usual reactions
+    return;
+  }
 
   // Based on the pounce outcome, accrue frustration or excitement
   float probExit = 0.0f;
@@ -576,6 +615,20 @@ void BehaviorKeepaway::TransitionToGetOutBored()
   CancelDelegates(false);
 
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored),
+                      [this](){
+                        BehaviorObjectiveAchieved(BehaviorObjective::KeepawayQuitBored);
+                        // Don't delegate, cancel behavior.
+                      });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKeepaway::TransitionToSoloGetOut()
+{
+  SET_STATE(GetOutSolo);
+  StopIdleAnimation();
+  CancelDelegates(false);
+
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceWinSession),
                       [this](){
                         BehaviorObjectiveAchieved(BehaviorObjective::KeepawayQuitBored);
                         // Don't delegate, cancel behavior.

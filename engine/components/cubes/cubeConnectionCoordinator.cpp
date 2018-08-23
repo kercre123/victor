@@ -301,7 +301,8 @@ void CubeConnectionCoordinator::CheckForConnectionLoss(const RobotCompMap& depen
     _connectedActiveObject = nullptr;
 
     // Set Status lights back to default state
-    dependentComps.GetComponent<CubeLightComponent>().EnableStatusAnims(false);
+    bool connectedInBackground = true;
+    dependentComps.GetComponent<CubeLightComponent>().SetCubeBackgroundState(connectedInBackground);
 
     SET_STATE(UnConnected);
     
@@ -335,7 +336,8 @@ void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCom
 
   // Play connection light animation
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
-  cubeLights.EnableStatusAnims(true);
+  bool connectedInBackground = false;
+  cubeLights.SetCubeBackgroundState(connectedInBackground);
 
   if(nullptr != _connectedActiveObject){
     cubeLights.PlayConnectionLights(_connectedActiveObject->GetID());
@@ -355,13 +357,15 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
 
   // Play disconnect light animation
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
-  auto animCompletedCallback = [this]()
+  auto animCompletedCallback = [this, &cubeLights]()
   { 
     // It's possible a subscription came in while playing disconnect lights from either the user or an internal action.
     // If that's the case, don't modify the state of the CubeConnectionCoordinator from the callback.
     if(!_cancelSwitchToBackground){
       float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       _timeToSwitchToBackground_s = currentTime_s + kPostLightsGracePeriod_s;
+      bool connectedInBackground = true;
+      cubeLights.SetCubeBackgroundState(connectedInBackground);
     }
   };
 
@@ -393,10 +397,6 @@ void CubeConnectionCoordinator::CancelSwitchToBackground(const RobotCompMap& dep
 void CubeConnectionCoordinator::TransitionToConnectedBackground(const RobotCompMap& dependentComps)
 {
   SET_STATE(ConnectedBackground);
-
-  // Tell the CubeLightComponent not to display status lights since we're functionally disconnected from the user's
-  // perspective
-  dependentComps.GetComponent<CubeLightComponent>().EnableStatusAnims(false);
 
   if(_subscriptionRecords.empty()){
     // Reset the timeout in case the last unsubscribe was a while ago. This ensures a minimum Background time of 

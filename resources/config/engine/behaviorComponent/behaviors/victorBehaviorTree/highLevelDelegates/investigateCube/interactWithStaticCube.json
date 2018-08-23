@@ -16,11 +16,16 @@
       "behaviorClass" : "DispatcherRandom",
 
       "behaviors" : [
-        // {
-        //   "behavior" : "VectorPlaysCubeSpinner",
-        //   "cooldown_s" : 300.0,
-        //   "weight" : 0.1
-        // },
+        {
+          "behavior" : "CubeSpinnerConnectionGate",
+          "cooldown_s" : 300.0,
+          "weight" : 0.1
+        },
+        {
+          "behavior" : "Keepaway",
+          "cooldown_s" : 300.0,
+          "weight" : 1.0
+        },
         {
           "behavior" : "PlaceCubeByCharger",
           "cooldown_s" : 300.0,

@@ -1,19 +1,13 @@
 {
-  "behaviorID" : "FindYourCubeVoiceCommand",
+  "behaviorID" : "FindCube",
   "behaviorClass" : "FindCubeAndThen",
   "associatedActiveFeature" : "FindCube",
-
-  "respondToUserIntents" : [
-    { "type" : "imperative_findcube" }
-  ],
 
   "wantsToBeActivatedCondition": {
     "conditionType" : "FeatureGate",
     "feature" : "FindCube",
     "expected" : true
   },
-
-  "followUpBehaviorID" : "InteractWithStaticCube",
 
   "postBehaviorSuggestion" : "Socialize"
 }

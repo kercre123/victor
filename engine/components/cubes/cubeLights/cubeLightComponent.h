@@ -100,6 +100,7 @@ public:
   bool PlayLightAnimByTrigger(const ObjectID& objectID,
                               const CubeAnimationTrigger& animTrigger,
                               AnimCompletedCallback callback = {},
+                              bool playDuringBackgroundConnection = false,
                               bool hasModifier = false,
                               const CubeLightAnimation::ObjectLights& modifier = {},
                               const s32 durationModifier_ms = 0);
@@ -149,7 +150,7 @@ public:
   bool PlayDisconnectionLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
   bool CancelDisconnectionLights(const ObjectID& objectID);
   bool PlayTapResponseLights(const ObjectID& objectID, AnimCompletedCallback callback = {});
-  bool EnableStatusAnims(const bool enable);
+  bool SetCubeBackgroundState(const bool enable);
 
   template<typename T>
   void HandleMessage(const T& msg);
@@ -270,8 +271,8 @@ private:
   bool _skipSleepAnim = false;
 
   // Whether or not to play connection/status lights
-  // Default to false so that status lights are driven from the CubeConnectionCoordinator
-  bool _enableStatusAnims = false;
+  // Default to true so that status lights are driven from the CubeConnectionCoordinator
+  bool _cubeConnectedInBackground = true;
   
   // The last cube light gamma that was sent to the robot (global across all cubes)
   u32 _prevGamma = 0;

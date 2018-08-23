@@ -134,8 +134,11 @@ void BehaviorOnboardingActivateCube::BehaviorUpdate()
     }
     if( currTime > _dVars.cubeActivationTime_s ) {
       // let there be light!
+      bool playLightsOnBackgroundConnectedCube = true;
       GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger( _dVars.targetID,
-                                                               CubeAnimationTrigger::Onboarding );
+                                                               CubeAnimationTrigger::Onboarding,
+                                                               nullptr,
+                                                               playLightsOnBackgroundConnectedCube );
       _dVars.state = State::WaitingForAnimToEnd;
     }
   }

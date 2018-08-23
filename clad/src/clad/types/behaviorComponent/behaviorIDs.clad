@@ -142,6 +142,7 @@ enum uint_16 BehaviorID {
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
+  FindCubeAndPlayKeepaway,
   FistBump,
 
   // victorBehaviorTree/highLevelDelegates/getHomeBehaviors
@@ -213,11 +214,12 @@ enum uint_16 BehaviorID {
   PickupCube,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
-  PlayWithCubeConnectionGate,
+  CubeSpinnerConnectionGate,
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube
   FetchCube,
+  FindCube,
   FindFacesFetchCube,
   PlayRollBlock,
   PlayWithCube,

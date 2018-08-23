@@ -4,6 +4,8 @@
 
   "associatedActiveFeature": "Keepaway",
   
+  "minPouncesForSoloPlay":            1,
+  "maxPouncesForSoloPlay":            4,
   "targetUnmovedGameEndTimeout_s":    10.0,  // Game will end with "Bored" if the cube is visibly unmoved for this long
   "noVisibleTargetGameEndTimeout_s":  8.0,   // Game will end with "Bored" if the cube goes this long unseen
   "targetVisibleTimeout_s":           1.0,   // Timeout to allow brief target occlusion (e.g. finger on marker)
@@ -14,16 +16,16 @@
   "targetUnmovedAngle_deg":           5.0,   // If the cube rotates less than this in a frame, we consider it static
   "allowablePointingError_deg":       7.5,   // Victor will turn to face the target if the angle to it is larger
   "targetUnmovedCreepTimeout_s":      2.0,   // Victor will creep up on a cube that hasn't moved in this long
-  "creepDistanceMin_mm":              5.0,
-  "creepDistanceMax_mm":              30.0,
-  "creepDelayTimeMin_s":              0.5,  // Min time victor will wait before creeping after the unmoved timeout
-  "creepDelayTimeMax_s":              2.0,  // Max time victor will wait before creeping after the unmoved timeout
+  "creepDistanceMin_mm":              10.0,
+  "creepDistanceMax_mm":              60.0,
+  "creepDelayTimeMin_s":              0.0,  // Min time victor will wait before creeping after the unmoved timeout
+  "creepDelayTimeMax_s":              0.5,  // Max time victor will wait before creeping after the unmoved timeout
   "pounceDelayTimeMin_s":             0.1,  // Once primed, min time victor waits to pounce
   "pounceDelayTimeMax_s":             1.0,  // Once primed, max time victor waits to pounce
-  "basePounceChance":                 0.6,  // Base probability that victor will pounce vs. fakeout
+  "basePounceChance":                 0.8,  // Base probability that victor will pounce vs. fakeout
   "pounceChanceIncrement":            0.15, // Amount by which probability of fakeout is reduced after each fakeout
   "nominalPounceDistance_mm":         55.0, // Cube must be closer than this to pounce
-  "mousetrapPounceDistance_mm":           35.0, // If the cube is closer than this, pounce with zero delay
+  "mousetrapPounceDistance_mm":       35.0, // If the cube is closer than this, pounce with zero delay
   "probBackupInsteadOfMousetrap":     0.5,
   "pounceSuccessPitchDiff_deg":       5.0,
 
@@ -39,9 +41,9 @@
   // Probability of reacting to any given hit/miss can be adjusted. if he rando decides not to react,
   // he'll increase the probability of reacting next time and then go back to idle directly. If he reacts,
   // the probabilty of reacting next time is set back to "baseProbReact".
-  "baseProbReact":                    0.0, // Base Probability of reacting to a hit/miss. 1.0 always react
+  "baseProbReact":                    0.4, // Base Probability of reacting to a hit/miss. 1.0 always react
   "minProbToReact":                   0.2, // React probability < this will NEVER react
-  "probReactIncrement":               0.15, // How much to increase probability of reacting per hit/miss
+  "probReactIncrement":               0.2, // How much to increase probability of reacting per hit/miss
   "probReactMax":                     1.0, // cap the probability of reacting at this value
 
   "useProxForDistance":               true

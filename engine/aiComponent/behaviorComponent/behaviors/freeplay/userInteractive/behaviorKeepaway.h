@@ -54,7 +54,8 @@ private:
     Pouncing,
     FakeOut,
     Reacting,
-    GetOut
+    GetOut,
+    GetOutSolo
   };
 
   enum class PounceReadyState{
@@ -75,6 +76,7 @@ private:
   void TransitionToFakeOut();
   void TransitionToReacting();
   void TransitionToGetOutBored();
+  void TransitionToSoloGetOut();
 
   bool PitchIndicatesPounceSuccess() const;
 
@@ -126,6 +128,8 @@ private:
     float   minProbToReact;
     float   probReactIncrement;
     float   probReactMax;
+    uint8_t minPouncesForSoloPlay;
+    uint8_t maxPouncesForSoloPlay;
     bool    useProxForDistance;
       
     std::vector<std::string> floatNames; // autofilled names of the above floats
@@ -145,9 +149,12 @@ private:
     float            frustrationExcitementScale;
     float            probReactToHit;
     float            probReactToMiss;
+    int              pounceCount;
+    int              pounceCountToExit;
     bool             isIdling;
     bool             victorGotLastPoint;
     bool             gameOver;
+    bool             soloExitAfterNextPounce;
    };
 
   InstanceConfig _iConfig;

@@ -343,10 +343,14 @@ CubeLightAnimation::Animation* CubeLightComponent::GetAnimation(const CubeAnimat
 bool CubeLightComponent::PlayLightAnimByTrigger(const ObjectID& objectID,
                                                 const CubeAnimationTrigger& animTrigger,
                                                 AnimCompletedCallback callback,
+                                                bool playDuringBackgroundConnection,
                                                 bool hasModifier,
                                                 const CubeLightAnimation::ObjectLights& modifier,
                                                 const s32 durationModifier_ms)
 {
+  if(_cubeConnectedInBackground && !playDuringBackgroundConnection){
+    return false;
+  }
   return PlayLightAnimByTrigger(objectID, animTrigger, AnimLayerEnum::Engine, callback, hasModifier, modifier, durationModifier_ms);
 }
 
@@ -794,7 +798,13 @@ bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
   // Stop the anim and prevent the update call in StopLightAnim from picking a next default anim
   // This will prevent the lights from briefly flickering between the calls to stop and play
   StopLightAnimByTrigger(animTriggerToStop, AnimLayerEnum::Engine, objectID, false);
-  return PlayLightAnimByTrigger(objectID, animTriggerToPlay, callback, hasModifier, modifier);
+  bool playDuringBackgroundConnection = true;
+  return PlayLightAnimByTrigger(objectID,
+                                animTriggerToPlay,
+                                callback,
+                                playDuringBackgroundConnection,
+                                hasModifier,
+                                modifier);
 }
 
 bool CubeLightComponent::StopAndPlayLightAnim(const ObjectID& objectID,
@@ -843,13 +853,14 @@ bool CubeLightComponent::PlayTapResponseLights(const ObjectID& objectID, AnimCom
   return PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::TapResponsePulse, AnimLayerEnum::State, callback);
 }
 
-bool CubeLightComponent::EnableStatusAnims(const bool enable)
+bool CubeLightComponent::SetCubeBackgroundState(const bool connectedInBackground)
 {
-  bool stateChanged = (_enableStatusAnims != enable);
-  _enableStatusAnims = enable;
+  bool stateChanged = (_cubeConnectedInBackground != connectedInBackground);
+  _cubeConnectedInBackground = connectedInBackground;
 
-  if(stateChanged){
+  if(stateChanged && _cubeConnectedInBackground){
     StopAllAnimsOnLayer(AnimLayerEnum::State);
+    StopAllAnimsOnLayer(AnimLayerEnum::Engine);
   }
 
   return stateChanged;
@@ -864,7 +875,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   }
 
   // If status anims are disabled for "background" cube connections, play a blank anim
-  if(!_enableStatusAnims){
+  if(_cubeConnectedInBackground){
     // TODO:(str) remove the "cube sleep" infrastructure?
     PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::SleepNoFade, AnimLayerEnum::State);
     return;
@@ -907,7 +918,7 @@ void CubeLightComponent::OnActiveObjectPoseStateChanged(const ObjectID& objectID
     return;
   }
 
-  if(!_enableStatusAnims)
+  if(_cubeConnectedInBackground)
   {
     return;
   }

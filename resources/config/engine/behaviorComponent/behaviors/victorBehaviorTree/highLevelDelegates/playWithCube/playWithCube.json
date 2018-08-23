@@ -13,28 +13,18 @@
   "anonymousBehaviors": [
     {
       "behaviorName" : "PlayWithCubeInternal",
-      "behaviorClass" : "DispatcherRandom",
-    
-      "behaviors" : [
-        {
-          "behavior": "PlayWithCubeConnectionGate",
-          "cooldown_s": 900.0,
-          "cooldown_random_factor": 0.5,
-          "weight": 1.0
-        },
-        {
-          "behavior": "PopAWheelie",
-          "cooldown_s": 300.0,
-          "cooldown_random_factor": 0.5,
-          "weight": 1.0
-        },
-        {
-          "behavior": "PlayRollBlock",
-          "cooldown_s": 600.0,
-          "cooldown_random_factor": 0.5,
-          "weight": 1.0
-        }
-      ]
+      "behaviorClass" : "FindCubeAndThen",
+      "associatedActiveFeature" : "FindCube",
+
+      "wantsToBeActivatedCondition": {
+        "conditionType" : "FeatureGate",
+        "feature" : "FindCube",
+        "expected" : true
+      },
+
+      "followUpBehaviorID" : "InteractWithStaticCube",
+
+      "postBehaviorSuggestion" : "Socialize"
     }
   ]
 }

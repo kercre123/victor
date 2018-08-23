@@ -512,6 +512,18 @@
     "AnimName": "ag_greeting_big_hello"
   },
   {
+    "CladEvent": "FindCubeReactToCube",
+    "AnimName": "ag_rollcube_initial"
+  },
+  {
+    "CladEvent": "FindCubeTurns",
+    "AnimName": "ag_cubedocking_searchforcubeturns"
+  },
+  {
+    "CladEvent": "FindCubeWaitLoop",
+    "AnimName": "ag_cubebehaviors_keepalive"
+  },
+  {
     "CladEvent": "FistBumpIdle",
     "AnimName": "ag_fistbump_idle"
   },

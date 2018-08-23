@@ -41,6 +41,7 @@ enum uint_8 BehaviorClass {
   ClearChargerArea,
   DriveOffCharger,
   FetchCube,
+  FindCubeAndThen,
   FindFaces,
   FindHome,
   GoHome,

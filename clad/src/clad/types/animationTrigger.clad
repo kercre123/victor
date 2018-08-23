@@ -140,6 +140,9 @@ enum int_32 AnimationTrigger
   FetchCubeSuccess,
 
   FoundFace,
+  FindCubeReactToCube,
+  FindCubeTurns,
+  FindCubeWaitLoop,
   FistBumpIdle,
   FistBumpRequestOnce,
   FistBumpRequestRetry,

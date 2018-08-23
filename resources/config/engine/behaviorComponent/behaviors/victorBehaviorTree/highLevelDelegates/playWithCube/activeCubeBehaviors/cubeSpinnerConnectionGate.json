@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "PlayWithCubeConnectionGate",
+  "behaviorID" : "CubeSpinnerConnectionGate",
   "behaviorClass" : "ConnectToCube",
 
   "delegateBehaviorID" : "VectorPlaysCubeSpinner",

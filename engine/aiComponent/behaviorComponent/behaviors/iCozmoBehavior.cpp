@@ -1550,7 +1550,7 @@ bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
                                            const CubeLightAnimation::ObjectLights& modifier)
 {
   if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
-    GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(objectID, anim, nullptr, true, modifier);
+    GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(objectID, anim, nullptr, false, true, modifier);
     _customLightObjects.push_back(objectID);
     return true;
   }else{

@@ -44,6 +44,7 @@ namespace{
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(BlackJack),
                                                                            BEHAVIOR_CLASS(FetchCube),
                                                                            BEHAVIOR_CLASS(FistBump),
+                                                                           BEHAVIOR_CLASS(FindCubeAndThen),
                                                                            BEHAVIOR_CLASS(Keepaway),
                                                                            BEHAVIOR_CLASS(InspectCube),
                                                                            BEHAVIOR_CLASS(PickUpCube),
