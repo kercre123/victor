@@ -31,6 +31,7 @@
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
+#include "engine/components/accountSettingsManager.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
@@ -63,6 +64,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
+#include "engine/components/userEntitlementsManager.h"
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -359,6 +361,8 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->AddDependentComponent(RobotComponentID::VariableSnapshotComponent,  new VariableSnapshotComponent());
     _components->AddDependentComponent(RobotComponentID::JdocsManager,               new JdocsManager());
+    _components->AddDependentComponent(RobotComponentID::AccountSettingsManager,     new AccountSettingsManager());
+    _components->AddDependentComponent(RobotComponentID::UserEntitlementsManager,    new UserEntitlementsManager());
     _components->InitComponents(this);
   }
 

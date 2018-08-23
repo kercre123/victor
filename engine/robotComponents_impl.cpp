@@ -73,6 +73,8 @@ class VariableSnapshotComponent;
 class PowerStateManager;
 class JdocsManager;
 class RobotExternalRequestComponent;
+class AccountSettingsManager;
+class UserEntitlementsManager;
 
 } // namespace Vector
 
@@ -129,7 +131,9 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
 LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, JdocsManager)
-LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent,   RobotComponentID, RobotExternalRequestComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent, RobotComponentID, RobotExternalRequestComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(AccountSettingsManager,        RobotComponentID, AccountSettingsManager)
+LINK_COMPONENT_TYPE_TO_ENUM(UserEntitlementsManager,       RobotComponentID, UserEntitlementsManager)
 
 // Translate entity into string
 template<>
@@ -139,6 +143,7 @@ template<>
 std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotComponentID enumID)
 {
   switch(enumID){
+    case Vector::RobotComponentID::AccountSettingsManager:       { return "AccountSettingsManager";}
     case Vector::RobotComponentID::AIComponent:                  { return "AIComponent";}
     case Vector::RobotComponentID::ActionList:                   { return "ActionList";}
     case Vector::RobotComponentID::Animation:                    { return "Animation";}
@@ -187,6 +192,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     case Vector::RobotComponentID::StateHistory:                 { return "StateHistory";}
     case Vector::RobotComponentID::TextToSpeechCoordinator:      { return "TextToSpeechCoordinator";}
     case Vector::RobotComponentID::TouchSensor:                  { return "TouchSensor";}
+    case Vector::RobotComponentID::UserEntitlementsManager:      { return "UserEntitlementsManager";}
     case Vector::RobotComponentID::VariableSnapshotComponent:    { return "VariableSnapshotComponent"; }
     case Vector::RobotComponentID::Vision:                       { return "Vision";}
     case Vector::RobotComponentID::VisionScheduleMediator:       { return "VisionScheduleMediator";}

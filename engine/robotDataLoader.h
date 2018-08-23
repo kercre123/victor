@@ -128,6 +128,7 @@ public:
   const Json::Value& GetSettingsConfig() const               { return _settingsConfig; }
   const Json::Value& GetEyeColorConfig() const               { return _eyeColorConfig; }
   const Json::Value& GetJdocsConfig() const                  { return _jdocsConfig; }
+  const Json::Value& GetAccountSettingsConfig() const        { return _accountSettingsConfig; }
 
   // Cube Spinner game configuration
   const Json::Value& GetCubeSpinnerConfig() const             { return _cubeSpinnerConfig; }
@@ -252,6 +253,7 @@ private:
   Json::Value _settingsConfig;
   Json::Value _eyeColorConfig;
   Json::Value _jdocsConfig;
+  Json::Value _accountSettingsConfig;
 
   Json::Value _cubeSpinnerConfig;
 

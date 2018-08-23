@@ -1,21 +1,24 @@
 /**
-* File: settingsCommManager.cpp
-*
-* Author: Paul Terry
-* Created: 6/8/18
-*
+ * File: settingsCommManager.cpp
+ *
+ * Author: Paul Terry
+ * Created: 6/8/18
+ *
  * Description: Communicates settings with App and Cloud; calls into SettingsManager
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * (for robot settings), AccountSettingsManager and UserEntitlementsManager
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 
 #include "engine/components/settingsCommManager.h"
 
 #include "engine/robot.h"
+#include "engine/components/accountSettingsManager.h"
 #include "engine/components/jdocsManager.h"
 #include "engine/components/settingsManager.h"
+#include "engine/components/userEntitlementsManager.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 
@@ -32,10 +35,15 @@ namespace
 {
   SettingsCommManager* s_SettingsCommManager = nullptr;
   static const bool kUpdateSettingsJdoc = true;
+  static const bool kUpdateAccountSettingsJdoc = true;
 
 #if REMOTE_CONSOLE_ENABLED
 
   static const char* kConsoleGroup = "RobotSettings";
+  static const char* kConsoleGroupAccountSettings = "AccountSettings";
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ROBOT SETTINGS console vars and functions:
 
   // NOTE: Need to keep kMasterVolumeLevels in sync with MasterVolume in robotSettings.clad
   constexpr const char* kMasterVolumeLevels = "Mute,Low,MediumLow,Medium,MediumHigh,High";
@@ -132,6 +140,16 @@ namespace
   }
   CONSOLE_FUNC(DebugDemoSetLocaleIndex, kConsoleGroup, int localeIndex);
 
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ACCOUNT SETTINGS console vars and functions:
+
+  void DebugToggleDataCollection(ConsoleFunctionContextRef context)
+  {
+    s_SettingsCommManager->ToggleAccountSettingHelper(external_interface::AccountSetting::DATA_COLLECTION);
+  }
+  CONSOLE_FUNC(DebugToggleDataCollection, kConsoleGroupAccountSettings);
+
 #endif
 }
 
@@ -148,6 +166,8 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
 {
   s_SettingsCommManager = this;
   _settingsManager = &robot->GetComponent<SettingsManager>();
+  _accountSettingsManager = &robot->GetComponent<AccountSettingsManager>();
+  _userEntitlementsManager = &robot->GetComponent<UserEntitlementsManager>();
   _jdocsManager = &robot->GetComponent<JdocsManager>();
   _gatewayInterface = robot->GetGatewayInterface();
   auto* gi = _gatewayInterface;
@@ -155,9 +175,9 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
   {
     auto commonCallback = std::bind(&SettingsCommManager::HandleEvents, this, std::placeholders::_1);
     // Subscribe to desired simple events
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullJdocsRequest,      commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPushJdocsRequest,      commonCallback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest, commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullJdocsRequest,              commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest,         commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateAccountSettingsRequest,  commonCallback));
   }
 
 #if REMOTE_CONSOLE_ENABLED
@@ -224,6 +244,32 @@ bool SettingsCommManager::ToggleRobotSettingHelper(const RobotSetting robotSetti
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsCommManager::HandleAccountSettingChangeRequest(const external_interface::AccountSetting accountSetting,
+                                                            const Json::Value& settingJson,
+                                                            const bool updateSettingsJdoc)
+{
+  // Change the account setting and apply the change
+  const bool success = _accountSettingsManager->SetAccountSetting(accountSetting, settingJson, updateSettingsJdoc);
+  if (!success)
+  {
+    LOG_ERROR("SettingsCommManager.HandleAccountSettingChangeRequest",
+              "Error setting key %s to value %s", external_interface::AccountSetting_Name(accountSetting).c_str(),
+              settingJson.asString().c_str());
+  }
+
+  return success;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsCommManager::ToggleAccountSettingHelper(const external_interface::AccountSetting accountSetting)
+{
+  const bool curSetting = _accountSettingsManager->GetAccountSettingAsBool(accountSetting);
+  return HandleAccountSettingChangeRequest(accountSetting, Json::Value(!curSetting), kUpdateAccountSettingsJdoc);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsCommManager::RefreshConsoleVars()
 {
 #if REMOTE_CONSOLE_ENABLED
@@ -244,11 +290,11 @@ void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::Gatew
     case external_interface::GatewayWrapperTag::kPullJdocsRequest:
       OnRequestPullJdocs(event.GetData().pull_jdocs_request());
       break;
-    case external_interface::GatewayWrapperTag::kPushJdocsRequest:
-      OnRequestPushJdocs(event.GetData().push_jdocs_request());
-      break;
     case external_interface::GatewayWrapperTag::kUpdateSettingsRequest:
       OnRequestUpdateSettings(event.GetData().update_settings_request());
+      break;
+    case external_interface::GatewayWrapperTag::kUpdateAccountSettingsRequest:
+      OnRequestUpdateAccountSettings(event.GetData().update_account_settings_request());
       break;
     default:
       LOG_ERROR("SettingsCommManager.HandleEvents",
@@ -271,45 +317,6 @@ void SettingsCommManager::OnRequestPullJdocs(const external_interface::PullJdocs
     _jdocsManager->GetJdoc(jdocType, *namedJdoc->mutable_doc());
   }
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pullJdocsResp));
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsCommManager::OnRequestPushJdocs(const external_interface::PushJdocsRequest& pushJdocsRequest)
-{
-  LOG_INFO("SettingsCommManager.OnRequestPushJdocs", "Push Jdocs request");
-  const auto numDocsBeingPushed = pushJdocsRequest.named_jdocs_size();
-  for (int i = 0; i < numDocsBeingPushed; i++)
-  {
-    const auto& namedJdoc = pushJdocsRequest.named_jdocs(i);
-    const auto& jdocType = namedJdoc.jdoc_type();
-    // TOOD: Pass in/resolve version number, etc.
-
-    // Convert the single jdoc STRING to a JSON::Value object
-    Json::Reader reader;
-    Json::Value docBodyJson;
-    const bool success = reader.parse(namedJdoc.doc().json_doc(), docBodyJson);
-    if (!success)
-    {
-      LOG_ERROR("SettingsCommManager.OnRequestPushJdocs.JsonError",
-                "Error in parsing JSON string in body of jdoc being pushed to robot");
-    }
-    if (jdocType == external_interface::ROBOT_SETTINGS)
-    {
-      LOG_WARNING("SettingsCommManager.OnRequestPushJdocs.PushDirectionIssue",
-                  "WARNING: robot settings jdoc is being pushed to robot");
-    }
-    else if (jdocType == external_interface::ROBOT_LIFETIME_STATS)
-    {
-      LOG_WARNING("SettingsCommManager.OnRequestPushJdocs.PushDirectionIssue",
-                  "WARNING: robot lifetime stats jdoc is being pushed to robot");
-    }
-    static const bool saveToDiskImmediately = true;
-    static const bool saveToCloudImmeidately = true;
-    _jdocsManager->UpdateJdoc(jdocType, &docBodyJson, saveToDiskImmediately, saveToCloudImmeidately);
-  }
-  auto* pushJdocsResp = new external_interface::PushJdocsResponse();
-  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pushJdocsResp));
 }
 
 
@@ -386,7 +393,7 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   if (settings.oneof_temp_is_fahrenheit_case() == external_interface::RobotSettingsConfig::OneofTempIsFahrenheitCase::kTempIsFahrenheit)
   {
     if (HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
-                                       Json::Value(settings.temp_is_fahrenheit())))
+                                        Json::Value(settings.temp_is_fahrenheit())))
     {
       updateSettingsJdoc = true;
       saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::temp_is_fahrenheit);
@@ -395,8 +402,8 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 
   if (settings.oneof_time_zone_case() == external_interface::RobotSettingsConfig::OneofTimeZoneCase::kTimeZone)
   {
-    if (HandleRobotSettingChangeRequest((RobotSetting::time_zone),
-                                         Json::Value(settings.time_zone())))
+    if (HandleRobotSettingChangeRequest(RobotSetting::time_zone,
+                                        Json::Value(settings.time_zone())))
     {
       updateSettingsJdoc = true;
       saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::time_zone);
@@ -413,6 +420,49 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
   auto* response = new external_interface::UpdateSettingsResponse();
   auto* jdoc = new external_interface::Jdoc();
   _jdocsManager->GetJdoc(external_interface::JdocType::ROBOT_SETTINGS, *jdoc);
+  response->set_allocated_doc(jdoc);
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::OnRequestUpdateAccountSettings(const external_interface::UpdateAccountSettingsRequest& updateAccountSettingsRequest)
+{
+  LOG_INFO("SettingsCommManager.OnRequestUpdateAccountSettings", "Update account settings request");
+  const auto& settings = updateAccountSettingsRequest.account_settings();
+  bool updateSettingsJdoc = false;
+  bool saveToCloudImmediately = false;
+
+  if (settings.oneof_data_collection_case() == external_interface::AccountSettingsConfig::OneofDataCollectionCase::kDataCollection)
+  {
+    if (HandleAccountSettingChangeRequest(external_interface::AccountSetting::DATA_COLLECTION,
+                                          Json::Value(settings.data_collection())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _accountSettingsManager->DoesSettingUpdateCloudImmediately(external_interface::AccountSetting::DATA_COLLECTION);
+    }
+  }
+
+  if (settings.oneof_app_locale_case() == external_interface::AccountSettingsConfig::OneofAppLocaleCase::kAppLocale)
+  {
+    if (HandleAccountSettingChangeRequest(external_interface::AccountSetting::APP_LOCALE,
+                                          Json::Value(settings.app_locale())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _accountSettingsManager->DoesSettingUpdateCloudImmediately(external_interface::AccountSetting::APP_LOCALE);
+    }
+  }
+
+  // The request can handle multiple settings changes, but we only update the jdoc once, for efficiency
+  if (updateSettingsJdoc)
+  {
+    const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
+    _accountSettingsManager->UpdateAccountSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+  }
+
+  auto* response = new external_interface::UpdateAccountSettingsResponse();
+  auto* jdoc = new external_interface::Jdoc();
+  _jdocsManager->GetJdoc(external_interface::JdocType::ACCOUNT_SETTINGS, *jdoc);
   response->set_allocated_doc(jdoc);
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
 }

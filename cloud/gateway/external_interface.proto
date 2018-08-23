@@ -229,13 +229,6 @@ service ExternalInterface {
     };
   }
 
-  rpc PushJdocs(PushJdocsRequest) returns (PushJdocsResponse) {
-    option (google.api.http) = {
-      post: "/v1/push_jdocs",
-      body: "*"
-    };
-  }
-
   rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
     option (google.api.http) = {
       post: "/v1/status_history",
@@ -246,6 +239,13 @@ service ExternalInterface {
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
     option (google.api.http) = {
       post: "/v1/update_settings",
+      body: "*"
+    };
+  }
+
+  rpc UpdateAccountSettings(UpdateAccountSettingsRequest) returns (UpdateAccountSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_account_settings",
       body: "*"
     };
   }

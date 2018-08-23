@@ -1,14 +1,15 @@
 /**
-* File: settingsCommManager.h
-*
-* Author: Paul Terry
-* Created: 6/15/18
-*
-* Description: Communicates settings with App and Cloud; calls into SettingsManager
-*
-* Copyright: Anki, Inc. 2018
-*
-**/
+ * File: settingsCommManager.h
+ *
+ * Author: Paul Terry
+ * Created: 6/15/18
+ *
+ * Description: Communicates settings with App and Cloud; calls into SettingsManager
+ * (for robot settings), AccountSettingsManager and UserEntitlementsManager
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef __Cozmo_Basestation_Components_settingsCommManager_H__
 #define __Cozmo_Basestation_Components_settingsCommManager_H__
@@ -20,6 +21,8 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "proto/external_interface/settings.pb.h"
+
 #include "clad/types/robotSettingsTypes.h"
 
 namespace Anki {
@@ -29,11 +32,12 @@ template <typename T>
 class AnkiEvent;
 class IGatewayInterface;
 class SettingsManager;
+class AccountSettingsManager;
+class UserEntitlementsManager;
 class JdocsManager;
 namespace external_interface {
   class GatewayWrapper;
   class PullJdocsRequest;
-  class PushJdocsRequest;
   class UpdateSettingsRequest;
 }
 
@@ -59,23 +63,30 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  bool HandleRobotSettingChangeRequest(const RobotSetting robotSetting,
-                                       const Json::Value& settingJson,
-                                       const bool updateSettingsJdoc = false);
-  bool ToggleRobotSettingHelper(const RobotSetting robotSetting);
+  bool HandleRobotSettingChangeRequest  (const RobotSetting robotSetting,
+                                         const Json::Value& settingJson,
+                                         const bool updateSettingsJdoc = false);
+  bool ToggleRobotSettingHelper         (const RobotSetting robotSetting);
+
+  bool HandleAccountSettingChangeRequest(const external_interface::AccountSetting accountSetting,
+                                         const Json::Value& settingJson,
+                                         const bool updateSettingsJdoc = false);
+  bool ToggleAccountSettingHelper       (const external_interface::AccountSetting accountSetting);
 
   void RefreshConsoleVars();
 
 private:
 
-  void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void OnRequestPullJdocs     (const external_interface::PullJdocsRequest& pullJdocsRequest);
-  void OnRequestPushJdocs     (const external_interface::PushJdocsRequest& pushJdocsRequest);
-  void OnRequestUpdateSettings(const external_interface::UpdateSettingsRequest& updateSettingsRequest);
+  void HandleEvents                   (const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void OnRequestPullJdocs             (const external_interface::PullJdocsRequest& pullJdocsRequest);
+  void OnRequestUpdateSettings        (const external_interface::UpdateSettingsRequest& updateSettingsRequest);
+  void OnRequestUpdateAccountSettings (const external_interface::UpdateAccountSettingsRequest& updateAccountSettingsRequest);
 
-  SettingsManager*    _settingsManager = nullptr;
-  JdocsManager*       _jdocsManager = nullptr;
-  IGatewayInterface*  _gatewayInterface = nullptr;
+  SettingsManager*         _settingsManager = nullptr;
+  AccountSettingsManager*  _accountSettingsManager = nullptr;
+  UserEntitlementsManager* _userEntitlementsManager = nullptr;
+  JdocsManager*            _jdocsManager = nullptr;
+  IGatewayInterface*       _gatewayInterface = nullptr;
 
   std::vector<Signal::SmartHandle> _signalHandles;
 };

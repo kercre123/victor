@@ -331,13 +331,14 @@ test_attention_transfer: .require_ip
 	@echo 
 
 test_settings: .require_ip
-	$(curl_command)/v1/push_jdocs -d '{"named_jdocs":[{"jdoc_type":"ACCOUNT_SETTINGS","doc":{"doc_version":3,"fmt_version":2,"client_metadata":"34","json_doc":"{\n   \"data_collection\" : true,\n   \"foo_bar_collection\" : false\n}\n"}}]}'
-	@echo
-
 	$(curl_command)/v1/pull_jdocs -d '{"jdoc_types":["ROBOT_SETTINGS", "ROBOT_LIFETIME_STATS"]}'
 	@echo
 
 	$(curl_command)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":1}}'
+	@echo
+
+test_account_settings: .require_ip
+	$(curl_command)/v1/update_account_settings -d '{"account_settings": {"app_locale":"en-US","data_collection":true}}'
 	@echo
 
 test_status_history: .require_ip

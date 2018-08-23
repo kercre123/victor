@@ -48,13 +48,14 @@ message RobotSettingsConfig {
   oneof oneof_time_zone { string time_zone = 8; }
 }
 
-message UserSettingsConfig {
-  oneof oneof_das_opt_in { bool das_opt_in = 1; }
+enum AccountSetting {
+  DATA_COLLECTION = 0;
+  APP_LOCALE = 1;
 }
 
-// Event containing an updated document
-message SettingsUpdate {
-  Jdoc doc = 1;
+message AccountSettingsConfig {
+  oneof oneof_data_collection { bool data_collection = 1; }
+  oneof oneof_app_locale { string app_locale = 2; }
 }
 
 enum ResultCode {
@@ -83,20 +84,21 @@ message PullJdocsResponse {
   repeated NamedJdoc named_jdocs = 2;
 }
 
-message PushJdocsRequest {
-  repeated NamedJdoc named_jdocs = 1;
-}
-
-message PushJdocsResponse {
-  ResponseStatus status = 1;
-  ResultCode code = 2;
-}
-
 message UpdateSettingsRequest {
   RobotSettingsConfig settings = 1;
 }
 
 message UpdateSettingsResponse {
+  ResponseStatus status = 1;
+  ResultCode code = 2;
+  Jdoc doc = 3;
+}
+
+message UpdateAccountSettingsRequest {
+  AccountSettingsConfig account_settings = 1;
+}
+
+message UpdateAccountSettingsResponse {
   ResponseStatus status = 1;
   ResultCode code = 2;
   Jdoc doc = 3;

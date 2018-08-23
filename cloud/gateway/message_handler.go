@@ -1449,27 +1449,6 @@ func (service *rpcService) SetCubeLights(ctx context.Context, in *extint.SetCube
 	}, nil
 }
 
-func (service *rpcService) PushJdocs(ctx context.Context, in *extint.PushJdocsRequest) (*extint.PushJdocsResponse, error) {
-	log.Println("Received rpc request PushJdocs(", in, ")")
-
-	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PushJdocsResponse{}, 1)
-	defer f()
-
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_PushJdocsRequest{
-			PushJdocsRequest: in,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	response, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-	}
-	return response.GetPushJdocsResponse(), nil
-}
-
 func (service *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHistoryRequest) (*extint.RobotHistoryResponse, error) {
 	log.Println("Received rpc request RobotStatusHistory(", in, ")")
 
@@ -1538,6 +1517,34 @@ func (service *rpcService) UpdateSettings(ctx context.Context, in *extint.Update
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	return response.GetUpdateSettingsResponse(), nil
+}
+
+func (service *rpcService) UpdateAccountSettings(ctx context.Context, in *extint.UpdateAccountSettingsRequest) (*extint.UpdateAccountSettingsResponse, error) {
+	log.Println("Received rpc request UpdateAccountSettings(", in, ")")
+
+	f, responseChan, ok := engineProtoManager.CreateUniqueChannel(&extint.GatewayWrapper_UpdateAccountSettingsResponse{}, 1)
+	if !ok {
+		return &extint.UpdateAccountSettingsResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS,
+			},
+		}, nil
+	}
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_UpdateAccountSettingsRequest{
+			UpdateAccountSettingsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	response, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return response.GetUpdateAccountSettingsResponse(), nil
 }
 
 // NOTE: this is the only function that won't need to check the client_token_guid header

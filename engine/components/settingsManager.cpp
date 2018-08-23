@@ -76,9 +76,6 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
     }));
   }
 
-  _platform = robot->GetContextDataPlatform();
-  DEV_ASSERT(_platform != nullptr, "SettingsManager.InitDependent.DataPlatformIsNull");
-
   // Call the JdocsManager to see if our robot settings jdoc file exists
   bool settingsDirty = false;
   const bool jdocNeedsCreation = _jdocsManager->JdocNeedsCreation(external_interface::JdocType::ROBOT_SETTINGS);

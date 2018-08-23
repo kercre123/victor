@@ -162,7 +162,7 @@ void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::str
 
 void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  // TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
+  // VIC-5804  TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
   
   // Update jdoc if there were change(s) this tick
   if (_dirtyJdoc)

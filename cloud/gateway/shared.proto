@@ -33,13 +33,12 @@ message Event {
     AttentionTransfer                attention_transfer                  = 4;
     RobotObservedFace                robot_observed_face                 = 5;
     RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
-    SettingsUpdate                   settings_update                     = 7;
-    ObjectEvent                      object_event                        = 8;
-    StimulationInfo                  stimulation_info                    = 9;
-    PhotoTaken                       photo_taken                         = 10;
-    RobotState                       robot_state                         = 11;
-    CubeBattery                      cube_battery                        = 12;
-    KeepAlivePing                    keep_alive                          = 13;
+    ObjectEvent                      object_event                        = 7;
+    StimulationInfo                  stimulation_info                    = 8;
+    PhotoTaken                       photo_taken                         = 9;
+    RobotState                       robot_state                         = 10;
+    CubeBattery                      cube_battery                        = 11;
+    KeepAlivePing                    keep_alive                          = 12;
   }
 }
 
@@ -100,12 +99,12 @@ message GatewayWrapper {
     DeletePhotoRequest            delete_photo_request               = 46;
     DeletePhotoResponse           delete_photo_response              = 47;
     // ------------ settings pairs ---------------------------------------
-    PushJdocsRequest              push_jdocs_request                 = 60;
-    PushJdocsResponse             push_jdocs_response                = 61;
-    PullJdocsRequest              pull_jdocs_request                 = 62;
-    PullJdocsResponse             pull_jdocs_response                = 63;
-    UpdateSettingsRequest         update_settings_request            = 64;
-    UpdateSettingsResponse        update_settings_response           = 65;
+    PullJdocsRequest              pull_jdocs_request                 = 60;
+    PullJdocsResponse             pull_jdocs_response                = 61;
+    UpdateSettingsRequest         update_settings_request            = 62;
+    UpdateSettingsResponse        update_settings_response           = 63;
+    UpdateAccountSettingsRequest  update_account_settings_request    = 64;
+    UpdateAccountSettingsResponse update_account_settings_response   = 65;
 
     // ------------ sdk behavior request/response pairs --------------------
     DriveOffChargerRequest        drive_off_charger_request          = 70;

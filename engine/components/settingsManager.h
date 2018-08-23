@@ -109,7 +109,6 @@ private:
 
   Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
-  Util::Data::DataPlatform* _platform = nullptr;
   const Json::Value*        _settingsConfig;
   bool                      _applySettingsNextTick = false;
 
