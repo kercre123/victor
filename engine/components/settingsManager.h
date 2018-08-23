@@ -57,7 +57,8 @@ public:
   // Returns true if successful
   bool SetRobotSetting(const RobotSetting robotSetting,
                        const Json::Value& valueJson,
-                       const bool updateSettingsJdoc);
+                       const bool updateSettingsJdoc,
+                       bool& ignoredDueToNoChange);
 
   // Return the setting value (currently strings, bools, uints supported)
   std::string GetRobotSettingAsString(const RobotSetting key) const;

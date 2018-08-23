@@ -206,8 +206,11 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
                                       const Json::Value& valueJson,
-                                      const bool updateSettingsJdoc)
+                                      const bool updateSettingsJdoc,
+                                      bool& ignoredDueToNoChange)
 {
+  ignoredDueToNoChange = false;
+
   const std::string key = RobotSettingToString(robotSetting);
   if (!_currentSettings.isMember(key))
   {
@@ -216,6 +219,19 @@ bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
   }
 
   const Json::Value prevValue = _currentSettings[key];
+  if (prevValue == valueJson)
+  {
+    // If the value is not actually changing, don't do anything.
+    // Currently (8/22/2018) the app sends the UpdateSettings request with all robot
+    // settings in it, whether they've changed or not.  This is until they get some
+    // proto code generation issue worked on.  In the meantime, this helps because
+    // otherwise the application methods all get called; one bad effect is that if
+    // the user changes ANY setting, they always get the 'robot eye color change'
+    // behavior.
+    ignoredDueToNoChange = true;
+    return false;
+  }
+
   _currentSettings[key] = valueJson;
 
   bool success = ApplyRobotSetting(robotSetting, false);

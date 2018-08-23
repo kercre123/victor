@@ -199,11 +199,16 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting rob
                                                           const bool updateSettingsJdoc)
 {
   // Change the robot setting and apply the change
-  const bool success = _settingsManager->SetRobotSetting(robotSetting, settingJson, updateSettingsJdoc);
+  bool ignoredDueToNoChange = false;
+  const bool success = _settingsManager->SetRobotSetting(robotSetting, settingJson,
+                                                         updateSettingsJdoc, ignoredDueToNoChange);
   if (!success)
   {
-    LOG_ERROR("SettingsCommManager.HandleRobotSettingChangeRequest",
-              "Error setting key %s to value %s", EnumToString(robotSetting), settingJson.asString().c_str());
+    if (!ignoredDueToNoChange)
+    {
+      LOG_ERROR("SettingsCommManager.HandleRobotSettingChangeRequest",
+                "Error setting key %s to value %s", EnumToString(robotSetting), settingJson.asString().c_str());
+    }
   }
 
   return success;
