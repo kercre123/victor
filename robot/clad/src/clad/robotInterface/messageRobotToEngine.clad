@@ -38,7 +38,9 @@ message PrepForShutdown
 message TriggerWordDetected
 {
   uint_32 timestamp,
-  uint_16 direction
+  uint_32 triggerScore,
+  uint_16 direction,
+  bool isButtonPress,
 }
 
 message MicDirection

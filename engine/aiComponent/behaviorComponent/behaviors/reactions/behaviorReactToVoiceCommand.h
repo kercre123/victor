@@ -118,6 +118,8 @@ protected:
   MicDirectionIndex GetReactionDirection() const;
   // get the "best recent" direction from the mic history
   MicDirectionIndex GetDirectionFromMicHistory() const;
+  
+  void UpdateDAS();
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -172,6 +174,11 @@ private:
     // when this handle's conditions are met, we animate to show the user there was a failure (and possibly
     // trigger an attention transfer)
     RecentOccurrenceTracker::Handle cloudErrorHandle;
+    
+    // for das
+    std::vector<uint32_t> triggerWordScores;
+    int lastTriggerWordScore;
+    float nextTimeSendDas_s;
 
   } _iVars;
 

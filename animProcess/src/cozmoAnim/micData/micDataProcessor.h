@@ -78,7 +78,7 @@ public:
                               MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
                               int searchFileIndex = -1);
 
-  void FakeTriggerWordDetection() { TriggerWordDetectCallback(nullptr, 0.f); }
+  void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
   
 private:
   const AnimContext* _context = nullptr;
@@ -157,8 +157,15 @@ private:
   MicTriggerConfig::TriggerDataPaths _nextTriggerPaths;
   std::mutex _triggerModelMutex;
   
+  enum class TriggerWordDetectSource : uint8_t {
+    Invalid=0,
+    Voice,
+    Button,
+  };
+  
   void InitVAD();
-  void TriggerWordDetectCallback(const char* resultFound, float score);
+  void TriggerWordVoiceCallback(const char* resultFound, float score) { TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score ); }
+  void TriggerWordDetectCallback(TriggerWordDetectSource source, float score);
   RobotTimeStamp_t CreateTriggerWordDetectedJobs();
   void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,

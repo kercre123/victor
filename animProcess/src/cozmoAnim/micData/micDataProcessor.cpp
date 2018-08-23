@@ -128,7 +128,7 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
   (void) _recognizer->Init(pronunciationFileToUse);
 
   // Set up the callback that creates the recording job when the trigger is detected
-  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordDetectCallback, 
+  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
                                    this, std::placeholders::_1, std::placeholders::_2);
   _recognizer->SetCallback(triggerCallback);
   _recognizer->Start();
@@ -183,8 +183,8 @@ void MicDataProcessor::InitVAD()
   _sVadConfig->HangoverCountDownStart = 10;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
-
-void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float score)
+  
+void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, float score)
 {
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
@@ -202,6 +202,8 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.timestamp = (TimeStamp_t)mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
+  twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
+  twDetectedMessage.triggerScore = (uint32_t) score;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
@@ -228,7 +230,7 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
 
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
-             "MicDataProcessor.TriggerWordDetectCallback.AudioProcIdx");
+             "MicDataProcessor.CreateTriggerWordDetectedJobs.AudioProcIdx");
   const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   if (showStreamState->ShouldStreamAfterTriggerWordResponse())
