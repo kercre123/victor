@@ -1391,6 +1391,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 {
   #define CHARGE_TEST_DEBUG(x)    x
   const int NUM_SAMPLES = 16;
+  const int OFF_CHARGER_CNT = 10;
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
@@ -1400,25 +1401,30 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   Board::powerOn(PWR_VEXT,0);
   Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //delay for syscon to enable charger
   
+  bool success=0;
   CHARGE_TEST_DEBUG( int ibase_ma = 0; uint32_t Tprint = 0;  );
   int avg=0, avgCnt=0, avgMax = 0, iMax = 0, offContact = 0;
-  uint32_t avgMaxTime = 0, iMaxTime = 0, Twait = Timer::get();
-  while( Timer::elapsedUs(Twait) < 5*1000*1000 )
+  uint32_t avgMaxTime = 0, iMaxTime = 0, Twait = Timer::get(), Telapsed;
+  while( (Telapsed = Timer::elapsedUs(Twait)) < 5*1000*1000 )
   {
     int current_ma = Meter::getCurrentMa(PWR_VEXT,6);
     int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
+    
+    //finish when average rises above our threshold (after minimum sample cnt)
     avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
     avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
+    success = avgCnt >= NUM_SAMPLES && avg >= i_done_ma;
     
     //DEBUG: log charge current as bar graph
     CHARGE_TEST_DEBUG( {
       const int DISP_MA_PER_CHAR = 15;
       const int IDIFF_MA = 25;
       if( ABS(current_ma - ibase_ma) >= IDIFF_MA || ABS(avg - ibase_ma) >= IDIFF_MA || 
-          Timer::elapsedUs(Tprint) > 500*1000 || (avgCnt >= NUM_SAMPLES && avg >= i_done_ma) )
+          Timer::elapsedUs(Tprint) > 500*1000 || success || offContact>=OFF_CHARGER_CNT )
       {
         ibase_ma = current_ma;
         Tprint = Timer::get();
+        //ConsolePrintf("%06i ", Telapsed/1000); DEBUG
         ConsolePrintf("%04umV %03d/%03d ", voltage_mv, avg, current_ma );
         for(int x=1; x <= (avg > current_ma ? avg : current_ma); x += DISP_MA_PER_CHAR )
           ConsolePrintf( x <= avg && x <= current_ma ? "=" : x > avg ? "+" : "-" );
@@ -1436,15 +1442,17 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
       avgMaxTime = Timer::elapsedUs(Twait);
     }
     
-    //finish when average rises above our threshold (after minimum sample cnt)
-    if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
+    if( success )
       break;
     
     //error out quickly if robot removed from charge base
-    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 20) {
-      CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
-      ConsolePrintf("robot off charger\n");
-      throw ERROR_BAT_CHARGER;
+    if( Telapsed > 4*SYSCON_CHG_PWR_DELAY_MS*1000 ) //safetey margin for charging enable before allowing off-contact detect
+    {
+      if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > OFF_CHARGER_CNT) {
+        CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
+        ConsolePrintf("robot off charger\n");
+        throw ERROR_BAT_CHARGER;
+      }
     }
     
     //keep an eye on output voltage from crappy power supplies
@@ -1461,7 +1469,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
-  if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
+  if( success )
     return; //OK
   
   if( batt_mv >= bat_overvolt_mv )
