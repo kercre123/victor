@@ -159,7 +159,7 @@ robot_sh "/bin/systemctl stop victor.target"
 
 logv "starting rsync daemon"
 robot_sh "/bin/systemctl is-active rsyncd.service > /dev/null 2>&1\
-          || /bin/systemctl start rsyncd.service"
+          || /bin/systemctl start rsyncd.service && sleep 0.5"
 
 pushd ${STAGING_DIR} > /dev/null 2>&1
 
