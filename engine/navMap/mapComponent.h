@@ -21,7 +21,6 @@
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/engineTimeStamp.h"
 
 #include "coretech/vision/engine/observableObjectLibrary.h"
 
@@ -31,7 +30,6 @@
 #include <assert.h>
 #include <string>
 #include <list>
-#include <map>
 
 namespace Anki {
 namespace Vector {
@@ -129,9 +127,8 @@ public:
   // return true of the specified region contains any objects of known collision types
   bool CheckForCollisions(const BoundedConvexSet2f& region) const;
 
-  // returns the accumulated area of cells in mm^2 in the current map that satisfy the predicate (and region, if supplied)
+  // returns the accumulated area of cells that satisfy the predicate
   float GetCollisionArea(const BoundedConvexSet2f& region) const;
-  float GetCollisionArea() const;
 
   // Remove all prox obstacles from the map.
   // CAUTION: This will entirely remove _all_ information about prox
@@ -144,8 +141,6 @@ public:
   
   // marks observable object as unobserved
   void MarkObjectUnobserved(const ObservableObject& object);
-  
-  void SendDASInfoAboutCurrentMap() const { SendDASInfoAboutMap(_currentMapOriginID); }
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -164,9 +159,6 @@ private:
   
   // remove current renders for all maps if any
   void ClearRender();
-  
-  // returns the accumulated area of cells in mm^2 in the entire specified map
-  float GetCollisionArea(const std::shared_ptr<const INavMap>& memoryMap) const;
 
   // update broadcast dirty flags with new changes
   void UpdateBroadcastFlags(bool wasChanged);
@@ -183,8 +175,6 @@ private:
 
   // search the navMap and remove any nodes that have exceeded their timeout period
   void TimeoutObjects();
-  
-  void SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Vision border detection
@@ -204,13 +194,7 @@ private:
     bool isInMap; // if true the pose was sent to the map, if false the pose was removed from the map
   };
   
-  struct MapInfo {
-    std::shared_ptr<INavMap> map;
-    EngineTimeStamp_t activationTime_ms;
-    TimeStamp_t activeDuration_ms;
-  };
-  
-  using MapTable                  = std::map<PoseOriginID_t, MapInfo>;
+  using MapTable                  = std::map<PoseOriginID_t, std::shared_ptr<INavMap>>;
   using OriginToPoseInMapInfo     = std::map<PoseOriginID_t, PoseInMapInfo>;
   using ObjectIdToPosesPerOrigin  = std::map<int, OriginToPoseInMapInfo>;
   using EventHandles              = std::vector<Signal::SmartHandle>;
