@@ -80,8 +80,8 @@ void Daemon::Start() {
   Anki::Wifi::Initialize();
 
   // Initialize IPC connections
+  InitializeCloudComms();   // must come before gateway comms
   InitializeGatewayComms();
-  InitializeCloudComms();
   InitializeEngineComms();
   Log::Write("Finished Starting");
 }

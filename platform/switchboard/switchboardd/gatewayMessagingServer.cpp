@@ -49,6 +49,7 @@ bool GatewayMessagingServer::Init() {
                 kGatewayMessageFrequency_s, 
                 kGatewayMessageFrequency_s);
   _handleGatewayMessageTimer.server = &_server;
+  _handleGatewayMessageTimer.messagingServer = this;
 
   ev_timer_start(loop_, &_handleGatewayMessageTimer.timer);
 
@@ -91,15 +92,20 @@ void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message
           isPrimary = false;
           tokenClient->SendSecondaryAuthRequest(sessionToken, "", "",
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
-            Log::Write("CloudReequest Auth Response Handler");
+            Log::Write("CloudRequest Auth Response Handler");
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
           });
         }
         break;
         case Anki::Vector::TokenError::InvalidToken: {
           // We received an invalid token
-          Log::Error("Received invalid token for JwtRequest");
-          SendMessage(SwitchboardResponse(Anki::Vector::AuthResponse("", "", error)));
+          Log::Error("Received invalid token for JwtRequest, try reassociation");
+          isPrimary = false;
+          tokenClient->SendReassociateAuthRequest(sessionToken, "", "",
+            [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
+            Log::Write("CloudRequest Auth Response Handler");
+            ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
+          });
         }
         break;
         case Anki::Vector::TokenError::Connection:

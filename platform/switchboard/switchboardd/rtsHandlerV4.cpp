@@ -529,7 +529,7 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
           isPrimary = false;
           std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendSecondaryAuthRequest(sessionToken, "", "",
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
-            Log::Write("CloudReequest Auth Response Handler");
+            Log::Write("CloudRequest Auth Response Handler");
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
           });
           _tokenClientHandles.push_back(authHandle);
@@ -537,9 +537,14 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         break;
         case Anki::Vector::TokenError::InvalidToken: {
           // We received an invalid token
-          Log::Error("Received invalid token for JwtRequest");
-          bool success = false;
-          SendRtsMessage<RtsCloudSessionResponse>(success, RtsCloudStatus::InvalidSessionToken, "");
+          Log::Error("Received invalid token for JwtRequest, trying to reassociate");
+          isPrimary = false;
+          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendReassociateAuthRequest(sessionToken, "", "",
+            [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
+            Log::Write("CloudRequest Auth Response Handler");
+            ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
+          });
+          _tokenClientHandles.push_back(authHandle);
         }
         break;
         case Anki::Vector::TokenError::Connection:

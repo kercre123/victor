@@ -694,8 +694,12 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
     const EngineTimeStamp_t currTimeStamp_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if ( _currentMapOriginID != PoseOriginList::UnknownOriginID )
     {
-      // increment the time that the previous _currentMapOriginID was active
-      _navMaps[_currentMapOriginID].activeDuration_ms += TimeStamp_t(currTimeStamp_ms - _navMaps[_currentMapOriginID].activationTime_ms);
+      // _currentMapOriginID might have been deleted as a zombie origin
+      auto it = _navMaps.find(_currentMapOriginID);
+      if( it != _navMaps.end() ) {
+        // increment the time that the previous _currentMapOriginID was active
+        it->second.activeDuration_ms += TimeStamp_t(currTimeStamp_ms - it->second.activationTime_ms);
+      }
     }
     
     
