@@ -30,6 +30,7 @@ namespace Vector {
 
 class BehaviorOnboardingDetectHabitat;
 class BehaviorOnboardingInterruptionHead;
+class BehaviorPopAWheelie;
 class IOnboardingStage;
 enum class OnboardingStages : uint8_t;
 enum class OnboardingSteps  : uint8_t;
@@ -194,8 +195,8 @@ private:
     std::shared_ptr<BehaviorOnboardingInterruptionHead> onChargerBehavior;
     std::shared_ptr<BehaviorOnboardingDetectHabitat> detectHabitatBehavior;
     
-    ICozmoBehaviorPtr normalReactToRobotOnBackBehavior;
-    ICozmoBehaviorPtr specialReactToRobotOnBackBehavior;
+    ICozmoBehaviorPtr reactToRobotOnBackBehavior;
+    std::shared_ptr<BehaviorPopAWheelie> onboardingPopAWheelieBehavior;
     
     std::unordered_map<OnboardingStages,StagePtr> stages;
     

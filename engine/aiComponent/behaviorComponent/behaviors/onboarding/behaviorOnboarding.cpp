@@ -253,8 +253,8 @@ void BehaviorOnboarding::InitBehavior()
                                   BEHAVIOR_CLASS(OnboardingDetectHabitat),
                                   _iConfig.detectHabitatBehavior );
   
-  _iConfig.normalReactToRobotOnBackBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ReactToRobotOnBack) );
-  _iConfig.specialReactToRobotOnBackBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingPopAWheelieRecovery) );
+  _iConfig.reactToRobotOnBackBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ReactToRobotOnBack) );
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPopAWheelie), BEHAVIOR_CLASS(PopAWheelie), _iConfig.onboardingPopAWheelieBehavior );
   
   {
     _iConfig.wakeUpBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( _iConfig.wakeUpID );
@@ -701,18 +701,18 @@ bool BehaviorOnboarding::CheckAndDelegateInterruptions()
               "BehaviorOnboarding.CheckAndDelegateInterruptions.SizeMismatch" );
   
   if( (_dVars.currentStage == OnboardingStages::FinishedMeetVictor)
-      && (_dVars.lastExpectedStep == external_interface::STEP_CUBE_TRICK) )
+      && (_dVars.lastExpectedStep == external_interface::STEP_CUBE_TRICK)
+      && _iConfig.onboardingPopAWheelieBehavior->IsActivated()
+      && _iConfig.onboardingPopAWheelieBehavior->IsPoppingWheelie() )
   {
-    // hack: suppress the normal react to robot on back behavior so that it doesn't trigger app
-    // messages. During this step, the popawheelie-specific ReactToRobotOnBackInternal will right
-    // the robot if the normalReactToRobotOnBackBehavior is prevented from activating.
-    _iConfig.normalReactToRobotOnBackBehavior->SetDontActivateThisTick( GetDebugLabel() );
+    // hack: suppress the normal react to robot on back behavior so that it doesn't abort the full
+    // popawheelie animation. todo VIC-5812: split that animation up into a get onto back animation, and a
+    // react to robot on back animation, so that we can play them both without suppressing behaviors
+    _iConfig.reactToRobotOnBackBehavior->SetDontActivateThisTick( GetDebugLabel() );
     
     // Also, since the robot OffTreadsState will often flicker into InAir during PopAWheelie,
     // prevent the pickup behavior from running while the special react to on back behavior is running
-    if( _iConfig.specialReactToRobotOnBackBehavior->IsActivated() ) {
-      _iConfig.pickedUpBehavior->SetDontActivateThisTick( GetDebugLabel() );
-    }
+    _iConfig.pickedUpBehavior->SetDontActivateThisTick( GetDebugLabel() );
   }
   
   for( size_t i=0; i<_iConfig.interruptions.size(); ++i ) {
