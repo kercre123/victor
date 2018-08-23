@@ -5,7 +5,7 @@
 Vector has a built-in camera which he uses to observe the world around him.
 
 The :class:`CameraComponent` class defined in this module is made available as
-:attr:`vector.robot.Robot.camera` and can be used to enable/disable image
+:attr:`anki_vector.robot.Robot.camera` and can be used to enable/disable image
 sending and observe images being sent by the robot.
 """
 
@@ -36,12 +36,12 @@ class CameraComponent(util.Component):
     The CameraComponent object receives images from Vector's camera, unpacks the data,
      composes it and makes it available as latest_image.
 
-    The :class:`vector.robot.Robot` or :class:`vector.robot.AsyncRobot` instance observes the camera.
+    The :class:`anki_vector.robot.Robot` or :class:`anki_vector.robot.AsyncRobot` instance observes the camera.
 
     .. code-block:: python
 
         from PIL import Image
-        with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
             image = Image.fromarray(camera.latest_image)
             image.show()
 
@@ -68,7 +68,7 @@ class CameraComponent(util.Component):
 
         .. code-block:: python
 
-            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """

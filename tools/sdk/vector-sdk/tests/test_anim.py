@@ -9,22 +9,22 @@ from pathlib import Path
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
 CUSTOM_ANIM_FOLDER = Path("test_assets", "custom_animations")
 
 
 def main():
     '''main execution'''
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
     print("------ begin testing animations ------")
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
         print("playing animation by name: anim_blackjack_victorwin_01")
         robot.anim.play_animation("anim_blackjack_victorwin_01")
 
-    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
+    with anki_vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
         print("------ testing load async animations ------")
 
         print("receiving all loaded animations")

@@ -83,7 +83,7 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
         formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         handler.setFormatter(formatter)
 
-    vector_logger = logging.getLogger('vector')
+    vector_logger = logging.getLogger('anki_vector')
     if not vector_logger.handlers:
         vector_logger.addHandler(handler)
         vector_logger.setLevel(general_log_level)
@@ -102,7 +102,7 @@ def angle_z_to_quaternion(angle_z):
     '''This function converts an angle in the z axis (Euler angle z component) to a quaternion.
 
     Args:
-        angle_z (:class:`vector.util.Angle`): The z axis angle.
+        angle_z (:class:`anki_vector.util.Angle`): The z axis angle.
 
     Returns:
         q0, q1, q2, q3 (float, float, float, float): A tuple with all the members
@@ -137,11 +137,11 @@ class Vector2:
         self._y = y
 
     def set_to(self, rhs):
-        """Copy the x and y components of the given vector.
+        """Copy the x and y components of the given Vector2 instance.
 
         Args:
             rhs (:class:`Vector2`): The right-hand-side of this assignment - the
-                source vector to copy into this vector.
+                source Vector2 to copy into this Vector2 instance.
         """
         self._x = rhs.x
         self._y = rhs.y
@@ -201,11 +201,11 @@ class Vector3:
         self._z = z
 
     def set_to(self, rhs):
-        """Copy the x, y and z components of the given vector.
+        """Copy the x, y and z components of the given Vector3 instance.
 
         Args:
             rhs (:class:`Vector3`): The right-hand-side of this assignment - the
-                source vector to copy into this vector.
+                source Vector3 to copy into this Vector3 instance.
         """
         self._x = rhs.x
         self._y = rhs.y
@@ -228,30 +228,30 @@ class Vector3:
 
     @property
     def magnitude_squared(self):
-        '''float: The magnitude of the vector'''
+        '''float: The magnitude of the Vector3 instance'''
         return self._x**2 + self._y**2 + self._z**2
 
     @property
     def magnitude(self):
-        '''float: The magnitude of the vector'''
+        '''float: The magnitude of the Vector3 instance'''
         return math.sqrt(self.magnitude_squared)
 
     @property
     def normalized(self):
-        ''':class:`Vector3`: Returns a vector with the same direction and unit magnitude'''
+        ''':class:`Vector3`: Returns a Vector3 instance with the same direction and unit magnitude'''
         mag = self.magnitude
         if mag == 0:
             return Vector3(0, 0, 0)
         return Vector3(self._x / mag, self._y / mag, self._z / mag)
 
     def dot(self, other):
-        ''':class:`Vector3`: Returns the dot product of this and another vector'''
+        ''':class:`Vector3`: Returns the dot product of this and another Vector3 instance'''
         if not isinstance(other, Vector3):
             raise TypeError("Unsupported argument for dot product, expected Vector3")
         return self._x * other.x + self._y * other.y + self._z * other.z
 
     def cross(self, other):
-        ''':class:`Vector3`: Returns the cross product of this and another vector'''
+        ''':class:`Vector3`: Returns the cross product of this and another Vector3 instance'''
         if not isinstance(other, Vector3):
             raise TypeError("Unsupported argument for cross product, expected Vector3")
 
@@ -343,12 +343,12 @@ class Angle:
 
 
 def degrees(degrees: float):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`vector.util.Angle` instance set to the specified number of degrees.'''
+    '''Returns an :class:`anki_vector.util.Angle` instance set to the specified number of degrees.'''
     return Angle(degrees=degrees)
 
 
 def radians(radians: float):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`vector.util.Angle` instance set to the specified number of radians.'''
+    '''Returns an :class:`anki_vector.util.Angle` instance set to the specified number of radians.'''
     return Angle(radians=radians)
 
 
@@ -605,7 +605,7 @@ class Position(Vector3):
 
 
 class Pose:
-    '''Represents the current pose (position and orientation) of vector'''
+    '''Represents the current pose (position and orientation) of the robot'''
 
     __slots__ = ('_position', '_rotation', '_origin_id')
 
@@ -635,10 +635,10 @@ class Pose:
         '''Creates a new pose such that new_pose's origin is now at the location of this pose.
 
         Args:
-            new_pose (:class:`vector.util.Pose`): The pose which origin is being changed.
+            new_pose (:class:`anki_vector.util.Pose`): The pose which origin is being changed.
 
         Returns:
-            A :class:`vector.util.pose` object for which the origin was this pose's origin.
+            A :class:`anki_vector.util.pose` object for which the origin was this pose's origin.
         '''
 
         if not isinstance(new_pose, Pose):
@@ -671,7 +671,7 @@ class Pose:
         Poses are comparable if they're valid and having matching origin IDs.
 
         Args:
-            other_pose (:class:`vector.util.Pose`): The other pose to compare against.
+            other_pose (:class:`anki_vector.util.Pose`): The other pose to compare against.
         Returns:
             bool: True if the two poses are comparable, False otherwise.
         '''
@@ -682,7 +682,7 @@ class Pose:
         """Convert the Pose to a Matrix44.
 
         Returns:
-            :class:`vector.util.Matrix44`: A matrix representing this Pose's
+            :class:`anki_vector.util.Matrix44`: A matrix representing this Pose's
             position and rotation.
         """
         return self.rotation.to_matrix(*self.position.x_y_z)
@@ -778,12 +778,12 @@ class Distance:
 
 
 def distance_mm(distance_mm):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`vector.util.Distance` instance set to the specified number of millimeters.'''
+    '''Returns an :class:`anki_vector.util.Distance` instance set to the specified number of millimeters.'''
     return Distance(distance_mm=distance_mm)
 
 
 def distance_inches(distance_inches):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`vector.util.Distance` instance set to the specified number of inches.'''
+    '''Returns an :class:`anki_vector.util.Distance` instance set to the specified number of inches.'''
     return Distance(distance_inches=distance_inches)
 
 
@@ -837,7 +837,7 @@ class Speed:
 
 
 def speed_mmps(speed_mmps):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`vector.util.Speed` instance set to the specified millimeters per second speed'''
+    '''Returns an :class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed'''
     return Speed(speed_mmps=speed_mmps)
 
 

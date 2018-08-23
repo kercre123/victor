@@ -18,7 +18,7 @@ Either:
 
 Or:
 
-* Install the vector sdk using `setup.py`: `pip3 install -e .`.
+* Install the Anki Vector sdk using `setup.py`: `pip3 install -e .`.
 
 ## Tests
 

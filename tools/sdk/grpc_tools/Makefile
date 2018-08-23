@@ -8,7 +8,7 @@ FORCE ?= 0
 
 current_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GIT_ROOT := $(abspath $(current_dir)/../../..)
-PYTHON_STRUCTURE := vector/messaging
+PYTHON_STRUCTURE := anki_vector/messaging
 PYTHON_SDK_ROOT := $(abspath $(current_dir)/../vector-sdk)
 PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
 GATEWAY_GO_FILES := $(filter-out $(GIT_ROOT)/cloud/gateway/config_mac.go,$(wildcard $(GIT_ROOT)/cloud/gateway/*.go))
@@ -33,7 +33,7 @@ pip: .PHONY
 gen_py_proto: .PHONY
 	mkdir -p $(PYTHON_OUT)
 	cp $(GIT_ROOT)/cloud/gateway/*.proto $(PYTHON_OUT)
-	sed -i -e 's/import "\([^\/]*\).proto"/import "vector\/messaging\/\1.proto"/g' $(PYTHON_OUT)/*.proto
+	sed -i -e 's/import "\([^\/]*\).proto"/import "anki_vector\/messaging\/\1.proto"/g' $(PYTHON_OUT)/*.proto
 	rm $(PYTHON_OUT)/*.proto-e
 
 go: .PHONY
@@ -58,18 +58,18 @@ pylint: pylint_tests pylint_examples pylint_main
 
 autopep: .PHONY
 	python3 -m pip install autopep8
-	python3 -m autopep8 --ignore E501,E402 --in-place $(shell find ../vector-sdk/examples -type f -name "*.py") ../vector-sdk/tests/*.py ../vector-sdk/tests/automated/*.py ../vector-sdk/vector/*.py
+	python3 -m autopep8 --ignore E501,E402 --in-place $(shell find ../vector-sdk/examples -type f -name "*.py") ../vector-sdk/tests/*.py ../vector-sdk/tests/automated/*.py ../vector-sdk/anki_vector/*.py
 
 pylint_main: autopep
-	@echo "> Running pylint on vector module"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1 -name "*.py") || exit 0
+	@echo "> Running pylint on anki_vector module"
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/anki_vector -type f -d 1 -name "*.py") || exit 0
 
 pylint_tests: autopep
 	@echo "> Running pylint on test files"
 	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 -name "*.py") || exit 0
 
 pylint_examples: autopep
-	@echo "> Running pylint on vector examples"
+	@echo "> Running pylint on anki_vector examples"
 	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/examples -type f -name "*.py") || exit 0
 
 

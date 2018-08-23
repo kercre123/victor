@@ -10,14 +10,14 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
     '''main execution'''
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
-    with vector.Robot(args.name, args.ip, str(args.cert), args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), args.port) as robot:
         print("------ use low level motor controls to drive the robot ------")
         robot.motors.set_wheel_motors(100.0, 100.0, 100.0, 100.0)
         time.sleep(5.0)

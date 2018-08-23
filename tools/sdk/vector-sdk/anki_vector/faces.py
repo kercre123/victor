@@ -5,7 +5,7 @@
 Vector is capable of recognizing human faces, tracking their position and rotation
 ("pose") and assigning names to them via an enrollment process.
 
-The :class:`vector.world.World` object keeps track of faces the robot currently
+The :class:`anki_vector.world.World` object keeps track of faces the robot currently
 knows about, along with those that are currently visible to the camera.
 
 Each face is assigned a :class:`Face` object, which generates a number of
@@ -32,7 +32,7 @@ class Expression(Enum):
     '''Facial expressions that Vector can distinguish
 
     Facial expression not recognized.
-    Call :func:`vector.robot.Robot.enable_vision_mode` to enable recognition.
+    Call :func:`anki_vector.robot.Robot.enable_vision_mode` to enable recognition.
     '''
     UNKNOWN = protocol.FacialExpression.Value("EXPRESSION_UNKNOWN")
     #: Facial expression neutral
@@ -154,12 +154,12 @@ class Face:
 
     @property
     def pose(self):
-        ''':class:`vector.util.Pose`: Position and rotation of the face observed'''
+        ''':class:`anki_vector.util.Pose`: Position and rotation of the face observed'''
         return self._pose
 
     @property
     def img_rect(self):
-        ''':class:`vector.util.ImageRect`: Position in image coords'''
+        ''':class:`anki_vector.util.ImageRect`: Position in image coords'''
         return self._img_rect
 
     @property
@@ -167,7 +167,7 @@ class Face:
         '''string: The facial expression Vector has recognized on the face.
 
         Will be :attr:`Expression.UNKNOWN` by default if you haven't called
-        :meth:`vector.robot.Robot.enable_vision_mode` to enable
+        :meth:`anki_vector.robot.Robot.enable_vision_mode` to enable
         the facial expression estimation. Otherwise it will be equal to one of:
         :attr:`Expression.NEUTRAL`, :attr:`Expression.HAPPINESS`,
         :attr:`Expression.SURPRISE`, :attr:`Expression.ANGER`,
@@ -180,7 +180,7 @@ class Face:
         '''int: The score/confidence that :attr:`expression` was correct.
 
         Will be 0 if expression is :attr:`Expression.UNKNOWN` (e.g. if
-        :meth:`vector.robot.Robot.enable_vision_mode` wasn't
+        :meth:`anki_vector.robot.Robot.enable_vision_mode` wasn't
         called yet). The maximum possible score is 100.
         '''
         return self._expression_score

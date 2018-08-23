@@ -17,13 +17,13 @@
 """Tell Vector to drive on and off the charger.
 """
 
-import vector
+import anki_vector
 
 
 def main():
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("Drive Vector onto charger...")
         robot.behavior.drive_on_charger()
 

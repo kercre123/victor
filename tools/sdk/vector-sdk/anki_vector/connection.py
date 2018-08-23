@@ -116,7 +116,7 @@ class Connection:
         conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/tmp/cert.pem")
         conn.connect()
         # Run your commands (for example play animation)
-        anim = vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
+        anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
         await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         # Close the connection
         conn.close()
@@ -145,11 +145,11 @@ class Connection:
     def interface(self) -> client.ExternalInterfaceStub:
         """A direct reference to the connected aiogrpc interface.
 
-        This may be used to directly call grpc messages bypassing :class:`vector.Robot`
+        This may be used to directly call grpc messages bypassing :class:`anki_vector.Robot`
 
         .. code-block:: python
 
-            anim = vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
+            anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
             await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         """
         return self._interface
@@ -162,7 +162,7 @@ class Connection:
         .. code-block:: python
             :emphasize-lines: 2
 
-            async def auto_reconnect(conn: vector.connection.Connection):
+            async def auto_reconnect(conn: anki_vector.connection.Connection):
                 await conn.control_lost_event.wait()
                 conn.request_control()
         """
@@ -174,7 +174,7 @@ class Connection:
         .. code-block:: python
             :emphasize-lines: 3
 
-            async def auto_reconnect(conn: vector.connection.Connection):
+            async def auto_reconnect(conn: anki_vector.connection.Connection):
                 await conn.control_lost_event.wait()
                 conn.request_control(timeout=5.0)
 
@@ -197,7 +197,7 @@ class Connection:
             # Add a 5 second timeout to reduce the amount of time allowed for a connection
             conn.connect(timeout=5.0)
             # Run your commands (for example play animation)
-            anim = vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
+            anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
             await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()
@@ -256,7 +256,7 @@ class Connection:
             conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/tmp/cert.pem")
             conn.connect()
             # Run your commands (for example play animation)
-            anim = vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
+            anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
             await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()

@@ -12,17 +12,17 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
     '''main execution'''
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
     print("------ begin cube light interactions ------")
 
     # The robot connects to a cube, and performs a number of manipulations on its lights
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
 
         # ensure we are connected to a cube
         robot.world.connect_cube()
@@ -32,14 +32,14 @@ def main():
             cube = connected_cubes[0]
 
             # Set cube lights to yellow
-            cube.set_lights(vector.lights.yellow_light)
+            cube.set_lights(anki_vector.lights.yellow_light)
             time.sleep(2.5)
 
             # Set cube lights to red, green, blue, and white
-            cube.set_light_corners(vector.lights.blue_light,
-                                   vector.lights.green_light,
-                                   vector.lights.red_light,
-                                   vector.lights.white_light)
+            cube.set_light_corners(anki_vector.lights.blue_light,
+                                   anki_vector.lights.green_light,
+                                   anki_vector.lights.red_light,
+                                   anki_vector.lights.white_light)
             time.sleep(2.5)
 
             # Turn off cube lights

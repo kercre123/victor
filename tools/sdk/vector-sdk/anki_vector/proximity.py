@@ -13,8 +13,8 @@ from . import util
 class ProximitySensorData:
     '''A distance sample from the time-of-flight sensor with metadata describing reliability of the measurement
 
-    The proximity sensor is located near the bottom of vector between the two front wheels, facing forward.  The
-    reported distance describes how far in front of this sensor vector feels an obstacle is.  The sensor estimates
+    The proximity sensor is located near the bottom of Vector between the two front wheels, facing forward.  The
+    reported distance describes how far in front of this sensor the robot feels an obstacle is.  The sensor estimates
     based on time of flight information within a field of view which the engine resolves to a certain quality value.
 
     Four additional flags are supplied by the engine to indicate whether this proximity data is considered valid
@@ -124,7 +124,7 @@ class ProximityComponent(util.Component):
 
       .. code-block:: python
 
-         with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+         with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
              proximity_data = robot.proximity.last_sensor_reading
              if proximity_data is not None:
                  print('Proximity distance: {0}, engine considers useful: {1}'.format(proximity_data.distance, proximity_data.is_valid))
@@ -137,7 +137,7 @@ class ProximityComponent(util.Component):
 
     @property
     def last_sensor_reading(self):
-        ''':class:`vector.proximity.ProximitySensorData`: The last reported sensor data.
+        ''':class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data.
 
         .. code-block:: python
 
@@ -147,7 +147,7 @@ class ProximityComponent(util.Component):
 
     @property
     def last_valid_sensor_reading(self):
-        ''':class:`vector.proximity.ProximitySensorData`: The last reported sensor data
+        ''':class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data
         which is considered useful for object detection.
 
         .. code-block:: python

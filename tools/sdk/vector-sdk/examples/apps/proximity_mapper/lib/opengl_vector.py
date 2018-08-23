@@ -39,10 +39,10 @@ import math
 import time
 from typing import List
 
-from vector.faces import Face
-from vector.objects import LightCube
-from vector.robot import Robot
-from vector import util
+from anki_vector.faces import Face
+from anki_vector.objects import LightCube
+from anki_vector.robot import Robot
+from anki_vector import util
 
 import opengl
 
@@ -214,7 +214,7 @@ class RobotView(opengl.PrecomputedView):
         self.build_from_mesh_data(mesh_data)
 
     def _display_vector_body(self):
-        """Displays vector's body to the current OpenGL context
+        """Displays the robot's body to the current OpenGL context
         """
 
         # Render the static body meshes - first the main body:
@@ -231,7 +231,7 @@ class RobotView(opengl.PrecomputedView):
         self.display_by_key("tracks_R_geo")
 
     def _display_vector_lift(self, lift_angle: float):
-        """Displays vector's lift to the current OpenGL context
+        """Displays the robot's lift to the current OpenGL context
 
         :param lift_angle: the angle of the lift in radians
         """
@@ -273,7 +273,7 @@ class RobotView(opengl.PrecomputedView):
         glPopMatrix()
 
     def _display_vector_head(self, head_angle: float):
-        """Displays vector's head to the current OpenGL context
+        """Displays the robot's head to the current OpenGL context
 
         :param head_angle: the angle of the lift in radians
         """
@@ -340,7 +340,7 @@ class RobotView(opengl.PrecomputedView):
 
 
 class VectorViewManifest():
-    """A collection of vector specific source data containing views to display.
+    """A collection of Vector-specific source data containing views to display.
     """
 
     def __init__(self):
@@ -350,7 +350,7 @@ class VectorViewManifest():
 
     @property
     def light_cube_view(self) -> LightCubeView:
-        """A precomputed view of the vector light cube."""
+        """A precomputed view of Vector's light cube."""
         return self._light_cube_view
 
     @property
@@ -363,7 +363,7 @@ class VectorViewManifest():
 
     @property
     def robot_view(self) -> RobotView:
-        """A precomputed view of the vector robot."""
+        """A precomputed view of the robot."""
         return self._robot_view
 
     def load_assets(self):

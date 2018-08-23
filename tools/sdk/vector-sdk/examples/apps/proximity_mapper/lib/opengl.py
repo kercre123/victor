@@ -42,7 +42,7 @@ from typing import List, Dict
 
 from pkg_resources import resource_stream
 
-from vector import util
+from anki_vector import util
 
 
 class InvalidOpenGLGlutImplementation(ImportError):
@@ -598,7 +598,7 @@ class Camera():
     :param up: The initial up vector of the camera.
     :param distance: The initial distance between the camera and it's target.
     :param pitch: The camera's current rotation about its X axis
-    :param yaw: The camera's current rotation about its world_up axis
+    :param yaw: The camera's current rotation about its up axis
     """
 
     def __init__(self, look_at: util.Vector3, up: util.Vector3, distance: float, pitch: float, yaw: float):
@@ -626,7 +626,7 @@ class Camera():
 
         :param forward_amount: distance to move along the camera's current forward heading.
         :param right_amount: distance to move along a right angle to the camera's current forward heading.
-        :param up_amount: distance to move along the camera's world_up vector.
+        :param up_amount: distance to move along the camera's up vector.
         """
         self._look_at += self._up * up_amount
 
@@ -658,7 +658,7 @@ class Camera():
     def turn(self, yaw_delta: float, pitch_delta: float):
         """Incrementally turns the camera.
 
-        :param yaw_delta: Amount to rotate around the camera's world_up axis.
+        :param yaw_delta: Amount to rotate around the camera's up axis.
         :param pitch_delta: Amount to rotate around the camera's X axis.  This is automatically capped between +/- pi/2
         """
         # Adjust the Camera pitch and yaw

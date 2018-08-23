@@ -57,7 +57,7 @@ class BehaviorComponent(util.Component):
         and rotation.angle_z.
 
         Args:
-            pose: (:class:`vector.util.Pose`): The destination pose.
+            pose: (:class:`anki_vector.util.Pose`): The destination pose.
             relative_to_robot (bool): Whether the given pose is relative to
                 the robot's pose.
             motion_prof_map (dict): Provide custom speed, acceleration and deceleration
@@ -75,7 +75,7 @@ class BehaviorComponent(util.Component):
                 is_custom (bool)
 
         Returns:
-            A :class:`vector.messaging.external_interface_pb2.GoToPoseResult` object which
+            A :class:`anki_vector.messaging.external_interface_pb2.GoToPoseResult` object which
             provides an action result.
         '''
         default_motion_profile = {
@@ -113,9 +113,9 @@ class BehaviorComponent(util.Component):
         Vector must be off of the charger for this movement action.
 
         Args:
-            distance (vector.util.Distance): The distance to drive
+            distance (anki_vector.util.Distance): The distance to drive
                 (>0 for forwards, <0 for backwards)
-            speed (vector.util.Speed): The speed to drive at
+            speed (anki_vector.util.Speed): The speed to drive at
                 (should always be >0, the abs(speed) is used internally)
             should_play_anim (bool): Whether to play idle animations
                 whilst driving (tilt head, hum, animated eyes, etc.)
@@ -135,12 +135,12 @@ class BehaviorComponent(util.Component):
         Vector must be off of the charger for this movement action.
 
         Args:
-            angle (vector.util.Angle): The angle to turn. Positive
+            angle (anki_vector.util.Angle): The angle to turn. Positive
                 values turn to the left, negative values to the right.
-            speed (vector.util.Angle): Angular turn speed (per second).
-            accel (vector.util.Angle): Acceleration of angular turn
+            speed (anki_vector.util.Angle): Angular turn speed (per second).
+            accel (anki_vector.util.Angle): Acceleration of angular turn
                 (per second squared).
-            angle_tolerance (vector.util.Angle): angular tolerance
+            angle_tolerance (anki_vector.util.Angle): angular tolerance
                 to consider the action complete (this is clamped to a minimum
                 of 2 degrees internally).
             is_absolute (bool): True to turn to a specific angle, False to
@@ -161,7 +161,7 @@ class BehaviorComponent(util.Component):
         '''Tell Vector's head to turn to a given angle.
 
         Args:
-            angle: (:class:`vector.util.Angle`): Desired angle for
+            angle: (:class:`anki_vector.util.Angle`): Desired angle for
                 Vector's head. (:const:`MIN_HEAD_ANGLE` to
                 :const:`MAX_HEAD_ANGLE`).
             max_speed (float): Maximum speed of Vector's head in radians per second.

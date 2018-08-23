@@ -21,10 +21,10 @@ import sys
 from google.protobuf.json_format import MessageToJson
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
-from vector.messaging import protocol  # pylint: disable=wrong-import-position
-from vector.messaging import client  # pylint: disable=wrong-import-position
+from anki_vector.messaging import protocol  # pylint: disable=wrong-import-position
+from anki_vector.messaging import client  # pylint: disable=wrong-import-position
 
 Interface = client.ExternalInterfaceServicer
 
@@ -167,7 +167,7 @@ MESSAGES_TO_TEST = [
      TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_names'])),  # pylint: disable=no-member
     # DisplayFaceImageRGB message
     (Interface.DisplayFaceImageRGB,
-     protocol.DisplayFaceImageRGBRequest(face_data=bytes(vector.color.Color(rgb=[255, 0, 0]).rgb565_bytepair * 17664), duration_ms=1000, interrupt_running=True),
+     protocol.DisplayFaceImageRGBRequest(face_data=bytes(anki_vector.color.Color(rgb=[255, 0, 0]).rgb565_bytepair * 17664), duration_ms=1000, interrupt_running=True),
      TestResultMatches(protocol.DisplayFaceImageRGBResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # UpdateEnrolledFaceByID message
     (Interface.UpdateEnrolledFaceByID,
@@ -275,8 +275,8 @@ MESSAGES_TO_TEST = [
     (client.ExternalInterfaceServicer.SetCubeLights,
      protocol.SetCubeLightsRequest(
          object_id=1,
-         on_color=[vector.color.green.int_color] * 4,
-         off_color=[vector.color.blue.int_color] * 4,
+         on_color=[anki_vector.color.green.int_color] * 4,
+         off_color=[anki_vector.color.blue.int_color] * 4,
          on_period_ms=[1000] * 4,
          off_period_ms=[1000] * 4,
          transition_on_period_ms=[1000] * 4,
@@ -413,9 +413,9 @@ async def run_message_tests(robot, future):
 
 def main():
     '''main execution'''
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
-    logger = logging.getLogger('vector')
+    logger = logging.getLogger('anki_vector')
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('robot_messages_debug.log')
     fh.setLevel(logging.DEBUG)
@@ -423,7 +423,7 @@ def main():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port, default_logging=False) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()

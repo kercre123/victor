@@ -25,7 +25,7 @@ class ViewerComponent(util.Component):
     obtained from Vector's camera
 
     .. code-block:: python
-        with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
+        with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
             robot.loop.run_until_complete(utilities.delay_close(5))
 
     :param robot: A reference to the owner Robot object. (May be :class:`None`)
@@ -74,7 +74,7 @@ class ViewerComponent(util.Component):
 
         .. code-block:: python
 
-            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
                 robot.viewer.show_video()
                 robot.loop.run_until_complete(utilities.delay_close(5))
 
@@ -86,7 +86,7 @@ class ViewerComponent(util.Component):
     def stop_video(self) -> None:
         """Stop rendering video of Vector's camera feed
 
-        with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
+        with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.viewer.stop_video()
                 robot.loop.run_until_complete(utilities.delay_close(5))

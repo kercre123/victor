@@ -19,12 +19,12 @@
 Make Vector say 'Hello World' in this simple Vector SDK example program.
 """
 
-import vector
+import anki_vector
 
 
 def main():
-    args = vector.util.parse_test_args()
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    args = anki_vector.util.parse_test_args()
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         print("Say 'Hello World'...")
         robot.say_text("Hello World")
 

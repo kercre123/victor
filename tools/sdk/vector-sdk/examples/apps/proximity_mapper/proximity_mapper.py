@@ -34,8 +34,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 from proximity_mapper_state import ClearedTerritory, MapState, Wall, WallSegment   # pylint: disable=wrong-import-position
 from opengl_viewer import OpenGLViewer   # pylint: disable=wrong-import-position
 
-import vector   # pylint: disable=wrong-import-position
-from vector.util import parse_test_args, radians, degrees, distance_mm, speed_mmps, Vector3  # pylint: disable=wrong-import-position
+import anki_vector   # pylint: disable=wrong-import-position
+from anki_vector.util import parse_test_args, radians, degrees, distance_mm, speed_mmps, Vector3  # pylint: disable=wrong-import-position
 
 # Constants
 
@@ -76,13 +76,13 @@ PROXIMITY_EXPLORATION_SHUTDOWN_DELAY_S = 8.0
 
 
 # @TODO: once pathfinding is more reliable, this should be enabled.
-#: ACTIVELY_EXPLORE_SPACE can be activated to allow vector to move
+#: ACTIVELY_EXPLORE_SPACE can be activated to allow the robot to move
 #: into an open space after scanning, and continue the process until all open
 #: spaces are explored.
 ACTIVELY_EXPLORE_SPACE = True
-#: The speed (in millimeters/second) vector drives while exploring.
+#: The speed (in millimeters/second) the robot drives while exploring.
 EXPLORE_DRIVE_SPEED_MMPS = 40.0
-#: The speed (in degrees/second) vector turns while exploring.
+#: The speed (in degrees/second) the robot turns while exploring.
 EXPLORE_TURN_SPEED_DPS = 90.0
 
 
@@ -166,7 +166,7 @@ async def add_proximity_non_contact_to_state(node_position: Vector3, state: MapS
 
 
 #: Modifies the map state with the details of a proximity reading
-async def analyze_proximity_sample(reading: vector.proximity.ProximitySensorData, robot: vector.robot.Robot, state: MapState):
+async def analyze_proximity_sample(reading: anki_vector.proximity.ProximitySensorData, robot: anki_vector.robot.Robot, state: MapState):
     # Check if the reading meets the engine's metrics for valid, and that its within our specified distance threshold.
     reading_contacted = reading.is_valid and reading.distance.distance_mm < PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM
 
@@ -192,7 +192,7 @@ async def analyze_proximity_sample(reading: vector.proximity.ProximitySensorData
 
 
 #: repeatedly collects proximity data sample and converts them to nodes and walls for the map state
-async def collect_proximity_data_loop(robot: vector.robot.Robot, future: concurrent.futures.Future, state: MapState):
+async def collect_proximity_data_loop(robot: anki_vector.robot.Robot, future: concurrent.futures.Future, state: MapState):
     try:
         scan_interval = 1.0 / PROXIMITY_SCAN_SAMPLE_FREQUENCY_HZ
 
@@ -213,7 +213,7 @@ async def collect_proximity_data_loop(robot: vector.robot.Robot, future: concurr
 
 
 #: Updates the map state by rotating 360 degrees and collecting/applying proximity data samples.
-async def scan_area(robot: vector.robot.Robot, state: MapState):
+async def scan_area(robot: anki_vector.robot.Robot, state: MapState):
     collect_future = concurrent.futures.Future()
 
     # The collect_proximity_data task relies on this external trigger to know when its finished.
@@ -236,7 +236,7 @@ async def scan_area(robot: vector.robot.Robot, state: MapState):
 
 
 #: Top level call to perform exploration and environment mapping
-async def map_explorer(robot: vector.robot.Robot, viewer: OpenGLViewer):
+async def map_explorer(robot: anki_vector.robot.Robot, viewer: OpenGLViewer):
     # Drop the lift, so that it does not block the proximity sensor
     await robot.behavior.set_lift_height(30.0)
 
@@ -312,7 +312,7 @@ async def map_explorer(robot: vector.robot.Robot, viewer: OpenGLViewer):
 
 # Connect to the robot
 args = parse_test_args()
-with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robotInstance:
+with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robotInstance:
     # Creates a 3d viewer for the connected robot.
     viewerInstance = OpenGLViewer(robot=robotInstance)
 

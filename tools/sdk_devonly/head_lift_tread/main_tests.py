@@ -8,9 +8,9 @@ import head_test as headTest
 import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.getcwd())),'sdk/vector-sdk'))
-import vector
+import anki_vector
 
-from vector.util import degrees, distance_mm, speed_mmps
+from anki_vector.util import degrees, distance_mm, speed_mmps
 
 BATTERY_LEVEL_LOW = 1
 BATTERY_LEVEL_FULL = 3
@@ -27,8 +27,8 @@ except KeyError:
     print("Please set the environment variable ANGLE_CUBE_ADDR")
 
 def Main():
-  args = vector.util.parse_test_args()
-  robot = vector.Robot(args.name, args.ip, str(args.cert), port="443")
+  args = anki_vector.util.parse_test_args()
+  robot = anki_vector.Robot(args.name, args.ip, str(args.cert), port="443")
   robot.connect()
   robot.behavior.set_head_angle(degrees(0.0))
 
@@ -92,10 +92,10 @@ def ConnectCube(robot, address):
   else:
     connected_cubes = robot.world.connected_light_cubes
     cube = connected_cubes[0]
-    cube.set_light_corners(vector.lights.blue_light,
-                          vector.lights.green_light,
-                          vector.lights.blue_light,
-                          vector.lights.green_light)
+    cube.set_light_corners(anki_vector.lights.blue_light,
+                          anki_vector.lights.green_light,
+                          anki_vector.lights.blue_light,
+                          anki_vector.lights.green_light)
 
 def CorrectCube(cube, address):
   try:

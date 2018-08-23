@@ -27,7 +27,7 @@ sdk_base_dir = os.path.join(here, '..', '..')
 
 
 def fetch_sdk_version():
-    with open(os.path.join(sdk_base_dir, 'vector', 'version.py')) as f:
+    with open(os.path.join(sdk_base_dir, 'anki_vector', 'version.py')) as f:
         ns = {}
         exec(f.read(), ns)
         return ns

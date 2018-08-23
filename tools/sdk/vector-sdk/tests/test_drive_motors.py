@@ -10,14 +10,14 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
     '''main execution'''
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         # manually drive about 0.1 m forward (100.0 mm/s for 1 sec) with a
         # 100.0 mm/s2 acceleration
         robot.motors.set_wheel_motors(100.0, 100.0, 100.0, 100.0)

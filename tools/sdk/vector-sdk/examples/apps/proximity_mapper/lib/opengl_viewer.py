@@ -26,7 +26,7 @@ Example:
         def my_function(robot):
             robot.play_animation("anim_blackjack_victorwin_01")
 
-        with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
             viewer = opengl.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
@@ -61,8 +61,8 @@ from typing import List
 import opengl
 import opengl_vector
 
-from vector.robot import Robot
-from vector import util
+from anki_vector.robot import Robot
+from anki_vector import util
 
 try:
     from OpenGL.GL import (GL_FILL,
@@ -85,7 +85,7 @@ except ImportError as import_exc:
 
 
 class VectorException(BaseException):
-    """Raised by a failure in the owned vector thread while the openGL viewer is running."""
+    """Raised by a failure in the owned Vector thread while the openGL viewer is running."""
 
 
 class _LoopThread:
@@ -323,21 +323,21 @@ class _ExternalRenderCallFunctor():  # pylint: disable=too-few-public-methods
         self._f(*self._f_args)
 
 
-#: A default window resolution provided for opengl vector programs
+#: A default window resolution provided for opengl Vector programs
 #: 800x600 is large enough to see detail, while fitting on the smaller
 #: end of modern monitors.
 default_resolution = [800, 600]
 
-#: A default projector configurate provided for opengl vector programs
+#: A default projector configurate provided for opengl Vector programs
 #: A Field of View of 45 degrees is common for 3d applications,
 #: and a viewable distance range of 1.0 to 1000.0 will provide a
-#: visible space comparable with most physical vector environments.
+#: visible space comparable with most physical Vector environments.
 default_projector = opengl.Projector(
     fov=45.0,
     near_clip_plane=1.0,
     far_clip_plane=1000.0)
 
-#: A default camera object provided for opengl vector programs.
+#: A default camera object provided for opengl Vector programs.
 #: Starts close to and looking at the charger.
 default_camera = opengl.Camera(
     look_at=util.Vector3(100.0, -25.0, 0.0),
@@ -346,7 +346,7 @@ default_camera = opengl.Camera(
     pitch=math.radians(40),
     yaw=math.radians(270))
 
-#: A default light group provided for opengl vector programs.
+#: A default light group provided for opengl Vector programs.
 #: Contains one light near the origin.
 default_lights = [opengl.Light(
     ambient_color=[1.0, 1.0, 1.0, 1.0],

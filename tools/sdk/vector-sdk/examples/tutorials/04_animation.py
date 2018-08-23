@@ -19,14 +19,14 @@
 Play an animation using a trigger, and then another animation by name.
 """
 
-import vector
+import anki_vector
 
 
 def main():
-    args = vector.util.parse_test_args()
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    args = anki_vector.util.parse_test_args()
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.behavior.drive_off_charger()
-        
+
         # Play an animation via a Trigger - see list of available triggers here:
         # TODO show list of animation triggers
         # A trigger can pick from several appropriate animations for variety.
@@ -39,7 +39,7 @@ def main():
         # we recommend using play_anim_trigger above instead.
         # See the remote_control_cozmo.py example in apps for an easy way to see
         # the available animations.
-        animation = 'anim_weather_snow_01'
+        animation = 'anim_blackjack_victorwin_01'
         print("Playing animation by name: " + animation)
         robot.anim.play_animation(animation)
 

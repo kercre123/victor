@@ -12,13 +12,13 @@ import sys
 from setuptools import setup
 
 if sys.version_info < (3, 5, 1):
-    sys.exit('vector requires Python 3.5.1 or later')
+    sys.exit('The Anki Vector SDK requires Python 3.5.1 or later')
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 def fetch_version():
     '''Get the version from the package'''
-    with open(os.path.join(HERE, 'vector', 'version.py')) as version_file:
+    with open(os.path.join(HERE, 'anki_vector', 'version.py')) as version_file:
         versions = {}
         exec(version_file.read(), versions)
         return versions
@@ -27,7 +27,7 @@ VERSION_DATA = fetch_version()
 VERSION = VERSION_DATA['__version__']
 
 setup(
-    name='vector',
+    name='anki_vector',
     version=VERSION,
     description='SDK for Anki Vector',
     long_description=__doc__,

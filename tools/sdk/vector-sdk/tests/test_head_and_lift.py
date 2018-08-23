@@ -9,18 +9,18 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
-from vector.util import degrees  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
+from anki_vector.util import degrees  # pylint: disable=wrong-import-position
 
 
 def main():
     '''main execution'''
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
     print("------ begin testing head and lift actions ------")
 
     # The robot shall lower and raise his head and lift
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.behavior.set_head_angle(degrees(-50.0))
         time.sleep(2)
 

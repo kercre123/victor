@@ -64,7 +64,7 @@ class AnimationComponent(util.Component):
             we recommend using :meth:`play_animation_trigger` instead. TODO: implement play_animation_trigger
 
         Args:
-            anim (str or vector.protocol.Animation): The animation to play.
+            anim (str or anki_vector.protocol.Animation): The animation to play.
             loop_count (int): Number of times to play the animation.
         '''
         animation = anim

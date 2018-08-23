@@ -21,15 +21,15 @@ This script combines the two previous examples (02_drive_and_turn.py and
 left 4 times in a row.
 """
 
-import vector
-from vector.util import degrees, distance_mm, speed_mmps
+import anki_vector
+from anki_vector.util import degrees, distance_mm, speed_mmps
 
 
 def main():
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
     # The robot drives straight, stops and then turns around
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         robot.behavior.drive_off_charger()
 
         # Use a "for loop" to repeat the indented code 4 times

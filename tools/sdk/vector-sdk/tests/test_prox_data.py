@@ -9,15 +9,15 @@ import sys
 import utilities
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
     print("------ begin testing prox sensor data ------")
 
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         loop = robot.loop
         for _ in range(30):
             proximity_data = robot.proximity.last_valid_sensor_reading

@@ -6,29 +6,29 @@ The API
     :nosignatures:
     :toctree: generated
 
-    vector
-    vector.animation
-    vector.backpack
-    vector.behavior
-    vector.color
-    vector.connection
-    vector.events
-    vector.exceptions
-    vector.faces
-    vector.lights
-    vector.messaging
-    vector.messaging.client
-    vector.messaging.protocol
-    vector.motors
-    vector.objects
-    vector.oled_face
-    vector.photos
-    vector.proximity
-    vector.robot
-    vector.sync
-    vector.util
-    vector.version
-    vector.world
+    anki_vector
+    anki_vector.animation
+    anki_vector.backpack
+    anki_vector.behavior
+    anki_vector.color
+    anki_vector.connection
+    anki_vector.events
+    anki_vector.exceptions
+    anki_vector.faces
+    anki_vector.lights
+    anki_vector.messaging
+    anki_vector.messaging.client
+    anki_vector.messaging.protocol
+    anki_vector.motors
+    anki_vector.objects
+    anki_vector.oled_face
+    anki_vector.photos
+    anki_vector.proximity
+    anki_vector.robot
+    anki_vector.sync
+    anki_vector.util
+    anki_vector.version
+    anki_vector.world
 
 ..
 

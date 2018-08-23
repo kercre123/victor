@@ -27,7 +27,7 @@ Objects can emit several events such as :class:`EvtObjectObserved` when
 the robot sees (or continues to see) the object with its camera, or
 :class:`EvtObjectTapped` if a power cube is tapped by a player.  You
 can either observe the object's instance directly, or capture all such events
-for all objects by observing them on :class:`vector.world.World` instead.
+for all objects by observing them on :class:`anki_vector.world.World` instead.
 
 All observable objects have a marker attached to them, which allows Victor
 to recognize the object and it's position and rotation("pose").  You can attach
@@ -122,7 +122,7 @@ class LightCube(util.Component):
         #: bool: True if the cube is currently connected to the robot via radio.
         self.is_connected = False
 
-        #: :class:`~vector.util.ImageRect`: The ImageRect defining where the
+        #: :class:`~anki_vector.util.ImageRect`: The ImageRect defining where the
         #: object was last visible within Victor's camera view.
         #: ``None`` if the element has not yet been observed.
         self._last_observed_image_rect = None
@@ -156,11 +156,11 @@ class LightCube(util.Component):
         '''Set the light for each corner
 
         Args:
-            light1 (:class:`vector.lights.Light`): The settings for the first light.
-            light2 (:class:`vector.lights.Light`): The settings for the second light.
-            light3 (:class:`vector.lights.Light`): The settings for the third light.
-            light4 (:class:`vector.lights.Light`): The settings for the fourth light.
-            color_profile (:class:`vector.lights.ColorProfile`): The profile to be used for the cube lights
+            light1 (:class:`anki_vector.lights.Light`): The settings for the first light.
+            light2 (:class:`anki_vector.lights.Light`): The settings for the second light.
+            light3 (:class:`anki_vector.lights.Light`): The settings for the third light.
+            light4 (:class:`anki_vector.lights.Light`): The settings for the fourth light.
+            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights
         '''
         params = lights.package_request_params((light1, light2, light3, light4), color_profile)
         print(params)
@@ -183,8 +183,8 @@ class LightCube(util.Component):
         '''Set all lights on the cube
 
         Args:
-            light (:class:`vector.lights.Light`): The settings for the lights.
-            color_profile (:class:`vector.lights.ColorProfile`): The profile to be used for the cube lights
+            light (:class:`anki_vector.lights.Light`): The settings for the lights.
+            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights
         '''
         return self.set_light_corners(light, light, light, light, color_profile)
 
@@ -192,7 +192,7 @@ class LightCube(util.Component):
         '''Set all lights off on the cube
 
         Args:
-            color_profile (:class:`vector.lights.ColorProfile`): The profile to be used for the cube lights'''
+            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights'''
 
         return self.set_light_corners(lights.off_light, lights.off_light, lights.off_light, lights.off_light, color_profile)
 
@@ -263,7 +263,7 @@ class LightCube(util.Component):
 
     @property
     def pose(self):
-        ''':class:`vector.util.Pose`: The pose of the element in the world.
+        ''':class:`anki_vector.util.Pose`: The pose of the element in the world.
 
         Is ``None`` for elements that don't have pose information.
         '''

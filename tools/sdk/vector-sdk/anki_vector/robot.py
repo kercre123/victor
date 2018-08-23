@@ -150,12 +150,12 @@ class Robot:
 
     @property
     def camera(self) -> camera.CameraComponent:
-        """:class:`vector.camera.CameraComponent`: The camera instance used to control
+        """:class:`anki_vector.camera.CameraComponent`: The camera instance used to control
         Vector's camera feed
 
         .. code-block:: python
 
-            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
@@ -195,12 +195,12 @@ class Robot:
 
     @property
     def viewer(self) -> viewer.ViewerComponent:
-        """:class:`vector.viewer.ViewerComponent`: The viewer instance used to render
+        """:class:`anki_vector.viewer.ViewerComponent`: The viewer instance used to render
         Vector's camera feed
 
         .. code-block:: python
 
-            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
+            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.viewer.stop_video()
         """
@@ -216,7 +216,7 @@ class Robot:
 
     @property
     def pose(self) -> util.Pose:
-        ''':class:`vector.util.Pose`: The current pose (position and orientation) of vector'''
+        ''':class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector'''
         return self._pose
 
     @property
@@ -251,12 +251,12 @@ class Robot:
 
     @property
     def accel(self):
-        ''':class:`vector.util.Vector3`: The current accelerometer reading (x, y, z)'''
+        ''':class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)'''
         return self._accel
 
     @property
     def gyro(self):
-        ''':class:`vector.util.Vector3`: The current gyroscope reading (x, y, z)'''
+        ''':class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)'''
         return self._gyro
 
     @property
@@ -288,7 +288,7 @@ class Robot:
     def status(self):
         return self._status
 
-    #TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
+    # TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
     @property
     def enable_camera_feed(self) -> bool:
         """The camera feed enabled/disabled
@@ -298,7 +298,7 @@ class Robot:
 
         .. code-block:: python
 
-            with vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", enable_camera_feed=True) as robot:
+            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", enable_camera_feed=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.enable_camera_feed = False
                 robot.loop.run_until_complete(utilities.delay_close(5))
@@ -344,7 +344,7 @@ class Robot:
             robot.disconnect()
 
         :param timeout: The time to allow for a connection before a
-            :class:`vector.exceptions.VectorTimeoutException` is raised.
+            :class:`anki_vector.exceptions.VectorTimeoutException` is raised.
         """
         if self.loop is None:
             self.logger.debug("Creating asyncio loop")

@@ -5,8 +5,8 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector
-from vector.util import degrees
+import anki_vector
+from anki_vector.util import degrees
 
 class Head:
   async def wait_async(self, t):

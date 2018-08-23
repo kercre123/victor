@@ -26,7 +26,7 @@ try:
 except ImportError:
     sys.exit('Cannot import from ipython: Do `pip3 install ipython` to install')
 
-import vector
+import anki_vector
 
 usage = ('This is an IPython interactive shell for Vector.\n'
          'All commands are executed within Vector\'s running connection loop.\n'
@@ -36,12 +36,12 @@ usage = ('This is an IPython interactive shell for Vector.\n'
          '  object?   -> Details about \'object\'.\n'
          '  object??  -> More detailed, verbose information about \'object\'.')
 
-args = vector.util.parse_test_args()
+args = anki_vector.util.parse_test_args()
 
 ipyshell = InteractiveShellEmbed(banner1='\nWelcome to the Vector Shell!',
                                  exit_msg='Goodbye\n')
 
 
-with vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
-    # Invoke the ipython shell while connected to vector
+with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    # Invoke the ipython shell while connected to Vector
     ipyshell(usage)

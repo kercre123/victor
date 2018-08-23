@@ -9,17 +9,17 @@ import sys
 import utilities
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import vector  # pylint: disable=wrong-import-position
+import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
     """main execution"""
-    args = vector.util.parse_test_args()
+    args = anki_vector.util.parse_test_args()
 
     print("------ begin testing camera feed ------")
 
     # Receive camera feed from robot
-    with vector.Robot(args.name, args.ip, str(args.cert), port=args.port, show_viewer=True) as robot:
+    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port, show_viewer=True) as robot:
         print("------ waiting for image events, press ctrl+c to exit early ------")
         try:
             # Render video for 10 seconds

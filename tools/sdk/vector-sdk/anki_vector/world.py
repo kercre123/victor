@@ -46,19 +46,18 @@ class World(util.Component):
         robot.events.subscribe("object_event",
                                self.on_object_event)
 
-
     @property
     def visible_faces(self):
         '''generator: yields each face that Vector can currently see.
 
         Returns:
-            A generator yielding :class:`vector.faces.Face` instances
+            A generator yielding :class:`anki_vector.faces.Face` instances
         '''
         for face in self._faces.values():
             yield face
 
     def get_face(self, face_id):
-        '''vector.faces.Face: Fetch a Face instance with the given id'''
+        '''anki_vector.faces.Face: Fetch a Face instance with the given id'''
         return self._faces.get(face_id)
 
     def add_update_face_to_world_view(self, _, msg):
@@ -89,7 +88,7 @@ class World(util.Component):
         '''Returns the connected light cube
 
         Returns:
-            :class:`vector.objects.LightCube`: The LightCube object with that cube_id
+            :class:`anki_vector.objects.LightCube`: The LightCube object with that cube_id
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
@@ -108,10 +107,10 @@ class World(util.Component):
 
     @property
     def connected_light_cubes(self):
-        '''Returns all light cube attached to vector
+        '''Returns all light cube attached to anki_vector
 
         Returns:
-            A list of :class:`vector.objects.LightCube` instances
+            A list of :class:`anki_vector.objects.LightCube` instances
         '''
         result = []
         cube = self.light_cube.get(objects.LightCube1Type)

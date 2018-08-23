@@ -28,7 +28,7 @@ class PhotographComponent(util.Component):
                 image = Image.open(io.BytesIO(photo.image))
                 image.show()
 
-    :param vector.Robot robot: A reference to an instance of the Robot class. Used to make rpc calls.
+    :param anki_vector.Robot robot: A reference to an instance of the Robot class. Used to make rpc calls.
     """
 
     def __init__(self, robot):

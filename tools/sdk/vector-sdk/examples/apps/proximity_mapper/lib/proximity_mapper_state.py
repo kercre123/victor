@@ -26,7 +26,7 @@ __all__ = ['ClearedTerritory', 'MapState', 'Wall', 'WallSegment']
 from math import cos, sin, pi
 from typing import List
 
-from vector.util import Vector3
+from anki_vector.util import Vector3
 
 import opengl
 
@@ -74,8 +74,8 @@ TERRITORY_RENDER_SECTIONS = 32
 WALL_RENDER_COLOR = [1.0, 0.4, 0.1, 1.0]
 #: Render height of the walls the robot has identified in the environment.
 #: This values is purely cosmetic.  As the proximity sensor is at a static height and
-#: always faces forward, vector has no way of detecting through this method how tall the
-#: obstacles are, so the 100mm height was tuned to be similar to vector in the viewer
+#: always faces forward, the robot has no way of detecting through this method how tall the
+#: obstacles are, so the 100mm height was tuned to be similar to Vector in the viewer
 #: rather than reflecting the objects in the environment.
 WALL_RENDER_HEIGHT_MM = 100.0
 
@@ -152,8 +152,8 @@ class Wall:
 
 
 class ClearedTerritory:
-    """A zone of space that vector has already explored.  These are used to
-    prevent vector from populating new open nodes in finished areas.
+    """A zone of space that the robot has already explored.  These are used to
+    prevent the robot from populating new open nodes in finished areas.
 
     Cleared Territories always exist in the x-y plane.
 
@@ -177,7 +177,7 @@ class ClearedTerritory:
 
 
 class MapState:
-    """A collection of walls, nodes, and territories defining the area vector
+    """A collection of walls, nodes, and territories defining the area the robot
     is exploring.
     """
 

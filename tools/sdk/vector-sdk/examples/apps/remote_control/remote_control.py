@@ -23,10 +23,10 @@ except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
 try:
-    import vector
-    from vector import util
+    import anki_vector
+    from anki_vector import util
 except ImportError:
-    sys.exit("Cannot import vector: Do `pip3 install -e .` in the vector home folder to install")
+    sys.exit("Cannot import anki_vector: Do `pip3 install -e .` in the vector home folder to install")
 
 
 def create_default_image(image_width, image_height, do_gradient=False):
@@ -659,7 +659,7 @@ def handle_updateVector():
 def run():
     args = util.parse_test_args()
 
-    with vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port) as robot:
         flask_app.remote_control_vector = RemoteControlVector(robot)
         flask_helpers.run_flask(flask_app)
 
@@ -669,5 +669,5 @@ if __name__ == '__main__':
         run()
     except KeyboardInterrupt as e:
         pass
-    except vector.exceptions.VectorConnectionException as e:
+    except anki_vector.exceptions.VectorConnectionException as e:
         sys.exit("A connection error occurred: %s" % e)

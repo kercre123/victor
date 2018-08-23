@@ -2,7 +2,7 @@
 
 from google.protobuf.json_format import MessageToJson
 
-from vector.messaging import settings_pb2
+from anki_vector.messaging import settings_pb2
 
 jsonObj = MessageToJson(settings_pb2.RobotSettingsConfig(clock_24_hour=True,
     eye_color=settings_pb2.TEAL, default_location="", dist_is_metric=True,
