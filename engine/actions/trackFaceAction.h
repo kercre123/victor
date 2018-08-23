@@ -33,8 +33,8 @@ public:
   virtual ~TrackFaceAction();
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
-  void SetStopCriteriaWithEyeContactOverride(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
-                                             const TimeStamp_t eyeContactWithinLast_ms);
+  void SetEyeContactContinueCriteria(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
+                                     const TimeStamp_t eyeContactWithinLast_ms);
   
 protected:
   
@@ -52,6 +52,11 @@ private:
   struct {
     f32     noEyeContactTimeout_sec     = 0.f;
     f32     timeOfLastEyeContact_sec    = 0.f;
+    // This is the earliest time that tracking will attempt
+    // to apply the other continue criteria. It will continue
+    // to track if and only if the other continue criteria is
+    // is satisified.
+    f32     earliestStoppingTime_sec    = -1.f;
     TimeStamp_t eyeContactWithinLast_ms = 0;
   } _eyeContactCriteria;
 

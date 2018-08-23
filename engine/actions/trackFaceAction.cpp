@@ -127,31 +127,61 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 
 bool TrackFaceAction::AreContinueCriteriaMet(const f32 currentTime_sec)
 {
-  if (Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
+  if (!Util::IsFltNear(_eyeContactCriteria.earliestStoppingTime_sec, -1.f) &&
+      Util::IsFltGTZero(_eyeContactCriteria.noEyeContactTimeout_sec))
   {
+    // Always update the time of last eye contact before we do anything else
     // TODO it would ideal to make sure we only use eye contact from the
     // face we're tracking VIC-5557
     const bool eyeContact = GetRobot().GetFaceWorld().IsMakingEyeContact(_eyeContactCriteria.eyeContactWithinLast_ms);
     if (eyeContact)
     {
       _eyeContactCriteria.timeOfLastEyeContact_sec = currentTime_sec;
-      return true;
     }
-    else if (currentTime_sec - _eyeContactCriteria.timeOfLastEyeContact_sec <= _eyeContactCriteria.noEyeContactTimeout_sec)
+
+    // If the current time is less than the earliest stopping time,
+    // we will always return true (which means we should continue
+    // tracking). Once current time is larger than the earliest
+    // stopping time, we apply the rest of the continue criteria.
+    if (currentTime_sec < _eyeContactCriteria.earliestStoppingTime_sec)
     {
       return true;
     }
+    else
+    {
+      if (eyeContact)
+      {
+        return true;
+      }
+      else if ((currentTime_sec - _eyeContactCriteria.timeOfLastEyeContact_sec) <= _eyeContactCriteria.noEyeContactTimeout_sec)
+      {
+        return true;
+      }
+    }
+  }
+  else
+  {
+    // We need both earliest stopping time and no eye contact timeout
+    // to be provided for continue criteria to work, if one of these are
+    // missing false will be returned (indicating we should stop tracking)
+    PRINT_NAMED_ERROR("TrackFaceAction.AreContinueCriteriaMet.MissingContinueCriteria",
+                      "Both earliest stopping time and no eye contact timeout must be provided");
   }
   return false;
 }
 
-void TrackFaceAction::SetStopCriteriaWithEyeContactOverride(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
-                                                            const TimeStamp_t eyeContactWithinLast_ms)
+void TrackFaceAction::SetEyeContactContinueCriteria(const f32 minTimeToTrack_sec, const f32 noEyeContactTimeout_sec,
+                                                    const TimeStamp_t eyeContactWithinLast_ms)
 {
-  DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
-  const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _stopCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetEyeContactContinueCriteria.ActionAlreadyStarted");
 
+  // This call configures AreContinueCriteriaMet to be called
+  // when determining whether to continue/stop tracking instead
+  // of AreStopCriteriaMet.
+  UseContinueCriteria(true);
+
+  const auto currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _eyeContactCriteria.earliestStoppingTime_sec = currentTime_sec + minTimeToTrack_sec;
   _eyeContactCriteria.noEyeContactTimeout_sec = noEyeContactTimeout_sec;
   _eyeContactCriteria.eyeContactWithinLast_ms = eyeContactWithinLast_ms;
 }

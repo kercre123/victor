@@ -762,17 +762,32 @@ bool ITrackAction::UpdateSmallAngleClamping()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::HaveStopCriteria() const {
-  return (Util::IsFltGTZero(_stopCriteria.duration_sec) || Util::IsFltGTZero(_stopCriteria.earliestStoppingTime_sec)); 
+  const bool atLeastOneTolerance = ( !Util::IsFltNear(_stopCriteria.panTol.ToFloat(), -1.f) ||
+                                     !Util::IsFltNear(_stopCriteria.tiltTol.ToFloat(), -1.f) ||
+                                     !Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) ||
+                                     !Util::IsFltNear(_stopCriteria.maxDist_mm, -1.f) );
+  return (Util::IsFltGTZero(_stopCriteria.duration_sec) && atLeastOneTolerance);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::IsTimeToStop(const f32 relPanAngle_rad, const f32 relTiltAngle_rad,
                                 const f32 distance_mm, const f32 currentTime_sec)
 {
-  const bool stopCriteriaMet = AreStopCriteriaMet(relPanAngle_rad, relTiltAngle_rad,
-                                                  distance_mm, currentTime_sec);
-  const bool continueCriteriaMet = AreContinueCriteriaMet(currentTime_sec);
-  return (stopCriteriaMet && !continueCriteriaMet);
+  // This logic can certainly be improved but we are trying to support two
+  // different use cases. In one case we want to continue if certain
+  // conditions are met, and in the other case we want to stop if certain
+  // conditions are met. VIC-5821
+  if (_useStopCriteria)
+  {
+    return AreStopCriteriaMet(relPanAngle_rad, relTiltAngle_rad, distance_mm,
+                              currentTime_sec);
+  }
+  else
+  {
+    // Since continue criteria are the opposite of stopping criteria
+    // we invert the logic to match whether we should stop or not
+    return ( !AreContinueCriteriaMet(currentTime_sec) );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -790,7 +805,7 @@ bool ITrackAction::IsWithinTolerances(const f32 relPanAngle_rad, const f32 relTi
       isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle_rad), _stopCriteria.tiltTol.ToFloat());
     }
     bool isWithinDistTol = true;
-    if (!Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && !Util::IsFltNear(_stopCriteria.minDist_mm, -1.f))
+    if (!Util::IsFltNear(_stopCriteria.minDist_mm, -1.f) && !Util::IsFltNear(_stopCriteria.maxDist_mm, -1.f))
     {
       isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
     }
@@ -818,10 +833,6 @@ bool ITrackAction::AreStopCriteriaMet(const f32 relPanAngle_rad, const f32 relTi
   const bool haveStopCriteria = HaveStopCriteria();
   if(haveStopCriteria)
   {
-    if (!Util::IsFltNear(_stopCriteria.earliestStoppingTime_sec, -1.f) && _stopCriteria.earliestStoppingTime_sec > currentTime_sec)
-    {
-      return true;
-    }
     const bool isWithinTol = IsWithinTolerances(relPanAngle_rad, relTiltAngle_rad, distance_mm,
                                                 currentTime_sec);
     if(isWithinTol)

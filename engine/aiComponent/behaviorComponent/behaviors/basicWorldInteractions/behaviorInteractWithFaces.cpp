@@ -442,8 +442,8 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     trackAction->SetUpdateTimeout(_iConfig.trackingTimeout_s);
-    trackAction->SetStopCriteriaWithEyeContactOverride(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeout_s,
-                                                       _iConfig.eyeContactWithinLast_ms);
+    trackAction->SetEyeContactContinueCriteria(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeout_s,
+                                               _iConfig.eyeContactWithinLast_ms);
     action->AddAction(trackAction);
   }
   
