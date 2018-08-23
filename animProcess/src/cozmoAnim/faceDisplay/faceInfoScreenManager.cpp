@@ -1275,8 +1275,9 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   const std::string charger = temp;
 
   sprintf(temp,
-          "TEMP:  %uC",
-          OSState::getInstance()->GetTemperature_C());
+          "TEMP:  %uC (H) / %uC (B)",
+          OSState::getInstance()->GetTemperature_C(),
+          state.battTemp_C);
   const std::string tempC = temp;
 
 

@@ -145,6 +145,7 @@ namespace Anki {
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
         robotState_.chargerVoltage = HAL::ChargerGetVoltage();
+        robotState_.battTemp_C = HAL::BatteryGetTemperature_C();
 #ifdef  SIMULATOR
         if(isForcedDelocalizing_)
         {

@@ -96,6 +96,7 @@ structure RobotState
   uint_16 backpackTouchSensorRaw,
   uint_8  cliffDetectedFlags,
   uint_8  whiteDetectedFlags,
+  uint_8  battTemp_C,
   int_8   currPathSegment, // -1 if not traversing a path
 }
 

@@ -212,6 +212,9 @@ bool BatteryIsOnCharger();
 /// after being on charge base for more than 30 min.
 bool BatteryIsDisconnected();
 
+// Return temperature of battery in C
+u8 BatteryGetTemperature_C();
+
 /// Return detected charger voltage
 f32 ChargerGetVoltage();
 /************************************************************************

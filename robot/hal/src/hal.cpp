@@ -651,6 +651,15 @@ f32 HAL::ChargerGetVoltage()
   return kBatteryScale * bodyData_->battery.charger;
 }
 
+u8 HAL::BatteryGetTemperature_C()
+{
+  if (bodyData_->battery.temperature > 0xff) {
+    AnkiWarn("HAL.BatteryGetTemperature_C.InvalidTemp", "%u", bodyData_->battery.temperature);
+    return 0;
+  }
+  return static_cast<u8>(bodyData_->battery.temperature);
+}
+
 u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2

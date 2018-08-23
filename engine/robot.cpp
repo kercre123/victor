@@ -2695,6 +2695,7 @@ RobotState Robot::GetDefaultRobotState()
                          0, // touch intensity value 
                          0, // uint8_t cliffDetectedFlags,
                          0, // uint8_t whiteDetectedFlags
+                         40, // battery temp C
                          -1); //int8_t currPathSegment
 
   return state;
