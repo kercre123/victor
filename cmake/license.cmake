@@ -14,6 +14,8 @@ else()
   set(MESSAGE_STATUS STATUS)
 endif()
 
+# TODO: VIC-5668 Add version numbers to licenses report and uploads
+
 file(WRITE ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html
       "<!DOCTYPE html><html><body>\n"
       "<h1>License Data for Vector 1.0.0</h1><p>\n")
@@ -132,11 +134,21 @@ function(anki_build_target_license target)
     if(file)
       # output to binary directory
       if(IS_ABSOLUTE ${file})
+        get_filename_component(filename ${file} NAME)
+
         # copy license to folder
-        file(COPY ${file} DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license})
+        file(COPY ${file}
+             DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license})
+
+        if (NOT ${filename} MATCHES ".txt")
+          # add .txt if it's missing
+          file(RENAME
+               ${CMAKE_BINARY_DIR}/licences/${target}-${license}/${filename}
+               ${CMAKE_BINARY_DIR}/licences/${target}-${license}/${filename}.txt)
+          set(filename "${filename}.txt")
+        endif()
 
         # create html link to folder/file
-        get_filename_component(filename ${file} NAME)
         file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "<a href=\"${target}-${license}/${filename}\"\>${target} ${license}</a><br/>\n")
       else()
         message(FATAL_ERROR "${target} target is using a relative path, ${file}, for it's ${license} license")
