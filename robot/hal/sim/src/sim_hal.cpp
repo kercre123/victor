@@ -886,6 +886,11 @@ namespace Anki {
       return false;
     }
 
+    u8 HAL::BatteryGetTemperature_C()
+    {
+      return 40;
+    }
+
     f32 HAL::ChargerGetVoltage()
     {
       if (BatteryIsOnCharger()) {

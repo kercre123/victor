@@ -2817,6 +2817,7 @@ RobotState Robot::GetDefaultRobotState()
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
+                         40, // battery temp C
                          -1); //int8_t currPathSegment
   
   return state;
