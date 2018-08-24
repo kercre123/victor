@@ -29,7 +29,7 @@ namespace{
   const u16 kMinProxDist_mm = 15;
   // the max is larger than it needs to be to account for oblique angles, which shouldn't happen, but perhaps
   // the robot was bumped. This can be reduced if we see false positives
-  const u16 kMaxProxDist_mm = 45;
+  const u16 kMaxProxDist_mm = 50;
   const u16 kMinDrivingDist_mm = 70;
 
   CONSOLE_VAR(bool, kOnboardingHabitatLog, "Onboarding", false);

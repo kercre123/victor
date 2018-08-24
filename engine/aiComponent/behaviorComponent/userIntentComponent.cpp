@@ -681,12 +681,12 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
 void UserIntentComponent::DisableEngineResponseToTriggerWord( const std::string& disablerName,  bool disable )
 {
   if(disable){
-     const auto res = _disableTriggerWordNames.insert(disablerName).second;
-     if(!res){
-       PRINT_NAMED_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.AlreadyDisabled", 
-                           "%s is attempting to disable the trigger word response, but it's already locking the trigger word",
-                           disablerName.c_str());
-     }
+    const auto res = _disableTriggerWordNames.insert(disablerName).second;
+    if(!res){
+      PRINT_NAMED_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.AlreadyDisabled",
+                          "%s is attempting to disable the trigger word response, but it's already locking the trigger word",
+                          disablerName.c_str());
+    }
   }else{
     const auto numRemoved = _disableTriggerWordNames.erase(disablerName);
     if(numRemoved == 0){

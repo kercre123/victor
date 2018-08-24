@@ -5,7 +5,7 @@
   "associatedActiveFeature": "Onboarding",
 
   "interruptions": [
-    "SingletonPoweringRobotOff",  // is suppressed during first stage 
+    "OnboardingPowerOff",         // is suppressed during first stage 
     "OnboardingPhysicalReactions", 
     "OnboardingLowBattery",
     "OnboardingDetectHabitat",

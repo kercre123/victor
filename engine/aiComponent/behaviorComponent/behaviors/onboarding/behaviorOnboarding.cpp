@@ -58,7 +58,7 @@ namespace {
   
   // Behaviors that dim the screen on the app
   const std::set<BehaviorID> kBehaviorsThatPauseFlow = {
-    BEHAVIOR_ID(SingletonPoweringRobotOff),
+    BEHAVIOR_ID(OnboardingPowerOff),
     BEHAVIOR_ID(OnboardingPhysicalReactions),
     BEHAVIOR_ID(OnboardingPickedUp),
   };
@@ -820,7 +820,7 @@ void BehaviorOnboarding::NotifyOfInterruptionChange( BehaviorID interruptionID )
   
   
   // notify app of certain new interruptions:
-  // SingletonPoweringRobotOff   : send OnboardingPhysicalInterruption. todo: power off messages
+  // OnboardingPowerOff          : send OnboardingPhysicalInterruption. todo: power off messages
   // OnboardingPhysicalReactions : OnboardingPhysicalInterruption
   // OnboardingLowBattery        : start charging countdown logic
   // OnboardingDetectHabitat     : send OnboardingHabitatDetected
@@ -1246,7 +1246,7 @@ int BehaviorOnboarding::GetPhysicalInterruptionMsgType( BehaviorID interruptionI
     interruptionType = external_interface::ONBOARDING_INTERRUPTION_PICKED_UP;
   } else if( interruptionID == BEHAVIOR_ID(OnboardingPhysicalReactions) ) {
     interruptionType = external_interface::ONBOARDING_INTERRUPTION_PHYSICAL;
-  } else if( interruptionID == BEHAVIOR_ID(SingletonPoweringRobotOff) ) {
+  } else if( interruptionID == BEHAVIOR_ID(OnboardingPowerOff) ) {
     interruptionType = external_interface::ONBOARDING_INTERRUPTION_POWER_BUTTON;
   } else {
     ANKI_VERIFY(false,

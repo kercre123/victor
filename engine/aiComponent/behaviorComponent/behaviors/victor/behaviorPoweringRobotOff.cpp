@@ -28,6 +28,7 @@ namespace{
 const char* kPowerButtonActivationKey = "powerButtonHeldToActivate_ms";
 const char* kPowerOnAnimName          = "powerOnAnimName";
 const char* kPowerOffAnimName         = "powerOffAnimName";
+const char* const kWaitForAnimMsgKey  = "waitForAnimMsg";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -40,6 +41,7 @@ BehaviorPoweringRobotOff::InstanceConfig::InstanceConfig(const Json::Value& conf
   const auto timeActivateBehavior = JsonTools::ParseUInt32(config, kPowerButtonActivationKey, debugName + kPowerButtonActivationKey);
   activateBehaviorCondition = std::shared_ptr<IBEICondition>(new ConditionTimePowerButtonPressed(timeActivateBehavior, "BehaviorPoweringRobotOff"));
 
+  waitForAnimMsg = config.get( kWaitForAnimMsgKey, false ).asBool();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,7 +75,11 @@ void BehaviorPoweringRobotOff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPoweringRobotOff::WantsToBeActivatedBehavior() const
 {
-  return _iConfig.activateBehaviorCondition->AreConditionsMet(GetBEI());
+  if( _iConfig.waitForAnimMsg ) {
+    return _dVars.shouldStartPowerOffAnimaiton;
+  } else {
+    return _iConfig.activateBehaviorCondition->AreConditionsMet(GetBEI());
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -96,7 +102,8 @@ void BehaviorPoweringRobotOff::GetBehaviorJsonKeys(std::set<const char*>& expect
   const char* list[] = {
     kPowerOnAnimName,
     kPowerOffAnimName,
-    kPowerButtonActivationKey
+    kPowerButtonActivationKey,
+    kWaitForAnimMsgKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }

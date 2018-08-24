@@ -258,7 +258,7 @@ private:
   void ResetFromInterruption(BehaviorID interruptingBehavior)
   {
     static const std::set<BehaviorID> interruptionsThatReset = {
-      //BEHAVIOR_ID(SingletonPoweringRobotOff)
+      //BEHAVIOR_ID(OnboardingPowerOff)
       //BEHAVIOR_ID(OnboardingPhysicalReactions)
       BEHAVIOR_ID(OnboardingLowBattery),
       //BEHAVIOR_ID(OnboardingDetectHabitat)

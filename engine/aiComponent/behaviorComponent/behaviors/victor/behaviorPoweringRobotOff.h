@@ -53,6 +53,7 @@ private:
     std::shared_ptr<IBEICondition> activateBehaviorCondition;
     std::string powerOnAnimName;
     std::string powerOffAnimName;
+    bool waitForAnimMsg;
   };
 
   struct DynamicVariables {
