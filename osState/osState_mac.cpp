@@ -44,7 +44,7 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState", 0, "Off,10ms,100ms,1000ms,10000ms");
+CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState.Webviz", 0, "Off,10ms,100ms,1000ms,10000ms");
 
 namespace {
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};

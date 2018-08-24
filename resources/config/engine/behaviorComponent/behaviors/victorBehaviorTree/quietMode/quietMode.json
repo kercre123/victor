@@ -16,7 +16,7 @@
 
   "behaviors": [
     {
-      "behavior": "QuietModeLowBatteryGoHome",
+      "behavior": "QuietModeEmergencyModeGoHome",
       "audioAllowed": false
     },
     {

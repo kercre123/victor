@@ -120,6 +120,13 @@ enum uint_16 BehaviorID {
   DriveOffChargerRandomlyAnim,
   DriveOffChargerStraight,
 
+  // victorBehaviorTree/emergencyMode
+  EmergencyMode,
+  EmergencyModeAnimDispatcher,
+  EmergencyModeInAir,
+  EmergencyModeOffCharger,
+  EmergencyModeTriggerWord,
+
   // victorBehaviorTree
   GlobalInterruptions,
   GreetAfterLongTime,
@@ -148,12 +155,12 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/getHomeBehaviors
   AcknowledgeCharger,
   ClearChargerArea,
+  EmergencyModeFindAndGoToHome,
   FindAndGoToHome,
   FindAndRequestHome,
   FindHome,
   FindHomeInHabitat,
   GoHome,
-  LowBatteryFindAndGoToHome,
   RequestHomeBecauseStuck,
   RequestToGoHome,
   WiggleBackOntoChargerFromPlatform,
@@ -277,14 +284,6 @@ enum uint_16 BehaviorID {
   InitNormalOperation,
   InitPRDemo,
   IntentUnmatched,
-
-  // victorBehaviorTree/lowBatteryMode
-  LowBatteryInAir,
-  LowBatteryMode,
-  LowBatteryOffCharger,
-  LowBatteryTriggerWord,
-
-  // victorBehaviorTree
   ModeSelector,
   NoCloud,
   NoWifi,
@@ -326,7 +325,7 @@ enum uint_16 BehaviorID {
   BeQuietAnims,
   BeQuietLoop,
   QuietMode,
-  QuietModeLowBatteryGoHome,
+  QuietModeEmergencyModeGoHome,
   ShutUpAnims,
   ShutUpMode,
 

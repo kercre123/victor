@@ -1,6 +1,6 @@
 {
   "behaviorClass" : "DispatcherQueue",
-  "behaviorID": "LowBatteryInAir",
+  "behaviorID": "EmergencyModeInAir",
   
   "associatedActiveFeature": "InTheAir",
 
@@ -23,13 +23,13 @@
 
 
   "behaviors": [
-    "LowBatteryPickupAnim",
+    "EmergencyModePickupAnim",
     "Wait"
   ],
   
   "anonymousBehaviors": [
     {
-      "behaviorName": "LowBatteryPickupAnim",
+      "behaviorName": "EmergencyModePickupAnim",
       "behaviorClass": "AnimSequence",
       "animTriggers" : [
         "ChargerDockingRequestPickup"

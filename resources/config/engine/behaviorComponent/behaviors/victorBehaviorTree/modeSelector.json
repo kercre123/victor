@@ -6,7 +6,7 @@
 
   "behaviors": [
     "SingletonPoweringRobotOff",
-    "LowBatteryMode",
+    "EmergencyMode",
     "ShutUpMode",
     "QuietMode",
     "SleepCycle"

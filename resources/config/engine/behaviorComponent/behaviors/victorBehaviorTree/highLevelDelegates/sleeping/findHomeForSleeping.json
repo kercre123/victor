@@ -11,7 +11,7 @@
   "behaviors" : [
     "MandatoryPhysicalReactions",
     // TODO:(bn) different in air reaction?
-    "LowBatteryInAir",
+    "EmergencyModeInAir",
     "FindAndGoToHome"
   ]
   

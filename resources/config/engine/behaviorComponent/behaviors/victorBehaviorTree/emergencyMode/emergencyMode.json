@@ -1,13 +1,21 @@
 {
-  "behaviorID" : "LowBatteryMode",
+  "behaviorID" : "EmergencyMode",
   "behaviorClass": "DispatcherQueue",
  
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
     "and": [
     {
-      "conditionType": "BatteryLevel",
-      "targetBatteryLevel" : "Low"
+      "conditionType": "Compound",
+      "or" : [
+        {
+          "conditionType" : "BatteryLevel",
+          "targetBatteryLevel" : "Low"
+        },
+        {
+          "conditionType" : "HighTemperatureCPU"
+        }
+      ]
     },
     {
       "conditionType": "Compound",
@@ -21,8 +29,16 @@
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
     "not": {
-      "conditionType": "BatteryLevel",
-      "targetBatteryLevel" : "Low"
+      "conditionType": "Compound",
+      "or" : [
+        {
+          "conditionType" : "BatteryLevel",
+          "targetBatteryLevel" : "Low"
+        },
+        {
+          "conditionType" : "HighTemperatureCPU"
+        }
+      ]
     }
   },
  
@@ -32,16 +48,7 @@
   "disableStreamAfterWakeWord" : true,
   
   "behaviors" : [
-    "InitialLowBatteryReaction",
-    "LowBatteryOffCharger"
-  ],
-  
-  "anonymousBehaviors" : [
-    {
-      "behaviorClass": "AnimSequence",
-      "behaviorName": "InitialLowBatteryReaction",
-      
-      "animTriggers" : ["ChargerDockingSorryButLowBattery"]
-    }
+    "EmergencyModeAnimDispatcher",
+    "EmergencyModeOffCharger"
   ]
 }

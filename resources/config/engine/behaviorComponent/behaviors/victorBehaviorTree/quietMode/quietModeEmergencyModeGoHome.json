@@ -1,13 +1,21 @@
 {
-  "behaviorID" : "QuietModeLowBatteryGoHome",
+  "behaviorID" : "QuietModeEmergencyModeGoHome",
   "behaviorClass" : "DispatcherStrictPriority",
 
   "linkScope": true,
   "interruptActiveBehavior": true,
 
   "wantsToBeActivatedCondition" : {
-    "conditionType": "BatteryLevel",
-    "targetBatteryLevel": "Low"
+    "conditionType": "Compound",
+    "or" : [
+    {
+      "conditionType" : "BatteryLevel",
+      "targetBatteryLevel" : "Low"
+    },
+    {
+      "conditionType" : "HighTemperatureCPU"
+    }
+    ]
   },
 
   "behaviors": [
@@ -17,6 +25,6 @@
     "ReactToCliff",
     "ReactToPlacedOnSlope",
     "ReactToUnexpectedMovement",
-    "LowBatteryFindAndGoToHome"
+    "EmergencyModeFindAndGoToHome"
   ]
 }

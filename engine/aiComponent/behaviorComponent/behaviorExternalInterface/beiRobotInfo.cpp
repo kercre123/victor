@@ -18,13 +18,11 @@
 #include "engine/components/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 
+#include "osState/osState.h"
 
 namespace Anki {
 namespace Vector {
-  
-namespace{
 
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BEIRobotInfo::~BEIRobotInfo()
@@ -257,6 +255,12 @@ IExternalInterface* BEIRobotInfo::GetExternalInterface()
 bool BEIRobotInfo::HasGatewayInterface() const
 {
   return _robot.HasGatewayInterface();
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint32_t BEIRobotInfo::GetCpuTemperature_degC() const
+{
+  return OSState::getInstance()->GetTemperature_C();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

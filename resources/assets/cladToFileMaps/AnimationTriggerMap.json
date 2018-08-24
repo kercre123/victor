@@ -568,6 +568,10 @@
     "AnimName": "ag_gotosleep_sleeping"
   },
   {
+    "CladEvent": "HighTemperatureWarningFace",
+    "AnimName": "ag_powersavemode_temperature"
+  },
+  {
     "CladEvent": "InvestigateHeldCubeGetIn",
     "AnimName": "ag_inspectheldcube_getin"
   },

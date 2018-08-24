@@ -285,10 +285,10 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _isInitialized = false;
 
-  // Engine currently has no reason to know about CPU
-  // freq or temperature so we set the update period to 0
-  // avoid time-wasting file access
-  OSState::getInstance()->SetUpdatePeriod(0);
+  // engine checks the temperature of the OS now.
+  // The fluctation in the temperature is not expected to be fast
+  // hence the 5 second update period (to prevent excessive file io)
+  OSState::getInstance()->SetUpdatePeriod(5000);
   OSState::getInstance()->SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpu", json); });
 
   _config = config;

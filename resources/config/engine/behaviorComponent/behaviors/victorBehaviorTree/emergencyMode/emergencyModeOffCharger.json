@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "LowBatteryOffCharger",
+  "behaviorID" : "EmergencyModeOffCharger",
   "behaviorClass": "DispatcherStrictPriority",
   
   "interruptActiveBehavior" : true,
@@ -10,9 +10,9 @@
   
   "behaviors" : [
     "MandatoryPhysicalReactions",
-    "LowBatteryInAir",
-    "LowBatteryTriggerWord",
-    "LowBatteryFindAndGoToHome"
+    "EmergencyModeInAir",
+    "EmergencyModeTriggerWord",
+    "EmergencyModeFindAndGoToHome"
   ]
   
 }

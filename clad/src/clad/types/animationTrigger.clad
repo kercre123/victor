@@ -153,6 +153,8 @@ enum int_32 AnimationTrigger
   GoToSleepGetIn,
   GoToSleepOff,
   GoToSleepSleeping,
+  
+  HighTemperatureWarningFace,
 
   ICantDoThat,
   InitialWakeUp,

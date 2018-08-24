@@ -1,0 +1,13 @@
+{
+  "behaviorID" : "EmergencyModeTriggerWord",
+  "behaviorClass": "DispatcherQueue",
+ 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "TriggerWordPending"
+  },
+  
+  "behaviors" : [
+    "TriggerWordDetected",
+    "EmergencyModeAnimDispatcher"
+  ]
+}

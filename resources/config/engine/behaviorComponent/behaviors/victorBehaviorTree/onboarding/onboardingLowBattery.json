@@ -3,12 +3,12 @@
   "behaviorClass": "DispatcherQueue",
 
   "wantsToBeActivatedCondition" : {
-    "conditionType": "BatteryLevel",
-    "targetBatteryLevel": "Low"
+    "conditionType" : "BatteryLevel",
+    "targetBatteryLevel" : "Low"
   },
 
   "behaviors" : [
-    "LowBatteryFindAndGoToHome",
+    "EmergencyModeFindAndGoToHome",
     "SittingOnChargerInternal" 
   ],
 

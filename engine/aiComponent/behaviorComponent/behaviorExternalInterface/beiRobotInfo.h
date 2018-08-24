@@ -119,6 +119,7 @@ public:
   Util::Data::DataPlatform* GetDataPlatform() const;
   bool IsPowerButtonPressed() const;
   TimeStamp_t GetTimeSincePowerButtonPressed_ms() const;
+  uint32_t GetCpuTemperature_degC() const;
 
 
   bool HasExternalInterface() const;
