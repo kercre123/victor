@@ -34,10 +34,10 @@ static const s32 NumBlankFramesBetweenPeople = 5;
 // Make sure we detected/recognized a high enough percentage of faces and that
 // we didn't add excessive IDs to the album in the process. These are checked
 // per user-directory of video frames
-static const f32 ExpectedDetectionPercent   = 90.f;
+//static const f32 ExpectedDetectionPercent   = 90.f;
 //static const f32 ExpectedRecognitionPercent = 80.f;
 //static const s32 ExpectedNumFaceIDsLimit    = 10;
-static const f32 ExpectedFalsePositivePercent = 1.f;
+//static const f32 ExpectedFalsePositivePercent = 1.f;
 
 extern Anki::Vector::CozmoContext* cozmoContext;
 
@@ -61,8 +61,50 @@ namespace Vision {
 
 static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png"};
 
-// Helper lambda to pass an image file into the vision component and
-// then update FaceWorld with any resulting detections
+void InitRobot(Robot& robot){
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  // Since we're processing faster than real time (using saved images)
+  Vision::kTimeBetweenFaceEnrollmentUpdates_sec = 1.f;
+  Vision::kGetEnrollmentTimeFromImageTimestamp = true;
+  
+  // Since the fake robot is in arbitrary pose
+  kIgnoreFacesBelowRobot = false;
+  
+  // So we don't have to fake IMU data, disable WasMovingTooFast checks
+  kBodyTurnSpeedThreshFace_degs = -1.f;
+  kHeadTurnSpeedThreshFace_degs = -1.f;
+  
+  Vision::kFaceRecognitionExtraDebug = true;
+  
+  
+  //const TimeStamp_t kTestTimeInc = 65;
+  
+  //s32 totalFalsePositives = 0;
+  
+  DependencyManagedEntity<RobotComponentID> dependentComps;
+  dependentComps.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
+
+  robot.FakeSyncRobotAck();
+  robot.GetVisionComponent().SetIsSynchronous(true);
+  robot.GetVisionComponent().InitDependent(&robot, dependentComps);
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  robot.GetVisionComponent().EnableMode(VisionMode::Idle, true);
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingFaces, true);
+  robot.GetVisionComponent().Enable(true);
+
+  return;
+}
+
 static void Recognize(Robot& robot, RobotTimeStamp_t timestamp, RobotState& stateMsg, Vision::Image& img,
                       const std::string& filename, const char *dispName, const std::set<std::string>& namesPresent)
 {
@@ -159,7 +201,7 @@ static void Recognize(Robot& robot, RobotTimeStamp_t timestamp, RobotState& stat
 
 } // Recognize()
 
-Result Enroll(Robot& robot, RobotTimeStamp_t& fakeTime, RobotState& stateMsg, Vision::Image& img, const std::string& dataPath, const std::string& userDir)
+Result EnrollFace(Robot& robot, RobotTimeStamp_t& fakeTime, RobotState& stateMsg, Vision::Image& img, const std::string& dataPath, const std::string& userDir)
 {
   const std::string& enrollSubDir = "enroll";
   
@@ -281,268 +323,69 @@ Result ShowBlankFrames(s32 N, Robot& robot, RobotTimeStamp_t& fakeTime, RobotSta
   return lastResult;
 }
 
+Result RunFacialRecognizer(Robot &robot){
+  //TODO: Implement the code that looks into the faces detected to find if the ones enrolled are recognized
+  return RESULT_OK;
+}
 
-TEST(FaceRecognition, VideoRecognitionAndTracking)
-{
+Result EnrollPerson(const char* person, Robot& robot){
+  //TODO: Implement the code that enrolls the given person into the robot
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "test/faceRecognitionAutomation/Enroll");
+
+  RobotTimeStamp_t fakeTime = 100000;
+  // Fake a state message update for robot
+  RobotState stateMsg( Robot::GetDefaultRobotState());
+  Vision::Image img;
+
+  // Get the names of all the people in the Enroll Directory
+  std::vector<std::string> peopleDirs;
+  Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
+
+  std::set<std::string> allNames(peopleDirs.begin(), peopleDirs.end());
+  //TODO: Check if person is actually in allNames
+  // Get default config and make it use synchronous mode for face recognition
+  Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfigUpdatableRef();
+  config["FaceRecognition"]["RunMode"] = "synchronous";
+
+  
+
+  Result lastResult = EnrollFace(robot, fakeTime, stateMsg, img, dataPath, person);
+  if(lastResult != RESULT_OK){
+    PRINT_NAMED_ERROR("FaceRecognition.VideoRecognitionAndTrackingAutomation.EnrollImage",
+                      "Failed to enroll %s", person);
+    return RESULT_FAIL;
+  }
+  
+  lastResult = ShowBlankFrames(NumBlankFramesBetweenPeople, robot, fakeTime, stateMsg, img, "EnrollImage");
+  if(lastResult != RESULT_OK){
+    PRINT_NAMED_ERROR("FaceRecognition.VideoRecognitionAndTrackingAutomation.EnrollImage",
+                      "Failed at ShowBlankFrames after enrolling %s", person);
+    return RESULT_FAIL;
+  }
+
+  return RESULT_OK;
+}
+
+TEST(FaceRecognition, VideoRecognitionAndTrackingAutomation){
+
   if(SKIP_FACE_RECOGNITION_TESTS) {
     return;
   }
 
-  Result lastResult = RESULT_OK;
-  
   if(false == Vision::FaceTracker::IsRecognitionSupported()) {
-    PRINT_NAMED_ERROR("FaceRecognition.VideoRecognitionAndTracking.RecognitionNotSupported",
+    PRINT_NAMED_ERROR("FaceRecognition.VideoRecognitionAndTrackingAutomation.RecognitionNotSupported",
                       "Skipping test because the compiled face tracker does not support recognition");
     return;
   }
-  
-  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
-  
-  Vision::Image img;
-  
-  // Find all directories of face images, one per person
-  std::vector<std::string> peopleDirs;
-  Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
 
-  std::set<Vision::FaceID_t> allIDs;
-  
-  struct TestDirData {
-    const char* dirName;
-    bool isForTraining;
-    std::set<std::string> names;
-  };
-  
-  std::vector<TestDirData> testDirData = {
-    {.dirName = "andrew",       .isForTraining = true,    .names = {"andrew"}},
-    {.dirName = "kevin",        .isForTraining = true,    .names = {"kevin"}},
-    {.dirName = "peter",        .isForTraining = true,    .names = {"peter"}},
-    {.dirName = "jane",         .isForTraining = true,    .names = {"jane"}},
-    {.dirName = "girl1",        .isForTraining = true,    .names = {"girl1"}},
-    {.dirName = "girl2",        .isForTraining = true,    .names = {"girl2"}},
-    {.dirName = "boy1",         .isForTraining = true,    .names = {"boy1"}},
-    {.dirName = "boy2",         .isForTraining = true,    .names = {"boy2"}},
-    //{.dirName = "girl3",        .isForTraining = true,    .names = {"girl3"}},
-    {.dirName = "andrew2",      .isForTraining = false,   .names = {"andrew"}},
-    {.dirName = "kevin+peter",  .isForTraining = false,   .names = {"kevin", "peter"}},
-  };
-  
-  std::set<std::string> allNames;
-  for(auto & test : testDirData) {
-    allNames.insert(test.names.begin(), test.names.end());
-  }
-  
-  // Get default config and make it use synchronous mode for face recognition
-  Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfigUpdatableRef();
-  config["FaceRecognition"]["RunMode"] = "synchronous";
-  
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-  
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-  
-  // Since we're processing faster than real time (using saved images)
-  Vision::kTimeBetweenFaceEnrollmentUpdates_sec = 1.f;
-  Vision::kGetEnrollmentTimeFromImageTimestamp = true;
-  
-  // Since the fake robot is in arbitrary pose
-  kIgnoreFacesBelowRobot = false;
-  
-  // So we don't have to fake IMU data, disable WasMovingTooFast checks
-  kBodyTurnSpeedThreshFace_degs = -1.f;
-  kHeadTurnSpeedThreshFace_degs = -1.f;
-  
-  Vision::kFaceRecognitionExtraDebug = true;
-  
-  RobotTimeStamp_t fakeTime = 100000;
-  const TimeStamp_t kTestTimeInc = 65;
-  
-  s32 totalFalsePositives = 0;
-  
-  DependencyManagedEntity<RobotComponentID> dependentComps;
-  dependentComps.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
-  for(s32 iReload=0; iReload<2; ++iReload)
-  {
-    // All-new robot, face tracker, and face world for each person for this test
-    Robot robot(1, cozmoContext);
-    robot.FakeSyncRobotAck();
+  Robot robot(1, cozmoContext);
+  InitRobot(robot);
 
-    // Fake a state message update for robot
-    RobotState stateMsg( Robot::GetDefaultRobotState() );
-    
-    robot.GetVisionComponent().SetIsSynchronous(true);
-    robot.GetVisionComponent().InitDependent(&robot, dependentComps);
-    
-    robot.GetVisionComponent().SetCameraCalibration(camCalib);
-    robot.GetVisionComponent().EnableMode(VisionMode::Idle, true);
-    robot.GetVisionComponent().EnableMode(VisionMode::DetectingFaces, true);
-    robot.GetVisionComponent().Enable(true);
-    
-    if(iReload == 0)
-    {
-      // Enroll each person marked for training
-      for(auto const& test : testDirData)
-      {
-        if(test.isForTraining)
-        {
-          ASSERT_EQ(1, test.names.size());
-          
-          lastResult = Enroll(robot, fakeTime, stateMsg, img, dataPath, test.dirName);
-          ASSERT_EQ(RESULT_OK, lastResult);
-          
-          lastResult = ShowBlankFrames(NumBlankFramesBetweenPeople, robot, fakeTime, stateMsg, img, "EnrollImage");
-          EXPECT_EQ(RESULT_OK, lastResult);
-        }
-      }
-    }
-    
-    if(iReload > 0)
-    {
-      std::list<Vision::LoadedKnownFace> loadedFaces;
-      Result loadResult = robot.GetVisionComponent().LoadFaceAlbumFromFile("testAlbum", loadedFaces);
-      ASSERT_EQ(loadResult, RESULT_OK);
-      ASSERT_EQ(loadedFaces.size(), allNames.size());
-      
-      // All loaded names should be in the all names set
-      for(auto & nameAndID : loadedFaces) {
-        ASSERT_TRUE(allNames.count(nameAndID.name) > 0);
-      }
-    }
-    
-    // Allow session-only enrollment
-    robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight);
-    
-    for(auto & test : testDirData)
-    {
-      const char* testDir = test.dirName;
-      
-      s32 clipsSucceeded = 0;
-      s32 clipCtr=1;
-      std::string clipPath = Util::FileUtils::FullFilePath({dataPath, testDir, "clip1"});
-      while(Util::FileUtils::DirectoryExists(clipPath))
-      {
-        std::set<std::string> clipFacesRecognized;
-        
-        robot.GetFaceWorld().ClearAllFaces();
-        
-        auto testFiles = Util::FileUtils::FilesInDirectory(clipPath, true, imageFileExtensions);
-        ASSERT_FALSE(testFiles.empty());
-        
-        struct {
-          s32 totalFrames = 0;
-          s32 facesDetected = 0;
-          s32 facesRecognized = 0;
-          s32 falsePositives = 0;
-          s32 numFaceIDs = 0;
-        } stats;
-        
-        //for(auto & testFile : testFiles)
-        const s32 numFiles = std::min(MaxImagesPerDir, (s32)testFiles.size());
-        for(s32 iFile=0; iFile < numFiles; ++iFile, fakeTime+=kTestTimeInc)
-        {
-          const std::string& testFile = testFiles[iFile];
-          
-          Recognize(robot, fakeTime, stateMsg, img, testFile, "TestImage", test.names);
-          stats.totalFrames++;
-          
-          // Get the faces observed in the current image
-          auto observedFaceIDs = robot.GetFaceWorld().GetFaceIDs(img.GetTimestamp());
-          
-          if(observedFaceIDs.size() != test.names.size()) {
-            PRINT_NAMED_WARNING("FaceRecognition.VideoRecognitionAndTracking.WrongNumFacesDetected",
-                                "Detected %lu faces instead of %lu. File: %s",
-                                observedFaceIDs.size(), test.names.size(), testFile.c_str());
-          }
-          
-          stats.facesDetected += observedFaceIDs.size();
-          
-          for(auto observedID : observedFaceIDs)
-          {
-            if(observedID != Vision::UnknownFaceID)
-            {
-              allIDs.insert(observedID);
-            }
-            
-            auto observedFace = robot.GetFaceWorld().GetFace(observedID);
-            ASSERT_NE(observedFace, nullptr);
-            
-            if(observedFace->HasName())
-            {
-              const std::string& observedName = observedFace->GetName();
-              clipFacesRecognized.insert(observedName);
-              
-              if(test.names.count(observedName) == 0) {
-                // Found a name not listed as being in this clip
-                stats.falsePositives++;
-              } else {
-                //PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.RecognizedFace",
-                //                 "Correctly found %s", observedName.c_str());
-                stats.facesRecognized++;
-              }
-            }
-          } // for each observed face
-          
-        } // for each testFile
-        
-        if(clipFacesRecognized == test.names)
-        {
-          // All faces found, no false positives
-          clipsSucceeded++;
-        }
-        
-        totalFalsePositives += stats.falsePositives;
-        stats.numFaceIDs = (s32)allIDs.size();
-        
-        const f32 detectionPercent = (f32)(stats.facesDetected*100)/(f32)(stats.totalFrames * test.names.size());
-        const f32 recogPercent     = (f32)(stats.facesRecognized*100)/(f32)stats.facesDetected;
-        const f32 falsePosPercent  = (f32)(stats.falsePositives*100)/(f32)stats.facesDetected;
-        
-        PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.Stats",
-                         "%s: %d images, %d faces detected (%.1f%%), %d faces recognized (%.1f%%), %d false positives (%.1f%%), %d total IDs assigned",
-                         testDir,
-                         stats.totalFrames, stats.facesDetected, detectionPercent,
-                         stats.facesRecognized, recogPercent,
-                         stats.falsePositives, falsePosPercent,
-                         stats.numFaceIDs);
-        
-        EXPECT_GE(detectionPercent, ExpectedDetectionPercent);
-        //EXPECT_GE(recogPercent,     ExpectedRecognitionPercent);
-        //EXPECT_LE(stats.numFaceIDs, ExpectedNumFaceIDsLimit);
-        EXPECT_LE(falsePosPercent,  ExpectedFalsePositivePercent);
-        
-        // Show the system blank frames before next video so it stops tracking
-        lastResult = ShowBlankFrames(NumBlankFramesBetweenPeople, robot, fakeTime, stateMsg, img, "TestImage");
-        EXPECT_EQ(RESULT_OK, lastResult);
-        
-        ++clipCtr;
-        clipPath = Util::FileUtils::FullFilePath({dataPath, testDir, "clip" + std::to_string(clipCtr)});
-      } // while clipDir exists
-      
-      PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.ClipStats",
-                       "Found face in %d of %d clips (%.1f%%)",
-                       clipsSucceeded, clipCtr-1, 100.f*(f32)clipsSucceeded/(f32)(clipCtr-1));
-      
-      EXPECT_GT(0, clipsSucceeded);
-      
-    } // for each testDir
-   
-    
-    Result saveResult = robot.GetVisionComponent().SaveFaceAlbumToFile("testAlbum");
-    ASSERT_EQ(saveResult, RESULT_OK);
-    
-  } // for reload
-  
-  ASSERT_EQ(0, totalFalsePositives);
+  Result lastResult = RESULT_OK;
 
-  // Clean up after ourselves
-  Util::FileUtils::RemoveDirectory("testAlbum");
-  
-  ASSERT_TRUE(RESULT_OK == lastResult);
-  
-} // FaceRecognition.VideoRecognitionAndTracking
+  lastResult = EnrollPerson("Andrew", robot);
+  ASSERT_EQ(RESULT_OK, lastResult);
 
+  lastResult = RunFacialRecognizer(robot);
+  ASSERT_EQ(RESULT_OK, lastResult);
+}
