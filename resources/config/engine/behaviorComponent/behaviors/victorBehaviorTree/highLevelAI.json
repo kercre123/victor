@@ -430,8 +430,7 @@
         "Observing",
         "Socializing",
         "PlayingWithCube",
-        "Exploring",
-        "ExploringVoiceCommand"
+        "Exploring"
       ],
       "interruptingTransitions": [
         {
@@ -439,6 +438,38 @@
           "condition": {
             "conditionType": "Compound",
             "and": [
+              {
+                "conditionType": "UserIsHoldingCube"
+              },
+              {
+                "conditionType": "ObjectKnown",
+                "objectTypes": ["Block_LIGHTCUBE1","Block_LIGHTCUBE2","Block_LIGHTCUBE3"],
+                "maxAge_ms" : 1000
+              },
+              {
+                "conditionType": "FeatureGate",
+                "feature": "CubeBehaviors"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      // same as above transitions into InvestigateHeldCube, but waits a little longer
+      // so that a cube doesn't pull it out of exploring for a minute
+      "from": "ExploringVoiceCommand",
+      "interruptingTransitions": [
+        {
+          "to": "InvestigateHeldCube",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "TimerInRange",
+                "begin_s": 60.0
+              },
               {
                 "conditionType": "UserIsHoldingCube"
               },

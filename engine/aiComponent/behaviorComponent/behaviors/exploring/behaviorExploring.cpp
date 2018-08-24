@@ -498,8 +498,8 @@ void BehaviorExploring::TransitionToDriving()
       // this can happen if we cleared all but one of the goal poses, then the robot stopped to
       // examine something midway, then when trying to start again, there is no path to the selected
       // goal. try a couple more times (maybe this needs more precise ActionResult types?)
-      if( _dVars.numDriveAttemps <= 4 ) {
-        if( res == ActionResult::PATH_PLANNING_FAILED_ABORT ) {
+      if( _dVars.numDriveAttemps <= 6 ) {
+        if( (res == ActionResult::PATH_PLANNING_FAILED_ABORT) || (res == ActionResult::FAILED_TRAVERSING_PATH) ) {
           // it's possible noise from the prox sensor is causing a legitimate planner failure (timeout), so
           // do a quick point turn to hopefully find an escape before continuing
           const float angle = (GetRNG().RandDbl() > 0.5f) ? M_PI_2_F : -M_PI_2_F;
