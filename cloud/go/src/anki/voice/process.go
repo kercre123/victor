@@ -165,7 +165,11 @@ procloop:
 					continue
 				}
 
-				language, err := getLanguage(msg.msg.GetHotword().Locale)
+				locale := msg.msg.GetHotword().Locale
+				if locale == "" {
+					locale = "en-US"
+				}
+				language, err := getLanguage(locale)
 				if err != nil {
 					p.writeError(cloud.ErrorType_InvalidConfig, err)
 					continue

@@ -3,6 +3,7 @@ package main
 import (
 	"anki/cloudproc"
 	"anki/ipc"
+	"anki/util"
 	"anki/voice"
 	"context"
 	"flag"
@@ -65,6 +66,7 @@ func main() {
 	fmt.Println("Read", len(data), "samples")
 
 	var msgIO voice.MsgIO
+	var ctx context.Context
 	if *makeproc {
 		voice.SetVerbose(*verbose)
 		options := []voice.Option{voice.WithCompression(*compress)}
@@ -73,7 +75,8 @@ func main() {
 		} else if *lex {
 			options = append(options, voice.WithHandler(voice.HandlerAmazon))
 		}
-		ctx, cancel := context.WithCancel(context.Background())
+		var cancel func()
+		ctx, cancel = context.WithCancel(context.Background())
 		defer cancel()
 		proc, err := harness.CreateMemProcess(ctx, cloudproc.WithVoiceOptions(options...))
 		if err != nil {
@@ -87,10 +90,14 @@ func main() {
 			wg.Add(1)
 			defer wg.Done()
 			var msg *cloud.Message
-			for msg == nil || msg.Tag() != cloud.MessageTag_Result {
+			for msg == nil || (msg.Tag() != cloud.MessageTag_Result && msg.Tag() != cloud.MessageTag_Error) {
+				if msg != nil {
+					fmt.Println("Received message:", msg)
+				}
 				msg, _ = proc.ReadMessage()
 			}
 			fmt.Println("Got AI response:", msg)
+			cancel()
 		}()
 		defer wg.Wait()
 	} else {
@@ -110,7 +117,10 @@ func main() {
 
 	// send hotword
 	fmt.Println("Sent: 0 samples")
-	msgIO.Send(cloud.NewMessageWithHotword(&cloud.Hotword{Mode: cloud.StreamType_Normal}))
+	if err := msgIO.Send(cloud.NewMessageWithHotword(&cloud.Hotword{Mode: cloud.StreamType_Normal})); err != nil {
+		fmt.Println("Hotword send error:", err)
+		return
+	}
 	buf := data
 	sent := 0
 	const chunkSamples = 16000 / 1000 * chunkMs
@@ -118,6 +128,10 @@ func main() {
 		sleepTarget := nextSend.Sub(time.Now())
 		nextSend = nextSend.Add(interval)
 		time.Sleep(sleepTarget)
+		if util.CanSelect(ctx.Done()) {
+			fmt.Println("Cancelled, breaking")
+			break
+		}
 
 		temp := buf[:chunkSamples]
 		buf = buf[chunkSamples:]
