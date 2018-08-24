@@ -377,4 +377,37 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // CheckUpdateStatus tells if the robot is ready to reboot and update.
+  rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
+    option (google.api.http) = {
+      post: "/v1/check_update_status",
+      body: "*"
+    };
+  }
+
+  // UpdateAndRestart reboots the robot when an update is available.
+  // This will apply the update when the robot starts up.
+  rpc UpdateAndRestart(UpdateAndRestartRequest) returns (UpdateAndRestartResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_and_restart",
+      body: "*"
+    };
+  }
+
+  // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
+  rpc UploadDebugLogs(UploadDebugLogsRequest) returns (UploadDebugLogsResponse) {
+    option (google.api.http) = {
+      post: "/v1/upload_debug_logs",
+      body: "*"
+    };
+  }
+
+  // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud.
+  rpc CheckCloudConnection(CheckCloudRequest) returns (CheckCloudResponse) {
+    option (google.api.http) = {
+      post: "/v1/check_cloud_connection",
+      body: "*"
+    };
+  }
 }

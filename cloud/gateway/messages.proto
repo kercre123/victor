@@ -16,6 +16,7 @@ message ResponseStatus {
     UNKNOWN = 0;
     RESPONSE_RECEIVED = 1; // The message has completed as expected
     REQUEST_PROCESSING = 2; // The message has been sent to the robot
+    OK = 3;
     FORBIDDEN = 100; // The user was not authorizied
     NOT_FOUND = 101; // The requested attribute was not found
     ERROR_UPDATE_IN_PROGRESS = 102; // The current rpc is currently updating values from another call
@@ -896,3 +897,48 @@ message CameraFeedResponse {
   ImageChunk image_chunk = 1;
 }
 
+// Check to see if an update is available for the robot
+message CheckUpdateStatusRequest{}
+
+message CheckUpdateStatusResponse{
+  ResponseStatus status = 1;
+  enum UpdateStatus {
+    NO_UPDATE = 0;
+    READY_TO_INSTALL = 1;
+  }
+  UpdateStatus update_status = 2;
+}
+
+// Apply updates to the robot (if available)
+message UpdateAndRestartRequest{}
+
+message UpdateAndRestartResponse{
+  ResponseStatus status = 1;
+}
+
+// Upload debug logs for customer care
+message UploadDebugLogsRequest{}
+
+message UploadDebugLogsResponse{
+  ResponseStatus status = 1;
+  string url = 2;
+}
+
+// Verify Vector's connection to the Anki Cloud
+message CheckCloudRequest{}
+
+message CheckCloudResponse{
+  ResponseStatus status = 1;
+  enum ConnectionCode {
+    UNKNOWN = 0;
+    AVAILABLE = 1;
+    BAD_CONNECTIVITY = 2;
+    FAILED_TLS = 3;
+    FAILED_AUTH = 4;
+    INSUFFICIENT_BANDWIDTH = 5;
+  }
+  ConnectionCode code = 2;
+  string status_message = 3;
+  int32 num_packets = 4;
+  int32 expected_packets = 5;
+}

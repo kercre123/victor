@@ -232,6 +232,18 @@ test_wifi: .require_ip
 	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo
 
+test_check_update_status: .require_ip
+	$(curl_command)/v1/check_update_status -d '{}'
+	@echo
+
+test_update_and_restart: .require_ip
+	$(curl_command)/v1/update_and_restart -d '{}'
+	@echo
+
+test_check_cloud_connection: .require_ip
+	$(curl_command)/v1/check_cloud_connection -d '{}'
+	@echo
+
 test_user_authentication: .require_ip
 	# Temporarily curl with "this is a test" base64 encoded until VIC-3490 gets done
 	# Then the user_session_id will be the login token that the user received from

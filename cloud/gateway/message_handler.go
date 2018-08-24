@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io/ioutil"
 	"math"
+	"os"
+	"os/exec"
 	"reflect"
 	"time"
 
@@ -1842,6 +1844,77 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	}
 
 	return nil
+}
+
+// CheckUpdateStatus tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatus(ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		return &extint.CheckUpdateStatusResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_OK,
+			},
+			UpdateStatus: extint.CheckUpdateStatusResponse_READY_TO_INSTALL,
+		}, nil
+	}
+	return &extint.CheckUpdateStatusResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_OK,
+		},
+		UpdateStatus: extint.CheckUpdateStatusResponse_NO_UPDATE,
+	}, nil
+}
+
+// UpdateAndRestart reboots the robot when an update is available.
+// This will apply the update when the robot starts up.
+func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.UpdateAndRestartRequest) (*extint.UpdateAndRestartResponse, error) {
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		go func() {
+			<-time.After(5 * time.Second)
+			exec.Command("/sbin/reboot").Run()
+		}()
+		return &extint.UpdateAndRestartResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_OK,
+			},
+		}, nil
+	}
+	return &extint.UpdateAndRestartResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_NOT_FOUND,
+		},
+	}, nil
+}
+
+// UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
+func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
+	return nil, grpc.Errorf(codes.Unimplemented, "Not implemented yet")
+}
+
+// CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
+// Its main use is to be called by the app during setup, but is fine for use by the outside world.
+func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.CheckCloudRequest) (*extint.CheckCloudResponse, error) {
+	log.Println("Received rpc request CheckCloudConnection(", in, ")")
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CheckCloudRequest{
+			CheckCloudRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	cloudResponse := payload.GetCheckCloudResponse()
+	cloudResponse.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return cloudResponse, nil
 }
 
 func newServer() *rpcService {
