@@ -40,6 +40,9 @@ void SavedSessionManager::MigrateKeys() {
 
     // save RtsKeys 
     SaveRtsKeys(keys);
+
+    // clear factory keys (but keep name)
+    ClearRtsKeysFactory();
   }
 }
 
@@ -200,6 +203,39 @@ RtsKeys SavedSessionManager::LoadRtsKeys() {
   }
 
   return savedData;
+}
+
+void SavedSessionManager::ClearRtsKeysFactory() {
+  std::ofstream fout;
+
+  fout.open(kRtsKeyPath, kWriteMode);
+
+  if(!fout.is_open()) {
+    Log::Error("Could not open file.");
+    return;
+  }
+
+  RtsKeys factoryKeys = LoadRtsKeysFactory();
+  factoryKeys.clients.clear();
+  
+  memset(factoryKeys.keys.id.publicKey, 0, sizeof(factoryKeys.keys.id.publicKey));
+  memset(factoryKeys.keys.id.privateKey, 0, sizeof(factoryKeys.keys.id.privateKey));
+
+  // Update saveData values
+  memcpy((char*)&factoryKeys.keys.magic, kPrefix, strlen(kPrefix)); 
+  factoryKeys.keys.version = kMagicVersionNumber;
+  factoryKeys.keys.numKnownClients = factoryKeys.clients.size();
+
+  fout.write((char*)&(factoryKeys.keys), sizeof(factoryKeys.keys));
+
+  // Zero-out the rest of our buffer size
+  uint32_t numBytesToZero = kNativeBufferSize - (uint32_t)fout.tellp();
+  for(int i  = 0; i < numBytesToZero; i++) {
+    char zero = 0;
+    fout.write((char*)&zero, sizeof(zero));
+  }
+
+  fout.close();
 }
 
 void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {  

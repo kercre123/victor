@@ -61,6 +61,7 @@ public:
 private:
   static bool HasMigrated();
   static RtsKeys LoadRtsKeysFactory();
+  static void ClearRtsKeysFactory();
   static bool MakeDirectory(std::string directory);
 
   static const std::string kSaveFolder;
