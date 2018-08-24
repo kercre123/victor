@@ -121,12 +121,12 @@ void BehaviorBlackJack::OnBehaviorActivated()
   _visualizer.Init(GetBEI());
 
   TransitionToTurnToFace();
- }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBlackJack::OnBehaviorDeactivated()
 {
-  _visualizer.ReleaseControl(GetBEI());
+  _visualizer.ReleaseControlAndClearState(GetBEI());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

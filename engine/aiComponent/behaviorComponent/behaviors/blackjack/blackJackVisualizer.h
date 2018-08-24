@@ -52,8 +52,9 @@ public:
   void ClearCards(BehaviorExternalInterface& bei);
 
   // If the visualizer has control of parts of the robot (face track etc) this function
-  // will release that control (probably becasue the behavior is ending)
-  void ReleaseControl(BehaviorExternalInterface& bei);
+  // will release that control (probably becasue the behavior is ending) and clear out any lasting
+  // state like callbacks and bools
+  void ReleaseControlAndClearState(BehaviorExternalInterface& bei);
 
 
 private:
@@ -75,8 +76,8 @@ private:
   uint _dealCardSeqApplyAt_ms = 0;
   uint _displayDealtCardsAt_ms = 0;
 
+  bool                  _shouldClearLocksOnCallback = false;
   bool                  _animCompletedLastFrame = false;
-  bool                  _lockTracksNextFrame = false;
   std::function<void()> _animCompletedCallback = nullptr;
 };
 

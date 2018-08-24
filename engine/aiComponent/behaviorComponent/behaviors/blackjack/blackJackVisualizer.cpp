@@ -250,6 +250,10 @@ void BlackJackVisualizer::Init(BehaviorExternalInterface& bei)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::Update(BehaviorExternalInterface& bei)
 {
+  // Hack: if we've received an Update call from the parent behavior, it's active. Don't clear locks on anim callbacks
+  // See VIC-5926
+  _shouldClearLocksOnCallback = false;
+
   // Callbacks provided by the parent behavior should only be called during the behavior update tick, in case
   // they impact the state of the parent behavior.
   if(_animCompletedLastFrame){
@@ -384,8 +388,11 @@ void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExtern
   auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
 
   // Set up the final state of the static image in the callback
-  auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
+  auto animationCallback = [this, &bei](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
   {
+    if(_shouldClearLocksOnCallback){
+      bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+    }
     // Note that the anim has completed to exercise callbacks
     _animCompletedLastFrame = true;
   };
@@ -439,9 +446,16 @@ void BlackJackVisualizer::ClearCards(BehaviorExternalInterface& bei)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlackJackVisualizer::ReleaseControl(BehaviorExternalInterface& bei)
+void BlackJackVisualizer::ReleaseControlAndClearState(BehaviorExternalInterface& bei)
 {
-  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+  ClearCards(bei);
+  // Hack: Assume the parent behavior is being interrupted. If that's the case we will want to unlock the face from the
+  // animCompletedCallback for any potentially orphaned CompositeAnimations that might currently be running. This will 
+  // have no effect if no anim is currently in progress. See VIC-5926
+  _shouldClearLocksOnCallback = true;
+
+  _animCompletedLastFrame = false;
+  _animCompletedCallback = nullptr;
 }
 
 
