@@ -38,8 +38,11 @@ public:
   
   // Is it safe to listen for new tempos/beat detection while this animation is playing?
   bool CanListenForBeats() const { return _canListenForBeats; }
-  
   void SetCanListenForBeats(const bool b) { _canListenForBeats = b; }
+  
+  // Should a getout be played after this animation if dancing is interrupted during this animation?
+  bool PlayGetoutIfInterrupted() const { return _playGetoutIfInterrupted; }
+  void SetPlayGetoutIfInterrupted(const bool b) { _playGetoutIfInterrupted = b; }
   
   float GetBeatDelay_sec() const {return _beatDelay_sec; }
   
@@ -51,6 +54,7 @@ public:
 private:
   std::string _animName;
   bool _canListenForBeats = false;
+  bool _playGetoutIfInterrupted = false;
   float _beatDelay_sec = 0.f;
 };
   
@@ -76,6 +80,7 @@ public:
   DanceAnimMetadata GetRandomAnim() const;
   
   void SetCanListenForBeats(const bool b);
+  void SetPlayGetoutIfInterrupted(const bool b);
   
   uint32_t GetMinBeats() const   { return _minBeats; }
   uint32_t GetMaxBeats() const   { return _maxBeats; }

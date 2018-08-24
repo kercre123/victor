@@ -167,7 +167,16 @@ void BehaviorDanceToTheBeat::BehaviorUpdate()
     return;
   }
 
-  WhileDancing();
+  const bool danceAnimQueued = (_dVars.nextAnimTriggerTime_sec > 0.f);
+  
+  // If we have no animation queued and we're not currently doing anything, it's time to quit.
+  if (!IsControlDelegated() && !danceAnimQueued) {
+    CancelSelf();
+  }
+  
+  if (danceAnimQueued) {
+    WhileDancing();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -204,8 +213,18 @@ void BehaviorDanceToTheBeat::WhileDancing()
       !beatDetector.IsBeatDetected()) {
     PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.WhileDancing.BeatNoLongerDetected",
                         "Cancelling behavior since we are currently listening for beats "
-                        "and BeatDetectorComponent says beat is no longer detected");
-    CancelSelf();
+                        "and BeatDetectorComponent says beat is no longer detected (play getout anim: %d)",
+                        _dVars.playGetoutIfBeatLost);
+    _dVars.nextAnimTriggerTime_sec = -1.f;
+    SetListeningForBeats(false);
+    if (_dVars.playGetoutIfBeatLost) {
+      DelegateNow(new TriggerAnimationAction(_iConfig.getOutAnim), [this](){
+        CancelSelf();
+      });
+    } else {
+      // No get-out, just cancel ourself
+      CancelSelf();
+    }
     return;
   }
   
@@ -222,12 +241,6 @@ void BehaviorDanceToTheBeat::WhileDancing()
       now_sec >= _dVars.nextAnimTriggerTime_sec) {
     PlayNextDanceAnim();
   }
-  
-  // If we have no animation queued and we're not currently doing anything, it's time to quit.
-  if (!IsControlDelegated() &&
-      _dVars.nextAnimTriggerTime_sec <= 0.f) {
-    CancelSelf();
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -237,6 +250,7 @@ void BehaviorDanceToTheBeat::PlayNextDanceAnim()
   DEV_ASSERT(!_dVars.danceAnims.empty(), "BehaviorDanceToTheBeat.PlayNextDanceAnim.NoDanceSessions");
   
   SetListeningForBeats(_dVars.danceAnims.front().CanListenForBeats());
+  _dVars.playGetoutIfBeatLost = _dVars.danceAnims.front().PlayGetoutIfInterrupted();
   auto* animAction = new PlayAnimationAction(_dVars.danceAnims.front().GetAnimName());
   _dVars.danceAnims.pop_front();
   

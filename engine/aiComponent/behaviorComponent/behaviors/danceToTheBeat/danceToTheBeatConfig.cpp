@@ -133,10 +133,19 @@ void DancePhrase::SetCanListenForBeats(const bool b)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DancePhrase::SetPlayGetoutIfInterrupted(const bool b)
+{
+  for (auto& anim : _anims) {
+    anim.SetPlayGetoutIfInterrupted(b);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DanceSession::DanceSession(const Json::Value& json)
 {
   const std::string debugName = "DanceSession";
   const bool canListenForBeats = JsonTools::ParseBool(json, "canListenForBeats", debugName);
+  const bool playGetoutIfInterrupted = JsonTools::ParseBool(json, "playGetoutIfInterrupted", debugName);
   
   const auto& dancePhrases = json["dancePhrases"];
   DEV_ASSERT(!dancePhrases.isNull() && dancePhrases.isArray() && !dancePhrases.empty(),
@@ -145,6 +154,7 @@ DanceSession::DanceSession(const Json::Value& json)
   for (const auto& dancePhraseJson : dancePhrases) {
     _dancePhrases.emplace_back(dancePhraseJson);
     _dancePhrases.back().SetCanListenForBeats(canListenForBeats);
+    _dancePhrases.back().SetPlayGetoutIfInterrupted(playGetoutIfInterrupted);
   }
 }
 

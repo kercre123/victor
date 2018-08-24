@@ -77,6 +77,9 @@ private:
     // running during the behavior.
     bool listeningForBeats = false;
     
+    // If true, then we should play the getout animation if we quit the behavior due to "losing" the beat
+    bool playGetoutIfBeatLost = false;
+    
     // ID for registering OnBeat callback with BeatDetectorComponent. A
     // value of less than 0 indicates that no callback is registered.
     int onBeatCallbackId = -1;

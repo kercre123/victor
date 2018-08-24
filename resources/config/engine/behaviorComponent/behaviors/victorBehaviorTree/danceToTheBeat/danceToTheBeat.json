@@ -33,6 +33,7 @@
   "danceSessions" : [  
     {
       "canListenForBeats" : true,
+      "playGetoutIfInterrupted": false,
       "dancePhrases" : [
         {
           "minBeats"    : 6,
@@ -48,6 +49,7 @@
   
     {
       "canListenForBeats" : false,
+      "playGetoutIfInterrupted": true,
       "dancePhrases" : [
         {
           "minBeats"    : 4,
@@ -102,6 +104,7 @@
   
     {
       "canListenForBeats" : true,
+      "playGetoutIfInterrupted": true,
       "dancePhrases" : [
         {
           "minBeats"    : 20,
@@ -117,6 +120,7 @@
   
     {
       "canListenForBeats" : false,
+      "playGetoutIfInterrupted": true,
       "dancePhrases" : [
         {
           "minBeats"    : 10,
