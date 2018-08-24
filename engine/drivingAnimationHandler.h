@@ -124,16 +124,16 @@ private:
   enum class AnimState
   {
     Waiting,         // State after Init() has been called
-      PlanningStart,   // Currently playing the planning start anim
-      PlanningLoop,    // Currently playing the planning loop anim
-      PlanningEnd,     // Currently playing the planning end anim
-      FinishedPlanning,// End planning anim has finished but driving anims haven't started yet
-      DrivingStart,    // Currently playing the driving start anim
-      DrivingLoop,     // Currently playing the driving loop anim
-      DrivingEnd,      // Currently playing the driving end anim
-      FinishedDriving, // End anim has finished but the action hasn't been destroyed yet
-      ActionDestroyed, // The action has been destroyed so we are waiting for Init() to be called
-      };
+    PlanningStart,   // Currently playing the planning start anim
+    PlanningLoop,    // Currently playing the planning loop anim
+    PlanningEnd,     // Currently playing the planning end anim
+    FinishedPlanning,// End planning anim has finished but driving anims haven't started yet
+    DrivingStart,    // Currently playing the driving start anim
+    DrivingLoop,     // Currently playing the driving loop anim
+    DrivingEnd,      // Currently playing the driving end anim
+    FinishedDriving, // End anim has finished but the action hasn't been destroyed yet
+    ActionDestroyed, // The action has been destroyed so we are waiting for Init() to be called
+  };
       
   // What state of playing driving animations we are in
   // Start in ActionDestroyed so that Init() needs to be called

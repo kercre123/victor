@@ -47,9 +47,9 @@ namespace {
   const char* kUseCliffSensorsKey        = "useCliffSensorCorrection";
   const char* kLeftTurnAnimKey           = "leftTurnAnimTrigger";
   const char* kRightTurnAnimKey          = "rightTurnAnimTrigger";
-  const char* kBackupStartAnimKey        = "backupStartAnimTrigger";
-  const char* kBackupEndAnimKey          = "backupEndAnimTrigger";
-  const char* kBackupLoopAnimKey         = "backupLoopAnimTrigger";
+  const char* kDrivingStartAnimKey       = "drivingStartAnimTrigger";
+  const char* kDrivingEndAnimKey         = "drivingEndAnimTrigger";
+  const char* kDrivingLoopAnimKey        = "drivingLoopAnimTrigger";
   const char* kRaiseLiftAnimKey          = "raiseLiftAnimTrigger";
   const char* kNuzzleAnimKey             = "nuzzleAnimTrigger";
   const char* kDriveToRetryCountKey      = "driveToRetryCount";
@@ -74,13 +74,13 @@ BehaviorGoHome::InstanceConfig::InstanceConfig(const Json::Value& config, const 
 {  
   useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
   
-  JsonTools::GetCladEnumFromJSON(config, kLeftTurnAnimKey,    leftTurnAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kRightTurnAnimKey,   rightTurnAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kBackupStartAnimKey, backupStartAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kBackupEndAnimKey,   backupEndAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kBackupLoopAnimKey,  backupLoopAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kRaiseLiftAnimKey,   raiseLiftAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kNuzzleAnimKey,      nuzzleAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kLeftTurnAnimKey,     leftTurnAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kRightTurnAnimKey,    rightTurnAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kDrivingStartAnimKey, drivingStartAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kDrivingEndAnimKey,   drivingEndAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kDrivingLoopAnimKey,  drivingLoopAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kRaiseLiftAnimKey,    raiseLiftAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kNuzzleAnimKey,       nuzzleAnimTrigger, debugName);
   homeFilter = std::make_unique<BlockWorldFilter>();
   driveToRetryCount = JsonTools::ParseInt32(config, kDriveToRetryCountKey, debugName);
   turnToDockRetryCount = JsonTools::ParseInt32(config, kTurnToDockRetryCountKey, debugName);
@@ -107,9 +107,9 @@ void BehaviorGoHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) co
     kUseCliffSensorsKey,
     kLeftTurnAnimKey,
     kRightTurnAnimKey,
-    kBackupStartAnimKey,
-    kBackupEndAnimKey,
-    kBackupLoopAnimKey,
+    kDrivingStartAnimKey,
+    kDrivingEndAnimKey,
+    kDrivingLoopAnimKey,
     kRaiseLiftAnimKey,
     kNuzzleAnimKey,
     kDriveToRetryCountKey,
@@ -465,7 +465,11 @@ void BehaviorGoHome::TransitionToMountCharger()
   // Play the animations to raise lift, then mount the charger
   auto* action = new CompoundActionSequential();
   action->AddAction(new TriggerAnimationAction(_iConfig.raiseLiftAnimTrigger));
-  action->AddAction(new MountChargerAction(_dVars.chargerID, _iConfig.useCliffSensorCorrection));
+  auto* mountAction = new MountChargerAction(_dVars.chargerID, _iConfig.useCliffSensorCorrection);
+  mountAction->SetDockingAnimTriggers(_iConfig.drivingStartAnimTrigger,
+                                      _iConfig.drivingLoopAnimTrigger,
+                                      _iConfig.drivingEndAnimTrigger);
+  action->AddAction(mountAction);
   
   DelegateIfInControl(action,
                       [this](ActionResult result) {
@@ -573,9 +577,9 @@ void BehaviorGoHome::PushDrivingAnims()
   
   if (!_dVars.drivingAnimsPushed) {
     auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.PushDrivingAnimations({_iConfig.backupStartAnimTrigger,
-                                              _iConfig.backupLoopAnimTrigger,
-                                              _iConfig.backupEndAnimTrigger},
+    drivingAnimHandler.PushDrivingAnimations({_iConfig.drivingStartAnimTrigger,
+                                              _iConfig.drivingLoopAnimTrigger,
+                                              _iConfig.drivingEndAnimTrigger},
                                              GetDebugLabel());
     _dVars.drivingAnimsPushed = true;
   }

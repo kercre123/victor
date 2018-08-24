@@ -192,9 +192,9 @@ namespace Anki {
       template<typename T>
       void HandleMessage(const T& msg);
 
-      static void SetDockAnimations(const AnimationTrigger& getIn,
-                                    const AnimationTrigger& loop,
-                                    const AnimationTrigger& getOut);      
+      void SetDockAnimations(const AnimationTrigger& getIn,
+                             const AnimationTrigger& loop,
+                             const AnimationTrigger& getOut);
     protected:
       
       // IDockAction derived classes nearly universally require the same VisionModes. Special cases should
@@ -236,6 +236,10 @@ namespace Anki {
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
       }
       
+      // Identify cases where the robot should play start, loop, and end animations while docking. Override this to
+      // false to prevent playing docking anims.
+      virtual bool ShouldPlayDockingAnimations() { return true; }
+      
       // Purely to shorten the name for nice whitespace alignment
       using UniqueCompoundPtr = std::unique_ptr<ICompoundAction>;
       
@@ -272,9 +276,6 @@ namespace Anki {
       // Sets up the turnTowardsObject action and the "glance up to see if there is a block on top of the
       // block we are docking with" action
       void SetupTurnAndVerifyAction(const ObservableObject* dockObject);
-      
-      // Identify cases where cozmo should squint while docking
-      bool ShouldApplyDockingSquint();
 
       // Manually update the dock animation subaction
       void UpdateDockingAnim();
@@ -290,15 +291,16 @@ namespace Anki {
       // Name of animation to play when moving lift post-dock
       using GE = AudioMetaData::GameEvent::GenericEvent;
       GE _liftMovingAudioEvent = GE::Invalid;
-;
       
       bool _shouldSetCubeLights      = false;
       bool _lightsSet                = false;
       bool _visuallyVerifyObjectOnly = false;
 
-      static AnimationTrigger _getInDockTrigger;
-      static AnimationTrigger _loopDockTrigger;
-      static AnimationTrigger _getOutDockTrigger;
+      // These default docking animation triggers can be overridden with SetDockAnimations()
+      AnimationTrigger _getInDockTrigger  = AnimationTrigger::DockStartDefault;
+      AnimationTrigger _loopDockTrigger   = AnimationTrigger::DockLoopDefault;
+      AnimationTrigger _getOutDockTrigger = AnimationTrigger::DockEndDefault;
+      
       AnimationTrigger _curDockTrigger    = AnimationTrigger::Count;
 
     }; // class IDockAction

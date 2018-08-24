@@ -5,9 +5,9 @@
   "useCliffSensorCorrection" : true,
   "leftTurnAnimTrigger"      : "ChargerDockingLeftTurn",
   "rightTurnAnimTrigger"     : "ChargerDockingRightTurn",
-  "backupStartAnimTrigger"   : "ChargerDockingBackupDriveStart",
-  "backupEndAnimTrigger"     : "ChargerDockingBackupDriveEnd",
-  "backupLoopAnimTrigger"    : "ChargerDockingBackupDriveLoop",
+  "drivingStartAnimTrigger"  : "ChargerDockingDrivingStart",
+  "drivingEndAnimTrigger"    : "ChargerDockingDrivingEnd",
+  "drivingLoopAnimTrigger"   : "ChargerDockingDrivingLoop",
   "raiseLiftAnimTrigger"     : "ChargerDockingRaiseLift",
   "nuzzleAnimTrigger"        : "ChargerDockingSettle",
   

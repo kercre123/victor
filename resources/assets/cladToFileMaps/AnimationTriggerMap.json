@@ -136,15 +136,15 @@
     "AnimName":  "ag_cubeconnection_connectionsuccess"
   },
   {
-    "CladEvent": "ChargerDockingBackupDriveEnd",
+    "CladEvent": "ChargerDockingDrivingEnd",
     "AnimName": "ag_chargerdocking_driving_end"
   },
   {
-    "CladEvent": "ChargerDockingBackupDriveLoop",
+    "CladEvent": "ChargerDockingDrivingLoop",
     "AnimName": "ag_chargerdocking_driving_loop"
   },
   {
-    "CladEvent": "ChargerDockingBackupDriveStart",
+    "CladEvent": "ChargerDockingDrivingStart",
     "AnimName": "ag_chargerdocking_drive_start"
   },
   {

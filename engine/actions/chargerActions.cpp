@@ -18,7 +18,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/batteryComponent.h"
-#include "engine/drivingAnimationHandler.h"
 #include "engine/robot.h"
 
 
@@ -28,25 +27,19 @@ namespace Vector {
 #pragma mark ---- MountChargerAction ----
   
 MountChargerAction::MountChargerAction(ObjectID chargerID,
-                                       const bool useCliffSensorCorrection,
-                                       const bool shouldPlayDrivingAnimation)
+                                       const bool useCliffSensorCorrection)
   : IAction("MountCharger",
             RobotActionType::MOUNT_CHARGER,
             (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK)
   , _chargerID(chargerID)
   , _useCliffSensorCorrection(useCliffSensorCorrection)
-  , _playDrivingAnimation(shouldPlayDrivingAnimation)
 {
   
 }
 
 
 MountChargerAction::~MountChargerAction()
-{
-  if (HasRobot() && _playDrivingAnimation) {
-    GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
-  }
-  
+{  
   if (_mountAction != nullptr) {
     _mountAction->PrepForCompletion();
   }
@@ -58,11 +51,6 @@ MountChargerAction::~MountChargerAction()
   
 ActionResult MountChargerAction::Init()
 {
-  if (_playDrivingAnimation) {
-    // Init the driving animation handler
-    GetRobot().GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking(), true);
-  }
-  
   // Reset the compound actions to ensure they get re-configured:
   _mountAction.reset();
   _driveForRetryAction.reset();
@@ -135,6 +123,17 @@ ActionResult MountChargerAction::CheckIfDone()
 }
 
 
+void MountChargerAction::SetDockingAnimTriggers(const AnimationTrigger& start,
+                                                const AnimationTrigger& loop,
+                                                const AnimationTrigger& end)
+{
+  _dockingStartTrigger = start;
+  _dockingLoopTrigger  = loop;
+  _dockingEndTrigger   = end;
+  _dockingAnimTriggersSet = true;
+}
+
+
 ActionResult MountChargerAction::ConfigureMountAction()
 {
   DEV_ASSERT(_mountAction == nullptr, "MountChargerAction.ConfigureMountAction.AlreadyConfigured");
@@ -148,30 +147,12 @@ ActionResult MountChargerAction::ConfigureMountAction()
     _mountAction->AddAction(new MoveLiftToHeightAction(backingUpLiftHeight_mm));
   }
   
-  // Play the driving Start anim if necessary
-  if (_playDrivingAnimation) {
-    _mountAction->AddAction(new WaitForLambdaAction([](Robot& robot) {
-      robot.GetDrivingAnimationHandler().StartDrivingAnim();
-      return true;
-    }));
-  }
-  
   // Back up into the charger
-  _mountAction->AddAction(new BackupOntoChargerAction(_chargerID,
-                                                      _useCliffSensorCorrection));
-  
-  // Play the driving End anim if necessary
-  if (_playDrivingAnimation) {
-    _mountAction->AddAction(new WaitForLambdaAction([](Robot& robot) {
-      if (robot.GetDrivingAnimationHandler().HasFinishedDrivingEndAnim()) {
-        return true;
-      }
-      if (!robot.GetDrivingAnimationHandler().IsPlayingDrivingEndAnim()) {
-        robot.GetDrivingAnimationHandler().EndDrivingAnim();
-      }
-      return false;
-    }));
+  auto* backupAction = new BackupOntoChargerAction(_chargerID, _useCliffSensorCorrection);
+  if (_dockingAnimTriggersSet) {
+    backupAction->SetDockAnimations(_dockingStartTrigger, _dockingLoopTrigger, _dockingEndTrigger);
   }
+  _mountAction->AddAction(backupAction);
   
   return ActionResult::SUCCESS;
 }

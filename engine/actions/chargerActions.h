@@ -18,6 +18,8 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actionableObject.h"
 
+#include "clad/types/animationTrigger.h"
+
 namespace Anki {
 namespace Vector {
     
@@ -32,9 +34,12 @@ class MountChargerAction : public IAction
 {
 public:
   MountChargerAction(ObjectID chargerID,
-                     const bool useCliffSensorCorrection = true,
-                     const bool shouldPlayDrivingAnimation = true);
+                     const bool useCliffSensorCorrection = true);
   ~MountChargerAction();
+  
+  void SetDockingAnimTriggers(const AnimationTrigger& start,
+                              const AnimationTrigger& loop,
+                              const AnimationTrigger& end);
   
 protected:
   
@@ -45,11 +50,16 @@ private:
   const ObjectID _chargerID;
 
   const bool _useCliffSensorCorrection;
-  const bool _playDrivingAnimation;
   
   // Pointers to compound actions which comprise this action:
   std::unique_ptr<ICompoundAction> _mountAction = nullptr;
   std::unique_ptr<DriveStraightAction> _driveForRetryAction = nullptr;
+  
+  AnimationTrigger _dockingStartTrigger = AnimationTrigger::Count;
+  AnimationTrigger _dockingLoopTrigger  = AnimationTrigger::Count;
+  AnimationTrigger _dockingEndTrigger   = AnimationTrigger::Count;
+  
+  bool _dockingAnimTriggersSet = false;
   
   // Allocate and add actions to the member compound actions:
   ActionResult ConfigureMountAction();
@@ -104,6 +114,8 @@ protected:
   virtual ActionResult SelectDockAction(ActionableObject* object) override;
   
   virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+  
+  virtual bool ShouldPlayDockingAnimations() override { return true; }
   
   //virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
   

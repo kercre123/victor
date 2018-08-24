@@ -57,19 +57,6 @@ static const f32 kSamePreactionPoseAngleThresh_deg = 30.f;
 namespace Anki {
   namespace Vector {
 
-    void IDockAction::SetDockAnimations(const AnimationTrigger& getIn,
-                                        const AnimationTrigger& loop,
-                                        const AnimationTrigger& getOut)
-    {
-      _getInDockTrigger  = getIn;
-      _loopDockTrigger   = loop;
-      _getOutDockTrigger = getOut;
-    }
-
-    AnimationTrigger IDockAction::_getInDockTrigger = AnimationTrigger::DockStartDefault;
-    AnimationTrigger IDockAction::_loopDockTrigger = AnimationTrigger::DockLoopDefault;
-    AnimationTrigger IDockAction::_getOutDockTrigger = AnimationTrigger::DockEndDefault;
-
     // Which docking method actions should use
     CONSOLE_VAR(u32, kDefaultDockingMethod,"DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
@@ -573,8 +560,10 @@ namespace Anki {
             _dockAnim->Cancel();
             _dockAnim->PrepForCompletion();
           }
-          _dockAnim.reset(new TriggerAnimationAction(_getOutDockTrigger));
-          _dockAnim->SetRobot(&GetRobot());
+          if (ShouldPlayDockingAnimations()) {
+            _dockAnim.reset(new TriggerAnimationAction(_getOutDockTrigger));
+            _dockAnim->SetRobot(&GetRobot());
+          }
         }
 
         using GE = AudioMetaData::GameEvent::GenericEvent;
@@ -769,7 +758,7 @@ namespace Anki {
         // know the robot got the DockWithObject command sent in Init().
         _wasPickingOrPlacing = _dockingComponentPtr->IsPickingOrPlacing();
 
-        if(_wasPickingOrPlacing && ShouldApplyDockingSquint())
+        if(_wasPickingOrPlacing && ShouldPlayDockingAnimations())
         {
           // If we haven't started playing any dock anim triggers, play the get in
           if(_curDockTrigger == AnimationTrigger::Count)
@@ -812,9 +801,8 @@ namespace Anki {
       }
       else
       {
-        // If dock anim is null then it means the get in finished so time
-        // to start the loop
-        if(_dockAnim == nullptr)
+        // If dock anim is null then it means the get in finished so time to start the loop
+        if(_dockAnim == nullptr && ShouldPlayDockingAnimations())
         {
           _curDockTrigger = _loopDockTrigger;
           _dockAnim.reset(new TriggerAnimationAction(_loopDockTrigger));
@@ -878,11 +866,6 @@ namespace Anki {
       }
     }
 
-    bool IDockAction::ShouldApplyDockingSquint()
-    {
-      return true;
-    }
-
     void IDockAction::UpdateDockingAnim()
     {
       if(_dockAnim != nullptr)
@@ -920,6 +903,15 @@ namespace Anki {
                       "Dock object was deleted from current origin stopping dock action");
         _dockObjectID.UnSet();
       }
+    }
+    
+    void IDockAction::SetDockAnimations(const AnimationTrigger& getIn,
+                                        const AnimationTrigger& loop,
+                                        const AnimationTrigger& getOut)
+    {
+      _getInDockTrigger  = getIn;
+      _loopDockTrigger   = loop;
+      _getOutDockTrigger = getOut;
     }
 
 #pragma mark ---- PopAWheelieAction ----

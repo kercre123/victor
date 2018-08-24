@@ -58,13 +58,13 @@ private:
     }
     InstanceConfig(const Json::Value& config, const std::string& debugName);
 
-    AnimationTrigger leftTurnAnimTrigger    = AnimationTrigger::Count;
-    AnimationTrigger rightTurnAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger backupStartAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger backupEndAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger backupLoopAnimTrigger  = AnimationTrigger::Count;
-    AnimationTrigger raiseLiftAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger nuzzleAnimTrigger      = AnimationTrigger::Count;
+    AnimationTrigger leftTurnAnimTrigger     = AnimationTrigger::Count;
+    AnimationTrigger rightTurnAnimTrigger    = AnimationTrigger::Count;
+    AnimationTrigger drivingStartAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger drivingEndAnimTrigger   = AnimationTrigger::Count;
+    AnimationTrigger drivingLoopAnimTrigger  = AnimationTrigger::Count;
+    AnimationTrigger raiseLiftAnimTrigger    = AnimationTrigger::Count;
+    AnimationTrigger nuzzleAnimTrigger       = AnimationTrigger::Count;
 
     bool useCliffSensorCorrection = true;
     std::unique_ptr<BlockWorldFilter> homeFilter;
