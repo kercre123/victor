@@ -29,6 +29,11 @@ BEIRobotInfo::~BEIRobotInfo()
 {
   
 }
+  
+ActionList& BEIRobotInfo::GetActionList()
+{
+  return _robot.GetComponent<ActionList>();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BatteryLevel BEIRobotInfo::GetBatteryLevel() const

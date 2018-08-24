@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
 
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -52,6 +53,7 @@ const char* const kAddtlLookTimeIfSawBodyKey     = "additionalLookTimeIfSawBody_
 const char* const kAddtlSearchTimeIfSawBodyKey   = "additionalSearchTimeIfSawBody_s";
 const char* const kUpperPortionLookUpPercent     = "upperPortionLookUpPercent";
 const char* const kAnimWhenSeesFaceKey           = "animWhenSeesFace";
+const char* const kAnimWhileSearching            = "animWhileSearching";
   
 const char* const kDebugName = "BehaviorFindFaceAndThen";
 
@@ -83,6 +85,7 @@ BehaviorFindFaceAndThen::DynamicVariables::DynamicVariables()
   timeEndFaceFromBodyBehavior_s = 0.0f;
   targetFace.Reset();
   lastPersonDetected     = Vision::SalientPoint();
+  animWhileSearchingTag  = ActionConstants::INVALID_TAG;
   sawBody                = false;
   sawFace                = false;
   sentEvent              = false;
@@ -131,6 +134,9 @@ BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
   _iConfig.animWhenSeesFace = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimWhenSeesFaceKey, _iConfig.animWhenSeesFace, GetDebugLabel(), false);
   
+  _iConfig.animWhileSearching = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimWhileSearching, _iConfig.animWhileSearching, GetDebugLabel(), false);
+  
   ANKI_VERIFY( _iConfig.exitOnceFound == _iConfig.behaviorOnceFoundID.empty(),
                "BehaviorFindFaceAndThen.Ctor.InvalidBehavior",
                "A 'behavior' must be provided, or set 'exitOnceFound' to true" );
@@ -172,6 +178,7 @@ void BehaviorFindFaceAndThen::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kAddtlSearchTimeIfSawBodyKey,
     kUpperPortionLookUpPercent,
     kAnimWhenSeesFaceKey,
+    kAnimWhileSearching,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -226,6 +233,13 @@ void BehaviorFindFaceAndThen::OnBehaviorActivated()
   
   _dVars.activationTimeStamp_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   _dVars.lastFaceTimeStamp_ms = _dVars.activationTimeStamp_ms;
+  
+  if( _iConfig.animWhileSearching != AnimationTrigger::Count ) {
+    // add a parallel search anim action
+    auto* animAction = new TriggerLiftSafeAnimationAction{ _iConfig.animWhileSearching, 0 };
+    _dVars.animWhileSearchingTag = animAction->GetTag();
+    GetBEI().GetRobotInfo().GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+  }
   
   const bool hasRecentFace = GetRecentFace( _dVars.targetFace, _dVars.lastFaceTimeStamp_ms );
   const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
@@ -364,6 +378,8 @@ void BehaviorFindFaceAndThen::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::OnBehaviorDeactivated()
 {
+  StopSearchAnimation(); // does nothing if not running
+  
   if( !_iConfig.exitOnceFound ) {
     _dVars.targetFace.Reset();
   }
@@ -418,6 +434,7 @@ void BehaviorFindFaceAndThen::TransitionToTurningTowardsFace()
     action->SetLockOnClosestFaceAfterTurn( true ); // accept any face once turning in the direction of targetFace
     action->SetRequireFaceConfirmation( true );
     if( _iConfig.animWhenSeesFace != AnimationTrigger::Count ) {
+      StopSearchAnimation(); // does nothing if not running
       action->SetAnyFaceAnimationTrigger( _iConfig.animWhenSeesFace );
       const u8 tracksToLock = ((u8)AnimTrackFlag::HEAD_TRACK) | ((u8)AnimTrackFlag::LIFT_TRACK) | ((u8)AnimTrackFlag::BODY_TRACK);
       action->SetAnimTracksToLock( tracksToLock );
@@ -483,6 +500,8 @@ void BehaviorFindFaceAndThen::TransitionToSearchingForFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::TransitionToFollowupBehavior()
 {
+  StopSearchAnimation(); // does nothing if not running
+  
   _dVars.sawFace = true;
   // send the event now instead of deactivation so it occurs before the followup behavior, if there exists one
   SendCompletionDASEvent();
@@ -684,6 +703,15 @@ void BehaviorFindFaceAndThen::SendCompletionDASEvent()
   DASMSG_SEND();
   
   _dVars.sentEvent = true;
+}
+  
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaceAndThen::StopSearchAnimation()
+{
+  if( _dVars.animWhileSearchingTag != ActionConstants::INVALID_TAG ) {
+    GetBEI().GetRobotInfo().GetActionList().Cancel( _dVars.animWhileSearchingTag );
+    _dVars.animWhileSearchingTag = ActionConstants::INVALID_TAG;
+  }
 }
   
 }

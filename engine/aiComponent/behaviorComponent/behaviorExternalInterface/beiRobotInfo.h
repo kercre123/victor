@@ -16,6 +16,7 @@
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/engineTimeStamp.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -39,6 +40,7 @@ class DataPlatform;
 namespace Vector {
 
 // forward declaration
+class ActionList;
 class BatteryComponent;
 class CarryingComponent;
 class CliffSensorComponent;
@@ -81,7 +83,7 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-
+  ActionList& GetActionList();
   BatteryLevel GetBatteryLevel() const;
   Quad2f GetBoundingQuadXY(const Pose3d& atPose) const;
   CarryingComponent& GetCarryingComponent() const;

@@ -19,6 +19,8 @@
   "additionalLookTimeIfSawBody_s": 30.0,
   "additionalSearchTimeIfSawBody_s": 30.0,
 
+  "animWhileSearching": "OnboardingLookAtUser",
+
   // shouldnt be needed
   "shouldLeaveChargerFirst": true, 
   "driveOffChargerBehavior": "DriveOffChargerStraight",

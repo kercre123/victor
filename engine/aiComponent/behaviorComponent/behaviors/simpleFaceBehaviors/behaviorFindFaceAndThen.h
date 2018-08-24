@@ -105,6 +105,7 @@ private:
     float upperPortionLookUpPercent;
     
     AnimationTrigger animWhenSeesFace;
+    AnimationTrigger animWhileSearching;
   };
 
   struct DynamicVariables {
@@ -126,6 +127,8 @@ private:
 
     // track faces that failed so we don't keep trying to look at them
     std::vector<SmartFaceID> failedFaces;
+    
+    u32 animWhileSearchingTag;
     
     // for DAS
     bool sawBody;
@@ -154,6 +157,8 @@ private:
   
   // Adds an action without changing the state
   void RunSearchFaceBehavior();
+  
+  void StopSearchAnimation();
   
   void SetState_internal(State state, const std::string& stateName);
   
