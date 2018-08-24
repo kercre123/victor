@@ -117,6 +117,8 @@ public:
 
   // Enable/disable moving of eyes while tracking. Default is false.
   void SetMoveEyes(bool moveEyes);
+
+  void SetMinAbsRelPanAngle(f32 minAbsRelPanAngle_rad);
   
 protected:
 
@@ -223,6 +225,7 @@ private:
   f32      _tiltDuration_sec = 0.15f;
   f32      _panDuration_sec  = 0.2f;
   f32      _timeToReachTarget_sec  = 0.5f;
+  f32      _minAbsRelPanAngle_rad = 0;
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
   bool     _clampSmallAngles = false;

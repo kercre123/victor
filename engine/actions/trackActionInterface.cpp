@@ -166,6 +166,13 @@ void ITrackAction::SetTiltDuration(f32 tiltDuration_sec)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ITrackAction::SetMinAbsRelPanAngle(f32 minAbsRelPanAngle_rad)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanDuration.ActionAlreadyStarted");
+  _minAbsRelPanAngle_rad = minAbsRelPanAngle_rad;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetUpdateTimeout(float timeout_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetUpdateTimeout.ActionAlreadyStarted");
@@ -487,6 +494,11 @@ ActionResult ITrackAction::CheckIfDone()
       
       // Pan Body:
       f32 relPanAngle = (absPanAngle - GetRobot().GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+
+      if (std::abs(relPanAngle) < _minAbsRelPanAngle_rad)
+      {
+        relPanAngle = 0;
+      }
       
       const bool isPanWithinTol = Util::IsFltLE(std::abs(relPanAngle), _panTolerance.ToFloat());
       // If enabled, always move at least the tolerance amount

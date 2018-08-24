@@ -454,6 +454,7 @@ namespace Vision {
 
   void FaceTracker::Impl::Reset()
   {
+    _faceIDsBeingTracked.clear();
     INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
     if(OKAO_NORMAL != result)
     {
@@ -462,6 +463,11 @@ namespace Vision {
     }
 
     _recognizer.ClearAllTrackingData();
+  }
+
+  void FaceTracker::Impl::AddFaceIDToIgnoreOnReset(const int faceID)
+  {
+    _faceIDsBeingTracked.insert(faceID);
   }
 
   void FaceTracker::Impl::SetRecognitionIsSynchronous(bool isSynchronous)
@@ -1077,6 +1083,16 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
+      if (!_faceIDsBeingTracked.empty())
+      {
+        if (_faceIDsBeingTracked.count(detectionInfo.nID) != 0 ||
+            _faceIDsBeingTracked.count(-detectionInfo.nID) != 0)
+        {
+          // We only want to update faces that are in _faceIDsBeingTracked
+          continue; 
+        }
+      }
+      
       // Add a new face to the list
       faces.emplace_back();
 
@@ -1164,6 +1180,17 @@ namespace Vision {
           // There is a assert in there that should catch if the pose is uninitialized but
           // won't catch on going cases of the dependence.
           face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
+        }
+
+        // We don't want to do recognition during tracking because we are
+        // relaxing the constraints of when we reset the face tracker. This
+        // relaxation has the potential to pollute our the records we use
+        // recognition. For example, person A's face could make it into person
+        // B's record, thus created the potential for confusion between the
+        // faces due to bad data.
+        if (!_faceIDsBeingTracked.empty())
+        {
+          continue;
         }
 
         //

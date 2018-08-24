@@ -67,10 +67,20 @@ namespace Vision {
   {
     _pImpl->Reset();
   }
+
+  void FaceTracker::AddFaceIDToIgnoreOnReset(const int faceID)
+  {
+    _pImpl->AddFaceIDToIgnoreOnReset(faceID);
+  }
   
   void FaceTracker::SetRecognitionIsSynchronous(bool isSynchronous)
   {
     _pImpl->SetRecognitionIsSynchronous(isSynchronous);
+  }
+
+  bool FaceTracker::HaveFacesToIgnoreOnReset()
+  {
+    return _pImpl->HaveFacesToIgnoreOnReset();
   }
   
   bool FaceTracker::IsRecognitionSupported()

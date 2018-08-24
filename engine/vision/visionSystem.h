@@ -217,6 +217,9 @@ namespace Vector {
     f32 GetMaxCameraGain() const { return MAX_CAMERA_GAIN; }
     
     void ClearImageCache();
+
+    void SetTrackingIDToIgnoreOnReset(const int trackingID);
+    void ClearAllTrackingIDsToIgnoreOnReset();
     
   protected:
   

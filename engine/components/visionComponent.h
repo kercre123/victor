@@ -337,6 +337,9 @@ struct DockingErrorSignal;
 
     void EnableSensorRes(bool sensorRes);
 
+    void SetTrackingIDToIgnoreOnReset(const int trackingID);
+    void ClearAllTrackingIDsToIgnoreOnReset();
+
   protected:
     
     // Non-rotated points representing the lift cross bar

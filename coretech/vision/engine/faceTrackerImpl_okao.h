@@ -59,6 +59,9 @@ namespace Vision {
                   std::list<UpdatedFaceID>&   updatedIDs);
     
     void Reset();
+
+    void AddFaceIDToIgnoreOnReset(const int faceID);
+    bool HaveFacesToIgnoreOnReset() { return !_faceIDsBeingTracked.empty(); }
     
     void EnableDisplay(bool enabled) { }
     
@@ -167,6 +170,9 @@ namespace Vision {
     std::unique_ptr<Util::RandomGenerator> _rng;
     
     std::map<FaceID_t, EyeContact> _facesEyeContact;
+
+    // TODO make sure the type here is correct
+    std::set<int> _faceIDsBeingTracked;
   }; // class FaceTracker::Impl
   
 } // namespace Vision

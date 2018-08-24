@@ -3159,5 +3159,14 @@ namespace Vector {
     }
   }
 
+  void VisionComponent::SetTrackingIDToIgnoreOnReset(const int trackingID)
+  {
+    _visionSystem->SetTrackingIDToIgnoreOnReset(trackingID);
+  }
+
+  void VisionComponent::ClearAllTrackingIDsToIgnoreOnReset()
+  {
+    _visionSystem->ClearAllTrackingIDsToIgnoreOnReset();
+  }
 } // namespace Vector
 } // namespace Anki

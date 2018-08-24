@@ -405,6 +405,8 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward()
     trackWithHeadAction->StopTrackingWhenOtherActionCompleted( driveActionTag );
     trackWithHeadAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackWithHeadAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
+    trackWithHeadAction->SetPanDuration(3.9);
+    trackWithHeadAction->SetMinAbsRelPanAngle(DEG_TO_RAD(6));
     trackWithHeadAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackWithHeadAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
 
