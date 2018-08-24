@@ -124,6 +124,7 @@ int handle_lcdclr_command(const char* cmd, int len) {
   return helper_lcdset_command_parse("0 \n", 3);
 }
 int handle_logstart_command(const char* cmd, int len) {
+  fixture_log_init();
   return fixture_log_start(cmd, len);
 }
 int handle_logstop_command(const char* cmd, int len) {
@@ -432,7 +433,6 @@ int main(int argc, const char* argv[])
   lcd_init();
   lcd_set_brightness(10);
   display_init();
-  fixture_log_init();
 
   int x; const char *tty = 0;
   for(x=1; x < argc; x++) {
