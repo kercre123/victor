@@ -110,8 +110,8 @@ void TestHeadDutProgram(void)
   //  FIXMODE_HEAD1(rel): dutprogram timeout ESN-PROD HWREV-PROD MODEL-PROD
   //  FIXMODE_HEAD1(dbg): dutprogram timeout ESN-PROD HWREV-DBG  MODEL-PROD
   //  FIXMODE_HEAD1_OL  : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert nos //inhibit cloud cert + os write (just test USB connectivity)
-  //  FIXMODE_HEAD2     : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert
-  //  FIXMODE_HELPER1   : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert helper
+  //  FIXMODE_HEAD2     : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert        //NOTE: won't work, latest headprogram script does not allow split nocert/nos args
+  //  FIXMODE_HELPER1   : dutprogram timeout ESN-DBG  HWREV-DBG  MODEL-DBG  nocert helper //helper implies 'nos' arg
   
   //provision ESN
   headnfo.esn = g_fixmode == FIXMODE_HEAD1 ? fixtureGetSerial() : 0x00100000;
@@ -165,7 +165,7 @@ TestFunction* TestHead1GetTests(void)
   static TestFunction m_tests[] = {
     TestHeadForceBoot,
     TestHeadDutProgram,
-    TestHeadFuseLockdown,
+    //TestHeadFuseLockdown,
     HeadFlexFlowReport,
     NULL,
   };
