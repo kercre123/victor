@@ -112,6 +112,11 @@ structure SpriteRenderConfig{
   uint_8 padding = 0,
 }
 
+structure SerializedLayoutModifier
+{
+  int_32 interleavedModifierList[250] // TODO: Make size a clad const, until then keep in sync with compositeImageLayer.cpp
+}
+
 // Structures for serializing CompositeImages as clad
 structure SerializedSpriteBox
 {
@@ -121,12 +126,16 @@ structure SerializedSpriteBox
   int_16 height,
   SpriteRenderConfig renderConfig,
   SpriteBoxName name,
+
   // For unit tests we compare sprite boxes - if padding values are uninitialized
   // then the comparison sometimes fails erroneously
   // Seperated the padding out into three ints that are initialized to fix this problem
   uint_8 padding_1 = 0,
   uint_8 padding_2 = 0,
-  uint_8 padding_3 = 0,
+  uint_8 layoutModifierInterleavedLength = 0,
+
+  SerializedLayoutModifier layoutModifier,
+
 }
 
 // Structures for serializing CompositeImages as clad
@@ -146,7 +155,8 @@ structure CompositeImageChunk
   SerializedSpriteBox  spriteBox,
 
   LayerName         layerName,
-  Vision::SpriteName spriteName
+  Vision::SpriteName spriteName,
+
 
 }
       

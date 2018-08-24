@@ -112,8 +112,7 @@ public:
   // Any layers specified in layersToIgnore will not be rendered
   void OverlayImageWithFrame(ImageRGBA& baseImage,
                              const u32 frameIdx = 0,
-                             std::set<Vision::LayerName> layersToIgnore = {},
-                             const Point2i& overlayOffset = {}) const;
+                             std::set<Vision::LayerName> layersToIgnore = {}) const;
   
   // Returns the length of the longest subsequence
   uint GetFullLoopLength();
@@ -151,14 +150,13 @@ private:
   // Data is non-const so it can be updated (e.g. update sprite box render method
   void UpdateAllSpriteBoxes(UpdateSpriteBoxDataFunc updateCallback);
   
-  template<typename ImageType>
-  void DrawSubImage(ImageType& baseImage, const ImageType& subImage, 
-                    const SpriteBox& spriteBox, const Point2i& overlayOffset) const;
-  
   // Translates SpriteRenderConfig into a usable format for composite images
   // Returns nullptr if should render RGBA with no image handle
   // Othrewise, returns HSImage to use in render
   HSImageHandle HowToRenderRGBA(const SpriteRenderConfig& config) const;
+
+  template<typename ImageType>
+  void VerifySubImageProperties(const ImageType& image, const SpriteBox& sb, const int frameIdx) const;
 
   SpriteCache* _spriteCache = nullptr;
   // To allow sprite boxes to be rendered the color of the robot's eyes

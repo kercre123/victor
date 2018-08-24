@@ -283,10 +283,9 @@ ImageRGBA CompositeImage::RenderFrame(const u32 frameIdx, std::set<Vision::Layer
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
                                            const u32 frameIdx,
-                                           std::set<Vision::LayerName> layersToIgnore,
-                                           const Point2i& overlayOffset) const
+                                           std::set<Vision::LayerName> layersToIgnore) const
 {
-  auto callback = [this, &baseImage, &frameIdx, &overlayOffset, &layersToIgnore]
+  auto callback = [this, &baseImage, &frameIdx, &layersToIgnore]
                      (Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
                       const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
     if(layersToIgnore.find(layerName) != layersToIgnore.end()){
@@ -297,24 +296,36 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
     Vision::SpriteHandle  handle;
     if(spriteEntry.ContentIsValid() &&
        spriteEntry.GetFrame(frameIdx, handle)){
+      Point2i topCornerInt = {};
+      int width = 0;
+      int height = 0;
+      spriteBox.GetPositionForFrame(frameIdx, topCornerInt, width, height);
+      Point2f topCorner = {static_cast<float>(topCornerInt.x()), static_cast<float>(topCornerInt.y())};
+      const static bool kDrawBlankPixels = false;
       switch(spriteBox.renderConfig.renderMethod){
         case SpriteRenderMethod::RGBA:
         {
           // Check to see if the RGBA image is cached
           if(handle->IsContentCached().rgba){
             const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA();
-            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            if(ANKI_DEV_CHEATS){
+              VerifySubImageProperties(subImage, spriteBox, frameIdx);
+            }
           }else{
             const ImageRGBA& subImage = handle->GetSpriteContentsRGBA();
-            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            if(ANKI_DEV_CHEATS){
+              VerifySubImageProperties(subImage, spriteBox, frameIdx);
+            }
           }
           break;
         }
         case SpriteRenderMethod::CustomHue:
         {
           
-          Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(spriteBox.height),
-                                                     static_cast<uint32_t>(spriteBox.width));
+          Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(height),
+                                                     static_cast<uint32_t>(width));
           std::shared_ptr<Vision::HueSatWrapper> hsImageHandle;
           
           const bool shouldRenderInEyeHue = (spriteBox.renderConfig.hue == 0) &&
@@ -344,10 +355,16 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           // Render the sprite - use the cached RGBA image if possible
           if(handle->IsContentCached(hsImageHandle).rgba){
             const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA(hsImageHandle);
-            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            if(ANKI_DEV_CHEATS){
+              VerifySubImageProperties(subImage, spriteBox, frameIdx);
+            }
           }else{
             const ImageRGBA& subImage = handle->GetSpriteContentsRGBA(hsImageHandle);
-            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            if(ANKI_DEV_CHEATS){
+              VerifySubImageProperties(subImage, spriteBox, frameIdx);
+            }
           }
           break;
         }
@@ -359,7 +376,8 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
                             SpriteBoxNameToString(spriteBoxName));
           break;
         }
-      }
+      } // end switch
+
     }else{
       PRINT_NAMED_DEBUG("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox", 
                         "Sprite Box %s will not be rendered - no valid image found",
@@ -487,28 +505,6 @@ void CompositeImage::UpdateAllSpriteBoxes(UpdateSpriteBoxDataFunc updateCallback
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<typename ImageType>
-void CompositeImage::DrawSubImage(ImageType& baseImage, const ImageType& subImage, 
-                                  const SpriteBox& spriteBox, const Point2i& overlayOffset) const
-{
-  Point2f topCorner(spriteBox.topLeftCorner.x() + overlayOffset.x(),
-                    spriteBox.topLeftCorner.y() + overlayOffset.y());
-  const bool drawBlankPixels = false;
-  baseImage.DrawSubImage(subImage, topCorner, drawBlankPixels);
-
-  // dev only verification that image size is as expected
-  ANKI_VERIFY(spriteBox.width == subImage.GetNumCols(), 
-              "CompositeImage.DrawSubImage.InvalidWidth",
-              "Quadrant Name:%s Expected Width:%d, Image Width:%d",
-              SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.width, subImage.GetNumCols());
-  ANKI_VERIFY(spriteBox.height == subImage.GetNumRows(), 
-              "CompositeImage.DrawSubImage.InvalidHeight",
-              "Quadrant Name:%s Expected Height:%d, Image Height:%d",
-              SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.height, subImage.GetNumRows());
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HSImageHandle CompositeImage::HowToRenderRGBA(const SpriteRenderConfig& config) const
 {
   HSImageHandle hsImageHandle;
@@ -549,6 +545,27 @@ HSImageHandle CompositeImage::HowToRenderRGBA(const SpriteRenderConfig& config) 
   }
 
   return hsImageHandle;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename ImageType>
+void CompositeImage::VerifySubImageProperties(const ImageType& image, const SpriteBox& sb, const int frameIdx) const
+{
+  Point2i topCornerInt = {};
+  int width = 0;
+  int height = 0;
+  sb.GetPositionForFrame(frameIdx, topCornerInt, width, height);
+
+  // dev only verification that image size is as expected
+  ANKI_VERIFY(width == image.GetNumCols(), 
+              "CompositeImage.DrawSubImage.InvalidWidth",
+              "Quadrant Name:%s Expected Width:%d, Image Width:%d",
+              SpriteBoxNameToString(sb.spriteBoxName), width, image.GetNumCols());
+  ANKI_VERIFY(height == image.GetNumRows(), 
+              "CompositeImage.DrawSubImage.InvalidHeight",
+              "Quadrant Name:%s Expected Height:%d, Image Height:%d",
+              SpriteBoxNameToString(sb.spriteBoxName), height, image.GetNumRows());
 }
 
 

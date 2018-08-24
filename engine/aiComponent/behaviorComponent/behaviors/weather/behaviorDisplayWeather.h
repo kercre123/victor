@@ -92,6 +92,9 @@ private:
   void TransitionToFindFaceInFront();
 
   bool GenerateTemperatureImage(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg) const;
+  // To accomodate 1s being half the width of other numerals we need to dynamically modify the temperature layer
+  void ApplyModifiersToTemperatureDisplay(Vision::CompositeImageLayer& layer, int temperature) const;
+  
   void ParseDisplayTempTimesFromAnim();
   void StartTTSGeneration();
 

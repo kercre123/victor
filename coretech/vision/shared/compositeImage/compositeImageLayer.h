@@ -18,6 +18,7 @@
 #include "clad/types/spriteNames.h"
 
 #include "coretech/common/engine/math/point.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
 #include <unordered_map>
@@ -121,29 +122,31 @@ struct CompositeImageLayer::SpriteBox{
     ValidateRenderConfig();
   }
 
-  SpriteBox(const SerializedSpriteBox& spriteBox)
-  : spriteBoxName(spriteBox.name)
-  , renderConfig(spriteBox.renderConfig)
-  , topLeftCorner(spriteBox.topLeftX, spriteBox.topLeftY)
-  , width(spriteBox.width)
-  , height(spriteBox.height){
-    ValidateRenderConfig();
-  }
-  
-  bool operator ==(const SpriteBox& other) const;
+  SpriteBox(const SpriteBox& spriteBox);
 
+  SpriteBox(const SerializedSpriteBox& spriteBox);
+  
+  SpriteBox& operator=(SpriteBox other);
+  bool operator ==(const SpriteBox& other) const;
 
   SerializedSpriteBox Serialize() const;
   bool ValidateRenderConfig() const;
+
+  void GetPositionForFrame(const u32 frameIdx, Point2i& outTopLeftCorner, 
+                           int& outWidth, int& outHeight) const;
+
+  void SetLayoutModifier(CompositeImageLayoutModifier*& modifier);
 
   SpriteBoxName          spriteBoxName;
   // When the render method is custom hue a hue/saturation value of 0,0 
   // indicates that the sprite box should be rendered the color of the robot's eyes
   SpriteRenderConfig     renderConfig;
 
-  Point2i       topLeftCorner;
-  int           width;
-  int           height;
+  private:
+    std::unique_ptr<CompositeImageLayoutModifier> layoutModifier;
+    Point2i       topLeftCorner;
+    int           width;
+    int           height;
 };
 
 // TODO: VIC-2414 - currently composite images can only be sent

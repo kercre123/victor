@@ -451,7 +451,108 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
                         _iConfig->temperatureAssets[hundredsDig]);
   }
 
+  ApplyModifiersToTemperatureDisplay(layer, temp);
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::ApplyModifiersToTemperatureDisplay(Vision::CompositeImageLayer& layer, int temperature) const
+{
+  const auto absTemp = std::abs(temperature);
+  const auto onesDigit = absTemp % 10;
+  const auto tensDigit = (absTemp / 10) % 10;
+  const auto hundredsDigit = (absTemp / 100) % 10;
+
+  // Setup new image layout modifier to deal with the fact that 1s are half width images
+  Vision::CompositeImageLayer::LayoutMap& layoutMap = layer.GetLayoutMap();
+  auto onesDigitIter = layoutMap.find(Vision::SpriteBoxName::TemperatureOnesDigit);
+  if(onesDigitIter == layoutMap.end()){
+    PRINT_NAMED_ERROR("BehaviorDisplayWeather.GenerateTemperatureImage.NoOnesDigit", 
+                      "Cant calculate layout modifier without a width for the sprite box");
+    return;
+  }
+
+  Point2i outPoint;
+  int outWidth;
+  int outHeight;
+
+  // Since ones are half width we want to move digits towards the center if they're present
+  // Since we're moving from both sides, the width each side will move towards the center is 1/4 the total width
+  onesDigitIter->second.GetPositionForFrame(0, outPoint, outWidth, outHeight);
+  const auto widthToMovePerOne = outWidth/4;
+  
+  int numberOfOnesToLeft = 0;
+  int numberOfOnesToRight = (onesDigit == 1 ? 1 : 0) +
+                            (tensDigit == 1 ? 1 : 0) +
+                            (hundredsDigit == 1 ? 1 : 0);
+
+  auto modifyLayoutFunc = [&layoutMap, &numberOfOnesToLeft, &numberOfOnesToRight, widthToMovePerOne]
+                             (Vision::SpriteBoxName sbName, bool addModifier = true){
+    auto iter = layoutMap.find(sbName);
+    if(iter != layoutMap.end()){
+      // clear out any previous modifier so that we get the proper outPoint below
+      Vision::CompositeImageLayoutModifier* modifier = nullptr;
+      iter->second.SetLayoutModifier(modifier);
+      
+      if(addModifier){
+        modifier = new Vision::CompositeImageLayoutModifier();
+
+        Point2i outPoint;
+        int outWidth;
+        int outHeight;
+
+        iter->second.GetPositionForFrame(0, outPoint, outWidth, outHeight);
+        outPoint[0] += (widthToMovePerOne * numberOfOnesToRight);
+        outPoint[0] -= (widthToMovePerOne * numberOfOnesToLeft);
+
+        modifier->UpdatePositionForFrame(0, outPoint);
+        iter->second.SetLayoutModifier(modifier);
+      }
+    }
+  };
+
+
+  // Negative indicator
+  {
+    modifyLayoutFunc(Vision::SpriteBoxName::TemperatureNegativeIndicator, temperature < 0);
+  }
+
+  if(hundredsDigit == 1){
+    numberOfOnesToLeft++;
+    numberOfOnesToRight--;
+  }
+  
+  // hundreds digit
+  {
+    modifyLayoutFunc(Vision::SpriteBoxName::TemperatureHundredsDigit);
+  }
+  
+  if(tensDigit == 1){
+    numberOfOnesToLeft++;
+    numberOfOnesToRight--;
+  }
+
+  // tens digit
+  {
+    modifyLayoutFunc(Vision::SpriteBoxName::TemperatureTensDigit);
+  }
+
+  if(onesDigit == 1){
+    numberOfOnesToLeft++;
+    numberOfOnesToRight--;
+  }
+
+  // ones digit
+  {
+    modifyLayoutFunc(Vision::SpriteBoxName::TemperatureOnesDigit);
+  }
+
+  // unit indicator
+  {
+    modifyLayoutFunc(Vision::SpriteBoxName::TemperatureDegreeIndicator);
+  }
+
 }
 
 

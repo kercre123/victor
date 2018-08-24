@@ -15,11 +15,18 @@
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 
 
 namespace Anki {
 namespace Vision {
+
+namespace{
+// Keep consistent with value in compositeImageTypes.clad
+// Should be half the value so that points can be interleaved
+const uint8_t kMaxModifierSequenceSerializationLength = 125; 
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer::CompositeImageLayer(const Json::Value& layoutSpec)
@@ -223,6 +230,25 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
   serialized.name     = spriteBoxName;
   serialized.renderConfig = renderConfig;
 
+  if(layoutModifier != nullptr){
+    const auto& seq = layoutModifier->GetModifierSequence();
+    if(seq.size() <= kMaxModifierSequenceSerializationLength){
+      int idx = 0;
+      for(const auto& point: seq){
+        serialized.layoutModifier.interleavedModifierList[idx] = point.x();
+        idx++;
+        serialized.layoutModifier.interleavedModifierList[idx] = point.y();
+        idx++;
+
+      }
+      serialized.layoutModifierInterleavedLength = idx;
+    }else{
+      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteBox.Serialize.ModifierIssue", 
+                        "Can't serialize modifier of length %zu, max length is %d", 
+                        seq.size(), kMaxModifierSequenceSerializationLength);
+    }
+  }
+
   return serialized;
 }
 
@@ -256,6 +282,86 @@ bool CompositeImageLayer::SpriteBox::operator==(const SpriteBox& other) const
          (width         == other.width) &&
          (height        == other.height);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImageLayer::SpriteBox& CompositeImageLayer::SpriteBox::operator=(SpriteBox other)
+{
+  spriteBoxName = other.spriteBoxName;
+  renderConfig  = other.renderConfig;
+  topLeftCorner = other.topLeftCorner;
+  width  = other.width;
+  height = other.height;
+
+  if(layoutModifier != nullptr){
+    layoutModifier = std::make_unique<CompositeImageLayoutModifier>(*other.layoutModifier);
+  }
+
+  return *this;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImageLayer::SpriteBox::SpriteBox(const SpriteBox& spriteBox)
+: spriteBoxName(spriteBox.spriteBoxName)
+, renderConfig(spriteBox.renderConfig)
+, topLeftCorner(spriteBox.topLeftCorner)
+, width(spriteBox.width)
+, height(spriteBox.height)
+{
+  if(spriteBox.layoutModifier != nullptr){
+    layoutModifier = std::make_unique<CompositeImageLayoutModifier>(*spriteBox.layoutModifier);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImageLayer::SpriteBox::SpriteBox(const SerializedSpriteBox& spriteBox)
+: spriteBoxName(spriteBox.name)
+, renderConfig(spriteBox.renderConfig)
+, topLeftCorner(spriteBox.topLeftX, spriteBox.topLeftY)
+, width(spriteBox.width)
+, height(spriteBox.height)
+{
+  ValidateRenderConfig();
+  
+  if(spriteBox.layoutModifierInterleavedLength > 0){
+    layoutModifier = std::make_unique<CompositeImageLayoutModifier>();
+    const auto modifierLength = spriteBox.layoutModifierInterleavedLength/2;
+    Point2i point;
+    for(int i = 0; i < modifierLength; i++){
+      Point2i point(spriteBox.layoutModifier.interleavedModifierList[i], 
+                    spriteBox.layoutModifier.interleavedModifierList[i + 1]);
+      layoutModifier->UpdatePositionForFrame(i, point);
+    }
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::SpriteBox::GetPositionForFrame(const u32 frameIdx, Point2i& outTopLeftCorner, 
+                                                         int& outWidth, int& outHeight) const
+{
+  if(layoutModifier != nullptr){
+    layoutModifier->GetPositionForFrame(frameIdx, outTopLeftCorner);
+  }else{
+    outTopLeftCorner = topLeftCorner;
+  }
+  
+  
+  outWidth = width;
+  outHeight = height;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::SpriteBox::SetLayoutModifier(CompositeImageLayoutModifier*& modifier)
+{
+  layoutModifier.reset(modifier);
+  modifier = nullptr;
+}
+
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
