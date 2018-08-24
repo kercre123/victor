@@ -24,6 +24,14 @@ BUILD_TOOLS_ROOT = os.path.join(VECTOR_ENGINE_ROOT, 'tools', 'build', 'tools')
 
 VICTOR_SDK_PORT = 8443
 
+#TODO:Remove the condition which ignores LocalUDPServer errors
+#https://ankiinc.atlassian.net/browse/VIC-5814
+#The webots error logs containing the keywords in ERROR_TO_IGNORE will be ignored, check parse_output()
+ERRORS_TO_IGNORE=[
+  "LocalUdpServer.Send",
+  "LocalUdpSocketComms.SendMessageInternal.FailedSend"
+]
+
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 from ankibuild import util
 
@@ -629,9 +637,11 @@ def parse_output(log_level, log_file):
     # [Error] catches controller log errors
     # 'ERROR:' catches potential problems with the webots world/protos
     if '[Error]' in line or 'ERROR:' in line:
-      error_count += 1
-      if log_level is ForwardWebotsLogLevel.only_errors or log_level is ForwardWebotsLogLevel.only_teamcity_stats_and_errors:
-        UtilLog.error("Webots log contained an error: '{error_msg}'".format(error_msg=line))
+      if not any(ignored_error in line for ignored_error in ERRORS_TO_IGNORE):
+        error_count += 1
+        if log_level is ForwardWebotsLogLevel.only_errors or\
+           log_level is ForwardWebotsLogLevel.only_teamcity_stats_and_errors:
+          UtilLog.error("Webots log contained an error: '{error_msg}'".format(error_msg=line))
     if 'Warn' in line:
       warning_count += 1
 
