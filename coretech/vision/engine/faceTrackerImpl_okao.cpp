@@ -1085,8 +1085,8 @@ namespace Vision {
 
       if (!_faceIDsBeingTracked.empty())
       {
-        if (_faceIDsBeingTracked.count(detectionInfo.nID) != 0 &&
-            _faceIDsBeingTracked.count(-detectionInfo.nID) != 0)
+        if (_faceIDsBeingTracked.count(detectionInfo.nID) == 0 &&
+            _faceIDsBeingTracked.count(-detectionInfo.nID) == 0)
         {
           // We only want to update faces that are in _faceIDsBeingTracked
           continue; 
