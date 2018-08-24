@@ -82,6 +82,15 @@ func jwtInit() error {
 		if err != nil {
 			return err
 		}
+
+		// TODO DELETE AFTER SEPTEMBER 7TH-ISH
+		// delete fake, no-userid token TMS used to generate for testing
+		if tok.UserId == "" {
+			log.Println("Deleting old test token")
+			os.Remove(tokenFile())
+			return nil
+		}
+
 		currentToken = tok
 		logUserID(tok)
 	}
