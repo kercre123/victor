@@ -222,7 +222,7 @@ static void RunTests()
   Board::ledOn(Board::LED_YLW); //test in-progress
   
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
+  cmdSend(CMD_IO_HELPER, "logstart", 3000, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
   
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();
