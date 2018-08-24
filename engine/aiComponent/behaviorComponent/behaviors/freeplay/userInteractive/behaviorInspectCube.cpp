@@ -361,7 +361,9 @@ void BehaviorInspectCube::TransitionToPlayingWithCube()
   if(_iConfig.playWithCubeBehavior->WantsToBeActivated()){
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::InvestigateHeldCubeOnSetDown),
       [this](){
-        DelegateIfInControl(_iConfig.playWithCubeBehavior.get());
+        if (_iConfig.playWithCubeBehavior->WantsToBeActivated()) {
+          DelegateIfInControl(_iConfig.playWithCubeBehavior.get());
+        }
       });
     PRINT_CH_INFO(kLogChannelName,
                   "BehaviorInspectCube.DelegatingToPlayWithCubeBehavior", "");
