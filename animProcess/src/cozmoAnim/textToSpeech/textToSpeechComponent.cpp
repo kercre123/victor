@@ -34,6 +34,9 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+
 // Log options
 #define LOG_CHANNEL "TextToSpeech"
 
@@ -46,6 +49,9 @@ namespace {
 
    // How many frames do we need before utterance is playable?
   CONSOLE_VAR_RANGED(u32, kMinPlayableFrames, "TextToSpeech", 8192, 0, 65536);
+
+  // Enable write to /tmp/tts.pcm?
+  CONSOLE_VAR(bool, kWriteTTSFile, "TextToSpeech", false);
 
 }
 
@@ -316,6 +322,25 @@ static void AppendAudioData(const std::shared_ptr<AudioEngine::StreamingWaveData
                             bool done)
 {
   using namespace AudioEngine;
+
+  // Enable this to inspect raw PCM
+  if (kWriteTTSFile) {
+    const auto num_samples = ttsData.GetNumSamples();
+    const auto samples = ttsData.GetSamples();
+    static int _fd = -1;
+    if (_fd < 0) {
+      const auto path = "/data/data/com.anki.victor/cache/tts.pcm";
+      _fd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
+    }
+    if (num_samples > 0) {
+      (void) write(_fd, samples, num_samples * sizeof(short));
+    }
+    if (done) {
+      close(_fd);
+      _fd = -1;
+    }
+  }
+
   if (ttsData.GetNumSamples() > 0) {
     const int sample_rate = ttsData.GetSampleRate();
     const int num_channels = ttsData.GetNumChannels();
@@ -432,11 +457,11 @@ bool TextToSpeechComponent::PostAudioEvent(uint8_t ttsID)
   const auto playingID = _audioController->PostAudioEvent(eventID, gameObject, audioCallbackContext);
 
   if (AudioEngine::kInvalidAudioPlayingId == playingID) {
-    LOG_ERROR("TextToSpeechComponent.PostAudioEvent", "Failed to post eventID %d for ttsID %d", eventID, ttsID);
+    LOG_ERROR("TextToSpeechComponent.PostAudioEvent", "Failed to post eventID %u for ttsID %d", eventID, ttsID);
     return false;
   }
 
-  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "eventID %d ttsID %d playingID %d", eventID, ttsID, playingID);
+  LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "eventID %u ttsID %d playingID %d", eventID, ttsID, playingID);
 
   _activeTTSID = ttsID;
 

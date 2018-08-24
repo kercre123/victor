@@ -97,10 +97,11 @@ private:
   BB_S32 _BAB_voicefreq = 0;
   BB_S32 _BAB_samplesize = 0;
 
-  // Current utterance
+  // State of current utterance
   std::string _str;
-  size_t _strlen;
-  size_t _strpos;
+  size_t _strlen = 0;
+  size_t _strpos = 0;
+  bool _draining = false;
 
   //
   // Internal state management

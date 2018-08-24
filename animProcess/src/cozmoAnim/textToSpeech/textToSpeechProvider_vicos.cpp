@@ -311,14 +311,15 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
   _str = text;
   _strlen = text.size();
   _strpos = 0;
+  _draining = false;
 
   return GetNextAudioData(data, done);
 }
 
 Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & data, bool & done)
 {
-  // If we are still processing text, return pointer to next text, else null
-  BB_TCHAR * str = (BB_TCHAR *) ((_strpos < _strlen) ? &_str[_strpos] : nullptr);
+  // If we are draining the TTS buffer, pass nullptr, else pass pointer to remaining text
+  BB_TCHAR * str = (BB_TCHAR *) (_draining ? nullptr: &_str[_strpos]);
 
   BB_S16 samples[2048];
   BB_U32 numWanted = (sizeof(samples)/_BAB_samplesize);
@@ -335,8 +336,13 @@ Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & dat
   }
 
   if (charRead == 0 && numSamples == 0) {
-    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Done");
-    done = true;
+    if (_draining) {
+      LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Done");
+      done = true;
+      return RESULT_OK;
+    }
+    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Start draining");
+    _draining = true;
     return RESULT_OK;
   }
 
