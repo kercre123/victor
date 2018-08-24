@@ -23,7 +23,7 @@
     "WhileInAirDispatcher",
     "ReactToPutDown",
     "ReactToDarkness",
-    "DanceToTheBeat",
+    "DanceToTheBeatCoordinator",
     "ConfirmHabitat",
     "PRDemoStateMachine",
     "HighLevelAI"

@@ -24,6 +24,10 @@ class ConditionBeatDetected : public IBEICondition
 public:
   explicit ConditionBeatDetected(const Json::Value& config);
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  
+private:
+  // Whether or not this condition should return true if a 'potential'/unconfirmed beat is detected
+  bool _allowPotentialBeat = false;
 };
 
 

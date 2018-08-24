@@ -71,6 +71,8 @@ enum uint_8 BehaviorClass {
 
   // danceToTheBeat
   DanceToTheBeat,
+  DanceToTheBeatCoordinator,
+  ListenForBeats,
 
   // devBehaviors
   DevBatteryLogging,

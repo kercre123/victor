@@ -44,7 +44,11 @@ public:
   virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   
-  // Is there currently a steady musical beat happening?
+  // Is there _potentially_ a steady musical beat happening? Even if this returns true, it is possible that it is a
+  // false positive detection. This should be confirmed by calling IsBeatDetected() after some 'listening' time.
+  bool IsPossibleBeatDetected() const;
+  
+  // Is there _definitely_ a steady musical beat happening?
   bool IsBeatDetected() const;
   
   // Predicted time (UniversalTime) of the next beat
@@ -66,6 +70,8 @@ public:
   // Returns true if the callback existed and was unregistered.
   bool UnregisterOnBeatCallback(const int callbackId);
   
+  void SendToWebViz();
+  
 private:
   
   // Called when we receive a beat message from the anim process
@@ -81,6 +87,8 @@ private:
   
   // map of unique ID to OnBeatCallback
   std::map<int, OnBeatCallback> _onBeatCallbacks;
+  
+  float _nextSendWebVizDataTime_sec = -1.f;
 };
 
 } // namespace Vector

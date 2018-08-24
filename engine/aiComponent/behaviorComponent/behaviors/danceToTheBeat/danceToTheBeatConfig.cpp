@@ -21,9 +21,8 @@
 namespace Anki {
 namespace Vector {
 
-DanceAnimMetadata::DanceAnimMetadata(std::string&& animStr, const bool canListenForBeats)
+DanceAnimMetadata::DanceAnimMetadata(std::string&& animStr)
   : _animName(std::move(animStr))
-  , _canListenForBeats(canListenForBeats)
 {
 }
  
@@ -68,12 +67,11 @@ DancePhrase::DancePhrase(const Json::Value& json)
   _minBeats          = JsonTools::ParseUInt32(json, "minBeats", debugName);
   _maxBeats          = JsonTools::ParseUInt32(json, "maxBeats", debugName);
   _multipleOf        = JsonTools::ParseUInt32(json, "multipleOf", debugName);
-  _canListenForBeats = JsonTools::ParseBool(json,   "canListenForBeats", debugName);
   std::vector<std::string> tmp;
   const bool hasAnims = JsonTools::GetVectorOptional(json, "anims", tmp);
   DEV_ASSERT(hasAnims && !tmp.empty(), "DancePhrase.Ctor.NoAnims");
   for (auto& anim : tmp) {
-    _anims.emplace_back(std::move(anim), _canListenForBeats);
+    _anims.emplace_back(std::move(anim));
   }
 }
 
@@ -117,7 +115,7 @@ DanceAnimMetadata DancePhrase::GetRandomAnim() const
 {
   if (_anims.empty()) {
     DEV_ASSERT(false, "DancePhrase.GetRandomAnim.NoAnims");
-    return DanceAnimMetadata{"invalid", false};
+    return DanceAnimMetadata{"invalid"};
   }
  
   // Draw a random anim from the list
@@ -127,11 +125,26 @@ DanceAnimMetadata DancePhrase::GetRandomAnim() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DancePhrase::SetCanListenForBeats(const bool b)
+{
+  for (auto& anim : _anims) {
+    anim.SetCanListenForBeats(b);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DanceSession::DanceSession(const Json::Value& json)
 {
-  DEV_ASSERT(json.isArray() && !json.empty(), "DanceSession.Ctor.NoAnims");
-  for (const auto& dancePhraseJson : json) {
+  const std::string debugName = "DanceSession";
+  const bool canListenForBeats = JsonTools::ParseBool(json, "canListenForBeats", debugName);
+  
+  const auto& dancePhrases = json["dancePhrases"];
+  DEV_ASSERT(!dancePhrases.isNull() && dancePhrases.isArray() && !dancePhrases.empty(),
+             "DanceSession.DanceSession.EmptyOrInvalidDancePhraseList");
+  
+  for (const auto& dancePhraseJson : dancePhrases) {
     _dancePhrases.emplace_back(dancePhraseJson);
+    _dancePhrases.back().SetCanListenForBeats(canListenForBeats);
   }
 }
 
@@ -143,24 +156,12 @@ bool DanceSession::IsValid() const
     return false;
   }
   
-  bool valid = true;
-  bool prevCanListenForBeats = true;
   for (const auto& phrase : _dancePhrases) {
     if (!phrase.IsValid()) {
-      valid = false;
+      return false;
     }
-    
-    const bool canListenForBeatsThisPhrase = phrase.CanListenForBeats();
-    if (canListenForBeatsThisPhrase && !prevCanListenForBeats) {
-      valid = false;
-      PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.InstanceConfig.CheckValid.InvalidListenForBeats",
-                          "CanListenForBeats is true for this phrase, but a previous canListenForBeats was false. Not allowed! "
-                          "Can only go from 'listening' to 'not listening' and never the other way around");
-
-    }
-    prevCanListenForBeats = canListenForBeatsThisPhrase;
   }
-  return valid;
+  return true;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

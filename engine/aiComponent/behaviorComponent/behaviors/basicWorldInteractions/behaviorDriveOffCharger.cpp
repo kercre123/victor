@@ -139,8 +139,7 @@ bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior() const
   // bn: this used to be "on charger platform", but that caused weird issues when the robot thought it drove
   // over the platform later due to mis-localization. Then this changed to "on charger" to avoid those issues,
   // but that caused other issues (if the robot was bumped during wakeup, it wouldn't drive off the
-  // charger). Now, we've gone back to OnChargerPlatform but fixed it to work better (see the comments in
-  // robot.h)
+  // charger). Now, we've gone back to OnChargerPlatform but fixed it to work better
   const bool onChargerPlatform = robotInfo.IsOnChargerPlatform();
   return onChargerPlatform;
 }

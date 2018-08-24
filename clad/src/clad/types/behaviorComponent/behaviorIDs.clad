@@ -109,6 +109,10 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/danceToTheBeat
   DanceToTheBeat,
+  DanceToTheBeatCoordinator,
+  DanceToTheBeatVoiceCommand,
+  ListenForBeats,
+  ListenForBeatsLong,
 
   // victorBehaviorTree
   DefaultTextToSpeechLoop,

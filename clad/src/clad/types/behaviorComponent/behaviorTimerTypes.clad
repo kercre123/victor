@@ -13,6 +13,7 @@ enum uint_8 BehaviorTimerTypes {
   Invalid,
 
   FistBump,
+  LastDance,
   PlayingWithCube,
   ReactToIllumination,
   Socializing,

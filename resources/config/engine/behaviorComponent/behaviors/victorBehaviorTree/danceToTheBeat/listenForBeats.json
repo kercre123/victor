@@ -1,0 +1,16 @@
+{
+  "behaviorClass": "ListenForBeats",
+  "behaviorID": "ListenForBeats",
+  
+  "associatedActiveFeature" : "DanceToTheBeat",
+
+  "preListeningAnim"  : "DanceBeatGetIn",
+  "listeningAnim"     : "DanceBeatListening",
+  "postListeningAnim" : "DanceBeatGetReady",
+  
+  "minListeningTime_sec" : 4.0,
+  "maxListeningTime_sec" : 10.0,
+  
+  "cancelSelfIfBeatLost" : true
+  
+}

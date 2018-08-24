@@ -47,12 +47,6 @@ protected:
 private:
   using base = ICozmoBehavior;
   
-  enum class State {
-    Init,
-    Listening,
-    Dancing
-  };
-  
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config, const std::string& debugName);
 
@@ -62,26 +56,17 @@ private:
     // Is this a valid config?
     bool isValid = false;
     
-    float cooldown_sec = 0.f;
-    
     const bool useBackpackLights;
     
     BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::Count;
     
     AnimationTrigger eyeHoldAnim    = AnimationTrigger::Count;
-    AnimationTrigger getInAnim      = AnimationTrigger::Count;
     AnimationTrigger getOutAnim     = AnimationTrigger::Count;
-    AnimationTrigger getReadyAnim   = AnimationTrigger::Count;
-    AnimationTrigger listeningAnim  = AnimationTrigger::Count;
     
     std::vector<DanceSession> danceSessionConfigs;
   };
   
   struct DynamicVariables {
-    State state = State::Init;
-    
-    float initialTempo_bpm = -1.f;
-    
     float beatPeriod_sec = -1.f;
     float nextBeatTime_sec = -1.f;
     float nextAnimTriggerTime_sec = -1.f;
@@ -96,28 +81,28 @@ private:
     // value of less than 0 indicates that no callback is registered.
     int onBeatCallbackId = -1;
     
-    // The queue of animations to play. One queue per dance session.
-    std::deque<std::deque<DanceAnimMetadata>> danceSessionAnims;
+    // The queue of animations to play while dancing
+    std::deque<DanceAnimMetadata> danceAnims;
   };
   
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
-  
-  void TransitionToListening();
-  
+
   void TransitionToDancing();
+  
+  void WhileDancing();
+  
+  void PlayNextDanceAnim();
   
   void SetNextAnimTriggerTime();
   
-  // Called when a beat occurs while the behavior is running
   void OnBeat();
   
   void StopBackpackLights();
   
+  void SetListeningForBeats(const bool listenForBeats);
+  
   void UnregisterOnBeatCallback();
-
-  // Note, this time uses BasestationTimer, not UniversalTime
-  float _lastRunningBasestationTime_sec = -1.f;
   
 };
 

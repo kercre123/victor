@@ -32,12 +32,14 @@ class CannedAnimationContainer;
 class DanceAnimMetadata
 {
 public:
-  DanceAnimMetadata(std::string&& animStr, const bool canListenForBeats);
+  DanceAnimMetadata(std::string&& animStr);
   
   const std::string& GetAnimName() const { return _animName; }
   
   // Is it safe to listen for new tempos/beat detection while this animation is playing?
   bool CanListenForBeats() const { return _canListenForBeats; }
+  
+  void SetCanListenForBeats(const bool b) { _canListenForBeats = b; }
   
   float GetBeatDelay_sec() const {return _beatDelay_sec; }
   
@@ -73,7 +75,7 @@ public:
   // Draw a random animation from the list
   DanceAnimMetadata GetRandomAnim() const;
   
-  bool CanListenForBeats() const { return _canListenForBeats; }
+  void SetCanListenForBeats(const bool b);
   
   uint32_t GetMinBeats() const   { return _minBeats; }
   uint32_t GetMaxBeats() const   { return _maxBeats; }
@@ -83,7 +85,6 @@ private:
   uint32_t _minBeats    = 0;
   uint32_t _maxBeats    = 0;
   uint32_t _multipleOf  = 1;
-  bool _canListenForBeats = false;
   std::vector<DanceAnimMetadata> _anims;
 };
   

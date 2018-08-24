@@ -21,6 +21,7 @@
     "KnowledgeGraphQuestion",
     "RespondToRenameFace", // not actually a voice command, but is paired with MeetVictor so I'm putting it here
     "MeetVictor",
-    "ReactToGreeting" // must come somewhere after blackjack or other behaviors which use the affirmative intent
+    "ReactToGreeting", // must come somewhere after blackjack or other behaviors which use the affirmative intent
+    "DanceToTheBeatVoiceCommand"
   ]
 }

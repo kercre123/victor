@@ -20,6 +20,11 @@
       "user_intent": "imperative_come"
     },
     {
+      "cloud_intent": "intent_imperative_dance",
+      "app_intent": "intent_imperative_dance",
+      "user_intent": "imperative_dance"
+    },
+    {
       "cloud_intent": "intent_imperative_affirmative",
       "user_intent": "imperative_affirmative"
     },

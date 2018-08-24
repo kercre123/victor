@@ -1,0 +1,17 @@
+{
+  "behaviorClass": "DispatcherQueue",
+  "behaviorID": "DanceToTheBeatVoiceCommand",
+  
+  "associatedActiveFeature" : "DanceToTheBeat",
+
+  "respondToUserIntents" : [
+    { "type": "imperative_dance" }
+  ],
+
+  "behaviors" : [
+    "DriveOffChargerStraight",
+    "ListenForBeatsLong",
+    "DanceToTheBeat"
+  ]
+  
+}
