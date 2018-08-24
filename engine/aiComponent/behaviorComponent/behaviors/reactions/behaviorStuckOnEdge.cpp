@@ -30,7 +30,7 @@ namespace {
 
   const float kMotionDetectGyroThresh_radps         = DEG_TO_RAD(5.f);
   const float kMotionDetectDurationThresh_sec       = 0.15f;
-  const float kDisablePowerSaveOnMotionDuration_sec = 1.f;
+  const float kDisablePowerSaveOnMotionDuration_sec = 2.f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,12 +75,13 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
+  const bool isPowerSaveRequestPending = powerSaveManager.IsPowerSaveRequestPending();
   const bool inPowerSaveMode = powerSaveManager.InPowerSaveMode();
   const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
 
   // Check if we need to toggle power save mode but only when no motors are moving
   const bool motorsMoving = GetBEI().GetRobotInfo().GetMoveComponent().IsMoving();
-  if (!motorsMoving) {
+  if (!motorsMoving && !isPowerSaveRequestPending) {
     if (inPowerSaveMode) {
       // If motion detected while in power save mode, temporarily deactivated power save mode
       // so that we can check cliff sensors to see if we're on solid ground again.
@@ -97,7 +98,7 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
       } else {
         _dVars.startOfMotionDetectedTime_s = 0.f;
       }
-    } else if (!gyroMotionDetected && (currTime_s > _dVars.enablePowerSaveModeTime_s)) {
+    } else if (!inSysconCalmMode && !gyroMotionDetected && (currTime_s > _dVars.enablePowerSaveModeTime_s)) {
       PRINT_NAMED_INFO("BehaviorStuckOnEdge.BehaviorUpdate.RequestPowerSaveMode","");
       ICozmoBehavior::SmartRequestPowerSaveMode();
     }

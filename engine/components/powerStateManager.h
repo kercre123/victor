@@ -70,6 +70,8 @@ public:
   // component will attempt to leave power save mode
   bool RemovePowerSaveModeRequest(const std::string& requester);
 
+  bool IsPowerSaveRequestPending() const { return _powerSaveRequests.empty() == _inPowerSaveMode; }
+
   bool InPowerSaveMode() const { return _inPowerSaveMode; }
 
   bool InSysconCalmMode() const { return _inSysconCalmMode; }

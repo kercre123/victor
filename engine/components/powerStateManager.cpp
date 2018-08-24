@@ -54,6 +54,10 @@ static constexpr const DesiredCPUFrequency kCPUFreqNormal = DesiredCPUFrequency:
 
 static constexpr const float kMicBufferLowMark = 0.1f;
 static constexpr const float kMicBufferHighMark = 0.6f;
+
+// The minimum amount of time that we must be in active mode before we can
+// go to power save mode, in order to limit fast/expensive mode toggling.
+static constexpr const float kMinActiveModeDuration_s = 10.f;
   
 const std::string kWebVizPowerModule = "power";
 const f32 kSendWebVizDataPeriod_sec = 0.5f;
@@ -94,10 +98,14 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     return;
   }
 
+  // Check if power save mode needs to be toggled
   const bool shouldBeInPowerSave = !_powerSaveRequests.empty();
   if( shouldBeInPowerSave != _inPowerSaveMode ) {
     if( shouldBeInPowerSave ) {
-      EnterPowerSave(dependentComps);
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (currTime_s - _timePowerSaveToggled_s > kMinActiveModeDuration_s) {
+        EnterPowerSave(dependentComps);
+      }
     }
     else {
       ExitPowerSave(dependentComps);
