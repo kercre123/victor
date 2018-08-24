@@ -138,7 +138,7 @@ void TestHeadDutProgram(void)
     throw ERROR_HEADPGM; //default
 }
 
-static void TestHeadFuseLockdown(void)
+void TestHeadFuseLockdown(void)
 {
   //Power cycle to blow the fuses (only if proper secdat was written)
   Board::powerOff(PWR_VEXT);
