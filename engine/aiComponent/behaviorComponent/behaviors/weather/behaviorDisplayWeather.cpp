@@ -125,6 +125,7 @@ bool BehaviorDisplayWeather::WantsToBeActivatedBehavior() const
 void BehaviorDisplayWeather::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = false;
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
 
 
