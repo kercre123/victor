@@ -4,6 +4,14 @@ so it should NOT be used for the original Cozmo because, for example, this
 version strips out the Left and Right backpack light data.
 """
 
+import sys
+import os
+import tempfile
+import subprocess
+import json
+import inspect
+
+
 BODY_MOTION_TRACK = "BodyMotionKeyFrame"
 ROBOT_AUDIO_TRACK = "RobotAudioKeyFrame"
 BACKPACK_LIGHT_TRACK = "BackpackLightsKeyFrame"
@@ -20,6 +28,36 @@ BODY_SPEED_ATTR = "speed"
 LIFT_HEIGHT_ATTR = "height_mm"
 
 HEAD_ANGLE_ATTR = "angle_deg"
+
+EYE_ATTRS = ["rightEye", "leftEye"]
+
+DEFAULT_EYE_SETTINGS = [
+    0,     # EyeCenterX
+    0,     # EyeCenterY
+    1.517, # EyeScaleX
+    1.145, # EyeScaleY
+    0,     # EyeAngle
+    0.6,   # LowerInnerRadiusX
+    0.6,   # LowerInnerRadiusY
+    0.6,   # UpperInnerRadiusX
+    0.6,   # UpperInnerRadiusY
+    0.6,   # UpperOuterRadiusX
+    0.6,   # UpperOuterRadiusY
+    0.6,   # LowerOuterRadiusX
+    0.6,   # LowerOuterRadiusY
+    0,     # UpperLidY
+    0,     # UpperLidAngle
+    0,     # UpperLidBend
+    0,     # LowerLidY
+    0,     # LowerLidAngle
+    0,     # LowerLidBend
+    1,     # Saturation
+    1,     # Lightness
+    0,     # GlowSize
+    0,     # HotSpotCenterX
+    0,     # HotSpotCenterY
+    0      # GlowLightness
+]
 
 
 # Audio JSON Attributes
@@ -53,20 +91,6 @@ BIN_FILE_EXT = ".bin"
 OLD_ANIM_TOOL_ATTRS = ["$type", "pathFromRoot"]
 
 OLD_BACKPACK_LIGHT_ATTRS = ["Left", "Right"]
-
-
-import sys
-import os
-import tempfile
-import json
-import pprint
-import subprocess
-import json
-import re
-import shutil
-import tarfile
-import inspect
-
 
 THIS_DIR = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
 
@@ -155,7 +179,7 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
                     pass
 
         if track == ROBOT_AUDIO_TRACK:
-            # There are so many migration changes audio gets its own method =)
+            # There are so many migration changes audio gets its own method
             keyframe = prep_audio_key_frame_json(keyframe, anim_name)
 
         if track == PROCEDURAL_FACE_TRACK:
@@ -164,6 +188,7 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
                 keyframe.pop(DURATION_TIME_ATTR)
             except KeyError:
                 pass
+            fill_out_eye_parameters(keyframe)
 
         # Since the 'radius_mm' attribute of 'BodyMotionKeyFrame' can be set to "TURN_IN_PLACE"
         # or "STRAIGHT", that attribute is always stored as a string for FlatBuffers. When the
@@ -188,6 +213,20 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
         anim_dict[KEYFRAMES_ATTR][track].append(keyframe)
 
     return anim_dict
+
+
+def fill_out_eye_parameters(keyframe):
+    """
+    If the provided keyframe doesn't have enough attributes for each
+    eye (because it is an old animation from a time when we had fewer
+    attributes per eye), then use DEFAULT_EYE_SETTINGS to fill in
+    those missing attributes for each eye (using the default values
+    defined in DEFAULT_EYE_SETTINGS).
+    """
+    for eye_attr in EYE_ATTRS:
+        num_eye_settings = len(keyframe[eye_attr])
+        if num_eye_settings < len(DEFAULT_EYE_SETTINGS):
+            keyframe[eye_attr].extend(DEFAULT_EYE_SETTINGS[num_eye_settings:])
 
 
 def prep_audio_key_frame_json(keyframe, anim_name):

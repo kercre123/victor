@@ -508,6 +508,8 @@ const std::set<std::string> kLegacyAnimationsWithCastDifferences{
   "anim_rtpmemorymatch_no_02",
   "anim_energy_eat_02",
   "anim_guarddog_settle_01",
+  "anim_qa_intervals_30frame",
+  "anim_vc_listen_loop_01",
   
   // todo: remove this if block once (VIC-4929) is resolved, or these animations no longer contain
   // procedural faces, whichever comes first
