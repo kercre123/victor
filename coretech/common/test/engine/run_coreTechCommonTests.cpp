@@ -7,18 +7,16 @@ Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
 
 GTEST_API_ int main(int argc, char * argv[])
 {
-  //LEAKING HERE
-  loggerProvider = new Anki::Util::PrintfLoggerProvider();
-  loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
-  Anki::Util::gLoggerProvider = loggerProvider;
-
-  char *path=NULL;
-  size_t size = 0;
-  path=getcwd(path,size);
-  std::cout<<"hello world! I am " << argv[0] << "\nRunning in " << path
-           << "\nLet the (CoreTechCommon) testing commence\n\n";
-  free(path);
   ::testing::InitGoogleTest(&argc, argv);
 
-  return RUN_ALL_TESTS();
+  int rc = 0;
+  {
+    Anki::Util::PrintfLoggerProvider printfLoggerProvider;
+    printfLoggerProvider.SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
+    Anki::Util::gLoggerProvider = &printfLoggerProvider;
+    rc = RUN_ALL_TESTS();
+    Anki::Util::gLoggerProvider = nullptr;
+  }
+  
+  return rc;
 }

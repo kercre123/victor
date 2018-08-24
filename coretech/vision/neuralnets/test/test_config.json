@@ -1,0 +1,30 @@
+{
+  "NeuralNets" :
+  {
+    // How frequently to print or log events about timing
+    "ProfilingPrintFrequency_ms"     : 10000,
+    "ProfilingEventLogFrequency_ms"  : 30000,
+
+    //
+    // Model definition:
+    //
+    "graphFile"           : "mobilenet_v1_1.0_224_quant.tflite", 
+    "memoryMapGraph"      : 0,
+    "labelsFile"          : "mobilenet_labels.txt", 
+    "architecture"        : "custom",
+    "inputLayerName"      : "input",
+    "outputLayerNames"    : "MobilenetV1/Predictions/Reshape_1",
+    "outputType"          : "classification",
+    "useFloatInput"       : 1,
+    "useGrayscale"        : 0,
+    "inputWidth"          : 224, 
+    "inputHeight"         : 224, 
+    "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
+    "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
+    "minScore"            : 0.5,
+    "verbose"             : 0,
+    "pollPeriod_ms"       : 10,
+    "timeoutDuration_sec" : 10.0,
+    "benchmarkRuns"       : 0
+  }
+}

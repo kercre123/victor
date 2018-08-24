@@ -98,7 +98,6 @@ if (MACOSX)
   set_tests_properties(cti_vision_test
     PROPERTIES
     ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
-    ENVIRONMENT "TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR}"
   )
 
 endif()

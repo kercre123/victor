@@ -40,3 +40,28 @@ cxx_project(
     platform_headers = [
     ]
 )
+
+# Neural Net unit tests
+cxx_project(
+    name = 'cti_neuralnet_test',
+    srcs = [
+      "neuralNetModel_interface.cpp", 
+      "neuralNetModel_tensorflow.cpp",
+      "neuralNetModel_tflite.cpp",
+      "neuralNetParams.cpp", 
+      "testNeuralNets.cpp"
+    ],
+    platform_srcs = [
+    ],
+    data = glob([
+      "test/**/*.json"
+    ]),
+    headers = [
+      "neuralNetModel_interface.h", 
+      "neuralNetModel_tensorflow.h", 
+      "neuralNetModel_tflite.h",
+      "neuralNetParams.h"
+    ],
+    platform_headers = [
+    ]
+)

@@ -8,10 +8,25 @@ include(anki_build_cxx)
 include(anki_build_strip)
 include(protobuf)
 
-set(PLATFORM_LIBS "")
-set(PLATFORM_INCLUDES "")
-set(PLATFORM_FLAGS "")
 set(TARGET_NAME "")
+
+set(PLATFORM_LIBS "")
+set(COMMON_LIBS
+  jsoncpp
+  util
+  cti_common
+  cti_vision_clad               # Just vision CLAD, not the whole enchilada
+  ${OPENCV_LIBS}                # NOTE: Order may matter here? (OpenCV before platform libs added below?)
+)
+
+set(PLATFORM_INCLUDES "")
+
+set(PLATFORM_FLAGS "")
+set(COMMON_FLAGS
+  -Wno-undef                    # Tensorflow includes don't adhere to our lofty standards
+  -Wno-shorten-64-to-32         #  "
+)
+
 set(PLATFORM_DEFINITIONS "")
 
 set(TENSORFLOW_PATH ${ANKI_EXTERNAL_DIR}/tensorflow)
@@ -148,9 +163,8 @@ anki_build_cxx_executable(${TARGET_NAME} ${ANKI_SRCLIST_DIR})
 anki_build_target_license(${TARGET_NAME} "ANKI" "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/tensorflow.license")
 
 target_compile_options(${TARGET_NAME}
-  PRIVATE 
-  -Wno-undef            # Tensorflow includes don't adhere to our lofty standards
-  -Wno-shorten-64-to-32 #  "
+  PRIVATE
+  ${COMMON_FLAGS}
   ${PLATFORM_FLAGS}
 )
 
@@ -166,13 +180,58 @@ target_compile_definitions(${TARGET_NAME}
 )
 target_link_libraries(${TARGET_NAME}
   PRIVATE
-  jsoncpp
-  util
-  cti_common
-  cti_vision_clad               # Just vision CLAD, not the whole enchilada
-  ${OPENCV_LIBS}                # NOTE: Order may matter here? (OpenCV before platform?)
+  ${COMMON_LIBS}
   ${PLATFORM_LIBS}
 )
 
 anki_build_strip(TARGET ${TARGET_NAME})
 
+
+#
+# Unit test target
+#
+
+set(TEST_TARGET_NAME cti_neuralnet_test)
+
+if (MACOSX)
+
+  enable_testing()
+
+  include(gtest)
+
+  anki_build_cxx_executable(${TEST_TARGET_NAME} ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(${TEST_TARGET_NAME} "ANKI")
+
+  target_compile_definitions(${TEST_TARGET_NAME}
+    PRIVATE
+    TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR}
+    ${PLATFORM_DEFINITIONS}
+  )
+
+  target_compile_options(${TEST_TARGET_NAME}
+    PRIVATE
+    ${COMMON_FLAGS}
+    ${PLATFORM_FLAGS}
+  )
+
+  target_include_directories(${TEST_TARGET_NAME}
+    PRIVATE
+    ${PLATFORM_INCLUDES}
+    ${OPENCV_INCLUDE_PATHS}
+  )
+
+  target_link_libraries(${TEST_TARGET_NAME}
+    PRIVATE
+    ${COMMON_LIBS}
+    ${PLATFORM_LIBS}
+    gtest
+  )
+
+  add_test(NAME ${TEST_TARGET_NAME} COMMAND ${TEST_TARGET_NAME})
+
+  set_tests_properties(${TEST_TARGET_NAME}
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiNeuralNetGoogleTest.xml"
+  )
+
+endif()
