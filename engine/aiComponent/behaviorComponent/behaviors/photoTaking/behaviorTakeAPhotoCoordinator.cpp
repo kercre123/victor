@@ -112,6 +112,7 @@ void BehaviorTakeAPhotoCoordinator::OnBehaviorActivated()
     TransitionToStorageIsFull();
     static const bool kSucceeded = false;
     GetBEI().GetPhotographyManager().SendDASEvent(kSucceeded, "TooManyPhotos");
+    return; // nothing to do here, especially don't go down and enable High Res photo mode
   }else if(intentData != nullptr){
     const bool robotPickedUp = GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads;
     _dVars.isASelfie = !(intentData->intent.Get_take_a_photo().empty_or_selfie.empty());
