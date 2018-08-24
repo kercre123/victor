@@ -76,9 +76,8 @@ func verboseHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			name, err := checkAuth(w, r) // Note: we only check here because json will forward to grpc, and doesn't need the same auth
 			if err != nil {
-				// TODO: uncomment this to turn on auth
-				// http.Error(w, grpc.ErrorDesc(err), 401)
-				// return
+				http.Error(w, grpc.ErrorDesc(err), http.StatusUnauthorized)
+				return
 			}
 			log.Printf("Authorized connection from '%s'\n", name)
 			LogRequest(r, "grpc")
@@ -97,9 +96,8 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			_, err := checkAuth(w, r) // Note: we only check here because json will forward to grpc, and doesn't need the same auth
 			if err != nil {
-				// TODO: uncomment this to turn on auth
-				// http.Error(w, grpc.ErrorDesc(err), http.StatusUnauthorized)
-				// return
+				http.Error(w, grpc.ErrorDesc(err), http.StatusUnauthorized)
+				return
 			}
 			grpcServer.ServeHTTP(w, r)
 		} else {

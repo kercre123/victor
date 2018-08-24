@@ -7,8 +7,10 @@ Copyright (c) 2018 Anki, Inc.
 __all__ = ['Robot', 'AsyncRobot', 'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE']
 
 import asyncio
+import configparser
 import functools
 import logging
+from pathlib import Path
 
 from . import (animation, backpack, behavior, camera, connection,
                events, exceptions, faces, motors,
@@ -58,9 +60,12 @@ class Robot:
         # Disconnect from the Robot
         robot.disconnect()
 
+    :param esn: serial number # TODO: comments
+    :param ini_file: the conf file # TODO: comments
     :param name: The name of the Vector. Usually something like "Vector-A1B2".
     :param ip: the ip address that Victor is currently connected to.
     :param cert_file: The location of the cert file downloaded from the cloud.
+    :param guid: client token guid # TODO: comments
     :param port: the port on which Vector is listening. default=443
     :param loop: the async loop on which the Vector commands will execute. default=None
     :param default_logging: Disable default logging. default=False
@@ -70,10 +75,13 @@ class Robot:
     :param show_viewer: Render camera feed on/off. default=False"""
 
     def __init__(self,
-                 name: str,
-                 ip: str,
-                 cert_file: str,
+                 esn: str = None,
+                 ini_file: str = None,
+                 name: str = None,
+                 ip: str = None,
                  port: str = "443",
+                 cert_file: str = None,
+                 guid: str = None,
                  loop: asyncio.BaseEventLoop = None,
                  default_logging: bool = True,
                  behavior_timeout: int = 10,
@@ -89,7 +97,26 @@ class Robot:
         self.is_loop_owner = False
         self._original_loop = None
         self.loop = loop
-        self.conn = connection.Connection(name, ':'.join([ip, port]), cert_file)
+
+        if esn is not None:
+            if ini_file is None:
+                home = Path.home() / ".anki-vector"
+                ini_file = str(home / "sdk_config.ini")
+            config = configparser.ConfigParser()
+            config.read(ini_file)
+
+            if name is None:
+                name = config[esn]["name"]
+            if ip is None:
+                ip = config[esn]["ip"]
+            if cert_file is None:
+                cert_file = config[esn]["cert"]
+            if guid is None:
+                guid = config[esn]["guid"]
+        elif name is None or ip is None or cert_file is None or guid is None:
+            raise ValueError("Robot requires a esn, or all the parameters needed to communicate to a Vector: name, ip, cert_file, and guid")
+
+        self.conn = connection.Connection(name, ':'.join([ip, port]), cert_file, guid)
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None

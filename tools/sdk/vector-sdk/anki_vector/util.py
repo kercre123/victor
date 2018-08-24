@@ -42,6 +42,7 @@ def parse_test_args(parser: argparse.ArgumentParser = None):
     '''
     if parser is None:
         parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--esn", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
     parser.add_argument("-n", "--name", nargs='?', default=os.environ.get('VECTOR_ROBOT_NAME', None))
     parser.add_argument("-i", "--ip", nargs='?', default=os.environ.get('VECTOR_ROBOT_IP', None))
     parser.add_argument("-c", "--cert_file", nargs='?', default=os.environ.get('VECTOR_ROBOT_CERT', None))
@@ -52,14 +53,15 @@ def parse_test_args(parser: argparse.ArgumentParser = None):
         args.ip = os.environ.get('VECTOR_ROBOT_IP_MAC', args.ip)
         args.cert_file = os.environ.get('VECTOR_ROBOT_CERT_MAC', args.cert_file)
 
-    if args.name is None or args.ip is None or args.cert_file is None:
-        parser.error('the following arguments are required: name, ip, cert_file '
-                     'or they may be set with the environment variables: '
-                     'VECTOR_ROBOT_NAME, VECTOR_ROBOT_IP, VECTOR_ROBOT_CERT '
-                     'respectively')
+    if args.esn is None:
+        if args.name is None or args.ip is None or args.cert_file is None:
+            parser.error('The following arguments are required: name, ip, cert_file '
+                        'or they may be set with the environment variables: '
+                        'VECTOR_ROBOT_NAME, VECTOR_ROBOT_IP, VECTOR_ROBOT_CERT '
+                        'respectively')
 
-    cert = Path(args.cert_file)
-    args.cert = cert.resolve()
+        cert = Path(args.cert_file)
+        args.cert = cert.resolve()
     return args
 
 

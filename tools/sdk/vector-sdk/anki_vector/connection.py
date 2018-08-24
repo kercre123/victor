@@ -129,7 +129,7 @@ class Connection:
     :param loop: The asyncio loop for the control events to run inside
     """
 
-    def __init__(self, name: str, host: str, cert_file: str):
+    def __init__(self, name: str, host: str, cert_file: str, guid: str):
         if cert_file is None:
             raise Exception("Must provide a cert file")
         self._loop: asyncio.BaseEventLoop = None
@@ -142,6 +142,7 @@ class Connection:
         self._logger = util.get_class_logger(__name__, self)
         self._control_stream_task = None
         self._control_events: _ControlEventManager = None
+        self._guid = guid
 
     @property
     def interface(self) -> client.ExternalInterfaceStub:
@@ -215,7 +216,7 @@ class Connection:
         # Pin the robot certificate for opening the channel
         channel_credentials = aiogrpc.ssl_channel_credentials(root_certificates=trusted_certs)
         # Add authorization header for all the calls
-        call_credentials = aiogrpc.access_token_call_credentials("8675309")  # TODO: get real credentials here or nothing will work
+        call_credentials = aiogrpc.access_token_call_credentials(self._guid)  # TODO: get real credentials here or nothing will work
 
         credentials = aiogrpc.composite_channel_credentials(channel_credentials, call_credentials)
 
