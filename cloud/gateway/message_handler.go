@@ -1522,6 +1522,34 @@ func (service *rpcService) UpdateAccountSettings(ctx context.Context, in *extint
 	return response.GetUpdateAccountSettingsResponse(), nil
 }
 
+func (service *rpcService) UpdateUserEntitlements(ctx context.Context, in *extint.UpdateUserEntitlementsRequest) (*extint.UpdateUserEntitlementsResponse, error) {
+	log.Println("Received rpc request UpdateUserEntitlements(", in, ")")
+
+	f, responseChan, ok := engineProtoManager.CreateUniqueChannel(&extint.GatewayWrapper_UpdateUserEntitlementsResponse{}, 1)
+	if !ok {
+		return &extint.UpdateUserEntitlementsResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS,
+			},
+		}, nil
+	}
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_UpdateUserEntitlementsRequest{
+			UpdateUserEntitlementsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	response, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return response.GetUpdateUserEntitlementsResponse(), nil
+}
+
 // NOTE: this is the only function that won't need to check the client_token_guid header
 func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.UserAuthenticationRequest) (*extint.UserAuthenticationResponse, error) {
 	log.Println("Received rpc request UserAuthentication(", in, ")")

@@ -257,6 +257,13 @@ service ExternalInterface {
     };
   }
 
+  rpc UpdateUserEntitlements(UpdateUserEntitlementsRequest) returns (UpdateUserEntitlementsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_user_entitlements",
+      body: "*"
+    };
+  }
+
   rpc DriveStraight(DriveStraightRequest) returns (DriveStraightResponse) {}
 
   rpc TurnInPlace(TurnInPlaceRequest) returns (TurnInPlaceResponse) {}

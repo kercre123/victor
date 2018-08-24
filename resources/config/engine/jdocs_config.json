@@ -30,16 +30,16 @@
       "cloudSavePeriod_s" : 0,
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
-//    },
-//    "USER_ENTITLEMENTS" : {
-//      "docName" : "vic.UserEntitlements",
-//      "savedOnDisk" : false,
-//      "diskSavePeriod_s" : 0,
-//      "warnOnCloudVersionLater" : false,
-//      "errorOnCloudVersionLater" : false,
-//      "cloudSavePeriod_s" : 0,
-//      "jdocFormatVersion" : 1,
-//      "bodyOwnedByJdocManager" : false
+    },
+    "USER_ENTITLEMENTS" : {
+      "docName" : "vic.UserEntitlements",
+      "savedOnDisk" : true,
+      "diskSavePeriod_s" : 0,
+      "warnOnCloudVersionLater" : false,
+      "errorOnCloudVersionLater" : false,
+      "cloudSavePeriod_s" : 0,
+      "jdocFormatVersion" : 1,
+      "bodyOwnedByJdocManager" : false
     }
   }
 }

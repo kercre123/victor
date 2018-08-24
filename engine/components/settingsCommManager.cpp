@@ -37,11 +37,13 @@ namespace
   SettingsCommManager* s_SettingsCommManager = nullptr;
   static const bool kUpdateSettingsJdoc = true;
   static const bool kUpdateAccountSettingsJdoc = true;
+  static const bool kUpdateUserEntitlementsJdoc = true;
 
 #if REMOTE_CONSOLE_ENABLED
 
   static const char* kConsoleGroup = "RobotSettings";
   static const char* kConsoleGroupAccountSettings = "AccountSettings";
+  static const char* kConsoleGroupUserEntitlements = "UserEntitlements";
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ROBOT SETTINGS console vars and functions:
@@ -151,6 +153,16 @@ namespace
   }
   CONSOLE_FUNC(DebugToggleDataCollection, kConsoleGroupAccountSettings);
 
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // USER ENTITLEMENTS console vars and functions:
+
+  void DebugToggleKickstarterEyes(ConsoleFunctionContextRef context)
+  {
+    s_SettingsCommManager->ToggleUserEntitlementHelper(external_interface::UserEntitlement::KICKSTARTER_EYES);
+  }
+  CONSOLE_FUNC(DebugToggleKickstarterEyes, kConsoleGroupUserEntitlements);
+
 #endif
 }
 
@@ -179,6 +191,7 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPullJdocsRequest,              commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest,         commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateAccountSettingsRequest,  commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateUserEntitlementsRequest, commonCallback));
   }
 
 #if REMOTE_CONSOLE_ENABLED
@@ -271,6 +284,32 @@ bool SettingsCommManager::ToggleAccountSettingHelper(const external_interface::A
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsCommManager::HandleUserEntitlementChangeRequest(const external_interface::UserEntitlement userEntitlement,
+                                                             const Json::Value& settingJson,
+                                                             const bool updateUserEntitlementsJdoc)
+{
+  // Change the user entitlement and apply the change
+  const bool success = _userEntitlementsManager->SetUserEntitlement(userEntitlement, settingJson, updateUserEntitlementsJdoc);
+  if (!success)
+  {
+    LOG_ERROR("SettingsCommManager.HandleUserEntitlementChangeRequest",
+              "Error setting key %s to value %s", external_interface::UserEntitlement_Name(userEntitlement).c_str(),
+              settingJson.asString().c_str());
+  }
+
+  return success;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsCommManager::ToggleUserEntitlementHelper(const external_interface::UserEntitlement userEntitlement)
+{
+  const bool curSetting = _userEntitlementsManager->GetUserEntitlementAsBool(userEntitlement);
+  return HandleUserEntitlementChangeRequest(userEntitlement, Json::Value(!curSetting), kUpdateUserEntitlementsJdoc);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsCommManager::RefreshConsoleVars()
 {
 #if REMOTE_CONSOLE_ENABLED
@@ -296,6 +335,9 @@ void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::Gatew
       break;
     case external_interface::GatewayWrapperTag::kUpdateAccountSettingsRequest:
       OnRequestUpdateAccountSettings(event.GetData().update_account_settings_request());
+      break;
+    case external_interface::GatewayWrapperTag::kUpdateUserEntitlementsRequest:
+      OnRequestUpdateUserEntitlements(event.GetData().update_user_entitlements_request());
       break;
     default:
       LOG_ERROR("SettingsCommManager.HandleEvents",
@@ -468,6 +510,39 @@ void SettingsCommManager::OnRequestUpdateAccountSettings(const external_interfac
   auto* response = new external_interface::UpdateAccountSettingsResponse();
   auto* jdoc = new external_interface::Jdoc();
   _jdocsManager->GetJdoc(external_interface::JdocType::ACCOUNT_SETTINGS, *jdoc);
+  response->set_allocated_doc(jdoc);
+  _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::OnRequestUpdateUserEntitlements(const external_interface::UpdateUserEntitlementsRequest& updateUserEntitlementsRequest)
+{
+  LOG_INFO("SettingsCommManager.OnRequestUpdateUserEntitlements", "Update user entitlements request");
+  const auto& userEntitlements = updateUserEntitlementsRequest.user_entitlements();
+  bool updateUserEntitlementsJdoc = false;
+  bool saveToCloudImmediately = false;
+
+  if (userEntitlements.oneof_kickstarter_eyes_case() == external_interface::UserEntitlementsConfig::OneofKickstarterEyesCase::kKickstarterEyes)
+  {
+    if (HandleUserEntitlementChangeRequest(external_interface::UserEntitlement::KICKSTARTER_EYES,
+                                           Json::Value(userEntitlements.kickstarter_eyes())))
+    {
+      updateUserEntitlementsJdoc = true;
+      saveToCloudImmediately |= _userEntitlementsManager->DoesUserEntitlementUpdateCloudImmediately(external_interface::UserEntitlement::KICKSTARTER_EYES);
+    }
+  }
+
+  // The request can handle multiple changes, but we only update the jdoc once, for efficiency
+  if (updateUserEntitlementsJdoc)
+  {
+    const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
+    _userEntitlementsManager->UpdateUserEntitlementsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+  }
+
+  auto* response = new external_interface::UpdateUserEntitlementsResponse();
+  auto* jdoc = new external_interface::Jdoc();
+  _jdocsManager->GetJdoc(external_interface::JdocType::USER_ENTITLEMENTS, *jdoc);
   response->set_allocated_doc(jdoc);
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
 }

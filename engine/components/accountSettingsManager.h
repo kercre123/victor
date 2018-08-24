@@ -75,7 +75,6 @@ private:
   bool ApplyAccountSettingDataCollection();
 
   Json::Value               _currentAccountSettings;
-  Robot*                    _robot = nullptr;
   const Json::Value*        _accountSettingsConfig;
   bool                      _applyAccountSettingsNextTick = false;
   

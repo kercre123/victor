@@ -63,15 +63,20 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  bool HandleRobotSettingChangeRequest  (const RobotSetting robotSetting,
-                                         const Json::Value& settingJson,
-                                         const bool updateSettingsJdoc = false);
-  bool ToggleRobotSettingHelper         (const RobotSetting robotSetting);
+  bool HandleRobotSettingChangeRequest   (const RobotSetting robotSetting,
+                                          const Json::Value& settingJson,
+                                          const bool updateSettingsJdoc = false);
+  bool ToggleRobotSettingHelper          (const RobotSetting robotSetting);
 
-  bool HandleAccountSettingChangeRequest(const external_interface::AccountSetting accountSetting,
-                                         const Json::Value& settingJson,
-                                         const bool updateSettingsJdoc = false);
-  bool ToggleAccountSettingHelper       (const external_interface::AccountSetting accountSetting);
+  bool HandleAccountSettingChangeRequest (const external_interface::AccountSetting accountSetting,
+                                          const Json::Value& settingJson,
+                                          const bool updateSettingsJdoc = false);
+  bool ToggleAccountSettingHelper        (const external_interface::AccountSetting accountSetting);
+
+  bool HandleUserEntitlementChangeRequest(const external_interface::UserEntitlement userEntitlement,
+                                          const Json::Value& settingJson,
+                                          const bool updateUserEntitlementsJdoc = false);
+  bool ToggleUserEntitlementHelper       (const external_interface::UserEntitlement userEntitlement);
 
   void RefreshConsoleVars();
 
@@ -81,6 +86,7 @@ private:
   void OnRequestPullJdocs             (const external_interface::PullJdocsRequest& pullJdocsRequest);
   void OnRequestUpdateSettings        (const external_interface::UpdateSettingsRequest& updateSettingsRequest);
   void OnRequestUpdateAccountSettings (const external_interface::UpdateAccountSettingsRequest& updateAccountSettingsRequest);
+  void OnRequestUpdateUserEntitlements(const external_interface::UpdateUserEntitlementsRequest& updateUserEntitlementsRequest);
 
   SettingsManager*         _settingsManager = nullptr;
   AccountSettingsManager*  _accountSettingsManager = nullptr;

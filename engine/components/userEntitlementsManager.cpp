@@ -23,18 +23,15 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
-//#include "clad/robotInterface/messageEngineToRobot.h"
-
-//#include <sys/wait.h>
-
 #define LOG_CHANNEL "UserEntitlementsManager"
 
 namespace Anki {
 namespace Vector {
 
-namespace {
-//  static const char* kConfigDefaultValueKey = "defaultValue";
-//  static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
+namespace
+{
+  static const char* kConfigDefaultValueKey = "defaultValue";
+  static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -50,211 +47,254 @@ void UserEntitlementsManager::InitDependent(Robot* robot, const RobotCompMap& de
   _robot = robot;
   _jdocsManager = &robot->GetComponent<JdocsManager>();
 
-//  _accountSettingsConfig = &robot->GetContext()->GetDataLoader()->GetSettingsConfig();
+  _userEntitlementsConfig = &robot->GetContext()->GetDataLoader()->GetUserEntitlementsConfig();
 
-  // Call the JdocsManager to see if our robot settings jdoc file exists
-//  bool settingsDirty = false;
-//  const bool jdocNeedsCreation = _jdocsManager->JdocNeedsCreation(external_interface::JdocType::USER_ENTITLEMENTS);
-//  _currentUserEntitlements.clear();
-//  if (jdocNeedsCreation)
-//  {
-//    LOG_INFO("UserEntitlementsManager.InitDependent.NoSettingsJdocFile",
-//             "User entitlements jdoc file not found; one will be created shortly");
-//  }
-//  else
-//  {
-//    _currentUserEntitlements = _jdocsManager->GetJdocBody(external_interface::JdocType::USER_ENTITLEMENTS);
+  // Call the JdocsManager to see if our user entitlements jdoc file exists
+  bool userEntitlementsDirty = false;
+  const bool jdocNeedsCreation = _jdocsManager->JdocNeedsCreation(external_interface::JdocType::USER_ENTITLEMENTS);
+  _currentUserEntitlements.clear();
+  if (jdocNeedsCreation)
+  {
+    LOG_INFO("UserEntitlementsManager.InitDependent.NoUserEntitlementsJdocFile",
+             "User entitlements jdoc file not found; one will be created shortly");
+  }
+  else
+  {
+    _currentUserEntitlements = _jdocsManager->GetJdocBody(external_interface::JdocType::USER_ENTITLEMENTS);
 
-//    if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::USER_ENTITLEMENTS))
-//    {
-//      // TODO (this has its own ticket, VIC-5669):
-//      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
-//      //   and new format versions.  Also put it in a function, and call that ALSO in the
-//      //   case of migration triggered when pulling a new version of jdoc from the cloud.
-//      //   consider another callback, similar to the 'overwritten' callback, but for this
-//      //   format migration.
-//      // Not doing this now because we're not changing format versions yet.
-//    }
-//  }
+    if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::USER_ENTITLEMENTS))
+    {
+      // TODO (this has its own ticket, VIC-5669):
+      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
+      //   and new format versions.  Also put it in a function, and call that ALSO in the
+      //   case of migration triggered when pulling a new version of jdoc from the cloud.
+      //   consider another callback, similar to the 'overwritten' callback, but for this
+      //   format migration.
+      // Not doing this now because we're not changing format versions yet.
+    }
+  }
 
-//  // Ensure current settings has each of the defined settings;
-//  // if not, initialize each missing setting to default value
-//  for (Json::ValueConstIterator it = _settingsConfig->begin(); it != _settingsConfig->end(); ++it)
-//  {
-//    if (!_currentSettings.isMember(it.name()))
-//    {
-//      const Json::Value& item = (*it);
-//      _currentSettings[it.name()] = item[kConfigDefaultValueKey];
-//      settingsDirty = true;
-//      LOG_INFO("SettingsManager.InitDependent.AddDefaultItem", "Adding setting with key %s and default value %s",
-//               it.name().c_str(), item[kConfigDefaultValueKey].asString().c_str());
-//    }
-//  }
-//
-//  // Now look through current settings, and remove any item
-//  // that is no longer defined in the config
-//  std::vector<std::string> keysToRemove;
-//  for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
-//  {
-//    if (!_settingsConfig->isMember(it.name()))
-//    {
-//      keysToRemove.push_back(it.name());
-//    }
-//  }
-//  for (const auto& key : keysToRemove)
-//  {
-//    LOG_INFO("SettingsManager.InitDependent.RemoveItem",
-//             "Removing setting with key %s", key.c_str());
-//    _currentSettings.removeMember(key);
-//    settingsDirty = true;
-//  }
-//
-//  if (settingsDirty)
-//  {
-//    static const bool kSaveToCloudImmediately = false;
-//    static const bool kSetCloudDirtyIfNotImmediate = !jdocNeedsCreation;
-//    UpdateSettingsJdoc(kSaveToCloudImmediately, kSetCloudDirtyIfNotImmediate);
-//  }
+  // Ensure current user entitlements has each of the defined user entitlements;
+  // if not, initialize each missing user entitlement to default value
+  for (Json::ValueConstIterator it = _userEntitlementsConfig->begin(); it != _userEntitlementsConfig->end(); ++it)
+  {
+    if (!_currentUserEntitlements.isMember(it.name()))
+    {
+      const Json::Value& item = (*it);
+      _currentUserEntitlements[it.name()] = item[kConfigDefaultValueKey];
+      userEntitlementsDirty = true;
+      LOG_INFO("UserEntitlementsManager.InitDependent.AddDefaultItem", "Adding user entitlement with key %s and default value %s",
+               it.name().c_str(), item[kConfigDefaultValueKey].asString().c_str());
+    }
+  }
 
-//  // Register the actual setting application methods, for those settings that want to execute code when changed:
-//  _settingSetters[RobotSetting::master_volume] = { false, &SettingsManager::ValidateSettingMasterVolume, &SettingsManager::ApplySettingMasterVolume };
-//  _settingSetters[RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
-//  _settingSetters[RobotSetting::locale]        = { false, nullptr,                                       &SettingsManager::ApplySettingLocale       };
-//  _settingSetters[RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
-//
-//  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
-//    _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
-//    ApplyAllCurrentSettings();
-//  });
-//
-//  // Finally, set a flag so we will apply all of the settings
-//  // we just loaded and/or set, in the first update
-//  _applySettingsNextTick = true;
+  // Now look through current user entitlements, and remove any item
+  // that is no longer defined in the config
+  std::vector<std::string> keysToRemove;
+  for (Json::ValueConstIterator it = _currentUserEntitlements.begin(); it != _currentUserEntitlements.end(); ++it)
+  {
+    if (!_userEntitlementsConfig->isMember(it.name()))
+    {
+      keysToRemove.push_back(it.name());
+    }
+  }
+  for (const auto& key : keysToRemove)
+  {
+    LOG_INFO("UserEntitlementsManager.InitDependent.RemoveItem",
+             "Removing user entitlement with key %s", key.c_str());
+    _currentUserEntitlements.removeMember(key);
+    userEntitlementsDirty = true;
+  }
+
+  if (userEntitlementsDirty)
+  {
+    static const bool kSaveToCloudImmediately = false;
+    static const bool kSetCloudDirtyIfNotImmediate = !jdocNeedsCreation;
+    UpdateUserEntitlementsJdoc(kSaveToCloudImmediately, kSetCloudDirtyIfNotImmediate);
+  }
+
+  // Register the actual user entitlement application methods, for those user entitlements that want to execute code when changed:
+  _settingSetters[external_interface::UserEntitlement::KICKSTARTER_EYES] = { nullptr, &UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes };
+
+  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::USER_ENTITLEMENTS, [this]() {
+    _currentUserEntitlements = _jdocsManager->GetJdocBody(external_interface::JdocType::USER_ENTITLEMENTS);
+    ApplyAllCurrentUserEntitlements();
+  });
+
+  // Finally, set a flag so we will apply all of the user entitlements
+  // we just loaded and/or set, in the first update
+  _applyUserEntitlementsNextTick = true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void UserEntitlementsManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
-//  if (_applySettingsNextTick)
-//  {
-//    _applySettingsNextTick = false;
-//    ApplyAllCurrentSettings();
-//
-//    auto& settingsCommManager = _robot->GetComponent<SettingsCommManager>();
-//    settingsCommManager.RefreshConsoleVars();
-//  }
+  if (_applyUserEntitlementsNextTick)
+  {
+    _applyUserEntitlementsNextTick = false;
+    ApplyAllCurrentUserEntitlements();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool UserEntitlementsManager::SetAccountSetting(/*const RobotSetting robotSetting,*/
-//                                                const Json::Value& valueJson,
-//                                                const bool updateSettingsJdoc)
-//{
-//  const std::string key = RobotSettingToString(robotSetting);
-//  if (!_currentSettings.isMember(key))
-//  {
-//    LOG_ERROR("SettingsManager.SetRobotSetting.InvalidKey", "Invalid key %s; ignoring", key.c_str());
-//    return false;
-//  }
-//
-//  const Json::Value prevValue = _currentSettings[key];
-//  _currentSettings[key] = valueJson;
-//
-//  bool success = ApplyRobotSetting(robotSetting, false);
-//  if (!success)
-//  {
-//    _currentSettings[key] = prevValue;  // Restore previous good value
-//    return false;
-//  }
-//
-//  if (updateSettingsJdoc)
-//  {
-//    const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(robotSetting);
-//    const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
-//    success = UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
-//  }
-//
-//  return success;
-//}
+bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserEntitlement userEntitlement,
+                                                 const Json::Value& valueJson,
+                                                 const bool updateUserEntitlementsJdoc)
+{
+  const std::string& key = external_interface::UserEntitlement_Name(userEntitlement);
+  if (!_currentUserEntitlements.isMember(key))
+  {
+    LOG_ERROR("UserEntitlementsManager.SetUserEntitlement.InvalidKey", "Invalid key %s; ignoring", key.c_str());
+    return false;
+  }
+
+  const Json::Value prevValue = _currentUserEntitlements[key];
+  _currentUserEntitlements[key] = valueJson;
+
+  bool success = ApplyUserEntitlement(userEntitlement);
+  if (!success)
+  {
+    _currentUserEntitlements[key] = prevValue;  // Restore previous good value
+    return false;
+  }
+
+  if (updateUserEntitlementsJdoc)
+  {
+    const bool saveToCloudImmediately = DoesUserEntitlementUpdateCloudImmediately(userEntitlement);
+    const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
+    success = UpdateUserEntitlementsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+  }
+
+  return success;
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//std::string UserEntitlementsManager::GetRobotSettingAsString(const RobotSetting key) const
-//{
-//  const std::string& keyString = EnumToString(key);
-//  if (!_currentSettings.isMember(keyString))
-//  {
-//    LOG_ERROR("UserEntitlementsManager.GetRobotSettingAsString.InvalidKey", "Invalid key %s", keyString.c_str());
-//    return "Invalid";
-//  }
-//
-//  return _currentSettings[keyString].asString();
-//}
+std::string UserEntitlementsManager::GetUserEntitlementAsString(const external_interface::UserEntitlement key) const
+{
+  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  if (!_currentUserEntitlements.isMember(keyString))
+  {
+    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsString.InvalidKey", "Invalid key %s", keyString.c_str());
+    return "Invalid";
+  }
+
+  return _currentUserEntitlements[keyString].asString();
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool UserEntitlementsManager::GetRobotSettingAsBool(const RobotSetting key) const
-//{
-//  const std::string& keyString = EnumToString(key);
-//  if (!_currentSettings.isMember(keyString))
-//  {
-//    LOG_ERROR("UserEntitlementsManager.GetRobotSettingAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
-//    return false;
-//  }
-//
-//  return _currentSettings[keyString].asBool();
-//}
+bool UserEntitlementsManager::GetUserEntitlementAsBool(const external_interface::UserEntitlement key) const
+{
+  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  if (!_currentUserEntitlements.isMember(keyString))
+  {
+    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
+    return false;
+  }
+
+  return _currentUserEntitlements[keyString].asBool();
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//uint32_t UserEntitlementsManager::GetRobotSettingAsUInt(const RobotSetting key) const
-//{
-//  const std::string& keyString = EnumToString(key);
-//  if (!_currentSettings.isMember(keyString))
-//  {
-//    LOG_ERROR("UserEntitlementsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
-//    return false;
-//  }
-//
-//  return _currentSettings[keyString].asUInt();
-//}
+uint32_t UserEntitlementsManager::GetUserEntitlementAsUInt(const external_interface::UserEntitlement key) const
+{
+  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  if (!_currentUserEntitlements.isMember(keyString))
+  {
+    LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
+    return 0;
+  }
+
+  return _currentUserEntitlements[keyString].asUInt();
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool UserEntitlementsManager::DoesSettingUpdateCloudImmediately(const RobotSetting key) const
-//{
-//  const std::string& keyString = EnumToString(key);
-//  const auto& config = (*_settingsConfig)[keyString];
-//  const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
-//  return saveToCloudImmediately;
-//}
+bool UserEntitlementsManager::DoesUserEntitlementUpdateCloudImmediately(const external_interface::UserEntitlement key) const
+{
+  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  const auto& config = (*_userEntitlementsConfig)[keyString];
+  const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
+  return saveToCloudImmediately;
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool UserEntitlementsManager::UpdateUserEntitlementsJdoc(const bool saveToCloudImmediately,
                                                          const bool setCloudDirtyIfNotImmediate)
 {
-//  static const bool saveToDiskImmediately = true;
-//  const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ACCOUNT_SETTINGS,
-//                                                 &_currentAccountSettings,
-//                                                 saveToDiskImmediately,
-//                                                 saveToCloudImmediately,
-//                                                 setCloudDirtyIfNotImmediate);
-//  return success;
-  return true;
+  static const bool saveToDiskImmediately = true;
+  const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::USER_ENTITLEMENTS,
+                                                 &_currentUserEntitlements,
+                                                 saveToDiskImmediately,
+                                                 saveToCloudImmediately,
+                                                 setCloudDirtyIfNotImmediate);
+  return success;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void UserEntitlementsManager::ApplyAllCurrentSettings()
-//{
-//  LOG_INFO("SettingsManager.ApplyAllCurrentSettings", "Applying all current robot settings");
-//  for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
-//  {
-//    ApplyRobotSetting(RobotSettingFromString(it.name()));
-//  }
-//}
+void UserEntitlementsManager::ApplyAllCurrentUserEntitlements()
+{
+  LOG_INFO("UserEntitlementsManager.ApplyAllCurrentUserEntitlements", "Applying all current user entitlements");
+  for (Json::ValueConstIterator it = _currentUserEntitlements.begin(); it != _currentUserEntitlements.end(); ++it)
+  {
+    external_interface::UserEntitlement whichUserEntitlement;
+    UserEntitlement_Parse(it.name(), &whichUserEntitlement);
+    ApplyUserEntitlement(whichUserEntitlement);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::ApplyUserEntitlement(const external_interface::UserEntitlement key)
+{
+  // Actually apply the user entitlement; note that some things don't need to be "applied"
+  bool success = true;
+  const auto it = _settingSetters.find(key);
+  if (it != _settingSetters.end())
+  {
+    const auto validationFunc = it->second.validationFunction;
+    if (validationFunc != nullptr)
+    {
+      success = (this->*(validationFunc))();
+      if (!success)
+      {
+        LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ValidateFunctionFailed", "Error attempting to apply %s user entitlement",
+                  external_interface::UserEntitlement_Name(key).c_str());
+        return false;
+      }
+    }
+
+    LOG_DEBUG("UserEntitlementsManager.ApplyUserEntitlement", "Applying user entitlement '%s'",
+              external_interface::UserEntitlement_Name(key).c_str());
+    success = (this->*(it->second.applicationFunction))();
+
+    if (!success)
+    {
+      LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ApplyFunctionFailed", "Error attempting to apply %s user entitlement",
+                external_interface::UserEntitlement_Name(key).c_str());
+    }
+  }
+  return success;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes()
+{
+  static const std::string& key = external_interface::UserEntitlement_Name(external_interface::UserEntitlement::KICKSTARTER_EYES);
+  const auto& value = _currentUserEntitlements[key].asBool();
+  LOG_INFO("UserEntitlementsManager.ApplyUserEntitlementKickstarterEyes.Apply",
+           "Setting kickstarter eyes flag to %s", value ? "true" : "false");
+  
+  // TODO:  Can call whereever here
+  
+  return true;
+}
 
 
 } // namespace Vector

@@ -284,7 +284,7 @@ uint32_t SettingsManager::GetRobotSettingAsUInt(const RobotSetting key) const
   if (!_currentSettings.isMember(keyString))
   {
     LOG_ERROR("SettingsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
-    return false;
+    return 0;
   }
   
   return _currentSettings[keyString].asUInt();

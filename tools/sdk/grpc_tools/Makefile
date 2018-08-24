@@ -353,6 +353,10 @@ test_account_settings: .require_ip
 	$(curl_command)/v1/update_account_settings -d '{"account_settings": {"app_locale":"en-US","data_collection":true}}'
 	@echo
 
+test_user_entitlements: .require_ip
+	$(curl_command)/v1/update_user_entitlements -d '{"user_entitlements": {"kickstarter_eyes":true}}'
+	@echo
+
 test_status_history: .require_ip
 	$(curl_command)/v1/status_history -d '{}'
 	@echo

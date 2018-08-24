@@ -21,6 +21,8 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 
+#include "proto/external_interface/settings.pb.h"
+
 #include "json/json.h"
 #include <map>
 
@@ -52,27 +54,41 @@ public:
   //////
 
   // Returns true if successful
-//  bool SetAccountSetting(/*const RobotSetting robotSetting,*/
-//                         const Json::Value& valueJson,
-//                         const bool updateSettingsJdoc);
+  bool SetUserEntitlement(const external_interface::UserEntitlement userEntitlement,
+                          const Json::Value& valueJson,
+                          const bool updateUserEntitlementsJdoc);
 
-  // Return the account setting value (currently strings, bools, uints supported)
-//  std::string GetAccountSettingAsString(const RobotSetting key) const;
-//  bool        GetAccountSettingAsBool  (const RobotSetting key) const;
-//  uint32_t    GetAccountSettingAsUInt  (const RobotSetting key) const;
-  
-//  bool DoesSettingUpdateCloudImmediately(const RobotSetting key) const;
+  // Return the user entitlement value (currently strings, bools, uints supported)
+  std::string GetUserEntitlementAsString(const external_interface::UserEntitlement key) const;
+  bool        GetUserEntitlementAsBool  (const external_interface::UserEntitlement key) const;
+  uint32_t    GetUserEntitlementAsUInt  (const external_interface::UserEntitlement key) const;
+
+  bool DoesUserEntitlementUpdateCloudImmediately(const external_interface::UserEntitlement key) const;
 
   bool UpdateUserEntitlementsJdoc(const bool saveToCloudImmediately,
                                   const bool setCloudDirtyIfNotImmediate);
 
 private:
 
+  void ApplyAllCurrentUserEntitlements();
+  bool ApplyUserEntitlement(const external_interface::UserEntitlement key);
+  bool ApplyUserEntitlementKickstarterEyes();
+
   Json::Value               _currentUserEntitlements;
   Robot*                    _robot = nullptr;
-//  const Json::Value*        _userEntitlementsConfig;
+  const Json::Value*        _userEntitlementsConfig;
+  bool                      _applyUserEntitlementsNextTick = false;
 
-  JdocsManager*                  _jdocsManager = nullptr;
+  using SettingFunction = bool (UserEntitlementsManager::*)();
+  struct SettingSetter
+  {
+    SettingFunction         validationFunction;
+    SettingFunction         applicationFunction;
+  };
+  using SettingSetters = std::map<external_interface::UserEntitlement, SettingSetter>;
+  SettingSetters            _settingSetters;
+
+  JdocsManager*             _jdocsManager = nullptr;
 };
 
 

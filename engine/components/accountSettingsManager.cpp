@@ -44,7 +44,6 @@ AccountSettingsManager::AccountSettingsManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
 {
-  _robot = robot;
   _jdocsManager = &robot->GetComponent<JdocsManager>();
 
   _accountSettingsConfig = &robot->GetContext()->GetDataLoader()->GetAccountSettingsConfig();
@@ -205,7 +204,7 @@ uint32_t AccountSettingsManager::GetAccountSettingAsUInt(const external_interfac
   if (!_currentAccountSettings.isMember(keyString))
   {
     LOG_ERROR("AccountSettingsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
-    return false;
+    return 0;
   }
 
   return _currentAccountSettings[keyString].asUInt();
