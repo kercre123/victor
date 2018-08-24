@@ -1274,7 +1274,14 @@ void BehaviorOnboarding::ConnectionLostCallback()
   const bool connectInBackground = true;
   GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection( this, connectInBackground );
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::ConnectionFailedCallback()
+{
+  // cube connection failed. try again.
+  const bool connectInBackground = true;
+  GetBEI().GetCubeConnectionCoordinator().SubscribeToCubeConnection( this, connectInBackground );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )

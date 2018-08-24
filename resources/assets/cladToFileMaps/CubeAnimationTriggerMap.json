@@ -41,7 +41,7 @@
     },
     {
         "CladEvent": "Onboarding",
-        "AnimName": "flash"
+        "AnimName": "wakeUp"
     },
     {
         "CladEvent": "ShutDown",
