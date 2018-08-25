@@ -15,6 +15,7 @@
 #include "switchboardd/IRtsHandler.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/tokenClient.h"
+#include "switchboardd/connectionIdManager.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/gatewayMessagingServer.h"
@@ -31,6 +32,7 @@ public:
     std::shared_ptr<EngineMessagingClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
+    std::shared_ptr<ConnectionIdManager> connectionIdManager,
     std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
     bool isOtaUpdating,
@@ -98,6 +100,7 @@ private:
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
   std::shared_ptr<GatewayMessagingServer> _gatewayServer;
+  std::shared_ptr<ConnectionIdManager> _connectionIdManager;
   std::shared_ptr<TaskExecutor> _taskExecutor;
   std::unique_ptr<ExternalCommsCladHandlerV4> _cladHandler;
   std::vector<std::weak_ptr<TokenResponseHandle>> _tokenClientHandles;

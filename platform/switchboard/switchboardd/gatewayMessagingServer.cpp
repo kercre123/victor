@@ -27,8 +27,10 @@ using namespace Anki::Vector::ExternalComms;
 
 uint8_t GatewayMessagingServer::sMessageData[2048];
 
-GatewayMessagingServer::GatewayMessagingServer(struct ev_loop* evloop, std::shared_ptr<TokenClient> tokenClient)
+GatewayMessagingServer::GatewayMessagingServer(struct ev_loop* evloop, std::shared_ptr<TaskExecutor> taskExecutor, std::shared_ptr<TokenClient> tokenClient, std::shared_ptr<ConnectionIdManager> connectionIdManager)
 : _tokenClient(tokenClient)
+, _connectionIdManager(connectionIdManager)
+, _taskExecutor(taskExecutor)
 , loop_(evloop)
 {}
 
@@ -62,6 +64,17 @@ bool GatewayMessagingServer::Disconnect() {
   }
   ev_timer_stop(loop_, &_handleGatewayMessageTimer.timer);
   return true;
+}
+
+std::shared_ptr<SafeHandle> GatewayMessagingServer::SendConnectionIdRequest(ConnectionIdRequestCallback callback) {
+  std::shared_ptr<SafeHandle> sharedHandle = std::make_shared<SafeHandle>();
+
+  _connectionIdRequestCallbackQueue.push(callback);
+  _connectionIdRequestHandlesQueue.push(std::weak_ptr<SafeHandle>(sharedHandle));
+
+  SendMessage(SwitchboardResponse(ExternalConnectionRequest()));
+
+  return sharedHandle;
 }
 
 void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message) {
@@ -119,6 +132,31 @@ void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message
   });
 }
 
+void GatewayMessagingServer::HandleConnectionIdRequest(const SwitchboardRequest& message) {
+  _taskExecutor->Wake([this, message]() {
+    // Give Gateway our connection id and status
+    std::string connectionId = _connectionIdManager->GetConnectionId();
+    bool isConnected = connectionId != "";
+    SwitchboardResponse res = SwitchboardResponse(ExternalConnectionResponse(isConnected, connectionId));
+    SendMessage(res);
+  });
+}
+
+void GatewayMessagingServer::HandleConnectionIdResponse(const SwitchboardRequest& message) {
+  _taskExecutor->Wake([this, message]() {
+    // Receive connection id and status from Gateway
+    ExternalConnectionResponse response = message.Get_ExternalConnectionResponse();
+    
+    ConnectionIdRequestCallback cb = _connectionIdRequestCallbackQueue.front();
+    _connectionIdRequestCallbackQueue.pop();
+    std::weak_ptr<SafeHandle> handle = _connectionIdRequestHandlesQueue.front();
+    _connectionIdRequestHandlesQueue.pop();
+    if(!handle.expired()) {
+      cb(response.isConnected, response.connectionId);
+    }
+  });
+}
+
 void GatewayMessagingServer::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
   // Send SwitchboardResponse
   SwitchboardResponse res = SwitchboardResponse(Anki::Vector::AuthResponse(appToken, "", authError));
@@ -128,6 +166,7 @@ void GatewayMessagingServer::ProcessCloudAuthResponse(bool isPrimary, Anki::Vect
 void GatewayMessagingServer::sEvGatewayMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents) {
   struct ev_GatewayMessageTimerStruct *wData = (struct ev_GatewayMessageTimerStruct*)w;
 
+  GatewayMessagingServer* self = wData->messagingServer;
   int recvSize;
 
   while((recvSize = wData->server->Recv((char*)sMessageData, sizeof(sMessageData))) > kMessageHeaderLength) {
@@ -147,10 +186,19 @@ void GatewayMessagingServer::sEvGatewayMessageHandler(struct ev_loop* loop, stru
     switch(messageTag) {
       case SwitchboardRequestTag::AuthRequest:
       {
-        GatewayMessagingServer* self = wData->messagingServer;
         self->HandleAuthRequest(message);
-      }
         break;
+      }
+      case SwitchboardRequestTag::ExternalConnectionRequest:
+      {
+        self->HandleConnectionIdRequest(message);
+        break;
+      }
+      case SwitchboardRequestTag::ExternalConnectionResponse:
+      {
+        self->HandleConnectionIdResponse(message);
+        break;
+      }
       default:
         break;
     }

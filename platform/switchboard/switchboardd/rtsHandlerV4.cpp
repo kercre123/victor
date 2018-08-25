@@ -14,6 +14,7 @@
 #include "anki-wifi/fileutils.h"
 #include "util/fileUtils/fileUtils.h"
 #include "switchboardd/rtsHandlerV4.h"
+#include "util/logging/DAS.h"
 #include "engine/clad/gateway/switchboard.h"
 #include <sstream>
 #include <cutils/properties.h>
@@ -29,6 +30,7 @@ RtsHandlerV4::RtsHandlerV4(INetworkStream* stream,
     std::shared_ptr<EngineMessagingClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
+    std::shared_ptr<ConnectionIdManager> connectionIdManager,
     std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
     bool isOtaUpdating,
@@ -38,6 +40,7 @@ _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
 _gatewayServer(gatewayServer),
+_connectionIdManager(connectionIdManager),
 _taskExecutor(taskExecutor),
 _pin(""),
 _challengeAttempts(0),
@@ -570,7 +573,10 @@ void RtsHandlerV4::HandleRtsAppConnectionIdRequest(const Vector::ExternalComms::
     msg.Get_RtsAppConnectionIdRequest();
 
   Log::Write("Client connection id [%s]", appConnIdMsg.connectionId.c_str());
-  // todo: connection id
+  
+  DASMSG(ble_conn_id_start, DASMSG_BLE_CONN_ID_START, "BLE connection id");
+    DASMSG_SET(s1, appConnIdMsg.connectionId, "connection id string");
+    DASMSG_SEND();
 
   SendRtsMessage<RtsAppConnectionIdResponse>();
 }

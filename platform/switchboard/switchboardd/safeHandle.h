@@ -9,6 +9,8 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
+#pragma once 
+
 namespace Anki {
 namespace Switchboard {
 

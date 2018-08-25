@@ -25,6 +25,7 @@
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/tokenClient.h"
+#include "switchboardd/connectionIdManager.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/gatewayMessagingServer.h"
 
@@ -150,6 +151,7 @@ namespace Switchboard {
       std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
       std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
       std::shared_ptr<TokenClient> _tokenClient;
+      std::shared_ptr<ConnectionIdManager> _connectionIdManager;
       bool _isUpdateEngineServiceRunning;
       bool _shouldRestartPairing;
       bool _isTokenClientFullyInitialized;

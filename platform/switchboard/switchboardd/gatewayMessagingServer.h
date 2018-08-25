@@ -17,10 +17,14 @@
 #define PLATFORM_SWITCHBOARD_SWITCHBOARDD_GatewayMessagingServer_H_
 
 #include <string>
+#include <queue>
 #include <signals/simpleSignal.hpp>
 #include "ev++.h"
 #include "coretech/messaging/shared/socketConstants.h"
 #include "coretech/messaging/shared/LocalUdpServer.h"
+#include "switchboardd/connectionIdManager.h"
+#include "switchboardd/taskExecutor.h"
+#include "switchboardd/safeHandle.h"
 #include "tokenClient.h"
 #include "engine/clad/gateway/switchboard.h"
 
@@ -28,21 +32,32 @@ namespace Anki {
 namespace Switchboard {
 
 class GatewayMessagingServer {
+  typedef std::function<void(bool, std::string)> ConnectionIdRequestCallback;
+
 public:
   using GatewayMessageSignal = Signal::Signal<void (SwitchboardRequest)>;
-  explicit GatewayMessagingServer(struct ev_loop* loop, std::shared_ptr<TokenClient> tokenClient);
+  explicit GatewayMessagingServer(struct ev_loop* loop, std::shared_ptr<TaskExecutor> taskExecutor, std::shared_ptr<TokenClient> tokenClient, std::shared_ptr<ConnectionIdManager> connectionIdManager);
   ~GatewayMessagingServer();
   bool Init();
   bool Disconnect();
+
+  std::shared_ptr<SafeHandle> SendConnectionIdRequest(ConnectionIdRequestCallback callback);
+
   void HandleAuthRequest(const SwitchboardRequest& message);
+  void HandleConnectionIdRequest(const SwitchboardRequest& message);
+  void HandleConnectionIdResponse(const SwitchboardRequest& message);
   void ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken);
   bool SendMessage(const SwitchboardResponse& message);
   static void sEvGatewayMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 
   std::weak_ptr<TokenClient> _tokenClient;
+  std::shared_ptr<ConnectionIdManager> _connectionIdManager;
 
 private:
   LocalUdpServer _server;
+  std::shared_ptr<TaskExecutor> _taskExecutor;
+  std::queue<ConnectionIdRequestCallback> _connectionIdRequestCallbackQueue;
+  std::queue<std::weak_ptr<SafeHandle>> _connectionIdRequestHandlesQueue;
 
   struct ev_loop* loop_;
 

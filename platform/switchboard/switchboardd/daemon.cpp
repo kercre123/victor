@@ -59,6 +59,7 @@ void Daemon::Start() {
   _loop = ev_default_loop(0);
 
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
+  _connectionIdManager = std::make_shared<ConnectionIdManager>();
 
   // Saved session manager
   SavedSessionManager::MigrateKeys();
@@ -111,7 +112,7 @@ void Daemon::InitializeEngineComms() {
 }
 
 void Daemon::InitializeGatewayComms() {
-  _gatewayMessagingServer = std::make_shared<GatewayMessagingServer>(_loop, _tokenClient);
+  _gatewayMessagingServer = std::make_shared<GatewayMessagingServer>(_loop, _taskExecutor, _tokenClient, _connectionIdManager);
   _gatewayMessagingServer->Init();
 }
 
@@ -233,7 +234,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     _connectionId = connId;
 
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
+      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _connectionIdManager, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
@@ -264,6 +265,8 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
 
 void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   _taskExecutor->Wake([this](){
+    _connectionIdManager->Clear();
+
     // do any clean up needed
     if(_securePairing != nullptr) {
       _securePairing->StopPairing();
@@ -283,6 +286,9 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
 
     DASMSG(ble_connection_status, "ble.disconnection",
             "BLE connection status has changed.");
+    DASMSG_SEND();
+
+    DASMSG(ble_conn_id_stop, DASMSG_BLE_CONN_ID_STOP, "BLE connection id");
     DASMSG_SEND();
 
     if(_shouldRestartPairing) {
