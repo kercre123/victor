@@ -168,25 +168,13 @@ void BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerDance(const bool returnToChargerAfter)
+void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerDance()
 {
   LOG_FUNCTION_NAME();
   
-  auto callback = [this, returnToChargerAfter]() {
-    if (returnToChargerAfter && _iConfig.goHomeBehavior->WantsToBeActivated()) {
-      DelegateIfInControl(_iConfig.goHomeBehavior.get());
-    }
-  };
-  
   const bool wantsToRun = _iConfig.offChargerDancingBehavior->WantsToBeActivated();
   if (wantsToRun) {
-    DelegateIfInControl(_iConfig.offChargerDancingBehavior.get(),
-                        callback);
-  } else if (returnToChargerAfter) {
-    // Dancing does not want to run - just go back home in this case (if required)
-    PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerDance.DoesNotWantToDance",
-                  "Returning to charger since the offChargerDancing behavior does not want to run");
-    callback();
+    DelegateIfInControl(_iConfig.offChargerDancingBehavior.get());
   }
 }
 
@@ -230,7 +218,17 @@ void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening()
   DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerListening.LongListenDoesNotWantToRun");
   DelegateIfInControl(_iConfig.longListeningBehavior.get(),
                       [this](){
-                        TransitionToOffChargerDance(true);
+                        const bool wantsToDance = _iConfig.offChargerDancingBehavior->WantsToBeActivated();
+                        if (wantsToDance) {
+                          TransitionToOffChargerDance();
+                        } else {
+                          // Dancing does not want to run - just go back home in this case
+                          PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator.TransitionToOffChargerListening.DoesNotWantToDance",
+                                        "Returning to charger since the offChargerDancing behavior does not want to run");
+                          if (_iConfig.goHomeBehavior->WantsToBeActivated()) {
+                            DelegateIfInControl(_iConfig.goHomeBehavior.get());
+                          }
+                        }
                       });
 }
 

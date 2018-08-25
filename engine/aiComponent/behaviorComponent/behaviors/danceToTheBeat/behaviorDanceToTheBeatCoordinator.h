@@ -67,8 +67,8 @@ private:
   // After listening is complete, check if there is a confident beat or not. If so, dispatch the proper behaviors
   void CheckIfBeatDetected();
   
-  // Start dancing (while off charger). Optionally attempt to return to the charger after
-  void TransitionToOffChargerDance(const bool returnToChargerAfter = false);
+  // Start dancing (while off charger)
+  void TransitionToOffChargerDance();
   
   // Start dancing (while on charger)
   void TransitionToOnChargerDance();
