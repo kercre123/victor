@@ -289,7 +289,8 @@ void BehaviorReactToSound::RespondToSound()
 
     // Send das message ONLY when we're reacting to a valid sound
     DASMSG( robot_reacted_to_sound, "robot.reacted_to_sound", "Robot is reacting to a valid sound" );
-    DASMSG_SET( i1, _triggeredMicPower, "The log10 of the mic power level" );
+    DASMSG_SET( s1, GetDebugLabel(), "Behavior handling the reaction");
+    DASMSG_SET( i1, _triggeredMicPower * 1000.0f, "1000 * the log10 of the mic power level" );
     DASMSG_SET( i2, _triggeredConfidence, "The direction confidence returned by SE" );
     DASMSG_SET( i3, _triggeredDirection, "The direction the sound came from (0 in front, clockwise, 12 is unknown)" );
     DASMSG_SEND();
