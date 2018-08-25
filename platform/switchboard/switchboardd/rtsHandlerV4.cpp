@@ -154,11 +154,11 @@ bool RtsHandlerV4::IsAuthenticated() {
   }
 
   // for now, early-out unless flag is set
-  #ifndef ANKI_SWITCHBOARD_CLOUD_AUTH
+  #if ANKI_SWITCHBOARD_CLOUD_AUTH
+  // Must be cloud authed for first time pair.
+  #else
   Log::Write("&&& Skipping cloud auth.");
   return true;
-  #else
-  // Must be cloud authed for first time pair.
   #endif
 
   if(_isFirstTimePair) {
@@ -690,10 +690,10 @@ void RtsHandlerV4::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_
   if(success) {
     // Inform client that we are good to go and
     // update our state
-    bool cloudAuth = true;
+    bool cloudAuth = false;
 
-    #ifndef ANKI_SWITCHBOARD_CLOUD_AUTH
-    cloudAuth = false;
+    #if ANKI_SWITCHBOARD_CLOUD_AUTH
+    cloudAuth = true;
     #endif
 
     if(_isFirstTimePair && (!_hasOwner || !cloudAuth)) {

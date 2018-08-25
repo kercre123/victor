@@ -52,6 +52,7 @@ target_compile_options(switchboard
 target_compile_definitions(switchboard
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
+  ANKI_SWITCHBOARD_CLOUD_AUTH=1
 )
 
 target_include_directories(switchboard

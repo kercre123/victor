@@ -153,7 +153,7 @@ void RtsHandlerV2::HandleRtsConnResponse(const Anki::Vector::ExternalComms::RtsC
     if(connResponse.connectionType == Anki::Vector::ExternalComms::RtsConnType::FirstTimePair) {
       bool cloudAuth = false;
 
-      #ifdef ANKI_SWITCHBOARD_CLOUD_AUTH
+      #if ANKI_SWITCHBOARD_CLOUD_AUTH
       cloudAuth = true;
       #endif
 
