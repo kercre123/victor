@@ -138,7 +138,6 @@ bool BehaviorKnowledgeGraphQuestion::WantsToBeActivatedBehavior() const
 void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
-  SmartDisableEngineResponseToTriggerWord();
 
   // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
   if ( _readyTTSWrapper.SetUtteranceText( _iVars.readyText, {} ) )
@@ -197,13 +196,6 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
   if ( IsActivated() )
   {
     UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-    const bool triggerWordPending = uic.IsTriggerWordPending();
-
-    // we should clear this each time it's pending regardless of state so the UIC doesn't complain about it not being handled
-    if ( triggerWordPending )
-    {
-      uic.ClearPendingTriggerWord();
-    }
 
     // at this point our get in animation is complete, so as soon as the audio is finished playing we can transition in
     if ( EState::WaitingToStream == _dVars.state )
@@ -245,7 +237,7 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
     {
       // if we're playing our response, allow victor to be interrupted
       const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
-      if ( isPickedUp || triggerWordPending )
+      if ( isPickedUp )
       {
         OnResponseInterrupted();
       }

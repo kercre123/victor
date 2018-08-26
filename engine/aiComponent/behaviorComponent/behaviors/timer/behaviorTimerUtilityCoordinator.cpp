@@ -458,9 +458,7 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelRinging()
   const bool shouldCancelTimer = shouldCancelDueToPickedUp || shouldCancelDueToTouch || uic.IsTriggerWordPending();
   if(IsTimerRinging() && shouldCancelTimer){
     GetTimerUtility().ClearTimer();
-    // Clear the pending trigger word and cancel the ringing timer
     // Its emergency get out will still play
-    uic.ClearPendingTriggerWord();
     CancelSelf();
     return;
   }

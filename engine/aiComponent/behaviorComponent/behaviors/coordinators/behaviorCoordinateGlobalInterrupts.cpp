@@ -188,12 +188,6 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
   }
 
-  // timer uses wakeword to suppress alarm
-  {
-    const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
-    shouldSuppressTriggerWordBehavior |= isTimerRinging;
-  }
-
   if ( shouldSuppressTriggerWordBehavior )
   {
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
