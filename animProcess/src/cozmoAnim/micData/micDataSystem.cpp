@@ -296,6 +296,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
         twDetectedMessage.timestamp = mostRecentTimestamp_ms;
         twDetectedMessage.direction = kFirstIndex;
+        // TODO:(bn) check stream state here? Currently just assuming streaming is on
+        twDetectedMessage.willOpenStream = true;
         auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
         {
           std::lock_guard<std::mutex> lock(_msgsMutex);

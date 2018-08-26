@@ -32,6 +32,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "clad/types/behaviorComponent/streamAndLightEffect.h"
+
 #include <deque>
 
 namespace Anki {
@@ -242,7 +244,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   // the "do a fist bump" part of "hey victor"
   const bool shouldSuppressStreaming = shouldSuppressTriggerWordBehavior;
   if(shouldSuppressStreaming){
-    SmartAlterStreamStateForCurrentResponse(false);
+    SmartAlterStreamStateForCurrentResponse(StreamAndLightEffect::StreamingDisabledButWithLight);
   }else{
     SmartPopResponseToTriggerWord();
   }

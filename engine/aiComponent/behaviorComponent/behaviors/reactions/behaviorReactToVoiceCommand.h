@@ -207,6 +207,8 @@ private:
 
     EIntentStatus             intentStatus;
     EngineTimeStamp_t         timestampToDisableTurnFor;
+
+    bool                      expectingStream;
   } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...

@@ -68,6 +68,7 @@ class IFeedingListener;
 enum class CubeAnimationTrigger;
 
 struct PathMotionProfile;
+struct TriggerWordResponseData;
 
 namespace ExternalInterface {
 struct BehaviorObjectiveAchieved;
@@ -476,6 +477,9 @@ protected:
   // deactivated. For convenience (in the case where there is extra intent data), a pointer the the intent is
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
+  
+  // de-activate an intent activated through the smart function above.
+  void SmartDeactivateUserIntent();
 
   // Disables engine's response to trigger words sent from the animation process
   void SmartDisableEngineResponseToTriggerWord();
@@ -485,10 +489,12 @@ protected:
   void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger = AnimationTrigger::Count, 
                                       const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, 
                                       StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
+
+  void SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState);
   void SmartPopResponseToTriggerWord();
 
   
-  void SmartAlterStreamStateForCurrentResponse(bool shouldTriggerWordStartStream);
+  void SmartAlterStreamStateForCurrentResponse(const StreamAndLightEffect newEffect);
 
 
   // Request that the robot enter power save mode
@@ -623,7 +629,8 @@ private:
 
   bool _hasSetMotionProfile = false;
 
-  bool _scopedDisableStreamAfterWakeWord = false;
+  std::unique_ptr<StreamAndLightEffect> _alterStreamAfterWakeword;
+  std::unique_ptr<TriggerWordResponseData> _triggerStreamStateToPush;
   bool _pushedCustomTriggerResponse = false;
   
   //A list of object IDs that have had a custom light pattern set

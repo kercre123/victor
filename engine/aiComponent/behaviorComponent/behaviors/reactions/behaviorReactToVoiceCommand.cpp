@@ -132,7 +132,8 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   streamingBeginTime( 0.0 ),
   streamingEndTime( 0.0 ),
   intentStatus( EIntentStatus::NoIntentHeard ),
-  timestampToDisableTurnFor(0)
+  timestampToDisableTurnFor(0),
+  expectingStream(false)
 {
 
 }
@@ -377,10 +378,14 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
 
+  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  _dVars.expectingStream = uic.WillPendingTriggerWordOpenStream();
+
   // Trigger word is heard (since we've been activated) ...
   PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Activated",
-                 "Reacting to trigger word from direction [%d] ...",
-                 (int)GetReactionDirection() );
+                  "Reacting to trigger word from direction [%d] (%s stream)",
+                  (int)GetReactionDirection(),
+                  _dVars.expectingStream ? "expecting" : "not expecting");
 
   StartListening();
 }
@@ -470,69 +475,66 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
   }
 
 
-  if ( IsActivated() )
+  if ( _dVars.state == EState::ListeningGetIn )
   {
-    if ( _dVars.state == EState::ListeningGetIn )
-    {
-      // Once the animation process's GetIn animation has finished, queue the listening loop animation
-      if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
+    // Once the animation process's GetIn animation has finished, queue the listening loop animation
+    if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
 
-        // we don't want to enter EState::Listening until we're in our loop or else
-        // we could end up exiting too soon and looking like garbage
-        if( _iVars.exitAfterGetIn )
-        {
-          OnVictorListeningEnd();
-          CancelSelf();
-        }
-
-        // we now loop indefinitely and wait for the timeout in the update function
-        // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-        DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
-        _dVars.state = EState::ListeningLoop;
-      }
-    }
-    else if ( _dVars.state == EState::ListeningLoop )
-    {
-      const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-      if ( isIntentPending )
+      // we don't want to enter EState::Listening until we're in our loop or else
+      // we could end up exiting too soon and looking like garbage
+      if( _iVars.exitAfterGetIn )
       {
-        // kill delegates, we'll handle next steps with callbacks
-        // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
-        PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
-                      "Stopping listening because an intent is pending");
+        OnVictorListeningEnd();
+        CancelSelf();
+      }
+
+      // we now loop indefinitely and wait for the timeout in the update function
+      // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
+      _dVars.state = EState::ListeningLoop;
+    }
+  }
+  else if ( _dVars.state == EState::ListeningLoop )
+  {
+    const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
+    if ( isIntentPending )
+    {
+      // kill delegates, we'll handle next steps with callbacks
+      // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
+      PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
+                    "Stopping listening because an intent is pending");
+      CancelDelegates( false );
+      StopListening();
+    }
+    else
+    {
+      // there are a few ways we can timeout from the Listening state;
+      // + error received
+      // + streaming never started
+      // + streaming started but no intent came back
+      const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+      const double listeningTimeout = GetListeningTimeout();
+      if ( currTime_s >= listeningTimeout )
+      {
+        PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
+                       "Stopping listening because of a(n) %s",
+                       GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
         CancelDelegates( false );
         StopListening();
       }
-      else
-      {
-        // there are a few ways we can timeout from the Listening state;
-        // + error received
-        // + streaming never started
-        // + streaming started but no intent came back
-        const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-        const double listeningTimeout = GetListeningTimeout();
-        if ( currTime_s >= listeningTimeout )
-        {
-          PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
-                         "Stopping listening because of a(n) %s",
-                         GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
-          CancelDelegates( false );
-          StopListening();
-        }
-      }
     }
-    else if ( _dVars.state == EState::Thinking )
-    {
-      // we may receive an intent AFTER we're done listening for various reasons,
-      // so poll for it while we're in the thinking state
-      // note: does nothing if intent is already set
-      UpdateUserIntentStatus();
-    }
+  }
+  else if ( _dVars.state == EState::Thinking )
+  {
+    // we may receive an intent AFTER we're done listening for various reasons,
+    // so poll for it while we're in the thinking state
+    // note: does nothing if intent is already set
+    UpdateUserIntentStatus();
+  }
 
-    if ( ( _dVars.state != EState::ListeningGetIn ) && !IsControlDelegated() )
-    {
-      CancelSelf();
-    }
+  if ( ( _dVars.state != EState::ListeningGetIn ) && !IsControlDelegated() )
+  {
+    CancelSelf();
   }
 }
 
@@ -819,7 +821,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     // in after we've closed our recording stream.
     OnVictorListeningEnd();
 
-    const bool streamingToCloud = GetBehaviorComp<UserIntentComponent>().GetShouldStreamAfterWakeWord();
+    const bool streamingToCloud = _dVars.expectingStream;
     if (!streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
       PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinkingCallback.NotStreaming",
                     "We are not streaming to the cloud currently, so no point in continuing with the behavior (since "
@@ -925,7 +927,7 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 
     case EIntentStatus::NoIntentHeard:
     case EIntentStatus::Error: {
-
+      
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error",
                       "Intent processing returned an error (or timeout)" );
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
@@ -1022,9 +1024,9 @@ double BehaviorReactToVoiceCommand::GetListeningTimeout() const
   const bool errorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
   const bool streamingHasBegun = ( _dVars.streamingBeginTime > 0.0 );
 
-  if ( errorPending || !streamingHasBegun )
+  if ( errorPending || !streamingHasBegun || !_dVars.expectingStream )
   {
-    // we haven't start streaming, so timeout this much after we've been active
+    // we haven't started streaming (or we won't), so timeout this much after we've been active
     timeout = ( GetTimeActivated_s() + kMinListeningTimeout_s );
   }
   else

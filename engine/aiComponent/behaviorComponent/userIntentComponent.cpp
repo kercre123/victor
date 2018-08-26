@@ -23,7 +23,10 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
+
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorTriggerResponse.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -71,7 +74,8 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
 
   // setup trigger word handler
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
-    SetTriggerWordPending();
+    const bool willStream = event.GetData().Get_triggerWordDetected().willOpenStream;
+    SetTriggerWordPending(willStream);
   };
   if( robot.GetRobotMessageHandler() != nullptr ) {
     _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
@@ -112,7 +116,7 @@ void UserIntentComponent::ClearPendingTriggerWord()
   }
 }
 
-void UserIntentComponent::SetTriggerWordPending()
+void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
@@ -139,7 +143,13 @@ void UserIntentComponent::SetTriggerWordPending()
   }
 
   _pendingTrigger = true;
-  _pendingTriggerTick = currTime_s;
+  _pendingTriggerWillStream = willOpenStream;
+  _pendingTriggerTick = BaseStationTimer::getInstance()->GetTickCount();
+
+  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.SetTriggerWordPending",
+                 "Set trigger word pending (%s stream) at tick %zu",
+                 willOpenStream ? "will" : "will not",
+                 _pendingTriggerTick );
 
   if( _wasIntentError ) {
     PRINT_NAMED_WARNING("UserIntentComponent.SetTriggerWordPending.ClearingError",
@@ -476,6 +486,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
             SetCloudIntentPendingFromJSONValue( std::move( json ) );
           }
           _isStreamOpen = false;
+          _pendingTriggerWillStream = false;
 
           if( _wasIntentError ) {
             PRINT_NAMED_WARNING("UserIntentComponent.GotCloudIntent.ClearingError",
@@ -502,6 +513,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
 
           _wasIntentError = true;
           _isStreamOpen = false;
+          _pendingTriggerWillStream = false;
           break;
         }
 
@@ -541,6 +553,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
                         "Trigger has been pending for %zu ticks, forcing a clear",
                         dt);
       _pendingTrigger = false;
+      _pendingTriggerWillStream = false;
       _waitingForTriggerWordGetInToFinish = false;
     }
   }
@@ -585,6 +598,16 @@ void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType strea
 }
 
 
+void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const TriggerWordResponseData& newState)
+{
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  auto postAudioEvent = AECH::CreatePostAudioEvent( newState.postAudioEvent,
+                                                    AudioMetaData::GameObjectType::Behavior,
+                                                    0 );
+  PushResponseToTriggerWord(id, newState.getInTrigger, postAudioEvent, newState.streamAndLightEffect);
+
+}
+
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
                                                     StreamAndLightEffect streamAndLightEffect)
@@ -613,20 +636,16 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
 
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName, 
-                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
+                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
                                                     StreamAndLightEffect streamAndLightEffect)
 {
-  // anim process will open a stream if shouldStream, but will skip sending anything to the cloud
-  // if simulatedStreaming. So, to get a streaming light without streaming, use StreamingDisabledButWithLight
-  const bool simulatedStreaming = (streamAndLightEffect == StreamAndLightEffect::StreamingDisabledButWithLight);
-  const bool shouldStream = (streamAndLightEffect == StreamAndLightEffect::StreamingEnabled) || simulatedStreaming;
-  
   RobotInterface::SetTriggerWordResponse msg;
   msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
   msg.postAudioEvent = postAudioEvent;
   msg.getInAnimationName = getInAnimationName;
-  msg.shouldTriggerWordStartStream = shouldStream;
-  msg.shouldTriggerWordSimulateStream = simulatedStreaming;
+
+  ApplyStreamAndLightEffect(streamAndLightEffect, msg);
+
   PushResponseToTriggerWordInternal(id, std::move(msg));
 }
 
@@ -656,21 +675,36 @@ void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
     }
 
     PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.PopResponseToTriggerWord",
-                   "Removed trigger word response id '%s'",
-                   id.c_str() );
+                   "Removed trigger word response id '%s', have %zu left on stack",
+                   id.c_str(),
+                   _responseToTriggerWordMap.size());
+
+    if( !_responseToTriggerWordMap.empty() ) {
+      PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.AfterPop",
+        "After pop, top of stack has id '%s' (streaming %s, fake streaming %s, get in '%s')",
+        _responseToTriggerWordMap.rbegin()->setID.c_str(),
+        _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordStartStream ? "enabled" : "disabled",
+        _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordSimulateStream ? "enabled" : "disabled",
+        _responseToTriggerWordMap.rbegin()->response.getInAnimationName.c_str());
+    }
   }
 }
 
 
-void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& id,  bool shouldTriggerWordStartStream)
+void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& id,
+                                                             const StreamAndLightEffect newEffect)
 {
   if(_responseToTriggerWordMap.empty()){
-    PRINT_NAMED_WARNING("UserIntentComponent.AlterStreamStateForCurrentResponse.NoResponseToAlter","");
+    PRINT_NAMED_WARNING("UserIntentComponent.AlterStreamStateForCurrentResponse.NoResponseToAlter",
+                        "request id '%s'",
+                        id.c_str());
     return;
   }
 
   auto intentionalCopy = _responseToTriggerWordMap.rbegin()->response;
-  intentionalCopy.shouldTriggerWordStartStream = shouldTriggerWordStartStream;
+
+  ApplyStreamAndLightEffect(newEffect, intentionalCopy);
+
   if(_responseToTriggerWordMap.rbegin()->setID != id ||
      intentionalCopy != _responseToTriggerWordMap.rbegin()->response){
     PushResponseToTriggerWordInternal(id, std::move(intentionalCopy));
@@ -678,6 +712,19 @@ void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& 
 
 }
 
+void UserIntentComponent::ApplyStreamAndLightEffect(const StreamAndLightEffect streamAndLightEffect,
+                                                    RobotInterface::SetTriggerWordResponse& message)
+{
+  // anim process will open a stream if shouldStream, but will skip sending anything to the cloud if
+  // simulatedStreaming. So, to get a streaming light without streaming, use StreamingDisabledButWithLight,
+  // which needs to "open a stream" to get the lights to work (currently) but also sets "simulate" to true so
+  // no audio data actually gets sent and we don't do a real request
+  const bool simulatedStreaming = (streamAndLightEffect == StreamAndLightEffect::StreamingDisabledButWithLight);
+  const bool shouldStream = (streamAndLightEffect == StreamAndLightEffect::StreamingEnabled) || simulatedStreaming;
+
+  message.shouldTriggerWordStartStream = shouldStream;
+  message.shouldTriggerWordSimulateStream = simulatedStreaming;
+}
 
 void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& id, 
                                                             RobotInterface::SetTriggerWordResponse&& response)
@@ -695,15 +742,17 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
   }
 
   PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.PushResponseToTriggerWord",
-                 "Pushing trigger word response id '%s' (streaming %s, get in %s)",
+                 "Pushing trigger word response id '%s' (streaming %s, fake streaming %s, get in '%s')",
                  id.c_str(),
                  response.shouldTriggerWordStartStream ? "enabled" : "disabled",
+                 response.shouldTriggerWordSimulateStream ? "enabled" : "disabled",
                  response.getInAnimationName.c_str());
 
-  _robot->SendMessage(RobotInterface::EngineToRobot( std::move(response)) );
+  RobotInterface::SetTriggerWordResponse intentionalCopy = response;
+  _robot->SendMessage(RobotInterface::EngineToRobot( std::move(intentionalCopy)) );
   _responseToTriggerWordMap.emplace_back(TriggerWordResponseEntry(id, std::move(response)));
-}
 
+}
 
 
 void UserIntentComponent::DisableEngineResponseToTriggerWord( const std::string& disablerName,  bool disable )

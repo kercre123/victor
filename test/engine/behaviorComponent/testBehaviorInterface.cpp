@@ -850,7 +850,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
       case 12: // behavior is waiting for a trigger
       {
         EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetTriggerWordPending();
+        uic.SetTriggerWordPending(true);
         EXPECT_TRUE( b.WantsToBeActivated() );
         b.OnActivated();
         EXPECT_FALSE( uic.IsTriggerWordPending() );

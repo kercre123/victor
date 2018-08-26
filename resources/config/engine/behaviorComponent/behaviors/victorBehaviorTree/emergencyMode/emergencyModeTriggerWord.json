@@ -7,7 +7,34 @@
   },
   
   "behaviors" : [
-    "TriggerWordDetected", // todo: this should be a separate instance so it can have sendDAS = true
+    "EmergencyModeTriggerWordInternal",
     "EmergencyModeAnimDispatcher"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "EmergencyModeTriggerWordInternal",
+      "behaviorClass": "ReactToVoiceCommand",
+
+      "behaviorStatToIncrement": "ReactedToTriggerWord",
+
+      "notifyOnErrors": {
+        "recentOccurrence": {
+          // trigger error notification immediately
+          "numberOfTimes": 1
+          // seconds don't matter with numberOfTimes = 1
+          // "amountOfSeconds": 300.0
+        }
+      },
+
+      "behaviorOnIntent": "ReactToTriggerDirectionAwake",
+      "backpackLights": true,
+      "exitAfterListeningIfNotStreaming" : true,
+      "pushResponse": false,
+
+      // TODO:(bn) clean this up. Unfortunately this is used in two places, one would want DAS the other
+      // not.... so for now avoid double sending. VIC-6339
+      "dasType": "None"
+    }
   ]
 }
