@@ -45,6 +45,8 @@ namespace Anki {
 namespace Vector {
 
 CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState.Webviz", 0, "Off,10ms,100ms,1000ms,10000ms");
+CONSOLE_VAR(bool, kSendFakeCpuTemperature,  "OSState.Temperature", false);
+CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 
 namespace {
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
@@ -287,6 +289,9 @@ uint32_t OSState::GetTemperature_C() const
 {
   if (_updatePeriod_ms == 0) {
     UpdateTemperature_C();
+  }
+  if(kSendFakeCpuTemperature) {
+    return kFakeCpuTemperature_degC;
   }
   return _cpuTemp_C;
 }
