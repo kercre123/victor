@@ -1266,7 +1266,7 @@
   },
   {
     "CladEvent": "RTS_OnCharger_Sleep_Ambient",
-    "AnimName": "ag_rtsound_oncharger_asleep_ambient"
+    "AnimName": "ag_rtsound_oncharger_asleep_front"
   },
   {
     "CladEvent": "RTS_OnCharger_Sleep_Front",
@@ -1318,7 +1318,7 @@
   },
   {
     "CladEvent": "RTS_OnCharger_Awake_Ambient",
-    "AnimName": "ag_rtsound_oncharger_observe_ambient"
+    "AnimName": "ag_rtsound_oncharger_observe_front"
   },
   {
     "CladEvent": "RTS_OnCharger_Awake_Front",
