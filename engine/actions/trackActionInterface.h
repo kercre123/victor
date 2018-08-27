@@ -223,7 +223,7 @@ private:
   Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
   
   f32      _tiltDuration_sec = 0.15f;
-  f32      _panDuration_sec  = 0.2f;
+  f32      _panDuration_sec  = 0.25f;
   f32      _timeToReachTarget_sec  = 0.5f;
   f32      _minAbsRelPanAngle_rad = 0;
   
