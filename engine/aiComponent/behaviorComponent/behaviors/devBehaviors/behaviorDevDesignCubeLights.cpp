@@ -15,7 +15,7 @@
 
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

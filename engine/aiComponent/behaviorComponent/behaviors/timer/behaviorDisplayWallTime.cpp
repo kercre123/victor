@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/settingsManager.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 
 #include "util/console/consoleInterface.h"
 

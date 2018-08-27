@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/components/settingsManager.h"
 #include "engine/faceWorld.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 
 namespace Anki {
 namespace Vector {

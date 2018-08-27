@@ -304,6 +304,12 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         break;
       }
       #endif
+      case CloudMic::MessageTag::connectionResult:
+      {
+        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
+        FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
+        break;
+      }
 
       default:
         PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
@@ -709,6 +715,15 @@ bool MicDataSystem::ShouldSimulateStreaming() const
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     const bool fakeIt = showStreamState->ShouldSimulateStreamAfterTriggerWord();
     return fakeIt;
+  }
+}
+
+void MicDataSystem::RequestConnectionStatus()
+{   
+  if (_udpServer->HasClient())
+  {
+    PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");    
+    SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
 }
 

@@ -22,7 +22,7 @@
 #include "engine/robotComponents_fwd.h"
 #include "engine/smartFaceId.h"
 #include "engine/viz/vizManager.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "clad/types/actionTypes.h"

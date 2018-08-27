@@ -5,14 +5,37 @@ import (
 	"anki/robot"
 	"anki/util"
 	"clad/cloud"
+	"crypto/tls"
 	"errors"
+
+	"github.com/gwatts/rootcerts"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/credentials"
 )
 
+const (
+	// CDNURL is the location of CDN for connection testing
+	CDNURL = "ota-cdn.anki.com:443"
+)
+
 func (strm *Streamer) connect() error {
+	if strm.opts.checkOpts != nil {
+		// for connection check, first try a simple https connection to our OTA CDN
+		conf := &tls.Config{
+			RootCAs: rootcerts.ServerCertPool(),
+		}
+		conn, err := tls.Dial("tcp", CDNURL, conf)
+		if err != nil {
+			log.Println("Error dialing CDN server:", err)
+			strm.receiver.OnError(cloud.ErrorType_TLS, err)
+			return err
+		}
+		conn.Close()
+		log.Println("Successfully dialed CDN")
+	}
+
 	var creds credentials.PerRPCCredentials
 	var err error
 	var tokenTime float64
@@ -64,7 +87,9 @@ func (strm *Streamer) openStream(creds credentials.PerRPCCredentials, sessionID 
 		return nil, nil, err
 	}
 	var stream chipper.Stream
-	if strm.opts.mode == cloud.StreamType_KnowledgeGraph {
+	if strm.opts.checkOpts != nil {
+		stream, err = conn.NewConnectionStream(strm.ctx, *strm.opts.checkOpts)
+	} else if strm.opts.mode == cloud.StreamType_KnowledgeGraph {
 		stream, err = conn.NewKGStream(strm.ctx, strm.opts.streamOpts.StreamOpts)
 	} else {
 		stream, err = conn.NewIntentStream(strm.ctx, strm.opts.streamOpts)

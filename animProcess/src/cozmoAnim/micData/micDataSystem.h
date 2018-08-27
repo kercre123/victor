@@ -115,6 +115,7 @@ public:
     { _streamUpdatedCallbacks.push_back(callback); }
 
   bool HasConnectionToCloud() const;
+  void RequestConnectionStatus();
 
   void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
   

@@ -17,7 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "lib/util/source/anki/util/entityComponent/dependencyManagedEntity.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"

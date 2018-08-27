@@ -27,13 +27,21 @@ func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ..
 }
 
 func (strm *Streamer) AddSamples(samples []int16) {
+	if strm.opts.checkOpts != nil {
+		// no external audio input during connection check
+		return
+	}
 	var buf bytes.Buffer
 	binary.Write(&buf, binary.LittleEndian, samples)
-	strm.AddBytes(buf.Bytes())
+	strm.addBytes(buf.Bytes())
 }
 
 func (strm *Streamer) AddBytes(bytes []byte) {
-	strm.byteChan <- bytes
+	if strm.opts.checkOpts != nil {
+		// no external audio input during connection check
+		return
+	}
+	strm.addBytes(bytes)
 }
 
 func (strm *Streamer) Close() error {
@@ -50,6 +58,7 @@ func (strm *Streamer) Close() error {
 }
 
 func (strm *Streamer) CloseSend() error {
+	// ignore if conn check?
 	if strm.stream != nil {
 		return strm.stream.CloseSend()
 	}

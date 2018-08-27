@@ -15,6 +15,7 @@ type options struct {
 	mode         cloud.StreamType
 	connOpts     []chipper.ConnOpt
 	streamOpts   chipper.IntentOpts
+	checkOpts    *chipper.ConnectOpts
 	url          string
 	secret       string
 }
@@ -39,6 +40,12 @@ func WithKnowledgeGraphOptions(opts chipper.StreamOpts) Option {
 	return func(o *options) {
 		o.mode = cloud.StreamType_KnowledgeGraph
 		o.streamOpts.StreamOpts = opts
+	}
+}
+
+func WithConnectionCheckOptions(opts chipper.ConnectOpts) Option {
+	return func(o *options) {
+		o.checkOpts = &opts
 	}
 }
 

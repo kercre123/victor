@@ -38,7 +38,7 @@
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "webServerProcess/src/webService.h"
 

@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 

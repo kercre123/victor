@@ -17,7 +17,16 @@ enum uint_8 ErrorType {
 	InvalidConfig,
 	Connecting,
 	NewStream,
-	Token
+	Token,
+	TLS, // only used by connection check
+}
+
+enum uint_8 ConnectionCode {
+	Available,
+	Connectivity,
+	Tls,
+	Auth,
+	Bandwidth
 }
 
 structure StreamOpen {
@@ -48,16 +57,25 @@ structure IntentError {
 	string extra
 }
 
+structure ConnectionResult {
+	ConnectionCode code,
+	string status,
+	uint_8 numPackets,
+	uint_8 expectedPackets,
+}
+
 union dupes_allowed Message {
 	// anim -> cloud
 	Hotword hotword,
 	AudioData audio,
 	Void audioDone,
+	Void connectionCheck,
 
 	// cloud -> anim
 	Void stopSignal,
 	Void testStarted,
 	Void streamTimeout,
+	ConnectionResult connectionResult,
 
 	// cloud -> engine
 	Filename debugFile,
