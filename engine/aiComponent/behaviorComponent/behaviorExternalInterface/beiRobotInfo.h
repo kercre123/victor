@@ -122,7 +122,7 @@ public:
   bool IsPowerButtonPressed() const;
   TimeStamp_t GetTimeSincePowerButtonPressed_ms() const;
   uint32_t GetCpuTemperature_degC() const;
-
+  u32 GetTimeSinceLastPoke_ms() const;
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();

@@ -47,6 +47,7 @@ enum uint_8 BEIConditionType {
   ProxInRange,
   RobotInHabitat,
   RobotPlacedOnSlope,
+  RobotPoked,
   RobotShaken,
   RobotTouched,
   SalientPointDetected,

@@ -530,7 +530,14 @@ public:
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
 
+  // ============ IMU Event Handling/Tracking ==============
 
+  // Event handler for whenever the IMU reports that the robot was poked.
+  // Logs the time at which the poke event is received for future reference.
+  void HandlePokeEvent();
+
+  // Returns the number of milliseconds elapsed since the IMU reported being poked.
+  EngineTimeStamp_t GetTimeSinceLastPoke_ms() const;
 
   // =========== Animation Commands =============
 
@@ -742,6 +749,7 @@ protected:
   bool               _powerButtonPressed        = false;
   EngineTimeStamp_t  _timePowerButtonPressed_ms = 0;
   bool               _isPickedUp                = false;
+  EngineTimeStamp_t  _timeLastPoked             = 0;
   bool               _isBeingHeld               = false;
   bool               _isCliffReactionDisabled   = false;
   bool               _gotStateMsgAfterRobotSync = false;

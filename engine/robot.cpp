@@ -1607,6 +1607,17 @@ TimeStamp_t Robot::GetTimeSincePowerButtonPressed_ms() const {
           TimeStamp_t(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timePowerButtonPressed_ms);
 }
 
+void Robot::HandlePokeEvent() {
+  _timeLastPoked = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  LOG_INFO("Robot.HandlePokeEvent", "Last poke event timestamp recorded as %u", static_cast<u32>(_timeLastPoked));
+}
+
+EngineTimeStamp_t Robot::GetTimeSinceLastPoke_ms() const {
+  // If the robot has never reported being poked, then set the time difference to the maximum allowable value
+  return _timeLastPoked == 0 ? std::numeric_limits<EngineTimeStamp_t>::max() :
+          TimeStamp_t(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timeLastPoked);
+}
+
 Result Robot::SyncRobot()
 {
   _syncRobotAcked = false;

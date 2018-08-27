@@ -57,6 +57,7 @@
 #include "util/signals/signalHolder.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/robot/logging.h"
 
 #include <functional>
 
@@ -128,6 +129,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDataState,                   &RobotToEngineImplMessaging::HandleMicDataState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::streamCameraImages,             &RobotToEngineImplMessaging::HandleStreamCameraImages);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::displayedFaceImageRGBChunk,     &RobotToEngineImplMessaging::HandleDisplayedFaceImage);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotPoked,                     &RobotToEngineImplMessaging::HandleRobotPoked);
 
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::state,
@@ -743,6 +745,13 @@ void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotI
 {
   const auto & payload = message.GetData().Get_streamCameraImages();
   robot->GetVisionComponent().EnableDrawImagesToScreen(payload.enable);
+}
+
+void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleRobotPoked");
+  AnkiInfo("Robot.HandleRobotPoked","");
+  robot->HandlePokeEvent();
 }
 
 } // end namespace Vector

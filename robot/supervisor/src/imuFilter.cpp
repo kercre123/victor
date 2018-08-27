@@ -120,6 +120,14 @@ namespace Anki {
         const f32 GYRO_MOTION_PRECALIB_THRESHOLD = DEG_TO_RAD_F32(10.f);  // Gyro motion threshold pre-calibration
                                                                           // (Max bias according to BMI160 datasheet is +/- 10 deg/s)
 
+        // Poke detection
+        TimeStamp_t _lastPokeDetectTime = 0;
+        TimeStamp_t _peakGyroStartTime = 0;
+        TimeStamp_t _peakGyroMaxTime = 0;
+        const u32 POKE_DETECT_COOLDOWN_MS = 1000;
+        const f32 PEAK_GYRO_THRESHOLD = 3.f;
+        const u32 MAX_GYRO_PEAK_DURATION_MS = 75;
+
         // Recorded buffer
         bool isRecording_ = false;
 
@@ -586,6 +594,39 @@ namespace Anki {
 
       }
 
+      // Simple poke detect
+      // If wheels aren't moving but a sudden rotation about z-axis was detected
+      void DetectPoke()
+      {
+        // Do nothing during cooldown period
+        TimeStamp_t currTime = HAL::GetTimeStamp();
+        if (currTime - _lastPokeDetectTime < POKE_DETECT_COOLDOWN_MS) {
+          _peakGyroStartTime = currTime;
+          return;
+        }
+        // Do nothing if motors are moving, as detecting pokes while the robot is attempting to move is far more challenging.
+        // Also don't attempt to detect pokes if a pickup was detected.
+        // TODO(GB): Poke detection should still run if the robot is being held upright in the user's hand.
+        if (!AreMotorsMoving() && !pickedUp_) {
+          // Check for a gyro rotation spike
+          if (fabsf(gyro_robot_frame_filt[2]) > PEAK_GYRO_THRESHOLD) {
+            _peakGyroMaxTime = currTime;
+          } else {
+            if ((_peakGyroMaxTime > _peakGyroStartTime) && (_peakGyroMaxTime - _peakGyroStartTime < MAX_GYRO_PEAK_DURATION_MS)) {
+              AnkiInfo( "IMUFilter.PokeDetected.Gyro", "");
+              _peakGyroStartTime = currTime;
+              _lastPokeDetectTime = currTime;
+              RobotInterface::RobotPoked m;
+              RobotInterface::SendMessage(m);
+            } else {
+              _peakGyroStartTime = currTime;
+            }
+          }
+        } else {
+          _peakGyroStartTime = currTime;
+        }
+      }
+
       // This pitch measurement isn't precise to begin with, but it's extra imprecise when the head is moving
       // so be careful relying on it when the head is moving!
       void UpdatePitch()
@@ -816,6 +857,10 @@ namespace Anki {
         //      when the robot drives up ramp (or the side of a platform) and
         //      clearing pose history.
         DetectPickup();
+
+        // Poke detection MUST occur after pick-up detection, to avoid confusing an
+        // overly-aggressive pickup with a poke.
+        DetectPoke();
         
         DetectFalling();
 

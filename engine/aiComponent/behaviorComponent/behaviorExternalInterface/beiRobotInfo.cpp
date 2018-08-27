@@ -336,6 +336,12 @@ bool BEIRobotInfo::IsPickedUp() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u32 BEIRobotInfo::GetTimeSinceLastPoke_ms() const
+{
+  return static_cast<u32>(_robot.GetTimeSinceLastPoke_ms());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsBeingHeld() const
 {
   return _robot.IsBeingHeld();

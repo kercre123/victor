@@ -29,6 +29,14 @@
     },
 
     {
+      "reason": "Poked",
+      "condition": {
+        "conditionType": "RobotPoked",
+        "wasPokedRecentlyTimeThreshold_sec": 0.2
+      }
+    },
+
+    {
       // NOTE: in version 1.0, this doesn't really work because the camera is turned off in power save mode
       // (during sleep). It is possible for it to trigger before the camera turns off, but very unlikely
       "reason": "LightsOn",
@@ -70,10 +78,11 @@
       "reasons": [
         "PickedUp",
         "Touched",
+        "Poked",
         "Sound",
         "LightsOn"
       ]
     }
   ]
-  
+
 }

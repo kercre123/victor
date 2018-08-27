@@ -34,6 +34,10 @@ message PrepForShutdown
 {
 }
 
+message RobotPoked
+{
+}
+
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
@@ -185,7 +189,7 @@ union RobotToEngine {
   CliffEvent                 cliffEvent             = 0xC5,
   PotentialCliff             potentialCliff         = 0xC6,
   FallingEvent               fallingEvent           = 0xC7,
-  // FREE SLOT                                      = 0xC8,
+  RobotPoked                 robotPoked             = 0xC8,
 
   // TODO: Can probably get rid of these eventually since engine
   //       can access most of this info directly now.
@@ -212,11 +216,11 @@ union RobotToEngine {
   // Messages relating to trigger word detection
   TriggerWordDetected        triggerWordDetected    = 0xD9,
   MicDirection               micDirection           = 0xDA,
-  
+
   TextToSpeechEvent          textToSpeechEvent      = 0xDB,
 
   SwitchboardInterface::EnterPairing  enterPairing  = 0xDC,
-  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
+  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,
   StreamCameraImages         streamCameraImages     = 0xDE,
   DebugScreenMode            debugScreenMode        = 0xDF,
 
@@ -227,7 +231,7 @@ union RobotToEngine {
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
   DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xE4,
-  
+
   BeatDetectorState          beatDetectorState      = 0xE5,
 
   AudioPlaybackBegin         audioPlaybackBegin     = 0xE6,

@@ -60,6 +60,7 @@ public:
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
   // For processing imu data chunks arriving from robot.
   // Writes the entire log of 3-axis accelerometer and 3-axis
