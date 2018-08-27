@@ -2,7 +2,7 @@
   "behaviorClass": "DispatcherQueue",
   "behaviorID": "DanceToTheBeatVoiceCommand",
   
-  "associatedActiveFeature" : "DanceToTheBeat",
+  "associatedActiveFeature" : "ListeningForBeats",
 
   "respondToUserIntents" : [
     { "type": "imperative_dance" }
