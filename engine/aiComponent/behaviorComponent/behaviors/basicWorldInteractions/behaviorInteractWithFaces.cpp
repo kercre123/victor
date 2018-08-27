@@ -98,6 +98,7 @@ const char* const kTrackingTimeoutKey = "trackingTimeout_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
+const char* const kMinAbsRelPanAngle = "minAbsRelPanAngle_deg";
 
 }
 
@@ -115,6 +116,7 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
   eyeContactWithinLast_ms        = 0;
   trackingTimeout_s              = 0.0f;
   clampSmallAngles               = false;
+  minAbsRelPanAngle_deg          = 0.f;
 }
 
 
@@ -148,6 +150,7 @@ void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expec
    kClampSmallAnglesKey,
    kMinClampPeriodKey,
    kMaxClampPeriodKey,
+   kMinAbsRelPanAngle,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -165,6 +168,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   _iConfig.noEyeContactTimeout_s          = ParseFloat(config, kNoEyeContactTimeoutKey, debugName);
   _iConfig.eyeContactWithinLast_ms        = ParseInt32(config, kEyeContactWithinLastKey, debugName);
   _iConfig.trackingTimeout_s              = ParseFloat(config, kTrackingTimeoutKey, debugName);
+  _iConfig.minAbsRelPanAngle_deg          = ParseFloat(config, kMinAbsRelPanAngle, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
@@ -405,7 +409,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward()
     trackWithHeadAction->StopTrackingWhenOtherActionCompleted( driveActionTag );
     trackWithHeadAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackWithHeadAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
-    trackWithHeadAction->SetMinAbsRelPanAngle(DEG_TO_RAD(6));
+    trackWithHeadAction->SetMinAbsRelPanAngle(DEG_TO_RAD(_iConfig.minAbsRelPanAngle_deg));
     trackWithHeadAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackWithHeadAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
 
@@ -442,6 +446,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
     trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
     trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
     trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
+    trackAction->SetMinAbsRelPanAngle(DEG_TO_RAD(_iConfig.minAbsRelPanAngle_deg));
     trackAction->SetUpdateTimeout(_iConfig.trackingTimeout_s);
     trackAction->SetEyeContactContinueCriteria(randomMinTimeToTrack_s, _iConfig.noEyeContactTimeout_s,
                                                _iConfig.eyeContactWithinLast_ms);
