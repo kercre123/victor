@@ -168,7 +168,7 @@ void ITrackAction::SetTiltDuration(f32 tiltDuration_sec)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMinAbsRelPanAngle(f32 minAbsRelPanAngle_rad)
 {
-  DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanDuration.ActionAlreadyStarted");
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMinAbsRelPanAngle.ActionAlreadyStarted");
   _minAbsRelPanAngle_rad = minAbsRelPanAngle_rad;
 }
 
