@@ -40,6 +40,9 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
 RUN apt-get update && apt-get install -y nodejs
 
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+RUN apt-get install git-lfs
+
 RUN chmod 0755 /usr/local/bin
 RUN wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
 RUN unzip ninja-linux.zip -d /usr/local/bin/
