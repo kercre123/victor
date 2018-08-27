@@ -8,15 +8,14 @@ import (
 	"github.com/anki/sai-go-util/http/apiclient"
 )
 
-// DoCreate attempts to create an account with the given user, pass, and email
-func DoCreate(username, password, email string) (apiclient.Json, error) {
+// DoCreate attempts to create an account with the given email and password
+func DoCreate(email, password string) (apiclient.Json, error) {
 	c, _, err := newClient()
 	if err != nil {
 		return nil, err
 	}
 
 	userInfo := map[string]interface{}{
-		"username": username,
 		"password": password,
 		"email":    email,
 	}

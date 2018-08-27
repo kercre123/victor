@@ -41,17 +41,16 @@ func tryLogin() (string, error) {
 }
 
 func tryCreate() (string, error) {
-	user := getStringPrompt("Enter desired username")
-	fmt.Println("Checking if", user, "is available...")
-	if ok, err := accounts.CheckUsername(user); err != nil {
+	email := getStringPrompt("Enter desired email address")
+	fmt.Println("Checking if", email, "is available...")
+	if ok, err := accounts.CheckUsername(email); err != nil {
 		return "", err
 	} else if !ok {
-		return "", fmt.Errorf("Username %s is already taken", user)
+		return "", fmt.Errorf("Email %s already has an account", email)
 	}
-	email := getStringPrompt("Enter your email")
 	password := getPasswordPrompt("Enter password")
 
-	json, err := accounts.DoCreate(user, password, email)
+	json, err := accounts.DoCreate(email, password)
 	if err != nil {
 		return "", err
 	}
