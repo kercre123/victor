@@ -999,7 +999,7 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
       {
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
-        const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
+        // const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
         Poly2f boundingPoly(object.GetBoundingQuadXY(newPoseWrtOrigin));
         switch(objectFam)
         {
@@ -1037,18 +1037,18 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
         _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
 
         // since we added an obstacle, any borders we saw while dropping it should not be interesting
-        const float kScaledQuadToIncludeEdges = 2.0f;
+        // const float kScaledQuadToIncludeEdges = 2.0f;
         // kScaledQuadToIncludeEdges: we want to consider interesting edges around this obstacle as non-interesting,
         // since we know they belong to this object. The quad to search for these edges has to be equal to the
         // obstacle quad plus the margin in which we would find edges. For example, a good tight limit would be the size
         // of the smallest quad in the memory map, since edges should be adjacent to the cube. This quad however is merely
         // to limit the search for interesting edges, so it being bigger than the tightest threshold should not
         // incur in a big penalty hit
-        const Quad2f& edgeQuad = newQuad.GetScaled(kScaledQuadToIncludeEdges);
-        if (memoryMap)
-        {
-          ReviewInterestingEdges(edgeQuad, memoryMap);
-        }
+        // const Quad2f& edgeQuad = newQuad.GetScaled(kScaledQuadToIncludeEdges);
+        // if (memoryMap)
+        // {
+        //   ReviewInterestingEdges(edgeQuad, memoryMap);
+        // }
       }
     }
     else
@@ -1424,46 +1424,46 @@ Result MapComponent::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameIn
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map)
-{
-  // Note1: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
-  // modifications. Leave here for legacy purposes. We surely enable it soon, because performance needs
-  // improvement.
-  // Note2: Actually FindBorder is very fast compared to having to check each node against the quad, depending
-  // on how many nodes of each type there are (interesting vs quads within 'withinQuad'), so it can potentially
-  // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note
+// void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map)
+// {
+//   // Note1: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
+//   // modifications. Leave here for legacy purposes. We surely enable it soon, because performance needs
+//   // improvement.
+//   // Note2: Actually FindBorder is very fast compared to having to check each node against the quad, depending
+//   // on how many nodes of each type there are (interesting vs quads within 'withinQuad'), so it can potentially
+//   // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note
 
 
-  // check if merge is enabled
-  if ( !kReviewInterestingEdges ) {
-    return;
-  }
+//   // check if merge is enabled
+//   if ( !kReviewInterestingEdges ) {
+//     return;
+//   }
 
-  // ask the memory map to do the merge
-  // some implementations make require parameters like max distance to merge, but for now trust continuity
-  if( map )
-  {
-    // interesting edges adjacent to any of these types will be deemed not interesting
-    constexpr FullContentArray typesWhoseEdgesAreNotInteresting =
-    {
-      {EContentType::Unknown               , false},
-      {EContentType::ClearOfObstacle       , false},
-      {EContentType::ClearOfCliff          , false},
-      {EContentType::ObstacleObservable    , true },
-      {EContentType::ObstacleProx          , true },
-      {EContentType::ObstacleUnrecognized  , true },
-      {EContentType::Cliff                 , false},
-      {EContentType::InterestingEdge       , false},
-      {EContentType::NotInterestingEdge    , true }
-    };
-    static_assert(IsSequentialArray(typesWhoseEdgesAreNotInteresting),
-      "This array does not define all types once and only once.");
+//   // ask the memory map to do the merge
+//   // some implementations make require parameters like max distance to merge, but for now trust continuity
+//   if( map )
+//   {
+//     // interesting edges adjacent to any of these types will be deemed not interesting
+//     constexpr FullContentArray typesWhoseEdgesAreNotInteresting =
+//     {
+//       {EContentType::Unknown               , false},
+//       {EContentType::ClearOfObstacle       , false},
+//       {EContentType::ClearOfCliff          , false},
+//       {EContentType::ObstacleObservable    , true },
+//       {EContentType::ObstacleProx          , true },
+//       {EContentType::ObstacleUnrecognized  , true },
+//       {EContentType::Cliff                 , false},
+//       {EContentType::InterestingEdge       , false},
+//       {EContentType::NotInterestingEdge    , true }
+//     };
+//     static_assert(IsSequentialArray(typesWhoseEdgesAreNotInteresting),
+//       "This array does not define all types once and only once.");
 
-    // fill border in memory map
-    MemoryMapData toAdd( EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
-    map->FillBorder(EContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, toAdd.Clone());
-  }
-}
+//     // fill border in memory map
+//     MemoryMapData toAdd( EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
+//     map->FillBorder(EContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, toAdd.Clone());
+//   }
+// }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
@@ -1989,29 +1989,29 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   }
 
   // now merge interesting edges into non-interesting
-  const bool addedEdges = !visionSegmentsWithInterestingBorders.empty();
-  if ( addedEdges )
-  {
-    // TODO Optimization, build bounding box from detected edges, rather than doing the whole ground plane
-    Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
-                                                   frameInfo.groundplane[Quad::TopLeft].y(),
-                                                   0.0f);
-    Point2f wrtOrigin2DBL = observedPose * Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
-                                                   frameInfo.groundplane[Quad::BottomLeft].y(),
-                                                   0.0f);
-    Point2f wrtOrigin2DTR = observedPose * Point3f(frameInfo.groundplane[Quad::TopRight].x(),
-                                                   frameInfo.groundplane[Quad::TopRight].y(),
-                                                   0.0f);
-    Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
-                                                   frameInfo.groundplane[Quad::BottomRight].y(),
-                                                   0.0f);
+  // const bool addedEdges = !visionSegmentsWithInterestingBorders.empty();
+  // if ( addedEdges )
+  // {
+  //   // TODO Optimization, build bounding box from detected edges, rather than doing the whole ground plane
+  //   Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
+  //                                                  frameInfo.groundplane[Quad::TopLeft].y(),
+  //                                                  0.0f);
+  //   Point2f wrtOrigin2DBL = observedPose * Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
+  //                                                  frameInfo.groundplane[Quad::BottomLeft].y(),
+  //                                                  0.0f);
+  //   Point2f wrtOrigin2DTR = observedPose * Point3f(frameInfo.groundplane[Quad::TopRight].x(),
+  //                                                  frameInfo.groundplane[Quad::TopRight].y(),
+  //                                                  0.0f);
+  //   Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
+  //                                                  frameInfo.groundplane[Quad::BottomRight].y(),
+  //                                                  0.0f);
 
-    Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
-    if (currentNavMemoryMap)
-    {
-      ReviewInterestingEdges(groundPlaneWRTOrigin, currentNavMemoryMap);
-    }
-  }
+  //   Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
+  //   if (currentNavMemoryMap)
+  //   {
+  //     ReviewInterestingEdges(groundPlaneWRTOrigin, currentNavMemoryMap);
+  //   }
+  // }
 
   // notify the whiteboard we just processed edge information from a frame
   const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?

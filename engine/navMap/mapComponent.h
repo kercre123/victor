@@ -194,7 +194,7 @@ private:
   Result AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
   
   // review interesting edges within the given quad and decide whether they are still interesting
-  void ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map);
+  // void ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map);
   
   // poses we have sent to the memory map for objects we know, in each origin
   struct PoseInMapInfo {
