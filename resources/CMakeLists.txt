@@ -5,9 +5,9 @@
 #
 # Build options
 #
+# Configure with -DANKI_BETA=1 to deploy beta resource files.
 # Configure with -DANKI_RESOURCE_SHIPPING=1 to deploy shipping resource files.
-# Configure with -DANKI_RESOURCE_SHIPPING=0 to deploy development resource files.
-# Default is ANKI_RESOURCE_SHIPPING=0.
+# Default is ANKI_BETA=0 and ANKI_RESOURCE_SHIPPING=0 to deploy developer resource files.
 #
 # Configure with -DFACTORY_TEST=1 or ANKI_NO_WEBSERVER_ENABLED=1 to prevent deployment of webserver resources.
 # Configure with -DFACTORY_TEST=0 and ANKI_NO_WEBSERVER_ENABLED=0 to allow deployment of webserver resources.
@@ -136,11 +136,13 @@ anki_build_copy_assets(
 add_asset_target(cozmo_resources_tts)
 
 #
-# cozmo_resources_development, cozmo_resources_shipping
+# cozmo_resources_beta, cozmo_resources_shipping, cozmo_resources_development
 # Choose extra resource files from shipping or development,
 # then copy them into resources.
 #
-if (ANKI_RESOURCE_SHIPPING)
+if (ANKI_BETA)
+  set(cozmo_resources_extra cozmo_resources_beta)
+elseif (ANKI_RESOURCE_SHIPPING)
   set(cozmo_resources_extra cozmo_resources_shipping)
 else()
   set(cozmo_resources_extra cozmo_resources_development)

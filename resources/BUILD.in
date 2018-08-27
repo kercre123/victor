@@ -63,6 +63,13 @@ asset_project(
 )
 
 asset_project(
+    name = 'cozmo_resources_beta',
+    srcs = subdir_glob([
+                ('beta', '**/*'),
+           ]),
+)
+
+asset_project(
     name = 'cozmo_resources_shipping',
     srcs = subdir_glob([
                 ('shipping', '**/*'),
