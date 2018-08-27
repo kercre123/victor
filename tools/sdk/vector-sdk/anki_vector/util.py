@@ -1,8 +1,8 @@
 # Copyright (c) 2018 Anki, Inc.
 
-'''
+"""
 Utility functions and classes for the Vector SDK
-'''
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['Angle',
@@ -33,49 +33,40 @@ MODULE_LOGGER = logging.getLogger(__name__)
 
 # TODO: Update this using the login credentials when they're available
 def parse_test_args(parser: argparse.ArgumentParser = None):
-    '''
+    """
     Provides the command line interface for all the tests
 
     :param parser: To add new arguments,
          pass an argparse parser with the new options
          already defined. Leave empty to use the defaults.
-    '''
+    """
     if parser is None:
         parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--esn", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
-    parser.add_argument("-n", "--name", nargs='?', default=os.environ.get('VECTOR_ROBOT_NAME', None))
-    parser.add_argument("-i", "--ip", nargs='?', default=os.environ.get('VECTOR_ROBOT_IP', None))
-    parser.add_argument("-c", "--cert_file", nargs='?', default=os.environ.get('VECTOR_ROBOT_CERT', None))
+    parser.add_argument("-s", "--serial", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
     parser.add_argument("--port", nargs='?', default="443")
     args = parser.parse_args()
+
     if args.port == "8443":
-        args.name = os.environ.get('VECTOR_ROBOT_NAME_MAC', args.name)
-        args.ip = os.environ.get('VECTOR_ROBOT_IP_MAC', args.ip)
-        args.cert_file = os.environ.get('VECTOR_ROBOT_CERT_MAC', args.cert_file)
+        args.serial = "Local"
 
-    if args.esn is None:
-        if args.name is None or args.ip is None or args.cert_file is None:
-            parser.error('The following arguments are required: name, ip, cert_file '
-                        'or they may be set with the environment variables: '
-                        'VECTOR_ROBOT_NAME, VECTOR_ROBOT_IP, VECTOR_ROBOT_CERT '
-                        'respectively')
-
-        cert = Path(args.cert_file)
-        args.cert = cert.resolve()
+    if args.serial is None:
+        parser.error('The "serial" argument is required '
+                     'or it may be set with the environment variable '
+                     '"VECTOR_ROBOT_SERIAL"')
     return args
 
 
 def setup_basic_logging(custom_handler: logging.Handler = None,
                         general_log_level: str = None,
                         target: object = None):
-    '''Helper to perform basic setup of the Python logging machinery.
+    """Helper to perform basic setup of the Python logging machinery.
 
     :param custom_handler: provide an external logger for custom logging locations
     :param general_log_level: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
             constant from the :mod:`logging` module.  If None then a
             value will be read from the VECTOR_LOG_LEVEL environment variable.
     :param target: The stream to send the log data to; defaults to stderr
-    '''
+    """
     if general_log_level is None:
         general_log_level = os.environ.get('VICTOR_LOG_LEVEL', logging.DEBUG)
 
@@ -92,16 +83,16 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 
 
 def get_class_logger(module: str, obj: object) -> logging.Logger:
-    '''Helper to create logger for a given class (and module)
+    """Helper to create logger for a given class (and module)
 
     :param module: The name of the module to which the object belongs.
     :param obj: the object that owns the logger.
-    '''
+    """
     return logging.getLogger(".".join([module, type(obj).__name__]))
 
 
 def angle_z_to_quaternion(angle_z):
-    '''This function converts an angle in the z axis (Euler angle z component) to a quaternion.
+    """This function converts an angle in the z axis (Euler angle z component) to a quaternion.
 
     Args:
         angle_z (:class:`anki_vector.util.Angle`): The z axis angle.
@@ -109,7 +100,7 @@ def angle_z_to_quaternion(angle_z):
     Returns:
         q0, q1, q2, q3 (float, float, float, float): A tuple with all the members
             of a quaternion defined by angle_z.
-    '''
+    """
 
     # Define the quaternion to be converted from a Euler angle (x,y,z) of 0,0,angle_z
     # These equations have their original equations above, and simplified implemented
@@ -125,12 +116,12 @@ def angle_z_to_quaternion(angle_z):
 
 
 class Vector2:
-    '''Represents a 2D Vector (type/units aren't specified)
+    """Represents a 2D Vector (type/units aren't specified)
 
     Args:
         x (float): X component
         y (float): Y component
-    '''
+    """
 
     __slots__ = ('_x', '_y')
 
@@ -150,17 +141,17 @@ class Vector2:
 
     @property
     def x(self):
-        '''float: The x component.'''
+        """float: The x component."""
         return self._x
 
     @property
     def y(self):
-        '''float: The y component.'''
+        """float: The y component."""
         return self._y
 
     @property
     def x_y(self):
-        '''tuple (float, float): The X, Y elements of the Vector2 (x,y)'''
+        """tuple (float, float): The X, Y elements of the Vector2 (x,y)"""
         return self._x, self._y
 
     def __repr__(self):
@@ -188,12 +179,12 @@ class Vector2:
 
 
 class Vector3:
-    '''Represents a 3D Vector (type/units aren't specified)
+    """Represents a 3D Vector (type/units aren't specified)
 
     :param x: X component
     :param y: Y component
     :param z: Z component
-    '''
+    """
 
     __slots__ = ('_x', '_y', '_z')
 
@@ -215,45 +206,45 @@ class Vector3:
 
     @property
     def x(self):
-        '''float: The x component.'''
+        """float: The x component."""
         return self._x
 
     @property
     def y(self):
-        '''float: The y component.'''
+        """float: The y component."""
         return self._y
 
     @property
     def z(self):
-        '''float: The z component.'''
+        """float: The z component."""
         return self._z
 
     @property
     def magnitude_squared(self):
-        '''float: The magnitude of the Vector3 instance'''
+        """float: The magnitude of the Vector3 instance"""
         return self._x**2 + self._y**2 + self._z**2
 
     @property
     def magnitude(self):
-        '''float: The magnitude of the Vector3 instance'''
+        """float: The magnitude of the Vector3 instance"""
         return math.sqrt(self.magnitude_squared)
 
     @property
     def normalized(self):
-        ''':class:`Vector3`: Returns a Vector3 instance with the same direction and unit magnitude'''
+        """:class:`Vector3`: Returns a Vector3 instance with the same direction and unit magnitude"""
         mag = self.magnitude
         if mag == 0:
             return Vector3(0, 0, 0)
         return Vector3(self._x / mag, self._y / mag, self._z / mag)
 
     def dot(self, other):
-        ''':class:`Vector3`: Returns the dot product of this and another Vector3 instance'''
+        """:class:`Vector3`: Returns the dot product of this and another Vector3 instance"""
         if not isinstance(other, Vector3):
             raise TypeError("Unsupported argument for dot product, expected Vector3")
         return self._x * other.x + self._y * other.y + self._z * other.z
 
     def cross(self, other):
-        ''':class:`Vector3`: Returns the cross product of this and another Vector3 instance'''
+        """:class:`Vector3`: Returns the cross product of this and another Vector3 instance"""
         if not isinstance(other, Vector3):
             raise TypeError("Unsupported argument for cross product, expected Vector3")
 
@@ -264,7 +255,7 @@ class Vector3:
 
     @property
     def x_y_z(self):
-        '''tuple (float, float, float): The X, Y, Z elements of the Vector3 (x,y,z)'''
+        """tuple (float, float, float): The X, Y, Z elements of the Vector3 (x,y,z)"""
         return self._x, self._y, self._z
 
     def __repr__(self):
@@ -292,7 +283,7 @@ class Vector3:
 
 
 class Angle:
-    '''Represents an angle.
+    """Represents an angle.
 
     Use the :func:`degrees` or :func:`radians` convenience methods to generate
     an Angle instance.
@@ -301,7 +292,7 @@ class Angle:
         (cannot be combined with ``degrees``)
     :param degrees: The number of degress the angle should represent
         (cannot be combined with ``radians``)
-    '''
+    """
 
     __slots__ = ('_radians')
 
@@ -317,12 +308,12 @@ class Angle:
 
     @property
     def radians(self):  # pylint: disable=redefined-outer-name
-        '''float: The angle in radians.'''
+        """float: The angle in radians."""
         return self._radians
 
     @property
     def degrees(self):  # pylint: disable=redefined-outer-name
-        '''float: The angle in degrees.'''
+        """float: The angle in degrees."""
         return self._radians / math.pi * 180
 
     def __repr__(self):
@@ -345,12 +336,12 @@ class Angle:
 
 
 def degrees(degrees: float):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`anki_vector.util.Angle` instance set to the specified number of degrees.'''
+    """Returns an :class:`anki_vector.util.Angle` instance set to the specified number of degrees."""
     return Angle(degrees=degrees)
 
 
 def radians(radians: float):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`anki_vector.util.Angle` instance set to the specified number of radians.'''
+    """Returns an :class:`anki_vector.util.Angle` instance set to the specified number of radians."""
     return Angle(radians=radians)
 
 
@@ -491,7 +482,7 @@ class Matrix44:
 
 
 class Quaternion:
-    '''Represents the rotation of an object in the world.'''
+    """Represents the rotation of an object in the world."""
 
     __slots__ = ('_q0', '_q1', '_q2', '_q3')
 
@@ -531,16 +522,16 @@ class Quaternion:
 
     @property
     def angle_z(self):
-        '''class:`Angle`: The z Euler component of the object's rotation.
+        """class:`Angle`: The z Euler component of the object's rotation.
 
         Defined as the rotation in the z axis.
-        '''
+        """
         q0, q1, q2, q3 = self.q0_q1_q2_q3
         return Angle(radians=math.atan2(2 * (q1 * q2 + q0 * q3), 1 - 2 * (q2**2 + q3**2)))
 
     @property
     def q0_q1_q2_q3(self):
-        '''tuple of float: Contains all elements of the quaternion (q0,q1,q2,q3)'''
+        """tuple of float: Contains all elements of the quaternion (q0,q1,q2,q3)"""
         return self._q0, self._q1, self._q2, self._q3
 
     def to_matrix(self, pos_x=0.0, pos_y=0.0, pos_z=0.0):
@@ -595,19 +586,19 @@ class Quaternion:
 
 
 class Position(Vector3):
-    '''Represents the position of an object in the world.
+    """Represents the position of an object in the world.
 
     A position consists of its x, y and z values in millimeters.
 
     :param x: X position in millimeters
     :param y: Y position in millimeters
     :param z: Z position in millimeters
-    '''
+    """
     __slots__ = ()
 
 
 class Pose:
-    '''Represents the current pose (position and orientation) of the robot'''
+    """Represents the current pose (position and orientation) of the robot"""
 
     __slots__ = ('_position', '_rotation', '_origin_id')
 
@@ -634,14 +625,14 @@ class Pose:
                 f" {self._rotation} <Origin Id: {self._origin_id}>>")
 
     def define_pose_relative_this(self, new_pose):
-        '''Creates a new pose such that new_pose's origin is now at the location of this pose.
+        """Creates a new pose such that new_pose's origin is now at the location of this pose.
 
         Args:
             new_pose (:class:`anki_vector.util.Pose`): The pose which origin is being changed.
 
         Returns:
             A :class:`anki_vector.util.pose` object for which the origin was this pose's origin.
-        '''
+        """
 
         if not isinstance(new_pose, Pose):
             raise TypeError("Unsupported type for new_origin, must be of type Pose")
@@ -664,11 +655,11 @@ class Pose:
 
     @property
     def is_valid(self):
-        '''bool: Returns True if this is a valid, usable pose.'''
+        """bool: Returns True if this is a valid, usable pose."""
         return self.origin_id >= 0
 
     def is_comparable(self, other_pose):
-        '''Are these two poses comparable.
+        """Are these two poses comparable.
 
         Poses are comparable if they're valid and having matching origin IDs.
 
@@ -676,7 +667,7 @@ class Pose:
             other_pose (:class:`anki_vector.util.Pose`): The other pose to compare against.
         Returns:
             bool: True if the two poses are comparable, False otherwise.
-        '''
+        """
         return (self.is_valid and other_pose.is_valid and
                 (self.origin_id == other_pose.origin_id))
 
@@ -691,7 +682,7 @@ class Pose:
 
 
 class ImageRect:
-    '''Image co-ordinates and size'''
+    """Image co-ordinates and size"""
 
     __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
 
@@ -719,7 +710,7 @@ class ImageRect:
 
 
 class Distance:
-    '''Represents a distance.
+    """Represents a distance.
 
     The class allows distances to be returned in either millimeters or inches.
 
@@ -731,7 +722,7 @@ class Distance:
             represent (cannot be combined with ``distance_inches``).
         distance_inches (float): The number of inches the distance should
             represent (cannot be combined with ``distance_mm``).
-    '''
+    """
 
     __slots__ = ('_distance_mm')
 
@@ -770,27 +761,27 @@ class Distance:
 
     @property
     def distance_mm(self):  # pylint: disable=redefined-outer-name
-        '''float: The distance in millimeters'''
+        """float: The distance in millimeters"""
         return self._distance_mm
 
     @property
     def distance_inches(self):  # pylint: disable=redefined-outer-name
-        '''float: The distance in inches'''
+        """float: The distance in inches"""
         return self._distance_mm / 25.4
 
 
 def distance_mm(distance_mm):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`anki_vector.util.Distance` instance set to the specified number of millimeters.'''
+    """Returns an :class:`anki_vector.util.Distance` instance set to the specified number of millimeters."""
     return Distance(distance_mm=distance_mm)
 
 
 def distance_inches(distance_inches):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`anki_vector.util.Distance` instance set to the specified number of inches.'''
+    """Returns an :class:`anki_vector.util.Distance` instance set to the specified number of inches."""
     return Distance(distance_inches=distance_inches)
 
 
 class Speed:
-    '''Represents a speed.
+    """Represents a speed.
 
     This class allows speeds to be measured  in millimeters per second.
 
@@ -800,7 +791,7 @@ class Speed:
     Args:
         speed_mmps (float): The number of millimeters per second the speed
             should represent.
-    '''
+    """
 
     __slots__ = ('_speed_mmps')
 
@@ -834,12 +825,12 @@ class Speed:
 
     @property
     def speed_mmps(self):  # pylint: disable=redefined-outer-name
-        '''float: The speed in millimeters per second (mmps).'''
+        """float: The speed in millimeters per second (mmps)."""
         return self._speed_mmps
 
 
 def speed_mmps(speed_mmps):  # pylint: disable=redefined-outer-name
-    '''Returns an :class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed'''
+    """Returns an :class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed"""
     return Speed(speed_mmps=speed_mmps)
 
 

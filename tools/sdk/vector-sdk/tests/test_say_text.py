@@ -17,7 +17,7 @@ def main():
 
     print("------ begin testing text-to-speech ------")
 
-    with anki_vector.Robot(args.esn) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.say_text("hello", use_vector_voice=True)
         time.sleep(1)  # Avoid overlapping messages
         robot.say_text("hello", use_vector_voice=False)

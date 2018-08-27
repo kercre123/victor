@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Anki, Inc.
 
 '''
-Vector, by Anki.
+Vector SDK, by Anki.
 
 Requirements:
     * Python 3.5.1 or later
@@ -17,7 +17,7 @@ if sys.version_info < (3, 5, 1):
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 def fetch_version():
-    '''Get the version from the package'''
+    """Get the version from the package"""
     with open(os.path.join(HERE, 'anki_vector', 'version.py')) as version_file:
         versions = {}
         exec(version_file.read(), versions)
@@ -25,6 +25,14 @@ def fetch_version():
 
 VERSION_DATA = fetch_version()
 VERSION = VERSION_DATA['__version__']
+
+def get_requirements() -> list:
+    """Load the requirements from requirements.txt into a list"""
+    reqs = []
+    with open(os.path.join(HERE, 'requirements.txt')) as requirements_file:
+        for line in requirements_file:
+            reqs.append(line.strip())
+    return reqs
 
 setup(
     name='anki_vector',
@@ -45,9 +53,5 @@ setup(
     ],
     zip_safe=True,
     keywords='anki vector robot robotics sdk'.split(),
-    install_requires=['aiogrpc>=1.4',
-                      'googleapis-common-protos',
-                      'opencv-python',
-                      'numpy',
-                      'Pillow'],
+    install_requires=get_requirements(),
 )

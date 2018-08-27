@@ -17,7 +17,7 @@ def main():
     '''main execution'''
     args = anki_vector.util.parse_test_args()
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         print("------ use low level motor controls to drive the robot ------")
         robot.motors.set_wheel_motors(100.0, 100.0, 100.0, 100.0)
         time.sleep(5.0)

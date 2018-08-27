@@ -21,7 +21,7 @@ def main():
     '''main execution'''
     args = anki_vector.util.parse_test_args()
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         print("------ begin testing oled ------")
 
         current_directory = os.path.dirname(os.path.realpath(__file__))

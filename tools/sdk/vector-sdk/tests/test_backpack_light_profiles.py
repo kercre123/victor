@@ -14,7 +14,7 @@ def main():
 
     print("------ begin testing backpack light profiles ------")
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
 
         # Set backpack to White Lights using the max brightness profile for 4 seconds
         robot.backpack.set_all_backpack_lights(anki_vector.lights.white_light, anki_vector.lights.MAX_COLOR_PROFILE)

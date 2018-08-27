@@ -29,7 +29,7 @@ def main():
     args = anki_vector.util.parse_test_args()
 
     # The robot drives straight, stops and then turns around
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.behavior.drive_off_charger()
 
         # Use a "for loop" to repeat the indented code 4 times

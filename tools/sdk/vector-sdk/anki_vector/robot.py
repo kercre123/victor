@@ -42,7 +42,7 @@ class Robot:
     .. code-block:: python
 
         # Create the robot connection
-        with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with Robot("00e20115") as robot:
             # Run your commands (for example play animation)
             robot.play_animation("anim_blackjack_victorwin_01")
 
@@ -52,7 +52,7 @@ class Robot:
     .. code-block:: python
 
         # Create a Robot object
-        robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+        robot = Robot("00e20115")
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
@@ -60,28 +60,26 @@ class Robot:
         # Disconnect from the Robot
         robot.disconnect()
 
-    :param esn: serial number # TODO: comments
-    :param ini_file: the conf file # TODO: comments
-    :param name: The name of the Vector. Usually something like "Vector-A1B2".
-    :param ip: the ip address that Victor is currently connected to.
-    :param cert_file: The location of the cert file downloaded from the cloud.
-    :param guid: client token guid # TODO: comments
-    :param port: the port on which Vector is listening. default=443
-    :param loop: the async loop on which the Vector commands will execute. default=None
-    :param default_logging: Disable default logging. default=False
-    :param behavior_timeout: The time to wait for control of the robot before failing. default=10
-    :param enable_vision_mode: Turn on face detection. default=False
-    :param enable_camera_feed: Turn camera feed on/off. default=True
-    :param show_viewer: Render camera feed on/off. default=False"""
+    :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
+    :param ip: Vector's IP Address. (optional)
+    :param port: The port on which Vector is listening. Defaults to :code:`443`
+    :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
+                   Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-A1B2", "guid": "<secret_key>"}`
+                   Where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
+                   when his backpack is double clicked on the charger, and :code:`guid` is the authorization token
+                   that identifies the SDK user. Note: Never share your guid with anyone.
+    :param loop: The async loop on which the Vector commands will execute. Defaults to :code:`None`
+    :param default_logging: Disable default logging. Defaults to :code:`False`
+    :param behavior_timeout: The time to wait for control of the robot before failing. Defaults to :code:`10`
+    :param enable_vision_mode: Turn on face detection. Defaults to :code:`False`
+    :param enable_camera_feed: Turn camera feed on/off. Defaults to :code:`True`
+    :param show_viewer: Render camera feed on/off. Defaults to :code:`False`"""
 
     def __init__(self,
-                 esn: str = None,
-                 ini_file: str = None,
-                 name: str = None,
+                 serial: str = None,
                  ip: str = None,
                  port: str = "443",
-                 cert_file: str = None,
-                 guid: str = None,
+                 config: dict = None,
                  loop: asyncio.BaseEventLoop = None,
                  default_logging: bool = True,
                  behavior_timeout: int = 10,
@@ -97,26 +95,22 @@ class Robot:
         self.is_loop_owner = False
         self._original_loop = None
         self.loop = loop
+        config = config if config is not None else {}
 
-        if esn is not None:
-            if ini_file is None:
-                home = Path.home() / ".anki-vector"
-                ini_file = str(home / "sdk_config.ini")
-            config = configparser.ConfigParser()
-            config.read(ini_file)
+        if serial is not None:
+            config = {**self._read_configuration(serial), **config}
 
-            if name is None:
-                name = config[esn]["name"]
-            if ip is None:
-                ip = config[esn]["ip"]
-            if cert_file is None:
-                cert_file = config[esn]["cert"]
-            if guid is None:
-                guid = config[esn]["guid"]
-        elif name is None or ip is None or cert_file is None or guid is None:
-            raise ValueError("Robot requires a esn, or all the parameters needed to communicate to a Vector: name, ip, cert_file, and guid")
+        self._name = config["name"]
+        self._ip = ip if ip is not None else config["ip"]
+        self._cert_file = config["cert"]
+        self._guid = config["guid"]
 
-        self.conn = connection.Connection(name, ':'.join([ip, port]), cert_file, guid)
+        if self._name is None or self._ip is None or self._cert_file is None or self._guid is None:
+            raise ValueError("Robot requires a serial and for Vector to be logged in (using the app then configure.py).\n"
+                             "You may also provide the values necessary for connection through the config parameter. ex: "
+                             '{"name":"Vector-A1B2", "ip":"192.168.43.48", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
+
+        self.conn = connection.Connection(self._name, ':'.join([self._ip, port]), self._cert_file, self._guid)
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
@@ -155,6 +149,18 @@ class Robot:
         self._enable_camera_feed = enable_camera_feed
         self._show_viewer = show_viewer
 
+    @staticmethod
+    def _read_configuration(serial: str) -> dict:
+        """Open the default conf file, and read it into a :class:`configparser.ConfigParser`
+
+        :param serial: Vector's serial number
+        """
+        home = Path.home() / ".anki-vector"
+        conf_file = str(home / "sdk_config.ini")
+        parser = configparser.ConfigParser()
+        parser.read(conf_file)
+        return parser[serial]
+
     @property
     def robot(self) -> 'Robot':
         return self
@@ -182,7 +188,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("00e20115") as robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
@@ -227,7 +233,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
+            with anki_vector.Robot("00e20115", show_viewer=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.viewer.stop_video()
         """
@@ -325,7 +331,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", enable_camera_feed=True) as robot:
+            with anki_vector.Robot("00e20115", enable_camera_feed=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.enable_camera_feed = False
                 robot.loop.run_until_complete(utilities.delay_close(5))
@@ -365,7 +371,7 @@ class Robot:
 
         .. code-block:: python
 
-            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot = Robot("00e20115")
             robot.connect()
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
@@ -421,7 +427,7 @@ class Robot:
 
         .. code-block:: python
 
-            robot = Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+            robot = Robot("00e20115")
             robot.connect()
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
@@ -518,7 +524,7 @@ class AsyncRobot(Robot):
     .. code-block:: python
 
         # Create the robot connection
-        with AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with AsyncRobot("00e20115") as robot:
             # Run your commands (for example play animation)
             robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
 
@@ -528,7 +534,7 @@ class AsyncRobot(Robot):
     .. code-block:: python
 
         # Create a Robot object
-        robot = AsyncRobot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert")
+        robot = AsyncRobot("00e20115")
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
@@ -536,14 +542,20 @@ class AsyncRobot(Robot):
         # Disconnect from the Robot
         robot.disconnect()
 
-    :param name: The name of the Vector. Usually something like "Vector-A1B2".
-    :param ip: the ip address that Victor is currently connected to.
-    :param cert_file: The location of the cert file downloaded from the cloud.
-    :param port: the port on which Vector is listening. default=443
-    :param loop: the async loop on which the Vector commands will execute. default=None
-    :param default_logging: Disable default logging. default=False
-    :param behavior_timeout: The time to wait for control of the robot before failing. default=10
-    :param enable_vision_mode: Turn on face detection. default=False"""
+    :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
+    :param ip: Vector's IP Address. (optional)
+    :param port: The port on which Vector is listening. Defaults to :code:`443`
+    :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
+                   Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-A1B2", "guid": "<secret_key>"}`
+                   Where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
+                   when his backpack is double clicked on the charger, and :code:`guid` is the authorization token
+                   that identifies the SDK user. Note: Never share your guid with anyone.
+    :param loop: The async loop on which the Vector commands will execute. Defaults to :code:`None`
+    :param default_logging: Disable default logging. Defaults to :code:`False`
+    :param behavior_timeout: The time to wait for control of the robot before failing. Defaults to :code:`10`
+    :param enable_vision_mode: Turn on face detection. Defaults to :code:`False`
+    :param enable_camera_feed: Turn camera feed on/off. Defaults to :code:`True`
+    :param show_viewer: Render camera feed on/off. Defaults to :code:`False`"""
 
     @functools.wraps(Robot.__init__)
     def __init__(self, *args, **kwargs):

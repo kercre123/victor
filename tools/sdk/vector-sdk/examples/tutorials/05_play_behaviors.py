@@ -23,7 +23,7 @@ import anki_vector
 def main():
     args = anki_vector.util.parse_test_args()
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         print("Drive Vector onto charger...")
         robot.behavior.drive_on_charger()
 

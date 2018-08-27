@@ -20,7 +20,7 @@ def main():
     print("------ begin testing head and lift actions ------")
 
     # The robot shall lower and raise his head and lift
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.behavior.set_head_angle(degrees(-50.0))
         time.sleep(2)
 

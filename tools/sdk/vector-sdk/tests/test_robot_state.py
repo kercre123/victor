@@ -17,7 +17,7 @@ def main():
     args = anki_vector.util.parse_test_args()
 
     print("------ Fetch robot state from robot's properties ------")
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.loop.run_until_complete(utilities.delay_close(1, lambda _: None))
         print(robot.pose)
         print(robot.pose_angle_rad)

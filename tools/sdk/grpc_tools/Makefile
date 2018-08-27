@@ -129,6 +129,7 @@ create_certs_mac: .PHONY
 	mkdir -p /tmp/anki/gateway
 	cp trust_mac.key /tmp/anki/gateway/trust.key
 	cp trust_mac.cert /tmp/anki/gateway/trust.cert
+	python3 configure-local.py
 certs_mac: create_certs_mac
 
 example_curl: .require_ip

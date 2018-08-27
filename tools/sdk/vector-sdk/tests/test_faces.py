@@ -41,7 +41,7 @@ def main():
             print(f"Nose: {face.nose}")
             print(f"Mouth: {face.mouth}")
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port, enable_vision_mode=True) as robot:
+    with anki_vector.Robot(args.serial, port=args.port, enable_vision_mode=True) as robot:
         test_subscriber = functools.partial(test_subscriber, robot)
         robot.events.subscribe('robot_changed_observed_face_id', test_subscriber)
         robot.events.subscribe('robot_observed_face', test_subscriber)

@@ -42,6 +42,6 @@ ipyshell = InteractiveShellEmbed(banner1='\nWelcome to the Vector Shell!',
                                  exit_msg='Goodbye\n')
 
 
-with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+with anki_vector.Robot(args.serial, port=args.port) as robot:
     # Invoke the ipython shell while connected to Vector
     ipyshell(usage)

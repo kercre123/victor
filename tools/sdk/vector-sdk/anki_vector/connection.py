@@ -253,8 +253,8 @@ class Connection:
                     self._control_events.update(False)
         except futures.CancelledError:
             self._logger.debug('Behavior handler task was cancelled. This is expected during disconnection.')
-        except Exception as e:
-            self._logger.error(e) # TODO: better handle errors due to auth failure
+        except Exception as e:  # pylint: disable=broad-except
+            self._logger.error(e)  # TODO: better handle errors due to auth failure (and remove pylint disable)
 
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.

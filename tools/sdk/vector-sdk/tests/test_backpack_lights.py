@@ -14,7 +14,7 @@ def main():
 
     print("------ begin testing backpack lights ------")
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         # Set backpack to RGB Lights for 4 seconds
         robot.backpack.set_backpack_lights(anki_vector.lights.blue_light, anki_vector.lights.green_light, anki_vector.lights.red_light)
         time.sleep(4.0)

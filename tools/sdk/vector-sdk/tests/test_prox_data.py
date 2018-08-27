@@ -17,7 +17,7 @@ def main():
 
     print("------ begin testing prox sensor data ------")
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
         loop = robot.loop
         for _ in range(30):
             proximity_data = robot.proximity.last_valid_sensor_reading

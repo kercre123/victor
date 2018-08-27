@@ -423,7 +423,7 @@ def main():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port, default_logging=False) as robot:
+    with anki_vector.Robot(args.serial, port=args.port, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()

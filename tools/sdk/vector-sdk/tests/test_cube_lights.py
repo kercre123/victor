@@ -22,7 +22,7 @@ def main():
     print("------ begin cube light interactions ------")
 
     # The robot connects to a cube, and performs a number of manipulations on its lights
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port) as robot:
+    with anki_vector.Robot(args.serial, port=args.port) as robot:
 
         # ensure we are connected to a cube
         robot.world.connect_cube()

@@ -20,11 +20,11 @@ def main():
 
     print("------ begin testing animations ------")
 
-    with anki_vector.Robot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
+    with anki_vector.Robot(args.serial, port=args.port, cache_animation_list=False) as robot:
         print("playing animation by name: anim_blackjack_victorwin_01")
         robot.anim.play_animation("anim_blackjack_victorwin_01")
 
-    with anki_vector.AsyncRobot(args.name, args.ip, str(args.cert), port=args.port, cache_animation_list=False) as robot:
+    with anki_vector.AsyncRobot(args.serial, port=args.port, cache_animation_list=False) as robot:
         print("------ testing load async animations ------")
 
         print("receiving all loaded animations")

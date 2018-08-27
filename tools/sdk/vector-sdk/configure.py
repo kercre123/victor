@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 
 """
-Welcome to Anki's Vector SDK. To use the SDK, you must agree to these terms of service.
-
-// TODO: Legal copy
-
-The removal of this warning, or modification of this script is strictly prohibited.
-
-
 This script is needed to use the python sdk as of now (when this file was created) because
 we have turned on client authorization on the robot. This means that all connections will
 require a client token guid to be valid.
@@ -16,12 +9,14 @@ Running this script requires that the Robot be on, and connected to the same net
 laptop. If you have any trouble, please mention it immediately in the #vic-coz-sdk channel.
 
 
-*IMPORTANT NOTE*
+**IMPORTANT NOTE**
 
-Use _build/mac/Release/bin/tokprovision to provision your robot (not needed if you have used a recent build of Chewie)
+Use _build/mac/Release/bin/tokprovision to provision your robot (not needed if you have connected with a recent build of Chewie)
 
-****************
+******************
 """
+
+# TODO: Update doc with actual copy
 
 import configparser
 from getpass import getpass
@@ -32,6 +27,12 @@ import requests
 import sys
 
 import grpc
+try:
+    # Non-critical import to add color output
+    from termcolor import colored
+except:
+    def colored(text, color=None, on_color=None, attrs=None):
+        return text
 
 import anki_vector.messaging as api
 
@@ -74,8 +75,8 @@ class Api:
 def get_esn():
     esn = os.environ.get('ANKI_ROBOT_SERIAL')
     if esn is None:
-        esn = input('Enter Robot Serial Number: ')
-    print("Using Serial:", esn)
+        esn = input('Enter Robot Serial Number (ex. 00e20100): ')
+    print("Using Serial: {}".format(colored(esn, "cyan")))
     r = requests.get('https://session-certs.token.global.anki-services.com/vic/{}'.format(esn))
     if r.status_code != 200:
         sys.exit(r.content)
@@ -86,7 +87,7 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
     # Pin the robot certificate for opening the channel
     creds = grpc.ssl_channel_credentials(root_certificates=cert)
 
-    print("Attempting to download guid from {} at {}:443...".format(name, ip))
+    print("Attempting to download guid from {} at {}:443...".format(colored(name, "cyan"), colored(ip, "cyan")))
     channel = grpc.secure_channel("{}:443".format(ip), creds,
                                         options=(("grpc.ssl_target_name_override", name,),))
     interface = api.client.ExternalInterfaceStub(channel)
@@ -105,7 +106,7 @@ def get_session_token():
     if environ == "":
         environ = "dev"
     if environ not in valid:
-        sys.exit("\nError: That is not a valid environment")
+        sys.exit("\n{}: That is not a valid environment".format("Error", "red"))
 
     username = input("Enter Username: ")
     password = getpass("Enter Password: ")
@@ -120,11 +121,11 @@ def get_name_and_ip():
     robot_name = os.environ['VECTOR_ROBOT_NAME']
     if robot_name is None:
         robot_name = input("Enter Robot Name (ex. Vector-A1B2): ")
-    print("Using Robot Name:", robot_name)
+    print("Using Robot Name: {}".format(colored(robot_name, "cyan")))
     ip = os.environ['ANKI_ROBOT_HOST']
     if ip is None:
         ip = input("Enter Robot IP (ex. 192.168.42.42): ")
-    print("Using IP:", ip)
+    print("Using IP: {}".format(colored(ip, "cyan")))
     return robot_name, ip
 
 def main():
@@ -137,23 +138,18 @@ def main():
         sys.exit("Session error: {}".format(token))
     guid = user_authentication(token["session"]["session_token"], cert, ip, name)
 
-    print("cert :", cert)
-    print("esn  :", esn)
-    print("guid :", guid)
-    print("name :", name)
-    print("ip   :", ip)
-
     # Write cert to a file
     home = Path.home()
     anki_dir = home / ".anki-vector"
     os.makedirs(str(anki_dir), exist_ok=True)
     cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
-    print("Writing certificate file to '{}'...".format(cert_file))
-    with open(cert_file, 'wb') as f:
+    print("Writing certificate file to '{}'...".format(colored(cert_file, "cyan")))
+    with os.fdopen(os.open(cert_file, os.O_WRONLY | os.O_CREAT, 0o600), 'wb') as f:
         f.write(cert)
+
     # Store details in a config file
     config_file = str(anki_dir / "sdk_config.ini")
-    print("Writing config file to '{}'...".format(config_file))
+    print("Writing config file to '{}'...".format(colored(config_file, "cyan")))
     config = configparser.ConfigParser()
 
     config.read(config_file)
@@ -162,9 +158,9 @@ def main():
     config[esn]["ip"] = ip
     config[esn]["name"] = name
     config[esn]["guid"] = guid.decode("utf-8")
-    with open(config_file, 'w') as f:
+    with os.fdopen(os.open(config_file, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as f:
         config.write(f)
-    print("DONE!")
+    print(colored("DONE!", "green"))
 
 if __name__ == "__main__":
     main()
