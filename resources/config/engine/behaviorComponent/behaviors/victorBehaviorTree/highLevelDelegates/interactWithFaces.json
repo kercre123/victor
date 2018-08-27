@@ -6,8 +6,8 @@
   "associatedActiveFeature": "InteractWithFaces",
   // This is the minimum time the robot will track
   // if no eye contact is made at all
-  "minTimeToTrackFaceLowerBound_s": 8.0,
-  "minTimeToTrackFaceUpperBound_s": 10.0,
+  "minTimeToTrackFaceLowerBound_s": 12.0,
+  "minTimeToTrackFaceUpperBound_s": 15.0,
 
   "minAbsRelPanAngle_deg": 6.0,
 
