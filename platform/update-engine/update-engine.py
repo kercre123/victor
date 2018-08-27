@@ -26,9 +26,6 @@ import update_payload
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
-MOUNT_POINT = "/mnt/sdcard"
-ANKI_REV_FILE = "/anki/etc/revision"
-ANKI_VER_FILE = "/anki/etc/version"
 EXPECTED_DOWNLOAD_SIZE_FILE = os.path.join(STATUS_DIR, "expected-download-size")
 EXPECTED_WRITE_SIZE_FILE = os.path.join(STATUS_DIR, "expected-size")
 PROGRESS_FILE = os.path.join(STATUS_DIR, "progress")
@@ -395,41 +392,6 @@ def copy_slot(partition, src_slot, dst_slot):
             dst.write(buffer)
 
 
-def update_build_props(mount_point):
-    "Updates (or creates) a property in the build.prop file specified"
-    # Get the Anki Victor info
-    victor_build_ver = open(os.path.join(mount_point, ANKI_VER_FILE), "r").read().strip()
-    victor_build_rev = open(os.path.join(mount_point, ANKI_REV_FILE), "r").read().strip()
-    build_prop_path_name = os.path.join(mount_point, "build.prop")
-    # Get all the old OS properties
-    props = OrderedDict()
-    for key, value in [p.strip().split('=') for p in open(build_prop_path_name, "r").readlines()]:
-        props[key] = value
-    os_version = props['ro.anki.version']
-    os_build_timestamp = props['ro.build.version.release']
-    os_rev = ""  # TODO find this somewhere
-    props["ro.revision"] = "anki-{VICTOR_BUILD_REV}_os-{REV}".format(VICTOR_BUILD_REV=victor_build_rev, REV=os_rev)
-    props["ro.anki.victor.version"] = victor_build_ver
-    version_id = "v{VICTOR_BUILD_VERSION}_os{OS_VERSION}".format(
-        VICTOR_BUILD_VERSION=victor_build_ver,
-        OS_VERSION=os_version
-    )
-    build_id = "v{VICTOR_BUILD_VERSION}{VICTOR_REV_TAG}_os{OS_VERSION}{REV_TAG}-{BUILD_TIMESTAMP}".format(
-        VICTOR_BUILD_VERSION=victor_build_ver,
-        VICTOR_REV_TAG="-" + victor_build_rev if victor_build_rev else "",
-        OS_VERSION=os_version,
-        REV_TAG="-" + os_rev if os_rev else "",
-        BUILD_TIMESTAMP=os_build_timestamp
-    )
-    props["ro.build.fingerprint"] = build_id
-    props["ro.build.id"] = build_id
-    props["ro.build.display.id"] = version_id
-
-    with open(build_prop_path_name, "w") as propfile:
-        propfile.write("\n".join(["=".join(prop) for prop in props.items()]))
-        propfile.write("\n")
-
-
 def handle_delta(current_slot, target_slot, manifest, tar_stream):
     "Apply a delta update to the boot and system partitions"
     current_version = get_prop("ro.anki.version")
@@ -489,49 +451,6 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     except update_payload.PayloadError as pay_err:
         zero_slot(target_slot)
         die(207, "Delta payload error: {!s}".format(pay_err))
-
-
-def handle_anki(current_slot, target_slot, manifest, tar_stream):
-    "Update the Anki folder only"
-    write_status(EXPECTED_WRITE_SIZE_FILE, 4)  # We're faking progress here with just stages 0-N
-    write_status(PROGRESS_FILE, 0)
-    if DEBUG:
-        print("Copying system from {} to {}".format(current_slot, target_slot))
-    copy_slot("system", current_slot, target_slot)
-    write_status(PROGRESS_FILE, 1)
-    if DEBUG:
-        print("Installing new Anki")
-    if not call(["mount", os.path.join(BOOT_DEVICE, "system" + "_" + target_slot), MOUNT_POINT]):
-        die(208, "Couldn't mount target system partition")
-    try:
-        anki_path = os.path.join(MOUNT_POINT, "anki")
-        shutil.rmtree(anki_path)
-        write_status(PROGRESS_FILE, 2)
-        anki_ti = tar_stream.next()
-        src_file = tar_stream.extractfile(anki_ti)
-        if manifest.getint("ANKI", "encryption") != 0:
-            die(210, "Encrypted Anki updates are not supported")
-        else:
-            sha_fh = ShaFile(src_file)
-        anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
-        anki_tar.extractall(MOUNT_POINT)
-        update_build_props(MOUNT_POINT)
-    finally:
-        call(["umount", MOUNT_POINT])
-    write_status(PROGRESS_FILE, 3)
-    # Verify anki tar hash
-    if sha_fh.bytes() != manifest.getint("ANKI", "bytes"):
-        zero_slot(target_slot)
-        die(209, "Anki archive wrong size")
-    if sha_fh.digest() != manifest.get("ANKI", "sha256"):
-        zero_slot(target_slot)
-        die(209, "Anki archive didn't match signed manifest")
-    # Copy over the boot partition since we passed
-    if DEBUG:
-        print("Sig passed, installing kernel")
-    copy_slot("boot", current_slot, target_slot)
-    write_status(PROGRESS_FILE, 4)
-
 
 def handle_factory(manifest, tar_stream):
     "Update factory partitions"
@@ -666,10 +585,8 @@ def update_from_url(url):
         elif num_images == 1:
             if manifest.has_section("DELTA"):
                 handle_delta(current_slot, target_slot, manifest, tar_stream)
-            elif manifest.has_section("ANKI"):
-                handle_anki(current_slot, target_slot, manifest, tar_stream)
             else:
-                die(201, "One image specified but not DELTA or ANKI")
+                die(201, "One image specified but not DELTA")
         elif num_images == 3:
             if manifest.has_section("ABOOT") and manifest.has_section("RECOVERY") and manifest.has_section("RECOVERYFS"):
                 if manifest.get("META", "qsn") == get_qsn():
