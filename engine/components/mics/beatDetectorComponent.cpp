@@ -223,7 +223,7 @@ bool BeatDetectorComponent::IsBeatDetected() const
 
 float BeatDetectorComponent::GetNextBeatTime_sec() const
 {
-  if (!IsBeatDetected() || _recentBeats.empty()) {
+  if (!IsPossibleBeatDetected() || _recentBeats.empty()) {
     PRINT_NAMED_WARNING("BeatDetectorComponent.GetNextBeatTime.NoBeatDetected",
                         "No current beat is detected");
     return 0.f;
@@ -243,7 +243,7 @@ float BeatDetectorComponent::GetNextBeatTime_sec() const
 
 float BeatDetectorComponent::GetCurrTempo_bpm() const
 {
-  if (!IsBeatDetected() || _recentBeats.empty()) {
+  if (!IsPossibleBeatDetected() || _recentBeats.empty()) {
     PRINT_NAMED_WARNING("BeatDetectorComponent.GetCurrTempo_bpm.NoBeatDetected",
                         "No current beat is detected");
     return 0.f;
@@ -303,6 +303,39 @@ void BeatDetectorComponent::SendToWebViz()
   }
 }
 
+
+BeatInfo BeatDetectorComponent::TEST_fakeLowConfidenceBeat(const float tempo_bpm, const float time_sec)
+{
+  // Create a beat with a confidence just under the threshold
+  BeatInfo beat;
+  beat.tempo_bpm  = tempo_bpm;
+  beat.time_sec   = time_sec;
+  beat.confidence = kConfidenceThreshold - 0.01f;
+  return beat;
+}
+
+
+BeatInfo BeatDetectorComponent::TEST_fakeHighConfidenceBeat(const float tempo_bpm, const float time_sec)
+{
+  // Create a beat with a confidence just above the threshold
+  BeatInfo beat;
+  beat.tempo_bpm  = tempo_bpm;
+  beat.time_sec   = time_sec;
+  beat.confidence = kConfidenceThreshold + 0.01f;
+  return beat;
+}
+
+
+BeatInfo BeatDetectorComponent::TEST_fakeVeryHighConfidenceBeat(const float tempo_bpm, const float time_sec)
+{
+  // Create a beat with a confidence just above the 'high' threshold
+  BeatInfo beat;
+  beat.tempo_bpm  = tempo_bpm;
+  beat.time_sec   = time_sec;
+  beat.confidence = kHighConfidenceThreshold + 0.01f;
+  return beat;
+}
+  
 } // namespace Vector
 } // namespace Anki
 

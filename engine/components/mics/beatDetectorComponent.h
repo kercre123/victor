@@ -51,12 +51,14 @@ public:
   // Is there _definitely_ a steady musical beat happening?
   bool IsBeatDetected() const;
   
-  // Predicted time (UniversalTime) of the next beat
+  // Predicted time (UniversalTime) of the next beat. Returns 0 and prints a warning if there is no 'possible' beat
+  // detected right now
   float GetNextBeatTime_sec() const;
-  
+
+  // Get the current detected tempo. Returns 0 and prints a warning if there is no 'possible' beat detected right now
   float GetCurrTempo_bpm() const;
   
-  // Send a message to reset the beat detector in the anim process
+  // Send a message to reset the beat detector in the anim process and clear our list of recent beats
   void Reset();
   
   using OnBeatCallback = std::function<void(void)>;
@@ -76,6 +78,10 @@ private:
   
   // Called when we receive a beat message from the anim process
   void OnBeat(const BeatInfo& beat);
+  
+  BeatInfo TEST_fakeLowConfidenceBeat(const float tempo_bpm, const float time_sec);
+  BeatInfo TEST_fakeHighConfidenceBeat(const float tempo_bpm, const float time_sec);
+  BeatInfo TEST_fakeVeryHighConfidenceBeat(const float tempo_bpm, const float time_sec);
   
   Robot* _robot = nullptr;
   
