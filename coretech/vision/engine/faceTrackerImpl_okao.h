@@ -62,6 +62,7 @@ namespace Vision {
 
     void AddFaceIDToIgnoreOnReset(const int faceID);
     bool HaveFacesToIgnoreOnReset() { return !_faceIDsBeingTracked.empty(); }
+    void ClearFacesToIgnore() { _faceIDsBeingTracked.clear(); }
     
     void EnableDisplay(bool enabled) { }
     

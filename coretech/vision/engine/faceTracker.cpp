@@ -82,6 +82,11 @@ namespace Vision {
   {
     return _pImpl->HaveFacesToIgnoreOnReset();
   }
+
+  void FaceTracker::ClearFacesToIgnore()
+  {
+    _pImpl->ClearFacesToIgnore();
+  }
   
   bool FaceTracker::IsRecognitionSupported()
   {

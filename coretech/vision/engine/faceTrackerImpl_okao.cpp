@@ -454,7 +454,7 @@ namespace Vision {
 
   void FaceTracker::Impl::Reset()
   {
-    _faceIDsBeingTracked.clear();
+    ClearFacesToIgnore();
     INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
     if(OKAO_NORMAL != result)
     {

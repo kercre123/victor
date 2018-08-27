@@ -53,6 +53,7 @@ namespace Vision {
 
     void AddFaceIDToIgnoreOnReset(const int FaceID);
     bool HaveFacesToIgnoreOnReset();
+    void ClearFacesToIgnore();
     
     void EnableDisplay(bool enabled);
     
