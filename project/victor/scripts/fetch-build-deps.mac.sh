@@ -46,6 +46,9 @@ vlog "Go"
 vlog "protobuf"
 ./tools/build/tools/ankibuild/protobuf.py --install
 
+vlog "git-lfs"
+$GIT lfs install
+
 vlog "check webots version"
 webotsVer=`cat /Applications/Webots.app/resources/version.txt`
 supportedVerFile=./simulator/supportedWebotsVersions.txt

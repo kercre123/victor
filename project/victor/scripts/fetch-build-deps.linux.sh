@@ -40,6 +40,8 @@ pushd "${TOPLEVEL}" > /dev/null 2>&1
 check_dep which python2
 check_dep which python3
 check_dep which ninja
+check_dep which git-lfs
+
 
 echo `pwd`
 
@@ -54,6 +56,9 @@ vlog "Go"
 
 vlog "protobuf"                                                                                     
 ./tools/build/tools/ankibuild/protobuf.py --install
+
+vlog "git lfs"
+$GIT lfs install
 
 vlog "Build output dirs"
 mkdir -p generated
