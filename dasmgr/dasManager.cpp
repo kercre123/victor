@@ -37,10 +37,15 @@ using LogLevel = Anki::Util::LogLevel;
 #define LOG_CHANNEL "DASManager"
 
 // Local constants
-
 namespace {
+
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
+
+  // JSON attribute keys
+  constexpr const char * kDASGlobalsKey = "dasGlobals";
+  constexpr const char * kSequenceKey = "sequence";
+  constexpr const char * kProfileIDKey = "profile_id";
 }
 
 //
@@ -480,28 +485,54 @@ std::string DASManager::GetPathNameForNextJsonLogFile()
   return Util::FileUtils::FullFilePath({_dasConfig.GetStoragePath(), filename});
 }
 
-void DASManager::LoadGlobalState(const std::string & globals_path)
+
+static void LoadGlobals(Json::Value & json, const std::string & path)
 {
-  // Read json from file
+  // Read json from persistent storage
   Json::Reader reader;
-  Json::Value json;
-  std::ifstream ifs(globals_path);
+  std::ifstream ifs(path);
 
   if (!reader.parse(ifs, json)) {
     const auto & errors = reader.getFormattedErrorMessages();
-    LOG_ERROR("DASManager.LoadGlobalState", "Failed to parse [%s] (%s)",
-      globals_path.c_str(), errors.c_str());
+    LOG_ERROR("DASManager.LoadGlobals", "Failed to parse [%s] (%s)",
+      path.c_str(), errors.c_str());
     return;
   }
+}
+
+void DASManager::LoadTransientGlobals(const std::string & path)
+{
+  // Read json from transient storage
+  Json::Value json;
+  LoadGlobals(json, path);
+
+  // Read transient values from json
+  const auto & dasGlobals = json[kDASGlobalsKey];
+  if (!dasGlobals.isObject()) {
+    LOG_ERROR("DASManager.LoadTransientGlobals", "Invalid json object");
+    return;
+  }
+
+  const auto & sequence = dasGlobals[kSequenceKey];
+  if (sequence.isNumeric()) {
+    _seq = sequence.asUInt64();
+  }
+}
+
+void DASManager::LoadPersistentGlobals(const std::string & path)
+{
+  // Read json from path
+  Json::Value json;
+  LoadGlobals(json, path);
 
   // Read values from json
-  const auto & dasGlobals = json["dasGlobals"];
+  const auto & dasGlobals = json[kDASGlobalsKey];
   if (!dasGlobals.isObject()) {
-    LOG_ERROR("DASManager.LoadGlobalState", "Invalid json object");
+    LOG_ERROR("DASManager.LoadPersistentGlobals", "Invalid json object");
     return;
   }
 
-  const auto & profile_id = dasGlobals["profile_id"];
+  const auto & profile_id = dasGlobals[kProfileIDKey];
   if (profile_id.isString()) {
     _profile_id = profile_id.asString();
   }
@@ -527,22 +558,24 @@ void DASManager::LoadGlobalState()
     Vector::OSState::removeInstance();
   }
 
-  // Get persistent values from DASGlobals.json
-  const std::string & globals_path = _dasConfig.GetGlobalsPath();
-  if (!globals_path.empty() && Util::FileUtils::FileExists(globals_path)) {
-    LoadGlobalState(globals_path);
+  // Get transient globals from transient storage
+  const std::string & transient_globals_path = _dasConfig.GetTransientGlobalsPath();
+  if (!transient_globals_path.empty() && Util::FileUtils::FileExists(transient_globals_path)) {
+    LoadTransientGlobals(transient_globals_path);
+  }
+
+// Get persistent globals from persistent storage
+  const std::string & persistent_globals_path = _dasConfig.GetPersistentGlobalsPath();
+  if (!persistent_globals_path.empty() && Util::FileUtils::FileExists(persistent_globals_path)) {
+    LoadPersistentGlobals(persistent_globals_path);
   }
 
 }
 
-void DASManager::SaveGlobalState(const std::string & globals_path)
+static void SaveGlobals(const Json::Value & json, const std::string & path)
 {
-  // Construct json container
-  Json::Value json;
-  json["dasGlobals"]["profile_id"] = _profile_id;
-
   // Write json to temp file
-  const auto & tmp = globals_path + ".tmp";
+  const auto & tmp = path + ".tmp";
   if (Util::FileUtils::FileExists(tmp)) {
     Util::FileUtils::DeleteFile(tmp);
   }
@@ -552,23 +585,50 @@ void DASManager::SaveGlobalState(const std::string & globals_path)
     std::ofstream ofs(tmp);
     ofs << writer.write(json);
   } catch (const std::exception & ex) {
-    LOG_ERROR("DASManager.SaveGlobalState", "Unable to write %s (%s)", tmp.c_str(), ex.what());
+    LOG_ERROR("DASManager.SaveGlobals", "Unable to write %s (%s)", tmp.c_str(), ex.what());
     return;
   }
 
   // Move temp file into place
   // Yes, the arguments are MoveFile(dest, src)
-  const bool ok = Util::FileUtils::MoveFile(globals_path, tmp);
+  const bool ok = Util::FileUtils::MoveFile(path, tmp);
   if (!ok) {
-    LOG_ERROR("DASManager.SaveGlobalState", "Unable to move %s to %s", tmp.c_str(), globals_path.c_str());
+    LOG_ERROR("DASManager.SaveGlobals", "Unable to move %s to %s", tmp.c_str(), path.c_str());
   }
+}
+
+void DASManager::SaveTransientGlobals(const std::string & path)
+{
+  // Construct json container
+  Json::Value json;
+  json[kDASGlobalsKey][kSequenceKey] = _seq;
+
+  // Save json to file
+  SaveGlobals(json, path);
+}
+
+void DASManager::SavePersistentGlobals(const std::string & path)
+{
+  // Construct json container
+  Json::Value json;
+  json[kDASGlobalsKey][kProfileIDKey] = _profile_id;
+
+  // Save json to file
+  SaveGlobals(json, path);
 }
 
 void DASManager::SaveGlobalState()
 {
-  const std::string & globals_path = _dasConfig.GetGlobalsPath();
-  if (!globals_path.empty()) {
-    SaveGlobalState(globals_path);
+  // Save transient globals to transient storage
+  const std::string & transient_globals_path = _dasConfig.GetTransientGlobalsPath();
+  if (!transient_globals_path.empty()) {
+    SaveTransientGlobals(transient_globals_path);
+  }
+
+  // Save persistent globals to persistent storage
+  const std::string & persistent_globals_path = _dasConfig.GetPersistentGlobalsPath();
+  if (!persistent_globals_path.empty()) {
+    SavePersistentGlobals(persistent_globals_path);
   }
 }
 

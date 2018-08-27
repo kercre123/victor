@@ -22,7 +22,8 @@ DASConfig::DASConfig(const std::string & url,
                      size_t storage_quota,
                      const std::string& backup_path,
                      size_t backup_quota,
-                     const std::string& globals_path) :
+                     const std::string& persistent_globals_path,
+                     const std::string& transient_globals_path) :
   _url(url),
   _file_threshold_size(file_threshold_size),
   _flush_interval(flush_interval),
@@ -30,11 +31,10 @@ DASConfig::DASConfig(const std::string & url,
   _storage_quota(storage_quota),
   _backup_path(backup_path),
   _backup_quota(backup_quota),
-  _globals_path(globals_path)
+  _persistent_globals_path(persistent_globals_path),
+  _transient_globals_path(transient_globals_path)
 {
 }
-
-
 
 std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const Json::Value & json)
 {
@@ -91,9 +91,15 @@ std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const Json::Value & json)
     return nullptr;
   }
 
-  const auto & globals_path = dasConfig["globals_path"];
-  if (!globals_path.isString()) {
-    LOG_ERROR("DASConfig.GetDASConfig.InvalidGlobalsPath", "Invalid globals_path attribute");
+  const auto & persistent_globals_path = dasConfig["persistent_globals_path"];
+  if (!persistent_globals_path.isString()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidPersistentGlobalsPath", "Invalid persistent_globals_path attribute");
+    return nullptr;
+  }
+
+  const auto & transient_globals_path = dasConfig["transient_globals_path"];
+  if (!transient_globals_path.isString()) {
+    LOG_ERROR("DASConfig.GetDASConfig.InvalidTransientGlobalsPath", "Invalid transient_globals_path attribute");
     return nullptr;
   }
 
@@ -104,7 +110,8 @@ std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const Json::Value & json)
                                      storage_quota.asUInt(),
                                      backup_path.asString(),
                                      backup_quota.asUInt(),
-                                     globals_path.asString());
+                                     persistent_globals_path.asString(),
+                                     transient_globals_path.asString());
 
 }
 

@@ -7,6 +7,7 @@
     "storage_quota": 5000000,
     "backup_path": "/data/data/com.anki.victor/cache/dasLogs",
     "backup_quota": 10000000,
-    "globals_path": "/data/data/com.anki.victor/persistent/DASGlobals.json"
+    "persistent_globals_path": "/data/data/com.anki.victor/persistent/dasGlobals.json",
+    "transient_globals_path": "/run/dasGlobals.json"
   }
 }

@@ -96,10 +96,12 @@ private:
   uint32_t GetNextIndexForJsonFile();
   std::string GetPathNameForNextJsonLogFile();
 
-  void LoadGlobalState(const std::string & globals_path);
+  void LoadTransientGlobals(const std::string & path);
+  void LoadPersistentGlobals(const std::string & path);
   void LoadGlobalState();
 
-  void SaveGlobalState(const std::string & globals_path);
+  void SaveTransientGlobals(const std::string & path);
+  void SavePersistentGlobals(const std::string & path);
   void SaveGlobalState();
 
 };
