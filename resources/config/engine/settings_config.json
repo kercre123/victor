@@ -18,7 +18,7 @@
   },
   "dist_is_metric" :
   {
-    "defaultValue" : true,
+    "defaultValue" : false,
     "updateCloudOnChange" : true
   },
   "locale" :
@@ -28,7 +28,7 @@
   },
   "master_volume" :
   {
-    "defaultValue" : 3,
+    "defaultValue" : 4,
     "updateCloudOnChange" : false
   },
   "temp_is_fahrenheit" :
