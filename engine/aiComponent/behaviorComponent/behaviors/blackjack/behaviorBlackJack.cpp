@@ -400,12 +400,10 @@ void BehaviorBlackJack::TransitionToEndGame(){
     }
   }
 
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Swipe), [this, endGameAction]()
-    {
-      _visualizer.ClearCards(GetBEI());
+  _visualizer.SwipeToClearFace(GetBEI(),
+    [this, endGameAction](){
       DelegateIfInControl(endGameAction, &BehaviorBlackJack::TransitionToPlayAgainPrompt);
-    }
-  );
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
