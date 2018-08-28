@@ -56,7 +56,7 @@ private:
     HitOrStand,
     ReactToPlayerCard,
     VictorsTurn,
-    VictorHitOrStand,
+    DealToVictor,
     ReactToDealerCard,
     EndGame,
     PlayAgainPrompt,
@@ -88,6 +88,7 @@ private:
   void TransitionToHitOrStandPrompt();
   void TransitionToHitOrStand();
   void TransitionToVictorsTurn();
+  void TransitionToDealToVictor();
   void TransitionToReactToDealerCard();
   void TransitionToEndGame();
   void TransitionToPlayAgainPrompt();

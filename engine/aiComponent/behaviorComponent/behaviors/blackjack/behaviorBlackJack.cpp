@@ -294,12 +294,10 @@ void BehaviorBlackJack::TransitionToHitOrStand()
     }
 
     // 2. We didn't receive any intents at all
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Response), [this]()
-      {
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Spread),
-                            &BehaviorBlackJack::TransitionToVictorsTurn);
-      }
-    );
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Response),
+      [this](){
+        TransitionToVictorsTurn();
+      });
   }
 }
 
@@ -311,14 +309,20 @@ void BehaviorBlackJack::TransitionToVictorsTurn()
   // TODO:(str) work out whether a "spread" is happening or not, dependent on dynamic layouts
   // _visualizer.VisualizeSpread();
 
-  if(!_game.DealerHasFlopped()){
-    _game.Flop();
-    _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
-  } else {
-    // The only reason Victor takes a turn after the flop is to hit
-    _game.DealToDealer();
-    _visualizer.DealToDealer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
-  }
+  DelegateIfInControl(SetUpSpeakingBehavior("Dealers Turn!"),
+    [this](){
+      _game.Flop();
+      _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToDealToVictor, this));
+    });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBlackJack::TransitionToDealToVictor()
+{
+  SET_STATE(DealToVictor);
+
+  _game.DealToDealer();
+  _visualizer.DealToDealer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -329,30 +333,30 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
   if(_game.DealerBusted()){
     // Announce score and bust
     _dVars.outcome = EOutcome::VictorBusts;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerTied()){
     _dVars.outcome = EOutcome::Tie;
-    std::string tieString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". We tied." );
+    std::string tieString(std::to_string(_game.GetDealerScore()) + ". We tied." );
     DelegateIfInControl(SetUpSpeakingBehavior(tieString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasBlackJack()){
     _dVars.outcome = EOutcome::VictorWinsBlackJack;
-    DelegateIfInControl(SetUpSpeakingBehavior("Dealer has 21!"),
+    DelegateIfInControl(SetUpSpeakingBehavior("21!"),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasWon()){
     _dVars.outcome = EOutcome::VictorWins;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasTooManyCards() || _game.DealerShouldStandPerVegasRules()) {
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". You win!" );
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". You win!" );
     _dVars.outcome = EOutcome::VictorLoses;
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else {
     // Announce score and Hit again
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) );
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToVictorsTurn);
+    std::string dealerScoreString( std::to_string(_game.GetDealerScore()) );
+    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToDealToVictor);
   }
 
 }
