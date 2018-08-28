@@ -337,6 +337,10 @@ struct DockingErrorSignal;
 
     void EnableSensorRes(bool sensorRes);
 
+    // These methods control which faces are tracked, and turn face
+    // recognition on/off. The goal here is to not call reset face
+    // detection when we are in an action that is trying to
+    // track a face e.g. track face action.
     void AddAllowedTrackedFace(const Vision::FaceID_t faceID);
     void ClearAllowedTrackedFaces();
 

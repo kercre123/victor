@@ -172,6 +172,10 @@ namespace Vision {
     
     std::map<FaceID_t, EyeContact> _facesEyeContact;
 
+    // This set contains the face id's we're allowed to track. All other
+    // face id's we should drop on the floor. We should also not perform
+    // any face recognition when this set is populated. If this set is
+    // we should proceed to track and recongize faces as usual.
     std::set<FaceID_t> _allowedTrackedFaceID;
   }; // class FaceTracker::Impl
   
