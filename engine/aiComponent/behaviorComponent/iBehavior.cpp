@@ -18,13 +18,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vector {
 
-namespace{
-static const int kBSTickInterval = 1;
+namespace {
+  const int kBSTickInterval = 1;
+  CONSOLE_VAR(bool, kDebugActivationState, "Behaviors.ActivationState", false);
 }
 
 
@@ -170,12 +172,14 @@ void IBehavior::OnLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SetActivationState_DevOnly(ActivationState state, const std::string& debugStr)
 {
-  PRINT_CH_DEBUG("Behaviors",
-                 "IBehavior.SetActivationState",
-                 "%s: Behavior '%s' Activation state set to %s",
-                 debugStr.c_str(),
-                 _debugLabel.c_str(),
-                 ActivationStateToString(state));
+  if (kDebugActivationState) {
+    PRINT_CH_DEBUG("Behaviors",
+                   "IBehavior.SetActivationState",
+                   "%s: Behavior '%s' Activation state set to %s",
+                   debugStr.c_str(),
+                   _debugLabel.c_str(),
+                   ActivationStateToString(state));
+  }
 
   #if ANKI_DEV_CHEATS
     _currentActivationState = state;
