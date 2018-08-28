@@ -237,11 +237,7 @@ void BehaviorBlackJack::TransitionToDealing()
 void BehaviorBlackJack::TransitionToReactToPlayerCard()
 {
   SET_STATE(ReactToPlayerCard);
-  if(_game.PlayerHasBlackJack()){
-    // Player got a BlackJack, but Victor could still tie
-    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
-                        &BehaviorBlackJack::TransitionToVictorsTurn);
-  } else if(_game.PlayerBusted()) {
+  if(_game.PlayerBusted()) {
     // Build the card value and bust string and action
     std::string playerScoreString(std::to_string(_game.GetPlayerScore()) + ". You busted!");
     _dVars.outcome = EOutcome::VictorWins;
@@ -253,12 +249,16 @@ void BehaviorBlackJack::TransitionToReactToPlayerCard()
       {
         _visualizer.DisplayCharlieFrame(GetBEI(), [this]()
           {
-            _dVars.outcome = EOutcome::VictorLoses;
+            _dVars.outcome = EOutcome::VictorLosesBlackJack;
             DelegateIfInControl(SetUpSpeakingBehavior("5 Card Charlie! You win!"), &BehaviorBlackJack::TransitionToEndGame);
           }
         );
       }
     );
+  }else if(_game.PlayerHasBlackJack()){
+    // Player got a BlackJack, but Victor could still tie
+    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
+                        &BehaviorBlackJack::TransitionToVictorsTurn);
   } else {
     // Build the card value string and read out action
     std::string playerScoreString(std::to_string(_game.GetPlayerScore()));
@@ -282,7 +282,7 @@ void BehaviorBlackJack::TransitionToHitOrStand()
   SET_STATE(HitOrStand);
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
 
-  if(uic.IsUserIntentPending(playerHitIntent)){     
+  if(uic.IsUserIntentPending(playerHitIntent)){
     uic.DropUserIntent(playerHitIntent);
     _game.DealToPlayer();
     _visualizer.DealToPlayer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToPlayerCard, this));
