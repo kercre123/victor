@@ -1,11 +1,9 @@
 package util
 
 import (
+	"anki/config"
 	"context"
 )
-
-// TODO: make this configurable
-const ankiDevKey = "xiepae8Ach2eequiphee4U"
 
 type MapCredentials map[string]string
 
@@ -19,7 +17,7 @@ func (r MapCredentials) RequireTransportSecurity() bool {
 
 func AppkeyMetadata() MapCredentials {
 	ret := MapCredentials{
-		"anki-app-key": ankiDevKey,
+		"anki-app-key": config.Env.AppKey,
 	}
 	return ret
 }

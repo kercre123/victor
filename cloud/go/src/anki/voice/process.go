@@ -1,6 +1,7 @@
 package voice
 
 import (
+	"anki/config"
 	"anki/log"
 	"anki/voice/stream"
 	"clad/cloud"
@@ -11,11 +12,6 @@ import (
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
-)
-
-const (
-	// ChipperURL is the location of the Chipper service
-	ChipperURL = "chipper-dev.api.anki.com:443"
 )
 
 var (
@@ -378,7 +374,7 @@ func (p *Process) defaultChipperOptions() chipper.StreamOpts {
 
 func (p *Process) newStream(ctx context.Context, receiver *strmReceiver, strmopts ...stream.Option) *stream.Streamer {
 	strmopts = append(strmopts, stream.WithTokener(p.opts.tokener, p.opts.requireToken),
-		stream.WithChipperURL(ChipperURL),
+		stream.WithChipperURL(config.Env.Chipper),
 		stream.WithChipperSecret(ChipperSecret))
 	newReceiver := *receiver
 	stream := stream.NewStreamer(ctx, &newReceiver, p.StreamSize(), strmopts...)

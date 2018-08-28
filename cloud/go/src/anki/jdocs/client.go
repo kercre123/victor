@@ -1,6 +1,7 @@
 package jdocs
 
 import (
+	"anki/config"
 	"anki/log"
 	"anki/token"
 	"clad/cloud"
@@ -12,8 +13,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
-
-const jdocsURL = "jdocs-dev.api.anki.com:443"
 
 type conn struct {
 	conn   *grpc.ClientConn
@@ -39,7 +38,7 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 		}
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	}
-	rpcConn, err := grpc.DialContext(ctx, jdocsURL, dialOpts...)
+	rpcConn, err := grpc.DialContext(ctx, config.Env.JDocs, dialOpts...)
 	if err != nil {
 		return nil, err
 	}

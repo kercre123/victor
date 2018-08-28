@@ -29,7 +29,7 @@ type response struct {
 var defaultESN func() string
 
 var queue = make(chan request)
-var url = "token-dev.api.anki.com:443"
+var url string
 var robotESN string
 
 func queueInit(ctx context.Context) error {

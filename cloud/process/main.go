@@ -2,6 +2,7 @@ package main
 
 import (
 	"anki/cloudproc"
+	"anki/config"
 	"anki/ipc"
 	"anki/jdocs"
 	"anki/log"
@@ -153,6 +154,13 @@ func main() {
 		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerMicrosoft))
 	} else if *lex {
 		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerAmazon))
+	}
+
+	if err := config.SetGlobal(""); err != nil {
+		log.Println("Could not load server config! This is not good!:", err)
+		if certErrorFunc != nil && certErrorFunc() {
+			return
+		}
 	}
 
 	options = append(options, cloudproc.WithVoice(process))

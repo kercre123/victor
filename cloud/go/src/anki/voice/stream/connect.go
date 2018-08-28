@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"anki/config"
 	"anki/log"
 	"anki/robot"
 	"anki/util"
@@ -15,18 +16,13 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-const (
-	// CDNURL is the location of CDN for connection testing
-	CDNURL = "ota-cdn.anki.com:443"
-)
-
 func (strm *Streamer) connect() error {
 	if strm.opts.checkOpts != nil {
 		// for connection check, first try a simple https connection to our OTA CDN
 		conf := &tls.Config{
 			RootCAs: rootcerts.ServerCertPool(),
 		}
-		conn, err := tls.Dial("tcp", CDNURL, conf)
+		conn, err := tls.Dial("tcp", config.Env.OTA, conf)
 		if err != nil {
 			log.Println("Error dialing CDN server:", err)
 			strm.receiver.OnError(cloud.ErrorType_TLS, err)

@@ -1,6 +1,7 @@
 package token
 
 import (
+	"anki/config"
 	"anki/ipc"
 	"anki/log"
 	"anki/token/jwt"
@@ -14,6 +15,7 @@ import (
 var initialized = false
 
 func Init() error {
+	url = config.Env.Token
 	if err := jwt.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return err
