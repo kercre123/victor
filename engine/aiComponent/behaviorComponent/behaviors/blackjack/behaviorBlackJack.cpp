@@ -282,15 +282,25 @@ void BehaviorBlackJack::TransitionToHitOrStand()
   SET_STATE(HitOrStand);
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
 
-  if(uic.IsUserIntentPending(playerHitIntent)){
-    uic.DropUserIntent(playerHitIntent);
+  if(uic.IsUserIntentPending(playerHitIntent) ||
+     uic.IsUserIntentPending(affirmativeIntent) ){
+
+    if(uic.IsUserIntentPending(playerHitIntent)){
+      uic.DropUserIntent(playerHitIntent);
+    } else if (uic.IsUserIntentPending(affirmativeIntent)){
+      uic.DropUserIntent(affirmativeIntent);
+    }
+
     _game.DealToPlayer();
     _visualizer.DealToPlayer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToPlayerCard, this));
+
   } else {
     // Stand if:
-    // 1. We received a valid playerStandIntent
+    // 1. We received a valid playerStandIntent or imperative_negative
     if (uic.IsUserIntentPending(playerStandIntent)) {
       uic.DropUserIntent(playerStandIntent);
+    } else if(uic.IsUserIntentPending(negativeIntent)) {
+      uic.DropUserIntent(negativeIntent);
     }
 
     // 2. We didn't receive any intents at all
