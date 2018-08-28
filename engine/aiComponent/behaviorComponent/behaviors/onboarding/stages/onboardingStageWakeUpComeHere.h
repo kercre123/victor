@@ -17,6 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "proto/external_interface/onboardingSteps.pb.h"
@@ -40,6 +41,7 @@ public:
     delegates.insert( BEHAVIOR_ID(OnboardingComeHere) );
     delegates.insert( BEHAVIOR_ID(OnboardingComeHereResume) );
     delegates.insert( BEHAVIOR_ID(OnboardingComeHereGetOut) );
+    delegates.insert( BEHAVIOR_ID(OnboardingWaitForNotFalling) );
   }
   
   IBehavior* GetBehavior( BehaviorExternalInterface& bei ) override
@@ -60,6 +62,7 @@ public:
     _behaviors[Step::ComeHere]                 = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHere) );
     _behaviors[Step::ComeHereGetOut]           = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHereGetOut) );
     _behaviors[Step::ComeHereResume]           = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingComeHereResume) );
+    _behaviors[Step::WaitForNotFalling]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingWaitForNotFalling) );
     
     _step = Step::LookAtPhone;
     _stepAfterResumeFromCharger = Step::LookAtPhone; // this is state is ignored since it could never happen outside initialization
@@ -147,15 +150,19 @@ public:
         TransitionToWakingUp();
       }
       // else stay asleep
-    } else if( _step == Step::WakingUp ) {
-      // if on the charger, drive off
-      _currentBehavior = _behaviors[Step::DriveOffCharger];
-      SetTriggerWordEnabled( false );
-      if( _currentBehavior->WantsToBeActivated() ) {
-        DebugTransition("Driving off charger");
-        _step = Step::DriveOffCharger;
+    } else if( (_step == Step::WakingUp) || (_step == Step::WaitForNotFalling) ) {
+      if( bei.GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads ) {
+        TransitionToWaitForNotFalling();
       } else {
-        TransitionToWaitingForTrigger();
+        // if on the charger, drive off
+        _currentBehavior = _behaviors[Step::DriveOffCharger];
+        SetTriggerWordEnabled( false );
+        if( _currentBehavior->WantsToBeActivated() ) {
+          DebugTransition("Driving off charger");
+          _step = Step::DriveOffCharger;
+        } else {
+          TransitionToWaitingForTrigger();
+        }
       }
     } else if( _step == Step::DriveOffCharger ) {
       OnFinishedDrivingOffCharger();
@@ -197,6 +204,7 @@ public:
         return external_interface::STEP_EXPECTING_CONTINUE_WAKE_UP;
       case Step::WakingUp:
       case Step::DriveOffCharger:
+      case Step::WaitForNotFalling:
         return external_interface::STEP_WAKING_UP;
       case Step::WaitingForTrigger:
         return external_interface::STEP_EXPECTING_FIRST_TRIGGER_WORD;
@@ -263,6 +271,13 @@ private:
     SetTriggerWordEnabled(false);
   }
   
+  void TransitionToWaitForNotFalling() {
+    DebugTransition("Waiting to be put down to complete wakeup");
+    _step = Step::WaitForNotFalling;
+    _currentBehavior = _behaviors[_step];
+    SetTriggerWordEnabled(false);
+  }
+  
   void OnFinishedDrivingOffCharger()
   {
     switch( _stepAfterResumeFromCharger ) {
@@ -281,6 +296,7 @@ private:
       case Step::Complete:
       case Step::ComeHereGetOut:
       case Step::ComeHereResume:
+      case Step::WaitForNotFalling:
         DEV_ASSERT(false, "OnboardingStageWakeUpComeHere.UnexpectedDriveOffCharger");
         break;
     }
@@ -302,6 +318,8 @@ private:
     ComeHereGetOut, // reaction after coming here
     ComeHereResume, // if the robot hits a cliff during ComeHere, the resume behavior
     Complete, // waiting for cleaning up
+    
+    WaitForNotFalling, // if the robot is falling before it wakes up, the falling anim is cancelled. do nothing until put down
   };
   
   Step _step;

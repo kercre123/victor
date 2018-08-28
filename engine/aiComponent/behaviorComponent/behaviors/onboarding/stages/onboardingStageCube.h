@@ -25,6 +25,7 @@
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "proto/external_interface/messages.pb.h"
+#include "util/console/consoleInterface.h"
 
 #include "json/json.h"
 
@@ -37,6 +38,7 @@ namespace {
   const float kMaxSearchDuration_s = 30.0f;
   const uint32_t kMaxAgeForRedoSearch_ms = 5000;
   const float kMinTimeToConnect_s = 20.0f;
+  CONSOLE_VAR_RANGED(float, kFakeCubeDelay_s, "Onboarding", 6.0f, 0.0f, 30.0f );
   
   const std::string& kLockName = "onboardingCubeStage";
 }
@@ -210,37 +212,39 @@ public:
     if( _step == Step::Complete ) {
       return;
     } else if( _step == Step::LookingForCube ) {
-      const bool seesCube = _cubeKnownCondition->AreConditionsMet(bei);
       EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      if( seesCube ) {
-        const std::vector<const ObservableObject*>& cubes = _cubeKnownCondition->GetObjects( bei );
-        if( !cubes.empty() ) {
-          DebugTransition("Found a cube");
-          // pick the first connected one
-          const ObservableObject* selectedCube = nullptr;
-          for( const auto* cube : cubes ) {
-            _objectID = cube->GetID();
-            const auto* connectedCube = bei.GetBlockWorld().GetConnectedActiveObjectByID(cube->GetID());
-            if( connectedCube != nullptr ) {
+      if( currTime_ms - _timeStartedSearching_ms >= 1000*kFakeCubeDelay_s ) {
+        const bool seesCube = _cubeKnownCondition->AreConditionsMet(bei);
+        if( seesCube ) {
+          const std::vector<const ObservableObject*>& cubes = _cubeKnownCondition->GetObjects( bei );
+          if( !cubes.empty() ) {
+            DebugTransition("Found a cube");
+            // pick the first connected one
+            const ObservableObject* selectedCube = nullptr;
+            for( const auto* cube : cubes ) {
               _objectID = cube->GetID();
-              selectedCube = cube;
-              TransitionToActivatingCube( bei );
-              break;
+              const auto* connectedCube = bei.GetBlockWorld().GetConnectedActiveObjectByID(cube->GetID());
+              if( connectedCube != nullptr ) {
+                _objectID = cube->GetID();
+                selectedCube = cube;
+                TransitionToActivatingCube( bei );
+                break;
+              }
+            }
+            if( selectedCube == nullptr ) {
+              // saw a cube, but we're not connected to any.
+              // since we've been trying to connect to the cube since the start of onboarding, we should have
+              // a cube by this point. The exception is if they began in the cube stage, in which case give it
+              // a little time to connect
+              const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+              if( currTime_s - _initTime_s >= kMinTimeToConnect_s ) {
+                SendCantFindCubeAndLookAtUser( bei );
+              }
             }
           }
-          if( selectedCube == nullptr ) {
-            // saw a cube, but we're not connected to any.
-            // since we've been trying to connect to the cube since the start of onboarding, we should have
-            // a cube by this point. The exception is if they began in the cube stage, in which case give it
-            // a little time to connect
-            const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-            if( currTime_s - _initTime_s >= kMinTimeToConnect_s ) {
-              SendCantFindCubeAndLookAtUser( bei );
-            }
-          }
+        } else if( currTime_ms >= _timeStartedSearching_ms + 1000*kMaxSearchDuration_s ) {
+          SendCantFindCubeAndLookAtUser( bei );
         }
-      } else if( currTime_ms >= _timeStartedSearching_ms + 1000*kMaxSearchDuration_s ) {
-        SendCantFindCubeAndLookAtUser( bei );
       }
     }
   }

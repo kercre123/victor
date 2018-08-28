@@ -315,6 +315,7 @@ enum uint_16 BehaviorID {
   OnboardingSluggishDriveOffCharger,
   OnboardingTriggerWord,
   OnboardingWaitForComeHere,
+  OnboardingWaitForNotFalling,
   OnboardingWaitForTriggerWord,
   OnboardingWakeUp,
   ResetOnboardingSafely,

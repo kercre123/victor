@@ -19,12 +19,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/stages/iOnboardingStage.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "proto/external_interface/onboardingSteps.pb.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Vector {
   
 namespace {
-  const float kTimeBeforeEnd_s = 2*60.0f;
+  CONSOLE_VAR_RANGED(float, kTimeBeforeAppEnd_s, "Onboarding", 30.0f, 0.0f, 120.0f);
 }
   
 class OnboardingStageApp : public IOnboardingStage
@@ -86,7 +87,7 @@ public:
     if( uic.IsAnyUserIntentPending() && !uic.IsUserIntentPending( USER_INTENT(unmatched_intent) ) ) {
       DebugTransition("User intent. Onboarding is done!");
       _selectedBehavior = nullptr;
-    } else if( currTime - _startTime_s >= kTimeBeforeEnd_s ) {
+    } else if( currTime - _startTime_s >= kTimeBeforeAppEnd_s ) {
       // user may have gotten to the point in app onboarding where it says to do a voice command, so break out
       DebugTransition("Timeout. Onboarding is done!");
       _selectedBehavior = nullptr;

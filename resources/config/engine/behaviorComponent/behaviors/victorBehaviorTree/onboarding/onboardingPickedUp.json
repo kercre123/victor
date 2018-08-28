@@ -7,8 +7,17 @@
   // todo: match InitialPickupAnimation once that contains something other than stubs
   
   "wantsToBeActivatedCondition": {
-    "conditionType": "OffTreadsState",
-    "targetState": "InAir"
+    "conditionType": "Compound",
+    "or": [
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "InAir"
+      },
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "Falling"
+      }
+    ]
   },
 
   "wantsToCancelSelfCondition": {

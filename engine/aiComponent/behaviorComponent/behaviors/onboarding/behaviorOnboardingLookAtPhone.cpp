@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 
 namespace Anki {
 namespace Vector {
@@ -62,13 +63,19 @@ void BehaviorOnboardingLookAtPhone::OnBehaviorActivated()
   bool hasRun = _dVars.hasRun;
   _dVars = DynamicVariables();
   _dVars.hasRun = true;
-  if( hasRun ) {
-    // start with the loop action, which has a delayed head keyframe in the UP position, instead
-    // of MoveHeadUp, which has an initial keyframe in the DOWN position, to avoid a head snap
-    RunLoopAction();
-  } else {
-    MoveHeadUp();
-  }
+  
+  // if the app requests we restart onboarding in the middle of something else, make sure the lift is down
+  auto* moveLiftAction = new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::LOW_DOCK );
+  DelegateIfInControl( moveLiftAction, [this, hasRun]() {
+    if( hasRun ) {
+      // start with the loop action, which has a delayed head keyframe in the UP position, instead
+      // of MoveHeadUp, which has an initial keyframe in the DOWN position, to avoid a head snap
+      RunLoopAction();
+    } else {
+      MoveHeadUp();
+    }
+  });
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
