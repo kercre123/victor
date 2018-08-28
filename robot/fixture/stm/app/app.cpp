@@ -222,7 +222,8 @@ static void RunTests()
   Board::ledOn(Board::LED_YLW); //test in-progress
   
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart", 3000, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
+  int logstart_timeout = helperConsecutiveFailCnt()<5 ? 3000 : CMD_DEFAULT_TIMEOUT; //if no helper attached, hurry up and fail
+  cmdSend(CMD_IO_HELPER, "logstart", logstart_timeout, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
   
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();

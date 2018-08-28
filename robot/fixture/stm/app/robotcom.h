@@ -11,6 +11,7 @@
 
 #define DEFAULT_TEMP_ZONE 3
 
+int   helperConsecutiveFailCnt(void); //incremented on failed helper cmd. reset on cmd success.
 int   helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text); //return cmd status
 void  helperLcdSetLine(int n, const char* line);
 void  helperLcdClear(void);
