@@ -958,6 +958,11 @@ namespace Anki {
       {
         return IsPickedUp() && isMotionDetected_;
       }
+      
+      bool IsMotionDetected()
+      {
+        return isMotionDetected_;
+      }
 
       bool IsFalling()
       {
