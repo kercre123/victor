@@ -68,7 +68,7 @@ namespace Vision {
     _pImpl->Reset();
   }
 
-  void FaceTracker::AddFaceIDToIgnoreOnReset(const int faceID)
+  void FaceTracker::AddFaceIDToIgnoreOnReset(const FaceID_t faceID)
   {
     _pImpl->AddFaceIDToIgnoreOnReset(faceID);
   }

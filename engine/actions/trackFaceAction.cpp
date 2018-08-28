@@ -49,8 +49,7 @@ void TrackFaceAction::OnRobotSet()
   if( !_faceID.IsValid() ) {
     _faceID = GetRobot().GetFaceWorld().GetSmartFaceID(_tmpFaceID);
   }
-  s32 rawFaceID = static_cast<s32>(_faceID.GetID());
-  GetRobot().GetVisionComponent().SetTrackingIDToIgnoreOnReset(rawFaceID);
+  GetRobot().GetVisionComponent().SetTrackingIDToIgnoreOnReset(_faceID.GetID());
 }
 
 void TrackFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const

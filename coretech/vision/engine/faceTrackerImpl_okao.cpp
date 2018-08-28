@@ -465,7 +465,7 @@ namespace Vision {
     _recognizer.ClearAllTrackingData();
   }
 
-  void FaceTracker::Impl::AddFaceIDToIgnoreOnReset(const int faceID)
+  void FaceTracker::Impl::AddFaceIDToIgnoreOnReset(const FaceID_t faceID)
   {
     _faceIDsBeingTracked.insert(faceID);
   }

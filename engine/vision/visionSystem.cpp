@@ -1932,7 +1932,7 @@ void VisionSystem::ClearImageCache()
   _imageCache->ReleaseMemory();
 }
 
-void VisionSystem::SetTrackingIDToIgnoreOnReset(const int trackingID)
+void VisionSystem::SetTrackingIDToIgnoreOnReset(const Vision::FaceID_t trackingID)
 {
   _faceTracker->AddFaceIDToIgnoreOnReset(trackingID);
 }

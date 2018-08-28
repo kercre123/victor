@@ -60,7 +60,7 @@ namespace Vision {
     
     void Reset();
 
-    void AddFaceIDToIgnoreOnReset(const int faceID);
+    void AddFaceIDToIgnoreOnReset(const FaceID_t faceID);
     bool HaveFacesToIgnoreOnReset() { return !_faceIDsBeingTracked.empty(); }
     void ClearFacesToIgnore() { _faceIDsBeingTracked.clear(); }
     
@@ -173,7 +173,7 @@ namespace Vision {
     std::map<FaceID_t, EyeContact> _facesEyeContact;
 
     // TODO make sure the type here is correct
-    std::set<int> _faceIDsBeingTracked;
+    std::set<FaceID_t> _faceIDsBeingTracked;
   }; // class FaceTracker::Impl
   
 } // namespace Vision
