@@ -948,8 +948,8 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   }
 
   _isAnimating = false;
-  DEV_ASSERT_MSG(_currAnimName == payload.animName, "AnimationComponent.AnimEnded.UnexpectedName", "Got %s, expected %s", payload.animName.c_str(), _currAnimName.c_str());
-  DEV_ASSERT_MSG(_currAnimTag == payload.tag, "AnimationComponent.AnimEnded.UnexpectedTag", "Got %d, expected %d", payload.tag, _currAnimTag);
+  DEV_ASSERT_MSG(_currAnimName.empty() || _currAnimName == payload.animName, "AnimationComponent.AnimEnded.UnexpectedName", "Got %s, expected %s", payload.animName.c_str(), _currAnimName.c_str());
+  DEV_ASSERT_MSG(_currAnimTag == kNotAnimatingTag || _currAnimTag == payload.tag, "AnimationComponent.AnimEnded.UnexpectedTag", "Got %d, expected %d", payload.tag, _currAnimTag);
 
   _currAnimName = "";
   _currAnimTag = kNotAnimatingTag;

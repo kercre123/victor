@@ -485,8 +485,8 @@ namespace Vector {
 
     FaceDisplay::removeInstance();
   }
-  
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms, 
+
+  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms,
                                                   bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
     // Special case: stop streaming the current animation
@@ -505,7 +505,14 @@ namespace Vector {
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, false);
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, u32 startAt_ms, 
+  void AnimationStreamer::SetPendingStreamingAnimation(const std::string& name, u32 numLoops)
+  {
+    std::lock_guard<std::mutex> lock(_pendingAnimationMutex);
+    _pendingAnimation = name;
+    _pendingNumLoops = numLoops;
+  }
+
+  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, u32 startAt_ms,
                                                   bool interruptRunning,
                                                   bool shouldOverrideEyeHue, bool shouldRenderInEyeHue,
                                                   bool isInternalAnim, bool shouldClearProceduralAnim)
@@ -1886,6 +1893,16 @@ namespace Vector {
 
   Result AnimationStreamer::Update()
   {
+    {
+      std::lock_guard<std::mutex> lock(_pendingAnimationMutex);
+      if (!_pendingAnimation.empty()) {
+        SetStreamingAnimation(_pendingAnimation, /*tag*/ 1, _pendingNumLoops, /*interruptRunning*/ true);
+
+        _pendingAnimation.clear();
+        _pendingNumLoops = 0;
+      }
+    }
+
     if(kIsInManualUpdateMode){
       _relativeStreamTime_ms = kCurrentManualFrameNumber * ANIM_TIME_STEP_MS;
     }

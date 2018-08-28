@@ -90,8 +90,11 @@ namespace Vector {
                                  bool interruptRunning = true,
                                  bool shouldOverrideEyeHue = false,
                                  bool shouldRenderInEyeHue = true);
-    
-    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
+
+    // Subset of the function above that is applied in the ::Update function and called from PlayAnimation
+    void SetPendingStreamingAnimation(const std::string& name, u32 numLoops);
+
+    Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
 
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
@@ -213,6 +216,12 @@ namespace Vector {
 
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
+
+    // Next animation, used by PlayAnimation and called from a thread
+
+    std::mutex _pendingAnimationMutex;
+    std::string _pendingAnimation = "";
+    u32 _pendingNumLoops = 0;
 
     // Start and end messages sent to engine
     bool _startOfAnimationSent = false;

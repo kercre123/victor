@@ -51,6 +51,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -93,7 +94,10 @@ namespace {
 
   // Whether or not we have already told the boot anim to stop
   bool _bootAnimStopped = false;
-  
+
+  Anki::Util::Dispatch::Queue* _dispatchQueue = nullptr;
+
+
 #if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -112,8 +116,15 @@ namespace {
   {
     const char* name = ConsoleArg_Get_String(context, "name");
     if (name) {
+
       int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
-      _animStreamer->SetStreamingAnimation(name, /*tag*/ 1, numLoops, /*interruptRunning*/ true);
+
+      if (!_dispatchQueue) {
+        _dispatchQueue = Anki::Util::Dispatch::Create("AddAnimation", Anki::Util::ThreadPriority::Low);
+      }
+      Anki::Util::Dispatch::Async(_dispatchQueue, [name, numLoops] {
+        _animStreamer->SetPendingStreamingAnimation(name, numLoops);
+      });
 
       char numLoopsStr[4+1];
       snprintf(numLoopsStr, sizeof(numLoopsStr), "%d", (numLoops > 9999) ? 9999 : numLoops);
@@ -131,7 +142,16 @@ namespace {
       const std::string animationFolder = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
       std::string animationPath = animationFolder + path;
 
-      _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+      if (!_dispatchQueue) {
+        _dispatchQueue = Anki::Util::Dispatch::Create("AddAnimation", Anki::Util::ThreadPriority::Low);
+      }
+
+      Anki::Util::Dispatch::Async(_dispatchQueue, [animationPath] {
+        // _context: global in scope
+        // animationPath: local in scope, on our heap
+        // GetDataLoader: downwards, self contained and threaded all by itself
+        _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+      });
 
       std::string text = "Adding animation ";
       text += animationPath;
