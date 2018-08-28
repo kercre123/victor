@@ -149,5 +149,6 @@ int fixture_log_stop(const char* params, int len)
     fixture_log_write("\n",1);
 
   gLogging.enabled = false;
+  system("sync");
   return 0;
 }
