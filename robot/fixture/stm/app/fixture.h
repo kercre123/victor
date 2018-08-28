@@ -298,7 +298,7 @@ typedef int error_t;
 
 //<export heading> Power System Errors
 #define ERROR_POWER_SHORT                 619 // Power short circuit detected
-//#define ERROR_BAT_LEAKAGE               620 // Too much leakage through battery when turned off
+#define ERROR_ROBOT_OFF_CHARGER           620 // Robot is off charger - unable to detect charge contact power draw (possible power circuit failure)
 #define ERROR_BAT_UNDERVOLT               621 // Battery voltage too low
 #define ERROR_BAT_CHARGER                 622 // Battery charger not working
 #define ERROR_BAT_OVERVOLT                623 // Battery voltage too high for this test (e.g. charge test)

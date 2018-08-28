@@ -1378,10 +1378,23 @@ void Recharge(void)
 extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void)
 {
-  if( IS_FIXMODE_ROBOT1() )
-    RobotChargeTest( 425, 4000 ); //test charging circuit
-  else
-    RobotChargeTest( 425, 4100 ); //test charging circuit
+  const u16 i_done_ma = 425;
+  const u16 bat_overvolt_mv = IS_FIXMODE_ROBOT1() ? 4000 : 4100;
+  
+  int e, retries=0;
+  while(1)
+  {
+    try { RobotChargeTest( i_done_ma, bat_overvolt_mv ); e = ERROR_OK; } 
+    catch(int err) { e = err; }
+    
+    if( e==ERROR_ROBOT_OFF_CHARGER && ++retries < 3 ) 
+      ConsolePrintf("retrying %i...\n", retries);
+    else
+      break;
+  }
+  
+  if( e != ERROR_OK )
+    throw e;
 }
 
 //Test charging circuit by verifying current draw
@@ -1394,10 +1407,12 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   const int OFF_CHARGER_CNT = 10;
   
   Contacts::setModeRx(); //switch to comm mode
-  Timer::delayMs(500); //let battery voltage settle
+  Timer::delayMs(400); //let battery voltage settle
   int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   //Turn on charging power
+  Board::powerOff(PWR_VEXT);
+  Timer::delayMs(100); //syscon state-machine reset
   Board::powerOn(PWR_VEXT,0);
   Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //delay for syscon to enable charger
   
@@ -1446,12 +1461,11 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
       break;
     
     //error out quickly if robot removed from charge base
-    if( Telapsed > 4*SYSCON_CHG_PWR_DELAY_MS*1000 ) //safetey margin for charging enable before allowing off-contact detect
+    if( Telapsed > SYSCON_CHG_PWR_DELAY_MS*1000 ) //safetey margin for charging enable before allowing off-contact detect
     {
       if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > OFF_CHARGER_CNT) {
-        CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
         ConsolePrintf("robot off charger\n");
-        throw ERROR_BAT_CHARGER;
+        throw ERROR_ROBOT_OFF_CHARGER;
       }
     }
     
