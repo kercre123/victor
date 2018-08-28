@@ -181,7 +181,7 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
 void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
 {
   if (IsControlDelegated()) {
-    // The SDK behavior has deleted to another behavior, and that
+    // The SDK behavior has delegated to another behavior, and that
     // behavior requested an action. Don't inform gateway that the
     // action has completed because it wasn't requested by the SDK.
     //

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+#TODO Update this comment and anything else in file to be good for the public.
+
 """
 This script is needed to use the python sdk as of now (when this file was created) because
 we have turned on client authorization on the robot. This means that all connections will
 require a client token guid to be valid.
 
-Running this script requires that the Robot be on, and connected to the same network as your
+Running this script requires that the Robot be on and connected to the same network as your
 laptop. If you have any trouble, please mention it immediately in the #vic-coz-sdk channel.
 
 
@@ -76,7 +78,7 @@ class Api:
 def get_esn():
     esn = os.environ.get('ANKI_ROBOT_SERIAL')
     if esn is None:
-        esn = input('Enter Robot Serial Number (ex. 00e20100): ')
+        esn = input('Enter Robot Serial Number (ex. 00e20100 from bottom of Vector): ')
     print("Using Serial: {}".format(colored(esn, "cyan")))
     r = requests.get('https://session-certs.token.global.anki-services.com/vic/{}'.format(esn))
     if r.status_code != 200:
@@ -109,7 +111,7 @@ def get_session_token():
     if environ not in valid:
         sys.exit("\n{}: That is not a valid environment".format("Error", "red"))
 
-    username = input("Enter Username: ")
+    username = input("Enter Username (email): ")
     password = getpass("Enter Password: ")
     payload = {'username': username, 'password': password}
 

@@ -42,7 +42,7 @@ def main():
         # and the right wheel at 50 mmps (so Vector will drive Forwards while also
         # turning to the left
         print("Set Vector's wheel motors...")
-        #robot.motors.set_wheel_motors(25, 50)
+        robot.motors.set_wheel_motors(25, 50)
 
         # wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
@@ -58,7 +58,7 @@ def main():
         # Tell Vector to drive the left wheel at 50 mmps (millimeters per second),
         # and the right wheel at -50 mmps (so Vector will turn in-place to the right)
         print("Set Vector's wheel motors...")
-        #robot.motors.set_wheel_motors(50, -50)
+        robot.motors.set_wheel_motors(50, -50)
 
         # Wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
@@ -66,6 +66,10 @@ def main():
         # Stop the wheels
         print("Stop Vector's wheels...")
         robot.motors.set_wheel_motors(0, 0)
+
+        # TODO Do something like this? What did cozmo do? Increase timeout above first?
+        #robot.motors.set_lift_motor(0)
+        #robot.motors.set_head_motor(0)
 
 
 if __name__ == "__main__":
