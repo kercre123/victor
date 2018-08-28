@@ -51,9 +51,9 @@ namespace Vision {
     // Clear currently-tracked faces, e.g. in case camera has moved and could cause trouble
     void Reset();
 
-    void AddFaceIDToIgnoreOnReset(const FaceID_t FaceID);
-    bool HaveFacesToIgnoreOnReset();
-    void ClearFacesToIgnore();
+    void AddAllowedTrackedFace(const FaceID_t faceID);
+    bool HaveAllowedTrackedFaces();
+    void ClearAllowedTrackedFaces();
     
     void EnableDisplay(bool enabled);
     

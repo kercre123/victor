@@ -68,9 +68,9 @@ namespace Vision {
     _pImpl->Reset();
   }
 
-  void FaceTracker::AddFaceIDToIgnoreOnReset(const FaceID_t faceID)
+  void FaceTracker::AddAllowedTrackedFace(const FaceID_t faceID)
   {
-    _pImpl->AddFaceIDToIgnoreOnReset(faceID);
+    _pImpl->AddAllowedTrackedFace(faceID);
   }
   
   void FaceTracker::SetRecognitionIsSynchronous(bool isSynchronous)
@@ -78,14 +78,14 @@ namespace Vision {
     _pImpl->SetRecognitionIsSynchronous(isSynchronous);
   }
 
-  bool FaceTracker::HaveFacesToIgnoreOnReset()
+  bool FaceTracker::HaveAllowedTrackedFaces()
   {
-    return _pImpl->HaveFacesToIgnoreOnReset();
+    return _pImpl->HaveAllowedTrackedFaces();
   }
 
-  void FaceTracker::ClearFacesToIgnore()
+  void FaceTracker::ClearAllowedTrackedFaces()
   {
-    _pImpl->ClearFacesToIgnore();
+    _pImpl->ClearAllowedTrackedFaces();
   }
   
   bool FaceTracker::IsRecognitionSupported()

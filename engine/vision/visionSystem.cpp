@@ -894,7 +894,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
   {
     PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
                       "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
-    if (_faceTracker->HaveFacesToIgnoreOnReset())
+    if (_faceTracker->HaveAllowedTrackedFaces())
     {
       _faceTracker->Reset();
     }
@@ -1932,12 +1932,12 @@ void VisionSystem::ClearImageCache()
   _imageCache->ReleaseMemory();
 }
 
-void VisionSystem::SetTrackingIDToIgnoreOnReset(const Vision::FaceID_t trackingID)
+void VisionSystem::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
 {
-  _faceTracker->AddFaceIDToIgnoreOnReset(trackingID);
+  _faceTracker->AddAllowedTrackedFace(faceID);
 }
 
-void VisionSystem::ClearAllTrackingIDsToIgnoreOnReset()
+void VisionSystem::ClearAllowedTrackedFaces()
 {
   _faceTracker->Reset();
 }

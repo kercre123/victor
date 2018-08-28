@@ -3159,14 +3159,14 @@ namespace Vector {
     }
   }
 
-  void VisionComponent::SetTrackingIDToIgnoreOnReset(const int trackingID)
+  void VisionComponent::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
   {
-    _visionSystem->SetTrackingIDToIgnoreOnReset(trackingID);
+    _visionSystem->AddAllowedTrackedFace(faceID);
   }
 
-  void VisionComponent::ClearAllTrackingIDsToIgnoreOnReset()
+  void VisionComponent::ClearAllowedTrackedFaces()
   {
-    _visionSystem->ClearAllTrackingIDsToIgnoreOnReset();
+    _visionSystem->ClearAllowedTrackedFaces();
   }
 } // namespace Vector
 } // namespace Anki

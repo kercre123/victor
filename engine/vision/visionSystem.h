@@ -218,8 +218,8 @@ namespace Vector {
     
     void ClearImageCache();
 
-    void SetTrackingIDToIgnoreOnReset(const Vision::FaceID_t trackingID);
-    void ClearAllTrackingIDsToIgnoreOnReset();
+    void AddAllowedTrackedFace(const Vision::FaceID_t trackingID);
+    void ClearAllowedTrackedFaces();
     
   protected:
   

@@ -337,8 +337,8 @@ struct DockingErrorSignal;
 
     void EnableSensorRes(bool sensorRes);
 
-    void SetTrackingIDToIgnoreOnReset(const int trackingID);
-    void ClearAllTrackingIDsToIgnoreOnReset();
+    void AddAllowedTrackedFace(const Vision::FaceID_t faceID);
+    void ClearAllowedTrackedFaces();
 
   protected:
     

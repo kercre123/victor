@@ -454,7 +454,7 @@ namespace Vision {
 
   void FaceTracker::Impl::Reset()
   {
-    ClearFacesToIgnore();
+    ClearAllowedTrackedFaces();
     INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
     if(OKAO_NORMAL != result)
     {
@@ -465,9 +465,9 @@ namespace Vision {
     _recognizer.ClearAllTrackingData();
   }
 
-  void FaceTracker::Impl::AddFaceIDToIgnoreOnReset(const FaceID_t faceID)
+  void FaceTracker::Impl::AddAllowedTrackedFace(const FaceID_t faceID)
   {
-    _faceIDsBeingTracked.insert(faceID);
+    _allowedTrackedFaceID.insert(faceID);
   }
 
   void FaceTracker::Impl::SetRecognitionIsSynchronous(bool isSynchronous)
@@ -1083,12 +1083,12 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
-      if (!_faceIDsBeingTracked.empty())
+      if (!_allowedTrackedFaceID.empty())
       {
-        if (_faceIDsBeingTracked.count(detectionInfo.nID) == 0 &&
-            _faceIDsBeingTracked.count(-detectionInfo.nID) == 0)
+        if (_allowedTrackedFaceID.count(detectionInfo.nID) == 0 &&
+            _allowedTrackedFaceID.count(-detectionInfo.nID) == 0)
         {
-          // We only want to update faces that are in _faceIDsBeingTracked
+          // We only want to update faces that are in _allowedTrackedFaceID
           continue; 
         }
       }
@@ -1188,7 +1188,7 @@ namespace Vision {
         // recognition. For example, person A's face could make it into person
         // B's record, thus created the potential for confusion between the
         // faces due to bad data.
-        if (!_faceIDsBeingTracked.empty())
+        if (!_allowedTrackedFaceID.empty())
         {
           continue;
         }
