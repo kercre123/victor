@@ -36,14 +36,14 @@ type ClientToken struct {
 // that stores them.
 // Note: comes from the ClientTokenDocument definition
 type ClientTokenManager struct {
-	ClientTokens     []ClientToken `json:"client_tokens"`
-	jdocIPC          IpcManager    `json:"-"`
-	updateChan       chan struct{} `json:"-"`
-	recentTokenIndex int           `json:"-"`
+	ClientTokens     []ClientToken      `json:"client_tokens"`
+	jdocIPC          IpcManager         `json:"-"`
+	updateChan       chan chan struct{} `json:"-"`
+	recentTokenIndex int                `json:"-"`
 }
 
 func (ctm *ClientTokenManager) Init() error {
-	ctm.updateChan = make(chan struct{})
+	ctm.updateChan = make(chan chan struct{})
 	ctm.jdocIPC.Connect(ipc.GetSocketPath(jdocDomainSocket), jdocSocketSuffix)
 	ctm.UpdateTokens()
 	return nil
@@ -111,6 +111,7 @@ func (ctm *ClientTokenManager) UpdateTokens() error {
 	if err != nil {
 		return nil
 	}
+	log.Println("Updated valid tokens")
 	return nil
 }
 
@@ -165,10 +166,16 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	return msg, nil
 }
 
+func (ctm *ClientTokenManager) ForceUpdate(response chan struct{}) {
+	ctm.recentTokenIndex = 0
+	ctm.ClientTokens = []ClientToken{}
+	ctm.updateChan <- response
+}
+
 func (ctm *ClientTokenManager) updateTicker() {
-	ticker := time.NewTicker(time.Minute * 5)
-	for _ = range ticker.C {
-		ctm.updateChan <- struct{}{}
+	ticker := time.NewTicker(15 * time.Minute)
+	for range ticker.C {
+		ctm.updateChan <- nil
 	}
 }
 
@@ -176,9 +183,11 @@ func (ctm *ClientTokenManager) StartUpdateListener() {
 	go ctm.updateTicker()
 	for {
 		select {
-		case <-ctm.updateChan:
-			log.Println("Updating tokens...")
+		case response := <-ctm.updateChan:
 			ctm.UpdateTokens()
+			if response != nil {
+				response <- struct{}{}
+			}
 		}
 	}
 }

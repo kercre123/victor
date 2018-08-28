@@ -37,7 +37,7 @@ func (manager *IpcManager) Connect(path string, name string) {
 	for {
 		conn, err := ipc.NewUnixgramClient(path, name)
 		if err != nil {
-			log.Printf("Couldn't create sockets for %s & %s_%s - retrying: %s", path, path, name, err.Error())
+			log.Printf("Couldn't create sockets for %s & %s_%s - retrying: %s\n", path, path, name, err.Error())
 			time.Sleep(5 * time.Second)
 		} else {
 			manager.conn = conn
@@ -196,6 +196,21 @@ func (manager *SwitchboardIpcManager) Init() {
 	manager.Connect(path.Join(SocketPath, switchboardDomainSocket), "client")
 }
 
+func (manager *SwitchboardIpcManager) handleSwitchboardMessages(msg *gw_clad.SwitchboardResponse) {
+	switch msg.Tag() {
+	case gw_clad.SwitchboardResponseTag_ExternalConnectionRequest:
+		manager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionResponse(&gw_clad.ExternalConnectionResponse{
+			IsConnected:  len(connectionId) != 0,
+			ConnectionId: connectionId,
+		}))
+	case gw_clad.SwitchboardResponseTag_ClientGuidRefreshRequest:
+		response := make(chan struct{})
+		tokenManager.ForceUpdate(response)
+		<-response
+		manager.Write(gw_clad.NewSwitchboardRequestWithClientGuidRefreshResponse(&gw_clad.ClientGuidRefreshResponse{}))
+	}
+}
+
 func (manager *SwitchboardIpcManager) ProcessMessages() {
 	var msg gw_clad.SwitchboardResponse
 	var b, block []byte
@@ -218,6 +233,7 @@ func (manager *SwitchboardIpcManager) ProcessMessages() {
 			continue
 		}
 
+		manager.handleSwitchboardMessages(&msg)
 		manager.SendToListeners(msg)
 	}
 }
@@ -264,7 +280,7 @@ func (manager *SwitchboardIpcManager) deleteFromMap(listener chan gw_clad.Switch
 
 func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardResponseTag, numChannels int) (func(), chan gw_clad.SwitchboardResponse) {
 	result := make(chan gw_clad.SwitchboardResponse, numChannels)
-	log.Printf("Listening for %+v", tag)
+	log.Printf("Listening for %+v\n", tag)
 	manager.managerMutex.Lock()
 	defer manager.managerMutex.Unlock()
 	slice := manager.managedChannels[tag]
@@ -359,7 +375,7 @@ func (manager *EngineCladIpcManager) deleteFromMap(listener chan gw_clad.Message
 
 func (manager *EngineCladIpcManager) CreateChannel(tag gw_clad.MessageRobotToExternalTag, numChannels int) (func(), chan gw_clad.MessageRobotToExternal) {
 	result := make(chan gw_clad.MessageRobotToExternal, numChannels)
-	log.Printf("Listening for %+v", tag)
+	log.Printf("Listening for %+v\n", tag)
 	manager.managerMutex.Lock()
 	defer manager.managerMutex.Unlock()
 	slice := manager.managedChannels[tag]

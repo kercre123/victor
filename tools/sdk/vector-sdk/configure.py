@@ -26,6 +26,7 @@ from pathlib import Path
 import requests
 import sys
 
+from google.protobuf.json_format import MessageToJson
 import grpc
 try:
     # Non-critical import to add color output
@@ -95,8 +96,8 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
     response = interface.UserAuthentication(request)
     if response.code != api.protocol.UserAuthenticationResponse.AUTHORIZED:
         sys.exit("Failed to authorize request: {}\n\n"
-                 "Make sure to follow the logging in to Vector steps first: "
-                 "https://ankiinc.atlassian.net/wiki/spaces/VD/pages/449380359/Logging+a+Victor+into+an+Anki+account".format(response))
+                 "Make sure to either connect via Chewie (preferred) or follow the steps for logging a Vector into an account first: "
+                 "https://ankiinc.atlassian.net/wiki/spaces/VD/pages/449380359/Logging+a+Victor+into+an+Anki+account".format(MessageToJson(response, including_default_value_fields=True)))
     print("Successfully retrieved guid")
     return response.client_token_guid
 

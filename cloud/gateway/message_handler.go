@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"sync"
 	"time"
 
 	"anki/log"
@@ -21,6 +22,11 @@ import (
 )
 
 const faceImagePixelsPerChunk = 600
+
+var (
+	connectionIdLock sync.Mutex
+	connectionId     string
+)
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
@@ -818,9 +824,54 @@ func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) 
 	return false
 }
 
+func (service *rpcService) checkConnectionId(id string) bool {
+	connectionIdLock.Lock()
+	defer connectionIdLock.Unlock()
+	if len(connectionId) != 0 {
+		return false
+	}
+	f, responseChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_ExternalConnectionResponse, 1)
+	defer f()
+	switchboardManager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionRequest(&gw_clad.ExternalConnectionRequest{}))
+
+	response := <-responseChan
+	connectionResponse := response.GetExternalConnectionResponse()
+	if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
+		return false
+	}
+	connectionId = id
+	return true
+}
+
 // Long running message for sending events to listening sdk users
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
+
+	isPrimary := service.checkConnectionId(in.ConnectionId)
+	if isPrimary {
+		defer func() { connectionId = "" }()
+	}
+	err := stream.Send(&extint.EventResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		Event: &extint.Event{
+			EventType: &extint.Event_ConnectionResponse{
+				ConnectionResponse: &extint.ConnectionResponse{
+					IsPrimary: isPrimary,
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Println("Closing stream:", err)
+		return err
+	} else if err = stream.Context().Err(); err != nil {
+		log.Println("Closing stream:", err)
+		// This is the case where the user disconnects the stream
+		// We should still return the err in case the user doesn't think they disconnected
+		return err
+	}
 
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 512)
 	defer f()
@@ -935,7 +986,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 		case <-done:
 			return nil
 		case response := <-responses:
-			log.Printf("BehaviorControl update: %+v", response)
+			log.Printf("BehaviorControl update: %+v\n", response)
 			if err := out.Send(&response); err != nil {
 				return err
 			} else if err = out.Context().Err(); err != nil {

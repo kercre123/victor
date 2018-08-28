@@ -52,7 +52,7 @@ def parse_test_args(parser: argparse.ArgumentParser = None):
     if args.serial is None:
         parser.error('The "serial" argument is required '
                      'or it may be set with the environment variable '
-                     '"VECTOR_ROBOT_SERIAL"')
+                     '"ANKI_ROBOT_SERIAL"')
     return args
 
 

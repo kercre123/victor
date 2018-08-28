@@ -144,6 +144,8 @@ private:
 
   VoidSignal _internetTimerSignal;
 
+  std::vector<std::shared_ptr<SafeHandle>> _handles;
+
   //
   // V3 Request to Listen for
   //
