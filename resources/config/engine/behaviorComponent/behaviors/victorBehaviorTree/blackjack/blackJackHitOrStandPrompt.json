@@ -9,7 +9,7 @@
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
   "textToSpeechBehaviorID"              : "BlackJackTextToSpeech",
   "vocalPromptString"                   : "Hit or Stand?",
-  "maxNumberOfReprompts"                : 2,
+  "maxNumberOfReprompts"                : 3,
   "stopListeningOnIntents"              : true,
   "backpackLights"                      : false,
   "playListeningGetIn"                  : false,
