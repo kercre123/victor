@@ -151,6 +151,9 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 }
 
 func ProtoPathMotionProfileToClad(msg *extint.PathMotionProfile) gw_clad.PathMotionProfile {
+	if msg == nil {
+		return gw_clad.PathMotionProfile{}
+	}
 	return gw_clad.PathMotionProfile{
 		SpeedMmps:                msg.SpeedMmps,
 		AccelMmps2:               msg.AccelMmps2,
@@ -623,7 +626,7 @@ func SendFaceDataAsChunks(in *extint.DisplayFaceImageRGBRequest, chunkCount int,
 
 		firstByte := (pixelsPerChunk * 2) * i
 		finalByte := firstByte + (pixelCount * 2)
-		slicedBinaryData := in.FaceData[firstByte:finalByte]
+		slicedBinaryData := in.FaceData[firstByte:finalByte] // TODO: Make this not implode on empty
 
 		for j := 0; j < pixelCount; j++ {
 			uintAsBytes := slicedBinaryData[j*2 : j*2+2]
@@ -830,14 +833,16 @@ func (service *rpcService) checkConnectionId(id string) bool {
 	if len(connectionId) != 0 {
 		return false
 	}
-	f, responseChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_ExternalConnectionResponse, 1)
-	defer f()
-	switchboardManager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionRequest(&gw_clad.ExternalConnectionRequest{}))
+	if IsOnRobot {
+		f, responseChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_ExternalConnectionResponse, 1)
+		defer f()
+		switchboardManager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionRequest(&gw_clad.ExternalConnectionRequest{}))
 
-	response := <-responseChan
-	connectionResponse := response.GetExternalConnectionResponse()
-	if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
-		return false
+		response := <-responseChan
+		connectionResponse := response.GetExternalConnectionResponse()
+		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
+			return false
+		}
 	}
 	connectionId = id
 	return true
@@ -1604,6 +1609,10 @@ func (service *rpcService) UpdateUserEntitlements(ctx context.Context, in *extin
 // NOTE: this is the only function that won't need to check the client_token_guid header
 func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.UserAuthenticationRequest) (*extint.UserAuthenticationResponse, error) {
 	log.Println("Received rpc request UserAuthentication(", in, ")")
+
+	if !IsOnRobot {
+		return nil, grpc.Errorf(codes.Internal, "User authentication is only available on the robot")
+	}
 
 	f, authChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_AuthResponse, 1)
 	defer f()
