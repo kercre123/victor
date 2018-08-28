@@ -1184,9 +1184,9 @@ namespace Vision {
 
         // We don't want to do recognition during tracking because we are
         // relaxing the constraints of when we reset the face tracker. This
-        // relaxation has the potential to pollute our the records we use
+        // relaxation has the potential to pollute the records we use for
         // recognition. For example, person A's face could make it into person
-        // B's record, thus created the potential for confusion between the
+        // B's record, thus creating the potential for confusion between the
         // faces due to bad data.
         if (!_allowedTrackedFaceID.empty())
         {
