@@ -1,3 +1,5 @@
+// +build vicos
+
 package stream
 
 import (

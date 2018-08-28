@@ -1,3 +1,5 @@
+// +build vicos
+
 package jwt
 
 func tokenPath() string {
