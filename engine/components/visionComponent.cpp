@@ -2332,6 +2332,45 @@ namespace Vector {
 
   void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
   {
+    // These are "failsafe" checks to avoid getting duplicate names in the face records.
+    // This is a pretty gross, heavy-handed way to achieve this, but is meant to try
+    // to catch bugs in the complex EnrollFace behavior in the wild.
+    const auto& idsWithName = GetFaceIDsWithName(name);
+    if(mergeWithID == Vision::UnknownFaceID)
+    {
+      if(!idsWithName.empty())
+      {
+        // This should not happen (caller error?), but for now wallpaper over it and avoid duplicate names polluting
+        // the system
+        mergeWithID = *idsWithName.begin(); // Just use first. Existence of multiple will be checked in next 'if'
+        std::string idStr;
+        for(auto idWithName : idsWithName)
+        {
+          idStr += std::to_string(idWithName);
+          idStr += " ";
+        }
+        PRINT_NAMED_ERROR("VisionComponent.AssignNameToFace.DuplicateNameWithoutMerge",
+                          "Name '%s' already in use (IDs:%s) with no mergeID specified. Forcing merge with ID:%d",
+                          Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str(), mergeWithID);
+      }
+    }
+    if(mergeWithID != Vision::UnknownFaceID) // deliberate recheck of mergeWithID, not "else"
+    {
+      if(idsWithName.size() != 1)
+      {
+        // THIS IS VERY BAD! WE HAVE SOMEHOW ENROLLED TWO RECORDS WITH THE SAME NAME!
+        std::string idStr;
+        for(auto idWithName : idsWithName)
+        {
+          idStr += std::to_string(idWithName);
+          idStr += " ";
+        }
+        PRINT_NAMED_ERROR("VisionComponent.AssignNameToFace.MultipleIDsWithSameName",
+                          "Found %zu IDs with name '%s': %s",
+                          idsWithName.size(), Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str());
+      }
+    }
+    
     // Pair this name and ID in the vision system
     Lock();
     _visionSystem->AssignNameToFace(faceID, name, mergeWithID);

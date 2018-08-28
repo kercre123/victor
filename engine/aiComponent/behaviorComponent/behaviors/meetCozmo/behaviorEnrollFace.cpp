@@ -392,7 +392,6 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
     // 2. We have room for a new face
     
     if(!_dVars->enrollingSpecificID
-       && (_dVars->persistent.state == State::NotStarted)  // if previously interrupted after enrollment completed, this name is ok
        && ANKI_VERIFY(!_dVars->persistent.isManualReEnroll,
                       "BehaviorEnrollFace.InitEnrollmentSettings.ManualReEnrollWithNoSaveID", ""))
     {
@@ -464,23 +463,6 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     moveComp.EnableUnexpectedRotationWithoutMotors( true );
   }
 
-  // Check for special case interruption
-  {
-    const bool prevNameSet = !_dVars->persistent.settings->name.empty();
-    const bool nameChanged = (_dVars->faceName != _dVars->persistent.settings->name);
-    const bool interrupted = (_dVars->persistent.state != State::NotStarted);
-    if(interrupted && prevNameSet && nameChanged)
-    {
-      // We were interrupted by a new enrollment. Just start the new enrollment from scratch
-      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.InterruptedByNewEnrollment",
-                    "WasEnrolling %s, interrupted to enroll %s. Starting over.",
-                    Util::HidePersonallyIdentifiableInfo(_dVars->persistent.settings->name.c_str()),
-                    Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
-      
-      _dVars->persistent.state = State::NotStarted;
-    }
-  }
-  
   const Result settingsResult = InitEnrollmentSettings();
   if(RESULT_OK != settingsResult)
   {
@@ -492,6 +474,25 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     return;
   }
   
+  // Check for special case interruption
+  // Must happen _after_ InitEnrollmentSettings (so that _dVars->faceName is populated)
+  {
+    DEV_ASSERT(!_dVars->faceName.empty(), "BehaviorEnrollFace.InitInternal.FaceNameNotSet");
+    const bool prevNameSet = !_dVars->persistent.settings->name.empty();
+    const bool nameChanged = (_dVars->faceName != _dVars->persistent.settings->name);
+    const bool interrupted = (_dVars->persistent.state != State::NotStarted);
+    if(interrupted && prevNameSet && nameChanged)
+    {
+      // We were interrupted by a new enrollment. Just start the new enrollment from scratch
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.InterruptedByNewEnrollment",
+                    "Was enrolling %s, interrupted to enroll %s. Starting over.",
+                    Util::HidePersonallyIdentifiableInfo(_dVars->persistent.settings->name.c_str()),
+                    Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
+      
+      _dVars->persistent.state = State::NotStarted;
+    }
+  }
+
   _dVars->persistent.requestedRescan = false;
   
   // Because we use SayTextAction instead of the tts coordinator for TTS, there's no way to do an
@@ -686,6 +687,20 @@ void BehaviorEnrollFace::BehaviorUpdate()
         // If we complete successfully, unset the observed ID/name
         _dVars->observedUnusableID = Vision::UnknownFaceID;
         _dVars->observedUnusableName.clear();
+        
+        if(ANKI_DEV_CHEATS)
+        {
+          // Sanity checks
+          ANKI_VERIFY(!_dVars->faceName.empty(), "BehaviorEnrollFace.BehaviorUpdate.AboutToAssignWithEmptyName", "");
+          
+          const bool isReenrollment = (_dVars->saveID != Vision::UnknownFaceID);
+          const auto& idsWithName = GetBEI().GetVisionComponent().GetFaceIDsWithName(_dVars->faceName);
+          ANKI_VERIFY( (isReenrollment && idsWithName.size()==1) || (!isReenrollment && idsWithName.empty()),
+                      "BehaviorEnrollFace.BehavbiorUpdate.BadNumIDsWithName",
+                      "IsReenrollment:%d NumIDsWithName:%zu (%s)",
+                      isReenrollment, idsWithName.size(), Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
+        }
+        
         GetBEI().GetVisionComponent().AssignNameToFace(_dVars->faceID, _dVars->faceName, _dVars->saveID);
 
         // Note that we will wait to disable face enrollment until the very end of
