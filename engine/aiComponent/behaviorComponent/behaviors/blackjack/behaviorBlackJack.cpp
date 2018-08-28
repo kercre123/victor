@@ -337,7 +337,7 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerTied()){
     _dVars.outcome = EOutcome::Tie;
-    std::string tieString(std::to_string(_game.GetDealerScore()) + ". We tied." );
+    std::string tieString(std::to_string(_game.GetDealerScore()) + ". Push." );
     DelegateIfInControl(SetUpSpeakingBehavior(tieString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasBlackJack()){
