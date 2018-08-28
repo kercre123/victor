@@ -7,7 +7,7 @@
   },
   
   "behaviors" : [
-    "TriggerWordDetected",
+    "TriggerWordDetected", // todo: this should be a separate instance so it can have sendDAS = true
     "EmergencyModeAnimDispatcher"
   ]
 }

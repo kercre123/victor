@@ -132,6 +132,14 @@ protected:
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  enum class DASType : uint8_t {
+    None=0,
+    TriggerAndStats,
+    TriggerOnly,
+  };
+  
+  static DASType DASTypeFromString(const std::string& str);
 
   struct InstanceConfig
   {
@@ -176,6 +184,7 @@ private:
     RecentOccurrenceTracker::Handle cloudErrorHandle;
     
     // for das
+    DASType dasType;
     std::vector<uint32_t> triggerWordScores;
     int lastTriggerWordScore;
     float nextTimeSendDas_s;

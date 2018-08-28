@@ -82,6 +82,7 @@ namespace {
   const char* kExitAfterGetInKey                   = "exitAfterGetIn";
   const char* kExitAfterListeningIfNotStreamingKey = "exitAfterListeningIfNotStreaming";
   const char* kPushResponseKey                     = "pushResponse";
+  const char* kDASType                             = "dasType";
   
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
@@ -166,6 +167,12 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   // get the behavior to play after an intent comes in
   JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
   
+  _iVars.dasType = DASType::None;
+  if( config[kDASType].isString() )
+  {
+    _iVars.dasType = DASTypeFromString( config[kDASType].asString() );
+  }
+  
   std::string animGetIn;
   if( JsonTools::GetValueOptional( config, kAnimListeningGetIn, animGetIn ) && !animGetIn.empty() )
   {
@@ -233,6 +240,7 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kExitAfterGetInKey,
     kExitAfterListeningIfNotStreamingKey,
     kPushResponseKey,
+    kDASType,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -317,10 +325,13 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
     const auto& msg = event.GetData().Get_triggerWordDetected();
     _triggerDirection = msg.direction;
     
-    DASMSG(wakeword_triggered, "wakeword.triggered", "Wake word was detected");
-    DASMSG_SET(i1, msg.triggerScore, "Score");
-    DASMSG_SET(i2, msg.isButtonPress, "Source (0=Voice, 1=Button)");
-    DASMSG_SEND();
+    if( (_iVars.dasType == DASType::TriggerOnly) || (_iVars.dasType == DASType::TriggerAndStats) )
+    {
+      DASMSG(wakeword_triggered, "wakeword.triggered", "Wake word was detected");
+      DASMSG_SET(i1, msg.triggerScore, "Score");
+      DASMSG_SET(i2, msg.isButtonPress, "Source (0=Voice, 1=Button)");
+      DASMSG_SEND();
+    }
     
     _iVars.triggerWordScores.push_back( msg.triggerScore );
     _iVars.lastTriggerWordScore = msg.triggerScore;
@@ -1031,15 +1042,40 @@ void BehaviorReactToVoiceCommand::UpdateDAS()
   const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if( currTime >= _iVars.nextTimeSendDas_s )
   {
-    DASMSG(wakeword_stats, "wakeword.stats", "Info on recent wakeword detection");
-    DASMSG_SET(i1, _iVars.triggerWordScores.size(), "Number of triggers in X seconds [ask a dev]"); // kTimeBetweenDASMsg_s seconds
-    // this one is sent to help build a distribution of scores
-    DASMSG_SET(i2, _iVars.lastTriggerWordScore, "The last score that was received (ignore if 0... that means no trigger word)");
-    DASMSG_SEND();
+    if( _iVars.dasType == DASType::TriggerAndStats )
+    {
+      DASMSG(wakeword_stats, "wakeword.stats", "Info on recent wakeword detection");
+      DASMSG_SET(i1, _iVars.triggerWordScores.size(), "Number of triggers in X seconds [ask a dev]"); // kTimeBetweenDASMsg_s seconds
+      // this one is sent to help build a distribution of scores
+      DASMSG_SET(i2, _iVars.lastTriggerWordScore, "The last score that was received (ignore if 0... that means no trigger word)");
+      DASMSG_SEND();
+    }
     
     _iVars.lastTriggerWordScore = 0;
     _iVars.triggerWordScores.clear();
     _iVars.nextTimeSendDas_s = currTime + kTimeBetweenDASMsg_s;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToVoiceCommand::DASType BehaviorReactToVoiceCommand::DASTypeFromString(const std::string& str)
+{
+  if( str == "None" )
+  {
+    return DASType::None;
+  }
+  else if( str == "TriggerAndStats" )
+  {
+    return DASType::TriggerAndStats;
+  }
+  else if( str == "TriggerOnly" )
+  {
+    return DASType::TriggerOnly;
+  }
+  else
+  {
+    ANKI_VERIFY( false && "invalid DASType", "BehaviorReactToVoiceCommand.DASTypeFromString.Invalid", "Invalid DASType '%s'", str.c_str());
+    return DASType::None;
   }
 }
 
