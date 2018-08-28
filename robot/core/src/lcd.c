@@ -17,7 +17,7 @@
 #define TRUE (!FALSE)
 
 
-static const int MAX_TRANSFER = 0x1000;
+static const int MAX_TRANSFER = (LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT * 2);
 
 static int lcd_use_fb; // use /dev/fb0?
 
