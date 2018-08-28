@@ -2,8 +2,6 @@
   "behaviorClass": "DanceToTheBeatCoordinator",
   "behaviorID": "DanceToTheBeatCoordinator",
   
-  "associatedActiveFeature" : "ListeningForBeats",
-  
   "wantsToBeActivatedCondition": {
     "conditionType" : "Compound",
     "and" : [
@@ -23,6 +21,8 @@
       }
     ]
   },
+  
+  "associatedActiveFeature" : "DanceToTheBeat",
 
   "listeningBehavior"         : "ListenForBeats",
   "longListeningBehavior"     : "ListenForBeatsLong",
