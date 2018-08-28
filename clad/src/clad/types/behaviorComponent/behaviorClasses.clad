@@ -91,6 +91,7 @@ enum uint_8 BehaviorClass {
   LiftLoadTest,
   PlannerTest,
   PowerSaveTest,
+  PowerSaveStressTest,
   ReactToBody,
 
   // devBehaviors/playpen

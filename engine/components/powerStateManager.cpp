@@ -38,9 +38,7 @@ namespace {
 #define CONSOLE_GROUP "PowerSave"
 
 CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
-// TODO (Al): Reenable once VIC-4615 is solved or find work around to reduce cpu usage
-// without stopping the camera
-CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, false);
+CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);

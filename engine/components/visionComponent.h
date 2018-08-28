@@ -122,6 +122,7 @@ struct DockingErrorSignal;
     Result SetNextImage(Vision::ImageRGB& image);
 
     void Pause(bool isPaused);
+    void EnableImageCapture(bool enable) { _enableImageCapture = enable; }
 
     // If the vision thread isn't busy, grab the lock and release all internally held images and return
     // true. Otherwise, return false
@@ -468,6 +469,8 @@ struct DockingErrorSignal;
     
     // Threading for OpenCV
     int _openCvNumThreads = 1;
+
+    bool _enableImageCapture = true;
     
   }; // class VisionComponent
   

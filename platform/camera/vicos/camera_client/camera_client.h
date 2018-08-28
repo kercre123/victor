@@ -122,8 +122,14 @@ int camera_start(struct anki_camera_handle* camera);
 int camera_stop(struct anki_camera_handle* camera);
 
 // De-initializes camera, makes it available to rest of system
+// This is asynchronous, check return value of camera_destroy
+// to know when the camera has actually been released
 int camera_release(struct anki_camera_handle* camera);
 
+// Attempts to destroy a previously released camera
+// Returns 1 if camera has been successfully destroyed, 0 otherwise
+int camera_destroy(struct anki_camera_handle* camera);
+  
 // Acquire (lock) the most recent available frame for reading
 int camera_frame_acquire(struct anki_camera_handle* camera, anki_camera_frame_t** out_frame);
 

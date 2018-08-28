@@ -2535,6 +2535,11 @@ namespace Vector {
 
   bool VisionComponent::TryReleaseInternalImages()
   {
+    if(_cvtFuture.valid())
+    {
+      return false;
+    }
+    
     if( _lock.try_lock() ) {
       ReleaseImage(_currentImg);
       ReleaseImage(_nextImg);
@@ -2546,7 +2551,12 @@ namespace Vector {
   }
 
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
-  {    
+  {
+    if(!_enableImageCapture)
+    {
+      return false;
+    }
+    
     // Wait until the current async conversion is finished before getting another
     // frame
     if(_cvtFuture.valid())

@@ -86,7 +86,9 @@ typedef struct {
 //
 struct client_ctx {
   pthread_t ipc_thread;
-
+  pthread_mutex_t ipc_mutex;
+  int waiting_for_delete;
+  
   int fd;
   int is_running;
   int request_close;
@@ -477,29 +479,52 @@ static int write_outgoing_data(struct client_ctx *ctx)
 
 static int enqueue_message(struct client_ctx *ctx, anki_camera_msg_id_t msg_id)
 {
+  pthread_mutex_lock(&ctx->ipc_mutex);
   uint32_t cursor = ctx->tx_cursor;
+
+  const int TX_SIZE = (sizeof(ctx->tx_packets) / sizeof(ctx->tx_packets[0]));
+  if(cursor+1 >= TX_SIZE)
+  {
+    pthread_mutex_unlock(&ctx->ipc_mutex);
+    loge("%s: tx message buffer full, dropping message %d", __func__, msg_id);
+    return -1;
+  }
+  
   struct anki_camera_msg *msg = &ctx->tx_packets[cursor];
   msg->msg_id = msg_id;
-  ctx->tx_cursor = cursor + 1;
+  ctx->tx_cursor = cursor + 1;     
+  pthread_mutex_unlock(&ctx->ipc_mutex);
   logv("%s: enqueue_message: %d", __func__, msg_id);
   return 0;
 }
 
 static int enqueue_message_with_payload(struct client_ctx *ctx, anki_camera_msg_id_t msg_id, void* buf, size_t len)
 {
+  pthread_mutex_lock(&ctx->ipc_mutex);
   uint32_t cursor = ctx->tx_cursor;
+
+  const int TX_SIZE = (sizeof(ctx->tx_packets) / sizeof(ctx->tx_packets[0]));
+  if(cursor+1 >= TX_SIZE)
+  {
+    pthread_mutex_unlock(&ctx->ipc_mutex);
+    loge("%s: tx message buffer full, dropping message %d", __func__, msg_id);
+    return -1;
+  }
+
   struct anki_camera_msg *msg = &ctx->tx_packets[cursor];
   msg->msg_id = msg_id;
 
   size_t num = len;
   if(num > ANKI_CAMERA_MSG_PAYLOAD_LEN)
   {
+    pthread_mutex_unlock(&ctx->ipc_mutex);
     loge("%s: enqueue_message payload size too large %u > %u", __func__, len, ANKI_CAMERA_MSG_PAYLOAD_LEN);
     return -1;
   }
   memcpy(msg->payload, buf, num);
   
   ctx->tx_cursor = cursor + 1;
+  pthread_mutex_unlock(&ctx->ipc_mutex);
   logv("%s: enqueue_message: %d", __func__, msg_id);
   return 0;
 }
@@ -691,6 +716,11 @@ static int event_loop(struct client_ctx *ctx)
   }
   while (ctx->is_running);
 
+  if(ctx->status == ANKI_CAMERA_STATUS_OFFLINE)
+  {
+    return -1;
+  }
+  
   return rc;
 }
 
@@ -713,7 +743,9 @@ static void *camera_client_thread(void *camera_handle_ptr)
       break;
     }
 
-    if (client->status == ANKI_CAMERA_STATUS_IDLE) {
+    // Only handle requests to start if we are idle and aren't waiting for a delete/shutdown
+    // request to be completed
+    if (client->status == ANKI_CAMERA_STATUS_IDLE && !client->waiting_for_delete) {
       if (client->request_start) {
         client->status = ANKI_CAMERA_STATUS_STARTING;
         enqueue_message(client, ANKI_CAMERA_MSG_C2S_START);
@@ -730,17 +762,6 @@ static void *camera_client_thread(void *camera_handle_ptr)
       enqueue_message(client, ANKI_CAMERA_MSG_C2S_HEARTBEAT);
       lastHeartbeatTs = now;
     }
-  }
-
-  // close socket
-  if (client->fd >= 0) {
-    close(client->fd);
-  }
-
-  // unmap & free ion mem
-  rc = unmap_camera_capture_buf(client);
-  if (rc != 0) {
-    loge("%s: error unmapping capture buffer", __func__);
   }
 
   client->status = ANKI_CAMERA_STATUS_OFFLINE;
@@ -773,6 +794,8 @@ int camera_init(struct anki_camera_handle **camera)
     return -1;
   }
 
+  pthread_mutex_init(&client->ipc_mutex, NULL);
+  
   if (pthread_create(&client->ipc_thread, NULL, camera_client_thread, &s_camera_handle)) {
     loge("%s: error creating thread: %s", __func__, strerror(errno));
     return -1;
@@ -809,14 +832,38 @@ int camera_stop(struct anki_camera_handle *camera)
 // De-initializes camera, makes it available to rest of system
 int camera_release(struct anki_camera_handle *camera)
 {
+  CAMERA_HANDLE_P(camera)->camera_client.waiting_for_delete = 1;
   enqueue_message(&CAMERA_HANDLE_P(camera)->camera_client, ANKI_CAMERA_MSG_C2S_CLIENT_UNREGISTER);
+  return 0;
+}
 
-  if (pthread_join(CAMERA_HANDLE_P(camera)->camera_client.ipc_thread, NULL)) {
-    loge("%s: error joining thread: %s", __func__, strerror(errno));
-    return -1;
+int camera_destroy(struct anki_camera_handle* camera)
+{
+  int rc = pthread_tryjoin_np(CAMERA_HANDLE_P(camera)->camera_client.ipc_thread, NULL);
+  if(rc != 0)
+  {
+    return 0;
+  }
+  
+  pthread_mutex_destroy(&CAMERA_HANDLE_P(camera)->camera_client.ipc_mutex);
+
+  struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
+
+  // close socket
+  if (client->fd >= 0) {
+    close(client->fd);
+    client->fd = -1;
   }
 
-  return 0;
+  // unmap & free ion mem
+  rc = unmap_camera_capture_buf(client);
+  if (rc != 0) {
+    loge("%s: error unmapping capture buffer", __func__);
+  }
+
+  client->waiting_for_delete = 0;
+  
+  return 1;
 }
 
 // Attempt (lock) the last available frame for reading
@@ -946,6 +993,11 @@ int camera_frame_release(struct anki_camera_handle *camera, uint32_t frame_id)
 
 anki_camera_status_t camera_status(struct anki_camera_handle *camera)
 {
+  if(camera == NULL)
+  {
+    return ANKI_CAMERA_STATUS_OFFLINE;
+  }
+  
   struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
   if (client == NULL) {
     return ANKI_CAMERA_STATUS_OFFLINE;
