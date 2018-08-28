@@ -93,6 +93,7 @@ void Process_RtsCloudSessionRequest(const Anki::Vector::ExternalComms::RtsCloudS
 void Process_RtsCloudSessionResponse(const Anki::Vector::ExternalComms::RtsCloudSessionResponse& msg);
 void Process_RtsAppConnectionIdRequest(const Anki::Vector::ExternalComms::RtsAppConnectionIdRequest& msg);
 void Process_RtsAppConnectionIdResponse(const Anki::Vector::ExternalComms::RtsAppConnectionIdResponse& msg);
+void Process_RtsResponse(const Anki::Vector::ExternalComms::RtsResponse& msg);
 void Process_Error(const Anki::Vector::ExternalComms::Error& msg);
 void Process_RtsConnRequest(const Anki::Vector::ExternalComms::RtsConnRequest& msg);
 void Process_RtsConnResponse(const Anki::Vector::ExternalComms::RtsConnResponse& msg);

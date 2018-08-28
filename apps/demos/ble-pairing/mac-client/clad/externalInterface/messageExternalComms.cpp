@@ -48,6 +48,22 @@ const uint8_t RtsConnTypeVersionHash[16] = {
     0x8b, 0x45, 0x41, 0x3b, 0x69, 0x63, 0xf4, 0x6, 0x39, 0xe3, 0x40, 0xd8, 0x65, 0x2b, 0xbf, 0xc 
 };
 
+const char* EnumToString(const RtsResponseCode m)
+{
+  switch(m) {
+    case RtsResponseCode::NotCloudAuthorized:
+      return "NotCloudAuthorized";
+    default: return nullptr;
+  }
+  return nullptr;
+}
+
+const char* RtsResponseCodeVersionHashStr = "d8b9cc44b8287568ef1a3a1d2f6da965";
+
+const uint8_t RtsResponseCodeVersionHash[16] = { 
+    0xd8, 0xb9, 0xcc, 0x44, 0xb8, 0x28, 0x75, 0x68, 0xef, 0x1a, 0x3a, 0x1d, 0x2f, 0x6d, 0xa9, 0x65 
+};
+
 const char* EnumToString(const RtsCloudStatus m)
 {
   switch(m) {
@@ -2986,6 +3002,75 @@ const char* RtsAppConnectionIdResponseVersionHashStr = "7c746c5bbb9f5df0eae86b5c
 
 const uint8_t RtsAppConnectionIdResponseVersionHash[16] = { 
     0x7c, 0x74, 0x6c, 0x5b, 0xbb, 0x9f, 0x5d, 0xf0, 0xea, 0xe8, 0x6b, 0x5c, 0x6a, 0x89, 0xe0, 0x7b 
+};
+
+// MESSAGE RtsResponse
+
+RtsResponse::RtsResponse(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsResponse::RtsResponse(const uint8_t* buff, size_t len)
+: RtsResponse::RtsResponse({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsResponse::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->code);
+  buffer.WritePString<uint16_t>(this->responseMessage);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsResponse::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->code);
+  buffer.ReadPString<uint16_t>(this->responseMessage);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsResponse::Size() const
+{
+  size_t result = 0;
+  // code
+  result += 2; // RtsResponseCode
+  // responseMessage
+  result += 2; // uint_16 (string length)
+  result += this->responseMessage.length(); // uint_8
+  return result;
+}
+
+bool RtsResponse::operator==(const RtsResponse& other) const
+{
+  return (this->code == other.code &&
+    this->responseMessage == other.responseMessage);
+}
+
+bool RtsResponse::operator!=(const RtsResponse& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsResponseVersionHashStr = "6654bf79b167206af5aac44fd5f7ef45";
+
+const uint8_t RtsResponseVersionHash[16] = { 
+    0x66, 0x54, 0xbf, 0x79, 0xb1, 0x67, 0x20, 0x6a, 0xf5, 0xaa, 0xc4, 0x4f, 0xd5, 0xf7, 0xef, 0x45 
 };
 
 // MESSAGE Error
@@ -8625,6 +8710,9 @@ RtsConnection_4::RtsConnection_4(const RtsConnection_4& other)
   case Tag::RtsAppConnectionIdResponse:
     new(&(this->_RtsAppConnectionIdResponse)) Anki::Vector::ExternalComms::RtsAppConnectionIdResponse(other._RtsAppConnectionIdResponse);
     break;
+  case Tag::RtsResponse:
+    new(&(this->_RtsResponse)) Anki::Vector::ExternalComms::RtsResponse(other._RtsResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -8733,6 +8821,9 @@ RtsConnection_4::RtsConnection_4(RtsConnection_4&& other) noexcept
     break;
   case Tag::RtsAppConnectionIdResponse:
     new(&(this->_RtsAppConnectionIdResponse)) Anki::Vector::ExternalComms::RtsAppConnectionIdResponse(std::move(other._RtsAppConnectionIdResponse));
+    break;
+  case Tag::RtsResponse:
+    new(&(this->_RtsResponse)) Anki::Vector::ExternalComms::RtsResponse(std::move(other._RtsResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -8846,6 +8937,9 @@ RtsConnection_4& RtsConnection_4::operator=(const RtsConnection_4& other)
   case Tag::RtsAppConnectionIdResponse:
     new(&(this->_RtsAppConnectionIdResponse)) Anki::Vector::ExternalComms::RtsAppConnectionIdResponse(other._RtsAppConnectionIdResponse);
     break;
+  case Tag::RtsResponse:
+    new(&(this->_RtsResponse)) Anki::Vector::ExternalComms::RtsResponse(other._RtsResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -8957,6 +9051,9 @@ RtsConnection_4& RtsConnection_4::operator=(RtsConnection_4&& other) noexcept
     break;
   case Tag::RtsAppConnectionIdResponse:
     new(&(this->_RtsAppConnectionIdResponse)) Anki::Vector::ExternalComms::RtsAppConnectionIdResponse(std::move(other._RtsAppConnectionIdResponse));
+    break;
+  case Tag::RtsResponse:
+    new(&(this->_RtsResponse)) Anki::Vector::ExternalComms::RtsResponse(std::move(other._RtsResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -10814,6 +10911,62 @@ void RtsConnection_4::Set_RtsAppConnectionIdResponse(Anki::Vector::ExternalComms
   }
 }
 
+RtsConnection_4 RtsConnection_4::CreateRtsResponse(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse)
+{
+  RtsConnection_4 m;
+  m.Set_RtsResponse(new_RtsResponse);
+  return m;
+}
+
+RtsConnection_4::RtsConnection_4(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse)
+{
+  new(&this->_RtsResponse) Anki::Vector::ExternalComms::RtsResponse(std::move(new_RtsResponse));
+  _tag = Tag::RtsResponse;
+}
+
+const Anki::Vector::ExternalComms::RtsResponse& RtsConnection_4::Get_RtsResponse() const
+{
+  assert(_tag == Tag::RtsResponse);
+  return this->_RtsResponse;
+}
+
+void RtsConnection_4::Set_RtsResponse(const Anki::Vector::ExternalComms::RtsResponse& new_RtsResponse)
+{
+  if(this->_tag == Tag::RtsResponse) {
+    this->_RtsResponse = new_RtsResponse;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsResponse) Anki::Vector::ExternalComms::RtsResponse(new_RtsResponse);
+    _tag = Tag::RtsResponse;
+  }
+}
+
+template<>
+const Anki::Vector::ExternalComms::RtsResponse& RtsConnection_4::Get_<RtsConnection_4::Tag::RtsResponse>() const
+{
+  assert(_tag == Tag::RtsResponse);
+  return this->_RtsResponse;
+}
+
+template<>
+RtsConnection_4 RtsConnection_4::Create_<RtsConnection_4::Tag::RtsResponse>(Anki::Vector::ExternalComms::RtsResponse member)
+{
+  return CreateRtsResponse(std::move(member));
+}
+
+void RtsConnection_4::Set_RtsResponse(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse)
+{
+  if (this->_tag == Tag::RtsResponse) {
+    this->_RtsResponse = std::move(new_RtsResponse);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsResponse) Anki::Vector::ExternalComms::RtsResponse(std::move(new_RtsResponse));
+    _tag = Tag::RtsResponse;
+  }
+}
+
 size_t RtsConnection_4::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -11093,6 +11246,14 @@ size_t RtsConnection_4::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsAppConnectionIdResponse.Unpack(buffer);
     }
     break;
+  case Tag::RtsResponse:
+    if (newTag != oldTag) {
+      new(&(this->_RtsResponse)) Anki::Vector::ExternalComms::RtsResponse(buffer);
+    }
+    else {
+      this->_RtsResponse.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -11209,6 +11370,9 @@ size_t RtsConnection_4::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsAppConnectionIdResponse:
     this->_RtsAppConnectionIdResponse.Pack(buffer);
     break;
+  case Tag::RtsResponse:
+    this->_RtsResponse.Pack(buffer);
+    break;
   default:
     break;
   }
@@ -11318,6 +11482,9 @@ size_t RtsConnection_4::Size() const
   case Tag::RtsAppConnectionIdResponse:
     result += this->_RtsAppConnectionIdResponse.Size(); // RtsAppConnectionIdResponse
     break;
+  case Tag::RtsResponse:
+    result += this->_RtsResponse.Size(); // RtsResponse
+    break;
   default:
     break;
   }
@@ -11396,6 +11563,8 @@ bool RtsConnection_4::operator==(const RtsConnection_4& other) const
     return this->_RtsAppConnectionIdRequest == other._RtsAppConnectionIdRequest;
   case Tag::RtsAppConnectionIdResponse:
     return this->_RtsAppConnectionIdResponse == other._RtsAppConnectionIdResponse;
+  case Tag::RtsResponse:
+    return this->_RtsResponse == other._RtsResponse;
   default:
     return true;
   }
@@ -11508,6 +11677,9 @@ void RtsConnection_4::ClearCurrent()
   case Tag::RtsAppConnectionIdResponse:
     _RtsAppConnectionIdResponse.~RtsAppConnectionIdResponse();
     break;
+  case Tag::RtsResponse:
+    _RtsResponse.~RtsResponse();
+    break;
   default:
     break;
   }
@@ -11582,15 +11754,17 @@ const char* RtsConnection_4TagToString(const RtsConnection_4Tag tag) {
     return "RtsAppConnectionIdRequest";
   case RtsConnection_4Tag::RtsAppConnectionIdResponse:
     return "RtsAppConnectionIdResponse";
+  case RtsConnection_4Tag::RtsResponse:
+    return "RtsResponse";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnection_4VersionHashStr = "16330e2bdb33882142e5df7dfda14bae";
+const char* RtsConnection_4VersionHashStr = "63d392bed59b5e66be87740b304580f1";
 
 const uint8_t RtsConnection_4VersionHash[16] = { 
-    0x16, 0x33, 0xe, 0x2b, 0xdb, 0x33, 0x88, 0x21, 0x42, 0xe5, 0xdf, 0x7d, 0xfd, 0xa1, 0x4b, 0xae 
+    0x63, 0xd3, 0x92, 0xbe, 0xd5, 0x9b, 0x5e, 0x66, 0xbe, 0x87, 0x74, 0xb, 0x30, 0x45, 0x80, 0xf1 
 };
 
 // UNION RtsConnection_1

@@ -166,6 +166,10 @@ bool RtsHandlerV4::IsAuthenticated() {
 
   if(_isFirstTimePair) {
     Log::Write("&&& Has cloud authed? %s", _hasCloudAuthed?"yes":"no");
+    if(!_hasCloudAuthed) {
+      SendRtsMessage<RtsResponse>(RtsResponseCode::NotCloudAuthorized, "Not cloud authorized.");
+    } 
+
     return _hasCloudAuthed;
   } else {
     return true;
@@ -272,7 +276,7 @@ void RtsHandlerV4::HandleRtsChallengeMessage(const Vector::ExternalComms::RtsCon
 }
 
 void RtsHandlerV4::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -316,7 +320,7 @@ void RtsHandlerV4::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
 }
 
 void RtsHandlerV4::HandleRtsWifiIpRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -347,7 +351,7 @@ void RtsHandlerV4::HandleRtsStatusRequest(const Vector::ExternalComms::RtsConnec
 }
 
 void RtsHandlerV4::HandleRtsWifiScanRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -844,7 +848,7 @@ void RtsHandlerV4::SendWifiAccessPointResponse(bool success, std::string ssid, s
 }
 
 void RtsHandlerV4::SendWifiScanResult() {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -856,11 +860,17 @@ void RtsHandlerV4::SendWifiScanResult() {
   std::vector<Anki::Vector::ExternalComms::RtsWifiScanResult_3> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
+    bool provisioned = wifiResults[i].provisioned;
+
+    if(_isFirstTimePair && !_hasCloudAuthed) {
+      provisioned = false;
+    }
+
     Anki::Vector::ExternalComms::RtsWifiScanResult_3 result = Anki::Vector::ExternalComms::RtsWifiScanResult_3(wifiResults[i].auth,
       wifiResults[i].signal_level,
       wifiResults[i].ssid,
       wifiResults[i].hidden,
-      wifiResults[i].provisioned);
+      provisioned);
 
       wifiScanResults.push_back(result);
   }
@@ -870,7 +880,7 @@ void RtsHandlerV4::SendWifiScanResult() {
 }
 
 void RtsHandlerV4::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 

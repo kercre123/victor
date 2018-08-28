@@ -1108,6 +1108,19 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         [self HandleChallengeSuccessMessage:msg];
         break;
       }
+      case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsResponse: {
+        Anki::Vector::ExternalComms::RtsResponse msg = rtsMsg.Get_RtsResponse();
+        
+        if(msg.code == Anki::Vector::ExternalComms::RtsResponseCode::NotCloudAuthorized) {
+          printf("Vector has an Anki account owner, and you need to prove that's you!\n");
+          printf("Use the command 'anki-auth SESSION_TOKEN' to do so.\n");
+        }
+        
+        if(!_readyForNextCommand) {
+          _readyForNextCommand = true;
+        }
+        break;
+      }
       case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsWifiConnectResponse_3: {
         Anki::Vector::ExternalComms::RtsWifiConnectResponse_3 msg = rtsMsg.Get_RtsWifiConnectResponse_3();
         
