@@ -39,7 +39,8 @@
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
-
+// TEST
+#include <fstream>
 
 namespace Anki {
 namespace Vector {
@@ -49,6 +50,11 @@ namespace {
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceEnableBeamFormingMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceDisableBeamFormingMicDataProc, CONSOLE_GROUP, false);
+  
+  CONSOLE_VAR(bool, kMicData_CollectFinalMicData, CONSOLE_GROUP, false);
+  
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
 
@@ -472,7 +478,16 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // When the robot is moving or the speaker is playing, we use the "fallback policy", meaning we essentially disable
   // beamforming so that we aren't focusing on the gear/speaker noise (note we still run SE processing to combine the
   // channels when using the fallback policy).
-  const bool shouldUseFallbackPolicy = robotIsMoving || _isSpeakerActive;
+  bool shouldUseFallbackPolicy = robotIsMoving || _isSpeakerActive;
+  
+  if (kMicData_ForceEnableBeamFormingMicDataProc) {
+    shouldUseFallbackPolicy = false;
+  }
+  else if (kMicData_ForceDisableBeamFormingMicDataProc) {
+    shouldUseFallbackPolicy = true;
+  }
+  
+  
   if (shouldUseFallbackPolicy != _usingFallbackPolicy) {
     const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
     SEDiagSetInt32(_policyFallbackFlag, newSetting);
@@ -569,6 +584,32 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
       bufferOut[i] = audioChunk[i] - (bias >> iirCoefPower);
       // Gain multiplier of 8 gives good results
       bufferOut[i] <<= 3;
+    }
+  }
+  
+  // HACK: Write final Mic data
+  static bool collectingData = false;
+  if (kMicData_CollectFinalMicData || collectingData) {
+    static std::ofstream waveStream;
+    if (kMicData_CollectFinalMicData && !collectingData) {
+      // Open Stream
+      collectingData = true;
+      waveStream.open("/data/FinalMicData_16k.data");
+      LOG_WARNING("MicDataProcessor::ProcessMicrophonesSE.StartWriteFile",
+                  "shouldUseFallbackPolicy %d activityFlag %d isLowPowerMode %d",
+                  shouldUseFallbackPolicy, activityFlag, isLowPowerMode);
+    }
+    else if (!kMicData_CollectFinalMicData && collectingData) {
+      // Close Stream
+      collectingData = false;
+      waveStream.close();
+      LOG_WARNING("MicDataProcessor::ProcessMicrophonesSE.EndWriteFile",
+                  "shouldUseFallbackPolicy %d activityFlag %d isLowPowerMode %d",
+                  shouldUseFallbackPolicy, activityFlag, isLowPowerMode);
+    }
+    if (collectingData) {
+      // Write file
+      waveStream.write((char*)bufferOut, sizeof(AudioUtil::AudioSample) * kSamplesPerBlock);
     }
   }
 
