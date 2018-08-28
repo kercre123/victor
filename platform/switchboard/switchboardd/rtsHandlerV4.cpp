@@ -164,7 +164,7 @@ bool RtsHandlerV4::IsAuthenticated() {
   return true;
   #endif
 
-  if(_isFirstTimePair) {
+  if(_isFirstTimePair && _hasOwner) {
     Log::Write("&&& Has cloud authed? %s", _hasCloudAuthed?"yes":"no");
     if(!_hasCloudAuthed) {
       SendRtsMessage<RtsResponse>(RtsResponseCode::NotCloudAuthorized, "Not cloud authorized.");
