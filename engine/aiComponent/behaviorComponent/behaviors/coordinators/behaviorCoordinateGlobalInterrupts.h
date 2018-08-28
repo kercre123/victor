@@ -52,9 +52,10 @@ private:
     IBEIConditionPtr  triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
+    AreBehaviorsActivatedHelper behaviorsThatShouldSuppressTimerAntics;
+
     std::shared_ptr<BehaviorReactToVoiceCommand> reactToVoiceCommandBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
-    ICozmoBehaviorPtr weatherCoordinatorBehavior;
 
     ICozmoBehaviorPtr meetVictorBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;

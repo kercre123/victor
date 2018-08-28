@@ -65,6 +65,9 @@ namespace{
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressTouch = { BEHAVIOR_CLASS(BlackJack) };
 
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressCliff = { BEHAVIOR_CLASS(BlackJack) };
+
+  static const std::set<BehaviorClass> kBeahviorClassesToSuppressTimerAntics = {{ BEHAVIOR_CLASS(BlackJack),
+                                                                                  BEHAVIOR_CLASS(CoordinateWeather) }};
   
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
     BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
@@ -134,7 +137,6 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
-  _iConfig.weatherCoordinatorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(WeatherResponses));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
   
@@ -151,11 +153,14 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
     _iConfig.behaviorsThatShouldntReactToTouch.AddBehavior(BC, behaviorClass);
   }
 
+  for(const auto& behaviorClass : kBeahviorClassesToSuppressTimerAntics){
+    _iConfig.behaviorsThatShouldSuppressTimerAntics.AddBehavior(BC, behaviorClass);
+  }
+
   _iConfig.reactToCliffBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToCliff));
   for(const auto& behaviorClass : kBehaviorClassesToSuppressCliff){
     _iConfig.behaviorsThatShouldntReactToCliff.AddBehavior(BC, behaviorClass);
   }
-
 
   std::set<ICozmoBehaviorPtr> driveToFaceBehaviors = BC.FindBehaviorsByClass(BEHAVIOR_CLASS(DriveToFace));
   _iConfig.driveToFaceBehaviors.reserve( driveToFaceBehaviors.size() );
@@ -225,12 +230,12 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
 
-  // Suppress timer antics if weather is running
-  if(_iConfig.weatherCoordinatorBehavior->IsActivated()){
+  // Suppress timer antics if necessary
+  if(_iConfig.behaviorsThatShouldSuppressTimerAntics.AreBehaviorsActivated() ) {
     const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
     _iConfig.timerCoordBehavior->SuppressAnticThisTick(tickCount);
   }
-  
+
   // this will suppress the streaming POST-wakeword pending
   // the "do a fist bump" part of "hey victor"
   const bool shouldSuppressStreaming = shouldSuppressTriggerWordBehavior;
