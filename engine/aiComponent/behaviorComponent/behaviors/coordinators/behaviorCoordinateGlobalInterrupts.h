@@ -68,6 +68,10 @@ private:
     AreBehaviorsActivatedHelper behaviorsThatShouldntReactToSoundAwake;
     ICozmoBehaviorPtr reactToSoundAwakeBehavior;
 
+    AreBehaviorsActivatedHelper behaviorsThatShouldntReactToTouch;
+    ICozmoBehaviorPtr reactToTouchPettingBehavior;
+
+    AreBehaviorsActivatedHelper behaviorsThatShouldntReactToCliff;
     ICozmoBehaviorPtr reactToCliffBehavior;
     std::vector<std::shared_ptr<BehaviorDriveToFace>> driveToFaceBehaviors;
     

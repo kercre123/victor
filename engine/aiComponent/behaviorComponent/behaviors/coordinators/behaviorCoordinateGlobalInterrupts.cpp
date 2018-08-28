@@ -61,6 +61,10 @@ namespace{
                                                                                    BEHAVIOR_CLASS(PopAWheelie),
                                                                                    BEHAVIOR_CLASS(PounceWithProx),
                                                                                    BEHAVIOR_CLASS(RollBlock) }};
+
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressTouch = { BEHAVIOR_CLASS(BlackJack) };
+
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressCliff = { BEHAVIOR_CLASS(BlackJack) };
   
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
     BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
@@ -142,7 +146,17 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
     _iConfig.behaviorsThatShouldntReactToSoundAwake.AddBehavior(BC, behaviorClass);
   }
 
+  _iConfig.reactToTouchPettingBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToTouchPetting));
+  for(const auto& behaviorClass : kBehaviorClassesToSuppressTouch){
+    _iConfig.behaviorsThatShouldntReactToTouch.AddBehavior(BC, behaviorClass);
+  }
+
   _iConfig.reactToCliffBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToCliff));
+  for(const auto& behaviorClass : kBehaviorClassesToSuppressCliff){
+    _iConfig.behaviorsThatShouldntReactToCliff.AddBehavior(BC, behaviorClass);
+  }
+
+
   std::set<ICozmoBehaviorPtr> driveToFaceBehaviors = BC.FindBehaviorsByClass(BEHAVIOR_CLASS(DriveToFace));
   _iConfig.driveToFaceBehaviors.reserve( driveToFaceBehaviors.size() );
   for( const auto& ptr : driveToFaceBehaviors ) {
@@ -173,20 +187,6 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   }
 
   bool shouldSuppressTriggerWordBehavior = false;
-  bool isBlackjackRunning = false;
-
-  {
-    auto callback = [&isBlackjackRunning](const ICozmoBehavior& behavior) {
-      if( behavior.GetClass() == BEHAVIOR_CLASS(BlackJack)){
-        isBlackjackRunning = true;
-      }
-
-      return true; // Iterate over the entire stack
-    };
-
-    const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
-    behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
-  }
 
   if ( shouldSuppressTriggerWordBehavior )
   {
@@ -281,9 +281,16 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
 
-  // Vector should not respond to cliffs while playing blackjack
+  // Suppress ReactToTouchPetting if needed
   {
-    if(isBlackjackRunning){
+    if( _iConfig.behaviorsThatShouldntReactToTouch.AreBehaviorsActivated() ) {
+      _iConfig.reactToTouchPettingBehavior->SetDontActivateThisTick(GetDebugLabel());
+    }
+  }
+
+  // Suppress ReactToCliff if needed
+  {
+    if( _iConfig.behaviorsThatShouldntReactToCliff.AreBehaviorsActivated() ) {
       _iConfig.reactToCliffBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }
