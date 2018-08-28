@@ -42,6 +42,7 @@ namespace {
 
 static const size_t kMaxTicksToWarn = 2;
 static const size_t kMaxTicksToClear = 3;
+static const float kTimeToClearWaitingForTriggerWordGetIn_s = 3.0f;
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
@@ -113,7 +114,12 @@ void UserIntentComponent::ClearPendingTriggerWord()
 
 void UserIntentComponent::SetTriggerWordPending()
 {
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // assume get in animation is playing
   _waitingForTriggerWordGetInToFinish = true;
+  _waitingForTriggerWordGetInToFinish_setTime_s = currTime_s;
+
   if(!_responseToTriggerWordMap.empty()){
     // TODO: VIC-5733 This also needs to either check if _responseToTriggerWordMap contains an empty anim, or listen
     // for playing anims and compare tags
@@ -133,7 +139,7 @@ void UserIntentComponent::SetTriggerWordPending()
   }
 
   _pendingTrigger = true;
-  _pendingTriggerTick = BaseStationTimer::getInstance()->GetTickCount();
+  _pendingTriggerTick = currTime_s;
 
   if( _wasIntentError ) {
     PRINT_NAMED_WARNING("UserIntentComponent.SetTriggerWordPending.ClearingError",
@@ -518,7 +524,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
   
   
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
-  // const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // if things pend too long they will queue up and trigger at the wrong time, which will be wrong and
   // confusing. Issue warnings here and clear the pending tick / intent if they aren't handled quickly enough
@@ -535,8 +541,20 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
                         "Trigger has been pending for %zu ticks, forcing a clear",
                         dt);
       _pendingTrigger = false;
+      _waitingForTriggerWordGetInToFinish = false;
     }
   }
+
+  if( _waitingForTriggerWordGetInToFinish ) {
+    const float dt = currTime_s - _waitingForTriggerWordGetInToFinish_setTime_s;
+    if( dt >= kTimeToClearWaitingForTriggerWordGetIn_s ) {
+      PRINT_NAMED_WARNING("UserIntentComponent.Update.WaitingForTriggerWordGetInToFinish.ForceClear",
+                          "Have been waiting for %f seconds for trigger word get in anim to finish, going ahead anyway",
+                          dt);
+      _waitingForTriggerWordGetInToFinish = false;
+    }
+  }
+
 
   if( _pendingIntent != nullptr ) {
     if( _pendingIntentTimeoutEnabled ) {
@@ -636,6 +654,10 @@ void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
       RobotInterface::SetTriggerWordResponse blankMessage;
       _robot->SendMessage(RobotInterface::EngineToRobot(std::move(blankMessage)));
     }
+
+    PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.PopResponseToTriggerWord",
+                   "Removed trigger word response id '%s'",
+                   id.c_str() );
   }
 }
 
@@ -672,8 +694,14 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
     _responseToTriggerWordMap.erase(iter);
   }
 
-  _responseToTriggerWordMap.emplace_back(TriggerWordResponseEntry(id, std::move(response)));
+  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.PushResponseToTriggerWord",
+                 "Pushing trigger word response id '%s' (streaming %s, get in %s)",
+                 id.c_str(),
+                 response.shouldTriggerWordStartStream ? "enabled" : "disabled",
+                 response.getInAnimationName.c_str());
+
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(response)) );
+  _responseToTriggerWordMap.emplace_back(TriggerWordResponseEntry(id, std::move(response)));
 }
 
 

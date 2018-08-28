@@ -284,6 +284,7 @@ private:
   std::vector<TriggerWordResponseEntry> _responseToTriggerWordMap;
   AnimationTag _tagForTriggerWordGetInCallbacks;
   bool _waitingForTriggerWordGetInToFinish = false;
+  float _waitingForTriggerWordGetInToFinish_setTime_s = 0.0f;
 
 };
 
