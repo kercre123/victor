@@ -572,6 +572,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     // Otherwise if it's determined there's really no activity right now, we're skipping the standard SE processing
     // We simply remove the DC bias and apply some gain to the first mic channel and pass it along
     
+    ANKI_CPU_PROFILE("ProcessSingleMicrophoneCheap");
+    
     // Our bias is stored as a fixed-point value
     constexpr int iirCoefPower = 10;
     constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
@@ -588,6 +590,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   }
   
   // HACK: Write final Mic data
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   static bool collectingData = false;
   if (kMicData_CollectFinalMicData || collectingData) {
     static std::ofstream waveStream;
@@ -612,9 +615,10 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
       waveStream.write((char*)bufferOut, sizeof(AudioUtil::AudioSample) * kSamplesPerBlock);
     }
   }
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   MicDirectionData result{};
-  result.activeState = activityFlag;
+  result.activeState = (kMicData_ForceDisableMicDataProc || activityFlag); // Do Trigger word detection
   result.latestPowerValue = latestPowerValue;
   result.latestNoiseFloor = latestNoiseFloor;
 
