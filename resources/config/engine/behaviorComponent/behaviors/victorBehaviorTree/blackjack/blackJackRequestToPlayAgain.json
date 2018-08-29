@@ -10,7 +10,7 @@
   "vocalPromptString"              : "Play Another Round?",
   "maxNumberOfReprompts"           : 1,
   "stopListeningOnIntents"         : true,
-  "playListeningGetIn"             : false,
-  "playListeningGetOut"            : false,
+  "playListeningGetIn"             : true,
+  "playListeningGetOut"            : true,
   "backpackLights"                 : true
 }
