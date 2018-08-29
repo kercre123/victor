@@ -118,8 +118,6 @@ public:
   // Enable/disable moving of eyes while tracking. Default is false.
   void SetMoveEyes(bool moveEyes);
 
-  void SetMinAbsRelPanAngle(f32 minAbsRelPanAngle_rad);
-  
 protected:
 
   ITrackAction(const std::string name, const RobotActionType type);

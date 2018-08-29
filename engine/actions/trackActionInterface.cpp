@@ -166,13 +166,6 @@ void ITrackAction::SetTiltDuration(f32 tiltDuration_sec)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ITrackAction::SetMinAbsRelPanAngle(f32 minAbsRelPanAngle_rad)
-{
-  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMinAbsRelPanAngle.ActionAlreadyStarted");
-  _minAbsRelPanAngle_rad = minAbsRelPanAngle_rad;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetUpdateTimeout(float timeout_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetUpdateTimeout.ActionAlreadyStarted");
