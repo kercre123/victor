@@ -95,6 +95,7 @@ void BehaviorOnboardingLookAtPhone::BehaviorUpdate()
 void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneUp };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl(action, [this](const ActionResult& res){
     RunLoopAction();
   });
@@ -104,6 +105,7 @@ void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 void BehaviorOnboardingLookAtPhone::RunLoopAction()
 {
   auto* loopAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop, 0 };
+  loopAction->SetRenderInEyeHue( false );
   DelegateIfInControl( loopAction ); // loop forever, waiting for a message
 }
  
@@ -111,6 +113,7 @@ void BehaviorOnboardingLookAtPhone::RunLoopAction()
 void BehaviorOnboardingLookAtPhone::MoveHeadDown()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneDown };
+  action->SetRenderInEyeHue( false );
   DelegateNow( action, [this](const ActionResult& res){
     CancelSelf();
   });

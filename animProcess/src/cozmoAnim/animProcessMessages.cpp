@@ -226,7 +226,9 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
            "Anim: %s, Tag: %d",
            animName.c_str(), msg.tag);
 
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms);
+  const bool interruptRunning = true;
+  const bool overrideEyes = !msg.renderInEyeHue;
+  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)

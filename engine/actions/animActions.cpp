@@ -139,9 +139,9 @@ namespace Anki {
         }
       };
 
-      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, 
+      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining,
                                                                      _interruptRunning, callback, GetTag(), 
-                                                                     _timeout_sec, _startAtTime_ms);
+                                                                     _timeout_sec, _startAtTime_ms, _renderInEyeHue);
 
       if(res != RESULT_OK) {
         _stoppedPlaying = true;

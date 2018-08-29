@@ -262,7 +262,8 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           AnimationCompleteCallback callback,
                                           const u32 actionTag,
                                           float timeout_sec,
-                                          u32 startAt_ms)
+                                          u32 startAt_ms,
+                                          bool renderInEyeHue)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
@@ -292,7 +293,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   }
 
   const Tag currTag = GetNextTag();
-  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, startAt_ms, currTag, animName) == RESULT_OK) {
+  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, startAt_ms, currTag, renderInEyeHue, animName) == RESULT_OK) {
     SetAnimationCallback(animName, callback, currTag, actionTag, numLoops, timeout_sec);
   }
   
