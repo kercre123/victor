@@ -277,8 +277,9 @@ namespace HeadController {
             Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
 
             firstCalibration_ = false;
-            calState_ = HCS_IDLE;
-            inPosition_ = true;
+            isCalibrated_     = true;
+            calState_         = HCS_IDLE;
+            inPosition_       = true;
             break;
           }
         } // end switch(calState_)
@@ -302,9 +303,7 @@ namespace HeadController {
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
 
-
               // Pretend calibration is fine
-              isCalibrated_ = true;
               calState_ = HCS_COMPLETE;
             }
           }
