@@ -1630,6 +1630,11 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 	token := auth.AppToken
 	if auth.Error == cloud_clad.TokenError_NoError {
 		code = extint.UserAuthenticationResponse_AUTHORIZED
+
+		// Force an update of the tokens
+		response := make(chan struct{})
+		tokenManager.ForceUpdate(response)
+		<-response
 	} else {
 		token = ""
 	}

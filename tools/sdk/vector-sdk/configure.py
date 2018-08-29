@@ -77,12 +77,20 @@ class Api:
 
 def get_esn():
     esn = os.environ.get('ANKI_ROBOT_SERIAL')
-    if esn is None:
-        esn = input('Enter Robot Serial Number (ex. 00e20100 from bottom of Vector): ')
-    print("Using Serial: {}".format(colored(esn, "cyan")))
+    if esn is None or len(esn) == 0:
+        print("Please find your Robot Serial Number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.\n")
+        esn = input('Enter Robot Serial Number: ')
+    else:
+        print("Found Robot Serial Number in environment variable '{}'".format(colored("ANKI_ROBOT_SERIAL", "green")))
+    esn = esn.lower()
+    print("Using Robot Serial Number: {}".format(colored(esn, "cyan")))
+    print("\nDownloading certificate from the cloud...", end="")
+    sys.stdout.flush()
     r = requests.get('https://session-certs.token.global.anki-services.com/vic/{}'.format(esn))
     if r.status_code != 200:
+        print(colored(" ERROR", "red"))
         sys.exit(r.content)
+    print(colored(" DONE\n", "green"))
     cert = r.content
     return cert, esn
 
@@ -90,17 +98,19 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
     # Pin the robot certificate for opening the channel
     creds = grpc.ssl_channel_credentials(root_certificates=cert)
 
-    print("Attempting to download guid from {} at {}:443...".format(colored(name, "cyan"), colored(ip, "cyan")))
+    print("Attempting to download guid from {} at {}:443...".format(colored(name, "cyan"), colored(ip, "cyan")), end="")
+    sys.stdout.flush()
     channel = grpc.secure_channel("{}:443".format(ip), creds,
                                         options=(("grpc.ssl_target_name_override", name,),))
     interface = api.client.ExternalInterfaceStub(channel)
     request = api.protocol.UserAuthenticationRequest(user_session_id=session_id.encode('utf-8'))
     response = interface.UserAuthentication(request)
     if response.code != api.protocol.UserAuthenticationResponse.AUTHORIZED:
+        print(colored(" ERROR", "red"))
         sys.exit("Failed to authorize request: {}\n\n"
                  "Make sure to either connect via Chewie (preferred) or follow the steps for logging a Vector into an account first: "
                  "https://ankiinc.atlassian.net/wiki/spaces/VD/pages/449380359/Logging+a+Victor+into+an+Anki+account".format(MessageToJson(response, including_default_value_fields=True)))
-    print("Successfully retrieved guid")
+    print(colored(" DONE\n", "green"))
     return response.client_token_guid
 
 def get_session_token():
@@ -109,25 +119,38 @@ def get_session_token():
     if environ == "":
         environ = "dev"
     if environ not in valid:
-        sys.exit("\n{}: That is not a valid environment".format("Error", "red"))
+        sys.exit("{}: That is not a valid environment".format(colored("ERROR", "red")))
 
-    username = input("Enter Username (email): ")
+    print("Enter your email and password. Make sure to use the same account that was used to set up Vector.")
+    username = input("Enter Email: ")
     password = getpass("Enter Password: ")
     payload = {'username': username, 'password': password}
 
+    print("\nAuthenticating user with the cloud...", end="")
+    sys.stdout.flush()
     api = Api(environ)
     r = requests.post(api.handler.url, data=payload, headers=api.handler.headers)
-
+    if r.status_code != 200:
+        print(colored(" ERROR", "red"))
+        sys.exit(r.content)
+    print(colored(" DONE\n", "green"))
     return json.loads(r.content)
 
 def get_name_and_ip():
-    robot_name = os.environ['VECTOR_ROBOT_NAME']
-    if robot_name is None:
-        robot_name = input("Enter Robot Name (ex. Vector-A1B2): ")
+    robot_name = os.environ.get('VECTOR_ROBOT_NAME')
+    if robot_name is None or len(robot_name) == 0:
+        print("Find your Robot Name (ex. Vector-A1B2) by placing Vector on the charger, and double clicking Vector's backpack button.")
+        robot_name = input("Enter Robot Name: ")
+    else:
+        print("Found Robot Name in environment variable '{}'".format(colored("VECTOR_ROBOT_NAME", "green")))
     print("Using Robot Name: {}".format(colored(robot_name, "cyan")))
-    ip = os.environ['ANKI_ROBOT_HOST']
-    if ip is None:
-        ip = input("Enter Robot IP (ex. 192.168.42.42): ")
+    ip = os.environ.get('ANKI_ROBOT_HOST')
+    if ip is None or len(ip) == 0:
+        print("Find your Robot IP (ex. 192.168.42.42) by placing Vector on the charger, and double clicking Vector's backpack button.\n"
+              "If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
+        ip = input("Enter Robot IP: ")
+    else:
+        print("Found Robot IP in environment variable '{}'".format(colored("ANKI_ROBOT_HOST", "green")))
     print("Using IP: {}".format(colored(ip, "cyan")))
     return robot_name, ip
 
@@ -163,7 +186,7 @@ def main():
     config[esn]["guid"] = guid.decode("utf-8")
     with os.fdopen(os.open(config_file, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as f:
         config.write(f)
-    print(colored("DONE!", "green"))
+    print(colored("SUCCESS!", "green"))
 
 if __name__ == "__main__":
     main()

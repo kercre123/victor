@@ -1,71 +1,15 @@
-import argparse
-import configparser
 import json
 import os
-from pathlib import Path
-import requests
-from requests_toolbelt.adapters import host_header_ssl
 import sys
 
 import pytest
-try:
-    # Non-critical import to add color output
-    from termcolor import colored
-except:
-    def colored(text, color=None, on_color=None, attrs=None):
-        return text
 
 try:
-    from anki_vector.util import parse_test_args
-    from google.protobuf.json_format import MessageToJson, Parse, MessageToDict
     import anki_vector.messaging.protocol as p
 except ImportError:
     sys.exit("Error: This script requires you to install the Vector SDK")
 
-
-class Connection:
-    def __init__(self, serial, port=443):
-        config_file = str(Path.home() / ".anki-vector" / "sdk_config.ini")
-        config = configparser.ConfigParser()
-        config.read(config_file)
-        self.info = {**config[serial]}
-        self.port = port
-        self.proxies = {'https://{}'.format(self.info["name"]): 'https://{}:{}'.format(self.info["ip"], port)}
-        print(self.info)
-        self.session = requests.Session()
-        self.session.mount("https://", host_header_ssl.HostHeaderSSLAdapter())
-
-    @staticmethod
-    def default_callback(response, response_type):
-        print("Default response: {}".format(colored(response.content, "cyan")))
-
-    @staticmethod
-    def default_stream_callback(response, response_type):
-        for i, r in enumerate(response.iter_lines()):
-            print("Shawn Test: {}".format(r))
-            data = json.loads(r.decode('utf8'))
-            print("Stream response: {}".format(colored(json.dumps(data, indent=4, sort_keys=True), "cyan")))
-            assert "result" in data
-            print("Converted Protobuf: {}".format(Parse(json.dumps(data["result"]), response_type, ignore_unknown_fields=True)))
-            if i >= 10:
-                return
-
-
-    def send(self, url_suffix, message, response_type, stream=False, callback=None):
-        if callback is None:
-            callback = Connection.default_callback if not stream else Connection.default_stream_callback
-        data = MessageToJson(message, including_default_value_fields=True)
-        url = "https://{}:{}/{}".format(self.info["ip"], self.port, url_suffix)
-        print(f"{url}")
-        with self.session.post(url, data, stream=stream, verify=self.info["cert"], headers={'Host': self.info["name"],'Authorization': 'Bearer {}'.format(self.info["guid"])}) as r:
-            callback(r, response_type)
-
-@pytest.fixture(scope="module")
-def vector_connection():
-    return Connection("Local", 8443)
-
-def test_event(vector_connection):
-    vector_connection.send("v1/event_stream", p.EventRequest(), p.EventResponse(), stream=True)
+from util import vector_connection
 
 # NOTE: Crashes when too long. Being temporarily removed by Ross until it works.
 # def test_status_history(vector_connection):
@@ -79,19 +23,6 @@ def test_list_animations(vector_connection):
 
 # def test_display_face_image_rgb(vector_connection):
 #     vector_connection.send("v1/display_face_image_rgb", p.DisplayFaceImageRGBRequest(), p.DisplayFaceImageRGBResponse())
-
-@pytest.mark.parametrize("request_params", [
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.UNKNOWN)},
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.OVERRIDE_ALL)},
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.TOP_PRIORITY_AI)},
-    {"control_release": p.ControlRelease()}
-])
-def test_assume_behavior_control(vector_connection, request_params):
-    vector_connection.send("v1/assume_behavior_control", p.BehaviorControlRequest(**request_params), p.BehaviorControlResponse(), stream=True)
-
-def test_assume_behavior_control_nil(vector_connection):
-    with pytest.raises(AssertionError):
-        vector_connection.send("v1/assume_behavior_control", p.BehaviorControlRequest(), p.BehaviorControlResponse(), stream=True)
 
 def test_app_intent(vector_connection):
     vector_connection.send("v1/app_intent", p.AppIntentRequest(), p.AppIntentResponse())
@@ -158,6 +89,28 @@ def test_get_latest_attention_transfer(vector_connection):
 def test_pull_jdocs(vector_connection):
     vector_connection.send("v1/pull_jdocs", p.PullJdocsRequest(), p.PullJdocsResponse())
 
+@pytest.mark.parametrize("data", [
+    '{"settings": {"default_location":"San Francisco, California"}}',
+    '{"settings": {"eye_color": 0}}',
+    '{"settings": {"eye_color": 1}}',
+    '{"settings": {"eye_color": 2}}',
+    '{"settings": {"eye_color": 3}}',
+    '{"settings": {"eye_color": 4}}',
+    '{"settings": {"eye_color": 5}}',
+    '{"settings": {"eye_color": 6}}',
+    '{"settings": {"eye_color": 7}}',
+    '{"settings": {"eye_color": -1}}',
+    '{"settings":{"clock_24_hour":true,"eye_color":1}}',
+    '{"settings":{"clock_24_hour":true}}',
+])
+def test_update_settings_raw(vector_connection, data):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        data = json.loads(response.content)
+        assert "code" in data
+        assert data["code"] == 0
+    vector_connection.send_raw("v1/update_settings", data, p.UpdateSettingsResponse(), callback=callback)
+
 def test_update_settings(vector_connection):
     vector_connection.send("v1/update_settings", p.UpdateSettingsRequest(), p.UpdateSettingsResponse())
 
@@ -203,10 +156,6 @@ def test_forget_preferred_cube(vector_connection):
 
 def test_set_preferred_cube(vector_connection):
     vector_connection.send("v1/set_preferred_cube", p.SetPreferredCubeRequest(), p.SetPreferredCubeResponse())
-
-# NOTE: Hangs forever (need to turn on camera feed first)
-# def test_camera_feed(vector_connection):
-#     vector_connection.send("v1/camera_feed", p.CameraFeedRequest(), p.CameraFeedResponse(), stream=True)
 
 def test_check_update_status(vector_connection):
     vector_connection.send("v1/check_update_status", p.CheckUpdateStatusRequest(), p.CheckUpdateStatusResponse())
