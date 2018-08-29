@@ -367,6 +367,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       }
     }
     
+#if ANKI_DEV_CHEATS
     if(kTestOnlyLoggingEnabled) {
       static FILE* fp = nullptr;
       if(fp==nullptr) {
@@ -378,6 +379,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
               (int)_baselineCalibrator.GetBaseline(),
               _confirmedPressState);
     }
+#endif    
     
     if(lastConfirmedPressState != _confirmedPressState) {
       _robot->Broadcast(
