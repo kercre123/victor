@@ -1,53 +1,49 @@
+#include <string.h>
 #include "vl53l0x_i2c_platform.h"
 #include "vl53l0x_def.h"
+#include "common.h"
+#include "console.h"
+#include "dut_i2c.h"
+#include "timer.h"
 
-//#define I2C_DEBUG
+namespace I2C = DUT_I2C;
+using namespace I2C;
 
 int VL53L0X_i2c_init(void) {
-  Wire.begin();
+  I2C::init();
   return VL53L0X_ERROR_NONE;
 }
 
-int VL53L0X_write_multi(uint8_t deviceAddress, uint8_t index, uint8_t *pdata, uint32_t count) {
-  Wire.beginTransmission(deviceAddress);
-  Wire.write(index);
-#ifdef I2C_DEBUG
-  Serial.print("\tWriting "); Serial.print(count); Serial.print(" to addr 0x"); Serial.print(index, HEX); Serial.print(": ");
-#endif
-  while(count--) {
-    Wire.write((uint8_t)pdata[0]);
-#ifdef I2C_DEBUG
-    Serial.print("0x"); Serial.print(pdata[0], HEX); Serial.print(", ");
-#endif
-    pdata++;
-  }
-#ifdef I2C_DEBUG
-  Serial.println();
-#endif
-  Wire.endTransmission();
-  return VL53L0X_ERROR_NONE;
+int VL53L0X_write_multi(uint8_t deviceAddress, uint8_t index, uint8_t *pdata, uint32_t count)
+{
+  if( !I2C::multiOp(I2C_REG_WRITE, 0, deviceAddress, index, count, pdata) )
+    return VL53L0X_ERROR_NONE;
+  /*
+  const int max_write_size = 40;
+  uint8_t buf[1+max_write_size];
+  if( count<1 || !pdata ) return VL53L0X_ERROR_INVALID_PARAMS;
+  if( count>max_write_size ) return VL53L0X_ERROR_NOT_SUPPORTED;
+  
+  buf[0] = index; //register offset
+  memcpy( buf+1, pdata, count );
+  
+  if( transfer(deviceAddress, 1+count,buf, 0,NULL) == 0 )
+    return VL53L0X_ERROR_NONE;
+  */
+  return VL53L0X_ERROR_CONTROL_INTERFACE;
 }
 
 int VL53L0X_read_multi(uint8_t deviceAddress, uint8_t index, uint8_t *pdata, uint32_t count) {
-  Wire.beginTransmission(deviceAddress);
-  Wire.write(index);
-  Wire.endTransmission();
-  Wire.requestFrom(deviceAddress, (byte)count);
-#ifdef I2C_DEBUG
-  Serial.print("\tReading "); Serial.print(count); Serial.print(" from addr 0x"); Serial.print(index, HEX); Serial.print(": ");
-#endif
-
-  while (count--) {
-    pdata[0] = Wire.read();
-#ifdef I2C_DEBUG
-    Serial.print("0x"); Serial.print(pdata[0], HEX); Serial.print(", ");
-#endif
-    pdata++;
-  }
-#ifdef I2C_DEBUG
-  Serial.println();
-#endif
-  return VL53L0X_ERROR_NONE;
+  if( !I2C::multiOp(I2C_REG_READ, 0, deviceAddress, index, count, pdata) )
+    return VL53L0X_ERROR_NONE;
+  /*
+  if( count<1 || !pdata )
+    return VL53L0X_ERROR_INVALID_PARAMS;
+  
+  if( transfer(deviceAddress, 1,&index, count, (uint8_t*)pdata) == 0 )
+    return VL53L0X_ERROR_NONE;
+  */
+  return VL53L0X_ERROR_CONTROL_INTERFACE;
 }
 
 int VL53L0X_write_byte(uint8_t deviceAddress, uint8_t index, uint8_t data) {
