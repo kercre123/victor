@@ -268,8 +268,8 @@ void BehaviorDanceToTheBeat::PlayNextDanceAnim()
     SetNextAnimTriggerTime();
   }
   
-  // Since we've played a dancing animation, reset the dancing behavior timer
-  GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::LastDance).Reset();
+  // Since we've played a dancing animation, reset the dancing cooldown behavior timer
+  GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::DancingCooldown).Reset();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

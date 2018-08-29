@@ -37,7 +37,8 @@ namespace {
   const char* kOnChargerDancingBehavior_key  = "onChargerDancingBehavior";
   
   #define CONSOLE_GROUP "BehaviorDanceToTheBeatCoordinator"
-  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 30.0f, 0.0f, 300.0f);
+  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 0.0f, 0.0f, 3600.0f);
+  CONSOLE_VAR_RANGED(f32, kListeningCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
 }
   
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator", "BehaviorDanceToTheBeatCoordinator.%s", __func__);
@@ -86,16 +87,25 @@ void BehaviorDanceToTheBeatCoordinator::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeatCoordinator::WantsToBeActivatedBehavior() const
 {
-  // Check if cooldown is active
-  const auto& danceTimer = GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::LastDance);
-  const bool inCooldown = danceTimer.HasBeenReset() && (danceTimer.GetElapsedTimeInSeconds() < kDancingCooldown_sec);
+  // Check if either dancing or listening cooldown is active
+  auto& timerManager = GetBEI().GetBehaviorTimerManager();
+  const auto& danceTimer = timerManager.GetTimer(BehaviorTimerTypes::DancingCooldown);
+  const auto& listeningTimer = timerManager.GetTimer(BehaviorTimerTypes::ListenForBeatsCooldown);
+  bool timersExpired = (danceTimer.HasCooldownExpired(kDancingCooldown_sec) &&
+                        listeningTimer.HasCooldownExpired(kListeningCooldown_sec));
+
+  // Override cooldowns if a 'strong' beat is detected
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  const bool strongBeatDetected = beatDetector.IsBeatDetected();
   
-  return !inCooldown;
+  return (timersExpired || strongBeatDetected);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDanceToTheBeatCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.wantsToBeActivatedWhenCarryingObject  = false;
+  modifiers.wantsToBeActivatedWhenOffTreads       = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

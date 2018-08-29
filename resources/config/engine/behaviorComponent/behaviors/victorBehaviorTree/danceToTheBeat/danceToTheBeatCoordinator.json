@@ -12,12 +12,6 @@
         "allowPotentialBeat" : true
       },
       {
-        "conditionType": "Compound",
-        "not": {
-          "conditionType": "CarryingCube"
-        }
-      },
-      {
         "conditionType": "FeatureGate",
         "feature" : "Dancing"
       }
