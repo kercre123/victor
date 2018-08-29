@@ -86,6 +86,12 @@ void TOF_sensorCheck(void)
     throw ERROR_SENSOR_TOF;
 }
 
+void TOF_calibrate(void)
+{
+  ConsolePrintf("calibrating...");
+  
+}
+
 void TOF_debugInspectRaw(void)
 {
   uint32_t Tsample = 0, displayErr=0;
@@ -150,6 +156,15 @@ TestFunction* TestAuxTofGetTests(void)
     TOF_debugInspectRaw,
     NULL,
   };
-  return g_fixmode==FIXMODE_TOF_DEBUG ? m_tests_debug : m_tests;
+  static TestFunction m_tests_calibrate[] = {
+    TOF_init,
+    TOF_calibrate,
+    TOF_sensorCheck,
+    NULL,
+  };
+  
+  if( g_fixmode==FIXMODE_TOF_DEBUG ) return m_tests_debug;
+  if( g_fixmode==FIXMODE_TOF_CALIB ) return m_tests_calibrate;
+  return m_tests;
 }
 

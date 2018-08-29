@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "console.h"
 //#include "hardware.h"
 //#include "power.h"
 
@@ -554,6 +555,8 @@ void Opto::start(void)
   writeReg(0, TOF_SENSOR_ADDRESS, SYSTEM_INTERRUPT_CLEAR, 0x01);
 
   measurement_timing_budget_us = getMeasurementTimingBudget();
+
+ConsolePrintf(".measurement timing budget: %ius\n", measurement_timing_budget_us);
 
   // "Disable MSRC and TCC by default"
   // MSRC = Minimum Signal Rate Check

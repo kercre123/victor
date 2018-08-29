@@ -59,6 +59,7 @@ extern "C" {
 
 #define FIXMODE_TOF            49
 #define FIXMODE_TOF_DEBUG      50
+#define FIXMODE_TOF_CALIB      51
 
 #define FIXMODE_BLOCK1         56
 #define FIXMODE_BLOCK2         57
@@ -158,7 +159,7 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "MOTOR3"      , TestMotorDetect     , TestMotor3GetTests          , TestMotorCleanup            , FIXMODE_MOTOR3      },  /*48*/  \
   { "TOF"         , TestAuxTofDetect    , TestAuxTofGetTests          , TestAuxTofCleanup           , FIXMODE_TOF         },  /*49*/  \
   { "TOF-DEBUG"   , TestAuxTofDetect    , TestAuxTofGetTests          , TestAuxTofCleanup           , FIXMODE_TOF_DEBUG   },  /*50*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "TOF-CAL"     , TestAuxTofDetect    , TestAuxTofGetTests          , TestAuxTofCleanup           , FIXMODE_TOF_CALIB   },  /*51*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
