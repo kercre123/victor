@@ -849,9 +849,13 @@ namespace Anki {
       
       // If we are no longer running and have at least started moving (path planning succeeded)
       // then start the drivingEnd animation and keep this action running
+      // VIC-6077 VIC-5039: the line with FAILED_TRAVERSING_PATH shouldnt be necessary according to the above
+      // comment, but there's some loop where it gets stuck in FAILED_TRAVERSING_PATH and improperly
+      // calls EndDrivingAnim without it
       if(result != ActionResult::RUNNING &&
          result != ActionResult::PATH_PLANNING_FAILED_ABORT &&
          result != ActionResult::PATH_PLANNING_FAILED_RETRY &&
+         result != ActionResult::FAILED_TRAVERSING_PATH &&      // ** see above comment
          GetRobot().GetDrivingAnimationHandler().EndDrivingAnim())
       {
         result = ActionResult::RUNNING;
