@@ -87,6 +87,14 @@ namespace Vision {
   {
     _pImpl->ClearAllowedTrackedFaces();
   }
+
+  void FaceTracker::RobotHasMoved()
+  {
+    if (!_pImpl->HaveAllowedTrackedFaces())
+    {
+      _pImpl->Reset();
+    }
+  }
   
   bool FaceTracker::IsRecognitionSupported()
   {

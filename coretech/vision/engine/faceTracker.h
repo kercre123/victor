@@ -54,6 +54,7 @@ namespace Vision {
     void AddAllowedTrackedFace(const FaceID_t faceID);
     bool HaveAllowedTrackedFaces();
     void ClearAllowedTrackedFaces();
+    void RobotHasMoved();
     
     void EnableDisplay(bool enabled);
     

@@ -894,10 +894,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
   {
     PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
                       "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
-    if (!_faceTracker->HaveAllowedTrackedFaces())
-    {
-      _faceTracker->Reset();
-    }
+    _faceTracker->RobotHasMoved();
   }
   
   if(!detectionRects.empty())
