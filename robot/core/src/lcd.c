@@ -17,7 +17,7 @@
 #define TRUE (!FALSE)
 
 
-static const int MAX_TRANSFER = 0x1000;
+static int MAX_TRANSFER = 0x1000;
 
 static int lcd_use_fb; // use /dev/fb0?
 
@@ -84,6 +84,42 @@ static int lcd_spi_init()
   /* if (err<0) { */
   /*   error_exit(app_IO_ERROR, "Can't configure LCD SPI. (%d)\n", errno); */
   /* } */
+
+  // Set MAX_TRANSFER size based on the spidev bufsiz parameter
+  int bufsiz_fd = open("/sys/module/spidev/parameters/bufsiz", O_RDONLY);
+  if(bufsiz_fd <= 0)
+  {
+    error_exit(app_DEVICE_OPEN_ERROR, "Can't open SPI bufsiz parameter\n");
+  }
+
+  // bufsiz is stored as a string in the file
+  char buf[32] = {0};
+  int bytes_read = 0;
+  
+  // Attempt to read enough bytes to fit in our buffer
+  while(bytes_read < sizeof(buf))
+  {
+    int num_bytes = read(bufsiz_fd, buf + bytes_read, sizeof(buf) - bytes_read);
+    bytes_read += num_bytes;
+    if(num_bytes == 0)
+    {
+      // End of file
+      break;
+    }
+    else if(num_bytes < 0)
+    {
+      (void)close(bufsiz_fd);
+      error_exit(app_IO_ERROR, "Failed to read from spi bufsiz\n");
+    }
+  }
+  
+  char* end;
+  int size = strtol(buf, &end, 10);
+  printf("LCD.lcd_spi_init.transferSize %d\n", size);
+  MAX_TRANSFER = size;
+
+  (void)close(bufsiz_fd);
+  
   return lcd_fd;
 }
 
