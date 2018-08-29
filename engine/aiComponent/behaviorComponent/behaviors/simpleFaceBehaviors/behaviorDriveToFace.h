@@ -69,6 +69,7 @@ private:
     AnimationTrigger resumeAnim;
     
     int maxNumResumes;
+    int maxNumFailures;
     
     std::string findFaceBehaviorStr;
     std::shared_ptr<BehaviorFindFaceAndThen> findFaceBehavior;
@@ -83,6 +84,7 @@ private:
     float trackEndTime_s;
     
     int numResumesRemaining;
+    int numFailuresRemaining;
     
     SmartFaceID targetFace;
     

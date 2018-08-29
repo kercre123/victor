@@ -45,6 +45,7 @@ const char* const kSuccessAnimKey                = "animationAfterDrive";
 const char* const kFindFaceBehaviorKey           = "findFaceBehavior"; // must be a BehaviorFindFaceAndThen
 const char* const kResumeAnimKey                 = "resumeAnimation";
 const char* const kMaxNumResumesKey              = "maxNumResumes";
+const char* const kMaxNumFailuresKey             = "maxNumFailures";
 const char* const kDebugName = "BehaviorDriveToFace";
 
 static constexpr const float kMaxTimeToTrackWithoutFace_s = 1.0f;
@@ -68,6 +69,7 @@ BehaviorDriveToFace::DynamicVariables::DynamicVariables()
   trackEndTime_s         = 0;
   currentState           = State::Invalid;
   numResumesRemaining    = 0;
+  numFailuresRemaining   = 0;
   interruptionEndTick    = 0;
 }
 
@@ -104,6 +106,8 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
   ANKI_VERIFY( (_iConfig.maxNumResumes == 0) == (_iConfig.resumeAnim == AnimationTrigger::Count),
                "BehaviorDriveToFace.Ctor.ResumeAnimWithoutCount",
                "maxNumResumes OR resumeAnimation was provided, but expecting both or neither" );
+  
+  _iConfig.maxNumFailures = config.get( kMaxNumFailuresKey, 2 ).asInt();
 
   
   _iConfig.findFaceBehaviorStr = JsonTools::ParseString(config, kFindFaceBehaviorKey, kDebugName);
@@ -151,6 +155,7 @@ void BehaviorDriveToFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
     kFindFaceBehaviorKey,
     kMaxNumResumesKey,
     kResumeAnimKey,
+    kMaxNumFailuresKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -195,6 +200,8 @@ void BehaviorDriveToFace::OnBehaviorActivated()
   auto numResumes = _dVars.numResumesRemaining;
   //reset
   _dVars = DynamicVariables();
+  
+  _dVars.numFailuresRemaining = _iConfig.maxNumFailures;
   
   const auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( uic.IsUserIntentPending( kUserIntentTag ) ) {
@@ -282,6 +289,9 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
         _dVars.numResumesRemaining = 0;
         GetBEI().GetMoodManager().TriggerEmotionEvent("DriveToFaceSuccess");
         TransitionToPlayingFinalAnim();
+      } else if( _dVars.numFailuresRemaining > 0 ) {
+        --_dVars.numFailuresRemaining;
+        TransitionToFindingFace(); // note this may fail to find the face now, at which point the behavior ends
       }
       // else let the behavior end now
     });
