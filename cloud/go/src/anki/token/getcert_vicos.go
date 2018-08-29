@@ -10,12 +10,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func init() {
-	if opt := robot.OSUserAgent(); opt != nil {
-		platformOpts = append(platformOpts, opt)
-	}
-}
-
 var robotCreds credentials.TransportCredentials
 
 func getTLSCert() (credentials.TransportCredentials, error) {

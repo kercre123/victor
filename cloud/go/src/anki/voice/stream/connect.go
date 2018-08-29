@@ -70,6 +70,9 @@ func (strm *Streamer) connect() error {
 
 func (strm *Streamer) openStream(creds credentials.PerRPCCredentials, sessionID string) (*chipper.Conn, chipper.Stream, error) {
 	opts := platformOpts
+	if grpcOpts := util.CommonGRPC(); grpcOpts != nil {
+		opts = append(opts, chipper.WithGrpcOptions(grpcOpts...))
+	}
 	if creds != nil {
 		opts = append(opts, chipper.WithCredentials(creds))
 	}

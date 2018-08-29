@@ -4,6 +4,7 @@ import (
 	"anki/config"
 	"anki/log"
 	"anki/token"
+	"anki/util"
 	"clad/cloud"
 	"context"
 	"fmt"
@@ -21,15 +22,12 @@ type conn struct {
 }
 
 var (
-	platformOpts   []grpc.DialOption
 	defaultTLSCert = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
 )
 
 func newConn(ctx context.Context, opts *options) (*conn, error) {
 	var dialOpts []grpc.DialOption
-	if platformOpts != nil && len(platformOpts) > 0 {
-		dialOpts = append(dialOpts, platformOpts...)
-	}
+	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
 	if opts.tokener != nil {
 		creds, err := opts.tokener.Credentials()

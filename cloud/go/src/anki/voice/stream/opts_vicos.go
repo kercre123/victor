@@ -10,9 +10,6 @@ import (
 )
 
 func init() {
-	if opt := robot.OSUserAgent(); opt != nil {
-		platformOpts = append(platformOpts, chipper.WithGrpcOptions(opt))
-	}
 	if esn, err := robot.ReadESN(); err != nil {
 		log.Println("Couldn't read robot ESN:", err)
 	} else {
