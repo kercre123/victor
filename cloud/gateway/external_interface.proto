@@ -236,12 +236,13 @@ service ExternalInterface {
     };
   }
 
-  rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
-    option (google.api.http) = {
-      post: "/v1/status_history",
-      body: "*"
-    };
-  }
+  // Disabled for 1.0
+  // rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
+  //  option (google.api.http) = {
+  //    post: "/v1/status_history",
+  //    body: "*"
+  //  };
+  // }
 
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
     option (google.api.http) = {

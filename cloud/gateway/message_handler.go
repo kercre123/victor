@@ -1480,6 +1480,7 @@ func (service *rpcService) SetCubeLights(ctx context.Context, in *extint.SetCube
 	}, nil
 }
 
+// NOTE: this is removed from external_interface because the result from the robot (size 100) is too large for the domain socket between gateway and engine
 func (service *rpcService) RobotStatusHistory(ctx context.Context, in *extint.RobotHistoryRequest) (*extint.RobotHistoryResponse, error) {
 	log.Println("Received rpc request RobotStatusHistory(", in, ")")
 
