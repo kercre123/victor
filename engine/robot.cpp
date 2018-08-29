@@ -2877,7 +2877,7 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             shouldManage);
 }
 
-Result Robot::UpdateStartupChecks()
+Result Robot::UpdateCameraStartupChecks()
 {
   enum State {
     FAILED = -1,
@@ -2920,29 +2920,66 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
-
-        #if FACTORY_TEST
-        // Manually init AnimationComponent
-        // Normally it would init when we receive syncTime from robot process
-        // but since there might not be a body (robot process won't init)
-        // we need to do it here
-        GetAnimationComponent().Init();
-        
-        // Once we have gotten a frame from the camera play a sound to indicate 
-        // a "successful" boot
-        static bool playedSound = false;
-        if(!playedSound)
-        {
-          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
-          playedSound = true;
-        }
-        #endif
       }
     }
   }
 
   return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
+Result Robot::UpdateGyroCalibChecks()
+{
+  // Wait this much time after sending sync to robot before checking if we
+  // should be displaying the gyro not calibrated image
+  const float kTimeAfterSyncSent_sec = 2.f;
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  static bool displayedImage = false;
+
+  if(!displayedImage &&
+     _syncRobotSentTime_sec > 0 &&
+     currentTime_sec - _syncRobotSentTime_sec > kTimeAfterSyncSent_sec &&
+     !_syncRobotAcked)
+  {
+    // Manually init AnimationComponent
+    // Normally it would init when we receive syncTime from robot process
+    // but we haven't received syncTime yet likely because the gyro hasn't calibrated
+    GetAnimationComponent().Init();
+
+    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
+    const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                         kGyroNotCalibratedImg);
+    Vision::ImageRGB img;
+    img.Load(imgPath);
+    // Display the image indefinitely or atleast until something else is displayed
+    GetAnimationComponent().DisplayFaceImage(img, 0, true);
+    // Move the head to look up to show the image clearly
+    GetMoveComponent().MoveHeadToAngle(MAX_HEAD_ANGLE,
+                                       MAX_HEAD_SPEED_RAD_PER_S,
+                                       MAX_HEAD_ACCEL_RAD_PER_S2,
+                                       1.f);
+    displayedImage = true;
+    
+  }
+
+  return RESULT_OK;
+}
+
+Result Robot::UpdateStartupChecks()
+{
+#define RUN_CHECK(func)  \
+  res = func();          \
+  if(res != RESULT_OK) { \
+    return res;          \
+  }
+  
+  Result res = RESULT_OK;
+  RUN_CHECK(UpdateGyroCalibChecks);
+  RUN_CHECK(UpdateCameraStartupChecks);
+  return res;
+
+#undef RUN_CHECK
 }
 
 bool Robot::SetLocale(const std::string & locale)

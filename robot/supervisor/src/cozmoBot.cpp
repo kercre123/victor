@@ -214,6 +214,36 @@ namespace Anki {
         buttonWasPressed = buttonIsPressed;
       }
 
+      void CheckForGyroCalibShutdown()
+      {
+        static const int GYRO_NOT_CALIB_SHUTDOWN_MS = 30000;
+        
+        static TimeStamp_t syncReceivedTime_ms = 0;
+
+        // As long as we haven't gotten sync from engine
+        if(syncReceivedTime_ms == 0)
+        {
+          // ...then update syncReceivedTime once we receive sync
+          if(Messages::ReceivedInit())
+          {
+            syncReceivedTime_ms = HAL::GetTimeStamp();
+          }
+        }
+        // Otherwise we are not on the charger and have received sync from engine
+        // and gyro has not calibrated
+        else if(!IMUFilter::IsBiasFilterComplete())
+        {
+          // If gyro has not been calibrated for more than GYRO_NOT_CALIB_SHUTDOWN_MS
+          // then shutdown
+          const TimeStamp_t timeDif_ms = HAL::GetTimeStamp() - syncReceivedTime_ms;
+          if(timeDif_ms > GYRO_NOT_CALIB_SHUTDOWN_MS)
+          {
+            AnkiWarn("CozmoBot.CheckForGyroCalibShutdown.HALShutdown","");
+            HAL::Shutdown();
+          }
+        }
+      }
+
       Result step_MainExecution()
       {
         EventStart(EventType::MAIN_STEP);
@@ -237,6 +267,7 @@ namespace Anki {
         }
 
         CheckForShutdown();
+        CheckForGyroCalibShutdown();
 /*
         // Test code for measuring number of mainExecution tics per second
         static u32 cnt = 0;

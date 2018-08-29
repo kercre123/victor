@@ -821,6 +821,8 @@ protected:
 
   // Performs various startup checks and displays fault codes as appropriate
   Result UpdateStartupChecks();
+  Result UpdateCameraStartupChecks();
+  Result UpdateGyroCalibChecks();
 }; // class Robot
 
 
