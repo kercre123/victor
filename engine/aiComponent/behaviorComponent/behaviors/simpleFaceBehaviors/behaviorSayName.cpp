@@ -19,39 +19,62 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/faceWorld.h"
-
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 namespace Anki {
 namespace Vector {
   
-namespace{
+namespace JsonKeys {
+  
+static const char * const kDontKnowNameAnimation = "dontKnowNameAnimation";
+static const char * const kKnowNameAnimation = "knowNameAnimation";
+static const char * const kDontKnowText = "dontKnowText";
   
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorSayName::InstanceConfig::InstanceConfig()
+BehaviorSayName::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
-
+  JsonTools::GetCladEnumFromJSON(config, JsonKeys::kDontKnowNameAnimation, dontKnowNameAnimation,
+                                 "BehaviorSayName.InstanceConfig");
+  
+  JsonTools::GetCladEnumFromJSON(config, JsonKeys::kKnowNameAnimation, knowNameAnimation,
+                                 "BehaviorSayName.InstanceConfig");
+  
+  JsonTools::GetValueOptional(config, JsonKeys::kDontKnowText, dontKnowText);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSayName::DynamicVariables::DynamicVariables()
 {
 }
-
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSayName::BehaviorSayName(const Json::Value& config)
   : ISimpleFaceBehavior(config)
+  , _iConfig(config)
 {
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSayName::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert( _iConfig.ttsBehavior.get() );
+  if( !_iConfig.dontKnowText.empty() )
+  {
+    delegates.insert( _iConfig.ttsBehavior.get() );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSayName::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    JsonKeys::kDontKnowNameAnimation,
+    JsonKeys::kKnowNameAnimation,
+    JsonKeys::kDontKnowText,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,25 +107,40 @@ void BehaviorSayName::OnBehaviorActivated()
   if(facePtr != nullptr){
     
     const bool nameKnown = facePtr->HasName();
-    if( nameKnown ) {
+    if( nameKnown )
+    {
+      // TODO: Use animation + TTS behavior instead of SayTextAction with animation containing special TTS keyframe?
       const std::string text = facePtr->GetName() + "!";
       auto* sayNameAction = new SayTextAction( text );
-      sayNameAction->SetAnimationTrigger( AnimationTrigger::MeetVictorSayNameAgain );
+      sayNameAction->SetAnimationTrigger( _iConfig.knowNameAnimation );
       DelegateIfInControl( sayNameAction );
-    } else {
-      const std::string text = "eye dont know";
-      _iConfig.ttsBehavior->SetTextToSay( text ); // set text in advance to begin generation
-      auto* animAction = new TriggerLiftSafeAnimationAction( AnimationTrigger::MeetVictorSawWrongFace );
-      DelegateIfInControl( animAction, [this](ActionResult result) {
-        ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(), "BehaviorSayName.OnBehaviorActivated.NoTTS","");
-        DelegateIfInControl(_iConfig.ttsBehavior.get() );
-      });
     }
-  
-    
+    else
+    {
+      auto* animAction = new TriggerLiftSafeAnimationAction( _iConfig.dontKnowNameAnimation );
+      
+      const bool haveDontKnowText = !_iConfig.dontKnowText.empty();
+      if(haveDontKnowText)
+      {
+        // Play the animation and then say the text with TTS
+        _iConfig.ttsBehavior->SetTextToSay( _iConfig.dontKnowText ); // set text in advance to begin generation
+        
+        DelegateIfInControl( animAction, [this]() {
+          if(ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(),
+                         "BehaviorSayName.OnBehaviorActivated.NoTTS",""))
+          {
+            DelegateIfInControl( _iConfig.ttsBehavior.get() );
+          }
+        });
+      }
+      else
+      {
+        // Just play the animation
+        DelegateIfInControl( animAction );
+      }
+    }
   }
 }
-  
 
 }
 }

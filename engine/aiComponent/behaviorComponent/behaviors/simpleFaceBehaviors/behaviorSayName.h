@@ -34,7 +34,7 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -43,7 +43,17 @@ protected:
 private:
 
   struct InstanceConfig {
-    InstanceConfig();
+    InstanceConfig(const Json::Value& config);
+    
+    // The animation to use while saying name. Must have special TTS keyframe!
+    AnimationTrigger knowNameAnimation = AnimationTrigger::MeetVictorSayNameAgain;
+    
+    // The animation to use to indicate name is not known. No TTS keyframe!
+    AnimationTrigger dontKnowNameAnimation = AnimationTrigger::MeetVictorSawWrongFace;
+    
+    // Text to speak *after* playing dontKnowNameAnimation (empty for none)
+    std::string dontKnowText = "eye dont know";
+    
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
   };
 

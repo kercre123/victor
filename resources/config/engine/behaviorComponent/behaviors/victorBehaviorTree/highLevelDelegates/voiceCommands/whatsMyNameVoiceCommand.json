@@ -17,16 +17,9 @@
   "additionalLookTimeIfSawBody_s": 3.0,
   "additionalSearchTimeIfSawBody_s": 3.0,
 
-  "behavior": "WhatsMyNameInternal",
+  "behavior": "SayName",
 
   "animWhenSeesFace": "FoundFace",
-  
-  "anonymousBehaviors": [
-    {
-      "behaviorName" : "WhatsMyNameInternal",
-      "behaviorClass" : "SayName"
-    }
-  ],
 
   "postBehaviorSuggestion": "Socialize"
 }
