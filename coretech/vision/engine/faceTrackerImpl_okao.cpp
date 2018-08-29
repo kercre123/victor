@@ -1093,8 +1093,7 @@ namespace Vision {
                               detectionInfo.nID,  faceID);
           // Not sure I need to negate this now that we're getting the faceId
           // from the recognizer
-          if (_allowedTrackedFaceID.count(faceID) == 0 &&
-              _allowedTrackedFaceID.count(-faceID) == 0)
+          if (_allowedTrackedFaceID.count(faceID) == 0)
           {
             // We only want to update faces that are in _allowedTrackedFaceID
             PRINT_NAMED_WARNING("FaceTrackerImpl.Update.ContinueFaceNotAllowed",
