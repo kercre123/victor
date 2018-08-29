@@ -95,10 +95,9 @@ namespace {
   // Whether or not we have already told the boot anim to stop
   bool _bootAnimStopped = false;
 
+#if REMOTE_CONSOLE_ENABLED
   Anki::Util::Dispatch::Queue* _dispatchQueue = nullptr;
 
-
-#if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
