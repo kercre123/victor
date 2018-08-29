@@ -485,6 +485,7 @@ void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 
   LOG_DEBUG("TextToSpeechComponent.UtteranceCompleted", "Completion callback received for ttsID %hhu", ttsID);
   SendAnimToEngine(ttsID, TextToSpeechState::Finished);
+  ClearOperationData(ttsID); // Cleanup operation's memory
 }
 
 //
