@@ -9,7 +9,7 @@ PROTO CozmoVizDisplay
   field SFBool filterLogs FALSE
   field SFBool colorizeStderrOutput FALSE
   field SFInt32 accelPlotObjectId 0
-  field SFInt32 numBehaviorStackLines 12
+  field SFInt32 numBehaviorStackLines 18
   field SFInt32 numVisionModeLines 8
 
   field SFInt32 numDebugImageDisplays 0 # Vision debug displays in addition to the camera
@@ -225,7 +225,7 @@ Supervisor {
         }
       ]
       name "victor_behavior_stack_display"
-      width 180
+      width 220
       # assumes size 8 font
       height %{= fields.numBehaviorStackLines.value * 10 + 16 }%
     }

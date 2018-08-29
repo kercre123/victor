@@ -328,6 +328,10 @@
     "AnimName": "ag_dancebeat_listening"
   },
   {
+    "CladEvent" : "DanceBeatNoBeatDetected",
+    "AnimName": "ag_generic_cantdothat"
+  },
+  {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
     "AnimName": "ag_dizzy_reaction_hard"
   },

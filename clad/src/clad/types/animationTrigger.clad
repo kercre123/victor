@@ -98,6 +98,7 @@ enum int_32 AnimationTrigger
   DanceBeatGetOut,
   DanceBeatGetReady,
   DanceBeatListening,
+  DanceBeatNoBeatDetected,
   DockEndDefault,
   DockLoopDefault,
   DockStartDefault,

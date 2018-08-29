@@ -11,7 +11,29 @@
   "behaviors" : [
     "DriveOffChargerStraight",
     "ListenForBeatsLong",
-    "DanceToTheBeat"
-  ]
+    "DanceIfPossible"
+  ],
   
+  "anonymousBehaviors": [
+  {
+    "behaviorClass" : "DispatcherStrictPriority",
+    "behaviorName" : "DanceIfPossible",
+    
+    "interruptActiveBehavior" : false,
+    "actAsSelector" : true,
+    
+    "behaviors" : [
+      "DanceToTheBeat",
+      "NoBeatDetectedAnim"
+    ],
+  
+    "anonymousBehaviors": [
+    {
+      "behaviorClass": "AnimSequence",
+      "behaviorName": "NoBeatDetectedAnim",
+      "animTriggers": ["DanceBeatNoBeatDetected"]
+    }
+    ]
+  }
+  ]
 }
