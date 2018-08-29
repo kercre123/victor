@@ -86,6 +86,7 @@ public:
     _behaviors[Step::LookingForCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookForCube) );
     _behaviors[Step::ActivatingCube]   = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingActivateCube) );
     _behaviors[Step::CubeTrick]        = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingPopAWheelie) );
+    _behaviors[Step::WaitForContinue]  = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
     
     bei.GetBehaviorContainer().FindBehaviorByIDAndDowncast( BEHAVIOR_ID(OnboardingPopAWheelie),
                                                             BEHAVIOR_CLASS(PopAWheelie),
@@ -116,6 +117,11 @@ public:
       accepted = (stepNum == external_interface::STEP_EXPECTING_START_CUBE_SEARCH);
       if( accepted ) {
         TransitionToLookingForCube( bei );
+      }
+    } else if( _step == Step::WaitForContinue ) {
+      accepted = (stepNum == external_interface::STEP_EXPECTING_CONTINUE_APP_ONBOARDING);
+      if( accepted ) {
+        TransitionToComplete( bei );
       }
     } else if( _step != Step::Complete ) {
       DEV_ASSERT(false, "OnboardingStageCube.UnexpectedContinue");
@@ -165,7 +171,7 @@ public:
         } else {
           DebugTransition( "Trick Success." );
         }
-        TransitionToComplete( bei );
+        TransitionToWaitingForContinue( bei );
       }
     }
     
@@ -197,7 +203,7 @@ public:
       const bool wheelieSuccess = _cubeTrickBehavior->WasLastActivationSuccessful();
       if( wheelieSuccess ) {
         DebugTransition( "Resumed after a successful trick" );
-        TransitionToComplete( bei );
+        TransitionToWaitingForContinue( bei );
       } else if( !HasCubeBeenSeenRecently( bei ) ) {
         TransitionToLookingForCube( bei );
       } else {
@@ -259,6 +265,8 @@ public:
       case Step::ActivatingCube:
       case Step::CubeTrick:
         return external_interface::STEP_CUBE_TRICK;
+      case Step::WaitForContinue:
+        return external_interface::STEP_EXPECTING_CONTINUE_APP_ONBOARDING;
       case Step::Invalid:
       case Step::Complete:
         return external_interface::STEP_INVALID;
@@ -330,6 +338,13 @@ private:
     _selectedBehavior = _behaviors[_step];
   }
   
+  void TransitionToWaitingForContinue( BehaviorExternalInterface& bei )
+  {
+    DebugTransition("Waiting for continue to end cube stage");
+    _step = Step::WaitForContinue;
+    _selectedBehavior = _behaviors[_step];
+  }
+  
   void TransitionToComplete( BehaviorExternalInterface& bei )
   {
     if( _addedDrivingAnims ) {
@@ -379,6 +394,7 @@ private:
     LookingForCube,
     ActivatingCube,
     CubeTrick,
+    WaitForContinue,
     Complete,
   };
   

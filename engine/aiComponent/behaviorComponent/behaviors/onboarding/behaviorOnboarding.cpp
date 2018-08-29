@@ -751,7 +751,6 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   }
   CancelDelegates(false);
   
-  
   // if a stage was running, tell it it was interrupted
   if( _dVars.state == BehaviorState::StageRunning ) {
     auto& currStage = GetCurrentStage();
@@ -786,7 +785,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
   // be activating if it was disabled by the behavior.
   if( interruptionID != BEHAVIOR_ID(OnboardingTriggerWord) ) {
-    SmartDisableEngineResponseToTriggerWord();
+    SetWakeWordState( WakeWordState::TriggerDisabled );
   }
 }
   
@@ -1156,13 +1155,20 @@ void BehaviorOnboarding::SendContinueResponse( bool acceptedContinue, int step )
   }
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse{ acceptedContinue };
+    auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse;
+    
+    external_interface::OnboardingSteps expectedStep = static_cast<external_interface::OnboardingSteps>(_dVars.lastExpectedStep);
+    external_interface::OnboardingSteps requestedStep = static_cast<external_interface::OnboardingSteps>(step);
+    
+    onboardingContinueResponse->set_accepted( acceptedContinue );
+    onboardingContinueResponse->set_robot_step_number( expectedStep );
+    onboardingContinueResponse->set_request_step_number( requestedStep );
     gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
     
+    // we probably don't need this now that the response sends the last expected step, but I won't change until after 1.0
     if( !acceptedContinue ) {
       // resend expected state
-      external_interface::OnboardingSteps stepEnum = static_cast<external_interface::OnboardingSteps>(_dVars.lastExpectedStep);
-      auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ stepEnum };
+      auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ expectedStep };
       gi->Broadcast( ExternalMessageRouter::Wrap(onboardingExpectedStep) );
     }
   }

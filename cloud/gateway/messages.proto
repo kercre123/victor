@@ -454,6 +454,8 @@ message OnboardingContinue {
 
 message OnboardingContinueResponse {
   bool accepted = 1;
+  OnboardingSteps robot_step_number = 2;
+  OnboardingSteps request_step_number = 3;
 }
 
 message OnboardingSkip {
