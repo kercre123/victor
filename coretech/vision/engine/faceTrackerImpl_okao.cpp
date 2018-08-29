@@ -1083,7 +1083,7 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
-      if (!_allowedTrackedFaceID.empty())
+      if (!HaveAllowedTrackedFaces())
       {
         FaceID_t faceID;
         if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
