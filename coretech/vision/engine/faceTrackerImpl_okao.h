@@ -61,7 +61,7 @@ namespace Vision {
     void Reset();
 
     void AddAllowedTrackedFace(const FaceID_t faceID);
-    bool HaveAllowedTrackedFaces() { return _allowedTrackedFaceID.empty(); }
+    bool HaveAllowedTrackedFaces() { return !_allowedTrackedFaceID.empty(); }
     void ClearAllowedTrackedFaces() { _allowedTrackedFaceID.clear(); }
     
     void EnableDisplay(bool enabled) { }

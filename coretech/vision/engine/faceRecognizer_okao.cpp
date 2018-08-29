@@ -2792,7 +2792,18 @@ namespace Vision {
     return result;
   } // LoadAlbum()
 
-
+  bool FaceRecognizer::GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID)
+  {
+    if (_trackingToFaceID.count(trackingID) == 0)
+    {
+      return false;
+    }
+    else
+    {
+      faceID = _trackingToFaceID[trackingID];
+      return true;
+    }
+  }
 
   //
   // This may prove useful later if we ever want to try to do more complicated / smarter
