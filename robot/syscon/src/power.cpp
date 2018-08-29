@@ -154,7 +154,7 @@ void Power::setMode(PowerMode set) {
   desiredState = set;
 }
 
-void Power::adjustHead(bool firstBoot) {
+void Power::adjustHead(bool appStart) {
   static bool headPowered = false;  // head has power, but devices are not setup
   bool wantPower = desiredState != POWER_STOP;
 
@@ -163,7 +163,7 @@ void Power::adjustHead(bool firstBoot) {
   }
 
   if (wantPower) {
-    if (!firstBoot) BODY_TX::mode(MODE_OUTPUT);
+    if (!appStart) BODY_TX::mode(MODE_OUTPUT);
     enableHead();
   } else {
     disableHead();
