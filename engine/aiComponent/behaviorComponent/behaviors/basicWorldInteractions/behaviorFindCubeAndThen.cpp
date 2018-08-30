@@ -303,8 +303,9 @@ void BehaviorFindCubeAndThen::StartNextTurn()
   if (sweptEnough || exceededMaxTurns) {
     // If we made it all the way through the search without finding anything, call it a failure
     TransitionToGetOutFailure();
-    PRINT_CH_INFO("Behaviors", "BehaviorFindHome.TransitionToSearchTurn.CompletedQuickSearch",
-                  "We have completed a full search. Played %d turn animations (max is %d), and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
+    PRINT_CH_INFO("Behaviors", "BehaviorFindCubeAndThen.TransitionToSearchTurn.CompletedQuickSearch",
+                  "We have completed a full search. Played %d turn animations (max is %d), "
+                  "and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
                   _dVars.numTurnsCompleted,
                   kMaxNumSearchTurns,
                   _dVars.angleSwept_deg,
@@ -313,10 +314,10 @@ void BehaviorFindCubeAndThen::StartNextTurn()
     auto* action = new CompoundActionSequential();
 
     // Always do the "search turn"
-    action->AddAction(new TriggerAnimationAction(AnimationTrigger::FindCubeTurns/*ChargerDockingSearchSingleTurn*/));
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::FindCubeTurns));
 
     auto* loopAndWaitAction = new CompoundActionParallel();
-    loopAndWaitAction->AddAction(new TriggerAnimationAction(AnimationTrigger::FindCubeWaitLoop/*ChargerDockingSearchWaitForImages*/));
+    loopAndWaitAction->AddAction(new TriggerAnimationAction(AnimationTrigger::FindCubeWaitLoop));
     loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
     action->AddAction(loopAndWaitAction);
 
