@@ -81,6 +81,7 @@ enum uint_8 BehaviorClass {
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,
   DevImageCapture,
+  DevPickup,
   DevTestBlackjackViz,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
@@ -90,8 +91,8 @@ enum uint_8 BehaviorClass {
   FactoryCentroidExtractor,
   LiftLoadTest,
   PlannerTest,
-  PowerSaveTest,
   PowerSaveStressTest,
+  PowerSaveTest,
   ReactToBody,
 
   // devBehaviors/playpen

@@ -56,6 +56,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevEventSequenceCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPickup.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTestBlackjackViz.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
@@ -65,8 +66,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPlannerTest.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveStressTest.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToBody.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
@@ -464,6 +465,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::DevPickup:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevPickup(config));
+      break;
+    }
+    
     case BehaviorClass::DevTestBlackjackViz:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevTestBlackjackViz(config));
@@ -518,18 +525,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::PowerSaveTest:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPowerSaveTest(config));
-      break;
-    }
-
     case BehaviorClass::PowerSaveStressTest:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPowerSaveStressTest(config));
       break;
     }
-
+    
+    case BehaviorClass::PowerSaveTest:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPowerSaveTest(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToBody:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBody(config));

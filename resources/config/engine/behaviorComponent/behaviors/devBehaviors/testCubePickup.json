@@ -1,0 +1,4 @@
+{
+  "behaviorID" : "TestCubePickup",
+  "behaviorClass": "DevPickup"
+}

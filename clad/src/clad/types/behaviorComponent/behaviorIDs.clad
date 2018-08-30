@@ -55,8 +55,9 @@ enum uint_16 BehaviorID {
   PlaypenWaitToStart,
 
   // devBehaviors
-  PowerSaveTest,
   PowerSaveStressTest,
+  PowerSaveTest,
+  TestCubePickup,
   TestStackMonitors,
 
   // examples
