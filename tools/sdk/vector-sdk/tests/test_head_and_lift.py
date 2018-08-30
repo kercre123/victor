@@ -6,7 +6,6 @@ Test the setting angle and height for the head and lift respectively
 
 import os
 import sys
-import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
@@ -22,19 +21,14 @@ def main():
     # The robot shall lower and raise his head and lift
     with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.behavior.set_head_angle(degrees(-50.0))
-        time.sleep(2)
 
         robot.behavior.set_head_angle(degrees(50.0))
-        time.sleep(2)
 
         robot.behavior.set_head_angle(degrees(0.0))
-        time.sleep(2)
 
         robot.behavior.set_lift_height(100.0)
-        time.sleep(2)
 
         robot.behavior.set_lift_height(0.0)
-        time.sleep(2)
 
     print("------ finished testing head and lift actions ------")
 

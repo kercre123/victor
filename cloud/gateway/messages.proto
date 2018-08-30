@@ -652,11 +652,20 @@ message PathMotionProfile {
   bool  is_custom = 11;
 }
 
+// TODO VIC-5920: Expand this list to include all action results for clearer error handling
 enum ActionResult {
   ACTION_RESULT_SUCCESS                 = 0;
   ACTION_RESULT_RUNNING                 = 16777216;
   ACTION_RESULT_CANCELLED_WHILE_RUNNING = 33554432;
 }
+
+enum ActionTagConstants {
+  INVALID_SDK_TAG = 0;
+  FIRST_SDK_TAG   = 2000001;
+  LAST_SDK_TAG    = 3000000;
+}
+
+// TODO VIC-5920: Add Cancel by id message, and add ids to all action response messages
 
 // GotoPose
 message GoToPoseRequest {
@@ -664,11 +673,13 @@ message GoToPoseRequest {
   float y_mm                    = 2;
   float rad                     = 3;
   PathMotionProfile motion_prof = 4;
+  int32 id_tag                  = 5;
+  int32 num_retries             = 6;
 }
 
 message GoToPoseResponse {
-  ResponseStatus status      = 1;
-  ActionResult action_result = 2;
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
 }
 
 // This is a uint8 in CLAD
@@ -688,67 +699,76 @@ message DockWithCubeRequest {
   bool              use_approach_angle      = 5;
   bool              use_pre_dock_pose       = 6;
   PathMotionProfile motion_prof             = 7;
+  int32             id_tag                  = 8;
+  int32             num_retries             = 9;
 }
 
 message DockWithCubeResponse {
   ResponseStatus status = 1;
-  ActionResult action_result = 2;
+  ActionResult   result = 2;
 }
 
-// @TODO: add num_retries (VIC-5735)
 message DriveStraightRequest {
-   float speed_mmps = 1;  // Speed should be positive
-   float dist_mm = 2;     // Use +ve for forward, -ve for backward
-   bool should_play_animation = 3;
+  float speed_mmps            = 1; // Speed should be positive
+  float dist_mm               = 2; // Use +ve for forward, -ve for backward
+  bool  should_play_animation = 3;
+  int32 id_tag                = 4;
+  int32 num_retries           = 5;
 }
 
 message DriveStraightResponse {
   ResponseStatus status = 1;
-  BehaviorResults result = 2;
+  ActionResult   result = 2;
 }
 
 // TurnInPlace
 // If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
 // If isAbsolute != 0, turns to the specified absolute orientation.
 message TurnInPlaceRequest {
-    float angle_rad = 1; // relative mode: postive turns left negative turns right
-    float speed_rad_per_sec = 2;
-    float accel_rad_per_sec2 = 3;
-    float tol_rad = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
-                            // Smaller values are ignored except 0 which is interpreted to mean
-                            // default tolerance of POINT_TURN_ANGLE_TOL.
-    uint32 is_absolute = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+  float  angle_rad          = 1; // relative mode: postive turns left negative turns right
+  float  speed_rad_per_sec  = 2;
+  float  accel_rad_per_sec2 = 3;
+  float  tol_rad            = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                                // Smaller values are ignored except 0 which is interpreted to mean
+                                // default tolerance of POINT_TURN_ANGLE_TOL.
+  uint32 is_absolute        = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+  int32  id_tag             = 6;
+  int32  num_retries        = 7;
 }
 
 message TurnInPlaceResponse {
   ResponseStatus status = 1;
-  BehaviorResults result = 2;
+  ActionResult   result = 2;
 }
 
 // SetHeadAngle
 message SetHeadAngleRequest {
-    float angle_rad = 1;
-    float max_speed_rad_per_sec = 2;
-    float accel_rad_per_sec2 = 3;
-    float duration_sec = 4;
+  float angle_rad             = 1;
+  float max_speed_rad_per_sec = 2;
+  float accel_rad_per_sec2    = 3;
+  float duration_sec          = 4;
+  int32 id_tag                = 5;
+  int32 num_retries           = 6;
 }
 
 message SetHeadAngleResponse {
   ResponseStatus status = 1;
-  BehaviorResults result = 2;
+  ActionResult   result = 2;
 }
 
 // SetLiftHeight
 message SetLiftHeightRequest {
-    float height_mm = 1;
-    float max_speed_rad_per_sec = 2;
-    float accel_rad_per_sec2 = 3;
-    float duration_sec = 4;
+  float height_mm             = 1;
+  float max_speed_rad_per_sec = 2;
+  float accel_rad_per_sec2    = 3;
+  float duration_sec          = 4;
+  int32 id_tag                = 5;
+  int32 num_retries           = 6;
 }
 
 message SetLiftHeightResponse {
   ResponseStatus status = 1;
-  BehaviorResults result = 2;
+  ActionResult   result = 2;
 }
 
 // SetBackpackLights

@@ -150,88 +150,6 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 	})
 }
 
-func ProtoPathMotionProfileToClad(msg *extint.PathMotionProfile) gw_clad.PathMotionProfile {
-	if msg == nil {
-		return gw_clad.PathMotionProfile{}
-	}
-	return gw_clad.PathMotionProfile{
-		SpeedMmps:                msg.SpeedMmps,
-		AccelMmps2:               msg.AccelMmps2,
-		DecelMmps2:               msg.DecelMmps2,
-		PointTurnSpeedRadPerSec:  msg.PointTurnSpeedRadPerSec,
-		PointTurnAccelRadPerSec2: msg.PointTurnAccelRadPerSec2,
-		PointTurnDecelRadPerSec2: msg.PointTurnDecelRadPerSec2,
-		DockSpeedMmps:            msg.DockSpeedMmps,
-		DockAccelMmps2:           msg.DockAccelMmps2,
-		DockDecelMmps2:           msg.DockDecelMmps2,
-		ReverseSpeedMmps:         msg.ReverseSpeedMmps,
-		IsCustom:                 msg.IsCustom,
-	}
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoGoToPoseToClad(msg *extint.GoToPoseRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithGotoPose(&gw_clad.GotoPose{
-		XMm:        msg.XMm,
-		YMm:        msg.YMm,
-		Rad:        msg.Rad,
-		MotionProf: ProtoPathMotionProfileToClad(msg.MotionProf),
-		Level:      0,
-	})
-}
-
-func ProtoDockWithCubeToClad(msg *extint.DockWithCubeRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithAlignWithObject(&gw_clad.AlignWithObject{
-		ObjectID:             msg.ObjectId,
-		MotionProf:           ProtoPathMotionProfileToClad(msg.MotionProf),
-		DistanceFromMarkerMm: msg.DistanceFromMarkerMm,
-		ApproachAngleRad:     msg.ApproachAngleRad,
-		AlignmentType:        gw_clad.AlignmentType(msg.AlignmentType - 1),
-		UseApproachAngle:     msg.UseApproachAngle,
-		UsePreDockPose:       msg.UsePreDockPose,
-	})
-}
-
-func ProtoDriveStraightToClad(msg *extint.DriveStraightRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithDriveStraight(&gw_clad.DriveStraight{
-		SpeedMmps:           msg.SpeedMmps,
-		DistMm:              msg.DistMm,
-		ShouldPlayAnimation: msg.ShouldPlayAnimation,
-	})
-}
-
-func ProtoTurnInPlaceToClad(msg *extint.TurnInPlaceRequest) *gw_clad.MessageExternalToRobot {
-	// Bind IsAbsolute to a uint8 boundary, the clad side uses a uint8, proto side uses uint32
-	if msg.IsAbsolute > math.MaxUint8 {
-		msg.IsAbsolute = math.MaxUint8
-	}
-	return gw_clad.NewMessageExternalToRobotWithTurnInPlace(&gw_clad.TurnInPlace{
-		AngleRad:        msg.AngleRad,
-		SpeedRadPerSec:  msg.SpeedRadPerSec,
-		AccelRadPerSec2: msg.AccelRadPerSec2,
-		TolRad:          msg.TolRad,
-		IsAbsolute:      uint8(msg.IsAbsolute),
-	})
-}
-
-func ProtoSetHeadAngleToClad(msg *extint.SetHeadAngleRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetHeadAngle(&gw_clad.SetHeadAngle{
-		AngleRad:          msg.AngleRad,
-		MaxSpeedRadPerSec: msg.MaxSpeedRadPerSec,
-		AccelRadPerSec2:   msg.AccelRadPerSec2,
-		DurationSec:       msg.DurationSec,
-	})
-}
-
-func ProtoSetLiftHeightToClad(msg *extint.SetLiftHeightRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetLiftHeight(&gw_clad.SetLiftHeight{
-		HeightMm:          msg.HeightMm,
-		MaxSpeedRadPerSec: msg.MaxSpeedRadPerSec,
-		AccelRadPerSec2:   msg.AccelRadPerSec2,
-		DurationSec:       msg.DurationSec,
-	})
-}
-
 func SliceToArray(msg []uint32) [3]uint32 {
 	var arr [3]uint32
 	copy(arr[:], msg)
@@ -1647,60 +1565,68 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 	}, nil
 }
 
-// @TODO: Send proto message through to engine after work in VIC-5735
 func (service *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequest) (*extint.GoToPoseResponse, error) {
 	log.Println("Received rpc request GoToPose(", in, ")")
 
-	f, goToPoseResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_RobotCompletedAction, 1)
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_GoToPoseResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoGoToPoseToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_GoToPoseRequest{
+			GoToPoseRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	response, ok := <-goToPoseResponse
+	goToPoseResponse, ok := <-responseChan
 	if !ok {
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
-	actionResult := response.GetRobotCompletedAction().Result
-	return &extint.GoToPoseResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-		},
-		ActionResult: extint.ActionResult(actionResult),
-	}, nil
+	response := goToPoseResponse.GetGoToPoseResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
-// @TODO: Send proto message through to engine after work in VIC-5735
 func (service *rpcService) DockWithCube(ctx context.Context, in *extint.DockWithCubeRequest) (*extint.DockWithCubeResponse, error) {
 	log.Println("Received rpc request DockWithCube(", in, ")")
 
-	f, dockWithCubeResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_RobotCompletedAction, 1)
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DockWithCubeResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoDockWithCubeToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DockWithCubeRequest{
+			DockWithCubeRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	response := <-dockWithCubeResponse
-	actionResult := response.GetRobotCompletedAction().Result
-	return &extint.DockWithCubeResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-		},
-		ActionResult: extint.ActionResult(actionResult),
-	}, nil
+	dockWithCubeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := dockWithCubeResponse.GetDockWithCubeResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
-// @TODO: Send proto message through to engine (VIC-5735)
 func (service *rpcService) DriveStraight(ctx context.Context, in *extint.DriveStraightRequest) (*extint.DriveStraightResponse, error) {
 	log.Println("Received rpc request DriveStraight(", in, ")")
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveStraightResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoDriveStraightToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DriveStraightRequest{
+			DriveStraightRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -1716,13 +1642,16 @@ func (service *rpcService) DriveStraight(ctx context.Context, in *extint.DriveSt
 	return response, nil
 }
 
-// @TODO: Send proto message through to engine after work in VIC-5735
 func (service *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPlaceRequest) (*extint.TurnInPlaceResponse, error) {
 	log.Println("Received rpc request TurnInPlace(", in, ")")
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_TurnInPlaceResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoTurnInPlaceToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_TurnInPlaceRequest{
+			TurnInPlaceRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -1738,13 +1667,16 @@ func (service *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPla
 	return response, nil
 }
 
-// @TODO: Send proto message through to engine after work in VIC-5735
 func (service *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadAngleRequest) (*extint.SetHeadAngleResponse, error) {
 	log.Println("Received rpc request SetHeadAngle(", in, ")")
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetHeadAngleResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoSetHeadAngleToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetHeadAngleRequest{
+			SetHeadAngleRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -1760,13 +1692,16 @@ func (service *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadA
 	return response, nil
 }
 
-// @TODO: Send proto message through to engine after work in VIC-5735
 func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeightRequest) (*extint.SetLiftHeightResponse, error) {
 	log.Println("Received rpc request SetLiftHeight(", in, ")")
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetLiftHeightResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoSetLiftHeightToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetLiftHeightRequest{
+			SetLiftHeightRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
