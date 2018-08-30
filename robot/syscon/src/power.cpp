@@ -12,8 +12,6 @@
 #include "mics.h"
 #include "lights.h"
 
-#include "contacts.h"
-
 extern "C" void SoftReset();
 
 static const uint32_t APB1_CLOCKS = 0
@@ -45,10 +43,11 @@ void Power::init(void) {
   DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
+  
+  Power::adjustHead(true);
 }
 
 static inline void enableHead(void) {
-  BODY_TX::mode(MODE_OUTPUT);
   MAIN_EN::set();
   Mics::start();
   Lights::enable();
@@ -129,13 +128,14 @@ static void enterBootloader(void) {
   RCC->APB1ENR &= ~APB1_CLOCKS;
   RCC->APB2ENR &= ~APB2_CLOCKS;
 
+  __disable_irq();
+
   // Set to flash handler
   SYSCFG->CFGR1 = 0;
 
   markForErase();
 
   // Pass control back to the reset handler
-  __disable_irq();
   DFU_FLAG = DFU_ENTRY_POINT;
   NVIC->ICER[0] = ~0; // Disable all interrupts
   NVIC->ICPR[0] = ~0; // Clear all pending interrupts
@@ -154,7 +154,7 @@ void Power::setMode(PowerMode set) {
   desiredState = set;
 }
 
-void Power::adjustHead(void) {
+void Power::adjustHead(bool appStart) {
   static bool headPowered = false;  // head has power, but devices are not setup
   bool wantPower = desiredState != POWER_STOP;
 
@@ -163,6 +163,7 @@ void Power::adjustHead(void) {
   }
 
   if (wantPower) {
+    if (!appStart) BODY_TX::mode(MODE_OUTPUT);
     enableHead();
   } else {
     disableHead();
