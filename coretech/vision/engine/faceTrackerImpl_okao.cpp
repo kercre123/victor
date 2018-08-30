@@ -469,6 +469,7 @@ namespace Vision {
   {
     Reset();
   }
+
   void FaceTracker::Impl::AddAllowedTrackedFace(const FaceID_t faceID)
   {
     _allowedTrackedFaceID.insert(faceID);
