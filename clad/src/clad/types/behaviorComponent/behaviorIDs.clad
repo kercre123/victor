@@ -279,6 +279,7 @@ enum uint_16 BehaviorID {
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
+  PlayAGameVoiceCommand,
   WhatsMyNameVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir

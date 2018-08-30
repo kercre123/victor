@@ -62,7 +62,8 @@ namespace{
                                                                                    BEHAVIOR_CLASS(PickUpCube),
                                                                                    BEHAVIOR_CLASS(PopAWheelie),
                                                                                    BEHAVIOR_CLASS(PounceWithProx),
-                                                                                   BEHAVIOR_CLASS(RollBlock) }};
+                                                                                   BEHAVIOR_CLASS(RollBlock),
+                                                                                   BEHAVIOR_CLASS(FindCubeAndThen) }};
 
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressTouch = { BEHAVIOR_CLASS(BlackJack) };
 
