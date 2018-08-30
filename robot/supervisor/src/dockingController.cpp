@@ -545,9 +545,10 @@ namespace Anki {
             
             // If we are doing hybrid docking then we want to backup when not in position and then fail
             // so if action retries we are close to predock pose
-            if(dockingMethod_ == DockingMethod::HYBRID_DOCKING)
+            if(dockingMethod_ == DockingMethod::HYBRID_DOCKING || 
+               dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE)
             {
-              AnkiDebug( "DockingController.Update.BackingUpAndStopping", "");
+              AnkiInfo( "DockingController.Update.BackingUpAndStopping", "");
               StopDocking(DockingResult::DOCK_FAILURE_RETRY);
             }
           }
@@ -682,9 +683,9 @@ namespace Anki {
 
         // Check if we are beyond point of no return distance
         if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
-#if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( "DockingController.Update.PointOfNoReturn", "(%f < %d) mode:%i", distToMarker, pointOfNoReturnDistMM_, mode_);
-#endif
+//#if(DEBUG_DOCK_CONTROLLER)
+          AnkiInfo( "DockingController.Update.PointOfNoReturn", "(%f < %d) mode:%i", distToMarker, pointOfNoReturnDistMM_, mode_);
+//#endif
           pastPointOfNoReturn_ = true;
           mode_ = APPROACH_FOR_DOCK;
         }
@@ -707,7 +708,7 @@ namespace Anki {
                 && !markerOutOfFOV_
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               StopDocking(DockingResult::DOCK_FAILURE_TOO_LONG_WITHOUT_BLOCKPOSE);
-              AnkiDebug( "DockingController.LOOKING_FOR_BLOCK.TooLongWithoutErrorSignal", "currTime %d, lastErrSignal %d, Giving up.", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+              AnkiInfo( "DockingController.LOOKING_FOR_BLOCK.TooLongWithoutErrorSignal", "currTime %d, lastErrSignal %d, Giving up.", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
             }
             break;
           case APPROACH_FOR_DOCK:
@@ -725,7 +726,7 @@ namespace Anki {
                 PathFollower::ClearPath();
                 SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
                 mode_ = LOOKING_FOR_BLOCK;
-                AnkiDebug( "DockingController.APPROACH_FOR_DOCK.TooLongWithoutErrorSignal", "currTime %d, lastErrSignal %d, Looking for block...", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+                AnkiInfo( "DockingController.APPROACH_FOR_DOCK.TooLongWithoutErrorSignal", "currTime %d, lastErrSignal %d, Looking for block...", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
                 break;
               }
             }
@@ -776,13 +777,17 @@ namespace Anki {
                 {
                   // Since hybrid docking doesn't plan into the block the error signal will be slightly larger
                   // when we finish traversing the path so increase the x_dist_err tolerance
-                  f32 rel_x_tol_mm = (dockingMethod_ == DockingMethod::HYBRID_DOCKING ? HYBRID_REL_X_TOL_MM : 0);
+                  f32 rel_x_tol_mm = (dockingMethod_ == DockingMethod::HYBRID_DOCKING || dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE ? HYBRID_REL_X_TOL_MM : 0);
                   if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) <= TIME_SINCE_LAST_ERRSIG &&
                      (dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_ + rel_x_tol_mm ||
                       ABS(dockingErrSignalMsg_.y_horErr) > LATERAL_DOCK_TOLERANCE_AT_DOCK_MM ||
                       ABS(dockingErrSignalMsg_.angleErr) > ERRMSG_NOT_IN_POSITION_ANGLE_TOL))
                   {
-                    AnkiDebug( "DockingController.Update.FinishedPathButErrorSignalTooLarge_1", "");
+                    AnkiInfo("DockingController.Update.FinishedPathButErrorSignalTooLarge_1", 
+                             "x: %f, y: %f, angle: %f",
+                             dockingErrSignalMsg_.x_distErr,
+                             dockingErrSignalMsg_.y_horErr,
+                             dockingErrSignalMsg_.angleErr);
                     inPosition = false;
                     
                     // If we aren't in position but are relativly close then we want to do the Hanns maneuver
@@ -792,7 +797,7 @@ namespace Anki {
                         ABS(dockingErrSignalMsg_.y_horErr) <= ERRMSG_HM_LATERAL_DOCK_TOL_MM &&
                         ABS(dockingErrSignalMsg_.angleErr) <= ERRMSG_HM_ANGLE_TOL)
                     {
-                      //AnkiDebug( "DockingController.Update.AbleToDoHannsManeuver_1", "");
+                      AnkiInfo( "DockingController.Update.AbleToDoHannsManeuver_1", "");
   #ifndef SIMULATOR
                       doHannsManeuver = true;
   #endif
@@ -805,14 +810,16 @@ namespace Anki {
                            ABS(rel_horz_dist_block) > HORZ_DOCK_TOL_MM ||
                            ABS(rel_angle_to_block) > POSE_NOT_IN_POSITION_ANGLE_TOL))
                   {
-                    AnkiDebug( "DockingController.Update.FinishedPathButErrorSignalTooLarge_2", "");
+                    AnkiInfo( "DockingController.Update.FinishedPathButErrorSignalTooLarge_2", 
+                              "ver: %f, hor: %f, angle: %f", 
+                              rel_vert_dist_block, rel_horz_dist_block, rel_angle_to_block);
                     inPosition = false;
                     
                     if(rel_vert_dist_block < VERT_DOCK_TOL_MM+POSE_HM_DIST_TOL &&
                         ABS(rel_horz_dist_block) < POSE_HM_HORZ_TOL_MM &&
                         ABS(rel_angle_to_block) < POSE_HM_ANGLE_TOL)
                     {
-                      //AnkiDebug( "DockingController.Update.AbleToDoHannsManeuver_2", "");
+                      AnkiInfo( "DockingController.Update.AbleToDoHannsManeuver_2", "");
   #ifndef SIMULATOR
                       doHannsManeuver = true;
   #endif
@@ -891,13 +898,13 @@ namespace Anki {
                   else
                   {
                     SendDockingStatusMessage(Status::STATUS_BACKING_UP);
-                    AnkiDebug( "DockingController.Update.BackingUp", "");
+                    AnkiInfo( "DockingController.Update.BackingUp", "");
                     
                     // If we have failed too many times just give up
                     if(numDockingFails_++ >= maxDockRetries_)
                     {
                       StopDocking(DockingResult::DOCK_FAILURE_RETRY);
-                      AnkiDebug( "DockingController.Update.TooManyDockingFails", "MaxRetries %d", maxDockRetries_);
+                      AnkiInfo( "DockingController.Update.TooManyDockingFails", "MaxRetries %d", maxDockRetries_);
                       break;
                     }
                     
@@ -966,6 +973,8 @@ namespace Anki {
 
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t)
       {
+        AnkiWarn( "DockingController.SetRelDockPose.ErrorSignal", "x: %f, y: %f, rad: %f", rel_x, rel_y, rel_rad);
+
         // Check for readings that we do not expect to get
         if (rel_x < 0.f || ABS(rel_rad) > 0.75f*M_PI_2_F) {
           AnkiWarn( "DockingController.SetRelDockPose.OORErrorSignal", "x: %f, y: %f, rad: %f", rel_x, rel_y, rel_rad);
@@ -1049,7 +1058,7 @@ namespace Anki {
         
         // If we are hybrid docking check if blockPose has changed too much indicating
         // something moved unexpectedly
-        if(dockingMethod_ == DockingMethod::HYBRID_DOCKING && prev_blockPose_x_ != -1)
+        if((dockingMethod_ == DockingMethod::HYBRID_DOCKING || dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE) && prev_blockPose_x_ != -1)
         {
           if(fabsf(prev_blockPose_x_ - blockPose_x) > DELTA_BLOCKPOSE_X_TOL_MM ||
              fabsf(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
@@ -1071,7 +1080,7 @@ namespace Anki {
         if (PathFollower::IsTraversingPath() &&
             (dockingMethod_ == DockingMethod::BLIND_DOCKING ||
              dockingMethod_ == DockingMethod::EVEN_BLINDER_DOCKING ||
-             (dockingMethod_ == DockingMethod::HYBRID_DOCKING && numErrSigToAcquireNewSignal_ < CONSEC_ERRSIG_TO_ACQUIRE_NEW_SIGNAL))) {
+             ((dockingMethod_ == DockingMethod::HYBRID_DOCKING || dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE) && numErrSigToAcquireNewSignal_ < CONSEC_ERRSIG_TO_ACQUIRE_NEW_SIGNAL))) {
           return;
         }
         numErrSigToAcquireNewSignal_ = 0;
@@ -1226,31 +1235,55 @@ namespace Anki {
           if(dockingMethod_ != TRACKER_DOCKING)
 #endif
           {
-            // Compute new starting point for path
-            // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
-            const f32 dockPoseCos = cosf(dockPose_.GetAngle().ToFloat());
-            const f32 dockPoseSin = sinf(dockPose_.GetAngle().ToFloat());
-            
-            f32 x_start_mm = dockPose_.x() - 3 * distToBlock * dockPoseCos;
-            f32 y_start_mm = dockPose_.y() - 3 * distToBlock * dockPoseSin;
-            
-            // Plan just a little bit into the block to reduce the chance that we don't quite get close enough
-            // and completely whiff picking up the object
-            f32 distIntoBlock_mm = 5;
-            
-            const DockAction curAction = PickAndPlaceController::GetCurAction();
-            // If we are rolling push the block a little by planning a path into it
-            if(curAction == DockAction::DA_ROLL_LOW ||
-               curAction == DockAction::DA_DEEP_ROLL_LOW)
-            {
-              distIntoBlock_mm = PATH_END_DIST_INTO_BLOCK_MM;
+            f32 x_start_mm = 0.f, y_start_mm = 0.f, x_end_mm = 0.f, y_end_mm = 0.f;
+            if(dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE) {
+              x_start_mm = Localization::GetCurrPose_x();
+              y_start_mm = Localization::GetCurrPose_y();
+              x_end_mm = blockPose_.x();
+              y_end_mm = blockPose_.y();
+
+              // Compute how far to drive into marker based on how off-angle it is.
+              f32 distIntoBlock_mm = 0.f;   // rel_rad;
+
+              const f32 dockPoseCos = cosf(angle_to_block);
+              const f32 dockPoseSin = sinf(angle_to_block);
+              x_end_mm += distIntoBlock_mm * dockPoseCos;
+              y_end_mm += distIntoBlock_mm * dockPoseSin;
+
+              AnkiWarn("DockingController.errSig", "x: %f, y: %f, a: %f", rel_x, rel_y, RAD_TO_DEG(rel_rad));
+              dockSpeed_mmps_ = 50.f;
+            } else {
+              AnkiWarn("DockingController.normal", "x: %f, y: %f, a: %f", rel_x, rel_y, RAD_TO_DEG(rel_rad));
+              // Compute new starting point for path
+              // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
+              const f32 dockPoseCos = cosf(dockPose_.GetAngle().ToFloat());
+              const f32 dockPoseSin = sinf(dockPose_.GetAngle().ToFloat());
+              
+              x_start_mm = dockPose_.x() - 3 * distToBlock * dockPoseCos;
+              y_start_mm = dockPose_.y() - 3 * distToBlock * dockPoseSin;
+              
+              // Plan just a little bit into the block to reduce the chance that we don't quite get close enough
+              // and completely whiff picking up the object
+              f32 distIntoBlock_mm = 5;
+              
+              const DockAction curAction = PickAndPlaceController::GetCurAction();
+              // If we are rolling push the block a little by planning a path into it
+              if(curAction == DockAction::DA_ROLL_LOW ||
+                curAction == DockAction::DA_DEEP_ROLL_LOW)
+              {
+                distIntoBlock_mm = PATH_END_DIST_INTO_BLOCK_MM;
+              }
+
+              // Compute end of path
+              x_end_mm = dockPose_.x() + distIntoBlock_mm*dockPoseCos;
+              y_end_mm = dockPose_.y() + distIntoBlock_mm*dockPoseSin;
             }
             
             PathFollower::ClearPath();
             PathFollower::AppendPathSegment_Line(x_start_mm,
                                                  y_start_mm,
-                                                 dockPose_.x() + distIntoBlock_mm*dockPoseCos,
-                                                 dockPose_.y() + distIntoBlock_mm*dockPoseSin,
+                                                 x_end_mm,
+                                                 y_end_mm,
                                                  dockSpeed_mmps_,
                                                  dockAccel_mmps2_,
                                                  dockAccel_mmps2_);
@@ -1435,6 +1468,8 @@ namespace Anki {
           return;
         }
         
+        AnkiWarn("DockingController.StopDocking", "%d", (int)result);
+
         dockingResult_ = result;
       
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
