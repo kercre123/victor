@@ -316,5 +316,21 @@ namespace TestCommon
     }
     ConsolePrintf("Console restored\n");
   }
+  
+  int waitForKeypress(uint32_t timeout, bool flush_rx, const char *printstr)
+  {
+    if( printstr )
+      ConsoleWrite((char*)printstr);
+    if( flush_rx )
+      while( ConsoleReadChar() > -1 );
+    
+    uint32_t Tstart = Timer::get();
+    while( !timeout || Timer::elapsedUs(Tstart) < timeout )
+      if( ConsoleReadChar() > -1 )
+        return 0;
+    
+    return 1;
+  }
+  
 }
 
