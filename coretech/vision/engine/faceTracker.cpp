@@ -83,7 +83,7 @@ namespace Vision {
     _pImpl->ClearAllowedTrackedFaces();
   }
 
-  void FaceTracker::RobotHasMoved()
+  void FaceTracker::AccountForRobotMove()
   {
     if (!_pImpl->HaveAllowedTrackedFaces())
     {

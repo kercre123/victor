@@ -61,7 +61,7 @@ namespace Vision {
 
     // If the robot moves we will call ClearAllowedTrackedFaces if 
     // we don't have any allowed tracked faces.
-    void RobotHasMoved();
+    void AccountForRobotMove();
     
     void EnableDisplay(bool enabled);
     
