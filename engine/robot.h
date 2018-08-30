@@ -129,6 +129,7 @@ class BeatDetectorComponent;
 class HabitatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
+enum class ShutdownReason : uint8_t;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -669,7 +670,7 @@ public:
 
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
-  void Shutdown() { _toldToShutdown = true; }
+  void Shutdown(ShutdownReason reason);
   bool ToldToShutdown() const { return _toldToShutdown; }
 
   bool SetLocale(const std::string & locale);

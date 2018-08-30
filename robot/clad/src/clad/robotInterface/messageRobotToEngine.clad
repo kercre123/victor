@@ -32,6 +32,7 @@ message RobotServerDisconnect
 
 message PrepForShutdown
 {
+  ShutdownReason reason
 }
 
 message RobotPoked

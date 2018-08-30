@@ -114,5 +114,13 @@ enum int_8 BodyColor
   COUNT
 }
 
+enum uint_8 ShutdownReason {
+  SHUTDOWN_BUTTON,
+  SHUTDOWN_CRITICAL_BATTERY,
+  SHUTDOWN_HOT_BATTERY,
+}
+
+
+
 } // namespace Vector
 } // namespace Anki

@@ -162,6 +162,12 @@ int main(void)
     result = animEngine->Update(curTime_ns);
     if (RESULT_OK != result) {
       PRINT_NAMED_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
+
+      // Don't exit with error code so as not to trigger 
+      // fault code 800 on what is actually a clean shutdown.
+      if (result == RESULT_SHUTDOWN) {
+        result = RESULT_OK;
+      }
       break;
     }
 

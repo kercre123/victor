@@ -65,14 +65,6 @@ namespace {
   // (the 'off-charger' low battery threshold).
   const float kOnChargerLowBatteryThresholdVolts = 4.0f;
 
-  // Approaching syscon cutoff voltage.
-  // Shutdown will occur in ~30 seconds.
-  const float kCriticalBatteryThresholdVolts = 3.45f;
-
-  // How often to call sync() when battery is critical
-  const float kCriticalBatterySyncPeriod_sec = 10.f;
-  float _nextSyncTime_sec = 0;
-
   // Console var for faking low battery
   CONSOLE_VAR(bool, kFakeLowBattery, "BatteryComponent", false);
   const float kFakeLowBatteryVoltage = 3.5f;
@@ -226,15 +218,6 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     level = BatteryLevel::Full;
   } else if (_batteryVoltsFilt < lowBattThreshold) {
     level = BatteryLevel::Low;
-
-    // Battery is critical
-    // Power shutdown is practically imminent so call
-    // sync() every once in a while.
-    if ((_batteryVoltsFilt < kCriticalBatteryThresholdVolts) &&
-        (now_sec > _nextSyncTime_sec)) {
-      sync();
-      _nextSyncTime_sec = now_sec + kCriticalBatterySyncPeriod_sec;
-    }
   }
   
   if (level != _batteryLevel) {

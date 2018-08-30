@@ -11,6 +11,7 @@
 #include "util/math/numericCast.h"
 #include <fstream>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <utime.h>
 #include <cstdio>
@@ -125,6 +126,17 @@ ssize_t FileUtils::GetDirectorySize(const std::string& path)
   }
 
   return size;
+}
+
+int64_t FileUtils::GetDirectoryFreeSize(const std::string& path)
+{
+  if (DirectoryExists(path)) {
+    struct statvfs buf;
+    statvfs(path.c_str(), &buf);
+    return buf.f_bsize * buf.f_bavail;
+  }
+
+  return -1;
 }
 
 std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,

@@ -104,6 +104,8 @@
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
+#include "osState/osState.h"
+
 #include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
@@ -305,6 +307,23 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   DEV_ASSERT(_context != nullptr, "Robot.Constructor.ContextIsNull");
 
   LOG_INFO("Robot.Robot", "Created");
+
+  // Check for /run/data_cleared file 
+  // VIC-6069: OS needs to write this file following Clear User Data reboot
+  static const std::string dataClearedFile = "/run/data_cleared";
+  if (Util::FileUtils::FileExists(dataClearedFile)) {
+    DASMSG(robot_cleared_user_data, "robot.cleared_user_data", "User data was cleared");
+    DASMSG_SEND();  
+    Util::FileUtils::DeleteFile(dataClearedFile);
+  }
+  
+
+  // DAS message "power on"
+  float idleTime_sec;
+  auto upTime_sec = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
+  DASMSG(robot_power_on, "robot.power_on", "Robot (engine) object created");
+  DASMSG_SET(i1, upTime_sec, "Uptime (seconds)");
+  DASMSG_SEND();
 
   // create all components
   {
@@ -1450,6 +1469,18 @@ Result Robot::Update()
   {
     _sentEngineLoadedMsg = true;
     SendRobotMessage<RobotInterface::EngineFullyLoaded>();
+
+    auto onCharger  = GetBatteryComponent().IsOnChargerContacts() ? 1 : 0;
+    auto battery_mV = static_cast<uint32_t>(GetBatteryComponent().GetBatteryVolts() * 1000);
+
+    LOG_INFO("Robot.Update.EngineFullyLoaded", 
+             "OnCharger: %d, Battery_mV: %d", 
+             onCharger, battery_mV);
+
+    DASMSG(robot_engine_ready, "robot.engine_ready", "All robot processes are ready");
+    DASMSG_SET(i1, onCharger,  "On charger status");
+    DASMSG_SET(i2, battery_mV, "Battery voltage (mV)");
+    DASMSG_SEND();
   }
   
   return RESULT_OK;
@@ -2998,6 +3029,31 @@ bool Robot::SetLocale(const std::string & locale)
 
   return true;
 }
+
+
+void Robot::Shutdown(ShutdownReason reason)
+{
+  if (_toldToShutdown) { 
+    LOG_WARNING("Robot.Shutdown.AlreadyShuttingDown", "Ignoring new reason %s", EnumToString(reason));
+    return;
+  }
+  _toldToShutdown = true;
+
+  float idleTime_sec;
+  auto upTime_sec   = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
+  auto numFreeBytes = Util::FileUtils::GetDirectoryFreeSize("/data");
+
+  LOG_INFO("Robot.Shutdown.ShuttingDown", 
+           "Reason: %s, upTime: %u, numFreeBytes: %llu", 
+           EnumToString(reason), upTime_sec, numFreeBytes);
+
+  DASMSG(robot_power_off, "robot.power_off", "Reason why robot powered off during the previous run");
+  DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
+  DASMSG_SET(i1, upTime_sec,           "Uptime (seconds)");
+  DASMSG_SET(i2, numFreeBytes,         "Free space in /data (bytes)");
+  DASMSG_SEND();
+}
+
 
 } // namespace Vector
 } // namespace Anki

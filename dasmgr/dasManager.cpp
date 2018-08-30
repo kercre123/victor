@@ -733,6 +733,8 @@ Result DASManager::Run(const bool & shutdown)
 
   SaveGlobalState();
 
+  sync();
+
   LOG_DEBUG("DASManager.Run", "Done(result %d)", result);
   return result;
 }
