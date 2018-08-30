@@ -96,6 +96,7 @@ enum {
   POWER_ON_CHARGER    = 0x1,
   POWER_IS_CHARGING   = 0x2,
   POWER_BATTERY_DISCONNECTED = 0x4,
+  POWER_IS_OVERHEATED = 0x8,
   POWER_CHARGER_SHORTED = 0x8000
 };
 typedef uint16_t BatteryFlags;
@@ -113,6 +114,15 @@ enum {
   POWER_CONNECT_CHARGER    = 0x4000,
 };
 typedef uint32_t PowerFlags;
+
+// ENUM TemperatureAlarm
+enum {
+  TEMP_ALARM_SAFE = 0,
+  TEMP_ALARM_LOW = 1,
+  TEMP_ALARM_MID = 2,
+  TEMP_ALARM_HOT = 3
+};
+typedef uint8_t TemperatureAlarm;
 
 // ENUM LedIndexes
 enum {
@@ -214,7 +224,7 @@ struct BodyToHead
 {
   uint32_t framecounter;
   uint8_t flags;
-  uint8_t _unused0;
+  TemperatureAlarm tempAlarm;
   FailureCode failureCode;
   struct MotorState motor[4];
   uint16_t cliffSense[4];

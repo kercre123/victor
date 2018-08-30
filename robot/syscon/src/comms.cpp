@@ -11,7 +11,6 @@
 #include "lights.h"
 #include "mics.h"
 #include "touch.h"
-#include "contacts.h"
 #include "vectors.h"
 #include "flash.h"
 
@@ -296,7 +295,6 @@ static void ProcessMessage(InboundPacket& packet) {
         Analog::receive(&packet.headToBody);
         break ;
       case PAYLOAD_CONT_DATA:
-        Contacts::forward(packet.contactData);
         break ;
       default:
         static const AckMessage ack = { NACK_BAD_COMMAND };

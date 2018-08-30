@@ -412,16 +412,16 @@
               <FileType>8</FileType>
               <FilePath>.\crypto\sha256.cpp</FilePath>
             </File>
+            <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\analog.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>common</GroupName>
           <Files>
-            <File>
-              <FileName>analog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\analog.cpp</FilePath>
-            </File>
             <File>
               <FileName>flash.cpp</FileName>
               <FileType>8</FileType>
