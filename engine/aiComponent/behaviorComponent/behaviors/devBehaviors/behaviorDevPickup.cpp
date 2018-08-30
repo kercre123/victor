@@ -97,10 +97,31 @@ void BehaviorDevPickup::OnBehaviorActivated()
 
 void BehaviorDevPickup::TransitionToDriveToInFrontOfCube()
 {
-  const float distToCube_mm = 70.f;
+  Pose3d markerPose;
+
+  const float dockOffset    = -50.f;
+  const bool  ignoreZ       = true;
+  const bool  forceHeadDown = false;
+  const auto& robotPose     = GetBEI().GetRobotInfo().GetPose();
+  const auto  result        = _dVars.cubePtr->GetClosestMarkerPose(robotPose, ignoreZ, markerPose);
+  
+  if (result != RESULT_OK) {
+    PRINT_NAMED_WARNING("BehaviorDevPickup.TransitionToFineTurn.FailedGettingClosestMarkerPose", "");
+    return;
+  }
   
   auto* action = new CompoundActionSequential();
-  action->AddAction(new DriveToObjectAction{_dVars.cubePtr->GetID(), distToCube_mm});
+
+  // probably a better way to do this math - for now rotate the marker pose by 90 degrees and add a translation manually
+  Vec3f translation = markerPose.GetRotation() * Point3f{0.f, dockOffset, 0.f};
+  Pose3d predockPose(markerPose.GetRotation() * Rotation3d(M_PI_2, Z_AXIS_3D()), markerPose.GetTranslation() + translation, robotPose);
+
+
+  // the drive to object action currently looks smoother, but has a higher failure rate if the cube is observed
+  // from further away, or if the cube has been moved slightly since the last observation
+  // action->AddAction(new DriveToObjectAction{_dVars.cubePtr->GetID(), distToCube_mm});
+  
+  action->AddAction(new DriveToPoseAction{predockPose, forceHeadDown});
   action->AddAction(new VisuallyVerifyObjectAction{_dVars.cubePtr->GetID()});
   
   DelegateIfInControl(action,
@@ -112,23 +133,26 @@ void BehaviorDevPickup::TransitionToFineTurn()
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   
   Pose3d markerPose;
+  Vision::Marker marker(Vision::Marker::ANY_CODE);
   
   const bool ignoreZ = true;
-  const auto result = _dVars.cubePtr->GetClosestMarkerPose(robotPose, ignoreZ, markerPose);
+  const bool visuallyVerifyWhenDone = true;
+  const bool headTrackWhenDone = false;
+  const auto result = _dVars.cubePtr->GetClosestMarkerPose(robotPose, ignoreZ, markerPose, marker);
   
   if (result != RESULT_OK) {
     PRINT_NAMED_WARNING("BehaviorDevPickup.TransitionToFineTurn.FailedGettingClosestMarkerPose", "");
     return;
   }
   
-  const float driveDist_mm = 30.f;
+  const float driveDist_mm = 40.f;
   
   auto* action = new CompoundActionSequential();
   
-  auto* turnToPose = new TurnTowardsPoseAction{markerPose};
-  turnToPose->SetPanTolerance(DEG_TO_RAD(2.f));
+  auto* turnToMarker = new TurnTowardsObjectAction(_dVars.cubePtr->GetID(), marker.GetCode(), M_PI_F, visuallyVerifyWhenDone, headTrackWhenDone);
+  turnToMarker->SetPanTolerance(DEG_TO_RAD(2.f));
   
-  action->AddAction(turnToPose);
+  action->AddAction(turnToMarker);
   action->AddAction(new DriveStraightAction{driveDist_mm});
   action->AddAction(new MoveLiftToHeightAction{MoveLiftToHeightAction::Preset::HIGH_DOCK});
   
