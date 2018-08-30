@@ -93,6 +93,8 @@ enum WiFiAuth : uint8_t {
   bool _isPairing;
   bool _hasVersion;
   int _inputVersion;
+  
+  Anki::Vector::ExternalComms::RtsConnRequest _currentConnRequest;
 }
 
 @property (strong, nonatomic) id delegate;

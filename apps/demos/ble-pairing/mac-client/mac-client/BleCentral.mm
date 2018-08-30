@@ -425,6 +425,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     sodium_increment(_nonceIn, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
   } else {
     if(_verbose) NSLog(@"Error in decrypting challenge. Our key must be bad. :(");
+    Clad::SendRtsMessage<Anki::Vector::ExternalComms::RtsChallengeMessage>(self, _commVersion, 000000);
+    _rtsState = Raw;
+    
     return;
   }
   
@@ -1584,6 +1587,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) HandleReceivePublicKey:(const Anki::Vector::ExternalComms::RtsConnRequest&)msg {
+  _currentConnRequest = msg;
   if(_verbose) NSLog(@"Received public key from Victor");
   const void* bytes = (const void*)msg.publicKey.data();
   int n = (int)msg.publicKey.size();
