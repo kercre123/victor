@@ -108,11 +108,13 @@ func initServer(ctx context.Context) (ipc.Server, error) {
 		return nil, err
 	}
 
-	go func() {
-		<-ctx.Done()
-		if err := serv.Close(); err != nil {
-			log.Println("error closing token server:", err)
-		}
-	}()
+	if done := ctx.Done(); done != nil {
+		go func() {
+			<-done
+			if err := serv.Close(); err != nil {
+				log.Println("error closing token server:", err)
+			}
+		}()
+	}
 	return serv, nil
 }
