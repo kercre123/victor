@@ -95,6 +95,8 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   homeFilter              = std::make_unique<BlockWorldFilter>();
   searchSpacePointEvaluator = std::make_unique<Util::RejectionSamplerHelper<Point2f>>();
   searchSpacePolyEvaluator  = std::make_unique<Util::RejectionSamplerHelper<Poly2f>>();
+  useExposureCycling      = JsonTools::ParseBool(config, kUseExposureCyclingKey, debugName);
+  numImagesToWaitFor      = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
   
   // Set up block world filter for finding charger object
   homeFilter->AddAllowedFamily(ObjectFamily::Charger);

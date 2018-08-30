@@ -69,9 +69,8 @@ private:
     bool        useExposureCycling = true;
     
     // If using cycling exposure to find charger (above), we need to wait at least cycle_length * auto_exp_period frames
-    // Default is auto exposure every 8 frames and cycle length 3, meaning 24 frames
-    // TODO: Disable white balance for this behavior so we can do auto exposure every 4 frames (VIC-4945)
-    int         numImagesToWaitFor = 25;
+    // Default is auto exposure every 5 frames and cycle length 3, meaning 15 frames
+    int         numImagesToWaitFor = 15;
     
     AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
     AnimationTrigger searchTurnEndAnimTrigger = AnimationTrigger::Count;
