@@ -334,7 +334,7 @@ void BehaviorBlackJack::TransitionToVictorsTurn()
   DelegateIfInControl(SetUpSpeakingBehavior("Dealers Turn!"),
     [this](){
       _game.Flop();
-      _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToDealToVictor, this));
+      _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
     });
 }
 
