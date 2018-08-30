@@ -105,9 +105,12 @@ bool IBehavior::WantsToBeActivated() const
 #if ANKI_DEV_CHEATS
   // It's possible that this behavior appears in multiple places in the tree, so it may be active when checking
   // WantsToBeActivated.
-  DEV_ASSERT((_currentActivationState == ActivationState::Activated) ||
-             (_currentActivationState == ActivationState::InScope),
-             "IBehavior.WantsToBeActivated.InvalidActivationState");
+  DEV_ASSERT_MSG((_currentActivationState == ActivationState::Activated) ||
+                 (_currentActivationState == ActivationState::InScope),
+                 "IBehavior.WantsToBeActivated.InvalidActivationState",
+                 "Behavior '%s' in activation state '%s' should not get WantsToBeActivated call",
+                 _debugLabel.c_str(),
+                 ActivationStateToString(_currentActivationState));
 #endif
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
