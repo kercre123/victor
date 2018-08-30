@@ -85,6 +85,7 @@ namespace Vision {
 
   void FaceTracker::ClearAllowedTrackedFaces()
   {
+    // This reset call also clears the allowed tracked faces
     _pImpl->Reset();
   }
 
