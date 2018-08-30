@@ -47,13 +47,12 @@ pid="$$"
 
 #
 # Helper function to perform upload
-# VIC-3912: Need certificate chain for https validation
 #
 function upload {
   url=${1}
   path=${2}
   name=${3}
-  /usr/bin/curl -s -f -k -X PUT \
+  /usr/bin/curl -s -f -X PUT \
     -H "Anki-App-Key: ${APP_KEY}" \
     -H "Usr-Username: ${APP_USER}" \
     -H "Usr-RobotESN: ${esn}" \
