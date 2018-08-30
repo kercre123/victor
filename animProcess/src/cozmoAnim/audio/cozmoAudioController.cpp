@@ -206,6 +206,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 : _animContext( context )
 {
 #if USE_AUDIO_ENGINE
+  SetupConfig config{};
   {
     DEV_ASSERT(nullptr != _animContext, "CozmoAudioController.CozmoAudioController.AnimContext.IsNull");
 
@@ -224,7 +225,6 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     _soundbankLoader.reset(new SoundbankLoader(*this, assetPath));
 
     // Config Engine
-    SetupConfig config{};
     // Read/Write Asset path
     config.assetFilePath = assetPath;
     config.writeFilePath = sWritePath;
@@ -245,8 +245,26 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  //  3 MB
     config.defaultLEMemoryPoolSize    = ( 6 * 1024 * 1024 );  //  6 MB
     config.ioMemorySize               = ( 2 * 1024 * 1024 );  //  2 MB
-#endif
-
+    
+#if defined(ANKI_PLATFORM_VICOS)
+    // Robot
+    // Disk Read
+    config.ioMemoryGranularitySize    = ( 32 * 1024 );        // 16 KB
+    config.defaultPlaybackLookAhead   = 2;
+    // Threading | Lower Engein
+    config.threadLowEngine.SetAffinityMaskCpuId( 2 );
+    // Scheduler
+    config.threadScheduler.SetAffinityMaskCpuId( 0 );
+    config.threadScheduler.SetAffinityMaskCpuId( 1 );
+    config.threadScheduler.SetAffinityMaskCpuId( 3 );
+    // Bank Manager
+    config.threadBankManager.SetAffinityMaskCpuId( 0 );
+    config.threadBankManager.SetAffinityMaskCpuId( 1 );
+    config.threadBankManager.SetAffinityMaskCpuId( 3 );
+    
+#endif // defined(ANKI_PLATFORM_VICOS)
+#endif // defined(ANKI_PLATFORM_OSX)
+    
     // Performance
     config.sampleRate         = 32000;
     config.bufferSize         = 1024;
@@ -271,6 +289,13 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 
     InitializePluginInterface();
     GetPluginInterface()->SetupAkAlsaSinkPlugIn();
+    
+#if defined(ANKI_PLATFORM_VICOS)
+    // Robot - Threading
+    // Run on the same CPU as audio low engine
+    GetPluginInterface()->SetupAkAlsaSinkPlugIn( config.threadLowEngine.affinityMask );
+#endif
+    
     GetPluginInterface()->SetupStreamingWavePortalPlugIn();
 
     // TBD VIC-5253: Retire non-streaming WavePortal after switch to streaming
@@ -278,7 +303,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS
-    if (_soundbankLoader.get() != nullptr) {
+    if ( _soundbankLoader.get() != nullptr ) {
       _soundbankLoader->LoadDefaultSoundbanks();
     }
 
