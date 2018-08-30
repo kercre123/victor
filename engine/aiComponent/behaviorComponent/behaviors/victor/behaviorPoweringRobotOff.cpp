@@ -46,7 +46,8 @@ BehaviorPoweringRobotOff::InstanceConfig::InstanceConfig(const Json::Value& conf
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPoweringRobotOff::DynamicVariables::DynamicVariables()
-: timeLastPowerAnimStopped_ms(0)
+: waitingForAnimationCallback(false)
+, timeLastPowerAnimStopped_ms(0)
 , shouldStartPowerOffAnimaiton(false)
 {
 }
@@ -121,7 +122,6 @@ void BehaviorPoweringRobotOff::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  SmartPushResponseToTriggerWord();
 }
 
 
