@@ -370,7 +370,7 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
     _dVars.outcome = EOutcome::VictorWins;
     std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
-  } else if(_game.DealerHasTooManyCards() || _game.DealerShouldStandPerVegasRules()) {
+  } else if(_game.DealerHasLost()) {
     std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". You win!" );
     _dVars.outcome = EOutcome::VictorLoses;
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString),
