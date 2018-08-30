@@ -1088,29 +1088,10 @@ namespace Vision {
         FaceID_t faceID;
         if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
         {
-          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.CheckingTrackingId",
-                              "checking tracking id %d and corresponding face id %d",
-                              detectionInfo.nID,  faceID);
-          // Not sure I need to negate this now that we're getting the faceId
-          // from the recognizer
           if (_allowedTrackedFaceID.count(faceID) == 0)
           {
-            // We only want to update faces that are in _allowedTrackedFaceID
-            PRINT_NAMED_WARNING("FaceTrackerImpl.Update.ContinueFaceNotAllowed",
-                                "tracking id %d and corresponding face id %d",
-                                detectionInfo.nID,  faceID);
-            for (const auto& allowedFaceID: _allowedTrackedFaceID)
-            {
-              PRINT_NAMED_WARNING("FaceTrackerImpl.Update.AllowedFaceID",
-                                  " face id %d", allowedFaceID);
-            }
             continue; 
           }
-        }
-        else
-        {
-          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.NoDetectionIDInRecognizer",
-                              "tracking id %d", detectionInfo.nID);
         }
       }
       

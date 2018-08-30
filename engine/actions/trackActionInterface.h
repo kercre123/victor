@@ -223,7 +223,6 @@ private:
   f32      _tiltDuration_sec = 0.15f;
   f32      _panDuration_sec  = 0.25f;
   f32      _timeToReachTarget_sec  = 0.5f;
-  f32      _minAbsRelPanAngle_rad = 0;
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
   bool     _clampSmallAngles = false;
