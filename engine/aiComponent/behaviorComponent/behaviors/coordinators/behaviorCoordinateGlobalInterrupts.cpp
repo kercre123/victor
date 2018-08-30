@@ -170,6 +170,8 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
       _iConfig.driveToFaceBehaviors.push_back( beh );
     }
   }
+
+  _iConfig.dancingToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeatCoordinator));
 }
 
 
@@ -263,12 +265,14 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
     
-    // If we are responding to "go home", disable the voice command turn since we want
-    // him to just go directly into looking for the charger / going to the charger.
+    // If we are responding to "go home", disable the voice command turn since we want him to just go directly
+    // into looking for the charger / going to the charger. Also disable dancing to the beat, need to get home
+    // first.  // TODO:(bn) disable others too?
     const bool isGoHomePending = uic.IsUserIntentPending(USER_INTENT(system_charger));
     if (isGoHomePending) {
       const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
+      _iConfig.dancingToTheBeatBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }
   

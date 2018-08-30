@@ -75,6 +75,8 @@ private:
     AreBehaviorsActivatedHelper behaviorsThatShouldntReactToCliff;
     ICozmoBehaviorPtr reactToCliffBehavior;
     std::vector<std::shared_ptr<BehaviorDriveToFace>> driveToFaceBehaviors;
+
+    ICozmoBehaviorPtr dancingToTheBeatBehavior;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
