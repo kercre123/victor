@@ -97,7 +97,7 @@ TEST_F(BeatDetectorComponentTest, OnBeatCallback)
   ASSERT_EQ(nCallbacks, 1) << "Expected callback _not_ to be called";
 }
 
-TEST_F(BeatDetectorComponentTest, PossibleBeatDetection)
+TEST_F(BeatDetectorComponentTest, DISABLED_PossibleBeatDetection)
 {
   _beatDetectorComponent->Reset();
   
@@ -156,7 +156,7 @@ TEST_F(BeatDetectorComponentTest, PossibleBeatDetection)
 }
 
 
-TEST_F(BeatDetectorComponentTest, BeatDetection)
+TEST_F(BeatDetectorComponentTest, DISABLED_BeatDetection)
 {
   _beatDetectorComponent->Reset();
   
