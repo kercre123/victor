@@ -9,7 +9,7 @@
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
   "textToSpeechBehaviorID"              : "BlackJackTextToSpeech",
   "vocalPromptString"                   : "Another card?",
-  "maxNumberOfReprompts"                : 3,
+  "maxNumberOfReprompts"                : 2,
   "stopListeningOnIntents"              : true,
   "backpackLights"                      : false,
   "playListeningGetIn"                  : false,
