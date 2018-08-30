@@ -114,6 +114,21 @@ func (strm *Streamer) responseRoutine() {
 	})
 }
 
+func (strm *Streamer) cancelResponse() {
+	done := strm.ctx.Done()
+	if done == nil {
+		return
+	}
+	<-strm.ctx.Done()
+	// if we pulled from the Done channel because of a call to strm.cancel(), the closed bool will be set
+	if strm.closed {
+		return
+	}
+	strm.respOnce.Do(func() {
+		strm.receiver.OnError(cloud.ErrorType_Timeout, strm.ctx.Err())
+	})
+}
+
 func sendIntentResponse(resp *chipper.IntentResult, receiver Receiver) {
 	metadata := fmt.Sprintf("text: %s  confidence: %f  handler: %s",
 		resp.QueryText, resp.IntentConfidence, resp.Service)

@@ -1,6 +1,9 @@
 package stream
 
 func (strm *Streamer) init(streamSize int) {
+	// set up error response if context times out/is canceled
+	go strm.cancelResponse()
+
 	// start routine to buffer communication between main routine and upload routine
 	go strm.bufferRoutine(streamSize)
 	if strm.opts.checkOpts != nil {

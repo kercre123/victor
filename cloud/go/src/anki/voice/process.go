@@ -286,10 +286,10 @@ procloop:
 
 		case err := <-cloudChans.err:
 			if err.recvr.stream != strm {
-				log.Println("Ignoring error from prior stream:", err)
+				log.Println("Ignoring error from prior stream:", err.err)
 				continue
 			}
-			logVerbose("Received error from cloud:", err)
+			logVerbose("Received error from cloud:", err.err)
 			p.signalMicStop()
 			p.writeError(err.kind, err.err)
 			if err := strm.Close(); err != nil {
