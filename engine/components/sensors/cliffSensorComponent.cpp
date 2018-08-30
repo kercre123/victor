@@ -320,5 +320,10 @@ void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
   }
 }
   
+void CliffSensorComponent::SetWhiteDetectThreshold(uint16_t threshold) const
+{
+  _robot->SendRobotMessage<RobotInterface::SetWhiteDetectThreshold>(threshold);
+}
+  
 } // Cozmo namespace
 } // Anki namespace

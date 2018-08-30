@@ -128,6 +128,9 @@ protected:
     std::vector<u16> _validProxDistances = {};
     
     u32 _numTicksWaitingForProx = 0;
+    
+    // whether we are retrying the cliff align action
+    bool _cliffAlignRetry = false;
 
     explicit DynamicVariables() = default;
   };

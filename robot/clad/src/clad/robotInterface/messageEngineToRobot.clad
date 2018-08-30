@@ -282,6 +282,11 @@ message EnableStopOnWhite
   bool enable
 }
 
+message SetWhiteDetectThreshold
+{
+  uint_16 threshold
+}
+
 // Message to start/stop action that aligns the cliffs sensors with a white line.
 // Assumes at least one of the front cliffs sensors is already detecting
 // a value greater than MIN_CLIFF_STOP_ON_WHITE_VAL.
@@ -703,6 +708,7 @@ union EngineToRobot
   IMURequest                    imuRequest                  = 0x30,
   CheckLiftLoad                 checkLiftLoad               = 0x31,
   SetCliffDetectThresholds      setCliffDetectThresholds    = 0x32,
+  SetWhiteDetectThreshold       setWhiteDetectThreshold     = 0x39,
 
   // Calibration
   StartMotorCalibration         startMotorCalibration       = 0x33,

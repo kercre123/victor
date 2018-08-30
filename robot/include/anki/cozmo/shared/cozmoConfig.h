@@ -206,8 +206,15 @@ namespace Vector {
 
   // The minimum value expected of cliff sensor when
   // it's detecting a white line in the habitat
-  // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold? 
-  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL = 450;
+  // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold?
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH = 400;
+  
+  // if cliff-alignment fails, we may wish to retry cliff alignment
+  // with a lowered threshold in case we are dealing with values
+  // that are marginally lower than the threshold
+  // note: this is to counteract variability in appearance of
+  // habitat white w.r.t. individual robots
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL_LOW = 350;
 
   // Amount below MIN_CLIFF_STOP_ON_WHITE_VAL at which a white
   // value is undetected

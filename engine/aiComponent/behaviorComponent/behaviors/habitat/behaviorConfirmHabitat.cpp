@@ -214,6 +214,7 @@ void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
+  GetBEI().GetCliffSensorComponent().SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH);
   _dVars = DynamicVariables();
 }
 
@@ -517,12 +518,49 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 
 void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","");
-  IActionRunner* action = new CliffAlignToWhiteAction();
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","%s",_dVars._cliffAlignRetry ? "Retry" : "");
+  
+  IActionRunner* action = nullptr;
+  if(!_dVars._cliffAlignRetry) {
+    action = new CliffAlignToWhiteAction();
+  } else {
+    CompoundActionSequential* compoundAction = new CompoundActionSequential(std::list<IActionRunner*>{
+      // note: temporarily lowers the white detection
+      // threshold. This allows us to retry with more
+      // margin for detecting the white region
+      // After the CliffAlignAction returns, it resets to the old threshold
+      new WaitForLambdaAction([](Robot& robot)->bool {
+        robot.GetComponentPtr<CliffSensorComponent>()->SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_LOW);
+        return true;
+      },0.1f)
+    });
+    compoundAction->AddAction(new CliffAlignToWhiteAction());
+    
+    // reset the white-detect threshold
+    compoundAction->AddAction(new WaitForLambdaAction(
+      [](Robot& robot)->bool {
+        robot.GetComponentPtr<CliffSensorComponent>()->SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH);
+        return true;
+      },
+    0.1f));
+    
+    action = compoundAction;
+  }
+  DEV_ASSERT_MSG(action != nullptr, "ConfirmHabitat.TransitionToCliffAlignWhite.NullActionPtr", "");
+  
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
     switch(msg.result) {
       case ActionResult::SUCCESS: { break; }
       case ActionResult::CLIFF_ALIGN_FAILED_TIMEOUT:
+      {
+        if(!_dVars._cliffAlignRetry) {
+          _dVars._cliffAlignRetry = true;
+          TransitionToCliffAlignWhite();
+          break;
+        }
+        // deliberate fall-through: if we already retried CliffAlignment
+        // then we don't retry and instead fail to confirm the habitat
+      }
       case ActionResult::CLIFF_ALIGN_FAILED_OVER_TURNING: // deliberate fall through
       {
         // this is probably indicative that we are not in the habitat
