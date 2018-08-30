@@ -27,6 +27,7 @@
 #include "switchboardd/tokenClient.h"
 #include "switchboardd/connectionIdManager.h"
 #include "switchboardd/engineMessagingClient.h"
+#include "switchboardd/wifiWatcher.h"
 #include "switchboardd/gatewayMessagingServer.h"
 
 namespace Anki {
@@ -90,6 +91,7 @@ namespace Switchboard {
       void InitializeBleComms();
       void StartPairing();
       void OnConnected(int connId, INetworkStream* stream);
+      void OnWifiChanged(bool connected, std::string manufacturerMac);
       void OnDisconnected(int connId, INetworkStream* stream);
       void OnBleIpcDisconnected();
       void OnPinUpdated(std::string pin);
@@ -113,6 +115,8 @@ namespace Switchboard {
       Signal::SmartHandle _bleOnConnectedHandle;
       Signal::SmartHandle _bleOnDisconnectedHandle;
       Signal::SmartHandle _bleOnIpcPeerDisconnectedHandle;
+
+      Signal::SmartHandle _wifiChangedHandle;
 
       void UpdateAdvertisement(bool pairing);
 
@@ -156,6 +160,8 @@ namespace Switchboard {
       bool _shouldRestartPairing;
       bool _isTokenClientFullyInitialized;
       bool _hasCloudOwner = false;
+
+      std::unique_ptr<WifiWatcher> _wifiWatcher;
   };
 }
 }
