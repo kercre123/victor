@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Photo related classes, functions, events and values.
-'''
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["PhotographComponent"]

@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Command Line Interface for Vector
+"""Command Line Interface for Vector
 
 This is an example of integrating Vector with an ipython-based command line interface.
-'''
+"""
 
 import sys
 

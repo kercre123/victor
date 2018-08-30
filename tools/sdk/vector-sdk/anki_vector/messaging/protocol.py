@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Protobuf messages exposed to the Vector Python SDK
-'''
+"""
 import sys, inspect
 
 from .behavior_pb2 import *

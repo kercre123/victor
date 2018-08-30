@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Event handler used to make functions subscribe to robot events.
-'''
+"""
 
 __all__ = ['EventHandler']
 

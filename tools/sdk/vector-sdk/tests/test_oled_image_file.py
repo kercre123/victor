@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test showing solid image of Cozmo on Vector's face for 4 seconds
-'''
+"""
 
 import os
 import sys
@@ -18,7 +18,7 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     with anki_vector.Robot(args.serial, port=args.port) as robot:

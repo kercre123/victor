@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Vector's OLED screen that displays his face - related functions and values.
 
 Copyright (c) 2018 Anki, Inc.
-'''
+"""
 
 from . import sync, color, util
 from .messaging import protocol
@@ -31,16 +31,16 @@ SCREEN_HEIGHT = 96
 
 
 def dimensions():
-    '''Return the dimension (width, height) of the oled screen.
+    """Return the dimension (width, height) of the oled screen.
 
     Returns:
         A tuple of ints (width, height)
-    '''
+    """
     return SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
-    '''Convert a sequence of pixel data to the correct format to display on Vector's face.
+    """Convert a sequence of pixel data to the correct format to display on Vector's face.
 
     Args:
         pixel_data (list): sequence of triplets representing rgb values, should be ints from 0-255
@@ -54,7 +54,7 @@ def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
         ValueError: Invalid Dimensions
         ValueError: Bad image_width
         ValueError: Bad image_height
-    '''
+    """
 
     if len(pixel_data) != (image_width * image_height):
         raise ValueError('Invalid Dimensions: len(pixel_data) {0} != image_width={1} * image_height={2} (== {3})'. format(len(pixel_data),
@@ -83,14 +83,14 @@ def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
 
 
 def convert_image_to_screen_data(image):
-    ''' Convert an image into the correct format to display on Vector's face.
+    """ Convert an image into the correct format to display on Vector's face.
 
     Args:
         image (:class:`~PIL.Image.Image`): The image to display on Vector's face
 
     Returns:
         A :class:`bytes` object representing all of the pixels (16bit color in rgb565 format)
-    '''
+    """
     image_data = image.getdata()
 
     return convert_pixels_to_screen_data(image_data, image.width, image.height)

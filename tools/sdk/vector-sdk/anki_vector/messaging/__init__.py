@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Protobuf and gRPC messages exposed to the Vector Python SDK
-'''
+"""
 
 from . import protocol
 from . import client

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test playing and listing animations
-'''
+"""
 
 import os
 from pathlib import Path
@@ -15,7 +15,7 @@ CUSTOM_ANIM_FOLDER = Path("test_assets", "custom_animations")
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin testing animations ------")

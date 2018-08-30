@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test proximity sensor data
-'''
+"""
 
 import os
 import sys

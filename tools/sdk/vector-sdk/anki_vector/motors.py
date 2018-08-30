@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Control the motors of Victor
-'''
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['MotorComponent']
@@ -24,7 +24,7 @@ from .messaging import protocol
 
 
 class MotorComponent(util.Component):
-    '''Controls the low-level motor functions'''
+    """Controls the low-level motor functions"""
     @sync.Synchronizer.wrap
     async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
         motors = protocol.DriveWheelsRequest(left_wheel_mmps=left_wheel_speed,

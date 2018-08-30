@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test say text
-'''
+"""
 
 import os
 import sys

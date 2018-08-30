@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 The main robot class for managing the Vector SDK
-'''
+"""
 
 __all__ = ['Robot', 'AsyncRobot', 'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE']
 
@@ -234,8 +234,8 @@ class Robot:
 
     @property
     def proximity(self) -> proximity.ProximityComponent:
-        '''Component containing state related to object proximity detection
-        '''
+        """Component containing state related to object proximity detection
+        """
         return self._proximity
 
     @property
@@ -261,72 +261,72 @@ class Robot:
 
     @property
     def pose(self) -> util.Pose:
-        ''':class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector'''
+        """:class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector"""
         return self._pose
 
     @property
     def pose_angle_rad(self):
-        '''Vector's pose angle (heading in X-Y plane).'''
+        """Vector's pose angle (heading in X-Y plane)."""
         return self._pose_angle_rad
 
     @property
     def pose_pitch_rad(self):
-        '''Vector's pose pitch (angle up/down).'''
+        """Vector's pose pitch (angle up/down)."""
         return self._pose_pitch_rad
 
     @property
     def left_wheel_speed_mmps(self):
-        '''Vector's left wheel speed in mm/sec'''
+        """Vector's left wheel speed in mm/sec"""
         return self._left_wheel_speed_mmps
 
     @property
     def right_wheel_speed_mmps(self):
-        '''Vector's right wheel speed in mm/sec'''
+        """Vector's right wheel speed in mm/sec"""
         return self._right_wheel_speed_mmps
 
     @property
     def head_angle_rad(self):
-        '''Vector's head angle (up/down).'''
+        """Vector's head angle (up/down)."""
         return self._head_angle_rad
 
     @property
     def lift_height_mm(self):
-        '''Height of Vector's lift from the ground.'''
+        """Height of Vector's lift from the ground."""
         return self._lift_height_mm
 
     @property
     def accel(self):
-        ''':class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)'''
+        """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)"""
         return self._accel
 
     @property
     def gyro(self):
-        ''':class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)'''
+        """:class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)"""
         return self._gyro
 
     @property
     def carrying_object_id(self):
-        '''The ID of the object currently being carried (-1 if none)'''
+        """The ID of the object currently being carried (-1 if none)"""
         return self._carrying_object_id
 
     @property
     def carrying_object_on_top_id(self):
-        '''The ID of the object on top of the object currently being carried (-1 if none)'''
+        """The ID of the object on top of the object currently being carried (-1 if none)"""
         return self._carrying_object_on_top_id
 
     @property
     def head_tracking_object_id(self):
-        '''The ID of the object the head is tracking to (-1 if none)'''
+        """The ID of the object the head is tracking to (-1 if none)"""
         return self._head_tracking_object_id
 
     @property
     def localized_to_object_id(self):
-        '''The ID of the object that the robot is localized to (-1 if none)'''
+        """The ID of the object that the robot is localized to (-1 if none)"""
         return self._localized_to_object_id
 
     @property
     def last_image_time_stamp(self):
-        '''The robot's timestamp for the last image seen.'''
+        """The robot's timestamp for the last image seen."""
         return self._last_image_time_stamp
 
     @property
@@ -509,7 +509,7 @@ class Robot:
 
     @sync.Synchronizer.wrap
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
-        '''Have Vector say text!
+        """Have Vector say text!
 
         :param text: The words for Vector to say.
         :param use_vector_voice: Whether to use Vector's robot voice
@@ -518,7 +518,7 @@ class Robot:
                 generated text to speech audio.
 
         :return: object that provides the status and utterance state
-        '''
+        """
         say_text_request = protocol.SayTextRequest(text=text,
                                                    use_vector_voice=use_vector_voice,
                                                    duration_scalar=duration_scalar)

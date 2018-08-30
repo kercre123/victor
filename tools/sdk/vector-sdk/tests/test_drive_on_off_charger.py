@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test driving on and off charger
-'''
+"""
 
 import math
 import os
@@ -14,7 +14,7 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     with anki_vector.Robot(args.serial, port=args.port) as robot:

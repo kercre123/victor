@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 SDK-specific exception classes for Vector
-'''
+"""
 
 from grpc import RpcError, StatusCode
 
@@ -28,7 +28,7 @@ __all__ = ["VectorException",
 
 
 class VectorException(Exception):
-    '''Base class of all Vector SDK exceptions.'''
+    """Base class of all Vector SDK exceptions."""
 
 
 class VectorConnectionException(VectorException):
@@ -50,19 +50,19 @@ class VectorConnectionException(VectorException):
 
 
 class VectorUnauthenticatedException(VectorConnectionException):
-    '''Failed to authenticate request'''
+    """Failed to authenticate request"""
 
 
 class VectorUnavailableException(VectorConnectionException):
-    '''Unable to reach Vector'''
+    """Unable to reach Vector"""
 
 
 class VectorUnimplementedException(VectorConnectionException):
-    '''Vector does not handle this message'''
+    """Vector does not handle this message"""
 
 
 class VectorTimeoutException(VectorConnectionException):
-    '''Message took too long to complete'''
+    """Message took too long to complete"""
 
 
 def connection_error(rpc_error: RpcError) -> VectorConnectionException:

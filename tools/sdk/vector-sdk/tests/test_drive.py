@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 test_drive
-'''
+"""
 import os
 import sys
 import time
@@ -13,7 +13,7 @@ from anki_vector.util import degrees, distance_mm, speed_mmps  # pylint: disable
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin testing driving along a straight path and turning in place ------")

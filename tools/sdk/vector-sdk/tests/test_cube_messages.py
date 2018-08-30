@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test cube connection interactions
-'''
+"""
 
 import os
 import sys
@@ -13,7 +13,7 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin cube interactions ------")

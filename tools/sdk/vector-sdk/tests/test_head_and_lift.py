@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test the setting angle and height for the head and lift respectively
-'''
+"""
 
 import os
 import sys
@@ -14,7 +14,7 @@ from anki_vector.util import degrees  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin testing head and lift actions ------")

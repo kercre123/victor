@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Calls specific messages on the robot, with expected results and verifies that the robot's responses match up
  - Exceptions will be raised if a response is of the wrong type, or has the wrong data
  - Exceptions will be raised if the interface defines a message that is neither on the test list or ignore list
@@ -11,7 +11,7 @@ requested pose due to a wall, etc.):
  - DriveOnCharger/DriveOffCharger
  - GoToPose
  - MeetVictor
-'''
+"""
 
 import asyncio
 import logging
@@ -41,19 +41,19 @@ MESSAGES_TO_IGNORE = [
 
 
 class TestResultMatches:
-    '''Result that matches'''
+    """Result that matches"""
     _value = None
 
     def __init__(self, value):
-        '''Create a TestResultMatches object'''
+        """Create a TestResultMatches object"""
         self._value = value
 
     def get_target_type(self):
-        '''Get the expected return type'''
+        """Get the expected return type"""
         return type(self._value)
 
     def test_with(self, target):
-        '''test with'''
+        """test with"""
         errors = []
 
         expected_type = type(self._value)
@@ -89,23 +89,23 @@ class TestResultMatches:
 
 
 class TestResultIsTypeWithStatusAndFieldNames:
-    '''Result with status and field names'''
+    """Result with status and field names"""
     _expected_type = None
     _status = None
     _field_names = []
 
     def __init__(self, expected_type, status, field_names):
-        '''Create a TestResultIsTypeWithStatusAndFieldNames object'''
+        """Create a TestResultIsTypeWithStatusAndFieldNames object"""
         self._expected_type = expected_type
         self._status = status
         self._field_names = field_names
 
     def get_target_type(self):
-        '''Get the expected return type'''
+        """Get the expected return type"""
         return self._expected_type
 
     def test_with(self, target):
-        '''test with'''
+        """test with"""
         errors = []
 
         target_type = type(target)
@@ -324,7 +324,7 @@ MESSAGES_TO_TEST = [
 
 
 async def test_message(robot, message_name, message_input, test_class, errors):
-    '''Test a single message'''
+    """Test a single message"""
     # The message_src is used mostly so we can easily verify that the name is supported by the servicer.
     # In terms of actually making the call its simpler to invoke on the robot
     message_call = getattr(robot.conn.interface, message_name)
@@ -346,7 +346,7 @@ async def test_message(robot, message_name, message_input, test_class, errors):
 
 
 async def run_message_test(robot, message, expected_test_list, errors):
-    '''Run the test on a messages'''
+    """Run the test on a messages"""
     message_call = message[0]
     input_data = message[1]
     test_class = message[2]
@@ -377,7 +377,7 @@ async def run_message_test(robot, message, expected_test_list, errors):
 
 
 async def run_message_tests(robot, future):
-    '''Run all the tests on messages'''
+    """Run all the tests on messages"""
     warnings = []
     errors = []
 
@@ -412,7 +412,7 @@ async def run_message_tests(robot, future):
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     logger = logging.getLogger('anki_vector')

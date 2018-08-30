@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test Synchronizer to make sure it works properly in all combinations:
 * Synchronous robot using with syntax
 * Synchronous robot using try finally syntax
 * Asynchronous robot using with syntax
 * Asynchronous robot using try finally syntax
 * Lastly disconnecting and reconnecting with the same robot
-'''
+"""
 
 import os
 import sys
@@ -18,13 +18,13 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin testing sync ------")
 
     def test_subscriber(event_type, event):
-        '''test that subscriptions work'''
+        """test that subscriptions work"""
         print(f"Subscriber called for: {event_type} = {event}")
 
     print("------ Synchronous Robot using with ------")

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 The "world" represents the robot's known view of its environment.
 It keeps track of all the faces Vector has observed.
-'''
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['World']
@@ -29,7 +29,7 @@ from .messaging import protocol
 
 
 class World(util.Component):
-    '''Represents the state of the world, as known to Vector.'''
+    """Represents the state of the world, as known to Vector."""
 
     #: callable: The factory function that returns a
     #: :class:`faces.Face` class or subclass instance
@@ -60,27 +60,27 @@ class World(util.Component):
 
     @property
     def visible_faces(self):
-        '''generator: yields each face that Vector can currently see.
+        """generator: yields each face that Vector can currently see.
 
         Returns:
             A generator yielding :class:`anki_vector.faces.Face` instances
-        '''
+        """
         for face in self._faces.values():
             yield face
 
     def get_face(self, face_id):
-        '''anki_vector.faces.Face: Fetch a Face instance with the given id'''
+        """anki_vector.faces.Face: Fetch a Face instance with the given id"""
         return self._faces.get(face_id)
 
     def add_update_face_to_world_view(self, _, msg):
-        '''Adds/Updates the world view when a face is observed'''
+        """Adds/Updates the world view when a face is observed"""
         face = self.face_factory()
         face.unpack_face_stream_data(msg)
         self._faces[face.face_id] = face
 
     def update_face_id(self, _, msg):
-        '''Updates the face id when a tracked face (negative ID) is recognized and
-        receives a positive ID or when face records get merged'''
+        """Updates the face id when a tracked face (negative ID) is recognized and
+        receives a positive ID or when face records get merged"""
         face = self.get_face(msg.old_id)
         if face:
             face.updated_face_id = msg.new_id
@@ -97,14 +97,14 @@ class World(util.Component):
         return cube
 
     def get_light_cube(self):
-        '''Returns the connected light cube
+        """Returns the connected light cube
 
         Returns:
             :class:`anki_vector.objects.LightCube`: The LightCube object with that cube_id
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
-        '''
+        """
         cube = self.light_cube.get(objects.LightCube1Type)
         # Only return the cube if it has an object_id
         if cube.object_id is not None:
@@ -119,11 +119,11 @@ class World(util.Component):
 
     @property
     def connected_light_cubes(self):
-        '''Returns all light cube attached to anki_vector
+        """Returns all light cube attached to anki_vector
 
         Returns:
             A list of :class:`anki_vector.objects.LightCube` instances
-        '''
+        """
         result = []
         cube = self.light_cube.get(objects.LightCube1Type)
         if cube and cube.is_connected:

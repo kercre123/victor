@@ -178,7 +178,7 @@ class BehaviorComponent(util.Component):
     # Movement actions
     @sync.Synchronizer.wrap
     async def drive_straight(self, distance, speed, should_play_anim=False):
-        '''Tells Vector to drive in a straight line
+        """Tells Vector to drive in a straight line
 
         Vector will drive for the specified distance (forwards or backwards)
 
@@ -194,7 +194,7 @@ class BehaviorComponent(util.Component):
 
         Returns:
            A :class:`protocol.DriveStraightResponse` object which provides the result description.
-        '''
+        """
         drive_straight_request = protocol.DriveStraightRequest(speed_mmps=speed.speed_mmps,
                                                                dist_mm=distance.distance_mm,
                                                                should_play_animation=should_play_anim)
@@ -202,7 +202,7 @@ class BehaviorComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def turn_in_place(self, angle, speed=util.Angle(0.0), accel=util.Angle(0.0), angle_tolerance=util.Angle(0.0), is_absolute=0):
-        '''Turn the robot around its current position.
+        """Turn the robot around its current position.
 
         Vector must be off of the charger for this movement action.
 
@@ -220,7 +220,7 @@ class BehaviorComponent(util.Component):
 
         Returns:
             A :class:`protocol.TurnInPlaceResponse` object which provides the result description.
-        '''
+        """
         turn_in_place_request = protocol.TurnInPlaceRequest(angle_rad=angle.radians,
                                                             speed_rad_per_sec=speed.radians,
                                                             accel_rad_per_sec2=accel.radians,
@@ -230,7 +230,7 @@ class BehaviorComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
-        '''Tell Vector's head to turn to a given angle.
+        """Tell Vector's head to turn to a given angle.
 
         Args:
             angle: (:class:`anki_vector.util.Angle`): Desired angle for
@@ -243,7 +243,7 @@ class BehaviorComponent(util.Component):
 
         Returns:
             A :class:`protocol.SetHeadAngleResponse` object which provides the result description.
-        '''
+        """
         set_head_angle_request = protocol.SetHeadAngleRequest(angle_rad=angle.radians,
                                                               max_speed_rad_per_sec=max_speed,
                                                               accel_rad_per_sec2=accel,
@@ -252,7 +252,7 @@ class BehaviorComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def set_lift_height(self, height, accel=10.0, max_speed=10.0, duration=0.0):
-        '''Tell Vector's lift to move to a given height
+        """Tell Vector's lift to move to a given height
 
         Args:
             height (float): desired height for Vector's lift 0.0 (bottom) to
@@ -265,7 +265,7 @@ class BehaviorComponent(util.Component):
 
         Returns:
             A :class:`protocol.SetLiftHeightResponse` object which provides the result description.
-        '''
+        """
         set_lift_height_request = protocol.SetLiftHeightRequest(height_mm=height,
                                                                 max_speed_rad_per_sec=max_speed,
                                                                 accel_rad_per_sec2=accel,

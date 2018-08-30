@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test the cube lights
 
 Attempts to connect to a cube.
 If successful sets its lights all to yellow for 2.5 seconds, then red, green, blue & white for 2.5 seconds
-'''
+"""
 
 import os
 import sys
@@ -16,7 +16,7 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin cube light interactions ------")

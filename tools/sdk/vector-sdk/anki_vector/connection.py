@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Management of the connection to and from a Vector Robot
-'''
+"""
 
 import asyncio
 from enum import Enum

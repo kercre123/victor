@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Animation related classes, functions, events and values.
-'''
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["AnimationComponent"]
@@ -26,7 +26,7 @@ from .messaging import protocol
 
 
 class AnimationComponent(util.Component):
-    '''Manage the state of all the animations in the robot'''
+    """Manage the state of all the animations in the robot"""
 
     def __init__(self, robot):
         super().__init__(robot)
@@ -42,14 +42,14 @@ class AnimationComponent(util.Component):
         return list(self._anim_dict.keys())
 
     async def ensure_loaded(self):
-        '''
+        """
         This is an optimization for the case where a user doesn't
         need the animation_list. That way connections aren't delayed
         by the load_animation_list call.
 
         If this is invoked inside another async function then we
         explicitly await the result.
-        '''
+        """
         if not self._anim_dict:
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
             result = self.load_animation_list()
@@ -67,7 +67,7 @@ class AnimationComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def play_animation(self, anim, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):
-        '''Starts an animation playing on a robot.
+        """Starts an animation playing on a robot.
 
         Vector must be off of the charger to play an animation.
 
@@ -78,7 +78,7 @@ class AnimationComponent(util.Component):
         Args:
             anim (str or anki_vector.protocol.Animation): The animation to play.
             loop_count (int): Number of times to play the animation.
-        '''
+        """
         animation = anim
         if not isinstance(anim, protocol.Animation):
             await self.ensure_loaded()
