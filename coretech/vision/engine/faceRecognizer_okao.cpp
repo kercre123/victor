@@ -2794,13 +2794,11 @@ namespace Vision {
 
   bool FaceRecognizer::GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID)
   {
-    if (_trackingToFaceID.count(trackingID) == 0)
-    {
+    auto iter = _trackingToFaceID.find(trackingID);
+    if(iter == _trackingToFaceID.end()) {
       return false;
-    }
-    else
-    {
-      faceID = _trackingToFaceID[trackingID];
+    } else {
+      faceID = iter->second;
       return true;
     }
   }
