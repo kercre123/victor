@@ -9,7 +9,8 @@
   "minTimeToTrackFaceLowerBound_s": 12.0,
   "minTimeToTrackFaceUpperBound_s": 15.0,
 
-  "minAbsRelPanAngle_deg": 6.0,
+  "minTrackingTiltAngle_deg": 4.0,
+  "minTrackingPanAngle_deg": 4.0,
 
   // This is the max time the robot will track
   // if eye contact is maintained the entire time
