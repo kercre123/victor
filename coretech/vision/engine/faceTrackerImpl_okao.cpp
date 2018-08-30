@@ -454,7 +454,7 @@ namespace Vision {
 
   void FaceTracker::Impl::Reset()
   {
-    ClearAllowedTrackedFaces();
+    _allowedTrackedFaceID.clear();
     INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
     if(OKAO_NORMAL != result)
     {
@@ -465,6 +465,10 @@ namespace Vision {
     _recognizer.ClearAllTrackingData();
   }
 
+  void FaceTracker::Impl::ClearAllowedTrackedFaces()
+  {
+    Reset();
+  }
   void FaceTracker::Impl::AddAllowedTrackedFace(const FaceID_t faceID)
   {
     _allowedTrackedFaceID.insert(faceID);

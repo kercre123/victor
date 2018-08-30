@@ -1936,7 +1936,7 @@ void VisionSystem::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
 
 void VisionSystem::ClearAllowedTrackedFaces()
 {
-  _faceTracker->Reset();
+  _faceTracker->ClearAllowedTrackedFaces();
 }
 
 } // namespace Vector

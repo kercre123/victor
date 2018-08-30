@@ -63,11 +63,6 @@ namespace Vision {
     return _pImpl->Update(frameOrig, faces, updatedIDs);
   }
   
-  void FaceTracker::Reset()
-  {
-    _pImpl->Reset();
-  }
-
   void FaceTracker::AddAllowedTrackedFace(const FaceID_t faceID)
   {
     _pImpl->AddAllowedTrackedFace(faceID);
@@ -85,15 +80,14 @@ namespace Vision {
 
   void FaceTracker::ClearAllowedTrackedFaces()
   {
-    // This reset call also clears the allowed tracked faces
-    _pImpl->Reset();
+    _pImpl->ClearAllowedTrackedFaces();
   }
 
   void FaceTracker::RobotHasMoved()
   {
     if (!_pImpl->HaveAllowedTrackedFaces())
     {
-      _pImpl->Reset();
+      _pImpl->ClearAllowedTrackedFaces();
     }
   }
   
