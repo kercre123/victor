@@ -492,15 +492,15 @@
     "AnimName": "ag_explorer_center_left"
   },
   {
-    "CladEvent": "DEPRECATED_FacePlantRoll",
+    "CladEvent": "FacePlantRoll",
     "AnimName": "ag_reacttocliff_faceplantroll_01"
   },
   {
-    "CladEvent": "DEPRECATED_FacePlantRollArmUp",
+    "CladEvent": "FacePlantRollArmUp",
     "AnimName": "ag_reacttocliff_faceplantroll_armup_01"
   },
   {
-    "CladEvent": "DEPRECATED_FailedToRightFromFace",
+    "CladEvent": "FailedToRightFromFace",
     "AnimName": "ag_reacttocliff_turtlerollfail_01"
   },
   {

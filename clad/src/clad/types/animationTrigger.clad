@@ -136,6 +136,10 @@ enum int_32 AnimationTrigger
   ExploringScanCenterFromLeft,
   ExploringScanCenterFromRight,
 
+  FacePlantRoll,
+  FacePlantRollArmUp,
+  FailedToRightFromFace,
+
   FetchCubeFailure,
   FetchCubeFrustrated,
   FetchCubeSuccess,
@@ -438,9 +442,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_DizzyShakeLoop,
   DEPRECATED_DizzyShakeStop,
   DEPRECATED_DizzyStillPickedUp,
-  DEPRECATED_FacePlantRoll,
-  DEPRECATED_FacePlantRollArmUp,
-  DEPRECATED_FailedToRightFromFace,
   DEPRECATED_LaserAcknowledge,
   DEPRECATED_LaserDriveEnd,
   DEPRECATED_LaserDriveLoop,
