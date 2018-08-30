@@ -33,13 +33,14 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
-
+#include <sched.h>
 
 namespace Anki {
 namespace Vector {
@@ -601,6 +602,30 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 void MicDataProcessor::ProcessRawLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "MicProcRaw");
+  
+  // Setup the thread's affinity mask
+//  AkThreadProperties threadProp;
+//  threadProp.dwAffinityMask =
+//  int error = AK_THREAD_INIT_CODE(threadProp);
+//  if (error != 0) {
+//    AK_LOG_ERROR("SetAffinityMask Error %d", error);
+//  }
+  
+  
+#if defined(ANKI_PLATFORM_VICOS)
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+//  CPU_SET(0, &cpu_set);
+  CPU_SET(2, &cpu_set);
+  int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set);
+  if (error != 0) {
+    LOG_ERROR("SetThreadName(pthread_self", "SetAffinityMask Error %d", error);
+  }
+  LOG_WARNING("MicDataProcessor::ProcessRawLoop", "--------  DID SET FLAG");
+#endif
+  LOG_WARNING("MicDataProcessor::ProcessRawLoop", "--------  POST SET FLAG");
+  
+  
   static constexpr uint32_t expectedAudioDropsPerAnimLoop = 7;
   static const uint32_t maxProcTime_ms = expectedAudioDropsPerAnimLoop * maxProcessingTimePerDrop_ms;
   const auto maxProcTime = std::chrono::milliseconds(maxProcTime_ms);
@@ -664,6 +689,22 @@ void MicDataProcessor::ProcessRawLoop()
 void MicDataProcessor::ProcessTriggerLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "MicProcTrigger");
+  
+#if defined(ANKI_PLATFORM_VICOS)
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+//  CPU_SET(0, &cpu_set);
+  CPU_SET(1, &cpu_set);
+//  CPU_SET(2, &cpu_set);
+  int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set);
+  if (error != 0) {
+    LOG_ERROR("SetThreadName(pthread_self", "SetAffinityMask Error %d", error);
+  }
+  LOG_WARNING("MicDataProcessor::ProcessTriggerLoop", "--------  DID SET FLAG");
+#endif
+  LOG_WARNING("MicDataProcessor::ProcessTriggerLoop", "--------  POST SET FLAG");
+  
+  
   while (!_processThreadStop)
   {
     ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorTrigger_Logging));
