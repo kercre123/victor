@@ -1,13 +1,38 @@
 {
-  "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToAffirmative",
+  "behaviorClass": "FindFaceAndThen",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
-  "animTriggers": ["ReactToAffirmative"],
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "searchForFaceBehavior": "ActiveLookForFaces",
+  "shouldLeaveChargerFirst": true,
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+
+  "timeUntilCancelFollowup_s": 15.0,
+
+  "useBodyDetector": true,
+  "additionalLookTimeIfSawBody_s": 3.0,
+  "additionalSearchTimeIfSawBody_s": 3.0,
+
+  "animWhenSeesFace": "FoundFace",
+
   "respondToUserIntents": [
     {
       "type": "imperative_affirmative"
+    }
+  ],
+  "behavior": "InternalReactToAffirmative",
+  "anonymousBehaviors": [
+    {
+      "behaviorClass": "AnimSequence",
+      "behaviorID": "InternalReactToAffirmative",
+
+      "animTriggers": [
+        "ReactToAffirmative"
+      ]
+
     }
   ]
 }
