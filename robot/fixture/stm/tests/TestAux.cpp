@@ -9,10 +9,16 @@
 #include "portable.h"
 #include "robotcom.h"
 #include "tests.h"
+#include "testcommon.h"
 #include "timer.h"
+#include "vl53l0x_api.h"
 
 //force start (via console or button) skips detect
 #define TOF_REQUIRE_FORCE_START 1
+
+//-----------------------------------------------------------------------------
+//                  ?????
+//-----------------------------------------------------------------------------
 
 static uint16_t m_last_read_mm = 0;
 uint16_t TestAuxTofLastRead(void) {
@@ -39,18 +45,198 @@ bool TestAuxTofDetect(void)
 }
 
 void TestAuxTofCleanup(void) {
-  Opto::stop();
   DUT_I2C::deinit();
   detectPrescale = 0;
   detectSticky = g_isDevicePresent;
 }
 
-void TOF_init(void) {
+//-----------------------------------------------------------------------------
+//                  TOF Primitives
+//-----------------------------------------------------------------------------
+
+typedef struct {
+  uint32_t  spad_refSpadCount;
+  uint8_t   spad_isApertureSpads;
+  uint8_t   temp_vhvSettings;
+  uint8_t   temp_phaseCal;
+  int32_t   offset_microMeter;
+  uint32_t  xtalk_compensationRateMegaCps;
+} tof_calibration_dat_t;
+
+static VL53L0X_Dev_t dev = {0};
+static tof_calibration_dat_t TOFcalibration;
+
+void print_tof_cal(tof_calibration_dat_t *cal) {
+  //cal = !cal ? &TOFcalibration : cal;
+  ConsolePrintf("spad %u %u temp %u %u ofs %+ium xtalk %uMCps\n",
+    cal->spad_refSpadCount, cal->spad_isApertureSpads,
+    cal->temp_vhvSettings, cal->temp_phaseCal,
+    cal->offset_microMeter,
+    cal->xtalk_compensationRateMegaCps);
+}
+
+//Note: init must be sequenced
+//  tof_init_static()
+//  tof_set_calibration() or tof_perform_calibration()
+//  tof_init_system()
+void tof_init_static(void) {
   m_last_read_mm = 0;
-  ConsolePrintf("initializing opto driver...\n");
+  //ConsolePrintf("initializing tof\n");
+  dev.I2cDevAddr = TOF_SENSOR_ADDRESS;
   DUT_I2C::init();
-  Opto::start();
-  ConsolePrintf("done!\n");
+  ConsolePrintf("VL53L0X reset device....%i\n", VL53L0X_ResetDevice(&dev) );
+  Timer::delayMs(50);
+  ConsolePrintf("VL53L0X data init.......%i\n", VL53L0X_DataInit(&dev) );
+  ConsolePrintf("VL53L0X static init.....%i\n", VL53L0X_StaticInit(&dev) );
+}
+
+void tof_init_system(void) {
+  ConsolePrintf("VL53L0X set mode........%i\n",
+    VL53L0X_SetDeviceMode(&dev, VL53L0X_DEVICEMODE_SINGLE_RANGING) );
+  //set up gpio here for interrupt modes
+}
+
+void tof_get_calibration(tof_calibration_dat_t *cal)
+{
+  memset( cal, 0, sizeof(tof_calibration_dat_t) );
+  
+  ConsolePrintf("read SPAD calibration...%i,cnt=%i,isAp=%i\n",
+    VL53L0X_GetReferenceSpads(&dev, &cal->spad_refSpadCount, &cal->spad_isApertureSpads),
+    cal->spad_refSpadCount,
+    cal->spad_isApertureSpads );
+  ConsolePrintf("read TEMP calibration...%i,vhv=%i,phase=%i\n",
+    VL53L0X_GetRefCalibration(&dev, &cal->temp_vhvSettings, &cal->temp_phaseCal),
+    cal->temp_vhvSettings,
+    cal->temp_phaseCal );
+  ConsolePrintf("read OFS calibration....%i,%ium\n",
+    VL53L0X_GetOffsetCalibrationDataMicroMeter(&dev, &cal->offset_microMeter),
+    cal->offset_microMeter );
+  uint8_t isXTalkEnabled = 255;
+  ConsolePrintf("read XTALK calibration..%i,%i,%iMCps,en=%i\n",
+    VL53L0X_GetXTalkCompensationRateMegaCps(&dev, &cal->xtalk_compensationRateMegaCps),
+    VL53L0X_GetXTalkCompensationEnable(&dev, &isXTalkEnabled),
+    cal->xtalk_compensationRateMegaCps,
+    isXTalkEnabled );
+  uint32_t tbudget=0; //not part of calibration, but useful cfg info
+  ConsolePrintf("read timing budget......%i,%ius\n",
+    VL53L0X_GetMeasurementTimingBudgetMicroSeconds(&dev, &tbudget),
+    tbudget );
+}
+
+void tof_set_calibration(tof_calibration_dat_t *cal, bool xtalk_enable)
+{
+  ConsolePrintf("set SPAD calibration....%i\n",
+    VL53L0X_SetReferenceSpads(&dev, cal->spad_refSpadCount, cal->spad_isApertureSpads) );
+  ConsolePrintf("set TEMP calibration....%i\n",
+    VL53L0X_SetRefCalibration(&dev, cal->temp_vhvSettings, cal->temp_phaseCal) );
+  ConsolePrintf("set OFS calibration.....%i\n",
+    VL53L0X_SetOffsetCalibrationDataMicroMeter(&dev, cal->offset_microMeter) );
+  ConsolePrintf("set XTALK calibration...%i,%i\n",
+    VL53L0X_SetXTalkCompensationRateMegaCps(&dev, cal->xtalk_compensationRateMegaCps),
+    VL53L0X_SetXTalkCompensationEnable(&dev, xtalk_enable) );
+}
+
+void tof_calibrate_spad(tof_calibration_dat_t *cal) {
+  //In case a cover glass is used on top of VL53L0X, the reference SPADs have to be recalibrated by the customer.
+  //It has to be done before Ref Calibration, VL53L0X_PerformRefCalibration().
+  ConsolePrintf("calibrate SPAD..........%i\n",
+    VL53L0X_PerformRefSpadManagement(&dev, &cal->spad_refSpadCount, &cal->spad_isApertureSpads) );
+}
+
+void tof_calibrate_temp(tof_calibration_dat_t *cal) {
+  ConsolePrintf("calibrate TEMP..........%i\n",
+    VL53L0X_PerformRefCalibration(&dev, &cal->temp_vhvSettings, &cal->temp_phaseCal) );
+}
+
+void tof_calibrate_ofs(tof_calibration_dat_t *cal) {
+  //Both Reference SPADs and Ref calibrations have to be performed before calling offset calibration.
+  ConsolePrintf("---- SET WHITE TARGET 88% REFLECTANCE ----\n");
+  TestCommon::waitForKeypress(0,1,"press a key when ready\n");
+  const int TARGET_MM_OFFSET_CAL = 80;
+  ConsolePrintf("calibrate Offset @ %imm target...%i\n", TARGET_MM_OFFSET_CAL,
+    VL53L0X_PerformOffsetCalibration(&dev, TARGET_MM_OFFSET_CAL, &cal->offset_microMeter) );
+}
+
+void tof_calibrate_xtalk(tof_calibration_dat_t *cal) {
+  //see user manual UM2039 section 2.6.2 - choosing a xtalk calibration distance
+  //The cross-talk correction is basically a weighted gain applied to the ranging data, based on a calibration result.
+  ConsolePrintf("---- SET GREY TARGET 17% REFLECTANCE ----\n");
+  TestCommon::waitForKeypress(0,1,"press a key when ready\n");
+  const int TARGET_MM_XTALK_CAL = 100;
+  ConsolePrintf("calibrate XTALK @ %imm target...%i\n", TARGET_MM_XTALK_CAL,
+    VL53L0X_PerformXTalkCalibration(&dev, TARGET_MM_XTALK_CAL, &cal->xtalk_compensationRateMegaCps) );
+}
+
+tof_dat_t* tof_read(uint32_t *out_tmeas=0, bool debug=0);
+tof_dat_t* tof_read(uint32_t *out_tmeas, bool debug)
+{
+  static tof_dat_t mdat;
+  
+  //mdat = *Opto::read();
+  uint32_t Tstart = Timer::get();
+  VL53L0X_PerformSingleMeasurement(&dev);
+  uint32_t Tmeas = Timer::elapsedUs(Tstart);
+  if( out_tmeas ) *out_tmeas = Tmeas;
+  
+  //convert to old data format
+  VL53L0X_RangingMeasurementData_t dat;
+  VL53L0X_GetRangingMeasurementData(&dev, &dat);
+  mdat.status = dat.RangeStatus;
+  mdat.reading = __REV16(dat.RangeMilliMeter);
+  mdat.signal_rate = __REV16(dat.SignalRateRtnMegaCps);
+  mdat.ambient_rate = __REV16(dat.AmbientRateRtnMegaCps);
+  mdat.spad_count = __REV16(dat.EffectiveSpadRtnCount);
+  
+  if( debug )
+  {
+    uint16_t reading_raw = __REV16(mdat.reading);
+    ConsolePrintf("tof read: %02i %03imm srate=%05i arate=%05i spad=%05i tim=%i,%i,%i\n",
+      mdat.status,
+      __REV16(mdat.reading),
+      __REV16(mdat.signal_rate),
+      __REV16(mdat.ambient_rate),
+      __REV16(mdat.spad_count),
+      dat.TimeStamp,
+      dat.MeasurementTimeUsec,
+      Tmeas
+    );
+  }
+  
+  return &mdat;
+}
+
+//-----------------------------------------------------------------------------
+//                  TOF Tests
+//-----------------------------------------------------------------------------
+
+void TOF_init(void)
+{
+  bool ofs_cal_enable = 0, xtalk_cal_enable = 0;
+  tof_calibration_dat_t *cal = &TOFcalibration;
+  memset( cal, 0, sizeof(tof_calibration_dat_t) );
+  
+  tof_init_static();
+  tof_get_calibration(cal);
+  
+  print_tof_cal(cal);
+  
+  //maybe calibrate some stuff (in this order)
+  tof_calibrate_spad(cal); //always?
+  tof_calibrate_temp(cal); //always?
+  if( ofs_cal_enable ) tof_calibrate_ofs(cal);
+  if( xtalk_cal_enable ) tof_calibrate_xtalk(cal);
+  
+  print_tof_cal(cal);
+  
+  tof_set_calibration(cal, xtalk_cal_enable);
+  tof_init_system();
+  
+  //re-read for sanity check
+  tof_calibration_dat_t readcal;
+  memset(&readcal, 0, sizeof(tof_calibration_dat_t) );
+  tof_get_calibration(&readcal);
+  print_tof_cal(&readcal);
+  print_tof_cal(cal);
 }
 
 //Playpen: 80mm+/-20mm after -30 window adjustment
@@ -64,7 +250,7 @@ void TOF_sensorCheck(void)
   int reading_avg=0; const int num_readings=25;
   for(int i=-10; i<num_readings; i++)
   {
-    tof_dat_t tof = *Opto::read();
+    tof_dat_t tof = *tof_read();
     uint16_t value = __REV16(tof.reading);
     if( i>=0 ) reading_avg += value; //don't include initial readings; "warm-up" period
     if( i==0 ) ConsolePrintf("\n");
@@ -82,14 +268,10 @@ void TOF_sensorCheck(void)
   FLEXFLOW::printf("<flex> TOF reading %imm </flex>\n", reading_adj );
   
   //nominal reading expected by playpen 90-130mm raw (80mm +/-20mm after -30 window adjustment)
+  /*
   if( reading_adj < tof_read_min || reading_adj > tof_read_max )
     throw ERROR_SENSOR_TOF;
-}
-
-void TOF_calibrate(void)
-{
-  ConsolePrintf("calibrating...");
-  
+  */
 }
 
 void TOF_debugInspectRaw(void)
@@ -99,7 +281,7 @@ void TOF_debugInspectRaw(void)
   
   //ignore spurious initial readings
   for(int i=0; i<5; i++)
-    Opto::read();
+    tof_read();
   
   //spew raw sensor data
   while(1)
@@ -108,21 +290,24 @@ void TOF_debugInspectRaw(void)
     {
       Tsample = Timer::get();
       
-      tof_dat_t tof = *Opto::read();
+      bool read_debug = true;
+      tof_dat_t tof = *tof_read(0, read_debug);
       uint16_t reading_raw = __REV16(tof.reading);
       uint16_t reading_adj = reading_raw > tof_window_adjust ? reading_raw - tof_window_adjust : 0;
-      ConsolePrintf("TOF: status=%03i mm=%05i mm.adj=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
-        tof.status, reading_raw, reading_adj, __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );
-      
+      if( !read_debug ) {
+        ConsolePrintf("TOF: status=%03i mm=%05i mm.adj=%05i sigrate=%05i ambRate=%05i spad=%05i\n",
+          tof.status, reading_raw, reading_adj, __REV16(tof.signal_rate), __REV16(tof.ambient_rate), __REV16(tof.spad_count) );
+      }
       m_last_read_mm = reading_adj; //save for display
       
-      //real-time measurements on helper display
+      /*/real-time measurements on helper display
       if( displayErr < 3 ) { //give up if no helper detected
         char b[30], color = reading_adj < tof_read_min || reading_adj > tof_read_max ? 'r' : 'g';
         //int status = helperLcdShow(1,0,color, snformat(b,sizeof(b),"%imm [%i]   ", reading_adj, reading_raw) );
         int status = helperLcdShow(1,0,color, snformat(b,sizeof(b),"%imm", reading_adj) );
         displayErr = status==0 ? 0 : displayErr+1;
       }
+      //-*/
     }
     
     //break on console input
@@ -140,8 +325,10 @@ void TOF_debugInspectRaw(void)
     }
   }
   
+  /*
   if( m_last_read_mm < tof_read_min || m_last_read_mm > tof_read_max )
     throw ERROR_SENSOR_TOF;
+  */
 }
 
 TestFunction* TestAuxTofGetTests(void)
@@ -158,8 +345,8 @@ TestFunction* TestAuxTofGetTests(void)
   };
   static TestFunction m_tests_calibrate[] = {
     TOF_init,
-    TOF_calibrate,
     TOF_sensorCheck,
+    TOF_debugInspectRaw,
     NULL,
   };
   
