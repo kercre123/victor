@@ -1088,7 +1088,7 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
-      if (!HaveAllowedTrackedFaces())
+      if (HaveAllowedTrackedFaces())
       {
         FaceID_t faceID;
         if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
@@ -1195,8 +1195,7 @@ namespace Vision {
         // recognition. For example, person A's face could make it into person
         // B's record, thus creating the potential for confusion between the
         // faces due to bad data.
-
-        if (!_allowedTrackedFaceID.empty())
+        if (!HaveAllowedTrackedFaces())
         {
           //
           // Face Recognition:
