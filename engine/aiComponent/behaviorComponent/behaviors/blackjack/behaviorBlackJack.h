@@ -100,6 +100,7 @@ private:
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> hitOrStandPromptBehavior;
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> playAgainPromptBehavior;
     std::shared_ptr<BehaviorTextToSpeechLoop>          ttsBehavior;
+    std::shared_ptr<BehaviorTextToSpeechLoop>          goodLuckTTSBehavior;
     std::shared_ptr<BehaviorLookAtFaceInFront>         lookAtFaceInFrontBehavior;
   };
 

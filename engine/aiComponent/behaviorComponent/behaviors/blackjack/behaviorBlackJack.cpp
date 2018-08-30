@@ -82,6 +82,7 @@ void BehaviorBlackJack::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.hitOrStandPromptBehavior.get());
   delegates.insert(_iConfig.playAgainPromptBehavior.get());
   delegates.insert(_iConfig.ttsBehavior.get());
+  delegates.insert(_iConfig.goodLuckTTSBehavior.get());
   delegates.insert(_iConfig.lookAtFaceInFrontBehavior.get());
 }
 
@@ -106,6 +107,10 @@ void BehaviorBlackJack::InitBehavior()
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackTextToSpeech),
                                   BEHAVIOR_CLASS(TextToSpeechLoop),
                                   _iConfig.ttsBehavior );
+
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackGoodLuckTTS),
+                                  BEHAVIOR_CLASS(TextToSpeechLoop),
+                                  _iConfig.goodLuckTTSBehavior );
 
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackLookAtFaceInFront),
                                   BEHAVIOR_CLASS(LookAtFaceInFront),
@@ -171,8 +176,15 @@ void BehaviorBlackJack::TransitionToDealing()
           _dVars.dealingState = EDealingState::DealerFirstCard;
           // keep an eye out for Aces
           if(_game.LastCard().IsAnAce()){
-            DelegateIfInControl(SetUpSpeakingBehavior("Good luck!"),
-                                &BehaviorBlackJack::TransitionToDealing);
+            _iConfig.goodLuckTTSBehavior->SetTextToSay("Good Luck!");
+            if(!ANKI_VERIFY(_iConfig.goodLuckTTSBehavior->WantsToBeActivated(),
+                            "BehaviorBlackjack.TTSError",
+                            "The Good Luck TTS behavior did not want to be activated, this indicates a usage error")){
+              CancelSelf();
+            } else{
+              DelegateIfInControl(_iConfig.goodLuckTTSBehavior.get(),
+                                  &BehaviorBlackJack::TransitionToDealing);
+            }
           } else {
             TransitionToDealing();
           }
@@ -464,9 +476,11 @@ void BehaviorBlackJack::TransitionToGetOut()
 IBehavior* BehaviorBlackJack::SetUpSpeakingBehavior(const std::string& vocalizationString)
 {
   _iConfig.ttsBehavior->SetTextToSay(vocalizationString);
-  ANKI_VERIFY(_iConfig.ttsBehavior->WantsToBeActivated(),
-              "BehaviorBlackjack.TTSError",
-              "The TTSLoop behavior did not want to be activated, this indicates a usage error");
+  if(!ANKI_VERIFY(_iConfig.ttsBehavior->WantsToBeActivated(),
+                 "BehaviorBlackjack.TTSError",
+                 "The TTSLoop behavior did not want to be activated, this indicates a usage error")){
+    CancelSelf();
+  }
   return _iConfig.ttsBehavior.get();
 }
 
