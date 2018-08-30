@@ -1,13 +1,38 @@
 {
-  "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToHello",
+  "behaviorClass": "FindFaceAndThen",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
-
-  "animTriggers": ["ReactToGreeting"],
   "respondToUserIntents": [
     {
       "type": "greeting_hello"
+    }
+  ],
+
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "searchForFaceBehavior": "ActiveLookForFaces",
+  "shouldLeaveChargerFirst": true,
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+
+  "behavior": "InternalGreeting",
+  "timeUntilCancelFollowup_s": 15.0,
+
+  "useBodyDetector": true,
+  "additionalLookTimeIfSawBody_s": 3.0,
+  "additionalSearchTimeIfSawBody_s": 3.0,
+
+  "animWhenSeesFace": "FoundFace",
+
+  "anonymousBehaviors": [
+    {
+      "behaviorClass": "AnimSequence",
+      "behaviorName": "InternalGreeting",
+
+      "animTriggers": [
+        "ReactToGreeting"
+      ]
+
     }
   ]
 }
