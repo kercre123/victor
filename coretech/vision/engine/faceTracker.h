@@ -50,9 +50,9 @@ namespace Vision {
     
     // These methods control which faces we are going to track, the rest
     // of the faces will be discarded. Also if there are any allowed
-    // faces, facial recogintion will be disabled. If there are no
+    // faces, facial recognition will be disabled. If there are no
     // allowed tracked faces all faces detected will be tracked and
-    // facial recognition will occuring "normally".
+    // facial recognition will occur "normally".
     void AddAllowedTrackedFace(const FaceID_t faceID);
     bool HaveAllowedTrackedFaces();
     // This method will clear all the tracked faces and reset the
