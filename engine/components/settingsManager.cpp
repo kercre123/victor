@@ -105,13 +105,8 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
 
     if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ROBOT_SETTINGS))
     {
-      // TODO (this has its own ticket, VIC-5669):
-      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
-      //   and new format versions.  Also put it in a function, and call that ALSO in the
-      //   case of migration triggered when pulling a new version of jdoc from the cloud.
-      //   consider another callback, similar to the 'overwritten' callback, but for this
-      //   format migration.
-      // Not doing this now because we're not changing format versions yet.
+      DoJdocFormatMigration();
+      settingsDirty = true;
     }
   }
 
@@ -163,6 +158,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
     ApplyAllCurrentSettings();
+  });
+
+  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
+    DoJdocFormatMigration();
   });
 
   // Finally, set a flag so we will apply all of the settings
@@ -464,7 +463,7 @@ bool SettingsManager::ApplySettingTimeZone()
   }
   return success;
 #else
-  LOG_WARNING("SettingsManager.ApplySettingTimeZone.NotInWebots",
+  LOG_INFO("SettingsManager.ApplySettingTimeZone.NotInWebots",
               "Applying time zone setting is not supported in webots");
   return true;
 #endif
@@ -636,6 +635,30 @@ bool SettingsManager::ExecCommand(const std::vector<std::string>& args)
   return true;
 }
 #endif
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsManager::DoJdocFormatMigration()
+{
+  const auto jdocType = external_interface::JdocType::ROBOT_SETTINGS;
+  const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
+  const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
+  LOG_INFO("SettingsManager.DoJdocFormatMigration",
+           "Migrating robot settings jdoc from format version %llu to %llu",
+           docFormatVersion, curFormatVersion);
+  if (docFormatVersion > curFormatVersion)
+  {
+    LOG_ERROR("SettingsManager.DoJdocFormatMigration.Error",
+              "Jdoc format version is newer than what victor code can handle; no migration possible");
+    return;
+  }
+
+  // When we change 'format version' on this jdoc, migration
+  // to a newer format version is performed here
+
+  // Now update the format version of this jdoc to the current format version
+  _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
+}
 
 
 } // namespace Vector

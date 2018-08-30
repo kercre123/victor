@@ -58,6 +58,9 @@ public:
   bool           JdocNeedsMigration(const external_interface::JdocType jdocTypeKey) const;
   const std::string&    GetJdocName(const external_interface::JdocType jdocTypeKey) const;
   const uint64_t  GetJdocDocVersion(const external_interface::JdocType jdocTypeKey) const;
+  const uint64_t  GetJdocFmtVersion(const external_interface::JdocType jdocTypeKey) const;
+  const uint64_t   GetCurFmtVersion(const external_interface::JdocType jdocTypeKey) const;
+  void   SetJdocFmtVersionToCurrent(const external_interface::JdocType jdocTypeKey);
   const Json::Value&    GetJdocBody(const external_interface::JdocType jdocTypeKey) const;
   Json::Value*   GetJdocBodyPointer(const external_interface::JdocType jdocTypeKey);
   bool                      GetJdoc(const external_interface::JdocType jdocTypeKey,
@@ -77,6 +80,10 @@ public:
   using OverwriteNotificationCallback = std::function<void(void)>;
   void RegisterOverwriteNotificationCallback(const external_interface::JdocType jdocTypeKey,
                                              const OverwriteNotificationCallback cb);
+
+  using FormatMigrationCallback = std::function<void(void)>;
+  void RegisterFormatMigrationCallback(const external_interface::JdocType jdocTypeKey,
+                                       const FormatMigrationCallback cb);
 
 private:
 
@@ -117,7 +124,8 @@ private:
 
     std::string               _jdocName;          // Official name; used in cloud API
     bool                      _needsCreation;     // True if this jdoc needs to be created (by another subsystem)
-    bool                      _needsMigration;    // True if this jdoc needs a format version migration
+    bool                      _needsMigration;    // True if this jdoc needs a format version migration at startup
+    uint64_t                  _curFormatVersion;  // Current/latest format version this code knows about
 
     bool                      _savedOnDisk;       // True if we keep a copy on disk
     std::string               _jdocFullPath;      // Full path of file on disk if applicable
@@ -132,8 +140,12 @@ private:
     bool                      _cloudDirty;        // True when cloud copy of the jdoc needs to be updated
     int                       _cloudSavePeriod_s; // Cloud save period, or 0 for always save immediately
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
+    // This flag indicates the cloud has a higher format version of the jdoc than
+    // the code can handle, so it is disabled for purposes of submitting to cloud
+    bool                      _disabledDueToFmtVersion;
 
     OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
+    FormatMigrationCallback   _formatMigrationCB; // Called when this jdoc needs a format migration
   };
 
   using Jdocs = std::map<external_interface::JdocType, JdocInfo>;

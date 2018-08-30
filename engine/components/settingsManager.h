@@ -107,6 +107,8 @@ private:
   bool RequestLatentSettingsUpdate( RobotSetting setting );
   void OnSettingsUpdateNotClaimed(RobotSetting setting);
 
+  void DoJdocFormatMigration();
+
   Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
   const Json::Value*        _settingsConfig;

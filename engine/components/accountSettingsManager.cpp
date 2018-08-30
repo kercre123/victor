@@ -63,13 +63,8 @@ void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dep
 
     if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ACCOUNT_SETTINGS))
     {
-      // TODO (this has its own ticket, VIC-5669):
-      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
-      //   and new format versions.  Also put it in a function, and call that ALSO in the
-      //   case of migration triggered when pulling a new version of jdoc from the cloud.
-      //   consider another callback, similar to the 'overwritten' callback, but for this
-      //   format migration.
-      // Not doing this now because we're not changing format versions yet.
+      DoJdocFormatMigration();
+      settingsDirty = true;
     }
   }
 
@@ -115,9 +110,13 @@ void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dep
   // Register the actual setting application methods, for those settings that want to execute code when changed:
   _settingSetters[external_interface::AccountSetting::DATA_COLLECTION] = { nullptr, &AccountSettingsManager::ApplyAccountSettingDataCollection };
 
-  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
+  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ACCOUNT_SETTINGS, [this]() {
     _currentAccountSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ACCOUNT_SETTINGS);
     ApplyAllCurrentAccountSettings();
+  });
+
+  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::ACCOUNT_SETTINGS, [this]() {
+    DoJdocFormatMigration();
   });
 
   // Finally, set a flag so we will apply all of the settings
@@ -293,6 +292,30 @@ bool AccountSettingsManager::ApplyAccountSettingDataCollection()
   // TODO:  Can call whereever here
   
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AccountSettingsManager::DoJdocFormatMigration()
+{
+  const auto jdocType = external_interface::JdocType::ACCOUNT_SETTINGS;
+  const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
+  const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
+  LOG_INFO("AccountSettingsManager.DoJdocFormatMigration",
+           "Migrating account settings jdoc from format version %llu to %llu",
+           docFormatVersion, curFormatVersion);
+  if (docFormatVersion > curFormatVersion)
+  {
+    LOG_ERROR("AccountSettingsManager.DoJdocFormatMigration.Error",
+              "Jdoc format version is newer than what victor code can handle; no migration possible");
+    return;
+  }
+
+  // When we change 'format version' on this jdoc, migration
+  // to a newer format version is performed here
+
+  // Now update the format version of this jdoc to the current format version
+  _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
 }
 
 

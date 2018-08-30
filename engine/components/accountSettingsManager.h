@@ -74,6 +74,8 @@ private:
   bool ApplyAccountSetting(const external_interface::AccountSetting key);
   bool ApplyAccountSettingDataCollection();
 
+  void DoJdocFormatMigration();
+
   Json::Value               _currentAccountSettings;
   const Json::Value*        _accountSettingsConfig;
   bool                      _applyAccountSettingsNextTick = false;
