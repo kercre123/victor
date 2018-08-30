@@ -14,7 +14,7 @@
     "ROBOT_LIFETIME_STATS" : {
       "docName" : "vic.RobotLifetimeStats",
       "savedOnDisk" : true,
-      "diskSavePeriod_s" : 60,
+      "diskSavePeriod_s" : 600,
       "warnOnCloudVersionLater" : false,
       "errorOnCloudVersionLater" : true,
       "cloudSavePeriod_s" : 3600,

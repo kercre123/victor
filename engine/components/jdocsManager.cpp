@@ -113,6 +113,10 @@ JdocsManager::JdocsManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 JdocsManager::~JdocsManager()
 {
+  // Immediately save to disk any jdocs that are disk-dirty
+  static const float kMaxFutureTime = FLT_MAX;
+  UpdatePeriodicFileSaves(kMaxFutureTime);
+
   if (_udpClient.IsConnected())
   {
     _udpClient.Disconnect();
