@@ -189,7 +189,7 @@ func (ctm *ClientTokenManager) ForceUpdate(response chan struct{}) {
 
 func (ctm *ClientTokenManager) updateListener() {
 	for range ctm.checkValid {
-		if time.Since(ctm.lastUpdatedTokens) > time.Minute { // TODO: Change to an hour
+		if time.Since(ctm.lastUpdatedTokens) > time.Hour {
 			ctm.updateNowChan <- ctm.notifyValid
 		} else {
 			ctm.notifyValid <- struct{}{}
