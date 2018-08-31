@@ -1044,6 +1044,22 @@
     "AnimName": "ag_reacttocliff_stuckonedge_01"
   },
   {
+    "CladEvent": "StuckOnEdgeLeftGetIn",
+    "AnimName": "ag_reacttocliff_stuckonedge_left_getin"
+  },
+  {
+    "CladEvent": "StuckOnEdgeLeftIdle",
+    "AnimName": "ag_reacttocliff_stuckonedge_left_01"
+  },
+  {
+    "CladEvent": "StuckOnEdgeRightGetIn",
+    "AnimName": "ag_reacttocliff_stuckonedge_right_getin"
+  },
+  {
+    "CladEvent": "StuckOnEdgeRightIdle",
+    "AnimName": "ag_reacttocliff_stuckonedge_right_01"
+  },
+  {
     "CladEvent": "SuccessfulWheelie",
     "AnimName": "ag_reacttocliff_wheelie_01"
   },
