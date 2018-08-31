@@ -1098,17 +1098,6 @@ namespace Vision {
             continue; 
           }
         }
-        else
-        {
-          if (_allowedTrackedFaceID.count(-detectionInfo.nID) == 0)
-          {
-            // Check to see if the negative of the detection id is
-            // in allowed tracked faces, if not continue. If the
-            // negative detection id is in here it means that we didn't
-            // recognize the face.
-            continue;
-          }
-        }
       }
       
       // Add a new face to the list
@@ -1204,13 +1193,21 @@ namespace Vision {
         // Face Recognition:
         //
         const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
-        bool faceIsEnrolling = false;
-        FaceID_t faceID;
-        if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
+        bool enableEnrollment = enrollable;
+
+        // If we have allowed tracked faces we should only enable enrollment
+        // if the current face matches the face id returned by GetEnrollmentID.
+        // This should only happen in MeetVictor currently. If we don't have any
+        // allowed tracked faces we don't need to worry about this and can just
+        // use the result from IsEnrollable.
+        if (HaveAllowedTrackedFaces())
         {
-          faceIsEnrolling = (faceID == _recognizer.GetEnrollmentID());
+          FaceID_t faceID;
+          if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
+          {
+            enableEnrollment &= (faceID == _recognizer.GetEnrollmentID());
+          }
         }
-        const bool enableEnrollment = (enrollable && faceIsEnrolling);
 
         // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
