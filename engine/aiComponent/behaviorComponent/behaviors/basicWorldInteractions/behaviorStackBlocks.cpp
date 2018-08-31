@@ -121,12 +121,8 @@ void BehaviorStackBlocks::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorStackBlocks::WantsToBeActivatedBehavior() const
 {
-  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-  const bool featureEnabled = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::CubeBehaviors);
-  if(!featureEnabled)
-  {
-    return false;
-  }
+  // TODO: (STR) Cube stacking will not be a thing in Vector. Keeping the behavior around in case we
+  // ever want to refer back to it. It does not need feature gating here since it isn't used anywhere.
 
   ObjectID bottomBlock;
   ObjectID topBlock;

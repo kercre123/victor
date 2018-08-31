@@ -4,17 +4,8 @@
   "associatedActiveFeature": "PopAWheelie",
 
   "wantsToBeActivatedCondition": {
-    "conditionType": "Compound",
-    "and": [
-      {
-        "conditionType" : "FeatureGate",
-        "feature" : "PopAWheelie"
-      },
-      {
-        "conditionType" : "FeatureGate",
-        "feature" : "CubeBehaviors"
-      }
-    ]
+    "conditionType" : "FeatureGate",
+    "feature" : "PopAWheelie"
   }
 
 }

@@ -156,7 +156,7 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
               },
               {
                 "conditionType": "Compound",
@@ -257,7 +257,7 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
               },
               {
                 "conditionType": "Compound",
@@ -464,7 +464,7 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
               }
             ]
           }
@@ -496,7 +496,7 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
               }
             ]
           }

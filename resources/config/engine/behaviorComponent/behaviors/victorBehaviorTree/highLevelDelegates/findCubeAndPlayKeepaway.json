@@ -5,5 +5,10 @@
 
   "followUpBehaviorID" : "Keepaway",
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "FeatureGate",
+    "feature": "Keepaway"
+  },
+
   "postBehaviorSuggestion" : "Socialize"
 }

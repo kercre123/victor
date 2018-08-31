@@ -9,8 +9,7 @@
 
   "wantsToBeActivatedCondition": {
     "conditionType" : "FeatureGate",
-    "feature" : "FindCube",
-    "expected" : true
+    "feature" : "FindCube"
   },
 
   "followUpBehaviorID" : "InteractWithStaticCube",
