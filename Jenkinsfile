@@ -115,12 +115,25 @@ stage("${primaryStageName} Build") {
         }
     }*/
     node('victor-shipping') {
-        withDockerEnv {
-            buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-            deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
-        }
-        stage('Cleaning workspace') {
-            cleanWs()
+        try {
+            withDockerEnv {
+                buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
+            }
+        } catch (exc) {
+            throw exc
+        } finally {
+            stage('Cleaning slave workspace') {
+                cleanWs()
+            }
+            stage('Cleaning master workspace') {
+                node('master') {
+                    def workspace = pwd()
+                    dir("${workspace}@script") {
+                        deleteDir()
+                    }
+                }
+            }
         }
     }
 }
