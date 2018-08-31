@@ -62,6 +62,8 @@ namespace Anki {
       
       virtual ~IDockAction();
 
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
+
       virtual void OnRobotSet() override final;
 
       // Functions to check if docking/carrying component pointers are set
@@ -316,6 +318,8 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
     protected:
+      
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return false; }
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
