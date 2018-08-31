@@ -517,6 +517,16 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
 
   Log::Write("Received cloud session authorization request.");
 
+  Anki::Wifi::WiFiState wifiState = Anki::Wifi::GetWiFiState();
+
+  if((wifiState.connState != Anki::Wifi::WiFiConnState::CONNECTED) &&
+    (wifiState.connState != Anki::Wifi::WiFiConnState::ONLINE)) {
+    Log::Error("CloudSessionResponse:ConnectionError robot is offline");
+    bool success = false;
+    SendRtsMessage<RtsCloudSessionResponse>(success, RtsCloudStatus::ConnectionError, "");
+    return;
+  }
+
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(
     [this, sessionToken](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
