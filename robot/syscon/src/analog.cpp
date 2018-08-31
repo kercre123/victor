@@ -42,6 +42,7 @@ static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
 static bool is_charging = false;
 static bool on_charger = false;
 static bool charge_cutoff = false;
+static bool too_hot = false;
 static int heat_counter = 0;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
@@ -137,6 +138,7 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.flags = 0
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
+                      | (too_hot ? POWER_CHARGER_OVERHEAT : 0)
                       | ((overheated > 0) ? POWER_IS_OVERHEATED : 0)
                       | (charge_cutoff ? POWER_BATTERY_DISCONNECTED : 0)
                       ;
@@ -239,7 +241,6 @@ static bool handleTemperature() {
     for (;;) __wfi();
   }
 
-  static bool too_hot = false;
   static int samples = 0;
   static int filt_temp = 0;
   filt_temp += temp_now;
@@ -358,7 +359,8 @@ void Analog::tick(void) {
     POWER_EN::pull(PULL_NONE);
     POWER_EN::mode(MODE_INPUT);
 
-    is_charging = false;
+    // Don't report that we are not charging if the charger is overheating
+    is_charging = too_hot;
 
     if (enable_watchdog) {
       ADC1->ISR = ADC_ISR_AWD;
