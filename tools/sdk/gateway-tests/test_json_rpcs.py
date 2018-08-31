@@ -62,14 +62,12 @@ def test_dock_with_cube(vector_connection):
 # def test_drive_on_charger(vector_connection):
 #     vector_connection.send("v1/drive_on_charger", p.DriveOnChargerRequest(), p.DriveOnChargerResponse())
 
-def test_pang(vector_connection):
-    vector_connection.send("v1/pang", p.Ping(), p.Pong())
-
 def test_get_onboarding_state(vector_connection):
     vector_connection.send("v1/get_onboarding_state", p.OnboardingStateRequest(), p.OnboardingStateResponse())
 
-def test_send_onboarding_input(vector_connection):
-    vector_connection.send("v1/send_onboarding_input", p.OnboardingInputRequest(), p.OnboardingInputResponse())
+# NOTE: Missing parameters
+# def test_send_onboarding_input(vector_connection):
+#     vector_connection.send("v1/send_onboarding_input", p.OnboardingInputRequest(), p.OnboardingInputResponse())
 
 def test_photos_info(vector_connection):
     vector_connection.send("v1/photos_info", p.PhotosInfoRequest(), p.PhotosInfoResponse())
@@ -163,8 +161,9 @@ def test_check_update_status(vector_connection):
 def test_update_and_restart(vector_connection):
     vector_connection.send("v1/update_and_restart", p.UpdateAndRestartRequest(), p.UpdateAndRestartResponse())
 
-def test_upload_debug_logs(vector_connection):
-    vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse())
+# NOTE: Not implemented yet
+# def test_upload_debug_logs(vector_connection):
+#     vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse())
 
 # NOTE: Hangs forever (not implemented in webots nor robot yet)
 # def test_check_cloud_connection(vector_connection):

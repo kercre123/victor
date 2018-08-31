@@ -345,18 +345,32 @@ func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint
 	if err != nil {
 		return nil, err
 	}
-	getStepResponse, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	select {
+	case getStepResponse, ok := <-responseChan:
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+		return &extint.OnboardingInputResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_REQUEST_PROCESSING,
+			},
+			OneofMessageType: &extint.OnboardingInputResponse_OnboardingStepResponse{
+				OnboardingStepResponse: getStepResponse.GetOnboardingStepResponse(),
+			},
+		}, nil
+	case <-time.After(10 * time.Second):
+		return &extint.OnboardingInputResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_NOT_FOUND,
+			},
+			OneofMessageType: &extint.OnboardingInputResponse_OnboardingStepResponse{
+				OnboardingStepResponse: &extint.OnboardingStepResponse{
+					StepNumber: extint.OnboardingSteps_STEP_INVALID,
+				},
+			},
+		}, nil
+
 	}
-	return &extint.OnboardingInputResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-		OneofMessageType: &extint.OnboardingInputResponse_OnboardingStepResponse{
-			OnboardingStepResponse: getStepResponse.GetOnboardingStepResponse(),
-		},
-	}, nil
 }
 
 func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
@@ -469,13 +483,19 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 	remaining := -1
 	for done == false || remaining != 0 {
 		select {
-		case chanResponse := <-animationAvailableResponse:
+		case chanResponse, ok := <-animationAvailableResponse:
+			if !ok {
+				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
 			var newAnim = extint.Animation{
 				Name: chanResponse.GetAnimationAvailable().AnimName,
 			}
 			anims = append(anims, &newAnim)
 			remaining = remaining - 1
-		case chanResponse := <-endOfMessageResponse:
+		case chanResponse, ok := <-endOfMessageResponse:
+			if !ok {
+				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
 			if chanResponse.GetEndOfMessage().MessageType == gw_clad.MessageType_AnimationAvailable {
 				remaining = len(animationAvailableResponse)
 				done = true
@@ -745,7 +765,7 @@ func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) 
 	return false
 }
 
-func (service *rpcService) checkConnectionId(id string) bool {
+func (service *rpcService) checkConnectionID(id string) bool {
 	connectionIdLock.Lock()
 	defer connectionIdLock.Unlock()
 	if len(connectionId) != 0 {
@@ -756,7 +776,11 @@ func (service *rpcService) checkConnectionId(id string) bool {
 		defer f()
 		switchboardManager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionRequest(&gw_clad.ExternalConnectionRequest{}))
 
-		response := <-responseChan
+		response, ok := <-responseChan
+		if !ok {
+			log.Println("Failed to receive ConnectionID response from vic-switchboard")
+			return false
+		}
 		connectionResponse := response.GetExternalConnectionResponse()
 		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
 			return false
@@ -770,7 +794,7 @@ func (service *rpcService) checkConnectionId(id string) bool {
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	log.Println("Received rpc request EventStream(", in, ")")
 
-	isPrimary := service.checkConnectionId(in.ConnectionId)
+	isPrimary := service.checkConnectionID(in.ConnectionId)
 	if isPrimary {
 		defer func() { connectionId = "" }()
 	}
@@ -801,7 +825,9 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 
 	done := make(chan struct{})
 	go service.EventKeepAlive(eventsChannel, done)
-	defer close(done)
+	defer func() {
+		done <- struct{}{}
+	}()
 
 	whiteList := in.GetWhiteList()
 	blackList := in.GetBlackList()
@@ -847,16 +873,16 @@ func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.Behav
 }
 
 func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) {
+	defer close(done)
 	defer engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ControlRelease{
 			ControlRelease: &extint.ControlRelease{},
 		},
 	})
-	for true {
+	for {
 		request, err := in.Recv()
 		if err != nil {
-			log.Println(err)
-			close(done)
+			log.Printf("BehaviorControlRequestHandler.close: %s\n", err.Error())
 			return
 		}
 		log.Println("BehaviorControl Incoming Request:", request)
@@ -864,23 +890,24 @@ func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInter
 		msg, err := service.BehaviorRequestToGatewayWrapper(request)
 		if err != nil {
 			log.Println(err)
-			close(done)
 			return
 		}
 		_, err = engineProtoManager.Write(msg)
 		if err != nil {
-			close(done)
 			return
 		}
 	}
 }
 
 func (service *rpcService) BehaviorControlResponseForwarding(wrapper chan extint.GatewayWrapper, responses chan extint.BehaviorControlResponse, done chan struct{}) {
-	for true {
+	for {
 		select {
 		case <-done:
 			return
-		case msg := <-wrapper:
+		case msg, ok := <-wrapper:
+			if !ok {
+				return
+			}
 			responses <- *msg.GetBehaviorControlResponse()
 		}
 	}
@@ -892,7 +919,7 @@ func (service *rpcService) BehaviorControlKeepAlive(responses chan extint.Behavi
 			KeepAlive: &extint.KeepAlivePing{},
 		},
 	}
-	for true {
+	for {
 		select {
 		case <-done:
 			return
@@ -904,12 +931,14 @@ func (service *rpcService) BehaviorControlKeepAlive(responses chan extint.Behavi
 
 // TODO: name this better
 func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) error {
-	for true {
+	for {
 		select {
 		case <-done:
 			return nil
-		case response := <-responses:
-			log.Printf("BehaviorControl update: %+v\n", response)
+		case response, ok := <-responses:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
 			if err := out.Send(&response); err != nil {
 				return err
 			} else if err = out.Context().Err(); err != nil {
@@ -1013,17 +1042,6 @@ func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveO
 	return response, nil
 }
 
-// Example sending an int to and receiving an int from the engine
-// TODO: Remove this example code once more code is converted to protobuf
-func (service *rpcService) Pang(ctx context.Context, in *extint.Ping) (*extint.Pong, error) {
-	if logVerbose {
-		log.Println("Received rpc request Ping(", in, ")")
-	}
-	return &extint.Pong{
-		Pong: in.Ping + 1,
-	}, nil
-}
-
 // Request the current robot onboarding status
 func (service *rpcService) GetOnboardingState(ctx context.Context, in *extint.OnboardingStateRequest) (*extint.OnboardingStateResponse, error) {
 	log.Println("Received rpc request GetOnboardingState(", in, ")")
@@ -1042,10 +1060,10 @@ func (service *rpcService) GetOnboardingState(ctx context.Context, in *extint.On
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	return &extint.OnboardingStateResponse{
-		OnboardingState: onboardingState.GetOnboardingState(),
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 		},
+		OnboardingState: onboardingState.GetOnboardingState(),
 	}, nil
 }
 

@@ -86,11 +86,6 @@ message GatewayWrapper {
     OnboardingGetStep             onboarding_get_step                = 9;
     OnboardingStepResponse        onboarding_step_response           = 10;
 
-    // ------------ test request/response pairs --------------------------
-    // TODO: remove these once the app no longer needs them (ping in event stream)
-    Ping                          ping                               = 20;
-    Pong                          pong                               = 21;
-
     // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 30;
     LatestAttentionTransfer        latest_attention_transfer         = 31;

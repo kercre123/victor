@@ -36,14 +36,20 @@ type ClientToken struct {
 // that stores them.
 // Note: comes from the ClientTokenDocument definition
 type ClientTokenManager struct {
-	ClientTokens     []ClientToken      `json:"client_tokens"`
-	jdocIPC          IpcManager         `json:"-"`
-	updateChan       chan chan struct{} `json:"-"`
-	recentTokenIndex int                `json:"-"`
+	ClientTokens      []ClientToken      `json:"client_tokens"`
+	jdocIPC           IpcManager         `json:"-"`
+	checkValid        chan struct{}      `json:"-"`
+	notifyValid       chan struct{}      `json:"-"`
+	updateNowChan     chan chan struct{} `json:"-"`
+	recentTokenIndex  int                `json:"-"`
+	lastUpdatedTokens time.Time          `json:"-"`
 }
 
 func (ctm *ClientTokenManager) Init() error {
-	ctm.updateChan = make(chan chan struct{})
+	ctm.lastUpdatedTokens = time.Now().Add(-24 * time.Hour) // older than our startup time
+	ctm.checkValid = make(chan struct{})
+	ctm.notifyValid = make(chan struct{})
+	ctm.updateNowChan = make(chan chan struct{})
 	ctm.jdocIPC.Connect(ipc.GetSocketPath(jdocDomainSocket), jdocSocketSuffix)
 	ctm.UpdateTokens()
 	return nil
@@ -54,6 +60,8 @@ func (ctm *ClientTokenManager) Close() error {
 }
 
 func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
+	ctm.checkValid <- struct{}{}
+	<-ctm.notifyValid
 	if len(ctm.ClientTokens) == 0 {
 		return "", grpc.Errorf(codes.Unauthenticated, "no valid tokens")
 	}
@@ -78,7 +86,15 @@ func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
 // DecodeTokenJdoc will update existing valid tokens, from a jdoc received from the server
 func (ctm *ClientTokenManager) DecodeTokenJdoc(jdoc []byte) error {
 	ctm.recentTokenIndex = 0
-	return json.Unmarshal(jdoc, ctm)
+	ctm.lastUpdatedTokens = time.Now()
+	err := json.Unmarshal(jdoc, ctm)
+	if err != nil {
+		log.Printf("Unmarshal tokens failed. Invalidating. %s\n", err.Error())
+		ctm.ClientTokens = []ClientToken{}
+	} else {
+		log.Println("Updated valid tokens")
+	}
+	return err
 }
 
 // UpdateTokens polls the server for new tokens, and will update as necessary
@@ -111,7 +127,6 @@ func (ctm *ClientTokenManager) UpdateTokens() error {
 	if err != nil {
 		return nil
 	}
-	log.Println("Updated valid tokens")
 	return nil
 }
 
@@ -169,21 +184,24 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 func (ctm *ClientTokenManager) ForceUpdate(response chan struct{}) {
 	ctm.recentTokenIndex = 0
 	ctm.ClientTokens = []ClientToken{}
-	ctm.updateChan <- response
+	ctm.updateNowChan <- response
 }
 
-func (ctm *ClientTokenManager) updateTicker() {
-	ticker := time.NewTicker(15 * time.Minute)
-	for range ticker.C {
-		ctm.updateChan <- nil
+func (ctm *ClientTokenManager) updateListener() {
+	for range ctm.checkValid {
+		if time.Since(ctm.lastUpdatedTokens) > time.Minute { // TODO: Change to an hour
+			ctm.updateNowChan <- ctm.notifyValid
+		} else {
+			ctm.notifyValid <- struct{}{}
+		}
 	}
 }
 
 func (ctm *ClientTokenManager) StartUpdateListener() {
-	go ctm.updateTicker()
+	go ctm.updateListener()
 	for {
 		select {
-		case response := <-ctm.updateChan:
+		case response := <-ctm.updateNowChan:
 			ctm.UpdateTokens()
 			if response != nil {
 				response <- struct{}{}

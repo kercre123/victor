@@ -387,18 +387,6 @@ message DriveOnChargerResponse {
   BehaviorResults result = 2;
 }
 
-// TODO: Remove these when pings are part of the event stream, and
-// app team is converted over
-message Ping {
-  uint64 ping = 1;
-}
-
-// TODO: Remove these when pings are part of the event stream, and
-// app team is converted over
-message Pong {
-  uint64 pong = 1;
-}
-
 enum OnboardingStages
 {
   NotStarted = 0;

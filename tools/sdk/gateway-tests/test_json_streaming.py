@@ -9,6 +9,11 @@ except ImportError:
 
 from util import vector_connection
 
+def test_event_forever(vector_connection):
+    if "test_json_streaming.py::test_event_forever" not in sys.argv:
+        pytest.skip("test_event_forever may only run when explicitly called")
+    vector_connection.send("v1/event_stream", p.EventRequest(), p.EventResponse(), stream=-1)
+
 def test_event(vector_connection):
     vector_connection.send("v1/event_stream", p.EventRequest(), p.EventResponse(), stream=100)
 
@@ -27,4 +32,4 @@ def test_assume_behavior_control_nil(vector_connection):
         vector_connection.send("v1/assume_behavior_control", p.BehaviorControlRequest(), p.BehaviorControlResponse(), stream=10)
 
 def test_camera_feed(vector_connection):
-    vector_connection.send("v1/camera_feed", p.CameraFeedRequest(), p.CameraFeedResponse(), stream=50)
+    vector_connection.send("v1/camera_feed", p.CameraFeedRequest(), p.CameraFeedResponse(), stream=100)

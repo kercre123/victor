@@ -163,14 +163,6 @@ service ExternalInterface {
     };
   }
 
-  // TODO: remove once app is converted to use event pings
-  rpc Pang(Ping) returns (Pong) {
-    option (google.api.http) = {
-      post: "/v1/pang",
-      body: "*"
-    };
-  }
-
   // Request onboarding state
   rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
     option (google.api.http) = {

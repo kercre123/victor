@@ -54,9 +54,12 @@ class Connection:
     @staticmethod
     def default_callback(response, response_type):
         print("Default response: {}".format(colored(response.content, "cyan")))
+        assert response.status_code == 200, "Received failure status_code: {}".format(response.status_code)
+        print("Converted Protobuf: {}".format(Parse(json.dumps(str(response.content)), response_type, ignore_unknown_fields=True)))
 
     @staticmethod
     def default_stream_callback(response, response_type, iterations=10):
+        i = 0
         for i, r in enumerate(response.iter_lines()):
             print("Shawn Test: {}".format(r))
             data = json.loads(r.decode('utf8'))
@@ -64,7 +67,9 @@ class Connection:
             assert "result" in data
             print("Converted Protobuf: {}".format(Parse(json.dumps(data["result"]), response_type, ignore_unknown_fields=True)))
             if i == iterations:
-                return
+                break
+        print("{} of {} iterations".format(i, iterations))
+        assert i == iterations, "Stream closed before expected number of iterations"
 
     def send_raw(self, url_suffix, data, response_type, stream=None, callback=None):
         if callback is None:
