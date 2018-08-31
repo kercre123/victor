@@ -16,6 +16,7 @@
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/components/jdocsManager.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
@@ -163,9 +164,10 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
   IncreaseHelper(kActiveFeatureCategory + std::string(kRobotStatsSeparator) + intentSource,
                  ActiveFeatureToString(feature), 1);
 
-  // also log usage by type, to serve as a "summary"
+  // also log usage by type, to serve as a "summary" of voice commands
   ActiveFeatureType featureType = GetActiveFeatureType(feature, ActiveFeatureType::Invalid);
-  if( featureType != ActiveFeatureType::Invalid ) {
+  if( featureType != ActiveFeatureType::Invalid &&
+      intentSource!= ActiveFeatureComponent::kIntentSourceAI) {
     IncreaseHelper( kActiveFeatureTypeCategory, ActiveFeatureTypeToString(featureType), 1);
   }
 }

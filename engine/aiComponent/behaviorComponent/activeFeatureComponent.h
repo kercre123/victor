@@ -37,6 +37,9 @@ class ActiveFeatureComponent : public IDependencyManagedComponent<BCComponentID>
 public:
   ActiveFeatureComponent();
 
+  // intent "source" defined for AI features (otherwise uses the UserIntentSource) as a string
+  static const std::string kIntentSourceAI;
+
   virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override {
     dependencies.insert(BCComponentID::RobotInfo);
   }
