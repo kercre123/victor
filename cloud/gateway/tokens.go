@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 
 	"anki/ipc"
@@ -20,6 +22,7 @@ import (
 const (
 	jdocDomainSocket = "jdocs_server"
 	jdocSocketSuffix = "gateway_client"
+	tokensFile       = "/data/vic-gateway/token-hashes.json"
 )
 
 // ClientToken holds the tuple of the client token hash and the
@@ -43,20 +46,37 @@ type ClientTokenManager struct {
 	updateNowChan     chan chan struct{} `json:"-"`
 	recentTokenIndex  int                `json:"-"`
 	lastUpdatedTokens time.Time          `json:"-"`
+	forceClearFile    bool               `json:"-"`
 }
 
 func (ctm *ClientTokenManager) Init() error {
+	ctm.forceClearFile = false
 	ctm.lastUpdatedTokens = time.Now().Add(-24 * time.Hour) // older than our startup time
 	ctm.checkValid = make(chan struct{})
 	ctm.notifyValid = make(chan struct{})
 	ctm.updateNowChan = make(chan chan struct{})
 	ctm.jdocIPC.Connect(ipc.GetSocketPath(jdocDomainSocket), jdocSocketSuffix)
-	ctm.UpdateTokens()
+	err := ctm.readTokensFile()
+	if err != nil {
+		return ctm.UpdateTokens()
+	}
 	return nil
 }
 
 func (ctm *ClientTokenManager) Close() error {
 	return ctm.jdocIPC.Close()
+}
+
+func (ctm *ClientTokenManager) readTokensFile() error {
+	clientTokens, err := ioutil.ReadFile(tokensFile)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(clientTokens, ctm)
+}
+
+func (ctm *ClientTokenManager) writeTokensFile(data []byte) error {
+	return ioutil.WriteFile(tokensFile, data, 0600)
 }
 
 func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
@@ -99,6 +119,12 @@ func (ctm *ClientTokenManager) DecodeTokenJdoc(jdoc []byte) error {
 
 // UpdateTokens polls the server for new tokens, and will update as necessary
 func (ctm *ClientTokenManager) UpdateTokens() error {
+	if ctm.forceClearFile {
+		err := os.Remove(tokensFile)
+		if err == nil {
+			ctm.forceClearFile = false
+		}
+	}
 	id, esn, err := ctm.getIDs()
 	if err != nil {
 		return err
@@ -118,12 +144,17 @@ func (ctm *ClientTokenManager) UpdateTokens() error {
 	}
 	read := resp.GetRead()
 	if read == nil {
-		return fmt.Errorf("error while trying to read jdocs:  %#v", resp)
+		return fmt.Errorf("error while trying to read jdocs: %#v", resp)
 	}
 	if len(read.Items) == 0 {
 		return errors.New("no jdoc in read response")
 	}
-	err = ctm.DecodeTokenJdoc([]byte(read.Items[0].Doc.JsonDoc))
+	data := []byte(read.Items[0].Doc.JsonDoc)
+	err = ctm.DecodeTokenJdoc(data)
+	if err != nil {
+		return nil
+	}
+	err = ctm.writeTokensFile(data)
 	if err != nil {
 		return nil
 	}
@@ -183,6 +214,7 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 }
 
 func (ctm *ClientTokenManager) ForceUpdate(response chan struct{}) {
+	ctm.forceClearFile = true
 	ctm.recentTokenIndex = 0
 	ctm.ClientTokens = []ClientToken{}
 	ctm.updateNowChan <- response
