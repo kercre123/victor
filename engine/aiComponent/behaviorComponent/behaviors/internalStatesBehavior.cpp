@@ -38,6 +38,11 @@
 
 #include <cctype>
 
+namespace {
+  #define CONSOLE_GROUP "Behaviors.InternalStatesBehavior"
+  CONSOLE_VAR(bool, kDebugInternalStatesBehavior, CONSOLE_GROUP, false);
+}
+
 namespace Anki {
 namespace Vector {
 
@@ -45,8 +50,8 @@ CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 
 namespace {
 
-constexpr const char* kStateConfgKey = "states";
-constexpr const char* kStateNameConfgKey = "name";
+constexpr const char* kStateConfigKey = "states";
+constexpr const char* kStateNameConfigKey = "name";
 constexpr const char* kResumeReplacementsKey = "resumeReplacements";
 constexpr const char* kTransitionDefinitionsKey = "transitionDefinitions";
 constexpr const char* kInitialStateKey = "initialState";
@@ -98,17 +103,17 @@ public:
       , emotionEvent(emotionEvent)
       {
       }
-      
+
     StateID toState;
     IBEIConditionPtr condition;
     std::string emotionEvent;
   };
-      
+
   explicit State(const Json::Value& config);
 
   // initialize this state after construction to fill in the behavior pointer
   void Init(BehaviorExternalInterface& bei);
-  
+
   void AddTransition(TransitionType transType, const Transition& transition);
 
   void OnActivated(BehaviorExternalInterface& bei, bool isResuming);
@@ -122,7 +127,7 @@ public:
   // interruption, the timer pauses rather than resetting (or continuing to track) and resumes if the state is
   // resumed.
   float GetTimeActive();
-  
+
   std::string _name;
 
   // note that these also count a state as "starting" and "ending" when this behavior itself is interrupted
@@ -132,7 +137,7 @@ public:
 
   // This tracks an "adjusted" start time for use with GetTimeActive()
   float _adjustedStartTime_s = -std::numeric_limits<float>::min();
-  
+
   // Transitions are evaluated in order, and if the function returns true, we will transition to the given
   // state id.
   using Transitions = std::vector<Transition>;
@@ -140,10 +145,10 @@ public:
   using TransitionMap = std::map<TransitionType, Transitions>;
 
   TransitionMap _transitions;
-  
+
   // optional light debugging color
   ColorRGBA _debugColor = NamedColors::BLACK;
-  
+
   UserIntentTag _activateIntent = USER_INTENT(INVALID);
 
   std::string _behaviorName;
@@ -154,7 +159,7 @@ public:
 
   BehaviorTimerTypes _behaviorTimer = BehaviorTimerTypes::Invalid;
 
-};  
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -165,25 +170,25 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   , _states(new StateMap)
   , _currDebugLights(kLightsOff)
 {
-  
+
   _useDebugLights = config.get("use_debug_lights", false).asBool();
-  
+
   _ignoreMissingTransitions = config.get(kIgnoreMissingTransitionsKey, false).asBool();
 
   // create custom BEI conditions for timers (if any are specified)
   CustomBEIConditionHandleList customTimerHandles = CreateCustomTimerConditions(config);
-  
+
   // First, parse the state definitions to create all of the "state names" as a first pass
-  for( const auto& stateConfig : config[kStateConfgKey] ) {
-    AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfgKey, "InternalStatesBehavior.StateConfig") );
+  for( const auto& stateConfig : config[kStateConfigKey] ) {
+    AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfigKey, "InternalStatesBehavior.StateConfig") );
   }
-  
+
   // Parse the state config again to create the actual states
-  for( const auto& stateConfig : config[kStateConfgKey] ) {
+  for( const auto& stateConfig : config[kStateConfigKey] ) {
     State state(stateConfig);
-    PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.LoadStateFromConfig",
-                   "%s",
-                   state._name.c_str());
+    if (kDebugInternalStatesBehavior) {
+      PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.LoadStateFromConfig", "%s", state._name.c_str());
+    }
     AddState(std::move(state));
   }
 
@@ -197,7 +202,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   // keep set of which states we've used so we can warn later if they aren't all used
   std::set< StateID > allFromStates;
   std::set< StateID > allToStates;
-  
+
   for( const auto& transitionDefConfig : config[kTransitionDefinitionsKey] ) {
     std::vector<StateID> fromStates;
     if( transitionDefConfig["from"].isArray() ) {
@@ -227,7 +232,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
       auto parseTransitions =
         [this, &transitionDefConfig, &allToStates, &fromState](const std::string& key,
                                                                const TransitionType transitionType) {
-        
+
         for( const auto& transitionConfig : transitionDefConfig[key] ) {
           const StateID toState = ParseStateFromJson(transitionConfig, "to");
           IBEIConditionPtr condition = ParseTransitionStrategy(transitionConfig);
@@ -272,7 +277,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
     _currState = stateIt->second;
     _defaultState = stateIt->second;
   }
-  
+
   // fill out _resumeReplacements with any state replacements to be made when re-activating the behavior
   if( !config[kResumeReplacementsKey].isNull() ) {
     const auto& replacementsList = config[kResumeReplacementsKey];
@@ -286,7 +291,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   // warn if any of the custom conditions aren't used
   BEIConditionFactory::CheckConditionsAreUsed(customTimerHandles, GetDebugLabel());
 }
-  
+
 InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config)
   : InternalStatesBehavior( config, {} )
 {
@@ -297,11 +302,11 @@ CustomBEIConditionHandleList InternalStatesBehavior::CreateCustomTimerConditions
   CustomBEIConditionHandleList handles;
 
   static const char* kDebugName = "InternalStatesBehavior.CreateCustomTimerConditions";
-  
+
   for( const auto& timerConfig : config[kStateTimerConditionsKey] ) {
-    const std::string& name = JsonTools::ParseString(timerConfig, kStateNameConfgKey, kDebugName);
+    const std::string& name = JsonTools::ParseString(timerConfig, kStateNameConfigKey, kDebugName);
     const float beginTime_s = JsonTools::ParseFloat(timerConfig, kBeginTimeKey, kDebugName);
-  
+
     handles.emplace_back(
       BEIConditionFactory::InjectCustomBEICondition(
         name,
@@ -314,18 +319,18 @@ CustomBEIConditionHandleList InternalStatesBehavior::CreateCustomTimerConditions
           },
           GetDebugLabel() )));
   }
-  
+
   return handles;
 }
 
 InternalStatesBehavior::~InternalStatesBehavior()
 {
 }
-  
+
 void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kStateConfgKey,
+    kStateConfigKey,
     kResumeReplacementsKey,
     kTransitionDefinitionsKey,
     kInitialStateKey,
@@ -339,7 +344,7 @@ void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expected
 void InternalStatesBehavior::InitBehavior()
 {
   std::set< std::shared_ptr<IBEICondition> > allTransitions;
-  
+
   // init all of the states
   for( auto& statePair : *_states ) {
     auto& state = statePair.second;
@@ -392,7 +397,7 @@ void InternalStatesBehavior::OnBehaviorActivated()
     // force an update
     _debugLightsDirty = true;
   }
-  
+
   if( !_firstRun ) {
     // resuming this behavior -- see if we should be resuming in a different state than when we were
     // previously de-activated
@@ -416,7 +421,7 @@ void InternalStatesBehavior::OnBehaviorActivated()
   else {
     TransitionToState(_defaultState);
   }
-  
+
   _firstRun = false;
 }
 
@@ -452,7 +457,7 @@ void InternalStatesBehavior::BehaviorUpdate()
     }
 
     auto& robotInfo = GetBEI().GetRobotInfo();
-    
+
     ColorRGBA robotStateColor = NamedColors::BLACK;
     if( robotInfo.IsOnChargerPlatform() ) {
       robotStateColor.SetG(1.0f);
@@ -464,12 +469,12 @@ void InternalStatesBehavior::BehaviorUpdate()
     if( _currDebugLights.onColors[kDebugRobotStatusLED] != robotStateColor ) {
       _currDebugLights.onColors[  kDebugRobotStatusLED]  = robotStateColor;
       _currDebugLights.offColors[ kDebugRobotStatusLED]  = robotStateColor;
-      
+
       _debugLightsDirty = true;
     }
 
     if( _debugLightsDirty ) {
-      
+
       GetBEI().GetBackpackLightComponent().SetBackpackAnimation(_currDebugLights);
       _debugLightsDirty = false;
     }
@@ -483,9 +488,9 @@ void InternalStatesBehavior::BehaviorUpdate()
     }
     return;
   }
-  
+
   State& state = _states->at(_currState);
-  
+
   if( ANKI_DEV_CHEATS ) {
     // check for console var transitions
     if( _consoleFuncState != InvalidStateID ) {
@@ -500,7 +505,7 @@ void InternalStatesBehavior::BehaviorUpdate()
     if( transition.condition->AreConditionsMet(GetBEI()) ) {
       if( !transition.emotionEvent.empty() ) {
         GetBEI().GetMoodManager().TriggerEmotionEvent(transition.emotionEvent);
-      }      
+      }
       TransitionToState(transition.toState);
       return true;
     }
@@ -512,7 +517,7 @@ void InternalStatesBehavior::BehaviorUpdate()
     return;
   }
 
-  
+
   // first check the interrupting conditions
   for( const auto& transition : state._transitions[TransitionType::Interrupting] ) {
     if( tryTransition(transition) ) {
@@ -526,7 +531,7 @@ void InternalStatesBehavior::BehaviorUpdate()
     // else, the get in is still running, so don't evaluate non-interrupting conditions (or exit conditions)
     return;
   }
-  
+
   // it's ok to dispatch now if either we aren't dispatched to anything, or the behavior we are dispatched to
   // is ok with a "gentle" interruption
   bool okToDispatch = ! IsControlDelegated();
@@ -562,7 +567,7 @@ void InternalStatesBehavior::BehaviorUpdate()
 
     // if we get here, then there is no state we want to switch to, so re-start the current one if it wants to
     // run and isn't already running
-    
+
     // TODO:(bn) can behaviors be null?
     if( !IsControlDelegated() ) {
       if( nullptr == state._behavior ) {
@@ -590,10 +595,10 @@ void InternalStatesBehavior::BehaviorUpdate()
 void InternalStatesBehavior::TransitionToState(const StateID targetState)
 {
 
-  // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
+  // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior
 
   const bool isResuming = (targetState == _currState) && !_firstRun;
-  
+
   if( _currState != InvalidStateID ) {
     _states->at(_currState).OnDeactivated(GetBEI());
     const bool allowCallback = false;
@@ -603,7 +608,7 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
     DEV_ASSERT( !IsControlDelegated() || targetState == InvalidStateID,
                 "InternalStatesBehavior.TransitionToState.WasInCountButHadDelegate" );
   }
-          
+
   // TODO:(bn) channel for high level ai?
   const std::string& oldStateStr = (_currState  != InvalidStateID) ? _states->at(_currState )._name : "<NONE>";
   const std::string& newStateStr = (targetState != InvalidStateID) ? _states->at(targetState)._name : "<NONE>";
@@ -612,9 +617,9 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
                 oldStateStr.c_str(), newStateStr.c_str());
   // tell subclass for debug/das
   OnStateNameChange( oldStateStr, newStateStr );
-  
+
   _currState = targetState;
-  
+
 
   // any transition clears the "get in" that may be playing
   _isRunningGetIn = false;
@@ -748,7 +753,7 @@ float InternalStatesBehavior::GetCurrentStateActiveTime_s() const
 
 InternalStatesBehavior::State::State(const Json::Value& config)
 {
-  _name = JsonTools::ParseString(config, kStateNameConfgKey, "InternalStatesBehavior.StateConfig");
+  _name = JsonTools::ParseString(config, kStateNameConfigKey, "InternalStatesBehavior.StateConfig");
   _getInBehaviorName = config.get(kGetInBehaviorKey, "").asString();
 
   _behaviorName = config.get(kBehaviorKey, "").asString();
@@ -759,13 +764,13 @@ InternalStatesBehavior::State::State(const Json::Value& config)
               "State '%s' does not specify behavior or cancelSelf",
               _name.c_str());
 
-  if( config[kResetBehaviorTimerKey].isString() ) {    
+  if( config[kResetBehaviorTimerKey].isString() ) {
     _behaviorTimer = BehaviorTimerManager::BehaviorTimerFromString( config[kResetBehaviorTimerKey].asString() );
   }
 
   const std::string& debugColorStr = config.get("debugColor", "BLACK").asString();
   _debugColor = NamedColors::GetByString(debugColorStr);
-  
+
   const std::string& activateIntent = config.get("activateIntent", "").asString();
   if( !activateIntent.empty() ) {
     ANKI_VERIFY( UserIntentTagFromString( activateIntent, _activateIntent ),
@@ -788,7 +793,7 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
                    _name.c_str(),
                    _behaviorName.c_str());
   }
-  
+
   if( !_getInBehaviorName.empty() ) {
     _getInBehavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _getInBehaviorName ) );
     DEV_ASSERT_MSG(_getInBehavior != nullptr, "InternalStatesBehavior.State.NoGetInBehavior",
@@ -853,7 +858,7 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
                      pausedFor_s,
                      currTime_s,
                      _lastTimeEnded_s ) ) {
-      
+
       _adjustedStartTime_s += pausedFor_s;
 
       PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.State.PausedFor",
@@ -922,7 +927,7 @@ InternalStatesBehavior::StateID InternalStatesBehavior::AddStateName(const std::
   }
   return InvalidStateID;
 }
-  
+
 void InternalStatesBehavior::AddConsoleVarTransitions( const char* uniqueVarName, const char* category )
 {
   if( ANKI_DEV_CHEATS ) {
@@ -975,7 +980,7 @@ const std::string& InternalStatesBehavior::GetStateName(const StateID state)
     static const std::string invalidStr = "<INVALID>";
     return invalidStr;
   }
-  
+
   const auto it = _states->find(state);
   if( it == _states->end() ) {
     PRINT_NAMED_ERROR("InternalStatesBehavior.GetStateName.InvalidState",
@@ -992,12 +997,12 @@ float InternalStatesBehavior::GetLastTimeStarted(StateID state) const
 {
   return _states->at(state)._lastTimeStarted_s;
 }
-  
+
 float InternalStatesBehavior::GetLastTimeEnded(StateID state) const
 {
   return _states->at(state)._lastTimeEnded_s;
 }
-  
+
 InternalStatesBehavior::StateID InternalStatesBehavior::ParseStateFromJson(const Json::Value& config,
                                                                            const std::string& key)
 {
@@ -1040,7 +1045,7 @@ InternalStatesBehavior::TransitionType InternalStatesBehavior::TransitionTypeFro
     return TransitionType::Exit;
   }
 }
-  
+
 std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>>
   InternalStatesBehavior::TESTONLY_GetAllTransitions( UnitTestKey key ) const
 {
@@ -1058,7 +1063,7 @@ std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>>
   }
   return ret;
 }
-  
+
 bool InternalStatesBehavior::TESTONLY_IsStateRunning( UnitTestKey key, const std::string& name ) const
 {
   return (GetCurrentStateID() != InvalidStateID)
