@@ -1196,10 +1196,12 @@ namespace Vision {
         bool enableEnrollment = enrollable;
 
         // If we have allowed tracked faces we should only enable enrollment
-        // if the current face matches the face id returned by GetEnrollmentID.
-        // This should only happen in MeetVictor currently. If we don't have any
-        // allowed tracked faces we don't need to worry about this and can just
-        // use the result from IsEnrollable.
+        // in two case. First if the current face matches the face id returned
+        // by GetEnrollmentID. This should only happen in MeetVictor currently.
+        // Second if we don't have the tracking id in the recognizer yet, indicating
+        // we haven't recognized the face yet. If we don't have any allowed tracked
+        // faces we don't need to worry about this and can just use the result from
+        // IsEnrollable.
         if (HaveAllowedTrackedFaces())
         {
           FaceID_t faceID;
@@ -1217,13 +1219,6 @@ namespace Vision {
         const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
         if(doRecognition)
         {
-          // We don't want to do recognition during tracking because we are
-          // relaxing the constraints of when we reset the face tracker. This
-          // relaxation has the potential to pollute the records we use for
-          // recognition. For example, person A's face could make it into person
-          // B's record, thus creating the potential for confusion between the
-          // faces due to bad data. Thus we disable enrollment if we have
-          // HaveAllowedTrackedFaces.
           const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                                       detectionInfo,
                                                                       _okaoPartDetectionResultHandle,
