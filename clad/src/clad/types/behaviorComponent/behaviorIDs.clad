@@ -237,6 +237,7 @@ enum uint_16 BehaviorID {
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
+  PopAWheelieVoiceCommand,
   RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/pounceWithProx

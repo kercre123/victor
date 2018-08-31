@@ -11,6 +11,7 @@
     "FindYourCubeVoiceCommand",
     "FistBumpVoiceCommand",
     "RollCubeVoiceCommand",
+    "PopAWheelieVoiceCommand",
     "KeepawayVoiceCommand",
     "BlackJackVoiceCommand",
     "PRDemoComeHere",
