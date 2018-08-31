@@ -289,6 +289,14 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         beh->SetDontActivateThisTick(GetDebugLabel() + ": going home");
       }
     }
+    
+    // If we are responding to "find your cube", disable the voice command turn since we want
+    // him to just go directly into looking for the cube
+    const bool isFindCubePending = uic.IsUserIntentPending(USER_INTENT(imperative_findcube));
+    if (isFindCubePending) {
+      const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
+    }
   }
   
   // disable ReactToUnexpectedMovement when intentionally bumping things

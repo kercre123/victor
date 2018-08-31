@@ -39,8 +39,8 @@ const char* const kFollowUpBehaviorKey = "followUpBehaviorID";
 
 static const float kDistThreshold_mm = 2.0f;
 static const float kAngleThreshold_deg = 2.0f;
-static const float kProxBackupThreshold_mm = 50.0f;
-static const float kMinSearchAngle = 300.0f;
+static const float kProxBackupThreshold_mm = 90.0f;
+static const float kMinSearchAngle = 330.0f;
 static const int   kMaxNumSearchTurns = 10;
 static const int   kNumImagesToWaitDuringSearch = 2;
 } // namespace
@@ -58,6 +58,8 @@ BehaviorFindCubeAndThen::DynamicVariables::DynamicVariables()
 , cubePtr(nullptr)
 , cubeState(CubeObservationState::Unreliable)
 , lastPoseCheckTimestamp(0)
+, angleSwept_deg(0.0f)
+, numTurnsCompleted(0)
 {
 }
 
@@ -151,11 +153,12 @@ void BehaviorFindCubeAndThen::BehaviorUpdate()
   }
 
 
-  if(FindCubeState::QuickSearchForCube == _dVars.state){
+  if( FindCubeState::CheckForCubeInFront == _dVars.state || 
+      FindCubeState::QuickSearchForCube  == _dVars.state ){
     auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
     uint16_t proxDist_mm = 0;
     if( proxSensor.GetLatestDistance_mm(proxDist_mm) && ( proxDist_mm < kProxBackupThreshold_mm ) ){
-      BackUpAndCheck();
+      TransitionToBackUpAndCheck();
     }
 
     // If we don't have a target yet, check if a cube has been seen in the last frame 
@@ -212,25 +215,62 @@ void BehaviorFindCubeAndThen::TransitionToVisuallyCheckLastKnown()
         TransitionToReactToCube();
       }
       else{
-        TransitionToQuickSearchForCube();
+        TransitionToCheckForCubeInFront();
       }
     });
   }
   else{
-    TransitionToQuickSearchForCube();
+    TransitionToCheckForCubeInFront();
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindCubeAndThen::TransitionToCheckForCubeInFront()
+{
+  SET_STATE(CheckForCubeInFront);
+
+  const bool isAbsolute = false;
+  auto searchInFrontAction = new CompoundActionSequential({
+    new MoveHeadToAngleAction(0.0f),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new TurnInPlaceAction(DEG_TO_RAD(30.0f), isAbsolute),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new TurnInPlaceAction(DEG_TO_RAD(-60.0f), isAbsolute),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+  });
+
+  if(nullptr != _dVars.cubePtr){
+    // If we made it here then the visual verification failed, so the cube pose is antequated and wrong
+    // Make a note of it, and don't trust the cube pose until it is updated, indicating new observations.
+    _dVars.cubePoseAtSearchStart = _dVars.cubePtr->GetPose();
+    _dVars.lastPoseCheckTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  }
+
+  DelegateIfInControl(searchInFrontAction, &BehaviorFindCubeAndThen::TransitionToQuickSearchForCube);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindCubeAndThen::TransitionToQuickSearchForCube()
 {
   SET_STATE(QuickSearchForCube);
-
-  if(nullptr != _dVars.cubePtr){
-    _dVars.cubePoseAtSearchStart = _dVars.cubePtr->GetPose();
-    _dVars.lastPoseCheckTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-  }
   StartNextTurn();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindCubeAndThen::TransitionToBackUpAndCheck()
+{
+  SET_STATE(BackUpAndCheck);
+  CancelDelegates(false);
+
+  CompoundActionSequential* backupAndCheckAction = new CompoundActionSequential();
+  backupAndCheckAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToObstacle));
+
+  auto* loopAndWaitAction = new CompoundActionParallel();
+  loopAndWaitAction->AddAction(new TriggerAnimationAction(AnimationTrigger::ChargerDockingSearchWaitForImages));
+  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+  backupAndCheckAction->AddAction(loopAndWaitAction);
+
+  DelegateIfInControl(backupAndCheckAction, &BehaviorFindCubeAndThen::TransitionToQuickSearchForCube);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -341,22 +381,6 @@ void BehaviorFindCubeAndThen::StartNextTurn()
         StartNextTurn();
       });
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::BackUpAndCheck()
-{
-  CancelDelegates(false);
-
-  CompoundActionSequential* backupAndCheckAction = new CompoundActionSequential();
-  backupAndCheckAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToObstacle));
-
-  auto* loopAndWaitAction = new CompoundActionParallel();
-  loopAndWaitAction->AddAction(new TriggerAnimationAction(AnimationTrigger::ChargerDockingSearchWaitForImages));
-  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
-  backupAndCheckAction->AddAction(loopAndWaitAction);
-
-  DelegateIfInControl(backupAndCheckAction, &BehaviorFindCubeAndThen::StartNextTurn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

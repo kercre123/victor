@@ -49,7 +49,9 @@ private:
     GetIn,
     DriveOffCharger,
     VisuallyCheckLastKnown,
+    CheckForCubeInFront,
     QuickSearchForCube,
+    BackUpAndCheck,
     ReactToCube,
     DriveToPredockPose,
     AttemptConnection,
@@ -88,7 +90,9 @@ private:
 
   void TransitionToDriveOffCharger();
   void TransitionToVisuallyCheckLastKnown();
+  void TransitionToCheckForCubeInFront();
   void TransitionToQuickSearchForCube();
+  void TransitionToBackUpAndCheck();
   void TransitionToReactToCube();
   void TransitionToDriveToPredockPose();
   void TransitionToAttemptConnection();
@@ -96,7 +100,6 @@ private:
   void TransitionToGetOutFailure();
 
   void StartNextTurn();
-  void BackUpAndCheck();
 
   // Returns true if worldViz returned a valid pointer stored in _dVars.cubePtr
   bool UpdateTargetCube();
