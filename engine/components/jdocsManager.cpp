@@ -135,6 +135,8 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 
   auto *osstate = OSState::getInstance();
   _thingID = "vic:" + osstate->GetSerialNumberAsString();
+  std::transform(_thingID.begin(), _thingID.end(), _thingID.begin(), ::tolower);
+  LOG_INFO("JdocsManager.InitDependent", "Thing ID is %s", _thingID.c_str());
 
   _savePath = _platform->pathToResource(Util::Data::Scope::Persistent, kJdocsManagerFolder);
   if (!Util::FileUtils::CreateDirectory(_savePath))
