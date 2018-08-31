@@ -555,6 +555,10 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
       _pendingTrigger = false;
       _pendingTriggerWillStream = false;
       _waitingForTriggerWordGetInToFinish = false;
+
+      DASMSG(trigger_dropped, "behavior.trigger_word.dropped", "Engine got a trigger word, but no behavior claimed it");
+      DASMSG_SEND_WARNING();
+
     }
   }
 
@@ -583,8 +587,17 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
                           "Intent '%s' has been pending for %zu ticks, forcing a clear",
                           UserIntentTagToString(_pendingIntent->intent.GetTag()),
                           dt);
+
+        DASMSG(intent_dropped, "behavior.voice_command.dropped",
+               "Engine got a user intent (e.g. voice command), but no behavior activated it");
+        DASMSG_SET(s1, UserIntentTagToString( _pendingIntent->intent.GetTag() ), "the intent type that was dropped");
+        DASMSG_SET(s2, UserIntentSourceToString( _pendingIntent->source ),
+                   "Source of the intent that was dropped (e.g. App, Voice)");
+        DASMSG_SEND_WARNING();
+
         _pendingIntent.reset();
         _wasIntentUnclaimed = true;
+
       }
     }
   }
