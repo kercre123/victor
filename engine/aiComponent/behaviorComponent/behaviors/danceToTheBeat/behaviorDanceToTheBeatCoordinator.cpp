@@ -37,7 +37,7 @@ namespace {
   const char* kOnChargerDancingBehavior_key  = "onChargerDancingBehavior";
   
   #define CONSOLE_GROUP "BehaviorDanceToTheBeatCoordinator"
-  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 0.0f, 0.0f, 3600.0f);
+  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
   CONSOLE_VAR_RANGED(f32, kListeningCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
 }
   
