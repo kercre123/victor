@@ -19,6 +19,7 @@ enum uint_8 ErrorType {
 	NewStream,
 	Token,
 	TLS, // only used by connection check
+	Connectivity
 }
 
 // Note: Keep this enum in sync with the version in robot/clad/src/clad/robotInterface/messageFromAnimProcess.clad

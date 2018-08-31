@@ -8,6 +8,7 @@ import (
 	"clad/cloud"
 	"crypto/tls"
 	"errors"
+	"net"
 
 	"github.com/gwatts/rootcerts"
 
@@ -18,18 +19,28 @@ import (
 
 func (strm *Streamer) connect() error {
 	if strm.opts.checkOpts != nil {
-		// for connection check, first try a simple https connection to our OTA CDN
-		conf := &tls.Config{
-			RootCAs: rootcerts.ServerCertPool(),
-		}
-		conn, err := tls.Dial("tcp", config.Env.OTA, conf)
+		// for connection check, first try the OTA CDN with no tls
+		conn, err := net.Dial("tcp", config.Env.OTA)
 		if err != nil {
 			log.Println("Error dialing CDN server:", err)
-			strm.receiver.OnError(cloud.ErrorType_TLS, err)
+			strm.receiver.OnError(cloud.ErrorType_Connectivity, err)
 			return err
 		}
 		conn.Close()
 		log.Println("Successfully dialed CDN")
+
+		// for connection check, next try a simple https connection to our OTA CDN
+		conf := &tls.Config{
+			RootCAs: rootcerts.ServerCertPool(),
+		}
+		conn, err = tls.Dial("tcp", config.Env.OTA, conf)
+		if err != nil {
+			log.Println("Error dialing CDN server over tls:", err)
+			strm.receiver.OnError(cloud.ErrorType_TLS, err)
+			return err
+		}
+		conn.Close()
+		log.Println("Successfully dialed CDN over tls")
 	}
 
 	var creds credentials.PerRPCCredentials
