@@ -4,7 +4,6 @@
 Test driving on and off charger
 """
 
-import math
 import os
 import sys
 import time
@@ -18,15 +17,6 @@ def main():
     args = anki_vector.util.parse_test_args()
 
     with anki_vector.Robot(args.serial, port=args.port) as robot:
-        print("------ use low level motor controls to drive the robot ------")
-        robot.motors.set_wheel_motors(100.0, 100.0, 100.0, 100.0)
-        time.sleep(5.0)
-        robot.motors.set_wheel_motors(0.0, 0.0)
-        robot.motors.set_wheel_motors_turn(100.0, curvature_radius_mm=(math.pi * 1))
-        time.sleep(0.5)
-        robot.motors.set_wheel_motors_turn(0.0)
-        time.sleep(5.0)
-
         print("------ begin testing drive on charger ------")
         result = robot.behavior.drive_on_charger()
         print("------ finish testing drive on charger. result: " + str(result))

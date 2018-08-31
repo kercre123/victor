@@ -55,16 +55,6 @@ message MoveLiftResponse {
   ResponseStatus status = 1;
 }
 
-message DriveArcRequest {
-  float speed = 1;
-  float accel = 2;
-  int32 curvature_radius_mm = 3;
-}
-
-message DriveArcResponse {
-  ResponseStatus status = 1;
-}
-
 // TODO: hook up ignore tracks and test that they work in the new world
 message PlayAnimationRequest {
   Animation animation = 1;

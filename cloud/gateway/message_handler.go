@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/binary"
 	"io/ioutil"
-	"math"
 	"os"
 	"os/exec"
 	"reflect"
@@ -64,22 +63,6 @@ func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalTo
 func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveLift(&gw_clad.MoveLift{
 		SpeedRadPerSec: msg.SpeedRadPerSec,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoDriveArcToClad(msg *extint.DriveArcRequest) *gw_clad.MessageExternalToRobot {
-	// Bind msg.CurvatureRadiusMm which is an int32 to an int16 boundary to prevent overflow
-	if msg.CurvatureRadiusMm < math.MinInt16 {
-		msg.CurvatureRadiusMm = math.MinInt16
-	} else if msg.CurvatureRadiusMm > math.MaxInt16 {
-		msg.CurvatureRadiusMm = math.MaxInt16
-	}
-	return gw_clad.NewMessageExternalToRobotWithDriveArc(&gw_clad.DriveArc{
-		Speed:             msg.Speed,
-		Accel:             msg.Accel,
-		CurvatureRadiusMm: int16(msg.CurvatureRadiusMm),
-		// protobuf does not have a 16-bit integer representation, this conversion is used to satisfy the specs specified in the clad
 	})
 }
 
@@ -533,19 +516,6 @@ func (service *rpcService) MoveLift(ctx context.Context, in *extint.MoveLiftRequ
 		return nil, err
 	}
 	return &extint.MoveLiftResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
-}
-
-func (service *rpcService) DriveArc(ctx context.Context, in *extint.DriveArcRequest) (*extint.DriveArcResponse, error) {
-	log.Println("Received rpc request DriveArc(", in, ")")
-	_, err := engineCladManager.Write(ProtoDriveArcToClad(in))
-	if err != nil {
-		return nil, err
-	}
-	return &extint.DriveArcResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},

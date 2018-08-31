@@ -26,7 +26,29 @@ from .messaging import protocol
 class MotorComponent(util.Component):
     """Controls the low-level motor functions"""
     @sync.Synchronizer.wrap
-    async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
+    async def set_wheel_motors(self,
+                               left_wheel_speed: float,
+                               right_wheel_speed: float,
+                               left_wheel_accel: float = 0.0,
+                               right_wheel_accel: float = 0.0):
+        '''Tell Vector to move his wheels / treads at a given speed.
+
+        The wheels will continue to move at that speed until commanded to drive
+        at a new speed.
+
+        To unlock the wheel track, call `set_wheel_motors(0, 0)`.
+
+        .. code-block:: python
+
+            robot.motors.set_wheel_motors(25, 50)
+
+        :param left_wheel_speed: Speed of the left tread (in millimeters per second)
+        :param right_wheel_speed: Speed of the right tread (in millimeters per second)
+        :param left_wheel_accel: Acceleration of left tread (in millimeters per second squared)
+                            ``None`` value defaults this to the same as l_wheel_speed.
+        :param right_wheel_accel: Acceleration of right tread (in millimeters per second squared)
+                            ``None`` value defaults this to the same as r_wheel_speed.
+        '''
         motors = protocol.DriveWheelsRequest(left_wheel_mmps=left_wheel_speed,
                                              right_wheel_mmps=right_wheel_speed,
                                              left_wheel_mmps2=left_wheel_accel,
@@ -34,16 +56,37 @@ class MotorComponent(util.Component):
         return await self.interface.DriveWheels(motors)
 
     @sync.Synchronizer.wrap
-    async def set_wheel_motors_turn(self, turn_speed, turn_accel=0.0, curvature_radius_mm=0):
-        drive_arc_request = protocol.DriveArcRequest(speed=turn_speed, accel=turn_accel, curvature_radius_mm=int(curvature_radius_mm))
-        return await self.interface.DriveArc(drive_arc_request)
+    async def set_head_motor(self,
+                             speed: float):
+        '''Tell Vector's head motor to move with a certain speed.
 
-    @sync.Synchronizer.wrap
-    async def set_head_motor(self, speed):
+        Positive speed for up, negative speed for down. Measured in radians per second.
+
+        To unlock the head track, call `set_head_motor(0)`.
+
+        .. code-block:: python
+
+            robot.motors.set_head_motor(-5.0)
+
+        :param speed: Motor speed for Vector's head, measured in radians per second.
+        '''
         set_head_request = protocol.MoveHeadRequest(speed_rad_per_sec=speed)
         return await self.interface.MoveHead(set_head_request)
 
     @sync.Synchronizer.wrap
-    async def set_lift_motor(self, speed):
+    async def set_lift_motor(self,
+                             speed: float):
+        '''Tell Vector's lift motor to move with a certain speed.
+
+        Positive speed for up, negative speed for down.  Measured in radians per second.
+
+        To unlock the lift track, call `set_lift_motor(0)`.
+
+        .. code-block:: python
+
+            robot.motors.set_lift_motor(-5.0)
+
+        :param speed: Motor speed for Vector's lift, measured in radians per second.
+        '''
         set_lift_request = protocol.MoveLiftRequest(speed_rad_per_sec=speed)
         return await self.interface.MoveLift(set_lift_request)

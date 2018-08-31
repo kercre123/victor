@@ -63,13 +63,10 @@ def main():
         # Wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
 
-        # Stop the wheels
-        print("Stop Vector's wheels...")
+        # Stop the motors, which unlocks the tracks
         robot.motors.set_wheel_motors(0, 0)
-
-        # TODO Do something like this? What did cozmo do? Increase timeout above first?
-        #robot.motors.set_lift_motor(0)
-        #robot.motors.set_head_motor(0)
+        robot.motors.set_lift_motor(0)
+        robot.motors.set_head_motor(0)
 
 
 if __name__ == "__main__":

@@ -23,8 +23,6 @@ The :class:`BehaviorComponent` class in this module contains
 functions for all the behaviors.
 """
 
-# TODO:
-# __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["BehaviorComponent"]
 
 

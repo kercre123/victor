@@ -24,8 +24,6 @@ from . import sync, util
 from .messaging import protocol
 
 
-# TODO: Add option to request a single image from the robot(SingleShot) once
-# VIC-5529 is resolved which depends on VIC-5159.
 class PhotographComponent(util.Component):
     """Manage the state of all the photos on the robot.
 

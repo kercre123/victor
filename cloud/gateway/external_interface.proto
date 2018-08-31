@@ -46,9 +46,6 @@ service ExternalInterface {
 
   // Moves the Lift
   rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
-
-  // Drive arc
-  rpc DriveArc(DriveArcRequest) returns (DriveArcResponse) {}
   
   // Sets LCD to a solid color
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {

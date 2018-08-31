@@ -145,10 +145,6 @@ MESSAGES_TO_TEST = [
                                  left_wheel_mmps2=0.0,
                                  right_wheel_mmps2=0.0),
      TestResultMatches(protocol.DriveWheelsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
-    # DriveArc message
-    (Interface.DriveArc,
-     protocol.DriveArcRequest(speed=0.0, accel=0.0, curvature_radius_mm=0),
-     TestResultMatches(protocol.DriveArcResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # MoveHead message
     (Interface.MoveHead,
      protocol.MoveHeadRequest(speed_rad_per_sec=0.0),
