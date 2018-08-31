@@ -16,6 +16,7 @@ enum ADC_CHANNEL {
 };
 
 namespace Analog {
+  extern bool on_charger;
   void init(void);
   void tick(void);
   void stop(void);

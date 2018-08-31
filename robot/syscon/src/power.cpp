@@ -12,7 +12,7 @@
 #include "mics.h"
 #include "lights.h"
 
-extern "C" void SoftReset();
+extern "C" void SoftReset(bool onCharger);
 
 static const uint32_t APB1_CLOCKS = 0
               | RCC_APB1ENR_USART2EN
@@ -140,7 +140,7 @@ static void enterBootloader(void) {
   NVIC->ICER[0] = ~0; // Disable all interrupts
   NVIC->ICPR[0] = ~0; // Clear all pending interrupts
 
-  SoftReset();
+  SoftReset(Analog::on_charger);
 }
 
 void Power::wakeUp() {
