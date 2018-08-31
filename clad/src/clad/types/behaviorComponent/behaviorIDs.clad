@@ -280,6 +280,11 @@ enum uint_16 BehaviorID {
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
   PlayAGameVoiceCommand,
+
+  // victorBehaviorTree/highLevelDelegates/voiceCommands/trickDispatchers
+  CubeTrickDispatcher,
+
+  // victorBehaviorTree/highLevelDelegates/voiceCommands
   WhatsMyNameVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir

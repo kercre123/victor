@@ -1,4 +1,5 @@
 {
   "behaviorID" : "ConnectToCube",
-  "behaviorClass" : "ConnectToCube"
+  "behaviorClass" : "ConnectToCube",
+  "associatedActiveFeature" : "NoFeature"
 }

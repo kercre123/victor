@@ -1,6 +1,6 @@
 {
   "behaviorID" : "DoATrickVoiceCommand",
-  "behaviorClass" : "DispatcherQueue",
+  "behaviorClass" : "DispatcherRandom",
 
   "respondToUserIntents": [
     {
@@ -9,41 +9,19 @@
   ],
 
   "behaviors" : [
-    // todo: the DriveOffCharger behavior should be paired with the below behaviors so it faces a face for fistbump
-    "DriveOffChargerCube",
-    "DoATrickInternal",
-    "PutDownBlock"
+    {
+      "behavior" : "FindCubeAndThenDoATrick",
+      "cooldown_s" : 300.0,
+      "weight" : 1.0
+    }
   ],
 
-  "postBehaviorSuggestion": "Socialize",
-
-  "anonymousBehaviors": [
+  "anonymousBehaviors" : [
     {
-      "behaviorName" : "DoATrickInternal",
-      "behaviorClass" : "DispatcherRandom",
+      "behaviorName" : "FindCubeAndThenDoATrick",
+      "behaviorClass" : "FindCubeAndThen",
     
-      "behaviors" : [
-        
-        {
-          "behavior": "PopAWheelie",
-          "cooldown_s": 600.0,
-          "cooldown_random_factor": 0.5,
-          "weight": 1.0
-        },
-        {
-          "behavior": "FistBump",
-          "cooldown_s": 600.0,
-          "cooldown_random_factor": 0.5,
-          "weight": 1.0
-        },
-        {
-          "behavior": "PlayRollBlock",
-          "cooldown_s": 600.0,
-          "cooldown_random_factor": 0.5,
-          "weight": 1.0
-        }
-        
-      ]
+      "followUpBehaviorID" : "CubeTrickDispatcher"
     }
   ]
 }
