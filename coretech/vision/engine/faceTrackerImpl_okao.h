@@ -64,7 +64,7 @@ namespace Vision {
     // any face recognition when this set is populated. If this set is
     // empty we should proceed to track and recognize faces as usual.
     void AddAllowedTrackedFace(const FaceID_t faceID);
-    bool HaveAllowedTrackedFaces() { return !_allowedTrackedFaceID.empty(); }
+    bool HaveAllowedTrackedFaces() const { return !_allowedTrackedFaceID.empty(); }
     // This method calls Reset which clears all the allowed tracked
     // faces and also resets the face tracker as well
     void ClearAllowedTrackedFaces();
