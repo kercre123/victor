@@ -7,6 +7,23 @@
 namespace Anki {
 namespace Vector {
 
+// Note: Keep this enum in sync with the versions in clad/src/clad/cloud/mic.clad
+enum uint_8 ConnectionCode
+{
+  Available,
+  Connectivity,
+  Tls,
+  Auth,
+  Bandwidth
+}
+
+message ReportCloudConnectivity
+{
+  ConnectionCode code,
+  uint_8 numPackets,
+  uint_8 expectedPackets,
+}
+
 message StartShutdownAnim
 {
 

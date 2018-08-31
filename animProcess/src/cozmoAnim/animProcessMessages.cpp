@@ -201,6 +201,14 @@ namespace Vector {
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
+void Process_checkCloudConnectivity(const Anki::Vector::RobotInterface::CheckCloudConnectivity& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->RequestConnectionStatus();
+  }
+}
+
 void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFullAnimTrackLockState& msg)
 {
   //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);

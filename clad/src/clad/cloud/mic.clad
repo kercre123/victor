@@ -21,6 +21,7 @@ enum uint_8 ErrorType {
 	TLS, // only used by connection check
 }
 
+// Note: Keep this enum in sync with the version in robot/clad/src/clad/robotInterface/messageFromAnimProcess.clad
 enum uint_8 ConnectionCode {
 	Available,
 	Connectivity,

@@ -35,6 +35,10 @@ namespace RobotInterface {
  * and to make debugging from message dumps more sane.
  */
 
+message CheckCloudConnectivity
+{
+}
+
 message StartMotorCalibration
 {
   bool calibrateHead,
@@ -780,6 +784,8 @@ union EngineToRobot
   TriggerBackpackAnimation triggerBackpackAnimation = 0xAC,
 
   EngineFullyLoaded engineFullyLoaded = 0xAD,
+
+  CheckCloudConnectivity checkCloudConnectivity = 0xAE,  
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

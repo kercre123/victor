@@ -87,7 +87,9 @@ private:
   void OnRequestUpdateSettings        (const external_interface::UpdateSettingsRequest& updateSettingsRequest);
   void OnRequestUpdateAccountSettings (const external_interface::UpdateAccountSettingsRequest& updateAccountSettingsRequest);
   void OnRequestUpdateUserEntitlements(const external_interface::UpdateUserEntitlementsRequest& updateUserEntitlementsRequest);
+  void OnRequestCheckCloud            (const external_interface::CheckCloudRequest& checkCloudRequest);
 
+  Robot*                   _robot = nullptr;
   SettingsManager*         _settingsManager = nullptr;
   AccountSettingsManager*  _accountSettingsManager = nullptr;
   UserEntitlementsManager* _userEntitlementsManager = nullptr;

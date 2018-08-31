@@ -207,6 +207,8 @@ union RobotToEngine {
   // Messages from animation process to engine
   StartShutdownAnim          startShutdownAnim      = 0xD0,
 
+  ReportCloudConnectivity    reportCloudConnectivity = 0xD1,
+
   AnimationAdded             animAdded              = 0xD3,
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,

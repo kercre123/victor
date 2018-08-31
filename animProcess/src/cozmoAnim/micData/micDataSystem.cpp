@@ -310,6 +310,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       {
         PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
         FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
+
+        // Send the results back to engine
+        ReportCloudConnectivity msgToEngine;
+        msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
+        msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
+        msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
+        RobotInterface::SendAnimToEngine(msgToEngine);
         break;
       }
 

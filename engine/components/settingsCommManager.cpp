@@ -21,10 +21,12 @@
 #include "engine/components/userEntitlementsManager.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/robotInterface/messageHandler.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #define LOG_CHANNEL "SettingsCommManager"
 
@@ -177,6 +179,7 @@ SettingsCommManager::SettingsCommManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
 {
+  _robot = robot;
   s_SettingsCommManager = this;
   _settingsManager = &robot->GetComponent<SettingsManager>();
   _accountSettingsManager = &robot->GetComponent<AccountSettingsManager>();
@@ -192,7 +195,23 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateSettingsRequest,         commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateAccountSettingsRequest,  commonCallback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kUpdateUserEntitlementsRequest, commonCallback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kCheckCloudRequest,             commonCallback));
   }
+  auto* messageHandler = robot->GetRobotMessageHandler();
+  _signalHandles.push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::reportCloudConnectivity, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
+    const auto code = static_cast<int>(event.GetData().Get_reportCloudConnectivity().code);
+    const auto numPackets = event.GetData().Get_reportCloudConnectivity().numPackets;
+    const auto expectedPackets = event.GetData().Get_reportCloudConnectivity().expectedPackets;
+    LOG_INFO("SettingsCommManager.RcvdConnectionStatus", "Engine received cloud connectivity check code %i, packets received %i, packets expected %i",
+             code, numPackets, expectedPackets);
+    auto* response = new external_interface::CheckCloudResponse();
+    // The proto enum set has a UNKNOWN at 0, and the rest are the same as the CLAD enum
+    const auto protoVersionOfCodeEnum = code + 1;
+    response->set_code(static_cast<::Anki::Vector::external_interface::CheckCloudResponse_ConnectionCode>(protoVersionOfCodeEnum));
+    response->set_num_packets(static_cast<::google::protobuf::int32>(numPackets));
+    response->set_expected_packets(static_cast<::google::protobuf::int32>(expectedPackets));
+    _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
+  }));
 
 #if REMOTE_CONSOLE_ENABLED
   // HACK:  Fill in a special debug console var used in the PR demo (related to locale and temperature units)
@@ -338,6 +357,9 @@ void SettingsCommManager::HandleEvents(const AnkiEvent<external_interface::Gatew
       break;
     case external_interface::GatewayWrapperTag::kUpdateUserEntitlementsRequest:
       OnRequestUpdateUserEntitlements(event.GetData().update_user_entitlements_request());
+      break;
+    case external_interface::GatewayWrapperTag::kCheckCloudRequest:
+      OnRequestCheckCloud(event.GetData().check_cloud_request());
       break;
     default:
       LOG_ERROR("SettingsCommManager.HandleEvents",
@@ -545,6 +567,18 @@ void SettingsCommManager::OnRequestUpdateUserEntitlements(const external_interfa
   _jdocsManager->GetJdoc(external_interface::JdocType::USER_ENTITLEMENTS, *jdoc);
   response->set_allocated_doc(jdoc);
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(response));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::OnRequestCheckCloud(const external_interface::CheckCloudRequest& checkCloudRequest)
+{
+  LOG_INFO("SettingsCommManager.OnRequestCheckCloud", "Check cloud connectivity request");
+  // Send a CLAD message to anim, requesting connectivity check
+  // Note that this path is: app -> gateway -> engine (YOU ARE HERE) -> anim -> cloud ->
+  //    actual cloud -> cloud -> anim -> engine -> gateway -> app
+  // See "reportCloudConnectivity" in this file
+  _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CheckCloudConnectivity{}));
 }
 
 
