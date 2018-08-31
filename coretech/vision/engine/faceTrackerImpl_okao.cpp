@@ -1192,7 +1192,14 @@ namespace Vision {
         //
         // Face Recognition:
         //
-        const bool enableEnrollment = IsEnrollable(detectionInfo, face, intraEyeDist);
+        const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
+        bool faceIsEnrolling = false;
+        FaceID_t faceID;
+        if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
+        {
+          faceIsEnrolling = (faceID == _recognizer.GetEnrollmentID());
+        }
+        const bool enableEnrollment = (enrollable && faceIsEnrolling);
 
         // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
@@ -1212,7 +1219,7 @@ namespace Vision {
           const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                                       detectionInfo,
                                                                       _okaoPartDetectionResultHandle,
-                                                                      !HaveAllowedTrackedFaces() && enableEnrollment);
+                                                                      enableEnrollment);
           if(recognizing) {
             // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
             // Switch to using the other handle so we don't step on its toes.
