@@ -59,6 +59,7 @@ private:
     float       minSearchAngleSweep_deg = 0.f;
     int         maxSearchTurns = 0;
     int         maxNumRecentSearches = 0;
+    int         numSearchesBeforePlayingPostSearchAnim = -1; // unused if negative
     float       recentSearchWindow_sec = 0.f;
     float       minDrivingDist_mm = 0.f;
     float       maxDrivingDist_mm = 0.f;
@@ -75,6 +76,7 @@ private:
     AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
     AnimationTrigger searchTurnEndAnimTrigger = AnimationTrigger::Count;
     AnimationTrigger waitForImagesAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger postSearchAnimTrigger = AnimationTrigger::Count;
     std::unique_ptr<BlockWorldFilter> homeFilter;
     
     std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> searchSpacePointEvaluator;

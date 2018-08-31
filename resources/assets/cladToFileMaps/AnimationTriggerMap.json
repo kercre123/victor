@@ -148,6 +148,10 @@
     "AnimName": "ag_chargerdocking_drive_start"
   },
   {
+    "CladEvent": "ChargerDockingFailure",
+    "AnimName": "ag_chargerdocking_searchforcharger_canthelp"
+  },
+  {
     "CladEvent": "ChargerDockingLeftTurn",
     "AnimName": "ag_chargerdocking_leftturn"
   },
@@ -174,6 +178,10 @@
   {
     "CladEvent": "ChargerDockingRightTurn",
     "AnimName": "ag_chargerdocking_rightturn"
+  },
+  {
+    "CladEvent": "ChargerDockingSearchAfterCompletedSearch",
+    "AnimName": "ag_chargerdocking_searchforcharger_canthelp"
   },
   {
     "CladEvent": "ChargerDockingSearchSingleTurn",
