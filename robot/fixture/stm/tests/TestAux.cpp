@@ -150,21 +150,29 @@ void tof_calibrate_temp(tof_calibration_dat_t *cal) {
 
 void tof_calibrate_ofs(tof_calibration_dat_t *cal) {
   //Both Reference SPADs and Ref calibrations have to be performed before calling offset calibration.
-  ConsolePrintf("---- SET WHITE TARGET 88% REFLECTANCE ----\n");
-  TestCommon::waitForKeypress(0,1,"press a key when ready\n");
-  const int TARGET_MM_OFFSET_CAL = 80;
-  ConsolePrintf("calibrate Offset @ %imm target...%i\n", TARGET_MM_OFFSET_CAL,
-    VL53L0X_PerformOffsetCalibration(&dev, TARGET_MM_OFFSET_CAL, &cal->offset_microMeter) );
+  ConsolePrintf("---- SET WHITE TARGET 88%% REFLECTANCE ----\n");
+  //TestCommon::waitForKeypress(0,1,"press a key when ready\n");
+  const int TARGET_MM_ACTUAL = 100;
+  const FixPoint1616_t TARGET_MM_FIX16P16 = TARGET_MM_ACTUAL << 16;
+  
+  ConsolePrintf("calibrating Offset @ %imm target...", TARGET_MM_ACTUAL);
+  uint32_t Tstart = Timer::get();
+  int vle = VL53L0X_PerformOffsetCalibration(&dev, TARGET_MM_FIX16P16, &cal->offset_microMeter);
+  ConsolePrintf("%i,%ium,%ius\n", vle, cal->offset_microMeter, Timer::elapsedUs(Tstart) );
 }
 
 void tof_calibrate_xtalk(tof_calibration_dat_t *cal) {
   //see user manual UM2039 section 2.6.2 - choosing a xtalk calibration distance
   //The cross-talk correction is basically a weighted gain applied to the ranging data, based on a calibration result.
-  ConsolePrintf("---- SET GREY TARGET 17% REFLECTANCE ----\n");
-  TestCommon::waitForKeypress(0,1,"press a key when ready\n");
-  const int TARGET_MM_XTALK_CAL = 100;
-  ConsolePrintf("calibrate XTALK @ %imm target...%i\n", TARGET_MM_XTALK_CAL,
-    VL53L0X_PerformXTalkCalibration(&dev, TARGET_MM_XTALK_CAL, &cal->xtalk_compensationRateMegaCps) );
+  ConsolePrintf("---- SET GREY TARGET 17%% REFLECTANCE ----\n");
+  //TestCommon::waitForKeypress(0,1,"press a key when ready\n");
+  const int TARGET_MM_ACTUAL = 100;
+  const FixPoint1616_t TARGET_MM_FIX16P16 = TARGET_MM_ACTUAL << 16;
+  
+  ConsolePrintf("calibrating XTALK @ %imm target...", TARGET_MM_ACTUAL);
+  uint32_t Tstart = Timer::get();
+  int vle = VL53L0X_PerformXTalkCalibration(&dev, TARGET_MM_FIX16P16, &cal->xtalk_compensationRateMegaCps);
+  ConsolePrintf("%i,%iMCps,%ius\n", vle, cal->xtalk_compensationRateMegaCps, Timer::elapsedUs(Tstart) );
 }
 
 tof_dat_t* tof_read(uint32_t *out_tmeas=0, bool debug=0);
@@ -331,6 +339,77 @@ void TOF_debugInspectRaw(void)
   */
 }
 
+//-----------------------------------------------------------------------------
+//                  CLI DEBUG
+//-----------------------------------------------------------------------------
+
+const char* TOF_CMD_HANDLER(const char *line, int len)
+{
+  tof_calibration_dat_t *cal = &TOFcalibration;
+  
+  //parse cmd line args (ints)
+  //int larg[6];
+  int nargs = cmdNumArgs((char*)line);
+  //for(int x=0; x<sizeof(larg)/sizeof(int); x++)
+  //  larg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
+  
+  if( !strncmp(line,"reset",5) )
+    tof_init_static();
+  else if( !strcmp(line,"start") )
+    tof_init_system();
+  else if( !strcmp(line,"getcal") )
+    tof_get_calibration(cal), print_tof_cal(cal);
+  else if( !strcmp(line,"setcal") )
+    ConsolePrintf("(disabled)\n"); //tof_set_calibration(cal, xtalk_cal_enable), print_tof_cal(cal);
+  else if( !strncmp(line,"cal",3) )
+  {
+    if( nargs < 2 ) {
+      tof_calibrate_spad(cal), tof_calibrate_temp(cal);
+    } else {
+      for(int i=2; i<=nargs; i++) {
+        char *arg = cmdGetArg((char*)line,i-1);
+        if( !strcmp(arg, "ofs") )   tof_calibrate_ofs(cal);
+        if( !strcmp(arg, "xtalk") ) tof_calibrate_xtalk(cal);
+      }
+    }
+    print_tof_cal(cal);
+  }
+  else if( !strncmp(line,"read",4) )
+  {
+    int avg=0, readCnt=0, readLimit=0;
+    if( nargs>=2 ) {
+      int lim = cmdParseInt32( cmdGetArg((char*)line,1) );
+      if( lim>0 ) readLimit = lim;
+    }
+    
+    while( !readLimit || readCnt < readLimit )
+    {
+      tof_dat_t tof = *tof_read(0, true); //print=true
+      avg += __REV16(tof.reading);
+      readCnt++;
+      if( !readLimit && !TestCommon::waitForKeypress(100000,0,0) )
+        break;
+    }
+    
+    if( readCnt > 0 )
+      ConsolePrintf("tof read avg: %i\n", avg/readCnt);
+  }
+  
+  return "";
+  //return "\n"; //sends the debug line to charge contacts (ignored by robot, but keeps cmd in recall buffer)
+  //return 0; //send original line unmodified
+}
+
+void TOF_CLI_DEBUG(void)
+{
+  const int bridgeOpts = BRIDGE_OPT_LOCAL_ECHO | BRIDGE_OPT_LINEBUFFER | BRIDGE_OPT_CHG_DISABLE;
+  TestCommon::consoleBridge(TO_CONTACTS, 0, 0, bridgeOpts, TOF_CMD_HANDLER);
+}
+
+//-----------------------------------------------------------------------------
+//                  Tests
+//-----------------------------------------------------------------------------
+
 TestFunction* TestAuxTofGetTests(void)
 {
   static TestFunction m_tests[] = {
@@ -345,8 +424,9 @@ TestFunction* TestAuxTofGetTests(void)
   };
   static TestFunction m_tests_calibrate[] = {
     TOF_init,
-    TOF_sensorCheck,
-    TOF_debugInspectRaw,
+    TOF_CLI_DEBUG,
+    //TOF_sensorCheck,
+    //TOF_debugInspectRaw,
     NULL,
   };
   
