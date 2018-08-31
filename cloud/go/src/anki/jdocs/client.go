@@ -50,6 +50,10 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 	return ret, nil
 }
 
+func (c *conn) close() error {
+	return c.conn.Close()
+}
+
 func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud.DocResponse, error) {
 	switch req.Tag() {
 	case cloud.DocRequestTag_Read:

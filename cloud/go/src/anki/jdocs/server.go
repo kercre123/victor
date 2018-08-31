@@ -66,5 +66,6 @@ func (c *client) handleRequest(ctx context.Context, msg *cloud.DocRequest) (*clo
 	if err != nil {
 		return connectErrorResponse, err
 	}
+	defer conn.close()
 	return conn.handleRequest(ctx, msg)
 }
