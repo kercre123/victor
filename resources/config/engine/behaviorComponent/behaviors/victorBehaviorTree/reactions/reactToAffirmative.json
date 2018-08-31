@@ -27,7 +27,7 @@
   "anonymousBehaviors": [
     {
       "behaviorClass": "AnimSequence",
-      "behaviorID": "InternalReactToAffirmative",
+      "behaviorName": "InternalReactToAffirmative",
 
       "animTriggers": [
         "ReactToAffirmative"
