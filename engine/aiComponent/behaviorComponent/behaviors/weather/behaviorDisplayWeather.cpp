@@ -264,6 +264,9 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
   _dVars.currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
   DEV_ASSERT(_dVars.currentIntent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
+  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
+  _iConfig->intentParser->SendDASEventForRepsonse(weatherResponse);
+
   StartTTSGeneration();
   TransitionToFindFaceInFront();
 }
