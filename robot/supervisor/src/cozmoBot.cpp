@@ -247,7 +247,7 @@ namespace Anki {
 
       void CheckForGyroCalibShutdown()
       {
-        static const int GYRO_NOT_CALIB_SHUTDOWN_MS = 30000;
+        static const int GYRO_NOT_CALIB_SHUTDOWN_MS = 60000;
         
         static TimeStamp_t syncReceivedTime_ms = 0;
 

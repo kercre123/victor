@@ -2962,7 +2962,7 @@ Result Robot::UpdateGyroCalibChecks()
 {
   // Wait this much time after sending sync to robot before checking if we
   // should be displaying the gyro not calibrated image
-  const float kTimeAfterSyncSent_sec = 2.f;
+  const float kTimeAfterSyncSent_sec = 5.f;
 
   const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
