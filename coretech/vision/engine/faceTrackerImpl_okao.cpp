@@ -1206,30 +1206,28 @@ namespace Vision {
         // recognition. For example, person A's face could make it into person
         // B's record, thus creating the potential for confusion between the
         // faces due to bad data.
-        if (!HaveAllowedTrackedFaces())
+
+        //
+        // Face Recognition:
+        //
+        const bool enableEnrollment = IsEnrollable(detectionInfo, face, intraEyeDist);
+
+        // Very Verbose:
+        //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
+        //                          "TrackerID:%d EnableEnrollment:%d",
+        //                          -detectionInfo.nID, enableEnrollment);
+
+        const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
+        if(doRecognition)
         {
-          //
-          // Face Recognition:
-          //
-          const bool enableEnrollment = IsEnrollable(detectionInfo, face, intraEyeDist);
-
-          // Very Verbose:
-          //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
-          //                          "TrackerID:%d EnableEnrollment:%d",
-          //                          -detectionInfo.nID, enableEnrollment);
-
-          const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
-          if(doRecognition)
-          {
-            const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
-                                                                        detectionInfo,
-                                                                        _okaoPartDetectionResultHandle,
-                                                                        enableEnrollment);
-            if(recognizing) {
-              // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
-              // Switch to using the other handle so we don't step on its toes.
-              std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
-            }
+          const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
+                                                                      detectionInfo,
+                                                                      _okaoPartDetectionResultHandle,
+                                                                      !HaveAllowedTrackedFaces() && enableEnrollment);
+          if(recognizing) {
+            // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
+            // Switch to using the other handle so we don't step on its toes.
+            std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
           }
           // Very verbose:
           //        else
