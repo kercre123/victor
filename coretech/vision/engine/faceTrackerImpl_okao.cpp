@@ -1189,13 +1189,6 @@ namespace Vision {
           face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
         }
 
-        // We don't want to do recognition during tracking because we are
-        // relaxing the constraints of when we reset the face tracker. This
-        // relaxation has the potential to pollute the records we use for
-        // recognition. For example, person A's face could make it into person
-        // B's record, thus creating the potential for confusion between the
-        // faces due to bad data.
-
         //
         // Face Recognition:
         //
@@ -1209,6 +1202,13 @@ namespace Vision {
         const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
         if(doRecognition)
         {
+          // We don't want to do recognition during tracking because we are
+          // relaxing the constraints of when we reset the face tracker. This
+          // relaxation has the potential to pollute the records we use for
+          // recognition. For example, person A's face could make it into person
+          // B's record, thus creating the potential for confusion between the
+          // faces due to bad data. Thus we disable enrollment if we have
+          // HaveAllowedTrackedFaces.
           const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                                       detectionInfo,
                                                                       _okaoPartDetectionResultHandle,
