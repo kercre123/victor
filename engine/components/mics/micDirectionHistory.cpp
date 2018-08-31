@@ -14,6 +14,7 @@
 #include "engine/cozmoContext.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
@@ -30,6 +31,9 @@
 
 namespace Anki {
 namespace Vector {
+namespace {
+  const EngineTimeStamp_t kVadSessionLength_ms = (30 * 60 * 1000);  // 30 mins == 1,800,000 ms
+}
 
 CONSOLE_VAR_RANGED( uint32_t,       kRTS_PowerAvgNumSamples,   "SoundReaction", 100, 1, 250 );
 CONSOLE_VAR_RANGED( double,         kRTS_WebVizUpdateInterval, "SoundReaction", 0.20, 0.0, 1.0 );
@@ -66,6 +70,7 @@ void MicDirectionHistory::AddMicSample(const RobotInterface::MicDirection& messa
 
   AddDirectionSample(currentTime_ms, message.direction, message.confidence, message.selectedDirection);
   AddMicPowerSample(currentTime_ms, message.latestPowerValue, message.latestNoiseFloor);
+  AddVadLogSample(currentTime_ms, message.latestNoiseFloor, message.activeState);
 
   ProcessSoundReactors();
   SendMicDataToWebserver();
@@ -423,6 +428,50 @@ void MicDirectionHistory::AddMicPowerSample(EngineTimeStamp_t timestamp, float p
   }
 }
 
+void MicDirectionHistory::AddVadLogSample(EngineTimeStamp_t timeStamp, float noiseFloorLevel, int activeState)
+{
+  // NOT Active -> Active
+  if ( (activeState == 1) && !_vadTrackingData.isActive ) {
+    _vadTrackingData.isActive = true;
+    ++_vadTrackingData.totalActiveCount;
+    _vadTrackingData.timeActive_ms = timeStamp;
+  }
+  // Active -> NOT Active
+  else if ( (activeState == 0) && _vadTrackingData.isActive ) {
+    _vadTrackingData.isActive = false;
+    _vadTrackingData.totalTimeActive_ms += (timeStamp - _vadTrackingData.timeActive_ms);
+  }
+  // Always track noise floor
+  _vadTrackingData.AddNoiseFloorAverage( noiseFloorLevel );
+  
+  // Check if Session time expired
+  if ( (timeStamp - _vadTrackingData.sessionStartTime_ms) > kVadSessionLength_ms ) {
+    // Time to create event, wait until the VAD is NOT Active
+    if ( !_vadTrackingData.isActive ) {
+      // Create Event
+      const EngineTimeStamp_t totalSessionLength_ms = timeStamp - _vadTrackingData.sessionStartTime_ms;
+      
+      DASMSG(wakeword_vad, "wakeword.vad",
+             "Track the number of times the Voice Audio Detection (VAD) is activated, how long it's activated, the \
+             average noise floor during tracking and the length of the session (normally 30 minutes)");
+      DASMSG_SET(i1, _vadTrackingData.totalActiveCount,
+                 "Number of times VAD was actived");
+      DASMSG_SET(i2, static_cast<int>((TimeStamp_t)_vadTrackingData.totalTimeActive_ms),
+                 "Total time actived in milliseconds");
+      DASMSG_SET(i3, static_cast<int>(_vadTrackingData.noiseFloorAverage),
+                 "Average noise floor level, this is the microphone’s sound pressure value");
+      DASMSG_SET(i4, static_cast<int>((TimeStamp_t)totalSessionLength_ms),
+                 "Total tracking in milliseconds")
+      DASMSG_SEND();
+      
+      // Reset Tracker
+      _vadTrackingData.ResetData();
+      _vadTrackingData.noiseFloorAverage = noiseFloorLevel; // Start the next session with the current level
+      _vadTrackingData.sessionStartTime_ms = timeStamp;     // Start next session
+    }
+  }
+}
+
 double MicDirectionHistory::AccumulatePeakPowerLevel( double latestPeakPowerLevel )
 {
   const double alpha = 1.0 / (double)kRTS_PowerAvgNumSamples;
@@ -513,6 +562,21 @@ void MicDirectionHistory::SendMicDataToWebserver()
     }
   }
   #endif
+}
+  
+// VadTrackingData struct
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicDirectionHistory::VadTrackingData::ResetData() {
+  isActive            = false;
+  timeActive_ms       = 0;
+  totalActiveCount    = 0;
+  totalTimeActive_ms  = 0;
+  noiseFloorAverage   = 0.f;
+  sessionStartTime_ms = 0;
+}
+
+void MicDirectionHistory::VadTrackingData::AddNoiseFloorAverage(float noiseFloorLevel) {
+  noiseFloorAverage = (noiseFloorAverage + noiseFloorLevel) / 2.0f;
 }
 
 } // namespace Vector
