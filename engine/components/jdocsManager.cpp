@@ -51,7 +51,7 @@ namespace
 
   static const std::string emptyString;
   static const Json::Value emptyJson;
-  
+
   static const std::string kNotLoggedIn = "NotLoggedIn";
 
   JdocsManager* s_JdocsManager = nullptr;
@@ -60,7 +60,7 @@ namespace
 
   static const char* kConsoleGroup = "JdocsManager";
 
-  // Keep this in sync with JodcType enum
+  // Keep this in sync with JdocType enum
   constexpr const char* kJdocTypes = "RobotSettings,RobotLifetimeStats,AccountSettings,UserEntitlements";
   CONSOLE_VAR_ENUM(u8, kJdocType, kConsoleGroup, 0, kJdocTypes);
 
@@ -242,7 +242,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     }
   }
 
-  // Now queue up a reqeust to the jdocs server (vic-cloud) for the userID
+  // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
   SendJdocsRequest(userReq);
 }
@@ -270,7 +270,7 @@ void JdocsManager::DebugCheckForUser()
   LOG_INFO("JdocsManager.DebugCheckForUser", "Re-requesting user id from vic-cloud");
   _userID = emptyString;  // Reset user ID so we can make the request again
 
-  // Now queue up a reqeust to the jdocs server (vic-cloud) for the userID
+  // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
   SendJdocsRequest(userReq);
 }
@@ -863,7 +863,7 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
     // Cloud has accepted the new or updated jdoc, and incremented the cloud-managed
     // version number, so update that version number in our jdoc in memory
     jdoc._jdocVersion = writeResponse.latestVersion;
-    
+
     if (jdocType == external_interface::JdocType::ROBOT_SETTINGS)
     {
       DASMSG(robot_settings_passed_to_cloud_jdoc, "robot.settings.passed_to_cloud_jdoc", "The robot settings jdoc was submitted to cloud");
@@ -898,10 +898,10 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
   else if (writeResponse.status == JDocs::WriteStatus::RejectedFmtVersion)
   {
     // The client format version is less than the server format version; update not allowed
-    LOG_ERROR("JodcsManager.HandleWriteResponse.RejectedFmtVersion",
+    LOG_ERROR("JdocsManager.HandleWriteResponse.RejectedFmtVersion",
               "Submitted jdoc's format version %llu is earlier than the format version in the cloud; update not allowed",
               writeRequest.doc.fmtVersion);
-    
+
     // Mark this jdoc type as 'disabled' so we don't try to submit it again.
     // After startup, we guarantee that all jdocs the jdocs manager owns are at the latest format version
     // that the code knows about.  So this scenario could occur if, AFTER startup, ANOTHER client were to
@@ -910,7 +910,7 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
   }
   else  // writeResponse.status == JDocs::WriteStatus::Error
   {
-    LOG_ERROR("JodcsManager.HandleWriteResponse.Error", "Error returned from write jdoc attempt");
+    LOG_ERROR("JdocsManager.HandleWriteResponse.Error", "Error returned from write jdoc attempt");
     // Not sure (yet) what to do if we get this
   }
 

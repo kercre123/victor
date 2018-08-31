@@ -46,6 +46,21 @@ namespace {
   constexpr const char * kDASGlobalsKey = "dasGlobals";
   constexpr const char * kSequenceKey = "sequence";
   constexpr const char * kProfileIDKey = "profile_id";
+  constexpr const char * kAllowUploadKey = "allow_upload";
+
+  // DAS column offsets
+  // If field count changes, we need to update this code.
+  // Unused columns are commented out until needed.
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
+  constexpr const int DAS_NAME = 0;
+  constexpr const int DAS_STR1 = 1;
+  //constexpr const int DAS_STR2 = 2;
+  constexpr const int DAS_STR3 = 3;
+  constexpr const int DAS_STR4 = 4;
+  constexpr const int DAS_INT1 = 5;
+  //constexpr const int DAS_INT2 = 6;
+  //constexpr const int DAS_INT3 = 7;
+  //constexpr const int DAS_INT4 = 8;
 }
 
 //
@@ -249,10 +264,8 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     return "";
   }
 
-  // If field count changes, we need to update this code
-  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
 
-  std::string name = values[0];
+  std::string name = values[DAS_NAME];
 
   if (name.empty()) {
     LOG_ERROR("DASManager.ConvertLogEntryToJson", "Missing event name");
@@ -266,22 +279,24 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
   //
   // If magic event names change, this code should be reviewed for compatibility.
   //
-
   if (name == DASMSG_FEATURE_START) {
-    _feature_run_id = values[3]; // s3
-    _feature_type = values[4]; // s4
+    _feature_run_id = values[DAS_STR3];
+    _feature_type = values[DAS_STR4];
   } else if (name == DASMSG_BLE_CONN_ID_START) {
-    _ble_conn_id = values[1]; // s1
+    _ble_conn_id = values[DAS_STR1];
   } else if (name == DASMSG_BLE_CONN_ID_STOP) {
     _ble_conn_id.clear();
   } else if (name == DASMSG_WIFI_CONN_ID_START) {
-    _wifi_conn_id = values[1]; // s1
+    _wifi_conn_id = values[DAS_STR1];
   } else if (name == DASMSG_WIFI_CONN_ID_STOP) {
     _wifi_conn_id.clear();
   } else if (name == DASMSG_PROFILE_ID_START) {
-    _profile_id = values[1]; // s1
+    _profile_id = values[DAS_STR1];
   } else if (name == DASMSG_PROFILE_ID_STOP) {
     _profile_id.clear();
+  } else if (name == DASMSG_DAS_ALLOW_UPLOAD) {
+    const auto i1 = std::atoi(values[DAS_INT1].c_str());
+    _allow_upload = (i1 != 0);
   }
 
   std::ostringstream ostr;
@@ -536,6 +551,11 @@ void DASManager::LoadPersistentGlobals(const std::string & path)
   if (profile_id.isString()) {
     _profile_id = profile_id.asString();
   }
+
+  const auto & allow_upload = dasGlobals[kAllowUploadKey];
+  if (allow_upload.isBool()) {
+    _allow_upload = allow_upload.asBool();
+  }
 }
 
 void DASManager::LoadGlobalState()
@@ -569,6 +589,12 @@ void DASManager::LoadGlobalState()
   if (!persistent_globals_path.empty() && Util::FileUtils::FileExists(persistent_globals_path)) {
     LoadPersistentGlobals(persistent_globals_path);
   }
+
+  // Call out global state for diagnostics
+  LOG_DEBUG("DASManager.LoadGlobalState",
+            "robot_id=%s robot_version=%s boot_id=%s sequence=%llu profile_id=%s allow_upload=%d",
+            _robot_id.c_str(), _robot_version.c_str(), _boot_id.c_str(), _seq, _profile_id.c_str(), _allow_upload);
+
 
 }
 
@@ -612,6 +638,7 @@ void DASManager::SavePersistentGlobals(const std::string & path)
   // Construct json container
   Json::Value json;
   json[kDASGlobalsKey][kProfileIDKey] = _profile_id;
+  json[kDASGlobalsKey][kAllowUploadKey] = _allow_upload;
 
   // Save json to file
   SaveGlobals(json, path);

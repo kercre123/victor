@@ -22,6 +22,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #define LOG_CHANNEL "AccountSettingsManager"
 
@@ -32,6 +33,17 @@ namespace
 {
   static const char* kConfigDefaultValueKey = "defaultValue";
   static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
+
+}
+
+//
+// Static methods to publish magic DAS events
+//
+static void EnableDataCollection(bool enable)
+{
+  DASMSG(das_allow_upload, DASMSG_DAS_ALLOW_UPLOAD, "Allow DAS upload");
+  DASMSG_SET(i1, (enable ? 1 : 0), "0/1")
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -285,12 +297,13 @@ bool AccountSettingsManager::ApplyAccountSetting(const external_interface::Accou
 bool AccountSettingsManager::ApplyAccountSettingDataCollection()
 {
   static const std::string& key = external_interface::AccountSetting_Name(external_interface::AccountSetting::DATA_COLLECTION);
-  const auto& value = _currentAccountSettings[key].asBool();
+  const bool value = _currentAccountSettings[key].asBool();
   LOG_INFO("AccountSettingsManager.ApplyAccountSettingDataCollection.Apply",
            "Setting data collection flag to %s", value ? "true" : "false");
-  
-  // TODO:  Can call whereever here
-  
+
+  // Publish choice to DAS manager
+  EnableDataCollection(value);
+
   return true;
 }
 
