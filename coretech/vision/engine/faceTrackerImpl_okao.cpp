@@ -1098,17 +1098,6 @@ namespace Vision {
             continue; 
           }
         }
-        else
-        {
-          if (_allowedTrackedFaceID.count(-detectionInfo.nID) == 0)
-          {
-            // Check to see if the negative of the detection id is
-            // in allowed tracked faces, if not continue. If the
-            // negative detection id is in here it means that we didn't
-            // recognize the face.
-            continue;
-          }
-        }
       }
       
       // Add a new face to the list
