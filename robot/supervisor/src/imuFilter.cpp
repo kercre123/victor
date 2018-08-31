@@ -428,9 +428,7 @@ namespace Anki {
       }
 
       bool AreMotorsMoving() {
-        return  WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving()
-                || HeadController::IsMoving() || !HeadController::IsInPosition()
-                || LiftController::IsMoving() || !LiftController::IsInPosition();
+        return  WheelController::AreWheelsMoving() || HeadController::IsMoving() || LiftController::IsMoving();
       }
 
       // Checks for conditions to enter/exit picked up state
