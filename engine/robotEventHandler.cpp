@@ -1879,7 +1879,6 @@ public:
     if( robot.GetActionList().QueueAction(QueueActionPosition::NOW, dispatchAction, 0) != RESULT_OK )
     {
       PRINT_NAMED_WARNING("RobotEventHandler.GatewayActionRunner.Invoke.ActionCouldNotQueue", "%s", internalAction->GetName().c_str());
-      delete dispatchAction;
     }
   }
 };
