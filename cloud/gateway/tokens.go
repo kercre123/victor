@@ -118,7 +118,7 @@ func (ctm *ClientTokenManager) UpdateTokens() error {
 	}
 	read := resp.GetRead()
 	if read == nil {
-		return fmt.Errorf("error while trying to read jdocs: %+v", resp)
+		return fmt.Errorf("error while trying to read jdocs:  %#v", resp)
 	}
 	if len(read.Items) == 0 {
 		return errors.New("no jdoc in read response")
@@ -137,7 +137,7 @@ func (ctm *ClientTokenManager) getIDs() (string, string, error) {
 	}
 	user := resp.GetUser()
 	if user == nil {
-		return "", "", fmt.Errorf("Unable to get robot's user id: %+v", resp)
+		return "", "", fmt.Errorf("Unable to get robot's user id:  %#v", resp)
 	}
 	esn, err := robot.ReadESN()
 	if err != nil {
@@ -160,6 +160,7 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	if err = request.Pack(&buf); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
+	log.Printf("%T: writing '%#v' message to JDoc Manager\n", *ctm, *request)
 	// TODO: use channel to a jdoc read/write manager goroutine
 	_, err = ctm.jdocIPC.conn.Write(buf.Bytes())
 	if err != nil {
@@ -175,7 +176,7 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	recvBuf.Write(msgBuffer)
 	msg := &cloud_clad.DocResponse{}
 	if err := msg.Unpack(&recvBuf); err != nil {
-		log.Printf("JdocIpcManager Call Err: %+v\n", err)
+		log.Printf("JdocIpcManager Call Err: %#v\n", err)
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	return msg, nil

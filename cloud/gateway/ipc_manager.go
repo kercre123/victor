@@ -80,6 +80,7 @@ func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
+	log.Printf("%T: writing '%#v' Proto message to Engine\n", *manager, msg)
 	return manager.conn.Write(buf.Bytes())
 }
 
@@ -263,6 +264,7 @@ func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (in
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
+	log.Printf("%T: writing '%#v' message to Switchboard\n", *manager, *msg)
 	return manager.conn.Write(buf.Bytes())
 }
 
@@ -361,6 +363,7 @@ func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) 
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
+	log.Printf("%T: writing '%#v' CLAD message to Engine\n", *manager, *msg)
 	return manager.conn.Write(buf.Bytes())
 }
 
