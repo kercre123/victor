@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/movementComponent.h"
 #include "engine/engineTimeStamp.h"
 #include "clad/types/animationTrigger.h"
 
@@ -277,6 +278,16 @@ BehaviorReactToSound::DirectionTrigger BehaviorReactToSound::GetTriggerData( Mic
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToSound::CanReactToSound() const
 {
+  // VIC-5979: Should not react to sound if the lift is moving and it is near the bottom of its range, since the sound
+  // of the lift smacking the bottom stop can be loud enough to trigger this
+  const float liftLowTol_mm = 25.f;
+  const bool isLiftLow = GetBEI().GetRobotInfo().GetLiftHeight() < LIFT_HEIGHT_LOWDOCK + liftLowTol_mm;
+  const bool isLiftMoving = GetBEI().GetMovementComponent().IsLiftMoving();
+  
+  if (isLiftMoving && isLiftLow) {
+    return false;
+  }
+  
   return true;
 }
 
