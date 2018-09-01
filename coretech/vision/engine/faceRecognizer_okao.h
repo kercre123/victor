@@ -108,6 +108,8 @@ namespace Vision {
                              const std::vector<u8>& enrollData,
                              std::list<LoadedKnownFace>& loadedFaces);
 
+    bool GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID);
+
   private:
     
     // Aliases for better readability

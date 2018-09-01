@@ -894,7 +894,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
   {
     PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
                       "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
-    _faceTracker->Reset();
+    _faceTracker->AccountForRobotMove();
   }
   
   if(!detectionRects.empty())
@@ -1927,6 +1927,16 @@ void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
 void VisionSystem::ClearImageCache()
 {
   _imageCache->ReleaseMemory();
+}
+
+void VisionSystem::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
+{
+  _faceTracker->AddAllowedTrackedFace(faceID);
+}
+
+void VisionSystem::ClearAllowedTrackedFaces()
+{
+  _faceTracker->ClearAllowedTrackedFaces();
 }
 
 } // namespace Vector
