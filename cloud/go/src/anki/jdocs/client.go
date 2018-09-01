@@ -3,6 +3,7 @@ package jdocs
 import (
 	"anki/config"
 	"anki/log"
+	"anki/robot"
 	"anki/token"
 	"anki/util"
 	"clad/cloud"
@@ -64,6 +65,8 @@ func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud
 		return c.deleteRequest(ctx, req.GetDeleteReq())
 	case cloud.DocRequestTag_User:
 		return c.userRequest()
+	case cloud.DocRequestTag_Thing:
+		return c.thingRequest()
 	}
 	err := fmt.Errorf("Major error: received unknown tag %d", req.Tag())
 	log.Println(err)
@@ -105,4 +108,9 @@ func (c *conn) userRequest() (*cloud.DocResponse, error) {
 		user = c.tok.UserID()
 	}
 	return cloud.NewDocResponseWithUser(&cloud.UserResponse{UserId: user}), nil
+}
+
+func (c *conn) thingRequest() (*cloud.DocResponse, error) {
+	thing, err := robot.CertCommonName("/factory/cloud")
+	return cloud.NewDocResponseWithThing(&cloud.ThingResponse{ThingName: thing}), err
 }
