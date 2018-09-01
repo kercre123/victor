@@ -1464,7 +1464,6 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
     // we need robot, anim, engine, and switchboard all communicating
     // for pairing to start. If the fault code is something besides a
     // process crash, this will clear it.
-    FaultCode::DisplayFaultCode(0);
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");

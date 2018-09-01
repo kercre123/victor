@@ -95,6 +95,7 @@ enum : uint16_t {
 // from the fifo
 static int DisplayFaultCode(uint16_t code)
 {
+  printf("DisplayFaultCode: %u\n", code);
   int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
   if (fifo == -1) {
     printf("DisplayFaultCode: Failed to open fifo %d\n", errno);
