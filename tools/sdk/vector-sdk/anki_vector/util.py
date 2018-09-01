@@ -38,7 +38,17 @@ import argparse
 import logging
 import math
 import os
-from pathlib import Path
+import sys
+
+try:
+    import cv2
+except ImportError as exc:
+    sys.exit("Cannot import opencv-python: Do `pip3 install opencv-python` to install")
+
+try:
+    import numpy as np
+except ImportError as exc:
+    sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
 
 MODULE_LOGGER = logging.getLogger(__name__)
 
@@ -844,6 +854,59 @@ class Speed:
 def speed_mmps(speed_mmps):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed"""
     return Speed(speed_mmps=speed_mmps)
+
+
+class BaseOverlay:
+    """A base overlay is used as a base class for other forms of overlays that can be drawn on top of an image.
+
+        :param line_thickness: The thickness of the line being drawn.
+        :param line_color: The color of the line to be drawn.
+    """
+
+    def __init__(self, line_thickness: int, line_color: tuple):
+        self._line_thickness: int = line_thickness
+        self._line_color: tuple = line_color
+
+    @property
+    def line_thickness(self):
+        return self._line_thickness
+
+    @property
+    def line_color(self):
+        return self._line_color
+
+
+class RectangleOverlay(BaseOverlay):
+    """A rectangle that can be drawn on top of a given image.
+
+        :param width: The width of the rectangle to be drawn.
+        :param height: The height of the rectangle to be drawn.
+        :param line_thickness: The thickness of the line being drawn.
+        :param line_color: The color of the line to be drawn.
+    """
+
+    def __init__(self, width: int, height: int, line_thickness: int = 5, line_color: tuple = (255, 0, 0)):
+        super().__init__(line_thickness, line_color)
+        self._width: int = width
+        self._height: int = height
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
+
+    # TODO: Update to handle PIL images
+    def apply_overlay(self, image: np.ndarray) -> None:
+        """Draw a rectangle on top of the given image."""
+        image_width, image_height, _ = image.shape
+        remaining_width = image_width - self.width
+        remaining_height = image_height - self.height
+        top_left = (remaining_height // 2, remaining_width // 2)
+        bottom_right = ((image_height - (remaining_height // 2)), (image_width - (remaining_width // 2)))
+        cv2.rectangle(image, top_left, bottom_right, self.line_color, self.line_thickness)
 
 
 class Component:

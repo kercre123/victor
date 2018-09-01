@@ -28,6 +28,11 @@ try:
 except ImportError as exc:
     sys.exit("Cannot import opencv-python: Do `pip3 install opencv-python` to install")
 
+try:
+    import numpy as np
+except ImportError as exc:
+    sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
+
 from .exceptions import VectorCameraFeedDisabledException
 from . import util
 
@@ -37,6 +42,7 @@ class ViewerComponent(util.Component):
     obtained from Vector's camera
 
     .. code-block:: python
+
         with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert", show_viewer=True) as robot:
             robot.loop.run_until_complete(utilities.delay_close(5))
 
@@ -46,12 +52,20 @@ class ViewerComponent(util.Component):
     def __init__(self, robot):
         super().__init__(robot)
         self.render_task: asyncio.Task = None
+        self.overlays: list = []
 
     @staticmethod
     def _close_window(window_name: str) -> None:
         # Close the openCV window
         cv2.destroyWindow(window_name)
         cv2.waitKey(1)
+
+    def _apply_overlays(self) -> None:
+        """Apply all overlays attached to viewer instance on to image from camera feed."""
+        image = np.copy(self.robot.camera.latest_image)
+        for overlay in self.overlays:
+            overlay.apply_overlay(image)
+        return image
 
     async def _render_frames(self, timeout) -> None:
         latest_image_id = None
@@ -71,7 +85,11 @@ class ViewerComponent(util.Component):
 
                 # Render image only if new image is available
                 if self.robot.camera.latest_image_id != latest_image_id:
-                    cv2.imshow(opencv_window_name, self.robot.camera.latest_image)
+                    if self.overlays:
+                        image = self._apply_overlays()
+                        cv2.imshow(opencv_window_name, image)
+                    else:
+                        cv2.imshow(opencv_window_name, self.robot.camera.latest_image)
                     cv2.waitKey(1)
                     latest_image_id = self.robot.camera.latest_image_id
                 await asyncio.sleep(0.1)
