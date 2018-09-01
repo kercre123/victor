@@ -1196,13 +1196,13 @@ namespace Vision {
         bool enableEnrollment = enrollable;
 
         // If we have allowed tracked faces we should only enable enrollment
-        // in two case. First if the current face matches the face id returned
+        // in two cases. First if the current face matches the face id returned
         // by GetEnrollmentID. This should only happen in MeetVictor currently.
         // Second if we don't have the tracking id in the recognizer yet, indicating
         // we haven't recognized the face yet. If we don't have any allowed tracked
         // faces we don't need to worry about this and can just use the result from
         // IsEnrollable.
-        if (HaveAllowedTrackedFaces())
+        if(enableEnrollment && HaveAllowedTrackedFaces())
         {
           FaceID_t faceID;
           if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
