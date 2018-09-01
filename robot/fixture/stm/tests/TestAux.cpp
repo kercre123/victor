@@ -63,11 +63,16 @@ typedef struct {
   uint32_t  xtalk_compensationRateMegaCps;
 } tof_calibration_dat_t;
 
+const int PROFILE_0_SPAD_TEMP = 0;
+const int PROFILE_1_OFFSET = 1;
+const int PROFILE_2_XTALK = 2;
+const int PROFILE_COUNT = 3;
+tof_calibration_dat_t tofCalProfile[PROFILE_COUNT];
+const char *tofCalProfileStr[PROFILE_COUNT] = { "spad-temp", "offset", "xtalk" };
+
 static VL53L0X_Dev_t dev = {0};
-static tof_calibration_dat_t TOFcalibration;
 
 void print_tof_cal(tof_calibration_dat_t *cal) {
-  //cal = !cal ? &TOFcalibration : cal;
   ConsolePrintf("spad %u %u temp %u %u ofs %+ium xtalk %uMCps\n",
     cal->spad_refSpadCount, cal->spad_isApertureSpads,
     cal->temp_vhvSettings, cal->temp_phaseCal,
@@ -82,6 +87,7 @@ void print_tof_cal(tof_calibration_dat_t *cal) {
 void tof_init_static(void) {
   m_last_read_mm = 0;
   //ConsolePrintf("initializing tof\n");
+  memset(&dev, 0, sizeof(dev));
   dev.I2cDevAddr = TOF_SENSOR_ADDRESS;
   DUT_I2C::init();
   ConsolePrintf("VL53L0X reset device....%i\n", VL53L0X_ResetDevice(&dev) );
@@ -125,15 +131,22 @@ void tof_get_calibration(tof_calibration_dat_t *cal)
 
 void tof_set_calibration(tof_calibration_dat_t *cal, bool xtalk_enable)
 {
-  ConsolePrintf("set SPAD calibration....%i\n",
-    VL53L0X_SetReferenceSpads(&dev, cal->spad_refSpadCount, cal->spad_isApertureSpads) );
-  ConsolePrintf("set TEMP calibration....%i\n",
-    VL53L0X_SetRefCalibration(&dev, cal->temp_vhvSettings, cal->temp_phaseCal) );
-  ConsolePrintf("set OFS calibration.....%i\n",
-    VL53L0X_SetOffsetCalibrationDataMicroMeter(&dev, cal->offset_microMeter) );
-  ConsolePrintf("set XTALK calibration...%i,%i\n",
+  ConsolePrintf("set SPAD calibration....%i,cnt=%i,isAp=%i\n",
+    VL53L0X_SetReferenceSpads(&dev, cal->spad_refSpadCount, cal->spad_isApertureSpads),
+    cal->spad_refSpadCount,
+    cal->spad_isApertureSpads );
+  ConsolePrintf("set TEMP calibration....%i,vhv=%i,phase=%i\n",
+    VL53L0X_SetRefCalibration(&dev, cal->temp_vhvSettings, cal->temp_phaseCal),
+    cal->temp_vhvSettings,
+    cal->temp_phaseCal );
+  ConsolePrintf("set OFS calibration.....%i,%ium\n",
+    VL53L0X_SetOffsetCalibrationDataMicroMeter(&dev, cal->offset_microMeter),
+    cal->offset_microMeter );
+  ConsolePrintf("set XTALK calibration...%i,%i,%iMCps,en=%i\n",
     VL53L0X_SetXTalkCompensationRateMegaCps(&dev, cal->xtalk_compensationRateMegaCps),
-    VL53L0X_SetXTalkCompensationEnable(&dev, xtalk_enable) );
+    VL53L0X_SetXTalkCompensationEnable(&dev, xtalk_enable),
+    cal->xtalk_compensationRateMegaCps,
+    xtalk_enable );
 }
 
 void tof_calibrate_spad(tof_calibration_dat_t *cal) {
@@ -220,7 +233,7 @@ tof_dat_t* tof_read(uint32_t *out_tmeas, bool debug)
 void TOF_init(void)
 {
   bool ofs_cal_enable = 0, xtalk_cal_enable = 0;
-  tof_calibration_dat_t *cal = &TOFcalibration;
+  tof_calibration_dat_t *cal = &tofCalProfile[PROFILE_0_SPAD_TEMP];
   memset( cal, 0, sizeof(tof_calibration_dat_t) );
   
   tof_init_static();
@@ -236,7 +249,7 @@ void TOF_init(void)
   
   print_tof_cal(cal);
   
-  tof_set_calibration(cal, xtalk_cal_enable);
+  //tof_set_calibration(cal, xtalk_cal_enable);
   tof_init_system();
   
   //re-read for sanity check
@@ -276,10 +289,8 @@ void TOF_sensorCheck(void)
   FLEXFLOW::printf("<flex> TOF reading %imm </flex>\n", reading_adj );
   
   //nominal reading expected by playpen 90-130mm raw (80mm +/-20mm after -30 window adjustment)
-  /*
   if( reading_adj < tof_read_min || reading_adj > tof_read_max )
     throw ERROR_SENSOR_TOF;
-  */
 }
 
 void TOF_debugInspectRaw(void)
@@ -308,14 +319,13 @@ void TOF_debugInspectRaw(void)
       }
       m_last_read_mm = reading_adj; //save for display
       
-      /*/real-time measurements on helper display
+      //real-time measurements on helper display
       if( displayErr < 3 ) { //give up if no helper detected
         char b[30], color = reading_adj < tof_read_min || reading_adj > tof_read_max ? 'r' : 'g';
         //int status = helperLcdShow(1,0,color, snformat(b,sizeof(b),"%imm [%i]   ", reading_adj, reading_raw) );
         int status = helperLcdShow(1,0,color, snformat(b,sizeof(b),"%imm", reading_adj) );
         displayErr = status==0 ? 0 : displayErr+1;
       }
-      //-*/
     }
     
     //break on console input
@@ -333,19 +343,116 @@ void TOF_debugInspectRaw(void)
     }
   }
   
-  /*
   if( m_last_read_mm < tof_read_min || m_last_read_mm > tof_read_max )
     throw ERROR_SENSOR_TOF;
-  */
 }
 
 //-----------------------------------------------------------------------------
 //                  CLI DEBUG
 //-----------------------------------------------------------------------------
 
+bool tofCalProfilesValid = 0;
+void tof_build_profiles(void)
+{
+  //Note: make sure sensor is in calibration position
+  //memset( &tofCalProfile[0], 0, PROFILE_COUNT*sizeof(tof_calibration_dat_t) );
+  memset( tofCalProfile, 0, sizeof(tofCalProfile) );
+  
+  ConsolePrintf("BUILDING CALIBRATION PROFILES:\n");
+  tof_init_static(); //reset
+  
+  //get default cal settings
+  tof_get_calibration( &tofCalProfile[PROFILE_0_SPAD_TEMP] );
+  tofCalProfile[PROFILE_1_OFFSET] = tofCalProfile[PROFILE_0_SPAD_TEMP];
+  tofCalProfile[PROFILE_2_XTALK] = tofCalProfile[PROFILE_0_SPAD_TEMP];
+  
+  //DEBUG
+  ConsolePrintf("SANITY CHECK:\n");
+  print_tof_cal( &tofCalProfile[PROFILE_0_SPAD_TEMP] );
+  print_tof_cal( &tofCalProfile[PROFILE_1_OFFSET] );
+  print_tof_cal( &tofCalProfile[PROFILE_2_XTALK] );
+  //-*/
+  
+  //Spad+Temp calibration
+  tof_calibrate_spad( &tofCalProfile[PROFILE_0_SPAD_TEMP] );
+  tof_calibrate_temp( &tofCalProfile[PROFILE_0_SPAD_TEMP] );
+  
+  //Offset calibration
+  tofCalProfile[PROFILE_1_OFFSET] = tofCalProfile[PROFILE_0_SPAD_TEMP];
+  Timer::delayMs(150);
+  tof_calibrate_ofs( &tofCalProfile[PROFILE_1_OFFSET] );
+  
+  //Crosstalk calibration
+  tofCalProfile[PROFILE_2_XTALK] = tofCalProfile[PROFILE_1_OFFSET];
+  Timer::delayMs(250);
+  tof_calibrate_xtalk( &tofCalProfile[PROFILE_2_XTALK] );
+  
+  //DEBUG
+  ConsolePrintf("SANITY CHECK:\n");
+  print_tof_cal( &tofCalProfile[PROFILE_0_SPAD_TEMP] );
+  print_tof_cal( &tofCalProfile[PROFILE_1_OFFSET] );
+  print_tof_cal( &tofCalProfile[PROFILE_2_XTALK] );
+  //-*/
+  
+  tof_init_system();
+  tofCalProfilesValid = 1;
+}
+
+void tof_sample_profile_readings(void)
+{
+  if( !tofCalProfilesValid ) { ConsolePrintf("invalid profiles\n"); return; }
+  int distance[PROFILE_COUNT]; memset(&distance,0,sizeof(distance));
+  
+  for(int i=0; i<PROFILE_COUNT; i++)
+  {
+    ConsolePrintf("SAMPLE USING CAL PROFILE: %s\n", tofCalProfileStr[i] );
+    tof_calibration_dat_t *cal = &tofCalProfile[i];
+    
+    //apply profile calibration
+    tof_init_static(); //reset
+    bool xtalk_cal_enable = i>=PROFILE_2_XTALK;
+    tof_set_calibration(cal, xtalk_cal_enable);
+    tof_init_system();
+    
+    //verify settings
+    tof_calibration_dat_t readback = {0};
+    tof_get_calibration(&readback);
+    if( 0
+        || readback.spad_refSpadCount != cal->spad_refSpadCount
+        || readback.spad_isApertureSpads != cal->spad_isApertureSpads
+        || readback.temp_phaseCal != cal->temp_phaseCal
+        || readback.temp_vhvSettings != cal->temp_vhvSettings
+        || readback.offset_microMeter != cal->offset_microMeter
+        //|| readback.xtalk_compensationRateMegaCps != cal->xtalk_compensationRateMegaCps
+        || ABS((int)readback.xtalk_compensationRateMegaCps - (int)cal->xtalk_compensationRateMegaCps) > 10
+    )
+    {
+      ConsolePrintf("---------------FAILED READBACK VALIDATION---------------\n");
+      print_tof_cal(cal);
+      print_tof_cal(&readback);
+      distance[i] = -1;
+    }
+    else
+    {
+      //take averaged reading
+      int avg=0; const int nsamples=32;
+      for(int n=-5; n<nsamples; n++) {
+        int value = __REV16( tof_read(0,true)->reading );
+        if( n>=0 ) avg += value;
+      }
+      distance[i] = avg/nsamples;
+    }
+  }
+  
+  ConsolePrintf("distance mm:\n");
+  for(int i=0; i<PROFILE_COUNT; i++) {
+    ConsolePrintf("  %-10s: %i\n", tofCalProfileStr[i], distance[i] );
+  }
+}
+
 const char* TOF_CMD_HANDLER(const char *line, int len)
 {
-  tof_calibration_dat_t *cal = &TOFcalibration;
+  tof_calibration_dat_t *cal = &tofCalProfile[PROFILE_0_SPAD_TEMP];
   
   //parse cmd line args (ints)
   //int larg[6];
@@ -354,7 +461,7 @@ const char* TOF_CMD_HANDLER(const char *line, int len)
   //  larg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
   
   if( !strncmp(line,"reset",5) )
-    tof_init_static();
+    tof_init_static(), tofCalProfilesValid = 0;
   else if( !strcmp(line,"start") )
     tof_init_system();
   else if( !strcmp(line,"getcal") )
@@ -368,6 +475,8 @@ const char* TOF_CMD_HANDLER(const char *line, int len)
     } else {
       for(int i=2; i<=nargs; i++) {
         char *arg = cmdGetArg((char*)line,i-1);
+        if( !strcmp(arg, "spad") )  tof_calibrate_spad(cal);
+        if( !strcmp(arg, "temp") )  tof_calibrate_temp(cal);
         if( !strcmp(arg, "ofs") )   tof_calibrate_ofs(cal);
         if( !strcmp(arg, "xtalk") ) tof_calibrate_xtalk(cal);
       }
@@ -393,7 +502,13 @@ const char* TOF_CMD_HANDLER(const char *line, int len)
     
     if( readCnt > 0 )
       ConsolePrintf("tof read avg: %i\n", avg/readCnt);
+    
+    return "\n"; //sends the debug line to charge contacts (ignored by robot, but keeps cmd in recall buffer)
   }
+  else if( !strcmp(line, "profile") )
+    tof_build_profiles();
+  else if( !strcmp(line,"sample") )
+    tof_sample_profile_readings();
   
   return "";
   //return "\n"; //sends the debug line to charge contacts (ignored by robot, but keeps cmd in recall buffer)
@@ -423,7 +538,7 @@ TestFunction* TestAuxTofGetTests(void)
     NULL,
   };
   static TestFunction m_tests_calibrate[] = {
-    TOF_init,
+    //TOF_init,
     TOF_CLI_DEBUG,
     //TOF_sensorCheck,
     //TOF_debugInspectRaw,
