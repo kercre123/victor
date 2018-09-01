@@ -42,6 +42,22 @@ var (
 	engineCladManager EngineCladIpcManager
 )
 
+func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	nameList := strings.Split(info.FullMethod, "/")
+	name := nameList[len(nameList)-1]
+	log.Printf("Received rpc request %s(%#v)\n", name, req)
+	resp, err := handler(ctx, req)
+	log.Printf("Sending rpc response %s(%#v)\n", name, resp)
+	return resp, err
+}
+
+func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	nameList := strings.Split(info.FullMethod, "/")
+	name := nameList[len(nameList)-1]
+	log.Printf("Received stream request %s(%#v)\n", name, srv)
+	return handler(srv, ss)
+}
+
 func verboseHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
@@ -152,6 +168,8 @@ func main() {
 	}
 	grpcServer := grpc.NewServer(
 		grpc.Creds(creds),
+		grpc.UnaryInterceptor(LoggingUnaryInterceptor),
+		grpc.StreamInterceptor(LoggingStreamInterceptor),
 	)
 	extint.RegisterExternalInterfaceServer(grpcServer, newServer())
 	ctx := context.Background()

@@ -98,7 +98,7 @@ def test_pull_jdocs(vector_connection):
     '{"settings": {"eye_color": 6}}',
     '{"settings": {"eye_color": 7}}',
     '{"settings": {"eye_color": -1}}',
-    '{"settings":{"clock_24_hour":true,"eye_color":1}}',
+    '{"settings":{"clock_24_hour":true,"eye_color":5}}',
     '{"settings":{"clock_24_hour":true}}',
 ])
 def test_update_settings_raw(vector_connection, data):
@@ -165,6 +165,5 @@ def test_update_and_restart(vector_connection):
 # def test_upload_debug_logs(vector_connection):
 #     vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse())
 
-# NOTE: Hangs forever (not implemented in webots nor robot yet)
-# def test_check_cloud_connection(vector_connection):
-#     vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
+def test_check_cloud_connection(vector_connection):
+    vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())

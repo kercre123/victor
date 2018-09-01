@@ -55,7 +55,8 @@ class Connection:
     def default_callback(response, response_type):
         print("Default response: {}".format(colored(response.content, "cyan")))
         assert response.status_code == 200, "Received failure status_code: {}".format(response.status_code)
-        print("Converted Protobuf: {}".format(Parse(json.dumps(str(response.content)), response_type, ignore_unknown_fields=True)))
+        Parse(response.content, response_type, ignore_unknown_fields=True)
+        print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
 
     @staticmethod
     def default_stream_callback(response, response_type, iterations=10):
@@ -65,17 +66,20 @@ class Connection:
             data = json.loads(r.decode('utf8'))
             print("Stream response: {}".format(colored(json.dumps(data, indent=4, sort_keys=True), "cyan")))
             assert "result" in data
-            print("Converted Protobuf: {}".format(Parse(json.dumps(data["result"]), response_type, ignore_unknown_fields=True)))
+            Parse(json.dumps(data["result"]), response_type, ignore_unknown_fields=True)
+            print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
             if i == iterations:
                 break
         print("{} of {} iterations".format(i, iterations))
         assert i == iterations, "Stream closed before expected number of iterations"
 
     def send_raw(self, url_suffix, data, response_type, stream=None, callback=None):
+        print()
         if callback is None:
             callback = Connection.default_callback if not stream else Connection.default_stream_callback
         url = "https://{}:{}/{}".format(self.info["ip"], self.port, url_suffix)
-        print(f"{url}")
+        print(f"Sending to {colored(url, 'cyan')} <- {colored(data, 'cyan')}")
+        print("---")
         with self.session.post(url, data, stream=stream is not None, verify=self.info["cert"], headers={'Host': self.info["name"],'Authorization': 'Bearer {}'.format(self.info["guid"])}) as r:
             callback(r, response_type, **{"iterations": stream} if stream is not None else {})
 
