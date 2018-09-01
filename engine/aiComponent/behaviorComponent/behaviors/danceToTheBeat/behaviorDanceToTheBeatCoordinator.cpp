@@ -20,10 +20,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 #include "engine/components/mics/beatDetectorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -87,6 +89,12 @@ void BehaviorDanceToTheBeatCoordinator::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeatCoordinator::WantsToBeActivatedBehavior() const
 {
+  // Do not try to activate this behavior if the backpack has been fiddled with recently, since that is sometimes
+  // interpreted as a rhythmic 'beat' by the BeatDetectorComponent
+  if (RecentBackpackActivity()) {
+    return false;
+  }
+
   // Check if either dancing or listening cooldown is active
   auto& timerManager = GetBEI().GetBehaviorTimerManager();
   const auto& danceTimer = timerManager.GetTimer(BehaviorTimerTypes::DancingCooldown);
@@ -240,6 +248,21 @@ void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening()
                           }
                         }
                       });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDanceToTheBeatCoordinator::RecentBackpackActivity() const
+{
+  // Has the backpack been fiddled with recently enough to mess up beat detection? A cooldown is necessary since the
+  // beat detector can retain its "beat detected" state for some time after the last touch.
+  const float kButtonPressCooldown_sec = 10.f;
+  
+  const auto& touchSensor = GetBEI().GetTouchSensorComponent();
+  const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool recentTouchSensorActivity = touchSensor.GetIsPressed() ||
+                                         touchSensor.GetTouchPressTime() > now_sec - kButtonPressCooldown_sec;
+  
+  return recentTouchSensorActivity;
 }
 
 }

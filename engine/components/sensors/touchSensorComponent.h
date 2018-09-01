@@ -256,7 +256,7 @@ private:
   int _countAboveDetectLevel;
   int _countBelowUndetectLevel;
   
-  // time in seconds of the last touch press
+  // time in seconds of the last touch press (using BaseStationTimer)
   float _touchPressTime;
   
   // counter for press state: number of consecutive
