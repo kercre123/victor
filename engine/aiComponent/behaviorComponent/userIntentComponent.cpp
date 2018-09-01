@@ -76,7 +76,10 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
     const bool willStream = event.GetData().Get_triggerWordDetected().willOpenStream;
     SetTriggerWordPending(willStream);
+
+    HandleTriggerWordEventForDas(event.GetData().Get_triggerWordDetected());
   };
+
   if( robot.GetRobotMessageHandler() != nullptr ) {
     _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
                                                                         triggerWordCallback ) );
@@ -845,6 +848,15 @@ std::vector<std::string> UserIntentComponent::DevGetCloudIntentsList() const
 std::vector<std::string> UserIntentComponent::DevGetAppIntentsList() const
 {
   return _intentMap->DevGetAppIntentsList();
+}
+
+void UserIntentComponent::HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg)
+{
+  DASMSG(wakeword_triggered, "wakeword.triggered", "Wake word was detected");
+  DASMSG_SET(i1, msg.triggerScore, "Score");
+  DASMSG_SET(i2, msg.isButtonPress, "Source (0=Voice, 1=Button)");
+  DASMSG_SET(i3, msg.willOpenStream, "Will stream (0=No, 1=Yes)");
+  DASMSG_SEND();
 }
   
 void UserIntentComponent::SendWebVizIntents()

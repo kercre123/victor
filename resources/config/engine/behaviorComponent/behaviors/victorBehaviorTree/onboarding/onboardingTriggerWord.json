@@ -25,7 +25,5 @@
   // this is the reason there is a separate onboarding trigger word instance. since the parent
   // controls the response to the trigger word, we don't want BehaviorReactToVoiceCommand to 
   // push another response on top of that
-  "pushResponse"            : false,
-
-  "dasType": "TriggerOnly"
+  "pushResponse"            : false
 }

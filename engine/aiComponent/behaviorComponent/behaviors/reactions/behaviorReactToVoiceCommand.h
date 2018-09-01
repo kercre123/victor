@@ -119,9 +119,6 @@ protected:
   // get the "best recent" direction from the mic history
   MicDirectionIndex GetDirectionFromMicHistory() const;
   
-  void UpdateDAS();
-
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Time Helpers
 
@@ -132,15 +129,6 @@ protected:
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  enum class DASType : uint8_t {
-    None=0,
-    TriggerAndStats,
-    TriggerOnly,
-  };
-  
-  static DASType DASTypeFromString(const std::string& str);
-
   struct InstanceConfig
   {
     InstanceConfig();
@@ -182,12 +170,6 @@ private:
     // when this handle's conditions are met, we animate to show the user there was a failure (and possibly
     // trigger an attention transfer)
     RecentOccurrenceTracker::Handle cloudErrorHandle;
-    
-    // for das
-    DASType dasType;
-    std::vector<uint32_t> triggerWordScores;
-    int lastTriggerWordScore;
-    float nextTimeSendDas_s;
 
   } _iVars;
 

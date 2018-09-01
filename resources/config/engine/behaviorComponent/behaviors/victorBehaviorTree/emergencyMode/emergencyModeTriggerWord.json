@@ -30,11 +30,7 @@
       "behaviorOnIntent": "ReactToTriggerDirectionAwake",
       "backpackLights": true,
       "exitAfterListeningIfNotStreaming" : true,
-      "pushResponse": false,
-
-      // TODO:(bn) clean this up. Unfortunately this is used in two places, one would want DAS the other
-      // not.... so for now avoid double sending. VIC-6339
-      "dasType": "None"
+      "pushResponse": false
     }
   ]
 }

@@ -23,9 +23,5 @@
 
   "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
   
-  "exitAfterListeningIfNotStreaming" : true,
-
-  // this instance is always in scope, except for low battery, onboarding, and quiet/shutup modes,
-  // so send trigger events and also accumulate and send DAS events when in scope
-  "dasType": "TriggerAndStats"
+  "exitAfterListeningIfNotStreaming" : true
 }

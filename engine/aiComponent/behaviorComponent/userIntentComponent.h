@@ -48,6 +48,10 @@ namespace ExternalInterface{
 struct AppIntent;
 }
 
+namespace RobotInterface{
+struct TriggerWordDetected;
+}
+
 // helper to avoid .h dependency on userIntent.clad
 const UserIntentSource& GetIntentSource(const UserIntentData& intentData);
 
@@ -239,6 +243,8 @@ private:
   void SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
 
   void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
+
+  void HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg);
 
   static size_t sActivatedIntentID;
 
