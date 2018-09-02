@@ -88,19 +88,20 @@ public:
 private:
 
   bool LoadJdocFile(const external_interface::JdocType jdocTypeKey);
-  void SaveJdocFile(const external_interface::JdocType jdocTypeKey);
-  void UpdatePeriodicFileSaves(const float currTime_s);
+  void SaveJdocFile(const external_interface::JdocType jdocTypeKey,
+                    const int cloudDirtyRemaining_s = 0);
+  void UpdatePeriodicFileSaves(const bool isShuttingDown = false);
 
   bool ConnectToJdocsServer();
   bool SendUdpMessage(const JDocs::DocRequest& msg);
-  void UpdatePeriodicCloudSaves(const float currTime_s);
+  void UpdatePeriodicCloudSaves();
   void UpdateJdocsServerResponses();
   void HandleWriteResponse(const JDocs::WriteRequest& writeRequest, const JDocs::WriteResponse& writeResponse);
   void HandleReadResponse(const JDocs::ReadRequest& readRequest, const JDocs::ReadResponse& readResponse);
   void HandleDeleteResponse(const JDocs::DeleteRequest& deleteRequest, const Void& voidResponse);
   void HandleErrResponse(const JDocs::ErrorResponse& errorResponse);
   void HandleUserResponse(const JDocs::UserResponse& userResponse);
-  void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isNewJdocInCloud);
+  void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud);
   bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc);
 
   external_interface::JdocType JdocTypeFromDocName(const std::string& docName) const;
@@ -112,6 +113,8 @@ private:
   std::string               _userID;
   std::string               _thingID;
   bool                      _gotLatestCloudJdocsAtStartup = false;
+  // We save currTime_s here each tick, because we need it in the destructor, and by then BasetationTimer is gone
+  float                     _currTime_s;
 
   struct JdocInfo
   {
@@ -127,7 +130,6 @@ private:
     bool                      _needsMigration;    // True if this jdoc needs a format version migration at startup
     uint64_t                  _curFormatVersion;  // Current/latest format version this code knows about
 
-    bool                      _savedOnDisk;       // True if we keep a copy on disk
     std::string               _jdocFullPath;      // Full path of file on disk if applicable
     bool                      _diskFileDirty;
     int                       _diskSavePeriod_s;  // Disk save period, or 0 for always save immediately

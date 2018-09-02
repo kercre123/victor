@@ -221,8 +221,6 @@ void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::str
 
 void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  // VIC-5804  TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
-
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   if( _lastTimeAliveUpdated_s + kRobotStats_AliveUpdatePeriod_s <= currTime_s ) {
