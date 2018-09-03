@@ -1667,7 +1667,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
   
   // Check for illumination state
-  if(ShouldProcessVisionMode(VisionMode::DetectingIllumination))
+  if(ShouldProcessVisionMode(VisionMode::DetectingIllumination) &&
+     !ShouldProcessVisionMode(VisionMode::CyclingExposure)) // don't check for illumination if cycling exposure
   {
     Tic("DetectingIllumination");
     lastResult = DetectIllumination(imageCache);
