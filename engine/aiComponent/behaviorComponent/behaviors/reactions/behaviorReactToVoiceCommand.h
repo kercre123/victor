@@ -107,6 +107,7 @@ protected:
   void OnVictorListeningBegin();
   void OnVictorListeningEnd();
 
+  void HandleStreamFailure();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Direction Helpers
@@ -167,9 +168,12 @@ private:
     float _errorTrackingWindow_s = 0.0f;
     int _numErrorsToTriggerAnim = 0;
     RecentOccurrenceTracker cloudErrorTracker;
+    RecentOccurrenceTracker wifiErrorTracker;
     // when this handle's conditions are met, we animate to show the user there was a failure (and possibly
     // trigger an attention transfer)
+    RecentOccurrenceTracker::Handle wifiErrorHandle;
     RecentOccurrenceTracker::Handle cloudErrorHandle;
+
 
   } _iVars;
 

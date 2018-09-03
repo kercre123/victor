@@ -5,7 +5,7 @@
   "associatedActiveFeature": "NoFeature",
   "behaviorStatToIncrement": "ReactedToTriggerWord",
 
-  "notifyOnErrors": {
+  "notifyOnWifiErrors": {
     "recentOccurrence": {
       // trigger error notification immediately
       "numberOfTimes": 1
@@ -14,6 +14,14 @@
     }
   },
   
+  "notifyOnCloudErrors": {
+    "recentOccurrence": {
+      // trigger error notification immediately
+      "numberOfTimes": 2,
+      "amountOfSeconds": 60.0
+    }
+  },
+
   "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
   "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "animListeningGetIn"      : "VC_SleepingToListeningGetIn",
