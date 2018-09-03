@@ -80,6 +80,11 @@ namespace{
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenDancingToTheBeat = {
     BEHAVIOR_ID(ReactToSoundAwake),
   };
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenGoingHome = {
+    BEHAVIOR_ID(DanceToTheBeatCoordinator),
+    BEHAVIOR_ID(ListenForBeats),
+    BEHAVIOR_ID(DanceToTheBeat),
+  };
 }
 
 
@@ -127,6 +132,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   for( const auto& id : kBehaviorIDsToSuppressWhenDancingToTheBeat ) {
     _iConfig.toSuppressWhenDancingToTheBeat.push_back( BC.FindBehaviorByID(id) );
   }
+  for( const auto& id : kBehaviorIDsToSuppressWhenGoingHome ) {
+    _iConfig.toSuppressWhenGoingHome.push_back( BC.FindBehaviorByID(id) );
+  }
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
@@ -172,8 +180,6 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
       _iConfig.driveToFaceBehaviors.push_back( beh );
     }
   }
-
-  _iConfig.dancingToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeatCoordinator));
 }
 
 
@@ -274,7 +280,13 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     if (isGoHomePending) {
       const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
-      _iConfig.dancingToTheBeatBehavior->SetDontActivateThisTick(GetDebugLabel());
+    }
+
+    const bool isGoHomeActive = uic.IsUserIntentActive(USER_INTENT(system_charger));
+    if( isGoHomeActive ) {
+      for( const auto& beh : _iConfig.toSuppressWhenGoingHome ) {
+        beh->SetDontActivateThisTick(GetDebugLabel() + ": going home");
+      }
     }
   }
   

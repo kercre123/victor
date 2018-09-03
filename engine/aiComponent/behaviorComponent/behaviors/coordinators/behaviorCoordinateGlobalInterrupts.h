@@ -76,7 +76,7 @@ private:
     ICozmoBehaviorPtr reactToCliffBehavior;
     std::vector<std::shared_ptr<BehaviorDriveToFace>> driveToFaceBehaviors;
 
-    ICozmoBehaviorPtr dancingToTheBeatBehavior;
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenGoingHome;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
