@@ -27,6 +27,11 @@ message SetConnectionStatus
   ConnectionStatus status
 }
 
+message SendBLEConnectionStatus
+{
+  bool connected,
+}
+
 message SetBLEPin
 {
   uint_32 pin

@@ -264,6 +264,9 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _securePairing->SetHasOwner(_hasCloudOwner);
       _securePairing->BeginPairing();
     });
+
+    // tell engine that we have BLE connection
+    _engineMessagingClient->SendBLEConnectionStatus(true);
   });
   Log::Write("Done OnConnected");
 
@@ -292,6 +295,9 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     }
 
     UpdateAdvertisement(false);
+
+    // tell engine that we lost BLE connection
+    _engineMessagingClient->SendBLEConnectionStatus(false);
 
     DASMSG(ble_connection_status, "ble.disconnection",
             "BLE connection status has changed.");

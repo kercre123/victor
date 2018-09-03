@@ -520,6 +520,11 @@ void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
+void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)
+{
+  // todo
+}
+
 void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg)
 {
   _streamingAnimationModifier->HandleMessage(msg);

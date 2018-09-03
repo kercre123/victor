@@ -773,9 +773,10 @@ union EngineToRobot
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
-  SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
-  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
-  AlterStreamingAnimationAtTime             alterStreamingAnimation   = 0xA2,
+  SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
+  SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
+  AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
+  SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 
