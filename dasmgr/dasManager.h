@@ -57,6 +57,7 @@ private:
   // Runtime state
   std::atomic<TimePoint> _last_flush_time;
   bool _allow_upload = false;
+  bool _purge_backup_files = false;
   bool _exiting = false;
   bool _uploading = false;
   std::string _logFilePath;
@@ -76,8 +77,11 @@ private:
   bool PostToServer(const std::string& pathToLogFile);
   void PostLogsToServer();
   void BackupLogFiles();
+  void PurgeBackupFiles();
+  void EnforceStorageQuota();
 
   std::string ConvertLogEntryToJson(const AndroidLogEntry & logEntry);
+
   // Process a log message
   void ProcessLogEntry(const AndroidLogEntry & logEntry);
 
