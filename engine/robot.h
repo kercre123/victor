@@ -215,6 +215,8 @@ public:
   template<typename T>
   T* GetComponentPtr() {return _components->GetComponentPtr<T>();}
 
+  const std::map<RobotComponentID,Util::Time::DurationStats>& GetComponentUpdateDurations() const { return _compUpdateDurations; }
+  
   inline AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() {return GetComponent<AppCubeConnectionSubscriber>();}
   inline const AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() const {return GetComponent<AppCubeConnectionSubscriber>();}
 
@@ -685,6 +687,7 @@ protected:
   using ComponentPtr = std::unique_ptr<EntityType>;
 
   ComponentPtr _components;
+  std::map<RobotComponentID,Util::Time::DurationStats> _compUpdateDurations;
 
   RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier

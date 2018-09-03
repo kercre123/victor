@@ -18,6 +18,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/signals/simpleSignal_fwd.h"
+
 #include <memory>
 
 namespace Json {
@@ -35,6 +36,9 @@ namespace Util {
   class TransportAddress;
   namespace Stats {
     class StatsAccumulator;
+  }
+  namespace Time {
+    class DurationStats;
   }
 }
 
@@ -54,7 +58,7 @@ public:
 
   virtual void Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context);
 
-  virtual Result ProcessMessages();
+  virtual Result ProcessMessages(std::map<RobotInterface::RobotToEngineTag, Util::Time::DurationStats>& processDurations);
 
   virtual Result SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
 

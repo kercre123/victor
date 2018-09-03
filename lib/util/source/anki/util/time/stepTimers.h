@@ -18,9 +18,11 @@
 #include "util/global/globalDefinitions.h"
 #include <string>
 
-
-// Set this to 1 to test timings in Release mode. Defaults to DEBUG only
-#define ANKI_RUN_STEP_TIMERS 0 // ANKI_DEVELOPER_CODE
+#if defined(ANKI_PROFILING_ENABLED) && ANKI_PROFILING_ENABLED
+#  define ANKI_RUN_STEP_TIMERS 1
+#else
+#  define ANKI_RUN_STEP_TIMERS 0 // ANKI_DEVELOPER_CODE
+#endif
 
 namespace Anki{ namespace Util {
 namespace Time {

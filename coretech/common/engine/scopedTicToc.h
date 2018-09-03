@@ -18,7 +18,7 @@
  **/
 
 #include "util/logging/logging.h"
-#include <chrono>
+#include "util/time/ticToc.h"
 
 // Can be overridden from the command line, otherwise default to on if DEV_CHEATS are enabled
 #ifndef ANKI_ALLOW_SCOPED_TICTOC
@@ -30,19 +30,16 @@
 #endif
 
 namespace Anki {
-  
+
 class ScopedTicToc
 {
 public:
-  using Resolution = std::chrono::milliseconds;
-  using ClockType  = std::chrono::high_resolution_clock;
-  static_assert(ClockType::is_steady, "ClockType should be steady");
   
   ScopedTicToc(const char* name, const char* channel = "ScopedTicToc")
 # if ANKI_ALLOW_SCOPED_TICTOC
   : _name(name)
   , _channel(channel)
-  , _start(ClockType::now())
+  , _start(Util::Time::Tic())
 # endif
   {
     
@@ -52,9 +49,9 @@ public:
   {
     if(ANKI_ALLOW_SCOPED_TICTOC && _enabled)
     {
-      const auto end = ClockType::now();
-      const auto duration = std::chrono::duration_cast<Resolution>(end - _start);
-      PRINT_CH_INFO(_channel, _name, "%dms", (int)duration.count());
+      const auto duration = Util::Time::Toc(_start);
+      PRINT_CH_INFO(_channel, _name, "WallTime:%llums CPUTime:%llums",
+                    duration.wallTime_ms, duration.cpuTime_ms);
     }
   }
   
@@ -66,7 +63,7 @@ private:
   
   const char* _name;
   const char* _channel;
-  std::chrono::time_point<ClockType> _start;
+  Util::Time::TimePoint _start;
 };
-
+  
 } // namespace Anki

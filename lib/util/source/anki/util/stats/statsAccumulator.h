@@ -16,6 +16,7 @@
 
 #include <float.h>
 #include <math.h>
+#include <stdint.h>
 
 namespace Anki {
 namespace Util {
@@ -29,6 +30,7 @@ public:
   }
 
   StatsAccumulator& operator+=(const double v) {
+    lastVal_ = v;
     val_ += v;
     num_ += 1.0;
 
@@ -46,8 +48,18 @@ public:
 
     return *this;
   }
+  
+  // Useful to avoid zero values from affecting statistics. NOTE: "LastVal" will still be zero.
+  void AddIfGTZero(int64_t v) {
+    if(v > 0) {
+      this->operator+=(v);
+    } else {
+      lastVal_ = v; // zero is still the "last value" 
+    }
+  }
 
-  double GetVal() const {return val_;};
+  double GetVal() const {return val_;}; // returns totally accumulated value
+  double GetLastVal() const { return lastVal_; } // returns most recent value added to the accumulator
   double GetMean() const {return ak_;};
   double GetStd() const {return sqrt(qk_/num_) ;}; // running standard deviation formula
   double GetVariance() const {return qk_/num_; };
@@ -63,6 +75,7 @@ public:
   int GetIntMin() const {return (int)round(min_);};
 
   void Clear() {
+    lastVal_ = 0.0;
     val_ = 0.0;
     max_ = -DBL_MAX;
     min_ = DBL_MAX;
@@ -73,7 +86,7 @@ public:
   }
 
 protected:
-  double val_, max_, min_;
+  double val_, lastVal_, max_, min_;
   double num_;
 
   // running std deviation variables

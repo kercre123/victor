@@ -55,6 +55,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/robot/config.h"
 
+#include "util/bitFlags/bitFlags.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
@@ -64,7 +65,6 @@
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
 #include "util/threading/threadPriority.h"
-#include "util/bitFlags/bitFlags.h"
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
@@ -150,7 +150,7 @@ namespace Vector {
     const char * const OpenCvThreadMode = "NumOpenCvThreads";
     const char * const FaceAlbum = "FaceAlbum";
   }
-
+  
   namespace
   {
     // These aren't actually constant, b/c they are loaded from configuration files,
@@ -165,6 +165,8 @@ namespace Vector {
     u16 kInitialExposureTime_ms = 16;
     
     const char* const kDefaultFaceAlbumName = "default";
+    
+    static Util::Time::TimePoint lockStartTime;
   }
 
   VisionComponent::VisionComponent()
@@ -390,12 +392,25 @@ namespace Vector {
 
   void VisionComponent::Lock()
   {
+    auto const tic = Util::Time::Tic();
     _lock.lock();
+    const auto duration = Util::Time::Toc(tic);
+    
+    _captureDurations["WaitingForLock"].AddIfGTZero(duration);
+    
+    lockStartTime = tic;
   }
 
   void VisionComponent::Unlock()
   {
+    auto const tic = Util::Time::Tic();
     _lock.unlock();
+    const auto duration = Util::Time::Toc(tic);
+    
+    _captureDurations["WaitingForUnlock"].AddIfGTZero(duration);
+    
+    const auto timeSpentLocked = Util::Time::Toc(lockStartTime);
+    _captureDurations["TimeSpentLocked"].AddIfGTZero(timeSpentLocked);
   }
 
   Result VisionComponent::EnableMode(VisionMode mode, bool enable)
@@ -476,7 +491,11 @@ namespace Vector {
     if(_bufferedImg.IsEmpty())
     {
       // We don't yet have a next image. Get one from camera.
+      auto const tic = Util::Time::Tic();
       const bool gotImage = CaptureImage(_bufferedImg);
+      const auto duration = Util::Time::Toc(tic);
+      _captureDurations["CaptureImage"].AddIfGTZero(duration);
+      
       _hasStartedCapturingImages = true;
 
       if(gotImage)
@@ -491,8 +510,12 @@ namespace Vector {
         
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
+        
+        auto const tic = Util::Time::Tic();
         Result lastResult = CompressAndSendImage(_bufferedImg, kImageCompressQuality, "camera");
         DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
+        const auto duration = Util::Time::Toc(tic);
+        _captureDurations["CompressAndSend"].AddIfGTZero(duration);
 
         // Track how fast we are receiving frames
         if(_lastReceivedImageTimeStamp_ms > 0) {
@@ -607,8 +630,15 @@ namespace Vector {
             animComponent.DisplayFaceImage(img565, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, false);
           }
         }
-
+#if ANKI_PROFILING_ENABLED
+        auto const tic = Util::Time::Tic();
+#endif
         SetNextImage(_bufferedImg);
+#if ANKI_PROFILING_ENABLED
+        auto const duration = Util::Time::Toc(tic);
+        _captureDurations["SetNextImage"].AddIfGTZero(duration);
+#endif
+        
         ReleaseImage(_bufferedImg);
       } // if(!haveHistStateAtLeastAsNewAsImage)
     } // if(_bufferedImg.IsEmpty())
@@ -1022,13 +1052,29 @@ namespace Vector {
             return;
           }
 
+#if ANKI_PROFILING_ENABLED
+          const auto tic = Util::Time::Tic();
+#endif
           // Call the passed in member handler to look at the result
-          if (RESULT_OK != (this->*handler)(result))
+          const Result handlerResult = (this->*handler)(result);
+          
+#if ANKI_PROFILING_ENABLED
+          const auto duration = Util::Time::Toc(tic);
+          for(VisionMode mode=(VisionMode)0; mode < VisionMode::Count; ++mode)
+          {
+            if(mask & result.modesProcessed.GetBitMask(Util::EnumToUnderlying(mode)))
+            {
+              _updateDurations[mode].AddIfGTZero(duration);
+            }
+          }
+#endif
+          
+          if (RESULT_OK != handlerResult)
           {
             std::string modeStr;
             for(VisionMode mode=(VisionMode)0; mode < VisionMode::Count; ++mode)
             {
-              if(mask & Util::EnumToUnderlying(mode))
+              if(mask & result.modesProcessed.GetBitMask(Util::EnumToUnderlying(mode)))
               {
                 modeStr += " ";
                 modeStr += EnumToString(mode);

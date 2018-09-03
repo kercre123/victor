@@ -21,6 +21,12 @@ namespace Json {
 }
 
 namespace Anki {
+  
+namespace Util {
+namespace Time {
+  class DurationStats;
+}
+}
 
 namespace Vector {
 
@@ -60,7 +66,7 @@ public:
   Result UpdateRobot();
 
   // Update robot connection state
-  Result UpdateRobotConnection();
+  Result UpdateRobotConnection(std::map<RobotInterface::RobotToEngineTag, Util::Time::DurationStats>& procMsgDuration);
 
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
   RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }

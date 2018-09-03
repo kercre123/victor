@@ -37,6 +37,7 @@
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/time/durationStats.h"
 
 #include <thread>
 #include <mutex>
@@ -180,6 +181,14 @@ struct DockingErrorSignal;
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
     Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
 
+    const std::map<VisionMode,Util::Time::DurationStats>& GetUpdateDurations() const {
+      return _updateDurations;
+    }
+    
+    const std::map<std::string,Util::Time::DurationStats>& GetCaptureDurations() const {
+      return _captureDurations;
+    }
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -450,6 +459,8 @@ struct DockingErrorSignal;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
 
+    std::map<VisionMode, Util::Time::DurationStats> _updateDurations;
+    std::map<std::string,Util::Time::DurationStats> _captureDurations;
 
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));

@@ -29,7 +29,14 @@
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
+#include "util/time/durationStats.h"
 #include "util/transport/transportAddress.h"
+
+#if defined(ANKI_PROFILING_ENABLED) && ANKI_PROFILING_ENABLED
+# define ENABLE_MESSAGE_BROADCAST_TIMING 1
+#else
+# define ENABLE_MESSAGE_BROADCAST_TIMING 0
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -54,7 +61,7 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   _isInitialized = true;
 }
 
-Result MessageHandler::ProcessMessages()
+Result MessageHandler::ProcessMessages(std::map<RobotInterface::RobotToEngineTag, Util::Time::DurationStats>& processDurations)
 {
   ANKI_CPU_PROFILE("MessageHandler::ProcessMessages");
   
@@ -105,7 +112,18 @@ Result MessageHandler::ProcessMessages()
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
 #endif
+      
+#if ENABLE_MESSAGE_BROADCAST_TIMING
+      const auto tic = Util::Time::Tic();
+#endif
+
       Broadcast(std::move(message));
+      
+#if ENABLE_MESSAGE_BROADCAST_TIMING
+      const auto duration = Util::Time::Toc(tic);
+      processDurations[msgType].AddIfGTZero(duration);
+#endif
+      
     }
   }
   return RESULT_OK;

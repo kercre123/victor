@@ -26,7 +26,7 @@ public:
     // do nothing
   }
 
-  virtual Result ProcessMessages() override {
+  virtual Result ProcessMessages(std::map<RobotInterface::RobotToEngineTag, int>& processDurations_ms) override {
     return RESULT_OK;
   }
 

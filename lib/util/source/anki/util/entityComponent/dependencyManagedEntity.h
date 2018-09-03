@@ -17,10 +17,18 @@
 #include "util/entityComponent/componentTypeEnumMap.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/logging/logging.h"
+#include "util/time/durationStats.h"
 
 #include <cassert>
+#include <chrono>
 #include <map>
 #include <set>
+
+#if defined(ANKI_PROFILING_ENABLED) && ANKI_PROFILING_ENABLED
+#  define ENABLE_COMPONENT_TIMING 1
+#else
+#  define ENABLE_COMPONENT_TIMING 0
+#endif
 
 namespace Anki {
 
@@ -59,7 +67,7 @@ public:
   void InitComponents(Vector::Robot* robot); //tmp for pass through
 
   // Update all components in their declared dependency order
-  void UpdateComponents();
+  void UpdateComponents(std::map<EnumType,Util::Time::DurationStats>& durations);
 
   template<typename T>
   bool HasComponent() const {
@@ -288,7 +296,7 @@ void DependencyManagedEntity<EnumType>::InitComponents(Vector::Robot* robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename EnumType>
-void DependencyManagedEntity<EnumType>::UpdateComponents()
+void DependencyManagedEntity<EnumType>::UpdateComponents(std::map<EnumType,Util::Time::DurationStats>& updateDurations)
 {
   // Build the cache if necessary
   if(_cachedUpdateOrder.empty()){
@@ -318,7 +326,18 @@ void DependencyManagedEntity<EnumType>::UpdateComponents()
   }
   // Update components;
   for(auto& entry: _cachedUpdateOrder){
+#   if ENABLE_COMPONENT_TIMING
+    const auto tic = Util::Time::Tic();
+#   endif
+    
     entry.first._ptr->UpdateDependent(entry.second);
+    
+#   if ENABLE_COMPONENT_TIMING
+    const auto duration = Util::Time::Toc(tic);
+    EnumType type;
+    entry.first._ptr->GetTypeDependent(type);
+    updateDurations[type].AddIfGTZero( duration );
+#   endif
   }
 }
 

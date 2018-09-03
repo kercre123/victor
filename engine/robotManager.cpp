@@ -182,10 +182,10 @@ Result RobotManager::UpdateRobot()
   return RESULT_OK;
 }
 
-Result RobotManager::UpdateRobotConnection()
+Result RobotManager::UpdateRobotConnection(std::map<RobotInterface::RobotToEngineTag, Util::Time::DurationStats>& procMsgDuration)
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateRobotConnection");
-  return _robotMessageHandler->ProcessMessages();
+  return _robotMessageHandler->ProcessMessages(procMsgDuration);
 }
 
 bool RobotManager::ShouldFilterMessage(const RobotInterface::RobotToEngineTag msgType) const

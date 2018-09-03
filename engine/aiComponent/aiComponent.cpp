@@ -98,7 +98,8 @@ void AIComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depend
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  _aiComponents->UpdateComponents();
+  std::map<AIComponentID, Util::Time::DurationStats> updateDurations;
+  _aiComponents->UpdateComponents(updateDurations);
   CheckForSuddenObstacle(*_robot);
 }
 

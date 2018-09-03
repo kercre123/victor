@@ -248,7 +248,8 @@ void BehaviorComponent::InitDependent(Robot* robot, const AICompMap& dependentCo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::UpdateDependent(const AICompMap& dependentComps)
 {
-  _comps->UpdateComponents();
+  std::map<BCComponentID, Util::Time::DurationStats> updateDurations;
+  _comps->UpdateComponents(updateDurations);
 }
 
 

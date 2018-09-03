@@ -56,6 +56,8 @@
 #include "util/logging/DAS.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
+#include "util/time/stepTimers.h"
+#include "util/time/ticToc.h"
 #include "util/time/universalTime.h"
 #include "util/environment/locale.h"
 #include "util/transport/connectionStats.h"
@@ -198,8 +200,7 @@ static int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbda
 
   return returnCode;
 }
-
-
+  
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
@@ -374,6 +375,42 @@ Result CozmoEngine::Init(const Json::Value& config) {
   return RESULT_OK;
 }
 
+static inline const char* KeyToString(const std::string& str) {
+  return str.c_str();
+}
+
+static inline const char* KeyToString(const RobotComponentID compID) {
+  return GetComponentStringForID(compID).c_str();
+}
+
+static inline const char* KeyToString(const VisionMode mode) {
+  return VisionModeToString(mode);
+}
+  
+static inline const char* KeyToString(const RobotInterface::RobotToEngineTag tag) {
+  return RobotInterface::RobotToEngineTagToString(tag);
+}
+
+template<class KeyType>
+static void LogDurationStats(const std::string& logName, const std::map<KeyType, Util::Time::DurationStats>& durations)
+{
+  for(auto const& durationPair : durations)
+  {
+    // Don't litter the logs with zero-duration messages
+    auto const& durationStats = durationPair.second;
+    if(durationStats.IsLastGTZero())
+    {
+      auto const& cpuStats = durationStats.GetCpuStats();
+      auto const& wallStats = durationStats.GetWallStats();
+      PRINT_NAMED_INFO(("CozmoEngine.Update." + logName).c_str(), "%s took %s [Avg/Max Wall:%.1f/%.1f CPU:%.1f/%.1f]",
+                       KeyToString(durationPair.first),
+                       durationStats.GetLast().ToString().c_str(),
+                       wallStats.GetMean(), wallStats.GetMax(),
+                       cpuStats.GetMean(), cpuStats.GetMax());
+    }
+  }
+}
+  
 Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 {
   ANKI_CPU_PROFILE("CozmoEngine::Update");
@@ -404,7 +441,31 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  auto const startTic = Util::Time::Tic();
+  static std::map<std::string, Util::Time::DurationStats> otherDurations;
+  Util::Time::TimePoint tic;
+  const size_t kFirstTimingTick = 100;
+  const bool pastFirstTimingTick = (BaseStationTimer::getInstance()->GetTickCount() > kFirstTimingTick);
+  
+  // Tic/Toc helpers to check pastFirstTimingTick and keep code neater below
+  auto TicIfEnabled = [&tic, pastFirstTimingTick]() {
+    if(pastFirstTimingTick) {
+      tic = Util::Time::Tic();
+    }
+  };
+  auto TocIfEnabled = [&tic,pastFirstTimingTick](const char* str, std::map<std::string, Util::Time::DurationStats>& durations) {
+    if(pastFirstTimingTick) {
+      durations[str].AddIfGTZero(Util::Time::Toc(tic));
+    }
+  };
+#else
+  // Tic/Toc no-ops if not enabled
+  auto TicIfEnabled = []() { return; }
+  auto TocIfEnabled = [](const char* str, std::map<std::string, Util::Time::DurationStats>& durations) {
+    return;
+  };
 #endif
+  
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   {
     static bool firstUpdate = true;
@@ -423,13 +484,16 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     firstUpdate = false;
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+  
 
   _uiMsgHandler->ResetMessageCounts();
   _protoMsgHandler->ResetMessageCounts();
   _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
   _context->GetVizManager()->ResetMessageCount();
-
+  
+  TicIfEnabled();
   _context->GetWebService()->Update();
+  TocIfEnabled("WebServiceUpdate", otherDurations);
 
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
@@ -458,21 +522,26 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     robot->GetMoveComponent().AllowExternalMovementCommands(hasUiConnection, "ui");
     _updateMoveComponent = false;
   }
-  
+
+  TicIfEnabled();
   Result lastResult = _uiMsgHandler->Update();
+  TocIfEnabled("UiMsgHandlerUpdate", otherDurations);
   if (RESULT_OK != lastResult)
   {
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating UIMessageHandler");
     return lastResult;
   }
 
+  TicIfEnabled();
   lastResult = _protoMsgHandler->Update();
+  TocIfEnabled("ProtoMsgHandlerUpdate", otherDurations);
   if (RESULT_OK != lastResult)
   {
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Error updating ProtoMessageHandler");
     return lastResult;
   }
 
+  std::map<RobotInterface::RobotToEngineTag, Util::Time::DurationStats> broadcastRobotMsgDuration;
   switch (_engineState)
   {
     case EngineState::Stopped:
@@ -521,7 +590,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       // Update OSState
       OSState::getInstance()->Update();
 
-      Result result = _context->GetRobotManager()->UpdateRobotConnection();
+      TicIfEnabled();
+      Result result = _context->GetRobotManager()->UpdateRobotConnection(broadcastRobotMsgDuration);
+      TocIfEnabled("UpdateRobotConnection", otherDurations);
       if (RESULT_OK != result) {
         LOG_ERROR("CozmoEngine.Update.Running", "Unable to update robot connection (result %d)", result);
         return result;
@@ -529,14 +600,18 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
+      TicIfEnabled();
       result = _context->GetRobotManager()->UpdateRobot();
+      TocIfEnabled("UpdateRobot", otherDurations);
       if(result != RESULT_OK)
       {
         LOG_WARNING("CozmoEngine.Update.UpdateRobotFailed", "Update robot failed with %d", result);
         return result;
       }
 
+      TicIfEnabled();
       UpdateLatencyInfo();
+      TocIfEnabled("UpdateLatencyInfo", otherDurations);
       break;
     }
     default:
@@ -548,12 +623,30 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
     const double maxUpdateDuration = BS_TIME_STEP_MS;
+    otherDurations["TotalUpdate"].AddIfGTZero(Util::Time::Toc(startTic));
     if (updateLengthMs > maxUpdateDuration)
     {
       static const std::string targetMs = std::to_string(BS_TIME_STEP_MS);
       Anki::Util::sInfoF("cozmo_engine.update.run.slow",
                          {{DDATA, targetMs.c_str()}},
                          "%.2f", updateLengthMs);
+      
+      if(EngineState::Running == _engineState)
+      {
+        // Display timings for each robot component
+        const Robot* robot = _context->GetRobotManager()->GetRobot();
+        LogDurationStats("RobotComponentUpdateDuration", robot->GetComponentUpdateDurations());
+        
+        // Display vision timings
+        LogDurationStats("VisionUpdateDuration", robot->GetVisionComponent().GetUpdateDurations());
+        LogDurationStats("VisionCaptureDuration", robot->GetVisionComponent().GetCaptureDurations());
+        
+        // Display timings for each robot message processed
+        LogDurationStats("ProcessMessageDuration", broadcastRobotMsgDuration);
+        
+        // Display "other" timers for CozmoEngine::Update()
+        LogDurationStats("LocalTimings", otherDurations);
+      }
     }
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS

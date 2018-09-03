@@ -1339,7 +1339,8 @@ Result Robot::Update()
 
   GetContext()->GetVizManager()->SendStartRobotUpdate();
 
-  _components->UpdateComponents();
+
+  _components->UpdateComponents(_compUpdateDurations);
   
   // If anything in updating block world caused a localization update, notify
   // the physical robot now:
