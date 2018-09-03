@@ -25,6 +25,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -62,7 +63,7 @@ namespace {
   static const char* kWebVizModuleNameSleeping = "sleeping";
 }
 
-#define CONSOLE_GROUP "Sleeping"
+#define CONSOLE_GROUP "Sleeping.SleepCycle"
 
 CONSOLE_VAR(f32, kSleepCycle_DeepSleep_PersonCheckInterval_s, CONSOLE_GROUP, 4 * 60.0f * 60.0f);
 CONSOLE_VAR(f32, kSleepCycle_LightSleep_PersonCheckInterval_s, CONSOLE_GROUP, 1 * 60.0f * 60.0f);
@@ -333,6 +334,10 @@ void BehaviorSleepCycle::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::OnBehaviorDeactivated()
 {
+  if( _dVars.isMuted ) {
+    MuteForPersonCheck(false);
+  }
+
   // if we were asleep, and being canceled by something above, play emergency get out (it is disabled in the
   // sleeping behavior itself)
   switch( _dVars.currState ) {
@@ -785,20 +790,28 @@ void BehaviorSleepCycle::TransitionToCheckingForPerson()
 
   _dVars.personCheckStartTimestamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
 
-  if( _iConfig.personCheckBehavior->WantsToBeActivated() ) {
-    DelegateIfInControl( _iConfig.personCheckBehavior.get(), &BehaviorSleepCycle::RespondToPersonCheck );
-  }
-  else {
-    PRINT_NAMED_WARNING("BehaviorSleepCycle.PersonCheck.BehaviorWontActivate",
-                        "Behavior '%s' doesnt want to activate",
-                        _iConfig.personCheckBehavior->GetDebugLabel().c_str());
-    RespondToPersonCheck();
-  }
+  // Mute audio and lock the lift so that the person check is as quiet as possible
+  MuteForPersonCheck(true);
+
+  DelegateIfInControl( new TriggerAnimationAction(AnimationTrigger::WakeupGetout), [this]() {
+      if( _iConfig.personCheckBehavior->WantsToBeActivated() ) {
+        DelegateIfInControl( _iConfig.personCheckBehavior.get(), &BehaviorSleepCycle::RespondToPersonCheck );
+      }
+      else {
+        PRINT_NAMED_WARNING("BehaviorSleepCycle.PersonCheck.BehaviorWontActivate",
+                            "Behavior '%s' doesnt want to activate",
+                            _iConfig.personCheckBehavior->GetDebugLabel().c_str());
+        RespondToPersonCheck();
+      }
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::RespondToPersonCheck()
 {
+  // undo mute / track locking for sleep
+  MuteForPersonCheck(false);
+
   // if there's a face, time to wake up
   const bool onlyRecognizable = true;
   if( GetBEI().GetFaceWorld().HasAnyFaces(_dVars.personCheckStartTimestamp, onlyRecognizable) ) {
@@ -905,6 +918,8 @@ void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
 void BehaviorSleepCycle::TransitionToSayingGoodnight()
 {
   SetState(SleepStateID::PreSleepAnimation);
+
+  GetBEI().GetMoodManager().TriggerEmotionEvent("RespondToGoodNight");
 
   if( IsControlDelegated() ) {
     CancelDelegates(false);
@@ -1027,14 +1042,45 @@ bool BehaviorSleepCycle::ShouldReactToSoundInState(const SleepStateID& state)
     case SleepStateID::Comatose:
     case SleepStateID::EmergencySleep:
     case SleepStateID::DeepSleep:
+    case SleepStateID::CheckingForPerson:
       return false;
 
     case SleepStateID::LightSleep:
-    case SleepStateID::CheckingForPerson:
       return true;
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSleepCycle::MuteForPersonCheck( bool mute )
+{
+  if( _dVars.isMuted != mute ) {
+
+    if( mute ) {
+      // lock the lift track because the robot likes to slam it around in a noisy way in some animations
+      SmartLockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK), GetDebugLabel(), GetDebugLabel());
+    }
+    else {
+      SmartUnLockTracks(GetDebugLabel());
+    }
+
+    SetAudioActive(!mute);
+
+    _dVars.isMuted = mute;
+
+    PRINT_CH_INFO("Behaviors", "BeahviorSleepCycle", "Setting mute: %d", mute);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// NOTE:(bn) this code is copied from BehaviorQuietModeCoordinator. Decided against sharing it somewhere
+// common for now because this is not a pattern I want to encourage
+void BehaviorSleepCycle::SetAudioActive( bool active )
+{
+  using GE = AudioMetaData::GameEvent::GenericEvent;
+  using GO = AudioMetaData::GameObjectType;
+  const auto event = active ? GE::Play__Robot_Vic_Scene__Quiet_Off : GE::Play__Robot_Vic_Scene__Quiet_On;
+  GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::PopulateWebVizJson(Json::Value& data) const

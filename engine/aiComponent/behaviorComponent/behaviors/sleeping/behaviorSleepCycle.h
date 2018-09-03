@@ -92,6 +92,10 @@ private:
 
   void PopulateWebVizJson(Json::Value& data) const;
 
+  void MuteForPersonCheck( bool mute );
+
+  void SetAudioActive( bool active );
+
   struct InstanceConfig {
     std::string awakeDelegateName;
     std::string findChargerBehaviorName;
@@ -127,6 +131,7 @@ private:
 
     SleepReactionType reactionState = SleepReactionType::NotReacting;
     bool wasOnChargerContacts = false;
+    bool isMuted = false;
 
 #if ANKI_DEV_CHEATS
     WakeReason lastWakeReason = WakeReason::Invalid;

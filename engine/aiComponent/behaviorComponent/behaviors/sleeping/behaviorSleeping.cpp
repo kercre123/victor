@@ -25,10 +25,10 @@ namespace Vector {
 
 namespace {
 
-#define CONSOLE_GROUP "Sleeping"
+#define CONSOLE_GROUP "Sleeping.Behavior"
 
-CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_min_s, CONSOLE_GROUP, 20.0f, 0.0f, 7200.0f);
-CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_max_s, CONSOLE_GROUP, 40.0f, 0.0f, 7200.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_min_s, CONSOLE_GROUP, 2700.0f, 0.0f, 7200.0f);
+CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_max_s, CONSOLE_GROUP, 5400.0f, 0.0f, 7200.0f);
 
 CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_min_s, CONSOLE_GROUP, 1.5f, 0.0f, 30.0f);
 CONSOLE_VAR_RANGED(f32, kSleepingBoutSpacing_max_s, CONSOLE_GROUP, 5.0f, 0.0f, 7200.0f);

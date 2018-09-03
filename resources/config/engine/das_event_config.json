@@ -6,7 +6,6 @@
     "ObservingIdleWithHeadLookingStraight",
     "ObservingIdleWithHeadLookingUp",
     "ObservingLookStraight",
-    "ObservingLookUp",
-    "GoToSleepSleeping"
+    "ObservingLookUp"
   ]
 }
