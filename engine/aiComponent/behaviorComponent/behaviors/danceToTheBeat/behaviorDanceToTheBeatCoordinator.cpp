@@ -259,8 +259,14 @@ bool BehaviorDanceToTheBeatCoordinator::RecentBackpackActivity() const
   
   const auto& touchSensor = GetBEI().GetTouchSensorComponent();
   const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  float touchTime = touchSensor.GetTouchPressTime();
+  // time defaults to FLT_MAX if never touched, so set this to zero in that case (shouldn't be in the future...)
+  if( touchTime > now_sec + kButtonPressCooldown_sec ) {
+    touchTime = 0.0f;
+  }
+
   const bool recentTouchSensorActivity = touchSensor.GetIsPressed() ||
-                                         touchSensor.GetTouchPressTime() > now_sec - kButtonPressCooldown_sec;
+                                         touchTime > now_sec - kButtonPressCooldown_sec;
   
   return recentTouchSensorActivity;
 }
