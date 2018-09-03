@@ -684,10 +684,11 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
       active[kStat_Cpu0] || active[kStat_Cpu1] ||
       active[kStat_Cpu2] || active[kStat_Cpu3]) {
     // CPU time stats
-    stat_cpuStat = osState->GetCPUTimeStats();
+    osState->GetCPUTimeStats(stat_cpuStat);
   }
-  else {
-    static const size_t kNumCPUTimeStats = 5;
+
+  static constexpr size_t kNumCPUTimeStats = 5;
+  if (stat_cpuStat.size() < kNumCPUTimeStats) {
     stat_cpuStat.resize(kNumCPUTimeStats);
   }
 
@@ -984,7 +985,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
-  
+
   _dispatchQueue = Util::Dispatch::Create("WebsocketSender");
 }
 

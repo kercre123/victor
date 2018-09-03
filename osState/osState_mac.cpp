@@ -65,7 +65,9 @@ namespace {
   uint32_t _memTotal_kB;      // Total memory in kB
   uint32_t _memFree_kB;       // Free memory in kB
   uint32_t _memAvailable_kB;  // Available memory in kB
+
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
+  std::mutex _CPUTimeStatsMutex;          // CPU time stats mutex
 
   // How often state variables are updated
   uint32_t _updatePeriod_ms = 0;
@@ -137,9 +139,14 @@ void OSState::Update()
       Json::Value json;
       json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
       auto& usage = json["usage"];
-      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
-        usage.append( _CPUTimeStats[i] );
+
+      {
+        std::lock_guard<std::mutex> lock(_CPUTimeStatsMutex);
+        for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+          usage.append( _CPUTimeStats[i] );
+        }
       }
+
       _webServiceCallback(json);
 
       _lastWebvizUpdateTime_ms = now_ms;
@@ -230,7 +237,7 @@ void OSState::UpdateMemoryInfo() const
   {
     _memFree_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
   }
-  
+
   // TODO: differentiate available and free
   _memAvailable_kB = _memFree_kB;
 }
@@ -252,6 +259,7 @@ void OSState::UpdateCPUTimeStats() const
 
   kern_return_t kerr = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numCPUsU, &cpuInfo, &numCpuInfo);
   if (kerr == KERN_SUCCESS) {
+    std::lock_guard<std::mutex> lock(_CPUTimeStatsMutex);
     integer_t total[CPU_STATE_MAX] = {0};
 
     _CPUTimeStats.resize(numCPUs+1);
@@ -305,7 +313,7 @@ const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
 }
-  
+
 void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental) const
 {
   // always the latest for the purposes of testing
@@ -380,12 +388,15 @@ uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB)
   return _memTotal_kB;
 }
 
-const std::vector<std::string>& OSState::GetCPUTimeStats() const
+void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
 {
   if (_updatePeriod_ms == 0) {
     UpdateCPUTimeStats();
   }
-  return _CPUTimeStats;
+  {
+    std::lock_guard<std::mutex> lock(_CPUTimeStatsMutex);
+    stats = _CPUTimeStats;
+  }
 }
 
 const std::string& OSState::GetRobotName() const
