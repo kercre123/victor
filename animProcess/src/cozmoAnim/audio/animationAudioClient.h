@@ -30,6 +30,7 @@ class RandomGenerator;
 }
 namespace Vector {
 class RobotAudioKeyFrame;
+class TextToSpeechComponent;
 
 namespace Audio {
 class CozmoAudioController;
@@ -45,31 +46,35 @@ public:
 
   ~AnimationAudioClient();
 
+  inline void SetTextToSpeechComponent(TextToSpeechComponent* ttsComponent)
+  {
+    _ttsComponent = ttsComponent;
+  }
+
   // Prepare to start animation
   void InitAnimation();
-  
+
   // Perform functionality for frame
   void PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen );
-  
+
   // Perform abort animation audio event
   void AbortAnimation();
-  
+
   // Check if there is an event being performed
   bool HasActiveEvents() const;
-  
 
 private:
-  
   CozmoAudioController*                 _audioController = nullptr;
+  TextToSpeechComponent*                _ttsComponent = nullptr;
   std::set<AudioEngine::AudioPlayingId> _activeEvents;
   mutable std::mutex                    _lock;
-  
+
   // Key frame types
   void HandleAudioRef( const AudioKeyFrameType::AudioEventGroupRef& eventRef, Util::RandomGenerator* randomGen = nullptr );
   void HandleAudioRef( const AudioKeyFrameType::AudioStateRef& stateRef );
   void HandleAudioRef( const AudioKeyFrameType::AudioSwitchRef& switchRef );
   void HandleAudioRef( const AudioKeyFrameType::AudioParameterRef& parameterRef );
-  
+
   // Perform an event
   AudioEngine::AudioPlayingId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
                                               AudioMetaData::GameObjectType gameObject );
@@ -78,10 +83,10 @@ private:
   bool SetCozmoEventParameter( AudioEngine::AudioPlayingId playId,
                                AudioMetaData::GameParameter::ParameterType parameter,
                                AudioEngine::AudioRTPCValue value ) const;
-  
+
   // Perform Event callback, used by "PostCozmoEvent()"
-  void CozmoEventCallback( const AudioEngine::AudioCallbackInfo& callbackInfo );
-  
+  void CozmoEventCallback(const uint8_t ttsID, const AudioEngine::AudioCallbackInfo& callbackInfo);
+
   // Track current playing events
   void AddActiveEvent( AudioEngine::AudioPlayingId playId );
   void RemoveActiveEvent( AudioEngine::AudioPlayingId playId );

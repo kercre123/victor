@@ -751,5 +751,16 @@ void TextToSpeechComponent::SetLocale(const std::string & locale)
   Util::Dispatch::Async(_dispatchQueue, task);
 
 }
+
+void TextToSpeechComponent::OnAudioComplete(const TTSID_t ttsID)
+{
+  LOG_DEBUG("TextToSpeechComponent.OnAudioComplete", "ttsID %d complete", ttsID);
+}
+
+void TextToSpeechComponent::OnAudioError(const TTSID_t ttsID)
+{
+  LOG_DEBUG("TextToSpeechComponent.OnAudioError", "ttsID %d error", ttsID);
+}
+
 } // end namespace Vector
 } // end namespace Anki

@@ -119,9 +119,9 @@ Result AnimEngine::Init()
   _context->GetMicDataSystem()->Init(*dataLoader);
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
-  _animationStreamer->Init();
+  _animationStreamer->Init(_ttsComponent.get());
   _backpackLightComponent->Init();
-  
+
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
@@ -132,7 +132,7 @@ Result AnimEngine::Init()
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput, _ttsComponent.get());
 
-  // set up audio stream state manager 
+  // set up audio stream state manager
   {
     _context->GetShowAudioStreamStateManager()->SetAnimationStreamer(_animationStreamer.get());
   }
@@ -146,7 +146,7 @@ Result AnimEngine::Init()
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
 
-  
+
   // Make sure OpenCV isn't threading
   Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );
   if( RESULT_OK != cvResult )
