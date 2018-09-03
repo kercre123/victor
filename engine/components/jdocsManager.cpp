@@ -66,23 +66,15 @@ namespace
 
   void DebugDeleteSelectedJdocInCloud(ConsoleFunctionContextRef context)
   {
-    std::string userID, thing;
-    s_JdocsManager->GetUserAndThingIDs(userID, thing);
-    const auto& docName = s_JdocsManager->GetJdocName(static_cast<external_interface::JdocType>(kJdocType));
-    const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{userID, thing, docName});
-    s_JdocsManager->SendJdocsRequest(deleteReq);
+    s_JdocsManager->DeleteJdocInCloud(static_cast<external_interface::JdocType>(kJdocType));
   }
   CONSOLE_FUNC(DebugDeleteSelectedJdocInCloud, kConsoleGroup);
 
   void DebugDeleteAllJdocsInCloud(ConsoleFunctionContextRef context)
   {
-    std::string userID, thing;
-    s_JdocsManager->GetUserAndThingIDs(userID, thing);
     for (int i = 0; i < external_interface::JdocType_ARRAYSIZE; i++)
     {
-      const auto& docName = s_JdocsManager->GetJdocName(static_cast<external_interface::JdocType>(i));
-      const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{userID, thing, docName});
-      s_JdocsManager->SendJdocsRequest(deleteReq);
+      s_JdocsManager->DeleteJdocInCloud(static_cast<external_interface::JdocType>(i));
     }
   }
   CONSOLE_FUNC(DebugDeleteAllJdocsInCloud, kConsoleGroup);
@@ -132,11 +124,6 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "JdocsManager.InitDependent.DataPlatformIsNull");
-
-  auto *osstate = OSState::getInstance();
-  _thingID = "vic:" + osstate->GetSerialNumberAsString();
-  std::transform(_thingID.begin(), _thingID.end(), _thingID.begin(), ::tolower);
-  LOG_INFO("JdocsManager.InitDependent", "Thing ID is %s", _thingID.c_str());
 
   _savePath = _platform->pathToResource(Util::Data::Scope::Persistent, kJdocsManagerFolder);
   if (!Util::FileUtils::CreateDirectory(_savePath))
@@ -244,10 +231,11 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::GetUserAndThingIDs(std::string& userID, std::string& thingID) const
+void JdocsManager::DeleteJdocInCloud(const external_interface::JdocType jdocTypeKey)
 {
-  userID  = _userID;
-  thingID = _thingID;
+  const auto& docName = s_JdocsManager->GetJdocName(jdocTypeKey);
+  const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{_userID, _thingID, docName});
+  s_JdocsManager->SendJdocsRequest(deleteReq);
 }
 
 
@@ -861,6 +849,12 @@ void JdocsManager::UpdateJdocsServerResponses()
       }
       break;
 
+      case JDocs::DocResponseTag::thing:
+      {
+        HandleThingResponse(response.Get_thing());
+      }
+      break;
+
       default:
       {
         LOG_INFO("JdocsManager.UpdateJdocsServerResponses.UnexpectedSignal",
@@ -1155,7 +1149,26 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   LOG_INFO("JdocsManager.HandleUserResponse", "Received user response from jdocs server, with userID: '%s'",
             _userID.c_str());
 
-  // Now ask the jdocs server to get the latest versions it has of each of these jdocs
+  // Now send a request to the jdocs server for the thingID
+  const auto thingReq = JDocs::DocRequest::Creatething(Void{});
+  SendJdocsRequest(thingReq);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::HandleThingResponse(const JDocs::ThingResponse& thingResponse)
+{
+  _thingID = thingResponse.thingName;
+  if (_thingID.empty())
+  {
+    LOG_ERROR("JdocsManager.HandleThingResponse.Error", "Received thing response from jdocs server, but thingID is empty");
+    return;
+  }
+
+  LOG_INFO("JdocsManager.HandleThingResponse", "Received thing response from jdocs server, with thingID: '%s'",
+           _thingID.c_str());
+
+  // Now ask the jdocs server to get the latest versions it has of each of the jdocs
   std::vector<JDocs::ReadItem> itemsToRequest;
   for (const auto& jdoc : _jdocs)
   {
@@ -1166,7 +1179,7 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   SendJdocsRequest(readReq);
 
   // Finally, if there are any jdoc operations waiting to be sent,
-  // send them now, and for each one, fill in the missing userID
+  // send them now, and for each one, fill in the missing userID and thingID
   while (!_unsentDocRequestQueue.empty())
   {
     auto unsentRequest = _unsentDocRequestQueue.front();
@@ -1176,18 +1189,21 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
     {
       auto readReq = unsentRequest.Get_read();
       readReq.account = _userID;
+      readReq.thing = _thingID;
       unsentRequest.Set_read(readReq);
     }
     else if (unsentRequest.GetTag() == JDocs::DocRequestTag::write)
     {
       auto writeReq = unsentRequest.Get_write();
       writeReq.account = _userID;
+      writeReq.thing = _thingID;
       unsentRequest.Set_write(writeReq);
     }
     else if (unsentRequest.GetTag() == JDocs::DocRequestTag::deleteReq)
     {
       auto deleteReq = unsentRequest.Get_deleteReq();
       deleteReq.account = _userID;
+      deleteReq.thing = _thingID;
       unsentRequest.Set_deleteReq(deleteReq);
     }
 

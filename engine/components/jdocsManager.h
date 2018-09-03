@@ -73,9 +73,11 @@ public:
   bool                ClearJdocBody(const external_interface::JdocType jdocTypeKey);
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
-  void GetUserAndThingIDs(std::string& userID, std::string& thingID) const;
+
+  // For testing and development:
   void DebugFakeUserLogOut();
   void DebugCheckForUser();
+  void DeleteJdocInCloud(const external_interface::JdocType jdocTypeKey);
 
   using OverwriteNotificationCallback = std::function<void(void)>;
   void RegisterOverwriteNotificationCallback(const external_interface::JdocType jdocTypeKey,
@@ -101,6 +103,7 @@ private:
   void HandleDeleteResponse(const JDocs::DeleteRequest& deleteRequest, const Void& voidResponse);
   void HandleErrResponse(const JDocs::ErrorResponse& errorResponse);
   void HandleUserResponse(const JDocs::UserResponse& userResponse);
+  void HandleThingResponse(const JDocs::ThingResponse& thingResponse);
   void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud);
   bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc);
 
