@@ -823,6 +823,11 @@ func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.Behav
 }
 
 func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) {
+    if disableStreams {
+		// Disabled for Vector 1.0 release
+		return
+	}
+
 	defer close(done)
 	defer engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ControlRelease{
@@ -881,6 +886,11 @@ func (service *rpcService) BehaviorControlKeepAlive(responses chan extint.Behavi
 
 // TODO: name this better
 func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) error {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return grpc.Errorf(codes.Unimplemented, "BehaviorControlResponseHandler disabled in message_handler.go")
+	}
+
 	for {
 		select {
 		case <-done:
@@ -902,6 +912,11 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 }
 
 func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")
+    }
+
 	log.Println("Received rpc request BehaviorControl")
 
 	done := make(chan struct{})
@@ -918,6 +933,11 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 }
 
 func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return grpc.Errorf(codes.Unimplemented, "AssumeBehaviorControl disabled in message_handler.go")
+	}
+
 	done := make(chan struct{})
 	responses := make(chan extint.BehaviorControlResponse)
 
@@ -941,6 +961,11 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 }
 
 func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResponse, error) {
+	if disableStreams {
+		// Disable for Vector 1.0 release
+		return nil, grpc.Errorf(codes.Unimplemented, "DriveOffCharger disabled in message_handler.go")
+    }
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOffChargerResponse{}, 1)
 	defer f()
 
@@ -964,6 +989,11 @@ func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.Drive
 }
 
 func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnChargerRequest) (*extint.DriveOnChargerResponse, error) {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return nil, grpc.Errorf(codes.Unimplemented, "DriveOnCharger disabled in message_handler.go")
+    }
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOnChargerResponse{}, 1)
 	defer f()
 
@@ -1755,6 +1785,10 @@ func ImageSendModeRequest(mode extint.ImageRequest_ImageSendMode) error {
 
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return grpc.Errorf(codes.Unimplemented, "CameraFeed disabled in message_handler.go")
+	}
 
 	// Enable video stream
 	err := ImageSendModeRequest(extint.ImageRequest_STREAM)
