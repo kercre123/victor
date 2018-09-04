@@ -45,12 +45,14 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
 
 private:
   
   void MoveHeadUp();
   void RunLoopAction();
   void MoveHeadDown();
+  bool DisplayURLScreen();
 
   struct InstanceConfig {
     InstanceConfig();
@@ -60,6 +62,10 @@ private:
     DynamicVariables();
     bool hasRun;
     bool receivedMessage;
+    struct Persistent {
+      bool hasBLEClient;
+    };
+    Persistent persistent;
   };
 
   InstanceConfig _iConfig;
