@@ -8,7 +8,9 @@ import (
 	"clad/cloud"
 	"crypto/tls"
 	"errors"
-	"net"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gwatts/rootcerts"
 
@@ -17,30 +19,51 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
+const (
+	HeadRequestTimeout = 8 * time.Second
+)
+
 func (strm *Streamer) connect() error {
 	if strm.opts.checkOpts != nil {
 		// for connection check, first try the OTA CDN with no tls
-		conn, err := net.Dial("tcp", config.Env.OTA)
-		if err != nil {
-			log.Println("Error dialing CDN server:", err)
+		otaBase := strings.Split(config.Env.OTA, ":")[0]
+		// construct a HTTP URL from OTA address (something like `ota-cdn.anki.com:443`)
+		otaURL := "http://" + otaBase
+		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
+			log.Println("Error creating CDN server http head request:", err)
 			strm.receiver.OnError(cloud.ErrorType_Connectivity, err)
 			return err
+		} else if resp, err := http.DefaultClient.Do(req.WithContext(strm.ctx)); err != nil {
+			log.Println("Error requesting head of CDN server:", err)
+			strm.receiver.OnError(cloud.ErrorType_Connectivity, err)
+			return err
+		} else {
+			resp.Body.Close()
+			log.Println("Successfully dialed CDN")
 		}
-		conn.Close()
-		log.Println("Successfully dialed CDN")
 
 		// for connection check, next try a simple https connection to our OTA CDN
-		conf := &tls.Config{
-			RootCAs: rootcerts.ServerCertPool(),
+		httpsClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: rootcerts.ServerCertPool(),
+				},
+			},
 		}
-		conn, err = tls.Dial("tcp", config.Env.OTA, conf)
-		if err != nil {
-			log.Println("Error dialing CDN server over tls:", err)
+		// construct a HTTPS URL from OTA address (something like `ota-cdn.anki.com:443`)
+		otaURL = "https://" + otaBase
+		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
+			log.Println("Error creating CDN server https head request:", err)
 			strm.receiver.OnError(cloud.ErrorType_TLS, err)
 			return err
+		} else if resp, err := httpsClient.Do(req.WithContext(strm.ctx)); err != nil {
+			log.Println("Error requesting head of CDN server over https:", err)
+			strm.receiver.OnError(cloud.ErrorType_TLS, err)
+			return err
+		} else {
+			resp.Body.Close()
+			log.Println("Successfully dialed CDN over https")
 		}
-		conn.Close()
-		log.Println("Successfully dialed CDN over tls")
 	}
 
 	var creds credentials.PerRPCCredentials
