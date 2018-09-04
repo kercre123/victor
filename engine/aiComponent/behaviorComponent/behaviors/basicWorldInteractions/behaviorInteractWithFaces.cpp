@@ -309,7 +309,8 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction()
   {
     TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, true);
     turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
-    turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
+    // TODO VIC-6435 uncomment this once we've removed turn from animation
+    //turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
     turnAndAnimateAction->SetRequireFaceConfirmation(true);
     action->AddAction(turnAndAnimateAction);
   }
