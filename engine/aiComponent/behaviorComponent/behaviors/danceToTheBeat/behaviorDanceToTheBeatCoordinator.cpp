@@ -42,6 +42,10 @@ namespace {
   #define CONSOLE_GROUP "BehaviorDanceToTheBeatCoordinator"
   CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
   CONSOLE_VAR_RANGED(f32, kListeningCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
+  
+  // The minimum time allowed between dancing and activation of this behavior (always enforced - even if a strong beat
+  // is detected)
+  CONSOLE_VAR_RANGED(f32, kMinIntraDancingPeriod_sec, CONSOLE_GROUP, 10.f, 0.0f, 3600.0f);
 }
   
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator", "BehaviorDanceToTheBeatCoordinator.%s", __func__);
@@ -103,6 +107,12 @@ bool BehaviorDanceToTheBeatCoordinator::WantsToBeActivatedBehavior() const
   bool timersExpired = (danceTimer.HasCooldownExpired(kDancingCooldown_sec) &&
                         listeningTimer.HasCooldownExpired(kListeningCooldown_sec));
 
+  // Has the minimum intra-dancing time been observed? If not, do not activate, even if a strong beat is detected.
+  const bool minIntraDanceTimeExceeded = danceTimer.HasCooldownExpired(kMinIntraDancingPeriod_sec);
+  if (!minIntraDanceTimeExceeded) {
+    return false;
+  }
+  
   // Override cooldowns if a 'strong' beat is detected
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
   const bool strongBeatDetected = beatDetector.IsBeatDetected();
