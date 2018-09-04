@@ -38,6 +38,8 @@
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
 
+#include "util/logging/DAS.h"
+
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorGoHome", "BehaviorGoHome.%s", __func__);
 
 namespace Anki {
@@ -235,6 +237,13 @@ void BehaviorGoHome::OnBehaviorActivated()
 void BehaviorGoHome::OnBehaviorDeactivated()
 {
   PopDrivingAnims();
+  
+  // If we had a clear success or failure, log it here
+  if (_dVars.HasResult()) {
+    DASMSG(go_home_result, "go_home.result", "Result of GoHome behavior");
+    DASMSG_SET(i1, _dVars.HasSucceeded(), "Success or failure to get onto the charger (1 for success, 0 for failure)");
+    DASMSG_SEND();
+  }
 }
 
 
@@ -474,6 +483,7 @@ void BehaviorGoHome::TransitionToMountCharger()
                         const auto resultCategory = IActionRunner::GetActionResultCategory(result);
                         if (resultCategory == ActionResultCategory::SUCCESS) {
                           GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::MountedCharger);
+                          _dVars.SetSucceeded(true);
                           TransitionToPlayingNuzzleAnim();
                         } else if ((resultCategory == ActionResultCategory::RETRY) &&
                                    (_dVars.mountChargerRetryCount++ < _iConfig.mountChargerRetryCount)) {
@@ -558,6 +568,8 @@ void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
   
   // Play the "charger face" animation indicating that we have failed, then allow the behavior to exit
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ChargerDockingFailure));
+  
+  _dVars.SetSucceeded(false);
 }
 
 

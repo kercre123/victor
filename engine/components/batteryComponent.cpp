@@ -33,6 +33,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/filters/lowPassFilterSimple.h"
+#include "util/logging/DAS.h"
 
 #include <unistd.h>
 
@@ -141,10 +142,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Check if saturation charging
   bool isSaturationCharging = _isCharging && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
   bool isFullyCharged = false;
+  bool saturationChargingStateChanged = false;
   if (isSaturationCharging) {
     if (_saturationChargingStartTime_sec <= 0.f) {
       // Saturation charging has started
       _saturationChargingStartTime_sec = now_sec;
+      saturationChargingStateChanged = true;
 
       // The amount of time until fully charged is the (discounted) amount of time
       // that has elapsed since the last time it was saturation charging
@@ -190,6 +193,17 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
                                                                (now_sec - _saturationChargingStartTime_sec);
     _saturationChargeTimeRemaining_sec = std::max(0.f, newPossibleSaturationChargeTimeRemaining_sec);
     _saturationChargingStartTime_sec = 0.f;
+    saturationChargingStateChanged = true;
+  }
+  
+  // Send a DAS message if the state of saturation charging has changed
+  if (saturationChargingStateChanged) {
+    const bool saturationChargingStarted = _saturationChargingStartTime_sec > 0.f;
+    DASMSG(battery_saturation_charging, "battery.saturation_charging", "Saturation charging has started/stopped");
+    DASMSG_SET(i1, saturationChargingStarted, "Whether we have started or stopped saturation charging (1 if we have started, 0 if we have stopped)");
+    DASMSG_SET(i2, _saturationChargeTimeRemaining_sec, "Saturation charging time remaining (sec)");
+    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SEND();
   }
 
   // Battery should always be full when battery disconnects.
@@ -226,6 +240,13 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
                      BatteryLevelToString(level),
                      BatteryLevelToString(_batteryLevel),
                      now_sec - _lastBatteryLevelChange_sec);
+    DASMSG(battery_level_changed, "battery.battery_level_changed", "The battery level has changed");
+    DASMSG_SET(s1, BatteryLevelToString(level), "New battery level");
+    DASMSG_SET(s2, BatteryLevelToString(_batteryLevel), "Previous battery level");
+    DASMSG_SET(i1, IsCharging(), "Is the battery currently charging? 1 if charging, 0 if not");
+    DASMSG_SET(i2, now_sec - _lastBatteryLevelChange_sec, "Time spent at previous battery level (sec)");
+    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SEND();
     _lastBatteryLevelChange_sec = now_sec;
     _batteryLevel = level;
   }
@@ -301,10 +322,18 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
   // Log events and send message if state changed
   if (onChargeContacts != _isOnChargerContacts) {
     _isOnChargerContacts = onChargeContacts;
+    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     PRINT_NAMED_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
     // Broadcast to game
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
+    // Broadcast to DAS
+    DASMSG(battery_on_charger_changed, "battery.on_charger_changed", "The robot onChargerContacts state has changed");
+    DASMSG_SET(i1, onChargeContacts, "On or off charge contacts (1 if on contacts, 0 if not)");
+    DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since previous change (sec)");
+    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SEND();
+    _lastOnChargerContactsChange_sec = now_sec;
   }
   OSState::getInstance()->SetOnChargeContacts(onChargeContacts);
 }

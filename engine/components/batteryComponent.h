@@ -24,6 +24,8 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include <cmath>
+
 namespace Anki {
 namespace Util {
   class LowPassFilterSimple;
@@ -126,6 +128,10 @@ private:
   // it will return 0.
   float GetSuggestedChargerTime() const;
   
+  // Filtered and raw battery voltage in mV
+  int GetBatteryVolts_mV() { return static_cast<int>(std::round(1000.f * _batteryVoltsFilt)); }
+  int GetBatteryVoltsRaw_mV() { return static_cast<int>(std::round(1000.f * _batteryVoltsRaw)); }
+  
   Robot* _robot = nullptr;
   
   float _batteryVoltsRaw = 0.f;
@@ -140,6 +146,7 @@ private:
   bool _isOnChargerPlatform = false;
   
   float _lastBatteryLevelChange_sec = 0;
+  float _lastOnChargerContactsChange_sec = 0;
   
   float _saturationChargingStartTime_sec = 0.f;
   float _saturationChargeTimeRemaining_sec = 0.f;
