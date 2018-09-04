@@ -58,7 +58,7 @@ namespace
   
   // highest expected value to come out of any cliff sensor
   // when it is observing the grey-matte surface of a habitat
-  const int kCliffGreyMaxHabitat = 200;
+  const int kCliffGreyMaxHabitat = 300;
   
   // number of consecutive readings while the front two cliff
   // sensors are positioned on the white line to average over
