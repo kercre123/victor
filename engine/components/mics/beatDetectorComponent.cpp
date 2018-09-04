@@ -254,6 +254,19 @@ float BeatDetectorComponent::GetCurrTempo_bpm() const
 }
 
 
+float BeatDetectorComponent::GetCurrConfidence() const
+{
+  if (!IsPossibleBeatDetected() || _recentBeats.empty()) {
+    PRINT_NAMED_WARNING("BeatDetectorComponent.GetCurrConfidence.NoBeatDetected",
+                        "No current beat is detected");
+    return 0.f;
+  }
+  
+  const auto& latestBeat = _recentBeats.back();
+  return latestBeat.confidence;
+}
+  
+
 void BeatDetectorComponent::Reset()
 {
   _recentBeats.clear();

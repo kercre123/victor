@@ -28,6 +28,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
@@ -151,6 +152,11 @@ void BehaviorDanceToTheBeatCoordinator::OnBehaviorActivated()
   DelegateIfInControl(_iConfig.listeningBehavior.get(),
                       &BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected);
   
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  DASMSG(dttb_coord_activated, "dttb.coord_activated", "DanceToTheBeat coordinator activated");
+  DASMSG_SET(i1, beatDetector.IsPossibleBeatDetected(), "IsPossibleBeatDetected");
+  DASMSG_SET(i2, beatDetector.IsBeatDetected(), "IsBeatDetected");
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -163,6 +169,8 @@ void BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected()
     // After listening, we do not have a strong beat detected. Bail out of the behavior.
     PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator.TransitionToCheckForBeat.NoBeat",
                   "Exiting behavior since no beat was detected during the listening phase");
+    DASMSG(dttb_coord_no_beat, "dttb.coord_no_beat", "DanceToTheBeat coordinator exiting since no beat detected during listening");
+    DASMSG_SEND();
     return;
   }
   

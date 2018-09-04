@@ -32,6 +32,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/cladHelpers/cladFromJSONHelpers.h"
+#include "util/logging/DAS.h"
 #include "util/random/randomGenerator.h"
 #include "util/time/universalTime.h"
 
@@ -156,6 +157,14 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
                              animSequence.begin(),
                              animSequence.end());
   }
+  
+  // Log DAS event
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  DASMSG(dttb_activated, "dttb.activated", "DanceToTheBeat behavior activated");
+  DASMSG_SET(i1, beatDetector.GetCurrTempo_bpm(), "Current tempo estimate (beats per minute)");
+  DASMSG_SET(i2, 1000.f * beatDetector.GetCurrConfidence(), "Current detection confidence (unitless). This is the raw confidence value multiplied by 1000");
+  DASMSG_SET(i3, (int) _dVars.danceAnims.size(), "Number of dance animations that have been queued to play");
+  DASMSG_SEND();
 
   TransitionToDancing();
 }
@@ -184,6 +193,14 @@ void BehaviorDanceToTheBeat::OnBehaviorDeactivated()
 {
   StopBackpackLights();
   UnregisterOnBeatCallback();
+  
+  // Log DAS event
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  DASMSG(dttb_end, "dttb.end", "DanceToTheBeat deactivated");
+  DASMSG_SET(i1, beatDetector.GetCurrTempo_bpm(), "Current tempo estimate (beats per minute)");
+  DASMSG_SET(i2, 1000.f * beatDetector.GetCurrConfidence(), "Current detection confidence (unitless). This is the raw confidence value multiplied by 1000");
+  DASMSG_SET(i3, (int) _dVars.danceAnims.size(), "Number of unplayed dance animations remaining in the queue");
+  DASMSG_SEND();
   
   // Clear out any remaining queued anims to free memory
   _dVars.danceAnims.clear();
@@ -215,6 +232,11 @@ void BehaviorDanceToTheBeat::WhileDancing()
                         "Cancelling behavior since we are currently listening for beats "
                         "and BeatDetectorComponent says beat is no longer detected (play getout anim: %d)",
                         _dVars.playGetoutIfBeatLost);
+    DASMSG(dttb_cancel_beat_lost, "dttb.cancel_beat_lost", "DanceToTheBeat cancelling because beat is lost");
+    DASMSG_SET(i1, beatDetector.GetCurrTempo_bpm(), "Current tempo estimate (beats per minute)");
+    DASMSG_SET(i2, 1000.f * beatDetector.GetCurrConfidence(), "Current detection confidence (unitless). This is the raw confidence value multiplied by 1000");
+    DASMSG_SET(i3, (int) _dVars.danceAnims.size(), "Number of unplayed dance animations remaining in the queue");
+    DASMSG_SEND();
     _dVars.nextAnimTriggerTime_sec = -1.f;
     SetListeningForBeats(false);
     if (_dVars.playGetoutIfBeatLost) {
