@@ -522,8 +522,12 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
   
   IActionRunner* action = nullptr;
   if(!_dVars._cliffAlignRetry) {
+    // first time attempt (since entering Habitat=Unknown)
     action = new CliffAlignToWhiteAction();
   } else {
+    // second time attempt
+    // + now use lowered thresholds for white detection
+    // + if this fails, we force set that we are not in habitat
     CompoundActionSequential* compoundAction = new CompoundActionSequential(std::list<IActionRunner*>{
       // note: temporarily lowers the white detection
       // threshold. This allows us to retry with more
@@ -554,8 +558,15 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
       case ActionResult::CLIFF_ALIGN_FAILED_TIMEOUT:
       {
         if(!_dVars._cliffAlignRetry) {
+          // indicates we failed our first attempt at cliff alignment
+          // + perturb our current position
+          // + resume doing a random walk
+          // the expected result is that the robot will eventually
+          // attempt to do cliff alignment a second time
+          // if that 2nd try fails, then the whole behavior will exit
           _dVars._cliffAlignRetry = true;
-          TransitionToCliffAlignWhite();
+          _dVars._phase = ConfirmHabitatPhase::RandomWalk;
+          TransitionToBackupTurnForward(-30, RandomSign()*DEG_TO_RAD(30.0f), 40);
           break;
         }
         // deliberate fall-through: if we already retried CliffAlignment
