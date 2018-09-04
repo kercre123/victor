@@ -209,7 +209,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     return result;
   }
 
-  OSState::getInstance()->Update();
+  OSState::getInstance()->Update(currTime_nanosec);
 
   _ttsComponent->Update();
 
