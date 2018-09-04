@@ -232,7 +232,7 @@ tof_dat_t* tof_read(uint32_t *out_tmeas, bool debug)
 
 void TOF_init(void)
 {
-  bool ofs_cal_enable = 0, xtalk_cal_enable = 0;
+  //const bool ofs_cal_enable = 0, xtalk_cal_enable = 0;
   tof_calibration_dat_t *cal = &tofCalProfile[PROFILE_0_SPAD_TEMP];
   memset( cal, 0, sizeof(tof_calibration_dat_t) );
   
@@ -244,8 +244,8 @@ void TOF_init(void)
   //maybe calibrate some stuff (in this order)
   tof_calibrate_spad(cal); //always?
   tof_calibrate_temp(cal); //always?
-  if( ofs_cal_enable ) tof_calibrate_ofs(cal);
-  if( xtalk_cal_enable ) tof_calibrate_xtalk(cal);
+  //if( ofs_cal_enable ) tof_calibrate_ofs(cal);
+  //if( xtalk_cal_enable ) tof_calibrate_xtalk(cal);
   
   print_tof_cal(cal);
   
