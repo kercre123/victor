@@ -118,7 +118,7 @@ stage("${primaryStageName} Build") {
         try {
             withDockerEnv {
                 buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-                deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
+                //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
         } catch (exc) {
             throw exc
