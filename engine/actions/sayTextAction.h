@@ -16,7 +16,7 @@
 #ifndef __Anki_Cozmo_Actions_SayTextAction_H__
 #define __Anki_Cozmo_Actions_SayTextAction_H__
 
-#include "components/textToSpeech/textToSpeechCoordinator.h"
+#include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/animActions.h"
 #include "clad/types/animationTrigger.h"
@@ -75,17 +75,17 @@ private:
     Running_Anim,
     Finished
   };
-  
+
   // TtS Cordinator
   TextToSpeechCoordinator*        _ttsCoordinator     = nullptr;
-  
+
   // TTS parameters
-  uint8_t                         _ttsId              = 0; // Id 0 is reserved for "invalid".
+  uint8_t                         _ttsID              = 0; // ID 0 is reserved for "invalid".
   std::string                     _text;
   AudioTtsProcessingStyle         _style              = AudioTtsProcessingStyle::Invalid;
   float                           _durationScalar     = 1.f;
   bool                            _fitToDuration      = false;
-  
+
   // Accompanying animation, if any
   AnimationTrigger                _animTrigger        = AnimationTrigger::Count; // Count == use built-in animation
   u8                              _ignoreAnimTracks   = (u8)AnimTrackFlag::NO_TRACKS;
@@ -100,10 +100,11 @@ private:
   // Internal state machine
   void TtsCoordinatorStateCallback(const UtteranceState& state);
   ActionResult GetTtsCoordinatorActionState();
-  
+  ActionResult TransitionToRunning();
+
   using CallbackType = std::function<void(const UtteranceState& state)>;
   std::shared_ptr<CallbackType> _callbackPtr;
-  
+
   // VIC-2151: Fit-to-duration not supported on victor
   // DEPRECATED: This feature has been moved to behaviors using TextToSpeechCoordinator
   // Append animation by stitching animation trigger group animations together until the animation's duration is
