@@ -29,6 +29,7 @@ enum uint_32 RobotStatusFlag {
     CLIFF_DETECTED          = 0x00004000,   // TODO (VIC-3578): Remove this
     ARE_WHEELS_MOVING       = 0x00008000,
     IS_BEING_HELD           = 0x00010000,
+    IS_MOTION_DETECTED      = 0x00020000, // whether the IMU detects motion
 }
 
 enum uint_8 DockAction
@@ -112,6 +113,14 @@ enum int_8 BodyColor
 
   COUNT
 }
+
+enum uint_8 ShutdownReason {
+  SHUTDOWN_BUTTON,
+  SHUTDOWN_CRITICAL_BATTERY,
+  SHUTDOWN_HOT_BATTERY,
+}
+
+
 
 } // namespace Vector
 } // namespace Anki

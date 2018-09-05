@@ -20,12 +20,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 #include "engine/components/mics/beatDetectorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
@@ -37,7 +40,12 @@ namespace {
   const char* kOnChargerDancingBehavior_key  = "onChargerDancingBehavior";
   
   #define CONSOLE_GROUP "BehaviorDanceToTheBeatCoordinator"
-  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 30.0f, 0.0f, 300.0f);
+  CONSOLE_VAR_RANGED(f32, kDancingCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
+  CONSOLE_VAR_RANGED(f32, kListeningCooldown_sec, CONSOLE_GROUP, 20.0f, 0.0f, 3600.0f);
+  
+  // The minimum time allowed between dancing and activation of this behavior (always enforced - even if a strong beat
+  // is detected)
+  CONSOLE_VAR_RANGED(f32, kMinIntraDancingPeriod_sec, CONSOLE_GROUP, 10.f, 0.0f, 3600.0f);
 }
   
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator", "BehaviorDanceToTheBeatCoordinator.%s", __func__);
@@ -86,16 +94,37 @@ void BehaviorDanceToTheBeatCoordinator::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDanceToTheBeatCoordinator::WantsToBeActivatedBehavior() const
 {
-  // Check if cooldown is active
-  const auto& danceTimer = GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::LastDance);
-  const bool inCooldown = danceTimer.HasBeenReset() && (danceTimer.GetElapsedTimeInSeconds() < kDancingCooldown_sec);
+  // Do not try to activate this behavior if the backpack has been fiddled with recently, since that is sometimes
+  // interpreted as a rhythmic 'beat' by the BeatDetectorComponent
+  if (RecentBackpackActivity()) {
+    return false;
+  }
+
+  // Check if either dancing or listening cooldown is active
+  auto& timerManager = GetBEI().GetBehaviorTimerManager();
+  const auto& danceTimer = timerManager.GetTimer(BehaviorTimerTypes::DancingCooldown);
+  const auto& listeningTimer = timerManager.GetTimer(BehaviorTimerTypes::ListenForBeatsCooldown);
+  bool timersExpired = (danceTimer.HasCooldownExpired(kDancingCooldown_sec) &&
+                        listeningTimer.HasCooldownExpired(kListeningCooldown_sec));
+
+  // Has the minimum intra-dancing time been observed? If not, do not activate, even if a strong beat is detected.
+  const bool minIntraDanceTimeExceeded = danceTimer.HasCooldownExpired(kMinIntraDancingPeriod_sec);
+  if (!minIntraDanceTimeExceeded) {
+    return false;
+  }
   
-  return !inCooldown;
+  // Override cooldowns if a 'strong' beat is detected
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  const bool strongBeatDetected = beatDetector.IsBeatDetected();
+  
+  return (timersExpired || strongBeatDetected);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDanceToTheBeatCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.wantsToBeActivatedWhenCarryingObject  = false;
+  modifiers.wantsToBeActivatedWhenOffTreads       = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,6 +162,11 @@ void BehaviorDanceToTheBeatCoordinator::OnBehaviorActivated()
   DelegateIfInControl(_iConfig.listeningBehavior.get(),
                       &BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected);
   
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  DASMSG(dttb_coord_activated, "dttb.coord_activated", "DanceToTheBeat coordinator activated");
+  DASMSG_SET(i1, beatDetector.IsPossibleBeatDetected(), "IsPossibleBeatDetected");
+  DASMSG_SET(i2, beatDetector.IsBeatDetected(), "IsBeatDetected");
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -145,6 +179,8 @@ void BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected()
     // After listening, we do not have a strong beat detected. Bail out of the behavior.
     PRINT_CH_INFO("Behaviors", "BehaviorDanceToTheBeatCoordinator.TransitionToCheckForBeat.NoBeat",
                   "Exiting behavior since no beat was detected during the listening phase");
+    DASMSG(dttb_coord_no_beat, "dttb.coord_no_beat", "DanceToTheBeat coordinator exiting since no beat detected during listening");
+    DASMSG_SEND();
     return;
   }
   
@@ -230,6 +266,27 @@ void BehaviorDanceToTheBeatCoordinator::TransitionToOffChargerListening()
                           }
                         }
                       });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDanceToTheBeatCoordinator::RecentBackpackActivity() const
+{
+  // Has the backpack been fiddled with recently enough to mess up beat detection? A cooldown is necessary since the
+  // beat detector can retain its "beat detected" state for some time after the last touch.
+  const float kButtonPressCooldown_sec = 10.f;
+  
+  const auto& touchSensor = GetBEI().GetTouchSensorComponent();
+  const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  float touchTime = touchSensor.GetTouchPressTime();
+  // time defaults to FLT_MAX if never touched, so set this to zero in that case (shouldn't be in the future...)
+  if( touchTime > now_sec + kButtonPressCooldown_sec ) {
+    touchTime = 0.0f;
+  }
+
+  const bool recentTouchSensorActivity = touchSensor.GetIsPressed() ||
+                                         touchTime > now_sec - kButtonPressCooldown_sec;
+  
+  return recentTouchSensorActivity;
 }
 
 }

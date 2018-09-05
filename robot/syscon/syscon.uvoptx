@@ -201,7 +201,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/power.cpp\141</Expression>
         </Bp>
@@ -217,7 +217,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/power.cpp\175</Expression>
         </Bp>
@@ -233,7 +233,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\main.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\main.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/main.cpp\59</Expression>
         </Bp>
@@ -452,18 +452,6 @@
     <File>
       <GroupNumber>1</GroupNumber>
       <FileNumber>11</FileNumber>
-      <FileType>8</FileType>
-      <tvExp>0</tvExp>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>.\src\contacts.cpp</PathWithFileName>
-      <FilenameWithoutPath>contacts.cpp</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>1</GroupNumber>
-      <FileNumber>12</FileNumber>
       <FileType>2</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
@@ -475,7 +463,7 @@
     </File>
     <File>
       <GroupNumber>1</GroupNumber>
-      <FileNumber>13</FileNumber>
+      <FileNumber>12</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
@@ -487,13 +475,25 @@
     </File>
     <File>
       <GroupNumber>1</GroupNumber>
-      <FileNumber>14</FileNumber>
+      <FileNumber>13</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\power.cpp</PathWithFileName>
       <FilenameWithoutPath>power.cpp</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>1</GroupNumber>
+      <FileNumber>14</FileNumber>
+      <FileType>8</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\src\analog.cpp</PathWithFileName>
+      <FilenameWithoutPath>analog.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -508,18 +508,6 @@
     <File>
       <GroupNumber>2</GroupNumber>
       <FileNumber>15</FileNumber>
-      <FileType>8</FileType>
-      <tvExp>0</tvExp>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>.\common\analog.cpp</PathWithFileName>
-      <FilenameWithoutPath>analog.cpp</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>2</GroupNumber>
-      <FileNumber>16</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>

@@ -46,25 +46,16 @@ public:
   virtual void OnBegin( BehaviorExternalInterface& bei ) override
   {
     _selectedBehavior = GetBehaviorByID( bei, BEHAVIOR_ID(OnboardingLookAtUser) );
-    _receivedStart = false;
     _startTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    // disable trigger word until continue
-    DebugTransition("Waiting on continue to begin");
-    SetTriggerWordEnabled(false);
+    DebugTransition("Waiting on voice command or timeout");
+    SetTriggerWordEnabled(true);
+    SetAllowAnyIntent();
   }
   
   virtual bool OnContinue( BehaviorExternalInterface& bei, int stepNum ) override
   {
-    // ignore whether or not _receivedStart since there are only two stages here
-    const bool accepted = (stepNum == external_interface::STEP_EXPECTING_CONTINUE_APP_ONBOARDING);
-    if( accepted ) {
-      DebugTransition("Waiting on voice command");
-      // enable trigger word
-      SetTriggerWordEnabled(true);
-      _receivedStart = true;
-    }
-    return accepted;
+    return false;
   }
   
   virtual void OnSkip( BehaviorExternalInterface& bei ) override
@@ -96,11 +87,7 @@ public:
   
   virtual int GetExpectedStep() const override
   {
-    if( _receivedStart ) {
-      return external_interface::STEP_APP_ONBOARDING;
-    } else {
-      return external_interface::STEP_EXPECTING_CONTINUE_APP_ONBOARDING;
-    }
+    return external_interface::STEP_APP_ONBOARDING;
   }
   
 private:
@@ -110,7 +97,6 @@ private:
   }
   
   IBehavior* _selectedBehavior = nullptr;
-  bool _receivedStart = false;
   float _startTime_s = 0.0f;
 };
   

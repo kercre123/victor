@@ -219,7 +219,7 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   uic.DisableEngineResponseToTriggerWord(kDisableTriggerWordName, true);
 
-  uic.AlterStreamStateForCurrentResponse(kLockName, false);
+  uic.AlterStreamStateForCurrentResponse(kLockName, StreamAndLightEffect::StreamingDisabled);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -260,7 +260,8 @@ void BehaviorComponentMessageHandler::SetupUserIntentEvents()
   auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
     PRINT_CH_INFO("BehaviorSystem","BehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
     auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-    uic.SetTriggerWordPending();
+    const bool willStreamAudio = false;
+    uic.SetTriggerWordPending(willStreamAudio);
   };
   _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeTriggerWordDetected, fakeTriggerWordCallback ) );
   

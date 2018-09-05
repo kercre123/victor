@@ -56,7 +56,7 @@ private:
     HitOrStand,
     ReactToPlayerCard,
     VictorsTurn,
-    VictorHitOrStand,
+    DealToVictor,
     ReactToDealerCard,
     EndGame,
     PlayAgainPrompt,
@@ -88,6 +88,7 @@ private:
   void TransitionToHitOrStandPrompt();
   void TransitionToHitOrStand();
   void TransitionToVictorsTurn();
+  void TransitionToDealToVictor();
   void TransitionToReactToDealerCard();
   void TransitionToEndGame();
   void TransitionToPlayAgainPrompt();
@@ -99,6 +100,7 @@ private:
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> hitOrStandPromptBehavior;
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> playAgainPromptBehavior;
     std::shared_ptr<BehaviorTextToSpeechLoop>          ttsBehavior;
+    std::shared_ptr<BehaviorTextToSpeechLoop>          goodLuckTTSBehavior;
     std::shared_ptr<BehaviorLookAtFaceInFront>         lookAtFaceInFrontBehavior;
   };
 

@@ -118,7 +118,11 @@ public:
   void RequestConnectionStatus();
 
   void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
-  
+
+  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
+  // sending any data to the cloud; this lasts for a set duration
+  bool ShouldSimulateStreaming() const;
+
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
@@ -164,9 +168,6 @@ private:
   bool _batteryLow = false;
 
   void SetWillStream(bool willStream) const;
-  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
-  // sending any data to the cloud; this lasts for a set duration
-  bool ShouldSimulateStreaming() const;
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();

@@ -1,3 +1,17 @@
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Behaviors represent a complex task which requires Vector's
 internal logic to determine how long it will take. This
@@ -7,12 +21,8 @@ set_lift_height, fist_bump, etc.
 
 The :class:`BehaviorComponent` class in this module contains
 functions for all the behaviors.
-
-Copyright (c) 2018 Anki, Inc.
 """
 
-# TODO:
-# __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["BehaviorComponent"]
 
 
@@ -21,6 +31,8 @@ from .messaging import protocol
 
 
 class BehaviorComponent(util.Component):
+    _next_action_id = protocol.FIRST_SDK_TAG
+
     def __init__(self, robot):
         super().__init__(robot)
         self._current_priority = None
@@ -85,6 +97,17 @@ class BehaviorComponent(util.Component):
     def is_active(self):
         return self._is_active
 
+    # TODO VIC-5920: Add Cancel by id message, and add ids to all action response messages
+    @classmethod
+    def _get_next_action_id(cls):
+        # Post increment _current_action_id (and loop within the SDK_TAG range)
+        next_action_id = cls._next_action_id
+        if cls._next_action_id == protocol.LAST_SDK_TAG:
+            cls._next_action_id = protocol.FIRST_SDK_TAG
+        else:
+            cls._next_action_id += 1
+        return next_action_id
+
     # Navigation actions
     @sync.Synchronizer.wrap
     async def drive_off_charger(self):
@@ -99,7 +122,8 @@ class BehaviorComponent(util.Component):
     @sync.Synchronizer.wrap
     async def go_to_pose(self,
                          pose: util.Pose,
-                         relative_to_robot: bool = False) -> protocol.GoToPoseResponse:
+                         relative_to_robot: bool = False,
+                         num_retries: int = 0) -> protocol.GoToPoseResponse:
         """Tells Vector to drive to the specified pose and orientation.
 
         If relative_to_robot is set to True, the given pose will assume the
@@ -116,16 +140,27 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt action in case of a failure.
 
         Returns:
-            An object which provides an action result.
+            A response from the robot with status information sent when this action successfully completes or fails.
+
+        .. code-block:: python
+
+            pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
+            robot.behavior.go_to_pose(pose)
         """
         if relative_to_robot and self.robot.pose:
             pose = self.robot.pose.define_pose_relative_this(pose)
 
         motion_prof = self._motion_profile_for_proto()
+        # @TODO: the id_tag we supply can be used to cancel this action,
+        #  however when we implement that we will need some way to get the it_tag
+        #  out of this function.
         go_to_pose_request = protocol.GoToPoseRequest(x_mm=pose.position.x,
                                                       y_mm=pose.position.y,
                                                       rad=pose.rotation.angle_z.radians,
-                                                      motion_prof=motion_prof)
+                                                      motion_prof=motion_prof,
+                                                      id_tag=self._get_next_action_id(),
+                                                      num_retries=num_retries)
+
         return await self.interface.GoToPose(go_to_pose_request)
 
     @sync.Synchronizer.wrap
@@ -133,7 +168,8 @@ class BehaviorComponent(util.Component):
                              target_object: objects.LightCube,
                              approach_angle: util.Angle = None,
                              alignment_type: protocol.AlignmentType = protocol.ALIGNMENT_TYPE_LIFT_PLATE,
-                             distance_from_marker: util.Distance = None) -> protocol.DockWithCubeResponse:
+                             distance_from_marker: util.Distance = None,
+                             num_retries: int = 0) -> protocol.DockWithCubeResponse:
         """Tells Vector to dock with a light cube with a given approach angle and distance.
 
         :param target_object: The LightCube object to dock with.
@@ -143,7 +179,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt action in case of a failure.
 
         Returns:
-            An object providing an action result.
+            A response from the robot with status information sent when this action successfully completes or fails.
 
         .. code-block:: python
 
@@ -151,9 +187,19 @@ class BehaviorComponent(util.Component):
             if connected_cubes:
                 robot.behavior.dock_with_cube(object_id=connected_cube[0])
         """
+        if target_object is None:
+            raise Exception("Must supply a target_object to dock_with_cube")
+
         motion_prof = self._motion_profile_for_proto()
 
-        dock_request = protocol.DockWithCubeRequest(object_id=target_object.object_id, alignment_type=alignment_type, motion_prof=motion_prof)
+        # @TODO: the id_tag we supply can be used to cancel this action,
+        #  however when we implement that we will need some way to get the it_tag
+        #  out of this function.
+        dock_request = protocol.DockWithCubeRequest(object_id=target_object.object_id,
+                                                    alignment_type=alignment_type,
+                                                    motion_prof=motion_prof,
+                                                    id_tag=self._get_next_action_id(),
+                                                    num_retries=num_retries)
         if approach_angle is not None:
             dock_request.use_approach_angle = True
             dock_request.use_pre_dock_pose = True
@@ -165,97 +211,145 @@ class BehaviorComponent(util.Component):
 
     # Movement actions
     @sync.Synchronizer.wrap
-    async def drive_straight(self, distance, speed, should_play_anim=False):
-        '''Tells Vector to drive in a straight line
+    async def drive_straight(self,
+                             distance: util.Distance,
+                             speed: util.Speed,
+                             should_play_anim: bool = True,
+                             num_retries: int = 0) -> protocol.DriveStraightResponse:
+        """Tells Vector to drive in a straight line
 
         Vector will drive for the specified distance (forwards or backwards)
 
         Vector must be off of the charger for this movement action.
 
-        Args:
-            distance (anki_vector.util.Distance): The distance to drive
-                (>0 for forwards, <0 for backwards)
-            speed (anki_vector.util.Speed): The speed to drive at
-                (should always be >0, the abs(speed) is used internally)
-            should_play_anim (bool): Whether to play idle animations
-                whilst driving (tilt head, hum, animated eyes, etc.)
+        :param distance: The distance to drive
+            (>0 for forwards, <0 for backwards)
+        :param speed: The speed to drive at
+            (should always be >0, the abs(speed) is used internally)
+        :param should_play_anim: Whether to play idle animations whilst driving
+            (tilt head, hum, animated eyes, etc.)
+        :param num_retries: Number of times to re-attempt action in case of a failure.
 
         Returns:
-           A :class:`protocol.DriveStraightResponse` object which provides the result description.
-        '''
+            A response from the robot with status information sent when this action successfully completes or fails.
+
+        .. code-block:: python
+
+            robot.behavior.drive_straight(distance_mm(100), speed_mmps(100))
+        """
+
+        # @TODO: the id_tag we supply can be used to cancel this action,
+        #  however when we implement that we will need some way to get the it_tag
+        #  out of this function.
         drive_straight_request = protocol.DriveStraightRequest(speed_mmps=speed.speed_mmps,
                                                                dist_mm=distance.distance_mm,
-                                                               should_play_animation=should_play_anim)
+                                                               should_play_animation=should_play_anim,
+                                                               id_tag=self._get_next_action_id(),
+                                                               num_retries=num_retries)
+
         return await self.interface.DriveStraight(drive_straight_request)
 
     @sync.Synchronizer.wrap
-    async def turn_in_place(self, angle, speed=util.Angle(0.0), accel=util.Angle(0.0), angle_tolerance=util.Angle(0.0), is_absolute=0):
-        '''Turn the robot around its current position.
+    async def turn_in_place(self,
+                            angle: util.Angle,
+                            speed: util.Angle = util.Angle(0.0),
+                            accel: util.Angle = util.Angle(0.0),
+                            angle_tolerance: util.Angle = util.Angle(0.0),
+                            is_absolute: bool = 0,
+                            num_retries: int = 0) -> protocol.TurnInPlaceResponse:
+        """Turn the robot around its current position.
 
         Vector must be off of the charger for this movement action.
 
-        Args:
-            angle (anki_vector.util.Angle): The angle to turn. Positive
+        :param angle: The angle to turn. Positive
                 values turn to the left, negative values to the right.
-            speed (anki_vector.util.Angle): Angular turn speed (per second).
-            accel (anki_vector.util.Angle): Acceleration of angular turn
+        :param speed: Angular turn speed (per second).
+        :param accel: Acceleration of angular turn
                 (per second squared).
-            angle_tolerance (anki_vector.util.Angle): angular tolerance
+        :param angle_tolerance: angular tolerance
                 to consider the action complete (this is clamped to a minimum
                 of 2 degrees internally).
-            is_absolute (bool): True to turn to a specific angle, False to
+        :param is_absolute: True to turn to a specific angle, False to
                 turn relative to the current pose.
 
         Returns:
-            A :class:`protocol.TurnInPlaceResponse` object which provides the result description.
-        '''
+            A response from the robot with status information sent when this action successfully completes or fails.
+
+        .. code-block:: python
+
+            robot.behavior.turn_in_place(degrees(90))
+        """
         turn_in_place_request = protocol.TurnInPlaceRequest(angle_rad=angle.radians,
                                                             speed_rad_per_sec=speed.radians,
                                                             accel_rad_per_sec2=accel.radians,
                                                             tol_rad=angle_tolerance.radians,
-                                                            is_absolute=is_absolute)
+                                                            is_absolute=is_absolute,
+                                                            id_tag=self._get_next_action_id(),
+                                                            num_retries=num_retries)
+
         return await self.interface.TurnInPlace(turn_in_place_request)
 
     @sync.Synchronizer.wrap
-    async def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
-        '''Tell Vector's head to turn to a given angle.
+    async def set_head_angle(self,
+                             angle: util.Angle,
+                             accel: float = 10.0,
+                             max_speed: float = 10.0,
+                             duration: float = 0.0,
+                             num_retries: int = 0) -> protocol.SetHeadAngleResponse:
+        """Tell Vector's head to move to a given angle.
 
-        Args:
-            angle: (:class:`anki_vector.util.Angle`): Desired angle for
-                Vector's head. (:const:`MIN_HEAD_ANGLE` to
-                :const:`MAX_HEAD_ANGLE`).
-            max_speed (float): Maximum speed of Vector's head in radians per second.
-            accel (float): Acceleration of Vector's head in radians per second squared.
-            duration (float): Time for Vector's head to turn in seconds. A value
+        :param angle: Desired angle for Vector's head.
+            (:const:`MIN_HEAD_ANGLE` to :const:`MAX_HEAD_ANGLE`).
+        :param max_speed: Maximum speed of Vector's head in radians per second.
+        :param accel: Acceleration of Vector's head in radians per second squared.
+        :param duration: Time for Vector's head to move in seconds. A value
                 of zero will make Vector try to do it as quickly as possible.
 
         Returns:
-            A :class:`protocol.SetHeadAngleResponse` object which provides the result description.
-        '''
+            A response from the robot with status information sent when this action successfully completes or fails.
+
+        .. code-block:: python
+
+            robot.behavior.set_head_angle(degrees(50.0))
+        """
         set_head_angle_request = protocol.SetHeadAngleRequest(angle_rad=angle.radians,
                                                               max_speed_rad_per_sec=max_speed,
                                                               accel_rad_per_sec2=accel,
-                                                              duration_sec=duration)
+                                                              duration_sec=duration,
+                                                              id_tag=self._get_next_action_id(),
+                                                              num_retries=num_retries)
+
         return await self.interface.SetHeadAngle(set_head_angle_request)
 
     @sync.Synchronizer.wrap
-    async def set_lift_height(self, height, accel=10.0, max_speed=10.0, duration=0.0):
-        '''Tell Vector's lift to move to a given height
+    async def set_lift_height(self,
+                              height: float,
+                              accel: float = 10.0,
+                              max_speed: float = 10.0,
+                              duration: float = 0.0,
+                              num_retries: int = 0) -> protocol.SetLiftHeightResponse:
+        """Tell Vector's lift to move to a given height
 
-        Args:
-            height (float): desired height for Vector's lift 0.0 (bottom) to
+        :param height: desired height for Vector's lift 0.0 (bottom) to
                 1.0 (top) (we clamp it to this range internally).
-            max_speed (float): Maximum speed of Vector's lift in radians per second.
-            accel (float): Acceleration of Vector's lift in radians per
+        :param max_speed: Maximum speed of Vector's lift in radians per second.
+        :param accel: Acceleration of Vector's lift in radians per
                 second squared.
-            duration (float): Time for Vector's lift to move in seconds. A value
+        :param duration: Time for Vector's lift to move in seconds. A value
                 of zero will make Vector try to do it as quickly as possible.
 
         Returns:
-            A :class:`protocol.SetLiftHeightResponse` object which provides the result description.
-        '''
+            A response from the robot with status information sent when this action successfully completes or fails.
+
+        .. code-block:: python
+
+            robot.behavior.set_lift_height(100.0)
+        """
         set_lift_height_request = protocol.SetLiftHeightRequest(height_mm=height,
                                                                 max_speed_rad_per_sec=max_speed,
                                                                 accel_rad_per_sec2=accel,
-                                                                duration_sec=duration)
+                                                                duration_sec=duration,
+                                                                id_tag=self._get_next_action_id(),
+                                                                num_retries=num_retries)
+
         return await self.interface.SetLiftHeight(set_lift_height_request)

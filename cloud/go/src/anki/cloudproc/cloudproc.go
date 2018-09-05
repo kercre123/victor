@@ -3,6 +3,7 @@ package cloudproc
 import (
 	"anki/jdocs"
 	"anki/log"
+	"anki/logcollector"
 	"anki/token"
 	"anki/voice"
 	"context"
@@ -49,6 +50,13 @@ func Run(ctx context.Context, procOptions ...Option) {
 			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener)},
 				opts.jdocOpts...)
 			jdocs.Run(ctx, jdocOpts...)
+		})
+	}
+	if opts.logcollectorOpts != nil {
+		launchProcess(&wg, func() {
+			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener)},
+				opts.logcollectorOpts...)
+			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
 	wg.Wait()

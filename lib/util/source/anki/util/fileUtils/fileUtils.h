@@ -34,6 +34,8 @@ public:
   static void RemoveDirectory(const std::string& path);
 
   static ssize_t GetDirectorySize(const std::string& path);
+
+  static int64_t GetDirectoryFreeSize(const std::string& path);
   
   // If useFullPath is true, the returned vector will contain full paths to each file found
   // (i.e., path/to/file/filename.ext). If extensions are provided (with or without "."), only

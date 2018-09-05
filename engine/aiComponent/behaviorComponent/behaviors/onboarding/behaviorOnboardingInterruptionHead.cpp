@@ -69,18 +69,23 @@ void BehaviorOnboardingInterruptionHead::GetBehaviorJsonKeys(std::set<const char
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingInterruptionHead::OnBehaviorActivated() 
 {
+  auto* action = new CompoundActionSequential;
+  // make sure lift is down
+  action->AddAction( new MoveLiftToHeightAction{ MoveLiftToHeightAction::Preset::LOW_DOCK } );
+  
   const OnboardingStages currentStage = GetAIComp<AIWhiteboard>().GetCurrentOnboardingStage();
   if( static_cast<u8>(currentStage) < static_cast<u8>(OnboardingStages::FinishedComeHere) ) {
     // head should still be down
-    auto* action = new CompoundActionParallel;
-    action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(-22.0f) ) );
+    auto* parallelAction = new CompoundActionParallel;
+    parallelAction->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(-22.0f) ) );
     if( _dVars.isGroggy && (_iConfig.animWhenGroggy != AnimationTrigger::Count) ) {
       const u8 tracks = (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK;
       auto* animAction = new TriggerLiftSafeAnimationAction{ _iConfig.animWhenGroggy, 0, true, tracks };
-      action->AddAction( animAction );
+      parallelAction->AddAction( animAction );
     }
-    DelegateIfInControl(action);
+    action->AddAction( parallelAction );
   }
+  DelegateIfInControl(action);
   
   // reset dynamic variables
   _dVars = DynamicVariables();

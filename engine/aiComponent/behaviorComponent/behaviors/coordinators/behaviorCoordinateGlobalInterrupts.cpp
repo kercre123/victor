@@ -32,6 +32,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "clad/types/behaviorComponent/streamAndLightEffect.h"
+
 #include <deque>
 
 namespace Anki {
@@ -60,7 +62,15 @@ namespace{
                                                                                    BEHAVIOR_CLASS(PickUpCube),
                                                                                    BEHAVIOR_CLASS(PopAWheelie),
                                                                                    BEHAVIOR_CLASS(PounceWithProx),
-                                                                                   BEHAVIOR_CLASS(RollBlock) }};
+                                                                                   BEHAVIOR_CLASS(RollBlock),
+                                                                                   BEHAVIOR_CLASS(FindCubeAndThen) }};
+
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressTouch = { BEHAVIOR_CLASS(BlackJack) };
+
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressCliff = { BEHAVIOR_CLASS(BlackJack) };
+
+  static const std::set<BehaviorClass> kBeahviorClassesToSuppressTimerAntics = {{ BEHAVIOR_CLASS(BlackJack),
+                                                                                  BEHAVIOR_CLASS(CoordinateWeather) }};
   
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
     BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
@@ -70,6 +80,11 @@ namespace{
   }};
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenDancingToTheBeat = {
     BEHAVIOR_ID(ReactToSoundAwake),
+  };
+  static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenGoingHome = {
+    BEHAVIOR_ID(DanceToTheBeatCoordinator),
+    BEHAVIOR_ID(ListenForBeats),
+    BEHAVIOR_ID(DanceToTheBeat),
   };
 }
 
@@ -118,6 +133,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   for( const auto& id : kBehaviorIDsToSuppressWhenDancingToTheBeat ) {
     _iConfig.toSuppressWhenDancingToTheBeat.push_back( BC.FindBehaviorByID(id) );
   }
+  for( const auto& id : kBehaviorIDsToSuppressWhenGoingHome ) {
+    _iConfig.toSuppressWhenGoingHome.push_back( BC.FindBehaviorByID(id) );
+  }
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
@@ -130,7 +148,6 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
-  _iConfig.weatherCoordinatorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(WeatherResponses));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
   
@@ -142,7 +159,20 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
     _iConfig.behaviorsThatShouldntReactToSoundAwake.AddBehavior(BC, behaviorClass);
   }
 
+  _iConfig.reactToTouchPettingBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToTouchPetting));
+  for(const auto& behaviorClass : kBehaviorClassesToSuppressTouch){
+    _iConfig.behaviorsThatShouldntReactToTouch.AddBehavior(BC, behaviorClass);
+  }
+
+  for(const auto& behaviorClass : kBeahviorClassesToSuppressTimerAntics){
+    _iConfig.behaviorsThatShouldSuppressTimerAntics.AddBehavior(BC, behaviorClass);
+  }
+
   _iConfig.reactToCliffBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToCliff));
+  for(const auto& behaviorClass : kBehaviorClassesToSuppressCliff){
+    _iConfig.behaviorsThatShouldntReactToCliff.AddBehavior(BC, behaviorClass);
+  }
+
   std::set<ICozmoBehaviorPtr> driveToFaceBehaviors = BC.FindBehaviorsByClass(BEHAVIOR_CLASS(DriveToFace));
   _iConfig.driveToFaceBehaviors.reserve( driveToFaceBehaviors.size() );
   for( const auto& ptr : driveToFaceBehaviors ) {
@@ -173,20 +203,6 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   }
 
   bool shouldSuppressTriggerWordBehavior = false;
-  bool isBlackjackRunning = false;
-
-  {
-    auto callback = [&isBlackjackRunning](const ICozmoBehavior& behavior) {
-      if( behavior.GetClass() == BEHAVIOR_CLASS(BlackJack)){
-        isBlackjackRunning = true;
-      }
-
-      return true; // Iterate over the entire stack
-    };
-
-    const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
-    behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
-  }
 
   if ( shouldSuppressTriggerWordBehavior )
   {
@@ -225,17 +241,17 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
 
-  // Suppress timer antics if weather is running
-  if(_iConfig.weatherCoordinatorBehavior->IsActivated()){
+  // Suppress timer antics if necessary
+  if(_iConfig.behaviorsThatShouldSuppressTimerAntics.AreBehaviorsActivated() ) {
     const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
     _iConfig.timerCoordBehavior->SuppressAnticThisTick(tickCount);
   }
-  
+
   // this will suppress the streaming POST-wakeword pending
   // the "do a fist bump" part of "hey victor"
   const bool shouldSuppressStreaming = shouldSuppressTriggerWordBehavior;
   if(shouldSuppressStreaming){
-    SmartAlterStreamStateForCurrentResponse(false);
+    SmartAlterStreamStateForCurrentResponse(StreamAndLightEffect::StreamingDisabledButWithLight);
   }else{
     SmartPopResponseToTriggerWord();
   }
@@ -258,12 +274,20 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
     
-    // If we are responding to "go home", disable the voice command turn since we want
-    // him to just go directly into looking for the charger / going to the charger.
+    // If we are responding to "go home", disable the voice command turn since we want him to just go directly
+    // into looking for the charger / going to the charger. Also disable dancing to the beat, need to get home
+    // first.  // TODO:(bn) disable others too?
     const bool isGoHomePending = uic.IsUserIntentPending(USER_INTENT(system_charger));
     if (isGoHomePending) {
       const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
+    }
+
+    const bool isGoHomeActive = uic.IsUserIntentActive(USER_INTENT(system_charger));
+    if( isGoHomeActive ) {
+      for( const auto& beh : _iConfig.toSuppressWhenGoingHome ) {
+        beh->SetDontActivateThisTick(GetDebugLabel() + ": going home");
+      }
     }
   }
   
@@ -281,9 +305,16 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
 
-  // Vector should not respond to cliffs while playing blackjack
+  // Suppress ReactToTouchPetting if needed
   {
-    if(isBlackjackRunning){
+    if( _iConfig.behaviorsThatShouldntReactToTouch.AreBehaviorsActivated() ) {
+      _iConfig.reactToTouchPettingBehavior->SetDontActivateThisTick(GetDebugLabel());
+    }
+  }
+
+  // Suppress ReactToCliff if needed
+  {
+    if( _iConfig.behaviorsThatShouldntReactToCliff.AreBehaviorsActivated() ) {
       _iConfig.reactToCliffBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }

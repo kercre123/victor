@@ -2,6 +2,7 @@ package cloudproc
 
 import (
 	"anki/jdocs"
+	"anki/logcollector"
 	"anki/token"
 	"anki/voice"
 )
@@ -9,10 +10,11 @@ import (
 type Option func(o *options)
 
 type options struct {
-	voice     *voice.Process
-	voiceOpts []voice.Option
-	tokenOpts []token.Option
-	jdocOpts  []jdocs.Option
+	voice            *voice.Process
+	voiceOpts        []voice.Option
+	tokenOpts        []token.Option
+	jdocOpts         []jdocs.Option
+	logcollectorOpts []logcollector.Option
 }
 
 func WithVoice(process *voice.Process) Option {
@@ -39,6 +41,16 @@ func WithJdocs(jdocOptions ...jdocs.Option) Option {
 		if o.jdocOpts == nil {
 			// even if no options specified, code is saying "run jdocs plz" by calling this
 			o.jdocOpts = []jdocs.Option{}
+		}
+	}
+}
+
+func WithLogCollectorOptions(logcollectorOptions ...logcollector.Option) Option {
+	return func(o *options) {
+		o.logcollectorOpts = append(o.logcollectorOpts, logcollectorOptions...)
+		if o.logcollectorOpts == nil {
+			// even if no options specified, code is saying "run log collector plz" by calling this
+			o.logcollectorOpts = []logcollector.Option{}
 		}
 	}
 }

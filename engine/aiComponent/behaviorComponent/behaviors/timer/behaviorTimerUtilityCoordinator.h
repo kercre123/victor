@@ -85,6 +85,7 @@ private:
     unsigned long tickToSuppressAnticFor;
     bool touchReleasedSinceStartedRinging;
     bool robotPlacedDownSinceStartedRinging;
+    float timeRingingStarted_s;
   };
 
   InstanceParams _iParams;

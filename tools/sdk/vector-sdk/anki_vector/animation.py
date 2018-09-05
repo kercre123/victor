@@ -1,8 +1,20 @@
-'''
-Animation related classes, functions, events and values.
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Copyright(c) 2018 Anki, Inc.
-'''
+"""
+Animation related classes, functions, events and values.
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["AnimationComponent"]
@@ -14,7 +26,7 @@ from .messaging import protocol
 
 
 class AnimationComponent(util.Component):
-    '''Manage the state of all the animations in the robot'''
+    """Manage the state of all the animations in the robot"""
 
     def __init__(self, robot):
         super().__init__(robot)
@@ -30,14 +42,14 @@ class AnimationComponent(util.Component):
         return list(self._anim_dict.keys())
 
     async def ensure_loaded(self):
-        '''
+        """
         This is an optimization for the case where a user doesn't
         need the animation_list. That way connections aren't delayed
         by the load_animation_list call.
 
         If this is invoked inside another async function then we
         explicitly await the result.
-        '''
+        """
         if not self._anim_dict:
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
             result = self.load_animation_list()
@@ -55,7 +67,7 @@ class AnimationComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def play_animation(self, anim, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):
-        '''Starts an animation playing on a robot.
+        """Starts an animation playing on a robot.
 
         Vector must be off of the charger to play an animation.
 
@@ -66,7 +78,7 @@ class AnimationComponent(util.Component):
         Args:
             anim (str or anki_vector.protocol.Animation): The animation to play.
             loop_count (int): Number of times to play the animation.
-        '''
+        """
         animation = anim
         if not isinstance(anim, protocol.Animation):
             await self.ensure_loaded()

@@ -12,9 +12,7 @@
 #include "mics.h"
 #include "lights.h"
 
-#include "contacts.h"
-
-extern "C" void SoftReset();
+extern "C" void SoftReset(bool onCharger);
 
 static const uint32_t APB1_CLOCKS = 0
               | RCC_APB1ENR_USART2EN
@@ -38,20 +36,30 @@ static const uint32_t APB2_CLOCKS = 0
 
 static PowerMode currentState = POWER_UNINIT;
 static PowerMode desiredState = POWER_CALM;
+static bool enter_recovery = false;
 
 static void enterBootloader(void);
+
+static inline void setupPerfs(void) {
+  Mics::start();
+  Lights::enable();
+}
 
 void Power::init(void) {
   DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
+  
+  setupPerfs();
+}
+
+void Power::signalRecovery() {
+  enter_recovery = true;
 }
 
 static inline void enableHead(void) {
-  BODY_TX::mode(MODE_OUTPUT);
   MAIN_EN::set();
-  Mics::start();
-  Lights::enable();
+  setupPerfs();
 }
 
 static inline void disableHead(void) {
@@ -129,18 +137,19 @@ static void enterBootloader(void) {
   RCC->APB1ENR &= ~APB1_CLOCKS;
   RCC->APB2ENR &= ~APB2_CLOCKS;
 
+  __disable_irq();
+
   // Set to flash handler
   SYSCFG->CFGR1 = 0;
 
   markForErase();
 
   // Pass control back to the reset handler
-  __disable_irq();
   DFU_FLAG = DFU_ENTRY_POINT;
   NVIC->ICER[0] = ~0; // Disable all interrupts
   NVIC->ICPR[0] = ~0; // Clear all pending interrupts
 
-  SoftReset();
+  SoftReset(Analog::on_charger);
 }
 
 void Power::wakeUp() {
@@ -154,12 +163,27 @@ void Power::setMode(PowerMode set) {
   desiredState = set;
 }
 
-void Power::adjustHead(void) {
-  static bool headPowered = false;  // head has power, but devices are not setup
+void Power::adjustHead() {
+  static bool headPowered = true;
   bool wantPower = desiredState != POWER_STOP;
 
   if (headPowered == wantPower) {
     return ;
+  }
+
+  // If the head is transitioning between power / not-powered
+  // We need to disable the TX pin, or set it to signal wether
+  // or not we are signalling recovery
+  if (wantPower) {
+    if (enter_recovery) {
+      BODY_TX::reset();
+      enter_recovery = false;
+    } else {
+      BODY_TX::set();
+    }
+    BODY_TX::mode(MODE_OUTPUT);
+  } else {
+    BODY_TX::mode(MODE_INPUT);
   }
 
   if (wantPower) {

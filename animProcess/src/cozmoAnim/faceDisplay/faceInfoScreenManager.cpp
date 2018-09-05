@@ -1464,7 +1464,6 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
     // we need robot, anim, engine, and switchboard all communicating
     // for pairing to start. If the fault code is something besides a
     // process crash, this will clear it.
-    FaultCode::DisplayFaultCode(0);
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
@@ -1494,11 +1493,6 @@ void FaceInfoScreenManager::Reboot()
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
   return;
 #else
-
-  // Suppress any error codes that might appear 
-  // as a result of the following reboot
-  FaceDisplay::getInstance()->EnableFaultCodeDisplay(false);
-
   // Need to call reboot in forked process for some reason.
   // Otherwise, reboot doesn't actually happen.
   // Also useful for transitioning to "REBOOTING..." screen anyway.

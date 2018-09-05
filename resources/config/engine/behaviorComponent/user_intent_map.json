@@ -5,6 +5,10 @@
       "user_intent": "play_anytrick"
     },
     {
+      "cloud_intent": "intent_play_anygame",
+      "user_intent": "play_anygame"
+    },
+    {
       "cloud_intent": "intent_imperative_quiet",
       "app_intent": "intent_imperative_quiet",
       "user_intent": "imperative_quiet"

@@ -34,6 +34,15 @@ namespace {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStuckOnEdge::DynamicVariables::DynamicVariables()
+{
+  startOfMotionDetectedTime_s = 0.f;
+  enablePowerSaveModeTime_s   = 0.f;
+  getInTrigger = AnimationTrigger::StuckOnEdgeGetIn;
+  idleTrigger  = AnimationTrigger::StuckOnEdgeIdle;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStuckOnEdge::BehaviorStuckOnEdge(const Json::Value& config)
 : ICozmoBehavior(config)
 {
@@ -57,6 +66,7 @@ void BehaviorStuckOnEdge::InitBehavior()
 void BehaviorStuckOnEdge::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
+  SetAnimTriggers();
   TriggerGetInAnim();
 }
 
@@ -90,7 +100,7 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
           _dVars.startOfMotionDetectedTime_s = currTime_s;
         }
         if (currTime_s - _dVars.startOfMotionDetectedTime_s > kMotionDetectDurationThresh_sec) {
-          PRINT_NAMED_INFO("BehaviorStuckOnEdge.BehaviorUpdate.RemovePowerSaveModeRequest","");
+          PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.BehaviorUpdate.RemovePowerSaveModeRequest","");
           ICozmoBehavior::SmartRemovePowerSaveModeRequest();
           _dVars.startOfMotionDetectedTime_s = 0.f;
           _dVars.enablePowerSaveModeTime_s = currTime_s + kDisablePowerSaveOnMotionDuration_sec;
@@ -99,7 +109,7 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
         _dVars.startOfMotionDetectedTime_s = 0.f;
       }
     } else if (!inSysconCalmMode && !gyroMotionDetected && (currTime_s > _dVars.enablePowerSaveModeTime_s)) {
-      PRINT_NAMED_INFO("BehaviorStuckOnEdge.BehaviorUpdate.RequestPowerSaveMode","");
+      PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.BehaviorUpdate.RequestPowerSaveMode","");
       ICozmoBehavior::SmartRequestPowerSaveMode();
     }
   }
@@ -113,19 +123,45 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
 
 }
 
+
+void BehaviorStuckOnEdge::SetAnimTriggers()
+{
+  const auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
+  const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
+
+  _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeGetIn;
+  _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeIdle;
+  if (!inSysconCalmMode) {
+    const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+    bool leftCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FL) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BL);
+    bool rightCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FR) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BR);
+
+    // Only pick a "sided" animation if we're seeing cliffs on one side only
+    if (leftCliffs != rightCliffs) {
+      if (leftCliffs) {
+        _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeLeftGetIn;
+        _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeLeftIdle;
+      } else {
+        _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeRightGetIn;
+        _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeRightIdle;
+      }
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStuckOnEdge::TriggerGetInAnim()
 {
-  PRINT_NAMED_INFO("BehaviorStuckOnEdge.TriggerGetInAnim", "");
-  auto action = new TriggerAnimationAction(AnimationTrigger::StuckOnEdgeGetIn, 1, true, kTracksToLock);
+  PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.TriggerGetInAnim", "%s", EnumToString(_dVars.getInTrigger));
+  auto action = new TriggerAnimationAction(_dVars.getInTrigger, 1, true, kTracksToLock);
   DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerIdleAnim);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStuckOnEdge::TriggerIdleAnim()
 {
-  PRINT_NAMED_INFO("BehaviorStuckOnEdge.TriggerIdleAnim", "");
-  auto action = new TriggerAnimationAction(AnimationTrigger::StuckOnEdgeIdle, 1, true, kTracksToLock);
+  PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.TriggerIdleAnim", "%s", EnumToString(_dVars.idleTrigger));
+  auto action = new TriggerAnimationAction(_dVars.idleTrigger, 1, true, kTracksToLock);
   DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerIdleAnim);
 }
 

@@ -117,7 +117,7 @@ public:
 
   // Enable/disable moving of eyes while tracking. Default is false.
   void SetMoveEyes(bool moveEyes);
-  
+
 protected:
 
   ITrackAction(const std::string name, const RobotActionType type);
@@ -221,7 +221,7 @@ private:
   Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
   
   f32      _tiltDuration_sec = 0.15f;
-  f32      _panDuration_sec  = 0.2f;
+  f32      _panDuration_sec  = 0.25f;
   f32      _timeToReachTarget_sec  = 0.5f;
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;

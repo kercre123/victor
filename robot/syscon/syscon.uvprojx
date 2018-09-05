@@ -428,11 +428,6 @@
               <FilePath>.\src\touch.cpp</FilePath>
             </File>
             <File>
-              <FileName>contacts.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\src\contacts.cpp</FilePath>
-            </File>
-            <File>
               <FileName>start_mics.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\src\start_mics.s</FilePath>
@@ -447,16 +442,16 @@
               <FileType>8</FileType>
               <FilePath>.\src\power.cpp</FilePath>
             </File>
+            <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\analog.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>common</GroupName>
           <Files>
-            <File>
-              <FileName>analog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\analog.cpp</FilePath>
-            </File>
             <File>
               <FileName>flash.cpp</FileName>
               <FileType>8</FileType>

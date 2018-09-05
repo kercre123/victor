@@ -16,6 +16,10 @@
     "enabled": true
   },
   {
+    "feature": "RollCube",
+    "enabled": true
+  },
+  {
     "feature": "Messaging",
     "enabled": false
   },

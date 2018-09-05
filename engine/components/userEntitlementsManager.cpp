@@ -64,13 +64,8 @@ void UserEntitlementsManager::InitDependent(Robot* robot, const RobotCompMap& de
 
     if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::USER_ENTITLEMENTS))
     {
-      // TODO (this has its own ticket, VIC-5669):
-      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
-      //   and new format versions.  Also put it in a function, and call that ALSO in the
-      //   case of migration triggered when pulling a new version of jdoc from the cloud.
-      //   consider another callback, similar to the 'overwritten' callback, but for this
-      //   format migration.
-      // Not doing this now because we're not changing format versions yet.
+      DoJdocFormatMigration();
+      userEntitlementsDirty = true;
     }
   }
 
@@ -119,6 +114,10 @@ void UserEntitlementsManager::InitDependent(Robot* robot, const RobotCompMap& de
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::USER_ENTITLEMENTS, [this]() {
     _currentUserEntitlements = _jdocsManager->GetJdocBody(external_interface::JdocType::USER_ENTITLEMENTS);
     ApplyAllCurrentUserEntitlements();
+  });
+
+  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::USER_ENTITLEMENTS, [this]() {
+    DoJdocFormatMigration();
   });
 
   // Finally, set a flag so we will apply all of the user entitlements
@@ -294,6 +293,30 @@ bool UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes()
   // TODO:  Can call whereever here
   
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void UserEntitlementsManager::DoJdocFormatMigration()
+{
+  const auto jdocType = external_interface::JdocType::USER_ENTITLEMENTS;
+  const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
+  const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
+  LOG_INFO("UserEntitlementsManager.DoJdocFormatMigration",
+           "Migrating user entitlements jdoc from format version %llu to %llu",
+           docFormatVersion, curFormatVersion);
+  if (docFormatVersion > curFormatVersion)
+  {
+    LOG_ERROR("UserEntitlementsManager.DoJdocFormatMigration.Error",
+              "Jdoc format version is newer than what victor code can handle; no migration possible");
+    return;
+  }
+
+  // When we change 'format version' on this jdoc, migration
+  // to a newer format version is performed here
+
+  // Now update the format version of this jdoc to the current format version
+  _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
 }
 
 

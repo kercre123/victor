@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test the motors for the head and lift
-'''
+"""
 
 import os
 import sys
@@ -13,7 +13,7 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin testing head and lift motors ------")

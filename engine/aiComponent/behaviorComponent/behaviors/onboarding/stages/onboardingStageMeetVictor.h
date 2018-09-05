@@ -146,6 +146,11 @@ public:
   {
     ResetFromInterruption(interruptingBehavior);
     DebugTransition("Resuming");
+    if( (_step == Step::MeetVictor) && !_behaviors[Step::MeetVictor]->WantsToBeActivated() ) {
+      // meet victor considers itself done. don't fight that and just consider us done, even if
+      // we didn't get the confirmation that set _enrollmentSuccessful
+      _step = Step::SuccessfulScan;
+    }
     _selectedBehavior = _behaviors[_step];
     const bool triggerEnabled = _step == Step::LookingAround || _step == Step::WaitForReScan;
     SetTriggerWordEnabled( triggerEnabled );

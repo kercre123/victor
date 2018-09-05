@@ -49,6 +49,8 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
+      
+      virtual void SetRenderInEyeHue(bool renderInEyeHue) { _renderInEyeHue = renderInEyeHue; }
 
       static constexpr f32 GetDefaultTimeoutInSeconds() { return _kDefaultTimeout_sec; }
       static constexpr f32 GetInfiniteTimeoutInSeconds() { return _kDefaultTimeoutForInfiniteLoops_sec; }
@@ -79,6 +81,7 @@ namespace Anki {
       float                     _timeout_sec = _kDefaultTimeout_sec;
       bool                      _bodyTrackManuallyLocked = false;
       TimeStamp_t               _startAtTime_ms = 0;
+      bool                      _renderInEyeHue = true;
       AnimationComponent::AnimationCompleteCallback _passedInCallback = nullptr;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;

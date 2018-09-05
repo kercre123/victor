@@ -57,7 +57,7 @@ public:
   static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
-  void Update();
+  void Update(BaseStationTime_t currTime_nanosec);
 
   RobotID_t GetRobotID() const;
 
@@ -89,7 +89,7 @@ public:
   uint32_t GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const;
 
   // Returns data about CPU times
-  const std::vector<std::string>& GetCPUTimeStats() const;
+  void GetCPUTimeStats(std::vector<std::string> & stats) const;
 
   // Returns our ip address
   const std::string& GetIPAddress(bool update = false);
@@ -124,7 +124,7 @@ public:
 
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
-  
+
   void GetOSBuildVersion(int& major, int& minor, int& incremental) const;
 
   // Returns "major.minor.build" for reporting to DAS
@@ -153,7 +153,7 @@ public:
 
   // True if user space is secure
   bool IsUserSpaceSecure();
-  
+
   // For the engine to let the OS State know if we are on/off the charge contacts
   void SetOnChargeContacts(const bool onChargeContacts) const;
 
@@ -199,7 +199,7 @@ private:
   std::string _bootID          = "";
   bool        _isUserSpaceSecure = false;
   bool        _hasValidIPAddress = false;
-  
+
 }; // class OSState
 
 } // namespace Vector

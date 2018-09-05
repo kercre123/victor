@@ -179,7 +179,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::prepForShutdown,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        LOG_INFO("RobotMessageHandler.ProcessMessage.Shutdown","");
-                                                       robot->Shutdown();
+                                                       robot->Shutdown(message.GetData().Get_prepForShutdown().reason);
                                                      }));
 
   

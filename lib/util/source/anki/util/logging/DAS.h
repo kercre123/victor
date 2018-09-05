@@ -178,6 +178,14 @@ void sLogDebug(const DasMsg & dasMessage);
 #define DASMSG_PROFILE_ID_STOP "profile_id.stop"
 
 //
+// DAS Allow Upload
+// This event is used to enable/disable DAS uploads.
+// If event name or event parameters change, DASManager must be updated to match.
+// Names are defined as a macro, not a constexpr, so they can be expanded by doxygen.
+//
+#define DASMSG_DAS_ALLOW_UPLOAD "das.allow_upload"
+
+//
 // DAS message macros
 //
 // These macros are used to ensure that developers provide some description of each event defined.

@@ -43,7 +43,7 @@ private:
 
   DASConfig _dasConfig;
 
-  // Global state
+  // Global event fields
   uint64_t _seq = 0;
   std::string _robot_id;
   std::string _robot_version;
@@ -54,7 +54,10 @@ private:
   std::string _ble_conn_id;
   std::string _wifi_conn_id;
 
+  // Runtime state
   std::atomic<TimePoint> _last_flush_time;
+  bool _allow_upload = false;
+  bool _purge_backup_files = false;
   bool _exiting = false;
   bool _uploading = false;
   std::string _logFilePath;
@@ -74,8 +77,11 @@ private:
   bool PostToServer(const std::string& pathToLogFile);
   void PostLogsToServer();
   void BackupLogFiles();
+  void PurgeBackupFiles();
+  void EnforceStorageQuota();
 
   std::string ConvertLogEntryToJson(const AndroidLogEntry & logEntry);
+
   // Process a log message
   void ProcessLogEntry(const AndroidLogEntry & logEntry);
 

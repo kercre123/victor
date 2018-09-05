@@ -30,11 +30,12 @@
 
 namespace Anki {
 namespace Wifi {
-
 static GMutex connectMutex;
 static const char* const agentPath = "/tmp/vic_switchboard/connman_agent";
 static const char* WIFI_DEVICE = "wlan0";
 static gpointer ConnectionThread(gpointer data);
+static std::shared_ptr<TaskExecutor> sTaskExecutor;
+static Signal::Signal<void(bool, std::string)> sWifiChangedSignal;
 
 static void AgentCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -64,6 +65,10 @@ static const gchar introspection_xml[] =
   "    </method>"
   "  </interface>"
   "</node>";
+
+Signal::Signal<void(bool, std::string)>& GetWifiChangedSignal() {
+  return sWifiChangedSignal;
+}
 
 void OnTechnologyChanged (GDBusConnection *connection,
                         const gchar *sender_name,
@@ -98,6 +103,10 @@ void OnTechnologyChanged (GDBusConnection *connection,
     }
   }
 
+  sTaskExecutor->Wake([propertyValue, apMacManufacturerBytes](){
+    sWifiChangedSignal.emit(propertyValue, apMacManufacturerBytes);
+  });
+
   Log::Write("WiFi connection status changed: [connected=%s / mac=%s]", 
     propertyValue?"true":"false", apMacManufacturerBytes.c_str());
 
@@ -109,7 +118,7 @@ void OnTechnologyChanged (GDBusConnection *connection,
   DASMSG_SEND();
 }
 
-void Initialize() {
+void Initialize(std::shared_ptr<TaskExecutor> taskExecutor) {
   GError* error = nullptr;
 
   static GThread *thread2 = g_thread_new("init_thread", ConnectionThread, nullptr);
@@ -135,6 +144,12 @@ void Initialize() {
     nullptr);                   //DestroyNotify
 
   (void)handle;
+
+  sTaskExecutor = taskExecutor;
+}
+
+void Deinitialize() {
+  sTaskExecutor = nullptr;
 }
 
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) {

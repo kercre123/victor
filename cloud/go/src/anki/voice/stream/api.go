@@ -20,7 +20,11 @@ func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ..
 		o(&strm.opts)
 	}
 
-	strm.ctx, strm.cancel = context.WithCancel(ctx)
+	if timeout := strm.opts.streamOpts.Timeout; timeout != 0 {
+		strm.ctx, strm.cancel = context.WithTimeout(ctx, timeout)
+	} else {
+		strm.ctx, strm.cancel = context.WithCancel(ctx)
+	}
 
 	go strm.init(streamSize)
 	return strm

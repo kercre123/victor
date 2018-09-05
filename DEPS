@@ -4,11 +4,11 @@
             "External_Dependencies": {
                 "build_type_id": "protocCppPlugin",
                 "checksums": {
-                    "sha256": "8066ef0b6d39b621a6e9a0b70e9a1c394f5f18b3032a5ddff37677da8f4b27cf"
+                    "sha256": "e1d9dce8484979da37ca7ddfaffdf5bec31d933de81c030dfd124150cf936e6a"
                 },
                 "extension": "tar.gz",
                 "package_name": "protocCppPlugin",
-                "version": "2"
+                "version": "3"
             },
             "tensorflow": {
                 "build_type_id": "anki",
@@ -23,6 +23,9 @@
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "files": {
+        "aws_credentials": {
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-logcollector-aws-credentials/victor-logcollector-aws-credentials"
+        },
         "chipper_key": {
             "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
         },
@@ -36,7 +39,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "180"
+                "version": "183"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -53,11 +56,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4098"
+                "version": "4153"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "90"
+                "version": "97"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

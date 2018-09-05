@@ -49,10 +49,6 @@ public:
 
   void SetFaceBrightness(LCDBrightness level);
 
-  // Enable/Disable fault code display (Default: Enabled)
-  // NB: This should probably only be used by FaceInfoScreenManager::Reboot()
-  void EnableFaultCodeDisplay(bool enable) { _enableFaultCodeDisplay = enable; }
-
   // Stops the boot animation process if it is running
   void StopBootAnim();
   
@@ -80,19 +76,6 @@ private:
   
   void DrawFaceLoop();
   void UpdateNextImgPtr();
-
-  // Main loop of the fault code thread
-  void FaultCodeLoop();
-  void DrawFaultCode(uint16_t fault);
-  void StopFaultCodeThread();
-
-  // Stuff for controlling fault code thread
-  std::thread _faultCodeThread;
-  std::mutex _faultCodeMutex;
-  std::condition_variable _faultCodeCondition;
-  bool _faultCodeStop = false;
-  bool _enableFaultCodeDisplay = true;
-
 }; // class FaceDisplay
 
 } // namespace Vector

@@ -53,6 +53,7 @@ namespace Anki {
         constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
         constexpr auto ARE_WHEELS_MOVING = EnumToUnderlyingType(RobotStatusFlag::ARE_WHEELS_MOVING);
         constexpr auto IS_BEING_HELD = EnumToUnderlyingType(RobotStatusFlag::IS_BEING_HELD);
+        constexpr auto IS_MOTION_DETECTED = EnumToUnderlyingType(RobotStatusFlag::IS_MOTION_DETECTED);
 
         u8 pktBuffer_[2048];
 
@@ -133,6 +134,7 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
         robotState_.status |= (IMUFilter::IsBeingHeld() ? IS_BEING_HELD : 0);
+        robotState_.status |= (IMUFilter::IsMotionDetected() ? IS_MOTION_DETECTED : 0);
         robotState_.status |= (HAL::GetButtonState(HAL::BUTTON_POWER) > 0 ? IS_BUTTON_PRESSED : 0 );
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
@@ -564,6 +566,11 @@ namespace Anki {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
         }
+      }
+      
+      void Process_setWhiteDetectThreshold(const RobotInterface::SetWhiteDetectThreshold& msg)
+      {
+        ProxSensors::SetWhiteDetectThreshold(msg.threshold);
       }
 
       void Process_cliffAlignToWhiteAction(const RobotInterface::CliffAlignToWhiteAction& msg)

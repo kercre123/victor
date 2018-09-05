@@ -28,6 +28,7 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/actionResults.h"
 #include "clad/types/animationTypes.h"
+#include "clad/types/offTreadsStates.h"
 
 #include "util/random/randomGenerator.h"
 
@@ -271,6 +272,12 @@ namespace Anki {
       // function, subscriptions to the VisionScheduleMediator will then be handled by IAction::UpdateInternal().
       // By default, we assume that no vision modes are required for the action
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const { }
+      
+      // If the derived action needs to fail if the robot's tread state transitions from OnTreads to any other
+      // state at runtime, then the action returns an action result of INVALID_OFF_TREADS_STATE. The check to verify
+      // this is handled by IAction::UpdateInternal, which calls IAction::IsCurrentTreadStateValid. By default,
+      // we assume that the actions can run even if the tread state transitions from OnTreads to any other state.
+      virtual bool ShouldFailOnTransitionOffTreads() const { return false; }
 
       // Derived Actions should implement these.
       virtual ActionResult  Init() { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
@@ -294,13 +301,17 @@ namespace Anki {
 
       // A random number generator all subclasses can share
       Util::RandomGenerator& GetRNG() const;
+      
+      // Verifies that the robot's tread state has NOT recently transitioned from OnTreads to any other state.
+      bool DidTreadStateChangeFromOnTreads() const;
 
     private:
 
-      bool          _preconditionsMet;
+      bool          _actionSpecificPreconditionsMet;
       f32           _startTime_sec;
 
       std::set<VisionModeRequest> _requiredVisionModes;
+      OffTreadsState _prevTreadsState;
 
     }; // class IAction
 

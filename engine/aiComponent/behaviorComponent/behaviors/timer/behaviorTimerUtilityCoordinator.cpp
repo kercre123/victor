@@ -32,6 +32,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
@@ -254,6 +255,7 @@ BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
   tickToSuppressAnticFor = 0;
   touchReleasedSinceStartedRinging = false;
   robotPlacedDownSinceStartedRinging = false;
+  timeRingingStarted_s = 0.0f;
 }
 
 
@@ -457,6 +459,20 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelRinging()
 
   const bool shouldCancelTimer = shouldCancelDueToPickedUp || shouldCancelDueToTouch || uic.IsTriggerWordPending();
   if(IsTimerRinging() && shouldCancelTimer){
+
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const int ringTime_ms = std::round( (currTime_s - _lParams.timeRingingStarted_s) * 1000.0f );
+
+    const char* reason = uic.IsTriggerWordPending() ? "trigger_word" :
+                         shouldCancelDueToPickedUp ? "picked_up" :
+                         shouldCancelDueToTouch ? "touched" : "invalid";
+
+    DASMSG(behavior_timer, "behavior.timer_utility.ringing_stopped",
+           "A ringing timer was stopped");
+    DASMSG_SET(s1, reason, "Reason the ringing stopped (trigger_word, picked_up, or touched)");
+    DASMSG_SET(i1, ringTime_ms, "Amount of time the timer was ringing in milliseconds");
+    DASMSG_SEND();
+
     GetTimerUtility().ClearTimer();
     // Its emergency get out will still play
     CancelSelf();
@@ -587,6 +603,7 @@ void BehaviorTimerUtilityCoordinator::TransitionToRinging()
   DelegateNow(_iParams.timerRingingBehavior.get());
   _lParams.touchReleasedSinceStartedRinging = false;
   _lParams.robotPlacedDownSinceStartedRinging = false;
+  _lParams.timeRingingStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 

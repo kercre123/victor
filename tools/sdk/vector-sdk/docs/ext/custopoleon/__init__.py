@@ -1,4 +1,4 @@
-'''
+"""
 Due to deficiencies in the design of Sphinx, two modules cannot both
 observe the same event.  Napaleon hooks the autodoc-skip-member event
 to determine which members to show.. We want to use the same thing
@@ -8,7 +8,7 @@ their undocumented members show up in the docs.
 As a workaround this module monkey patches Napoleon to wrap their
 autodoc-skip-member implementation and special case the response for
 our classes.
-'''
+"""
 
 
 import sphinx.ext.napoleon

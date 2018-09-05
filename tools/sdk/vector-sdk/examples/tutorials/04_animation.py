@@ -39,7 +39,7 @@ def main():
         # we recommend using play_anim_trigger above instead.
         # See the remote_control_cozmo.py example in apps for an easy way to see
         # the available animations.
-        animation = 'anim_blackjack_victorwin_01'
+        animation = 'anim_pounce_success_02'
         print("Playing animation by name: " + animation)
         robot.anim.play_animation(animation)
 

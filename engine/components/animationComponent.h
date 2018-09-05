@@ -119,7 +119,8 @@ public:
                         AnimationCompleteCallback callback = nullptr,
                         const u32 actionTag = 0,
                         float timeout_sec = _kDefaultTimeout_sec,
-                        u32 startAt_ms = 0);
+                        u32 startAt_ms = 0,
+                        bool renderInEyeHue = true);
 
   // Tell animation process to render the specified animation
   // to the Procedural_Eyes layer of the specified composite image

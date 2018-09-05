@@ -25,6 +25,10 @@
 
 #include <errno.h>
 
+// will log all the touch sensor data to /data/misc/touch.csv
+// disable when you aren't trying to debug the touch sensor
+#define DEBUG_TOUCH_SENSOR 0
+
 namespace Anki {
 namespace Vector {
 
@@ -469,6 +473,14 @@ Result HAL::Step(void)
 #endif // #ifndef HAL_DUMMY_BODY
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
+  
+#if(DEBUG_TOUCH_SENSOR)
+  static FILE* fp = nullptr;
+  if(fp == nullptr) {
+    fp = fopen("/data/misc/touch.csv","w+");
+  }
+  fprintf(fp, "%d\n", lastValidTouchIntensity_);
+#endif
 
   // Monitor body temperature (For debugging only)
   if (bodyData_ != nullptr) {

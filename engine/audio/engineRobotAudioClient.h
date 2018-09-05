@@ -22,6 +22,7 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/events/ankiEvent.h"
+#include "proto/external_interface/settings.pb.h"
 #include <memory>
 #include <vector>
 
@@ -32,7 +33,6 @@ namespace RobotInterface {
 class RobotToEngine;
 }
 class Robot;
-enum class MasterVolume : uint8_t;
 
 namespace Audio {
 class AudioBehaviorStackListener;
@@ -60,7 +60,7 @@ public:
 
   // Engine Robot Audio Client Helper Methods
   //--------------------------------------------------------------------------------------------------------------------
-  void SetRobotMasterVolume( MasterVolume volume );
+  void SetRobotMasterVolume( external_interface::Volume volume );
 
 
   // Basic Audio Client Methods

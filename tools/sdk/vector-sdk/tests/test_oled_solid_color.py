@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-'''
+"""
 This test cycles Victor's OLED 4 times between solid colors:
 yellow-orange, green, azure, and purple
 
 NOTE: Currently, victor's default eye animations will override the solid colors, so
       when testing the colors will flicker back and forth between the eyes and color.
-'''
+"""
 
 # @TODO: Once behaviors are worked out, we should be sending some kind of "stop default eye stuff"
 #        message at the start of this program, and a complimentary "turn back on default eye stuff"
@@ -20,7 +20,7 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     with anki_vector.Robot(args.serial, port=args.port) as robot:

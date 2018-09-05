@@ -1,0 +1,78 @@
+---
+- name: update raspbian index
+  apt:
+    upgrade: yes
+    update_cache: yes 
+  become: yes
+
+- name: apt packages for installing alternative python version
+  apt:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - build-essential
+    - python-dev 
+    - python-setuptools
+    - python-pip 
+    - python-smbus
+    - libncursesw5-dev 
+    - libgdbm-dev 
+    - libc6-dev
+    - zlib1g-dev
+    - libsqlite3-dev
+    - tk-dev
+    - libssl-dev
+    - openssl
+    - libffi-dev
+  become: yes
+
+- name: Download python 3.6.0 tarball 
+  get_url:
+    url: "{{ tarball_url }}"
+    dest: "{{ base_dir }}"
+  mode: 0755
+
+- name: Unarchive python 3.6.0 tarball
+  unarchive:
+    src: "{{ base_dir }}/{{ python_tarball_name }}"
+    dest: "{{ base_dir }}"
+    remote_src: yes
+
+- name: Run configure script for Python 3.6.0 (Can take up to 5 minutes)
+  shell: "{{ python_dir }}/configure"
+  args:
+    chdir: "{{ python_dir }}"
+
+- name: Run make for Python 3.6.0 (Can take up to 10 minutes)
+  make: 
+    chdir: "{{ python_dir }}"
+    target: all
+    params:
+      jobs: 4
+
+- name: Run make install for Python 3.6.0 (Can take up to 5 minutes)
+  make: 
+    chdir: "{{ python_dir }}"
+    target: install
+    params:
+      jobs: 4
+  become: yes
+
+- name: Update pip and setuptools
+  pip:
+    name: "{{ item }}"
+    executable: pip3
+    state: latest
+  with_items:
+    - pip
+    - setuptools
+  become: yes
+
+- name: Clean up files
+  file:
+    path: "{{ item }}" 
+    state: absent
+  with_items:
+    - "{{ python_dir }}"
+    - "{{ base_dir }}/{{ python_tarball_name }}"
+  become: yes

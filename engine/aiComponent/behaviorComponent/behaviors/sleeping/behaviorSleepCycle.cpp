@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleepCycle.h"
 
+#include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
@@ -24,6 +25,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -35,6 +37,7 @@
 #include "webServerProcess/src/webService.h"
 #include "webServerProcess/src/webVizSender.h"
 
+
 namespace Anki {
 namespace Vector {
 
@@ -44,6 +47,7 @@ namespace {
   const char* kAlwaysWakeReasonsKey = "alwaysWakeReasons";
   const char* kWakeFromStatesKey = "wakeFromStates";
   const char* kFindChargerBehaviorKey = "goToChargerBehavior";
+  const char* kEmergencyConditionKey = "emergencyCondition";
 
   const int kMaxTicksForPostBehaviorSuggestions = 5;
 
@@ -59,7 +63,7 @@ namespace {
   static const char* kWebVizModuleNameSleeping = "sleeping";
 }
 
-#define CONSOLE_GROUP "Sleeping"
+#define CONSOLE_GROUP "Sleeping.SleepCycle"
 
 CONSOLE_VAR(f32, kSleepCycle_DeepSleep_PersonCheckInterval_s, CONSOLE_GROUP, 4 * 60.0f * 60.0f);
 CONSOLE_VAR(f32, kSleepCycle_LightSleep_PersonCheckInterval_s, CONSOLE_GROUP, 1 * 60.0f * 60.0f);
@@ -90,6 +94,8 @@ BehaviorSleepCycle::BehaviorSleepCycle(const Json::Value& config)
   CheckWakeReasonConfig();
 
   ParseWakeReasons(config);
+
+  _iConfig.emergencyCondition = BEIConditionFactory::CreateBEICondition(config[kEmergencyConditionKey], GetDebugLabel());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -164,7 +170,8 @@ void BehaviorSleepCycle::CheckWakeReasonConfig()
     const WakeReason reason = (WakeReason)reasonIdx;
 
     if( reason != WakeReason::SawPerson &&
-        reason != WakeReason::NotSleepy ) {
+        reason != WakeReason::NotSleepy &&
+        reason != WakeReason::Interrupted ) {
       // skip special cases, everything else must exist
 
       ANKI_VERIFY( _iConfig.wakeConditions.find(reason) != _iConfig.wakeConditions.end(),
@@ -237,6 +244,7 @@ void BehaviorSleepCycle::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.sleepingSoundReactionBehavior.get());
   delegates.insert(_iConfig.sleepingWakeWordBehavior.get());
   delegates.insert(_iConfig.wiggleBackOntoChargerBehavior.get());
+  delegates.insert(_iConfig.emergencyModeAnimBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -247,7 +255,8 @@ void BehaviorSleepCycle::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
     kWakeReasonConditionsKey,
     kAlwaysWakeReasonsKey,
     kWakeFromStatesKey,
-    kFindChargerBehaviorKey
+    kFindChargerBehaviorKey,
+    kEmergencyConditionKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -275,11 +284,14 @@ void BehaviorSleepCycle::InitBehavior()
   _iConfig.sleepingSoundReactionBehavior = BC.FindBehaviorByID( BEHAVIOR_ID( ReactToSoundAsleep ) );
   _iConfig.sleepingWakeWordBehavior      = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingTriggerWord ) );
   _iConfig.wiggleBackOntoChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID( WiggleBackOntoChargerFromPlatform ) );
+  _iConfig.emergencyModeAnimBehavior     = BC.FindBehaviorByID( BEHAVIOR_ID( EmergencyModeAnimDispatcher ) );
   _iConfig.personCheckBehavior           = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingPersonCheck ) );
 
   for( const auto& conditionPair : _iConfig.wakeConditions ) {
     conditionPair.second->Init( GetBEI() );
   }
+
+  _iConfig.emergencyCondition->Init( GetBEI() );
 
   const auto* context = GetBEI().GetRobotInfo().GetContext();
   if( context != nullptr ) {
@@ -295,7 +307,6 @@ void BehaviorSleepCycle::InitBehavior()
                                     onWebVizSubscribed ));
     }
   }
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -315,12 +326,18 @@ void BehaviorSleepCycle::OnBehaviorActivated()
   if( _iConfig.awakeDelegate->WantsToBeActivated() ) {
     DelegateIfInControl(_iConfig.awakeDelegate.get());
   }
+
+  _iConfig.emergencyCondition->SetActive( GetBEI(), true );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::OnBehaviorDeactivated()
 {
+  if( _dVars.isMuted ) {
+    MuteForPersonCheck(false);
+  }
+
   // if we were asleep, and being canceled by something above, play emergency get out (it is disabled in the
   // sleeping behavior itself)
   switch( _dVars.currState ) {
@@ -333,10 +350,25 @@ void BehaviorSleepCycle::OnBehaviorDeactivated()
       break;
 
     case SleepStateID::Comatose:
+    case SleepStateID::EmergencySleep:
     case SleepStateID::DeepSleep:
-    case SleepStateID::LightSleep:
+    case SleepStateID::LightSleep: {
+
       PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
+
+#if ANKI_DEV_CHEATS
+      _dVars.lastWakeReason = WakeReason::Interrupted;
+
+      auto* context = GetBEI().GetRobotInfo().GetContext();
+      if( context ) {
+        if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleNameSleeping,
+                                                                          context->GetWebService()) ) {
+          PopulateWebVizJson(webSender->Data());
+        }
+      }
+#endif
       break;
+    }
   }
 
   // set all "always running" conditions to non-active
@@ -345,6 +377,8 @@ void BehaviorSleepCycle::OnBehaviorDeactivated()
   }
 
   SetConditionsActiveForState( _dVars.currState, false);
+
+  _iConfig.emergencyCondition->SetActive( GetBEI(), false );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -377,11 +411,39 @@ void BehaviorSleepCycle::BehaviorUpdate()
       return;
     }
     else {
-      // finished listening behavior, clear reaction state
-      _dVars.reactionState = SleepReactionType::None;
 
-      // go on with the loop here, wake reason will wake us if needed
+      auto clearReactionState = [this]() {
+        SetReactionState(SleepReactionType::NotReacting);
+      };
+
+      if( _dVars.currState == SleepStateID::EmergencySleep ) {
+        // show "charger face" or "too hot face" animation to explain to the user why the voice command failed
+        if( _iConfig.emergencyModeAnimBehavior->WantsToBeActivated() ) {
+          if( DelegateIfInControl(_iConfig.emergencyModeAnimBehavior.get(), clearReactionState) ) {
+            return;
+          }
+        }
+        PRINT_NAMED_WARNING("BehaviorSleepCycle.BehaviorUpdate.CantPlayEmergencyAnim",
+                            "For some reason, emergency anim behavior '%s' wont activate",
+                            _iConfig.emergencyModeAnimBehavior ?
+                            _iConfig.emergencyModeAnimBehavior->GetDebugLabel().c_str() :
+                            "<NULL>");
+        clearReactionState();
+        return;
+      }
+      else {
+        // not an emergency, so we're done with the reaction now, wake reason will wake us if needed (e.g. an
+        // intent is set)
+        clearReactionState();
+      }
     }
+  }
+
+  if( _dVars.currState != SleepStateID::EmergencySleep &&
+      _iConfig.emergencyCondition->AreConditionsMet( GetBEI() ) ) {
+    TransitionToEmergencySleep();
+    SendGoToSleepDasEvent(SleepReason::Emergency);
+    return;
   }
 
   if( _dVars.currState == SleepStateID::Awake ) {
@@ -393,7 +455,7 @@ void BehaviorSleepCycle::BehaviorUpdate()
     // first check wake word
     if( _iConfig.sleepingWakeWordBehavior->WantsToBeActivated() ) {
       CancelDelegates(false);
-      _dVars.reactionState = SleepReactionType::TriggerWord;
+      SetReactionState(SleepReactionType::TriggerWord);
       DelegateIfInControl(_iConfig.sleepingWakeWordBehavior.get());
     }
 
@@ -416,11 +478,30 @@ void BehaviorSleepCycle::BehaviorUpdate()
 
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-    if( _dVars.currState == SleepStateID::Comatose &&
-        currTime_s > _dVars.comatoseStartTime_s + kSleepCycle_ComatoseLength_s ) {
-      // since we only get to comatose from a voice command, always go to deep sleep, even if it's daytime
-      TransitionToDeepSleep();
-      return;
+    if( _dVars.currState == SleepStateID::EmergencySleep ) {
+      if( !_iConfig.emergencyCondition->AreConditionsMet( GetBEI() ) ) {
+
+        // no longer in emergency sleep. If a voice command was activated for sleeping (before we went into
+        // emergency mode) go to deep sleep, otherwise select the right sleep automatically
+        auto& uic = GetBehaviorComp<UserIntentComponent>();
+        if( uic.IsUserIntentActive( USER_INTENT( system_sleep ) ) ) {
+          TransitionToDeepSleep();
+        }
+        else {
+          TransitionToLightOrDeepSleep();
+        }
+
+        return;
+      }
+    }
+
+    if( _dVars.currState == SleepStateID::Comatose ) {
+      const bool timeToTransition = currTime_s > _dVars.comatoseStartTime_s + kSleepCycle_ComatoseLength_s;
+      if( timeToTransition ) {
+        // We only get into Comatose from the sleeping voice command, so always go directly to deep sleep
+        TransitionToDeepSleep();
+        return;
+      }
     }
 
     if( _dVars.currState == SleepStateID::LightSleep ||
@@ -438,18 +519,18 @@ void BehaviorSleepCycle::BehaviorUpdate()
       }
     }
 
-    if( _dVars.reactionState == SleepReactionType::None &&
+    if( _dVars.reactionState == SleepReactionType::NotReacting &&
         ShouldReactToSoundInState(_dVars.currState) &&
         _iConfig.sleepingSoundReactionBehavior->WantsToBeActivated() ) {
       CancelDelegates(false);
-      _dVars.reactionState = SleepReactionType::Sound;
+      SetReactionState(SleepReactionType::Sound);
       DelegateIfInControl(_iConfig.sleepingSoundReactionBehavior.get());
       return;
     }
 
     if( ShouldWiggleOntoChargerFromSleep() ) {
       CancelDelegates(false);
-      _dVars.reactionState = SleepReactionType::WiggleOntoCharger;;
+      SetReactionState(SleepReactionType::WiggleOntoCharger);
 
       // manually disable face keep alive to keep us sleeping while backing up
       SmartDisableKeepFaceAlive();
@@ -457,7 +538,7 @@ void BehaviorSleepCycle::BehaviorUpdate()
       DelegateIfInControl(_iConfig.wiggleBackOntoChargerBehavior.get(), [this]() {
           // even if this fails, clear the variable so we don't keep trying
           _dVars.wasOnChargerContacts = false;
-          _dVars.reactionState = SleepReactionType::None;
+          SetReactionState(SleepReactionType::NotReacting);
           if( _dVars.currState != SleepStateID::Awake ) {
             // go back to slip, but skip the get in
             const bool playGetIn = false;
@@ -470,7 +551,7 @@ void BehaviorSleepCycle::BehaviorUpdate()
       return;
     }
 
-    if( _dVars.reactionState == SleepReactionType::None &&
+    if( _dVars.reactionState == SleepReactionType::NotReacting &&
         !_dVars.wasOnChargerContacts &&
         GetBEI().GetRobotInfo().IsOnChargerContacts() ) {
       _dVars.wasOnChargerContacts = true;
@@ -492,7 +573,7 @@ bool BehaviorSleepCycle::ShouldWiggleOntoChargerFromSleep()
     return false;
   }
 
-  const bool notReacting = ( _dVars.reactionState == SleepReactionType::None );
+  const bool notReacting = ( _dVars.reactionState == SleepReactionType::NotReacting );
   const bool onContacts = GetBEI().GetRobotInfo().IsOnChargerContacts();
 
   return notReacting &&
@@ -507,7 +588,7 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
 
   if( kSleepCycleForceSleep ) {
     TransitionToLightOrDeepSleep();
-    SendToGoSleepDasEvent(SleepReason::ConsoleVar);
+    SendGoToSleepDasEvent(SleepReason::ConsoleVar);
     return true;
   }
 
@@ -517,7 +598,7 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
   if( isSleepIntentPending ) {
     SmartActivateUserIntent( USER_INTENT( system_sleep ) );
     TransitionToComatose();
-    SendToGoSleepDasEvent(SleepReason::SleepCommand);
+    SendGoToSleepDasEvent(SleepReason::SleepCommand);
     return true;
   }
 
@@ -525,7 +606,7 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
   if( isGoodnightIntentPending ) {
     SmartActivateUserIntent( USER_INTENT( greeting_goodnight ) );
     TransitionToSayingGoodnight();
-    SendToGoSleepDasEvent(SleepReason::GoodnightCommand);
+    SendGoToSleepDasEvent(SleepReason::GoodnightCommand);
     return true;
   }
 
@@ -550,13 +631,13 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
 
   if( !wokeRecently && checkSuggestion(PostBehaviorSuggestions::SleepOnCharger) ) {
     TransitionToCharger();
-    SendToGoSleepDasEvent(SleepReason::SleepOnChargerSuggestion);
+    SendGoToSleepDasEvent(SleepReason::SleepOnChargerSuggestion);
     return true;
   }
 
   if( !wokeRecently && checkSuggestion(PostBehaviorSuggestions::Sleep) ) {
     TransitionToLightOrDeepSleep();
-    SendToGoSleepDasEvent(SleepReason::SleepSuggestion);
+    SendGoToSleepDasEvent(SleepReason::SleepSuggestion);
     return true;
   }
 
@@ -572,7 +653,7 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
       isObserving &&
       !wokeRecently ) {
     TransitionToCharger();
-    SendToGoSleepDasEvent(SleepReason::Sleepy);
+    SendGoToSleepDasEvent(SleepReason::Sleepy);
     return true;
   }
 
@@ -600,7 +681,7 @@ bool BehaviorSleepCycle::WakeIfNeeded(const WakeReason& forReason)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSleepCycle::SendToGoSleepDasEvent(const SleepReason& reason)
+void BehaviorSleepCycle::SendGoToSleepDasEvent(const SleepReason& reason)
 {
   if( _dVars.currState == SleepStateID::Awake ) {
     PRINT_NAMED_WARNING("BehaviorSleepCycle.GoToSleep.InvalidDASState",
@@ -642,9 +723,12 @@ void BehaviorSleepCycle::WakeUp(const WakeReason& reason, bool playWakeUp)
   DASMSG_SEND();
 
   // never play wake up if we were in the middle of a reaction (we're already visibly "awake" in that case)
-  const bool wasPlayingReaction = _dVars.reactionState != SleepReactionType::None;
+  const bool wasPlayingReaction = _dVars.reactionState != SleepReactionType::NotReacting;
 
   SetState(SleepStateID::Awake);
+
+  // if we went to sleep due to a voice intent, clear that now
+  SmartDeactivateUserIntent();
 
   // clear charger contacts (may be on or off now)
   _dVars.wasOnChargerContacts = false;
@@ -706,20 +790,28 @@ void BehaviorSleepCycle::TransitionToCheckingForPerson()
 
   _dVars.personCheckStartTimestamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
 
-  if( _iConfig.personCheckBehavior->WantsToBeActivated() ) {
-    DelegateIfInControl( _iConfig.personCheckBehavior.get(), &BehaviorSleepCycle::RespondToPersonCheck );
-  }
-  else {
-    PRINT_NAMED_WARNING("BehaviorSleepCycle.PersonCheck.BehaviorWontActivate",
-                        "Behavior '%s' doesnt want to activate",
-                        _iConfig.personCheckBehavior->GetDebugLabel().c_str());
-    RespondToPersonCheck();
-  }
+  // Mute audio and lock the lift so that the person check is as quiet as possible
+  MuteForPersonCheck(true);
+
+  DelegateIfInControl( new TriggerAnimationAction(AnimationTrigger::WakeupGetout), [this]() {
+      if( _iConfig.personCheckBehavior->WantsToBeActivated() ) {
+        DelegateIfInControl( _iConfig.personCheckBehavior.get(), &BehaviorSleepCycle::RespondToPersonCheck );
+      }
+      else {
+        PRINT_NAMED_WARNING("BehaviorSleepCycle.PersonCheck.BehaviorWontActivate",
+                            "Behavior '%s' doesnt want to activate",
+                            _iConfig.personCheckBehavior->GetDebugLabel().c_str());
+        RespondToPersonCheck();
+      }
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::RespondToPersonCheck()
 {
+  // undo mute / track locking for sleep
+  MuteForPersonCheck(false);
+
   // if there's a face, time to wake up
   const bool onlyRecognizable = true;
   if( GetBEI().GetFaceWorld().HasAnyFaces(_dVars.personCheckStartTimestamp, onlyRecognizable) ) {
@@ -742,49 +834,50 @@ void BehaviorSleepCycle::RespondToPersonCheck()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSleepCycle::TransitionToComatose()
+void BehaviorSleepCycle::SleepTransitionHelper(const SleepStateID& newState, const bool playSleepGetIn)
 {
   if( _dVars.currState == SleepStateID::Awake ) {
     // not going to be awake anymore
     CancelDelegates(false);
   }
 
-  SetState(SleepStateID::Comatose);
+  SetState(newState);
+
+  SleepIfInControl(playSleepGetIn);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSleepCycle::TransitionToComatose()
+{
+  SleepTransitionHelper(SleepStateID::Comatose);
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _dVars.comatoseStartTime_s = currTime_s;
+}
 
-  SleepIfInControl();
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSleepCycle::TransitionToEmergencySleep()
+{
+  SleepTransitionHelper(SleepStateID::EmergencySleep);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::TransitionToDeepSleep()
 {
-  if( _dVars.currState == SleepStateID::Awake ) {
-    CancelDelegates(false);
-  }
-
-  SetState(SleepStateID::DeepSleep);
+  SleepTransitionHelper(SleepStateID::DeepSleep);
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _dVars.nextPersonCheckTime_s = currTime_s + kSleepCycle_DeepSleep_PersonCheckInterval_s;
-
-  SleepIfInControl();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::TransitionToLightSleep()
 {
-  if( _dVars.currState == SleepStateID::Awake ) {
-    CancelDelegates(false);
-  }
-
-  SetState(SleepStateID::LightSleep);
+  SleepTransitionHelper(SleepStateID::LightSleep);
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _dVars.nextPersonCheckTime_s = currTime_s + kSleepCycle_LightSleep_PersonCheckInterval_s;
-
-  SleepIfInControl();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -825,6 +918,8 @@ void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
 void BehaviorSleepCycle::TransitionToSayingGoodnight()
 {
   SetState(SleepStateID::PreSleepAnimation);
+
+  GetBEI().GetMoodManager().TriggerEmotionEvent("RespondToGoodNight");
 
   if( IsControlDelegated() ) {
     CancelDelegates(false);
@@ -878,12 +973,30 @@ void BehaviorSleepCycle::SetState(SleepStateID state)
 {
   SetConditionsActiveForState(_dVars.currState, false);
 
+  const bool wasEmergencyMode = _dVars.currState == SleepStateID::EmergencySleep;
+
   _dVars.currState = state;
   PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.SetState",
                 "%s",
                 SleepStateIDToString(state));
 
+  const bool isEmergencyMode = _dVars.currState == SleepStateID::EmergencySleep;
+
+  if( wasEmergencyMode && !isEmergencyMode ) {
+    // leaving emergency mode, enable wake word streaming again
+    SmartPopResponseToTriggerWord();
+  }
+  else if( !wasEmergencyMode && isEmergencyMode ) {
+    // within emergency mode, disable trigger word audio streaming
+    SmartAlterStreamStateForCurrentResponse(StreamAndLightEffect::StreamingDisabledButWithLight);
+  }
+
+
   SetConditionsActiveForState(_dVars.currState, true);
+
+  // if the state changes, our sleeping reaction will not be active (or be canceled) so clear here
+  _dVars.reactionState = SleepReactionType::NotReacting;
+
 
   auto* context = GetBEI().GetRobotInfo().GetContext();
   if( context ) {
@@ -892,9 +1005,25 @@ void BehaviorSleepCycle::SetState(SleepStateID state)
       PopulateWebVizJson(webSender->Data());
     }
   }
+}
 
-  // if the state changes, our sleeping reaction will not be active (or be canceled) so clear here
-  _dVars.reactionState = SleepReactionType::None;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSleepCycle::SetReactionState(SleepReactionType reaction)
+{
+  _dVars.reactionState = reaction;
+
+  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.Reaction",
+                "sleeping reaction: %s",
+                SleepReactionTypeToString(reaction));
+
+
+  auto* context = GetBEI().GetRobotInfo().GetContext();
+  if( context ) {
+    if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleNameSleeping,
+                                                                      context->GetWebService()) ) {
+      PopulateWebVizJson(webSender->Data());
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -911,15 +1040,47 @@ bool BehaviorSleepCycle::ShouldReactToSoundInState(const SleepStateID& state)
     case SleepStateID::PreSleepAnimation:
     case SleepStateID::GoingToCharger:
     case SleepStateID::Comatose:
+    case SleepStateID::EmergencySleep:
     case SleepStateID::DeepSleep:
+    case SleepStateID::CheckingForPerson:
       return false;
 
     case SleepStateID::LightSleep:
-    case SleepStateID::CheckingForPerson:
       return true;
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSleepCycle::MuteForPersonCheck( bool mute )
+{
+  if( _dVars.isMuted != mute ) {
+
+    if( mute ) {
+      // lock the lift track because the robot likes to slam it around in a noisy way in some animations
+      SmartLockTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK), GetDebugLabel(), GetDebugLabel());
+    }
+    else {
+      SmartUnLockTracks(GetDebugLabel());
+    }
+
+    SetAudioActive(!mute);
+
+    _dVars.isMuted = mute;
+
+    PRINT_CH_INFO("Behaviors", "BeahviorSleepCycle", "Setting mute: %d", mute);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// NOTE:(bn) this code is copied from BehaviorQuietModeCoordinator. Decided against sharing it somewhere
+// common for now because this is not a pattern I want to encourage
+void BehaviorSleepCycle::SetAudioActive( bool active )
+{
+  using GE = AudioMetaData::GameEvent::GenericEvent;
+  using GO = AudioMetaData::GameObjectType;
+  const auto event = active ? GE::Play__Robot_Vic_Scene__Quiet_Off : GE::Play__Robot_Vic_Scene__Quiet_On;
+  GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::PopulateWebVizJson(Json::Value& data) const
@@ -935,6 +1096,8 @@ void BehaviorSleepCycle::PopulateWebVizJson(Json::Value& data) const
     if( _dVars.lastSleepReason != SleepReason::Invalid ) {
       data["last_sleep_reason"] = SleepReasonToString(_dVars.lastSleepReason);
     }
+
+    data["reaction_state"] = SleepReactionTypeToString(_dVars.reactionState);
   }
 #endif
 }

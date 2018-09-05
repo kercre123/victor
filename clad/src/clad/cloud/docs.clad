@@ -67,11 +67,12 @@ structure DeleteRequest {
     string[uint_16] docName
 }
 
-union DocRequest {
+union dupes_allowed DocRequest {
     WriteRequest write,
     ReadRequest read,
     DeleteRequest deleteReq, // every form of delete is a keyword
     Void user,
+    Void thing,
 }
 
 structure ErrorResponse {
@@ -82,12 +83,17 @@ structure UserResponse {
     string userId,
 }
 
+structure ThingResponse {
+    string thingName,
+}
+
 union DocResponse {
     WriteResponse write,
     ReadResponse read,
     Void deleteResp,
     ErrorResponse err,
     UserResponse user,
+    ThingResponse thing,
 }
 
 }

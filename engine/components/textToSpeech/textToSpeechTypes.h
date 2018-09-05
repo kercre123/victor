@@ -18,12 +18,16 @@ enum class UtteranceState
   Finished
 };
 
+const char * EnumToString(UtteranceState state);
+
 enum class UtteranceTriggerType
 {
   Immediate,
   Manual,
   KeyFrame
 };
+
+const char * EnumToString(UtteranceTriggerType triggerType);
 
 } // namespace Vector
 } // namespace Anki

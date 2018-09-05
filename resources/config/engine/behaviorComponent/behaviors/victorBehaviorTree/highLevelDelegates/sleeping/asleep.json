@@ -3,5 +3,6 @@
   "behaviorClass" : "Sleeping",
   "associatedActiveFeature": "Sleeping",
   "shouldPlayEmergencyGetOut": false,
-  "canActivateOffTreads": true
+  "canActivateOffTreads": true,
+  "emotionEventOnActivated": "Asleep"
 }

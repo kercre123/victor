@@ -1,0 +1,42 @@
+---
+- include_vars: "vars/all.yml"
+
+- name: Grab Victor ssh key
+  shell: |
+    curl -sL -o {{ shared_ssh_output }} {{ shared_ssh_url }}
+    chmod 600 {{ shared_ssh_output }}
+
+- name: Insert Victor ssh config information
+  blockinfile:
+    path: "{{ ssh_config }}"
+    create: yes
+    block: |
+      Host {{ vector_ip }}
+         IdentityFile {{ shared_ssh_output }}
+         StrictHostKeyChecking no
+         UserKnownHostsFile /dev/null
+         LogLevel ERROR
+
+- name: Check that victor repo isn't already cloned
+  stat:
+    path: "{{ victor_repo }}"
+  register: victor_repo_exists
+
+- include_role:
+    name: victor-repo-shallow-clone  
+  when: victor_repo_exists.stat.exists == false
+
+- name: Setup gRPC for Victor SDK
+  make: 
+    chdir: "{{ victor_grpc_dir }}"
+    target: all
+  environment:
+    ANKI_ROBOT_HOST: "{{ vector_ip }}"
+  
+- name: Create trust.certs from Victor
+  make: 
+    chdir: "{{ victor_grpc_dir }}"
+    target: certs
+  environment:
+    ANKI_ROBOT_HOST: "{{ vector_ip }}"
+  

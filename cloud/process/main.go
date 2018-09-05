@@ -2,21 +2,27 @@ package main
 
 import (
 	"anki/cloudproc"
+	"anki/config"
 	"anki/ipc"
 	"anki/jdocs"
 	"anki/log"
+	"anki/logcollector"
 	"anki/robot"
 	"anki/token"
 	"anki/voice"
 	"bytes"
 	"clad/cloud"
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gwatts/rootcerts"
 )
 
 var verbose bool
@@ -33,6 +39,15 @@ func getSocketWithRetry(name string, client string) ipc.Conn {
 		} else {
 			return sock
 		}
+	}
+}
+
+func getHTTPClient() *http.Client {
+	// Create a HTTP client with given CA cert pool so we can use https on device
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{RootCAs: rootcerts.ServerCertPool()},
+		},
 	}
 }
 
@@ -88,6 +103,12 @@ func main() {
 
 	ms := flag.Bool("ms", false, "force microsoft handling on the server end")
 	lex := flag.Bool("lex", false, "force amazon handling on the server end")
+
+	// TODO: what are sensible defaults here?
+	bucketName := flag.String("bucket-name", "sai-platform-temp", "Log S3 bucket name")
+	s3BasePrefix := flag.String("key-prefix", "joep", "S3 Key prefix for log files")
+	awsRegion := flag.String("region", "us-west-2", "AWS Region")
+
 	flag.Parse()
 
 	micSock := getSocketWithRetry(ipc.GetSocketPath("mic_sock"), "cp_mic")
@@ -135,11 +156,25 @@ func main() {
 		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerAmazon))
 	}
 
+	if err := config.SetGlobal(""); err != nil {
+		log.Println("Could not load server config! This is not good!:", err)
+		if certErrorFunc != nil && certErrorFunc() {
+			return
+		}
+	}
+
 	options = append(options, cloudproc.WithVoice(process))
 	options = append(options, cloudproc.WithVoiceOptions(voiceOpts...))
 	tokenOpts := []token.Option{token.WithServer()}
 	options = append(options, cloudproc.WithTokenOptions(tokenOpts...))
 	options = append(options, cloudproc.WithJdocs(jdocs.WithServer()))
+
+	logcollectorOpts := []logcollector.Option{logcollector.WithServer()}
+	logcollectorOpts = append(logcollectorOpts, logcollector.WithHTTPClient(getHTTPClient()))
+	logcollectorOpts = append(logcollectorOpts, logcollector.WithBucketName(*bucketName))
+	logcollectorOpts = append(logcollectorOpts, logcollector.WithS3BasePrefix(*s3BasePrefix))
+	logcollectorOpts = append(logcollectorOpts, logcollector.WithAwsRegion(*awsRegion))
+	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorOpts...))
 
 	cloudproc.Run(context.Background(), options...)
 

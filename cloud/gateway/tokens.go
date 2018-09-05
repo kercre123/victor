@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 
 	"anki/ipc"
@@ -20,6 +22,7 @@ import (
 const (
 	jdocDomainSocket = "jdocs_server"
 	jdocSocketSuffix = "gateway_client"
+	tokensFile       = "/data/vic-gateway/token-hashes.json"
 )
 
 // ClientToken holds the tuple of the client token hash and the
@@ -36,16 +39,27 @@ type ClientToken struct {
 // that stores them.
 // Note: comes from the ClientTokenDocument definition
 type ClientTokenManager struct {
-	ClientTokens     []ClientToken      `json:"client_tokens"`
-	jdocIPC          IpcManager         `json:"-"`
-	updateChan       chan chan struct{} `json:"-"`
-	recentTokenIndex int                `json:"-"`
+	ClientTokens      []ClientToken      `json:"client_tokens"`
+	jdocIPC           IpcManager         `json:"-"`
+	checkValid        chan struct{}      `json:"-"`
+	notifyValid       chan struct{}      `json:"-"`
+	updateNowChan     chan chan struct{} `json:"-"`
+	recentTokenIndex  int                `json:"-"`
+	lastUpdatedTokens time.Time          `json:"-"`
+	forceClearFile    bool               `json:"-"`
 }
 
 func (ctm *ClientTokenManager) Init() error {
-	ctm.updateChan = make(chan chan struct{})
+	ctm.forceClearFile = false
+	ctm.lastUpdatedTokens = time.Now().Add(-24 * time.Hour) // older than our startup time
+	ctm.checkValid = make(chan struct{})
+	ctm.notifyValid = make(chan struct{})
+	ctm.updateNowChan = make(chan chan struct{})
 	ctm.jdocIPC.Connect(ipc.GetSocketPath(jdocDomainSocket), jdocSocketSuffix)
-	ctm.UpdateTokens()
+	err := ctm.readTokensFile()
+	if err != nil {
+		return ctm.UpdateTokens()
+	}
 	return nil
 }
 
@@ -53,7 +67,21 @@ func (ctm *ClientTokenManager) Close() error {
 	return ctm.jdocIPC.Close()
 }
 
+func (ctm *ClientTokenManager) readTokensFile() error {
+	clientTokens, err := ioutil.ReadFile(tokensFile)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(clientTokens, ctm)
+}
+
+func (ctm *ClientTokenManager) writeTokensFile(data []byte) error {
+	return ioutil.WriteFile(tokensFile, data, 0600)
+}
+
 func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
+	ctm.checkValid <- struct{}{}
+	<-ctm.notifyValid
 	if len(ctm.ClientTokens) == 0 {
 		return "", grpc.Errorf(codes.Unauthenticated, "no valid tokens")
 	}
@@ -78,11 +106,25 @@ func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
 // DecodeTokenJdoc will update existing valid tokens, from a jdoc received from the server
 func (ctm *ClientTokenManager) DecodeTokenJdoc(jdoc []byte) error {
 	ctm.recentTokenIndex = 0
-	return json.Unmarshal(jdoc, ctm)
+	ctm.lastUpdatedTokens = time.Now()
+	err := json.Unmarshal(jdoc, ctm)
+	if err != nil {
+		log.Printf("Unmarshal tokens failed. Invalidating. %s\n", err.Error())
+		ctm.ClientTokens = []ClientToken{}
+	} else {
+		log.Println("Updated valid tokens")
+	}
+	return err
 }
 
 // UpdateTokens polls the server for new tokens, and will update as necessary
 func (ctm *ClientTokenManager) UpdateTokens() error {
+	if ctm.forceClearFile {
+		err := os.Remove(tokensFile)
+		if err == nil {
+			ctm.forceClearFile = false
+		}
+	}
 	id, esn, err := ctm.getIDs()
 	if err != nil {
 		return err
@@ -102,16 +144,20 @@ func (ctm *ClientTokenManager) UpdateTokens() error {
 	}
 	read := resp.GetRead()
 	if read == nil {
-		return fmt.Errorf("error while trying to read jdocs: %+v", resp)
+		return fmt.Errorf("error while trying to read jdocs: %#v", resp)
 	}
 	if len(read.Items) == 0 {
 		return errors.New("no jdoc in read response")
 	}
-	err = ctm.DecodeTokenJdoc([]byte(read.Items[0].Doc.JsonDoc))
+	data := []byte(read.Items[0].Doc.JsonDoc)
+	err = ctm.DecodeTokenJdoc(data)
 	if err != nil {
 		return nil
 	}
-	log.Println("Updated valid tokens")
+	err = ctm.writeTokensFile(data)
+	if err != nil {
+		return nil
+	}
 	return nil
 }
 
@@ -122,7 +168,7 @@ func (ctm *ClientTokenManager) getIDs() (string, string, error) {
 	}
 	user := resp.GetUser()
 	if user == nil {
-		return "", "", fmt.Errorf("Unable to get robot's user id: %+v", resp)
+		return "", "", fmt.Errorf("Unable to get robot's user id:  %#v", resp)
 	}
 	esn, err := robot.ReadESN()
 	if err != nil {
@@ -145,6 +191,7 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	if err = request.Pack(&buf); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
+	log.Printf("%T: writing '%#v' message to JDoc Manager\n", *ctm, *request)
 	// TODO: use channel to a jdoc read/write manager goroutine
 	_, err = ctm.jdocIPC.conn.Write(buf.Bytes())
 	if err != nil {
@@ -160,30 +207,34 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	recvBuf.Write(msgBuffer)
 	msg := &cloud_clad.DocResponse{}
 	if err := msg.Unpack(&recvBuf); err != nil {
-		log.Printf("JdocIpcManager Call Err: %+v\n", err)
+		log.Printf("JdocIpcManager Call Err: %#v\n", err)
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	return msg, nil
 }
 
 func (ctm *ClientTokenManager) ForceUpdate(response chan struct{}) {
+	ctm.forceClearFile = true
 	ctm.recentTokenIndex = 0
 	ctm.ClientTokens = []ClientToken{}
-	ctm.updateChan <- response
+	ctm.updateNowChan <- response
 }
 
-func (ctm *ClientTokenManager) updateTicker() {
-	ticker := time.NewTicker(15 * time.Minute)
-	for range ticker.C {
-		ctm.updateChan <- nil
+func (ctm *ClientTokenManager) updateListener() {
+	for range ctm.checkValid {
+		if time.Since(ctm.lastUpdatedTokens) > time.Hour {
+			ctm.updateNowChan <- ctm.notifyValid
+		} else {
+			ctm.notifyValid <- struct{}{}
+		}
 	}
 }
 
 func (ctm *ClientTokenManager) StartUpdateListener() {
-	go ctm.updateTicker()
+	go ctm.updateListener()
 	for {
 		select {
-		case response := <-ctm.updateChan:
+		case response := <-ctm.updateNowChan:
 			ctm.UpdateTokens()
 			if response != nil {
 				response <- struct{}{}

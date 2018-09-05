@@ -3208,5 +3208,14 @@ namespace Vector {
     }
   }
 
+  void VisionComponent::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
+  {
+    _visionSystem->AddAllowedTrackedFace(faceID);
+  }
+
+  void VisionComponent::ClearAllowedTrackedFaces()
+  {
+    _visionSystem->ClearAllowedTrackedFaces();
+  }
 } // namespace Vector
 } // namespace Anki

@@ -55,8 +55,8 @@ enum uint_16 BehaviorID {
   PlaypenWaitToStart,
 
   // devBehaviors
-  PowerSaveTest,
   PowerSaveStressTest,
+  PowerSaveTest,
   TestStackMonitors,
 
   // examples
@@ -88,6 +88,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/blackjack
   BlackJack,
+  BlackJackGoodLuckTTS,
   BlackJackHandleRTPResponses,
   BlackJackHitOrStandPrompt,
   BlackJackLookAtFaceInFront,
@@ -236,6 +237,7 @@ enum uint_16 BehaviorID {
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
+  PopAWheelieVoiceCommand,
   RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
@@ -248,6 +250,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates
   PutDownBlock,
   PutDownDispatch_LookForFaceAndCube,
+  SayName,
   ShortLookAroundForFaceAndCube,
 
   // victorBehaviorTree/highLevelDelegates/sleeping
@@ -277,6 +280,12 @@ enum uint_16 BehaviorID {
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
+  PlayAGameVoiceCommand,
+
+  // victorBehaviorTree/highLevelDelegates/voiceCommands/trickDispatchers
+  CubeTrickDispatcher,
+
+  // victorBehaviorTree/highLevelDelegates/voiceCommands
   WhatsMyNameVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir

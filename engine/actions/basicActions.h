@@ -78,6 +78,7 @@ namespace Vector {
       
     protected:
       
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -144,6 +145,7 @@ namespace Vector {
 
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       virtual void OnRobotSet() override final;
@@ -188,7 +190,8 @@ namespace Vector {
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
     protected:
-      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override; 
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override;
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -234,6 +237,7 @@ namespace Vector {
       Radians GetHeadTiltAngleTolerance() const { return _tiltAngleTol; }
 
     protected:
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -799,6 +803,7 @@ namespace Vector {
       
     protected:
       
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       

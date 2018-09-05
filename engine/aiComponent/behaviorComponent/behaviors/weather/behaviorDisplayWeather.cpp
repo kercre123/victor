@@ -264,6 +264,9 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
   _dVars.currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
   DEV_ASSERT(_dVars.currentIntent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
 
+  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
+  _iConfig->intentParser->SendDASEventForRepsonse(weatherResponse);
+
   StartTTSGeneration();
   TransitionToFindFaceInFront();
 }
@@ -375,7 +378,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
                                 false;
   if(featureEnabled){
     auto& settings = GetBEI().GetSettingsManager();
-    const bool shouldBeFarenheit = settings.GetRobotSettingAsBool(RobotSetting::temp_is_fahrenheit);
+    const bool shouldBeFarenheit = settings.GetRobotSettingAsBool(external_interface::RobotSetting::temp_is_fahrenheit);
     if(!shouldBeFarenheit && isFahrenheit){
       temp = static_cast<int>((temp - 32) * (5.0/9.0));
       isFahrenheit = false;

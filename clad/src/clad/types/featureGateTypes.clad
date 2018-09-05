@@ -8,6 +8,7 @@ enum uint_8 FeatureType {
   Exploring,
   FindCube,
   FetchCube,
+  RollCube,
   Messaging,
   ReactToIllumination,
   KnowledgeGraph,

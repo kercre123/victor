@@ -85,7 +85,7 @@ namespace Anki {
         const u8 POSE_HISTORY_RES_IN_CYCLES = 6;
         
         // Never need to erase elements, just overwrite with new data.
-        const u8 POSE_HISTORY_SIZE = 600/(ROBOT_TIME_STEP_MS * POSE_HISTORY_RES_IN_CYCLES); // 600ms of history
+        const u8 POSE_HISTORY_SIZE = 1000/(ROBOT_TIME_STEP_MS * POSE_HISTORY_RES_IN_CYCLES); // 1000ms of history
 
         PoseStamp hist_[POSE_HISTORY_SIZE];
         u16 hStart_ = 0;

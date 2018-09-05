@@ -46,11 +46,6 @@ _rtsVersion(0)
   // Initialize safe handle
   _safeHandle = SafeHandle::Create();
 
-  // Register with stream events
-  _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
-    std::bind(&RtsComms::HandleMessageReceived,
-    this, std::placeholders::_1, std::placeholders::_2));
-
   // pairing timeout
   _onPairingTimeoutReceived = _pairingTimeoutSignal.ScopedSubscribe(std::bind(&RtsComms::HandleTimeout, this));
   _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
@@ -85,6 +80,11 @@ void RtsComms::Init() {
 
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   }
+
+  // Register with stream events
+  _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
+    std::bind(&RtsComms::HandleMessageReceived,
+    this, std::placeholders::_1, std::placeholders::_2));
 
   // Send Handshake
   ev_timer_again(_loop, &_handleTimeoutTimer.timer);

@@ -115,6 +115,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             imperative_shutup,
   UserIntent_MeetVictor       meet_victor, 
   UserIntent_Void             names_ask,
+  UserIntent_Void             play_anygame,
   UserIntent_Void             play_anytrick,
   UserIntent_PlaySpecific     play_specific,
   UserIntent_Void             check_timer,

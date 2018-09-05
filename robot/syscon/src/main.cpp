@@ -3,7 +3,6 @@
 
 #include "power.h"
 #include "comms.h"
-#include "contacts.h"
 #include "timer.h"
 #include "motors.h"
 #include "encoders.h"
@@ -21,7 +20,6 @@ void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
-  Contacts::tick();
   Opto::tick();
   Analog::tick();
   Lights::tick();
@@ -46,7 +44,6 @@ int main (void) {
   Power::init();
   Mics::init();
   Analog::init();
-  Contacts::init();
   Comms::init();
   Motors::init();
   Touch::init();

@@ -20,14 +20,19 @@ def main():
 
     print("------ begin cube docking ------")
 
+    docking_result_code = -1
     with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.world.connect_cube()
 
         connected_cubes = robot.world.connected_light_cubes
         if connected_cubes:
-            robot.behavior.dock_with_cube(connected_cubes[0])
+            dock_response = robot.behavior.dock_with_cube(connected_cubes[0])
+            docking_result_code = dock_response.result
 
-    print("------ finish cube docking ------")
+    if docking_result_code == anki_vector.messaging.protocol.ACTION_RESULT_SUCCESS:
+        print("------ finish cube docking ------")
+    else:
+        print("------ cube docking failed with code {0} ------".format(docking_result_code))
 
 
 if __name__ == "__main__":

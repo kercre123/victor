@@ -1,6 +1,7 @@
 package voice
 
 import (
+	"anki/config"
 	"anki/log"
 	"anki/voice/stream"
 	"clad/cloud"
@@ -11,11 +12,6 @@ import (
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
-)
-
-const (
-	// ChipperURL is the location of the Chipper service
-	ChipperURL = "chipper-dev.api.anki.com:443"
 )
 
 var (
@@ -290,10 +286,10 @@ procloop:
 
 		case err := <-cloudChans.err:
 			if err.recvr.stream != strm {
-				log.Println("Ignoring error from prior stream:", err)
+				log.Println("Ignoring error from prior stream:", err.err)
 				continue
 			}
-			logVerbose("Received error from cloud:", err)
+			logVerbose("Received error from cloud:", err.err)
 			p.signalMicStop()
 			p.writeError(err.kind, err.err)
 			if err := strm.Close(); err != nil {
@@ -314,11 +310,7 @@ procloop:
 				continue
 			}
 			logVerbose("Received error from conn check:", err)
-			if err.kind == cloud.ErrorType_TLS {
-				p.respondToConnectionCheck(nil, nil, err.err)
-			} else {
-				p.respondToConnectionCheck(nil, &err, nil)
-			}
+			p.respondToConnectionCheck(nil, &err)
 			if err := strm.Close(); err != nil {
 				log.Println("Error closing context:")
 			}
@@ -333,7 +325,7 @@ procloop:
 				continue
 			}
 			logVerbose("Received connection check result from cloud:", r.result)
-			p.respondToConnectionCheck(r.result, nil, nil)
+			p.respondToConnectionCheck(r.result, nil)
 			if err := strm.Close(); err != nil {
 				log.Println("Error closing context:")
 			}
@@ -378,7 +370,7 @@ func (p *Process) defaultChipperOptions() chipper.StreamOpts {
 
 func (p *Process) newStream(ctx context.Context, receiver *strmReceiver, strmopts ...stream.Option) *stream.Streamer {
 	strmopts = append(strmopts, stream.WithTokener(p.opts.tokener, p.opts.requireToken),
-		stream.WithChipperURL(ChipperURL),
+		stream.WithChipperURL(config.Env.Chipper),
 		stream.WithChipperSecret(ChipperSecret))
 	newReceiver := *receiver
 	stream := stream.NewStreamer(ctx, &newReceiver, p.StreamSize(), strmopts...)
@@ -412,17 +404,27 @@ func (p *Process) writeMic(msg *cloud.Message) {
 	}
 }
 
-func (p *Process) respondToConnectionCheck(result *cloud.ConnectionResult, cErr *cloudError, tlsErr error) {
+func (p *Process) respondToConnectionCheck(result *cloud.ConnectionResult, cErr *cloudError) {
 	toSend := &cloud.ConnectionResult{
 		NumPackets:      uint8(0),
 		ExpectedPackets: uint8(DefaultAudioLenMs / DefaultChunkMs),
 	}
-	if tlsErr != nil {
-		toSend.Code = cloud.ConnectionCode_Tls
-		toSend.Status = tlsErr.Error()
-	} else if cErr != nil {
-		toSend.Code = cloud.ConnectionCode_Auth
+	if cErr != nil {
 		toSend.Status = cErr.err.Error()
+		switch cErr.kind {
+		case cloud.ErrorType_TLS:
+			toSend.Code = cloud.ConnectionCode_Tls
+		case cloud.ErrorType_Connectivity:
+			toSend.Code = cloud.ConnectionCode_Connectivity
+		case cloud.ErrorType_Timeout:
+			toSend.Code = cloud.ConnectionCode_Bandwidth
+		case cloud.ErrorType_Connecting:
+			fallthrough
+		case cloud.ErrorType_InvalidConfig:
+			fallthrough
+		default:
+			toSend.Code = cloud.ConnectionCode_Auth
+		}
 	} else {
 		toSend = result
 	}

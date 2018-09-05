@@ -22,7 +22,7 @@ namespace Vision {
 CompositeImageLayoutModifier::CompositeImageLayoutModifier(LoopConfig loopConfig)
 : loopConfig(loopConfig)
 {
- 
+
 }
 
 
@@ -36,18 +36,26 @@ CompositeImageLayoutModifier::~CompositeImageLayoutModifier()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayoutModifier::GetPositionForFrame(const u32 frameIdx, Point2i& outTopLeftCorner)
 {
-  if(loopConfig == LoopConfig::Error && frameIdx >= _coordinatesSequence.size()){
-    return false;
-  }
-
   u32 getIdx = frameIdx;
 
-  if(loopConfig == LoopConfig::Hold){
-    getIdx = frameIdx >= _coordinatesSequence.size() ? static_cast<u32>(_coordinatesSequence.size() - 1) : frameIdx;
-  }else if(loopConfig == LoopConfig::Loop){
-    getIdx = frameIdx %  _coordinatesSequence.size();
+  // If frame index is out of range, adjust according to loop mode
+  const auto size = _coordinatesSequence.size();
+  if (getIdx >= size) {
+    switch (loopConfig) {
+      case LoopConfig::Loop:
+        getIdx = (getIdx % size);
+        break;
+      case LoopConfig::Hold:
+        getIdx = static_cast<u32>(size - 1);
+        break;
+      case LoopConfig::DoNothing:
+        return false;
+      case LoopConfig::Error:
+        return false;
+    }
   }
 
+  DEV_ASSERT(getIdx < size, "CompositeImageLayoutModifier.GetPositionForFrame.InvalidIndex");
   outTopLeftCorner = _coordinatesSequence[getIdx];
 
   return true;
@@ -63,7 +71,7 @@ bool CompositeImageLayoutModifier::UpdatePositionForFrame(const u32 frameIdx, co
   }else if(frameIdx == _coordinatesSequence.size()){
     _coordinatesSequence.push_back(topLeftCorner);
   }else if(fillMissingFramesWithValue){
-    for(auto i = _coordinatesSequence.size(); i > frameIdx; i++){
+    for(auto i = _coordinatesSequence.size(); i <= frameIdx; ++i){
       _coordinatesSequence.push_back(topLeftCorner);
     }
     return true;
@@ -75,4 +83,3 @@ bool CompositeImageLayoutModifier::UpdatePositionForFrame(const u32 frameIdx, co
 
 }; // namespace Vision
 }; // namespace Anki
-

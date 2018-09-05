@@ -14,6 +14,7 @@
 #pragma once
 
 #include "connmanbus.h"
+#include "signals/simpleSignal.hpp"
 
 #include <map>
 #include <string>
@@ -21,6 +22,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
+#include "switchboardd/taskExecutor.h"
 
 namespace Anki {
 namespace Wifi {
@@ -123,6 +125,8 @@ struct WPAConnectInfo {
   ConnectWifiResult status;
 };
 
+Signal::Signal<void(bool, std::string)>& GetWifiChangedSignal(); 
+
 std::string GetObjectPathForService(GVariant* service);
 ConnectWifiResult ConnectToWifiService(ConnManBusService* service);
 bool RemoveWifiService(std::string ssid);
@@ -141,7 +145,7 @@ bool DisableAccessPointMode();
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 bool GetApMacAddress(uint8_t* mac_48bits);
 WiFiState GetWiFiState();
-void Initialize();
+void Initialize(std::shared_ptr<TaskExecutor> taskExecutor);
 void Deinitialize();
 
 } // namespace Wifi

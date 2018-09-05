@@ -34,7 +34,7 @@
       "cooldown_s" : 0.0
     },
     {
-      "behavior" : "FindAndRequestHome",
+      "behavior" : "FindHome",
       "cooldown_s" : 0.0
     }
   ]

@@ -54,9 +54,18 @@ namespace Vector {
 class TextToSpeechComponent
 {
 public:
+  // Public type declarations
+  using TTSID_t = uint8_t;
 
+  // Public constants
+  static constexpr TTSID_t kInvalidTTSID = 0;
+
+  // Constructor, destructor
   TextToSpeechComponent(const AnimContext* context);
   ~TextToSpeechComponent();
+
+  // Reports active TTSID (if any), else kInvalidTTSID
+  TTSID_t GetActiveTTSID() { return _activeTTSID; }
 
   //
   // CLAD message handlers are called on the main thread to handle incoming requests.
@@ -76,6 +85,10 @@ public:
   //
   void SetLocale(const std::string & locale);
 
+  // Callbacks invoked by audio engine
+  void OnAudioComplete(const TTSID_t ttsID);
+  void OnAudioError(const TTSID_t ttsID);
+
 private:
   // -------------------------------------------------------------------------------------------------------------------
   // Private types
@@ -85,7 +98,6 @@ private:
   using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
   using TextToSpeechProvider = TextToSpeech::TextToSpeechProvider;
   using DispatchQueue = Util::Dispatch::Queue;
-  using TTSID_t = uint8_t;
   using EventTuple = std::tuple<TTSID_t, TextToSpeechState, f32>;
   using EventQueue = std::deque<EventTuple>;
 
@@ -114,14 +126,13 @@ private:
   // Private members
   // -------------------------------------------------------------------------------------------------------------------
 
-  static constexpr TTSID_t kInvalidTTSID = 0;
-
   // Internal mutex
   mutable std::mutex _lock;
 
   // Map of data bundles
   std::map<TTSID_t, BundlePtr> _bundleMap;
 
+  // Active TTSID, if any
   TTSID_t _activeTTSID;
 
   // Audio controller provided by context

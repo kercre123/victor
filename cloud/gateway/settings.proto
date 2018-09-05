@@ -18,6 +18,21 @@ enum JdocType {
   USER_ENTITLEMENTS = 3;
 }
 
+// These are not in all caps like the others, for historical reasons.
+// (Originally this was a CLAD enum.)  Changing that now would involve
+// a format migration because we're now saving robot settings jdocs in
+// the cloud.
+enum RobotSetting {
+  clock_24_hour      = 0;
+  eye_color          = 1;
+  default_location   = 2;
+  dist_is_metric     = 3;
+  locale             = 4;
+  master_volume      = 5;
+  temp_is_fahrenheit = 6;
+  time_zone          = 7;
+}
+
 enum Volume {
   MUTE        = 0;
   LOW         = 1;

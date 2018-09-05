@@ -1,15 +1,28 @@
-#!/usr/bin/env python3
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
 
 
 class ColorProfile:
-    '''A Color profile send to be used with messages involving Lights.
+    """A Color profile send to be used with messages involving Lights.
 
     Args:
         red_multiplier (float): Scaling value for the brightness of red Lights
         green_multiplier (float): Scaling value for the brightness of green Lights
         blue_multiplier (float): Scaling value for the brightness of blue Lights
-    '''
+    """
 
     def __init__(self, red_multiplier, green_multiplier, blue_multiplier):
         self._red_multiplier = red_multiplier
@@ -32,17 +45,17 @@ class ColorProfile:
 
     @property
     def red_multiplier(self):
-        '''float: The multiplier used on the red channel.'''
+        """float: The multiplier used on the red channel."""
         return self._red_multiplier
 
     @property
     def green_multiplier(self):
-        '''float: The multiplier used on the red channel.'''
+        """float: The multiplier used on the red channel."""
         return self._green_multiplier
 
     @property
     def blue_multiplier(self):
-        '''float: The multiplier used on the red channel.'''
+        """float: The multiplier used on the red channel."""
         return self._blue_multiplier
 
 
@@ -67,11 +80,11 @@ WHITE_BALANCED_CUBE_PROFILE = ColorProfile(red_multiplier=1.0,
 
 
 class Light:
-    '''Lights are used with LightCubes and Vector's backpack.
+    """Lights are used with LightCubes and Vector's backpack.
 
     Lights may either be "on" or "off", though in practice any colors may be
     assigned to either state (including no color/light).
-    '''
+    """
 
     def __init__(self,
                  on_color=off,
@@ -89,7 +102,7 @@ class Light:
 
     @property
     def on_color(self):
-        ''':class:`Color`: The Color shown when the light is on.'''
+        """:class:`Color`: The Color shown when the light is on."""
         return self._on_color
 
     @on_color.setter
@@ -100,7 +113,7 @@ class Light:
 
     @property
     def off_color(self):
-        ''':class:`Color`: The Color shown when the light is off.'''
+        """:class:`Color`: The Color shown when the light is off."""
         return self._off_color
 
     @off_color.setter
@@ -111,7 +124,7 @@ class Light:
 
     @property
     def on_period_ms(self):
-        '''int: The number of milliseconds the light should be "on" for for each cycle.'''
+        """int: The number of milliseconds the light should be "on" for for each cycle."""
         return self._on_period_ms
 
     @on_period_ms.setter
@@ -122,7 +135,7 @@ class Light:
 
     @property
     def off_period_ms(self):
-        '''int: The number of milliseconds the light should be "off" for for each cycle.'''
+        """int: The number of milliseconds the light should be "off" for for each cycle."""
         return self._off_period_ms
 
     @off_period_ms.setter
@@ -133,7 +146,7 @@ class Light:
 
     @property
     def transition_on_period_ms(self):
-        '''int: The number of milliseconds to take to transition the light to the on color.'''
+        """int: The number of milliseconds to take to transition the light to the on color."""
         return self._transition_on_period_ms
 
     @transition_on_period_ms.setter
@@ -144,7 +157,7 @@ class Light:
 
     @property
     def transition_off_period_ms(self):
-        '''int: The number of milliseconds to take to transition the light to the off color.'''
+        """int: The number of milliseconds to take to transition the light to the off color."""
         return self._transition_off_period_ms
 
     @transition_off_period_ms.setter

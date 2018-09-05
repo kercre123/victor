@@ -184,7 +184,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
   
   // send DAS event for activation. don't send it if quitReaction is false, because the user likely didn't notice
   {
-    DASMSG(behavior_cliffreaction, "behaviors.cliffreaction", "The robot reacted to a cliff");
+    DASMSG(behavior_cliffreaction, "behavior.cliffreaction", "The robot reacted to a cliff");
     DASMSG_SET(i1, _dVars.persistent.cliffValsAtStart[0], "Sensor value 1");
     DASMSG_SET(i2, _dVars.persistent.cliffValsAtStart[1], "Sensor value 2");
     DASMSG_SET(i3, _dVars.persistent.cliffValsAtStart[2], "Sensor value 3");

@@ -3,6 +3,7 @@ package token
 import (
 	"anki/log"
 	"anki/robot"
+	"anki/util"
 	"context"
 	"io/ioutil"
 
@@ -16,16 +17,12 @@ type conn struct {
 	client pb.TokenClient
 }
 
-var platformOpts []grpc.DialOption
-
 func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, error) {
 	dialOpts, err := getDialOptions(creds)
 	if err != nil {
 		return nil, err
 	}
-	if platformOpts != nil && len(platformOpts) > 0 {
-		dialOpts = append(dialOpts, platformOpts...)
-	}
+	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	rpcConn, err := grpc.Dial(serverURL, dialOpts...)
 	if err != nil {
 		return nil, err

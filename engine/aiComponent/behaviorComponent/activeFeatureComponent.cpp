@@ -34,6 +34,9 @@
 namespace Anki {
 namespace Vector {
 
+const std::string ActiveFeatureComponent::kIntentSourceAI = "AI";
+
+
 ActiveFeatureComponent::ActiveFeatureComponent()
   : IDependencyManagedComponent( this, BCComponentID::ActiveFeature )
 {
@@ -92,7 +95,7 @@ void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComps)
       }
 
       // the default is that the robot activated the intent on it's own
-      std::string intentSource = "AI";
+      std::string intentSource = kIntentSourceAI;
 
       if( activeIntent != nullptr ) {
         // only consider a single source to be activated by an intent

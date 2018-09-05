@@ -129,6 +129,7 @@ class BeatDetectorComponent;
 class HabitatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
+enum class ShutdownReason : uint8_t;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -669,7 +670,7 @@ public:
 
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
-  void Shutdown() { _toldToShutdown = true; }
+  void Shutdown(ShutdownReason reason);
   bool ToldToShutdown() const { return _toldToShutdown; }
 
   bool SetLocale(const std::string & locale);
@@ -797,7 +798,6 @@ protected:
   Result SendSyncRobot() const;
 
   float _syncRobotSentTime_sec = 0.0f;
-  constexpr static float kMaxSyncRobotAckDelay_sec = 5.0f;
 
   // Used to calculate tick rate
   float _prevCurrentTime_sec = 0.0f;
@@ -821,6 +821,8 @@ protected:
 
   // Performs various startup checks and displays fault codes as appropriate
   Result UpdateStartupChecks();
+  Result UpdateCameraStartupChecks();
+  Result UpdateGyroCalibChecks();
 }; // class Robot
 
 

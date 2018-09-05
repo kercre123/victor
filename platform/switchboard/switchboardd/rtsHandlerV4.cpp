@@ -164,7 +164,7 @@ bool RtsHandlerV4::IsAuthenticated() {
   return true;
   #endif
 
-  if(_isFirstTimePair) {
+  if(_isFirstTimePair && _hasOwner) {
     Log::Write("&&& Has cloud authed? %s", _hasCloudAuthed?"yes":"no");
     if(!_hasCloudAuthed) {
       SendRtsMessage<RtsResponse>(RtsResponseCode::NotCloudAuthorized, "Not cloud authorized.");
@@ -516,6 +516,16 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
   std::string sessionToken = cloudReq.sessionToken;
 
   Log::Write("Received cloud session authorization request.");
+
+  Anki::Wifi::WiFiState wifiState = Anki::Wifi::GetWiFiState();
+
+  if((wifiState.connState != Anki::Wifi::WiFiConnState::CONNECTED) &&
+    (wifiState.connState != Anki::Wifi::WiFiConnState::ONLINE)) {
+    Log::Error("CloudSessionResponse:ConnectionError robot is offline");
+    bool success = false;
+    SendRtsMessage<RtsCloudSessionResponse>(success, RtsCloudStatus::ConnectionError, "");
+    return;
+  }
 
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(
     [this, sessionToken](Anki::Vector::TokenError error, std::string jwtToken) {

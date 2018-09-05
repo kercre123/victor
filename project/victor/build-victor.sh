@@ -321,7 +321,7 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   # Append a dummy dir to the GOPATH so that `go get` doesn't barf
   # on nonexistent clad files
   GODUMMY=${TOPLEVEL}/cloud/dummy
-  (cd ${TOPLEVEL}; PATH="$PATH:$(dirname $GO_EXE)" GOPATH="$GOPATH:$GODUMMY" ./godeps.js execute ${GEN_SRC_DIR})
+  (cd ${TOPLEVEL}; PATH="$(dirname $GO_EXE):$PATH" GOPATH="$GOPATH:$GODUMMY" ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi

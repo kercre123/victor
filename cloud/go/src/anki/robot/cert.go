@@ -130,3 +130,19 @@ func TLSKeyPair(cloudDir string) (tls.Certificate, error) {
 	keysFile := filepath.Join(cloudDir, KeysFilename)
 	return tls.LoadX509KeyPair(certFile, keysFile)
 }
+
+var certCommonName string
+
+// CertCommonName returns the CommonName field stored in the certificate
+// in the given factory directory
+func CertCommonName(cloudDir string) (string, error) {
+	if certCommonName != "" {
+		return certCommonName, nil
+	}
+	cert, err := ParseX509Certificate(cloudDir)
+	if err != nil {
+		return "", err
+	}
+	certCommonName = cert.Subject.CommonName
+	return certCommonName, nil
+}

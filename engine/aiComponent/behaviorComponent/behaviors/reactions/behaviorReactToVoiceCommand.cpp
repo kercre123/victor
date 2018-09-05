@@ -44,7 +44,7 @@
 #include "micDataTypes.h"
 #include "osState/osState.h"
 #include "util/console/consoleInterface.h"
-#include "util/logging/DAS.h"
+
 
 #include "coretech/common/engine/utils/timer.h"
 
@@ -75,13 +75,14 @@ namespace {
   const char* kEarConFail                          = "earConAudioEventNeutral";
   const char* kIntentBehaviorKey                   = "behaviorOnIntent";
   const char* kProceduralBackpackLights            = "backpackLights";
-  const char* kNotifyOnErrors                      = "notifyOnErrors";
   const char* kAnimListeningGetIn                  = "animListeningGetIn";
   const char* kAnimListeningLoop                   = "animListeningLoop";
   const char* kAnimListeningGetOut                 = "animListeningGetOut";
   const char* kExitAfterGetInKey                   = "exitAfterGetIn";
   const char* kExitAfterListeningIfNotStreamingKey = "exitAfterListeningIfNotStreaming";
   const char* kPushResponseKey                     = "pushResponse";
+  const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
+  const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
   
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
@@ -102,8 +103,12 @@ namespace {
   // if we cannot determine the mic direction, we fall back to the most recent direction
   // this allows you to specify how far back we sample for the most recent direction
   CONSOLE_VAR_RANGED( double, kRecentDirFallbackTime,          CONSOLE_GROUP, 1.0, 0.0, 10.0 );
+
+// pretend all responses are errors: NOTE intents may still get processed with this set true, recommendation
+// is to use silence or a known mismatch intent (my favorite happens to be "potatoes").
+  CONSOLE_VAR( bool, kTriggerWord_FakeError, CONSOLE_GROUP, false );
+  CONSOLE_VAR( bool, kTriggerWord_FakeError_HasWifi, CONSOLE_GROUP, false );
   
-  constexpr float kTimeBetweenDASMsg_s = 1800.0f; // 30 mins
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -117,9 +122,8 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   backpackLights( true ),
   exitAfterGetIn( false ),
   exitAfterListeningIfNotStreaming( false ),
-  cloudErrorTracker( "VoiceCommandErrorTracker" ),
-  lastTriggerWordScore( 0 ),
-  nextTimeSendDas_s( 0.0f )
+  cloudErrorTracker( "VoiceCommandErrorTracker_nocloud" ),
+  wifiErrorTracker( "VoiceCommandErrorTracker_nowifi" )
 {
 
 }
@@ -131,7 +135,8 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   streamingBeginTime( 0.0 ),
   streamingEndTime( 0.0 ),
   intentStatus( EIntentStatus::NoIntentHeard ),
-  timestampToDisableTurnFor(0)
+  timestampToDisableTurnFor(0),
+  expectingStream(false)
 {
 
 }
@@ -165,7 +170,7 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 
   // get the behavior to play after an intent comes in
   JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
-  
+    
   std::string animGetIn;
   if( JsonTools::GetValueOptional( config, kAnimListeningGetIn, animGetIn ) && !animGetIn.empty() )
   {
@@ -198,19 +203,43 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   JsonTools::GetValueOptional( config, kExitAfterListeningIfNotStreamingKey, _iVars.exitAfterListeningIfNotStreaming );
   
   _iVars.pushResponse = config.get(kPushResponseKey, true).asBool();
-  
-  if( !config[kNotifyOnErrors].isNull() )
+
+  if( !config[kNotifyOnWifiErrorsKey].isNull() )
   {
     int numErrorsToTriggerAnim;
     float errorTrackingWindow_s;
     
-    ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnErrors],
+    ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnWifiErrorsKey],
                                                       numErrorsToTriggerAnim,
                                                       errorTrackingWindow_s),
                  "BehaviorReactToVoiceCommand.Constructor.InvalidConfig",
-                 "Behavior '%s' specified invalid recent occurrence config",
+                 "Behavior '%s' specified invalid recent occurrence config for wifi",
+                 GetDebugLabel().c_str() );
+    _iVars.wifiErrorHandle = _iVars.wifiErrorTracker.GetHandle(numErrorsToTriggerAnim, errorTrackingWindow_s);
+  }
+  else {
+    PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.NoErrorNotification.WifiErrors",
+                        "Behavior '%s' is not configured to show wifi errors at all",
+                        GetDebugLabel().c_str());
+  }
+
+  if( !config[kNotifyOnCloudErrorsKey].isNull() )
+  {
+    int numErrorsToTriggerAnim;
+    float errorTrackingWindow_s;
+
+    ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnCloudErrorsKey],
+                                                      numErrorsToTriggerAnim,
+                                                      errorTrackingWindow_s),
+                 "BehaviorReactToVoiceCommand.Constructor.InvalidConfig",
+                 "Behavior '%s' specified invalid recent occurrence config for cloud",
                  GetDebugLabel().c_str() );
     _iVars.cloudErrorHandle = _iVars.cloudErrorTracker.GetHandle(numErrorsToTriggerAnim, errorTrackingWindow_s);
+  }
+  else {
+    PRINT_NAMED_WARNING("BehaviorReactToVoiceCommand.NoErrorNotification.CloudErrors",
+                        "Behavior '%s' is not configured to show cloud errors at all",
+                        GetDebugLabel().c_str());
   }
 
   SetRespondToTriggerWord( true );
@@ -226,13 +255,14 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kEarConFail,
     kProceduralBackpackLights,
     kIntentBehaviorKey,
-    kNotifyOnErrors,
     kAnimListeningGetIn,
     kAnimListeningLoop,
     kAnimListeningGetOut,
     kExitAfterGetInKey,
     kExitAfterListeningIfNotStreamingKey,
     kPushResponseKey,
+    kNotifyOnWifiErrorsKey,
+    kNotifyOnCloudErrorsKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -271,9 +301,6 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   {
     RobotInterface::RobotToEngineTag::triggerWordDetected
   });
-  
-  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _iVars.nextTimeSendDas_s = currTime + kTimeBetweenDASMsg_s;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -317,14 +344,6 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
     const auto& msg = event.GetData().Get_triggerWordDetected();
     _triggerDirection = msg.direction;
     
-    DASMSG(wakeword_triggered, "wakeword.triggered", "Wake word was detected");
-    DASMSG_SET(i1, msg.triggerScore, "Score");
-    DASMSG_SET(i2, msg.isButtonPress, "Source (0=Voice, 1=Button)");
-    DASMSG_SEND();
-    
-    _iVars.triggerWordScores.push_back( msg.triggerScore );
-    _iVars.lastTriggerWordScore = msg.triggerScore;
-
     #if DEBUG_TRIGGER_WORD_VERBOSE
     {
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Debug",
@@ -366,10 +385,14 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
 
+  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  _dVars.expectingStream = uic.WillPendingTriggerWordOpenStream();
+
   // Trigger word is heard (since we've been activated) ...
   PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Activated",
-                 "Reacting to trigger word from direction [%d] ...",
-                 (int)GetReactionDirection() );
+                  "Reacting to trigger word from direction [%d] (%s stream)",
+                  (int)GetReactionDirection(),
+                  _dVars.expectingStream ? "expecting" : "not expecting");
 
   StartListening();
 }
@@ -428,8 +451,6 @@ void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
-  UpdateDAS();
-  
   if(!IsActivated()){
     return;
   }
@@ -459,69 +480,66 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
   }
 
 
-  if ( IsActivated() )
+  if ( _dVars.state == EState::ListeningGetIn )
   {
-    if ( _dVars.state == EState::ListeningGetIn )
-    {
-      // Once the animation process's GetIn animation has finished, queue the listening loop animation
-      if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
+    // Once the animation process's GetIn animation has finished, queue the listening loop animation
+    if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
 
-        // we don't want to enter EState::Listening until we're in our loop or else
-        // we could end up exiting too soon and looking like garbage
-        if( _iVars.exitAfterGetIn )
-        {
-          OnVictorListeningEnd();
-          CancelSelf();
-        }
-
-        // we now loop indefinitely and wait for the timeout in the update function
-        // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-        DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
-        _dVars.state = EState::ListeningLoop;
-      }
-    }
-    else if ( _dVars.state == EState::ListeningLoop )
-    {
-      const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-      if ( isIntentPending )
+      // we don't want to enter EState::Listening until we're in our loop or else
+      // we could end up exiting too soon and looking like garbage
+      if( _iVars.exitAfterGetIn )
       {
-        // kill delegates, we'll handle next steps with callbacks
-        // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
-        PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
-                      "Stopping listening because an intent is pending");
+        OnVictorListeningEnd();
+        CancelSelf();
+      }
+
+      // we now loop indefinitely and wait for the timeout in the update function
+      // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
+      _dVars.state = EState::ListeningLoop;
+    }
+  }
+  else if ( _dVars.state == EState::ListeningLoop )
+  {
+    const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
+    if ( isIntentPending )
+    {
+      // kill delegates, we'll handle next steps with callbacks
+      // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
+      PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
+                    "Stopping listening because an intent is pending");
+      CancelDelegates( false );
+      StopListening();
+    }
+    else
+    {
+      // there are a few ways we can timeout from the Listening state;
+      // + error received
+      // + streaming never started
+      // + streaming started but no intent came back
+      const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+      const double listeningTimeout = GetListeningTimeout();
+      if ( currTime_s >= listeningTimeout )
+      {
+        PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
+                       "Stopping listening because of a(n) %s",
+                       GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
         CancelDelegates( false );
         StopListening();
       }
-      else
-      {
-        // there are a few ways we can timeout from the Listening state;
-        // + error received
-        // + streaming never started
-        // + streaming started but no intent came back
-        const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-        const double listeningTimeout = GetListeningTimeout();
-        if ( currTime_s >= listeningTimeout )
-        {
-          PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
-                         "Stopping listening because of a(n) %s",
-                         GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
-          CancelDelegates( false );
-          StopListening();
-        }
-      }
     }
-    else if ( _dVars.state == EState::Thinking )
-    {
-      // we may receive an intent AFTER we're done listening for various reasons,
-      // so poll for it while we're in the thinking state
-      // note: does nothing if intent is already set
-      UpdateUserIntentStatus();
-    }
+  }
+  else if ( _dVars.state == EState::Thinking )
+  {
+    // we may receive an intent AFTER we're done listening for various reasons,
+    // so poll for it while we're in the thinking state
+    // note: does nothing if intent is already set
+    UpdateUserIntentStatus();
+  }
 
-    if ( ( _dVars.state != EState::ListeningGetIn ) && !IsControlDelegated() )
-    {
-      CancelSelf();
-    }
+  if ( ( _dVars.state != EState::ListeningGetIn ) && !IsControlDelegated() )
+  {
+    CancelSelf();
   }
 }
 
@@ -808,7 +826,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     // in after we've closed our recording stream.
     OnVictorListeningEnd();
 
-    const bool streamingToCloud = GetBehaviorComp<UserIntentComponent>().GetShouldStreamAfterWakeWord();
+    const bool streamingToCloud = _dVars.expectingStream;
     if (!streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
       PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinkingCallback.NotStreaming",
                     "We are not streaming to the cloud currently, so no point in continuing with the behavior (since "
@@ -868,7 +886,9 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 {
   _dVars.state = EState::IntentReceived;
 
-  switch ( _dVars.intentStatus )
+  const auto status = kTriggerWord_FakeError ? EIntentStatus::Error : _dVars.intentStatus;
+
+  switch ( status )
   {
     case EIntentStatus::IntentHeard: {
       // no animation for valid intent, go straight into the intent behavior
@@ -879,6 +899,7 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoWifi);
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoCloudConnection);
       _iVars.cloudErrorTracker.Reset();
+      _iVars.wifiErrorTracker.Reset();
       break;
     }
 
@@ -913,81 +934,95 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
     }
 
     case EIntentStatus::NoIntentHeard:
-    case EIntentStatus::Error: {
-
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error",
-                      "Intent processing returned an error (or timeout)" );
-      GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
-
-      // track that an error occurred
-      _iVars.cloudErrorTracker.AddOccurrence();
-
-      if( _iVars.cloudErrorHandle && _iVars.cloudErrorHandle->AreConditionsMet() )
-      {
-        // time to let the user know
-
-        auto errorBehaviorCallback = [this]() {
-          const bool updateNow = true;
-          const bool hasSSID = !OSState::getInstance()->GetSSID(updateNow).empty();
-
-          if( hasSSID ) {
-            PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoCloud",
-                            "has wifi, so error must be on the internet or cloud side" );
-
-            // has wifi, but no cloud
-            if( ANKI_VERIFY( _iVars.noCloudBehavior && _iVars.noCloudBehavior->WantsToBeActivated(),
-                             "BehaviorReactToVoiceCommand.Intent.Error.NoCloud.BehaviorWontActivate",
-                             "No cloud behavior '%s' doesn't want to be activated",
-                             _iVars.noCloudBehavior ? _iVars.noCloudBehavior->GetDebugLabel().c_str() : "<NULL>" ) ) {
-              // this behavior will (should) interact directly with the attention transfer component
-              DelegateIfInControl(_iVars.noCloudBehavior.get());
-            }
-          }
-          else {
-            PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoWifi",
-                            "no wifi SSID, error is local" );
-
-            // no wifi
-            if( ANKI_VERIFY( _iVars.noWifiBehavior && _iVars.noWifiBehavior->WantsToBeActivated(),
-                             "BehaviorReactToVoiceCommand.Intent.Error.NoWifi.BehaviorWontActivate",
-                             "No wifi behavior '%s' doesn't want to be activated",
-                             _iVars.noWifiBehavior ? _iVars.noWifiBehavior->GetDebugLabel().c_str() : "<NULL>" ) ) {
-              // this behavior will (should) interact directly with the attention transfer component
-              DelegateIfInControl(_iVars.noWifiBehavior.get());
-            }
-          }
-        };
-
-        const MicDirectionIndex triggerDirection = GetReactionDirection();
-        _iVars.reactionBehavior->SetReactDirection( triggerDirection );
-
-        PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error.SetReactionDirection",
-                       "Setting reaction behavior direction to [%d]",
-                       (int)triggerDirection);
-
-        // allow the reaction to not want to run in certain directions/states
-        if ( _iVars.reactionBehavior->WantsToBeActivated() )
-        {
-          DelegateIfInControl( _iVars.reactionBehavior.get(), errorBehaviorCallback );
-        }
-        else
-        {
-          PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error",
-                         "%s: intent reaction behavior '%s' doesn't want to activate (in case of intent error)",
-                         GetDebugLabel().c_str(),
-                         _iVars.reactionBehavior->GetDebugLabel().c_str());
-          errorBehaviorCallback();
-        }
-      }
-      else {
-        // not time to tell the user, just play the normal unheard animation
-        DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
-      }
+    case EIntentStatus::Error:
+      HandleStreamFailure();
       break;
-    }
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::HandleStreamFailure()
+{
+      
+  PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error",
+                  "Intent processing returned an error (or timeout)" );
+  GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
+
+
+  const bool updateNow = true;
+  const bool osHasSSID = !OSState::getInstance()->GetSSID(updateNow).empty();
+
+  // if console vare faking is enabled, then check the console var to determine wifi rather than the true os
+  // state
+  const bool hasSSID = kTriggerWord_FakeError ? kTriggerWord_FakeError_HasWifi : osHasSSID;
+
+  ICozmoBehaviorPtr errorBehavior;
+
+  if( hasSSID ) {
+    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoCloud",
+                    "has wifi, so error must be on the internet or cloud side" );
+
+    _iVars.cloudErrorTracker.AddOccurrence();
+    if( _iVars.cloudErrorHandle && _iVars.cloudErrorHandle->AreConditionsMet() )
+    {
+      if( ANKI_VERIFY(_iVars.noCloudBehavior != nullptr,
+                      "BehaviorReactToVoiceCommand.Intent.Error.MissingNoCloudBehavior",
+                      "Bad config, no beahvior specified") ) {
+        errorBehavior = _iVars.noCloudBehavior;
+      }
+    }
+  }
+  else {
+    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoWifi",
+                    "no wifi SSID, error is local" );
+
+    _iVars.wifiErrorTracker.AddOccurrence();
+    if( _iVars.wifiErrorHandle && _iVars.wifiErrorHandle->AreConditionsMet() )
+    {
+      if( ANKI_VERIFY(_iVars.noWifiBehavior != nullptr,
+                      "BehaviorReactToVoiceCommand.Intent.Error.noWifiBehavior",
+                      "Bad config, no beahvior specified") ) {
+        errorBehavior = _iVars.noWifiBehavior;
+      }
+    }
+  }
+
+  if( errorBehavior ) {
+    const MicDirectionIndex triggerDirection = GetReactionDirection();
+    _iVars.reactionBehavior->SetReactDirection( triggerDirection );
+
+    PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error.SetReactionDirection",
+                   "Setting reaction behavior direction to [%d]",
+                   (int)triggerDirection);
+
+    auto errorBehaviorCallback = [this,errorBehavior](){
+      if( ANKI_VERIFY( errorBehavior->WantsToBeActivated(),
+                       "BehaviorReactToVoiceCommand.Intent.Error.BehaviorWontActivate",
+                       "behavior '%s' doesn't want to be activated",
+                       errorBehavior->GetDebugLabel().c_str()) ) {
+        DelegateIfInControl(errorBehavior.get());
+      }
+    };
+
+    // allow the reaction to not want to run in certain directions/states
+    if ( _iVars.reactionBehavior->WantsToBeActivated() )
+    {
+      DelegateIfInControl( _iVars.reactionBehavior.get(), errorBehaviorCallback );
+    }
+    else
+    {
+      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error",
+                     "%s: intent reaction behavior '%s' doesn't want to activate (in case of intent error)",
+                     GetDebugLabel().c_str(),
+                     _iVars.reactionBehavior->GetDebugLabel().c_str());
+      errorBehaviorCallback();
+    }
+  }
+  else {
+    // not time to tell the user, just play the normal unheard animation
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
@@ -1011,9 +1046,9 @@ double BehaviorReactToVoiceCommand::GetListeningTimeout() const
   const bool errorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
   const bool streamingHasBegun = ( _dVars.streamingBeginTime > 0.0 );
 
-  if ( errorPending || !streamingHasBegun )
+  if ( errorPending || !streamingHasBegun || !_dVars.expectingStream )
   {
-    // we haven't start streaming, so timeout this much after we've been active
+    // we haven't started streaming (or we won't), so timeout this much after we've been active
     timeout = ( GetTimeActivated_s() + kMinListeningTimeout_s );
   }
   else
@@ -1025,23 +1060,5 @@ double BehaviorReactToVoiceCommand::GetListeningTimeout() const
   return timeout;
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::UpdateDAS()
-{
-  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if( currTime >= _iVars.nextTimeSendDas_s )
-  {
-    DASMSG(wakeword_stats, "wakeword.stats", "Info on recent wakeword detection");
-    DASMSG_SET(i1, _iVars.triggerWordScores.size(), "Number of triggers in X seconds [ask a dev]"); // kTimeBetweenDASMsg_s seconds
-    // this one is sent to help build a distribution of scores
-    DASMSG_SET(i2, _iVars.lastTriggerWordScore, "The last score that was received (ignore if 0... that means no trigger word)");
-    DASMSG_SEND();
-    
-    _iVars.lastTriggerWordScore = 0;
-    _iVars.triggerWordScores.clear();
-    _iVars.nextTimeSendDas_s = currTime + kTimeBetweenDASMsg_s;
-  }
-}
-
 } // namespace Vector
 } // namespace Anki

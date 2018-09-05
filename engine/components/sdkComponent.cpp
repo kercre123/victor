@@ -25,6 +25,7 @@
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/robotEventHandler.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 
@@ -64,6 +65,13 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
 
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kControlRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kControlRelease, callback));
+
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kGoToPoseRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kDockWithCubeRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kDriveStraightRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnInPlaceRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetLiftHeightRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetHeadAngleRequest, callback));
   }
 }
 
@@ -73,10 +81,10 @@ void SDKComponent::UpdateDependent(const RobotCompMap& dependentComps)
   // TODO
 }
 
-// Receives a message that external SDK wants an SDK behavior to be activated.
 void SDKComponent::HandleMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
   switch(event.GetData().GetTag()){
+    // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
       LOG_INFO("SDKComponent.HandleMessageRequest", "SDK requested control");
       _sdkWantsControl = true;
@@ -88,12 +96,14 @@ void SDKComponent::HandleMessage(const AnkiEvent<external_interface::GatewayWrap
         return;
       }
       break;
+
     case external_interface::GatewayWrapperTag::kControlRelease:
       LOG_INFO("SDKComponent.HandleMessageRelease", "Releasing SDK control");
       _sdkWantsControl = false;
       break;
+
     default:
-      LOG_WARNING("SDKComponent::HandleMessageDefault", "Unknown SDK control message");
+      _robot->GetRobotEventHandler().HandleMessage(event);
       break;
   }
 }
@@ -120,6 +130,77 @@ void SDKComponent::DispatchSDKActivationResult(bool enabled) {
   else {
     auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlLostResponse());
     gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+  }
+}
+
+void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  switch((RobotActionType)msg.actionType)
+  {
+    case RobotActionType::TURN_IN_PLACE:
+    {
+      auto* response = new external_interface::TurnInPlaceResponse;
+      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::DRIVE_STRAIGHT:
+    {
+      auto* response = new external_interface::DriveStraightResponse;
+      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::MOVE_HEAD_TO_ANGLE:
+    {
+      auto* response = new external_interface::SetHeadAngleResponse;
+      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+    {
+      auto* response = new external_interface::SetLiftHeightResponse;
+      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::PLAY_ANIMATION:
+    {
+      auto* response = new external_interface::PlayAnimationResponse;
+      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::DRIVE_TO_POSE:
+    {
+      auto* response = new external_interface::GoToPoseResponse;
+      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    case RobotActionType::ALIGN_WITH_OBJECT:
+    {
+      auto* response = new external_interface::DockWithCubeResponse;
+      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
+    }
+    break;
+
+    default:
+    {
+      PRINT_NAMED_WARNING("SDKComponent.OnActionCompleted.NoMatch", "No match for action tag so no response sent: [Tag=%d]", msg.idTag);
+      return;
+    }
   }
 }
 

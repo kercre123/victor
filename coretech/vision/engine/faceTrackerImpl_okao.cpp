@@ -454,6 +454,7 @@ namespace Vision {
 
   void FaceTracker::Impl::Reset()
   {
+    _allowedTrackedFaceID.clear();
     INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
     if(OKAO_NORMAL != result)
     {
@@ -462,6 +463,16 @@ namespace Vision {
     }
 
     _recognizer.ClearAllTrackingData();
+  }
+
+  void FaceTracker::Impl::ClearAllowedTrackedFaces()
+  {
+    Reset();
+  }
+
+  void FaceTracker::Impl::AddAllowedTrackedFace(const FaceID_t faceID)
+  {
+    _allowedTrackedFaceID.insert(faceID);
   }
 
   void FaceTracker::Impl::SetRecognitionIsSynchronous(bool isSynchronous)
@@ -1077,6 +1088,18 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
+      if (HaveAllowedTrackedFaces())
+      {
+        FaceID_t faceID;
+        if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
+        {
+          if (_allowedTrackedFaceID.count(faceID) == 0)
+          {
+            continue; 
+          }
+        }
+      }
+      
       // Add a new face to the list
       faces.emplace_back();
 
@@ -1169,7 +1192,24 @@ namespace Vision {
         //
         // Face Recognition:
         //
-        const bool enableEnrollment = IsEnrollable(detectionInfo, face, intraEyeDist);
+        const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
+        bool enableEnrollment = enrollable;
+
+        // If we have allowed tracked faces we should only enable enrollment
+        // in two cases. First if the current face matches the face id returned
+        // by GetEnrollmentID. This should only happen in MeetVictor currently.
+        // Second if we don't have the tracking id in the recognizer yet, indicating
+        // we haven't recognized the face yet. If we don't have any allowed tracked
+        // faces we don't need to worry about this and can just use the result from
+        // IsEnrollable.
+        if(enableEnrollment && HaveAllowedTrackedFaces())
+        {
+          FaceID_t faceID;
+          if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
+          {
+            enableEnrollment &= (faceID == _recognizer.GetEnrollmentID());
+          }
+        }
 
         // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
@@ -1188,14 +1228,14 @@ namespace Vision {
             // Switch to using the other handle so we don't step on its toes.
             std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
           }
+          // Very verbose:
+          //        else
+          //        {
+          //          PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.SkipRecognitionForAlreadyKnown",
+          //                            "TrackingID %d already known and there are %d faces detected",
+          //                            -detectionInfo.nID, numDetections);
+          //        }
         }
-        // Very verbose:
-        //        else
-        //        {
-        //          PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.SkipRecognitionForAlreadyKnown",
-        //                            "TrackingID %d already known and there are %d faces detected",
-        //                            -detectionInfo.nID, numDetections);
-        //        }
 
       }
       else

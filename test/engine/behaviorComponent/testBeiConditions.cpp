@@ -1162,10 +1162,10 @@ TEST(BeiConditions, TriggerWordPending)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
   auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-  uic.SetTriggerWordPending();
+  uic.SetTriggerWordPending(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
-  uic.SetTriggerWordPending();
+  uic.SetTriggerWordPending(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   
   uic.ClearPendingTriggerWord();

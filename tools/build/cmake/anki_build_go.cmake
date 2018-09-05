@@ -1,7 +1,7 @@
 
 include(anki_build_source_list)
 
-set(ANKI_GO_VERSION 1.10.2)
+set(ANKI_GO_VERSION 1.11)
 
 # Check correct Go version
 execute_process(COMMAND ${GOROOT}/bin/go version

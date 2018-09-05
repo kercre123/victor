@@ -250,9 +250,24 @@ int main(int argc, char **argv)
         
         if(img.empty())
         {
-          PRINT_NAMED_ERROR("VicNeuralNets.Main.ImageReadFailed", "Empty image from %s", imageFilename.c_str());
-          result = RESULT_FAIL;
-          break;
+          PRINT_NAMED_ERROR("VicNeuralNets.Main.ImageReadFailed", "Error while loading image %s", imageFilename.c_str());
+          if(imageFileProvided)
+          {
+            // If we loaded in image file specified on the command line, we are done
+            result = RESULT_FAIL;
+            break;
+          }
+          else
+          {
+            // Remove the image file we were working with to signal that we're done with it
+            // and ready for a new image, even if this one was corrupted
+            if(neuralNet.IsVerbose())
+            {
+              LOG_INFO("VicNeuralNets.Main.DeletingImageFile", "%s", imageFilename.c_str());
+            }
+            remove(imageFilename.c_str());
+            continue; // no need to stop the process, it was just a bad image, won't happen again
+          }
         }
       }
 
@@ -350,10 +365,13 @@ void GetImage(const std::string& imageFilename, const std::string timestampFilen
   } 
   else {
     img = cv::imread(imageFilename);
-    cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
+    if(! img.empty()) // otherwise opencv crashes at the cvtColor
+    {
+      cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
+    }
   }
 
-  if(img.empty())
+  if(img.empty()) // catches both bmp and other cases
   {
     // Don't bother reading the timestamp file
     return;

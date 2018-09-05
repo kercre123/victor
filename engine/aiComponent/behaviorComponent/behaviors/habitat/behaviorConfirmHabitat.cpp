@@ -214,6 +214,7 @@ void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
+  GetBEI().GetCliffSensorComponent().SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH);
   _dVars = DynamicVariables();
 }
 
@@ -517,12 +518,60 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 
 void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","");
-  IActionRunner* action = new CliffAlignToWhiteAction();
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","%s",_dVars._cliffAlignRetry ? "Retry" : "");
+  
+  IActionRunner* action = nullptr;
+  if(!_dVars._cliffAlignRetry) {
+    // first time attempt (since entering Habitat=Unknown)
+    action = new CliffAlignToWhiteAction();
+  } else {
+    // second time attempt
+    // + now use lowered thresholds for white detection
+    // + if this fails, we force set that we are not in habitat
+    CompoundActionSequential* compoundAction = new CompoundActionSequential(std::list<IActionRunner*>{
+      // note: temporarily lowers the white detection
+      // threshold. This allows us to retry with more
+      // margin for detecting the white region
+      // After the CliffAlignAction returns, it resets to the old threshold
+      new WaitForLambdaAction([](Robot& robot)->bool {
+        robot.GetComponentPtr<CliffSensorComponent>()->SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_LOW);
+        return true;
+      },0.1f)
+    });
+    compoundAction->AddAction(new CliffAlignToWhiteAction());
+    
+    // reset the white-detect threshold
+    compoundAction->AddAction(new WaitForLambdaAction(
+      [](Robot& robot)->bool {
+        robot.GetComponentPtr<CliffSensorComponent>()->SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH);
+        return true;
+      },
+    0.1f));
+    
+    action = compoundAction;
+  }
+  DEV_ASSERT_MSG(action != nullptr, "ConfirmHabitat.TransitionToCliffAlignWhite.NullActionPtr", "");
+  
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
     switch(msg.result) {
       case ActionResult::SUCCESS: { break; }
       case ActionResult::CLIFF_ALIGN_FAILED_TIMEOUT:
+      {
+        if(!_dVars._cliffAlignRetry) {
+          // indicates we failed our first attempt at cliff alignment
+          // + perturb our current position
+          // + resume doing a random walk
+          // the expected result is that the robot will eventually
+          // attempt to do cliff alignment a second time
+          // if that 2nd try fails, then the whole behavior will exit
+          _dVars._cliffAlignRetry = true;
+          _dVars._phase = ConfirmHabitatPhase::RandomWalk;
+          TransitionToBackupTurnForward(-30, RandomSign()*DEG_TO_RAD(30.0f), 40);
+          break;
+        }
+        // deliberate fall-through: if we already retried CliffAlignment
+        // then we don't retry and instead fail to confirm the habitat
+      }
       case ActionResult::CLIFF_ALIGN_FAILED_OVER_TURNING: // deliberate fall through
       {
         // this is probably indicative that we are not in the habitat

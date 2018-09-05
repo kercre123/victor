@@ -115,16 +115,46 @@ namespace Anki {
         BackpackLightController::TurnOffAll();
       }
 
+      void CheckForCriticalBatteryShutdown()
+      {        
+        static const int   CRITICAL_BATTERY_THRESH_TICS = 20;
+        static const float CRITICAL_BATTERY_THRESH_VOLTS = 3.45f;
+        static const float HAL_SHUTDOWN_DELAY_MS = 2000;
+        static TimeStamp_t shutdownTime_ms = 0;
+        static int         numTicsBelowThresh = 0;
+
+        const f32 battVoltage = HAL::BatteryGetVoltage();
+        if (shutdownTime_ms == 0) {
+          if (battVoltage < CRITICAL_BATTERY_THRESH_VOLTS) {
+            ++numTicsBelowThresh;
+            if (numTicsBelowThresh > CRITICAL_BATTERY_THRESH_TICS) {
+              // Send a shutdown message to anim/engine
+              AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
+              RobotInterface::PrepForShutdown msg;
+              msg.reason = ShutdownReason::SHUTDOWN_CRITICAL_BATTERY;
+              RobotInterface::SendMessage(msg);
+
+              shutdownTime_ms = HAL::GetTimeStamp() + HAL_SHUTDOWN_DELAY_MS;
+            }
+          } else {
+            numTicsBelowThresh = 0;
+          }
+        } else if (HAL::GetTimeStamp() > shutdownTime_ms) {
+          AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
+          HAL::Shutdown();
+        }
+      }
+
       void CheckForShutdown()
       {
         // Shutdown sequence will be begin if the button is held down for this
         // amount of time
-        static const int SHUTDOWN_TIME_MS = 4000;
+        static const int SHUTDOWN_TIME_MS = 3000;
 
         // Wait this amount of time after sending PrepForShutdown message and calling
         // sync(). The assumption is that whoever is handling the PrepForShutdown message
         // is able to do so within this amount of time
-        static const int TIME_TO_WAIT_UNTIL_SYNC_MS = 350;
+        static const int TIME_TO_WAIT_UNTIL_SYNC_MS = 1350;
 
         // Wait this amount of time after syncing before sending the shutdown
         // command to syscon
@@ -173,8 +203,9 @@ namespace Anki {
                 timeMark_ms = curTime_ms;
                 state = START;
                 // Send a shutdown message to anim/engine
-                AnkiWarn("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
+                AnkiInfo("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
                 RobotInterface::PrepForShutdown msg;
+                msg.reason = ShutdownReason::SHUTDOWN_BUTTON;
                 RobotInterface::SendMessage(msg);
 #endif                
               }
@@ -190,7 +221,7 @@ namespace Anki {
             // then we should sync()
             if(curTime_ms - timeMark_ms > TIME_TO_WAIT_UNTIL_SYNC_MS)
             {
-              AnkiWarn("CozmoBot.CheckForButtonHeld.Sync", "");
+              AnkiInfo("CozmoBot.CheckForButtonHeld.Sync", "");
               #ifdef VICOS
               sync();
               #endif
@@ -212,6 +243,36 @@ namespace Anki {
         }
 
         buttonWasPressed = buttonIsPressed;
+      }
+
+      void CheckForGyroCalibShutdown()
+      {
+        static const int GYRO_NOT_CALIB_SHUTDOWN_MS = 60000;
+        
+        static TimeStamp_t syncReceivedTime_ms = 0;
+
+        // As long as we haven't gotten sync from engine
+        if(syncReceivedTime_ms == 0)
+        {
+          // ...then update syncReceivedTime once we receive sync
+          if(Messages::ReceivedInit())
+          {
+            syncReceivedTime_ms = HAL::GetTimeStamp();
+          }
+        }
+        // Otherwise we are not on the charger and have received sync from engine
+        // and gyro has not calibrated
+        else if(!IMUFilter::IsBiasFilterComplete())
+        {
+          // If gyro has not been calibrated for more than GYRO_NOT_CALIB_SHUTDOWN_MS
+          // then shutdown
+          const TimeStamp_t timeDif_ms = HAL::GetTimeStamp() - syncReceivedTime_ms;
+          if(timeDif_ms > GYRO_NOT_CALIB_SHUTDOWN_MS)
+          {
+            AnkiWarn("CozmoBot.CheckForGyroCalibShutdown.HALShutdown","");
+            HAL::Shutdown();
+          }
+        }
       }
 
       Result step_MainExecution()
@@ -237,6 +298,8 @@ namespace Anki {
         }
 
         CheckForShutdown();
+        CheckForCriticalBatteryShutdown();
+        CheckForGyroCalibShutdown();
 /*
         // Test code for measuring number of mainExecution tics per second
         static u32 cnt = 0;

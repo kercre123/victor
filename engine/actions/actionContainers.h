@@ -149,7 +149,8 @@ namespace Anki {
       // this action, the returned SlotHandle can be ignored.
       SlotHandle AddConcurrentAction(IActionRunner* action, u8 numRetries = 0);
 
-      // Queue an action
+      // Queue an action.  This function will take ownership over the memory pointed
+      // to by action, regardless of whether it succeeds or fails.
       Result     QueueAction(QueueActionPosition inPosition,
                              IActionRunner* action, u8 numRetries = 0);
 

@@ -98,7 +98,7 @@ namespace {
   const char* kManualGovernor = "userspace";
 
   const char* const kWifiInterfaceName = "wlan0";
-  
+
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
   uint32_t _cpuTemp_C;        // Temperature in Celsius
@@ -111,9 +111,9 @@ namespace {
 
 
   // How often state variables are updated
-  uint32_t _updatePeriod_ms = 0;
-  uint32_t _lastUpdateTime_ms = 0;
-  uint32_t _lastWebvizUpdateTime_ms = 0;
+  uint64_t _currentTime_ms = 0;
+  uint64_t _updatePeriod_ms = 0;
+  uint64_t _lastWebvizUpdateTime_ms = 0;
 
   std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
@@ -122,7 +122,7 @@ namespace {
   {
     return *str ? 1 + GetConstStrLength(str + 1) : 0;
   }
-  
+
   // OS version numbers
   int _majorVersion = -1;
   int _minorVersion = -1;
@@ -170,7 +170,7 @@ OSState::OSState()
   // set cpu frequency to default (in case we left it in a bad state last time)
   SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
 
-  _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  _lastWebvizUpdateTime_ms = _currentTime_ms;
   
   // read the OS versions once on boot up
   if(Util::FileUtils::FileExists("/etc/os-version")) {
@@ -205,46 +205,27 @@ RobotID_t OSState::GetRobotID() const
   return DEFAULT_ROBOT_ID;
 }
 
-void OSState::Update()
+void OSState::Update(BaseStationTime_t currTime_nanosec)
 {
-  if (_updatePeriod_ms != 0) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      using namespace std::chrono;
-      // const auto startTime = steady_clock::now();
-
-      // Update cpu freq
-      UpdateCPUFreq_kHz();
-
-      // Update temperature reading
-      UpdateTemperature_C();
-
-      // Update memory info
-      UpdateMemoryInfo();
-
-      // const auto now = steady_clock::now();
-      // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
-      // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
-
-      _lastUpdateTime_ms = now_ms;
-
-    }
-  }
-
+  _currentTime_ms = currTime_nanosec/1000000;
   if (kWebvizUpdatePeriod != 0 && _webServiceCallback) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    if (now_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
+    if (_currentTime_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
       UpdateCPUTimeStats();
 
       Json::Value json;
-      json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
-      auto& usage = json["usage"];
-      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
-        usage.append( _CPUTimeStats[i] );
+      json["deltaTime_ms"] = _currentTime_ms - _lastWebvizUpdateTime_ms;
+
+      {
+        auto& usage = json["usage"];
+        std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
+        for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+          usage.append( _CPUTimeStats[i] );
+        }
       }
+
       _webServiceCallback(json);
 
-      _lastWebvizUpdateTime_ms = now_ms;
+      _lastWebvizUpdateTime_ms = _currentTime_ms;
     }
   }
 }
@@ -304,7 +285,7 @@ void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
       return;
     }
 
-    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manaul cpu frequency %u",
+    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manual cpu frequency %u",
                      freqVal);
   }
   else {
@@ -368,9 +349,12 @@ void OSState::UpdateCPUTimeStats() const
 
 uint32_t OSState::GetCPUFreq_kHz() const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateCPUFreq_kHz();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   return _cpuFreq_kHz;
 }
 
@@ -383,9 +367,12 @@ bool OSState::IsCPUThrottling() const
 
 uint32_t OSState::GetTemperature_C() const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateTemperature_C();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   if(kSendFakeCpuTemperature) {
     return kFakeCpuTemperature_degC;
   }
@@ -394,33 +381,41 @@ uint32_t OSState::GetTemperature_C() const
 
 float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetUptimeAndIdleTime.NonZeroUpdate");
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateUptimeAndIdleTime();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   idleTime_s = _idleTime_s;
   return _uptime_s;
 }
 
 uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateMemoryInfo();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   freeMem_kB = _memFree_kB;
   availableMem_kB = _memAvailable_kb;
   return _memTotal_kB;
 }
 
-const std::vector<std::string>& OSState::GetCPUTimeStats() const
+void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetCPUTimeStats.NonZeroUpdate");
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateCPUTimeStats();
+    lastUpdate_ms = _currentTime_ms;
+  } 
+
+  {
+    std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
+    stats = _CPUTimeStats;
   }
-  return _CPUTimeStats;
 }
 
 
@@ -776,18 +771,18 @@ bool OSState::IsUserSpaceSecure()
   if(!read)
   {
     read = true;
-    std::ifstream infile(kCmdLineFile);	
+    std::ifstream infile(kCmdLineFile);
     std::string line;
-    while(std::getline(infile, line))	
+    while(std::getline(infile, line))
     {
       static const char* kKey = "dm=";
-      size_t index = line.find(kKey);	
-      if(index != std::string::npos)	
+      size_t index = line.find(kKey);
+      if(index != std::string::npos)
       {
         _isUserSpaceSecure = true;
         break;
-      }	
-    }	
+      }
+    }
     infile.close();
   }
 

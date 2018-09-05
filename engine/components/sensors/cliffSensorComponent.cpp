@@ -81,14 +81,9 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   // Update raw and filtered cliff sensor data
   for (int i=0 ; i<kNumCliffSensors ; i++) {
     _cliffDataRaw[i] = msg.cliffDataRaw[i];
-    if (_cliffDataRaw[i] == 0) {
-      PRINT_NAMED_WARNING("CliffSensorComponent.UpdateInternal.RawCliffZero", "Raw cliff data for sensor %d is zero! Discarding.", i);
-    } else {
-      // Update filtered values (and initialize it if needed)
-      _cliffDataFilt[i] = Util::IsNearZero(_cliffDataFilt[i]) ?
-                          _cliffDataRaw[i] :
-                          (kCliffFiltCoef * _cliffDataFilt[i]) + ((1.f - kCliffFiltCoef) * static_cast<float>(_cliffDataRaw[i]));
-    }
+    _cliffDataFilt[i] = Util::IsNearZero(_cliffDataFilt[i]) ?
+                        _cliffDataRaw[i] :
+                        (kCliffFiltCoef * _cliffDataFilt[i]) + ((1.f - kCliffFiltCoef) * static_cast<float>(_cliffDataRaw[i]));
   }
   _cliffDetectedFlags = msg.cliffDetectedFlags;
   _whiteDetectedFlags = msg.whiteDetectedFlags;
@@ -323,6 +318,11 @@ void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
       _robot->SendRobotMessage<RobotInterface::EnableStopOnWhite>(stopOnWhite);
     }
   }
+}
+  
+void CliffSensorComponent::SetWhiteDetectThreshold(uint16_t threshold) const
+{
+  _robot->SendRobotMessage<RobotInterface::SetWhiteDetectThreshold>(threshold);
 }
   
 } // Cozmo namespace

@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Anki, Inc.
+# Copyright (c) 2018 Anki, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 # limitations under the License.
 
 """This module provides a 3D support classes for openGL, used by opengl_viewer.py
+
+It uses PyOpenGL, a Python OpenGL 3D graphics library which is available on most
+platforms. It also depends on the Pillow library for image processing.
 
 Warning:
     This package requires Python to have the PyOpenGL package installed, along

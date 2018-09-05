@@ -79,6 +79,8 @@ private:
   bool UpdateStatsJdoc(const bool saveToDiskImmediately,
                        const bool saveToCloudImmediately = false);
 
+  void DoJdocFormatMigration();
+
   bool _dirtyJdoc = false;
   JdocsManager* _jdocsManager = nullptr;
   float _lastTimeAliveUpdated_s = -1.0f;

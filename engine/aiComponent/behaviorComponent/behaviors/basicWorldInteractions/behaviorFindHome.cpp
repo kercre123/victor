@@ -27,6 +27,7 @@
 #include "engine/vision/imageSaver.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
@@ -46,10 +47,12 @@ namespace {
   const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
   const char* kSearchTurnWaitingForImagesAnimKey = "searchTurnWaitingForImagesAnimTrigger";
   const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
+  const char* kPostSearchAnimTrigger             = "postSearchAnimTrigger";
   const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
   const char* kMaxSearchTurnsKey                 = "maxSearchTurns";
   const char* kRecentSearchWindowKey             = "recentSearchWindow_sec";
   const char* kMaxNumRecentSearchesKey           = "maxNumRecentSearches";
+  const char* kNumSearchesBeforePlayingPostSearchAnim = "numSearchesBeforePlayingPostSearchAnim";
   const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
   const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
   const char* kUseExposureCyclingKey             = "useExposureCycling";
@@ -86,15 +89,19 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnAnimKey, searchTurnAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnWaitingForImagesAnimKey, waitForImagesAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnEndAnimKey, searchTurnEndAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kPostSearchAnimTrigger, postSearchAnimTrigger, debugName);
   minSearchAngleSweep_deg = JsonTools::ParseFloat(config, kMinSearchAngleSweepKey, debugName);
   maxSearchTurns          = JsonTools::ParseUint8(config, kMaxSearchTurnsKey, debugName);
   recentSearchWindow_sec  = JsonTools::ParseFloat(config, kRecentSearchWindowKey, debugName);
+  numSearchesBeforePlayingPostSearchAnim = JsonTools::ParseInt32(config, kNumSearchesBeforePlayingPostSearchAnim, debugName);
   maxNumRecentSearches    = JsonTools::ParseUint8(config, kMaxNumRecentSearchesKey, debugName);
   minDrivingDist_mm       = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
   maxDrivingDist_mm       = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
   homeFilter              = std::make_unique<BlockWorldFilter>();
   searchSpacePointEvaluator = std::make_unique<Util::RejectionSamplerHelper<Point2f>>();
   searchSpacePolyEvaluator  = std::make_unique<Util::RejectionSamplerHelper<Poly2f>>();
+  useExposureCycling      = JsonTools::ParseBool(config, kUseExposureCyclingKey, debugName);
+  numImagesToWaitFor      = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
   
   // Set up block world filter for finding charger object
   homeFilter->AddAllowedFamily(ObjectFamily::Charger);
@@ -137,10 +144,12 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kSearchTurnAnimKey,
     kSearchTurnWaitingForImagesAnimKey,
     kSearchTurnEndAnimKey,
+    kPostSearchAnimTrigger,
     kMinSearchAngleSweepKey,
     kMaxSearchTurnsKey,
     kRecentSearchWindowKey,
     kMaxNumRecentSearchesKey,
+    kNumSearchesBeforePlayingPostSearchAnim,
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
     kUseExposureCyclingKey,
@@ -272,7 +281,17 @@ void BehaviorFindHome::TransitionToSearchTurn()
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     _dVars.persistent.searchedLocations[now_sec] = Point2f{robotPose.GetTranslation()};
-    TransitionToRandomDrive();
+    // If appropriate, play the "post search" animation before transferring to random drive
+    const bool shouldPlayPostSearchAnim = (_iConfig.numSearchesBeforePlayingPostSearchAnim >= 0) &&
+                                          (_dVars.numSearchesCompleted > _iConfig.numSearchesBeforePlayingPostSearchAnim);
+    if (shouldPlayPostSearchAnim) {
+      DelegateIfInControl(new TriggerAnimationAction(_iConfig.postSearchAnimTrigger),
+                          [this]() {
+                            TransitionToRandomDrive();
+                          });
+    } else {
+      TransitionToRandomDrive();
+    }
   } else {
     // In high stimulation, just play the search turn animations, but not the
     // "waiting for images" or "search turn end" animations
@@ -303,7 +322,8 @@ void BehaviorFindHome::TransitionToSearchTurn()
       // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
       // images action, and play a "search turn end" animation after the "wait for images" anim.
       auto* loopAndWaitForImagesAction = new CompoundActionParallel();
-      loopAndWaitForImagesAction->AddAction(new TriggerAnimationAction(_iConfig.waitForImagesAnimTrigger));
+      loopAndWaitForImagesAction->SetShouldEndWhenFirstActionCompletes(true);
+      loopAndWaitForImagesAction->AddAction(new TriggerAnimationAction(_iConfig.waitForImagesAnimTrigger, 0)); // loop forever
       loopAndWaitForImagesAction->AddAction(waitForImagesAction);
       action->AddAction(loopAndWaitForImagesAction);
       action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
@@ -319,11 +339,12 @@ void BehaviorFindHome::TransitionToSearchTurn()
                           const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
                           const auto endHeading = robotPose.GetRotation().GetAngleAroundZaxis();
                           const auto angleSwept_deg = (endHeading - startHeading).getDegrees();
-                          DEV_ASSERT(angleSwept_deg < 0.f, "BehaviorFindHome.TransitionToSearchTurn.ShouldTurnClockwise");
-                          if (std::abs(angleSwept_deg) > 75.f) {
-                            PRINT_NAMED_WARNING("BehaviorFindHome.TransitionToSearchTurn.TurnedTooMuch",
-                                                "The last turn swept an angle of %.2f deg - may have missed seeing the charger due to the camera's limited FOV",
-                                                std::abs(angleSwept_deg));
+                          if (!Util::InRange(std::abs(angleSwept_deg), 30.f, 75.f)) {
+                            // We turned an unexpected amount - may have missed seeing the charger due to the camera's limited FOV
+                            DASMSG(find_home_invalid_turn, "behavior.find_home.invalid_turn_angle", "Invalid turn angle during a search-for-charger turn");
+                            DASMSG_SET(i1, (int) std::round(angleSwept_deg), "The actual angle swept during this turn (degrees)");
+                            DASMSG_SET(i2, _dVars.numTurnsCompleted, "Number of search turns completed at this location");
+                            DASMSG_SEND_WARNING();
                           }
                           _dVars.angleSwept_deg += std::abs(angleSwept_deg);
                           TransitionToSearchTurn();

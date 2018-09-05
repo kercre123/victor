@@ -58,6 +58,10 @@ public:
   // Get the current detected tempo. Returns 0 and prints a warning if there is no 'possible' beat detected right now
   float GetCurrTempo_bpm() const;
   
+  // Get the current beat confidence, which is a unitless measure of how confident the beat detection algorithm is.
+  // Returns 0 and prints a warning if there is no 'possible' beat detected right now
+  float GetCurrConfidence() const;
+  
   // Send a message to reset the beat detector in the anim process and clear our list of recent beats
   void Reset();
   

@@ -17,7 +17,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
-#include "util/time/universalTime.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -45,6 +44,8 @@ namespace Anki {
 namespace Vector {
 
 CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState.Webviz", 0, "Off,10ms,100ms,1000ms,10000ms");
+CONSOLE_VAR(bool, kSendFakeCpuTemperature,  "OSState.Temperature", false);
+CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 
 namespace {
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
@@ -63,12 +64,14 @@ namespace {
   uint32_t _memTotal_kB;      // Total memory in kB
   uint32_t _memFree_kB;       // Free memory in kB
   uint32_t _memAvailable_kB;  // Available memory in kB
+
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
+  std::mutex _CPUTimeStatsMutex;          // CPU time stats mutex
 
   // How often state variables are updated
-  uint32_t _updatePeriod_ms = 0;
-  uint32_t _lastUpdateTime_ms = 0;
-  uint32_t _lastWebvizUpdateTime_ms = 0;
+  uint64_t _currentTime_ms = 0;
+  uint64_t _updatePeriod_ms = 0;
+  uint64_t _lastWebvizUpdateTime_ms = 0;
 
   std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
@@ -97,8 +100,6 @@ OSState::OSState()
   _cpuTemp_C = 0;
 
   _buildSha = ANKI_BUILD_SHA;
-
-  _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 }
 
 OSState::~OSState()
@@ -111,36 +112,27 @@ void OSState::SetSupervisor(webots::Supervisor *sup)
   _supervisorIsSet = true;
 }
 
-void OSState::Update()
+void OSState::Update(BaseStationTime_t currTime_nanosec)
 {
-  if (_updatePeriod_ms != 0) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-
-      // Update cpu freq
-      UpdateCPUFreq_kHz();
-
-      // Update temperature reading
-      UpdateTemperature_C();
-
-      _lastUpdateTime_ms = now_ms;
-    }
-  }
-
+  _currentTime_ms = currTime_nanosec/1000000;
   if (kWebvizUpdatePeriod != 0 && _webServiceCallback) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    if (now_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
+    if (_currentTime_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
       UpdateCPUTimeStats();
 
       Json::Value json;
-      json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
+      json["deltaTime_ms"] = _currentTime_ms - _lastWebvizUpdateTime_ms;
       auto& usage = json["usage"];
-      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
-        usage.append( _CPUTimeStats[i] );
+
+      {
+        std::lock_guard<std::mutex> lock(_CPUTimeStatsMutex);
+        for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+          usage.append( _CPUTimeStats[i] );
+        }
       }
+
       _webServiceCallback(json);
 
-      _lastWebvizUpdateTime_ms = now_ms;
+      _lastWebvizUpdateTime_ms = _currentTime_ms;
     }
   }
 }
@@ -228,7 +220,7 @@ void OSState::UpdateMemoryInfo() const
   {
     _memFree_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
   }
-  
+
   // TODO: differentiate available and free
   _memAvailable_kB = _memFree_kB;
 }
@@ -250,6 +242,7 @@ void OSState::UpdateCPUTimeStats() const
 
   kern_return_t kerr = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numCPUsU, &cpuInfo, &numCpuInfo);
   if (kerr == KERN_SUCCESS) {
+    std::lock_guard<std::mutex> lock(_CPUTimeStatsMutex);
     integer_t total[CPU_STATE_MAX] = {0};
 
     _CPUTimeStats.resize(numCPUs+1);
@@ -272,9 +265,12 @@ void OSState::UpdateCPUTimeStats() const
 
 uint32_t OSState::GetCPUFreq_kHz() const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateCPUFreq_kHz();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   return _cpuFreq_kHz;
 }
 
@@ -285,9 +281,16 @@ bool OSState::IsCPUThrottling() const
 
 uint32_t OSState::GetTemperature_C() const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateTemperature_C();
+    lastUpdate_ms = _currentTime_ms;
   }
+
+  if(kSendFakeCpuTemperature) {
+    return kFakeCpuTemperature_degC;
+  }
+
   return _cpuTemp_C;
 }
 
@@ -300,7 +303,7 @@ const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
 }
-  
+
 void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental) const
 {
   // always the latest for the purposes of testing
@@ -358,29 +361,41 @@ uint64_t OSState::GetWifiRxBytes() const
 
 float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateUptimeAndIdleTime();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   idleTime_s = _idleTime_s;
   return _uptime_s;
 }
 
 uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateMemoryInfo();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   freeMem_kB = _memFree_kB;
   availableMem_kB = _memAvailable_kB;
   return _memTotal_kB;
 }
 
-const std::vector<std::string>& OSState::GetCPUTimeStats() const
+void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateCPUTimeStats();
+    lastUpdate_ms = _currentTime_ms;
   }
-  return _CPUTimeStats;
+
+  {
+    std::lock_guard<std::mutex> lock(_CPUTimeStatsMutex);
+    stats = _CPUTimeStats;
+  }
 }
 
 const std::string& OSState::GetRobotName() const

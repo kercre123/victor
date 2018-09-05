@@ -1,9 +1,23 @@
 #!/usr/bin/env python3
 
-'''Control Vector using a webpage on your computer.
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Control Vector using a webpage on your computer.
 
 This example lets you control Vector by Remote Control, using a webpage served by Flask.
-'''
+"""
 
 import asyncio
 import io
@@ -30,7 +44,7 @@ except ImportError:
 
 
 def create_default_image(image_width, image_height, do_gradient=False):
-    '''Create a place-holder PIL image to use until we have a live feed from Vector'''
+    """Create a place-holder PIL image to use until we have a live feed from Vector"""
     image_bytes = bytearray([0x70, 0x70, 0x70]) * image_width * image_height
 
     if do_gradient:
@@ -52,7 +66,7 @@ _is_mouse_look_enabled_by_default = False
 
 
 def remap_to_range(x, x_min, x_max, out_min, out_max):
-    '''convert x (in x_min..x_max range) to out_min..out_max range'''
+    """convert x (in x_min..x_max range) to out_min..out_max range"""
     if x < x_min:
         return out_min
     if x > x_max:
@@ -123,9 +137,9 @@ class RemoteControlVector:
         self.anim_index_for_key[key_index] = anim_index
 
     def handle_mouse(self, mouse_x, mouse_y):
-        '''Called whenever mouse moves
+        """Called whenever mouse moves
             mouse_x, mouse_y are in in 0..1 range (0,0 = top left, 1,1 = bottom right of window)
-        '''
+        """
         if self.is_mouse_look_enabled:
             mouse_sensitivity = 1.5  # higher = more twitchy
             self.mouse_dir = remap_to_range(mouse_x, 0.0, 1.0, -mouse_sensitivity, mouse_sensitivity)
@@ -147,7 +161,7 @@ class RemoteControlVector:
                 self.update_head()
 
     def update_drive_state(self, key_code, is_key_down, speed_changed):
-        '''Update state of driving intent from keyboard, and if anything changed then call update_driving'''
+        """Update state of driving intent from keyboard, and if anything changed then call update_driving"""
         update_driving = True
         if key_code == ord('W'):
             self.drive_forwards = is_key_down
@@ -163,7 +177,7 @@ class RemoteControlVector:
         return update_driving
 
     def update_lift_state(self, key_code, is_key_down, speed_changed):
-        '''Update state of lift move intent from keyboard, and if anything changed then call update_lift'''
+        """Update state of lift move intent from keyboard, and if anything changed then call update_lift"""
         update_lift = True
         if key_code == ord('R'):
             self.lift_up = is_key_down
@@ -175,7 +189,7 @@ class RemoteControlVector:
         return update_lift
 
     def update_head_state(self, key_code, is_key_down, speed_changed):
-        '''Update state of head move intent from keyboard, and if anything changed then call update_head'''
+        """Update state of head move intent from keyboard, and if anything changed then call update_head"""
         update_head = True
         if key_code == ord('T'):
             self.head_up = is_key_down
@@ -187,9 +201,9 @@ class RemoteControlVector:
         return update_head
 
     def handle_key(self, key_code, is_shift_down, is_alt_down, is_key_down):
-        '''Called on any key press or release
+        """Called on any key press or release
            Holding a key down may result in repeated handle_key calls with is_key_down==True
-        '''
+        """
 
         # Update desired speed / fidelity of actions based on shift/alt being held
         was_go_fast = self.go_fast
@@ -256,7 +270,7 @@ class RemoteControlVector:
         await asyncio.sleep(0)
 
     def update(self):
-        '''Try and execute the next queued action'''
+        """Try and execute the next queued action"""
         self.vector.loop.run_until_complete(self.dummy_wait())
         if self.action_queue:
             queued_action, action_args = self.action_queue[0]
@@ -300,14 +314,14 @@ class RemoteControlVector:
 
 
 def get_anim_sel_drop_down(selectorIndex):
-    html_text = '''<select onchange="handleDropDownSelect(this)" name="animSelector''' + str(selectorIndex) + '''">'''
+    html_text = """<select onchange="handleDropDownSelect(this)" name="animSelector""" + str(selectorIndex) + """">"""
     i = 0
     for anim_name in flask_app.remote_control_vector.anim_names:
         is_selected_item = (i == flask_app.remote_control_vector.anim_index_for_key[selectorIndex])
-        selected_text = ''' selected="selected"''' if is_selected_item else ""
-        html_text += '''<option value=''' + str(i) + selected_text + '''>''' + anim_name + '''</option>'''
+        selected_text = """ selected="selected"""" if is_selected_item else ""
+        html_text += """<option value=""" + str(i) + selected_text + """>""" + anim_name + """</option>"""
         i += 1
-    html_text += '''</select>'''
+    html_text += """</select>"""
     return html_text
 
 
@@ -316,7 +330,7 @@ def get_anim_sel_drop_downs():
     for i in range(10):
         # list keys 1..9,0 as that's the layout on the keyboard
         key = i + 1 if (i < 9) else 0
-        html_text += str(key) + ''': ''' + get_anim_sel_drop_down(key) + '''<br>'''
+        html_text += str(key) + """: """ + get_anim_sel_drop_down(key) + """<br>"""
     return html_text
 
 
@@ -326,7 +340,7 @@ def to_js_bool_string(bool_value):
 
 @flask_app.route("/")
 def handle_index_page():
-    return '''
+    return """
     <html>
         <head>
             <title>remote_control_vector.py display</title>
@@ -366,12 +380,12 @@ def handle_index_page():
                         <h3>Play Animations</h3>
                         <b>0 .. 9</b> : Play Animation mapped to that key<br>
                         <h3>Talk</h3>
-                        <b>Space</b> : Say <input type="text" name="sayText" id="sayTextId" value="''' + flask_app.remote_control_vector.text_to_say + '''" onchange=handleTextInput(this)>
+                        <b>Space</b> : Say <input type="text" name="sayText" id="sayTextId" value="""" + flask_app.remote_control_vector.text_to_say + """" onchange=handleTextInput(this)>
                     </td>
                     <td width=30></td>
                     <td valign=top>
                     <h2>Animation key mappings:</h2>
-                    ''' + get_anim_sel_drop_downs() + '''<br>
+                    """ + get_anim_sel_drop_downs() + """<br>
                     </td>
                 </tr>
             </table>
@@ -379,7 +393,7 @@ def handle_index_page():
             <script type="text/javascript">
                 var gLastClientX = -1
                 var gLastClientY = -1
-                var gIsMouseLookEnabled = ''' + to_js_bool_string(_is_mouse_look_enabled_by_default) + '''
+                var gIsMouseLookEnabled = """ + to_js_bool_string(_is_mouse_look_enabled_by_default) + """
                 var gIsFreeplayEnabled = false
                 var gUserAgent = window.navigator.userAgent;
                 var gIsMicrosoftBrowser = gUserAgent.indexOf('MSIE ') > 0 || gUserAgent.indexOf('Trident/') > 0 || gUserAgent.indexOf('Edge/') > 0;
@@ -520,7 +534,7 @@ def handle_index_page():
 
         </body>
     </html>
-    '''
+    """
 
 
 def get_annotated_image():
@@ -534,7 +548,7 @@ def get_annotated_image():
 
 
 def streaming_video():
-    '''Video streaming generator function'''
+    """Video streaming generator function"""
     while True:
         if flask_app.remote_control_vector:
             image = get_annotated_image()
@@ -579,7 +593,7 @@ def handle_key_event(key_request, is_key_down):
 
 @flask_app.route('/mousemove', methods=['POST'])
 def handle_mousemove():
-    '''Called from Javascript whenever mouse moves'''
+    """Called from Javascript whenever mouse moves"""
     message = json.loads(request.data.decode("utf-8"))
     if flask_app.remote_control_vector:
         flask_app.remote_control_vector.handle_mouse(mouse_x=(message['clientX']), mouse_y=message['clientY'])
@@ -588,7 +602,7 @@ def handle_mousemove():
 
 @flask_app.route('/setMouseLookEnabled', methods=['POST'])
 def handle_setMouseLookEnabled():
-    '''Called from Javascript whenever mouse-look mode is toggled'''
+    """Called from Javascript whenever mouse-look mode is toggled"""
     message = json.loads(request.data.decode("utf-8"))
     if flask_app.remote_control_vector:
         flask_app.remote_control_vector.set_mouse_look_enabled(is_mouse_look_enabled=message['isMouseLookEnabled'])
@@ -597,7 +611,7 @@ def handle_setMouseLookEnabled():
 
 @flask_app.route('/setFreeplayEnabled', methods=['POST'])
 def handle_setFreeplayEnabled():
-    '''Called from Javascript whenever freeplay mode is toggled on/off'''
+    """Called from Javascript whenever freeplay mode is toggled on/off"""
     message = json.loads(request.data.decode("utf-8"))
     if flask_app.remote_control_vector:
         isFreeplayEnabled = message['isFreeplayEnabled']
@@ -608,19 +622,19 @@ def handle_setFreeplayEnabled():
 
 @flask_app.route('/keydown', methods=['POST'])
 def handle_keydown():
-    '''Called from Javascript whenever a key is down (note: can generate repeat calls if held down)'''
+    """Called from Javascript whenever a key is down (note: can generate repeat calls if held down)"""
     return handle_key_event(request, is_key_down=True)
 
 
 @flask_app.route('/keyup', methods=['POST'])
 def handle_keyup():
-    '''Called from Javascript whenever a key is released'''
+    """Called from Javascript whenever a key is released"""
     return handle_key_event(request, is_key_down=False)
 
 
 @flask_app.route('/dropDownSelect', methods=['POST'])
 def handle_dropDownSelect():
-    '''Called from Javascript whenever an animSelector dropdown menu is selected (i.e. modified)'''
+    """Called from Javascript whenever an animSelector dropdown menu is selected (i.e. modified)"""
     message = json.loads(request.data.decode("utf-8"))
 
     item_name_prefix = "animSelector"
@@ -635,7 +649,7 @@ def handle_dropDownSelect():
 
 @flask_app.route('/sayText', methods=['POST'])
 def handle_sayText():
-    '''Called from Javascript whenever the saytext text field is modified'''
+    """Called from Javascript whenever the saytext text field is modified"""
     message = json.loads(request.data.decode("utf-8"))
     if flask_app.remote_control_vector:
         flask_app.remote_control_vector.text_to_say = message['textEntered']

@@ -46,9 +46,6 @@ service ExternalInterface {
 
   // Moves the Lift
   rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
-
-  // Drive arc
-  rpc DriveArc(DriveArcRequest) returns (DriveArcResponse) {}
   
   // Sets LCD to a solid color
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {
@@ -163,14 +160,6 @@ service ExternalInterface {
     };
   }
 
-  // TODO: remove once app is converted to use event pings
-  rpc Pang(Ping) returns (Pong) {
-    option (google.api.http) = {
-      post: "/v1/pang",
-      body: "*"
-    };
-  }
-
   // Request onboarding state
   rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
     option (google.api.http) = {
@@ -236,12 +225,13 @@ service ExternalInterface {
     };
   }
 
-  rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
-    option (google.api.http) = {
-      post: "/v1/status_history",
-      body: "*"
-    };
-  }
+  // Disabled for 1.0
+  // rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
+  //  option (google.api.http) = {
+  //    post: "/v1/status_history",
+  //    body: "*"
+  //  };
+  // }
 
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
     option (google.api.http) = {

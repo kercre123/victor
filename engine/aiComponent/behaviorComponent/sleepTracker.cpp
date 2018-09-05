@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Vector {
 
-#define CONSOLE_GROUP "Sleeping"
+#define CONSOLE_GROUP "Sleeping.SleepTracker"
 
 CONSOLE_VAR_RANGED(int, kSleepTracker_moning_hour, CONSOLE_GROUP, 7, 0, 23);
 CONSOLE_VAR_RANGED(int, kSleepTracker_moning_minute, CONSOLE_GROUP, 0, 0, 59);

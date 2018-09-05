@@ -74,6 +74,8 @@ private:
   bool ApplyUserEntitlement(const external_interface::UserEntitlement key);
   bool ApplyUserEntitlementKickstarterEyes();
 
+  void DoJdocFormatMigration();
+
   Json::Value               _currentUserEntitlements;
   Robot*                    _robot = nullptr;
   const Json::Value*        _userEntitlementsConfig;

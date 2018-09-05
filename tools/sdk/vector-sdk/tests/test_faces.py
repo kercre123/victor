@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test subscribing to seen faces
-'''
+"""
 
 import functools
 import os
@@ -14,14 +14,14 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
+    """main execution"""
     args = anki_vector.util.parse_test_args()
 
     print("------ begin testing face events ------")
     # Should see a stream of face events when the robot observes a face
 
     def test_subscriber(robot, event_type, event):
-        '''output when a face is seen'''
+        """output when a face is seen"""
         # Print the stream data received
         print(f"Subscriber called for: {event_type} = {event}")
 

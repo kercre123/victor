@@ -36,6 +36,7 @@ public:
   bool Disconnect();
   void SendMessage(const Anki::Vector::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
+  void SendBLEConnectionStatus(bool connected);
   void ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status);
   void HandleWifiScanRequest();
   EngineMessageSignal& OnReceivePairingStatus() {

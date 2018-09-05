@@ -52,9 +52,10 @@ private:
     IBEIConditionPtr  triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
+    AreBehaviorsActivatedHelper behaviorsThatShouldSuppressTimerAntics;
+
     std::shared_ptr<BehaviorReactToVoiceCommand> reactToVoiceCommandBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
-    ICozmoBehaviorPtr weatherCoordinatorBehavior;
 
     ICozmoBehaviorPtr meetVictorBehavior;
     std::vector<ICozmoBehaviorPtr> toSuppressWhenMeetVictor;
@@ -68,8 +69,14 @@ private:
     AreBehaviorsActivatedHelper behaviorsThatShouldntReactToSoundAwake;
     ICozmoBehaviorPtr reactToSoundAwakeBehavior;
 
+    AreBehaviorsActivatedHelper behaviorsThatShouldntReactToTouch;
+    ICozmoBehaviorPtr reactToTouchPettingBehavior;
+
+    AreBehaviorsActivatedHelper behaviorsThatShouldntReactToCliff;
     ICozmoBehaviorPtr reactToCliffBehavior;
     std::vector<std::shared_ptr<BehaviorDriveToFace>> driveToFaceBehaviors;
+
+    std::vector<ICozmoBehaviorPtr> toSuppressWhenGoingHome;
     
     std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };

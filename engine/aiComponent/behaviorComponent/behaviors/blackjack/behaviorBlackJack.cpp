@@ -82,6 +82,7 @@ void BehaviorBlackJack::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.hitOrStandPromptBehavior.get());
   delegates.insert(_iConfig.playAgainPromptBehavior.get());
   delegates.insert(_iConfig.ttsBehavior.get());
+  delegates.insert(_iConfig.goodLuckTTSBehavior.get());
   delegates.insert(_iConfig.lookAtFaceInFrontBehavior.get());
 }
 
@@ -106,6 +107,10 @@ void BehaviorBlackJack::InitBehavior()
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackTextToSpeech),
                                   BEHAVIOR_CLASS(TextToSpeechLoop),
                                   _iConfig.ttsBehavior );
+
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackGoodLuckTTS),
+                                  BEHAVIOR_CLASS(TextToSpeechLoop),
+                                  _iConfig.goodLuckTTSBehavior );
 
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackLookAtFaceInFront),
                                   BEHAVIOR_CLASS(LookAtFaceInFront),
@@ -171,8 +176,15 @@ void BehaviorBlackJack::TransitionToDealing()
           _dVars.dealingState = EDealingState::DealerFirstCard;
           // keep an eye out for Aces
           if(_game.LastCard().IsAnAce()){
-            DelegateIfInControl(SetUpSpeakingBehavior("Good luck!"),
-                                &BehaviorBlackJack::TransitionToDealing);
+            _iConfig.goodLuckTTSBehavior->SetTextToSay("Good Luck!");
+            if(!ANKI_VERIFY(_iConfig.goodLuckTTSBehavior->WantsToBeActivated(),
+                            "BehaviorBlackjack.TTSError",
+                            "The Good Luck TTS behavior did not want to be activated, this indicates a usage error")){
+              CancelSelf();
+            } else{
+              DelegateIfInControl(_iConfig.goodLuckTTSBehavior.get(),
+                                  &BehaviorBlackJack::TransitionToDealing);
+            }
           } else {
             TransitionToDealing();
           }
@@ -237,11 +249,7 @@ void BehaviorBlackJack::TransitionToDealing()
 void BehaviorBlackJack::TransitionToReactToPlayerCard()
 {
   SET_STATE(ReactToPlayerCard);
-  if(_game.PlayerHasBlackJack()){
-    // Player got a BlackJack, but Victor could still tie
-    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
-                        &BehaviorBlackJack::TransitionToVictorsTurn);
-  } else if(_game.PlayerBusted()) {
+  if(_game.PlayerBusted()) {
     // Build the card value and bust string and action
     std::string playerScoreString(std::to_string(_game.GetPlayerScore()) + ". You busted!");
     _dVars.outcome = EOutcome::VictorWins;
@@ -253,12 +261,16 @@ void BehaviorBlackJack::TransitionToReactToPlayerCard()
       {
         _visualizer.DisplayCharlieFrame(GetBEI(), [this]()
           {
-            _dVars.outcome = EOutcome::VictorLoses;
+            _dVars.outcome = EOutcome::VictorLosesBlackJack;
             DelegateIfInControl(SetUpSpeakingBehavior("5 Card Charlie! You win!"), &BehaviorBlackJack::TransitionToEndGame);
           }
         );
       }
     );
+  }else if(_game.PlayerHasBlackJack()){
+    // Player got a BlackJack, but Victor could still tie
+    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
+                        &BehaviorBlackJack::TransitionToVictorsTurn);
   } else {
     // Build the card value string and read out action
     std::string playerScoreString(std::to_string(_game.GetPlayerScore()));
@@ -282,24 +294,32 @@ void BehaviorBlackJack::TransitionToHitOrStand()
   SET_STATE(HitOrStand);
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
 
-  if(uic.IsUserIntentPending(playerHitIntent)){     
-    uic.DropUserIntent(playerHitIntent);
+  if(uic.IsUserIntentPending(playerHitIntent) ||
+     uic.IsUserIntentPending(affirmativeIntent) ){
+
+    if(uic.IsUserIntentPending(playerHitIntent)){
+      uic.DropUserIntent(playerHitIntent);
+    } else if (uic.IsUserIntentPending(affirmativeIntent)){
+      uic.DropUserIntent(affirmativeIntent);
+    }
+
     _game.DealToPlayer();
     _visualizer.DealToPlayer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToPlayerCard, this));
+
   } else {
     // Stand if:
-    // 1. We received a valid playerStandIntent
+    // 1. We received a valid playerStandIntent or imperative_negative
     if (uic.IsUserIntentPending(playerStandIntent)) {
       uic.DropUserIntent(playerStandIntent);
+    } else if(uic.IsUserIntentPending(negativeIntent)) {
+      uic.DropUserIntent(negativeIntent);
     }
 
     // 2. We didn't receive any intents at all
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Response), [this]()
-      {
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Spread),
-                            &BehaviorBlackJack::TransitionToVictorsTurn);
-      }
-    );
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Response),
+      [this](){
+        TransitionToVictorsTurn();
+      });
   }
 }
 
@@ -311,14 +331,20 @@ void BehaviorBlackJack::TransitionToVictorsTurn()
   // TODO:(str) work out whether a "spread" is happening or not, dependent on dynamic layouts
   // _visualizer.VisualizeSpread();
 
-  if(!_game.DealerHasFlopped()){
-    _game.Flop();
-    _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
-  } else {
-    // The only reason Victor takes a turn after the flop is to hit
-    _game.DealToDealer();
-    _visualizer.DealToDealer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
-  }
+  DelegateIfInControl(SetUpSpeakingBehavior("Dealers Turn!"),
+    [this](){
+      _game.Flop();
+      _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
+    });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBlackJack::TransitionToDealToVictor()
+{
+  SET_STATE(DealToVictor);
+
+  _game.DealToDealer();
+  _visualizer.DealToDealer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -329,30 +355,30 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
   if(_game.DealerBusted()){
     // Announce score and bust
     _dVars.outcome = EOutcome::VictorBusts;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerTied()){
     _dVars.outcome = EOutcome::Tie;
-    std::string tieString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". We tied." );
+    std::string tieString(std::to_string(_game.GetDealerScore()) + ". Push." );
     DelegateIfInControl(SetUpSpeakingBehavior(tieString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasBlackJack()){
     _dVars.outcome = EOutcome::VictorWinsBlackJack;
-    DelegateIfInControl(SetUpSpeakingBehavior("Dealer has 21!"),
+    DelegateIfInControl(SetUpSpeakingBehavior("21!"),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasWon()){
     _dVars.outcome = EOutcome::VictorWins;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
-  } else if(_game.DealerHasTooManyCards() || _game.DealerShouldStandPerVegasRules()) {
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". You win!" );
+  } else if(_game.DealerHasLost()) {
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". You win!" );
     _dVars.outcome = EOutcome::VictorLoses;
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else {
     // Announce score and Hit again
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) );
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToVictorsTurn);
+    std::string dealerScoreString( std::to_string(_game.GetDealerScore()) );
+    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToDealToVictor);
   }
 
 }
@@ -450,9 +476,11 @@ void BehaviorBlackJack::TransitionToGetOut()
 IBehavior* BehaviorBlackJack::SetUpSpeakingBehavior(const std::string& vocalizationString)
 {
   _iConfig.ttsBehavior->SetTextToSay(vocalizationString);
-  ANKI_VERIFY(_iConfig.ttsBehavior->WantsToBeActivated(),
-              "BehaviorBlackjack.TTSError",
-              "The TTSLoop behavior did not want to be activated, this indicates a usage error");
+  if(!ANKI_VERIFY(_iConfig.ttsBehavior->WantsToBeActivated(),
+                 "BehaviorBlackjack.TTSError",
+                 "The TTSLoop behavior did not want to be activated, this indicates a usage error")){
+    CancelSelf();
+  }
   return _iConfig.ttsBehavior.get();
 }
 

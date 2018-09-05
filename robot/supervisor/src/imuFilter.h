@@ -59,6 +59,10 @@ namespace Anki {
       // This can only be true if IsPickedUp() is also true.
       bool IsBeingHeld();
       
+      // Returns true if the gyro measurements indicate any form of motions on
+      // whether it is because the robot itself is moving, or is being moved
+      bool IsMotionDetected();
+      
       // Returns true if falling detected
       bool IsFalling();
       

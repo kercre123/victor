@@ -7,6 +7,8 @@
     "CriticalTemperatureAnimInternal"
   ],
 
+  "associatedActiveFeature": "NoFeature",
+
   "anonymousBehaviors": [
     {
       "behaviorName" : "EmergencyModeAnimInternal",

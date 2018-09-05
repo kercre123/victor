@@ -80,11 +80,12 @@ func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
+	log.Printf("%T: writing '%#v' Proto message to Engine\n", *manager, msg)
 	return manager.conn.Write(buf.Bytes())
 }
 
 // TODO: make this generic (via interfaces). Comparison failed when not specific.
-func (manager *EngineProtoIpcManager) deleteFromMap(listener chan extint.GatewayWrapper, tag string) func() {
+func (manager *EngineProtoIpcManager) deleteFromMap(listener chan<- extint.GatewayWrapper, tag string) func() {
 	return func() {
 		manager.managerMutex.Lock()
 		defer manager.managerMutex.Unlock()
@@ -93,6 +94,7 @@ func (manager *EngineProtoIpcManager) deleteFromMap(listener chan extint.Gateway
 			if v == listener {
 				chanSlice[idx] = chanSlice[len(chanSlice)-1]
 				manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
+				close(listener)
 				break
 			}
 			if len(chanSlice)-1 == idx {
@@ -134,14 +136,15 @@ func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numCh
 
 func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.GatewayWrapper) {
 	manager.managerMutex.RLock()
+	defer manager.managerMutex.RUnlock()
 	chanList, ok := manager.managedChannels[tag]
-	manager.managerMutex.RUnlock()
 	if !ok {
 		return // No listeners for message
 	}
 	if logVerbose {
 		log.Printf("Sending %s to listeners\n", tag)
 	}
+	markedForDelete := make(chan chan<- extint.GatewayWrapper, 5)
 	var wg sync.WaitGroup
 	for idx, listener := range chanList {
 		wg.Add(1)
@@ -152,12 +155,20 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 				if logVerbose {
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
-			case <-time.After(100 * time.Millisecond):
-				log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+			case <-time.After(250 * time.Millisecond):
+				log.Printf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
 	}
 	wg.Wait()
+	if len(markedForDelete) != 0 {
+		manager.managerMutex.RUnlock()
+		for deadListener := range markedForDelete {
+			manager.deleteFromMap(deadListener, tag)()
+		}
+		manager.managerMutex.RLock()
+	}
 	runtime.Gosched()
 }
 
@@ -253,11 +264,12 @@ func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (in
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
+	log.Printf("%T: writing '%#v' message to Switchboard\n", *manager, *msg)
 	return manager.conn.Write(buf.Bytes())
 }
 
 // TODO: make this generic (via interfaces). Comparison failed when not specific.
-func (manager *SwitchboardIpcManager) deleteFromMap(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) func() {
+func (manager *SwitchboardIpcManager) deleteFromMap(listener chan<- gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) func() {
 	return func() {
 		manager.managerMutex.Lock()
 		defer manager.managerMutex.Unlock()
@@ -266,6 +278,7 @@ func (manager *SwitchboardIpcManager) deleteFromMap(listener chan gw_clad.Switch
 			if v == listener {
 				chanSlice[idx] = chanSlice[len(chanSlice)-1]
 				manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
+				close(listener)
 				break
 			}
 			if len(chanSlice)-1 == idx {
@@ -312,8 +325,9 @@ func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardRes
 				if logVerbose {
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
-			case <-time.After(100 * time.Millisecond):
-				log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+			case <-time.After(250 * time.Millisecond):
+				log.Printf("SwitchboardIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				manager.deleteFromMap(listener, tag)()
 			}
 		}(idx, listener, msg)
 	}
@@ -349,10 +363,11 @@ func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) 
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
+	log.Printf("%T: writing '%#v' CLAD message to Engine\n", *manager, *msg)
 	return manager.conn.Write(buf.Bytes())
 }
 
-func (manager *EngineCladIpcManager) deleteFromMap(listener chan gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) func() {
+func (manager *EngineCladIpcManager) deleteFromMap(listener chan<- gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) func() {
 	return func() {
 		manager.managerMutex.Lock()
 		defer manager.managerMutex.Unlock()
@@ -361,6 +376,7 @@ func (manager *EngineCladIpcManager) deleteFromMap(listener chan gw_clad.Message
 			if v == listener {
 				chanSlice[idx] = chanSlice[len(chanSlice)-1]
 				manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
+				close(listener)
 				break
 			}
 			if len(chanSlice)-1 == idx {
@@ -407,8 +423,9 @@ func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToE
 				if logVerbose {
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
-			case <-time.After(100 * time.Millisecond):
-				log.Printf("Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+			case <-time.After(250 * time.Millisecond):
+				log.Printf("EngineCladIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				manager.deleteFromMap(listener, tag)()
 			}
 		}(idx, listener, msg)
 	}

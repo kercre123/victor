@@ -15,6 +15,7 @@
 #include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -39,7 +40,7 @@ using namespace AudioMetaData;
 using namespace AudioKeyFrameType;
 
 static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Animation);
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController )
 : _audioController( audioController )
@@ -54,11 +55,11 @@ AnimationAudioClient::~AnimationAudioClient()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::InitAnimation()
 {
-  // Clear events (if any) from the previous animation 
+  // Clear events (if any) from the previous animation
   std::lock_guard<std::mutex> lock( _lock );
   _activeEvents.clear();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen )
 {
@@ -83,7 +84,7 @@ void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::HandleAudioRef( const AudioEventGroupRef& eventRef, Util::RandomGenerator* randomGen )
 {
@@ -142,17 +143,28 @@ bool AnimationAudioClient::HasActiveEvents() const
   std::lock_guard<std::mutex> lock( _lock );
   return !_activeEvents.empty();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
                                                                   AudioMetaData::GameObjectType gameObject )
 {
-  if ( _audioController == nullptr ) { return kInvalidAudioPlayingId; }
+  using GenericEvent = Anki::AudioMetaData::GameEvent::GenericEvent;
 
-  const auto audioEventId = ToAudioEventId( event );
-  AudioCallbackContext* audioCallbackContext = nullptr;
-  const auto callbackFunc = std::bind(&AnimationAudioClient::CozmoEventCallback, this, std::placeholders::_1);
-  audioCallbackContext = new AudioCallbackContext();
+  if ( _audioController == nullptr ) {
+    return kInvalidAudioPlayingId;
+  }
+
+  // Are we about to play a TextToSpeech utterance?
+  auto ttsID = TextToSpeechComponent::kInvalidTTSID;
+  if (event == GenericEvent::Play__Robot_Vic__External_Voice_Text) {
+    if (_ttsComponent != nullptr) {
+      ttsID = _ttsComponent->GetActiveTTSID();
+    }
+  }
+
+  // Set up callback function, callback context
+  const auto callbackFunc = std::bind(&AnimationAudioClient::CozmoEventCallback, this, ttsID, std::placeholders::_1);
+  AudioCallbackContext* audioCallbackContext = new AudioCallbackContext();
   // Set callback flags
   audioCallbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
   // Execute callbacks synchronously (on main thread)
@@ -165,6 +177,7 @@ AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData:
                                                  callbackFunc( callbackInfo );
                                                } );
 
+  const auto audioEventId = ToAudioEventId( event );
   const AudioEngine::AudioPlayingId playId = _audioController->PostAudioEvent( audioEventId,
                                                                                ToAudioGameObject( gameObject ),
                                                                                audioCallbackContext );
@@ -182,51 +195,61 @@ bool AnimationAudioClient::SetCozmoEventParameter( AudioEngine::AudioPlayingId p
   if ( _audioController == nullptr ) { return false; }
   return _audioController->SetParameterWithPlayingId( ToAudioParameterId( parameter ), value, playId );
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::CozmoEventCallback( const AudioEngine::AudioCallbackInfo& callbackInfo )
+void AnimationAudioClient::CozmoEventCallback(const uint8_t ttsID, const AudioEngine::AudioCallbackInfo& callbackInfo)
 {
   switch (callbackInfo.callbackType) {
-      
+
     case AudioEngine::AudioCallbackType::Complete:
     {
       const auto& info = static_cast<const AudioCompletionCallbackInfo&>( callbackInfo );
-      RemoveActiveEvent( info.playId );
       AUDIO_DEBUG_LOG("AnimationAudioClient.PostCozmoEvent.Callback", "%s", info.GetDescription().c_str());
-    }
+      RemoveActiveEvent( info.playId );
+      if (ttsID != TextToSpeechComponent::kInvalidTTSID) {
+        if (_ttsComponent != nullptr) {
+          _ttsComponent->OnAudioComplete(ttsID);
+        }
+      }
       break;
-      
+    }
+
     case AudioCallbackType::Error:
     {
       const auto& info = static_cast<const AudioErrorCallbackInfo&>( callbackInfo );
-      RemoveActiveEvent( info.playId );
       PRINT_NAMED_WARNING("AnimationAudioClient.PostCozmoEvent.CallbackError", "%s", info.GetDescription().c_str());
-    }
+      RemoveActiveEvent( info.playId );
+      if (ttsID != TextToSpeechComponent::kInvalidTTSID) {
+        if (_ttsComponent != nullptr) {
+          _ttsComponent->OnAudioError(ttsID);
+        }
+      }
       break;
-      
+    }
+
     case AudioEngine::AudioCallbackType::Duration:
     {
       const auto& info = static_cast<const AudioDurationCallbackInfo&>( callbackInfo );
       PRINT_NAMED_WARNING("AnimationAudioClient.PostCozmoEvent.CallbackUnexpected", "%s", info.GetDescription().c_str());
-    }
       break;
-      
+    }
+
     case AudioEngine::AudioCallbackType::Marker:
     {
       const auto& info = static_cast<const AudioMarkerCallbackInfo&>( callbackInfo );
       PRINT_NAMED_WARNING("AnimationAudioClient.PostCozmoEvent.CallbackUnexpected", "%s", info.GetDescription().c_str());
-    }
       break;
-      
+    }
+
     case AudioEngine::AudioCallbackType::Invalid:
     {
       PRINT_NAMED_WARNING("AnimationAudioClient.PostCozmoEvent.CallbackInvalid", "%s", callbackInfo.GetDescription().c_str());
-    }
       break;
+    }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::AddActiveEvent( AudioEngine::AudioPlayingId playId )
 {

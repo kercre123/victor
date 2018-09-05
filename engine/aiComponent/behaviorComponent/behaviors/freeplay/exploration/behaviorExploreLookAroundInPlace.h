@@ -73,7 +73,6 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = _configParams.behavior_CanCarryCube;
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingPets, EVisionUpdateFrequency::Standard });
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   

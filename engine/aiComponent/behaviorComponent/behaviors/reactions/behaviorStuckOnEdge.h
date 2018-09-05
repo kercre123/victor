@@ -43,6 +43,7 @@ protected:
   virtual void BehaviorUpdate() override;
 
 private:
+  void SetAnimTriggers();
   void TriggerGetInAnim();
   void TriggerIdleAnim();
   
@@ -51,10 +52,12 @@ private:
   };
 
   struct DynamicVariables {
-    DynamicVariables() = default;
+    DynamicVariables();
     
-    float startOfMotionDetectedTime_s = 0.0f;
-    float enablePowerSaveModeTime_s = 0.0f;
+    float startOfMotionDetectedTime_s;
+    float enablePowerSaveModeTime_s;
+    AnimationTrigger getInTrigger;
+    AnimationTrigger idleTrigger;
   };
 
   InstanceConfig _iConfig;

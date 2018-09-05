@@ -16,7 +16,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
@@ -181,7 +180,7 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
 void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
 {
   if (IsControlDelegated()) {
-    // The SDK behavior has deleted to another behavior, and that
+    // The SDK behavior has delegated to another behavior, and that
     // behavior requested an action. Don't inform gateway that the
     // action has completed because it wasn't requested by the SDK.
     //
@@ -194,58 +193,11 @@ void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
     return;
   }
 
-  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-  if (gi == nullptr) return;
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  auto& sdkComponent = robotInfo.GetSDKComponent();
 
   ExternalInterface::RobotCompletedAction msg = event.GetData().Get_RobotCompletedAction();
-  switch((RobotActionType)msg.actionType)
-  {
-    case RobotActionType::TURN_IN_PLACE:
-    {
-      auto* response = new external_interface::TurnInPlaceResponse;
-      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::DRIVE_STRAIGHT:
-    {
-      auto* response = new external_interface::DriveStraightResponse;
-      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::MOVE_HEAD_TO_ANGLE:
-    {
-      auto* response = new external_interface::SetHeadAngleResponse;
-      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::MOVE_LIFT_TO_HEIGHT:
-    {
-      auto* response = new external_interface::SetLiftHeightResponse;
-      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::PLAY_ANIMATION:
-    {
-      auto* response = new external_interface::PlayAnimationResponse;
-      response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    default:
-    {
-      PRINT_NAMED_WARNING("BehaviorSDKInterface.HandleWhileActivated.NoMatch", "No match for action tag so no response sent: [Tag=%d]", msg.idTag);
-      return;
-    }
-  }
+  sdkComponent.OnActionCompleted(msg);
 }
 
 void BehaviorSDKInterface::SetAllowExternalMovementCommands(const bool allow) {
@@ -254,11 +206,22 @@ void BehaviorSDKInterface::SetAllowExternalMovementCommands(const bool allow) {
 }
 
 void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
-  if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOffChargerRequest ) {
-     DriveOffChargerRequest(event.GetData().drive_off_charger_request());
-  } else if( event.GetData().GetTag() == external_interface::GatewayWrapperTag::kDriveOnChargerRequest ) {
-     DriveOnChargerRequest(event.GetData().drive_on_charger_request());
-  }  
+  switch(event.GetData().GetTag())
+  {
+    case external_interface::GatewayWrapperTag::kDriveOffChargerRequest:
+      DriveOffChargerRequest(event.GetData().drive_off_charger_request());
+      break;
+
+    case external_interface::GatewayWrapperTag::kDriveOnChargerRequest:
+      DriveOnChargerRequest(event.GetData().drive_on_charger_request());
+      break;
+
+    default:
+    {
+      PRINT_NAMED_WARNING("BehaviorSDKInterface.HandleWhileActivated.NoMatch", "No match for action tag so no response sent: [Tag=%d]", (int)event.GetData().GetTag());
+      return;
+    }
+  }
 }
 
 // Delegate to the DriveOffCharger behavior
@@ -296,5 +259,6 @@ void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::Drive
     gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
   }
 }
+
 } // namespace Vector
 } // namespace Anki

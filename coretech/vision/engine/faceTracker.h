@@ -48,8 +48,20 @@ namespace Vision {
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
-    // Clear currently-tracked faces, e.g. in case camera has moved and could cause trouble
-    void Reset();
+    // These methods control which faces we are going to track, the rest
+    // of the faces will be discarded. Also if there are any allowed
+    // faces, facial recognition will be disabled. If there are no
+    // allowed tracked faces all faces detected will be tracked and
+    // facial recognition will occur "normally".
+    void AddAllowedTrackedFace(const FaceID_t faceID);
+    bool HaveAllowedTrackedFaces();
+    // This method will clear all the tracked faces and reset the
+    // face tracker.
+    void ClearAllowedTrackedFaces();
+
+    // If the robot moves we will call ClearAllowedTrackedFaces if 
+    // we don't have any allowed tracked faces.
+    void AccountForRobotMove();
     
     void EnableDisplay(bool enabled);
     

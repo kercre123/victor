@@ -129,6 +129,12 @@ void EngineMessagingClient::SetPairingPin(std::string pin) {
   SendMessage(GMessage::CreateSetBLEPin(std::move(sbp)));
 }
 
+void EngineMessagingClient::SendBLEConnectionStatus(bool connected) {
+  Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus msg;
+  msg.connected = connected;
+  SendMessage(GMessage::CreateSendBLEConnectionStatus(std::move(msg)));
+}
+
 void EngineMessagingClient::ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status) {
   Anki::Vector::SwitchboardInterface::SetConnectionStatus scs;
   scs.status = status;

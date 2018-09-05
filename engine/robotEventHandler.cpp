@@ -27,6 +27,7 @@
 #include "engine/components/pathComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -61,10 +62,33 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 
+#include "generated/proto/external_interface/shared.pb.h"
+#include "generated/proto/external_interface/messages.pb.h"
+
 namespace Anki {
 namespace Vector {
 
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PathMotionProfile ConvertProtoPathMotionProfile(const external_interface::PathMotionProfile& protoPathMotionProfile)
+{
+  PathMotionProfile pathMotionProfile{
+    protoPathMotionProfile.speed_mmps(),
+    protoPathMotionProfile.accel_mmps2(),
+    protoPathMotionProfile.decel_mmps2(),
+    protoPathMotionProfile.point_turn_speed_rad_per_sec(),
+    protoPathMotionProfile.point_turn_accel_rad_per_sec2(),
+    protoPathMotionProfile.point_turn_decel_rad_per_sec2(),
+    protoPathMotionProfile.dock_speed_mmps(),
+    protoPathMotionProfile.dock_accel_mmps2(),
+    protoPathMotionProfile.dock_decel_mmps2(),
+    protoPathMotionProfile.reverse_speed_mmps(),
+    protoPathMotionProfile.is_custom()
+  };
+
+  return pathMotionProfile;
+}
 
 // =====================================================================================================================
 #pragma mark -
@@ -138,6 +162,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: GoToPoseRequest
+//  if any changes are made here, they should be reflected in the associated function.
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)
 {
@@ -156,6 +182,30 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   {
     robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
+  return action;
+}
+
+// Proto equivalent of the preceeding GotoPose clad message handler.
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const external_interface::GoToPoseRequest& msg)
+{
+  // TODO: Add ability to indicate z too!
+  // TODO: Better way to specify the target pose's parent
+  Pose3d targetPose(msg.rad(), Z_AXIS_3D(), Vec3f(msg.x_mm(), msg.y_mm(), 0), robot.GetWorldOrigin());
+  targetPose.SetName("GotoPoseTarget");
+
+  // TODO: expose whether or not to drive with head down in message?
+  const bool driveWithHeadDown = false;
+
+  DriveToPoseAction* action = new DriveToPoseAction(targetPose,
+                                                    driveWithHeadDown);
+
+  PathMotionProfile pathMotionProfile = ConvertProtoPathMotionProfile(msg.motion_prof());
+  if(pathMotionProfile.isCustom)
+  {
+    robot.GetPathComponent().SetCustomMotionProfileForAction(pathMotionProfile, action);
+  }
+
   return action;
 }
 
@@ -326,6 +376,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoObject
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: DockWithCubeRequest
+//  if any changes are made here, they should be reflected in the associated function.
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
 {
@@ -363,6 +415,50 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
   }
 }
 
+// Proto equivalent of the preceeding AlignWithObject clad message handler.
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const external_interface::DockWithCubeRequest& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.object_id() < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.object_id();
+  }
+
+  // offsetting by one because in proto 0 is registered as invalid
+  AlignmentType alignmentType = static_cast<AlignmentType>(msg.alignment_type() - 1);
+
+  PathMotionProfile pathMotionProfile = ConvertProtoPathMotionProfile(msg.motion_prof());
+
+  if(msg.use_pre_dock_pose()) {
+    DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(selectedObjectID,
+                                                                            msg.distance_from_marker_mm(),
+                                                                            msg.use_approach_angle(),
+                                                                            msg.approach_angle_rad(),
+                                                                            alignmentType);
+    if(pathMotionProfile.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(pathMotionProfile, action);
+    }
+
+    return action;
+  } else {
+    AlignWithObjectAction* action = new AlignWithObjectAction(selectedObjectID,
+                                                              msg.distance_from_marker_mm(),
+                                                              alignmentType);
+    if(pathMotionProfile.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(pathMotionProfile, action);
+    }
+    action->SetDoNearPredockPoseCheck(false);
+    // We don't care about aligning with a specific marker just that we are aligning with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
+
+    return action;
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateMotors& msg)
@@ -381,10 +477,24 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CliffAlign
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: DriveStraightRequest
+//  if any changes are made here, they should be reflected in the associated function.
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveStraight& msg)
 {
   return new DriveStraightAction(msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
+}
+
+// Proto equivalent of the preceeding DriveStraight clad message handler.
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const external_interface::DriveStraightRequest& msg)
+{
+  IAction* action = new DriveStraightAction(
+    msg.dist_mm(),
+    msg.speed_mmps(),
+    msg.should_play_animation());
+
+  return action;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -530,6 +640,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RealignWit
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: TurnInPlaceRequest
+//  if any changes are made here, they should be reflected in the associated function.
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnInPlace& msg)
 {
@@ -537,6 +649,24 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnInPlac
   action->SetMaxSpeed(msg.speed_rad_per_sec);
   action->SetAccel(msg.accel_rad_per_sec2);
   action->SetTolerance(msg.tol_rad);
+  return action;
+}
+
+// Proto equivalent of the preceeding TurnInPlace clad message handler.
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const external_interface::TurnInPlaceRequest& msg)
+{
+  auto isAbsolute = msg.is_absolute();
+  if(isAbsolute > std::numeric_limits<uint8_t>::max())
+  {
+    isAbsolute = std::numeric_limits<uint8_t>::max();
+  }
+
+  TurnInPlaceAction* action = new TurnInPlaceAction(msg.angle_rad(), isAbsolute);
+  action->SetMaxSpeed(msg.speed_rad_per_sec());
+  action->SetAccel(msg.accel_rad_per_sec2());
+  action->SetTolerance(msg.tol_rad());
+
   return action;
 }
 
@@ -706,6 +836,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToPet
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: SetHeadAngleRequest
+//  if any changes are made here, they should be reflected in the associated function.
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
 {
@@ -713,6 +845,18 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAng
   action->SetMaxSpeed(setHeadAngle.max_speed_rad_per_sec);
   action->SetAccel(setHeadAngle.accel_rad_per_sec2);
   action->SetDuration(setHeadAngle.duration_sec);
+  return action;
+}
+
+// Proto equivalent of the preceeding SetHeadAngle clad message handler.
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const external_interface::SetHeadAngleRequest& msg)
+{
+  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(msg.angle_rad());
+  action->SetMaxSpeed(msg.max_speed_rad_per_sec());
+  action->SetAccel(msg.accel_rad_per_sec2());
+  action->SetDuration(msg.duration_sec());
+
   return action;
 }
 
@@ -730,6 +874,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: SetLiftHeightRequest
+//  if any changes are made here, they should be reflected in the associated function.
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHeight& msg)
 {
@@ -749,8 +895,31 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHei
     action->SetDuration(msg.duration_sec);
 
     return action;
-    }
   }
+}
+
+// Proto equivalent of the preceeding SetLiftHeight clad message handler.
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const external_interface::SetLiftHeightRequest& msg)
+{
+  // Special case if commanding low dock height while carrying a block...
+  if (msg.height_mm() == LIFT_HEIGHT_LOWDOCK && robot.GetCarryingComponent().IsCarryingObject())
+  {
+    // ...put the block down right here.
+    IActionRunner* action = new PlaceObjectOnGroundAction();
+    return action;
+  }
+  else
+  {
+    // In the normal case directly set the lift height
+    MoveLiftToHeightAction* action = new MoveLiftToHeightAction(msg.height_mm());
+    action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec());
+    action->SetLiftAccel(msg.accel_rad_per_sec2());
+    action->SetDuration(msg.duration_sec());
+
+    return action;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -1013,6 +1182,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Messages from switchboard
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEPin>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SendBLEConnectionStatus>();
 
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1651,6 +1821,127 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetBLEPin& msg
     // Forward to robot
     robot->SendRobotMessage<SwitchboardInterface::SetBLEPin>(msg.pin);
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const SwitchboardInterface::SendBLEConnectionStatus& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetRobot();
+
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSendBLEConnectionStatus.InvalidRobotID",
+                        "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->SendRobotMessage<SwitchboardInterface::SendBLEConnectionStatus>(msg.connected);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class IGatewayActionRunner {
+public:
+  virtual void Invoke(Robot& robot, const AnkiEvent<external_interface::GatewayWrapper>& event) const = 0;
+  virtual ~IGatewayActionRunner() {}
+};
+
+template <typename MessageType>
+class GatewayActionRunner : public IGatewayActionRunner
+{
+public:
+  using GatewayMessageConverterFcn = std::function<const MessageType(const AnkiEvent<external_interface::GatewayWrapper>&)>;
+  const GatewayMessageConverterFcn converter;
+
+  constexpr GatewayActionRunner(const GatewayMessageConverterFcn& converter)
+  : converter(converter)
+  {
+
+  }
+
+  virtual void Invoke(Robot& robot, const AnkiEvent<external_interface::GatewayWrapper>& event) const
+  {
+    const MessageType& convertedMessage = converter(event);
+    IActionRunner* internalAction = GetActionHelper(robot, convertedMessage);
+    PRINT_NAMED_INFO("RobotEventHandler.GatewayActionRunner.Invoke.ParsedMessage", "%s", internalAction->GetName().c_str());
+
+    int numRetries = convertedMessage.num_retries();
+    int idTag = convertedMessage.id_tag();
+
+    IActionRunner* dispatchAction = nullptr;
+
+    if (numRetries > 0) {
+      IAction* actionPtr = dynamic_cast<IAction*>(internalAction);
+      if (actionPtr != nullptr) {
+        dispatchAction = new RetryWrapperAction(actionPtr, AnimationTrigger::Count, numRetries);
+      } else {
+        ICompoundAction* compoundActionPtr = dynamic_cast<ICompoundAction*>(internalAction);
+        if (compoundActionPtr != nullptr) {
+          dispatchAction = new RetryWrapperAction(compoundActionPtr, AnimationTrigger::Count, numRetries);
+        } else {
+          PRINT_NAMED_WARNING("RobotEventHandler.GatewayActionRunner.Invoke.InvalidActionForRetries", "%s", internalAction->GetName().c_str());
+          delete internalAction;
+          return;
+        }
+      }
+    } else {
+      dispatchAction = internalAction;
+    }
+
+    dispatchAction->SetTag(idTag);
+
+    // Put the action in the given position of the specified queue.
+    // The Queue will take responsibility for the memory management of this raw pointer - unless it fails
+    //  in which case we clean up the memory ourselves.
+    if( robot.GetActionList().QueueAction(QueueActionPosition::NOW, dispatchAction, 0) != RESULT_OK )
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.GatewayActionRunner.Invoke.ActionCouldNotQueue", "%s", internalAction->GetName().c_str());
+    }
+  }
+};
+
+static const std::map< external_interface::GatewayWrapperTag, std::unique_ptr<IGatewayActionRunner> >& GetGatewayHandlers()
+{
+  static std::map< external_interface::GatewayWrapperTag, std::unique_ptr<IGatewayActionRunner> > result;
+  if( result.size() == 0 )
+  {
+#   define ADD_GATEWAY_HANDLER(__gatewayTag__, __requestType__, __extractionFunction__) \
+      result[external_interface::GatewayWrapperTag::__gatewayTag__] = \
+        std::make_unique<GatewayActionRunner<external_interface::__requestType__> >( \
+          []( const AnkiEvent<external_interface::GatewayWrapper>& event ) { return event.GetData().__extractionFunction__(); } \
+        )
+
+    ADD_GATEWAY_HANDLER( kGoToPoseRequest,      GoToPoseRequest,      go_to_pose_request );
+    ADD_GATEWAY_HANDLER( kDockWithCubeRequest,  DockWithCubeRequest,  dock_with_cube_request );
+    ADD_GATEWAY_HANDLER( kDriveStraightRequest, DriveStraightRequest, drive_straight_request );
+    ADD_GATEWAY_HANDLER( kTurnInPlaceRequest,   TurnInPlaceRequest,   turn_in_place_request );
+    ADD_GATEWAY_HANDLER( kSetLiftHeightRequest, SetLiftHeightRequest, set_lift_height_request );
+    ADD_GATEWAY_HANDLER( kSetHeadAngleRequest,  SetHeadAngleRequest,  set_head_angle_request );
+  }
+  return result;
+}
+
+template<>
+void RobotEventHandler::HandleMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  Robot* robot = _context->GetRobotManager()->GetRobot();
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleMessage.InvalidRobotID",
+                        "Failed to find robot");
+    return;
+  }
+
+  const auto& handlerMap = GetGatewayHandlers();
+
+  const auto& tag = event.GetData().GetTag();
+  if( handlerMap.count(tag) == 0 )
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleMessage.NoGatewayHandler",
+                        "Gateway message recieved with no handler for tag %i", (int)tag);
+    return;
+  }
+
+  const auto& handler = handlerMap.at(tag);
+  handler->Invoke(*robot, event);
 }
 
 } // namespace Vector

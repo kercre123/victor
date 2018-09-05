@@ -296,6 +296,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
         twDetectedMessage.timestamp = mostRecentTimestamp_ms;
         twDetectedMessage.direction = kFirstIndex;
+        // TODO:(bn) check stream state here? Currently just assuming streaming is on
+        twDetectedMessage.willOpenStream = true;
         auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
         {
           std::lock_guard<std::mutex> lock(_msgsMutex);
@@ -308,6 +310,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       {
         PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
         FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
+
+        // Send the results back to engine
+        ReportCloudConnectivity msgToEngine;
+        msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
+        msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
+        msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
+        RobotInterface::SendAnimToEngine(msgToEngine);
         break;
       }
 

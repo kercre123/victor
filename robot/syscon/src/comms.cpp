@@ -11,7 +11,6 @@
 #include "lights.h"
 #include "mics.h"
 #include "touch.h"
-#include "contacts.h"
 #include "vectors.h"
 #include "flash.h"
 
@@ -268,7 +267,6 @@ static void ProcessMessage(InboundPacket& packet) {
   // Process our packet
   if (foundCRC == footer->checksum) {
     // Emergency eject in case of recovery mode
-    BODY_TX::set();
     BODY_TX::mode(MODE_ALTERNATE);
 
     switch (packet.header.payload_type) {
@@ -296,7 +294,6 @@ static void ProcessMessage(InboundPacket& packet) {
         Analog::receive(&packet.headToBody);
         break ;
       case PAYLOAD_CONT_DATA:
-        Contacts::forward(packet.contactData);
         break ;
       default:
         static const AckMessage ack = { NACK_BAD_COMMAND };

@@ -82,6 +82,7 @@ namespace Anki {
 
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual f32 GetTimeoutInSeconds() const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
@@ -176,6 +177,7 @@ namespace Anki {
       
     protected:
       
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       

@@ -217,6 +217,9 @@ namespace Vector {
     f32 GetMaxCameraGain() const { return MAX_CAMERA_GAIN; }
     
     void ClearImageCache();
+
+    void AddAllowedTrackedFace(const Vision::FaceID_t trackingID);
+    void ClearAllowedTrackedFaces();
     
   protected:
   

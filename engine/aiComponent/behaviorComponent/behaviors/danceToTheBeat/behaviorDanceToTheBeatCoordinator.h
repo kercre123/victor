@@ -79,6 +79,9 @@ private:
   // After driving off the charger, listening to confirm a beat again
   void TransitionToOffChargerListening();
   
+  // Returns true if the backpack has been fiddled with recently enough to adversely affect beat detection
+  bool RecentBackpackActivity() const;
+  
 };
 
 } // namespace Vector

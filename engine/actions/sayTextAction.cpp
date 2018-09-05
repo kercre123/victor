@@ -51,12 +51,10 @@ SayTextAction::~SayTextAction()
 {
   // Cleanup TTS request, if any
   if (_ttsCoordinator != nullptr) {
-    const auto ttsState = _ttsCoordinator->GetUtteranceState( _ttsId );
-    if (ttsState == UtteranceState::Generating ||
-        ttsState == UtteranceState::Ready ||
-        ttsState == UtteranceState::Playing) {
-      LOG_DEBUG("SayTextAction.Destructor", "Cancel ttsID %d", _ttsId);
-      _ttsCoordinator->CancelUtterance( _ttsId );
+    if (_ttsState == UtteranceState::Generating ||
+        _ttsState == UtteranceState::Ready ||
+        _ttsState == UtteranceState::Playing) {
+      _ttsCoordinator->CancelUtterance( _ttsID );
     }
     _ttsCoordinator = nullptr;
   }
@@ -89,8 +87,6 @@ ActionResult SayTextAction::Init()
 {
   //
   // If we have an animation, use keyframe trigger, else use manual trigger.
-  // With a keyframe trigger, TTS data is automatically delivered to the audio engine
-  // so there is no need for an explicit 'play' request.
   //
   const auto triggerType =
     ((_animTrigger == AnimationTrigger::Count) ? UtteranceTriggerType::Manual : UtteranceTriggerType::KeyFrame);
@@ -104,7 +100,7 @@ ActionResult SayTextAction::Init()
       (*callback)(state);
     }
   };
-  _ttsId = _ttsCoordinator->CreateUtterance(_text,
+  _ttsID = _ttsCoordinator->CreateUtterance(_text,
                                             triggerType,
                                             _style,
                                             _durationScalar,
@@ -115,7 +111,7 @@ ActionResult SayTextAction::Init()
   // When does this action expire?
   _expiration_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeout_sec;
 
-  LOG_INFO("SayTextAction.Init", "ttsID %d text %s", _ttsId, Util::HidePersonallyIdentifiableInfo(_text.c_str()));
+  LOG_INFO("SayTextAction.Init", "ttsID %d text %s", _ttsID, Util::HidePersonallyIdentifiableInfo(_text.c_str()));
 
   // Execution continues in CheckIfDone() below.
   // State is advanced in response to events from animation process.
@@ -124,13 +120,36 @@ ActionResult SayTextAction::Init()
 
 } // Init()
 
+ActionResult SayTextAction::TransitionToRunning()
+{
+  DEV_ASSERT(_ttsCoordinator != nullptr, "SayTextAction.TransitionToRunning.InvalidCoordinator");
+
+  const bool ok = _ttsCoordinator->PlayUtterance(_ttsID);
+  if (!ok) {
+    LOG_ERROR("SayTextAction.TransitionToRunning.FailedToPlay", "Unable to play ttsID %d", _ttsID);
+    _actionState = SayTextActionState::Invalid;
+    return ActionResult::ABORT;
+  }
+
+  if (_animTrigger != AnimationTrigger::Count) {
+    LOG_DEBUG("SayTextAction.TransitionToRunning", "ttsID %d now running with animation", _ttsID);
+    _animAction = std::make_unique<TriggerAnimationAction>(_animTrigger, 1, true, _ignoreAnimTracks);
+    _animAction->SetRobot(&GetRobot());
+    _actionState = SayTextActionState::Running_Anim;
+    return ActionResult::RUNNING;
+  }
+
+  LOG_DEBUG("SayTextAction.TransitionToRunning", "ttsID %d now running", _ttsID);
+  _actionState = SayTextActionState::Running_Tts;
+  return ActionResult::RUNNING;
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::CheckIfDone()
 {
   // Has this action expired?
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if (_expiration_sec < now_sec) {
-    LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d has expired", _ttsId);
+    LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d has expired", _ttsID);
     return ActionResult::TIMEOUT;
   }
 
@@ -139,13 +158,17 @@ ActionResult SayTextAction::CheckIfDone()
     case SayTextActionState::Invalid:
     {
       // Something has gone wrong
-      LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d is invalid", _ttsId);
+      LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d is invalid", _ttsID);
       result = ActionResult::CANCELLED_WHILE_RUNNING;
       break;
     }
     case SayTextActionState::Waiting:
     {
       result = ActionResult::RUNNING;
+      if (_ttsState == UtteranceState::Ready) {
+        // Transition to running
+        result = TransitionToRunning();
+      }
       break;
     }
     case SayTextActionState::Running_Tts:
@@ -156,8 +179,12 @@ ActionResult SayTextAction::CheckIfDone()
     }
     case SayTextActionState::Running_Anim:
     {
-      // Tick anim while running, will return success when animation is completed
+      // Tick animation while running, will return success when animation is completed
       result = _animAction->Update();
+      // If animation has completed, defer to TTS Coordinator State
+      if (result == ActionResult::SUCCESS) {
+        result = GetTtsCoordinatorActionState();
+      }
       break;
     }
     case SayTextActionState::Finished:
@@ -173,21 +200,10 @@ ActionResult SayTextAction::CheckIfDone()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::TtsCoordinatorStateCallback(const UtteranceState& state)
 {
+  LOG_DEBUG("SayTextAction.TtsCoordinatorStateCallback",
+            "ttsID %d now state %d (%s)",
+            _ttsID, state, EnumToString(state));
   _ttsState = state;
-  if (UtteranceState::Ready == _ttsState) {
-    // Transition to next state
-    if (_animTrigger == AnimationTrigger::Count) {
-      // Play TtS without animation trigger
-      _ttsCoordinator->PlayUtterance(_ttsId);
-      _actionState = SayTextActionState::Running_Tts;
-    }
-    else {
-      // Play TtS using animation trigger
-      _animAction = std::make_unique<TriggerAnimationAction>(_animTrigger, 1, true, _ignoreAnimTracks);
-      _animAction->SetRobot(&GetRobot());
-      _actionState = SayTextActionState::Running_Anim;
-    }
-  }
 } // TtsCoordinatorStateCallback()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

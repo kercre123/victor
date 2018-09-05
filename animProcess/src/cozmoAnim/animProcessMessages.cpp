@@ -95,10 +95,9 @@ namespace {
   // Whether or not we have already told the boot anim to stop
   bool _bootAnimStopped = false;
 
+#if REMOTE_CONSOLE_ENABLED
   Anki::Util::Dispatch::Queue* _dispatchQueue = nullptr;
 
-
-#if REMOTE_CONSOLE_ENABLED
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
@@ -202,6 +201,14 @@ namespace Vector {
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
+void Process_checkCloudConnectivity(const Anki::Vector::RobotInterface::CheckCloudConnectivity& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->RequestConnectionStatus();
+  }
+}
+
 void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFullAnimTrackLockState& msg)
 {
   //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);
@@ -226,7 +233,9 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
            "Anim: %s, Tag: %d",
            animName.c_str(), msg.tag);
 
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms);
+  const bool interruptRunning = true;
+  const bool overrideEyes = !msg.renderInEyeHue;
+  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
@@ -509,6 +518,11 @@ void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetCo
 void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);
+}
+
+void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)
+{
+  // todo
 }
 
 void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg)

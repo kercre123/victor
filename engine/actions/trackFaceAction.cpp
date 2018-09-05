@@ -49,6 +49,7 @@ void TrackFaceAction::OnRobotSet()
   if( !_faceID.IsValid() ) {
     _faceID = GetRobot().GetFaceWorld().GetSmartFaceID(_tmpFaceID);
   }
+  GetRobot().GetVisionComponent().AddAllowedTrackedFace(_faceID.GetID());
 }
 
 void TrackFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
@@ -65,6 +66,7 @@ ActionResult TrackFaceAction::InitInternal()
 
 void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
 {
+  GetRobot().GetVisionComponent().ClearAllowedTrackedFaces();
   TrackFaceCompleted completion;
   completion.faceID = static_cast<s32>(_faceID.GetID());
   completionUnion.Set_trackFaceCompleted(std::move(completion));

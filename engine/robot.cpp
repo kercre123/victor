@@ -104,6 +104,8 @@
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
+#include "osState/osState.h"
+
 #include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
@@ -305,6 +307,23 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   DEV_ASSERT(_context != nullptr, "Robot.Constructor.ContextIsNull");
 
   LOG_INFO("Robot.Robot", "Created");
+
+  // Check for /run/data_cleared file 
+  // VIC-6069: OS needs to write this file following Clear User Data reboot
+  static const std::string dataClearedFile = "/run/data_cleared";
+  if (Util::FileUtils::FileExists(dataClearedFile)) {
+    DASMSG(robot_cleared_user_data, "robot.cleared_user_data", "User data was cleared");
+    DASMSG_SEND();  
+    Util::FileUtils::DeleteFile(dataClearedFile);
+  }
+  
+
+  // DAS message "power on"
+  float idleTime_sec;
+  auto upTime_sec = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
+  DASMSG(robot_power_on, "robot.power_on", "Robot (engine) object created");
+  DASMSG_SET(i1, upTime_sec, "Uptime (seconds)");
+  DASMSG_SEND();
 
   // create all components
   {
@@ -1284,12 +1303,6 @@ Result Robot::Update()
 
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  // Check for syncRobotAck taking too long to arrive
-  if (_syncRobotSentTime_sec > 0.0f && currentTime > _syncRobotSentTime_sec + kMaxSyncRobotAckDelay_sec) {
-    LOG_WARNING("Robot.Update.SyncRobotAckNotReceived", "");
-    _syncRobotSentTime_sec = 0.0f;
-  }
-
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
@@ -1450,6 +1463,18 @@ Result Robot::Update()
   {
     _sentEngineLoadedMsg = true;
     SendRobotMessage<RobotInterface::EngineFullyLoaded>();
+
+    auto onCharger  = GetBatteryComponent().IsOnChargerContacts() ? 1 : 0;
+    auto battery_mV = static_cast<uint32_t>(GetBatteryComponent().GetBatteryVolts() * 1000);
+
+    LOG_INFO("Robot.Update.EngineFullyLoaded", 
+             "OnCharger: %d, Battery_mV: %d", 
+             onCharger, battery_mV);
+
+    DASMSG(robot_engine_ready, "robot.engine_ready", "All robot processes are ready");
+    DASMSG_SET(i1, onCharger,  "On charger status");
+    DASMSG_SET(i2, battery_mV, "Battery voltage (mV)");
+    DASMSG_SEND();
   }
   
   return RESULT_OK;
@@ -2877,7 +2902,7 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             shouldManage);
 }
 
-Result Robot::UpdateStartupChecks()
+Result Robot::UpdateCameraStartupChecks()
 {
   enum State {
     FAILED = -1,
@@ -2920,29 +2945,66 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
-
-        #if FACTORY_TEST
-        // Manually init AnimationComponent
-        // Normally it would init when we receive syncTime from robot process
-        // but since there might not be a body (robot process won't init)
-        // we need to do it here
-        GetAnimationComponent().Init();
-        
-        // Once we have gotten a frame from the camera play a sound to indicate 
-        // a "successful" boot
-        static bool playedSound = false;
-        if(!playedSound)
-        {
-          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
-          playedSound = true;
-        }
-        #endif
       }
     }
   }
 
   return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
+Result Robot::UpdateGyroCalibChecks()
+{
+  // Wait this much time after sending sync to robot before checking if we
+  // should be displaying the gyro not calibrated image
+  const float kTimeAfterSyncSent_sec = 5.f;
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  static bool displayedImage = false;
+
+  if(!displayedImage &&
+     _syncRobotSentTime_sec > 0 &&
+     currentTime_sec - _syncRobotSentTime_sec > kTimeAfterSyncSent_sec &&
+     !_syncRobotAcked)
+  {
+    // Manually init AnimationComponent
+    // Normally it would init when we receive syncTime from robot process
+    // but we haven't received syncTime yet likely because the gyro hasn't calibrated
+    GetAnimationComponent().Init();
+
+    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
+    const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                         kGyroNotCalibratedImg);
+    Vision::ImageRGB img;
+    img.Load(imgPath);
+    // Display the image indefinitely or atleast until something else is displayed
+    GetAnimationComponent().DisplayFaceImage(img, 0, true);
+    // Move the head to look up to show the image clearly
+    GetMoveComponent().MoveHeadToAngle(MAX_HEAD_ANGLE,
+                                       MAX_HEAD_SPEED_RAD_PER_S,
+                                       MAX_HEAD_ACCEL_RAD_PER_S2,
+                                       1.f);
+    displayedImage = true;
+    
+  }
+
+  return RESULT_OK;
+}
+
+Result Robot::UpdateStartupChecks()
+{
+#define RUN_CHECK(func)  \
+  res = func();          \
+  if(res != RESULT_OK) { \
+    return res;          \
+  }
+  
+  Result res = RESULT_OK;
+  RUN_CHECK(UpdateGyroCalibChecks);
+  RUN_CHECK(UpdateCameraStartupChecks);
+  return res;
+
+#undef RUN_CHECK
 }
 
 bool Robot::SetLocale(const std::string & locale)
@@ -2961,6 +3023,31 @@ bool Robot::SetLocale(const std::string & locale)
 
   return true;
 }
+
+
+void Robot::Shutdown(ShutdownReason reason)
+{
+  if (_toldToShutdown) { 
+    LOG_WARNING("Robot.Shutdown.AlreadyShuttingDown", "Ignoring new reason %s", EnumToString(reason));
+    return;
+  }
+  _toldToShutdown = true;
+
+  float idleTime_sec;
+  auto upTime_sec   = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
+  auto numFreeBytes = Util::FileUtils::GetDirectoryFreeSize("/data");
+
+  LOG_INFO("Robot.Shutdown.ShuttingDown", 
+           "Reason: %s, upTime: %u, numFreeBytes: %llu", 
+           EnumToString(reason), upTime_sec, numFreeBytes);
+
+  DASMSG(robot_power_off, "robot.power_off", "Reason why robot powered off during the previous run");
+  DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
+  DASMSG_SET(i1, upTime_sec,           "Uptime (seconds)");
+  DASMSG_SET(i2, numFreeBytes,         "Free space in /data (bytes)");
+  DASMSG_SEND();
+}
+
 
 } // namespace Vector
 } // namespace Anki

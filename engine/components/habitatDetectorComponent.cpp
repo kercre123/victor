@@ -50,7 +50,7 @@ namespace Vector {
 // when the robot is positioned such that its front two cliff
 // sensors see the white line of the habitat, then this is
 // the max expected of values for the sensor seeing the wall
-const int HabitatDetectorComponent::kConfirmationConfigProxMaxReading = 39;
+const int HabitatDetectorComponent::kConfirmationConfigProxMaxReading = 60;
 
 // "private" constants
 namespace 
@@ -58,7 +58,7 @@ namespace
   
   // highest expected value to come out of any cliff sensor
   // when it is observing the grey-matte surface of a habitat
-  const int kCliffGreyMaxHabitat = 200;
+  const int kCliffGreyMaxHabitat = 300;
   
   // number of consecutive readings while the front two cliff
   // sensors are positioned on the white line to average over

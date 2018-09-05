@@ -1,6 +1,18 @@
 # Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-'''Face recognition and enrollment.
+"""Face recognition and enrollment.
 
 Vector is capable of recognizing human faces, tracking their position and rotation
 ("pose") and assigning names to them via an enrollment process.
@@ -10,7 +22,7 @@ knows about, along with those that are currently visible to the camera.
 
 Each face is assigned a :class:`Face` object, which generates a number of
 observable events whenever the face is observed, has its ID updated.
-'''
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['Face', 'Expression', 'FaceComponent']
@@ -29,11 +41,11 @@ from .messaging import protocol
 
 
 class Expression(Enum):
-    '''Facial expressions that Vector can distinguish
+    """Facial expressions that Vector can distinguish
 
     Facial expression not recognized.
     Call :func:`anki_vector.robot.Robot.enable_vision_mode` to enable recognition.
-    '''
+    """
     UNKNOWN = protocol.FacialExpression.Value("EXPRESSION_UNKNOWN")
     #: Facial expression neutral
     NEUTRAL = protocol.FacialExpression.Value("EXPRESSION_NEUTRAL")
@@ -48,7 +60,7 @@ class Expression(Enum):
 
 
 class Face:
-    '''A single face that Vector has detected.
+    """A single face that Vector has detected.
 
     May represent a face that has previously been enrolled, in which case
     :attr:`name` will hold the name that it was enrolled with.
@@ -56,7 +68,7 @@ class Face:
     Each Face instance has a :attr:`face_id` integer - This may change if
     Vector later gets an improved view and makes a different prediction about
     which face it is looking at.
-    '''
+    """
 
     def __init__(self, face_id=None):
         self._face_id = face_id
@@ -85,7 +97,7 @@ class Face:
 
     @property
     def face_id(self):
-        ''':return: The internal ID assigned to the face.'''
+        """:return: The internal ID assigned to the face."""
         return self._face_id if self._updated_face_id is None else self._updated_face_id
 
     @face_id.setter
@@ -97,17 +109,17 @@ class Face:
 
     @property
     def has_updated_face_id(self):
-        '''bool: True if this face been updated / superseded by a face with a new ID
+        """bool: True if this face been updated / superseded by a face with a new ID
 
         .. code-block:: python
 
             my_was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
-        '''
+        """
         return self._updated_face_id is not None
 
     @property
     def updated_face_id(self):
-        '''int: The ID for the face that superseded this one (if any, otherwise :meth:`face_id`)'''
+        """int: The ID for the face that superseded this one (if any, otherwise :meth:`face_id`)"""
         if self._updated_face_id:
             return self._updated_face_id
         return self._face_id
@@ -118,10 +130,10 @@ class Face:
 
     @property
     def name(self):
-        '''string: The name Vector has associated with the face in his memory.
+        """string: The name Vector has associated with the face in his memory.
 
         This string will be empty if the face is not recognized or enrolled.
-        '''
+        """
         return self._name
 
     @property
@@ -149,22 +161,22 @@ class Face:
 
     @property
     def timestamp(self):
-        '''int: Timestamp of event'''
+        """int: Timestamp of event"""
         return self._last_observed_robot_timestamp
 
     @property
     def pose(self):
-        ''':class:`anki_vector.util.Pose`: Position and rotation of the face observed'''
+        """:class:`anki_vector.util.Pose`: Position and rotation of the face observed"""
         return self._pose
 
     @property
     def img_rect(self):
-        ''':class:`anki_vector.util.ImageRect`: Position in image coords'''
+        """:class:`anki_vector.util.ImageRect`: Position in image coords"""
         return self._img_rect
 
     @property
     def expression(self):
-        '''string: The facial expression Vector has recognized on the face.
+        """string: The facial expression Vector has recognized on the face.
 
         Will be :attr:`Expression.UNKNOWN` by default if you haven't called
         :meth:`anki_vector.robot.Robot.enable_vision_mode` to enable
@@ -172,41 +184,41 @@ class Face:
         :attr:`Expression.NEUTRAL`, :attr:`Expression.HAPPINESS`,
         :attr:`Expression.SURPRISE`, :attr:`Expression.ANGER`,
         or :attr:`Expression.SADNESS`.
-        '''
+        """
         return self._expression
 
     @property
     def expression_score(self):
-        '''int: The score/confidence that :attr:`expression` was correct.
+        """int: The score/confidence that :attr:`expression` was correct.
 
         Will be 0 if expression is :attr:`Expression.UNKNOWN` (e.g. if
         :meth:`anki_vector.robot.Robot.enable_vision_mode` wasn't
         called yet). The maximum possible score is 100.
-        '''
+        """
         return self._expression_score
 
     @property
     def left_eye(self):
-        '''sequence of tuples of float (x,y): points representing the outline of the left eye'''
+        """sequence of tuples of float (x,y): points representing the outline of the left eye"""
         return self._left_eye
 
     @property
     def right_eye(self):
-        '''sequence of tuples of float (x,y): points representing the outline of the right eye'''
+        """sequence of tuples of float (x,y): points representing the outline of the right eye"""
         return self._right_eye
 
     @property
     def nose(self):
-        '''sequence of tuples of float (x,y): points representing the outline of the nose'''
+        """sequence of tuples of float (x,y): points representing the outline of the nose"""
         return self._nose
 
     @property
     def mouth(self):
-        '''sequence of tuples of float (x,y): points representing the outline of the mouth'''
+        """sequence of tuples of float (x,y): points representing the outline of the mouth"""
         return self._mouth
 
     def unpack_face_stream_data(self, msg):
-        '''Unpacks the face observed stream data in to a Face instance'''
+        """Unpacks the face observed stream data in to a Face instance"""
         self._face_id = msg.face_id
         self._name = msg.name
         self._last_observed_time = time.time()
@@ -228,7 +240,7 @@ class Face:
 
 
 class FaceComponent(util.Component):
-    '''Manage the state of all the photos on the robot'''
+    """Manage the state of all the photos on the robot"""
     @sync.Synchronizer.wrap
     async def meet_victor(self, name):
         req = protocol.AppIntentRequest(intent='intent_meet_victor',
@@ -247,30 +259,30 @@ class FaceComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def update_enrolled_face_by_id(self, face_id, old_name, new_name):
-        '''Update the name enrolled for a given face.
+        """Update the name enrolled for a given face.
 
         Args:
             face_id (int): The ID of the face to rename.
             old_name (string): The old name of the face (must be correct, otherwise message is ignored).
             new_name (string): The new name for the face.
-        '''
+        """
         req = protocol.UpdateEnrolledFaceByIDRequest(faceID=face_id,
                                                      oldName=old_name, newName=new_name)
         return await self.interface.UpdateEnrolledFaceByID(req)
 
     @sync.Synchronizer.wrap
     async def erase_enrolled_face_by_id(self, face_id):
-        '''Erase the enrollment (name) record for the face with this ID.
+        """Erase the enrollment (name) record for the face with this ID.
 
         Args:
             face_id (int): The ID of the face to erase.
-        '''
+        """
         req = protocol.EraseEnrolledFaceByIDRequest(faceID=face_id)
         return await self.interface.EraseEnrolledFaceByID(req)
 
     @sync.Synchronizer.wrap
     async def erase_all_enrolled_faces(self):
-        '''Erase the enrollment (name) records for all faces.'''
+        """Erase the enrollment (name) records for all faces."""
         req = protocol.EraseAllEnrolledFacesRequest()
         return await self.interface.EraseAllEnrolledFaces(req)
 
@@ -286,11 +298,11 @@ class FaceComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def enable_vision_mode(self, enable, mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
-        '''Edit the vision mode
+        """Edit the vision mode
 
         Args:
             enable (bool): Enable/Disable the mode specified
             mode (messaging.protocol.VisionMode): Specifies the vision mode to edit
-        '''
+        """
         enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=mode, enable=enable)
         return await self.interface.EnableVisionMode(enable_vision_mode_request)

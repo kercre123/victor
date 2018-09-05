@@ -2792,7 +2792,16 @@ namespace Vision {
     return result;
   } // LoadAlbum()
 
-
+  bool FaceRecognizer::GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID)
+  {
+    auto iter = _trackingToFaceID.find(trackingID);
+    if(iter == _trackingToFaceID.end()) {
+      return false;
+    } else {
+      faceID = iter->second;
+      return true;
+    }
+  }
 
   //
   // This may prove useful later if we ever want to try to do more complicated / smarter

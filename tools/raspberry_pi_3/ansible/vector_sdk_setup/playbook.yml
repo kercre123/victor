@@ -1,0 +1,16 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: berry1
+  gather_facts: yes
+  tasks:
+    - name: Check which python3 version we have 
+      shell: echo "$(python3 --version | cut -d ' ' -f2)"
+      register: python3_version
+    
+    #Note: include_role only works with ansible 2.4+
+    - include_role: 
+        name: python-install
+      when: python3_version is version_compare('3.6.0','<')
+
+    - include_role: 
+        name: setup-sdk

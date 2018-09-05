@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Object and Power Cube recognition.
+"""Object and Power Cube recognition.
 
 Victor can recognize and track a number of different types of objects.
 
@@ -33,7 +33,7 @@ All observable objects have a marker attached to them, which allows Victor
 to recognize the object and it's position and rotation("pose").  You can attach
 markers to your own objects for Victor to recognize by printing them out from the
 online documentation.  They will be detected as :class:`CustomObject` instances.
-'''
+"""
 
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -57,7 +57,7 @@ LightCube1Type = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
 
 
 class LightCube(util.Component):
-    '''The base type for anything Victor can see.'''
+    """The base type for anything Victor can see."""
 
     #: Length of time in seconds to go without receiving an observed event before
     #: assuming that Victor can no longer see an element. Can be overridden in sub
@@ -153,7 +153,7 @@ class LightCube(util.Component):
 
     @sync.Synchronizer.wrap
     async def set_light_corners(self, light1, light2, light3, light4, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
-        '''Set the light for each corner
+        """Set the light for each corner
 
         Args:
             light1 (:class:`anki_vector.lights.Light`): The settings for the first light.
@@ -161,7 +161,7 @@ class LightCube(util.Component):
             light3 (:class:`anki_vector.lights.Light`): The settings for the third light.
             light4 (:class:`anki_vector.lights.Light`): The settings for the fourth light.
             color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights
-        '''
+        """
         params = lights.package_request_params((light1, light2, light3, light4), color_profile)
         print(params)
         req = protocol.SetCubeLightsRequest(
@@ -180,19 +180,19 @@ class LightCube(util.Component):
         return await self.interface.SetCubeLights(req)
 
     def set_lights(self, light, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
-        '''Set all lights on the cube
+        """Set all lights on the cube
 
         Args:
             light (:class:`anki_vector.lights.Light`): The settings for the lights.
             color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights
-        '''
+        """
         return self.set_light_corners(light, light, light, light, color_profile)
 
     def set_lights_off(self, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
-        '''Set all lights off on the cube
+        """Set all lights off on the cube
 
         Args:
-            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights'''
+            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights"""
 
         return self.set_light_corners(lights.off_light, lights.off_light, lights.off_light, lights.off_light, color_profile)
 
@@ -247,7 +247,7 @@ class LightCube(util.Component):
 
     @property
     def factory_id(self):
-        '''str: The unique hardware id of the physical cube.'''
+        """str: The unique hardware id of the physical cube."""
         return self._factory_id
 
     @factory_id.setter
@@ -256,40 +256,40 @@ class LightCube(util.Component):
 
     @property
     def descriptive_name(self):
-        '''str: A descriptive name for this ObservableObject instance.'''
+        """str: A descriptive name for this ObservableObject instance."""
         # Note: Sub-classes should override this to add any other relevant info
         # for that object type.
         return "{0} id={1} factory_id={2} is_connected={3}".format(self.__class__.__name__, self.object_id, self._factory_id, self.is_connected)
 
     @property
     def pose(self):
-        ''':class:`anki_vector.util.Pose`: The pose of the element in the world.
+        """:class:`anki_vector.util.Pose`: The pose of the element in the world.
 
         Is ``None`` for elements that don't have pose information.
-        '''
+        """
         return self._pose
 
     @property
     def time_since_last_seen(self):
-        '''float: time since this element was last seen (math.inf if never)'''
+        """float: time since this element was last seen (math.inf if never)"""
         if self.last_observed_time is None:
             return math.inf
         return time.time() - self.last_observed_time
 
     @property
     def is_visible(self):
-        '''bool: True if the element has been observed recently.
+        """bool: True if the element has been observed recently.
 
         "recently" is defined as :attr:`visibility_timeout` seconds.
-        '''
+        """
         return self._is_visible
 
     @property
     def object_id(self):
-        '''int: The internal ID assigned to the object.
+        """int: The internal ID assigned to the object.
 
         This value can only be assigned once as it is static in the engine.
-        '''
+        """
         return self._object_id
 
     @object_id.setter

@@ -1,12 +1,24 @@
 # Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-'''
+"""
 A synchronizer is used to make functions waitable outside
 of the scope of the event loop. This allows for more
 advanced use cases where multiple commands may be sent in
 parallel (see :class:`AsyncRobot` in robot.py), but also
 simpler use cases where everything executes synchronously.
-'''
+"""
 
 __all__ = ['Synchronizer']
 
@@ -21,22 +33,22 @@ MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class Synchronizer:
-    '''
+    """
     Class for managing asynchronous functions in a synchronous world
-    '''
+    """
 
     def __init__(self, loop, remove_pending, func, *args, **kwargs):
-        '''
+        """
         Create an Synchronizer
-        '''
+        """
         self.remove_pending = remove_pending
         self.loop = loop
         self.task = self.loop.create_task(func(*args, **kwargs))
 
     def wait_for_completed(self):
-        '''
+        """
         Wait until the task completes before continuing
-        '''
+        """
         try:
             return self.loop.run_until_complete(self.task)
         finally:
@@ -45,19 +57,19 @@ class Synchronizer:
 
     @staticmethod
     def disable_log(func):
-        '''
+        """
         Use this decorator to disable the automatic debug logging of wrap
 
         TODO: Might be better to instead have this as a parameter you can pass to wrap
-        '''
+        """
         func.disable_log = True
         return func
 
     @classmethod
     def wrap(cls, func):
-        '''
+        """
         Decorator to wrap a function for synchronous usage
-        '''
+        """
 
         @functools.wraps(func)
         def log_result(func, logger):
@@ -75,10 +87,10 @@ class Synchronizer:
 
         @functools.wraps(func)
         def waitable(*args, **kwargs):
-            '''
+            """
             Either returns an Synchronizer or finishes processing the function depending on if the
             object "is_async"
-            '''
+            """
             that = args[0]
             log_wrapped_func = log_result(func, that.logger)
 

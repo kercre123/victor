@@ -67,8 +67,6 @@ void Flash::eraseApplication(void) {
 }
 
 void Flash::writeFaultReason(FaultType reason) {
-  unlockFlash();
-
   // Write to first available fault slot
   for (int i = 0; i < MAX_FAULT_COUNT; i++) {
     if (APP->faultCounter[i] != FAULT_NONE) continue ;

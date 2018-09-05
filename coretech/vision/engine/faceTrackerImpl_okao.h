@@ -58,7 +58,16 @@ namespace Vision {
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
-    void Reset();
+    // These methods allow to add or clear the contents of the set that
+    // contains the face id's we're allowed to track. All other
+    // face id's we should drop on the floor. We should also not perform
+    // any face recognition when this set is populated. If this set is
+    // empty we should proceed to track and recognize faces as usual.
+    void AddAllowedTrackedFace(const FaceID_t faceID);
+    bool HaveAllowedTrackedFaces() const { return !_allowedTrackedFaceID.empty(); }
+    // This method calls Reset which clears all the allowed tracked
+    // faces and also resets the face tracker as well
+    void ClearAllowedTrackedFaces();
     
     void EnableDisplay(bool enabled) { }
     
@@ -122,6 +131,8 @@ namespace Vision {
                           const TimeStamp_t& frameOrig);
   
     bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face, const f32 intraEyeDist);
+
+    void Reset();
     
     // Setting the pose of the face uses the camera's pose as its parent
     Result SetFacePoseFromParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist);
@@ -167,6 +178,8 @@ namespace Vision {
     std::unique_ptr<Util::RandomGenerator> _rng;
     
     std::map<FaceID_t, EyeContact> _facesEyeContact;
+
+    std::set<FaceID_t> _allowedTrackedFaceID;
   }; // class FaceTracker::Impl
   
 } // namespace Vision

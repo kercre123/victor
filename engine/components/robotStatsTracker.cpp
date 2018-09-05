@@ -16,6 +16,7 @@
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/components/jdocsManager.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
@@ -122,13 +123,26 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
     static const bool kSaveToDiskImmediately = true;
     UpdateStatsJdoc(kSaveToDiskImmediately);
   }
+  else
+  {
+    if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ROBOT_LIFETIME_STATS))
+    {
+      DoJdocFormatMigration();
+      static const bool kSaveToDiskImmediately = true;
+      static const bool kSaveToCloudImmediately = false;
+      UpdateStatsJdoc(kSaveToDiskImmediately, kSaveToCloudImmediately);
+    }
+  }
+
+  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::ROBOT_LIFETIME_STATS, [this]() {
+    DoJdocFormatMigration();
+  });
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  auto currWallTime = WallTime::getInstance()->GetApproximateTime();
+  const auto currWallTime = WallTime::getInstance()->GetApproximateTime();
   // start alive tracking counter now
   _lastTimeAliveUpdated_s = currTime_s;
   _lastAliveWallTime = currWallTime;
-
 }
 
 void RobotStatsTracker::IncreaseStimulationSeconds(float delta)
@@ -150,9 +164,10 @@ void RobotStatsTracker::IncrementActiveFeature(const ActiveFeature& feature, con
   IncreaseHelper(kActiveFeatureCategory + std::string(kRobotStatsSeparator) + intentSource,
                  ActiveFeatureToString(feature), 1);
 
-  // also log usage by type, to serve as a "summary"
+  // also log usage by type, to serve as a "summary" of voice commands
   ActiveFeatureType featureType = GetActiveFeatureType(feature, ActiveFeatureType::Invalid);
-  if( featureType != ActiveFeatureType::Invalid ) {
+  if( featureType != ActiveFeatureType::Invalid &&
+      intentSource!= ActiveFeatureComponent::kIntentSourceAI) {
     IncreaseHelper( kActiveFeatureTypeCategory, ActiveFeatureTypeToString(featureType), 1);
   }
 }
@@ -206,8 +221,6 @@ void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::str
 
 void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  // VIC-5804  TODO:(bn) need to get a hook for cleanup so I can dump the file before shutdown / reboot
-
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   if( _lastTimeAliveUpdated_s + kRobotStats_AliveUpdatePeriod_s <= currTime_s ) {
@@ -250,6 +263,35 @@ void RobotStatsTracker::ResetAllStats()
   static const bool kSaveToCloudImmediately = true;
   UpdateStatsJdoc(kSaveToDiskImmediately, kSaveToCloudImmediately);
 }
+
+
+void RobotStatsTracker::DoJdocFormatMigration()
+{
+  const auto jdocType = external_interface::JdocType::ROBOT_LIFETIME_STATS;
+  const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
+  const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
+  LOG_INFO("RobotStatsTracker.DoJdocFormatMigration",
+           "Migrating user entitlements jdoc from format version %llu to %llu",
+           docFormatVersion, curFormatVersion);
+  if (docFormatVersion > curFormatVersion)
+  {
+    LOG_ERROR("RobotStatsTracker.DoJdocFormatMigration.Error",
+              "Jdoc format version is newer than what victor code can handle; no migration possible");
+    return;
+  }
+
+  // When we change 'format version' on this jdoc, migration
+  // to a newer format version is performed here
+  
+  // Note that with the RobotStatsTracker, the JdocsManager owns the body of the jdoc,
+  // so any changes to the jdoc body should be done by first getting a pointer to the
+  // body with _jdocsManager->GetJdocBodyPointer, and then manipulating the body json
+  // directly
+
+  // Now update the format version of this jdoc to the current format version
+  _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
+}
+
 
 }
 }

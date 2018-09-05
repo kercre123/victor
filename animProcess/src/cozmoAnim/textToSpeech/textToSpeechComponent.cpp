@@ -267,6 +267,8 @@ bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
 
   SetAudioProcessingStyle(ttsBundle->style);
 
+  _activeTTSID = ttsID;
+
   return true;
 } // PrepareAudioEngine()
 
@@ -463,8 +465,6 @@ bool TextToSpeechComponent::PostAudioEvent(uint8_t ttsID)
 
   LOG_DEBUG("TextToSpeechComponent.PostAudioEvent", "eventID %u ttsID %d playingID %d", eventID, ttsID, playingID);
 
-  _activeTTSID = ttsID;
-
   return true;
 }
 
@@ -485,6 +485,7 @@ void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 
   LOG_DEBUG("TextToSpeechComponent.UtteranceCompleted", "Completion callback received for ttsID %hhu", ttsID);
   SendAnimToEngine(ttsID, TextToSpeechState::Finished);
+  ClearOperationData(ttsID); // Cleanup operation's memory
 }
 
 //
@@ -527,21 +528,25 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
 
   LOG_DEBUG("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d", ttsID);
 
+  // Validate bundle
   const auto bundle = GetBundle(ttsID);
   if (!bundle) {
-    LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d has been cancelled", ttsID);
+    LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d not found", ttsID);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
     return;
   }
 
-  if (bundle->triggerMode != TextToSpeechTriggerMode::Manual) {
-    LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d has trigger mode %s not %s",
-      ttsID, EnumToString(bundle->triggerMode), EnumToString(TextToSpeechTriggerMode::Manual));
+  // Validate trigger mode
+  const auto triggerMode = bundle->triggerMode;
+  if (triggerMode != TextToSpeechTriggerMode::Manual && triggerMode != TextToSpeechTriggerMode::Keyframe) {
+    LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d has unplayable trigger mode %s",
+      ttsID, EnumToString(bundle->triggerMode));
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
     ClearOperationData(ttsID);
     return;
   }
 
+  // Enqueue audio
   float duration_ms = 0.f;
   if (!PrepareAudioEngine(ttsID, duration_ms)) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechDeliver", "Unable to prepare audio engine for ttsID %d", ttsID);
@@ -552,11 +557,14 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
 
   LOG_INFO("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d will play for %.2f ms", ttsID, duration_ms);
 
-  if (!PostAudioEvent(ttsID)) {
-    LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "Unable to post audio event for ttsID %d", ttsID);
-    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
-    CleanupAudioEngine(ttsID);
-    return;
+  // Post audio event?
+  if (triggerMode == TextToSpeechTriggerMode::Manual) {
+    if (!PostAudioEvent(ttsID)) {
+      LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "Unable to post audio event for ttsID %d", ttsID);
+      SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+      CleanupAudioEngine(ttsID);
+      return;
+    }
   }
 
   // Notify engine
@@ -670,23 +678,6 @@ void TextToSpeechComponent::OnStatePrepared(const TTSID_t ttsID, f32 duration_ms
   // Notify engine that tts request has been prepared
   SendAnimToEngine(ttsID, TextToSpeechState::Prepared, duration_ms);
 
-  //
-  // For keyframe triggers, prep the audio engine but do not send trigger event.
-  // Engine is responsible for managing an animation that contains the trigger event.
-  // Once audio has been queued, we're done with the bundle.
-  // We don't track playback state for this trigger mode.
-  //
-  if (bundle->triggerMode == TextToSpeechTriggerMode::Keyframe) {
-    if (!PrepareAudioEngine(ttsID, duration_ms)) {
-      LOG_ERROR("TextToSpeechComponent.OnStatePrepared", "Unable to prepare audio engine for ttsID %d", ttsID);
-      SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
-      ClearOperationData(ttsID);
-      return;
-    }
-    LOG_DEBUG("TextToSpeechComponent.OnStatePrepared", "ttsID %d queued for keyframe playback", ttsID);
-    ClearOperationData(ttsID);
-  }
-
 }
 
 //
@@ -750,5 +741,34 @@ void TextToSpeechComponent::SetLocale(const std::string & locale)
   Util::Dispatch::Async(_dispatchQueue, task);
 
 }
+
+void TextToSpeechComponent::OnAudioComplete(const TTSID_t ttsID)
+{
+  LOG_DEBUG("TextToSpeechComponent.OnAudioComplete", "Finished playing ttsID %d", ttsID);
+  auto bundle = GetBundle(ttsID);
+  if (!bundle) {
+    LOG_ERROR("TextToSpeechComponent.OnAudioComplete", "ttsID %d not found", ttsID);
+    return;
+  }
+
+  SendAnimToEngine(ttsID, TextToSpeechState::Finished);
+  ClearOperationData(ttsID);
+
+}
+
+void TextToSpeechComponent::OnAudioError(const TTSID_t ttsID)
+{
+  LOG_DEBUG("TextToSpeechComponent.OnAudioError", "Error playing ttsID %d ", ttsID);
+  auto bundle = GetBundle(ttsID);
+  if (!bundle) {
+    LOG_ERROR("TextToSpeechComponent.OnAudioError", "ttsID %d not found", ttsID);
+    return;
+  }
+
+  SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+  ClearOperationData(ttsID);
+
+}
+
 } // end namespace Vector
 } // end namespace Anki
