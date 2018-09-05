@@ -126,7 +126,7 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
 template<>
 void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
 {
-  if(msg.treadsState==OffTreadsState::OnTreads) {
+  if(msg.treadsState==OffTreadsState::OnTreads || msg.treadsState==OffTreadsState::InAir) {
     const auto* featureGate = _robot->GetContext()->GetFeatureGate();
     const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo);
     if(!inPRDemo) {
