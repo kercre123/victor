@@ -20,7 +20,8 @@
   "eyeContactWithinLast_ms": 100,
   "trackingTimeout_s": 2.5,
 
-  "clampSmallAngles": false
+  "clampSmallAngles": false,
+  "chanceSayName": 0.1
   // ,
   // "minClampPeriod_s": 0.2,
   // "maxClampPeriod_s": 0.7

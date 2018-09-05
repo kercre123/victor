@@ -89,6 +89,8 @@ private:
     float trackingTimeout_s;
     TimeStamp_t eyeContactWithinLast_ms;
 
+    float chanceSayName;
+
     float minClampPeriod_s;
     float maxClampPeriod_s;
     bool clampSmallAngles;

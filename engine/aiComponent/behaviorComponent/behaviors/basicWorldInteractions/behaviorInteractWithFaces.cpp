@@ -98,6 +98,7 @@ const char* const kTrackingTimeoutKey = "trackingTimeout_s";
 const char* const kClampSmallAnglesKey = "clampSmallAngles";
 const char* const kMinClampPeriodKey = "minClampPeriod_s";
 const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
+const char* const kChanceSayName = "chanceSayName";
 
 }
 
@@ -115,6 +116,7 @@ BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
   eyeContactWithinLast_ms        = 0;
   trackingTimeout_s              = 0.0f;
   clampSmallAngles               = false;
+  chanceSayName                  = 0.1;
 }
 
 
@@ -148,6 +150,7 @@ void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expec
    kClampSmallAnglesKey,
    kMinClampPeriodKey,
    kMaxClampPeriodKey,
+   kChanceSayName,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -165,6 +168,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   _iConfig.noEyeContactTimeout_s          = ParseFloat(config, kNoEyeContactTimeoutKey, debugName);
   _iConfig.eyeContactWithinLast_ms        = ParseInt32(config, kEyeContactWithinLastKey, debugName);
   _iConfig.trackingTimeout_s              = ParseFloat(config, kTrackingTimeoutKey, debugName);
+  _iConfig.chanceSayName                  = ParseFloat(config, kChanceSayName, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFaceLowerBound_s >= _iConfig.minTimeToTrackFaceUpperBound_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
@@ -307,10 +311,12 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction()
   CompoundActionSequential* action = new CompoundActionSequential();
 
   {
-    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, true);
-    turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
+
+    const bool sayName = GetRNG().RandDbl() < _iConfig.chanceSayName;
+    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, sayName);
     // TODO VIC-6435 uncomment this once we've removed turn from animation
-    //turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
+    //turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
+    turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
     turnAndAnimateAction->SetRequireFaceConfirmation(true);
     action->AddAction(turnAndAnimateAction);
   }
