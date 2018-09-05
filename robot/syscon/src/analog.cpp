@@ -37,7 +37,7 @@ static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mo
 static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
 static const int START_DISCHARGE = 200 * 60 * 60 * 24 * 3;  // 3 Days
 static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
-static const int MINIMUM_WD_TIME = 5;
+static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
@@ -199,18 +199,12 @@ static void handleButton() {
 
   // Button is held, handle appropriate cases
   if (++hold_count >= POWER_WIPE_TIME) {
-    // We will be signaling a recovery
-    BODY_TX::reset();
-
+    // Restart head in recovery mode
     if (Analog::on_charger) {
-      // Re-enable power to the head
+      Power::signalRecovery();
       Power::setMode(POWER_ACTIVE);
     }
   } else if (hold_count >= POWER_DOWN_TIME) {
-    // Do not signal recovery
-    BODY_TX::set();
-    BODY_TX::mode(MODE_INPUT);
-
     Power::setMode(POWER_STOP);
   } else {
     Power::setMode(POWER_ACTIVE);
@@ -286,7 +280,7 @@ static bool handleTemperature() {
 
 static void handleLowBattery() {
   if (Analog::on_charger) return ;
-  
+
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
   if (adc_values[ADC_VMAIN] < LOW_VOLTAGE_POWER_DOWN_POINT) {
@@ -312,8 +306,8 @@ static bool shouldPowerRobot() {
 
 static void debounceVEXT() {
   static bool last_vext = true;
-  static bool vext_now = adc_values[ADC_VEXT] >= TRANSITION_POINT;
   static int vext_debounce = MINIMUM_ON_CHARGER;
+  bool vext_now = adc_values[ADC_VEXT] >= TRANSITION_POINT;
 
   if (vext_now == last_vext) {
     if (vext_debounce < MINIMUM_ON_CHARGER) {
@@ -324,11 +318,12 @@ static void debounceVEXT() {
   } else {
     vext_debounce = 0;
   }
+
   last_vext = vext_now;
 }
 
 void Analog::tick(void) {
-  static int watchdog_counter = 0;
+  static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
   static bool discharge_battery = false;
@@ -345,13 +340,12 @@ void Analog::tick(void) {
     if (!prevent_charge) {
       if (++on_charger_time == START_DISCHARGE) {
         discharge_battery = true;
+      } else if (on_charger_time >= TOP_OFF_TIME) {
+        on_charger_time = 0;
       }
     }
-
-    off_charger_time = 0;
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
     on_charger_time = 0;
-    off_charger_time = 0; // Overflow protection
   }
 
   // 30 minute charge cut-off
@@ -363,59 +357,68 @@ void Analog::tick(void) {
 
     // Powered off, on charger (let charger power body)
     nCHG_PWR::reset();
-    POWER_EN::pull(PULL_NONE);
-    POWER_EN::mode(MODE_INPUT);
 
+    if (!delay_disable) {
+      POWER_EN::pull(PULL_NONE);
+      POWER_EN::mode(MODE_INPUT);
+    } else {
+      delay_disable = false;
+    }
+
+    overheated = 0;
+    heat_counter = 0;
     is_charging = false;
-    watchdog_counter = MINIMUM_WD_TIME;
   } else if (!on_charger || discharge_battery) {
-    NVIC_DisableIRQ(ADC1_IRQn);
     // Powered on, off charger
-    nCHG_PWR::set();
-
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
+
+    nCHG_PWR::set();
+
+    NVIC_DisableIRQ(ADC1_IRQn);
 
     if (adc_values[ADC_VMAIN] <= DISCHARGED_BATTERY) {
       discharge_battery = false;
     }
 
+    delay_disable = true;
     is_charging = false;
-    watchdog_counter = MINIMUM_WD_TIME;
   } else if (charge_cutoff) {
-    if (watchdog_counter >= MINIMUM_WD_TIME) {
-      ADC1->ISR = ADC_ISR_AWD;
-      NVIC_EnableIRQ(ADC1_IRQn);
-    } else {
-      watchdog_counter++;
-    }
-
     // Battery disconnected, on charger (timeout)
     nCHG_PWR::reset();
-    POWER_EN::pull(PULL_NONE);
-    POWER_EN::mode(MODE_INPUT);
+
+    if (!delay_disable) {
+      ADC1->ISR = ADC_ISR_AWD;
+      NVIC_EnableIRQ(ADC1_IRQn);
+      
+      POWER_EN::pull(PULL_NONE);
+      POWER_EN::mode(MODE_INPUT);
+    } else {
+      delay_disable = false;
+    }
 
     // Don't report that we are not charging if the charger is overheating
     is_charging = too_hot;
   } else {
-    // Battery connected, on charger (charging)
-    NVIC_DisableIRQ(ADC1_IRQn);
-   
+    // Battery connected, on charger (charging)  
     nCHG_PWR::reset();
+
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
 
+    NVIC_DisableIRQ(ADC1_IRQn);
+
+    delay_disable = true;
     is_charging = true;
-    watchdog_counter = 0;
+    off_charger_time = 0;
   }
 }
 
 extern "C" void ADC1_IRQHandler(void) {
-  ADC1->ISR = ADC_ISR_AWD;
-  NVIC_DisableIRQ(ADC1_IRQn);
-
   POWER_EN::set();
   POWER_EN::mode(MODE_OUTPUT);
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
+
+  ADC1->ISR = ADC_ISR_AWD;
 }

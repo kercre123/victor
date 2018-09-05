@@ -36,21 +36,30 @@ static const uint32_t APB2_CLOCKS = 0
 
 static PowerMode currentState = POWER_UNINIT;
 static PowerMode desiredState = POWER_CALM;
+static bool enter_recovery = false;
 
 static void enterBootloader(void);
+
+static inline void setupPerfs(void) {
+  Mics::start();
+  Lights::enable();
+}
 
 void Power::init(void) {
   DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
   
-  Power::adjustHead(true);
+  setupPerfs();
+}
+
+void Power::signalRecovery() {
+  enter_recovery = true;
 }
 
 static inline void enableHead(void) {
   MAIN_EN::set();
-  Mics::start();
-  Lights::enable();
+  setupPerfs();
 }
 
 static inline void disableHead(void) {
@@ -154,16 +163,30 @@ void Power::setMode(PowerMode set) {
   desiredState = set;
 }
 
-void Power::adjustHead(bool appStart) {
-  static bool headPowered = false;  // head has power, but devices are not setup
+void Power::adjustHead() {
+  static bool headPowered = true;
   bool wantPower = desiredState != POWER_STOP;
 
   if (headPowered == wantPower) {
     return ;
   }
 
+  // If the head is transitioning between power / not-powered
+  // We need to disable the TX pin, or set it to signal wether
+  // or not we are signalling recovery
   if (wantPower) {
-    if (!appStart) BODY_TX::mode(MODE_OUTPUT);
+    if (enter_recovery) {
+      BODY_TX::reset();
+      enter_recovery = false;
+    } else {
+      BODY_TX::set();
+    }
+    BODY_TX::mode(MODE_OUTPUT);
+  } else {
+    BODY_TX::mode(MODE_INPUT);
+  }
+
+  if (wantPower) {
     enableHead();
   } else {
     disableHead();

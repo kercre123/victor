@@ -267,7 +267,6 @@ static void ProcessMessage(InboundPacket& packet) {
   // Process our packet
   if (foundCRC == footer->checksum) {
     // Emergency eject in case of recovery mode
-    BODY_TX::set();
     BODY_TX::mode(MODE_ALTERNATE);
 
     switch (packet.header.payload_type) {
