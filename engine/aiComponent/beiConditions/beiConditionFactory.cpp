@@ -32,8 +32,9 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionHighTemperatureCPU.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionIsMaintenanceReboot.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionIsNightTime.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -49,19 +50,20 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPoked.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouched.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSettingsUpdatePending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionSimpleMood.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionStuckOnEdge.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimePowerButtonPressed.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserHoldingCube.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentActive.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionUserHoldingCube.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 
@@ -451,6 +453,16 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::UnitTestCondition:
     {
       condition = std::make_shared<ConditionUnitTest>(config);
+      break;
+    }
+    case BEIConditionType::IsMaintenanceReboot:
+    {
+      condition = std::make_shared<ConditionIsMaintenanceReboot>(config);
+      break;
+    }
+    case BEIConditionType::IsNightTime:
+    {
+      condition = std::make_shared<ConditionIsNightTime>(config);
       break;
     }
 

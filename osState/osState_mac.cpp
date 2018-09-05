@@ -46,6 +46,7 @@ namespace Vector {
 CONSOLE_VAR_ENUM(int, kWebvizUpdatePeriod, "OSState.Webviz", 0, "Off,10ms,100ms,1000ms,10000ms");
 CONSOLE_VAR(bool, kSendFakeCpuTemperature,  "OSState.Temperature", false);
 CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
+CONSOLE_VAR(bool, kFakeIsReboot,  "OSState.Boot", false);
 
 namespace {
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
@@ -407,6 +408,11 @@ const std::string& OSState::GetRobotName() const
 bool OSState::IsInRecoveryMode()
 {
   return false;
+}
+
+bool OSState::RebootedForMaintenance() const
+{
+  return kFakeIsReboot;
 }
 
 bool OSState::HasValidEMR() const

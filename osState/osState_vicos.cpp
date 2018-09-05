@@ -93,6 +93,7 @@ namespace {
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
   constexpr const char* kRobotVersionFile = "/anki/etc/version";
   constexpr const char* kOnChargeContactsPath = "/run/on-charge-contacts";
+  constexpr const char* kMaintenanceRebootFile = "/run/after_maintenance_reboot";
 
   const char* kAutomaticGovernor = "interactive";
   const char* kManualGovernor = "userspace";
@@ -619,6 +620,11 @@ uint64_t OSState::GetWifiRxBytes() const
 bool OSState::IsInRecoveryMode()
 {
   return Util::FileUtils::FileExists(kRecoveryModeFile);
+}
+
+bool OSState::RebootedForMaintenance() const
+{
+  return Util::FileUtils::FileExists(kMaintenanceRebootFile);
 }
 
 bool OSState::HasValidEMR() const

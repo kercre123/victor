@@ -30,6 +30,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
+#include "osState/osState.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
@@ -50,6 +51,7 @@ namespace {
   const char* kEmergencyConditionKey = "emergencyCondition";
 
   const int kMaxTicksForPostBehaviorSuggestions = 5;
+  const int kSecondsThatMeanRecentBoot = 20.0f;
 
 #if REMOTE_CONSOLE_ENABLED
   static bool sForcePersonCheck = false;
@@ -320,16 +322,28 @@ void BehaviorSleepCycle::OnBehaviorActivated()
     _iConfig.wakeConditions[reason]->SetActive( GetBEI(), true );
   }
 
-  SetState( SleepStateID::Awake );
-
-  // starts in "awake", so delegate right away to awake behavior
-  if( _iConfig.awakeDelegate->WantsToBeActivated() ) {
-    DelegateIfInControl(_iConfig.awakeDelegate.get());
-  }
-
   _iConfig.emergencyCondition->SetActive( GetBEI(), true );
-}
 
+  // if we just rebooted, and it's night time, then start out asleep
+  const bool shouldStartAsleep = WasNighlyReboot();
+
+  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.Activated",
+                "Starting out %s",
+                shouldStartAsleep ? "asleep" : "awake");
+
+  if( shouldStartAsleep ) {
+    TransitionToLightOrDeepSleep();
+    SendGoToSleepDasEvent(SleepReason::NightTimeReboot);
+  }
+  else {
+    SetState( SleepStateID::Awake );
+
+    // starts in "awake", so delegate right away to awake behavior
+    if( _iConfig.awakeDelegate->WantsToBeActivated() ) {
+      DelegateIfInControl(_iConfig.awakeDelegate.get());
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::OnBehaviorDeactivated()
@@ -582,6 +596,19 @@ bool BehaviorSleepCycle::ShouldWiggleOntoChargerFromSleep()
     _iConfig.wiggleBackOntoChargerBehavior->WantsToBeActivated();
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorSleepCycle::WasNighlyReboot() const
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool engineStartedRecently = currTime_s < kSecondsThatMeanRecentBoot;
+  const bool wasReboot = OSState::getInstance()->RebootedForMaintenance();
+  const bool isNight = GetBEI().GetSleepTracker().IsNightTime();
+  const bool wasNightlyReboot = engineStartedRecently && wasReboot && isNight;
+
+  return wasNightlyReboot;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSleepCycle::GoToSleepIfNeeded()
 {
@@ -642,7 +669,7 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
   }
 
   const bool alreadyAsleep = false;
-  const bool isSleepy = GetBehaviorComp<SleepTracker>().IsSleepy( alreadyAsleep );
+  const bool isSleepy = GetBEI().GetSleepTracker().IsSleepy( alreadyAsleep );
   const bool lowStim = GetBEI().GetMoodManager().GetSimpleMood() == SimpleMoodType::LowStim;
   const ActiveFeature currActiveFeature = GetBehaviorComp<ActiveFeatureComponent>().GetActiveFeature();
   const bool isObserving = ( currActiveFeature == ActiveFeature::Observing) ||
@@ -819,7 +846,7 @@ void BehaviorSleepCycle::RespondToPersonCheck()
     return;
   }
 
-  auto& sleepTracker = GetBehaviorComp< SleepTracker >();
+  auto& sleepTracker = GetBEI().GetSleepTracker();
 
   // no face, is it time to wake up?
   const bool fromSleep = true;
@@ -896,7 +923,10 @@ void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
       }
     };
 
-    if( playGetIn ) {
+    // even if requested, skip the get-in if this is a recent reboot (go straight to sleep in this case)
+    const bool skipGetIn = WasNighlyReboot();
+
+    if( playGetIn && !skipGetIn ) {
       if( _iConfig.goToSleepBehavior->WantsToBeActivated() ) {
         DelegateIfInControl( _iConfig.goToSleepBehavior.get(), playAsleepBehavior );
       }
@@ -954,7 +984,7 @@ void BehaviorSleepCycle::TransitionToCharger()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::TransitionToLightOrDeepSleep()
 {
-  auto& sleepTracker = GetBehaviorComp< SleepTracker >();
+  auto& sleepTracker = GetBEI().GetSleepTracker();
   sleepTracker.EnsureSleepDebtAtLeast( kSleepCycle_MinSleepDebt_s );
 
   // decide if we should go to light or deep sleep

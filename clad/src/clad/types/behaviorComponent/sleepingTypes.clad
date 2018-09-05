@@ -82,6 +82,8 @@ enum uint_8 SleepReason {
 
   // e.g. low battery or high temp
   Emergency,
+
+  NightTimeReboot,
 }
 
 enum uint_8 SleepReactionType {

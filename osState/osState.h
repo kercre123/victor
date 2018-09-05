@@ -145,6 +145,10 @@ public:
   // while robot is on charger
   bool IsInRecoveryMode();
 
+  // True if this current boot of the robot was the result of an automatic reboot, as opposed to the user
+  // turning off the robot or it powering off for some other reason, like a dead battery
+  bool RebootedForMaintenance() const;
+
   // True if we've synced time with a time server
   bool IsWallTimeSynced() const;
 

@@ -58,6 +58,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
   auto* delegationComponent    = dependentComps.GetComponentPtr<DelegationComponent>();
   auto* faceWorld              = dependentComps.GetComponentPtr<FaceWorld>();
   auto* robotInfo              = dependentComps.GetComponentPtr<BEIRobotInfo>();
+  auto* sleepTracker           = dependentComps.GetComponentPtr<SleepTracker>();
 
   Init(aiComponent,
        robot->GetComponentPtr<AnimationComponent>(),
@@ -95,7 +96,8 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        robot->GetComponentPtr<VariableSnapshotComponent>(),
        robot->GetComponentPtr<VisionComponent>(),
        robot->GetComponentPtr<VisionScheduleMediator>(),
-       robot->GetComponentPtr<SettingsManager>());
+       robot->GetComponentPtr<SettingsManager>(),
+       sleepTracker);
 }
 
 
@@ -136,7 +138,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      VariableSnapshotComponent*     variableSnapshotComponent,
                                      VisionComponent*               visionComponent,
                                      VisionScheduleMediator*        visionScheduleMediator,
-                                     SettingsManager*               settingsManager)
+                                     SettingsManager*               settingsManager,
+                                     SleepTracker*                  sleepTracker)
 {
   _arrayWrapper = std::make_unique<CompArrayWrapper>(aiComponent,
                                                      animationComponent,
@@ -174,7 +177,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      variableSnapshotComponent,
                                                      visionComponent,
                                                      visionScheduleMediator,
-                                                     settingsManager);
+                                                     settingsManager,
+                                                     sleepTracker);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,22 +230,23 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               VariableSnapshotComponent*     variableSnapshotComponent,
                                                               VisionComponent*               visionComponent,
                                                               VisionScheduleMediator*        visionScheduleMediator,
-                                                              SettingsManager*               settingsManager)
+                                                              SettingsManager*               settingsManager,
+                                                              SleepTracker*                  sleepTracker)
 : _array({
     {BEIComponentID::AIComponent,               BEIComponentWrapper(aiComponent)},
     {BEIComponentID::Animation,                 BEIComponentWrapper(animationComponent)},
+    {BEIComponentID::BackpackLightComponent,    BEIComponentWrapper(backpackLightComponent)},
     {BEIComponentID::BeatDetector,              BEIComponentWrapper(beatDetectorComponent)},
     {BEIComponentID::BehaviorContainer,         BEIComponentWrapper(behaviorContainer)},
     {BEIComponentID::BehaviorEvent,             BEIComponentWrapper(behaviorEventComponent)},
     {BEIComponentID::BehaviorTimerManager,      BEIComponentWrapper(behaviorTimers)},
     {BEIComponentID::BlockWorld,                BEIComponentWrapper(blockWorld)},
-    {BEIComponentID::BackpackLightComponent,    BEIComponentWrapper(backpackLightComponent)},
+    {BEIComponentID::CliffSensor,               BEIComponentWrapper(cliffSensorComponent)},
     {BEIComponentID::CubeAccel,                 BEIComponentWrapper(cubeAccelComponent)},
     {BEIComponentID::CubeComms,                 BEIComponentWrapper(cubeCommsComponent)},
     {BEIComponentID::CubeConnectionCoordinator, BEIComponentWrapper(cubeConnectionCoordinator)},
     {BEIComponentID::CubeInteractionTracker,    BEIComponentWrapper(cubeInteractionTracker)},
     {BEIComponentID::CubeLight,                 BEIComponentWrapper(cubeLightComponent)},
-    {BEIComponentID::CliffSensor,               BEIComponentWrapper(cliffSensorComponent)},
     {BEIComponentID::DataAccessor,              BEIComponentWrapper(dataAccessor)},
     {BEIComponentID::Delegation,                BEIComponentWrapper(delegationComponent)},
     {BEIComponentID::FaceWorld,                 BEIComponentWrapper(faceWorld)},
@@ -256,10 +261,11 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::PowerStateManager,         BEIComponentWrapper(powerStateManager)},
     {BEIComponentID::ProxSensor,                BEIComponentWrapper(proxSensor)},
     {BEIComponentID::PublicStateBroadcaster,    BEIComponentWrapper(publicStateBroadcaster)},
-    {BEIComponentID::SDK,                       BEIComponentWrapper(sdkComponent)},
-    {BEIComponentID::SettingsManager,           BEIComponentWrapper(settingsManager)},
     {BEIComponentID::RobotAudioClient,          BEIComponentWrapper(robotAudioClient)},
     {BEIComponentID::RobotInfo,                 BEIComponentWrapper(robotInfo)},
+    {BEIComponentID::SDK,                       BEIComponentWrapper(sdkComponent)},
+    {BEIComponentID::SettingsManager,           BEIComponentWrapper(settingsManager)},
+    {BEIComponentID::SleepTracker,              BEIComponentWrapper(sleepTracker)},
     {BEIComponentID::TextToSpeechCoordinator,   BEIComponentWrapper(textToSpeechCoordinator)},
     {BEIComponentID::TouchSensor,               BEIComponentWrapper(touchSensorComponent)},
     {BEIComponentID::VariableSnapshotComponent, BEIComponentWrapper(variableSnapshotComponent)},

@@ -81,7 +81,7 @@ void BehaviorSleeping::OnBehaviorActivated()
   GetBEI().GetFaceWorldMutable().ClearAllFaces();
   GetBEI().GetVisionComponent().LoadFaceAlbum();
   
-  GetBehaviorComp<SleepTracker>().SetIsSleeping(true);
+  GetBEI().GetSleepTracker().SetIsSleeping(true);
   
   if( _iConfig.shouldEnterPowerSave ) {
     SmartRequestPowerSaveMode();
@@ -100,7 +100,7 @@ void BehaviorSleeping::OnBehaviorDeactivated()
     PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
   }
   
-  GetBehaviorComp<SleepTracker>().SetIsSleeping(false);
+  GetBEI().GetSleepTracker().SetIsSleeping(false);
 }
 
 void BehaviorSleeping::TransitionToSleeping()
