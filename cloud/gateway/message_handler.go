@@ -717,12 +717,27 @@ func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) 
 	return false
 }
 
+// Should be called on WiFi connect.
+func (service *rpcService) onConnect(id string) {
+	// Call DAS WiFi connection event to indicate start of a WiFi connection.
+	// Log the connection id for the primary connection, which is the first person to connect.
+	log.Das("wifi_conn_id.start", (&log.DasFields{}).SetStrings(id))			
+}
+
+// Should be called on WiFi disconnect.
+func (service *rpcService) onDisconnect() {
+	// Call DAS WiFi connection event to indicate stop of a WiFi connection
+	log.Das("wifi_conn_id.stop", (&log.DasFields{}).SetStrings(""))
+	connectionId = ""
+}
+
 func (service *rpcService) checkConnectionID(id string) bool {
 	connectionIdLock.Lock()
 	defer connectionIdLock.Unlock()
 	if len(connectionId) != 0 {
 		return false
 	}
+	// Check whether we are in Webots.
 	if IsOnRobot {
 		f, responseChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_ExternalConnectionResponse, 1)
 		defer f()
@@ -734,7 +749,12 @@ func (service *rpcService) checkConnectionID(id string) bool {
 			return false
 		}
 		connectionResponse := response.GetExternalConnectionResponse()
+
+		// IsConnected shows whether switchboard is connected over ble.
+		// Detect if someone else is connected.
 		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
+			// Someone is connected over BLE and they are not the primary connection.
+			// We return false so the app can tell you not to connect.
 			return false
 		}
 	}
@@ -746,7 +766,8 @@ func (service *rpcService) checkConnectionID(id string) bool {
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	isPrimary := service.checkConnectionID(in.ConnectionId)
 	if isPrimary {
-		defer func() { connectionId = "" }()
+		service.onConnect(connectionId)
+		defer service.onDisconnect()
 	}
 	err := stream.Send(&extint.EventResponse{
 		Status: &extint.ResponseStatus{
