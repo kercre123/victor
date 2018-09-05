@@ -308,20 +308,13 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction()
 {
   DEBUG_SET_STATE(VerifyFace);
 
-  CompoundActionSequential* action = new CompoundActionSequential();
-
-  {
-
-    const bool sayName = GetRNG().RandDbl() < _iConfig.chanceSayName;
-    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, sayName);
-    // TODO VIC-6435 uncomment this once we've removed turn from animation
-    //turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
-    turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
-    turnAndAnimateAction->SetRequireFaceConfirmation(true);
-    action->AddAction(turnAndAnimateAction);
-  }
+  const bool sayName = ( GetRNG().RandDbl() < _iConfig.chanceSayName );
+  TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, sayName);
+  turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
+  turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
+  turnAndAnimateAction->SetRequireFaceConfirmation(true);
   
-  DelegateIfInControl(action, [this](ActionResult ret ) {
+  DelegateIfInControl(turnAndAnimateAction, [this](ActionResult ret ) {
       if( ret == ActionResult::SUCCESS ) {
         TransitionToGlancingDown();
       }

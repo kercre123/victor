@@ -21,6 +21,8 @@
   "trackingTimeout_s": 2.5,
 
   "clampSmallAngles": false,
+  // This is the probability that we'll say a
+  // name if we know before we start tracking
   "chanceSayName": 0.1
   // ,
   // "minClampPeriod_s": 0.2,
