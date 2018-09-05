@@ -89,6 +89,7 @@ private:
     float trackingTimeout_s;
     TimeStamp_t eyeContactWithinLast_ms;
 
+    float chanceSayName;
     float minTrackingTiltAngle_deg;
     float minTrackingPanAngle_deg;
 
