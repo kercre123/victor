@@ -86,7 +86,10 @@ public:
   
   // If the robot has been on the charger for more than 30 min, the battery
   // is disconnected from the charging circuit to prevent repeated trickle
-  // discharge/charge cycles that reduce battery expectancy.
+  // discharge/charge cycles that reduce battery expectancy. 
+  // It may also be disconnected if the battery overheats to 45C until it cools
+  // down to 42C at which point it will be reconnected. The cumulative total
+  // time that the battery is connected while on the charger should still be 30 min.
   // (Currently, when disconnected, GetBatteryVoltsRaw() returns a very low (~0.1V)
   // reading while GetBatteryVolts() holds the last valid filtered voltage reading, 
   // but this can be changed as needed.)
@@ -119,6 +122,8 @@ public:
 
   external_interface::GatewayWrapper GetBatteryState(const external_interface::BatteryStateRequest& request);
   
+  uint8_t GetBatteryTemperature_C() const { return _battTemperature_C; }
+
 private:
   
   void Init(Robot* _robot);
@@ -142,6 +147,8 @@ private:
   float _batteryVoltsFilt = 0.f;
   float _chargerVoltsRaw = 0.f;
 
+  uint8_t _battTemperature_C = 0;
+
   BatteryLevel _batteryLevel = BatteryLevel::Unknown;
   
   bool _battOverheated = false;
@@ -149,6 +156,7 @@ private:
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
+  bool _hasStoppedChargingSinceLastSaturationCharge = false;
   
   float _lastBatteryLevelChange_sec = 0;
   float _lastOnChargerContactsChange_sec = 0;

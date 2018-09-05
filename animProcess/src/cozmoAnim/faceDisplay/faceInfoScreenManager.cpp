@@ -1267,9 +1267,11 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
+  const bool batteryDisconnected = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
   sprintf(temp,
-          "BATT:  %0.2fV",
-          state.batteryVoltage);
+          "BATT:  %0.2fV   %s",
+          state.batteryVoltage,
+          batteryDisconnected ? "D" : "");
   const std::string batt = temp;
 
   sprintf(temp,

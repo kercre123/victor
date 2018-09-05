@@ -122,6 +122,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   }
   wasFakeLowBattery = kFakeLowBattery;
 
+  // Get battery temperature
+  _battTemperature_C = msg.battTemp_C;
+
   // Check if battery is overheating
   _battOverheated = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED;
 
@@ -142,8 +145,20 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
   UpdateOnChargerPlatform();
   
+
+  // DAS message for when battery is disconnected for cooldown
+  if ((_battDisconnected != wasDisconnected) && IsCharging()) {
+    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    DASMSG(battery_cooldown, "battery.cooldown", "Indicates that the battery was disconnected/reconnected in order to cool down the battery");
+    DASMSG_SET(i1, _battDisconnected, "Whether we have started or stopped cooldown (1 if we have started, 0 if we have stopped)");
+    DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since placed on charger (sec)");
+    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SET(i4, GetBatteryTemperature_C(), "Current temperature (C)");
+    DASMSG_SEND();
+  }
+
   // Check if saturation charging
-  bool isSaturationCharging = _isCharging && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
+  bool isSaturationCharging = _isCharging && !_battDisconnected && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
   bool isFullyCharged = false;
   bool saturationChargingStateChanged = false;
   if (isSaturationCharging) {
@@ -170,9 +185,14 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       const float kSaturationTimeReplenishmentSpeed = 0.6f;  //  1: Replenish at real-time rate
                                                              // >1: Replenish faster (i.e. Takes longer to reach full)
                                                              // <1: Replenish slower (i.e. Faster to reach full)
-      const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec +
-                                                                 (kSaturationTimeReplenishmentSpeed *
-                                                                  (now_sec - _lastSaturationChargingEndTime_sec));
+      float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec;
+
+      // Add extra time if charging had actually stopped since the last time we were saturation charging
+      if (_hasStoppedChargingSinceLastSaturationCharge) {
+        newPossibleSaturationChargeTimeRemaining_sec += (kSaturationTimeReplenishmentSpeed *
+                                                        (now_sec - _lastSaturationChargingEndTime_sec));
+      }
+                                                                 
       _saturationChargeTimeRemaining_sec = std::min(kMaxSaturationTime_sec, newPossibleSaturationChargeTimeRemaining_sec);
 
       Util::sInfoF("BatteryComponent.NotifyOfRobotState.SaturationChargeStartVoltage",
@@ -197,6 +217,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _saturationChargeTimeRemaining_sec = std::max(0.f, newPossibleSaturationChargeTimeRemaining_sec);
     _saturationChargingStartTime_sec = 0.f;
     saturationChargingStateChanged = true;
+
+    // If saturation charging stopped because the robot moved off the contacts
+    // We add more saturation time when we next saturation charge again.
+    // If saturation charging stopped because the battery was disconnected due
+    // to overheating, don't add any extra charging time.
+    _hasStoppedChargingSinceLastSaturationCharge = !IsCharging();
   }
   
   // Send a DAS message if the state of saturation charging has changed
@@ -209,13 +235,17 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG_SEND();
   }
 
-  // Battery should always be full when battery disconnects.
+  // Battery may sometimes disconnect to cool down an overheating
+  // battery while on charger. In this situation, the IS_CHARGING bit
+  // is still set. Otherwise, after 30 min of cumulative connected
+  // charging time, the battery will disconnect and IS_CHARGING will
+  // go low. By this time, the battery should always be full.
   // If it isn't, we may need to adjust kSaturationChargingThresholdVolts
   // or possibly the syscon cutoff time.
   // Current battery voltage should also be non-zero, otherwise it means
   // the engine started while the battery was already disconnected which
   // does not warrant a warning.
-  if (_battDisconnected) {
+  if (_battDisconnected && !IsCharging()) {
     if (!wasDisconnected && !IsBatteryFull() && !NEAR_ZERO(_batteryVoltsFilt) ) {
       PRINT_NAMED_WARNING("BatteryComponent.NotifyOfRobotState.FullBatteryExpected", "%f", _batteryVoltsFilt);
     }
@@ -243,6 +273,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
                      BatteryLevelToString(level),
                      BatteryLevelToString(_batteryLevel),
                      now_sec - _lastBatteryLevelChange_sec);
+
     DASMSG(battery_level_changed, "battery.battery_level_changed", "The battery level has changed");
     DASMSG_SET(s1, BatteryLevelToString(level), "New battery level");
     DASMSG_SET(s2, BatteryLevelToString(_batteryLevel), "Previous battery level");
@@ -250,6 +281,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG_SET(i2, now_sec - _lastBatteryLevelChange_sec, "Time spent at previous battery level (sec)");
     DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
     DASMSG_SEND();
+
     _lastBatteryLevelChange_sec = now_sec;
     _batteryLevel = level;
   }
