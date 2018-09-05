@@ -50,23 +50,23 @@ namespace
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ROBOT SETTINGS console vars and functions:
 
-  // NOTE: Need to keep kMasterVolumeLevels in sync with MasterVolume in robotSettings.clad
-  constexpr const char* kMasterVolumeLevels = "Mute,Low,MediumLow,Medium,MediumHigh,High";
+  // NOTE: Need to keep kMasterVolumeLevels in sync with enum Volume in settings.proto
+  constexpr const char* kMasterVolumeLevels = "MUTE,LOW,MEDIUM_LOW,MEDIUM,MEDIUM_HIGH,HIGH";
   CONSOLE_VAR_ENUM(u8, kMasterVolumeLevel, kConsoleGroup, 0, kMasterVolumeLevels);
   void DebugSetMasterVolume(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::master_volume,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::master_volume,
                                                            Json::Value(kMasterVolumeLevel),
                                                            kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetMasterVolume, kConsoleGroup);
 
-  // NOTE: Need to keep kEyeColors in sync with EyeColor in robotSettings.clad
-  constexpr const char* kEyeColors = "TipOverTeal,OverfitOrange,UncannyYellow,NonLinearLime,SingularitySapphire,FalsePositivePurple,ConfusionMatrixGreen";
+  // NOTE: Need to keep kEyeColors in sync with enum EyeColor in settings.proto
+  constexpr const char* kEyeColors = "TIP_OVER_TEAL,OVERFIT_ORANGE,UNCANNY_YELLOW,NON_LINEAR_LIME,SINGULARITY_SAPPHIRE,FALSE_POSITIVE_PURPLE,CONFUSION_MATRIX_GREEN";
   CONSOLE_VAR_ENUM(u8, kEyeColor, kConsoleGroup, 0, kEyeColors);
   void DebugSetEyeColor(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::eye_color,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::eye_color,
                                                            Json::Value(kEyeColor),
                                                            kUpdateSettingsJdoc);
   }
@@ -75,7 +75,7 @@ namespace
   void DebugSetLocale(ConsoleFunctionContextRef context)
   {
     const std::string& localeValue = ConsoleArg_Get_String(context, "localeValue");
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::locale,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::locale,
                                                            Json::Value(localeValue),
                                                            kUpdateSettingsJdoc);
   }
@@ -84,7 +84,7 @@ namespace
   void DebugSetTimeZone(ConsoleFunctionContextRef context)
   {
     const std::string& timeZoneValue = ConsoleArg_Get_String(context, "timeZoneValue");
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::time_zone,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::time_zone,
                                                            Json::Value(timeZoneValue),
                                                            kUpdateSettingsJdoc);
   }
@@ -93,7 +93,7 @@ namespace
   void DebugSetDefaultLocation(ConsoleFunctionContextRef context)
   {
     const std::string& defaultLocationValue = ConsoleArg_Get_String(context, "defaultLocationValue");
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::default_location,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::default_location,
                                                            Json::Value(defaultLocationValue),
                                                            kUpdateSettingsJdoc);
   }
@@ -101,19 +101,19 @@ namespace
 
   void DebugToggle24HourClock(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->ToggleRobotSettingHelper(RobotSetting::clock_24_hour);
+    s_SettingsCommManager->ToggleRobotSettingHelper(external_interface::RobotSetting::clock_24_hour);
   }
   CONSOLE_FUNC(DebugToggle24HourClock, kConsoleGroup);
 
   void DebugToggleTempIsFahrenheit(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->ToggleRobotSettingHelper(RobotSetting::temp_is_fahrenheit);
+    s_SettingsCommManager->ToggleRobotSettingHelper(external_interface::RobotSetting::temp_is_fahrenheit);
   }
   CONSOLE_FUNC(DebugToggleTempIsFahrenheit, kConsoleGroup);
 
   void DebugToggleDistIsMetric(ConsoleFunctionContextRef context)
   {
-    s_SettingsCommManager->ToggleRobotSettingHelper(RobotSetting::dist_is_metric);
+    s_SettingsCommManager->ToggleRobotSettingHelper(external_interface::RobotSetting::dist_is_metric);
   }
   CONSOLE_FUNC(DebugToggleDistIsMetric, kConsoleGroup);
 
@@ -133,12 +133,12 @@ namespace
     static const std::string locales[kNumLocales] = {"en-US", "en-GB", "en-AU", "en-US"};
     const std::string localeValue = locales[localeIndex];
     LOG_INFO("SettingsCommManager.DebugDemoSetLocaleIndex", "Demo Locale set to %s", localeValue.c_str());
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::locale,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::locale,
                                                            Json::Value(localeValue));
 
     static const bool isFahrenheitFlags[kNumLocales] = {true, false, false, false};
     const bool isFahrenheit = isFahrenheitFlags[localeIndex];
-    s_SettingsCommManager->HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::temp_is_fahrenheit,
                                                            Json::Value(isFahrenheit),
                                                            kUpdateSettingsJdoc);
     kDebugDemoLocaleIndex = localeIndex;
@@ -215,8 +215,8 @@ void SettingsCommManager::InitDependent(Robot* robot, const RobotCompMap& depend
 
 #if REMOTE_CONSOLE_ENABLED
   // HACK:  Fill in a special debug console var used in the PR demo (related to locale and temperature units)
-  const auto& localeSetting = _settingsManager->GetRobotSettingAsString(RobotSetting::locale);
-  const auto& isFahrenheitSetting = _settingsManager->GetRobotSettingAsBool(RobotSetting::temp_is_fahrenheit);
+  const auto& localeSetting = _settingsManager->GetRobotSettingAsString(external_interface::RobotSetting::locale);
+  const auto& isFahrenheitSetting = _settingsManager->GetRobotSettingAsBool(external_interface::RobotSetting::temp_is_fahrenheit);
   if (localeSetting == "en-US")
   {
     // Set US or Canada based on fahrenheit setting
@@ -247,7 +247,7 @@ void SettingsCommManager::UpdateDependent(const RobotCompMap& dependentComps)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting robotSetting,
+bool SettingsCommManager::HandleRobotSettingChangeRequest(const external_interface::RobotSetting robotSetting,
                                                           const Json::Value& settingJson,
                                                           const bool updateSettingsJdoc)
 {
@@ -260,7 +260,8 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting rob
     if (!ignoredDueToNoChange)
     {
       LOG_ERROR("SettingsCommManager.HandleRobotSettingChangeRequest",
-                "Error setting key %s to value %s", EnumToString(robotSetting), settingJson.asString().c_str());
+                "Error setting key %s to value %s",
+                RobotSetting_Name(robotSetting).c_str(), settingJson.asString().c_str());
     }
   }
 
@@ -269,7 +270,7 @@ bool SettingsCommManager::HandleRobotSettingChangeRequest(const RobotSetting rob
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsCommManager::ToggleRobotSettingHelper(const RobotSetting robotSetting)
+bool SettingsCommManager::ToggleRobotSettingHelper(const external_interface::RobotSetting robotSetting)
 {
   const bool curSetting = _settingsManager->GetRobotSettingAsBool(robotSetting);
   return HandleRobotSettingChangeRequest(robotSetting, Json::Value(!curSetting), kUpdateSettingsJdoc);
@@ -332,10 +333,10 @@ bool SettingsCommManager::ToggleUserEntitlementHelper(const external_interface::
 void SettingsCommManager::RefreshConsoleVars()
 {
 #if REMOTE_CONSOLE_ENABLED
-  const auto& masterVolumeValue = _settingsManager->GetRobotSettingAsUInt(RobotSetting::master_volume);
+  const auto& masterVolumeValue = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
   kMasterVolumeLevel = static_cast<u8>(masterVolumeValue);
 
-  const auto& eyeColorValue = _settingsManager->GetRobotSettingAsUInt(RobotSetting::eye_color);
+  const auto& eyeColorValue = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::eye_color);
   kEyeColor = static_cast<u8>(eyeColorValue);
 #endif
 }
@@ -395,83 +396,83 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 
   if (settings.oneof_clock_24_hour_case() == external_interface::RobotSettingsConfig::OneofClock24HourCase::kClock24Hour)
   {
-    if (HandleRobotSettingChangeRequest(RobotSetting::clock_24_hour,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::clock_24_hour,
                                         Json::Value(settings.clock_24_hour())))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::clock_24_hour);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::clock_24_hour);
     }
   }
 
   if (settings.oneof_eye_color_case() == external_interface::RobotSettingsConfig::OneofEyeColorCase::kEyeColor)
   {
     const auto eyeColor = static_cast<uint32_t>(settings.eye_color());
-    if (HandleRobotSettingChangeRequest(RobotSetting::eye_color,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::eye_color,
                                         Json::Value(eyeColor)))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::eye_color);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::eye_color);
     }
   }
 
   if (settings.oneof_default_location_case() == external_interface::RobotSettingsConfig::OneofDefaultLocationCase::kDefaultLocation)
   {
-    if (HandleRobotSettingChangeRequest(RobotSetting::default_location,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::default_location,
                                         Json::Value(settings.default_location())))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::default_location);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::default_location);
     }
   }
 
   if (settings.oneof_dist_is_metric_case() == external_interface::RobotSettingsConfig::OneofDistIsMetricCase::kDistIsMetric)
   {
-    if (HandleRobotSettingChangeRequest(RobotSetting::dist_is_metric,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::dist_is_metric,
                                         Json::Value(settings.dist_is_metric())))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::dist_is_metric);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::dist_is_metric);
     }
   }
 
   if (settings.oneof_locale_case() ==  external_interface::RobotSettingsConfig::OneofLocaleCase::kLocale)
   {
-    if (HandleRobotSettingChangeRequest(RobotSetting::locale,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::locale,
                                         Json::Value(settings.locale())))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::locale);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::locale);
     }
   }
 
   if (settings.oneof_master_volume_case() == external_interface::RobotSettingsConfig::OneofMasterVolumeCase::kMasterVolume)
   {
     const auto masterVolume = static_cast<uint32_t>(settings.master_volume());
-    if (HandleRobotSettingChangeRequest(RobotSetting::master_volume,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::master_volume,
                                         Json::Value(masterVolume)))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::master_volume);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::master_volume);
     }
   }
 
   if (settings.oneof_temp_is_fahrenheit_case() == external_interface::RobotSettingsConfig::OneofTempIsFahrenheitCase::kTempIsFahrenheit)
   {
-    if (HandleRobotSettingChangeRequest(RobotSetting::temp_is_fahrenheit,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::temp_is_fahrenheit,
                                         Json::Value(settings.temp_is_fahrenheit())))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::temp_is_fahrenheit);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::temp_is_fahrenheit);
     }
   }
 
   if (settings.oneof_time_zone_case() == external_interface::RobotSettingsConfig::OneofTimeZoneCase::kTimeZone)
   {
-    if (HandleRobotSettingChangeRequest(RobotSetting::time_zone,
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::time_zone,
                                         Json::Value(settings.time_zone())))
     {
       updateSettingsJdoc = true;
-      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(RobotSetting::time_zone);
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::time_zone);
     }
   }
 

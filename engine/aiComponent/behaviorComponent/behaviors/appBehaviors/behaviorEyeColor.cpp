@@ -74,7 +74,7 @@ void BehaviorEyeColor::GetBehaviorOperationModifiers( BehaviorOperationModifiers
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEyeColor::WantsToBeActivatedBehavior() const
 {
-  return GetBEI().GetSettingsManager().IsSettingsUpdateRequestPending( RobotSetting::eye_color );
+  return GetBEI().GetSettingsManager().IsSettingsUpdateRequestPending( external_interface::RobotSetting::eye_color );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,7 +82,7 @@ void BehaviorEyeColor::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
-  GetBEI().GetSettingsManager().ClaimPendingSettingsUpdate( RobotSetting::eye_color );
+  GetBEI().GetSettingsManager().ClaimPendingSettingsUpdate( external_interface::RobotSetting::eye_color );
 
   CompoundActionSequential* animationSequence = new CompoundActionSequential();
   animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorGetIn ), true );
@@ -97,9 +97,9 @@ void BehaviorEyeColor::OnBehaviorDeactivated()
 {
   // if we still have the pending request, let's force apply the setting
   SettingsManager& settings = GetBEI().GetSettingsManager();
-  if ( settings.IsSettingsUpdateRequestPending( RobotSetting::eye_color ))
+  if ( settings.IsSettingsUpdateRequestPending( external_interface::RobotSetting::eye_color ))
   {
-    settings.ApplyPendingSettingsUpdate( RobotSetting::eye_color, true );
+    settings.ApplyPendingSettingsUpdate( external_interface::RobotSetting::eye_color, true );
   }
 }
 

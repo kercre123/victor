@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "json/json-forwards.h"
-#include "clad/types/robotSettingsTypes.h"
+#include "proto/external_interface/settings.pb.h"
 
 
 namespace Anki {
@@ -36,7 +36,7 @@ protected:
 private:
 
   bool          _isSettingSpecified;
-  RobotSetting  _setting;
+  external_interface::RobotSetting _setting;
 
 };
 

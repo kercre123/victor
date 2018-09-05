@@ -32,7 +32,7 @@ ConditionSettingsUpdatePending::ConditionSettingsUpdatePending( const Json::Valu
   std::string settingString;
   if ( JsonTools::GetValueOptional( config, kKeyRobotSetting, settingString ) )
   {
-    _isSettingSpecified = EnumFromString( settingString, _setting );
+    _isSettingSpecified = external_interface::RobotSetting_Parse( settingString, &_setting );
     ANKI_VERIFY( _isSettingSpecified, "ConditionSettingsUpdatePending.BadConfig",
                 "Invalid setting specified '%s'",
                 settingString.c_str() );

@@ -68,9 +68,9 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
       const AnimationEvent& animEvent = event.GetData().Get_animEvent();
       if (animEvent.event_id == AnimEvent::CHANGE_EYE_COLOR)
       {
-        if (IsSettingsUpdateRequestPending(RobotSetting::eye_color))
+        if (IsSettingsUpdateRequestPending(external_interface::RobotSetting::eye_color))
         {
-          ApplyPendingSettingsUpdate(RobotSetting::eye_color, false);
+          ApplyPendingSettingsUpdate(external_interface::RobotSetting::eye_color, false);
         }
       }
     }));
@@ -88,20 +88,6 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   else
   {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
-
-    // Temporary migration code:  Since we're now saving proto enums as numbers, not strings
-    // If the enum setting is a string, reset its value to [the default] number (below)
-    std::string key = RobotSettingToString(RobotSetting::eye_color);
-    if (_currentSettings.isMember(key) && (_currentSettings[key].isString()))
-    {
-      _currentSettings.removeMember(key);
-    }
-    key = RobotSettingToString(RobotSetting::master_volume);
-    if (_currentSettings.isMember(key) && (_currentSettings[key].isString()))
-    {
-      _currentSettings.removeMember(key);
-    }
-    // End temporary migration code
 
     if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ROBOT_SETTINGS))
     {
@@ -150,10 +136,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
-  _settingSetters[RobotSetting::master_volume] = { false, &SettingsManager::ValidateSettingMasterVolume, &SettingsManager::ApplySettingMasterVolume };
-  _settingSetters[RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
-  _settingSetters[RobotSetting::locale]        = { false, nullptr,                                       &SettingsManager::ApplySettingLocale       };
-  _settingSetters[RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
+  _settingSetters[external_interface::RobotSetting::master_volume] = { false, &SettingsManager::ValidateSettingMasterVolume, &SettingsManager::ApplySettingMasterVolume };
+  _settingSetters[external_interface::RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
+  _settingSetters[external_interface::RobotSetting::locale]        = { false, nullptr,                                       &SettingsManager::ApplySettingLocale       };
+  _settingSetters[external_interface::RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
 
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
@@ -190,7 +176,7 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
     {
       LOG_INFO("SettingsManager.UpdateDependent",
                "Setting update request '%s' has been pending for %zu ticks, forcing a clear",
-               RobotSettingToString(_settingsUpdateRequest.setting),
+               RobotSetting_Name(_settingsUpdateRequest.setting).c_str(),
                dt);
 
       OnSettingsUpdateNotClaimed(_settingsUpdateRequest.setting);
@@ -200,14 +186,14 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
+bool SettingsManager::SetRobotSetting(const external_interface::RobotSetting robotSetting,
                                       const Json::Value& valueJson,
                                       const bool updateSettingsJdoc,
                                       bool& ignoredDueToNoChange)
 {
   ignoredDueToNoChange = false;
 
-  const std::string key = RobotSettingToString(robotSetting);
+  const std::string key = RobotSetting_Name(robotSetting);
   if (!_currentSettings.isMember(key))
   {
     LOG_ERROR("SettingsManager.SetRobotSetting.InvalidKey", "Invalid key %s; ignoring", key.c_str());
@@ -249,9 +235,9 @@ bool SettingsManager::SetRobotSetting(const RobotSetting robotSetting,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string SettingsManager::GetRobotSettingAsString(const RobotSetting key) const
+std::string SettingsManager::GetRobotSettingAsString(const external_interface::RobotSetting key) const
 {
-  const std::string& keyString = EnumToString(key);
+  const std::string& keyString = RobotSetting_Name(key);
   if (!_currentSettings.isMember(keyString))
   {
     LOG_ERROR("SettingsManager.GetRobotSettingAsString.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -263,9 +249,9 @@ std::string SettingsManager::GetRobotSettingAsString(const RobotSetting key) con
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::GetRobotSettingAsBool(const RobotSetting key) const
+bool SettingsManager::GetRobotSettingAsBool(const external_interface::RobotSetting key) const
 {
-  const std::string& keyString = EnumToString(key);
+  const std::string& keyString = RobotSetting_Name(key);
   if (!_currentSettings.isMember(keyString))
   {
     LOG_ERROR("SettingsManager.GetRobotSettingAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -277,9 +263,9 @@ bool SettingsManager::GetRobotSettingAsBool(const RobotSetting key) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t SettingsManager::GetRobotSettingAsUInt(const RobotSetting key) const
+uint32_t SettingsManager::GetRobotSettingAsUInt(const external_interface::RobotSetting key) const
 {
-  const std::string& keyString = EnumToString(key);
+  const std::string& keyString = RobotSetting_Name(key);
   if (!_currentSettings.isMember(keyString))
   {
     LOG_ERROR("SettingsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -291,9 +277,9 @@ uint32_t SettingsManager::GetRobotSettingAsUInt(const RobotSetting key) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::DoesSettingUpdateCloudImmediately(const RobotSetting key) const
+bool SettingsManager::DoesSettingUpdateCloudImmediately(const external_interface::RobotSetting key) const
 {
-  const std::string& keyString = EnumToString(key);
+  const std::string& keyString = RobotSetting_Name(key);
   const auto& config = (*_settingsConfig)[keyString];
   const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
   return saveToCloudImmediately;
@@ -320,13 +306,15 @@ void SettingsManager::ApplyAllCurrentSettings()
   LOG_INFO("SettingsManager.ApplyAllCurrentSettings", "Applying all current robot settings");
   for (Json::ValueConstIterator it = _currentSettings.begin(); it != _currentSettings.end(); ++it)
   {
-    ApplyRobotSetting(RobotSettingFromString(it.name()));
+    external_interface::RobotSetting robotSetting;
+    RobotSetting_Parse(it.name(), &robotSetting);
+    ApplyRobotSetting(robotSetting);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool force)
+bool SettingsManager::ApplyRobotSetting(const external_interface::RobotSetting robotSetting, bool force)
 {
   // Actually apply the setting; note that some things don't need to be "applied"
   bool success = true;
@@ -340,14 +328,15 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
       if (!success)
       {
         LOG_ERROR("SettingsManager.ApplyRobotSetting.ValidateFunctionFailed", "Error attempting to apply %s setting",
-                  RobotSettingToString(robotSetting));
+                  RobotSetting_Name(robotSetting).c_str());
         return false;
       }
     }
 
     if (force || !it->second.isLatentApplication)
     {
-      LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'", RobotSettingToString(robotSetting));
+      LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'",
+                RobotSetting_Name(robotSetting).c_str());
       success = (this->*(it->second.applicationFunction))();
     }
     else
@@ -358,7 +347,7 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
     if (!success)
     {
       LOG_ERROR("SettingsManager.ApplyRobotSetting.ApplyFunctionFailed", "Error attempting to apply %s setting",
-                RobotSettingToString(robotSetting));
+                RobotSetting_Name(robotSetting).c_str());
     }
   }
   return success;
@@ -368,7 +357,7 @@ bool SettingsManager::ApplyRobotSetting(const RobotSetting robotSetting, bool fo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ValidateSettingMasterVolume()
 {
-  static const std::string& key = RobotSettingToString(RobotSetting::master_volume);
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::master_volume);
   const auto& value = _currentSettings[key].asUInt();
   if (!external_interface::Volume_IsValid(value))
   {
@@ -382,13 +371,12 @@ bool SettingsManager::ValidateSettingMasterVolume()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingMasterVolume()
 {
-  static const std::string& key = RobotSettingToString(RobotSetting::master_volume);
-  const auto& value = _currentSettings[key].asUInt();
-  const auto& volumeName = external_interface::Volume_Name(static_cast<external_interface::Volume>(value));
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::master_volume);
+  const auto& value = static_cast<external_interface::Volume>(_currentSettings[key].asUInt());
+  const auto& volumeName = external_interface::Volume_Name(value);
   LOG_INFO("SettingsManager.ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", volumeName.c_str());
 
-  const auto volume = static_cast<MasterVolume>(value); // Cast to CLAD enum (to be cleaned up later)
-  _robot->GetAudioClient()->SetRobotMasterVolume(volume);
+  _robot->GetAudioClient()->SetRobotMasterVolume(value);
 
   return true;
 }
@@ -397,7 +385,7 @@ bool SettingsManager::ApplySettingMasterVolume()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ValidateSettingEyeColor()
 {
-  static const std::string& key = RobotSettingToString(RobotSetting::eye_color);
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::eye_color);
   const auto& value = _currentSettings[key].asUInt();
   if (!external_interface::EyeColor_IsValid(value))
   {
@@ -412,7 +400,7 @@ bool SettingsManager::ValidateSettingEyeColor()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingEyeColor()
 {
-  static const std::string& key = RobotSettingToString(RobotSetting::eye_color);
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::eye_color);
   const auto& value = _currentSettings[key].asUInt();
   const auto& eyeColorName = external_interface::EyeColor_Name(static_cast<external_interface::EyeColor>(value));
   LOG_INFO("SettingsManager.ApplySettingEyeColor.Apply", "Setting robot eye color to %s", eyeColorName.c_str());
@@ -432,7 +420,7 @@ bool SettingsManager::ApplySettingEyeColor()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingLocale()
 {
-  static const std::string& key = RobotSettingToString(RobotSetting::locale);
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::locale);
   const std::string& value = _currentSettings[key].asString();
   DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
   const bool success = _robot->SetLocale(value);
@@ -448,7 +436,7 @@ bool SettingsManager::ApplySettingLocale()
 bool SettingsManager::ApplySettingTimeZone()
 {
 #if defined(ANKI_PLATFORM_VICOS)
-  static const std::string key = RobotSettingToString(RobotSetting::time_zone);
+  static const std::string key = RobotSetting_Name(external_interface::RobotSetting::time_zone);
   const std::string value = _currentSettings[key].asString();
 
   std::vector<std::string> command;
@@ -470,7 +458,7 @@ bool SettingsManager::ApplySettingTimeZone()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::RequestLatentSettingsUpdate(RobotSetting setting)
+bool SettingsManager::RequestLatentSettingsUpdate(const external_interface::RobotSetting setting)
 {
   bool success = false;
 
@@ -478,7 +466,8 @@ bool SettingsManager::RequestLatentSettingsUpdate(RobotSetting setting)
   // if our current pending request hasn't been claimed yet, simply override it
   if (!IsSettingsUpdateRequestPending() || !_settingsUpdateRequest.isClaimed)
   {
-    LOG_DEBUG("SettingsManager.RequestLatentSettingsUpdate", "Requesting update to setting '%s'", RobotSettingToString(setting));
+    LOG_DEBUG("SettingsManager.RequestLatentSettingsUpdate", "Requesting update to setting '%s'",
+              RobotSetting_Name(setting).c_str());
 
     // create new request
     _settingsUpdateRequest =
@@ -494,7 +483,7 @@ bool SettingsManager::RequestLatentSettingsUpdate(RobotSetting setting)
   {
     LOG_ERROR("SettingsManager.RequestLatentSettingsUpdate",
               "Requesting to change setting '%s' while previous claimed request '%s' was pending",
-              RobotSettingToString(setting), RobotSettingToString(_settingsUpdateRequest.setting));
+              RobotSetting_Name(setting).c_str(), RobotSetting_Name(_settingsUpdateRequest.setting).c_str());
   }
 
   return success;
@@ -506,13 +495,13 @@ bool SettingsManager::IsSettingsUpdateRequestPending() const
   return _hasPendingSettingsRequest;
 }
 
-bool SettingsManager::IsSettingsUpdateRequestPending(RobotSetting setting) const
+bool SettingsManager::IsSettingsUpdateRequestPending(const external_interface::RobotSetting setting) const
 {
   return IsSettingsUpdateRequestPending() && (setting == _settingsUpdateRequest.setting);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotSetting SettingsManager::GetPendingSettingsUpdate() const
+external_interface::RobotSetting SettingsManager::GetPendingSettingsUpdate() const
 {
   return _settingsUpdateRequest.setting;
 }
@@ -524,7 +513,7 @@ void SettingsManager::ClearPendingSettingsUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ClaimPendingSettingsUpdate(RobotSetting setting)
+bool SettingsManager::ClaimPendingSettingsUpdate(const external_interface::RobotSetting setting)
 {
   bool success = false;
 
@@ -538,21 +527,21 @@ bool SettingsManager::ClaimPendingSettingsUpdate(RobotSetting setting)
     {
       LOG_ERROR("SettingsManager.ClaimPendingSettingsUpdate",
                 "Attempted to consume setting '%s', but setting was previously consumed",
-                RobotSettingToString(setting));
+                RobotSetting_Name(setting).c_str());
     }
   }
   else
   {
     LOG_ERROR("SettingsManager.ClaimPendingSettingsUpdate",
               "Attempted to consume setting '%s', but setting was not pending",
-              RobotSettingToString(setting));
+              RobotSetting_Name(setting).c_str());
   }
 
   return success;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SettingsManager::ApplyPendingSettingsUpdate(RobotSetting setting, bool clearRequest)
+bool SettingsManager::ApplyPendingSettingsUpdate(const external_interface::RobotSetting setting, const bool clearRequest)
 {
   bool success = false;
 
@@ -570,14 +559,14 @@ bool SettingsManager::ApplyPendingSettingsUpdate(RobotSetting setting, bool clea
   {
     LOG_DEBUG("SettingsManager.ApplyPendingSettingsUpdate",
               "Attempted to apply latent setting '%s', but setting was not pending",
-              RobotSettingToString(setting));
+              RobotSetting_Name(setting).c_str());
   }
 
   return success;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsManager::OnSettingsUpdateNotClaimed(RobotSetting setting)
+void SettingsManager::OnSettingsUpdateNotClaimed(const external_interface::RobotSetting setting)
 {
   ApplyRobotSetting(setting, true);
 }

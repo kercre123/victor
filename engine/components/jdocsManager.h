@@ -25,7 +25,6 @@
 #include "proto/external_interface/settings.pb.h"
 
 #include "clad/cloud/docs.h"
-#include "clad/types/robotSettingsTypes.h"
 
 #include <map>
 #include <queue>

@@ -39,7 +39,6 @@ namespace
   static const char* kDocVersionKey = "doc_version";
   static const char* kFmtVersionKey = "fmt_version";
   static const char* kClientMetadataKey = "client_metadata";
-  static const char* kFingerprintKey = "fingerprint"; // for backwards compatibility
   static const char* kCloudDirtyRemainingSecKey = "cloud_dirty_remaining_sec";
   static const char* kJdocKey = "jdoc";
   static const char* kDiskSavePeriodKey = "diskSavePeriod_s";
@@ -60,7 +59,7 @@ namespace
 
   static const char* kConsoleGroup = "JdocsManager";
 
-  // Keep this in sync with JdocType enum
+  // Keep this in sync with JdocType enum in settings.proto
   constexpr const char* kJdocTypes = "RobotSettings,RobotLifetimeStats,AccountSettings,UserEntitlements";
   CONSOLE_VAR_ENUM(u8, kJdocType, kConsoleGroup, 0, kJdocTypes);
 
@@ -140,8 +139,8 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 
   for (const auto& name : memberNames)
   {
-    JdocType jdocType;
-    const bool valid = EnumFromString(name, jdocType);
+    external_interface::JdocType jdocType;
+    const bool valid = external_interface::JdocType_Parse(name, &jdocType);
     if (!valid)
     {
       LOG_ERROR("JdocsManager.InitDependent.InvalidJdocTypeInConfig",
@@ -149,8 +148,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       continue;
     }
     const auto& jdocConfig = jdocsConfig[name];
-    const external_interface::JdocType jdocTypeKey = static_cast<external_interface::JdocType>(jdocType);
-    if (_jdocs.find(jdocTypeKey) != _jdocs.end())
+    if (_jdocs.find(jdocType) != _jdocs.end())
     {
       LOG_ERROR("JdocsManager.InitDependent.DuplicateJdocTypeInConfig",
                 "Duplicate jdoc type %s in jdoc config file; ignoring duplicate", name.c_str());
@@ -183,13 +181,13 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._overwrittenCB = nullptr;
       jdocInfo._formatMigrationCB = nullptr;
 
-      _jdocs[jdocTypeKey] = jdocInfo;
+      _jdocs[jdocType] = jdocInfo;
     }
 
-    auto& jdocItem = _jdocs[jdocTypeKey];
+    auto& jdocItem = _jdocs[jdocType];
     if (Util::FileUtils::FileExists(jdocItem._jdocFullPath))
     {
-      if (LoadJdocFile(jdocTypeKey))
+      if (LoadJdocFile(jdocType))
       {
         const auto latestFormatVersion = jdocItem._curFormatVersion;
         if (jdocItem._jdocFormatVersion < latestFormatVersion)
@@ -620,16 +618,7 @@ bool JdocsManager::LoadJdocFile(const external_interface::JdocType jdocTypeKey)
 
   jdocItem._jdocVersion        = jdocJson[kDocVersionKey].asUInt64();
   jdocItem._jdocFormatVersion  = jdocJson[kFmtVersionKey].asUInt64();
-  if (jdocJson.isMember(kClientMetadataKey))
-  {
-    jdocItem._jdocClientMetadata = jdocJson[kClientMetadataKey].asString();
-  }
-  else
-  {
-    // Temp code for backwards compatibility due to field rename
-    jdocItem._jdocClientMetadata = jdocJson[kFingerprintKey].asString();
-    jdocItem._diskFileDirty = true; // So we write it out with the correct key string
-  }
+  jdocItem._jdocClientMetadata = jdocJson[kClientMetadataKey].asString();
   jdocItem._jdocBody           = jdocJson[kJdocKey];
 
   if (jdocJson.isMember(kCloudDirtyRemainingSecKey))
