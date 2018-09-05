@@ -103,7 +103,7 @@ void BehaviorWallTimeCoordinator::OnBehaviorActivated()
 
   StartTTSGeneration();
   struct tm unused;
-  if(WallTime::getInstance()->GetLocalTime(unused)){
+  if(WallTime::getInstance()->GetApproximateLocalTime(unused)){
     TransitionToFindFaceInFront();
   }else{
     TransitionToICantDoThat();
@@ -180,7 +180,7 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
 void BehaviorWallTimeCoordinator::StartTTSGeneration()
 {
   struct tm localTime;
-  if(!WallTime::getInstance()->GetLocalTime(localTime)){
+  if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
     return;
   }
 
