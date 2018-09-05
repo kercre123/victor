@@ -133,6 +133,18 @@ void SDKComponent::DispatchSDKActivationResult(bool enabled) {
   }
 }
 
+template <typename MessageType>
+external_interface::GatewayWrapper ConstructActionResponseMessage(const ActionResult& actionResult)
+{
+  MessageType* response = new MessageType();
+
+  external_interface::ActionResult* actionStatus = new external_interface::ActionResult();
+  actionStatus->set_code((external_interface::ActionResult_ActionResultCode)actionResult);
+
+  response->set_allocated_result(actionStatus);
+  return ExternalMessageRouter::WrapResponse(response);
+}
+
 void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg)
 {
   auto* gi = _robot->GetGatewayInterface();
@@ -140,38 +152,6 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
 
   switch((RobotActionType)msg.actionType)
   {
-    case RobotActionType::TURN_IN_PLACE:
-    {
-      auto* response = new external_interface::TurnInPlaceResponse;
-      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::DRIVE_STRAIGHT:
-    {
-      auto* response = new external_interface::DriveStraightResponse;
-      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::MOVE_HEAD_TO_ANGLE:
-    {
-      auto* response = new external_interface::SetHeadAngleResponse;
-      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::MOVE_LIFT_TO_HEIGHT:
-    {
-      auto* response = new external_interface::SetLiftHeightResponse;
-      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
     case RobotActionType::PLAY_ANIMATION:
     {
       auto* response = new external_interface::PlayAnimationResponse;
@@ -180,25 +160,27 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
     }
     break;
 
-    case RobotActionType::DRIVE_TO_POSE:
-    {
-      auto* response = new external_interface::GoToPoseResponse;
-      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
-    case RobotActionType::ALIGN_WITH_OBJECT:
-    {
-      auto* response = new external_interface::DockWithCubeResponse;
-      response->set_result(static_cast<external_interface::ActionResult>(msg.result));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
-    }
-    break;
-
     default:
     {
-      PRINT_NAMED_WARNING("SDKComponent.OnActionCompleted.NoMatch", "No match for action tag so no response sent: [Tag=%d]", msg.idTag);
+      using ProtoActionResponseFactory = std::function<external_interface::GatewayWrapper(const ActionResult&)>;
+      std::map<RobotActionType, ProtoActionResponseFactory> actionResponseFactories = {
+        { RobotActionType::TURN_IN_PLACE,       ConstructActionResponseMessage<external_interface::TurnInPlaceResponse> },
+        { RobotActionType::DRIVE_STRAIGHT,      ConstructActionResponseMessage<external_interface::DriveStraightResponse> },
+        { RobotActionType::MOVE_HEAD_TO_ANGLE,  ConstructActionResponseMessage<external_interface::SetHeadAngleResponse> },
+        { RobotActionType::MOVE_LIFT_TO_HEIGHT, ConstructActionResponseMessage<external_interface::SetLiftHeightResponse> },
+        { RobotActionType::DRIVE_TO_POSE,       ConstructActionResponseMessage<external_interface::GoToPoseResponse> },
+        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> }
+      };
+
+      if(actionResponseFactories.count((RobotActionType)msg.actionType) == 0) 
+      {
+          PRINT_NAMED_WARNING("SDKComponent.OnActionCompleted.NoMatch", "No match for action tag so no response sent: [Tag=%d]", msg.idTag);
+      }
+      else
+      {
+        auto& responseFactory = actionResponseFactories.at((RobotActionType)msg.actionType);
+        gi->Broadcast( responseFactory(msg.result) );
+      }
       return;
     }
   }

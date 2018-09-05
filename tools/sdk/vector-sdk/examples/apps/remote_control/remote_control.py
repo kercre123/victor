@@ -318,7 +318,7 @@ def get_anim_sel_drop_down(selectorIndex):
     i = 0
     for anim_name in flask_app.remote_control_vector.anim_names:
         is_selected_item = (i == flask_app.remote_control_vector.anim_index_for_key[selectorIndex])
-        selected_text = """ selected="selected"""" if is_selected_item else ""
+        selected_text = ''' selected="selected"''' if is_selected_item else ""
         html_text += """<option value=""" + str(i) + selected_text + """>""" + anim_name + """</option>"""
         i += 1
     html_text += """</select>"""

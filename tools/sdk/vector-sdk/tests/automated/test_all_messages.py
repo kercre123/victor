@@ -205,8 +205,10 @@ MESSAGES_TO_TEST = [
     (client.ExternalInterfaceServicer.DriveStraight,
      protocol.DriveStraightRequest(speed_mmps=0.0,
                                    dist_mm=0.0,
-                                   should_play_animation=False),
-     TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                   should_play_animation=False,
+                                   id_tag=protocol.FIRST_SDK_TAG + 1),
+     TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                      result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # TurnInPlace message
     (client.ExternalInterfaceServicer.TurnInPlace,
@@ -214,24 +216,30 @@ MESSAGES_TO_TEST = [
                                  speed_rad_per_sec=0.0,
                                  accel_rad_per_sec2=0.0,
                                  tol_rad=0.0,
-                                 is_absolute=False),
-     TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                 is_absolute=False,
+                                 id_tag=protocol.FIRST_SDK_TAG + 2),
+     TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                    result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetHeadAngle message
     (client.ExternalInterfaceServicer.SetHeadAngle,
      protocol.SetHeadAngleRequest(angle_rad=0.0,
                                   max_speed_rad_per_sec=0.0,
                                   accel_rad_per_sec2=0.0,
-                                  duration_sec=0.0),
-     TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                  duration_sec=0.0,
+                                  id_tag=protocol.FIRST_SDK_TAG + 3),
+     TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                     result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetLiftHeight message
     (client.ExternalInterfaceServicer.SetLiftHeight,
      protocol.SetLiftHeightRequest(height_mm=0.0,
                                    max_speed_rad_per_sec=0.0,
                                    accel_rad_per_sec2=0.0,
-                                   duration_sec=0.0),
-     TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                   duration_sec=0.0,
+                                   id_tag=protocol.FIRST_SDK_TAG + 4),
+     TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                      result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetBackpackLights message
     (client.ExternalInterfaceServicer.SetBackpackLights,
@@ -244,7 +252,7 @@ MESSAGES_TO_TEST = [
      protocol.ConnectCubeRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
                                              protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["success", "object_id", "factory_id"])),
+                                             ["success", "factory_id"])),
 
     # DisconnectCube message
     (client.ExternalInterfaceServicer.DisconnectCube,

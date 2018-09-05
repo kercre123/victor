@@ -630,11 +630,68 @@ message PathMotionProfile {
   bool  is_custom = 11;
 }
 
-// TODO VIC-5920: Expand this list to include all action results for clearer error handling
-enum ActionResult {
-  ACTION_RESULT_SUCCESS                 = 0;
-  ACTION_RESULT_RUNNING                 = 16777216;
-  ACTION_RESULT_CANCELLED_WHILE_RUNNING = 33554432;
+// TODO: These codes are duplicated from actionResults.clad file and need to be kept in sync. Need to find a solution to this issue.
+message ActionResult {
+  enum ActionResultCode {
+    ACTION_RESULT_SUCCESS                 = 0;
+    ACTION_RESULT_RUNNING                 = 16777216;
+
+    ACTION_RESULT_CANCELLED_WHILE_RUNNING = 33554432;
+    NOT_STARTED                           = 33554433;
+
+    ABORT                                 = 50331648;
+    ANIM_ABORTED                          = 50331649;
+    BAD_MARKER                            = 50331650;
+    BAD_MESSAGE_TAG                       = 50331651;
+    BAD_OBJECT                            = 50331652;
+    BAD_POSE                              = 50331653;
+    BAD_TAG                               = 50331654;
+    CHARGER_UNPLUGGED_ABORT               = 50331655;
+    CLIFF_ALIGN_FAILED_TIMEOUT            = 50331656;
+    CLIFF_ALIGN_FAILED_NO_TURNING         = 50331657;
+    CLIFF_ALIGN_FAILED_OVER_TURNING       = 50331658;
+    CLIFF_ALIGN_FAILED_NO_WHITE           = 50331659;
+    CLIFF_ALIGN_FAILED_STOPPED            = 50331660;
+    FAILED_SETTING_CALIBRATION            = 50331661;
+    FOLLOWING_PATH_BUT_NOT_TRAVERSING     = 50331662;
+    INTERRUPTED                           = 50331663;
+    INVALID_OFF_TREADS_STATE              = 50331664;
+    MISMATCHED_UP_AXIS                    = 50331665;
+    NO_ANIM_NAME                          = 50331666;
+    NO_DISTANCE_SET                       = 50331667;
+    NO_FACE                               = 50331668;
+    NO_GOAL_SET                           = 50331669;
+    NO_PREACTION_POSES                    = 50331670;
+    NOT_CARRYING_OBJECT_ABORT             = 50331671;
+    NOT_ON_CHARGER_ABORT                  = 50331672;
+    NULL_SUBACTION                        = 50331673;
+    PATH_PLANNING_FAILED_ABORT            = 50331674;
+    PICKUP_OBJECT_UNEXPECTEDLY_MOVING     = 50331675;
+    PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING = 50331676;
+    SEND_MESSAGE_TO_ROBOT_FAILED          = 50331677;
+    STILL_CARRYING_OBJECT                 = 50331678;
+    TIMEOUT                               = 50331679;
+    TRACKS_LOCKED                         = 50331680;
+    UNEXPECTED_DOCK_ACTION                = 50331681;
+    UNKNOWN_TOOL_CODE                     = 50331682;
+    UPDATE_DERIVED_FAILED                 = 50331683;
+    VISUAL_OBSERVATION_FAILED             = 50331684;
+    SHOULDNT_DRIVE_ON_CHARGER             = 50331685;
+
+
+    RETRY                           = 67108864;
+    DID_NOT_REACH_PREACTION_POSE    = 67108865;
+    FAILED_TRAVERSING_PATH          = 67108866;
+    LAST_PICK_AND_PLACE_FAILED      = 67108867;
+    MOTOR_STOPPED_MAKING_PROGRESS   = 67108868;
+    NOT_CARRYING_OBJECT_RETRY       = 67108869;
+    NOT_ON_CHARGER_RETRY            = 67108870;
+    PATH_PLANNING_FAILED_RETRY      = 67108871;
+    PLACEMENT_GOAL_NOT_FREE         = 67108872;
+    STILL_ON_CHARGER                = 67108873;
+    UNEXPECTED_PITCH_ANGLE          = 67108874;
+  }
+  ActionResultCode code = 1;
 }
 
 enum ActionTagConstants {

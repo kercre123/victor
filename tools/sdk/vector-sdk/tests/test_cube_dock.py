@@ -29,7 +29,7 @@ def main():
             dock_response = robot.behavior.dock_with_cube(connected_cubes[0])
             docking_result_code = dock_response.result
 
-    if docking_result_code == anki_vector.messaging.protocol.ACTION_RESULT_SUCCESS:
+    if docking_result_code == anki_vector.messaging.protocol.ActionResult.ACTION_RESULT_SUCCESS:  # pylint: disable=no-member
         print("------ finish cube docking ------")
     else:
         print("------ cube docking failed with code {0} ------".format(docking_result_code))

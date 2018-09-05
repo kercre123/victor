@@ -844,7 +844,7 @@ func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.Behav
 }
 
 func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) {
-    if disableStreams {
+	if disableStreams {
 		// Disabled for Vector 1.0 release
 		return
 	}
@@ -936,7 +936,7 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 	if disableStreams {
 		// Disabled for Vector 1.0 release
 		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")
-    }
+	}
 
 	log.Println("Received rpc request BehaviorControl")
 
@@ -985,7 +985,7 @@ func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.Drive
 	if disableStreams {
 		// Disable for Vector 1.0 release
 		return nil, grpc.Errorf(codes.Unimplemented, "DriveOffCharger disabled in message_handler.go")
-    }
+	}
 
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOffChargerResponse{}, 1)
 	defer f()
@@ -1013,7 +1013,7 @@ func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveO
 	if disableStreams {
 		// Disabled for Vector 1.0 release
 		return nil, grpc.Errorf(codes.Unimplemented, "DriveOnCharger disabled in message_handler.go")
-    }
+	}
 
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOnChargerResponse{}, 1)
 	defer f()
@@ -1544,7 +1544,22 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 	}, nil
 }
 
+func ValidateActionTag(idTag int32) error {
+	firstTag := int32(extint.ActionTagConstants_FIRST_SDK_TAG)
+	lastTag := int32(extint.ActionTagConstants_LAST_SDK_TAG)
+	if idTag < firstTag || idTag > lastTag {
+		return grpc.Errorf(codes.Internal, "Invalid Action tag_id")
+	}
+
+	return nil
+}
+
 func (service *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequest) (*extint.GoToPoseResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_GoToPoseResponse{}, 1)
 	defer f()
 
@@ -1565,10 +1580,16 @@ func (service *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequ
 	response.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
+	log.Printf("Received rpc response GoToPose(%#v)\n", in)
 	return response, nil
 }
 
 func (service *rpcService) DockWithCube(ctx context.Context, in *extint.DockWithCubeRequest) (*extint.DockWithCubeResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DockWithCubeResponse{}, 1)
 	defer f()
 
@@ -1593,6 +1614,11 @@ func (service *rpcService) DockWithCube(ctx context.Context, in *extint.DockWith
 }
 
 func (service *rpcService) DriveStraight(ctx context.Context, in *extint.DriveStraightRequest) (*extint.DriveStraightResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveStraightResponse{}, 1)
 	defer f()
 
@@ -1617,6 +1643,11 @@ func (service *rpcService) DriveStraight(ctx context.Context, in *extint.DriveSt
 }
 
 func (service *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPlaceRequest) (*extint.TurnInPlaceResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_TurnInPlaceResponse{}, 1)
 	defer f()
 
@@ -1641,6 +1672,11 @@ func (service *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPla
 }
 
 func (service *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadAngleRequest) (*extint.SetHeadAngleResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetHeadAngleResponse{}, 1)
 	defer f()
 
@@ -1665,6 +1701,11 @@ func (service *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadA
 }
 
 func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLiftHeightRequest) (*extint.SetLiftHeightResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetLiftHeightResponse{}, 1)
 	defer f()
 

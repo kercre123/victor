@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 """
-Prints out the battery voltage on the robot & cube 
+Prints out the battery voltage on the robot & cube.
 """
 
 import os
 import sys
-import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
