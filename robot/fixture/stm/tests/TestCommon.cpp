@@ -317,7 +317,7 @@ namespace TestCommon
     ConsolePrintf("Console restored\n");
   }
   
-  int waitForKeypress(uint32_t timeout, bool flush_rx, const char *printstr)
+  int waitForKeypress(int timeout, bool flush_rx, const char *printstr)
   {
     if( printstr )
       ConsoleWrite((char*)printstr);
@@ -325,12 +325,22 @@ namespace TestCommon
       while( ConsoleReadChar() > -1 );
     
     uint32_t Tstart = Timer::get();
-    while( !timeout || Timer::elapsedUs(Tstart) < timeout )
+    do {
       if( ConsoleReadChar() > -1 )
         return 0;
+    } while( timeout==0 || (timeout>0 && Timer::elapsedUs(Tstart) < timeout) );
     
     return 1;
   }
   
+  int checkForKeypress(bool *ref_flush_rx)
+  {
+    bool flush = 0;
+    if( ref_flush_rx ) {
+      flush = *ref_flush_rx;
+      *ref_flush_rx = 0; //one-shot flush, for use in loops
+    }
+    return waitForKeypress(-1, flush, NULL); //single check for pending keypress
+  }
 }
 

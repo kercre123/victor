@@ -28,9 +28,15 @@ namespace TestCommon
   void consoleBridge(bridge_target_e which, int inactivity_delay_ms=0, int timeout_ms=0, int opts = 0, bridge_hook_sendline_t hook_sendline = NULL );
   
   //block wait for any input from the console.
-  //timeout[us]=0 -> no wait (check once). flush_rx=1 -> clear input buffer before wait
+  //timeout[us]: 0=infinite, <0 no wait (checks once)
+  //flush_rx: 1 = clear input buffer before wait/check
+  //printstr: optional console print before wait begins
   //@return 0 if keypress detected. 1 if timed-out
-  int waitForKeypress(uint32_t timeout=0, bool flush_rx=0, const char *printstr=0);
+  int waitForKeypress(int timeout=0, bool flush_rx=0, const char *printstr=0);
+  
+  //non-block check for keypress (loop usage)
+  //ref_flush_rx: loop bool. cleared after each check. use for one-shot buffer flush 1st loop pass
+  int checkForKeypress(bool *ref_flush_rx=0);
 }
 
 #ifdef __cplusplus
