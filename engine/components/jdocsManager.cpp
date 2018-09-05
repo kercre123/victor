@@ -1218,9 +1218,15 @@ void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocType
   // Hence the differences/copying code here
   external_interface::Jdoc jdoc;
   GetJdoc(jdocTypeKey, jdoc);
-  if (isJdocNewInCloud)
+  if (isJdocNewInCloud && jdoc.doc_version() != 0)
   {
-    DEV_ASSERT(jdoc.doc_version() == 0, "Error: Non-zero jdoc version for one not found in the cloud");
+    // This would occur if the userID or thingID was somehow changed on this robot.  However,
+    // we recover gracefully when we get the write response for this submission; we copy down
+    // the new version (which will be 1) and then save the jdoc to disk.  At that point the
+    // jdoc on disk will be in sync with the jdoc in cloud.
+    LOG_WARNING("JdocsManager.SubmitJdocToCloud.NonZeroFirstTimeJdoc",
+                "Submitting a jdoc not found in the cloud, but that has non-zero doc version %llu",
+                jdoc.doc_version());
   }
 
   LOG_INFO("JdocsManager.SubmitJdocToCloud", "Submitted jdoc to cloud: %s, doc version %llu, fmt version %llu",
