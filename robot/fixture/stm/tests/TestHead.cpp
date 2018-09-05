@@ -16,6 +16,7 @@
 static headid_t headnfo;
 static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_MP;
 static const int CURRENT_HEAD_MODEL = 1;
+const int HEAD_PRESENT_CURRENT_MA = 10;
 
 static uint32_t m_previous_esn = ~0;
 uint32_t TestHeadGetPrevESN(void)
@@ -160,6 +161,35 @@ static void HeadFlexFlowReport(void)
   FLEXFLOW::printf("<flex> ESN %08x </flex>\n", headnfo.esn);
 }
 
+void TestHeadDebugBreakpoint(void)
+{
+  //spin on a few conditions (user-controlled program breakpoint?)
+  bool flushrx=1;
+  while(1)
+  {
+    //break on device disconnect
+    int iext = Meter::getCurrentMa(PWR_VEXT, 4);
+    int ibat = Meter::getCurrentMa(PWR_VBAT, 4);
+    if( iext < HEAD_PRESENT_CURRENT_MA && ibat < HEAD_PRESENT_CURRENT_MA ) {
+      ConsolePrintf("aborted: device disconnected\n");
+      throw ERROR_ROBOT_OFF_CHARGER;
+      //break;
+    }
+    
+    //break on console input
+    if( !TestCommon::checkForKeypress(&flushrx) ) {
+      ConsolePrintf("aborted: keypress\n");
+      break;
+    }
+    
+    //break on btn4 press
+    if( Board::btnEdgeDetect(Board::BTN_4, 1000, 50) > 0 ) {
+      ConsolePrintf("aborted: button press\n");
+      break;
+    }
+  }
+}
+
 TestFunction* TestHead1GetTests(void)
 {
   static TestFunction m_tests[] = {
@@ -171,11 +201,15 @@ TestFunction* TestHead1GetTests(void)
   };
   return m_tests;
 }
-TestFunction* TestHelper1GetTests(void) {
-  return TestHead1GetTests();
-}
-
 TestFunction* TestHead2GetTests(void) {
   return TestHead1GetTests();
 }
 
+TestFunction* TestHelper1GetTests(void) {
+  static TestFunction m_tests[] = {
+    TestHeadForceBoot,
+    TestHeadDebugBreakpoint,
+    NULL,
+  };
+  return m_tests;
+}
