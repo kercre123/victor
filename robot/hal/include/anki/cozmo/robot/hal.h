@@ -215,6 +215,10 @@ bool BatteryIsDisconnected();
 // Return temperature of battery in C
 u8 BatteryGetTemperature_C();
 
+// Whether or not the battery is overheating.
+// Syscon will shutoff 30s after this first becomes true.
+bool BatteryIsOverheated();
+
 /// Return detected charger voltage
 f32 ChargerGetVoltage();
 /************************************************************************

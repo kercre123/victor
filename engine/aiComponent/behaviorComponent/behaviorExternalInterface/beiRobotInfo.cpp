@@ -40,7 +40,7 @@ BatteryLevel BEIRobotInfo::GetBatteryLevel() const
 {
   return _robot.GetBatteryComponent().GetBatteryLevel();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f BEIRobotInfo::GetBoundingQuadXY(const Pose3d& atPose) const
 {

@@ -87,6 +87,21 @@ enum : uint16_t {
   DFU_FAILED            = 801,
   NO_ANIM_PROCESS       = 800,
 
+
+  // --------- Shutdown codes ----------
+
+  // The battery_overheated icon is displayed by faultCodeDisplay.cpp
+  // when it receives this code. Power will be cut in 30s.
+  SHUTDOWN_BATTERY_CRITICAL_TEMP  = 705,
+
+  // These codes result in only vic-dasmgr be stopped
+  // Also, no fault code is displayed since power to the
+  // head will be cut shortly.
+  SHUTDOWN_BATTERY_CRITICAL_VOLT  = 702,
+  SHUTDOWN_GYRO_NOT_CALIBRATING   = 701,
+  SHUTDOWN_BUTTON                 = 700,
+  // ------ End of Shutdown codes ------
+
   COUNT = 1000
 };
 

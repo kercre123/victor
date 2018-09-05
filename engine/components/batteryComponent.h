@@ -105,6 +105,10 @@ public:
   // charger contacts is always on the platform (NOTE: even if it thinks it's in the air or on it's side)
   bool IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
+  // Returns whether or not the battery is overheated.
+  // A power shutdown is imminent 30 seconds from when this first becomes true.
+  bool IsBatteryOverheated() const { return _battOverheated; }
+
   // Returns how long the "fully charged" state has been active. Returns 0
   // if not currently fully charged.
   float GetFullyChargedTimeSec() const;
@@ -140,6 +144,7 @@ private:
 
   BatteryLevel _batteryLevel = BatteryLevel::Unknown;
   
+  bool _battOverheated = false;
   bool _battDisconnected = false;
   bool _isCharging = false;
   bool _isOnChargerContacts = false;

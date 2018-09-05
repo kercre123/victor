@@ -507,9 +507,17 @@ Result HAL::Step(void)
   return (commander_is_active) ? RESULT_FAIL_IO_UNSYNCHRONIZED : result;
 }
 
+void StopMotors()
+{
+  for (int m = 0; m < MOTOR_COUNT; m++) {
+    HAL::MotorSetPower((MotorID)m, 0.f);
+  }
+}
+
 void HAL::Stop()
 {
   AnkiInfo("HAL.Stop", "");
+  StopMotors();
   StopRadio();
   StopIMU();
   DisconnectRadio();
@@ -655,6 +663,11 @@ bool HAL::BatteryIsDisconnected()
   // the charge base, but the battery has been disconnected from the
   // charging circuit.
   return bodyData_->battery.flags & POWER_BATTERY_DISCONNECTED;
+}
+
+bool HAL::BatteryIsOverheated()
+{
+  return bodyData_->battery.flags & POWER_IS_OVERHEATED;
 }
 
 f32 HAL::ChargerGetVoltage()

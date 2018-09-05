@@ -122,6 +122,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   }
   wasFakeLowBattery = kFakeLowBattery;
 
+  // Check if battery is overheating
+  _battOverheated = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED;
+
   // Only update filtered value if the battery isn't disconnected
   bool wasDisconnected = _battDisconnected;
   _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED)

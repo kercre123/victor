@@ -915,6 +915,11 @@ namespace Anki {
       return false;
     }
 
+    bool HAL::BatteryIsOverheated()
+    {
+      return false;
+    }
+
     u8 HAL::BatteryGetTemperature_C()
     {
       return 40;
