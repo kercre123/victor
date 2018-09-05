@@ -310,7 +310,8 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction()
 
   const bool sayName = ( GetRNG().RandDbl() < _iConfig.chanceSayName );
   TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, sayName);
-  turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
+  // TODO VIC-6435 uncomment this once we've removed turn from animation
+  //turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
   turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
   turnAndAnimateAction->SetRequireFaceConfirmation(true);
   
