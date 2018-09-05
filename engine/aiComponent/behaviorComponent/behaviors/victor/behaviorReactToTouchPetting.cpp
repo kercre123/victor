@@ -73,7 +73,6 @@ BehaviorReactToTouchPetting::BehaviorReactToTouchPetting(const Json::Value& conf
 , _checkForTransitionTime(std::numeric_limits<float>::max())
 , _currBlissLevel(0)
 , _numPressesAtCurrentBlissLevel(0)
-, _numTicksPressed(0)
 , _isPressed(false)
 , _isPressedPrevTick(false)
 {
@@ -182,6 +181,8 @@ void BehaviorReactToTouchPetting::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToTouchPetting::OnBehaviorActivated()
 {
+  SmartDisableKeepFaceAlive();
+  
   CancelAndPlayAnimation(_animPettingGetin);
 
   // set internal state to speed up entry into Level1 animations
@@ -192,7 +193,10 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;
   
-  SmartDisableKeepFaceAlive();
+  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _checkForTransitionTime       = now + _timeTilTouchCheck;
+  _checkForTimeoutTimeBliss     = now + _blissTimeout;
+  _checkForTimeoutTimeNonbliss  = now + _nonBlissTimeout;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -237,14 +241,11 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
   const float now            = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool reachedMaxBliss = (_currBlissLevel == _animPettingResponse.size());
   if(_isPressed) {
-    _numTicksPressed++;
     // update the timeouts if we are being currently pressed
     // prevents issues where presses that are roughly equal
     // in duration as the timeout, would let the behavior exit
     _checkForTimeoutTimeBliss     = now + _blissTimeout;
     _checkForTimeoutTimeNonbliss  = now + _nonBlissTimeout;
-  } else {
-    _numTicksPressed = 0;
   }
   
   //-----------------------------------------------------------------------------
