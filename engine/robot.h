@@ -798,7 +798,6 @@ protected:
   Result SendSyncRobot() const;
 
   float _syncRobotSentTime_sec = 0.0f;
-  constexpr static float kMaxSyncRobotAckDelay_sec = 5.0f;
 
   // Used to calculate tick rate
   float _prevCurrentTime_sec = 0.0f;

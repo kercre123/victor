@@ -1303,12 +1303,6 @@ Result Robot::Update()
 
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  // Check for syncRobotAck taking too long to arrive
-  if (_syncRobotSentTime_sec > 0.0f && currentTime > _syncRobotSentTime_sec + kMaxSyncRobotAckDelay_sec) {
-    LOG_WARNING("Robot.Update.SyncRobotAckNotReceived", "");
-    _syncRobotSentTime_sec = 0.0f;
-  }
-
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
