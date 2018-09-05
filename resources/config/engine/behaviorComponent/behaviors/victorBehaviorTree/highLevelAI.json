@@ -157,6 +157,14 @@
               {
                 "conditionType": "FeatureGate",
                 "feature": "CubeBehaviors"
+              },
+              {
+                "conditionType": "Compound",
+                "not":
+                {
+                  "conditionType": "BatteryLevel",
+                  "targetBatteryLevel" : "Low"
+                }
               }
             ]
           }
@@ -250,6 +258,14 @@
               {
                 "conditionType": "FeatureGate",
                 "feature": "CubeBehaviors"
+              },
+              {
+                "conditionType": "Compound",
+                "not":
+                {
+                  "conditionType": "BatteryLevel",
+                  "targetBatteryLevel" : "Low"
+                }
               }
             ]
           }
