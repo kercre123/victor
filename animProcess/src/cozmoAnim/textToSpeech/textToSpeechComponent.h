@@ -206,6 +206,7 @@ private:
   void SetAudioProcessingStyle(AudioTtsProcessingStyle style);
   bool PostAudioEvent(uint8_t ttsID);
   void StopActiveTTS();
+  void ClearActiveTTS();
 
   // SWAG estimate of final duration
   f32 GetEstimatedDuration_ms(const std::string & text);

@@ -279,12 +279,7 @@ void TextToSpeechComponent::CleanupAudioEngine(const TTSID_t ttsID)
 
   if (ttsID == _activeTTSID){
     StopActiveTTS();
-  }
-
-  // Clear previously loaded data
-  auto * plugin = _audioController->GetPluginInterface()->GetStreamingWavePortalPlugIn();
-  if (plugin != nullptr) {
-    plugin->ClearAudioData(kTtsPluginId);
+    ClearActiveTTS();
   }
 
   // Clear operation data if needed
@@ -473,7 +468,20 @@ bool TextToSpeechComponent::PostAudioEvent(uint8_t ttsID)
 //
 void TextToSpeechComponent::StopActiveTTS()
 {
+  LOG_DEBUG("TextToSpeechComponent.StopActiveTTS", "Stop active TTS");
   _audioController->StopAllAudioEvents(static_cast<AudioEngine::AudioGameObject>(kTTSGameObject));
+}
+
+//
+// Clear data from currently playing tts
+//
+void TextToSpeechComponent::ClearActiveTTS()
+{
+  LOG_DEBUG("TextToSpeechComponent.ClearActiveTTS", "Clear active TTS");
+  auto * plugin = _audioController->GetPluginInterface()->GetStreamingWavePortalPlugIn();
+  if (plugin != nullptr) {
+    plugin->ClearAudioData(kTtsPluginId);
+  }
 }
 
 //
