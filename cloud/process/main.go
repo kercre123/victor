@@ -95,7 +95,7 @@ func main() {
 
 	// don't yet have control over process startup on DVT2, set these as default
 	verbose = true
-	test := true
+	test := false
 
 	// flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
 	// var test bool
