@@ -47,12 +47,7 @@ private:
   std::vector<IBEIConditionPtr> _offTreadsConditions;
   
   void ReactToBeingOnSide();
-  void AskToBeRighted();
-  //Ensures no other behaviors run while Cozmo is still on his side
   void HoldingLoop();
-
-  float _timeToPerformBoredAnim_s = -1.0f;
-  
 };
 
 }

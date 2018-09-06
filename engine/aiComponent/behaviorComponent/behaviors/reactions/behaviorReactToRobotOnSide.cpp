@@ -22,9 +22,6 @@ namespace Vector {
   
 using namespace ExternalInterface;
 
-static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config)
 : ICozmoBehavior(config)
@@ -72,9 +69,6 @@ void BehaviorReactToRobotOnSide::OnBehaviorLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::OnBehaviorActivated()
 {
-  // clear bored animation timer
-  _timeToPerformBoredAnim_s = -1.0f;
-  
   ICozmoBehavior::SmartRequestPowerSaveMode();
   
   ReactToBeingOnSide();
@@ -95,28 +89,15 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
   }
   
   if(anim != AnimationTrigger::Count){
-    DelegateIfInControl(new TriggerAnimationAction(anim),
-                        &BehaviorReactToRobotOnSide::AskToBeRighted);
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::AskToBeRighted()
-{
-  AnimationTrigger anim = AnimationTrigger::Count;
-  
-  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
-    anim = AnimationTrigger::DEPRECATED_AskToBeRightedLeft;
-  }
-  
-  if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
-    anim = AnimationTrigger::DEPRECATED_AskToBeRightedRight;
-  }
-  
-  if(anim != AnimationTrigger::Count){
-    DelegateIfInControl(new TriggerAnimationAction(anim),
-                &BehaviorReactToRobotOnSide::HoldingLoop);
+    const u32 numLoops = 1;
+    const bool interruptRunning = true;
+    // lock the body to avoid weird motion
+    const u8 tracksToLock = (u8)AnimTrackFlag::BODY_TRACK;
+    DelegateIfInControl(new TriggerAnimationAction(anim,
+                                                   numLoops,
+                                                   interruptRunning,
+                                                   tracksToLock),
+                        &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
 
@@ -126,33 +107,8 @@ void BehaviorReactToRobotOnSide::HoldingLoop()
 {
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide
      || GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide) {
-
-    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
-    if( _timeToPerformBoredAnim_s < 0.0f ) {
-      // set timer for when to perform the bored animations
-      _timeToPerformBoredAnim_s = currTime_s + kWaitTimeBeforeRepeatAnim_s;
-    }
-    
-    if( currTime_s >= _timeToPerformBoredAnim_s ) {
-      // reset timer
-      _timeToPerformBoredAnim_s = -1.0f;
-
-      // play bored animation sequence, then return to holding
-
-      // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
-      // we be playing a specific loop here?
-      DelegateIfInControl(new CompoundActionSequential({
-                    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_NothingToDoBoredIntro),
-                    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_NothingToDoBoredEvent),
-                    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_NothingToDoBoredOutro) }),
-                  &BehaviorReactToRobotOnSide::HoldingLoop);
-    }
-    else {
-      // otherwise, we just loop this animation
-      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
-                  &BehaviorReactToRobotOnSide::HoldingLoop);
-    }
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
+                        &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
 

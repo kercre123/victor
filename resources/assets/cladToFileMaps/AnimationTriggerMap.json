@@ -14,15 +14,7 @@
   {
     "CladEvent": "AlreadyAtFace",
     "AnimName": "ag_vc_reaction_alreadyhere"
-  },
-  {
-    "CladEvent": "DEPRECATED_AskToBeRightedLeft",
-    "AnimName": "ag_reacttocliff_stuckleftside_01"
-  },
-  {
-    "CladEvent": "DEPRECATED_AskToBeRightedRight",
-    "AnimName": "ag_reacttocliff_stuckrightside_01"
-  },
+  },  
   {
     "CladEvent": "AudioOnlyHuh",
     "AnimName": "ag_explorer_huh"
@@ -722,19 +714,7 @@
   {
     "CladEvent": "NothingToDoBoredIdle",
     "AnimName": "ag_hiking_lookaround"
-  },
-  {
-    "CladEvent": "DEPRECATED_NothingToDoBoredIntro",
-    "AnimName": "ag_bored"
-  },
-  {
-    "CladEvent": "DEPRECATED_NothingToDoBoredEvent",
-    "AnimName": "ag_bored_event"
-  },
-  {
-    "CladEvent": "DEPRECATED_NothingToDoBoredOutro",
-    "AnimName": "ag_bored_getout"
-  },
+  },  
   {
     "CladEvent": "OnboardingComeHere",
     "AnimName": "ag_onboarding_drive_to_face"

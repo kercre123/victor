@@ -438,8 +438,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_AcknowledgeFaceNamed,
   DEPRECATED_AcknowledgeFaceUnnamed,
   DEPRECATED_AcknowledgeObject,
-  DEPRECATED_AskToBeRightedLeft,
-  DEPRECATED_AskToBeRightedRight,
   DEPRECATED_ComeHere_SearchForFace,
   DEPRECATED_CubeMovedSense,
   DEPRECATED_CubeMovedUpset,
@@ -457,9 +455,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_LaserPounce,
   DEPRECATED_LookDownForLaser,
   DEPRECATED_NamedFaceInitialGreeting,
-  DEPRECATED_NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
-  DEPRECATED_NothingToDoBoredIntro,             // Cozmo doesn't have anything to do in freeplay - start of bored game sequence
-  DEPRECATED_NothingToDoBoredOutro,             // Cozmo doesn't have anything to do in freeplay - end of bored game sequence
   DEPRECATED_SearchForFace_Search,
   DEPRECATED_SearchForFace_FoundFace,
   DEPRECATED_StackBlocksSuccess,
