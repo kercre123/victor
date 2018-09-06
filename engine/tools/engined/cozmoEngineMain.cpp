@@ -254,8 +254,7 @@ int main(int argc, char* argv[])
   // Install signal handler
   signal(SIGTERM, sigterm);
 
-  static char const* filenamePrefix = "engine";
-  Anki::Victor::InstallCrashReporter(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
 
   char cwd[PATH_MAX] = { 0 };
   (void)getcwd(cwd, sizeof(cwd));
