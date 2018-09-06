@@ -163,6 +163,9 @@ enum uint_8 BehaviorClass {
   OnboardingInterruptionHead,
   OnboardingLookAtPhone,
 
+  // onboarding_1p0
+  Onboarding1p0,
+
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,

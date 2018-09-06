@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboarding1p0.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/cozmoContext.h"
@@ -80,7 +80,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
 {
   using namespace Util;
   const Data::DataPlatform* platform = robot->GetContextDataPlatform();
-  _saveFolder = platform->pathToResource( Data::Scope::Persistent, BehaviorOnboarding::kOnboardingFolder );
+  _saveFolder = platform->pathToResource( Data::Scope::Persistent, BehaviorOnboarding1p0::kOnboardingFolder );
   _saveFolder = FileUtils::AddTrailingFileSeparator( _saveFolder );
   
   if( FileUtils::DirectoryDoesNotExist( _saveFolder ) ) {
@@ -145,6 +145,14 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingStateRequest,
                                            onRequestOnboardingState) );
     
+    auto onRequestOnboardingComplete = [gi,this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
+      const bool completed = (_stage == OnboardingStages::Complete) || (_stage == OnboardingStages::DevDoNothing);
+      auto* onboardingComplete = new external_interface::OnboardingCompleteResponse{ completed };
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingComplete) );
+    };
+    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingCompleteRequest,
+                                           onRequestOnboardingComplete) );
+    
     auto onRestart = [this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
       RestartOnboarding();
     };
@@ -176,8 +184,8 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
       // onboarding was just stopped because we plan to reset it. Set the stage
       _stage = OnboardingStages::NotStarted;
       // explicitly pass the stage so we don't have to worry about when messages are received
-      std::shared_ptr<BehaviorOnboarding> castPtr;
-      _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding), castPtr);
+      std::shared_ptr<BehaviorOnboarding1p0> castPtr;
+      _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding1p0), castPtr);
       if( castPtr != nullptr ) {
         castPtr->SetOnboardingStage(_stage);
       }
@@ -196,7 +204,7 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
   
 void BehaviorsBootLoader::InitOnboarding()
 {
-  const std::string filename = _saveFolder + BehaviorOnboarding::kOnboardingFilename;
+  const std::string filename = _saveFolder + BehaviorOnboarding1p0::kOnboardingFilename;
   const std::string fileContents = Util::FileUtils::ReadFile( filename );
   
   Json::Reader reader;
@@ -213,9 +221,9 @@ void BehaviorsBootLoader::InitOnboarding()
 # endif
   
   if( !fileContents.empty() && reader.parse( fileContents, onboardingStateJSON ) ) {
-    if( ANKI_VERIFY( onboardingStateJSON[BehaviorOnboarding::kOnboardingStageKey].isString(), "BehaviorsBootLoader.InitOnboarding.InvalidKey", "" ) )
+    if( ANKI_VERIFY( onboardingStateJSON[BehaviorOnboarding1p0::kOnboardingStageKey].isString(), "BehaviorsBootLoader.InitOnboarding.InvalidKey", "" ) )
     {
-      const auto& stageStr = onboardingStateJSON[BehaviorOnboarding::kOnboardingStageKey].asString();
+      const auto& stageStr = onboardingStateJSON[BehaviorOnboarding1p0::kOnboardingStageKey].asString();
       ANKI_VERIFY( OnboardingStagesFromString(stageStr, _stage),
                   "BehaviorsBootLoader.InitOnboarding.InvalidStage",
                   "Stage %s is invalid", stageStr.c_str() );
@@ -227,7 +235,7 @@ void BehaviorsBootLoader::InitOnboarding()
   
   if( static_cast<u8>(_stage) < static_cast<u8>(OnboardingStages::Complete) ) {
     // explicitly pass the stage so we don't have to worry about when messages are received
-    std::shared_ptr<BehaviorOnboarding> castPtr;
+    std::shared_ptr<BehaviorOnboarding1p0> castPtr;
     _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding), castPtr);
     if( castPtr != nullptr ) {
       castPtr->SetOnboardingStage(_stage);
@@ -281,7 +289,7 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorsBootLoader::RestartOnboarding()
 {
-  Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding::kOnboardingFilename );
+  Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding1p0::kOnboardingFilename );
   
   // hacky way of de-activating the current onboarding and then re-activating it. Flag to start the Wait behavior,
   // when it starts change the stage within BehaviorOnboarding, pause a few ticks, then flag to start onboarding again.

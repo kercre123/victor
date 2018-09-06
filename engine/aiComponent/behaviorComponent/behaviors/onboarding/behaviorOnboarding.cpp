@@ -272,28 +272,28 @@ void BehaviorOnboarding::InitBehavior()
       // save here, which may save twice if onboarding is running, but ensures it saves at least once outside of onboarding
       SaveToDisk( _dVars.devConsoleStage );
     };
-    _iConfig.consoleFuncs.emplace_front( "MoveToStage", std::move(setStageFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldMoveToStage", std::move(setStageFunc), "Onboarding", "" );
     
     auto continueFunc = [this](ConsoleFunctionContextRef context) {
       // cheat and request the continue that's expected
       RequestContinue( _dVars.lastExpectedStep );
     };
-    _iConfig.consoleFuncs.emplace_front( "Continue", std::move(continueFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldContinue", std::move(continueFunc), "Onboarding", "" );
     
     auto skipFunc = [this](ConsoleFunctionContextRef context) {
       RequestSkip();
     };
-    _iConfig.consoleFuncs.emplace_front( "Skip", std::move(skipFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldSkip", std::move(skipFunc), "Onboarding", "" );
     
     auto skipEverythingFunc = [this](ConsoleFunctionContextRef context) {
       RequestSkipRobotOnboarding();
     };
-    _iConfig.consoleFuncs.emplace_front( "SkipEverything", std::move(skipEverythingFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldSkipEverything", std::move(skipEverythingFunc), "Onboarding", "" );
     
     auto retryChargingFunc = [this](ConsoleFunctionContextRef context) {
       RequestRetryCharging();
     };
-    _iConfig.consoleFuncs.emplace_front( "RetryCharging", std::move(retryChargingFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldRetryCharging", std::move(retryChargingFunc), "Onboarding", "" );
   }
   
   {

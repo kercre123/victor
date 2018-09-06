@@ -296,6 +296,52 @@ func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.Ro
 	}
 }
 
+func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingCompleteResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	completeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingCompleteResponse{
+			OnboardingCompleteResponse: completeResponse.GetOnboardingCompleteResponse(),
+		},
+	}, nil
+}
+
+func SendOnboardingWakeUp(in *extint.GatewayWrapper_OnboardingWakeUpRequest) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingWakeUpResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	wakeUpResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingWakeUpResponse{
+			OnboardingWakeUpResponse: wakeUpResponse.GetOnboardingWakeUpResponse(),
+		},
+	}, nil
+}
+
 func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingContinueResponse{}, 1)
 	defer f()
@@ -1064,6 +1110,14 @@ func (service *rpcService) GetOnboardingState(ctx context.Context, in *extint.On
 func (service *rpcService) SendOnboardingInput(ctx context.Context, in *extint.OnboardingInputRequest) (*extint.OnboardingInputResponse, error) {
 	// oneof_message_type
 	switch x := in.OneofMessageType.(type) {
+	case *extint.OnboardingInputRequest_OnboardingCompleteRequest:
+		return SendOnboardingComplete(&extint.GatewayWrapper_OnboardingCompleteRequest{
+			OnboardingCompleteRequest: in.GetOnboardingCompleteRequest(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingWakeUpRequest:
+		return SendOnboardingWakeUp(&extint.GatewayWrapper_OnboardingWakeUpRequest{
+			OnboardingWakeUpRequest: in.GetOnboardingWakeUpRequest(),
+		})
 	case *extint.OnboardingInputRequest_OnboardingContinue:
 		return SendOnboardingContinue(&extint.GatewayWrapper_OnboardingContinue{
 			OnboardingContinue: in.GetOnboardingContinue(),

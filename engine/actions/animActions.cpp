@@ -30,6 +30,7 @@
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 
@@ -41,6 +42,9 @@ namespace Anki {
 
     namespace {
       static constexpr const char* kManualBodyTrackLockName = "PlayAnimationOnChargerSpecialLock";
+      
+      // Toggle to true so animators can play any animation on charger for testing
+      CONSOLE_VAR(bool, kIgnoreAnimWhitelist, "Animation", false);
     }
 
     #pragma mark ---- PlayAnimationAction ----
@@ -103,7 +107,7 @@ namespace Anki {
         return;
       }
 
-      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() ) {
+      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() && !kIgnoreAnimWhitelist ) {
         // default here is now to LOCK the body track, but first check the whitelist
 
         auto* dataLoader = GetRobot().GetContext()->GetDataLoader();

@@ -85,6 +85,10 @@ message GatewayWrapper {
     OnboardingRestart             onboarding_restart                 = 8;
     OnboardingGetStep             onboarding_get_step                = 9;
     OnboardingStepResponse        onboarding_step_response           = 10;
+    OnboardingCompleteRequest     onboarding_complete_request        = 11;
+    OnboardingCompleteResponse    onboarding_complete_response       = 12;
+    OnboardingWakeUpRequest       onboarding_wake_up_request         = 13;
+    OnboardingWakeUpResponse      onboarding_wake_up_response        = 14;
 
     // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 30;

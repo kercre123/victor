@@ -764,6 +764,10 @@
     "AnimName": "ag_onboarding_drive_straight"
   },
   {
+    "CladEvent": "OnboardingDriveOffCharger_1p0",
+    "AnimName": "ag_onboarding_drive_straight_alternative"
+  },
+  {
     "CladEvent": "OnboardingLookAround",
     "AnimName": "ag_onboarding_lookaround_loop"
   },

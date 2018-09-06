@@ -185,6 +185,12 @@ test_onboarding: .require_ip
 	$(curl_command)/v1/send_onboarding_input -d '{"onboarding_continue":{}}'
 	@echo
 
+test_onboarding_1p0: .require_ip
+	$(curl_command)/v1/get_onboarding_complete -d '{}'
+	@echo
+	$(curl_command)/v1/send_onboarding_wake_up -d '{}'
+	@echo
+
 test_wifi: .require_ip
 	$(curl_command)/v1/wifi_scan -d '{}'
 	@echo

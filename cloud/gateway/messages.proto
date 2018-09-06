@@ -118,6 +118,8 @@ message Onboarding {
     OnboardingCantFindCube             onboarding_cant_find_cube     = 6;
     OnboardingRobotExpectingStep       onboarding_expecting_step     = 7;
     OnboardingHabitatDetected          onboarding_habitat_detected   = 8;
+    OnboardingWakeUpFinished           onboarding_wake_up_finished   = 9;
+    Onboarding1p0ChargingInfo          onboarding_1p0_charging_info  = 10;
   }
 }
 
@@ -380,8 +382,9 @@ message DriveOnChargerResponse {
 enum OnboardingStages
 {
   NotStarted = 0;
-  FinishedComeHere = 1;
-  FinishedMeetVictor = 2;
+  // TODO: re-enable for 1.1:
+  // FinishedComeHere = 1;
+  // FinishedMeetVictor = 2;
   Complete = 3;
   DevDoNothing = 4;
 }
@@ -457,20 +460,24 @@ message OnboardingStepResponse {
 
 message OnboardingInputRequest {
   oneof oneof_message_type {
-    OnboardingContinue onboarding_continue = 1;
-    OnboardingSkip onboarding_skip = 2;
-    OnboardingRetryCharging onboarding_retry_charging = 3;
-    OnboardingGetStep onboarding_get_step = 4;
-    OnboardingSkipOnboarding onboarding_skip_onboarding = 5;
-    OnboardingRestart onboarding_restart = 6;
+    OnboardingCompleteRequest onboarding_complete_request    = 1;
+    OnboardingWakeUpRequest onboarding_wake_up_request       = 2;
+    OnboardingContinue onboarding_continue                   = 3;
+    OnboardingSkip onboarding_skip                           = 4;
+    OnboardingRetryCharging onboarding_retry_charging        = 5;
+    OnboardingGetStep onboarding_get_step                    = 6;
+    OnboardingSkipOnboarding onboarding_skip_onboarding      = 7;
+    OnboardingRestart onboarding_restart                     = 8;
   }
 }
 
 message OnboardingInputResponse {
   ResponseStatus status = 1;
   oneof oneof_message_type {
-    OnboardingContinueResponse   onboarding_continue_response    = 2;
-    OnboardingStepResponse       onboarding_step_response        = 3;
+    OnboardingCompleteResponse   onboarding_complete_response    = 2;
+    OnboardingWakeUpResponse     onboarding_wake_up_response     = 3;
+    OnboardingContinueResponse   onboarding_continue_response    = 4;
+    OnboardingStepResponse       onboarding_step_response        = 5;
   }
 }
 
@@ -479,6 +486,30 @@ message OnboardingRobotExpectingStep {
 }
 
 message OnboardingHabitatDetected {
+}
+
+message OnboardingCompleteRequest {
+}
+
+message OnboardingCompleteResponse {
+  bool completed = 1;
+}
+
+message OnboardingWakeUpRequest {
+}
+
+message OnboardingWakeUpResponse {
+  bool waking_up = 1;
+  Onboarding1p0ChargingInfo charging_info = 2;
+}
+
+message Onboarding1p0ChargingInfo {
+  bool on_charger = 1;
+  bool needs_to_charge = 2;
+  bool suggested_charger_time = 3;
+}
+
+message OnboardingWakeUpFinished {
 }
 
 message WakeWordBegin {

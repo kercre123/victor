@@ -124,6 +124,10 @@ public:
   
   uint8_t GetBatteryTemperature_C() const { return _battTemperature_C; }
 
+  // If the robot is low battery, this will give a timer of how long it should charge for in seconds. Once elapsed,
+  // or if the robot was not recently low battery, it will return 0.0
+  float GetSuggestedChargerTime() const;
+
 private:
   
   void Init(Robot* _robot);
@@ -132,10 +136,6 @@ private:
   void SetIsCharging(const bool isCharging);
   void UpdateOnChargerPlatform();
   void UpdateSuggestedChargerTime(bool wasLowBattery, bool wasCharging);
-  
-  // If the robot is low battery, this will give a timer of how long it should charge for. Once elapsed,
-  // it will return 0.
-  float GetSuggestedChargerTime() const;
   
   // Filtered and raw battery voltage in mV
   int GetBatteryVolts_mV() { return static_cast<int>(std::round(1000.f * _batteryVoltsFilt)); }

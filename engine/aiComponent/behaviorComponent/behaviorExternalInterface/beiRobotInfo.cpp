@@ -376,6 +376,12 @@ NVStorageComponent& BEIRobotInfo::GetNVStorageComponent() const
 {
   return _robot.GetNVStorageComponent();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BatteryComponent& BEIRobotInfo::GetBatteryComponent() const
+{
+  return _robot.GetBatteryComponent();
+}
 
   
 } // namespace Vector

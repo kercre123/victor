@@ -121,7 +121,14 @@ void BehaviorPoweringRobotOff::OnBehaviorEnteredActivatableScope()
 void BehaviorPoweringRobotOff::OnBehaviorActivated() 
 {
   // reset dynamic variables
+  const bool prevShouldStartPowerOffAnimaiton = _dVars.shouldStartPowerOffAnimaiton;
   _dVars = DynamicVariables();
+  
+  // make shouldStartPowerOffAnimaiton persist if _iConfig.waitForAnimMsg, since this behavior WantToBeActivated
+  // iff shouldStartPowerOffAnimaiton, whenever _iConfig.waitForAnimMsg
+  if( _iConfig.waitForAnimMsg ) {
+    _dVars.shouldStartPowerOffAnimaiton = prevShouldStartPowerOffAnimaiton;
+  }
 }
 
 
