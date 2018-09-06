@@ -283,12 +283,17 @@ bool SettingsCommManager::HandleAccountSettingChangeRequest(const external_inter
                                                             const bool updateSettingsJdoc)
 {
   // Change the account setting and apply the change
-  const bool success = _accountSettingsManager->SetAccountSetting(accountSetting, settingJson, updateSettingsJdoc);
+  bool ignoredDueToNoChange = false;
+  const bool success = _accountSettingsManager->SetAccountSetting(accountSetting, settingJson,
+                                                                  updateSettingsJdoc, ignoredDueToNoChange);
   if (!success)
   {
-    LOG_ERROR("SettingsCommManager.HandleAccountSettingChangeRequest",
-              "Error setting key %s to value %s", external_interface::AccountSetting_Name(accountSetting).c_str(),
-              settingJson.asString().c_str());
+    if (!ignoredDueToNoChange)
+    {
+      LOG_ERROR("SettingsCommManager.HandleAccountSettingChangeRequest",
+                "Error setting key %s to value %s", external_interface::AccountSetting_Name(accountSetting).c_str(),
+                settingJson.asString().c_str());
+    }
   }
 
   return success;
@@ -309,12 +314,17 @@ bool SettingsCommManager::HandleUserEntitlementChangeRequest(const external_inte
                                                              const bool updateUserEntitlementsJdoc)
 {
   // Change the user entitlement and apply the change
-  const bool success = _userEntitlementsManager->SetUserEntitlement(userEntitlement, settingJson, updateUserEntitlementsJdoc);
+  bool ignoredDueToNoChange = false;
+  const bool success = _userEntitlementsManager->SetUserEntitlement(userEntitlement, settingJson,
+                                                                    updateUserEntitlementsJdoc, ignoredDueToNoChange);
   if (!success)
   {
-    LOG_ERROR("SettingsCommManager.HandleUserEntitlementChangeRequest",
-              "Error setting key %s to value %s", external_interface::UserEntitlement_Name(userEntitlement).c_str(),
-              settingJson.asString().c_str());
+    if (!ignoredDueToNoChange)
+    {
+      LOG_ERROR("SettingsCommManager.HandleUserEntitlementChangeRequest",
+                "Error setting key %s to value %s", external_interface::UserEntitlement_Name(userEntitlement).c_str(),
+                settingJson.asString().c_str());
+    }
   }
 
   return success;

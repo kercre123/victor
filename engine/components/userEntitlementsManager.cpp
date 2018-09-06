@@ -139,9 +139,12 @@ void UserEntitlementsManager::UpdateDependent(const RobotCompMap& dependentComps
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserEntitlement userEntitlement,
                                                  const Json::Value& valueJson,
-                                                 const bool updateUserEntitlementsJdoc)
+                                                 const bool updateUserEntitlementsJdoc,
+                                                 bool& ignoredDueToNoChange)
 {
-  const std::string& key = external_interface::UserEntitlement_Name(userEntitlement);
+  ignoredDueToNoChange = false;
+
+  const std::string& key = UserEntitlement_Name(userEntitlement);
   if (!_currentUserEntitlements.isMember(key))
   {
     LOG_ERROR("UserEntitlementsManager.SetUserEntitlement.InvalidKey", "Invalid key %s; ignoring", key.c_str());
@@ -149,6 +152,12 @@ bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserE
   }
 
   const Json::Value prevValue = _currentUserEntitlements[key];
+  if (prevValue == valueJson)
+  {
+    // If the value is not actually changing, don't do anything.
+    ignoredDueToNoChange = true;
+    return false;
+  }
   _currentUserEntitlements[key] = valueJson;
 
   bool success = ApplyUserEntitlement(userEntitlement);
@@ -172,7 +181,7 @@ bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string UserEntitlementsManager::GetUserEntitlementAsString(const external_interface::UserEntitlement key) const
 {
-  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  const std::string& keyString = UserEntitlement_Name(key);
   if (!_currentUserEntitlements.isMember(keyString))
   {
     LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsString.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -186,7 +195,7 @@ std::string UserEntitlementsManager::GetUserEntitlementAsString(const external_i
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool UserEntitlementsManager::GetUserEntitlementAsBool(const external_interface::UserEntitlement key) const
 {
-  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  const std::string& keyString = UserEntitlement_Name(key);
   if (!_currentUserEntitlements.isMember(keyString))
   {
     LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -200,7 +209,7 @@ bool UserEntitlementsManager::GetUserEntitlementAsBool(const external_interface:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uint32_t UserEntitlementsManager::GetUserEntitlementAsUInt(const external_interface::UserEntitlement key) const
 {
-  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  const std::string& keyString = UserEntitlement_Name(key);
   if (!_currentUserEntitlements.isMember(keyString))
   {
     LOG_ERROR("UserEntitlementsManager.GetUserEntitlementAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -214,7 +223,7 @@ uint32_t UserEntitlementsManager::GetUserEntitlementAsUInt(const external_interf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool UserEntitlementsManager::DoesUserEntitlementUpdateCloudImmediately(const external_interface::UserEntitlement key) const
 {
-  const std::string& keyString = external_interface::UserEntitlement_Name(key);
+  const std::string& keyString = UserEntitlement_Name(key);
   const auto& config = (*_userEntitlementsConfig)[keyString];
   const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
   return saveToCloudImmediately;
@@ -263,19 +272,23 @@ bool UserEntitlementsManager::ApplyUserEntitlement(const external_interface::Use
       if (!success)
       {
         LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ValidateFunctionFailed", "Error attempting to apply %s user entitlement",
-                  external_interface::UserEntitlement_Name(key).c_str());
+                  UserEntitlement_Name(key).c_str());
         return false;
       }
     }
 
-    LOG_DEBUG("UserEntitlementsManager.ApplyUserEntitlement", "Applying user entitlement '%s'",
-              external_interface::UserEntitlement_Name(key).c_str());
-    success = (this->*(it->second.applicationFunction))();
-
-    if (!success)
+    const auto applicationFunc = it->second.applicationFunction;
+    if (applicationFunc != nullptr)
     {
-      LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ApplyFunctionFailed", "Error attempting to apply %s user entitlement",
-                external_interface::UserEntitlement_Name(key).c_str());
+      LOG_DEBUG("UserEntitlementsManager.ApplyUserEntitlement", "Applying user entitlement '%s'",
+                UserEntitlement_Name(key).c_str());
+      success = (this->*(applicationFunc))();
+
+      if (!success)
+      {
+        LOG_ERROR("UserEntitlementsManager.ApplyUserEntitlement.ApplyFunctionFailed", "Error attempting to apply %s user entitlement",
+                  UserEntitlement_Name(key).c_str());
+      }
     }
   }
   return success;
@@ -285,7 +298,7 @@ bool UserEntitlementsManager::ApplyUserEntitlement(const external_interface::Use
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool UserEntitlementsManager::ApplyUserEntitlementKickstarterEyes()
 {
-  static const std::string& key = external_interface::UserEntitlement_Name(external_interface::UserEntitlement::KICKSTARTER_EYES);
+  static const std::string& key = UserEntitlement_Name(external_interface::UserEntitlement::KICKSTARTER_EYES);
   const auto& value = _currentUserEntitlements[key].asBool();
   LOG_INFO("UserEntitlementsManager.ApplyUserEntitlementKickstarterEyes.Apply",
            "Setting kickstarter eyes flag to %s", value ? "true" : "false");

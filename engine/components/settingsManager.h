@@ -101,6 +101,8 @@ private:
   bool ApplySettingTimeZone();
   bool ValidateSettingMasterVolume();
   bool ValidateSettingEyeColor();
+  bool ValidateSettingLocale();
+  bool ValidateSettingDefaultLocation();
   bool ExecCommand(const std::vector<std::string>& args);
 
   // request that the specified RobotSetting is not immediately applied, but some other source will apply it

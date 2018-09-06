@@ -21,6 +21,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
+#include "util/environment/locale.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -138,8 +139,9 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   // Register the actual setting application methods, for those settings that want to execute code when changed:
   _settingSetters[external_interface::RobotSetting::master_volume] = { false, &SettingsManager::ValidateSettingMasterVolume, &SettingsManager::ApplySettingMasterVolume };
   _settingSetters[external_interface::RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
-  _settingSetters[external_interface::RobotSetting::locale]        = { false, nullptr,                                       &SettingsManager::ApplySettingLocale       };
+  _settingSetters[external_interface::RobotSetting::locale]        = { false, &SettingsManager::ValidateSettingLocale,       &SettingsManager::ApplySettingLocale       };
   _settingSetters[external_interface::RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
+  _settingSetters[external_interface::RobotSetting::default_location] = { false, &SettingsManager::ValidateSettingDefaultLocation, nullptr                              };
 
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
@@ -335,9 +337,13 @@ bool SettingsManager::ApplyRobotSetting(const external_interface::RobotSetting r
 
     if (force || !it->second.isLatentApplication)
     {
-      LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'",
-                RobotSetting_Name(robotSetting).c_str());
-      success = (this->*(it->second.applicationFunction))();
+      const auto applicationFunc = it->second.applicationFunction;
+      if (applicationFunc != nullptr)
+      {
+        LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'",
+                  RobotSetting_Name(robotSetting).c_str());
+        success = (this->*(applicationFunc))();
+      }
     }
     else
     {
@@ -373,7 +379,7 @@ bool SettingsManager::ApplySettingMasterVolume()
 {
   static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::master_volume);
   const auto& value = static_cast<external_interface::Volume>(_currentSettings[key].asUInt());
-  const auto& volumeName = external_interface::Volume_Name(value);
+  const auto& volumeName = Volume_Name(value);
   LOG_INFO("SettingsManager.ApplySettingMasterVolume.Apply", "Setting robot master volume to %s", volumeName.c_str());
 
   _robot->GetAudioClient()->SetRobotMasterVolume(value);
@@ -402,7 +408,7 @@ bool SettingsManager::ApplySettingEyeColor()
 {
   static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::eye_color);
   const auto& value = _currentSettings[key].asUInt();
-  const auto& eyeColorName = external_interface::EyeColor_Name(static_cast<external_interface::EyeColor>(value));
+  const auto& eyeColorName = EyeColor_Name(static_cast<external_interface::EyeColor>(value));
   LOG_INFO("SettingsManager.ApplySettingEyeColor.Apply", "Setting robot eye color to %s", eyeColorName.c_str());
 
   const auto& config = _robot->GetContext()->GetDataLoader()->GetEyeColorConfig();
@@ -418,10 +424,26 @@ bool SettingsManager::ApplySettingEyeColor()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ValidateSettingLocale()
+{
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::locale);
+  const auto& value = _currentSettings[key].asString();
+  if (!Anki::Util::Locale::IsValidLocaleString(value))
+  {
+    LOG_ERROR("SettingsManager.ValidateSettingLocale.Invalid",
+              "Invalid locale: %s", value.c_str());
+    return false;
+  }
+
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingLocale()
 {
   static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::locale);
-  const std::string& value = _currentSettings[key].asString();
+  const auto& value = _currentSettings[key].asString();
   DEV_ASSERT(_robot != nullptr, "SettingsManager.ApplySettingLocale.InvalidRobot");
   const bool success = _robot->SetLocale(value);
   if (!success)
@@ -456,6 +478,24 @@ bool SettingsManager::ApplySettingTimeZone()
   return true;
 #endif
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ValidateSettingDefaultLocation()
+{
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::default_location);
+  const auto& value = _currentSettings[key].asString();
+  static const size_t kMaxDefaultLocationStringLen = 255;
+  if (value.length() > kMaxDefaultLocationStringLen)
+  {
+    LOG_ERROR("SettingsManager.ValidateSettingDefaultLocation.Invalid",
+              "Default location string too long (length %zu)", value.length());
+    return false;
+  }
+  
+  return true;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::RequestLatentSettingsUpdate(const external_interface::RobotSetting setting)
