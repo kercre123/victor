@@ -109,6 +109,7 @@ private:
     EState              state;
     EDealingState       dealingState;
     EOutcome            outcome;
+    float               gameStartTime_s;
   };
 
   InstanceConfig _iConfig;
@@ -116,6 +117,13 @@ private:
 
   BlackJackGame _game;
   BlackJackVisualizer _visualizer;
+
+  // DAS Session tracking
+  float _sessionStartTime_s;
+  int _humanWinsInSession;
+  int _robotWinsInSession;
+  int _gamesInSession;
+  bool _newSession;
 
   // Helper functions
   IBehavior* SetUpSpeakingBehavior(const std::string& vocalizationString);
