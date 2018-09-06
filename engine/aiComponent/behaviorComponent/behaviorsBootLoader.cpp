@@ -236,7 +236,7 @@ void BehaviorsBootLoader::InitOnboarding()
   if( static_cast<u8>(_stage) < static_cast<u8>(OnboardingStages::Complete) ) {
     // explicitly pass the stage so we don't have to worry about when messages are received
     std::shared_ptr<BehaviorOnboarding1p0> castPtr;
-    _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding), castPtr);
+    _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding1p0), castPtr);
     if( castPtr != nullptr ) {
       castPtr->SetOnboardingStage(_stage);
     }
