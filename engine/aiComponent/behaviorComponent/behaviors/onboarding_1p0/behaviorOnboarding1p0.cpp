@@ -273,10 +273,18 @@ void BehaviorOnboarding1p0::TransitionToPhoneIcon()
   CancelDelegates( false );
   
   SET_STATE( LookAtPhone );
-  // this behavior runs until its ContinueReceived is called
-  DelegateIfInControl( _iConfig.behaviorLookAtPhone.get(), [this](){
-    TransitionToWakingUp();
-  });
+  if( ANKI_VERIFY( _iConfig.behaviorLookAtPhone->WantsToBeActivated(),
+                   "BehaviorOnboarding.TransitionToPhoneIcon.DWTBA",
+                   "OnboardingLookAtPhone doesnt want to activate" ) )
+  {
+    // this behavior runs until its ContinueReceived is called
+    DelegateIfInControl( _iConfig.behaviorLookAtPhone.get(), [this](){
+      TransitionToWakingUp();
+    });
+  } else {
+    const bool timeout = true; // an error is closer to a timeout than a voice command
+    TerminateOnboarding( timeout );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
