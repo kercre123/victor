@@ -34,14 +34,61 @@ ShowAudioStreamStateManager::~ShowAudioStreamStateManager()
 
 }
 
+void ShowAudioStreamStateManager::Update()
+{
+  {
+    std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
+    if(_havePendingTriggerResponse)
+    {
+      if(_pendingTriggerResponseHasGetIn)
+      {
+        StartTriggerResponseWithGetIn(_responseCallback);
+      }
+      else
+      {
+        StartTriggerResponseWithoutGetIn(_responseCallback);
+      }
 
+      _havePendingTriggerResponse = false;
+      _responseCallback = nullptr;
+    }
+  }
+}
+  
 void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg)
 {
+  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   _postAudioEvent = msg.postAudioEvent;
   _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
   _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
   _getInAnimationTag = msg.getInAnimationTag;
   _getInAnimName = std::string(msg.getInAnimationName, msg.getInAnimationName_length);
+}
+
+void ShowAudioStreamStateManager::SetPendingTriggerResponseWithGetIn(OnTriggerAudioCompleteCallback callback)
+{
+  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
+  if(_havePendingTriggerResponse)
+  {
+    PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithGetIn.ExisitingResponse",
+                        "Already have pending trigger reponse, overridding");
+  }
+  _havePendingTriggerResponse = true;
+  _pendingTriggerResponseHasGetIn = true;
+  _responseCallback = callback;
+}
+  
+void ShowAudioStreamStateManager::SetPendingTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback callback)
+{
+  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
+  if(_havePendingTriggerResponse)
+  {
+    PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithoutGetIn.ExisitingResponse",
+                        "Already have pending trigger reponse, overridding");
+  }
+  _havePendingTriggerResponse = true;
+  _pendingTriggerResponseHasGetIn = false;
+  _responseCallback = callback;
 }
 
 
@@ -104,19 +151,22 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
 }
 
 
-bool ShowAudioStreamStateManager::HasValidTriggerResponse() const
+bool ShowAudioStreamStateManager::HasValidTriggerResponse()
 {
+  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   return _postAudioEvent.audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid;
 }
 
 
-bool ShowAudioStreamStateManager::ShouldStreamAfterTriggerWordResponse() const 
-{ 
+bool ShowAudioStreamStateManager::ShouldStreamAfterTriggerWordResponse()
+{
+  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   return HasValidTriggerResponse() && _shouldTriggerWordStartStream;
 }
 
-bool ShowAudioStreamStateManager::ShouldSimulateStreamAfterTriggerWord() const
+bool ShowAudioStreamStateManager::ShouldSimulateStreamAfterTriggerWord()
 {
+  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   return HasValidTriggerResponse() && _shouldTriggerWordSimulateStream;
 }
 

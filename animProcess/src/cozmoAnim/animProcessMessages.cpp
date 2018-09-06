@@ -813,6 +813,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
   _context->GetMicDataSystem()->Update(currTime_nanosec);
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
+  _context->GetShowAudioStreamStateManager()->Update();
 
   // Process incoming messages from engine
   u32 dataLen;

@@ -200,7 +200,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
   if(showStreamState->HasValidTriggerResponse()){
     SetWillStream(true);
   }
-  showStreamState->StartTriggerResponseWithoutGetIn(callback);
+  showStreamState->SetPendingTriggerResponseWithoutGetIn(callback);
 }
 
 void MicDataSystem::FakeTriggerWordDetection()

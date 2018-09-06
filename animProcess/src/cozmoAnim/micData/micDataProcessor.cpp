@@ -192,7 +192,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
     return;
   }
 
-  showStreamState->StartTriggerResponseWithGetIn();
+  showStreamState->SetPendingTriggerResponseWithGetIn();
 
   RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
