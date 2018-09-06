@@ -803,8 +803,8 @@ namespace Anki {
     }
 
     void VizManager::SendRobotState(const RobotState &msg,
-                                    const u8  videoFrameRateHz,
-                                    const u8  imageProcFrameRateHz,
+                                    const u16 videoFramePeriodMs,
+                                    const u16 imageProcFramePeriodMs,
                                     const u32 numProcAnimFaceKeyframes,
                                     const u8  lockedTracks,
                                     const u8  tracksInUse,                                    
@@ -814,7 +814,7 @@ namespace Anki {
                                     )
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse, batteryVolts)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFramePeriodMs, imageProcFramePeriodMs, lockedTracks, tracksInUse, batteryVolts)));
     }
 
     void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)

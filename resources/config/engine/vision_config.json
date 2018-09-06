@@ -65,7 +65,7 @@
   {
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
-    "TargetValue"               : 80,    // [0,255] - Try to make targetPercentile have this value
+    "TargetValue"               : 128,   // [0,255] - Try to make targetPercentile have this value
     "TargetPercentile"          : 0.50,  // [0.0, 1.0]
     "CyclingTargetValues"       : [5, 100, 250], // When "cycling" exposure is enabled, the target values to use [0,255]
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this

@@ -825,8 +825,8 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM_TRACK_LOCKS, Anki::NamedColors::GREEN, txt);
 
 
-  sprintf(txt, "Video: %d Hz   Proc: %d Hz",
-    payload.videoFrameRateHz, payload.imageProcFrameRateHz);
+  sprintf(txt, "Video: %.1f Hz   Proc: %.1f Hz",
+    1000.f / (f32)payload.videoFramePeriodMs, 1000.f / (f32)payload.imageProcPeriodMs);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Status: %5s %5s %6s %4s %4s",

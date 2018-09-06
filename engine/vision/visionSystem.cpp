@@ -712,6 +712,8 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     wbMode = Vision::CameraParamsController::WhiteBalanceMode::GrayWorld;
   }
   
+  _cameraParamsController->ClearMeteringRegions();
+  
   bool useCycling = false;
   if(!kMeterFromDetections || _meteringRegions.empty())
   {
@@ -730,7 +732,6 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     useCycling = false;
     
     _lastMeteringTimestamp_ms = imageCache.GetTimeStamp();
-    _cameraParamsController->ClearMeteringRegions();
     
     for(auto const& entry : _meteringRegions)
     {
@@ -1697,7 +1698,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.UpdateCameraParamsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::AutoExposure,      isAutoExposing);
+      visionModesProcessed.SetBitFlag(VisionMode::AutoExposure, isAutoExposing);
       visionModesProcessed.SetBitFlag(VisionMode::WhiteBalance, isWhiteBalancing);
     }
   }

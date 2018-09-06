@@ -1184,14 +1184,14 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // TODO: Should this just be a different message? Or one that includes the state message from the robot?
   RobotState stateMsg(msg);
 
-  const float imageFrameRate = 1000.0f / GetVisionComponent().GetFramePeriod_ms();
-  const float imageProcRate = 1000.0f / GetVisionComponent().GetProcessingPeriod_ms();
+  const u16 imageFramePeriod_ms = Util::numeric_cast<u16>( GetVisionComponent().GetFramePeriod_ms() );
+  const u16 imageProcPeriod_ms  = Util::numeric_cast<u16>( GetVisionComponent().GetProcessingPeriod_ms() );
 
   // Send state to visualizer for displaying
   GetContext()->GetVizManager()->SendRobotState(
     stateMsg,
-    (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
-    (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
+    imageFramePeriod_ms,
+    imageProcPeriod_ms,
     GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
     GetMoveComponent().GetLockedTracks(),
     GetAnimationComponent().GetAnimState_TracksInUse(),
