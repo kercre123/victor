@@ -233,10 +233,14 @@ void CompositeImage::MergeInImage(const CompositeImage& otherImage)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImage::AddLayer(CompositeImageLayer&& layer)
 {
-  auto resultPair = _layerMap.emplace(layer.GetLayerName(), std::move(layer));
-  // If map entry already exists, just update existing iterator
-  if(!resultPair.second){
-    resultPair.first->second = std::move(layer);
+  const auto& layerName = layer.GetLayerName();
+  const auto layerIt = _layerMap.find(layerName);
+  if (layerIt != _layerMap.end()) {
+    // If map entry already exists, just update existing iterator
+    layerIt->second = std::move(layer);
+  } else {
+    // Add new layer entry
+    _layerMap.emplace(layerName, std::move(layer));
   }
   return true;
 }

@@ -152,7 +152,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       data.visualAngleAwayFromTarget_rad = angle.ToFloat();
     }
     
-    if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
+    if(!GetLogger().Append(GetDebugLabel(), data))
     {
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
     }
