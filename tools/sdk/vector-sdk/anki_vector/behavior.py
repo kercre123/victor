@@ -183,9 +183,8 @@ class BehaviorComponent(util.Component):
 
         .. code-block:: python
 
-            connected_cubes = robot.world.connected_light_cubes
-            if connected_cubes:
-                robot.behavior.dock_with_cube(object_id=connected_cube[0])
+            if robot.world.connected_light_cube:
+                robot.behavior.dock_with_cube(object_id=robot.world.connected_light_cube)
         """
         if target_object is None:
             raise Exception("Must supply a target_object to dock_with_cube")

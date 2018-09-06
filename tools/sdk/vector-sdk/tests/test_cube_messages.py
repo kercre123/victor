@@ -20,7 +20,7 @@ def main():
 
     # The robot shall drive straight, stop and then turn around
     with anki_vector.Robot(args.serial, port=args.port) as robot:
-        print("disconnecting from any connected cubes...")
+        print("disconnecting from any connected cube...")
         robot.world.disconnect_cube()
 
         loop = robot.loop
@@ -29,25 +29,24 @@ def main():
         print("connect to a cube...")
         connectionResult = robot.world.connect_cube()
         print(connectionResult)
-
-        connected_cubes = robot.world.connected_light_cubes
-        print("should be connected now, we are connected to {0} objects.".format(len(connected_cubes)))
-        for i in connected_cubes:
-            print("connected to cube {0}, clearing preferred cube for 1 second...".format(i.factory_id))
+        
+        connected_cube = robot.world.connected_light_cube
+        if connected_cube:
+            print("connected to cube {0}, clearing preferred cube for 1 second...".format(connected_cube.factory_id))
             robot.world.forget_preferred_cube()
             loop.run_until_complete(utilities.wait_async(1.0))
 
             print("resetting preferred cube to the one we connected to...")
-            robot.world.set_preferred_cube(i.factory_id)
+            robot.world.set_preferred_cube(connected_cube.factory_id)
             loop.run_until_complete(utilities.wait_async(1.0))
 
             robot.world.flash_cube_lights()
 
         print("for the next 8 second, please tap, move, or allow victor to observe the cube, events will be logged to console.")
         for _ in range(16):
-            for i in connected_cubes:
-                print(i)
-                print("last observed timestamp: " + str(i.last_observed_time) + ", robot timestamp: " + str(i.last_observed_robot_timestamp))
+            if connected_cube:
+                print(connected_cube)
+                print("last observed timestamp: " + str(connected_cube.last_observed_time) + ", robot timestamp: " + str(connected_cube.last_observed_robot_timestamp))
             loop.run_until_complete(utilities.wait_async(0.5))
 
         print("disconnecting...")

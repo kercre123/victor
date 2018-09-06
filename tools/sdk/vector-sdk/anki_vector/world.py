@@ -118,16 +118,16 @@ class World(util.Component):
         return self._objects[object_id]
 
     @property
-    def connected_light_cubes(self):
-        """Returns all light cube attached to anki_vector
+    def connected_light_cube(self):
+        """Returns a light cube attached to Vector, if any
 
         Returns:
-            A list of :class:`anki_vector.objects.LightCube` instances
+            A :class:`anki_vector.objects.LightCube` instance, or None
         """
-        result = []
+        result = None
         cube = self.light_cube.get(objects.LightCube1Type)
         if cube and cube.is_connected:
-            result.append(cube)
+            result = cube
 
         return result
 
@@ -177,7 +177,7 @@ class World(util.Component):
             handler = object_event_handlers[object_event_type]
             handler(object_event_type, getattr(msg, object_event_type))
         else:
-            self.logger.warning('An object_event was recieved with unknown type:{0}'.format(object_event_type))
+            self.logger.warning('An object_event was received with unknown type:{0}'.format(object_event_type))
 
     def _on_object_connection_state(self, _, msg):
         self.logger.debug('Got Object Connection State Message ( object_id: {0}, factory_id: {1}, object_type: {2}, connected: {3} )'.format(msg.object_id, msg.factory_id, msg.object_type, msg.connected))

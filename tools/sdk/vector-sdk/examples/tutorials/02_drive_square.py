@@ -16,9 +16,7 @@
 
 """Make Vector drive in a square.
 
-This script combines the two previous examples (02_drive_and_turn.py and
-03_count.py) to make Vector drive in a square by going forward and turning
-left 4 times in a row.
+Make Vector drive in a square by going forward and turning left 4 times in a row.
 """
 
 import anki_vector

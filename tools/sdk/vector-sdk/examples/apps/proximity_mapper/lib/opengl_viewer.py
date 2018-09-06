@@ -455,7 +455,7 @@ class OpenGLViewer():
         robot_frame = world_frame.robot_frame
         robot_pose = robot_frame.pose
 
-        # Render the cubes
+        # Render the cube
         for i in range(1):
             cube_frame = world_frame.cube_frames[i]
             if cube_frame is None:

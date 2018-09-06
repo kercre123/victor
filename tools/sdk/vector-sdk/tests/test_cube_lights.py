@@ -27,9 +27,8 @@ def main():
         # ensure we are connected to a cube
         robot.world.connect_cube()
 
-        connected_cubes = robot.world.connected_light_cubes
-        if connected_cubes:
-            cube = connected_cubes[0]
+        if robot.world.connected_light_cube:
+            cube = robot.world.connected_light_cube
 
             # Set cube lights to yellow
             cube.set_lights(anki_vector.lights.yellow_light)
@@ -47,7 +46,7 @@ def main():
 
             print("------ finish cube light interactions ------")
         else:
-            print("------ FAILURE: No connected cubes found ------")
+            print("------ FAILURE: No connected cube found ------")
 
 
 if __name__ == "__main__":

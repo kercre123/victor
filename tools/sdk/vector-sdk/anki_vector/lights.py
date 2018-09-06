@@ -80,7 +80,7 @@ WHITE_BALANCED_CUBE_PROFILE = ColorProfile(red_multiplier=1.0,
 
 
 class Light:
-    """Lights are used with LightCubes and Vector's backpack.
+    """Lights are used with Vector's LightCube and backpack.
 
     Lights may either be "on" or "off", though in practice any colors may be
     assigned to either state (including no color/light).

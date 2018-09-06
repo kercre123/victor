@@ -24,9 +24,8 @@ def main():
     with anki_vector.Robot(args.serial, port=args.port) as robot:
         robot.world.connect_cube()
 
-        connected_cubes = robot.world.connected_light_cubes
-        if connected_cubes:
-            dock_response = robot.behavior.dock_with_cube(connected_cubes[0])
+        if robot.world.connected_light_cube:
+            dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
             docking_result = dock_response.result
 
     if docking_result:
