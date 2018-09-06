@@ -39,10 +39,6 @@
     "commit": "8c34f848e18c4bd34d02db7f19a0ed1a0a8f5852",
     "branch": "master"
   },
-  "github.com/hashicorp/go-multierror": {
-    "commit": "b7773ae218740a7be65057fc60b366a49b538a44",
-    "branch": "master"
-  },
   "github.com/gwatts/rootcerts": {
     "commit": "bfd86e4fe5adc76db72b682148820bdcf104f308",
     "branch": "master"
