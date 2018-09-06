@@ -63,10 +63,6 @@ func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud
 		return c.writeRequest(ctx, req.GetWrite())
 	case cloud.DocRequestTag_DeleteReq:
 		return c.deleteRequest(ctx, req.GetDeleteReq())
-	case cloud.DocRequestTag_User:
-		return c.userRequest()
-	case cloud.DocRequestTag_Thing:
-		return c.thingRequest()
 	}
 	err := fmt.Errorf("Major error: received unknown tag %d", req.Tag())
 	log.Println(err)
@@ -102,15 +98,27 @@ func (c *conn) deleteRequest(ctx context.Context, cladReq *cloud.DeleteRequest) 
 	return cloud.NewDocResponseWithDeleteResp(&cloud.Void{}), nil
 }
 
-func (c *conn) userRequest() (*cloud.DocResponse, error) {
+func (c *client) handleConnectionless(req *cloud.DocRequest) (bool, *cloud.DocResponse, error) {
+	switch req.Tag() {
+	case cloud.DocRequestTag_User:
+		r, e := c.handleUserRequest()
+		return true, r, e
+	case cloud.DocRequestTag_Thing:
+		r, e := c.handleThingRequest()
+		return true, r, e
+	}
+	return false, nil, nil
+}
+
+func (c *client) handleUserRequest() (*cloud.DocResponse, error) {
 	var user string
-	if c.tok != nil {
-		user = c.tok.UserID()
+	if c.opts.tokener != nil {
+		user = c.opts.tokener.UserID()
 	}
 	return cloud.NewDocResponseWithUser(&cloud.UserResponse{UserId: user}), nil
 }
 
-func (c *conn) thingRequest() (*cloud.DocResponse, error) {
+func (c *client) handleThingRequest() (*cloud.DocResponse, error) {
 	thing, err := robot.CertCommonName("/factory/cloud")
 	return cloud.NewDocResponseWithThing(&cloud.ThingResponse{ThingName: thing}), err
 }
