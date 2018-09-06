@@ -28,6 +28,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
@@ -70,6 +71,7 @@ BehaviorOnboarding1p0::DynamicVariables::DynamicVariables()
   markedComplete = false;
   triggerWordStartTime_s = -1.0f;
   treadsStateEndTime_s = -1.0f;
+  isStimMaxed = false;
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -161,9 +163,16 @@ void BehaviorOnboarding1p0::OnBehaviorActivated()
   // disable wake word for now
   DisableWakeWord();
   
+  FixStimAtMax();
+  
   TransitionToPhoneIcon();
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding1p0::OnBehaviorDeactivated()
+{
+  UnFixStim();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding1p0::BehaviorUpdate() 
@@ -399,6 +408,10 @@ void BehaviorOnboarding1p0::TransitionToWaitingForVC()
                     (onCharger ? BehaviorIDToString(kBehaviorIDWhileWaitingOnCharger)
                                : BehaviorIDToString(kBehaviorIDWhileWaiting)) ) )
     {
+      // when waiting for trigger word, assume the user will use one shortly and let stim float so that it's not
+      // obviously fixed at 1
+      UnFixStim();
+      
       DelegateIfInControl( behavior, [this](){
         // keep doing this if it somehow ends
         TransitionToWaitingForVC();
@@ -635,6 +648,28 @@ bool BehaviorOnboarding1p0::ShouldCheckPowerOff() const
     case State::PowerOff:
     case State::WaitingForTermination:
       return false;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding1p0::FixStimAtMax()
+{
+  if( GetBEI().HasMoodManager() && !_dVars.isStimMaxed ) {
+    auto& moodManager = GetBEI().GetMoodManager();
+    moodManager.TriggerEmotionEvent("OnboardingStarted");
+    moodManager.SetEmotionFixed( EmotionType::Stimulated, true );
+    _dVars.isStimMaxed = true;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding1p0::UnFixStim()
+{
+  if( GetBEI().HasMoodManager() && _dVars.isStimMaxed ) {
+    auto& moodManager = GetBEI().GetMoodManager();
+    // since this behavior is always at the base of the stack (todo: unit test this), just set it fixed==false
+    moodManager.SetEmotionFixed( EmotionType::Stimulated, false );
+    _dVars.isStimMaxed = false;
   }
 }
 

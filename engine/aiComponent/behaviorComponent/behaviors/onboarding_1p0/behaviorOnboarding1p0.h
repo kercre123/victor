@@ -53,6 +53,7 @@ protected:
   
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
   
   virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
@@ -107,6 +108,9 @@ private:
   bool IsBatteryCountdownDone() const;
   
   bool ShouldCheckPowerOff() const;
+  
+  void FixStimAtMax();
+  void UnFixStim();
 
   struct InstanceConfig {
     InstanceConfig();
@@ -135,6 +139,8 @@ private:
     float treadsStateEndTime_s;
     
     BatteryInfo batteryInfo;
+    
+    bool isStimMaxed;
   };
 
   InstanceConfig _iConfig;

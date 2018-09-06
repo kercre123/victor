@@ -145,6 +145,9 @@ private:
   void OnDelegateComplete();
   
   void SendStageToApp( const OnboardingStages& stage ) const;
+  
+  void FixStimAtMax();
+  void UnFixStim();
 
   // all events are queued so that their order is the same whether its an app event or dev tools event.
   // this holds the event data.
@@ -242,6 +245,8 @@ private:
     bool shouldDriveOffCharger;
 
     BatteryInfo batteryInfo;
+    
+    bool isStimMaxed;
     
     bool devConsoleStagePending;
     OnboardingStages devConsoleStage;

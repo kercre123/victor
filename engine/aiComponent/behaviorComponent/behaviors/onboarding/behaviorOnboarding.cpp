@@ -35,6 +35,7 @@
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/moodSystem/moodManager.h"
 #include "proto/external_interface/shared.pb.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
@@ -97,6 +98,8 @@ BehaviorOnboarding::DynamicVariables::DynamicVariables()
   robotHeardTrigger = false;
   
   shouldDriveOffCharger = false;
+  
+  isStimMaxed = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -350,6 +353,8 @@ void BehaviorOnboarding::OnBehaviorActivated()
       _dVars.wakeUpState = WakeUpState::Complete;
     });
   }
+  
+  FixStimAtMax();
 }
 
 void BehaviorOnboarding::OnBehaviorDeactivated()
@@ -357,6 +362,8 @@ void BehaviorOnboarding::OnBehaviorDeactivated()
   PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorDeactivated.OnboardingStatus", "Onboarding complete (deactivated)");
   SmartEnableEngineResponseToTriggerWord();
   SetAllowAnyIntent();
+  
+  UnFixStim();
 }
 
 
@@ -612,6 +619,11 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
     
     ExternalInterface::OnboardingState msg{ stage, forceSkipStackReset };
     ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msg)} );
+  }
+  
+  if( stage == OnboardingStages::Complete ) {
+    // let stim float once in app onboarding
+    UnFixStim();
   }
   
   SendStageToApp( stage );
@@ -1331,6 +1343,28 @@ void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
     }
   }
   
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::FixStimAtMax()
+{
+  if( GetBEI().HasMoodManager() && !_dVars.isStimMaxed ) {
+    auto& moodManager = GetBEI().GetMoodManager();
+    moodManager.TriggerEmotionEvent("OnboardingStarted");
+    moodManager.SetEmotionFixed( EmotionType::Stimulated, true );
+    _dVars.isStimMaxed = true;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::UnFixStim()
+{
+  if( GetBEI().HasMoodManager() && _dVars.isStimMaxed ) {
+    auto& moodManager = GetBEI().GetMoodManager();
+    // since this behavior is always at the base of the stack (todo: unit test this), just set it fixed==false
+    moodManager.SetEmotionFixed( EmotionType::Stimulated, false );
+    _dVars.isStimMaxed = false;
+  }
 }
 
 }
