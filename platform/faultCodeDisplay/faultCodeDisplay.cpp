@@ -94,11 +94,15 @@ int main(int argc, char * argv[])
 {
   using namespace Anki::Vector;
   
-  lcd_init();
-
   char* end;
   // Convert first argument from a string to a uint16_t
-  uint16_t code = (uint16_t)strtoimax(argv[1], &end, 10);
+  auto res = strtoumax(argv[1], &end, 10);
+  if (res > std::numeric_limits<uint16_t>::max() || res == 0) {
+    return -1;
+  }
+  uint16_t code = (uint16_t)res;
+
+  lcd_init();
 
   // See if an image or number should be drawn
   bool imageDrawn = false;
