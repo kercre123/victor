@@ -12,6 +12,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
@@ -21,18 +22,26 @@
 //
 // Programmatic defaults. These values are used when unless overridden by configuration.
 //
-#define TTS_DEFAULT_LANGUAGE   "en"
-#define TTS_DEFAULT_VOICE      "Ryan22k_CO"
-#define TTS_DEFAULT_SPEED      100
-#define TTS_DEFAULT_SHAPING    100
-#define TTS_DEFAULT_PITCH      100
-#define TTS_LEADINGSILENCE_MS  50
-#define TTS_TRAILINGSILENCE_MS 50
+#define TTS_DEFAULT_LANGUAGE    "en"
+#define TTS_DEFAULT_VOICE       "Ryan22k_CO"
+#define TTS_DEFAULT_SPEED       100
+#define TTS_DEFAULT_SHAPING     100
+#define TTS_DEFAULT_PITCH       100
 #define TTS_PAUSEPUNCTUATION_MS 1000
 #define TTS_PAUSESEMICOLON_MS   500
 #define TTS_PAUSECOMMA_MS       250
 #define TTS_PAUSEBRACKET_MS     100
 #define TTS_PAUSESPELLING_MS    100
+
+//
+// Platform-specific defaults
+#ifdef ANKI_PLATFORM_OSX
+#define TTS_LEADINGSILENCE_MS   50
+#define TTS_TRAILINGSILENCE_MS  50
+#else
+#define TTS_LEADINGSILENCE_MS   0
+#define TTS_TRAILINGSILENCE_MS  0
+#endif
 
 // Configuration keys
 #define TTS_VOICE_KEY   "voice"
