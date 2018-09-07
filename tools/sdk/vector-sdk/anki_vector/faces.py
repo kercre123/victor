@@ -258,24 +258,22 @@ class FaceComponent(util.Component):
         return await self.interface.RequestEnrolledNames(req)
 
     @sync.Synchronizer.wrap
-    async def update_enrolled_face_by_id(self, face_id, old_name, new_name):
+    async def update_enrolled_face_by_id(self, face_id: int, old_name: str, new_name: str):
         """Update the name enrolled for a given face.
 
-        Args:
-            face_id (int): The ID of the face to rename.
-            old_name (string): The old name of the face (must be correct, otherwise message is ignored).
-            new_name (string): The new name for the face.
+        :param face_id: The ID of the face to rename.
+        :param old_name: The old name of the face (must be correct, otherwise message is ignored).
+        :param new_name: The new name for the face.
         """
         req = protocol.UpdateEnrolledFaceByIDRequest(faceID=face_id,
                                                      oldName=old_name, newName=new_name)
         return await self.interface.UpdateEnrolledFaceByID(req)
 
     @sync.Synchronizer.wrap
-    async def erase_enrolled_face_by_id(self, face_id):
+    async def erase_enrolled_face_by_id(self, face_id: int):
         """Erase the enrollment (name) record for the face with this ID.
 
-        Args:
-            face_id (int): The ID of the face to erase.
+        :param face_id: The ID of the face to erase.
         """
         req = protocol.EraseEnrolledFaceByIDRequest(faceID=face_id)
         return await self.interface.EraseEnrolledFaceByID(req)
@@ -287,7 +285,7 @@ class FaceComponent(util.Component):
         return await self.interface.EraseAllEnrolledFaces(req)
 
     @sync.Synchronizer.wrap
-    async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot=True, sayName=False, useMusic=False):
+    async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot: bool = True, sayName: bool = False, useMusic: bool = False):
         req = protocol.SetFaceToEnrollRequest(name=name,
                                               observedID=observedID,
                                               saveID=saveID,
@@ -297,12 +295,11 @@ class FaceComponent(util.Component):
         return await self.interface.SetFaceToEnroll(req)
 
     @sync.Synchronizer.wrap
-    async def enable_vision_mode(self, enable, mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
+    async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
         """Edit the vision mode
 
-        Args:
-            enable (bool): Enable/Disable the mode specified
-            mode (messaging.protocol.VisionMode): Specifies the vision mode to edit
+        :param enable: Enable/Disable the mode specified.
+        :param mode: Specifies the vision mode to edit.
         """
         enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=mode, enable=enable)
         return await self.interface.EnableVisionMode(enable_vision_mode_request)

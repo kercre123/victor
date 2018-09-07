@@ -19,14 +19,13 @@ class Color:
     Either int_color or rgb may be used to specify the actual color.
     Any alpha components (from int_color) are ignored - all colors are fully opaque.
 
-    Args:
-        int_color (int): A 32 bit value holding the binary RGBA value (where A
+    :param int_color: A 32 bit value holding the binary RGBA value (where A
             is ignored and forced to be fully opaque).
-        rgb (tuple): A tuple holding the integer values from 0-255 for (reg, green, blue)
-        name (str): A name to assign to this color
+    :param rgb: A tuple holding the integer values from 0-255 for (reg, green, blue)
+    :param name: A name to assign to this color.
     """
 
-    def __init__(self, int_color=None, rgb=None, name=None):
+    def __init__(self, int_color: int = None, rgb: tuple = None, name: str = None):
         self.name = name
         self._int_color = 0
         if int_color is not None:

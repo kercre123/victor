@@ -106,15 +106,14 @@ class MyClass:
 
     Docstring for constructor should appear in the class description
 
-    Args:
-        default_timeout (int): Default number of seconds for operations to
+    :param default_timeout: Default number of seconds for operations to
             wait for timeout.
     '''
     #: string: Description of a class-level attribute.  The description
     #: may span multiple lines as long as they all begin with #:
     class_level_attr = ''
 
-    def __init__(self, default_timeout=None):
+    def __init__(self, default_timeout: int = None):
         #: int: The default number of seconds for operations to wait for timeout.
         self.default_timeout = default_timeout
 

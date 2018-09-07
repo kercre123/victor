@@ -66,7 +66,7 @@ class AnimationComponent(util.Component):
         return result
 
     @sync.Synchronizer.wrap
-    async def play_animation(self, anim, loop_count=1, ignore_body_track=True, ignore_head_track=True, ignore_lift_track=True):
+    async def play_animation(self, anim: str, loop_count: int = 1, ignore_body_track: bool = True, ignore_head_track: bool = True, ignore_lift_track: bool = True):
         """Starts an animation playing on a robot.
 
         Vector must be off of the charger to play an animation.
@@ -75,9 +75,11 @@ class AnimationComponent(util.Component):
             If you want your program to work more reliably across all versions
             we recommend using :meth:`play_animation_trigger` instead. TODO: implement play_animation_trigger
 
-        Args:
-            anim (str or anki_vector.protocol.Animation): The animation to play.
-            loop_count (int): Number of times to play the animation.
+        :param anim: The animation to play. Can be of type str or :class:`anki_vector.protocol.Animation`.
+        :param loop_count: Number of times to play the animation.
+        :param ignore_body_track: True to ignore the animation track for Vector's body (i.e. the wheels / treads).
+        :param ignore_head_track: True to ignore the animation track for Vector's head.
+        :param ignore_lift_track: True to ignore the animation track for Vector's lift.
         """
         animation = anim
         if not isinstance(anim, protocol.Animation):

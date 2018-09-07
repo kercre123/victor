@@ -18,13 +18,18 @@ Utility functions and classes for the Vector SDK
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['Angle',
+           'BaseOverlay',
            'Component',
+           'Distance',
+           'ImageRect',
+           'Matrix44',
            'Pose',
            'Position',
            'Quaternion',
-           'Vector3',
-           'Distance',
+           'RectangleOverlay',
            'Speed',
+           'Vector2',
+           'Vector3',
            'degrees',
            'radians',
            'angle_z_to_quaternion',
@@ -113,49 +118,23 @@ def get_class_logger(module: str, obj: object) -> logging.Logger:
     return logging.getLogger(".".join([module, type(obj).__name__]))
 
 
-def angle_z_to_quaternion(angle_z):
-    """This function converts an angle in the z axis (Euler angle z component) to a quaternion.
-
-    Args:
-        angle_z (:class:`anki_vector.util.Angle`): The z axis angle.
-
-    Returns:
-        q0, q1, q2, q3 (float, float, float, float): A tuple with all the members
-            of a quaternion defined by angle_z.
-    """
-
-    # Define the quaternion to be converted from a Euler angle (x,y,z) of 0,0,angle_z
-    # These equations have their original equations above, and simplified implemented
-    # q0 = cos(x/2)*cos(y/2)*cos(z/2) + sin(x/2)*sin(y/2)*sin(z/2)
-    q0 = math.cos(angle_z.radians / 2)
-    # q1 = sin(x/2)*cos(y/2)*cos(z/2) - cos(x/2)*sin(y/2)*sin(z/2)
-    q1 = 0
-    # q2 = cos(x/2)*sin(y/2)*cos(z/2) + sin(x/2)*cos(y/2)*sin(z/2)
-    q2 = 0
-    # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
-    q3 = math.sin(angle_z.radians / 2)
-    return q0, q1, q2, q3
-
-
 class Vector2:
     """Represents a 2D Vector (type/units aren't specified)
 
-    Args:
-        x (float): X component
-        y (float): Y component
+    :param x: X component
+    :param y: Y component
     """
 
     __slots__ = ('_x', '_y')
 
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float):
         self._x = x
         self._y = y
 
     def set_to(self, rhs):
         """Copy the x and y components of the given Vector2 instance.
 
-        Args:
-            rhs (:class:`Vector2`): The right-hand-side of this assignment - the
+        :param rhs: The right-hand-side of this assignment - the
                 source Vector2 to copy into this Vector2 instance.
         """
         self._x = rhs.x
@@ -218,8 +197,7 @@ class Vector3:
     def set_to(self, rhs):
         """Copy the x, y and z components of the given Vector3 instance.
 
-        Args:
-            rhs (:class:`Vector3`): The right-hand-side of this assignment - the
+        :param rhs: The right-hand-side of this assignment - the
                 source Vector3 to copy into this Vector3 instance.
         """
         self._x = rhs.x
@@ -357,6 +335,29 @@ class Angle:
         return Angle(radians=(self.radians * other))
 
 
+def angle_z_to_quaternion(angle_z: Angle):
+    """This function converts an angle in the z axis (Euler angle z component) to a quaternion.
+
+    :param angle_z: The z axis angle.
+
+    Returns:
+        q0, q1, q2, q3 (float, float, float, float): A tuple with all the members
+            of a quaternion defined by angle_z.
+    """
+
+    # Define the quaternion to be converted from a Euler angle (x,y,z) of 0,0,angle_z
+    # These equations have their original equations above, and simplified implemented
+    # q0 = cos(x/2)*cos(y/2)*cos(z/2) + sin(x/2)*sin(y/2)*sin(z/2)
+    q0 = math.cos(angle_z.radians / 2)
+    # q1 = sin(x/2)*cos(y/2)*cos(z/2) - cos(x/2)*sin(y/2)*sin(z/2)
+    q1 = 0
+    # q2 = cos(x/2)*sin(y/2)*cos(z/2) + sin(x/2)*cos(y/2)*sin(z/2)
+    q2 = 0
+    # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
+    q3 = math.sin(angle_z.radians / 2)
+    return q0, q1, q2, q3
+
+
 def degrees(degrees: float):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Angle` instance set to the specified number of degrees."""
     return Angle(degrees=degrees)
@@ -454,49 +455,45 @@ class Matrix44:
         """tuple of 3 floats: The x,y,z components representing the matrix's position vector."""
         return self.m30, self.m31, self.m32
 
-    def set_forward(self, x, y, z):
+    def set_forward(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's forward vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m00 = x
         self.m01 = y
         self.m02 = z
 
-    def set_left(self, x, y, z):
+    def set_left(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's left vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m10 = x
         self.m11 = y
         self.m12 = z
 
-    def set_up(self, x, y, z):
+    def set_up(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's up vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m20 = x
         self.m21 = y
         self.m22 = z
 
-    def set_pos(self, x, y, z):
+    def set_pos(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's position vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m30 = x
         self.m31 = y
@@ -556,18 +553,17 @@ class Quaternion:
         """tuple of float: Contains all elements of the quaternion (q0,q1,q2,q3)"""
         return self._q0, self._q1, self._q2, self._q3
 
-    def to_matrix(self, pos_x=0.0, pos_y=0.0, pos_z=0.0):
+    def to_matrix(self, pos_x: float = 0.0, pos_y: float = 0.0, pos_z: float = 0.0):
         """Convert the Quaternion to a 4x4 matrix representing this rotation.
 
         A position can also be provided to generate a full translation matrix.
 
-        Args:
-            pos_x (float): The x component for the position.
-            pos_y (float): The y component for the position.
-            pos_z (float): The z component for the position.
+        :param pos_x: The x component for the position.
+        :param pos_y: The y component for the position.
+        :param pos_z: The z component for the position.
 
         Returns:
-            :class:`cozmo.util.Matrix44`: A matrix representing this Quaternion's
+            :class:`anki_vector.util.Matrix44`: A matrix representing this Quaternion's
             rotation, with the provided position (which defaults to 0,0,0).
         """
         # See https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
@@ -649,8 +645,7 @@ class Pose:
     def define_pose_relative_this(self, new_pose):
         """Creates a new pose such that new_pose's origin is now at the location of this pose.
 
-        Args:
-            new_pose (:class:`anki_vector.util.Pose`): The pose which origin is being changed.
+        :param new_pose: The pose which origin is being changed. Type is Pose.
 
         Returns:
             A :class:`anki_vector.util.pose` object for which the origin was this pose's origin.
@@ -685,8 +680,8 @@ class Pose:
 
         Poses are comparable if they're valid and having matching origin IDs.
 
-        Args:
-            other_pose (:class:`anki_vector.util.Pose`): The other pose to compare against.
+        :param other_pose: The other pose to compare against. Type is Pose.
+
         Returns:
             bool: True if the two poses are comparable, False otherwise.
         """
@@ -739,16 +734,15 @@ class Distance:
     Use the :func:`distance_inches` or :func:`distance_mm` convenience methods to generate
     a Distance instance.
 
-    Args:
-        distance_mm (float): The number of millimeters the distance should
+    :param distance_mm: The number of millimeters the distance should
             represent (cannot be combined with ``distance_inches``).
-        distance_inches (float): The number of inches the distance should
+    :param distance_inches: The number of inches the distance should
             represent (cannot be combined with ``distance_mm``).
     """
 
     __slots__ = ('_distance_mm')
 
-    def __init__(self, distance_mm=None, distance_inches=None):  # pylint: disable=redefined-outer-name
+    def __init__(self, distance_mm: float = None, distance_inches: float = None):  # pylint: disable=redefined-outer-name
         if distance_mm is None and distance_inches is None:
             raise ValueError("Expected either the distance_mm or distance_inches keyword argument")
         if distance_mm and distance_inches:
@@ -810,14 +804,13 @@ class Speed:
     Use :func:`speed_mmps` convenience methods to generate
     a Speed instance.
 
-    Args:
-        speed_mmps (float): The number of millimeters per second the speed
+    :param speed_mmps: The number of millimeters per second the speed
             should represent.
     """
 
     __slots__ = ('_speed_mmps')
 
-    def __init__(self, speed_mmps=None):  # pylint: disable=redefined-outer-name
+    def __init__(self, speed_mmps: float = None):  # pylint: disable=redefined-outer-name
         if speed_mmps is None:
             raise ValueError("Expected speed_mmps keyword argument")
         self._speed_mmps = speed_mmps

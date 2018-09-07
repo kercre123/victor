@@ -18,13 +18,12 @@ from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
 class ColorProfile:
     """A Color profile send to be used with messages involving Lights.
 
-    Args:
-        red_multiplier (float): Scaling value for the brightness of red Lights
-        green_multiplier (float): Scaling value for the brightness of green Lights
-        blue_multiplier (float): Scaling value for the brightness of blue Lights
+    :param red_multiplier: Scaling value for the brightness of red Lights
+    :param green_multiplier: Scaling value for the brightness of green Lights
+    :param blue_multiplier: Scaling value for the brightness of blue Lights
     """
 
-    def __init__(self, red_multiplier, green_multiplier, blue_multiplier):
+    def __init__(self, red_multiplier: float, green_multiplier: float, blue_multiplier: float):
         self._red_multiplier = red_multiplier
         self._green_multiplier = green_multiplier
         self._blue_multiplier = blue_multiplier

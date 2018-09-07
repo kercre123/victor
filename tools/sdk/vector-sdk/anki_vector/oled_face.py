@@ -18,8 +18,15 @@ Vector's OLED screen that displays his face - related functions and values.
 Copyright (c) 2018 Anki, Inc.
 """
 
+import sys
+
 from . import sync, color, util
 from .messaging import protocol
+
+try:
+    from PIL import Image
+except ImportError:
+    sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['dimensions', 'convert_pixels_to_screen_data',
@@ -39,13 +46,12 @@ def dimensions():
     return SCREEN_WIDTH, SCREEN_HEIGHT
 
 
-def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
+def convert_pixels_to_screen_data(pixel_data: list, image_width: int, image_height: int):
     """Convert a sequence of pixel data to the correct format to display on Vector's face.
 
-    Args:
-        pixel_data (list): sequence of triplets representing rgb values, should be ints from 0-255
-        image_width (int): width of the image defined by the pixel_data
-        image_height (int): height of the image defined by the pixel_data
+    :param pixel_data: sequence of triplets representing rgb values, should be ints from 0-255
+    :param image_width: width of the image defined by the pixel_data
+    :param image_height: height of the image defined by the pixel_data
 
     Returns:
         A :class:`bytes` object representing all of the pixels (16bit color in rgb565 format)
@@ -82,23 +88,22 @@ def convert_pixels_to_screen_data(pixel_data, image_width, image_height):
     return bytes(color_565_data)
 
 
-def convert_image_to_screen_data(image):
+def convert_image_to_screen_data(pil_image: Image.Image):
     """ Convert an image into the correct format to display on Vector's face.
 
-    Args:
-        image (:class:`~PIL.Image.Image`): The image to display on Vector's face
+    :param pil_image: The image to display on Vector's face
 
     Returns:
         A :class:`bytes` object representing all of the pixels (16bit color in rgb565 format)
     """
-    image_data = image.getdata()
+    image_data = pil_image.getdata()
 
-    return convert_pixels_to_screen_data(image_data, image.width, image.height)
+    return convert_pixels_to_screen_data(image_data, pil_image.width, pil_image.height)
 
 
 class OledComponent(util.Component):
     @sync.Synchronizer.wrap
-    async def set_oled_with_screen_data(self, image_data, duration_sec, interrupt_running=True):
+    async def set_oled_with_screen_data(self, image_data, duration_sec, interrupt_running: bool = True):
         if not isinstance(image_data, bytes):
             raise ValueError("set_oled_with_screen_data expected bytes")
         if len(image_data) != 35328:
@@ -113,6 +118,6 @@ class OledComponent(util.Component):
 
         return await self.interface.DisplayFaceImageRGB(message)
 
-    def set_oled_to_color(self, solid_color, duration_sec, interrupt_running=True):
+    def set_oled_to_color(self, solid_color, duration_sec, interrupt_running: bool = True):
         image_data = bytes(solid_color.rgb565_bytepair * 17664)
         return self.set_oled_with_screen_data(image_data, duration_sec, interrupt_running)

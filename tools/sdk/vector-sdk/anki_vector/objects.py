@@ -152,15 +152,19 @@ class LightCube(util.Component):
     #### Public Methods ####
 
     @sync.Synchronizer.wrap
-    async def set_light_corners(self, light1, light2, light3, light4, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
+    async def set_light_corners(self,
+                                light1: lights.Light,
+                                light2: lights.Light,
+                                light3: lights.Light,
+                                light4: lights.Light,
+                                color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set the light for each corner
 
-        Args:
-            light1 (:class:`anki_vector.lights.Light`): The settings for the first light.
-            light2 (:class:`anki_vector.lights.Light`): The settings for the second light.
-            light3 (:class:`anki_vector.lights.Light`): The settings for the third light.
-            light4 (:class:`anki_vector.lights.Light`): The settings for the fourth light.
-            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights
+        :param light1: The settings for the first light.
+        :param light2: The settings for the second light.
+        :param light3: The settings for the third light.
+        :param light4: The settings for the fourth light.
+        :param color_profile: The profile to be used for the cube lights
         """
         params = lights.package_request_params((light1, light2, light3, light4), color_profile)
         print(params)
@@ -179,20 +183,19 @@ class LightCube(util.Component):
             make_relative=protocol.SetCubeLightsRequest.OFF)  # pylint: disable=no-member
         return await self.interface.SetCubeLights(req)
 
-    def set_lights(self, light, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
+    def set_lights(self, light: lights.Light, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights on the cube
 
-        Args:
-            light (:class:`anki_vector.lights.Light`): The settings for the lights.
-            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights
+        :param light: The settings for the lights
+        :param color_profile: The profile to be used for the cube lights
         """
         return self.set_light_corners(light, light, light, light, color_profile)
 
-    def set_lights_off(self, color_profile=lights.WHITE_BALANCED_CUBE_PROFILE):
+    def set_lights_off(self, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights off on the cube
 
-        Args:
-            color_profile (:class:`anki_vector.lights.ColorProfile`): The profile to be used for the cube lights"""
+        :param color_profile: The profile to be used for the cube lights
+        """
 
         return self.set_light_corners(lights.off_light, lights.off_light, lights.off_light, lights.off_light, color_profile)
 
