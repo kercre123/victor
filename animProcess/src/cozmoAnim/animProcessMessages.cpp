@@ -660,6 +660,8 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     case RobotInterface::RobotToEngine::Tag_state:
     {
       HandleRobotStateUpdate(msg.state);
+      const bool onChargerContacts = (msg.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
+      _animStreamer->SetBodyWhitelistActive(onChargerContacts);
     }
     break;
     case RobotInterface::RobotToEngine::Tag_robotStopped:

@@ -196,6 +196,8 @@ namespace Vector {
     // Whether or not to redirect a face image to the FaceInfoScreenManager
     // for display on a debug screen
     void RedirectFaceImagesToDebugScreen(bool redirect) { _redirectFaceImagesToDebugScreen = redirect; }
+    
+    void SetBodyWhitelistActive(bool active) { _bodyWhiteListActive = active; }
 
     // Procedural Eye
     void ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg);
@@ -323,6 +325,8 @@ namespace Vector {
     bool _redirectFaceImagesToDebugScreen = false;
 
     std::vector<NewAnimationCallback> _newAnimationCallbacks;
+    
+    bool _bodyWhiteListActive = false;
 
     static bool IsTrackLocked(u8 lockedTracks, u8 trackFlagToCheck) {
       return ((lockedTracks & trackFlagToCheck) == trackFlagToCheck);
@@ -406,6 +410,9 @@ namespace Vector {
 
     static void InsertStreamableFaceIntoCompImg(Vision::ImageRGB565& streamableFace,
                                                 Vision::CompositeImage& image);
+    
+    void InvalidateBannedTracks(const std::string& animName,
+                                AnimationMessageWrapper& messageWrapper) const;
 
     // Inspects streaming track's sprite sequence track to see whether procedural
     // eyes are needed this tick

@@ -1969,6 +1969,13 @@ namespace Vector {
         messageWrapper.faceImg.DrawText(pos, frameNum, color, scale);
       }
     }
+    
+    // A workaround to remove tracks that escaped through the engine process' track locking. This currently
+    // happens only for composite weather animations and wake word animations, both of which bypass
+    // action system's track locking.
+    if( _streamingAnimation != nullptr ) {
+      InvalidateBannedTracks(_streamingAnimation->GetName(), messageWrapper);
+    }
 
     // Send the data
     SendAnimationMessages(messageWrapper);
@@ -2209,6 +2216,42 @@ namespace Vector {
       needToRenderFaceIntoCompositeImage = proceduralFaceRendered;
     }
     return newSpriteSeqData || needToRenderFaceIntoCompositeImage;
+  }
+  
+  void AnimationStreamer::InvalidateBannedTracks(const std::string& animName,
+                                                 AnimationMessageWrapper& messageWrapper) const
+  {
+    // note: this duplicates engine's animation_whitelist.json, but hopefully InvalidateBannedTracks is removed soon
+    static const std::set<std::string> whitelisted = {
+      "anim_chargerdocking_comeoff_left_01",
+      "anim_chargerdocking_comeoff_left_02",
+      "anim_chargerdocking_comeoff_right_01",
+      "anim_chargerdocking_comeoff_right_02",
+      "anim_chargerdocking_comeoff_straight_01",
+      "anim_onboarding_driveoff_charger_01",
+      "anim_onboarding_wakeup_01",
+      "anim_onboarding_driveoff_charger_alt_01",
+      "anim_chargerdocking_settle_01",
+    };
+    if(_bodyWhiteListActive
+       && ((_lockedTracks & (u8)AnimTrackFlag::BODY_TRACK) == 0)
+       && (whitelisted.find(animName) == whitelisted.end()))
+    {
+      Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
+      
+      if( ANKI_DEV_CHEATS ) {
+        // A list of known issues where animations are used without locking tracks on the charger
+        static const std::set<std::string> knownIssues = {
+          "anim_onboarding_wakeword_getin_01",
+          "PROCEDURAL_ANIM",
+        };
+        if(knownIssues.find(animName) == knownIssues.end()) {
+          PRINT_NAMED_WARNING("AnimationStreamer.InvalidateBannedTracks.UnknownIssue",
+                              "Animation '%s' did not have its body track locked when on the charger",
+                              animName.c_str());
+        }
+      }
+    }
   }
 
 
