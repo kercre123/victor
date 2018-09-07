@@ -145,7 +145,7 @@ void BehaviorReactToUnexpectedMovement::ResetActivationHistory()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
 {
-  return _unexpectedMovementCondition->AreConditionsMet(GetBEI());;
+  return _unexpectedMovementCondition->AreConditionsMet(GetBEI());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
