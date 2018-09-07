@@ -23,9 +23,6 @@ inserted into the cube's corners.
 You must place a cube in front of Vector so that he can see it.
 """
 
-import os
-import sys
-
 import anki_vector
 from anki_vector.util import degrees
 
@@ -51,6 +48,7 @@ def main():
     if docking_result:
         if docking_result.code != anki_vector.messaging.protocol.ActionResult.ACTION_RESULT_SUCCESS:
             print("Cube docking failed with code {0} ({1})".format(str(docking_result).rstrip('\n\r'), docking_result.code))
+
 
 if __name__ == "__main__":
     main()

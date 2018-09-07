@@ -29,7 +29,7 @@ def main():
         print("connect to a cube...")
         connectionResult = robot.world.connect_cube()
         print(connectionResult)
-        
+
         connected_cube = robot.world.connected_light_cube
         if connected_cube:
             print("connected to cube {0}, clearing preferred cube for 1 second...".format(connected_cube.factory_id))

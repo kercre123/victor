@@ -31,6 +31,7 @@ class CONTROL_PRIORITY_LEVEL(Enum):
 
     #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
     #: Victor may safely react to events such as falling.
+    # TODO Remove if we don't ship this level
     OVERRIDE_ALL = protocol.ControlRequest.OVERRIDE_ALL  # pylint: disable=no-member
 
     #: Runs below Mandatory Physical Reactions such as tucking Vector's head and lift during a fall,
