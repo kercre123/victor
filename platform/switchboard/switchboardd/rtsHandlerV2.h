@@ -15,6 +15,7 @@
 #include "switchboardd/IRtsHandler.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/INetworkStream.h"
+#include "switchboardd/wifiWatcher.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/externalCommsCladHandlerV2.h"
 #include "anki-wifi/wifi.h"
@@ -29,6 +30,7 @@ public:
     std::shared_ptr<EngineMessagingClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<TaskExecutor> taskExecutor,
+    std::shared_ptr<WifiWatcher> wifiWatcher,
     bool isPairing,
     bool isOtaUpdating,
     bool hasOwner);
@@ -90,6 +92,7 @@ private:
   struct ev_loop* _loop;
   std::shared_ptr<EngineMessagingClient> _engineClient;
   std::shared_ptr<TaskExecutor> _taskExecutor;
+  std::shared_ptr<WifiWatcher> _wifiWatcher;
   std::unique_ptr<ExternalCommsCladHandlerV2> _cladHandler;
 
   const uint8_t kMaxMatchAttempts = 5;

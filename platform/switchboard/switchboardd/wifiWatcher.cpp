@@ -12,13 +12,16 @@
  **/
 
 #include "log.h"
+#include "util/fileUtils/fileUtils.h"
 #include "wifiWatcher.h"
 
 namespace Anki {
 namespace Switchboard {
 
 WifiWatcher::WifiWatcher(struct ev_loop* loop)
-: _loop(loop) {
+: _loop(loop),
+_enabled(true) {
+  _timer.self = this;
   ev_timer_init(&_timer.timer, WatcherTick, 0, kWifiTick_s);
   ev_timer_start(_loop, &_timer.timer);
 }
@@ -27,7 +30,30 @@ WifiWatcher::~WifiWatcher() {
   ev_timer_stop(_loop, &_timer.timer);
 }
 
+void WifiWatcher::Enable() {
+  _enabled = true;
+}
+
+void WifiWatcher::Disable() {
+  _enabled = false;
+}
+
 void WifiWatcher::ConnectIfNoWifi() {
+  if(!_enabled) {
+    Log::Write("WifiWatcher: disabled, doing nothing this tick.");
+    return;
+  }
+
+  if(Wifi::IsAccessPointMode()) {
+    Log::Write("WifiWatcher: access point mode enabled, doing nothing this tick.");
+    return;
+  }
+
+  if(!HasKnownWifiConfigurations()) {
+    Log::Write("WifiWatcher: no known wifi networks, doing nothing this tick.");
+    return;
+  }
+
   Anki::Wifi::WiFiState wifiState = Anki::Wifi::GetWiFiState();
 
   if((wifiState.connState == Anki::Wifi::WiFiConnState::CONNECTED) ||
@@ -64,6 +90,14 @@ void WifiWatcher::ConnectIfNoWifi() {
       break;
     }
   }
+}
+
+bool WifiWatcher::HasKnownWifiConfigurations() {
+  // Check if any networks are configured
+  std::vector<std::string> configs;
+  Anki::Util::FileUtils::ListAllDirectories("/data/lib/connman", configs);
+
+  return configs.size() > 0;
 }
 
 void WifiWatcher::WatcherTick(struct ev_loop* loop, struct ev_timer* w, int revents) {

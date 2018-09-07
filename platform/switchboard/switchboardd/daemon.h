@@ -161,7 +161,7 @@ namespace Switchboard {
       bool _isTokenClientFullyInitialized;
       bool _hasCloudOwner = false;
 
-      std::unique_ptr<WifiWatcher> _wifiWatcher;
+      std::shared_ptr<WifiWatcher> _wifiWatcher;
   };
 }
 }

@@ -25,9 +25,13 @@ public:
   ~WifiWatcher();
 
   void ConnectIfNoWifi();
+  void Enable();
+  void Disable();
 
 private:
   static void WatcherTick(struct ev_loop* loop, struct ev_timer* w, int revents);
+
+  bool HasKnownWifiConfigurations();
 
   struct ev_loop* _loop;
 
@@ -37,6 +41,8 @@ private:
   } _timer;
 
   const uint8_t kWifiTick_s = 15;
+
+  bool _enabled = true;
 };
 
 } // Switchboard

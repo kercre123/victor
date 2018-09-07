@@ -79,7 +79,7 @@ void Daemon::Start() {
 
   // Initialize wifi listeners
   Anki::Wifi::Initialize(_taskExecutor);
-  _wifiWatcher = std::make_unique<WifiWatcher>(_loop);
+  _wifiWatcher = std::make_shared<WifiWatcher>(_loop);
   _wifiChangedHandle = Anki::Wifi::GetWifiChangedSignal().ScopedSubscribe(std::bind(&Daemon::OnWifiChanged, this, std::placeholders::_1, std::placeholders::_2));
 
   // Initialize IPC connections
@@ -243,7 +243,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     _connectionId = connId;
 
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _connectionIdManager, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
+      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _connectionIdManager, _wifiWatcher, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
@@ -295,6 +295,10 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     }
 
     UpdateAdvertisement(false);
+
+    // Re-enable autoconnect in case BLE disconnected before 
+    // RtsHandler could re-enable WifiWatcher
+    _wifiWatcher->Enable();
 
     // tell engine that we lost BLE connection
     _engineMessagingClient->SendBLEConnectionStatus(false);

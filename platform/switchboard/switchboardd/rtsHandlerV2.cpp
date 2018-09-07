@@ -28,6 +28,7 @@ RtsHandlerV2::RtsHandlerV2(INetworkStream* stream,
     std::shared_ptr<EngineMessagingClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<TaskExecutor> taskExecutor,
+    std::shared_ptr<WifiWatcher> wifiWatcher,
     bool isPairing,
     bool isOtaUpdating,
     bool hasOwner) :
@@ -36,6 +37,7 @@ _stream(stream),
 _loop(evloop),
 _engineClient(engineClient),
 _taskExecutor(taskExecutor),
+_wifiWatcher(wifiWatcher),
 _pin(""),
 _challengeAttempts(0),
 _numPinDigits(0),
@@ -231,6 +233,9 @@ void RtsHandlerV2::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
     _wifiConnectTimeout_s = std::max(kWifiConnectMinTimeout_s, wifiConnectMessage.timeout);
 
     UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
+
+    // Disable autoconnect before connecting manually
+    _wifiWatcher->Disable();
 
     Wifi::ConnectWifiResult connected = Wifi::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
@@ -642,6 +647,9 @@ void RtsHandlerV2::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
+
+  // Re-enable autoconnect
+  _wifiWatcher->Enable();
 
   // Send challenge and update state
   Wifi::WiFiState wifiState = Wifi::GetWiFiState();
