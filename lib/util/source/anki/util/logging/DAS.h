@@ -193,10 +193,14 @@ void sLogDebug(const DasMsg & dasMessage);
 // variable declarations and logging calls.  When processed by doxygen, they are are expanded
 // into syntactically invalid C++ that contains magic directives to produce readable documentation.
 //
+// Overwriting fields that have already been set (e.g. calling DASMSG_SET(i1, ...) twice) is not allowed.
+//
 #ifndef DOXYGEN
 
 #define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
-#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
+#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value); \
+                                             /* define an empty struct (to detect if this item has been set twice) */ \
+                                             struct _already_set_##dasEntry {};
 #define DASMSG_SEND()         Anki::Util::sLogInfo(__DAS_msg); }
 #define DASMSG_SEND_WARNING() Anki::Util::sLogWarning(__DAS_msg); }
 #define DASMSG_SEND_ERROR()   Anki::Util::sLogError(__DAS_msg); }
