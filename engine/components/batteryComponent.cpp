@@ -77,7 +77,7 @@ namespace {
   // removed, the timer pauses. When being re-placed on the charger, the remaining time is increased
   // my an amount proportional to the time off charger (const is kExtraChargingTimePerDischargePeriod_s),
   // clamped at a max of kRequiredChargeTime_s.
-  const float kRequiredChargeTime_s = 5*60.0f;
+  CONSOLE_VAR_RANGED(float, kRequiredChargeTime_s, "BatteryComponent", 5*60.0f, 10.0f, 9999.0f ); // must be set before low battery and then not changed
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
 }
 

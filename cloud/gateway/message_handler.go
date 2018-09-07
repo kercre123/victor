@@ -319,6 +319,29 @@ func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest)
 	}, nil
 }
 
+func SendOnboardingWakeUpStarted(in *extint.GatewayWrapper_OnboardingWakeUpStartedRequest) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingWakeUpStartedResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	completeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingWakeUpStartedResponse{
+			OnboardingWakeUpStartedResponse: completeResponse.GetOnboardingWakeUpStartedResponse(),
+		},
+	}, nil
+}
+
 func SendOnboardingWakeUp(in *extint.GatewayWrapper_OnboardingWakeUpRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingWakeUpResponse{}, 1)
 	defer f()
@@ -1113,6 +1136,10 @@ func (service *rpcService) SendOnboardingInput(ctx context.Context, in *extint.O
 	case *extint.OnboardingInputRequest_OnboardingCompleteRequest:
 		return SendOnboardingComplete(&extint.GatewayWrapper_OnboardingCompleteRequest{
 			OnboardingCompleteRequest: in.GetOnboardingCompleteRequest(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingWakeUpStartedRequest:
+		return SendOnboardingWakeUpStarted(&extint.GatewayWrapper_OnboardingWakeUpStartedRequest{
+			OnboardingWakeUpStartedRequest: in.GetOnboardingWakeUpStartedRequest(),
 		})
 	case *extint.OnboardingInputRequest_OnboardingWakeUpRequest:
 		return SendOnboardingWakeUp(&extint.GatewayWrapper_OnboardingWakeUpRequest{

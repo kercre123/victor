@@ -96,6 +96,7 @@ private:
   void TransitionToPoweringOff();
   
   void MarkOnboardingComplete();
+  void SendWakeUpFinished() const;
   void SetStage( OnboardingStages stage, bool forceSkipStackReset = true );
   void TerminateOnboarding( bool timeout );
   void SaveToDisk( OnboardingStages stage ) const;

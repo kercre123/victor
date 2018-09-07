@@ -81,6 +81,7 @@ BehaviorOnboarding1p0::BehaviorOnboarding1p0(const Json::Value& config)
   
   SubscribeToAppTags({
     AppToEngineTag::kOnboardingWakeUpRequest,
+    AppToEngineTag::kOnboardingWakeUpStartedRequest,
   });
   
 }
@@ -172,6 +173,16 @@ void BehaviorOnboarding1p0::OnBehaviorActivated()
 void BehaviorOnboarding1p0::OnBehaviorDeactivated()
 {
   UnFixStim();
+  
+  if( _dVars.attemptedLeaveCharger ) {
+    // in case this behavior ends after wakeup, but it hasn't marked onboarding as complete yet.
+    // this does nothing if already marked complete
+    MarkOnboardingComplete();
+  } else {
+    // this behavior ended before the wakeup sequence finished. Tell the app it finished without marking onboarding as
+    // complete in case the app is sitting waiting on the wakeup screen
+    SendWakeUpFinished();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -339,13 +350,6 @@ void BehaviorOnboarding1p0::TransitionToWakingUp()
   auto* wakeUpAnimAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingWakeUp };
   DelegateIfInControl( wakeUpAnimAction, [this](){
     
-    // tell app that wakeup finished, even if it was aborted, because it only happens once
-    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-    if( gi != nullptr ) {
-      auto* onboardingWakeUpFinished = new external_interface::OnboardingWakeUpFinished;
-      gi->Broadcast( ExternalMessageRouter::Wrap(onboardingWakeUpFinished) );
-    }
-    
     // if the user drops the robot, this action got aborted, and we should not try to play the next one until put down.
     // also, the if statement below checks != OnTreads instead of Falling so that this behavior effectively pauses if
     // dropped and then still held
@@ -366,10 +370,6 @@ void BehaviorOnboarding1p0::TransitionToDrivingOffCharger()
   bool shouldDriveOffCharger = !_dVars.attemptedLeaveCharger;
   _dVars.attemptedLeaveCharger = true;
   
-  // in case the user drops the robot when it's driving off the charger, mark it as complete now
-  // instead of after driving off the charger
-  MarkOnboardingComplete();
-  
   if( shouldDriveOffCharger && GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
     CancelDelegates( false );
     SET_STATE( DriveOffCharger );
@@ -386,6 +386,8 @@ void BehaviorOnboarding1p0::TransitionToDrivingOffCharger()
 void BehaviorOnboarding1p0::TransitionToWaitingForVC()
 {
   CancelDelegates( false );
+  
+  MarkOnboardingComplete();
   
   // from here on out, the wakeword is enabled, even if moved back to the charger or picked up
   EnableWakeWord();
@@ -524,6 +526,15 @@ void BehaviorOnboarding1p0::HandleWhileActivated(const AppToEngineEvent& event)
   if( event.GetData().GetTag() == AppToEngineTag::kOnboardingWakeUpRequest ) {
     // flag to wake up (don't start it now so that app messages and console vars are both applied at the same time)
     _dVars.receivedWakeUp = true;
+  } else if( event.GetData().GetTag() == AppToEngineTag::kOnboardingWakeUpStartedRequest ) {
+    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+    if( gi != nullptr ) {
+      // tell app wakeup started if we already received the wakeup command from the app, or if that command was handled
+      // and the state is waking up or later
+      const bool wakeUpReceived = _dVars.receivedWakeUp || ((_dVars.state != State::NotStarted) && (_dVars.state != State::LookAtPhone));
+      auto* msg = new external_interface::OnboardingWakeUpStartedResponse{ wakeUpReceived };
+      gi->Broadcast( ExternalMessageRouter::WrapResponse(msg) );
+    }
   }
 }
   
@@ -577,9 +588,23 @@ void BehaviorOnboarding1p0::MarkOnboardingComplete()
   }
   _dVars.markedComplete = true;
   
+  SendWakeUpFinished();
+  
   SetStage( OnboardingStages::Complete );
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding1p0::SendWakeUpFinished() const
+{
+  // tell app that wakeup finished
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* onboardingWakeUpFinished = new external_interface::OnboardingWakeUpFinished;
+    gi->Broadcast( ExternalMessageRouter::Wrap(onboardingWakeUpFinished) );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding1p0::SetStage( OnboardingStages stage, bool forceSkipStackReset )
 {
   

@@ -468,6 +468,7 @@ message OnboardingInputRequest {
     OnboardingGetStep onboarding_get_step                    = 6;
     OnboardingSkipOnboarding onboarding_skip_onboarding      = 7;
     OnboardingRestart onboarding_restart                     = 8;
+    OnboardingWakeUpStartedRequest onboarding_wake_up_started_request = 9;
   }
 }
 
@@ -478,6 +479,7 @@ message OnboardingInputResponse {
     OnboardingWakeUpResponse     onboarding_wake_up_response     = 3;
     OnboardingContinueResponse   onboarding_continue_response    = 4;
     OnboardingStepResponse       onboarding_step_response        = 5;
+    OnboardingWakeUpStartedResponse onboarding_wake_up_started_response = 6;
   }
 }
 
@@ -493,6 +495,13 @@ message OnboardingCompleteRequest {
 
 message OnboardingCompleteResponse {
   bool completed = 1;
+}
+
+message OnboardingWakeUpStartedRequest {
+}
+
+message OnboardingWakeUpStartedResponse {
+  bool already_started = 1;
 }
 
 message OnboardingWakeUpRequest {

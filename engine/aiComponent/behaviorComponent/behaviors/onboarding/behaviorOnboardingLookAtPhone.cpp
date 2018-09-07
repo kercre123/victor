@@ -64,6 +64,11 @@ void BehaviorOnboardingLookAtPhone::OnBehaviorActivated()
   _dVars = DynamicVariables();
   _dVars.hasRun = true;
   
+  // since this behavior runs on and off charger without any user facing battery alerts, make sure it's in low power
+  // mode to avoid overheating the battery. We should be able to still receive app messages during this time to wake
+  // up (which ends low power mode).
+  SmartRequestPowerSaveMode();
+  
   // if the app requests we restart onboarding in the middle of something else, make sure the lift is down
   auto* moveLiftAction = new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::LOW_DOCK );
   DelegateIfInControl( moveLiftAction, [this, hasRun]() {
