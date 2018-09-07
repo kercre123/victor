@@ -112,8 +112,6 @@ void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotToEngine
 
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFactoryFirmware", "robot has factory firmware");
 
-  Util::sInfoF("robot.factory_firmware_version", {}, "0");
-
   const auto result = RobotConnectionResult::OutdatedFirmware;
   OnNotified(result, 0);
 }

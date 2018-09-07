@@ -604,10 +604,6 @@ void CubeCommsComponent::OnCubeConnected(const BleFactoryId& factoryId)
   
   const auto& activeId = _factoryIdToActiveIdMap[factoryId];
   
-  // log event to das
-  Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"connected"}}, "%s,%s",
-                     factoryId.c_str(), EnumToString(kValidCubeType));
-  
   // Add active object to blockworld
   const ObjectID objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, factoryId, kValidCubeType);
   if (objID.IsSet()) {
@@ -645,10 +641,6 @@ void CubeCommsComponent::OnCubeConnected(const BleFactoryId& factoryId)
 
 void CubeCommsComponent::OnCubeDisconnected(const BleFactoryId& factoryId)
 {
-  // log event to das
-  Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"disconnected"}}, "%s,%s",
-                     factoryId.c_str(), EnumToString(kValidCubeType));
-  
   const auto& activeId = GetActiveId(factoryId);
   
   if (activeId == ObservableObject::InvalidActiveID) {

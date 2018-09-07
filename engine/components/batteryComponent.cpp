@@ -194,9 +194,6 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       }
                                                                  
       _saturationChargeTimeRemaining_sec = std::min(kMaxSaturationTime_sec, newPossibleSaturationChargeTimeRemaining_sec);
-
-      Util::sInfoF("BatteryComponent.NotifyOfRobotState.SaturationChargeStartVoltage",
-                   {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "%f", _saturationChargeTimeRemaining_sec);
     }
     _lastSaturationChargingEndTime_sec = now_sec;
 
@@ -204,8 +201,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
     // If transitioning to full, write DAS log
     if (isFullyCharged && !IsBatteryFull()) {
-       Util::sInfoF("BatteryComponent.NotifyOfRobotState.FullyChargedVoltage",
-                    {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "");
+      DASMSG(battery_fully_charged_voltage, "battery.fully_charged_voltage", "Transitioning to Full battery after saturation charging");
+      DASMSG_SET(i1, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+      DASMSG_SEND();
     }
 
   } else if (_saturationChargingStartTime_sec > 0.f) {
