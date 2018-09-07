@@ -152,20 +152,21 @@ void BehaviorAnimSequence::StartPlayingAnimations()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimSequence::StartSequenceLoop()
 {
-    // if not done, start another sequence
-    if (_dVars.sequenceLoopsDone < _iConfig.numLoops)
-    {
-      IActionRunner* action = GetAnimationAction();
-      // count already that the loop is done for the next time
-      ++_dVars.sequenceLoopsDone;
-      // start it and come back here next time to check for more loops
-      DelegateIfInControl(action, [this]() {
+  // if not done, start another sequence
+  if ( _iConfig.numLoops == 0 ||
+       _dVars.sequenceLoopsDone < _iConfig.numLoops)
+  {
+    IActionRunner* action = GetAnimationAction();
+    // count already that the loop is done for the next time
+    ++_dVars.sequenceLoopsDone;
+    // start it and come back here next time to check for more loops
+    DelegateIfInControl(action, [this]() {
         CallToListeners();
         StartSequenceLoop();
       });
-    } else {
-      OnAnimationsComplete();
-    }
+  } else {
+    OnAnimationsComplete();
+  }
 }
 
 

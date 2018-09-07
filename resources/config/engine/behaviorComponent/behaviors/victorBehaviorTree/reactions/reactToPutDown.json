@@ -2,13 +2,9 @@
   // In lieu of a design for putting down, this plays an animation
 
   "behaviorID": "ReactToPutDown",
-  "behaviorClass": "AnimSequence",
+  "behaviorClass": "DispatcherQueue",
 
   "associatedActiveFeature": "NoFeature",
-
-  "animTriggers": ["ReactToPutDown"],
-  "num_loops": 100,
-  "tracksToLock": ["BODY_TRACK"],
 
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
@@ -27,21 +23,53 @@
     ]
   },
 
-  "wantsToCancelSelfCondition": {
-    "conditionType": "Compound",
-    "or": [
-      {
-        "conditionType": "OffTreadsState",
-        "targetState": "OnTreads",
-        "minTimeSinceChange_ms": 3000
-      },
-      {
+  "behaviors": [
+    "PutDownAnimInternal",
+    "PutDownWaitInternal"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "PutDownAnimInternal",
+      "behaviorClass": "AnimSequence",
+      "animTriggers": ["ReactToPutDown"]
+    },
+    {
+      "behaviorName": "PutDownWaitInternal",
+      "behaviorClass": "AnimSequence",
+
+      "animTriggers": ["ObservingIdleWithHeadLookingUp"],
+      "num_loops": 100,
+      "tracksToLock": ["BODY_TRACK"],
+
+      "wantsToCancelSelfCondition": {
         "conditionType": "Compound",
-        "not": {
-          "conditionType": "OffTreadsState",
-          "targetState": "OnTreads"
-        }
+        "or": [
+          {
+            "conditionType": "Compound",
+            "and": [
+              {
+                // stable off charger
+                "conditionType": "OffTreadsState",
+                "targetState": "OnTreads",
+                "minTimeSinceChange_ms": 3000
+              },
+              {
+                // been playing wait anim for 3 seconds (don't count the time from the put down reaction)
+                "conditionType": "TimerInRange",
+                "begin_s": 3.0
+              }
+            ]
+          },
+          {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "OffTreadsState",
+              "targetState": "OnTreads"
+            }
+          }
+        ]
       }
-    ]
-  }
+    }
+  ]
 }

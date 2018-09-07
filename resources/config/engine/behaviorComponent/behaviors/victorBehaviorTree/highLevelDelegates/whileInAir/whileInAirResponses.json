@@ -1,6 +1,6 @@
 {
   "behaviorID" : "WhileInAirResponses",
-  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorClass" : "AnimSequence",
 
   "wantsToBeActivatedCondition":  {
     "conditionType": "FeatureGate",
@@ -8,9 +8,6 @@
     "expected": false
   },
 
-  "interruptActiveBehavior": false,
-
-  "behaviors": [
-    "Wait"
-  ]
+  "animTriggers": ["ReactToPickupLoop"],
+  "num_loops": 0 // loop forever
 }

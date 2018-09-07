@@ -948,8 +948,16 @@
     "AnimName": "ag_reacttoblock_stuckonblock"
   },
   {
-    "CladEvent": "ReactToPickup",
-    "AnimName": "ag_reacttocliff_pickup"
+    "CladEvent": "ReactToPickupInitial",
+    "AnimName": "ag_rtpickup_reaction"
+  },
+  {
+    "CladEvent": "ReactToPickupLoop",
+    "AnimName": "ag_rtpickup_loop"
+  },
+  {
+    "CladEvent": "ReactToPutDown",
+    "AnimName": "ag_rtpickup_putdown"
   },
   {
     "CladEvent": "ReactToUnexpectedMovement",
@@ -1167,10 +1175,6 @@
   {
     "CladEvent": "DEPRECATED_LookDownForLaser",
     "AnimName": "ag_vc_laser_lookdown"
-  },
-  {
-    "CladEvent": "ReactToPutDown",
-    "AnimName": "ag_generic_look_up_idle"
   },
   {
     "CladEvent": "RTS_OffCharger_Sleep_Ambient",

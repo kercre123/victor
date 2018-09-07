@@ -325,7 +325,8 @@ enum int_32 AnimationTrigger
   ReactToOnLeftSide,
   ReactToOnRightSide,
   ReactToPerchedOnBlock,
-  ReactToPickup,
+  ReactToPickupInitial,
+  ReactToPickupLoop,
   ReactToPutDown,
 
   RTS_OffCharger_Sleep_Ambient,
