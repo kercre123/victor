@@ -147,8 +147,9 @@ bool SleepTracker::IsSleepy(const bool fromSleep) const
 bool SleepTracker::IsNightTime() const
 {
   struct tm localTime;
-  if(!WallTime::getInstance()->GetLocalTime(localTime)){
-    // arbitrarily default to "night"
+  if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
+    // arbitrarily default to "night", if timezone isn't set or system reports some other time failure
+    // (doesn't need to be synced accurately though)
     return true;
   }
 
