@@ -506,7 +506,7 @@ message OnboardingWakeUpResponse {
 message Onboarding1p0ChargingInfo {
   bool on_charger = 1;
   bool needs_to_charge = 2;
-  bool suggested_charger_time = 3;
+  float suggested_charger_time = 3;
 }
 
 message OnboardingWakeUpFinished {
