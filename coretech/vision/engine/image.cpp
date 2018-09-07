@@ -850,8 +850,8 @@ namespace Vision {
     u32 i = floor(h);
     f32 dh = h - i; // decimal part of h
     
-    u32 numRows = GetNumRows();
-    u32 numCols = GetNumCols();
+    s32 numRows = GetNumRows();
+    s32 numCols = GetNumCols();
 
     if(this->IsContinuous() && output.IsContinuous())
     {
@@ -973,8 +973,8 @@ namespace Vision {
     const float32x4_t bt_whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
 
     const float32x4_t kOne = vdupq_n_f32(1.f);
-
-    const u32 kNumElementsProcessedPerLoop = 8;
+    
+    const s32 kNumElementsProcessedPerLoop = 8;
 #endif
     
     for(u32 r = 0; r < numRows; r++)

@@ -85,11 +85,11 @@ namespace Vector {
     // Despite taking in an ImageRGB, note that this method actually draws in HSV and
     // is just using ImageRGB as a "3 channel image" since we don't (yet) have an ImageHSV.
     // The resulting face image is converted to RGB by DrawFace at the end.
-    static void DrawEye(const ProceduralFace& faceData, WhichEye whichEye,
+    static void DrawEye(const ProceduralFace& faceData, WhichEye whichEye, const Matrix_3x3f* W_facePtr,
                         Vision::Image& faceHsv, Rectangle<f32>& eyeBoundingBox);
     
-    static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
-                                                        f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
+    static Matrix_3x3f GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
+                                               f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
     
 #if PROCEDURALFACE_GLOW_FEATURE
     static Vision::Image _glowImg;
@@ -108,7 +108,6 @@ namespace Vector {
       Vision::Image img8[kSize];
       Vision::ImageRGB565 img565;
       int eyes;
-      int transformedFace;
       int distortedFace;
       int finalFace;
     } _faceCache;
@@ -126,7 +125,6 @@ namespace Vector {
 
     static void ApplyAntiAliasing(Vision::Image& shape, float minX, float minY, float maxX, float maxY);
     static bool DrawEyes(const ProceduralFace& faceData, bool dirty);
-    static bool TransformFace(const ProceduralFace& faceData, bool dirty);
     static bool DistortScanlines(const ProceduralFace& faceData, bool dirty);
     static bool ApplyNoise(const Util::RandomGenerator& rng, bool dirty);
     static bool ConvertColorspace(const ProceduralFace& faceData, Vision::ImageRGB565& output, bool dirty);

@@ -56,7 +56,7 @@ public:
   // Given the "warp" matrix which positions/scales the eye in the face, draws the corresponding "off"
   // noise into the image.
   template<typename T>
-  void AddOffNoise(const SmallMatrix<2,3,f32>& warpMatrix,
+  void AddOffNoise(const Matrix_3x3f& warpMatrix,
                    const s32 eyeHeight, const s32 eyeWidth,
                    T& faceImg) const
   {

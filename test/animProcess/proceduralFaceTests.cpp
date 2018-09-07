@@ -13,6 +13,8 @@
 #include "util/fileUtils/fileUtils.h"
 
 #define GENERATE_TEST_FILES 0
+#define DISPLAY_FAILURES 0
+#define SAVE_FAILURE_DIFFS 0
 
 using namespace Anki;
 using namespace Anki::Vector;
@@ -72,18 +74,41 @@ TEST(ProceduralFace, ParameterSweep)
 } // TEST(ProceduralFace, ParameterSweep)
 
 // Compare two images by getting the square-root of sum of squared error
-static double GetSimilarity(const Vision::ImageRGB565& testImage, const Vision::ImageRGB565& storedImage) {
-    EXPECT_GT(testImage.GetNumRows(), 0);
-    EXPECT_GT(testImage.GetNumCols(), 0);
-    EXPECT_EQ(testImage.GetNumRows(), storedImage.GetNumRows());
-    EXPECT_EQ(testImage.GetNumCols(), storedImage.GetNumCols());
+static double ImageDifferenceFraction(const Vision::ImageRGB565& testImage, const Vision::ImageRGB565& storedImage)
+{
+  EXPECT_GT(testImage.GetNumRows(), 0);
+  EXPECT_GT(testImage.GetNumCols(), 0);
+  EXPECT_EQ(testImage.GetNumRows(), storedImage.GetNumRows());
+  EXPECT_EQ(testImage.GetNumCols(), storedImage.GetNumCols());
+  
+  // Get the max difference across channels and count the number of pixels
+  // that change by "too much"
+  s32 numTooDifferent = 0;
+  const u8 kPixDiffThresh = 4; // "too much" change, in brightness levels
+  const Vision::PixelRGB565* testPixel_   = testImage.GetRow(0);
+  const Vision::PixelRGB565* storedPixel_ = storedImage.GetRow(0);
+  for(s32 i=0; i < testImage.GetNumElements(); ++i)
+  {
+    const Vision::PixelRGB& testPixel   = testPixel_[i].ToPixelRGB();
+    const Vision::PixelRGB& storedPixel = storedPixel_[i].ToPixelRGB();
+    
+#define ABSDIFF_U8(__p1__, __p2__) static_cast<u8>(std::abs((s32)__p1__ - (s32)__p2__))
 
-    // Calculate the L2 relative error between images.
-    double errorL2 = cv::norm(testImage.get_CvMat_(), storedImage.get_CvMat_(), CV_L2);
-
-    // Convert to a reasonable scale, since L2 error is summed across all pixels of the image.
-    double similarity = errorL2 / (double)(testImage.GetNumRows() * testImage.GetNumCols());
-    return similarity;
+    const Vision::PixelRGB absPixDiff(ABSDIFF_U8(testPixel.r(), storedPixel.r()),
+                                      ABSDIFF_U8(testPixel.g(), storedPixel.g()),
+                                      ABSDIFF_U8(testPixel.b(), storedPixel.b()));
+    
+#undef ABSDIFF_U8
+    
+    const u8 maxDiff = absPixDiff.max();
+    if(maxDiff > kPixDiffThresh)
+    {
+      ++numTooDifferent;
+    }
+  }
+  
+  const double tooDifferentFraction = (double)numTooDifferent / (double)testImage.GetNumElements();
+  return tooDifferentFraction;
 }
 
 static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const std::string& filename)
@@ -117,9 +142,32 @@ static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const s
 
   // Compare, threshold is 0.01f based on inspecton
   // Note: see comment on random number generation and determinism
-
-  double similarity = GetSimilarity(procFaceImg, savedFaceImg);
-  EXPECT_LT(similarity, 0.01f);
+  const double kDiffFractionThreshold = 0.01;
+  const double diffFrac = ImageDifferenceFraction(procFaceImg, savedFaceImg);
+  EXPECT_LT(diffFrac, kDiffFractionThreshold);
+  
+  if((DISPLAY_FAILURES || SAVE_FAILURE_DIFFS) && (diffFrac >= kDiffFractionThreshold))
+  {
+    // Do the diff in RGB (not RGB565)
+    Vision::ImageRGB procFaceImgRGB, savedFaceImgRGB, diffImageRGB;
+    procFaceImgRGB.SetFromRGB565(procFaceImg);
+    savedFaceImgRGB.SetFromRGB565(savedFaceImg);
+    cv::absdiff(procFaceImgRGB.get_CvMat_(), savedFaceImgRGB.get_CvMat_(), diffImageRGB.get_CvMat_());
+    
+    if(DISPLAY_FAILURES)
+    {
+      procFaceImg.Display("Generated");
+      savedFaceImg.Display("GroundTruth");
+      diffImageRGB.Display("Diff", 0);
+    }
+    
+    if(SAVE_FAILURE_DIFFS)
+    {
+      const size_t slash = filename.find_last_of("/");
+      const std::string diffFilename = std::string("/")+Util::FileUtils::FullFilePath({"tmp", "diff", filename.substr(slash+1)});
+      diffImageRGB.Save(diffFilename);
+    }
+  }
 }
 
 // Render known set of expressions and compare bitmap output to known good versions
