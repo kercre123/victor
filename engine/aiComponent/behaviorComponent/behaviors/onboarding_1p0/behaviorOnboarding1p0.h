@@ -72,6 +72,7 @@ private:
     TriggerWord,
     PowerOff,
     
+    GetOut,
     WaitingForTermination,
   };
   
@@ -94,6 +95,7 @@ private:
   void TransitionToWaitingForPutDown(); // either when disturbed during wakeup or waiting for trigger word
   void TransitionToTriggerWord();
   void TransitionToPoweringOff();
+  void TransitionToGetOut();
   
   void MarkOnboardingComplete();
   void SendWakeUpFinished() const;

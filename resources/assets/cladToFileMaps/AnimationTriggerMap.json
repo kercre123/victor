@@ -748,6 +748,10 @@
     "AnimName": "ag_onboarding_drive_straight_alternative"
   },
   {
+    "CladEvent": "OnboardingLookAtUserGetOut_1p0",
+    "AnimName": "ag_onboarding_eyecontact_getout"
+  },
+  {
     "CladEvent": "OnboardingLookAround",
     "AnimName": "ag_onboarding_lookaround_loop"
   },

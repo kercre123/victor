@@ -255,8 +255,7 @@ void BehaviorOnboarding1p0::BehaviorUpdate()
       const bool onChargerState = (_dVars.state == State::WaitForTriggerWordOnCharger);
       const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
       if( currTime_s >= _dVars.triggerWordStartTime_s + kVCTimeout_s ) {
-        const bool timeout = true;
-        TerminateOnboarding( timeout );
+        TransitionToGetOut();
       } else if( GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads ) {
         TransitionToWaitingForPutDown();
       } else if( onCharger != onChargerState ) {
@@ -267,6 +266,16 @@ void BehaviorOnboarding1p0::BehaviorUpdate()
       
     case State::TriggerWord: // just wait for behavior to end
     case State::PowerOff: // just wait for behavior to end
+      break;
+      
+    case State::GetOut:
+      if( !IsControlDelegated() ) {
+        // this also happens as the action callback just in case
+        const bool timeout = true;
+        TerminateOnboarding( timeout );
+      }
+      break;
+      
     case State::WaitingForTermination: // just wait for BehaviorsBootLoader to switch stacks
       break;
       
@@ -476,6 +485,20 @@ void BehaviorOnboarding1p0::TransitionToTriggerWord()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding1p0::TransitionToGetOut()
+{
+  CancelDelegates(false);
+  SET_STATE( GetOut );
+  const int numLoops = 1;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtUserGetOut_1p0, numLoops };
+  DelegateIfInControl( action, [this](ActionResult res){
+    // this also happens in behavior update just in case
+    const bool timeout = true;
+    TerminateOnboarding( timeout );
+  });
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding1p0::TransitionToPoweringOff()
 {
   CancelDelegates( false );
@@ -672,6 +695,7 @@ bool BehaviorOnboarding1p0::ShouldCheckPowerOff() const
     case State::WaitForTriggerWord:
     case State::WaitForTriggerWordOnCharger:
     case State::TriggerWord:
+    case State::GetOut:
       return true;
     case State::NotStarted:
     case State::LookAtPhone:
