@@ -144,7 +144,7 @@ void Analog::transmit(BodyToHead* data) {
                       | (on_charger ? POWER_ON_CHARGER : 0)
                       | (too_hot ? POWER_CHARGER_OVERHEAT : 0)
                       | ((overheated > 0) ? POWER_IS_OVERHEATED : 0)
-                      | (charge_cutoff ? POWER_BATTERY_DISCONNECTED : 0)
+                      | ((charge_cutoff && on_charger) ? POWER_BATTERY_DISCONNECTED : 0)
                       ;
 
   data->tempAlarm = temp_alarm;
@@ -230,13 +230,8 @@ static bool handleTemperature() {
 
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
-    // Force shut down 
-    nCHG_PWR::set();
-    POWER_EN::reset();
-    POWER_EN::mode(MODE_OUTPUT);
-    POWER_EN::pull(PULL_NONE);
-    __disable_irq();
-    for (;;) __wfi();
+    Power::setMode(POWER_STOP);
+    return ;
   }
 
   static int samples = 0;

@@ -39,18 +39,14 @@ static PowerMode desiredState = POWER_CALM;
 static bool enter_recovery = false;
 
 static void enterBootloader(void);
-
-static inline void setupPerfs(void) {
-  Mics::start();
-  Lights::enable();
-}
+static inline void enableHead(void);
 
 void Power::init(void) {
   DFU_FLAG = 0;
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
   
-  setupPerfs();
+  enableHead();
 }
 
 void Power::signalRecovery() {
@@ -59,7 +55,8 @@ void Power::signalRecovery() {
 
 static inline void enableHead(void) {
   MAIN_EN::set();
-  setupPerfs();
+  Mics::start();
+  Lights::enable();
 }
 
 static inline void disableHead(void) {
@@ -177,21 +174,19 @@ void Power::adjustHead() {
   if (wantPower) {
     if (enter_recovery) {
       BODY_TX::reset();
-      enter_recovery = false;
     } else {
       BODY_TX::set();
     }
     BODY_TX::mode(MODE_OUTPUT);
-  } else {
-    BODY_TX::mode(MODE_INPUT);
-  }
 
-  if (wantPower) {
     enableHead();
   } else {
+    BODY_TX::mode(MODE_INPUT);
+
     disableHead();
   }
 
+  enter_recovery = false;
   headPowered = wantPower;
 }
 
