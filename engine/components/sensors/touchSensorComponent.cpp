@@ -11,7 +11,7 @@
  **/
 
 #include "engine/components/sensors/touchSensorComponent.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/externalInterface/externalInterface.h"

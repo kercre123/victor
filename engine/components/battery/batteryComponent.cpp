@@ -11,14 +11,15 @@
  *
  **/
 
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 
 #include "engine/aiComponent/aiComponent.h"
 
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
-#include "engine/components/movementComponent.h"
+#include "engine/components/battery/batteryStats.h"
 #include "engine/components/cubes/cubeBatteryComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -85,6 +86,7 @@ BatteryComponent::BatteryComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Battery)
   , _saturationChargeTimeRemaining_sec(kMaxSaturationTime_sec)
   , _chargerFilter(std::make_unique<BlockWorldFilter>())
+  , _batteryStatsAccumulator(std::make_unique<BatteryStats>())
 {
   // setup battery voltage low pass filter (samples come in at kBatteryVoltsUpdatePeriod_sec)
   _batteryVoltsFilter = std::make_unique<Util::LowPassFilterSimple>(kBatteryVoltsUpdatePeriod_sec,
@@ -299,6 +301,8 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   
   const bool wasLowBattery = (oldBatteryLevel == BatteryLevel::Low);
   UpdateSuggestedChargerTime(wasLowBattery, wasCharging);
+  
+  _batteryStatsAccumulator->Update(_battTemperature_C, _batteryVoltsFilt);
 }
 
 

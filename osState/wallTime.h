@@ -60,7 +60,9 @@ public:
   // Get the chrono timepoint regardless of sync (may be inaccurate, as above)
   TimePoint_t GetApproximateTime();
 
-  // return the epoch time (for comparison with other TimePoint_t times)
+  // return the epoch time (for comparison with other TimePoint_t times).
+  // Note: This is _not_ time since epoch, but rather the TimePoint_t corresponding to time 0 of the Unix epoch (i.e.
+  // 00:00:00 Jan 1 1970)
   TimePoint_t GetEpochTime();
 
   ////////////////////////////////////////////////////////////////////////////////

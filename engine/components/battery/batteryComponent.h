@@ -32,6 +32,7 @@ namespace Util {
 }
 namespace Vector {
 
+class BatteryStats;
 class BlockWorldFilter;
 class Robot;
 struct RobotState;
@@ -178,6 +179,8 @@ private:
   
   float _timeRemovedFromCharger_s = 0.f;
   float _suggestedChargeEndTime_s = 0.f;
+  
+  std::unique_ptr<BatteryStats> _batteryStatsAccumulator;
 };
 
 

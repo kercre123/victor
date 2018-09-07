@@ -15,7 +15,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/robot.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 
 #include "osState/osState.h"

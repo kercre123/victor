@@ -39,7 +39,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 #include "test/engine/helpers/cubePlacementHelper.h"
 #include "engine/utils/cozmoFeatureGate.h"

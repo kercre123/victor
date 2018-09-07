@@ -11,6 +11,8 @@
 #ifndef __util_logging_DAS_h
 #define __util_logging_DAS_h
 
+#include <string>
+
 //
 // This file must be #included by each CPP file that uses DASMSG macros, to
 // ensure that macros are expanded correctly by doxygen.  If this file

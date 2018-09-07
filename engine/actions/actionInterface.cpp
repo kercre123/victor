@@ -18,7 +18,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/actionWatcher.h"
 #include "engine/components/animTrackHelpers.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"

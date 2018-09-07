@@ -17,7 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 
 

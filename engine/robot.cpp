@@ -33,7 +33,7 @@
 #include "engine/charger.h"
 #include "engine/components/accountSettingsManager.h"
 #include "engine/components/animationComponent.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/carryingComponent.h"

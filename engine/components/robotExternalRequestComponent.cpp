@@ -12,7 +12,7 @@
 
 #include "engine/buildVersion.h"
 #include "engine/components/robotExternalRequestComponent.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/robotManager.h"
 
 #include "osState/osState.h"
