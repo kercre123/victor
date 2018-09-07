@@ -56,6 +56,7 @@
 #include "engine/components/photographyManager.h"
 #include "engine/components/powerStateManager.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/robotHealthReporter.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/components/settingsCommManager.h"
@@ -139,7 +140,7 @@ CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
 // Robot singleton
 static Robot* _thisRobot = nullptr;
-  
+
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
 //   on the Unity side), then this console func can be removed.
@@ -210,7 +211,7 @@ void SayText(ConsoleFunctionContextRef context)
     LOG_ERROR("Robot.TtSCoordinator.NoText", "No text string");
     return;
   }
-  
+
   // VIC-4364 Replace `_` with spaces. Hack to allows to use spaces
   std::string textStr = text;
   std::replace(textStr.begin(), textStr.end(), '_', ' ');
@@ -290,7 +291,7 @@ static const TimeStamp_t kInAirTooLongTimeReportTime_ms = 60000;
 // As long as robot's orientation doesn't change by more than
 // this amount, we assume it's not being held by a person.
 // Note that if he's placed on a platform that's vibrating so
-// much that his orientation changes by more than this amount, 
+// much that his orientation changes by more than this amount,
 // we would not be able to differentiate this from being held.
 static const float kRobotAngleChangedThresh_rad = DEG_TO_RAD(1);
 
@@ -308,15 +309,15 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 
   LOG_INFO("Robot.Robot", "Created");
 
-  // Check for /run/data_cleared file 
+  // Check for /run/data_cleared file
   // VIC-6069: OS needs to write this file following Clear User Data reboot
   static const std::string dataClearedFile = "/run/data_cleared";
   if (Util::FileUtils::FileExists(dataClearedFile)) {
     DASMSG(robot_cleared_user_data, "robot.cleared_user_data", "User data was cleared");
-    DASMSG_SEND();  
+    DASMSG_SEND();
     Util::FileUtils::DeleteFile(dataClearedFile);
   }
-  
+
 
   // DAS message "power on"
   float idleTime_sec;
@@ -376,6 +377,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::PhotographyManager,         new PhotographyManager());
     _components->AddDependentComponent(RobotComponentID::PowerStateManager,          new PowerStateManager());
     _components->AddDependentComponent(RobotComponentID::SettingsCommManager,        new SettingsCommManager());
+    _components->AddDependentComponent(RobotComponentID::RobotHealthReporter,        new RobotHealthReporter());
     _components->AddDependentComponent(RobotComponentID::SettingsManager,            new SettingsManager());
     _components->AddDependentComponent(RobotComponentID::RobotStatsTracker,          new RobotStatsTracker());
     _components->AddDependentComponent(RobotComponentID::VariableSnapshotComponent,  new VariableSnapshotComponent());
@@ -618,7 +620,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   // Too long InAir DAS message
   //////////////////////////////////
   // Check if robot is stuck in-air for a long time, but is likely not being held.
-  // Might be indicative of a vibrating surface or overly sensitive conditions 
+  // Might be indicative of a vibrating surface or overly sensitive conditions
   // for staying in the picked up state.
   static bool        reportedInAirTooLong      = false;
   static EngineTimeStamp_t inAirTooLongReportTime_ms = 0;
@@ -633,9 +635,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     if ((_offTreadsState == OffTreadsState::InAir) && robotAngleChanged) {
       inAirTooLongReportTime_ms = currentTimestamp + kInAirTooLongTimeReportTime_ms;
       lastStableRobotAngle_rad = msg.pose.angle;
-    }    
+    }
 
-    if ((inAirTooLongReportTime_ms > 0) && 
+    if ((inAirTooLongReportTime_ms > 0) &&
         (inAirTooLongReportTime_ms < currentTimestamp)) {
       DASMSG(robot_too_long_in_air, "robot.too_long_in_air",
             "Robot has been in InAir picked up state for too long. Vibrating surface?");
@@ -1012,7 +1014,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const OffTreadsState prevOffTreadsState = _offTreadsState;
   const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);
   const bool isDelocalizing = wasTreadsStateUpdated && (prevOffTreadsState == OffTreadsState::OnTreads || _offTreadsState == OffTreadsState::OnTreads);
-  
+
   if( isDelocalizing && (prevOffTreadsState == OffTreadsState::OnTreads) )
   {
     // Robot is delocalized, and not because it was put back down. Tell the map component to send relevant info about the
@@ -1020,7 +1022,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // the robot is in the air is not sent when the robot is put back down, since MapComponent doesn't (need to) track OffTreadsState
     GetMapComponent().SendDASInfoAboutCurrentMap();
   }
-  
+
   if (wasTreadsStateUpdated)
   {
     DASMSG(robot_offtreadsstatechanged, "robot.offtreadsstatechanged", "The robot off treads state changed");
@@ -1317,7 +1319,7 @@ Result Robot::Update()
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
   }
- 
+
   const bool trackingPowerButtonPress = (_timePowerButtonPressed_ms != 0);
   // Keep track of how long the power button has been pressed
   if(!trackingPowerButtonPress && _powerButtonPressed){
@@ -1334,7 +1336,7 @@ Result Robot::Update()
   GetContext()->GetVizManager()->SendStartRobotUpdate();
 
   _components->UpdateComponents();
-  
+
   // If anything in updating block world caused a localization update, notify
   // the physical robot now:
   if (_needToSendLocalizationUpdate) {
@@ -1467,8 +1469,8 @@ Result Robot::Update()
     auto onCharger  = GetBatteryComponent().IsOnChargerContacts() ? 1 : 0;
     auto battery_mV = static_cast<uint32_t>(GetBatteryComponent().GetBatteryVolts() * 1000);
 
-    LOG_INFO("Robot.Update.EngineFullyLoaded", 
-             "OnCharger: %d, Battery_mV: %d", 
+    LOG_INFO("Robot.Update.EngineFullyLoaded",
+             "OnCharger: %d, Battery_mV: %d",
              onCharger, battery_mV);
 
     DASMSG(robot_engine_ready, "robot.engine_ready", "All robot processes are ready");
@@ -1476,7 +1478,7 @@ Result Robot::Update()
     DASMSG_SET(i2, battery_mV, "Battery voltage (mV)");
     DASMSG_SEND();
   }
-  
+
   return RESULT_OK;
 
 } // Update()
@@ -1554,7 +1556,7 @@ void Robot::SetHeadAngle(const f32& angle)
                   angle, RAD_TO_DEG(angle));
     }
   }
-  
+
   // note: moving the motor inside bounds shouldn't erase previous state
   _isHeadMotorOutOfBounds |= angle < (MIN_HEAD_ANGLE-HEAD_ANGLE_LIMIT_MARGIN) ||
                              angle > (MAX_HEAD_ANGLE+HEAD_ANGLE_LIMIT_MARGIN);
@@ -1606,7 +1608,7 @@ void Robot::SetLiftAngle(const f32& angle)
   // note: moving the motor inside bounds shouldn't erase previous state
   _isLiftMotorOutOfBounds |=  angle < (MIN_LIFT_ANGLE-LIFT_ANGLE_LIMIT_MARGIN) ||
                               angle > (MAX_LIFT_ANGLE+LIFT_ANGLE_LIMIT_MARGIN);
-  
+
   // TODO: Add lift angle limits?
   GetComponent<FullRobotPose>().SetLiftAngle(angle);
 
@@ -1628,7 +1630,7 @@ bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 TimeStamp_t Robot::GetTimeSincePowerButtonPressed_ms() const {
   // this is a time difference, so could be any type, but to avoid someone thinking that all
   // power button times are robot times, this returns an engine timestmap to match _timePowerButtonPressed_ms
-  return _timePowerButtonPressed_ms == 0 ? 0 : 
+  return _timePowerButtonPressed_ms == 0 ? 0 :
           TimeStamp_t(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _timePowerButtonPressed_ms);
 }
 
@@ -2728,7 +2730,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
-                         0, // touch intensity value 
+                         0, // touch intensity value
                          0, // uint8_t cliffDetectedFlags,
                          0, // uint8_t whiteDetectedFlags
                          40, // battery temp C
@@ -2985,7 +2987,7 @@ Result Robot::UpdateGyroCalibChecks()
                                        MAX_HEAD_ACCEL_RAD_PER_S2,
                                        1.f);
     displayedImage = true;
-    
+
   }
 
   return RESULT_OK;
@@ -2998,7 +3000,7 @@ Result Robot::UpdateStartupChecks()
   if(res != RESULT_OK) { \
     return res;          \
   }
-  
+
   Result res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
@@ -3027,7 +3029,7 @@ bool Robot::SetLocale(const std::string & locale)
 
 void Robot::Shutdown(ShutdownReason reason)
 {
-  if (_toldToShutdown) { 
+  if (_toldToShutdown) {
     LOG_WARNING("Robot.Shutdown.AlreadyShuttingDown", "Ignoring new reason %s", EnumToString(reason));
     return;
   }
@@ -3038,8 +3040,8 @@ void Robot::Shutdown(ShutdownReason reason)
   auto upTime_sec   = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
   auto numFreeBytes = Util::FileUtils::GetDirectoryFreeSize("/data");
 
-  LOG_INFO("Robot.Shutdown.ShuttingDown", 
-           "Reason: %s, upTime: %u, numFreeBytes: %llu", 
+  LOG_INFO("Robot.Shutdown.ShuttingDown",
+           "Reason: %s, upTime: %u, numFreeBytes: %llu",
            EnumToString(reason), upTime_sec, numFreeBytes);
 
   DASMSG(robot_power_off, "robot.power_off", "Reason why robot powered off during the previous run");
@@ -3049,7 +3051,7 @@ void Robot::Shutdown(ShutdownReason reason)
   DASMSG_SEND();
 
 
-  // Send fault code 
+  // Send fault code
   // Fault code handler will kill vic-dasMgr and do other stuff as necessary
 
   // For simplicity, make sure that the ShutdownReason and corresponding

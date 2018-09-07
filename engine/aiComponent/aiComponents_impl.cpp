@@ -45,17 +45,19 @@ std::string GetEntityNameForEnumType<Vector::AIComponentID>(){ return "AICompone
 template<>
 std::string GetComponentStringForID<Vector::AIComponentID>(Vector::AIComponentID enumID)
 {
-  switch(enumID){
-    case Vector::AIComponentID::BehaviorComponent:                 { return "BehaviorComponent";}
-    case Vector::AIComponentID::ContinuityComponent:               { return "ContinuityComponent";}
-    case Vector::AIComponentID::FaceSelection:                     { return "FaceSelection";}
-    case Vector::AIComponentID::ObjectInteractionInfoCache:        { return "ObjectInteractionInfoCache";}
-    case Vector::AIComponentID::Puzzle:                            { return "Puzzle";}
-    case Vector::AIComponentID::SalientPointsDetectorComponent:    { return "SalientPointsComponent";}
-    case Vector::AIComponentID::TimerUtility:                      { return "TimerUtility";}
-    case Vector::AIComponentID::Whiteboard:                        { return "Whiteboard";}
-    case Vector::AIComponentID::Count:                             { return "Count";}
+  #define CASE(id) case Vector::AIComponentID::id: { return #id; }
+  switch (enumID) {
+    CASE(BehaviorComponent)
+    CASE(ContinuityComponent)
+    CASE(FaceSelection)
+    CASE(ObjectInteractionInfoCache)
+    CASE(Puzzle)
+    CASE(SalientPointsDetectorComponent)
+    CASE(TimerUtility)
+    CASE(Whiteboard)
+    CASE(Count)
   }
+  #undef CASE
 }
 
 

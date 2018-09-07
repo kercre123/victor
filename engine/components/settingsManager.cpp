@@ -14,6 +14,7 @@
 #include "engine/components/settingsManager.h"
 
 #include "engine/components/jdocsManager.h"
+#include "engine/components/robotHealthReporter.h"
 #include "engine/components/settingsCommManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -273,7 +274,7 @@ uint32_t SettingsManager::GetRobotSettingAsUInt(const external_interface::RobotS
     LOG_ERROR("SettingsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
     return 0;
   }
-  
+
   return _currentSettings[keyString].asUInt();
 }
 
@@ -449,8 +450,13 @@ bool SettingsManager::ApplySettingLocale()
   if (!success)
   {
     LOG_ERROR("SettingsManager.ApplySettingLocale", "Error setting locale to %s", value.c_str());
+    return false;
   }
-  return success;
+
+  auto & robotHealthReporter = _robot->GetRobotHealthReporter();
+  robotHealthReporter.OnSetLocale(value);
+
+  return true;
 }
 
 
@@ -470,8 +476,14 @@ bool SettingsManager::ApplySettingTimeZone()
   {
     LOG_ERROR("SettingsManager.ApplySettingTimeZone.TimeZoneError",
               "Error setting time zone to %s ", value.c_str());
+    return false;
   }
-  return success;
+
+  auto & robotHealthReporter = _robot->GetRobotHealthReporter();
+  robotHealthReporter.OnSetTimeZone(value);
+
+  return true;
+
 #else
   LOG_INFO("SettingsManager.ApplySettingTimeZone.NotInWebots",
               "Applying time zone setting is not supported in webots");
@@ -492,7 +504,7 @@ bool SettingsManager::ValidateSettingDefaultLocation()
               "Default location string too long (length %zu)", value.length());
     return false;
   }
-  
+
   return true;
 }
 

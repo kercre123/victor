@@ -1,7 +1,7 @@
 /**
  * File: robot.h
  *
- * Author: Andrew Stein
+ * Author: Andrew Stein feat. Various Artists
  * Date:   8/23/13
  *
  * Description: Defines a Robot representation on the Basestation, which is
@@ -102,6 +102,7 @@ class PhotographyManager;
 class PowerStateManager;
 class RobotEventHandler;
 class RobotGyroDriftDetector;
+class RobotHealthReporter;
 class RobotIdleTimeoutComponent;
 class RobotStateHistory;
 class HistRobotState;
@@ -215,26 +216,59 @@ public:
   template<typename T>
   T* GetComponentPtr() {return _components->GetComponentPtr<T>();}
 
-  inline AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() {return GetComponent<AppCubeConnectionSubscriber>();}
-  inline const AppCubeConnectionSubscriber& GetAppCubeConnectionSubscriber() const {return GetComponent<AppCubeConnectionSubscriber>();}
+  //
+  // Most components declare both const and non-const accessors.
+  // If your component does not fit this pattern, add custom code below.
+  //
+  // Handy macro tricks: Use ## to splice macro parameters into a symbol
+  //
+  #define INLINE_GETTERS(T) \
+    inline T & Get##T() { return GetComponent<T>(); } \
+    inline const T & Get##T() const { return GetComponent<T>(); }
 
-  inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>();}
-  inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>();}
+  INLINE_GETTERS(AIComponent)
+  INLINE_GETTERS(AnimationComponent)
+  INLINE_GETTERS(AppCubeConnectionSubscriber)
+  INLINE_GETTERS(BackpackLightComponent)
+  INLINE_GETTERS(BatteryComponent)
+  INLINE_GETTERS(BeatDetectorComponent)
+  INLINE_GETTERS(BlockWorld)
+  INLINE_GETTERS(CarryingComponent)
+  INLINE_GETTERS(CliffSensorComponent)
+  INLINE_GETTERS(CubeAccelComponent)
+  INLINE_GETTERS(CubeBatteryComponent)
+  INLINE_GETTERS(CubeCommsComponent)
+  INLINE_GETTERS(CubeConnectionCoordinator)
+  INLINE_GETTERS(CubeInteractionTracker)
+  INLINE_GETTERS(CubeLightComponent)
+  INLINE_GETTERS(DataAccessorComponent)
+  INLINE_GETTERS(DockingComponent)
+  INLINE_GETTERS(DrivingAnimationHandler)
+  INLINE_GETTERS(FaceWorld)
+  INLINE_GETTERS(HabitatDetectorComponent)
+  INLINE_GETTERS(MapComponent)
+  INLINE_GETTERS(MicComponent)
+  INLINE_GETTERS(MoodManager)
+  INLINE_GETTERS(NVStorageComponent)
+  INLINE_GETTERS(ObjectPoseConfirmer)
+  INLINE_GETTERS(PathComponent)
+  INLINE_GETTERS(PetWorld)
+  INLINE_GETTERS(PhotographyManager)
+  INLINE_GETTERS(PowerStateManager)
+  INLINE_GETTERS(ProxSensorComponent)
+  INLINE_GETTERS(PublicStateBroadcaster)
+  INLINE_GETTERS(RobotHealthReporter)
+  INLINE_GETTERS(RobotToEngineImplMessaging)
+  INLINE_GETTERS(SDKComponent)
+  INLINE_GETTERS(TextToSpeechCoordinator)
+  INLINE_GETTERS(TouchSensorComponent)
+  INLINE_GETTERS(VariableSnapshotComponent)
+  INLINE_GETTERS(VisionComponent)
+  INLINE_GETTERS(VisionScheduleMediator)
 
-  inline FaceWorld&       GetFaceWorld()       {return GetComponent<FaceWorld>();}
-  inline const FaceWorld& GetFaceWorld() const {return GetComponent<FaceWorld>();}
+  #undef INLINE_GETTERS
 
-  inline PetWorld&       GetPetWorld()       {return GetComponent<PetWorld>();}
-  inline const PetWorld& GetPetWorld() const {return GetComponent<PetWorld>();}
-
-  inline VisionComponent&       GetVisionComponent()       { return GetComponent<VisionComponent>(); }
-  inline const VisionComponent& GetVisionComponent() const { return GetComponent<VisionComponent>(); }
-
-  inline VisionScheduleMediator& GetVisionScheduleMediator() {return GetComponent<VisionScheduleMediator>(); }
-  inline const VisionScheduleMediator& GetVisionScheduleMediator() const {return GetComponent<VisionScheduleMediator>(); }
-
-  inline MapComponent&       GetMapComponent()       {return GetComponent<MapComponent>();}
-  inline const MapComponent& GetMapComponent() const {return GetComponent<MapComponent>();}
+  const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>();}
   inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>();}
@@ -242,100 +276,8 @@ public:
   inline MovementComponent& GetMoveComponent() {return GetComponent<MovementComponent>();}
   inline const MovementComponent& GetMoveComponent() const {return GetComponent<MovementComponent>();}
 
-  inline CubeLightComponent& GetCubeLightComponent() {return GetComponent<CubeLightComponent>();}
-  inline const CubeLightComponent& GetCubeLightComponent() const {return GetComponent<CubeLightComponent>();}
-
-  inline BackpackLightComponent& GetBackpackLightComponent() {return GetComponent<BackpackLightComponent>();}
-  inline const BackpackLightComponent& GetBackpackLightComponent() const {return GetComponent<BackpackLightComponent>();}
-
-  inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>();}
-  inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>();}
-  
-  inline CubeBatteryComponent& GetCubeBatteryComponent() {return GetComponent<CubeBatteryComponent>();}
-  inline const CubeBatteryComponent& GetCubeBatteryComponent() const {return GetComponent<CubeBatteryComponent>();}
-
-  inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>();}
-  inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>();}
-
-  inline CubeConnectionCoordinator& GetCubeConnectionCoordinator() {return GetComponent<CubeConnectionCoordinator>();}
-  inline const CubeConnectionCoordinator& GetCubeConnectionCoordinator() const {return GetComponent<CubeConnectionCoordinator>();}
-
-  inline CubeInteractionTracker& GetCubeInteractionTracker() {return GetComponent<CubeInteractionTracker>();}
-  inline const CubeInteractionTracker& GetCubeInteractionTracker() const {return GetComponent<CubeInteractionTracker>();}
-
-  inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>();}
-  inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>();}
-
-  inline const DataAccessorComponent& GetDataAccessorComponent() const { return GetComponent<DataAccessorComponent>(); }
-  inline       DataAccessorComponent& GetDataAccessorComponent()       { return GetComponent<DataAccessorComponent>(); }
-
-  inline const NVStorageComponent& GetNVStorageComponent() const {return GetComponent<NVStorageComponent>();}
-  inline NVStorageComponent& GetNVStorageComponent() {return GetComponent<NVStorageComponent>();}
-
-  inline const AIComponent& GetAIComponent() const {return GetComponent<AIComponent>();}
-  inline AIComponent& GetAIComponent() {return GetComponent<AIComponent>();}
-
-  inline const PublicStateBroadcaster& GetPublicStateBroadcaster() const {return GetComponent<PublicStateBroadcaster>();}
-  inline PublicStateBroadcaster& GetPublicStateBroadcaster(){return GetComponent<PublicStateBroadcaster>();}
-
-  inline DockingComponent& GetDockingComponent() {return GetComponent<DockingComponent>();}
-  inline const DockingComponent& GetDockingComponent() const {return GetComponent<DockingComponent>();}
-
-  inline CarryingComponent& GetCarryingComponent() {return GetComponent<CarryingComponent>();}
-  inline const CarryingComponent& GetCarryingComponent() const {return GetComponent<CarryingComponent>();}
-
   inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {return GetComponent<RobotIdleTimeoutComponent>();}
   inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {return GetComponent<RobotIdleTimeoutComponent>();}
-
-  inline const PathComponent& GetPathComponent() const { return GetComponent<PathComponent>(); }
-  inline       PathComponent& GetPathComponent()       { return GetComponent<PathComponent>(); }
-
-  inline const CliffSensorComponent& GetCliffSensorComponent() const { return GetComponent<CliffSensorComponent>(); }
-  inline       CliffSensorComponent& GetCliffSensorComponent()       { return GetComponent<CliffSensorComponent>(); }
-
-  inline const PowerStateManager& GetPowerStateManager() const { return GetComponent<PowerStateManager>(); }
-  inline       PowerStateManager& GetPowerStateManager()       { return GetComponent<PowerStateManager>(); }
-
-  inline const ProxSensorComponent& GetProxSensorComponent() const { return GetComponent<ProxSensorComponent>(); }
-  inline       ProxSensorComponent& GetProxSensorComponent()       { return GetComponent<ProxSensorComponent>(); }
-
-  inline const AnimationComponent& GetAnimationComponent() const { return GetComponent<AnimationComponent>(); }
-  inline       AnimationComponent& GetAnimationComponent()       { return GetComponent<AnimationComponent>(); }
-
-  inline const TextToSpeechCoordinator& GetTextToSpeechCoordinator() const { return GetComponent<TextToSpeechCoordinator>();}
-  inline       TextToSpeechCoordinator& GetTextToSpeechCoordinator()       { return GetComponent<TextToSpeechCoordinator>();}
-
-  inline const TouchSensorComponent& GetTouchSensorComponent() const { return GetComponent<TouchSensorComponent>(); }
-  inline       TouchSensorComponent& GetTouchSensorComponent()       { return GetComponent<TouchSensorComponent>(); }
-
-  inline const VariableSnapshotComponent& GetVariableSnapshotComponent() const { return GetComponent<VariableSnapshotComponent>(); }
-  inline       VariableSnapshotComponent& GetVariableSnapshotComponent()       { return GetComponent<VariableSnapshotComponent>(); }
-
-  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return GetComponent<DrivingAnimationHandler>(); }
-  DrivingAnimationHandler& GetDrivingAnimationHandler() { return GetComponent<DrivingAnimationHandler>(); }
-
-  const MicComponent& GetMicComponent() const { return GetComponent<MicComponent>(); }
-  MicComponent&       GetMicComponent()       { return GetComponent<MicComponent>(); }
-
-  const BatteryComponent&    GetBatteryComponent()    const { return GetComponent<BatteryComponent>(); }
-  BatteryComponent&          GetBatteryComponent()          { return GetComponent<BatteryComponent>(); }
-
-  const BeatDetectorComponent&    GetBeatDetectorComponent()    const { return GetComponent<BeatDetectorComponent>(); }
-  BeatDetectorComponent&          GetBeatDetectorComponent()          { return GetComponent<BeatDetectorComponent>(); }
-
-  const HabitatDetectorComponent& GetHabitatDetectorComponent() const { return GetComponent<HabitatDetectorComponent>(); }
-  HabitatDetectorComponent&       GetHabitatDetectorComponent()       { return GetComponent<HabitatDetectorComponent>(); }
-
-  const SDKComponent&    GetSDKComponent()    const { return GetComponent<SDKComponent>(); }
-  SDKComponent&          GetSDKComponent()          { return GetComponent<SDKComponent>(); }
-
-  const PhotographyManager& GetPhotographyManager() const {return GetComponent<PhotographyManager>();}
-  PhotographyManager&       GetPhotographyManager()       {return GetComponent<PhotographyManager>();}
-
-  const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
-
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }
-  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {return GetComponent<ObjectPoseConfirmer>();}
 
   ActionList& GetActionList() { return GetComponent<ActionList>(); }
 
@@ -344,8 +286,6 @@ public:
 
   RobotStateHistory* GetStateHistory() { return GetComponentPtr<RobotStateHistory>(); }
   const RobotStateHistory* GetStateHistory() const { return GetComponentPtr<RobotStateHistory>(); }
-
-  RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(); }
 
   // Get pointer to robot's runtime context.
   // Nothing outside of robot is allowed to modify robot's context.
@@ -452,7 +392,7 @@ public:
 
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;
-  
+
   bool IsHeadMotorOutOfBounds() const { return _isHeadMotorOutOfBounds; }
   bool IsLiftMotorOutOfBounds() const { return _isLiftMotorOutOfBounds; }
 
@@ -734,7 +674,7 @@ protected:
   // engine connects to robot
   bool             _isHeadCalibrated = true;
   bool             _isLiftCalibrated = true;
-  
+
   // flags that represent whether the motor values exceeded
   // the expected range of the respective motors. If it is
   // out of bounds, it'll trigger a calibration
@@ -772,7 +712,7 @@ protected:
 
   // Whether or not we have sent the engine is fully loaded message
   bool _sentEngineLoadedMsg = false;
-  
+
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
   // the public function SetNewPose()

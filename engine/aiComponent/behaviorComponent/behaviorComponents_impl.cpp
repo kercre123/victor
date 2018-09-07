@@ -80,33 +80,35 @@ std::string GetEntityNameForEnumType<Vector::BCComponentID>(){ return "BehaviorC
 template<>
 std::string GetComponentStringForID<Vector::BCComponentID>(Vector::BCComponentID enumID)
 {
-  switch(enumID){
-    case Vector::BCComponentID::AIComponent:                        { return "AIComponent";}
-    case Vector::BCComponentID::AsyncMessageComponent:              { return "AsyncMessageComponent";}
-    case Vector::BCComponentID::BehaviorAudioComponent:             { return "BehaviorAudioComponent";}
-    case Vector::BCComponentID::BehaviorComponentMessageHandler:    { return "BehaviorComponentMessageHandler";}
-    case Vector::BCComponentID::BehaviorContainer:                  { return "BehaviorContainer";}
-    case Vector::BCComponentID::BehaviorEventComponent:             { return "BehaviorEventComponent";}
-    case Vector::BCComponentID::BehaviorExternalInterface:          { return "BehaviorExternalInterface";}
-    case Vector::BCComponentID::BehaviorHelperComponent:            { return "BehaviorHelperComponent";}
-    case Vector::BCComponentID::BehaviorSystemManager:              { return "BehaviorSystemManager";}
-    case Vector::BCComponentID::BlockWorld:                         { return "BlockWorld";}
-    case Vector::BCComponentID::DelegationComponent:                { return "DelegationComponent";}
-    case Vector::BCComponentID::FaceWorld:                          { return "FaceWorld";}
-    case Vector::BCComponentID::RobotInfo:                          { return "RobotInfo";}
-    case Vector::BCComponentID::UserDefinedBehaviorTreeComponent:   { return "UserDefinedBehaviorTreeComponent";}
-    case Vector::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
-    case Vector::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
-    case Vector::BCComponentID::ActiveFeature:                      { return "ActiveFeature";}
-    case Vector::BCComponentID::ActiveBehaviorIterator:             { return "ActiveBehaviorIterator";}
-    case Vector::BCComponentID::BehaviorsBootLoader:                { return "BehaviorsBootLoader";}
-    case Vector::BCComponentID::RobotStatsTracker:                  { return "RobotStatsTracker";}
-    case Vector::BCComponentID::AttentionTransferComponent:         { return "AttentionTransferComponent";}
-    case Vector::BCComponentID::PowerStateManager:                  { return "PowerStateManager";}
-    case Vector::BCComponentID::MoodManager:                        { return "MoodManager";}
-    case Vector::BCComponentID::SleepTracker:                       { return "SleepTracker";}
-    case Vector::BCComponentID::Count:                              { return "Count";}
+  #define CASE(id) case Vector::BCComponentID::id: { return #id; }
+  switch (enumID) {
+    CASE(ActiveBehaviorIterator)
+    CASE(ActiveFeature)
+    CASE(AIComponent)
+    CASE(AsyncMessageComponent)
+    CASE(AttentionTransferComponent)
+    CASE(BehaviorAudioComponent)
+    CASE(BehaviorComponentMessageHandler)
+    CASE(BehaviorContainer)
+    CASE(BehaviorEventComponent)
+    CASE(BehaviorExternalInterface)
+    CASE(BehaviorHelperComponent)
+    CASE(BehaviorSystemManager)
+    CASE(BehaviorTimerManager)
+    CASE(BehaviorsBootLoader)
+    CASE(BlockWorld)
+    CASE(DelegationComponent)
+    CASE(FaceWorld)
+    CASE(MoodManager)
+    CASE(PowerStateManager)
+    CASE(RobotInfo)
+    CASE(RobotStatsTracker)
+    CASE(SleepTracker)
+    CASE(UserDefinedBehaviorTreeComponent)
+    CASE(UserIntentComponent)
+    CASE(Count)
   }
+  #undef CASE
 }
 
 } // namespace Anki

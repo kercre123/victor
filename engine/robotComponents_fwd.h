@@ -28,7 +28,7 @@ namespace Vector {
 
 // When adding to this enum be sure to also declare a template specialization
 // in the _impl.cpp file mapping the enum to the class type it is associated with
-enum class RobotComponentID{
+enum class RobotComponentID {
   AccountSettingsManager,
   AIComponent,
   ActionList,
@@ -73,6 +73,7 @@ enum class RobotComponentID{
   SDK,
   SettingsCommManager,
   SettingsManager,
+  RobotHealthReporter,
   RobotIdleTimeout,
   RobotStatsTracker,
   RobotToEngineImplMessaging,
