@@ -57,6 +57,35 @@ BleCentral* centralContext;
   fflush(stdout);
 }
 
+- (std::string) getSessionToken {
+  // check if ~/.saiconfig exists
+  // if so, parse token line and make RtsCloudSessionRequest
+  NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @".saiconfig", nil];
+  NSString* saiconfigPath = [NSString pathWithComponents:pathParts];
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+
+  if(![fileManager fileExistsAtPath:saiconfigPath]) {
+    // saiConfig does not exist
+    return "";
+  }
+  
+  NSString* content = [NSString stringWithContentsOfFile:saiconfigPath
+                                                encoding:NSUTF8StringEncoding
+                                                   error:NULL];
+  
+  std::string saiconfigStr = std::string([content UTF8String]);
+  
+  size_t index = saiconfigStr.find("token = ");
+  
+  if(index == std::string::npos) {
+    return "";
+  }
+  
+  index += 8;
+  
+  return saiconfigStr.substr(index, saiconfigStr.length() - index - 1);
+}
+
 - (void)setHasVersion:(bool)has version:(int)v {
   _hasVersion = has;
   _inputVersion = v;
@@ -141,6 +170,9 @@ BleCentral* centralContext;
     _otaExpected = 0;
     
     _isPairing = false;
+    
+    _hasStartedPrompt = false;
+    _hasAuthed = true;
     
     // migration helper
     if([self HasSavedPublicKey] && ([self GetPrivateKey] == nil)) {
@@ -425,6 +457,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     sodium_increment(_nonceIn, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
   } else {
     if(_verbose) NSLog(@"Error in decrypting challenge. Our key must be bad. :(");
+    printf("Unable to decrypt challenge from Vector! Our saved keys must be old/corrupted. Put Vector in pairing mode and run mac-client again.\n --> If your robot has an Anki account owner, remember to do 'anki-auth SESSION_TOKEN' when you pin pair, as soon as the Vector prompt shows up.\n");
     Clad::SendRtsMessage<Anki::Vector::ExternalComms::RtsChallengeMessage>(self, _commVersion, 000000);
     _rtsState = Raw;
     
@@ -1115,8 +1148,21 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         Anki::Vector::ExternalComms::RtsResponse msg = rtsMsg.Get_RtsResponse();
         
         if(msg.code == Anki::Vector::ExternalComms::RtsResponseCode::NotCloudAuthorized) {
-          printf("Vector has an Anki account owner, and you need to prove that's you!\n");
-          printf("Use the command 'anki-auth SESSION_TOKEN' to do so.\n");
+          _hasOwner = true;
+          
+          if(_hasStartedPrompt) {
+            printf("Vector has an Anki account owner, and you need to prove that's you!\n");
+            printf("Use the command 'anki-auth SESSION_TOKEN' to do so.\n");
+          } else {
+            // not authed and not started prompt
+            std::string token = [self getSessionToken];
+            if(token != "") {
+              Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsCloudSessionRequest>(self, _commVersion, token);
+              printf("  => Trying to authenticate...\n");
+            } else {
+              [self startPrompt];
+            }
+          }
         }
         
         if(!_readyForNextCommand) {
@@ -1186,6 +1232,16 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsStatusResponse_4: {
         //
+        if(!_hasStartedPrompt) {
+          Anki::Vector::ExternalComms::RtsStatusResponse_4 msg = rtsMsg.Get_RtsStatusResponse_4();
+          _hasOwner = msg.hasOwner;
+          if(msg.hasOwner) {
+            _hasAuthed = true;
+          }
+          [self startPrompt];
+          break;
+        }
+        
         if(_currentCommand == "status" && !_readyForNextCommand) {
           Anki::Vector::ExternalComms::RtsStatusResponse_4 msg = rtsMsg.Get_RtsStatusResponse_4();
           
@@ -1206,6 +1262,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
             default:
               break;
           }
+          
+          _hasOwner = msg.hasOwner;
           
           printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n  ota_in_progress = %s\n         hasOwner = %s\n              esn = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str(), msg.otaInProgress? "true" : "false", msg.hasOwner? "true" : "false", msg.esn.c_str());
           _readyForNextCommand = true;
@@ -1236,6 +1294,16 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsCloudSessionResponse: {
         Anki::Vector::ExternalComms::RtsCloudSessionResponse msg = rtsMsg.Get_RtsCloudSessionResponse();
+        
+        if(msg.success) {
+          _hasAuthed = true;
+          _hasOwner = true;
+        }
+        
+        if(!_hasStartedPrompt) {
+          printf("  => Anki account auth: %s\n", msg.success?"success":"failed");
+          [self startPrompt];
+        }
         
         if(_currentCommand == "anki-auth" && !_readyForNextCommand) {
           printf("Success: %s\nStatus: %d\nAppToken: %s\n\n",
@@ -1579,6 +1647,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   // Set version
   _commVersion = version;
   
+  if(_commVersion == 4) {
+    _hasAuthed = false;
+  }
+  
   msg[1] = version;
   [self send:bytes length:n];
   
@@ -1762,30 +1834,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   //
 }
 
-- (void) HandleChallengeSuccessMessage:(const Anki::Vector::ExternalComms::RtsChallengeSuccessMessage&)msg {
-  if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
-  
-  if(_syncdelegate != nullptr) {
-    [_syncdelegate performSelector:@selector(onFullyConnected)];
-    return;
-  }
-  
-  // connection id
-  if(_commVersion >= 4) {
-    std::string connId = "mac-client-";
-    std::vector<std::string> nums = {{"0","1","2","3","4","5","6","7","8","9", "a", "b", "c", "d", "e", "f"}};
-    
-    for(int i = 0; i < 24; i++) {
-      int index = (int)arc4random_uniform((uint32_t)nums.size());
-      connId += nums[index];
-    }
-    
-    printf("  => connection id: %s\n", connId.c_str());
-    
-    Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsAppConnectionIdRequest>(self, _commVersion, connId);
-  }
-  
+- (void) startPrompt {
   dispatch_async(_commandQueue, [self]{
+    _hasStartedPrompt = true;
     char* input;
     
     NSString* shellName = @"vector-????";
@@ -1795,10 +1846,28 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     int vColor = [_colorArray[(_commVersion - 1) % _colorArray.count] intValue];
     
     char prompt[128];
-    sprintf(prompt, "\033[0;%dmvector-%s#\033[0m ", vColor, [shellName UTF8String]);
+    //const char* unauthorizedPrompt = "\033[0;41;39m🔒  \033[0m";
+    const char* unauthorizedPrompt = "🔒  ";
+    const char* unownedPrompt = "⚠️  ";
+    const char* authorizedPrompt = "☁️  ";
+    const char* factoryPrompt = "🏭  ";
+    
+    if(_commVersion > 2) {
+      if(!_hasOwner) {
+        printf("  => \033[0;43;30mRobot does not have an Anki account owner yet. Cloud services will not work. Please use `anki-auth SESSION_TOKEN`.\033[0m\n");
+      } else if(!_hasAuthed) {
+        printf("  => \033[0;41;97mmac-client is currently unauthorized. Please use `anki-auth SESSION_TOKEN`.\033[0m\n");
+      }
+    }
     
     // Start shell
     while(true) {
+      if(_commVersion > 2) {
+        sprintf(prompt, "%s\033[0;%dmvector-%s#\033[0m ", ((!_hasOwner)?unownedPrompt:(_hasAuthed?authorizedPrompt:unauthorizedPrompt)), vColor, [shellName UTF8String]);
+      } else {
+        sprintf(prompt, "%s\033[0;%dmvector-%s#\033[0m ", factoryPrompt, vColor, [shellName UTF8String]);
+      }
+      
       if(!_readyForNextCommand) {
         continue;
       }
@@ -1831,7 +1900,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         WiFiAuth auth = AUTH_WPA_PSK;
         
         NSString* ssidHex = [NSString stringWithUTF8String:[self hexStr:(char*)words[1].c_str() length:(int)ssidS.length].c_str()];
-      
+        
         if(![_wifiHidden containsObject:ssidHex] && [_wifiAuth valueForKey:ssidS] != nullptr) {
           auth = (WiFiAuth)[[_wifiAuth objectForKey:ssidS] intValue];
         } else {
@@ -1933,6 +2002,36 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
     }
   });
+}
+
+- (void) HandleChallengeSuccessMessage:(const Anki::Vector::ExternalComms::RtsChallengeSuccessMessage&)msg {
+  if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
+  
+  if(_syncdelegate != nullptr) {
+    [_syncdelegate performSelector:@selector(onFullyConnected)];
+    return;
+  }
+  
+  // connection id
+  if(_commVersion >= 4) {
+    std::string connId = "mac-client-";
+    std::vector<std::string> nums = {{"0","1","2","3","4","5","6","7","8","9", "a", "b", "c", "d", "e", "f"}};
+    
+    for(int i = 0; i < 24; i++) {
+      int index = (int)arc4random_uniform((uint32_t)nums.size());
+      connId += nums[index];
+    }
+    
+    printf("  => connection id: %s\n", connId.c_str());
+    
+    if(_reconnection) {
+      _hasAuthed = true;
+    }
+    Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsStatusRequest>(self, _commVersion);
+    Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsAppConnectionIdRequest>(self, _commVersion, connId);
+  } else {
+    [self startPrompt];
+  }
 }
 
 - (void) HandleWifiScanResponse:(const Anki::Vector::ExternalComms::RtsWifiScanResponse&)msg {

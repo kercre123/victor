@@ -94,6 +94,10 @@ enum WiFiAuth : uint8_t {
   bool _hasVersion;
   int _inputVersion;
   
+  bool _hasStartedPrompt;
+  bool _hasAuthed;
+  bool _hasOwner;
+  
   Anki::Vector::ExternalComms::RtsConnRequest _currentConnRequest;
 }
 
@@ -116,6 +120,8 @@ enum WiFiAuth : uint8_t {
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
 - (void) showProgress: (float)current expected:(float)expected;
+- (std::string) getSessionToken;
+- (void) startPrompt;
 - (void) handleRequest:(Anki::Vector::ExternalComms::RtsConnection_2)msg;
 
 - (void) SendSshPublicKey:(std::string)filename;
