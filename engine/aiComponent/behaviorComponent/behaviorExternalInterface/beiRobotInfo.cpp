@@ -383,6 +383,12 @@ BatteryComponent& BEIRobotInfo::GetBatteryComponent() const
   return _robot.GetBatteryComponent();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BEIRobotInfo::SendRobotMessage( const RobotInterface::EngineToRobot& msg ) const
+{
+  _robot.SendMessage(msg);
+}
+
   
 } // namespace Vector
 } // namespace Anki

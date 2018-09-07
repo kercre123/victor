@@ -48,6 +48,24 @@ structure AudioData {
 	int_16 data[uint_16]
 }
 
+structure OnlineMusicRequest {
+	string request,
+}
+
+structure OnlineMusicReady {
+	bool ready,
+}
+
+structure OnlineMusicData {
+	uint_16 siz, /// not sure if needed
+	uint_8 data[uint_16], // []byte in go
+}
+
+structure OnlineMusicComplete {
+  int_8 endCondition,
+}
+
+
 structure IntentResult {
 	string intent,
 	string[uint_16] parameters,
@@ -72,12 +90,20 @@ union dupes_allowed Message {
 	AudioData audio,
 	Void audioDone,
 	Void connectionCheck,
+	OnlineMusicRequest onlineMusicRequest,
+	Void onlineMusicPlay,
+	Void onlineMusicStop,
+	
 
 	// cloud -> anim
 	Void stopSignal,
 	Void testStarted,
 	Void streamTimeout,
 	ConnectionResult connectionResult,
+	OnlineMusicReady onlineMusicReady,
+	OnlineMusicData onlineMusicData,
+	OnlineMusicComplete onlineMusicComplete,
+	
 
 	// cloud -> engine
 	Filename debugFile,

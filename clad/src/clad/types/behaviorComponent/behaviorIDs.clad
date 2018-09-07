@@ -38,6 +38,7 @@ enum uint_16 BehaviorID {
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
+  PlayMusic,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,

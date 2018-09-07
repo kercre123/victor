@@ -33,8 +33,12 @@
 // Declarations
 namespace Anki {
   namespace Vector {
+    class RadioAudioComponent;
+    
     namespace CloudMic {
       class Message;
+      struct OnlineMusicData;
+      struct OnlineMusicComplete;
     }
     namespace MicData {
       class MicDataInfo;
@@ -122,6 +126,16 @@ public:
   // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
   // sending any data to the cloud; this lasts for a set duration
   bool ShouldSimulateStreaming() const;
+  
+  void OnlineMusicRequest( const std::string request );
+  void OnlineMusicPlay( const std::string request );
+  void OnlineMusicStop( const std::string request );
+  
+  void OnlineMusicAbort();
+  
+  void OnOnlineMusicReady( bool ready );
+  void OnOnlineMusicData( uint8_t* data, int size );
+  void OnOnlineMusicComplete( const CloudMic::OnlineMusicComplete& msg );
 
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
@@ -174,6 +188,17 @@ private:
   void SendUdpMessage(const CloudMic::Message& msg);
   
   const AnimContext* _context;
+  
+  std::unique_ptr<RadioAudioComponent> _radioAudioComponent;
+  enum class OnlineMusicState : uint8_t {
+    None=0,
+    Requested,
+    Available,
+    Playing,
+  };
+  OnlineMusicState _onlineMusicState;
+  std::string _onlineMusicRequestName;
+  static const char* const OnlineMusicStateToString( OnlineMusicState state );
 };
 
 } // namespace MicData

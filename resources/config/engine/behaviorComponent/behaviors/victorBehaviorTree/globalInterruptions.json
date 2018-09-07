@@ -18,6 +18,7 @@
     "ReactToObstacle",
     "InterruptingVoiceReactions",
     "ChangeEyeColor",
+    "PlayMusic",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "WhileInAirDispatcher",

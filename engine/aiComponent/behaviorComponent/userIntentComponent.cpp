@@ -33,10 +33,12 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/logging/DAS.h"
+#include "util/string/stringUtils.h"
 #include "webServerProcess/src/webVizSender.h"
 
 
 #include "json/json.h"
+#include <regex>
 
 namespace Anki {
 namespace Vector {
@@ -121,6 +123,7 @@ void UserIntentComponent::ClearPendingTriggerWord()
 
 void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
 {
+  
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // assume get in animation is playing
@@ -380,13 +383,24 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
     return false;
   }
   
+  UserIntentTag userIntentTag = _intentMap->GetUserIntentFromCloudIntent(cloudIntent);
+  if( userIntentTag == USER_INTENT(unmatched_intent) ) {
+    if( TryRewriteDevIntent( json ) ) {
+      if( !JsonTools::GetValueOptional(json, kCloudIntentJsonKey, cloudIntent) ) {
+        PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.MissingIntentKey2",
+                            "Cloud json missing key '%s'",
+                            kCloudIntentJsonKey);
+        return false;
+      }
+      userIntentTag = _intentMap->GetUserIntentFromCloudIntent(cloudIntent);
+    }
+  }
+  
   auto& params = json[kParamsKey];
   const bool hasParams = !params.isNull();
   
   Json::Value emptyJson;
   Json::Value& intentJson = hasParams ? params : emptyJson;
-  
-  UserIntentTag userIntentTag = _intentMap->GetUserIntentFromCloudIntent(cloudIntent);
   
   if( hasParams ) {
     // translate variable names, if necessary
@@ -467,6 +481,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
         case CloudMic::MessageTag::result:
         {
           auto json = _pendingCloudIntent.Get_result().GetJSON();
+          PRINT_NAMED_WARNING("WHATNOW", "Json='%s", _pendingCloudIntent.GetJSON().toStyledString().c_str());
           bool ok = true;
           if ( json[kAltParamsKey].isString() ) {
             // params are encoded as a string, but we need to make it a Json::Value
@@ -792,7 +807,7 @@ void UserIntentComponent::DisableEngineResponseToTriggerWord( const std::string&
   
 void UserIntentComponent::OnCloudData(CloudMic::Message&& data)
 {
-  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.OnCloudData", "'%s'", CloudMic::MessageTagToString(data.GetTag()) );
+  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.OnCloudData", "'%s'", data.GetJSON().toStyledString().c_str() );
   
   std::lock_guard<std::mutex> lock{_mutex};
   _pendingCloudIntent = std::move(data);
@@ -895,6 +910,81 @@ void UserIntentComponent::SendWebVizIntents()
       }
     } // if (webSender ...
   }
+}
+
+  struct DevIntentInfo {
+    std::string intentName;
+    std::string regex;
+    std::vector<std::string> params;
+  };
+  
+bool ParseDevIntent( const std::string& input, Json::Value& json )
+{
+  static std::vector<DevIntentInfo> devMap = {
+    {"intent_play_any_music", "play(?: me)? some music", {}},
+    {"intent_play_music", "play(?: me)? some ([a-zA-Z ]+)", {"request"}},
+    {"intent_eat_potatoes", "eat ([0-9]+) potatoes", {"number"}},
+    {"intent_imperative_come", "go to your master", {}},
+  };
+  
+  for( const auto& entry : devMap ) {
+    PRINT_NAMED_WARNING("WHATNOW", "comparing '%s'", input.c_str());
+    std::regex r{ entry.regex };
+    std::smatch matches;
+    
+    if( std::regex_match(input, matches, r) ) {
+      PRINT_NAMED_WARNING("WHATNOW", "Found match for '%s' in '%s' (match=%s)", entry.regex.c_str(), input.c_str(), matches.str(0).c_str());
+      // Build object like {"intent":"intent_play_music","params": {"request":"KQED"}}"
+      if( ANKI_VERIFY( entry.params.size()+1 == matches.size(),
+                       "WHATNOW", "Params size %zu != regex size %zu",
+                       entry.params.size(), matches.size() ) )
+      {
+        json.clear();
+        json["intent"] = entry.intentName;
+        
+        Json::Value params;
+        for( int i=0; i<entry.params.size(); ++i ) {
+          PRINT_NAMED_WARNING("WHATNOW", "'%s' == '%s'", entry.params[i].c_str(), matches.str(i+1).c_str());
+          params[entry.params[i]] = matches.str(i+1);
+        }
+        if( !params.empty() ) {
+          json["params"] = params;
+        }
+        return true;
+      }
+    } else {
+      PRINT_NAMED_WARNING("WHATNOW", "Did not find match for '%s' in '%s'", entry.regex.c_str(), input.c_str());
+    }
+  }
+  
+  return false;
+}
+  
+bool UserIntentComponent::TryRewriteDevIntent( Json::Value& json ) const
+{
+  std::string metadata = json.get("metadata", "").asString();
+  if( !metadata.empty() ) {
+    PRINT_NAMED_WARNING("WHATNOW", "metadata=%s", metadata.c_str());
+    // find an entry like "text: my special command"
+    const std::string dblDelim = "  ";
+    std::vector<std::string> entries = Util::StringSplitStr( metadata, dblDelim );
+    for( const auto& entry : entries ) {
+      PRINT_NAMED_WARNING("WHATNOW", "entry=%s", entry.c_str());
+      const static std::string searchStr = "text: ";
+      const auto idx = entry.find(searchStr);
+      if( idx != std::string::npos ) {
+        PRINT_NAMED_WARNING("WHATNOW", "found 'text: '");
+        if( idx + searchStr.length() < entry.size() ) {
+          const std::string text = entry.substr( idx + searchStr.length() );
+          if( ParseDevIntent( text, json ) ) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  
+  return false;
 }
 
 }

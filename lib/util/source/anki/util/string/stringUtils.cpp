@@ -406,6 +406,20 @@ std::string StringJoin(const std::vector<std::string>& strings, char delim)
 
   return result;
 }
+  
+std::vector<std::string> StringSplitStr(std::string string, const std::string& delim)
+{
+  size_t pos = 0;
+  std::string token;
+  std::vector<std::string> result;
+  while( (pos = string.find(delim)) != std::string::npos ) {
+    token = string.substr( 0, pos );
+    result.push_back( std::move(token) );
+    string.erase(0, pos + delim.length());
+  }
+  result.push_back( std::move(string) );
+  return result;
+}
 
 std::vector<std::string> StringSplit(const std::string& string, char delim)
 {

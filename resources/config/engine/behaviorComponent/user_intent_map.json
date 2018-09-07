@@ -9,6 +9,19 @@
       "user_intent": "play_anygame"
     },
     {
+      "cloud_intent": "intent_play_music",
+      "user_intent": "play_music"
+    },
+    {
+      "cloud_intent": "intent_play_any_music",
+      "user_intent": "play_any_music"
+    },
+    {
+      "cloud_intent": "intent_eat_potatoes",
+      "user_intent": "eat_potatoes",
+      "cloud_numerics": ["number"]
+    },
+    {
       "cloud_intent": "intent_imperative_quiet",
       "app_intent": "intent_imperative_quiet",
       "user_intent": "imperative_quiet"

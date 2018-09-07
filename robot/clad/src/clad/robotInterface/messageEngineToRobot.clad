@@ -299,6 +299,17 @@ message CliffAlignToWhiteAction
   bool start
 }
 
+message OnlineMusicRequest {
+  string request,
+}
+
+message OnlineMusicPlay {
+  string request,
+}
+
+message OnlineMusicStop {
+  string request,
+}
 
 message EnableBraceWhenFalling
 {
@@ -756,6 +767,10 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
+
+  OnlineMusicRequest onlineMusicRequest = 0x75,
+  OnlineMusicPlay onlineMusicPlay = 0x76,
+  OnlineMusicStop onlineMusicStop = 0x77,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,

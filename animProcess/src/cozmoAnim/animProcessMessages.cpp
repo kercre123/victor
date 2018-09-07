@@ -224,6 +224,40 @@ void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
 
   _context->GetDataLoader()->LoadAnimationFile(path);
 }
+  
+void Process_onlineMusicRequest(const Anki::Vector::RobotInterface::OnlineMusicRequest& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem == nullptr)
+  {
+    return;
+  }
+  const std::string request{msg.request, msg.request_length};
+  micDataSystem->OnlineMusicRequest( request );
+}
+
+void Process_onlineMusicPlay(const Anki::Vector::RobotInterface::OnlineMusicPlay& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem == nullptr)
+  {
+    return;
+  }
+  const std::string request{msg.request, msg.request_length};
+  micDataSystem->OnlineMusicPlay( request );
+}
+
+void Process_onlineMusicStop(const Anki::Vector::RobotInterface::OnlineMusicStop& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem == nullptr)
+  {
+    return;
+  }
+  const std::string request{msg.request, msg.request_length};
+  micDataSystem->OnlineMusicStop( request );
+}
+  
 
 void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
 {

@@ -83,6 +83,8 @@ std::string UrlEncodeString(const std::string& str);
 // Simple way to handle comma-delimited strings
 std::string StringJoin(const std::vector<std::string>& strings, char delim=',');
 std::vector<std::string> StringSplit(const std::string& string, char delim=',');
+// split by a string of any length
+std::vector<std::string> StringSplitStr(std::string string, const std::string& delim);
   
 void StringReplace( std::string& toChange, const std::string& oldStr, const std::string& newStr );
 

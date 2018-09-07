@@ -21,6 +21,7 @@
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/radioAudioComponent.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
 #include "audioEngine/plugins/ankiPluginInterface.h"
@@ -97,6 +98,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation, triggerDataDir));
+  _radioAudioComponent.reset( new RadioAudioComponent );
 
   if (!_writeLocationDir.empty())
   {
@@ -119,6 +121,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
   _micDataProcessor->Init(dataLoader, _locale);
+  _radioAudioComponent->Init( _context );
 }
 
 MicDataSystem::~MicDataSystem()
@@ -277,55 +280,79 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
   const ssize_t bytesReceived = _udpServer->Recv((char*)receiveArray, kMaxReceiveBytes);
   if (bytesReceived > 0) {
-    CloudMic::Message msg{receiveArray, (size_t)bytesReceived};
-    switch (msg.GetTag()) {
+    if( receiveArray[0] == (uint8_t)CloudMic::MessageTag::onlineMusicData ) {
+      const uint16_t* sizP = (uint16_t*)(receiveArray + 1);
+      const uint16_t siz = *sizP;
+      OnOnlineMusicData( receiveArray + 3, siz );
+//      // could maybe avoid this one copy with a struct
+//      const uint16_t* sizP = (uint16_t*)(receiveArray + 1);
+//      const uint16_t siz = *sizP;
+//      std::vector<uint8_t> audioData{ std::begin(receiveArray) + 3, std::begin(receiveArray) + 3 + siz };
+//      OnOnlineMusicData( std::move(audioData) );
+    } else {
+      CloudMic::Message msg{receiveArray, (size_t)bytesReceived};
+      switch (msg.GetTag()) {
+          
+        case CloudMic::MessageTag::onlineMusicReady:
+          OnOnlineMusicReady( msg.Get_onlineMusicReady().ready );
+          break;
+          
+        case CloudMic::MessageTag::onlineMusicData:
+          assert(false);
+          break;
+        case CloudMic::MessageTag::onlineMusicComplete:
+          OnOnlineMusicComplete( msg.Get_onlineMusicComplete() );
+          break;
+          
+        case CloudMic::MessageTag::stopSignal:
+          PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
+          receivedStopMessage = true;
+          break;
 
-      case CloudMic::MessageTag::stopSignal:
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
-        receivedStopMessage = true;
-        break;
-
-      #if ANKI_DEV_CHEATS
-      case CloudMic::MessageTag::testStarted:
-      {
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
-        _fakeStreamingState = true;
-
-        // Set up a message to send out about the triggerword
-        RobotInterface::TriggerWordDetected twDetectedMessage;
-        const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
-        twDetectedMessage.timestamp = mostRecentTimestamp_ms;
-        twDetectedMessage.direction = kFirstIndex;
-        // TODO:(bn) check stream state here? Currently just assuming streaming is on
-        twDetectedMessage.willOpenStream = true;
-        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+        #if ANKI_DEV_CHEATS
+        case CloudMic::MessageTag::testStarted:
         {
-          std::lock_guard<std::mutex> lock(_msgsMutex);
-          _msgsToEngine.push_back(std::move(engineMessage));
+          PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
+          _fakeStreamingState = true;
+
+          // Set up a message to send out about the triggerword
+          RobotInterface::TriggerWordDetected twDetectedMessage;
+          const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
+          twDetectedMessage.timestamp = mostRecentTimestamp_ms;
+          twDetectedMessage.direction = kFirstIndex;
+          // TODO:(bn) check stream state here? Currently just assuming streaming is on
+          twDetectedMessage.willOpenStream = true;
+          auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+          {
+            std::lock_guard<std::mutex> lock(_msgsMutex);
+            _msgsToEngine.push_back(std::move(engineMessage));
+          }
+          break;
         }
-        break;
-      }
-      #endif
-      case CloudMic::MessageTag::connectionResult:
-      {
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
-        FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
+        #endif
+        case CloudMic::MessageTag::connectionResult:
+        {
+          PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
+          FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
 
-        // Send the results back to engine
-        ReportCloudConnectivity msgToEngine;
-        msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
-        msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
-        msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
-        RobotInterface::SendAnimToEngine(msgToEngine);
-        break;
-      }
+          // Send the results back to engine
+          ReportCloudConnectivity msgToEngine;
+          msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
+          msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
+          msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
+          RobotInterface::SendAnimToEngine(msgToEngine);
+          break;
+        }
 
-      default:
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
-        receivedStopMessage = true;
-        break;
+        default:
+          PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
+          receivedStopMessage = true;
+          break;
+      }
     }
   }
+  
+  _radioAudioComponent->Update();
 
 #if ANKI_DEV_CHEATS
   uint32_t recordingSecondsRemaining = 0;
@@ -734,6 +761,153 @@ void MicDataSystem::RequestConnectionStatus()
     PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");    
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
+}
+  
+const char* const MicDataSystem::OnlineMusicStateToString( OnlineMusicState state )
+{
+  switch( state ) {
+    case OnlineMusicState::None:      return "None";
+    case OnlineMusicState::Requested: return "Requested";
+    case OnlineMusicState::Available: return "Available";
+    case OnlineMusicState::Playing:   return "Playing";
+  }
+}
+  
+void MicDataSystem::OnlineMusicRequest( const std::string request )
+{
+  if( _onlineMusicState != OnlineMusicState::None ) {
+    OnlineMusicStop( _onlineMusicRequestName );
+    _onlineMusicRequestName = "";
+  }
+  
+  _onlineMusicRequestName = request;
+  _onlineMusicState = OnlineMusicState::Requested;
+  
+  // send request to cloud
+  if( _udpServer->HasClient() ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Requesting %s (len=%zu)", _onlineMusicRequestName.c_str(), _onlineMusicRequestName.length());
+    Anki::Vector::CloudMic::OnlineMusicRequest msg;
+    msg.request = _onlineMusicRequestName;
+    SendUdpMessage( CloudMic::Message::CreateonlineMusicRequest(std::move(msg)) );
+  }
+  
+}
+
+void MicDataSystem::OnlineMusicPlay( const std::string request )
+{
+  if( _onlineMusicState != OnlineMusicState::Available ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Music state is %s, not available for request %s", OnlineMusicStateToString(_onlineMusicState), request.c_str());
+    OnlineMusicAbort();
+    return;
+  }
+  if( request != _onlineMusicRequestName ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Request '%s' does not match available music '%s'", request.c_str(), _onlineMusicRequestName.c_str());
+    return;
+  }
+  
+  _onlineMusicState = OnlineMusicState::Playing;
+  
+  // send request to cloud
+  if( _udpServer->HasClient() ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Requesting %s to PLAY", _onlineMusicRequestName.c_str());
+    SendUdpMessage( CloudMic::Message::CreateonlineMusicPlay({}) );
+  }
+}
+
+void MicDataSystem::OnlineMusicStop( const std::string request )
+{
+  if( request != _onlineMusicRequestName ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Request '%s' does not match available music '%s'",
+                        request.c_str(), _onlineMusicRequestName.c_str());
+    OnlineMusicAbort();
+    return;
+  }
+  
+  if( _onlineMusicState != OnlineMusicState::None ) {
+    // send request to cloud (in any state-- this also aborts any requests)
+    if( _udpServer->HasClient() ) {
+      PRINT_NAMED_WARNING("WHATNOW", "Requesting %s to STOP (request=%s)",
+                          _onlineMusicRequestName.c_str(), request.c_str());
+      SendUdpMessage( CloudMic::Message::CreateonlineMusicStop({}) );
+    }
+  }
+  _onlineMusicState = OnlineMusicState::None;
+  _onlineMusicRequestName = "";
+  _radioAudioComponent->Stop();
+}
+
+void MicDataSystem::OnOnlineMusicReady( bool ready )
+{
+  // if state is still Requested, tell engine the result
+  if( _onlineMusicState == OnlineMusicState::Requested ) {
+    if( ready ) {
+      _onlineMusicState = OnlineMusicState::Available;
+    } else {
+      _onlineMusicState = OnlineMusicState::None;
+    }
+    RobotInterface::OnlineMusicReady msgToEngine;
+    memcpy( msgToEngine.request, _onlineMusicRequestName.c_str(), _onlineMusicRequestName.length() );
+    msgToEngine.request_length = _onlineMusicRequestName.length();
+    msgToEngine.ready = ready;
+    RobotInterface::SendAnimToEngine(msgToEngine);
+  } else {
+    PRINT_NAMED_WARNING("WHATNOW", "Music state is %s, not Requested for OnOnlineMusicReady %s",
+                        OnlineMusicStateToString(_onlineMusicState), _onlineMusicRequestName.c_str());
+    OnlineMusicAbort();
+  }
+}
+  
+void MicDataSystem::OnOnlineMusicData( uint8_t* data, int size )
+{
+  if( _onlineMusicState == OnlineMusicState::Playing ) {
+    // play data
+    PRINT_NAMED_WARNING("WHATNOW", "Received data! Len=%d", size);
+    _radioAudioComponent->AddData( data, size );
+  } else {
+    PRINT_NAMED_WARNING("WHATNOW", "Music state is %s, not Playing for OnlineMusicData %s",
+                        OnlineMusicStateToString(_onlineMusicState), _onlineMusicRequestName.c_str());
+    OnlineMusicAbort();
+  }
+}
+
+void MicDataSystem::OnOnlineMusicComplete( const CloudMic::OnlineMusicComplete& msg )
+{
+  if( _onlineMusicState == OnlineMusicState::Playing ) {
+    PRINT_NAMED_WARNING("WHATNOW", "EOF! condition=%d", msg.endCondition);
+    // tell engine it's done
+    RobotInterface::OnlineMusicComplete msgToEngine;
+    memcpy( msgToEngine.request, _onlineMusicRequestName.c_str(), _onlineMusicRequestName.length() );
+    msgToEngine.request_length = _onlineMusicRequestName.length();
+    msgToEngine.endCondition = msg.endCondition;
+    RobotInterface::SendAnimToEngine(msgToEngine);
+  } else {
+    PRINT_NAMED_WARNING("WHATNOW", "Music state is %s, not Playing for OnlineMusicComplete %s",
+                        OnlineMusicStateToString(_onlineMusicState), _onlineMusicRequestName.c_str());
+    // no need to abort because it's over anyway
+  }
+  _onlineMusicState = OnlineMusicState::None;
+  _onlineMusicRequestName = "";
+}
+  
+void MicDataSystem::OnlineMusicAbort()
+{
+  if( _onlineMusicState != OnlineMusicState::None ) {
+    // tell engine it's done
+    RobotInterface::OnlineMusicComplete msgToEngine;
+    memcpy( msgToEngine.request, _onlineMusicRequestName.c_str(), _onlineMusicRequestName.length() );
+    msgToEngine.request_length = _onlineMusicRequestName.length();
+    msgToEngine.endCondition = -1;
+    RobotInterface::SendAnimToEngine(msgToEngine);
+    
+    if( _udpServer->HasClient() ) {
+      PRINT_NAMED_WARNING("WHATNOW", "Requesting %s to ABORT/STOP (request=%s)",
+                          _onlineMusicRequestName.c_str(), _onlineMusicRequestName.c_str());
+      SendUdpMessage( CloudMic::Message::CreateonlineMusicStop({}) );
+    }
+  }
+  _onlineMusicState = OnlineMusicState::None;
+  _onlineMusicRequestName = "";
+  _radioAudioComponent->Stop();
 }
 
 } // namespace MicData

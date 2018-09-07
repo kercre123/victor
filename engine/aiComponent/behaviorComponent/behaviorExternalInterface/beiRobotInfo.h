@@ -64,6 +64,10 @@ class VisionComponent;
 
 struct AccelData;
 struct GyroData;
+  
+  namespace RobotInterface {
+    class EngineToRobot;
+  }
 
   
 class BEIRobotInfo : public IDependencyManagedComponent<BCComponentID> {
@@ -130,6 +134,8 @@ public:
   
   bool HasGatewayInterface() const;
   IGatewayInterface* GetGatewayInterface();
+  
+  void SendRobotMessage( const RobotInterface::EngineToRobot& msg ) const;
 
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
 

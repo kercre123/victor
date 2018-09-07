@@ -10,6 +10,15 @@ import (
 	"strings"
 	"time"
 
+	// for radio
+	"bufio"
+	"net/http"
+  //"log" // todo: use existing fmt
+	"io/ioutil"
+	//"os"
+	"encoding/xml"
+	"net/url"
+
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 )
@@ -19,6 +28,8 @@ var (
 	// key for Chipper use
 	ChipperSecret string
 	verbose       bool
+	radioURL      string
+	playingRadio  bool
 )
 
 const (
@@ -45,6 +56,166 @@ type Process struct {
 	kill      chan struct{}
 	msg       chan messageEvent
 	opts      options
+}
+
+type Ompl struct {
+	XMLName    xml.Name `xml:"opml"`
+	Head       Head   `xml:"head"`
+	Body       Body   `xml:"body"`
+}
+type Head struct {
+	XMLName    xml.Name `xml:"head"`
+	Title      string   `xml:"title"`
+	Status     string   `xml:"status"`
+}
+type Body struct {
+	XMLName    xml.Name `xml:"body"`
+	Outlines   []Outline   `xml:"outline"`
+}
+type Outline struct {
+	XMLName     xml.Name `xml:"outline"`
+    Type        string   `xml:"type,attr"`
+    Text        string   `xml:"text,attr"`
+    URL         string   `xml:"URL,attr"`
+    Bitrate     int      `xml:"bitrate,attr"`
+    Reliability int      `xml:"reliability,attr"`
+    // todo: skip anything with   stream_type="download"
+}
+
+func GetURL(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+			return nil, fmt.Errorf("GET error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("Status error: %v", resp.StatusCode)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+			return nil, fmt.Errorf("Read body: %v", err)
+	}
+
+	return data, nil
+}
+
+func GetPlaylistURL(url string) (string, int, error) {
+	if data, err := GetURL(url); err != nil {
+		log.Printf("Failed to get XML: %v", err)
+        return "",0,err
+	} else {
+		log.Println("Received XML:")
+        var ompl Ompl
+        xml.Unmarshal(data, &ompl)
+
+        for i := 0; i < len(ompl.Body.Outlines); i++ {
+						entry := ompl.Body.Outlines[i]
+            if (entry.Reliability > 90) { 
+                fmt.Println(entry)
+                return entry.URL, entry.Bitrate, nil
+            }
+        }
+        fmt.Println("Could not find reliable entry among %d entries", len(ompl.Body.Outlines))
+        return "",0,fmt.Errorf("No results")
+
+	}
+}
+
+func GetStreamURL(playlistURL string) (string, error) {
+    if data, err := GetURL(playlistURL); err != nil {
+        log.Printf("Failed to get playlist: %v", err)
+        return "", err
+    } else {
+        scanner := bufio.NewScanner(strings.NewReader(string(data)))
+        for scanner.Scan() {
+            url := scanner.Text()
+            fmt.Println(url)
+            return url, nil
+        }
+        return "", fmt.Errorf("Could not find stream URL")
+    }
+}
+
+func DownloadStream(streamURL string, p *Process) {
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", streamURL, nil)
+
+    res, err := client.Do(req)
+    if err != nil {
+        panic(err.Error())
+    }
+    defer res.Body.Close()
+		
+		// file, err := os.OpenFile(
+		// 	"test.txt",
+		// 	os.O_WRONLY|os.O_TRUNC|os.O_CREATE,
+		// 	0666,
+		// )
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// defer file.Close()
+
+    reader := bufio.NewReader(res.Body)
+    byteStream := make([]byte, 1024)
+    for {
+			  // read into byteStream, getting length n
+				n, err := reader.Read(byteStream)
+        //line, err := reader.ReadBytes('\n')
+        if err != nil {
+						// eof
+						p.writeMic(cloud.NewMessageWithOnlineMusicComplete(&cloud.OnlineMusicComplete{
+							EndCondition: 5,
+						}))
+            return
+				}
+				if !playingRadio {
+					p.writeMic(cloud.NewMessageWithOnlineMusicComplete(&cloud.OnlineMusicComplete{
+						EndCondition: 3,
+					}))
+					return
+				}
+				
+				p.writeMic(cloud.NewMessageWithOnlineMusicData(&cloud.OnlineMusicData{
+					Data: byteStream,
+					Siz: uint16(n), // todo: check n bounds (should be < 1024)
+				}))
+				//p.writeMic(cloud.NewMessageWithTestStarted(&cloud.Void{}))
+
+				// bytesWritten, err := file.Write(byteStream)
+				// if err != nil {
+				// 	log.Fatal(err)
+				// }
+				// log.Printf("Wrote %d bytes (%d).\n", bytesWritten,n)
+				log.Printf("Captured %d bytes\n", n)
+    }
+}
+
+func CheckForRadioStation(query string) bool {
+	searchURL := "http://opml.radiotime.com/Search.ashx?query=" + url.QueryEscape(query)
+	playlistURL, bitrate, err := GetPlaylistURL(searchURL)
+	if err == nil {
+			log.Printf("Received URL=%s Bitrate=%d", playlistURL, bitrate)
+			streamURL, err := GetStreamURL(playlistURL)
+			if err == nil {
+					log.Printf("Received stream = %s", streamURL)
+
+					// todo: timeout
+					//if !IsReachable(streamURL) {
+						//  log.Printf("URL %s is not reachable", streamURL)
+					//} else {
+						// save for now, wait for PLAY to start streaming
+						radioURL = streamURL
+
+						return true
+					//DownloadStream( streamURL )
+					//}
+					
+			}
+	}
+	return false
 }
 
 // AddReceiver adds the given Receiver to the list of sources the
@@ -244,6 +415,26 @@ procloop:
 				} else {
 					logVerbose("No active context, discarding", len(buf), "samples")
 				}
+
+			case cloud.MessageTag_OnlineMusicRequest:
+				SetVerbose(true)
+				radioURL = ""
+				request := msg.msg.GetOnlineMusicRequest().Request
+				log.Println("Got OnlineMusicRequest ", request, " of length ", len(request))
+				readyForStreaming := CheckForRadioStation(request)
+				p.writeMic(cloud.NewMessageWithOnlineMusicReady(&cloud.OnlineMusicReady{Ready: readyForStreaming}))
+
+			case cloud.MessageTag_OnlineMusicPlay:
+				log.Println("Got OnlineMusicPlay")
+				if radioURL != "" {
+					playingRadio = true
+					DownloadStream( radioURL, p )
+				}
+
+			case cloud.MessageTag_OnlineMusicStop:
+				radioURL = ""
+				playingRadio = false
+				log.Println("Got OnlineMusicStop")
 
 			case cloud.MessageTag_ConnectionCheck:
 				logVerbose("Got connection check request")

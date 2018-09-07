@@ -65,6 +65,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPlannerTest.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPlayMusic.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveStressTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToBody.h"
@@ -516,6 +517,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::PlannerTest:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlannerTest(config));
+      break;
+    }
+    
+    case BehaviorClass::PlayMusic:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayMusic(config));
       break;
     }
     

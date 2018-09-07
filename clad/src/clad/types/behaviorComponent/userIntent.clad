@@ -67,6 +67,16 @@ structure UserIntent_KnowledgeResponse
   string query_text
 }
 
+structure UserIntent_PlayMusic
+{
+  string request,
+}
+
+structure UserIntent_EatPotatoes
+{
+  uint_8 number,
+}
+
 structure UserIntent_GlobalStop
 {
   string what_to_stop,
@@ -134,6 +144,11 @@ union dupes_allowed UserIntent
   UserIntent_KnowledgeResponse knowledge_response,
   UserIntent_Void             knowledge_unknown,
   UserIntent_Void             silence,
+
+
+  UserIntent_PlayMusic        play_music,
+  UserIntent_Void        play_any_music,
+  UserIntent_EatPotatoes eat_potatoes,
 
 
   // for tests

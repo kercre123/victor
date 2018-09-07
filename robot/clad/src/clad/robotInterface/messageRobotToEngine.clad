@@ -39,6 +39,17 @@ message RobotPoked
 {
 }
 
+
+message OnlineMusicReady {
+  bool ready,
+  string request,
+}
+
+message OnlineMusicComplete {
+  int_8 endCondition,
+  string request,
+}
+
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
@@ -203,6 +214,8 @@ union RobotToEngine {
   RobotServerDisconnect      robotServerDisconnect  = 0xCD,
 
   // FREE SLOTS 0xCE to 0xD2
+  OnlineMusicReady           onlineMusicReady       = 0xCE,
+  OnlineMusicComplete        onlineMusicComplete    = 0xCF,
 
   // Messages from animation process to engine
   StartShutdownAnim          startShutdownAnim      = 0xD0,
@@ -251,6 +264,8 @@ union RobotToEngine {
 
   // From anim process
   AnimationState             animState              = 0xF3,
+
+
 
 }
 

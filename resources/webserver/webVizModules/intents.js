@@ -57,6 +57,7 @@
               }
               $.get(url);
             } else {
+              requestedIntent = '{"intent":"intent_play_music", "params": {"request":"KQED"}}';
               var payload = {intentType: intent, request: requestedIntent};
               sendData( payload );
             }

@@ -245,6 +245,9 @@ private:
   void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
 
   void HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg);
+  
+  // if json looks like a dev intent, rewrite it and return the true. otherwise returns false
+  bool TryRewriteDevIntent( Json::Value& json ) const;
 
   static size_t sActivatedIntentID;
 
