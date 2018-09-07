@@ -77,15 +77,20 @@ void OnTechnologyChanged (GDBusConnection *connection,
                         const gchar *signal_name,
                         GVariant *parameters,
                         gpointer user_data) {
-  const char* propertyName = g_variant_get_string(g_variant_get_child_value(parameters, 0), nullptr);
-  bool propertyValue = g_variant_get_boolean(g_variant_get_variant(g_variant_get_child_value(parameters, 1)));
+  GVariant* nameChild = g_variant_get_child_value(parameters, 0);  
+  const char* propertyName = g_variant_get_string(nameChild, nullptr);
   const char MAC_BYTES = 6;
   const char MAC_MANUFAC_BYTES = 3;
+
+  g_variant_unref(nameChild);
 
   if(!g_str_equal(propertyName, "Connected")) {
     // Not the property we care about.
     return;
   }
+
+  GVariant* valueChild = g_variant_get_child_value(parameters, 1);  
+  bool propertyValue = g_variant_get_boolean(g_variant_get_variant(valueChild));
 
   std::string connectionStatus = propertyValue?"Connected.":"Disconnected.";
 
@@ -116,6 +121,8 @@ void OnTechnologyChanged (GDBusConnection *connection,
           "WiFi connection status changed.");
   DASMSG_SET(s4, apMacManufacturerBytes, "AP MAC manufacturer bytes");
   DASMSG_SEND();
+
+  g_variant_unref(valueChild);
 }
 
 void Initialize(std::shared_ptr<TaskExecutor> taskExecutor) {
@@ -156,9 +163,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
   results.clear();
 
   bool disabledApMode = DisableAccessPointMode();
-  if(!disabledApMode) {
-    Log::Write("Not in access point mode or could not disable AccessPoint mode");
-  } else {
+  if(disabledApMode) {
     Log::Write("Disabled AccessPoint mode.");
   }
 
@@ -174,6 +179,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /net/connman/technology/wifi");
+    g_error_free(error);
     return WifiScanErrorCode::ERROR_GETTING_PROXY;
   }
 
@@ -183,6 +189,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
   g_object_unref(tech_proxy);
   if (error) {
     loge("error asking connman to scan for wifi access points");
+    g_error_free(error);
     return WifiScanErrorCode::ERROR_SCANNING;
   }
 
@@ -200,6 +207,7 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /");
+    g_error_free(error);
     return WifiScanErrorCode::ERROR_GETTING_MANAGER;
   }
 
@@ -244,6 +252,10 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
           type_is_wifi = true;
         } else {
           type_is_wifi = false;
+          g_variant_unref(attr);
+          g_variant_unref(key_v);
+          g_variant_unref(val_v);
+          g_variant_unref(val);
           break;
         }
       }
@@ -261,9 +273,18 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
               iface_is_wlan0 = true;
             } else {
               iface_is_wlan0 = false;
+              g_variant_unref(ethernet_attr);
+              g_variant_unref(ethernet_key_v);
+              g_variant_unref(ethernet_val_v);
+              g_variant_unref(ethernet_val);
               break;
             }
           }
+
+          g_variant_unref(ethernet_attr);
+          g_variant_unref(ethernet_key_v);
+          g_variant_unref(ethernet_val_v);
+          g_variant_unref(ethernet_val);
         }
       }
 
@@ -294,12 +315,20 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
             result.auth = WiFiAuth::AUTH_WPA2_PSK;
             result.encrypted = true;
           }
+
+          g_variant_unref(security_val);
         }
       }
 
       if (g_str_equal(key, "Favorite")) {
         result.provisioned = g_variant_get_boolean(val);
       }
+
+      // free
+      g_variant_unref(attr);
+      g_variant_unref(key_v);
+      g_variant_unref(val_v);
+      g_variant_unref(val);
     }
 
     if (type_is_wifi && iface_is_wlan0) {
@@ -311,7 +340,14 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
 
       results.push_back(result);
     }
+
+    // free child and attrs
+    g_variant_unref(attrs);
+    g_variant_unref(child);
   }
+
+  // free services
+  g_variant_unref(services);
 
   return WifiScanErrorCode::SUCCESS;
 }
@@ -407,6 +443,9 @@ static void AgentCallback(GDBusConnection *connection,
     g_variant_builder_unref(dict_builder);
 
     g_dbus_method_invocation_return_value(invocation, response);
+
+    g_variant_unref(dict);
+    g_variant_unref(response);
   }
 
   if (!strcmp(method_name, "ReportError")) {
@@ -497,6 +536,7 @@ bool UnregisterAgent(struct WPAConnectInfo *wpaConnectInfo) {
                                                    &error);
 
   if (error) {
+    g_error_free(error);
     return false;
   }
 
@@ -513,24 +553,12 @@ bool UnregisterAgent(struct WPAConnectInfo *wpaConnectInfo) {
 }
 
 bool RemoveWifiService(std::string ssid) {
-  ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
   error = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
-
-  if (error) {
-    loge("error getting proxy for net.connman /net/connman/technology/wifi");
-    return false;
-  }
 
   ConnManBusManager* manager_proxy;
   manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
@@ -541,6 +569,7 @@ bool RemoveWifiService(std::string ssid) {
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /");
+    g_error_free(error);
     return false;
   }
 
@@ -553,6 +582,7 @@ bool RemoveWifiService(std::string ssid) {
   g_object_unref(manager_proxy);
   if (error) {
     loge("Error getting services from connman");
+    g_error_free(error);
     return false;
   }
 
@@ -562,7 +592,6 @@ bool RemoveWifiService(std::string ssid) {
   }
 
   GVariant* serviceVariant = nullptr;
-  GVariant* currentServiceVariant = nullptr;
   bool foundService = false;
 
   for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
@@ -615,18 +644,25 @@ bool RemoveWifiService(std::string ssid) {
               matchedInterface = true;
             } else {
               matchedInterface = false;
+              g_variant_unref(ethernet_attr);
+              g_variant_unref(ethernet_key_v);
+              g_variant_unref(ethernet_val_v);
+              g_variant_unref(ethernet_val);
               break;
             }
           }
+
+          g_variant_unref(ethernet_attr);
+          g_variant_unref(ethernet_key_v);
+          g_variant_unref(ethernet_val_v);
+          g_variant_unref(ethernet_val);
         }
       }
 
-      if (g_str_equal(key, "State")) {
-        if (g_str_equal(g_variant_get_string(val, nullptr), "online") ||
-            g_str_equal(g_variant_get_string(val, nullptr), "ready") ) {
-          currentServiceVariant = child;
-        }
-      }
+      g_variant_unref(attr);
+      g_variant_unref(key_v);
+      g_variant_unref(val_v);
+      g_variant_unref(val);
     }
 
     if(matchedName && matchedInterface && matchedType) {
@@ -634,10 +670,16 @@ bool RemoveWifiService(std::string ssid) {
       serviceVariant = child;
       foundService = true;
     }
+
+    g_variant_unref(attrs);
+    if(child != serviceVariant) {
+      g_variant_unref(child);
+    }
   }
 
   if(!foundService) {
     loge("Could not find service...");
+    g_variant_unref(services);
     return false;
   }
 
@@ -648,6 +690,8 @@ bool RemoveWifiService(std::string ssid) {
   Log::Write("Service path: %s", servicePath.c_str());
   ConnManBusService* service = GetServiceForPath(servicePath);
   if(service == nullptr) {
+    g_variant_unref(services);
+    g_variant_unref(serviceVariant);
     return false;
   }
 
@@ -656,25 +700,24 @@ bool RemoveWifiService(std::string ssid) {
     nullptr,
     &error);
 
+  g_object_unref(service);
+  g_variant_unref(services);
+  g_variant_unref(serviceVariant);
+
   return success && !error;
 }
 
 ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
-  ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
   error = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
+
   if (error) {
     loge("error getting proxy for net.connman /net/connman/technology/wifi");
+    g_error_free(error);
     return ConnectWifiResult::CONNECT_FAILURE;
   }
 
@@ -687,6 +730,7 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /");
+    g_error_free(error);
     return ConnectWifiResult::CONNECT_FAILURE;
   }
 
@@ -699,6 +743,7 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
   g_object_unref(manager_proxy);
   if (error) {
     loge("Error getting services from connman");
+    g_error_free(error);
     return ConnectWifiResult::CONNECT_FAILURE;
   }
 
@@ -762,9 +807,18 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
               matchedInterface = true;
             } else {
               matchedInterface = false;
+              g_variant_unref(ethernet_attr);
+              g_variant_unref(ethernet_key_v);
+              g_variant_unref(ethernet_val_v);
+              g_variant_unref(ethernet_val);
               break;
             }
           }
+
+          g_variant_unref(ethernet_attr);
+          g_variant_unref(ethernet_key_v);
+          g_variant_unref(ethernet_val_v);
+          g_variant_unref(ethernet_val);
         }
       }
 
@@ -775,6 +829,11 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
           serviceOnline = true;
         }
       }
+
+      g_variant_unref(attr);
+      g_variant_unref(key_v);
+      g_variant_unref(val_v);
+      g_variant_unref(val);
     }
 
     if(matchedName && matchedInterface && matchedType) {
@@ -790,10 +849,19 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
       serviceVariant = child;
       foundService = true;
     }
+
+    g_variant_unref(attrs);
+    if(child != serviceVariant && child != currentServiceVariant) {
+      g_variant_unref(child);
+    }
   }
 
   if(!foundService) {
     loge("Could not find service...");
+    g_variant_unref(services);
+    if(currentServiceVariant != nullptr) {
+      g_variant_unref(currentServiceVariant);
+    }
     return ConnectWifiResult::CONNECT_FAILURE;
   }
 
@@ -810,12 +878,17 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
     if(disconnected) {
       Log::Write("Disconnected from %s.", currentOPath.c_str());
     }
+
+    g_object_unref(currentService);
+    g_variant_unref(currentServiceVariant);
   }
 
   // Get the ConnManBusService for our object path
   Log::Write("Service path: %s", servicePath.c_str());
   ConnManBusService* service = GetServiceForPath(servicePath);
   if(service == nullptr) {
+    g_variant_unref(services);
+    g_variant_unref(serviceVariant);
     return ConnectWifiResult::CONNECT_FAILURE;
   }
 
@@ -830,6 +903,9 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
   agent_registered = RegisterAgent(&connectInfo);
   if (!agent_registered) {
     loge("could not register agent, bailing out");
+    g_variant_unref(services);
+    g_variant_unref(serviceVariant);
+    g_object_unref(service);
     return ConnectWifiResult::CONNECT_FAILURE;
   }
 
@@ -868,6 +944,11 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
     Log::Write("unregistering agent");
     UnregisterAgent(&connectInfo);
   }
+
+  g_variant_unref(services);
+  g_variant_unref(serviceVariant);
+  g_object_unref(service);
+
   return connectStatus;
 }
 
@@ -883,6 +964,10 @@ ConnManBusService* GetServiceForPath(std::string objectPath) {
 
   if(service == nullptr || error != nullptr) {
     Log::Write("Could not find service for object path: %s", objectPath.c_str());
+  }
+
+  if(error) {
+    g_error_free(error);
   }
 
   return service;
@@ -927,7 +1012,13 @@ bool DisconnectFromWifiService(ConnManBusService* service) {
   }
   
   GError* error = nullptr;
-  return conn_man_bus_service_call_disconnect_sync (service, nullptr, &error);
+  bool success = conn_man_bus_service_call_disconnect_sync (service, nullptr, &error);
+
+  if(error) {
+    g_error_free(error);
+  }
+
+  return success;
 }
 
 std::string GetObjectPathForService(GVariant* service) {
@@ -965,6 +1056,7 @@ WiFiState GetWiFiState() {
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /");
+    g_error_free(error);
     return wifiState;
   }
 
@@ -976,6 +1068,7 @@ WiFiState GetWiFiState() {
   g_object_unref(manager_proxy);
   if (error) {
     loge("Error getting services from connman");
+    g_error_free(error);
     return wifiState;
   }
 
@@ -1002,6 +1095,10 @@ WiFiState GetWiFiState() {
       // Make sure this is a wifi service and not something else
       if (g_str_equal(key, "Type")) {
         if (!g_str_equal(g_variant_get_string(val, nullptr), "wifi")) {
+          g_variant_unref(attr);
+          g_variant_unref(key_v);
+          g_variant_unref(val_v);
+          g_variant_unref(val);
           break;
         }
       }
@@ -1017,9 +1114,19 @@ WiFiState GetWiFiState() {
           if (g_str_equal(ethernet_key, "Interface")) {
             if (!g_str_equal(g_variant_get_string(ethernet_val, nullptr), WIFI_DEVICE)) {
               isAssociated = false;
+
+              g_variant_unref(ethernet_attr);
+              g_variant_unref(ethernet_key_v);
+              g_variant_unref(ethernet_val_v);
+              g_variant_unref(ethernet_val);
               break;
             }
           }
+
+          g_variant_unref(ethernet_attr);
+          g_variant_unref(ethernet_key_v);
+          g_variant_unref(ethernet_val_v);
+          g_variant_unref(ethernet_val);
         }
       }
 
@@ -1036,14 +1143,26 @@ WiFiState GetWiFiState() {
           connState = WiFiConnState::ONLINE;
         }
       }
+
+      g_variant_unref(attr);
+      g_variant_unref(key_v);
+      g_variant_unref(val_v);
+      g_variant_unref(val);
     }
 
     if(isAssociated) {
       wifiState.ssid = connectedSsid;
       wifiState.connState = connState;
+      g_variant_unref(attrs);
+      g_variant_unref(child);
       break;
     }
+
+    g_variant_unref(attrs);
+    g_variant_unref(child);
   }
+
+  g_variant_unref(services);
 
   return wifiState;
 }
@@ -1152,6 +1271,7 @@ bool IsAccessPointMode() {
                                                               &error);
 
   if(error != nullptr) {
+    g_error_free(error);
     return false;
   }
 
@@ -1161,7 +1281,14 @@ bool IsAccessPointMode() {
     nullptr,
     &error);
 
-  if(error != nullptr || !success) {
+  if(error != nullptr) {
+    g_error_free(error);
+    return false;
+  }
+
+  g_object_unref(tech_proxy);
+
+  if(!success) {
     return false;
   }
 
@@ -1172,12 +1299,21 @@ bool IsAccessPointMode() {
     GVariant* val = g_variant_get_variant(val_v);
     const char* key = g_variant_get_string(key_v, nullptr);
 
+    g_variant_unref(attr);
+    g_variant_unref(key_v);
+    g_variant_unref(val_v);
+    g_variant_unref(val);
+
     // Make sure this is a wifi service and not something else
     if (g_str_equal(key, "Tethering")) {
-      return (bool)g_variant_get_boolean(val);
+      bool valBool = (bool)g_variant_get_boolean(val);
+      g_variant_unref(properties);
+      return valBool;
     }
+
   }
 
+  g_variant_unref(properties);
   return false;
 }
 
@@ -1202,6 +1338,7 @@ bool EnableAccessPointMode(std::string ssid, std::string pw) {
                                                               &error);
 
   if(error != nullptr) {
+    g_error_free(error);    
     return false;
   }
 
@@ -1213,6 +1350,8 @@ bool EnableAccessPointMode(std::string ssid, std::string pw) {
     &error);
 
   if(error != nullptr) {
+    g_error_free(error);
+    g_object_unref(tech_proxy);
     return false;
   }
 
@@ -1224,6 +1363,8 @@ bool EnableAccessPointMode(std::string ssid, std::string pw) {
     &error);
 
   if(error != nullptr) {
+    g_error_free(error);
+    g_object_unref(tech_proxy);
     return false;
   }
 
@@ -1235,8 +1376,12 @@ bool EnableAccessPointMode(std::string ssid, std::string pw) {
     &error);
 
   if(error != nullptr) {
+    g_error_free(error);
+    g_object_unref(tech_proxy);
     return false;
   }
+
+  g_object_unref(tech_proxy);
 
   return true;
 }
@@ -1256,6 +1401,7 @@ bool DisableAccessPointMode() {
                                                               &error);
 
   if(error != nullptr) {
+    g_error_free(error);
     return false;
   }
 
@@ -1266,7 +1412,10 @@ bool DisableAccessPointMode() {
     nullptr,
     &error);
 
+  g_object_unref(tech_proxy);
+
   if(error != nullptr) {
+    g_error_free(error);
     return false;
   }
 
