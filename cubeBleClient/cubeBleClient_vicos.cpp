@@ -153,39 +153,48 @@ bool CubeBleClient::UpdateInternal()
   
   
   // Check for connection state changes
-  const bool connectedToCube = _bleClient->IsConnectedToCube();
-  if (connectedToCube != _wasConnectedToCube) {
-    if (connectedToCube) {
-      PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.ConnectedToCube",
-                       "Connected to cube %s",
-                       _currentCube.c_str());
-      if (_cubeConnectionState != CubeConnectionState::PendingConnect) {
-        PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.UnexpectedConnection",
-                            "Received unexpected connection. Previous connection state: %s",
-                            CubeConnectionStateToString(_cubeConnectionState));
-      }
-      _cubeConnectionState = CubeConnectionState::Connected;
-      for (const auto& callback : _cubeConnectionCallbacks) {
-        callback(_currentCube, true);
-      }
-    } else {
-      PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.DisconnectedFromCube",
-                       "Disconnected from cube %s",
-                       _currentCube.c_str());
-      if (_cubeConnectionState != CubeConnectionState::PendingDisconnect) {
-        PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.UnexpectedDisconnection",
-                            "Received unexpected disconnection. Previous connection state: %s",
-                            CubeConnectionStateToString(_cubeConnectionState));
-      }
-      _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
-      for (const auto& callback : _cubeConnectionCallbacks) {
-        callback(_currentCube, false);
-      }
-      _currentCube.clear();
+  auto onConnect = [this](){
+    PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.ConnectedToCube",
+                     "Connected to cube %s",
+                     _currentCube.c_str());
+    _cubeConnectionState = CubeConnectionState::Connected;
+    for (const auto& callback : _cubeConnectionCallbacks) {
+      callback(_currentCube, true);
     }
-    
-    _wasConnectedToCube = connectedToCube;
+  };
+  
+  auto onDisconnect = [this](){
+    PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.DisconnectedFromCube",
+                     "Disconnected from cube %s",
+                     _currentCube.c_str());
+    _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
+    for (const auto& callback : _cubeConnectionCallbacks) {
+      callback(_currentCube, false);
+    }
+    _currentCube.clear();
+  };
+  
+  // Check for connection state changes (both expected and unexpected)
+  const bool connectedToCube = _bleClient->IsConnectedToCube();
+  if (connectedToCube && _cubeConnectionState == CubeConnectionState::PendingConnect) {
+    // Successfully connected
+    onConnect();
+  } else if (!connectedToCube && _cubeConnectionState == CubeConnectionState::PendingDisconnect) {
+    // Successfully disconnected
+    onDisconnect();
+  } else if (connectedToCube != _wasConnectedToCube) {
+    // Unexpected cube connection/disconnection!
+    PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.UnexpectedConnectOrDisconnect",
+                        "Received unexpected %s. Previous connection state: %s",
+                        connectedToCube ? "connection" : "disconnection",
+                        CubeConnectionStateToString(_cubeConnectionState));
+    if (connectedToCube) {
+      onConnect();
+    } else {
+      onDisconnect();
+    }
   }
+  _wasConnectedToCube = connectedToCube;
   
   // Pull advertisement messages from queue into a temp queue,
   // to avoid holding onto the mutex for too long.

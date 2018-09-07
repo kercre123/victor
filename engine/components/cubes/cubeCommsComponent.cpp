@@ -229,6 +229,9 @@ bool CubeCommsComponent::RequestConnectToCube(const ConnectionCallback& connecte
     }
     case CubeConnectionState::PendingDisconnect:
     {
+      PRINT_NAMED_INFO("CubeCommsComponent.RequestConnectToCube.ScanScheduled",
+                       "We are currently pending a disconnection from a cube, so we will attempt to scan/connect to "
+                       "cubes once we are finished disconnecting from the current one");
       // Plan to start scanning when we fully disconnect from the cube
       _startScanWhenUnconnected = true;
       break;
