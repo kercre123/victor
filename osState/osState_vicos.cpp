@@ -513,14 +513,27 @@ static std::string GetIPV4AddressForInterface(const char* if_name) {
     }
   }
 
-  if (host[0]) {
-    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
-                     if_name, host);
-  } else {
+  const std::string ip(host);
+  if (host[0])
+  {
+    static std::string sPrevIface = "";
+    static std::string sPrevIP = "";
+    const std::string iface(if_name);
+    if(sPrevIP != ip || sPrevIface != iface)
+    {
+      sPrevIP = ip;
+      sPrevIface = iface;
+      PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
+                       if_name, host);
+    }
+  }
+  else
+  {
     PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
   }
   freeifaddrs(ifaddr);
-  return std::string(host);
+  
+  return ip;
 }
 
 static std::string GetWiFiSSIDForInterface(const char* if_name) {
