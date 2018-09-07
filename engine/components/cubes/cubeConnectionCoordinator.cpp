@@ -460,9 +460,21 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
     PRINT_NAMED_WARNING("CubeConnectionCoordinator.ConnectionFailed",
                         "CubeCommsComponent failed to establish a cube connection.");
     SET_STATE(UnConnected);
+
+    // The Connection attempt failed. Clear out the subscription record so that further connection attempts are made
+    // only if subscribers drive them.
+    std::set<ICubeConnectionSubscriber*> subscribersRemovedThisTick;
     for(auto& subscriberRecord : _subscriptionRecords){
-      subscriberRecord.subscriber->ConnectionFailedCallback();
+      subscribersRemovedThisTick.insert(subscriberRecord.subscriber);
     }
+    _subscriptionRecords.clear();
+
+    // Notify former subscribers of the failed attempt after clearing the record so that re-subscribes aren't
+    // immediately thrown out.
+    for(auto* subscriber : subscribersRemovedThisTick){
+      subscriber->ConnectionFailedCallback();
+    }
+
   } else {
     auto& cubeComms = dependentComps.GetComponent<CubeCommsComponent>();
     auto& bw = dependentComps.GetComponent<BlockWorld>();
