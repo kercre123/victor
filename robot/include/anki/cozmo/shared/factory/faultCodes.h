@@ -37,6 +37,7 @@ enum : uint16_t {
   //display precedence over (external) body tests
   DISPLAY_FAILURE       = 990, //nobody will ever see this :(
 
+  CAMERA_STOPPED        = 981,
   CAMERA_FAILURE        = 980,
 
   //WIFI                  = 970,

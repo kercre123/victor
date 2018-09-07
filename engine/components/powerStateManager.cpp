@@ -113,8 +113,27 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
   if( _cameraState == CameraState::ShouldDelete ) {
     auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
     if( visionComponent.TryReleaseInternalImages() ) {
-      CameraService::getInstance()->DeleteCamera();
-      _cameraState = CameraState::Deleted;
+      const Result res = CameraService::getInstance()->DeleteCamera();
+      if(res == RESULT_OK)
+      {
+        _cameraState = CameraState::Deleted;
+      }
+    }
+  }
+  else if(_cameraState == CameraState::ShouldInit)
+  {
+    // Should InitCamera fail, it will get called again next tick which may end up working
+    // This is just a hunch that camera init sometimes can fail but will work if called again
+    // I've seen CameraService get into a mismatched state after InitCamera (should be fixed)
+    // and restarting engine (calls InitCamera) fixes things
+    // Worst case InitCamera will never work and VisionComponent will show a fault code
+    // due to not receiving any images for some amount of time
+    const Result res = CameraService::getInstance()->InitCamera();
+    if(res == RESULT_OK)
+    {
+      auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
+      visionComponent.Pause(false);
+      _cameraState = CameraState::Running;
     }
   }
 
@@ -229,21 +248,18 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
             _cameraState = CameraState::ShouldDelete;
           }
         }
-        else {
-          if( _cameraState == CameraState::Deleted ) {
-            if( CameraService::getInstance()->InitCamera() == RESULT_OK ) {
-              _cameraState = CameraState::Running;
-            }
-            else {
-              PRINT_NAMED_ERROR("PowerStateManager.Toggle.FailedToInitCamera",
-                                "Camera service init failed! Camera may be in a bad state");
-            }
+        else
+        {
+          if(_cameraState == CameraState::Deleted)
+          {
+            _cameraState = CameraState::ShouldInit;
           }
-          else {
-            _cameraState = CameraState::Running;
+          else
+          {
+            PRINT_NAMED_WARNING("PowerStateManager.ToggleOn.CameraServiceAlreadyRunning",
+                                "CameraState:%d not initing",
+                                _cameraState);
           }
-
-          visionComponent.Pause(false);
         }
       }
 

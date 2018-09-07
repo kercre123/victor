@@ -479,6 +479,32 @@ namespace Vector {
       const bool gotImage = CaptureImage(_bufferedImg);
       _hasStartedCapturingImages = true;
 
+      // Display a fault code in case we have not received an image from the camera for some amount of time
+      // and we aren't in power save mode in which case we expect to not be receiving images
+      // This is a catch-all for any issues with the camera server/daemon should something go wrong and we
+      // stop receiving images
+      static const EngineTimeStamp_t kNoImageFaultCodeTimeout_ms = 60000;
+      static EngineTimeStamp_t sTimeSinceValidImg_ms = 0;
+
+      const bool inPowerSave = _robot->GetComponent<PowerStateManager>().InPowerSaveMode();
+      if(!gotImage && !inPowerSave)
+      {
+        const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        if(sTimeSinceValidImg_ms == 0)
+        {
+          sTimeSinceValidImg_ms = curTime_ms;
+        }
+        else if(curTime_ms - sTimeSinceValidImg_ms > kNoImageFaultCodeTimeout_ms)
+        {
+          FaultCode::DisplayFaultCode(FaultCode::CAMERA_STOPPED);
+          sTimeSinceValidImg_ms = 0;
+        }
+      }
+      else
+      {
+        sTimeSinceValidImg_ms = 0;
+      }
+
       if(gotImage)
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");

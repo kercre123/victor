@@ -115,13 +115,21 @@ namespace Anki {
       std::lock_guard<std::mutex> lock(_lock);
 
       anki_camera_status_t status = camera_status(_camera);
-      if(status != ANKI_CAMERA_STATUS_OFFLINE ||
-         _powerState != CameraPowerState::Off)
+      if(status == ANKI_CAMERA_STATUS_RUNNING &&
+         _powerState == CameraPowerState::Running)
+      {
+        LOG_INFO("CameraService.InitCamera.AlreadyInited", "");
+        
+        return RESULT_OK;
+      }
+      else if(status != ANKI_CAMERA_STATUS_OFFLINE ||
+              _powerState != CameraPowerState::Off)
       {
         LOG_WARNING("CameraService.InitCamera.CameraStillRunning",
                     "Camera is in state %d, power state %d",
                     status,
                     _powerState);
+        
         return RESULT_FAIL;
       }
       
@@ -132,26 +140,34 @@ namespace Anki {
       int rc = camera_init(&_camera);
       if (rc != 0) {
         LOG_ERROR("CameraService.InitCamera.CameraInitFailed", "camera_init error %d", rc);
+        _powerState = CameraPowerState::Off;
         return RESULT_FAIL;
       }
 
       rc = camera_start(_camera);
       if (rc != 0) {
         LOG_ERROR("CameraService.InitCamera.CameraStartFailed", "camera_start error %d", rc);
+        _powerState = CameraPowerState::Off;
         return RESULT_FAIL;
       }
 
       return RESULT_OK;
     }
 
-    void CameraService::DeleteCamera() {
+    Result CameraService::DeleteCamera()
+    {
       std::lock_guard<std::mutex> lock(_lock);
 
-      if (_camera == NULL ||
-          _powerState != CameraPowerState::Running)
+      if(_camera == NULL ||
+         _powerState == CameraPowerState::Off)
+      {
+        LOG_INFO("CameraService.DeleteCamera.AlreadyDeleted", "");
+        return RESULT_OK;
+      }
+      else if(_powerState != CameraPowerState::Running)
       {
         LOG_WARNING("CameraService.DeleteCamera.CameraNotRunning", "");
-        return;
+        return RESULT_FAIL;
       }
 
       _powerState = CameraPowerState::WaitingToDelete;
@@ -159,12 +175,18 @@ namespace Anki {
       int res = camera_stop(_camera);
       if (res != 0) {
         LOG_ERROR("CameraService.DeleteCamera.CameraStopFailed", "camera_stop error %d", res);
+        _powerState = CameraPowerState::Running;
+        return RESULT_FAIL;
       }
 
       res = camera_release(_camera);
       if (res != 0) {
         LOG_ERROR("CameraService.DeleteCamera.CameraReleaseFailed", "camera_release error %d", res);
+        _powerState = CameraPowerState::Running;
+        return RESULT_FAIL;
       }
+
+      return RESULT_OK;
     }
 
     Result CameraService::Update()

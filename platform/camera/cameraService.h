@@ -70,7 +70,7 @@ namespace Anki
       //
 
       Result InitCamera();
-      void DeleteCamera();
+      Result DeleteCamera();
 
       void RegisterOnCameraRestartCallback(std::function<void()> callback);
 

@@ -108,6 +108,7 @@ private:
   std::set<PowerSaveSetting> _enabledSettings;
 
   enum class CameraState {
+    ShouldInit,
     Running,
     ShouldDelete,
     Deleted
