@@ -23,6 +23,7 @@
 
 #include "proto/external_interface/shared.pb.h"
 
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -134,6 +135,15 @@ void CubeBatteryComponent::HandleCubeVoltageData(const BleFactoryId& factoryId,
     return;
   }
   
+  // If this is the first time we are getting info for this cube, then log its battery voltage now
+  const bool hasBattInfo = (_cubeBatteryInfo.find(factoryId) != _cubeBatteryInfo.end());
+  if (!hasBattInfo) {
+    DASMSG(cube_battery_voltage, "cube.battery_voltage", "Records the cube's battery voltage if this is the first information we are receiving from it");
+    DASMSG_SET(i1, (int) std::round(1000.f * batteryVolts), "Cube battery voltage (mV)");
+    DASMSG_SET(s1, factoryId, "Cube factory ID");
+    DASMSG_SEND();
+  }
+  
   auto& battInfo = _cubeBatteryInfo[factoryId];
   
   battInfo.batteryVolts = batteryVolts;
@@ -149,7 +159,10 @@ void CubeBatteryComponent::HandleCubeVoltageData(const BleFactoryId& factoryId,
       PRINT_NAMED_WARNING("CubeBatteryComponent.HandleCubeVoltageData.LowCubeBattery",
                           "Low cube battery detected. Voltage %.3f, factoryId %s",
                           batteryVolts, factoryId.c_str());
-      
+      DASMSG(cube_low_battery, "cube.low_battery", "Indicates that the connected cube has reported a low battery voltage");
+      DASMSG_SET(i1, (int) std::round(1000.f * batteryVolts), "Cube battery voltage (mV)");
+      DASMSG_SET(s1, factoryId, "Cube factory ID");
+      DASMSG_SEND();
       // Send gateway message
       auto* cubeBatteryMsg = GetCubeBatteryMsg().release();
       DEV_ASSERT(cubeBatteryMsg != nullptr, "CubeBatteryComponent::HandleCubeVoltageData.NullCubeBatteryMsg");

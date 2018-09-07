@@ -16,6 +16,7 @@
 #include "bleClient.h"
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "anki-ble/common/gatt_constants.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/string/stringUtils.h"
@@ -311,6 +312,11 @@ void BleClient::OnCharacteristicReadResult(const int connection_id,
       PRINT_NAMED_INFO("BleClient.OnCharacteristicReadResult.FirmwareVersionMismatch",
                        "Flashing cube since its firmware version (%s) does not match that on disk (%s)",
                        cubeFirmwareVersion.c_str(), _cubeFirmwareVersionOnDisk.c_str());
+      DASMSG(cube_firmware_mismatch, "cube.firmware_mismatch", "Flashing cube since its firmware version does not match that on disk");
+      DASMSG_SET(s1, _cubeAddress, "Cube factory ID");
+      DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
+      DASMSG_SET(s3, _cubeFirmwareVersionOnDisk, "On disk firmware version");
+      DASMSG_SEND();
       FlashCube();
     }
   }
@@ -328,8 +334,17 @@ void BleClient::OnReceiveMessage(const int connection_id,
     const auto& cubeFirmwareVersion = std::string(value.begin(), value.end());
     if (cubeFirmwareVersion == _cubeFirmwareVersionOnDisk) {
       PRINT_NAMED_INFO("BleClient.OnReceiveMessage.FlashingSuccess","%s",cubeFirmwareVersion.c_str());
+      DASMSG(cube_firmware_flash_success, "cube.firmware_flash_success", "Flashing cube firmware succeeded");
+      DASMSG_SET(s1, _cubeAddress, "Cube factory ID");
+      DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
+      DASMSG_SEND();
     } else {
       PRINT_NAMED_WARNING("BleClient.OnReceiveMessage.FlashingFailure","got = %s exp = %s",cubeFirmwareVersion.c_str(), _cubeFirmwareVersionOnDisk.c_str());
+      DASMSG(cube_firmware_flash_fail, "cube.firmware_flash_fail", "Flashing cube firmware failed");
+      DASMSG_SET(s1, _cubeAddress, "Cube factory ID");
+      DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
+      DASMSG_SET(s3, _cubeFirmwareVersionOnDisk, "On disk firmware version");
+      DASMSG_SEND();
     }
     
     // consider the firmware check complete now.

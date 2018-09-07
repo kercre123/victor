@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageCubeToEngine.h"
 #include "clad/externalInterface/messageEngineToCube.h"
 
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/string/stringUtils.h"
@@ -157,6 +158,9 @@ bool CubeBleClient::UpdateInternal()
     PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.ConnectedToCube",
                      "Connected to cube %s",
                      _currentCube.c_str());
+    DASMSG(cube_connected, "cube.connected", "We have connected to a cube");
+    DASMSG_SET(s1, _currentCube, "Cube factory ID");
+    DASMSG_SEND();
     _cubeConnectionState = CubeConnectionState::Connected;
     for (const auto& callback : _cubeConnectionCallbacks) {
       callback(_currentCube, true);
@@ -167,6 +171,9 @@ bool CubeBleClient::UpdateInternal()
     PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.DisconnectedFromCube",
                      "Disconnected from cube %s",
                      _currentCube.c_str());
+    DASMSG(cube_disconnected, "cube.disconnected", "We have disconnected from a cube");
+    DASMSG_SET(s1, _currentCube, "Cube factory ID");
+    DASMSG_SEND();
     _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
     for (const auto& callback : _cubeConnectionCallbacks) {
       callback(_currentCube, false);
@@ -188,6 +195,11 @@ bool CubeBleClient::UpdateInternal()
                         "Received unexpected %s. Previous connection state: %s",
                         connectedToCube ? "connection" : "disconnection",
                         CubeConnectionStateToString(_cubeConnectionState));
+    DASMSG(cube_unexpected_connect_disconnect, "cube.unexpected_connect_disconnect", "Unexpectedly connected or disconnected from a cube");
+    DASMSG_SET(i1, connectedToCube, "1 if we have connected to a cube, 0 or null if we have disconnected");
+    DASMSG_SET(s1, _currentCube, "Cube factory ID");
+    DASMSG_SET(s2, CubeConnectionStateToString(_cubeConnectionState), "Previous connection state");
+    DASMSG_SEND();
     if (connectedToCube) {
       onConnect();
     } else {
