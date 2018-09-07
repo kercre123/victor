@@ -43,6 +43,8 @@ static const char* const kMaxCubeAgeKey = "maxCubeAge_s";
   
 const float kDefaultExtraDist_mm = 60.0f;
   
+const float kExtraProceduralTimeout_s = 2.5f; // buffer to account for accel/decel and bumps
+  
 const AnimationTrigger kAnimFarLeft = AnimationTrigger::DriveOffChargerFarLeft;
 const AnimationTrigger kAnimFarRight = AnimationTrigger::DriveOffChargerFarRight;
 const AnimationTrigger kAnimLeft = AnimationTrigger::DriveOffChargerLeft;
@@ -267,6 +269,13 @@ void BehaviorDriveOffCharger::SelectAndDrive()
     }
   }
   
+  if( (_dVars.directionIndex >= kMaxAttempts) && !IsControlDelegated() ) {
+    PRINT_NAMED_WARNING("BehaviorDriveOffCharger.SelectAndDrive.CouldntLeave",
+                        "Behavior '%s' couldn't get off charger in %d attempts. onCharger=%d",
+                        GetDebugLabel().c_str(), kMaxAttempts, GetBEI().GetRobotInfo().IsOnChargerPlatform());
+    CancelSelf();
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -275,6 +284,9 @@ void BehaviorDriveOffCharger::TransitionToDrivingStraightProcedural()
   PRINT_CH_INFO( "Behaviors", "BehaviorDriveOffCharger.TransitionToDrivingStraightProcedural", "Driving straight" );
   DriveStraightAction* action = new DriveStraightAction(_iConfig.proceduralDistToDrive_mm);
   action->SetCanMoveOnCharger(true);
+  const float timeout_s = kExtraProceduralTimeout_s
+                          + (static_cast<float>(_iConfig.proceduralDistToDrive_mm) / DEFAULT_PATH_MOTION_PROFILE.speed_mmps);
+  action->SetTimeoutInSeconds( timeout_s );
   DelegateIfInControl( action );
   // the Update function will transition back to this or another direction, or end the behavior, as appropriate
 }

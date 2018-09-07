@@ -589,6 +589,7 @@ namespace Anki {
               RobotActionType::DRIVE_STRAIGHT,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
+    , _timeout_s(IAction::GetTimeoutInSeconds())
     {
 
       // set default speed based on the driving direction
@@ -639,6 +640,16 @@ namespace Anki {
         }
 
         GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+      }
+    }
+    
+    void DriveStraightAction::SetTimeoutInSeconds(float timeout_s)
+    {
+      if ( ANKI_VERIFY(!HasStarted(),
+                       "DriveStraightAction.SetTimeoutInSeconds.AlreadyInit",
+                       "Cannot set timeout after init" ) )
+      {
+        _timeout_s = timeout_s;
       }
     }
 

@@ -189,6 +189,9 @@ namespace Vector {
 
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
+      virtual f32 GetTimeoutInSeconds() const override { return _timeout_s; }
+      void SetTimeoutInSeconds(float timeout_s);
+      
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override;
       virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
@@ -208,6 +211,8 @@ namespace Vector {
       bool _shouldPlayDrivingAnimation = true;
 
       bool _canMoveOnCharger = false;
+      
+      float _timeout_s;
       
     }; // class DriveStraightAction
     
