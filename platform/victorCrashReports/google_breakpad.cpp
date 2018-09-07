@@ -104,6 +104,7 @@ void InstallGoogleBreakpad(const char* filenamePrefix)
 
   fd = open(crashFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
   google_breakpad::MinidumpDescriptor descriptor(fd);
+  descriptor.set_sanitize_stacks(true);
   exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
 }
 
