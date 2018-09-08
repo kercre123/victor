@@ -39,6 +39,7 @@ namespace {
 
 CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
+CONSOLE_VAR( bool, kPowerSave_CameraStopCameraStream, CONSOLE_GROUP, false);
 CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);
@@ -110,28 +111,49 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     }
   }
 
-  if( _cameraState == CameraState::ShouldDelete ) {
+  if( _cameraState == CameraState::ShouldDelete )
+  {
     auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
-    if( visionComponent.TryReleaseInternalImages() ) {
-      const Result res = CameraService::getInstance()->DeleteCamera();
+    Result res = RESULT_OK;
+    if( visionComponent.TryReleaseInternalImages() )
+    {
+      if(kPowerSave_CameraStopCameraStream)
+      {
+        res = CameraService::getInstance()->DeleteCamera();
+      }
+      else
+      {
+        visionComponent.EnableImageCapture(false);
+      }
+        
       if(res == RESULT_OK)
       {
         _cameraState = CameraState::Deleted;
       }
     }
+    
   }
   else if(_cameraState == CameraState::ShouldInit)
   {
-    // Should InitCamera fail, it will get called again next tick which may end up working
-    // This is just a hunch that camera init sometimes can fail but will work if called again
-    // I've seen CameraService get into a mismatched state after InitCamera (should be fixed)
-    // and restarting engine (calls InitCamera) fixes things
-    // Worst case InitCamera will never work and VisionComponent will show a fault code
-    // due to not receiving any images for some amount of time
-    const Result res = CameraService::getInstance()->InitCamera();
+    auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
+    Result res = RESULT_OK;
+    if(kPowerSave_CameraStopCameraStream)
+    {
+      // Should InitCamera fail, it will get called again next tick which may end up working
+      // This is just a hunch that camera init sometimes can fail but will work if called again
+      // I've seen CameraService get into a mismatched state after InitCamera (should be fixed)
+      // and restarting engine (calls InitCamera) fixes things
+      // Worst case InitCamera will never work and VisionComponent will show a fault code
+      // due to not receiving any images for some amount of time
+      res = CameraService::getInstance()->InitCamera();
+    }
+    else
+    {
+      visionComponent.EnableImageCapture(true);
+    }
+    
     if(res == RESULT_OK)
     {
-      auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
       visionComponent.Pause(false);
       _cameraState = CameraState::Running;
     }
