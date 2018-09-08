@@ -19,6 +19,8 @@ Animation related classes, functions, events and values.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["AnimationComponent"]
 
+# TODO Cozmo had EvtAnimationsLoaded, EvtAnimationCompleted, Animation, AnimationNames is_loaded. Where is this now?
+
 import asyncio
 
 from . import exceptions, sync, util
@@ -34,6 +36,12 @@ class AnimationComponent(util.Component):
 
     @property
     def anim_list(self):
+        """
+        Holds the set of animation names (strings) returned from the robot.
+
+        Animation names are dynamically retrieved from the robot when the Python
+        script connects to it.
+        """
         if not self._anim_dict:
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
             result = self.load_animation_list()

@@ -26,7 +26,7 @@ from .connection import Connection
 from . import util
 from .messaging import protocol
 
-MODULE_LOGGER = logging.getLogger(__name__)
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class EventHandler:

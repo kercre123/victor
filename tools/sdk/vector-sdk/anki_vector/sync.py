@@ -29,7 +29,7 @@ import grpc
 
 from . import exceptions
 
-MODULE_LOGGER = logging.getLogger(__name__)
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class Synchronizer:

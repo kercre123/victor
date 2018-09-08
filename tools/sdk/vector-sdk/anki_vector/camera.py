@@ -98,6 +98,7 @@ class CameraComponent(util.Component):
 
     @latest_image_id.setter
     def latest_image_id(self, img_id) -> None:
+        """ID for this image, used only to track chunks of the same image."""
         self._latest_image_id = img_id
 
     def init_camera_feed(self) -> None:

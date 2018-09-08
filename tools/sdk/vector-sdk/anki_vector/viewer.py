@@ -67,7 +67,7 @@ class ViewerComponent(util.Component):
             overlay.apply_overlay(image)
         return image
 
-    async def _render_frames(self, timeout) -> None:
+    async def _render_frames(self, timeout: float) -> None:
         latest_image_id = None
         opencv_window_name = "Vector Camera Feed"
         cv2.namedWindow(opencv_window_name, cv2.WINDOW_NORMAL)

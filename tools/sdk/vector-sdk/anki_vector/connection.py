@@ -16,6 +16,9 @@
 Management of the connection to and from a Vector Robot
 """
 
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['CONTROL_PRIORITY_LEVEL', 'Connection']
+
 import asyncio
 from enum import Enum
 from concurrent import futures
@@ -27,11 +30,11 @@ from .messaging import client, protocol
 
 
 class CONTROL_PRIORITY_LEVEL(Enum):
+    # TODO Review these levels to make sure they represent what we are shipping
     """Enum used to specify the priority level that the program requests to run at"""
 
     #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
     #: Victor may safely react to events such as falling.
-    # TODO Remove if we don't ship this level
     OVERRIDE_ALL = protocol.ControlRequest.OVERRIDE_ALL  # pylint: disable=no-member
 
     #: Runs below Mandatory Physical Reactions such as tucking Vector's head and lift during a fall,
@@ -254,7 +257,7 @@ class Connection:
             await asyncio.sleep(0.1)
 
     async def _open_connections(self):
-        """Starts the BehaviorControl stream, and handles the messages coming back from the engine."""
+        """Starts the BehaviorControl stream, and handles the messages coming back from the robot."""
         try:
             async for response in self._interface.BehaviorControl(self._request_handler()):
                 response_type = response.WhichOneof("response_type")

@@ -18,13 +18,17 @@ SDK-specific exception classes for Vector
 
 from grpc import RpcError, StatusCode
 
-__all__ = ["VectorException",
-           "VectorConnectionException",
-           "VectorUnauthenticatedException",
-           "VectorUnavailableException",
-           "VectorUnimplementedException",
-           "VectorTimeoutException",
-           "VectorNotReadyException"]
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['VectorCameraFeedDisabledException',
+           'VectorConnectionException',
+           'VectorControlException',
+           'VectorException',
+           'VectorNotReadyException',
+           'VectorTimeoutException',
+           'VectorUnauthenticatedException',
+           'VectorUnavailableException',
+           'VectorUnimplementedException',
+           'connection_error']
 
 
 class VectorException(Exception):

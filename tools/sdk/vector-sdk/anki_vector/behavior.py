@@ -91,10 +91,13 @@ class BehaviorComponent(util.Component):
 
     @property
     def current_priority(self):
+        # TODO implement
         return self._current_priority
 
     @property
     def is_active(self):
+        # TODO implement
+        """bool: True if the behavior is currently active and may run on the robot."""
         return self._is_active
 
     # TODO VIC-5920: Add Cancel by id message, and add ids to all action response messages
@@ -111,11 +114,20 @@ class BehaviorComponent(util.Component):
     # Navigation actions
     @sync.Synchronizer.wrap
     async def drive_off_charger(self):
+        """ Drive Vector off the charger
+
+        If Vector is on the charger, drives him off the charger.
+        """
         drive_off_charger_request = protocol.DriveOffChargerRequest()
         return await self.interface.DriveOffCharger(drive_off_charger_request)
 
     @sync.Synchronizer.wrap
     async def drive_on_charger(self):
+        """ Drive Vector onto the charger
+
+        Vector will attempt to find the charger and, if successful, he will
+        back onto it and start charging.
+        """
         drive_on_charger_request = protocol.DriveOnChargerRequest()
         return await self.interface.DriveOnCharger(drive_on_charger_request)
 
@@ -152,7 +164,7 @@ class BehaviorComponent(util.Component):
 
         motion_prof = self._motion_profile_for_proto()
         # @TODO: the id_tag we supply can be used to cancel this action,
-        #  however when we implement that we will need some way to get the it_tag
+        #  however when we implement that we will need some way to get the id_tag
         #  out of this function.
         go_to_pose_request = protocol.GoToPoseRequest(x_mm=pose.position.x,
                                                       y_mm=pose.position.y,
@@ -192,7 +204,7 @@ class BehaviorComponent(util.Component):
         motion_prof = self._motion_profile_for_proto()
 
         # @TODO: the id_tag we supply can be used to cancel this action,
-        #  however when we implement that we will need some way to get the it_tag
+        #  however when we implement that we will need some way to get the id_tag
         #  out of this function.
         dock_request = protocol.DockWithCubeRequest(object_id=target_object.object_id,
                                                     alignment_type=alignment_type,
@@ -238,7 +250,7 @@ class BehaviorComponent(util.Component):
         """
 
         # @TODO: the id_tag we supply can be used to cancel this action,
-        #  however when we implement that we will need some way to get the it_tag
+        #  however when we implement that we will need some way to get the id_tag
         #  out of this function.
         drive_straight_request = protocol.DriveStraightRequest(speed_mmps=speed.speed_mmps,
                                                                dist_mm=distance.distance_mm,

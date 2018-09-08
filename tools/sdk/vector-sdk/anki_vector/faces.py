@@ -25,7 +25,7 @@ observable events whenever the face is observed, has its ID updated.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['Face', 'Expression', 'FaceComponent']
+__all__ = ['Expression', 'Face', 'FaceComponent']
 
 from enum import Enum
 import math
@@ -34,7 +34,8 @@ import time
 from . import sync, util
 from .messaging import protocol
 
-# TODO: Add event classes in to this moodule once event subscription logic changes
+# TODO: Add event classes in to this module once event subscription logic changes
+
 # TODO: Move MeetVictor codebase(like erase_all_enrolled_faces,
 # erase_enrolled_face_by_id and update_enrolled_face_by_id) in to this
 # module

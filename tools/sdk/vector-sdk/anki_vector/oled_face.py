@@ -18,6 +18,10 @@ Vector's OLED screen that displays his face - related functions and values.
 Copyright (c) 2018 Anki, Inc.
 """
 
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['SCREEN_WIDTH', 'SCREEN_HEIGHT', 'dimensions', 'convert_image_to_screen_data',
+           'convert_pixels_to_screen_data', 'OledComponent']
+
 import sys
 
 from . import sync, color, util
@@ -27,11 +31,6 @@ try:
     from PIL import Image
 except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
-
-# __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['dimensions', 'convert_pixels_to_screen_data',
-           'convert_image_to_screen_data', 'OledComponent']
-
 
 SCREEN_WIDTH = 184
 SCREEN_HEIGHT = 96
@@ -118,6 +117,6 @@ class OledComponent(util.Component):
 
         return await self.interface.DisplayFaceImageRGB(message)
 
-    def set_oled_to_color(self, solid_color, duration_sec, interrupt_running: bool = True):
+    def set_oled_to_color(self, solid_color: color.Color, duration_sec: float, interrupt_running: bool = True):
         image_data = bytes(solid_color.rgb565_bytepair * 17664)
         return self.set_oled_with_screen_data(image_data, duration_sec, interrupt_running)

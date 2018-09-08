@@ -30,11 +30,11 @@ can either observe the object's instance directly, or capture all such events
 for all objects by observing them on :class:`anki_vector.world.World` instead.
 
 All observable objects have a marker attached to them, which allows Victor
-to recognize the object and it's position and rotation("pose").  You can attach
-markers to your own objects for Victor to recognize by printing them out from the
-online documentation.  They will be detected as :class:`CustomObject` instances.
+to recognize the object and its position and rotation("pose").
 """
 
+
+# TODO EvtObjectObserved, EvtObjectTapped, and others in Cozmo's object.py not implemented. Should they be? If not, remove from docs above?
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['LightCube1Type',
@@ -56,6 +56,8 @@ OBJECT_VISIBILITY_TIMEOUT = 0.4
 LightCube1Type = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
 
 
+# TODO Instead inherit from ObservableObject, like for Cozmo?
+# TODO In this class, how are we deciding whether a member has a leading underscore or not?
 class LightCube(util.Component):
     """The base type for anything Victor can see."""
 
@@ -66,10 +68,11 @@ class LightCube(util.Component):
 
     def __init__(self, robot, world, **kw):
         super().__init__(robot, **kw)
+        #: :class:`anki_vector.world.World`: The robot's world in which this element is located.
         self._world = world
 
+        # TODO Document
         self._pose = None
-        self._image_rect = None
 
         #: float: The time the object was last tapped
         #: ``None`` if the cube wasn't tapped yet.
@@ -97,8 +100,13 @@ class LightCube(util.Component):
         #: In milliseconds relative to robot epoch.
         self.last_moved_start_robot_timestamp = None
 
+        #: float: The time the last up axis event was received.
+        #: ``None`` if no events have yet been received.
         self.last_up_axis_changed_time = None
 
+        #: int: The robot's timestamp of the last up axis event.
+        #: ``None`` if the there has not been an up axis event.
+        #: In milliseconds relative to robot epoch.
         self.last_up_axis_changed_robot_timestamp = None
 
         #: float: The time the last event was received.
@@ -114,6 +122,8 @@ class LightCube(util.Component):
         #: In milliseconds relative to robot epoch.
         self.last_observed_robot_timestamp = None
 
+        # The object's up_axis value from the last time it changed.
+        # TODO Add more docs, like type description.
         self.up_axis = None
 
         #: bool: True if the cube's accelerometer indicates that the cube is moving.
@@ -291,14 +301,14 @@ class LightCube(util.Component):
     def object_id(self):
         """int: The internal ID assigned to the object.
 
-        This value can only be assigned once as it is static in the engine.
+        This value can only be assigned once as it is static on the robot.
         """
         return self._object_id
 
     @object_id.setter
     def object_id(self, value):
         if self._object_id is not None:
-            # We cannot currently rely on Engine ensuring that object ID remains static
+            # We cannot currently rely on robot ensuring that object ID remains static
             # E.g. in the case of a cube disconnecting and reconnecting it's removed
             # and then re-added to blockworld which results in a new ID.
             self.logger.warning("Changing object_id for %s from %s to %s", self.__class__, self._object_id, value)

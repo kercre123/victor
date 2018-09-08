@@ -14,7 +14,9 @@
 
 """
 The "world" represents the robot's known view of its environment.
-It keeps track of all the faces Vector has observed.
+
+This view includes objects and faces it knows about and can currently
+"see" with its camera.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -26,6 +28,8 @@ from . import sync
 from . import util
 
 from .messaging import protocol
+
+# TODO How do we decide what does and does not have a leading underscore, below?
 
 
 class World(util.Component):
@@ -68,7 +72,7 @@ class World(util.Component):
         for face in self._faces.values():
             yield face
 
-    def get_face(self, face_id):
+    def get_face(self, face_id: int):
         """anki_vector.faces.Face: Fetch a Face instance with the given id"""
         return self._faces.get(face_id)
 
@@ -85,7 +89,7 @@ class World(util.Component):
         if face:
             face.updated_face_id = msg.new_id
 
-    def _allocate_light_cube(self, object_type, object_id, factory_id):
+    def _allocate_light_cube(self, object_type: objects.LightCube, object_id: int, factory_id: str):
         cube = self.light_cube.get(object_type)
         if not cube:
             self.robot.logger.error('Received invalid cube object_type=%s', object_type)
@@ -133,6 +137,11 @@ class World(util.Component):
 
     @sync.Synchronizer.wrap
     async def connect_cube(self):
+        """ Attempt to connect to a cube
+
+        Attempt to connect to a cube. If a cube is currently connected,
+        this will do nothing.
+        """
         req = protocol.ConnectCubeRequest()
         result = await self.interface.ConnectCube(req)
 
@@ -144,27 +153,47 @@ class World(util.Component):
 
     @sync.Synchronizer.wrap
     async def disconnect_cube(self):
+        """ Requests a disconnection from the currently connected cube """
         req = protocol.DisconnectCubeRequest()
         return await self.interface.DisconnectCube(req)
 
     @sync.Synchronizer.wrap
     async def flash_cube_lights(self):
+        """ Flash cube lights
+
+        Plays the default cube connection animation on the currently
+        connected cube's lights.
+        """
+
         req = protocol.FlashCubeLightsRequest()
         return await self.interface.FlashCubeLights(req)
 
     @sync.Synchronizer.wrap
     async def forget_preferred_cube(self):
+        """ Forget preferred cube
+
+        'Forget' the robot's preferred cube. This will cause the robot to
+        connect to the cube with the highest RSSI (signal strength) next
+        time a connection is requested.
+        """
         req = protocol.ForgetPreferredCubeRequest()
         return await self.interface.ForgetPreferredCube(req)
 
     @sync.Synchronizer.wrap
     async def set_preferred_cube(self, factory_id):
+        """ Set preferred cube
+
+        Set the robot's preferred cube and save it to disk. The robot
+        will always attempt to connect to this cube if it is available.
+        This is only used in simulation (for now).
+        """
         req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
         return await self.interface.SetPreferredCube(req)
 
     def on_object_event(self, _, msg):
         object_event_type = msg.WhichOneof("object_event_type")
 
+        # TODO How can we document these better? These are a bit buried right now.
         object_event_handlers = {
             "object_connection_state": self._on_object_connection_state,
             "object_moved": self._on_object_moved,

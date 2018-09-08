@@ -17,7 +17,7 @@ Object Proximity detection related classes, functions, events and values.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ["ProximitySensorData", "ProximityComponent"]
+__all__ = ["ProximityComponent", "ProximitySensorData"]
 
 from . import util
 
@@ -168,7 +168,7 @@ class ProximityComponent(util.Component):
         """
         return self._last_valid_sensor_reading
 
-    def on_proximity_update(self, prox_data):
+    def on_proximity_update(self, prox_data: ProximitySensorData):
         self._last_sensor_reading = ProximitySensorData(prox_data)
         if self._last_sensor_reading.is_valid:
             self._last_valid_sensor_reading = self._last_sensor_reading

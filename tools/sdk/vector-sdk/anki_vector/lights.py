@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Helper routines for dealing with Vector's lights and colors."""
+
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['MAX_COLOR_PROFILE', 'WHITE_BALANCED_BACKPACK_PROFILE', 'WHITE_BALANCED_CUBE_PROFILE',
+           'blue_light', 'cyan_light', 'green_light', 'magenta_light', 'off_light',
+           'red_light', 'white_light', 'yellow_light',
+           'Color', 'ColorProfile', 'Light', 'package_request_params']
+
 from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
 
 

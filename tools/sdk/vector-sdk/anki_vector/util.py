@@ -30,14 +30,15 @@ __all__ = ['Angle',
            'Speed',
            'Vector2',
            'Vector3',
-           'degrees',
-           'radians',
            'angle_z_to_quaternion',
+           'degrees',
            'distance_mm',
            'distance_inches',
-           'speed_mmps',
+           'get_class_logger',
+           'parse_test_args',
+           'radians',
            'setup_basic_logging',
-           'get_class_logger']
+           'speed_mmps']
 
 import argparse
 import logging
@@ -55,7 +56,7 @@ try:
 except ImportError as exc:
     sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
 
-MODULE_LOGGER = logging.getLogger(__name__)
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 # TODO: Update this using the login credentials when they're available
@@ -500,6 +501,7 @@ class Matrix44:
         self.m32 = z
 
 
+# TODO See Cozmo class Quaternion definition. Use some/all of that here?
 class Quaternion:
     """Represents the rotation of an object in the world."""
 
@@ -525,18 +527,22 @@ class Quaternion:
 
     @property
     def q0(self):
+        """float: The q0 (w) value of the quaternion."""
         return self._q0
 
     @property
     def q1(self):
+        """float: The q1 (i) value of the quaternion."""
         return self._q1
 
     @property
     def q2(self):
+        """float: The q2 (j) value of the quaternion."""
         return self._q2
 
     @property
     def q3(self):
+        """float: The q3 (k) value of the quaternion."""
         return self._q3
 
     @property
@@ -615,9 +621,32 @@ class Position(Vector3):
     __slots__ = ()
 
 
+# TODO add pose_quaternion and pose_z_angle from Cozmo or remove from docs below
 class Pose:
-    """Represents the current pose (position and orientation) of the robot"""
+    """Represents where an object is in the world.
 
+    Use the :func:'pose_quaternion' to return pose in the form of
+    position and rotation defined by a quaternion
+
+    Use the :func:'pose_z_angle' to return pose in the form of
+    position and rotation defined by rotation about the z axis
+
+    Whenever Vector is de-localized (i.e. whenever Vector no longer knows
+    where he is - e.g. when he's picked up), Vector creates a new pose starting at
+    (0,0,0) with no rotation, with origin_id incremented to show that these poses
+    cannot be compared with earlier ones. As Vector drives around, his pose (and the
+    pose of other objects he observes - e.g. faces, cubes etc.) is relative to this
+    initial position and orientation.
+
+    The coordinate space is relative to Vector, where Vector's origin is the
+    point on the ground between Vector's two front wheels:
+
+    The X axis is Vector's forward direction
+    The Y axis is to Vector's left
+    The Z axis is up
+
+    Only poses of the same origin_id can safely be compared or operated on
+    """
     __slots__ = ('_position', '_rotation', '_origin_id')
 
     def __init__(self, x, y, z, q0=None, q1=None, q2=None, q3=None,
@@ -699,7 +728,7 @@ class Pose:
 
 
 class ImageRect:
-    """Image co-ordinates and size"""
+    """Image coordinates and size"""
 
     __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
 
@@ -711,18 +740,22 @@ class ImageRect:
 
     @property
     def x_top_left(self):
+        """float: Top left x value of where the object was last visible within Victor's camera view."""
         return self._x_top_left
 
     @property
     def y_top_left(self):
+        """float: Top left y value of where the object was last visible within Victor's camera view."""
         return self._y_top_left
 
     @property
     def width(self):
+        """float: Width of the object from when it was last visible within Victor's camera view."""
         return self._width
 
     @property
     def height(self):
+        """float: Height of the object from when it was last visible within Victor's camera view."""
         return self._height
 
 
@@ -786,12 +819,12 @@ class Distance:
         return self._distance_mm / 25.4
 
 
-def distance_mm(distance_mm):  # pylint: disable=redefined-outer-name
+def distance_mm(distance_mm: float):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Distance` instance set to the specified number of millimeters."""
     return Distance(distance_mm=distance_mm)
 
 
-def distance_inches(distance_inches):  # pylint: disable=redefined-outer-name
+def distance_inches(distance_inches: float):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Distance` instance set to the specified number of inches."""
     return Distance(distance_inches=distance_inches)
 
@@ -839,12 +872,12 @@ class Speed:
         return speed_mmps(self.speed_mmps / other)
 
     @property
-    def speed_mmps(self):  # pylint: disable=redefined-outer-name
+    def speed_mmps(self: float):  # pylint: disable=redefined-outer-name
         """float: The speed in millimeters per second (mmps)."""
         return self._speed_mmps
 
 
-def speed_mmps(speed_mmps):  # pylint: disable=redefined-outer-name
+def speed_mmps(speed_mmps: float):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed"""
     return Speed(speed_mmps=speed_mmps)
 
@@ -885,10 +918,12 @@ class RectangleOverlay(BaseOverlay):
 
     @property
     def width(self):
+        """int: The width of the rectangle to be drawn."""
         return self._width
 
     @property
     def height(self):
+        """int: The height of the rectangle to be drawn."""
         return self._height
 
     # TODO: Update to handle PIL images

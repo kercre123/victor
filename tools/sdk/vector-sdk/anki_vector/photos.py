@@ -18,6 +18,7 @@ Photo related classes, functions, events and values.
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["PhotographComponent"]
+
 from typing import List
 
 from . import sync, util

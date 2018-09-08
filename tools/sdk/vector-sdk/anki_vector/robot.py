@@ -16,7 +16,8 @@
 The main robot class for managing the Vector SDK
 """
 
-__all__ = ['Robot', 'AsyncRobot', 'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE']
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['MAX_HEAD_ANGLE', 'MIN_HEAD_ANGLE', 'AsyncRobot', 'Robot']
 
 import asyncio
 import configparser
@@ -30,7 +31,7 @@ from . import (animation, backpack, behavior, camera, connection,
                viewer, world)
 from .messaging import protocol
 
-MODULE_LOGGER = logging.getLogger(__name__)
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 # Constants
 
@@ -39,6 +40,12 @@ MIN_HEAD_ANGLE = util.degrees(-22)
 
 #: The maximum angle the robot's head can be set to
 MAX_HEAD_ANGLE = util.degrees(45)
+
+# TODO Consider adding constants from Cozmo's robot.py for MIN_LIFT_HEIGHT_MM, MIN_LIFT_HEIGHT,
+# MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
+
+# TODO Consider adding Cozmo's LiftPosition class
+# TODO How are we deciding was has a leading underscore or not in Robot class?
 
 
 class Robot:
@@ -122,6 +129,7 @@ class Robot:
                              "You may also provide the values necessary for connection through the config parameter. ex: "
                              '{"name":"Vector-A1B2", "ip":"192.168.43.48", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
 
+        #: :class:`anki_vector.connection.Connection`: The active connection to the robot.
         self.conn = connection.Connection(self._name, ':'.join([self._ip, port]), self._cert_file, self._guid)
         self.events = events.EventHandler()
         # placeholders for components before they exist
