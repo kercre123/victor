@@ -184,8 +184,16 @@ void BehaviorWallTimeCoordinator::StartTTSGeneration()
     return;
   }
 
+  const auto& settingsManager = GetBEI().GetSettingsManager();
+  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(external_interface::RobotSetting::clock_24_hour);
+  const int divisor = clockIs24Hour ? 24 : 12;
+
   const int currentMins = localTime.tm_min;
-  int currentHours = localTime.tm_hour % 12;
+  int currentHours = localTime.tm_hour % divisor;
+
+  if( !clockIs24Hour && currentHours == 0 ) {
+    currentHours = 12;
+  }
 
   auto callback = [this](const UtteranceState& utteranceState)
   {

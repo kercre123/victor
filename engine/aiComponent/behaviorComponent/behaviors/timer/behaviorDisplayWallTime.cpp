@@ -77,6 +77,10 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
 
     if(!ShouldDisplayAsMilitaryTime()){
       currentHours = currentHours % 12;
+
+      if( currentHours == 0 ) {
+        currentHours = 12;
+      }
     }
 
     // Tens Digit (left of colon)
