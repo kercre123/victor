@@ -221,12 +221,6 @@ namespace Vector {
 
   CONSOLE_VAR(bool, kDisplayMemoryPressure, "AnimationStreamer.System", true);
 
-  // When total/avail > this, display red square (should be > MediumPressureMultiple below)
-  CONSOLE_VAR(u32, kHighMemPressureMultiple, "AnimationStreamer.System", 10);
-
-  // When total/avail > this, display yellow square (should be < HighPressureMultiple above)
-  CONSOLE_VAR(u32, kMediumMemPressureMultiple, "AnimationStreamer.System", 5);
-
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
   /////////
@@ -1417,16 +1411,14 @@ namespace Vector {
     // Draw a colored square in the upper right corner if there's memory pressure
     if (kDisplayMemoryPressure)
     {
-      uint32_t freeMem_kB = 0, availableMem_kB = 0;
-      const uint32_t totalMem_kB = OSState::getInstance()->GetMemoryInfo(freeMem_kB, availableMem_kB);
-      const s32 memFactor = (availableMem_kB > 0 ? totalMem_kB / availableMem_kB : 1);
-
-      if(memFactor > kMediumMemPressureMultiple)
-      {
-        const ColorRGBA& memAlertColor = (memFactor > kHighMemPressureMultiple ? NamedColors::RED : NamedColors::YELLOW);
+      OSState::MemoryInfo info;
+      OSState::getInstance()->GetMemoryInfo(info);
+      if (info.alert > OSState::Alert::None) {
+        const ColorRGBA& memAlertColor = (info.alert >= OSState::Alert::Red ? NamedColors::RED : NamedColors::YELLOW);
         const Rectangle<s32> rect(FACE_DISPLAY_WIDTH-30, 0, 30, 25);
         faceImg565.DrawFilledRect(rect, memAlertColor);
-        faceImg565.DrawText({FACE_DISPLAY_WIDTH-15, 20}, std::to_string(availableMem_kB/1024),
+        faceImg565.DrawText({FACE_DISPLAY_WIDTH-15, 20},
+                            std::to_string(info.availMem_kB/1024),
                             NamedColors::BLACK, 0.55, false, 1, true);
       }
     }
@@ -1969,7 +1961,7 @@ namespace Vector {
         messageWrapper.faceImg.DrawText(pos, frameNum, color, scale);
       }
     }
-    
+
     // A workaround to remove tracks that escaped through the engine process' track locking. This currently
     // happens only for composite weather animations and wake word animations, both of which bypass
     // action system's track locking.
@@ -2217,7 +2209,7 @@ namespace Vector {
     }
     return newSpriteSeqData || needToRenderFaceIntoCompositeImage;
   }
-  
+
   void AnimationStreamer::InvalidateBannedTracks(const std::string& animName,
                                                  AnimationMessageWrapper& messageWrapper) const
   {
@@ -2238,7 +2230,7 @@ namespace Vector {
        && (whitelisted.find(animName) == whitelisted.end()))
     {
       Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
-      
+
       if( ANKI_DEV_CHEATS ) {
         // A list of known issues where animations are used without locking tracks on the charger
         static const std::set<std::string> knownIssues = {
