@@ -88,6 +88,9 @@ rsync \
     -l \
     -t \
     -D \
+    --numeric-ids \
+    --chmod=ug+rw \
+    --groupmap=*:2901 \
     --files-from=${DIST_LIST} \
     ./ \
     ${DISTDIR}/

@@ -18,6 +18,7 @@
 #include "se_diag.h"
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"

@@ -19,23 +19,24 @@ namespace Victor {
   // Local (unix-domain) socket paths.
   // RobotID will be appended to generate unique paths for each robot.
   //
+
   #ifdef SIMULATOR
-  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]    = "/tmp/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]    = "/tmp/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[]   = "/tmp/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[]   = "/tmp/_engine_anim_client_";
-  constexpr char ENGINE_SWITCH_SERVER_PATH[] = "/tmp/_engine_switch_server_";
-  constexpr char ENGINE_SWITCH_CLIENT_PATH[] = "/tmp/_engine_switch_client_";
+  #define LOCAL_SOCKET_PATH                         "/tmp/"
   #else
-  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
-  constexpr char ENGINE_SWITCH_SERVER_PATH[] = "/dev/socket/_engine_switch_server_";
-  constexpr char ENGINE_SWITCH_CLIENT_PATH[] = "/dev/socket/_engine_switch_client_";
+  #define LOCAL_SOCKET_PATH                         "/dev/socket/"
   #endif
 
+  constexpr char ANIM_ROBOT_SERVER_PATH[]           = LOCAL_SOCKET_PATH "_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]           = LOCAL_SOCKET_PATH "_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[]          = LOCAL_SOCKET_PATH "_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[]          = LOCAL_SOCKET_PATH "_engine_anim_client_";
+  constexpr char ENGINE_SWITCH_SERVER_PATH[]        = LOCAL_SOCKET_PATH "_engine_switch_server_";
+  constexpr char ENGINE_SWITCH_CLIENT_PATH[]        = LOCAL_SOCKET_PATH "_engine_switch_client_";
+
+  // basenames for per-robot socket servers
+  constexpr char MIC_SERVER_BASE_PATH[]             = LOCAL_SOCKET_PATH "mic_sock";
+  constexpr char AI_SERVER_BASE_PATH[]              = LOCAL_SOCKET_PATH "ai_sock";
+
+  //
 } // Victor
 } // Anki
