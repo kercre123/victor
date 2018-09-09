@@ -12,6 +12,7 @@
 */
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -107,7 +108,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "mic_sock" + (robotID == 0 ? "" : std::to_string(robotID));
+  const std::string sockName = std::string{Victor::MIC_SERVER_BASE_PATH} + (robotID == 0 ? "" : std::to_string(robotID));
   _udpServer->SetBindClients(false);
   const bool udpSuccess = _udpServer->StartListening(sockName);
   ANKI_VERIFY(udpSuccess,

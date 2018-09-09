@@ -16,6 +16,7 @@
 #include "engine/components/jdocsManager.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/messaging/shared/socketConstants.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "osState/osState.h"
@@ -705,8 +706,8 @@ void JdocsManager::UpdatePeriodicFileSaves(const bool isShuttingDown)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::ConnectToJdocsServer()
 {
-  static const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "jdocs_engine_client";
-  static const std::string peerName = std::string{LOCAL_SOCKET_PATH} + "jdocs_server";
+  static const std::string sockName = std::string{Victor::JDOCS_ENGINE_CLIENT_PATH};
+  static const std::string peerName = std::string{Victor::JDOCS_SERVER_PATH};
   const bool udpSuccess = _udpClient.Connect(sockName, peerName);
   LOG_INFO("JdocsManager.ConnectToJdocsServer.Attempt", "Attempted connection from %s to %s: Result: %s",
            sockName.c_str(), peerName.c_str(), udpSuccess ? "SUCCESS" : "Failed");

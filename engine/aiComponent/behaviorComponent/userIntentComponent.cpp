@@ -835,9 +835,10 @@ void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appInt
   
 std::string UserIntentComponent::GetServerName(const Robot& robot) const
 {
-  return "ai_sock" + ((robot.GetID() == 0)
-                      ? ""
-                      : std::to_string(robot.GetID()));  // Offset port by robotID so that we can run sims with multiple robots
+  // Offset port by robotID so that we can run sims with multiple robots
+  return ((robot.GetID() == 0)
+           ? ""
+           : std::to_string(robot.GetID()));
 }
   
 std::vector<std::string> UserIntentComponent::DevGetCloudIntentsList() const

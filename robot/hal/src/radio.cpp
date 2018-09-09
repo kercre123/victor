@@ -18,6 +18,7 @@
 #include <string>
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 #define ARRAY_SIZE(inArray)   (sizeof(inArray) / sizeof((inArray)[0]))
 
@@ -39,7 +40,7 @@ namespace Anki {
     Result InitRadio()
     {
       const RobotID_t robotID = HAL::GetID();
-      const std::string & server_path = std::string(ANIM_ROBOT_SERVER_PATH) + std::to_string(robotID);
+      const std::string & server_path = std::string(Victor::ANIM_ROBOT_SERVER_PATH) + std::to_string(robotID);
 
       AnkiInfo("HAL.InitRadio.StartListening", "Start listening at %s", server_path.c_str());
       if (!server.StartListening(server_path.c_str())) {

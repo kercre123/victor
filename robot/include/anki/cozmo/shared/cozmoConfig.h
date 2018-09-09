@@ -357,24 +357,6 @@ namespace Vector {
   // THIS ON IN MASTER
   #define SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE false
   
-  //
-  // Local (unix-domain) socket paths.
-  // RobotID will be appended to generate unique paths for each robot.
-  //
-  #ifdef SIMULATOR
-  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/tmp/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/tmp/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/tmp/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/tmp/_engine_anim_client_";
-  #else
-  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
-  #endif
-  
 } // namespace Vector
 } // namespace Anki
 
