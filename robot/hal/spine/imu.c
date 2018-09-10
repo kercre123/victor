@@ -290,8 +290,12 @@ int imu_manage(struct IMURawData* data)
   uint8_t rawdata[DATA_BYTES*IMU_MAX_SAMPLES_PER_READ+1];
   memset(rawdata, DATA_INVALID, sizeof(rawdata)); // Prefill frame with invalid so we don't have to branch on read success
 
-  spi_read_n(FIFO_DATA, (uint8_t*)rawdata, DATA_BYTES*IMU_MAX_SAMPLES_PER_READ);
-
+  int rc = spi_read_n(FIFO_DATA, (uint8_t*)rawdata, DATA_BYTES*IMU_MAX_SAMPLES_PER_READ);
+  if(rc < 0)
+  {
+    return rc;
+  }
+  
   int i;
   for (i=0; i < IMU_MAX_SAMPLES_PER_READ; i++) {
     uint8_t* sample_data = rawdata + 1 + (DATA_BYTES*i);

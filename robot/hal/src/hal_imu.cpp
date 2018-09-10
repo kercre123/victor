@@ -11,6 +11,7 @@
 #include "anki/cozmo/robot/spi_imu.h"
 
 // Our Includes
+#include "anki/cozmo/robot/DAS.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
@@ -94,6 +95,21 @@ void ProcessIMUEvents()
   IMURawData rawData[IMU_MAX_SAMPLES_PER_READ];
   HAL::IMU_DataStructure imuData;
   const int imu_read_samples = imu_manage(rawData);
+  if(imu_read_samples < 0)
+  {
+    AnkiError("HAL.ProcessIMUEvents.IMUManageFailed", "");
+
+    static bool sentDAS = false;
+    if(!sentDAS)
+    {
+      sentDAS = true;
+      DASMSG(imu_failure,
+             "robot.imu_failure",
+             "Indicates that we failed to read/write to the IMU and it may not be working correctly");
+      DASMSG_SEND();
+    }
+  }
+  
   for (int i=0; i < imu_read_samples; i++) {
     imuData.acc_x = rawData[i].acc[0] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
     imuData.acc_y = rawData[i].acc[1] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
