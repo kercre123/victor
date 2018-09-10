@@ -231,7 +231,7 @@ static bool handleTemperature() {
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
     Power::setMode(POWER_STOP);
-    return ;
+    return true;
   }
 
   static int samples = 0;
@@ -256,13 +256,15 @@ static bool handleTemperature() {
       || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 40) // Fire in ~4H
       ;
 
-    // NOTE: This counter cannot be reset until it fires
-    if (overheated > 0) {
-      if (--overheated == 0) Power::setMode(POWER_STOP);
-    } else if (disable_vmain) {
+    if (overheated == 0 && disable_vmain) {
       overheated = OVERHEAT_SHUTDOWN;
     }
   } 
+
+  // NOTE: This counter cannot be reset until it fires
+  if (overheated > 0 && --overheated == 0) {
+    Power::setMode(POWER_STOP);
+  }
 
   if (temperature >= 45) {
     too_hot = true;
