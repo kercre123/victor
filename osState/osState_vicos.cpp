@@ -205,6 +205,10 @@ OSState::OSState()
         _incrementalVersion = -1;
       }
     }
+
+    // Initialize memory info
+    UpdateMemoryInfo();
+
   }
   const bool versionsValid = _majorVersion >= 0 &&
                              _minorVersion >= 0 &&

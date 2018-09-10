@@ -116,6 +116,9 @@ OSState::OSState()
   _cpuTemp_C = 0;
 
   _buildSha = ANKI_BUILD_SHA;
+
+  // Initialize memory info
+  UpdateMemoryInfo();
 }
 
 OSState::~OSState()
