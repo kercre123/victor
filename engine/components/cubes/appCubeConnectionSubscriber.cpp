@@ -27,6 +27,10 @@
 
 #include "util/logging/logging.h"
 
+namespace {
+  const float kCubeConnectionTimeout_s = 60.0f;
+}
+
 namespace Anki{
 namespace Vector{
 
@@ -142,9 +146,11 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
     case GatewayWrapperTag::kConnectCubeRequest:
     {
       PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.SubscribeRequest",
-                       "Received a request for cube connection from gateway. Subscribing to interactable connection");
+                       "Received a request for cube connection from gateway. Subscribing to interactable connection "
+                       "for %f seconds",
+                       kCubeConnectionTimeout_s);
       const bool background = false;
-      ccc.SubscribeToCubeConnection(this, background);
+      ccc.SubscribeToCubeConnection(this, background, kCubeConnectionTimeout_s);
       break;
     }
     case GatewayWrapperTag::kDisconnectCubeRequest:
@@ -162,6 +168,10 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
       PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.FlashCubeLightsRequest",
                        "Received a request from gateway to flash cube lights.");
       if (ccc.IsConnectedToCube()) {
+        // Renew the subscription to reset the timeout
+        const bool background = false;
+        ccc.SubscribeToCubeConnection(this, background, kCubeConnectionTimeout_s);
+
         const auto& activeId = _robot->GetCubeCommsComponent().GetConnectedCubeActiveId();
         const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeId);
         if (object != nullptr) {

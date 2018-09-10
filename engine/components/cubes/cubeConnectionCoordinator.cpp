@@ -256,6 +256,9 @@ bool CubeConnectionCoordinator::UnsubscribeFromCubeConnection(ICubeConnectionSub
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(!it->isBackgroundConnection){
     if(--_nonBackgroundSubscriberCount == 0){
+      PRINT_NAMED_INFO("CubeConnectionCoordinator.NoInteractableSubscribers",
+                        "No remaining interactable subscribers, transitioning to background in %f seconds",
+                        kStandbyTimeout_s);
       _timeToEndStandby_s = currentTime_s + kStandbyTimeout_s;
     }
   }
@@ -355,6 +358,9 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
   SET_STATE(ConnectedSwitchingToBackground);
   _timeToSwitchToBackground_s = 0;
 
+  PRINT_NAMED_INFO("CubeConnectionCoordinator.SwitchingToBackgroundConnection",
+                   "Switching to background connection upon cube light anim completion");
+
   // Play disconnect light animation
   auto& cubeLights = dependentComps.GetComponent<CubeLightComponent>();
   auto animCompletedCallback = [this, &cubeLights]()
@@ -386,6 +392,9 @@ void CubeConnectionCoordinator::CancelSwitchToBackground(const RobotCompMap& dep
   // Don't play connection lights or notify subscribers, since the cube connection is still live
   SET_STATE(ConnectedInteractable);
 
+  PRINT_NAMED_INFO("CubeConnectionCoordinator.SwitchToBackgroundInterrupted",
+                   "New interactable subscription received while switching to background, returning to interactable");
+
   // Stop the disconnection lights if they're playing
   auto& clc = dependentComps.GetComponent<CubeLightComponent>();
   clc.CancelDisconnectionLights(_connectedActiveObject->GetID());
@@ -415,6 +424,9 @@ void CubeConnectionCoordinator::RequestConnection(const RobotCompMap& dependentC
 {
   SET_STATE(Connecting);
 
+  PRINT_NAMED_INFO("CubeConnectionCoordinator.RequestingConnection",
+                    "Requesting cube connection from CubeCommsComponent");
+
   _connectionAttemptFinished = false;
   _connectionAttemptSucceeded = false;
 
@@ -438,6 +450,9 @@ void CubeConnectionCoordinator::RequestDisconnect(const RobotCompMap& dependentC
 {
   SET_STATE(Disconnecting);
 
+  PRINT_NAMED_INFO("CubeConnectionCoordinator.RequestingDisconnect",
+                    "Requesting disconnection from CubeCommsComponent");
+
   if(!_subscriptionRecords.empty()){
     PRINT_NAMED_ERROR("CubeConnectionCoordinator.DisconnectedWithSubscribers",
                       "Cube disconnected despite having active subscribers");
@@ -459,7 +474,6 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
   if(!_connectionAttemptSucceeded){
     PRINT_NAMED_WARNING("CubeConnectionCoordinator.ConnectionFailed",
                         "CubeCommsComponent failed to establish a cube connection.");
-    SET_STATE(UnConnected);
 
     // The Connection attempt failed. Clear out the subscription record so that further connection attempts are made
     // only if subscribers drive them.
@@ -468,6 +482,9 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
       subscribersRemovedThisTick.insert(subscriberRecord.subscriber);
     }
     _subscriptionRecords.clear();
+    _nonBackgroundSubscriberCount = 0;
+
+    SET_STATE(UnConnected);
 
     // Notify former subscribers of the failed attempt after clearing the record so that re-subscribes aren't
     // immediately thrown out.
