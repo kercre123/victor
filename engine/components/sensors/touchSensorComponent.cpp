@@ -243,12 +243,17 @@ void TouchSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
       if (webService != nullptr) {
         // set up handler for incoming payload from WebViz
         auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
-          const std::string& stateStr = JsonTools::ParseString(data, "enabled", "TouchSensorComponent.WebVizJsonCallback");
-          _enabled = stateStr.compare("true")==0;
-          
-          // recalibrate and re-init the boxfilter
-          _baselineCalibrator.ResetCalibration();
-          _boxFilterTouch = BoxFilter(_filterParams.boxFilterSize);
+          if(data.isMember("enabled")) {
+            const std::string& stateStr = JsonTools::ParseString(data, "enabled", "TouchSensorComponent.WebVizJsonCallback");
+            _enabled = stateStr.compare("true")==0;
+            // recalibrate and re-init the boxfilter
+            _baselineCalibrator.ResetCalibration();
+            _boxFilterTouch = BoxFilter(_filterParams.boxFilterSize);
+          }
+
+          if(data.isMember("resetCount")) {
+            _touchCountForWebviz = 0;
+          }
           
           // ack the mode change
           const auto* context = _robot->GetContext();
@@ -256,6 +261,7 @@ void TouchSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
             auto* webService = context->GetWebService();
             if (webService != nullptr) {
               _toSendJson["enabled"] = _enabled ? "true" : "false";
+              _toSendJson["count"] = (int)_touchCountForWebviz;
               webService->SendToWebViz(kWebVizTouchSensorModuleName, _toSendJson);
             }
           }
