@@ -30,7 +30,7 @@ def main():
         # Use a custom profile to change specs
         robot.behavior.motion_profile_map = {"speed_mmps": 500.0}
         robot.behavior.go_to_pose(pose)
-        # Permit enough to pass before the SDK mode is de-activated
+        # Permit enough to pass before the SDK behavior is deactivated
         time.sleep(5)
 
     print("------ finished testing go to pose ------")

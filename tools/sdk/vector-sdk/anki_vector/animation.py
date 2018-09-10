@@ -28,7 +28,7 @@ from .messaging import protocol
 
 
 class AnimationComponent(util.Component):
-    """Manage the state of all the animations in the robot"""
+    """Play animations on the robot"""
 
     def __init__(self, robot):
         super().__init__(robot)
@@ -41,6 +41,13 @@ class AnimationComponent(util.Component):
 
         Animation names are dynamically retrieved from the robot when the Python
         script connects to it.
+
+        .. code-block:: python
+
+            print("List all animation names:")
+            anim_names = robot.anim.anim_list
+            for anim_name in anim_names:
+                print(anim_name)
         """
         if not self._anim_dict:
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
@@ -49,10 +56,11 @@ class AnimationComponent(util.Component):
                 result.wait_for_completed()
         return list(self._anim_dict.keys())
 
+    # TODO Provide example of how to connect without loading animations, then using ensure_loaded to load and use them.
     async def ensure_loaded(self):
         """
         This is an optimization for the case where a user doesn't
-        need the animation_list. That way connections aren't delayed
+        need the animation_list. This way, connections aren't delayed
         by the load_animation_list call.
 
         If this is invoked inside another async function then we
@@ -82,6 +90,10 @@ class AnimationComponent(util.Component):
         Warning: Specific animations may be renamed or removed in future updates of the app.
             If you want your program to work more reliably across all versions
             we recommend using :meth:`play_animation_trigger` instead. TODO: implement play_animation_trigger
+
+        .. code-block:: python
+
+            robot.anim.play_animation('anim_pounce_success_02')
 
         :param anim: The animation to play. Can be of type str or :class:`anki_vector.protocol.Animation`.
         :param loop_count: Number of times to play the animation.

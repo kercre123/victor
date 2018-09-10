@@ -59,7 +59,8 @@ except ImportError as exc:
 _MODULE_LOGGER = logging.getLogger(__name__)
 
 
-# TODO: Update this using the login credentials when they're available
+# TODO Update this using the login credentials when they're available
+# TODO Add sample code
 def parse_test_args(parser: argparse.ArgumentParser = None):
     """
     Provides the command line interface for all the tests
@@ -645,7 +646,12 @@ class Pose:
     The Y axis is to Vector's left
     The Z axis is up
 
-    Only poses of the same origin_id can safely be compared or operated on
+    Only poses of the same origin_id can safely be compared or operated on.
+
+    .. code-block:: python
+
+        pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
+        robot.behavior.go_to_pose(pose)
     """
     __slots__ = ('_position', '_rotation', '_origin_id')
 

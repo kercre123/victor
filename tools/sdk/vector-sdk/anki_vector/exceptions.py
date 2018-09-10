@@ -36,6 +36,8 @@ class VectorException(Exception):
 
 
 class VectorConnectionException(VectorException):
+    """Base class of exceptions that can occur when the Python script is connecting to the robot."""
+
     def __init__(self, cause):
         self._status = cause.code()
         self._details = cause.details()

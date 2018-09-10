@@ -78,6 +78,9 @@ class CameraComponent(util.Component):
     def latest_image(self) -> np.ndarray:
         """:class:`numpy.ndarray`: The most recent processed image received from the robot, represented as an N-dimensional array of bytes.
 
+        :getter: Returns the ndarray representing the latest image
+        :setter: Sets the latest image
+
         .. code-block:: python
 
             with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
@@ -87,25 +90,34 @@ class CameraComponent(util.Component):
 
         return self._latest_image
 
+    # TODO Do we really allow setting the latest image? What is the purpose of this?
     @latest_image.setter
     def latest_image(self, img) -> None:
         self._latest_image = img
 
     @property
     def latest_image_id(self) -> int:
-        """int: The most recent processed image's id received from the robot."""
+        """The most recent processed image's id received from the robot.
+
+        Used only to track chunks of the same image.
+
+        :getter: Returns the id for the latest image
+        :setter: Sets the latest image's id
+        """
         return self._latest_image_id
 
+    # TODO Do we really allow setting the latest image id? What is the purpose of this?
     @latest_image_id.setter
     def latest_image_id(self, img_id) -> None:
-        """ID for this image, used only to track chunks of the same image."""
         self._latest_image_id = img_id
 
     def init_camera_feed(self) -> None:
+        """Begin camera feed task"""
         if not self._camera_feed_task or self._camera_feed_task.done():
             self._camera_feed_task = self.robot.loop.create_task(self._handle_image_chunks())
 
     def close_camera_feed(self) -> None:
+        """Cancel camera feed task"""
         if self._camera_feed_task:
             self._camera_feed_task.cancel()
             self.robot.loop.run_until_complete(self._camera_feed_task)

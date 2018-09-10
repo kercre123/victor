@@ -170,6 +170,21 @@ class LightCube(util.Component):
                                 color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set the light for each corner
 
+        .. code-block:: python
+
+            # ensure we are connected to a cube
+            robot.world.connect_cube()
+
+            if robot.world.connected_light_cube:
+                cube = robot.world.connected_light_cube
+
+                # Set cube lights to red, green, blue, and white
+                cube.set_light_corners(anki_vector.lights.blue_light,
+                                       anki_vector.lights.green_light,
+                                       anki_vector.lights.red_light,
+                                       anki_vector.lights.white_light)
+                time.sleep(2.5)
+
         :param light1: The settings for the first light.
         :param light2: The settings for the second light.
         :param light3: The settings for the third light.
@@ -196,6 +211,17 @@ class LightCube(util.Component):
     def set_lights(self, light: lights.Light, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights on the cube
 
+        .. code-block:: python
+
+            # ensure we are connected to a cube
+            robot.world.connect_cube()
+
+            if robot.world.connected_light_cube:
+                cube = robot.world.connected_light_cube
+
+                # Set cube lights to yellow
+                cube.set_lights(anki_vector.lights.yellow_light)
+
         :param light: The settings for the lights
         :param color_profile: The profile to be used for the cube lights
         """
@@ -203,6 +229,21 @@ class LightCube(util.Component):
 
     def set_lights_off(self, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights off on the cube
+
+        .. code-block:: python
+
+            # ensure we are connected to a cube
+            robot.world.connect_cube()
+
+            if robot.world.connected_light_cube:
+                cube = robot.world.connected_light_cube
+
+                # Set cube lights to yellow
+                cube.set_lights(anki_vector.lights.yellow_light)
+                time.sleep(2.5)
+
+                # Turn off cube lights
+                cube.set_lights_off()
 
         :param color_profile: The profile to be used for the cube lights
         """

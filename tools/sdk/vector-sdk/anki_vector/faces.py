@@ -98,12 +98,17 @@ class Face:
 
     @property
     def face_id(self):
-        """:return: The internal ID assigned to the face."""
+        """The internal ID assigned to the face.
+
+        This value can only be assigned once as it is static in the engine.
+
+        :getter: Returns the face ID
+        :setter: Sets the face ID
+        """
         return self._face_id if self._updated_face_id is None else self._updated_face_id
 
     @face_id.setter
     def face_id(self, face_id):
-        # True if this face been updated / superseded by a face with a new ID
         if self._face_id is not None:
             raise ValueError(f"Cannot change face ID once set (from {self._face_id} to {face_id})")
         self._face_id = face_id
@@ -125,6 +130,7 @@ class Face:
             return self._updated_face_id
         return self._face_id
 
+    # TODO Do we really need this setter?
     @updated_face_id.setter
     def updated_face_id(self, face_id):
         self._updated_face_id = face_id
@@ -241,18 +247,15 @@ class Face:
 
 
 class FaceComponent(util.Component):
-    """Manage the state of all the photos on the robot"""
-    @sync.Synchronizer.wrap
-    async def meet_victor(self, name):
-        req = protocol.AppIntentRequest(intent='intent_meet_victor',
-                                        param=name)
-        return await self.interface.AppIntent(req)
+    """Manage the state of the faces on the robot"""
 
+    # TODO document
     @sync.Synchronizer.wrap
     async def cancel_face_enrollment(self):
         req = protocol.CancelFaceEnrollmentRequest()
         return await self.interface.CancelFaceEnrollment(req)
 
+    # TODO document
     @sync.Synchronizer.wrap
     async def request_enrolled_names(self):
         req = protocol.RequestEnrolledNamesRequest()
@@ -285,6 +288,7 @@ class FaceComponent(util.Component):
         req = protocol.EraseAllEnrolledFacesRequest()
         return await self.interface.EraseAllEnrolledFaces(req)
 
+    # TODO document
     @sync.Synchronizer.wrap
     async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot: bool = True, sayName: bool = False, useMusic: bool = False):
         req = protocol.SetFaceToEnrollRequest(name=name,
@@ -295,6 +299,7 @@ class FaceComponent(util.Component):
                                               useMusic=useMusic)
         return await self.interface.SetFaceToEnroll(req)
 
+    # TODO move out of face component? This is general to objects, not specific to faces? Does this also live in robot?
     @sync.Synchronizer.wrap
     async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
         """Edit the vision mode

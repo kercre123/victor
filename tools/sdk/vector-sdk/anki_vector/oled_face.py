@@ -90,6 +90,15 @@ def convert_pixels_to_screen_data(pixel_data: list, image_width: int, image_heig
 def convert_image_to_screen_data(pil_image: Image.Image):
     """ Convert an image into the correct format to display on Vector's face.
 
+    .. code-block:: python
+
+        # Load an image
+        image_file = Image.open('path/to/my/image.jpg')
+
+        # Convert the image to the format used by the oled screen
+        screen_data = anki_vector.oled_face.convert_image_to_screen_data(image_file)
+        robot.oled.set_oled_with_screen_data(screen_data, 4.0)
+
     :param pil_image: The image to display on Vector's face
 
     Returns:
@@ -102,7 +111,23 @@ def convert_image_to_screen_data(pil_image: Image.Image):
 
 class OledComponent(util.Component):
     @sync.Synchronizer.wrap
-    async def set_oled_with_screen_data(self, image_data, duration_sec, interrupt_running: bool = True):
+    async def set_oled_with_screen_data(self, image_data: bytes, duration_sec: float, interrupt_running: bool = True):
+        """
+        Display an image on Vector's OLED screen (his "face").
+
+        .. code-block:: python
+
+            # Load an image
+            image_file = Image.open('path/to/my/image.jpg')
+
+            # Convert the image to the format used by the oled screen
+            screen_data = anki_vector.oled_face.convert_image_to_screen_data(image_file)
+            robot.oled.set_oled_with_screen_data(screen_data, 4.0)
+
+        :param image_data: A :class:`bytes` object representing all of the pixels (16bit color in rgb565 format)
+        :param duration_sec: The number of seconds the image should remain on Vector's face.
+        :param interrupt_running: Set to true so any currently-streaming animation will be aborted in favor of this.
+        """
         if not isinstance(image_data, bytes):
             raise ValueError("set_oled_with_screen_data expected bytes")
         if len(image_data) != 35328:
@@ -118,5 +143,15 @@ class OledComponent(util.Component):
         return await self.interface.DisplayFaceImageRGB(message)
 
     def set_oled_to_color(self, solid_color: color.Color, duration_sec: float, interrupt_running: bool = True):
+        """
+        Set Vector's OLED screen (his "face"). to a solid color.
+
+        .. code-block:: python
+            robot.oled.set_oled_to_color(anki_vector.color.Color(rgb=[255, 128, 0]), duration_sec=1.0)
+
+        :param solid_color: Desired color to set Vector's OLED screen.
+        :param duration_sec: The number of seconds the color should remain on Vector's face.
+        :param interrupt_running: Set to true so any currently-streaming animation will be aborted in favor of this.
+        """
         image_data = bytes(solid_color.rgb565_bytepair * 17664)
         return self.set_oled_with_screen_data(image_data, duration_sec, interrupt_running)

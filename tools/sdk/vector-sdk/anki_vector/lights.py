@@ -22,9 +22,11 @@ __all__ = ['MAX_COLOR_PROFILE', 'WHITE_BALANCED_BACKPACK_PROFILE', 'WHITE_BALANC
 
 from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
 
+# TODO Needs a better docstring. Can't describe a ColorProfile as a Color profile.
+
 
 class ColorProfile:
-    """A Color profile send to be used with messages involving Lights.
+    """A Color profile to be used with messages involving Lights.
 
     :param red_multiplier: Scaling value for the brightness of red Lights
     :param green_multiplier: Scaling value for the brightness of green Lights

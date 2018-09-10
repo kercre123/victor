@@ -243,6 +243,12 @@ class Robot:
     @property
     def proximity(self) -> proximity.ProximityComponent:
         """Component containing state related to object proximity detection
+
+        .. code-block:: python
+
+            proximity_data = robot.proximity.last_valid_sensor_reading
+            if proximity_data is not None:
+                print(proximity_data.distance)
         """
         return self._proximity
 
@@ -269,76 +275,153 @@ class Robot:
 
     @property
     def pose(self) -> util.Pose:
-        """:class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector"""
+        """:class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector
+
+        .. code-block:: python
+
+            current_robot_pose = robot.pose
+        """
         return self._pose
 
     @property
     def pose_angle_rad(self):
-        """Vector's pose angle (heading in X-Y plane)."""
+        """Vector's pose angle (heading in X-Y plane).
+
+        .. code-block:: python
+
+            current_pose_angle_rad = robot.pose_angle_rad
+        """
         return self._pose_angle_rad
 
     @property
     def pose_pitch_rad(self):
-        """Vector's pose pitch (angle up/down)."""
+        """Vector's pose pitch (angle up/down).
+
+        .. code-block:: python
+
+            current_pose_pitch_rad = robot.pose_pitch_rad
+        """
         return self._pose_pitch_rad
 
     @property
     def left_wheel_speed_mmps(self):
-        """Vector's left wheel speed in mm/sec"""
+        """Vector's left wheel speed in mm/sec
+
+        .. code-block:: python
+
+            current_left_wheel_speed_mmps = robot.left_wheel_speed_mmps
+        """
         return self._left_wheel_speed_mmps
 
     @property
     def right_wheel_speed_mmps(self):
-        """Vector's right wheel speed in mm/sec"""
+        """Vector's right wheel speed in mm/sec
+
+        .. code-block:: python
+
+            current_right_wheel_speed_mmps = robot.right_wheel_speed_mmps
+        """
         return self._right_wheel_speed_mmps
 
     @property
     def head_angle_rad(self):
-        """Vector's head angle (up/down)."""
+        """Vector's head angle (up/down).
+
+        .. code-block:: python
+
+            current_head_angle_rad = robot.head_angle_rad
+        """
         return self._head_angle_rad
 
     @property
     def lift_height_mm(self):
-        """Height of Vector's lift from the ground."""
+        """Height of Vector's lift from the ground.
+
+        .. code-block:: python
+
+            current_lift_height_mm = robot.lift_height_mm
+        """
         return self._lift_height_mm
 
     @property
     def accel(self):
-        """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)"""
+        """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)
+
+        .. code-block:: python
+
+            current_accel = robot.accel
+        """
         return self._accel
 
     @property
     def gyro(self):
-        """:class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)"""
+        """:class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)
+
+        .. code-block:: python
+
+            current_gyro = robot.gyro
+        """
         return self._gyro
 
     @property
     def carrying_object_id(self):
-        """The ID of the object currently being carried (-1 if none)"""
+        """The ID of the object currently being carried (-1 if none)
+
+        .. code-block:: python
+
+            current_carrying_object_id = robot.carrying_object_id
+        """
         return self._carrying_object_id
 
     @property
     def carrying_object_on_top_id(self):
-        """The ID of the object on top of the object currently being carried (-1 if none)"""
+        """The ID of the object on top of the object currently being carried (-1 if none)
+
+        .. code-block:: python
+
+            current_carrying_object_on_top_id = robot.carrying_object_on_top_id
+        """
         return self._carrying_object_on_top_id
 
     @property
     def head_tracking_object_id(self):
-        """The ID of the object the head is tracking to (-1 if none)"""
+        """The ID of the object the head is tracking to (-1 if none)
+
+        .. code-block:: python
+
+            current_head_tracking_object_id = robot.head_tracking_object_id
+        """
         return self._head_tracking_object_id
 
     @property
     def localized_to_object_id(self):
-        """The ID of the object that the robot is localized to (-1 if none)"""
+        """The ID of the object that the robot is localized to (-1 if none)
+
+        .. code-block:: python
+
+            current_localized_to_object_id = robot.localized_to_object_id
+        """
         return self._localized_to_object_id
 
     @property
     def last_image_time_stamp(self):
-        """The robot's timestamp for the last image seen."""
+        """The robot's timestamp for the last image seen.
+
+        .. code-block:: python
+
+            current_last_image_time_stamp = robot.last_image_time_stamp
+        """
         return self._last_image_time_stamp
 
+    # TODO If we are going to keep this, need to tell people what the values mean. See RobotStatusFlag in robotStatusAndActions.clad?
     @property
     def status(self):
+        """ Describes robot status.
+
+        .. code-block:: python
+
+            current_status = robot.status
+        """
         return self._status
 
     # TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
@@ -489,6 +572,8 @@ class Robot:
         .. code-block:: python
 
             battery_state = robot.get_battery_state()
+            if battery_state:
+                print("Robot Battery Voltage: {0}".format(battery_state.battery_volts))
         """
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.interface.BatteryState(get_battery_state_request)
@@ -518,6 +603,10 @@ class Robot:
     @sync.Synchronizer.wrap
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         """Have Vector say text!
+
+        .. code-block:: python
+
+            robot.say_text("Hello World")
 
         :param text: The words for Vector to say.
         :param use_vector_voice: Whether to use Vector's robot voice

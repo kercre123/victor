@@ -17,7 +17,7 @@ Behaviors represent a complex task which requires Vector's
 internal logic to determine how long it will take. This
 may include combinations of animation, path planning or
 other functionality. Examples include drive_on_charger,
-set_lift_height, fist_bump, etc.
+set_lift_height, etc.
 
 The :class:`BehaviorComponent` class in this module contains
 functions for all the behaviors.
@@ -31,6 +31,8 @@ from .messaging import protocol
 
 
 class BehaviorComponent(util.Component):
+    """Run behaviors on Vector"""
+
     _next_action_id = protocol.FIRST_SDK_TAG
 
     def __init__(self, robot):
@@ -42,12 +44,11 @@ class BehaviorComponent(util.Component):
 
     @property
     def motion_profile_map(self) -> dict:
-        return self._motion_profile_map
-
-    @motion_profile_map.setter
-    def motion_profile_map(self, motion_profile_map: dict):
         """Tells Vector how to drive when receiving navigation and movement actions
         such as go_to_pose and dock_with_cube.
+
+        :getter: Returns the motion profile map
+        :setter: Sets the motion profile map
 
         :param motion_prof_map: Provide custom speed, acceleration and deceleration
             values with which the robot goes to the given pose.
@@ -63,6 +64,10 @@ class BehaviorComponent(util.Component):
             reverse_speed_mmps (float)
             is_custom (bool)
         """
+        return self._motion_profile_map
+
+    @motion_profile_map.setter
+    def motion_profile_map(self, motion_profile_map: dict):
         self._motion_profile_map = motion_profile_map
 
     def _motion_profile_for_proto(self) -> protocol.PathMotionProfile:
@@ -100,7 +105,6 @@ class BehaviorComponent(util.Component):
         """bool: True if the behavior is currently active and may run on the robot."""
         return self._is_active
 
-    # TODO VIC-5920: Add Cancel by id message, and add ids to all action response messages
     @classmethod
     def _get_next_action_id(cls):
         # Post increment _current_action_id (and loop within the SDK_TAG range)
@@ -117,6 +121,10 @@ class BehaviorComponent(util.Component):
         """ Drive Vector off the charger
 
         If Vector is on the charger, drives him off the charger.
+
+        .. code-block:: python
+
+            robot.behavior.drive_off_charger()
         """
         drive_off_charger_request = protocol.DriveOffChargerRequest()
         return await self.interface.DriveOffCharger(drive_off_charger_request)
@@ -127,6 +135,10 @@ class BehaviorComponent(util.Component):
 
         Vector will attempt to find the charger and, if successful, he will
         back onto it and start charging.
+
+        .. code-block:: python
+
+            robot.behavior.drive_on_charger()        
         """
         drive_on_charger_request = protocol.DriveOnChargerRequest()
         return await self.interface.DriveOnCharger(drive_on_charger_request)
@@ -175,6 +187,7 @@ class BehaviorComponent(util.Component):
 
         return await self.interface.GoToPose(go_to_pose_request)
 
+    # TODO Check that num_retries is actually working (and if not, same for other num_retries).
     @sync.Synchronizer.wrap
     async def dock_with_cube(self,
                              target_object: objects.LightCube,
@@ -282,6 +295,7 @@ class BehaviorComponent(util.Component):
                 of 2 degrees internally).
         :param is_absolute: True to turn to a specific angle, False to
                 turn relative to the current pose.
+        :param num_retries: Number of times to re-attempt the turn in case of a failure.
 
         Returns:
             A response from the robot with status information sent when this action successfully completes or fails.
@@ -311,10 +325,11 @@ class BehaviorComponent(util.Component):
 
         :param angle: Desired angle for Vector's head.
             (:const:`MIN_HEAD_ANGLE` to :const:`MAX_HEAD_ANGLE`).
-        :param max_speed: Maximum speed of Vector's head in radians per second.
         :param accel: Acceleration of Vector's head in radians per second squared.
+        :param max_speed: Maximum speed of Vector's head in radians per second.
         :param duration: Time for Vector's head to move in seconds. A value
                 of zero will make Vector try to do it as quickly as possible.
+        :param num_retries: Number of times to re-attempt the action in case of a failure.
 
         Returns:
             A response from the robot with status information sent when this action successfully completes or fails.
@@ -343,11 +358,12 @@ class BehaviorComponent(util.Component):
 
         :param height: desired height for Vector's lift 0.0 (bottom) to
                 1.0 (top) (we clamp it to this range internally).
-        :param max_speed: Maximum speed of Vector's lift in radians per second.
         :param accel: Acceleration of Vector's lift in radians per
                 second squared.
+        :param max_speed: Maximum speed of Vector's lift in radians per second.
         :param duration: Time for Vector's lift to move in seconds. A value
                 of zero will make Vector try to do it as quickly as possible.
+        :param num_retries: Number of times to re-attempt the action in case of a failure.
 
         Returns:
             A response from the robot with status information sent when this action successfully completes or fails.

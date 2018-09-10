@@ -36,9 +36,19 @@ class BackpackComponent(util.Component):
 
         The light descriptions below are all from Vector's perspective.
 
+        .. code-block:: python
+
+            # Set backpack to different shades of red using int codes for 4 seconds
+            robot.backpack.set_backpack_lights(
+                anki_vector.lights.Light(anki_vector.color.Color(int_color=0xff0000ff)),
+                anki_vector.lights.Light(anki_vector.color.Color(int_color=0x1f0000ff)),
+                anki_vector.lights.Light(anki_vector.color.Color(int_color=0x4f0000ff)))
+            time.sleep(4.0)
+
         :param light1: The front backpack light
         :param light2: The center backpack light
         :param light3: The rear backpack light
+        :param backpack_color_profile: The color profile to use with the backpack light setting
         """
         params = lights.package_request_params((light1, light2, light3), backpack_color_profile)
         set_backpack_lights_request = protocol.SetBackpackLightsRequest(**params)
@@ -49,6 +59,11 @@ class BackpackComponent(util.Component):
                                 light: lights.Light,
                                 color_profile: lights.ColorProfile = lights.WHITE_BALANCED_BACKPACK_PROFILE):
         """Set the lights on Vector's backpack to the same color.
+
+        .. code-block:: python
+
+            robot.backpack.set_all_backpack_lights(anki_vector.lights.magenta_light, anki_vector.lights.MAX_COLOR_PROFILE)
+            time.sleep(4)
 
         :param light: The lights for Vector's backpack.
         :param color_profile: The profile to be used for the backpack lights.

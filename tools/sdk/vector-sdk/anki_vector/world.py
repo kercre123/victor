@@ -66,6 +66,24 @@ class World(util.Component):
     def visible_faces(self):
         """generator: yields each face that Vector can currently see.
 
+        .. code-block:: python
+
+            # Print the visible face's attributes
+            for face in robot.world.visible_faces:
+                print("Face attributes:")
+                print(f"Face id: {face.face_id}")
+                print(f"Updated face id: {face.updated_face_id}")
+                print(f"Name: {face.name}")
+                print(f"Expression: {face.expression}")
+                print(f"Timestamp: {face.timestamp}")
+                print(f"Pose: {face.pose}")
+                print(f"Image Rect: {face.img_rect}")
+                print(f"Expression score: {face.expression_score}")
+                print(f"Left eye: {face.left_eye}")
+                print(f"Right eye: {face.right_eye}")
+                print(f"Nose: {face.nose}")
+                print(f"Mouth: {face.mouth}")
+
         Returns:
             A generator yielding :class:`anki_vector.faces.Face` instances
         """
@@ -125,6 +143,12 @@ class World(util.Component):
     def connected_light_cube(self):
         """Returns a light cube attached to Vector, if any
 
+        .. code-block:: python
+
+            robot.world.connect_cube()
+            if robot.world.connected_light_cube:            
+                dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
+
         Returns:
             A :class:`anki_vector.objects.LightCube` instance, or None
         """
@@ -141,6 +165,10 @@ class World(util.Component):
 
         Attempt to connect to a cube. If a cube is currently connected,
         this will do nothing.
+
+        .. code-block:: python
+
+            robot.world.connect_cube()
         """
         req = protocol.ConnectCubeRequest()
         result = await self.interface.ConnectCube(req)
@@ -153,7 +181,12 @@ class World(util.Component):
 
     @sync.Synchronizer.wrap
     async def disconnect_cube(self):
-        """ Requests a disconnection from the currently connected cube """
+        """ Requests a disconnection from the currently connected cube
+
+        .. code-block:: python
+
+            robot.world.disconnect_cube()
+        """
         req = protocol.DisconnectCubeRequest()
         return await self.interface.DisconnectCube(req)
 
@@ -175,17 +208,29 @@ class World(util.Component):
         'Forget' the robot's preferred cube. This will cause the robot to
         connect to the cube with the highest RSSI (signal strength) next
         time a connection is requested.
+
+        .. code-block:: python
+
+            robot.world.forget_preferred_cube()
         """
         req = protocol.ForgetPreferredCubeRequest()
         return await self.interface.ForgetPreferredCube(req)
 
     @sync.Synchronizer.wrap
-    async def set_preferred_cube(self, factory_id):
+    async def set_preferred_cube(self, factory_id: str):
         """ Set preferred cube
 
         Set the robot's preferred cube and save it to disk. The robot
         will always attempt to connect to this cube if it is available.
         This is only used in simulation (for now).
+
+        .. code-block:: python
+
+            connected_cube = robot.world.connected_light_cube
+            if connected_cube:
+                robot.world.set_preferred_cube(connected_cube.factory_id)
+
+        :param factory_id: The unique hardware id of the physical cube.
         """
         req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
         return await self.interface.SetPreferredCube(req)

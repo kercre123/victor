@@ -34,8 +34,8 @@ class Color:
             self._int_color = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
 
     @property
-    def int_color(self):
-        """int: The encoded integer value of the color."""
+    def int_color(self) -> int:
+        """The encoded integer value of the color."""
         return self._int_color
 
     @property
