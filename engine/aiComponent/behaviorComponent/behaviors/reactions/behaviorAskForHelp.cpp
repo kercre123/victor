@@ -1,8 +1,8 @@
 /**
- * File: behaviorStuckOnEdge.cpp
+ * File: BehaviorAskForHelp.cpp
  *
- * Author: Kevin Yoon
- * Created: 2018-05-08
+ * Author: Guillermo Bautista
+ * Created: 2018-09-04
  *
  * Description: Behavior that periodically plays a "distressed" animation because
  *              he's stuck and needs help from the user to get out of his situation.
@@ -12,11 +12,11 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorStuckOnEdge.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/movementComponent.h"
 #include "engine/components/powerStateManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 
@@ -34,7 +34,7 @@ namespace {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStuckOnEdge::DynamicVariables::DynamicVariables()
+BehaviorAskForHelp::DynamicVariables::DynamicVariables()
 {
   startOfMotionDetectedTime_s = 0.f;
   enablePowerSaveModeTime_s   = 0.f;
@@ -43,41 +43,31 @@ BehaviorStuckOnEdge::DynamicVariables::DynamicVariables()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStuckOnEdge::BehaviorStuckOnEdge(const Json::Value& config)
-: ICozmoBehavior(config)
+BehaviorAskForHelp::BehaviorAskForHelp(const Json::Value& config)
+ : ICozmoBehavior(config)
 {
-  _iConfig.stuckOnEdgeCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::StuckOnEdge, GetDebugLabel());
+  // Read config into _iConfig here if necessary.
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorStuckOnEdge::WantsToBeActivatedBehavior() const
+void BehaviorAskForHelp::OnBehaviorActivated()
 {
-  return _iConfig.stuckOnEdgeCondition->AreConditionsMet(GetBEI());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::InitBehavior()
-{
-  _iConfig.stuckOnEdgeCondition->Init(GetBEI());
-  _iConfig.stuckOnEdgeCondition->SetActive(GetBEI(), true);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::OnBehaviorActivated()
-{
+  // reset dynamic variables
   _dVars = DynamicVariables();
+
   SetAnimTriggers();
   TriggerGetInAnim();
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::BehaviorUpdate()
+void BehaviorAskForHelp::BehaviorUpdate()
 {
   if (!IsActivated()) {
     return;
   }
 
-  // Check if gyro motion detected this tic
+  // Check if gyro motion detected this tick
   const GyroData gyroData = GetBEI().GetRobotInfo().GetHeadGyroData();
   const bool gyroMotionDetected = std::fabs(gyroData.x) > kMotionDetectGyroThresh_radps ||
                                   std::fabs(gyroData.y) > kMotionDetectGyroThresh_radps ||
@@ -100,7 +90,7 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
           _dVars.startOfMotionDetectedTime_s = currTime_s;
         }
         if (currTime_s - _dVars.startOfMotionDetectedTime_s > kMotionDetectDurationThresh_sec) {
-          PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.BehaviorUpdate.RemovePowerSaveModeRequest","");
+          PRINT_CH_INFO("Behaviors", "BehaviorAskForHelp.BehaviorUpdate.RemovePowerSaveModeRequest","");
           ICozmoBehavior::SmartRemovePowerSaveModeRequest();
           _dVars.startOfMotionDetectedTime_s = 0.f;
           _dVars.enablePowerSaveModeTime_s = currTime_s + kDisablePowerSaveOnMotionDuration_sec;
@@ -109,22 +99,14 @@ void BehaviorStuckOnEdge::BehaviorUpdate()
         _dVars.startOfMotionDetectedTime_s = 0.f;
       }
     } else if (!inSysconCalmMode && !gyroMotionDetected && (currTime_s > _dVars.enablePowerSaveModeTime_s)) {
-      PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.BehaviorUpdate.RequestPowerSaveMode","");
+      PRINT_CH_INFO("Behaviors", "BehaviorAskForHelp.BehaviorUpdate.RequestPowerSaveMode","");
       ICozmoBehavior::SmartRequestPowerSaveMode();
     }
   }
-
-  // Check if we should cancel behavior based on pickup or no more cliffs detected
-  const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
-  const bool noCliffs   = !inSysconCalmMode && !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
-  if (isPickedUp || noCliffs) {
-    CancelSelf();
-  }
-
 }
 
-
-void BehaviorStuckOnEdge::SetAnimTriggers()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAskForHelp::SetAnimTriggers()
 {
   const auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
   const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
@@ -132,6 +114,7 @@ void BehaviorStuckOnEdge::SetAnimTriggers()
   _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeGetIn;
   _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeIdle;
   if (!inSysconCalmMode) {
+    // Check if a cliff is detected on either side of ther robot in the location where we're stuck.
     const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
     bool leftCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FL) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BL);
     bool rightCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FR) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BR);
@@ -150,25 +133,20 @@ void BehaviorStuckOnEdge::SetAnimTriggers()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::TriggerGetInAnim()
+void BehaviorAskForHelp::TriggerGetInAnim()
 {
-  PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.TriggerGetInAnim", "%s", EnumToString(_dVars.getInTrigger));
+  PRINT_CH_INFO("Behaviors", "BehaviorAskForHelp.TriggerGetInAnim", "%s", EnumToString(_dVars.getInTrigger));
   auto action = new TriggerAnimationAction(_dVars.getInTrigger, 1, true, kTracksToLock);
-  DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerIdleAnim);
+  DelegateIfInControl(action, &BehaviorAskForHelp::TriggerIdleAnim);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::TriggerIdleAnim()
+void BehaviorAskForHelp::TriggerIdleAnim()
 {
-  PRINT_CH_INFO("Behaviors", "BehaviorStuckOnEdge.TriggerIdleAnim", "%s", EnumToString(_dVars.idleTrigger));
+  PRINT_CH_INFO("Behaviors", "BehaviorAskForHelp.TriggerIdleAnim", "%s", EnumToString(_dVars.idleTrigger));
   auto action = new TriggerAnimationAction(_dVars.idleTrigger, 1, true, kTracksToLock);
-  DelegateIfInControl(action, &BehaviorStuckOnEdge::TriggerIdleAnim);
+  DelegateIfInControl(action, &BehaviorAskForHelp::TriggerIdleAnim);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStuckOnEdge::OnBehaviorDeactivated()
-{
 }
-
-} // namespace Vector
-} // namespace Anki
+}

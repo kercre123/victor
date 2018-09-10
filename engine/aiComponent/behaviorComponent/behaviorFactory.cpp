@@ -137,7 +137,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUncalibratedHeadAndLift.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorStuckOnEdge.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
@@ -951,9 +951,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::StuckOnEdge:
+    case BehaviorClass::AskForHelp:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorStuckOnEdge(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAskForHelp(config));
       break;
     }
     

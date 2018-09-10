@@ -354,6 +354,7 @@ enum uint_16 BehaviorID {
   ReactToUnclaimedIntent,
 
   // victorBehaviorTree/reactions
+  AskForHelp,
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
