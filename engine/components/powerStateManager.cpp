@@ -272,7 +272,7 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
         }
         else
         {
-          if(_cameraState == CameraState::Deleted)
+          if(_cameraState != CameraState::Running)
           {
             _cameraState = CameraState::ShouldInit;
           }
