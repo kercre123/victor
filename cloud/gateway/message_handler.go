@@ -790,7 +790,7 @@ func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) 
 func (service *rpcService) onConnect(id string) {
 	// Call DAS WiFi connection event to indicate start of a WiFi connection.
 	// Log the connection id for the primary connection, which is the first person to connect.
-	log.Das("wifi_conn_id.start", (&log.DasFields{}).SetStrings(id))			
+	log.Das("wifi_conn_id.start", (&log.DasFields{}).SetStrings(id))
 }
 
 // Should be called on WiFi disconnect.
@@ -1926,6 +1926,64 @@ func ImageSendModeRequest(mode extint.ImageRequest_ImageSendMode) error {
 	return err
 }
 
+type CameraFeedCache struct {
+	Data        []byte
+	ImageId     int32
+	Invalid     bool
+	Size        int32
+	LastChunkId int32
+}
+
+func ResetCameraCache(cache *CameraFeedCache) error {
+	cache.Data = nil
+	cache.ImageId = -1
+	cache.Invalid = false
+	cache.Size = 0
+	cache.LastChunkId = -1
+	return nil
+}
+
+func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCache) (bool, error) {
+	imageId := int32(imageChunk.GetImageId())
+	chunkId := int32(imageChunk.GetChunkId())
+
+	if cache.ImageId != -1 && chunkId == 0 {
+		if !cache.Invalid {
+			log.Println("Lost final chunk of image; discarding")
+		}
+		cache.ImageId = -1
+	}
+
+	if cache.ImageId == -1 {
+		if chunkId != 0 {
+			if !cache.Invalid {
+				log.Println("Received chunk of broken image")
+			}
+			cache.Invalid = true
+			return false, nil
+		}
+		// discard any previous in-progress image
+		ResetCameraCache(cache)
+
+		cache.Data = make([]byte, imageChunk.GetWidth()*imageChunk.GetHeight()*3)
+		cache.ImageId = int32(imageId)
+	}
+
+	if chunkId != cache.LastChunkId+1 || imageId != cache.ImageId {
+		log.Println("Image missing chunks; discarding (last_chunk_id=", cache.LastChunkId, " partial_image_id=", cache.ImageId, ")")
+		ResetCameraCache(cache)
+		cache.Invalid = true
+		return false, nil
+	}
+
+	dataSize := int32(len(imageChunk.GetData()))
+	copy(cache.Data[cache.Size:cache.Size+dataSize], imageChunk.GetData()[:])
+	cache.Size += dataSize
+	cache.LastChunkId = chunkId
+
+	return chunkId == int32(imageChunk.GetImageChunkCount()-1), nil
+}
+
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
 	if disableStreams {
@@ -1945,16 +2003,36 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 10)
 	defer f()
 
+	cache := CameraFeedCache{
+		Data:    nil,
+		ImageId: -1,
+		Invalid: false,
+		Size:    0,
+	}
+
 	for result := range cameraFeedChannel {
-		cameraFeedResponse := &extint.CameraFeedResponse{
-			ImageChunk: result.GetImageChunk(),
+
+		imageChunk := result.GetImageChunk()
+		readyToSend, err := UnpackCameraImageChunk(imageChunk, &cache)
+		if err != nil {
+			return err
 		}
-		if err := stream.Send(cameraFeedResponse); err != nil {
-			return err
-		} else if err = stream.Context().Err(); err != nil {
-			// This is the case where the user disconnects the stream
-			// We should still return the err in case the user doesn't think they disconnected
-			return err
+		if readyToSend {
+			cameraFeedResponse := &extint.CameraFeedResponse{
+				FrameTimeStamp: imageChunk.GetFrameTimeStamp(),
+				ImageId:        uint32(cache.ImageId),
+				ImageEncoding:  imageChunk.GetImageEncoding(),
+				Data:           cache.Data[0:cache.Size],
+			}
+			ResetCameraCache(&cache)
+
+			if err := stream.Send(cameraFeedResponse); err != nil {
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
 		}
 	}
 

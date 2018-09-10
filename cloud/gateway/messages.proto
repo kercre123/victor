@@ -991,7 +991,11 @@ message CameraFeedRequest {}
 
 message CameraFeedResponse {
   option (streamed) = true;
-  ImageChunk image_chunk = 1;
+
+  uint32                   frame_time_stamp = 1;
+  uint32                   image_id = 2;
+  ImageChunk.ImageEncoding image_encoding = 3;
+  bytes                    data = 4;
 }
 
 // Check to see if an update is available for the robot
