@@ -181,3 +181,6 @@ to get:
 
 ### BaseStationTimer, WallTime, UniversalTime, I'm confused!? Which timer should I use?
   - See the [Time, Clocks, and Timers](/docs/development/time.md) doc
+  
+### I want to use Linux, instead of macOS.  Which version should I use?
+  - Use Ubuntu 16.04
