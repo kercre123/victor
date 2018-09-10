@@ -69,7 +69,7 @@ private:
     float cliffBackupDist_mm;
     float cliffBackupSpeed_mmps;
     
-    float stopEventTimeout_sec;
+    float eventFlagTimeout_sec;
   };
 
   InstanceConfig _iConfig;
@@ -85,6 +85,7 @@ private:
     struct Persistent {
       int numStops;
       float lastStopTime_sec;
+      float lastPutDownOnCliffTime_sec;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;

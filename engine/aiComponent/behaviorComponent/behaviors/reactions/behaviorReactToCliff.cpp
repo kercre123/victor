@@ -46,7 +46,7 @@ using namespace ExternalInterface;
 namespace {
   const char* kCliffBackupDistKey = "cliffBackupDistance_mm";
   const char* kCliffBackupSpeedKey = "cliffBackupSpeed_mmps";
-  const char* kStopTimeoutKey = "stopEventTimeout_sec";
+  const char* kEventFlagTimeoutKey = "eventFlagTimeout_sec";
 
   // If the value of the cliff when it started stopping is
   // this much less than the value when it stopped, then
@@ -72,7 +72,7 @@ void BehaviorReactToCliff::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
   const char* list[] = {
     kCliffBackupDistKey,
     kCliffBackupSpeedKey,
-    kStopTimeoutKey
+    kEventFlagTimeoutKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -96,14 +96,14 @@ BehaviorReactToCliff::InstanceConfig::InstanceConfig(const Json::Value& config, 
   ANKI_VERIFY(Util::IsFltGTZero(cliffBackupSpeed_mmps), (debugName + ".InvalidCliffBackupSpeed").c_str(),
               "Value should be greater than 0.0 (not %.2f).", cliffBackupSpeed_mmps);
   
-  stopEventTimeout_sec = JsonTools::ParseFloat(config, kStopTimeoutKey, debugName);
+  eventFlagTimeout_sec = JsonTools::ParseFloat(config, kEventFlagTimeoutKey, debugName);
   // Verify that the stop event timeout limit is valid.
-  if (!ANKI_VERIFY(Util::IsFltGEZero(stopEventTimeout_sec),
-                   (debugName + ".InvalidStopEventTimeout").c_str(),
+  if (!ANKI_VERIFY(Util::IsFltGEZero(eventFlagTimeout_sec),
+                   (debugName + ".InvalidEventFlagTimeout").c_str(),
                    "Value should always be greater than or equal to 0.0 (not %.2f). Making positive.",
-                   stopEventTimeout_sec))
+                   eventFlagTimeout_sec))
   {
-    stopEventTimeout_sec *= -1.0;
+    eventFlagTimeout_sec *= -1.0;
   }
 }
 
@@ -119,6 +119,7 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
   persistent.numStops = 0;
   persistent.lastStopTime_sec = 0.f;
+  persistent.lastPutDownOnCliffTime_sec = 0.f;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -320,10 +321,20 @@ void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) cons
 void BehaviorReactToCliff::BehaviorUpdate()
 {
   if(!IsActivated()){
-    const auto& timeSinceLastStop_sec =
-      BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _dVars.persistent.lastStopTime_sec;
-    if (timeSinceLastStop_sec > _iConfig.stopEventTimeout_sec) {
-      _dVars.gotStop = false;
+    const auto& currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (_dVars.gotStop) {
+      const auto& timeSinceLastStop_sec = currentTime_sec - _dVars.persistent.lastStopTime_sec;
+      if (timeSinceLastStop_sec > _iConfig.eventFlagTimeout_sec) {
+        _dVars.gotStop = false;
+        PRINT_NAMED_INFO("BehaviorReactToCliff.Update.IgnoreLastStopEvent", "");
+      }
+    }
+    if (_dVars.putDownOnCliff) {
+      const auto& timeSinceLastPutDownOnCliff_sec = currentTime_sec - _dVars.persistent.lastPutDownOnCliffTime_sec;
+      if (timeSinceLastPutDownOnCliff_sec > _iConfig.eventFlagTimeout_sec) {
+        _dVars.putDownOnCliff = false;
+        PRINT_NAMED_INFO("BehaviorReactToCliff.Update.IgnoreLastPossiblePutDownOnCliffEvent", "");
+      }
     }
     // Set wantsToBeActivated to effectively give the activation conditions
     // an extra tick to be evaluated.
@@ -399,6 +410,7 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       if (treadsState == OffTreadsState::OnTreads && cliffsDetected) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.AlwaysHandleInScope", "Possibly put down on cliff");
         _dVars.putDownOnCliff = true;
+        _dVars.persistent.lastPutDownOnCliffTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       } else {
         _dVars.putDownOnCliff = false;
       }
