@@ -565,7 +565,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   // of these default values change the server gets them too
 
   const auto& confList = micData.confidenceList;
-  const auto& winningIndex = micData.selectedDirection;
+  const auto& winningIndex = micData.direction;
   auto maxCurConf = (float)micData.confidence;
   for (int i=0; i<12; ++i)
   {
@@ -613,8 +613,9 @@ void FaceInfoScreenManager::DrawConfidenceClock(
         Json::Value webData;
         webData["time"] = currentTime;
         webData["confidence"] = micData.confidence;
-        // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
-        webData["dominant"] = micData.direction;
+        webData["activeState"] = micData.activeState;
+        // 'direction' is the strongest direction, whereas 'selectedDirection' is what's being used (locked-in)
+        webData["direction"] = micData.direction;
         webData["selectedDirection"] = micData.selectedDirection;
         webData["maxConfidence"] = maxConf;
         webData["triggerDetected"] = triggerRecognized;

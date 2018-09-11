@@ -24,6 +24,7 @@
 #include "util/global/globalDefinitions.h"
 
 #include <array>
+#include <atomic>
 #include <condition_variable>
 #include <cstdint>
 #include <memory>
@@ -68,6 +69,16 @@ public:
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
 
+  enum class ProcessingState {
+    None = 0,               // Raw single mic data
+    NoProcessingSingleMic,  // Cheap single mic processing
+    SigEsBeamformingOff,    // Signal Essence fall back policy, clean & mix mics
+    SigEsBeamformingOn      // Signal Essence beamforming processing
+  };
+  
+  // Set the processing state that is desired, system state can change the active processing state
+  void SetPreferredMicDataProcessingState(ProcessingState state) { _preferredProcState = state; }
+  
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
   
@@ -117,9 +128,8 @@ private:
   bool _robotWasMoving = false;
   bool _isSpeakerActive = false;
   bool _wasSpeakerActive = false;
+  bool _isInLowPowerMode = false;
   uint32_t _speakerCooldownCnt = 0;
-
-  bool _usingFallbackPolicy = false; // True if we are using the 'fallback' beamforming policy
 
 
 #if ANKI_DEV_CHEATS
@@ -145,6 +155,8 @@ private:
   std::condition_variable _xferAvailableCondition;
   size_t _procAudioRawComplete = 0;
   size_t _procAudioXferCount = 0;
+  std::atomic<ProcessingState> _activeProcState{ProcessingState::None};
+  std::atomic<ProcessingState> _preferredProcState{ProcessingState::None};
 
   // Mutex for different accessing signal essence software
   std::mutex _seInteractMutex;
@@ -179,6 +191,9 @@ private:
 
   void ProcessRawLoop();
   void ProcessTriggerLoop();
+  
+  void SetActiveMicDataProcessingState(ProcessingState state);
+  const char* GetProcessingStateName(ProcessingState state) const;
 };
 
 } // namespace MicData

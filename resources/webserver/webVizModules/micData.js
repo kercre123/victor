@@ -172,18 +172,24 @@
       }
     }
 
-    // We draw the selected direction, as opposed to dominant, to most clearly reflect the actual listening behavior
-    // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
-    var dotRadius = 7;
-    var dotX = ClockData.center[0] + ( ClockData.offsets[data.selectedDirection][0] * ClockData.radius );
-    var dotY = ClockData.center[1] + ( ClockData.offsets[data.selectedDirection][1] * ClockData.radius );
-
+    // Audio strongest direction
+    dotRadius = 8;
+    dotX = ClockData.center[0] + ( ClockData.offsets[data.direction][0] * ClockData.radius );
+    dotY = ClockData.center[1] + ( ClockData.offsets[data.direction][1] * ClockData.radius );
     context.beginPath();
     context.arc( dotX, dotY, dotRadius, 0, 2*Math.PI );
     context.fillStyle = '#FF0000';
     context.fill();
 
-
+    // Audio beamforming selected direction
+    var dotRadius = 5;
+    var dotX = ClockData.center[0] + ( ClockData.offsets[data.selectedDirection][0] * ClockData.radius );
+    var dotY = ClockData.center[1] + ( ClockData.offsets[data.selectedDirection][1] * ClockData.radius );
+    context.beginPath();
+    context.arc( dotX, dotY, dotRadius, 0, 2*Math.PI );
+    context.fillStyle = '#00FF00';
+    context.fill();
+    
     // add in our confidence values ...
     var labelX = 250, valueX = 425;
     var textY = 25, textHeight = 25;
@@ -199,6 +205,19 @@
     textY += textHeight;
     context.fillText( "Delay Time (ms) : ", labelX, textY );
     context.fillText( data.delayTime, valueX, textY );
+
+    // VAD active
+    textY += textHeight;
+    context.fillText( "Voice Detected :", labelX, textY );
+    dotRadius = 8;
+    context.beginPath();
+    context.arc( valueX + 10, textY + 11, dotRadius, 0, 2*Math.PI );
+    context.fillStyle = '#FF0000';
+    if (data.activeState) {
+      context.fillStyle = '#00FF00';
+    }
+    context.fill();
+    context.fillStyle = '#000000';
     
     textY += 2*textHeight;
     context.fillText( "Beat Detector:", labelX, textY );

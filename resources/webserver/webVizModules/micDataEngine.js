@@ -153,13 +153,22 @@
     // need to redraw this each time
     drawClockFace();
 
-    var dotRadius = 7;
-    var dotX = ClockData.center[0] + ( ClockData.offsets[data.dominant][0] * ClockData.radius );
-    var dotY = ClockData.center[1] + ( ClockData.offsets[data.dominant][1] * ClockData.radius );
-
+    // Audio strongest direction
+    var dotRadius = 8;
+    var dotX = ClockData.center[0] + ( ClockData.offsets[data.direction][0] * ClockData.radius );
+    var dotY = ClockData.center[1] + ( ClockData.offsets[data.direction][1] * ClockData.radius );
     context.beginPath();
     context.arc( dotX, dotY, dotRadius, 0, 2*Math.PI );
     context.fillStyle = '#FF0000';
+    context.fill();
+
+    // Audio beamforming selected direction
+    var dotRadius = 5;
+    var dotX = ClockData.center[0] + ( ClockData.offsets[data.selectedDirection][0] * ClockData.radius );
+    var dotY = ClockData.center[1] + ( ClockData.offsets[data.selectedDirection][1] * ClockData.radius );
+    context.beginPath();
+    context.arc( dotX, dotY, dotRadius, 0, 2*Math.PI );
+    context.fillStyle = '#00FF00';
     context.fill();
 
     // Update data used in the chart
@@ -176,7 +185,7 @@
     micDataPeakMinThreshold.push( [data["time"], micNoiseFloor+micPeakAverage+micPeakMinThreshold] );
 
     // add in our confidence values ...
-    var labelX = 250, valueX = 375;
+    var labelX = 250, valueX = 400;
     var textY = 25, textHeight = 25;
 
     context.font="normal 18px Arial";
@@ -194,6 +203,19 @@
     textY += textHeight;
     context.fillText( "Scoring Avg : ", labelX, textY );
     context.fillText( micPeakAverage.toFixed(3), valueX, textY );
+
+    // VAD active
+    textY += textHeight;
+    context.fillText( "Voice Detected :", labelX, textY );
+    dotRadius = 8;
+    context.beginPath();
+    context.arc( valueX + 10, textY + 11, dotRadius, 0, 2*Math.PI );
+    context.fillStyle = '#FF0000';
+    if (data.activeState) {
+      context.fillStyle = '#00FF00';
+    }
+    context.fill();
+    context.fillStyle = '#000000';
 
     valueX = 450;
     if ( data.isTriggered )

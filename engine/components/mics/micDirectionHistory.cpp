@@ -68,7 +68,8 @@ void MicDirectionHistory::AddMicSample(const RobotInterface::MicDirection& messa
 {
   const EngineTimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-  AddDirectionSample(currentTime_ms, message.direction, message.confidence, message.selectedDirection);
+  AddDirectionSample(currentTime_ms, (message.activeState == 1),
+                     message.direction, message.confidence, message.selectedDirection);
   AddMicPowerSample(currentTime_ms, message.latestPowerValue, message.latestNoiseFloor);
   AddVadLogSample(currentTime_ms, message.latestNoiseFloor, message.activeState);
 
@@ -348,12 +349,15 @@ void MicDirectionHistory::UnRegisterSoundReactor(SoundReactorId id)
 }
 
 void MicDirectionHistory::AddDirectionSample(EngineTimeStamp_t timestamp,
+                                             bool isVadActive,
                                              MicDirectionIndex newDirection,
                                              MicDirectionConfidence newConf,
                                              MicDirectionIndex selectedDirection)
 {
   // use this for Sound Reactors
+  _soundTrackingData.isVadActive = isVadActive;
   _soundTrackingData.latestMicDirection = newDirection;
+  _soundTrackingData.selectedMicDirection = selectedDirection;
   _soundTrackingData.latestMicConfidence = newConf;
 
 
@@ -540,7 +544,9 @@ void MicDirectionHistory::SendMicDataToWebserver()
           Json::Value webData;
           webData["time"] = currentTime;
           webData["confidence"] = _soundTrackingData.latestMicConfidence;
-          webData["dominant"] = _soundTrackingData.latestMicDirection;
+          webData["activeState"] = _soundTrackingData.isVadActive;
+          webData["direction"] = _soundTrackingData.latestMicDirection;
+          webData["selectedDirection"] = _soundTrackingData.selectedMicDirection;
           webData["latestPowerValue"] = _soundTrackingData.latestPowerLevel;
           webData["latestNoiseFloor"] = _soundTrackingData.latestNoiseFloor;
           webData["powerScore"] = _soundTrackingData.latestPeakLevel;
