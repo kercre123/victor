@@ -24,10 +24,14 @@
 #include "pickAndPlaceController.h"
 #include "powerModeManager.h"
 #include "proxSensors.h"
+#include "messages.h"
+
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
-#include "messages.h"
+#include "anki/cozmo/robot/DAS.h"
+
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/motorTypes.h"
 
 #define DEBUG_IMU_FILTER 0
 
@@ -283,9 +287,8 @@ namespace Anki {
         if (bracingEnabled_) {
           LiftController::Unbrace();
           HeadController::Unbrace();
-
-          LiftController::StartCalibrationRoutine(true);
-          HeadController::StartCalibrationRoutine(true);
+          LiftController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::UnbraceAfterImpact));
+          HeadController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::UnbraceAfterImpact));
         }
       }
 

@@ -29,5 +29,16 @@ message MotorAutoEnabled
   bool enabled
 }
 
+enum uint_8 MotorCalibrationReason
+{
+  LiftMotorBurnoutProtection,
+  HeadMotorBurnoutProtection,
+  UnbraceAfterImpact,
+  PowerSaveEnteringActiveMode,
+  BehaviorReactToUncalibratedHeadAndLift,
+  BehaviorReactToOnFace,
+  BehaviorReactToOnBack,
+}
+
 } // namespace Vector
 } // namespace Anki

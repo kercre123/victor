@@ -33,7 +33,7 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 namespace DAS {  
 
@@ -87,11 +87,11 @@ constexpr const int FIELD_COUNT = 9;
 
 } // end namespace DAS
 } // end namespace RobotInterface
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 
 //
@@ -144,7 +144,7 @@ void sLogInfo(const DasMsg & dasMessage);
 void sLogDebug(const DasMsg & dasMessage);
 
 } // end namespace RobotInterface
-} // end namespace Cozmo
+} // end namespace Vector
 } // end namespace Anki
 
 
@@ -158,12 +158,12 @@ void sLogDebug(const DasMsg & dasMessage);
 //
 #ifndef DOXYGEN
 
-#define DASMSG(ezRef, eventName, documentation) { Anki::Cozmo::RobotInterface::DasMsg __DAS_msg(eventName);
-#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Cozmo::RobotInterface::DasItem(value);
-#define DASMSG_SEND()         Anki::Cozmo::RobotInterface::sLogInfo(__DAS_msg); }
-#define DASMSG_SEND_WARNING() Anki::Cozmo::RobotInterface::sLogWarning(__DAS_msg); }
-#define DASMSG_SEND_ERROR()   Anki::Cozmo::RobotInterface::sLogError(__DAS_msg); }
-#define DASMSG_SEND_DEBUG()   Anki::Cozmo::RobotInterface::sLogDebug(__DAS_msg); }
+#define DASMSG(ezRef, eventName, documentation) { Anki::Vector::RobotInterface::DasMsg __DAS_msg(eventName);
+#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Vector::RobotInterface::DasItem(value);
+#define DASMSG_SEND()         Anki::Vector::RobotInterface::sLogInfo(__DAS_msg); }
+#define DASMSG_SEND_WARNING() Anki::Vector::RobotInterface::sLogWarning(__DAS_msg); }
+#define DASMSG_SEND_ERROR()   Anki::Vector::RobotInterface::sLogError(__DAS_msg); }
+#define DASMSG_SEND_DEBUG()   Anki::Vector::RobotInterface::sLogDebug(__DAS_msg); }
 
 #else
 

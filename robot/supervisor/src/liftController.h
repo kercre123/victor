@@ -31,7 +31,9 @@ namespace Anki {
       
       // Moves lift all the way down and sets that position to 0
       // Automatically enables motor if it was disabled
-      void StartCalibrationRoutine(bool autoStarted = false);
+      // Note: if a non-empty calibration reason is provided,
+      // this will also send up a DAS event for the calibration
+      void StartCalibrationRoutine(bool autoStarted = false, const char* calibrationReason = "");
       
       // Returns true if calibration has completed
       bool IsCalibrated();      

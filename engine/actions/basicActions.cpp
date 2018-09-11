@@ -39,6 +39,8 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "util/console/consoleInterface.h"
 
+#include "util/logging/DAS.h"
+
 namespace Anki {
   
   namespace Vector {
@@ -778,12 +780,14 @@ namespace Anki {
 #pragma mark ---- CalibrateMotorAction ----
     
     CalibrateMotorAction::CalibrateMotorAction(bool calibrateHead,
-                                               bool calibrateLift)
+                                               bool calibrateLift,
+                                               std::string calibrationReason)
     : IAction("CalibrateMotor-" + std::string(calibrateHead ? "Head" : "") + std::string(calibrateLift ? "Lift" : ""),
               RobotActionType::CALIBRATE_MOTORS,
               (calibrateHead ? (u8)AnimTrackFlag::HEAD_TRACK : 0) | (calibrateLift ? (u8)AnimTrackFlag::LIFT_TRACK : 0) )
     , _calibHead(calibrateHead)
     , _calibLift(calibrateLift)
+    , _calibReason(calibrationReason)
     , _headCalibStarted(false)
     , _liftCalibStarted(false)
     {
@@ -792,6 +796,27 @@ namespace Anki {
     
     ActionResult CalibrateMotorAction::Init()
     {
+      if(!_calibReason.empty()) {
+        // this DAS message mimics messages sent by vic-robot
+        // when a motor calibration is triggered.
+        // The same event string is used, and by convention
+        // i1 is whether the head motor is being calibrated
+        // i2 is whether the lift motor is being calibrated
+        // NOTE:
+        // ultimately this action resolves to calling the same
+        // calibrate methods in vic-robot, but the reason for
+        // triggering calibration is not bubbled down to vic-robot
+        // so we message it up here, and let it default to empty
+        // in vic-robot (which won't send the das event then)
+        DASMSG(engine_calibrate_motor_action,
+               "calibrate_motors",
+               "send when the robot triggers calibration");
+        DASMSG_SET(s1, _calibReason, "reason for triggering calibration");
+        DASMSG_SET(i1, (int)_calibHead, "is head motor being calibrated");
+        DASMSG_SET(i2, (int)_calibLift, "is lift motor being calibrated");
+        DASMSG_SEND();
+      }
+      
       ActionResult result = ActionResult::SUCCESS;
       _headCalibStarted = false;
       _liftCalibStarted = false;

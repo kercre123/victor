@@ -9,7 +9,7 @@
 #include <android/log.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 
 // Basically a copy of VictorLogger::LogEvent() in Util
@@ -35,9 +35,9 @@ void DasLogEvent(int prio, const DasMsg & dasMsg)
   //
   // We use a fixed format string for performance, but we need to update the format string
   // if event format ever changes.
-  static_assert(Anki::Cozmo::RobotInterface::DAS::EVENT_MARKER == '@', "DAS event marker does not match declarations");
-  static_assert(Anki::Cozmo::RobotInterface::DAS::FIELD_MARKER == '\x1F', "DAS field marker does not match declarations");
-  static_assert(Anki::Cozmo::RobotInterface::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
+  static_assert(Anki::Vector::RobotInterface::DAS::EVENT_MARKER == '@', "DAS event marker does not match declarations");
+  static_assert(Anki::Vector::RobotInterface::DAS::FIELD_MARKER == '\x1F', "DAS field marker does not match declarations");
+  static_assert(Anki::Vector::RobotInterface::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
   
   __android_log_print(prio, "vic-robot", "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s",
                       dasMsg.event.c_str(), 
@@ -67,6 +67,6 @@ void sLogDebug(const DasMsg & dasMessage)
 }
 
 } // namespace RobotInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

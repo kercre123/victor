@@ -21,6 +21,9 @@
 #include "engine/components/powerStateManager.h"
 #include "engine/actions/basicActions.h"
 
+#include "util/logging/DAS.h"
+#include "clad/types/motorTypes.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -74,7 +77,8 @@ void BehaviorReactToUncalibratedHeadAndLift::OnBehaviorActivated()
   
   if(GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds() || GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds()) {
     DelegateNow(new CalibrateMotorAction(GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds(),
-                                         GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds()));
+                                         GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds(),
+                                         EnumToString(MotorCalibrationReason::BehaviorReactToUncalibratedHeadAndLift)));
   }
 }
   
