@@ -48,6 +48,9 @@ namespace {
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, 0,
+                   "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
+
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
 
@@ -97,6 +100,8 @@ namespace {
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
+  using MicProcessingState = MicDataProcessor::ProcessingState;
+  const MicProcessingState kLowPowerModeProcessingState = MicProcessingState::NoProcessingSingleMic;
 
 } // anonymous namespace
 
@@ -169,6 +174,11 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
 #endif // ANKI_DEVELOPER_CODE
 
   UpdateTriggerForLocale(locale);
+  
+  // Set initial processing state
+  const auto initProcessState = ProcessingState::SigEsBeamformingOff;
+  SetPreferredMicDataProcessingState(initProcessState);
+  SetActiveMicDataProcessingState(initProcessState);
 }
 
 void MicDataProcessor::InitVAD()
@@ -450,6 +460,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
   const bool robotIsMoving = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::IS_MOVING);
+  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
   _robotWasMoving = robotIsMoving;
 
@@ -468,17 +479,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   const bool speakerStoppedPlaying = !_isSpeakerActive && _wasSpeakerActive;
   _wasSpeakerActive = _isSpeakerActive;
   
-  // When the robot is moving or the speaker is playing, we use the "fallback policy", meaning we essentially disable
-  // beamforming so that we aren't focusing on the gear/speaker noise (note we still run SE processing to combine the
-  // channels when using the fallback policy).
-  const bool shouldUseFallbackPolicy = robotIsMoving || _isSpeakerActive;
-  if (shouldUseFallbackPolicy != _usingFallbackPolicy) {
-    const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
-    SEDiagSetInt32(_policyFallbackFlag, newSetting);
-    PRINT_NAMED_DEBUG("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s (robot moving %d, speaker playing %d)",
-                      newSetting > 0 ? "true" : "false", robotIsMoving, _isSpeakerActive);
-    _usingFallbackPolicy = shouldUseFallbackPolicy;
-  }
+  // The robot is either moving or playing audio
+  const bool hasRobotNoise = (robotIsMoving || (_isSpeakerActive && kMicData_SpeakerNoiseDisablesMics));
 
   if (robotStoppedMoving || speakerStoppedPlaying)
   {
@@ -505,7 +507,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
                           (int16_t*)audioChunk);       // pointer to input data
     latestPowerValue = _sVadObject->AvePowerInBlock;
     latestNoiseFloor = _sVadObject->NoiseFloor;
-    if (robotIsMoving || _isSpeakerActive)
+  
+    if (hasRobotNoise)
     {
       activityFlag = 1;
     }
@@ -529,7 +532,18 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     }
   }
 
-  // Allow overriding (for testing) to force enable or disable mic data processing
+  // Check if the power mode state needs to be updated
+  ProcessingState processingState = _activeProcState;
+  // Low Power Mode toggle
+  if (isLowPowerMode != _isInLowPowerMode) {
+    // Update Power mode state
+    processingState = isLowPowerMode ? kLowPowerModeProcessingState : _preferredProcState.load();
+    _isInLowPowerMode = isLowPowerMode;
+  }
+
+  
+#if ANKI_DEV_CHEATS
+  // Allow overriding (for testing) to force enable or disable mic data processing & force processing state
   if (kMicData_ForceEnableMicDataProc)
   {
     activityFlag = 1;
@@ -538,36 +552,73 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   {
     activityFlag = 0;
   }
-
-  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
-  // If we've detected activity, SE signal processing (which includes the fallback policy
-  // that will skip spatial filtering, which is enabled while the robot is moving).
-  if (!isLowPowerMode && activityFlag == 1)
-  {
-    static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
-    {
-      ANKI_CPU_PROFILE("ProcessMicrophonesSE");
-      // Process the current audio block with SE software
-      MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
-    }
+  
+  switch (kDevForceProcessState) {
+    case 0:
+      // Do Noting
+      break;
+    case 1:
+      processingState = ProcessingState::None;
+      break;
+    case 2:
+      processingState = ProcessingState::NoProcessingSingleMic;
+      break;
+    case 3:
+      processingState = ProcessingState::SigEsBeamformingOff;
+      break;
+    case 4:
+      processingState = ProcessingState::SigEsBeamformingOn;
+      break;
+    default:
+      // Do Nothing
+      break;
   }
-  else
-  {
-    // Otherwise if it's determined there's really no activity right now, we're skipping the standard SE processing
-    // We simply remove the DC bias and apply some gain to the first mic channel and pass it along
-    
-    // Our bias is stored as a fixed-point value
-    constexpr int iirCoefPower = 10;
-    constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
-    static int bias = audioChunk[0] << iirCoefPower;
-    for (int i=0; i<kSamplesPerBlock; ++i)
+#endif
+  
+  // Update State
+  SetActiveMicDataProcessingState(processingState);
+  bool directionIsAvailable = false;
+  
+  switch (_activeProcState) {
+    case ProcessingState::None:
     {
-      // First update our bias with the latest audio sample
-      bias = ((bias * iirMult) >> iirCoefPower) + audioChunk[i];
-      // Push out the next sample using the updated bias
-      bufferOut[i] = audioChunk[i] - (bias >> iirCoefPower);
-      // Gain multiplier of 8 gives good results
-      bufferOut[i] <<= 3;
+      // Use raw mic data from single source
+      ANKI_CPU_PROFILE("ProcessRawSingleMicrophoneCopy");
+      memcpy(bufferOut, audioChunk, sizeof(AudioUtil::AudioSample) * kSamplesPerBlock);
+      break;
+    }
+    case ProcessingState::NoProcessingSingleMic:
+    {
+      // Remove the DC bias and apply some gain to the first mic channel and pass it along
+      ANKI_CPU_PROFILE("ProcessSingleMicrophone");
+      
+      // Our bias is stored as a fixed-point value
+      constexpr int iirCoefPower = 10;
+      constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
+      static int bias = audioChunk[0] << iirCoefPower;
+      for (int i=0; i<kSamplesPerBlock; ++i)
+      {
+        // First update our bias with the latest audio sample
+        bias = ((bias * iirMult) >> iirCoefPower) + audioChunk[i];
+        // Push out the next sample using the updated bias
+        bufferOut[i] = audioChunk[i] - (bias >> iirCoefPower);
+        // Gain multiplier of 8 gives good results
+        bufferOut[i] <<= 3;
+      }
+      break;
+    }
+    case ProcessingState::SigEsBeamformingOff:
+    case ProcessingState::SigEsBeamformingOn:
+    {
+      // Signal Essense Processing
+      static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+      {
+        ANKI_CPU_PROFILE("ProcessMicrophonesSE");
+        // Process the current audio block with SE software
+        MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
+      }
+      directionIsAvailable = true;
+      break;
     }
   }
 
@@ -576,9 +627,9 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   result.latestPowerValue = latestPowerValue;
   result.latestNoiseFloor = latestNoiseFloor;
 
-  // When we know the robot is moving, or speaker is playing, or low power mode, or there's no
-  //  current activity (so we didn't do beamforming) clear direction data
-  if (robotIsMoving || ( _isSpeakerActive && kMicData_SpeakerNoiseDisablesMics ) || (activityFlag != 1) || isLowPowerMode)
+  // When we know the robot is making noise (via moving or speaker is playing) or not using a Signal Essense processing
+  // we clear direction data
+  if (hasRobotNoise || !directionIsAvailable)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }
@@ -840,6 +891,46 @@ void MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
                         "locale: %s modelType: %d searchFileIndex: %d",
                         newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
   }
+}
+
+void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::ProcessingState state)
+{
+  if (state != _activeProcState) {
+    
+    PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
+                     GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
+    
+    switch (state) {
+      case ProcessingState::None:
+      case ProcessingState::NoProcessingSingleMic:
+        // Do Nothing
+        break;
+      case ProcessingState::SigEsBeamformingOff:
+      case ProcessingState::SigEsBeamformingOn:
+      {
+        const bool shouldUseFallbackPolicy = (state == ProcessingState::SigEsBeamformingOff);
+        const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
+        SEDiagSetInt32(_policyFallbackFlag, newSetting);
+        break;
+      }
+    }
+    _activeProcState = state;
+  }
+}
+  
+const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::ProcessingState state) const
+{
+  switch (state) {
+    case ProcessingState::None:
+      return "None";
+    case ProcessingState::NoProcessingSingleMic:
+      return "NoProcessingSingleMic";
+    case ProcessingState::SigEsBeamformingOff:
+      return "SigEsBeamformingOff";
+    case ProcessingState::SigEsBeamformingOn:
+      return "SigEsBeamformingOn";
+  }
+  return "";
 }
 
 } // namespace MicData

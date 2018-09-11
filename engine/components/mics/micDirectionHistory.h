@@ -45,8 +45,7 @@ public:
   static constexpr uint32_t kMicDirectionHistoryLen = kMicDirectionHistory_ms / kTimePerDirectionUpdate_ms;
 
   void AddMicSample( const RobotInterface::MicDirection& message );
-  void AddDirectionSample(EngineTimeStamp_t timestamp,
-                          MicDirectionIndex newIndex, MicDirectionConfidence newConf,
+  void AddDirectionSample(EngineTimeStamp_t timestamp, bool isVadActive, MicDirectionIndex newIndex, MicDirectionConfidence newConf,
                           MicDirectionIndex selectedDirection);
   void AddMicPowerSample(EngineTimeStamp_t timestamp, float powerLevel, float noiseFloor);
   void AddVadLogSample(EngineTimeStamp_t timeStamp, float noiseFloorLevel, int activeState);
@@ -56,6 +55,8 @@ public:
   MicDirectionIndex GetRecentDirection(TimeStamp_t timeLength_ms = kDefaultDirectionRecentTime_ms) const;
   MicDirectionIndex GetDirectionAtTime(EngineTimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
+  // Selected direction is only valid when microphone beamforming is enabled, the direction will either be the what the
+  // mic processing has determined same as "RecentDirection" or if the beamforming direction has been specifically set.
   MicDirectionIndex GetSelectedDirection() const { return _mostRecentSelectedDirection; }
 
   MicDirectionNodeList GetRecentHistory(TimeStamp_t timeLength_ms) const;
@@ -80,6 +81,8 @@ private:
   struct SoundTrackingData
   {
     MicDirectionIndex         latestMicDirection = kMicDirectionUnknown;
+    MicDirectionIndex         selectedMicDirection = kMicDirectionUnknown;
+    bool                      isVadActive = false;
     MicDirectionConfidence    latestMicConfidence = 0;
     double                    latestPowerLevel = 0.0;
     double                    latestNoiseFloor = 0.0;
