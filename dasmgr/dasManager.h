@@ -54,6 +54,10 @@ private:
   std::string _ble_conn_id;
   std::string _wifi_conn_id;
 
+  // Event timetamps used to eliminate duplicates
+  int64_t _first_event_ts = 0;
+  int64_t _last_event_ts = 0;
+
   // Runtime state
   std::atomic<TimePoint> _last_flush_time;
   bool _allow_upload = false;

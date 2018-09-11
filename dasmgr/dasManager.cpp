@@ -47,6 +47,7 @@ namespace {
   constexpr const char * kSequenceKey = "sequence";
   constexpr const char * kProfileIDKey = "profile_id";
   constexpr const char * kAllowUploadKey = "allow_upload";
+  constexpr const char * kLastEventKey = "last_event_ts";
 
   // DAS column offsets
   // If field count changes, we need to update this code.
@@ -315,6 +316,14 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     return "";
   }
 
+  // Is this a recycled event?
+  const auto ts = GetTimeStamp(logEntry);
+  if (ts <= _first_event_ts) {
+    return "";
+  }
+
+  _last_event_ts = ts;
+
   //
   // DAS manager uses magic event names to track global state.
   // These event names are declared in a common header (DAS.h)
@@ -351,7 +360,7 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
   ostr << '{';
   serialize(ostr, "source", logEntry.tag);
   ostr << ',';
-  serialize(ostr, "ts", GetTimeStamp(logEntry));
+  serialize(ostr, "ts", ts);
   ostr << ',';
   serialize(ostr, "seq", (int64_t) _seq++);
   ostr << ',';
@@ -588,6 +597,11 @@ void DASManager::LoadTransientGlobals(const std::string & path)
   if (sequence.isNumeric()) {
     _seq = sequence.asUInt64();
   }
+
+  const auto & last_event_ts = dasGlobals[kLastEventKey];
+  if (last_event_ts.isNumeric()) {
+    _last_event_ts = last_event_ts.asInt64();
+  }
 }
 
 void DASManager::LoadPersistentGlobals(const std::string & path)
@@ -640,17 +654,32 @@ void DASManager::LoadGlobalState()
     LoadTransientGlobals(transient_globals_path);
   }
 
-// Get persistent globals from persistent storage
+  // Get persistent globals from persistent storage
   const std::string & persistent_globals_path = _dasConfig.GetPersistentGlobalsPath();
   if (!persistent_globals_path.empty() && Util::FileUtils::FileExists(persistent_globals_path)) {
     LoadPersistentGlobals(persistent_globals_path);
+  }
+
+  //
+  // LAST timestamp from previous run becomes FIRST timestamp for current run.
+  // This allows us to avoid processing events multiple times if the service
+  // is restarted without clearing the log buffer.
+  //
+  // Timestamps are saved to transient storage and will be cleared automatically
+  // when robot is rebooted.
+  //
+  // Note that android log buffer uses a realtime clock, not a steady clock, and
+  // timestamps may drift backward when system clock is adjusted.  If this happens
+  // during service restart, events may be dropped.
+  //
+  if (_last_event_ts != 0) {
+    _first_event_ts = _last_event_ts;
   }
 
   // Call out global state for diagnostics
   LOG_DEBUG("DASManager.LoadGlobalState",
             "robot_id=%s robot_version=%s boot_id=%s sequence=%llu profile_id=%s allow_upload=%d",
             _robot_id.c_str(), _robot_version.c_str(), _boot_id.c_str(), _seq, _profile_id.c_str(), _allow_upload);
-
 
 }
 
@@ -684,6 +713,7 @@ void DASManager::SaveTransientGlobals(const std::string & path)
   // Construct json container
   Json::Value json;
   json[kDASGlobalsKey][kSequenceKey] = _seq;
+  json[kDASGlobalsKey][kLastEventKey] = _last_event_ts;
 
   // Save json to file
   SaveGlobals(json, path);
