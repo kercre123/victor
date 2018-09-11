@@ -36,6 +36,7 @@ static const char* WIFI_DEVICE = "wlan0";
 static gpointer ConnectionThread(gpointer data);
 static std::shared_ptr<TaskExecutor> sTaskExecutor;
 static Signal::Signal<void(bool, std::string)> sWifiChangedSignal;
+static Signal::Signal<void()> sWifiScanCompleteSignal;
 
 static void AgentCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -68,6 +69,10 @@ static const gchar introspection_xml[] =
 
 Signal::Signal<void(bool, std::string)>& GetWifiChangedSignal() {
   return sWifiChangedSignal;
+}
+
+Signal::Signal<void()>& GetWifiScanCompleteSignal() {
+  return sWifiScanCompleteSignal;
 }
 
 void OnTechnologyChanged (GDBusConnection *connection,
@@ -159,7 +164,19 @@ void Deinitialize() {
   sTaskExecutor = nullptr;
 }
 
+void ScanCallback(GObject *source_object, GAsyncResult *result, gpointer user_data)
+{
+  sTaskExecutor->Wake([](){
+    sWifiScanCompleteSignal.emit();
+  });
+}
+
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) {
+  bool doScan = true;
+  return GetWiFiServices(results, doScan);
+}
+
+WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool scan) {
   results.clear();
 
   bool disabledApMode = DisableAccessPointMode();
@@ -167,35 +184,37 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
     Log::Write("Disabled AccessPoint mode.");
   }
 
-  ConnManBusTechnology* tech_proxy;
-  GError* error;
+  GError* error = nullptr;
+  gboolean success;
 
-  error = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /net/connman/technology/wifi");
-    g_error_free(error);
-    return WifiScanErrorCode::ERROR_GETTING_PROXY;
-  }
-
-  gboolean success = conn_man_bus_technology_call_scan_sync(tech_proxy,
+  if(scan) {
+    ConnManBusTechnology* tech_proxy;
+    tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                            G_DBUS_PROXY_FLAGS_NONE,
+                                                            "net.connman",
+                                                            "/net/connman/technology/wifi",
                                                             nullptr,
                                                             &error);
-  g_object_unref(tech_proxy);
-  if (error) {
-    loge("error asking connman to scan for wifi access points");
-    g_error_free(error);
-    return WifiScanErrorCode::ERROR_SCANNING;
-  }
+    if (error) {
+      loge("error getting proxy for net.connman /net/connman/technology/wifi");
+      g_error_free(error);
+      return WifiScanErrorCode::ERROR_GETTING_PROXY;
+    }
 
-  if (!success) {
-    loge("connman failed to scan for wifi access points");
-    return WifiScanErrorCode::FAILED_SCANNING;
+    success = conn_man_bus_technology_call_scan_sync(tech_proxy,
+                                                              nullptr,
+                                                              &error);
+    g_object_unref(tech_proxy);
+    if (error) {
+      loge("error asking connman to scan for wifi access points [%s]", error->message);
+      g_error_free(error);
+      return WifiScanErrorCode::ERROR_SCANNING;
+    }
+
+    if (!success) {
+      loge("connman failed to scan for wifi access points");
+      return WifiScanErrorCode::FAILED_SCANNING;
+    }
   }
 
   ConnManBusManager* manager_proxy;
@@ -352,18 +371,32 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
   return WifiScanErrorCode::SUCCESS;
 }
 
-std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results) {
-  std::vector<uint8_t> packed_results;
-  // Payload is (<auth><encrypted><wps><signal_level><ssid>\0)*
-  for (auto const& r : results) {
-    packed_results.push_back(r.auth);
-    packed_results.push_back(r.encrypted);
-    packed_results.push_back(r.wps);
-    packed_results.push_back(r.signal_level);
-    std::copy(r.ssid.begin(), r.ssid.end(), std::back_inserter(packed_results));
-    packed_results.push_back(0);
+void ScanForWiFiAccessPointsAsync() {
+  bool disabledApMode = DisableAccessPointMode();
+  if(disabledApMode) {
+    Log::Write("Disabled AccessPoint mode.");
   }
-  return packed_results;
+
+  ConnManBusTechnology* tech_proxy;
+  GError* error;
+
+  error = nullptr;
+  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/net/connman/technology/wifi",
+                                                              nullptr,
+                                                              &error);
+  if (error) {
+    loge("error getting proxy for net.connman /net/connman/technology/wifi");
+    g_error_free(error);
+    return;
+  }
+
+  conn_man_bus_technology_call_scan (tech_proxy,
+    nullptr,
+    ScanCallback,
+    nullptr);
 }
 
 void HandleOutputCallback(int rc) {
