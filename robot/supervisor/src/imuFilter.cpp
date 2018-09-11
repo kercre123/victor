@@ -125,7 +125,7 @@ namespace Anki {
         TimeStamp_t _peakGyroStartTime = 0;
         TimeStamp_t _peakGyroMaxTime = 0;
         const u32 POKE_DETECT_COOLDOWN_MS = 1000;
-        const f32 PEAK_GYRO_THRESHOLD = 3.f;
+        const f32 PEAK_GYRO_THRESHOLD = DEG_TO_RAD_F32(5.f);  // rad/s
         const u32 MAX_GYRO_PEAK_DURATION_MS = 75;
 
         // Recorded buffer

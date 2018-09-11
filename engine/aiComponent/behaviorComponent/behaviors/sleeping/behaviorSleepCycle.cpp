@@ -81,6 +81,9 @@ CONSOLE_VAR(f32, kSleepCycle_MinSleepDebt_s, CONSOLE_GROUP, 50 * 60.0f);
 CONSOLE_VAR(bool, kSleepCycle_EnableWiggleWhileSleeping, CONSOLE_GROUP, true);
 
 CONSOLE_VAR(bool, kSleepCycleForceSleep, CONSOLE_GROUP, false);
+
+CONSOLE_VAR(bool, kSleepCycleForceLightSleep, CONSOLE_GROUP, false);
+  
 CONSOLE_FUNC(ForcePersonCheck, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -989,7 +992,7 @@ void BehaviorSleepCycle::TransitionToLightOrDeepSleep()
 
   // decide if we should go to light or deep sleep
   const bool isNightTime = sleepTracker.IsNightTime();
-  if( isNightTime ) {
+  if( isNightTime && !kSleepCycleForceLightSleep ) {
     TransitionToDeepSleep();
   }
   else {
