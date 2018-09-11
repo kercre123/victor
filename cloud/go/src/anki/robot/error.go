@@ -12,6 +12,6 @@ func WriteFaceErrorCode(code uint16) error {
 		return err
 	}
 	defer file.Close()
-	_, err = fmt.Fprintf(file, "%u\n", code)
+	_, err = fmt.Fprintf(file, "%d\n", code)
 	return err
 }
