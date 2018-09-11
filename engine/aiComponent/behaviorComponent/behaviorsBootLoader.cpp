@@ -119,16 +119,17 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
       const auto& msg = onboardingStageEvt.GetData().Get_OnboardingState();
       const auto newState = msg.stage;
       // save the stage so the app knows it, but only change the stack if requested, so that, if desired,
-      // onboarding can remain in app onboarding (Complete)
+      // onboarding can remain in app onboarding (Complete). Even if not desired, set the _bootBehavior
+      // without changing the behavior stack so that entering and leaving CC screen then pulls the new
+      // behavior
       _stage = newState;
-      if( !msg.forceSkipStackReset ) {
-        if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
-          SetNewBehavior( _behaviors.onboardingBehavior );
-        } else if( newState == OnboardingStages::Complete ) {
-          SetNewBehavior( _behaviors.postOnboardingBehavior );
-        } else if( newState == OnboardingStages::DevDoNothing ) {
-          SetNewBehavior( _behaviors.devBaseBehavior );
-        }
+      const bool requestStackReset = !msg.forceSkipStackReset;
+      if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
+        SetNewBehavior( _behaviors.onboardingBehavior, requestStackReset );
+      } else if( newState == OnboardingStages::Complete ) {
+        SetNewBehavior( _behaviors.postOnboardingBehavior, requestStackReset );
+      } else if( newState == OnboardingStages::DevDoNothing ) {
+        SetNewBehavior( _behaviors.devBaseBehavior, requestStackReset );
       }
     };
 
@@ -266,7 +267,7 @@ IBehavior* BehaviorsBootLoader::GetBootBehavior()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID)
+void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID, bool requestStackReset)
 {
   DEV_ASSERT(_behaviorContainer != nullptr, "BehaviorsBootLoader.SetNewBehavior.NoBC");
   
@@ -276,7 +277,7 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID)
               "No %s", BehaviorTypesWrapper::BehaviorIDToString(behaviorID)) )
   {
     if( behavior != _bootBehavior ) {
-      if( _hasGrabbedBootBehavior ) {
+      if( _hasGrabbedBootBehavior && requestStackReset ) {
         // need to wait until Update to reset the stack, since the bsm claims
         // this class as a dependent and may not have finished init
         _behaviorToSwitchTo = behavior;
