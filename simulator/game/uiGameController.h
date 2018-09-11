@@ -69,6 +69,8 @@ public:
   
   void Init();
   s32 Update();
+  // Called when the engine is fully loaded
+  void OnEngineLoaded();
   
   void SetDataPlatform(const Util::Data::DataPlatform* dataPlatform);
   const Util::Data::DataPlatform* GetDataPlatform() const;

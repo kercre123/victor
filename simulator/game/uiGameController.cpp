@@ -732,6 +732,8 @@ namespace Anki {
           if (_engineLoadedRatio >= 1.0f)
           {
             _uiState = UI_RUNNING;
+            
+            OnEngineLoaded();
           }
           break;
         }
@@ -757,6 +759,15 @@ namespace Anki {
       } // switch(_uiState)
       
       return res;
+    }
+    
+    void UiGameController::OnEngineLoaded()
+    {
+      // Set Render Enable in Map Component
+      ExternalInterface::SetMemoryMapRenderEnabled m;
+      m.enabled = true;
+      ExternalInterface::MessageGameToEngine message(std::move(m));
+      SendMessage(message);
     }
     
     void UiGameController::UpdateActualObjectPoses()
