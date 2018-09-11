@@ -36,7 +36,7 @@ func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, erro
 	return ret, nil
 }
 
-func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error) {
+func (c *conn) associatePrimary(session string) (*pb.TokenBundle, error) {
 	req := pb.AssociatePrimaryUserRequest{}
 	cert, err := ioutil.ReadFile(robot.GatewayCert)
 	if err != nil {
