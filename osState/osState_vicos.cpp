@@ -60,6 +60,13 @@ CONSOLE_VAR(bool, kSendFakeCpuTemperature,  "OSState.Temperature", false);
 CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 
 namespace {
+
+  // When total/avail > this, display red square
+  CONSOLE_VAR_RANGED(u32, kHighMemPressureMultiple, "OSState.MemoryInfo", 10, 0, 100);
+
+  // When total/avail > this, display yellow square
+  CONSOLE_VAR_RANGED(u32, kMediumMemPressureMultiple, "OSState.MemoryInfo", 5, 0, 100);
+
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
   std::ifstream _cpuFile;
@@ -105,9 +112,10 @@ namespace {
   uint32_t _cpuTemp_C;        // Temperature in Celsius
   float _uptime_s;            // Uptime in seconds
   float _idleTime_s;          // Idle time in seconds
-  uint32_t _memTotal_kB;      // Total memory in kB
-  uint32_t _memFree_kB;       // Free memory in kB
-  uint32_t _memAvailable_kb;  // Available memory in kB
+  uint32_t _totalMem_kB;      // Total memory in kB
+  uint32_t _availMem_kB;      // Available memory in kB
+  uint32_t _freeMem_kB;       // Free memory in kB
+
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
 
 
@@ -172,7 +180,7 @@ OSState::OSState()
   SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
 
   _lastWebvizUpdateTime_ms = _currentTime_ms;
-  
+
   // read the OS versions once on boot up
   if(Util::FileUtils::FileExists("/etc/os-version")) {
     std::string osv = Util::FileUtils::ReadFile("/etc/os-version");
@@ -328,7 +336,7 @@ void OSState::UpdateMemoryInfo() const
   _memInfoFile.open(kMemInfoFile, std::ifstream::in);
   if (_memInfoFile.is_open()) {
     std::string discard;
-    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB >> discard >> discard >> _memAvailable_kb;
+    _memInfoFile >> discard >> _totalMem_kB >> discard >> discard >> _freeMem_kB >> discard >> discard >> _availMem_kB;
     _memInfoFile.close();
   }
 }
@@ -392,17 +400,29 @@ float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
   return _uptime_s;
 }
 
-uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
+void OSState::GetMemoryInfo(MemoryInfo & info) const
 {
+  // Update current stats?
   static uint64_t lastUpdate_ms = 0;
   if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateMemoryInfo();
     lastUpdate_ms = _currentTime_ms;
   }
 
-  freeMem_kB = _memFree_kB;
-  availableMem_kB = _memAvailable_kb;
-  return _memTotal_kB;
+  // Populate return struct
+  info.totalMem_kB = _totalMem_kB;
+  info.availMem_kB = _availMem_kB;
+  info.freeMem_kB = _freeMem_kB;
+
+  info.pressure = (info.availMem_kB > 0 ? info.totalMem_kB / info.availMem_kB : std::numeric_limits<uint32_t>::max());
+  if (info.pressure > kHighMemPressureMultiple) {
+    info.alert = Alert::Red;
+  } else if (info.pressure > kMediumMemPressureMultiple) {
+    info.alert = Alert::Yellow;
+  } else {
+    info.alert = Alert::None;
+  }
+
 }
 
 void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
@@ -411,7 +431,7 @@ void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
   if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateCPUTimeStats();
     lastUpdate_ms = _currentTime_ms;
-  } 
+  }
 
   {
     std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
@@ -532,7 +552,7 @@ static std::string GetIPV4AddressForInterface(const char* if_name) {
     PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
   }
   freeifaddrs(ifaddr);
-  
+
   return ip;
 }
 

@@ -667,15 +667,15 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   std::string stat_mem1;
   std::string stat_mem2;
   if (active[kStat_MemoryInfo1] || active[kStat_MemoryInfo2]) {
-    uint32_t freeMem_kB, availableMem_kB;
-    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB, availableMem_kB);
+    OSState::MemoryInfo info;
+    osState->GetMemoryInfo(info);
     if (active[kStat_MemoryInfo1]) {
       // Memory use 1
-      stat_mem1 = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB);
+      stat_mem1 = std::to_string(info.totalMem_kB) + "," + std::to_string(info.freeMem_kB);
     }
     if (active[kStat_MemoryInfo2]) {
       // Memory use 2
-      stat_mem2 = std::to_string(totalMem_kB) + "," + std::to_string(availableMem_kB);
+      stat_mem2 = std::to_string(info.totalMem_kB) + "," + std::to_string(info.availMem_kB);
     }
   }
 
