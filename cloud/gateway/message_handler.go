@@ -421,7 +421,6 @@ func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint
 				},
 			},
 		}, nil
-
 	}
 }
 
@@ -733,26 +732,6 @@ func (service *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFa
 	}, nil
 }
 
-func (service *rpcService) EventKeepAlive(responses chan<- extint.GatewayWrapper, done chan struct{}) {
-	ping := extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_Event{
-			Event: &extint.Event{
-				EventType: &extint.Event_KeepAlive{
-					KeepAlive: &extint.KeepAlivePing{},
-				},
-			},
-		},
-	}
-	for true {
-		select {
-		case <-done:
-			return
-		case <-time.After(time.Second):
-			responses <- ping
-		}
-	}
-}
-
 func isMember(needle string, haystack []string) bool {
 	for _, word := range haystack {
 		if word == needle {
@@ -774,9 +753,6 @@ func checkFilters(event *extint.Event, whiteList, blackList *extint.FilterList) 
 	props.Parse(val.Type().Field(0).Tag.Get("protobuf"))
 	responseType := props.OrigName
 
-	if responseType == "keep_alive" {
-		return true
-	}
 	if whiteList != nil && isMember(responseType, whiteList.List) {
 		return true
 	}
@@ -851,10 +827,10 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 		},
 	})
 	if err != nil {
-		log.Println("Closing stream:", err)
+		log.Println("Closing Event stream (on send):", err)
 		return err
 	} else if err = stream.Context().Err(); err != nil {
-		log.Println("Closing stream:", err)
+		log.Println("Closing Event stream:", err)
 		// This is the case where the user disconnects the stream
 		// We should still return the err in case the user doesn't think they disconnected
 		return err
@@ -864,28 +840,50 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 	defer f()
 
 	done := make(chan struct{})
-	go service.EventKeepAlive(eventsChannel, done)
 	defer func() {
 		done <- struct{}{}
 	}()
+	ping := extint.EventResponse{
+		Event: &extint.Event{
+			EventType: &extint.Event_KeepAlive{
+				KeepAlive: &extint.KeepAlivePing{},
+			},
+		},
+	}
 
 	whiteList := in.GetWhiteList()
 	blackList := in.GetBlackList()
 
-	for response := range eventsChannel {
-		event := response.GetEvent()
-		if checkFilters(event, whiteList, blackList) {
-			if logVerbose {
-				log.Printf("EventStream: Sending event to client: %#v\n", *event)
+	for {
+		select {
+		case response, ok := <-eventsChannel:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
 			}
-			eventResponse := &extint.EventResponse{
-				Event: event,
+			event := response.GetEvent()
+			if checkFilters(event, whiteList, blackList) {
+				if logVerbose {
+					log.Printf("EventStream: Sending event to client: %#v\n", *event)
+				}
+				eventResponse := &extint.EventResponse{
+					Event: event,
+				}
+				if err := stream.Send(eventResponse); err != nil {
+					log.Println("Closing Event stream (on send):", err)
+					return err
+				} else if err = stream.Context().Err(); err != nil {
+					log.Println("Closing Event stream:", err)
+					// This is the case where the user disconnects the stream
+					// We should still return the err in case the user doesn't think they disconnected
+					return err
+				}
 			}
-			if err := stream.Send(eventResponse); err != nil {
-				log.Println("Closing stream:", err)
+		case <-time.After(time.Second): // ping to check connection liveness after one second.
+			if err := stream.Send(&ping); err != nil {
+				log.Println("Closing Event stream (on send):", err)
 				return err
 			} else if err = stream.Context().Err(); err != nil {
-				log.Println("Closing stream:", err)
+				log.Println("Closing Event stream:", err)
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
 				return err
@@ -912,12 +910,7 @@ func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.Behav
 	return msg, nil
 }
 
-func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return
-	}
-
+func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, done chan struct{}) {
 	defer close(done)
 	defer engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ControlRelease{
@@ -944,41 +937,11 @@ func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInter
 	}
 }
 
-func (service *rpcService) BehaviorControlResponseForwarding(wrapper chan extint.GatewayWrapper, responses chan extint.BehaviorControlResponse, done chan struct{}) {
-	for {
-		select {
-		case <-done:
-			return
-		case msg, ok := <-wrapper:
-			if !ok {
-				return
-			}
-			responses <- *msg.GetBehaviorControlResponse()
-		}
-	}
-}
-
-func (service *rpcService) BehaviorControlKeepAlive(responses chan extint.BehaviorControlResponse, done chan struct{}) {
+func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.GatewayWrapper, done chan struct{}) error {
 	ping := extint.BehaviorControlResponse{
 		ResponseType: &extint.BehaviorControlResponse_KeepAlive{
 			KeepAlive: &extint.KeepAlivePing{},
 		},
-	}
-	for {
-		select {
-		case <-done:
-			return
-		case <-time.After(time.Second):
-			responses <- ping
-		}
-	}
-}
-
-// TODO: name this better
-func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.BehaviorControlResponse, done chan struct{}) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "BehaviorControlResponseHandler disabled in message_handler.go")
 	}
 
 	for {
@@ -989,11 +952,24 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 			if !ok {
 				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
-			if err := out.Send(&response); err != nil {
+			msg := response.GetBehaviorControlResponse()
+			if err := out.Send(msg); err != nil {
+				log.Println("Closing BehaviorControl stream (on send):", err)
 				return err
 			} else if err = out.Context().Err(); err != nil {
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
+				log.Println("Closing BehaviorControl stream:", err)
+				return err
+			}
+		case <-time.After(time.Second): // ping to check connection liveness after one second.
+			if err := out.Send(&ping); err != nil {
+				log.Println("Closing BehaviorControl stream (on send):", err)
+				return err
+			} else if err = out.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				log.Println("Closing BehaviorControl stream:", err)
 				return err
 			}
 		}
@@ -1010,16 +986,12 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 	log.Println("Received rpc request BehaviorControl")
 
 	done := make(chan struct{})
-	responses := make(chan extint.BehaviorControlResponse)
 
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
 	defer f()
 
-	go service.BehaviorControlRequestHandler(bidirectionalStream, responses, done)
-	go service.BehaviorControlKeepAlive(responses, done)
-	go service.BehaviorControlResponseForwarding(behaviorStatus, responses, done)
-
-	return service.BehaviorControlResponseHandler(bidirectionalStream, responses, done)
+	go service.BehaviorControlRequestHandler(bidirectionalStream, done)
+	return service.BehaviorControlResponseHandler(bidirectionalStream, behaviorStatus, done)
 }
 
 func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
@@ -1029,7 +1001,6 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 	}
 
 	done := make(chan struct{})
-	responses := make(chan extint.BehaviorControlResponse)
 
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
 	defer f()
@@ -1044,10 +1015,7 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 		return err
 	}
 
-	go service.BehaviorControlKeepAlive(responses, done)
-	go service.BehaviorControlResponseForwarding(behaviorStatus, responses, done)
-
-	return service.BehaviorControlResponseHandler(out, responses, done)
+	return service.BehaviorControlResponseHandler(out, behaviorStatus, done)
 }
 
 func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResponse, error) {
