@@ -235,7 +235,10 @@ func (ctm *ClientTokenManager) StartUpdateListener() {
 	for {
 		select {
 		case response := <-ctm.updateNowChan:
-			ctm.UpdateTokens()
+			err := ctm.UpdateTokens()
+			if err != nil {
+				log.Printf("Unable to update tokens: %s", err.Error())
+			}
 			if response != nil {
 				response <- struct{}{}
 			}
