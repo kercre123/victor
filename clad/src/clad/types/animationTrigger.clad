@@ -308,6 +308,7 @@ enum int_32 AnimationTrigger
   ReactToCubeTapInteractionLoop,
   ReactToDarkness,
   ReactToAffirmative,
+  ReactToNegative,
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToGoodNight,

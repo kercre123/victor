@@ -1,0 +1,37 @@
+{
+  "behaviorID": "ReactToNegative",
+  "behaviorClass": "FindFaceAndThen",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
+  "timeUntilCancelFaceLooking_s": 2.0,
+  "timeUntilCancelFaceSearch_s": 10.0,
+  "searchForFaceBehavior": "ActiveLookForFaces",
+  "shouldLeaveChargerFirst": true,
+  "driveOffChargerBehavior": "DriveOffChargerStraight",
+
+  "timeUntilCancelFollowup_s": 15.0,
+
+  "useBodyDetector": true,
+  "additionalLookTimeIfSawBody_s": 3.0,
+  "additionalSearchTimeIfSawBody_s": 3.0,
+
+  "animWhenSeesFace": "FoundFace",
+
+  "respondToUserIntents": [
+    {
+      "type": "imperative_negative"
+    }
+  ],
+  "behavior": "InternalReactToNegative",
+  "anonymousBehaviors": [
+    {
+      "behaviorClass": "AnimSequence",
+      "behaviorName": "InternalReactToNegative",
+
+      "animTriggers": [
+        "ReactToNegative"
+      ]
+    }
+  ]
+}

@@ -37,6 +37,18 @@
       "user_intent": "imperative_negative"
     },
     {
+      "cloud_intent": "intent_imperative_praise",
+      "user_intent": "imperative_affirmative"
+    },
+    {
+      "cloud_intent": "intent_imperative_apologize",
+      "user_intent": "imperative_affirmative"
+    },
+    {
+      "cloud_intent": "intent_imperative_scold",
+      "user_intent": "imperative_negative"
+    },
+    {
       "cloud_intent": "intent_global_stop_extend",
       "user_intent": "global_stop",
       "cloud_substitutions": {
