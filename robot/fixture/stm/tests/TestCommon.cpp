@@ -177,6 +177,17 @@ namespace TestCommon
         }
         else //use line buffering
         {
+          //grave accent, as 1st char: recall + enter
+          if( c == '`' && line_len==0 ) {
+            if( recall_len > 0 ) {
+              for(int x=0; x<recall_len; x++)
+                ConsolePutChar(line[x]); //re-print last command on the console
+              line_len = recall_len; //restore buffer point
+              recall_len = 0;
+            }
+            c = '\n';
+          }
+          
           if( c > 0 && c < 0x80 ) //ignore null and non-ascii
           {
             if( c == '\r' || c == '\n' ) { //enter or return
