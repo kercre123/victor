@@ -1,11 +1,4 @@
 #!/usr/bin/env groovy
-if (env.CHANGE_ID) {
-    properties([pipelineTriggers([pollSCM('H/10 * * * *')])])
-} else {
-    properties([pipelineTriggers([pollSCM('H/50 * * * *')])]) 
-}
-
-
 @NonCPS
 def getListOfOnlineNodesForLabel(label) {
   def nodes = []
