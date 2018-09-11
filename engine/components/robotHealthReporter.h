@@ -11,12 +11,9 @@
 #define __engine_components_robotHealthReporter_h
 
 #include "engine/robotComponents_fwd.h"
-#include "osState/osState.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/dispatchQueue/taskExecutor.h"
-
 #include <chrono>
-#include <string>
 
 namespace Anki {
 namespace Vector {
@@ -45,7 +42,6 @@ class RobotHealthReporter : public IDependencyManagedComponent<RobotComponentID>
     std::chrono::steady_clock::time_point _once_per_second_time;
 
     // Stuff we keep track of
-    OSState::Alert _memoryAlert = OSState::Alert::None;
     std::string _locale;
     std::string _timezone;
 

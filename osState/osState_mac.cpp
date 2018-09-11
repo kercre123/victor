@@ -49,13 +49,6 @@ CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 CONSOLE_VAR(bool, kFakeIsReboot,  "OSState.Boot", false);
 
 namespace {
-
-  // When total/avail > this, display red square
-  CONSOLE_VAR_RANGED(u32, kHighMemPressureMultiple, "OSState.MemoryInfo", 10, 0, 100);
-
-  // When total/avail > this, display yellow square
-  CONSOLE_VAR_RANGED(u32, kMediumMemPressureMultiple, "OSState.MemoryInfo", 5, 0, 100);
-
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
   // Whether or not SetSupervisor() was called
@@ -69,9 +62,9 @@ namespace {
   uint32_t _cpuTemp_C;        // Temperature in Celsius
   float _uptime_s;            // Uptime in seconds
   float _idleTime_s;          // Idle time in seconds
-  uint32_t _totalMem_kB;      // Total memory in kB
-  uint32_t _availMem_kB;      // Available memory in kB
-  uint32_t _freeMem_kB;       // Free memory in kB
+  uint32_t _memTotal_kB;      // Total memory in kB
+  uint32_t _memFree_kB;       // Free memory in kB
+  uint32_t _memAvailable_kB;  // Available memory in kB
 
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
   std::mutex _CPUTimeStatsMutex;          // CPU time stats mutex
@@ -209,15 +202,15 @@ void OSState::UpdateUptimeAndIdleTime() const
 void OSState::UpdateMemoryInfo() const
 {
   // Update total and free memory
-  _totalMem_kB = 0;
-  _freeMem_kB = 0;
+  _memTotal_kB = 0;
+  _memFree_kB = 0;
 
   struct task_basic_info info;
   mach_msg_type_number_t sizeOfInfo = sizeof(info);
 
   kern_return_t kerr = task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &sizeOfInfo);
   if (kerr == KERN_SUCCESS) {
-    _totalMem_kB = static_cast<uint32_t>(info.resident_size / 1024);
+    _memTotal_kB = static_cast<uint32_t>(info.resident_size / 1024);
   }
 
   mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
@@ -226,11 +219,11 @@ void OSState::UpdateMemoryInfo() const
   kerr = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count);
   if (kerr == KERN_SUCCESS)
   {
-    _freeMem_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
+    _memFree_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
   }
 
   // TODO: differentiate available and free
-  _availMem_kB = _freeMem_kB;
+  _memAvailable_kB = _memFree_kB;
 }
 
 void OSState::UpdateCPUTimeStats() const
@@ -379,27 +372,17 @@ float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
   return _uptime_s;
 }
 
-void OSState::GetMemoryInfo(MemoryInfo & info) const
+uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
 {
-  // Update current stats?
   static uint64_t lastUpdate_ms = 0;
   if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateMemoryInfo();
     lastUpdate_ms = _currentTime_ms;
   }
 
-  // Populate return struct
-  info.totalMem_kB = _totalMem_kB;
-  info.availMem_kB = _availMem_kB;
-  info.freeMem_kB = _freeMem_kB;
-  info.pressure = (info.availMem_kB > 0 ? info.totalMem_kB / info.availMem_kB : std::numeric_limits<uint32_t>::max());
-  if (info.pressure > kHighMemPressureMultiple) {
-    info.alert = Alert::Red;
-  } else if (info.pressure > kMediumMemPressureMultiple) {
-    info.alert = Alert::Yellow;
-  } else {
-    info.alert = Alert::None;
-  }
+  freeMem_kB = _memFree_kB;
+  availableMem_kB = _memAvailable_kB;
+  return _memTotal_kB;
 }
 
 void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const

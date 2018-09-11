@@ -47,28 +47,7 @@ class OSState : public Util::DynamicSingleton<OSState>
   ANKIUTIL_FRIEND_SINGLETON(OSState);
 
 public:
-  // Public types
-  typedef enum Alert {
-    None = 0,
-    Yellow = 1,
-    Red = 2
-  } Alert;
 
-  // System-wide memory stats
-  typedef struct MemoryInfo {
-    // Total memory, in kB
-    uint32_t totalMem_kB = 0;
-    // Memory available to processes, in kB
-    uint32_t availMem_kB = 0;
-    // Unused memory, in kB
-    uint32_t freeMem_kB = 0;
-    // "Memory pressure" aka (total / avail)
-    uint32_t pressure = 0;
-    // Alert level for current pressure
-    Alert alert = Alert::None;
-  } MemoryInfo;
-
-// Public destructor
 ~OSState();
 
 #ifdef SIMULATOR
@@ -106,7 +85,8 @@ public:
   // Returns uptime (and idle time) in seconds
   float GetUptimeAndIdleTime(float &idleTime_s) const;
 
-  void GetMemoryInfo(MemoryInfo & info) const;
+  // Returns total and free/available memory in kB
+  uint32_t GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const;
 
   // Returns data about CPU times
   void GetCPUTimeStats(std::vector<std::string> & stats) const;

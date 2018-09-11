@@ -7,12 +7,10 @@
  *
  **/
 
-#include "util/logging/DAS.h"
-
 #include "robotHealthReporter.h"
 #include "osState/osState.h"
 #include "util/logging/logging.h"
-
+#include "util/logging/DAS.h"
 #include "util/fileUtils/fileUtils.h"
 
 #define LOG_CHANNEL "RobotHealthReporter"
@@ -60,26 +58,8 @@ void RobotHealthReporter::OncePerMinuteCheck()
 
 void RobotHealthReporter::OncePerSecondCheck()
 {
+  // TBD
   // Report stuff that needs to be checked once per second
-
-  const auto * osState = OSState::getInstance();
-
-  DEV_ASSERT(osState != nullptr, "RobotHealthReporter.OncePerSecondCheck.InvalidOSState");
-
-  // Report if memory pressure crosses alert threshold
-  {
-    OSState::MemoryInfo info;
-    osState->GetMemoryInfo(info);
-    if (info.alert != _memoryAlert) {
-      DASMSG(robot_memory_pressure, "robot.memory_pressure", "Memory pressure has crossed alert threshold");
-      DASMSG_SET(i1, info.totalMem_kB, "Total memory (kB)");
-      DASMSG_SET(i2, info.availMem_kB, "Available memory (kB)");
-      DASMSG_SET(i3, info.freeMem_kB, "Free memory (kB)");
-      DASMSG_SET(i4, info.pressure, "Memory pressure factor");
-      DASMSG_SEND();
-      _memoryAlert = info.alert;
-    }
-  }
 }
 
 //
