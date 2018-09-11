@@ -7,5 +7,10 @@
     "ObservingIdleWithHeadLookingUp",
     "ObservingLookStraight",
     "ObservingLookUp"
+  ],
+
+  // only checked if the animation is played without an AnimationTrigger
+  "blacklisted_animation_names": [
+    
   ]
 }
