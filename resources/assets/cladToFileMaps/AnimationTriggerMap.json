@@ -1425,6 +1425,10 @@
     "AnimName": "ag_vc_greeting"
   },
   {
+    "CladEvent": "ReactToNegative",
+    "AnimName": "ag_vc_abuse"
+  },
+  {
     "CladEvent": "ReactToGoodBye",
     "AnimName": "ag_vc_goodbye"
   },

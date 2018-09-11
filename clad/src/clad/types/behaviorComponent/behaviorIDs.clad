@@ -359,6 +359,7 @@ enum uint_16 BehaviorID {
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
   ReactToAffirmative,
+  ReactToNegative,
   ReactToCliff,
   ReactToDarkness,
   ReactToFrustrationMajor,
