@@ -4,6 +4,8 @@
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/DAS.h"
+#include "clad/types/motorTypes.h"
 
 namespace Anki {
 namespace Vector {
@@ -47,8 +49,8 @@ void Update()
 
     if (calibOnEnable_ && enable_) {
       AnkiInfo("PowerModeManager.CalibrateOnActiveMode", "");
-      LiftController::StartCalibrationRoutine(true);
-      HeadController::StartCalibrationRoutine(true);
+      LiftController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::PowerSaveEnteringActiveMode));
+      HeadController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::PowerSaveEnteringActiveMode));
     }
   } else if (!enable_ && isHALActiveModeEnabled) {
     // Active mode should be disabled, but it's enabled.

@@ -8,7 +8,7 @@
 #include "anki/cozmo/robot/DAS.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 namespace RobotInterface {
 
 void DasLogEvent(const std::string& logLevel, const DasMsg & dasMsg)
@@ -41,6 +41,6 @@ void sLogDebug(const DasMsg & dasMessage)
 }
 
 } // namespace RobotInterface
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

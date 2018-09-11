@@ -20,6 +20,9 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 
+#include "util/logging/DAS.h"
+#include "clad/types/motorTypes.h"
+
 namespace Anki {
 namespace Vector {
   
@@ -92,7 +95,7 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
       const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
       PRINT_NAMED_INFO("BehaviorReactToRobotOnFace.FlipOverIfNeeded.CalibratingHead",
                        "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
-      DelegateIfInControl(new CalibrateMotorAction(true, false),
+      DelegateIfInControl(new CalibrateMotorAction(true, false, EnumToString(MotorCalibrationReason::BehaviorReactToOnFace)),
                           &BehaviorReactToRobotOnFace::DelayThenCheckState);
     }
   }

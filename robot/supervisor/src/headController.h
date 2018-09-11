@@ -32,7 +32,10 @@ namespace Anki {
       // TODO: Add if/when needed?
       // Result Init();
 
-      void StartCalibrationRoutine(bool autoStarted = false);
+      // begins the calibration routine, and if a non-empty calibration
+      // reason is provided, it will send up a DAS event for it
+      void StartCalibrationRoutine(bool autoStarted = false, const char* calibrationReason = "");
+      
       bool IsCalibrated();
       bool IsCalibrating();
       

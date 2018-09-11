@@ -2,7 +2,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/logEvent.h"
+#include "anki/cozmo/robot/DAS.h"
 
+#include "clad/types/motorTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"

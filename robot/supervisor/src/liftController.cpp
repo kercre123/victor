@@ -9,9 +9,11 @@
 #include "coretech/common/shared/radians.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/DAS.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/motorTypes.h"
 
 #include <math.h>
 
@@ -258,8 +260,22 @@ namespace Anki {
         DisableInternal(autoReEnable);
       }
 
-      void StartCalibrationRoutine(bool autoStarted)
+      void StartCalibrationRoutine(bool autoStarted, const char* calibrationReason)
       {
+        if(calibrationReason!=NULL && strlen(calibrationReason)!=0) {
+          // this DAS message mimics a similar message sent from engine
+          // by the CalibrateMotorAction. It has the same event string
+          // and i1 represents whether the head is being calibrated,
+          // and i2 represents whether the lift is being calibrated
+          DASMSG(lift_controller_motor_calib_reason,
+                 "calibrate_motors",
+                 "send when the robot triggers calibration");
+          DASMSG_SET(s1, calibrationReason, "reason for triggering calibration");
+          DASMSG_SET(i1, 0, "is head motor being calibrated");
+          DASMSG_SET(i2, 1, "is lift motor being calibrated");
+          DASMSG_SEND();
+        }
+        
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         inPosition_ = false;
@@ -642,7 +658,7 @@ namespace Anki {
           } else {
             // Burnout protection triggered. Recalibrating.
             AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");
-            StartCalibrationRoutine(true);
+            StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::LiftMotorBurnoutProtection));
           }
           return true;
         }
