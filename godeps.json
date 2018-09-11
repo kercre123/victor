@@ -55,7 +55,7 @@
     "commit": "07f5e79768022f9a3265235f0db4ac8c3f675fec"
   },
   "github.com/anki/sai-token-service": {
-    "commit": "75e7156196de61751a86f94a95363a4e8a49759a",
+    "commit": "4188f3e672397277f78b920f3d0e16d9acdde040",
     "branch": "develop"
   },
   "github.com/dgrijalva/jwt-go": {
@@ -118,32 +118,8 @@
     "commit": "11a60eebd8ee670e91380148156a000191be7e65",
     "branch": "develop"
   },
-  "github.com/anki/sai-kinlog": {
-    "commit": "d7ce0cb8f603af96e91fd3233d62e13891d9c2cc",
-    "branch": "master"
-  },
-  "github.com/anki/sai-service-framework": {
-    "commit": "ab6d3d366cba43ddfdd5f0041facb99280ea7e94",
-    "branch": "master"
-  },
-  "github.com/grpc-ecosystem/go-grpc-middleware": {
-    "commit": "e9c5d9645c437ab1b204cff969a2c0fb16cd4276",
-    "branch": "master"
-  },
-  "github.com/gwatts/manners": {
-    "commit": "274b9b6b94851e6fda7a9ad05f199011fb544a34",
-    "branch": "master"
-  },
-  "github.com/gwatts/profile": {
-    "commit": "a1776ed66938eefb62344cbd33cd4aa94aa0ac3f",
-    "branch": "master"
-  },
   "github.com/satori/go.uuid": {
     "commit": "36e9d2ebbde5e3f13ab2e25625fd453271d6522e",
-    "branch": "master"
-  },
-  "github.com/stoewer/go-strcase": {
-    "commit": "c8136b55823dc6af966d084a06056c5575f6400f",
     "branch": "master"
   }
 }

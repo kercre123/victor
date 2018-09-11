@@ -14,7 +14,7 @@ import (
 	"anki/robot"
 	cloud_clad "clad/cloud"
 
-	"github.com/anki/sai-token-service/client/token"
+	"github.com/anki/sai-token-service/client/clienthash"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -86,7 +86,7 @@ func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
 		return "", grpc.Errorf(codes.Unauthenticated, "no valid tokens")
 	}
 	recentToken := ctm.ClientTokens[ctm.recentTokenIndex]
-	err := token.CompareHashAndToken(recentToken.Hash, clientToken)
+	err := clienthash.CompareHashAndToken(recentToken.Hash, clientToken)
 	if err == nil {
 		return recentToken.ClientName, nil
 	}
@@ -94,7 +94,7 @@ func (ctm *ClientTokenManager) CheckToken(clientToken string) (string, error) {
 		if idx == ctm.recentTokenIndex || len(validToken.Hash) == 0 {
 			continue
 		}
-		err = token.CompareHashAndToken(validToken.Hash, clientToken)
+		err = clienthash.CompareHashAndToken(validToken.Hash, clientToken)
 		if err == nil {
 			ctm.recentTokenIndex = idx
 			return validToken.ClientName, nil
