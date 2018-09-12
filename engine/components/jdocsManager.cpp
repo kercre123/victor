@@ -177,6 +177,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._cloudDirty = false;
       jdocInfo._cloudSavePeriod_s = jdocConfig[kCloudSavePeriodKey].asInt();
       jdocInfo._nextCloudSaveTime = currTime_s + jdocInfo._cloudSavePeriod_s;
+      jdocInfo._pendingCloudSave = false;
       jdocInfo._disabledDueToFmtVersion = false;
       jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
       jdocInfo._overwrittenCB = nullptr;
@@ -762,7 +763,7 @@ bool JdocsManager::SendJdocsRequest(const JDocs::DocRequest& docRequest)
   }
   LOG_INFO("JdocsManager.SendJdocsRequest.Sent", "Sent request with tag %i",
            static_cast<int>(docRequest.GetTag()));
-  _docRequestQueue.push(docRequest);
+  _docRequestQueue.push_back(docRequest);
   return true;
 }
 
@@ -804,9 +805,11 @@ void JdocsManager::UpdateJdocsServerResponses()
   if (bytesReceived > 0)
   {
     DEV_ASSERT(!_docRequestQueue.empty(), "Doc request queue is empty but we're receiving a response");
-    const auto& docRequest = _docRequestQueue.front();
+    // Make a copy of the doc request, and remove it from the queue. We remove from queue now
+    // because some code below can check the queue and we want it to be up to date
+    const auto docRequest = _docRequestQueue.front();
+    _docRequestQueue.pop_front();
     JDocs::DocResponse response{receiveArray, (size_t)bytesReceived};
-    bool valid = true;
     switch (response.GetTag())
     {
       case JDocs::DocResponseTag::write:
@@ -849,14 +852,8 @@ void JdocsManager::UpdateJdocsServerResponses()
       {
         LOG_INFO("JdocsManager.UpdateJdocsServerResponses.UnexpectedSignal",
                  "0x%x 0x%x", receiveArray[0], receiveArray[1]);
-        valid = false;
       }
       break;
-    }
-
-    if (valid)
-    {
-      _docRequestQueue.pop();
     }
   }
 }
@@ -882,6 +879,15 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
       DASMSG(robot_settings_passed_to_cloud_jdoc, "robot.settings.passed_to_cloud_jdoc", "The robot settings jdoc was submitted to cloud");
       DASMSG_SEND();
     }
+
+    if (jdoc._pendingCloudSave)
+    {
+      // If we had detected an 'overlap' of write requests for this jdoc earlier,
+      // now submit the next revision of the jdoc to the cloud
+      jdoc._pendingCloudSave = false;
+      static const bool kIsJdocNewInCloud = false;
+      SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
+    }
   }
   else if (writeResponse.status == JDocs::WriteStatus::RejectedDocVersion)
   {
@@ -901,6 +907,7 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
       // Let's just re-submit the jdoc, using the latest version number we got from cloud
       // In future we might want to change this behavior for certain documents (e.g. if
       // customer care can change UserEntitlements jdoc directly)
+      // TODO: Deal with _pendingCloudSave flag if set...
       jdoc._jdocVersion = writeResponse.latestVersion;
       static const bool kIsJdocNewInCloud = false;
       SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
@@ -1205,14 +1212,37 @@ void JdocsManager::HandleThingResponse(const JDocs::ThingResponse& thingResponse
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud)
 {
-  _jdocs[jdocTypeKey]._cloudDirty = false;
+  auto& jdocItem = _jdocs[jdocTypeKey];
+  jdocItem._cloudDirty = false;
 
-  if (_jdocs[jdocTypeKey]._disabledDueToFmtVersion)
+  if (jdocItem._disabledDueToFmtVersion)
   {
     LOG_WARNING("JdocsManager.SubmitJdocToCloud.DisabledDueToFmtVersion",
                 "NOT submitting jdoc %s to cloud, because cloud has a newer format version than this code can handle",
                 external_interface::JdocType_Name(jdocTypeKey).c_str());
     return;
+  }
+
+  // If there is an outstanding cloud write request for this jdoc, just set a flag and exit;
+  // we will submit this request later, after the current write request gets a response
+  if (jdocItem._pendingCloudSave)
+  {
+    LOG_INFO("JdocsManager.SubmitJdocToCloud.MultipleWriteOverlap",
+             "Multiple cloud write overlap detected; delaying submission of this jdoc");
+    return;
+  }
+  for (const auto& request : _docRequestQueue)
+  {
+    if (request.GetTag() == JDocs::DocRequestTag::write)
+    {
+      if (request.Get_write().docName == jdocItem._jdocName)
+      {
+        LOG_INFO("JdocsManager.SubmitJdocToCloud.WriteOverlap",
+                 "Cloud write overlap detected; delaying submission of this jdoc");
+        jdocItem._pendingCloudSave = true;
+        return;
+      }
+    }
   }
 
   // Jdocs are sent to/from the app with protobuf; jdocs are sent to/from vic-cloud with CLAD

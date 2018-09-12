@@ -144,6 +144,7 @@ private:
     bool                      _cloudDirty;        // True when cloud copy of the jdoc needs to be updated
     int                       _cloudSavePeriod_s; // Cloud save period, or 0 for always save immediately
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
+    bool                      _pendingCloudSave;  // True when cloud save is awaiting response from prior cloud save
     // This flag indicates the cloud has a higher format version of the jdoc than
     // the code can handle, so it is disabled for purposes of submitting to cloud
     bool                      _disabledDueToFmtVersion;
@@ -155,9 +156,11 @@ private:
   using Jdocs = std::map<external_interface::JdocType, JdocInfo>;
   Jdocs                       _jdocs;
 
-  using DocRequestQueue = std::queue<JDocs::DocRequest>;
+  using DocRequestQueue = std::deque<JDocs::DocRequest>;
   DocRequestQueue             _docRequestQueue;       // Outstanding requests that have been sent
-  DocRequestQueue             _unsentDocRequestQueue; // Unsent requests that are waiting for connection
+
+  using UnsentDocRequestQueue = std::queue<JDocs::DocRequest>;
+  UnsentDocRequestQueue       _unsentDocRequestQueue; // Unsent requests that are waiting for connection
 };
 
 
