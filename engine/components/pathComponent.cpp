@@ -576,7 +576,6 @@ void PathComponent::UpdatePlanning()
         Abort();
         // don't set failure here, since we have an empty plan, we have technically succeeded
       }
-
       OnPathComplete();
       break;
     }
