@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/animationComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
@@ -203,6 +204,9 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
     return;
   }
 
+  auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
+  contComp.UpdateInfoFace(true);
+
   bsm.ResetBehaviorStack(waitBehavior.get());
   
   // Disable neutral eyes while in the dev screens, because symmetry with another call to
@@ -229,6 +233,9 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
 {
   
   PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.OnInfoFaceStarted.ExitPairing", "");
+
+  auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
+  contComp.UpdateInfoFace(false);
   
   // ignore any unclaimed trigger word or intent warnings, if a user said the wake word or a command
   // just prior to accessing a dev screen
