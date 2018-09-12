@@ -25,6 +25,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <ctime>
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 
@@ -37,6 +38,9 @@ static gpointer ConnectionThread(gpointer data);
 static std::shared_ptr<TaskExecutor> sTaskExecutor;
 static Signal::Signal<void(bool, std::string)> sWifiChangedSignal;
 static Signal::Signal<void()> sWifiScanCompleteSignal;
+
+static std::time_t sLastWifiConnect_tm;
+static std::time_t sLastWifiDisconnect_tm;
 
 static void AgentCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -95,9 +99,18 @@ void OnTechnologyChanged (GDBusConnection *connection,
   }
 
   GVariant* valueChild = g_variant_get_child_value(parameters, 1);  
-  bool propertyValue = g_variant_get_boolean(g_variant_get_variant(valueChild));
+  bool connected = g_variant_get_boolean(g_variant_get_variant(valueChild));
+  double duration_s = 0;
 
-  std::string connectionStatus = propertyValue?"Connected.":"Disconnected.";
+  std::time_t t = std::time(0);
+
+  if(connected) {
+    sLastWifiConnect_tm = t;
+  } else {
+    sLastWifiDisconnect_tm = t;
+  }
+
+  std::string connectionStatus = connected?"Connected.":"Disconnected.";
 
   uint8_t apMac[MAC_BYTES];
   bool hasMac = GetApMacAddress(apMac);
@@ -113,19 +126,28 @@ void OnTechnologyChanged (GDBusConnection *connection,
     }
   }
 
-  sTaskExecutor->Wake([propertyValue, apMacManufacturerBytes](){
-    sWifiChangedSignal.emit(propertyValue, apMacManufacturerBytes);
+  sTaskExecutor->Wake([connected, apMacManufacturerBytes](){
+    sWifiChangedSignal.emit(connected, apMacManufacturerBytes);
   });
 
   Log::Write("WiFi connection status changed: [connected=%s / mac=%s]", 
-    propertyValue?"true":"false", apMacManufacturerBytes.c_str());
+    connected?"true":"false", apMacManufacturerBytes.c_str());
 
-  std::string event = propertyValue?"wifi.connection":"wifi.disconnection";
+  std::string event = connected?"wifi.connection":"wifi.disconnection";
+
+  duration_s = std::difftime(t, (connected? sLastWifiDisconnect_tm : sLastWifiConnect_tm));
 
   DASMSG(wifi_connection_status, event,
           "WiFi connection status changed.");
+  DASMSG_SET(i1, (int)duration_s, "Seconds from last connect/disconnect");
   DASMSG_SET(s4, apMacManufacturerBytes, "AP MAC manufacturer bytes");
   DASMSG_SEND();
+
+  if(connected) {
+    sLastWifiConnect_tm = t;
+  } else {
+    sLastWifiDisconnect_tm = t;
+  }
 
   g_variant_unref(valueChild);
 }
@@ -143,6 +165,11 @@ void Initialize(std::shared_ptr<TaskExecutor> taskExecutor) {
   GDBusConnection* gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
                               nullptr,
                               &error);
+
+  // Initialize wifi time trackers
+  std::time_t t = std::time(0);
+  sLastWifiConnect_tm = t;
+  sLastWifiDisconnect_tm = t;
 
   guint handle = g_dbus_connection_signal_subscribe (gdbusConn,
     "net.connman",
@@ -197,6 +224,10 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
                                                             &error);
     if (error) {
       loge("error getting proxy for net.connman /net/connman/technology/wifi");
+      DASMSG(connman_error, "connman.error.technology_proxy", "Connman error.");
+      DASMSG_SET(s1, error->message, "Error message");
+      DASMSG_SEND();
+
       g_error_free(error);
       return WifiScanErrorCode::ERROR_GETTING_PROXY;
     }
@@ -207,6 +238,10 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
     g_object_unref(tech_proxy);
     if (error) {
       loge("error asking connman to scan for wifi access points [%s]", error->message);
+      DASMSG(connman_error, "connman.error.call_scan", "Connman error.");
+      DASMSG_SET(s1, error->message, "Error message");
+      DASMSG_SEND();
+
       g_error_free(error);
       return WifiScanErrorCode::ERROR_SCANNING;
     }
@@ -1032,6 +1067,9 @@ ConnectWifiResult ConnectToWifiService(ConnManBusService* service) {
   g_mutex_unlock(&connectMutex);
 
   if(data.error != nullptr) {
+    DASMSG(connman_error, "connman.error.connect", "Connman error.");
+      DASMSG_SET(s1, data.error->message, "Error message");
+      DASMSG_SEND();
     Log::Write("Connect error: %s", data.error->message);
   }
 
