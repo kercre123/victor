@@ -198,7 +198,6 @@ function(check_licenses)
       if(anki_out_path_isset AND exclude_from_all_isset)
         get_property(exclude_from_all TARGET ${target} PROPERTY EXCLUDE_FROM_ALL)
         if (NOT exclude_from_all)
-          message("TARGET ${target} exclude_from_all")
           # Go executables, deployed to the rebot, have EXCLUDE_FROM_ALL set to FALSE
           list(APPEND all_executables ${target})
         endif()
