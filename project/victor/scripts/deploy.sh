@@ -167,10 +167,10 @@ pushd ${STAGING_DIR} > /dev/null 2>&1
 # Use --inplace to avoid consuming temp space & minimize number of writes
 # Use --delete to purge files that are no longer present in build tree
 #
-RSYNC_ARGS="-rlptD -uzvP --chmod=ug+rw --groupmap=*:2901 --inplace --delete"
+RSYNC_ARGS="-rlptD -uzvP --chmod=ug+rw --chown=:2901 --inplace --delete"
 if [ $FORCE_DEPLOY -eq 1 ]; then
   # Ignore times, delete before transfer, and force deletion of directories 
-  RSYNC_ARGS="-rlptD -IzvP --chmod=ug+rw --groupmap=*:2901 --inplace --delete --delete-before --force"
+  RSYNC_ARGS="-rlptD -IzvP --chmod=ug+rw --chown=:2901 --inplace --delete --delete-before --force"
 fi
 
 logv "rsync"
