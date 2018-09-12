@@ -68,6 +68,20 @@ public:
     Alert alert = Alert::None;
   } MemoryInfo;
 
+  // Filesystem space stats
+  typedef struct DiskInfo {
+    // Total space, in kB
+    uint32_t total_kB = 0;
+    // Space available to non-root users, in kB
+    uint32_t avail_kB = 0;
+    // Unused space, in kB
+    uint32_t free_kB = 0;
+    // "Disk pressure" aka (total / avail)
+    uint32_t pressure = 0;
+    // Alert level for current pressure
+    Alert alert = Alert::None;
+  } DiskInfo;
+
 // Public destructor
 ~OSState();
 
@@ -106,7 +120,13 @@ public:
   // Returns uptime (and idle time) in seconds
   float GetUptimeAndIdleTime(float &idleTime_s) const;
 
+  // Get system-wide memory info
+  // Values are fetched once per update period
   void GetMemoryInfo(MemoryInfo & info) const;
+
+  // Get disk info for given path
+  // Values are fetched from file system each time
+  bool GetDiskInfo(const std::string & path, DiskInfo & info) const;
 
   // Returns data about CPU times
   void GetCPUTimeStats(std::vector<std::string> & stats) const;
@@ -223,6 +243,22 @@ private:
   std::string _bootID          = "";
   bool        _isUserSpaceSecure = false;
   bool        _hasValidIPAddress = false;
+
+  inline uint32_t GetPressure(uint32_t avail, uint32_t total) const
+  {
+    return (avail > 0 ? total / avail : std::numeric_limits<uint32_t>::max());
+  }
+
+  inline Alert GetAlert(uint32_t pressure, uint32_t yellow, uint32_t red) const
+  {
+    if (pressure > red) {
+      return Alert::Red;
+    }
+    if (pressure > yellow) {
+      return Alert::Yellow;
+    }
+    return Alert::None;
+  }
 
 }; // class OSState
 
