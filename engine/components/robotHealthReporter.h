@@ -16,6 +16,7 @@
 #include "util/dispatchQueue/taskExecutor.h"
 
 #include <chrono>
+#include <map>
 #include <string>
 
 namespace Anki {
@@ -46,6 +47,7 @@ class RobotHealthReporter : public IDependencyManagedComponent<RobotComponentID>
 
     // Stuff we keep track of
     OSState::Alert _memoryAlert = OSState::Alert::None;
+    std::map<std::string, OSState::DiskInfo> _diskInfo;
     std::string _locale;
     std::string _timezone;
 

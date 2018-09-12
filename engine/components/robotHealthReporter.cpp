@@ -7,13 +7,16 @@
  *
  **/
 
-#include "util/logging/DAS.h"
+
 
 #include "robotHealthReporter.h"
 #include "osState/osState.h"
-#include "util/logging/logging.h"
-
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/ankiDefines.h"
+#include "util/logging/logging.h"
+#include "util/logging/DAS.h"
+
+#include <list>
 
 #define LOG_CHANNEL "RobotHealthReporter"
 
@@ -21,6 +24,13 @@ namespace {
   // Have we already reported health since booting?
   // This path should point to a temporary filesystem that will be cleared by each reboot.
   const char * kOncePerBootPath = "/tmp/robot_health_once_per_boot";
+
+  // Which filesystems do we monitor for this platform?
+  #ifdef ANKI_PLATFORM_VICOS
+  const std::list<std::string> kDiskInfoPaths = {"/data", "/tmp", "/run"};
+  #else
+  const std::list<std::string> kDiskInfoPaths = {"/tmp"};
+  #endif
 }
 
 namespace Anki {
@@ -54,8 +64,32 @@ void RobotHealthReporter::OncePerStartupCheck()
 
 void RobotHealthReporter::OncePerMinuteCheck()
 {
-  // TBD
   // Report stuff that needs to be checked once per minute
+  const auto * osState = OSState::getInstance();
+
+  DEV_ASSERT(osState != nullptr, "RobotHealthReporter.OncePerMinuteCheck.InvalidOSState");
+
+  for (const auto & path : kDiskInfoPaths) {
+    // Get disk info for this path.
+    // If we can't get disk info, treat it as a red alert.
+    OSState::DiskInfo info;
+    if (!osState->GetDiskInfo(path, info)) {
+      LOG_ERROR("RobotHealthReporter.OncePerMinuteCheck.InvalidDiskInfo", "Unable to fetch disk info for %s", path.c_str());
+      info.alert = OSState::Alert::Red;
+    }
+
+    // Has filesystem crossed an alert threshold?
+    if (_diskInfo[path].alert != info.alert) {
+      DASMSG(robot_disk_pressure, "robot.disk_pressure", "Disk pressure has crossed alert threshold");
+      DASMSG_SET(s1, path, "Path");
+      DASMSG_SET(i1, info.total_kB, "Total space (kB)");
+      DASMSG_SET(i2, info.avail_kB, "Available space (kB)");
+      DASMSG_SET(i3, info.free_kB, "Free space (kB)");
+      DASMSG_SET(i4, info.pressure, "Disk pressure factor");
+      DASMSG_SEND();
+      _diskInfo[path] = info;
+    }
+  }
 }
 
 void RobotHealthReporter::OncePerSecondCheck()
@@ -115,6 +149,7 @@ void RobotHealthReporter::UpdateDependent(const DependencyManager & dependencyMa
     const auto elapsed_minutes = std::chrono::duration_cast<std::chrono::minutes>(elapsed);
     if (elapsed_minutes.count() >= 1) {
       OncePerMinuteCheck();
+      _once_per_minute_time = now;
     }
   }
 
@@ -124,6 +159,7 @@ void RobotHealthReporter::UpdateDependent(const DependencyManager & dependencyMa
     const auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed);
     if (elapsed_seconds.count() >= 1) {
       OncePerSecondCheck();
+      _once_per_second_time = now;
     }
   }
 

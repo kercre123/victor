@@ -13,28 +13,30 @@
  **/
 
 #include "osState/osState.h"
-#include "util/console/consoleInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
 #include <webots/Supervisor.hpp>
 
-// For getting our ip address
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <netinet/in.h>
-
 #include <array>
 
-#include <sys/sysctl.h>
-#include <sys/types.h>
+// For getting our ip address
+#include <arpa/inet.h>
 #include <mach/mach.h>
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 #ifndef SIMULATOR
 #error SIMULATOR should be defined by any target using osState_mac.cpp
@@ -50,11 +52,17 @@ CONSOLE_VAR(bool, kFakeIsReboot,  "OSState.Boot", false);
 
 namespace {
 
-  // When total/avail > this, display red square
+  // When total/avail > this, report red alert
   CONSOLE_VAR_RANGED(u32, kHighMemPressureMultiple, "OSState.MemoryInfo", 10, 0, 100);
 
-  // When total/avail > this, display yellow square
+  // When total/avail > this, report yellow alert
   CONSOLE_VAR_RANGED(u32, kMediumMemPressureMultiple, "OSState.MemoryInfo", 5, 0, 100);
+
+  // When total/avail > this, report red alert
+  CONSOLE_VAR_RANGED(u32, kHighDiskPressureMultiple, "OSState.DiskInfo", 10, 0, 100);
+
+  // When total/avail > this, report yellow alert
+  CONSOLE_VAR_RANGED(u32, kMediumDiskPressureMultiple, "OSState.DiskInfo", 5, 0, 100);
 
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
@@ -392,14 +400,26 @@ void OSState::GetMemoryInfo(MemoryInfo & info) const
   info.totalMem_kB = _totalMem_kB;
   info.availMem_kB = _availMem_kB;
   info.freeMem_kB = _freeMem_kB;
-  info.pressure = (info.availMem_kB > 0 ? info.totalMem_kB / info.availMem_kB : std::numeric_limits<uint32_t>::max());
-  if (info.pressure > kHighMemPressureMultiple) {
-    info.alert = Alert::Red;
-  } else if (info.pressure > kMediumMemPressureMultiple) {
-    info.alert = Alert::Yellow;
-  } else {
-    info.alert = Alert::None;
+  info.pressure = GetPressure(info.availMem_kB, info.totalMem_kB);
+  info.alert = GetAlert(info.pressure, kMediumMemPressureMultiple, kHighMemPressureMultiple);
+}
+
+bool OSState::GetDiskInfo(const std::string & path, DiskInfo & info) const
+{
+  struct statfs fsinfo = {};
+
+  if (statfs(path.c_str(), &fsinfo) != 0) {
+    LOG_ERROR("OSState::GetDiskInfo", "Unable to get disk info for %s (errno %d)", path.c_str(), errno);
+    return false;
   }
+
+  // Populate return struct
+  info.total_kB = (uint32_t)(fsinfo.f_blocks * fsinfo.f_bsize / 1024);
+  info.avail_kB = (uint32_t)(fsinfo.f_bavail * fsinfo.f_bsize / 1024);
+  info.free_kB = (uint32_t)(fsinfo.f_bfree * fsinfo.f_bsize / 1024);
+  info.pressure = GetPressure(info.avail_kB, info.total_kB);
+  info.alert = GetAlert(info.pressure, kMediumDiskPressureMultiple, kHighDiskPressureMultiple);
+  return true;
 }
 
 void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const

@@ -28,23 +28,24 @@
 
 // For getting our ip address
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <sys/types.h>
 #include <ifaddrs.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/timex.h>
-#include <sys/stat.h>
-
 #include <linux/wireless.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/timex.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <fstream>
 #include <array>
 #include <iomanip>
-#include <stdlib.h>
+
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
@@ -61,11 +62,17 @@ CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 
 namespace {
 
-  // When total/avail > this, display red square
+  // When total/avail > this, report red alert
   CONSOLE_VAR_RANGED(u32, kHighMemPressureMultiple, "OSState.MemoryInfo", 10, 0, 100);
 
-  // When total/avail > this, display yellow square
+  // When total/avail > this, report yellow alert
   CONSOLE_VAR_RANGED(u32, kMediumMemPressureMultiple, "OSState.MemoryInfo", 5, 0, 100);
+
+ // When total/avail > this, report red alert
+  CONSOLE_VAR_RANGED(u32, kHighDiskPressureMultiple, "OSState.DiskInfo", 10, 0, 100);
+
+  // When total/avail > this, report yellow alert
+  CONSOLE_VAR_RANGED(u32, kMediumDiskPressureMultiple, "OSState.DiskInfo", 5, 0, 100);
 
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
@@ -413,16 +420,27 @@ void OSState::GetMemoryInfo(MemoryInfo & info) const
   info.totalMem_kB = _totalMem_kB;
   info.availMem_kB = _availMem_kB;
   info.freeMem_kB = _freeMem_kB;
+  info.pressure = GetPressure(info.availMem_kB, info.totalMem_kB);
+  info.alert = GetAlert(info.pressure, kMediumMemPressureMultiple, kHighMemPressureMultiple);
 
-  info.pressure = (info.availMem_kB > 0 ? info.totalMem_kB / info.availMem_kB : std::numeric_limits<uint32_t>::max());
-  if (info.pressure > kHighMemPressureMultiple) {
-    info.alert = Alert::Red;
-  } else if (info.pressure > kMediumMemPressureMultiple) {
-    info.alert = Alert::Yellow;
-  } else {
-    info.alert = Alert::None;
+}
+
+bool OSState::GetDiskInfo(const std::string & path, DiskInfo & info) const
+{
+  struct statfs fsinfo = {};
+
+  if (statfs(path.c_str(), &fsinfo) != 0) {
+    LOG_ERROR("OSState::GetDiskInfo", "Unable to get disk info for %s (errno %d)", path.c_str(), errno);
+    return false;
   }
 
+  // Populate return struct
+  info.total_kB = (fsinfo.f_blocks * fsinfo.f_bsize / 1024);
+  info.avail_kB = (fsinfo.f_bavail * fsinfo.f_bsize / 1024);
+  info.free_kB = (fsinfo.f_bfree * fsinfo.f_bsize / 1024);
+  info.pressure = GetPressure(info.avail_kB, info.total_kB);
+  info.alert = GetAlert(info.pressure, kMediumDiskPressureMultiple, kHighDiskPressureMultiple);
+  return true;
 }
 
 void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
