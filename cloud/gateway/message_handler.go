@@ -800,6 +800,7 @@ func (service *rpcService) checkConnectionID(id string) bool {
 		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
 			// Someone is connected over BLE and they are not the primary connection.
 			// We return false so the app can tell you not to connect.
+			log.Printf("Detected mismatched BLE connection id: %s\n", connectionResponse.ConnectionId)
 			return false
 		}
 	}
@@ -839,10 +840,6 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 512)
 	defer f()
 
-	done := make(chan struct{})
-	defer func() {
-		done <- struct{}{}
-	}()
 	ping := extint.EventResponse{
 		Event: &extint.Event{
 			EventType: &extint.Event_KeepAlive{
@@ -982,8 +979,6 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 		// Disabled for Vector 1.0 release
 		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")
 	}
-
-	log.Println("Received rpc request BehaviorControl")
 
 	done := make(chan struct{})
 
