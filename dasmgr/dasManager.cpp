@@ -236,7 +236,7 @@ void DASManager::BackupLogFiles()
   const auto & jsonFiles = GetJsonFiles(storagePath);
   for (const auto & jsonFile : jsonFiles) {
     // Create the directory that will hold the json
-    if (!Util::FileUtils::CreateDirectory(backupPath, false, true)) {
+    if (!Util::FileUtils::CreateDirectory(backupPath, false, true, S_IRWXU)) {
       LOG_ERROR("DASManager.BackupLogFiles.CreateBackupDir", "Failed to create backup path %s", backupPath.c_str());
       return;
     }
@@ -429,7 +429,7 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
 
   // Create the directory that will hold the json
   const auto & storagePath = _dasConfig.GetStoragePath();
-  if (!Util::FileUtils::CreateDirectory(storagePath, false, true)) {
+  if (!Util::FileUtils::CreateDirectory(storagePath, false, true, S_IRWXU)) {
     LOG_ERROR("DASManager.ProcessLogEntry.CreateStoragePathFailure",
               "Failed to create storage path %s",
               storagePath.c_str());

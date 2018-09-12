@@ -56,7 +56,10 @@ ssize_t FileUtils::GetFileSize(const std::string &path)
 // -p      Create intermediate directories as required.  If this option is not specified,
 // the full path prefix of each operand must already exist.  On the other hand, with this
 // option specified, no error will be reported if a directory given as an operand already exists.
-bool FileUtils::CreateDirectory(const std::string &path, const bool stripFilename, bool dashP)
+bool FileUtils::CreateDirectory(const std::string &path,
+                                const bool stripFilename,
+                                bool dashP,
+                                const mode_t mode)
 {
   std::string workPath;
   if (stripFilename) {
@@ -75,7 +78,7 @@ bool FileUtils::CreateDirectory(const std::string &path, const bool stripFilenam
       std::string subPath = workPath.substr(0, pos);
       ++count;
       if (!Util::FileUtils::DirectoryExists(subPath)) {
-        if( mkdir(subPath.c_str(), S_IRWXU) != 0 ) {
+        if( mkdir(subPath.c_str(), mode) != 0 ) {
           return false;
         }
       }
@@ -84,7 +87,7 @@ bool FileUtils::CreateDirectory(const std::string &path, const bool stripFilenam
   }
 
   if (!Util::FileUtils::DirectoryExists(workPath)) {
-    if( mkdir(workPath.c_str(), S_IRWXU) != 0 ) {
+    if( mkdir(workPath.c_str(), mode) != 0 ) {
       return false;
     }
   }
