@@ -24,6 +24,8 @@
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
+#include "image.h"
+
 #endif
 
 namespace {
@@ -59,6 +61,7 @@ void ResizeKeepAspectRatioHelper(const cv::Mat_<T>& src, cv::Mat_<T>& dest, s32 
       PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException", "Error while resizing image: %s,"
                         "ratio %f, rows: %d, cols: %d, desiredSize: (%d, %d)",
                         e.what(), ratio, src.rows, src.cols, desiredSize.width, desiredSize.height);
+      return;
     }
   }
 }
@@ -1697,14 +1700,38 @@ namespace Vision {
     return *this;
   }
 
-  Image ImageRGB::ToGray() const
+  Image ImageRGB::ToGray(const ImageRGB::RGBToGrayMethod method) const
+  {
+    switch(method) {
+      case ImageRGB::RGBToGrayMethod::GreenChannel:
+        return ToGrayFromGreenChannel();
+
+      case RGBToGrayMethod::DoubleGreen:
+        return  ToGrayFromDoubleGreen();
+    }
+  }
+
+  void ImageRGB::FillGray(Image &grayOut, const ImageRGB::RGBToGrayMethod method) const
+  {
+    switch(method) {
+      case RGBToGrayMethod::DoubleGreen:
+        FillGrayFromDoubleGreen(grayOut);
+        break;
+
+      case RGBToGrayMethod::GreenChannel:
+        FillGrayFromGreenChannel(grayOut);
+        break;
+    }
+  }
+
+  Image ImageRGB::ToGrayFromDoubleGreen() const
   {
     Image grayImage(GetNumRows(), GetNumCols());
     FillGray(grayImage);
     return grayImage;
   }
   
-  void ImageRGB::FillGray(Image& grayImage) const
+  void ImageRGB::FillGrayFromDoubleGreen(Anki::Vision::Image &grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
     grayImage.SetImageId(GetImageId());
@@ -1756,6 +1783,29 @@ namespace Vision {
         imageRGBPtr++;
         grayPtr++;
       }
+    }
+  }
+
+  Image ImageRGB::ToGrayFromGreenChannel() const
+  {
+    Image grayImage(GetNumRows(), GetNumCols());
+    FillGrayFromGreenChannel(grayImage);
+    return grayImage;
+  }
+
+  void ImageRGB::FillGrayFromGreenChannel(Image& grayImage) const
+  {
+    grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
+    grayImage.SetImageId(GetImageId());
+
+    cv::Mat_<u8>& cvGrayImage = grayImage.get_CvMat_();
+
+    try {
+      cv::extractChannel(get_CvMat_(), cvGrayImage, 1); // gets green channel from BGR (or RGB!)
+    }
+    catch (const cv::Exception &e) {
+      PRINT_NAMED_ERROR("ImageRGB.FillGrayFromGreenChannel.ExtractChannelError",
+                        "Error while extracting channel: %s", e.what());
     }
   }
   
