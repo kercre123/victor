@@ -337,7 +337,7 @@ tof_dat_t* tof_read(bool debug)
 //-----------------------------------------------------------------------------
 
 void TOF_init(void) { 
-  tof_init_(DRV_ST);
+  tof_init_(DRV_OPTO);
 }
 
 //Playpen: 80mm+/-20mm after -30 window adjustment
