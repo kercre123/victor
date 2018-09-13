@@ -208,36 +208,25 @@ namespace Anki {
       }
 
       // Stop motion on any movement tracks that are locked by this action
-      // and that are currently moving.
       const auto& mc = GetRobot().GetMoveComponent();
       const auto& lockStr = std::to_string(GetTag());
       std::string debugStr;
-      if (mc.IsHeadMoving() &&
-          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
+      if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
         GetRobot().GetMoveComponent().StopHead();
         debugStr += "HEAD_TRACK, ";
       }
-      if (mc.IsLiftMoving() &&
-          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::LIFT_TRACK, lockStr)) {
+      if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::LIFT_TRACK, lockStr)) {
         GetRobot().GetMoveComponent().StopLift();
         debugStr += "LIFT_TRACK, ";
       }
-      const bool areWheelsMoving = mc.AreWheelsMoving();
-      const bool isBodyLocked = mc.AreAllTracksLockedBy((u8) AnimTrackFlag::BODY_TRACK, lockStr);
-      if (areWheelsMoving && isBodyLocked) {
+      if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::BODY_TRACK, lockStr)) {
         GetRobot().GetMoveComponent().StopBody();
         debugStr += "BODY_TRACK, ";
-      } else if (areWheelsMoving || isBodyLocked) {
-        PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destroy.CheckForBodyMovement",
-                       "Wheels %s moving, but BODY_TRACK %s locked [%s][%d]",
-                       (areWheelsMoving ? "ARE" : "NOT "),
-                       (isBodyLocked ? "IS" : "NOT"),
-                       _name.c_str(), GetTag());
       }
       // Log if we've stopped movement on any tracks
       if (!debugStr.empty()) {
         PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destroy.StopMovement",
-                      "Stopping movement on the following tracks since they were locked and are still moving: %s[%s][%d]",
+                      "Stopping movement on the following tracks since they were locked: %s[%s][%d]",
                       debugStr.c_str(), _name.c_str(), _idTag);
       }
 
