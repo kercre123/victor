@@ -38,6 +38,7 @@ class ColorProfile:
         self._green_multiplier = green_multiplier
         self._blue_multiplier = blue_multiplier
 
+    # TODO Needs docs, param types, sample code
     def augment_color(self, original_color):
         rgb = [
             (original_color.int_color >> 24) & 0xff,
@@ -52,16 +53,19 @@ class ColorProfile:
         result_int_code = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
         return Color(result_int_code)
 
+    # TODO Needs example code, more descriptive docs
     @property
     def red_multiplier(self):
         """float: The multiplier used on the red channel."""
         return self._red_multiplier
 
+    # TODO Needs example code, more descriptive docs
     @property
     def green_multiplier(self):
         """float: The multiplier used on the red channel."""
         return self._green_multiplier
 
+    # TODO Needs example code, more descriptive docs
     @property
     def blue_multiplier(self):
         """float: The multiplier used on the red channel."""
@@ -96,12 +100,12 @@ class Light:
     """
 
     def __init__(self,
-                 on_color=off,
-                 off_color=off,
-                 on_period_ms=250,
-                 off_period_ms=0,
-                 transition_on_period_ms=0,
-                 transition_off_period_ms=0):
+                 on_color: Color = off,
+                 off_color: Color = off,
+                 on_period_ms: int = 250,
+                 off_period_ms: int = 0,
+                 transition_on_period_ms: int = 0,
+                 transition_off_period_ms: int = 0):
         self._on_color = on_color
         self._off_color = off_color
         self._on_period_ms = on_period_ms
@@ -110,8 +114,8 @@ class Light:
         self._transition_off_period_ms = transition_off_period_ms
 
     @property
-    def on_color(self):
-        """:class:`Color`: The Color shown when the light is on."""
+    def on_color(self) -> Color:
+        """The color shown when the light is on."""
         return self._on_color
 
     @on_color.setter
@@ -121,8 +125,8 @@ class Light:
         self._on_color = color
 
     @property
-    def off_color(self):
-        """:class:`Color`: The Color shown when the light is off."""
+    def off_color(self) -> Color:
+        """The color shown when the light is off."""
         return self._off_color
 
     @off_color.setter
@@ -132,8 +136,8 @@ class Light:
         self._off_color = color
 
     @property
-    def on_period_ms(self):
-        """int: The number of milliseconds the light should be "on" for for each cycle."""
+    def on_period_ms(self) -> int:
+        """The number of milliseconds the light should be "on" for for each cycle."""
         return self._on_period_ms
 
     @on_period_ms.setter
@@ -143,8 +147,8 @@ class Light:
         self._on_period_ms = ms
 
     @property
-    def off_period_ms(self):
-        """int: The number of milliseconds the light should be "off" for for each cycle."""
+    def off_period_ms(self) -> int:
+        """The number of milliseconds the light should be "off" for for each cycle."""
         return self._off_period_ms
 
     @off_period_ms.setter
@@ -154,8 +158,8 @@ class Light:
         self._off_period_ms = ms
 
     @property
-    def transition_on_period_ms(self):
-        """int: The number of milliseconds to take to transition the light to the on color."""
+    def transition_on_period_ms(self) -> int:
+        """The number of milliseconds to take to transition the light to the on color."""
         return self._transition_on_period_ms
 
     @transition_on_period_ms.setter
@@ -165,8 +169,8 @@ class Light:
         self._transition_on_period_ms = ms
 
     @property
-    def transition_off_period_ms(self):
-        """int: The number of milliseconds to take to transition the light to the off color."""
+    def transition_off_period_ms(self) -> int:
+        """The number of milliseconds to take to transition the light to the off color."""
         return self._transition_off_period_ms
 
     @transition_off_period_ms.setter
@@ -176,6 +180,7 @@ class Light:
         self._transition_off_period_ms = ms
 
 
+# TODO needs docs, param types. Should this be private?
 def package_request_params(lights, color_profile):
     merged_params = {}
     for light in lights:
@@ -186,6 +191,8 @@ def package_request_params(lights, color_profile):
                 attr_val = color_profile.augment_color(attr_val).int_color
             merged_params.setdefault(attr_name, []).append(attr_val)
     return merged_params
+
+# TODO Add sample code for the following light instances?
 
 
 #: :class:`Light`: A steady green colored LED light.

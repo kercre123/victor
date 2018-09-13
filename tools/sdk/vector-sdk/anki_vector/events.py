@@ -20,13 +20,10 @@ __all__ = ['EventHandler']
 
 import asyncio
 from concurrent.futures import CancelledError
-import logging
 
 from .connection import Connection
 from . import util
 from .messaging import protocol
-
-_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class EventHandler:
@@ -40,15 +37,28 @@ class EventHandler:
         self.event_task = None
         self.subscribers = {}
 
-    # TODO document
     def start(self, connection: Connection, loop: asyncio.BaseEventLoop):
+        """Start listening for events. Automatically called by the :class:`anki_vector.robot.Robot` class.
+
+        .. code-block:: python
+
+            robot.events.start(robot.conn, robot.loop)
+
+        :param connection: A references to the connection from the SDK to the robot.
+        :param loop: The loop to run the event task on.
+        """
         self._loop = loop
         self._conn = connection
         self.listening_for_events = True
         self.event_task = self._loop.create_task(self._handle_events())
 
-    # TODO document
     def close(self):
+        """Stop listening for events. Automatically called by the :class:`anki_vector.robot.Robot` class.
+
+        .. code-block:: python
+
+            robot.events.close()
+        """
         self.listening_for_events = False
         self.event_task.cancel()
         self._loop.run_until_complete(self.event_task)
@@ -56,7 +66,7 @@ class EventHandler:
     async def _handle_events(self):
         try:
             req = protocol.EventRequest()
-            async for evt in self._conn.interface.EventStream(req):
+            async for evt in self._conn.grpc_interface.EventStream(req):
                 if not self.listening_for_events:
                     break
                 event_type = evt.event.WhichOneof("event_type")

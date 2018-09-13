@@ -21,7 +21,7 @@ The API
     anki_vector.messaging.protocol
     anki_vector.motors
     anki_vector.objects
-    anki_vector.oled_face
+    anki_vector.screen
     anki_vector.photos
     anki_vector.proximity
     anki_vector.robot

@@ -331,7 +331,7 @@ async def test_message(robot, message_name, message_input, test_class, errors):
     """Test a single message"""
     # The message_src is used mostly so we can easily verify that the name is supported by the servicer.
     # In terms of actually making the call its simpler to invoke on the robot
-    message_call = getattr(robot.conn.interface, message_name)
+    message_call = getattr(robot.conn.grpc_interface, message_name)
 
     print(
         "Sending: \"{0}\"".format(MessageToJson(message_input,

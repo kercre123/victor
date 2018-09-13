@@ -35,17 +35,17 @@ class ProximitySensorData:
     """
 
     @property
-    def distance(self):
+    def distance(self) -> float:
         """The distance between the sensor and a detected object
 
         .. code-block:: python
 
-           my_distance = robot.proximity.last_sensor_reading.distance
+           distance = robot.proximity.last_sensor_reading.distance
         """
         return self._distance
 
     @property
-    def signal_quality(self):
+    def signal_quality(self) -> float:
         """The quality of the detected object.
 
         The proximity sensor detects obstacles within a given field of view,
@@ -54,54 +54,54 @@ class ProximitySensorData:
 
         .. code-block:: python
 
-           my_signal_quality = robot.proximity.last_sensor_reading.signal_quality
+           signal_quality = robot.proximity.last_sensor_reading.signal_quality
         """
         return self._signal_quality
 
     @property
-    def is_in_valid_range(self):
+    def is_in_valid_range(self) -> bool:
         """Whether or not the engine considers the detected signal is close enough
         to be considered useful.  Past a certain threshold, distance readings
         become unreliable.
 
         .. code-block:: python
 
-           my_is_in_valid_range = robot.proximity.last_sensor_reading.is_in_valid_range
+           is_in_valid_range = robot.proximity.last_sensor_reading.is_in_valid_range
         """
         return self._is_in_valid_range
 
     @property
-    def is_valid_signal_quality(self):
+    def is_valid_signal_quality(self) -> bool:
         """Whether the engine considers the detected signal to be reliable enough
         to be considered an object in proximity.
 
         .. code-block:: python
 
-           my_is_valid_signal_quality = robot.proximity.last_sensor_reading.is_valid_signal_quality
+           is_valid_signal_quality = robot.proximity.last_sensor_reading.is_valid_signal_quality
         """
         return self._is_valid_signal_quality
 
     @property
-    def is_lift_in_fov(self):
+    def is_lift_in_fov(self) -> bool:
         """Whether Vector's lift is blocking the time-of-flight sensor.  While
         the lift will send clear proximity signals, it's not useful for object
         detection.
 
         .. code-block:: python
 
-           my_is_lift_in_fov = robot.proximity.last_sensor_reading.is_lift_in_fov
+           is_lift_in_fov = robot.proximity.last_sensor_reading.is_lift_in_fov
         """
         return self._is_lift_in_fov
 
     @property
-    def is_too_pitched(self):
+    def is_too_pitched(self) -> bool:
         """Whether the engine considers the robot to be tilted too much up or down
         for the time of flight data to usefully describe obstacles in the driving
         plane.
 
         .. code-block:: python
 
-           my_is_too_pitched = robot.proximity.last_sensor_reading.is_too_pitched
+           is_too_pitched = robot.proximity.last_sensor_reading.is_too_pitched
         """
         return self._is_too_pitched
 
@@ -114,13 +114,13 @@ class ProximitySensorData:
         self._is_too_pitched = proto_data.is_too_pitched
 
     @property
-    def is_valid(self):
-        """Comprehensive judgement of whether the reported distance is useful for
+    def is_valid(self) -> bool:
+        """Comprehensive judgment of whether the reported distance is useful for
         object proximity detection.
 
         .. code-block:: python
 
-           my_is_valid = robot.proximity.last_sensor_reading.is_valid
+           is_valid = robot.proximity.last_sensor_reading.is_valid
         """
         return self._is_in_valid_range and self._is_valid_signal_quality and not self._is_lift_in_fov and not self._is_too_pitched
 
@@ -148,26 +148,27 @@ class ProximityComponent(util.Component):
         self._last_sensor_reading = None
 
     @property
-    def last_sensor_reading(self):
+    def last_sensor_reading(self) -> ProximitySensorData:
         """:class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data.
 
         .. code-block:: python
 
-           my_last_sensor_reading = robot.proximity.last_sensor_reading
+           last_sensor_reading = robot.proximity.last_sensor_reading
         """
         return self._last_sensor_reading
 
     @property
-    def last_valid_sensor_reading(self):
+    def last_valid_sensor_reading(self) -> ProximitySensorData:
         """:class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data
         which is considered useful for object detection.
 
         .. code-block:: python
 
-           my_last_valid_sensor_reading = robot.proximity.last_valid_sensor_reading
+           last_valid_sensor_reading = robot.proximity.last_valid_sensor_reading
         """
         return self._last_valid_sensor_reading
 
+    # TODO Needs docstring, sample code
     def on_proximity_update(self, prox_data: ProximitySensorData):
         self._last_sensor_reading = ProximitySensorData(prox_data)
         if self._last_sensor_reading.is_valid:

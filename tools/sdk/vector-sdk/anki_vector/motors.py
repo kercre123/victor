@@ -53,7 +53,7 @@ class MotorComponent(util.Component):
                                              right_wheel_mmps=right_wheel_speed,
                                              left_wheel_mmps2=left_wheel_accel,
                                              right_wheel_mmps2=right_wheel_accel)
-        return await self.interface.DriveWheels(motors)
+        return await self.grpc_interface.DriveWheels(motors)
 
     @sync.Synchronizer.wrap
     async def set_head_motor(self,
@@ -71,7 +71,7 @@ class MotorComponent(util.Component):
         :param speed: Motor speed for Vector's head, measured in radians per second.
         '''
         set_head_request = protocol.MoveHeadRequest(speed_rad_per_sec=speed)
-        return await self.interface.MoveHead(set_head_request)
+        return await self.grpc_interface.MoveHead(set_head_request)
 
     @sync.Synchronizer.wrap
     async def set_lift_motor(self,
@@ -89,4 +89,4 @@ class MotorComponent(util.Component):
         :param speed: Motor speed for Vector's lift, measured in radians per second.
         '''
         set_lift_request = protocol.MoveLiftRequest(speed_rad_per_sec=speed)
-        return await self.interface.MoveLift(set_lift_request)
+        return await self.grpc_interface.MoveLift(set_lift_request)

@@ -44,10 +44,10 @@ def main():
         # Load an image
         image_file = Image.open(image_path)
 
-        # Convert the image to the format used by the oled screen
+        # Convert the image to the format used by the Screen
         print("Display image on Vector's face...")
-        screen_data = anki_vector.oled_face.convert_image_to_screen_data(image_file)
-        robot.oled.set_oled_with_screen_data(screen_data, 4.0)
+        screen_data = anki_vector.screen.convert_image_to_screen_data(image_file)
+        robot.screen.set_screen_with_image_data(screen_data, 4.0)
         time.sleep(5)
 
 

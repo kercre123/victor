@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This test cycles Victor's OLED 4 times between solid colors:
+This test cycles Victor's Screen 4 times between solid colors:
 yellow-orange, green, azure, and purple
 
 NOTE: Currently, victor's default eye animations will override the solid colors, so
@@ -24,19 +24,19 @@ def main():
     args = anki_vector.util.parse_test_args()
 
     with anki_vector.Robot(args.serial, port=args.port) as robot:
-        print("------ begin testing oled ------")
+        print("------ begin testing screen ------")
 
         for _ in range(4):
-            robot.oled.set_oled_to_color(anki_vector.color.Color(rgb=[255, 128, 0]), duration_sec=1.0)
+            robot.screen.set_screen_to_color(anki_vector.color.Color(rgb=[255, 128, 0]), duration_sec=1.0)
             time.sleep(1.0)
-            robot.oled.set_oled_to_color(anki_vector.color.Color(rgb=[48, 192, 48]), duration_sec=1.0)
+            robot.screen.set_screen_to_color(anki_vector.color.Color(rgb=[48, 192, 48]), duration_sec=1.0)
             time.sleep(1.0)
-            robot.oled.set_oled_to_color(anki_vector.color.Color(rgb=[0, 128, 255]), duration_sec=1.0)
+            robot.screen.set_screen_to_color(anki_vector.color.Color(rgb=[0, 128, 255]), duration_sec=1.0)
             time.sleep(1.0)
-            robot.oled.set_oled_to_color(anki_vector.color.Color(rgb=[96, 0, 192]), duration_sec=1.0)
+            robot.screen.set_screen_to_color(anki_vector.color.Color(rgb=[96, 0, 192]), duration_sec=1.0)
             time.sleep(1.0)
 
-        print("------ finish testing oled ------")
+        print("------ finish testing screen ------")
 
 
 if __name__ == "__main__":

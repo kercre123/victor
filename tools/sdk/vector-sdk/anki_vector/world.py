@@ -77,7 +77,7 @@ class World(util.Component):
                 print(f"Expression: {face.expression}")
                 print(f"Timestamp: {face.timestamp}")
                 print(f"Pose: {face.pose}")
-                print(f"Image Rect: {face.img_rect}")
+                print(f"Image Rect: {face.face_rect}")
                 print(f"Expression score: {face.expression_score}")
                 print(f"Left eye: {face.left_eye}")
                 print(f"Right eye: {face.right_eye}")
@@ -90,8 +90,8 @@ class World(util.Component):
         for face in self._faces.values():
             yield face
 
-    def get_face(self, face_id: int):
-        """anki_vector.faces.Face: Fetch a Face instance with the given id"""
+    def get_face(self, face_id: int) -> faces.Face:
+        """Fetches a Face instance with the given id"""
         return self._faces.get(face_id)
 
     def add_update_face_to_world_view(self, _, msg):
@@ -133,6 +133,7 @@ class World(util.Component):
             return cube
         return None
 
+    # TODO add docstring and return type. Note no one is calling this. Do we need this?
     def get_object_by_id(self, object_id):
         if object_id not in self._objects:
             raise ValueError("Invalid object_id %s" % object_id)
@@ -141,12 +142,12 @@ class World(util.Component):
 
     @property
     def connected_light_cube(self):
-        """Returns a light cube attached to Vector, if any
+        """A light cube attached to Vector, if any
 
         .. code-block:: python
 
             robot.world.connect_cube()
-            if robot.world.connected_light_cube:            
+            if robot.world.connected_light_cube:
                 dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
 
         Returns:
@@ -159,6 +160,7 @@ class World(util.Component):
 
         return result
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def connect_cube(self):
         """ Attempt to connect to a cube
@@ -171,7 +173,7 @@ class World(util.Component):
             robot.world.connect_cube()
         """
         req = protocol.ConnectCubeRequest()
-        result = await self.interface.ConnectCube(req)
+        result = await self.grpc_interface.ConnectCube(req)
 
         if not result.object_id in self._objects:
             self.light_cube[objects.LightCube1Type] = self._allocate_light_cube(objects.LightCube1Type, result.object_id, result.factory_id)
@@ -179,6 +181,7 @@ class World(util.Component):
 
         return result
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def disconnect_cube(self):
         """ Requests a disconnection from the currently connected cube
@@ -188,8 +191,9 @@ class World(util.Component):
             robot.world.disconnect_cube()
         """
         req = protocol.DisconnectCubeRequest()
-        return await self.interface.DisconnectCube(req)
+        return await self.grpc_interface.DisconnectCube(req)
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def flash_cube_lights(self):
         """ Flash cube lights
@@ -197,10 +201,10 @@ class World(util.Component):
         Plays the default cube connection animation on the currently
         connected cube's lights.
         """
-
         req = protocol.FlashCubeLightsRequest()
-        return await self.interface.FlashCubeLights(req)
+        return await self.grpc_interface.FlashCubeLights(req)
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def forget_preferred_cube(self):
         """ Forget preferred cube
@@ -214,8 +218,9 @@ class World(util.Component):
             robot.world.forget_preferred_cube()
         """
         req = protocol.ForgetPreferredCubeRequest()
-        return await self.interface.ForgetPreferredCube(req)
+        return await self.grpc_interface.ForgetPreferredCube(req)
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def set_preferred_cube(self, factory_id: str):
         """ Set preferred cube
@@ -233,8 +238,9 @@ class World(util.Component):
         :param factory_id: The unique hardware id of the physical cube.
         """
         req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
-        return await self.interface.SetPreferredCube(req)
+        return await self.grpc_interface.SetPreferredCube(req)
 
+    # TODO Add docstring
     def on_object_event(self, _, msg):
         object_event_type = msg.WhichOneof("object_event_type")
 

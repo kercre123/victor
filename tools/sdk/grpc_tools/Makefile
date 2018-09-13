@@ -243,7 +243,7 @@ test_curl: .require_ip
 	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":false}'
 	@echo
 
-	$(curl_command)/v1/display_face_image_rgb -d @test_assets/oled_color.json
+	$(curl_command)/v1/display_face_image_rgb -d @test_assets/screen_color.json
 	@echo
 
 	$(curl_command)/v1/list_animations -d '{}'

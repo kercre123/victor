@@ -36,10 +36,6 @@ from .messaging import protocol
 
 # TODO: Add event classes in to this module once event subscription logic changes
 
-# TODO: Move MeetVictor codebase(like erase_all_enrolled_faces,
-# erase_enrolled_face_by_id and update_enrolled_face_by_id) in to this
-# module
-
 
 class Expression(Enum):
     """Facial expressions that Vector can distinguish
@@ -79,7 +75,7 @@ class Face:
         self._last_observed_time: int = None
         self._last_observed_robot_timestamp: int = None
         self._pose = None
-        self._img_rect = None
+        self._face_rect = None
 
         # Individual expression values histogram, sums to 100 (Exception: all
         # zero if expression=Unknown)
@@ -114,26 +110,21 @@ class Face:
         self._face_id = face_id
 
     @property
-    def has_updated_face_id(self):
-        """bool: True if this face been updated / superseded by a face with a new ID
+    def has_updated_face_id(self) -> bool:
+        """True if this face been updated / superseded by a face with a new ID
 
         .. code-block:: python
 
-            my_was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
+            was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
         """
         return self._updated_face_id is not None
 
     @property
-    def updated_face_id(self):
-        """int: The ID for the face that superseded this one (if any, otherwise :meth:`face_id`)"""
+    def updated_face_id(self) -> int:
+        """The ID for the face that superseded this one (if any, otherwise :meth:`face_id`)"""
         if self._updated_face_id:
             return self._updated_face_id
         return self._face_id
-
-    # TODO Do we really need this setter?
-    @updated_face_id.setter
-    def updated_face_id(self, face_id):
-        self._updated_face_id = face_id
 
     @property
     def name(self):
@@ -144,23 +135,23 @@ class Face:
         return self._name
 
     @property
-    def last_observed_time(self):
-        """ float: The time the element was last observed by the robot.
+    def last_observed_time(self) -> float:
+        """The time the element was last observed by the robot.
         ``None`` if the element has not yet been observed.
 
         .. code-block:: python
 
-            my_was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
+            was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
         """
         return self._last_observed_time
 
     @property
-    def time_since_last_seen(self):
-        """float: time since this element was last seen (math.inf if never)
+    def time_since_last_seen(self) -> float:
+        """The time since this element was last seen (math.inf if never)
 
         .. code-block:: python
 
-            my_last_seen_time = cube.time_since_last_seen
+            last_seen_time = cube.time_since_last_seen
         """
         if self._last_observed_time is None:
             return math.inf
@@ -177,9 +168,9 @@ class Face:
         return self._pose
 
     @property
-    def img_rect(self):
-        """:class:`anki_vector.util.ImageRect`: Position in image coords"""
-        return self._img_rect
+    def face_rect(self) -> util.ImageRect:
+        """Rect representing position of face"""
+        return self._face_rect
 
     @property
     def expression(self):
@@ -234,10 +225,10 @@ class Face:
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3,
                                origin_id=msg.pose.origin_id)
-        self._img_rect = util.ImageRect(msg.img_rect.x_top_left,
-                                        msg.img_rect.y_top_left,
-                                        msg.img_rect.width,
-                                        msg.img_rect.height)
+        self._face_rect = util.ImageRect(msg.img_rect.x_top_left,
+                                         msg.img_rect.y_top_left,
+                                         msg.img_rect.width,
+                                         msg.img_rect.height)
         self._expression = msg.expression
         self._expression_score = msg.expression_values
         self._left_eye = msg.left_eye
@@ -249,17 +240,18 @@ class Face:
 class FaceComponent(util.Component):
     """Manage the state of the faces on the robot"""
 
-    # TODO document
+    # TODO document, sample code and add Anki internal test for all face enrollment methods
     @sync.Synchronizer.wrap
     async def cancel_face_enrollment(self):
         req = protocol.CancelFaceEnrollmentRequest()
-        return await self.interface.CancelFaceEnrollment(req)
+        return await self.grpc_interface.CancelFaceEnrollment(req)
 
-    # TODO document
+    # TODO document, needs sample code and return value. It returns an array of LoadedKnownFace but is that availble in Python?
+    # TODO This doesn't seem to be in Cozmo. Are we sure we want to expose it?
     @sync.Synchronizer.wrap
     async def request_enrolled_names(self):
         req = protocol.RequestEnrolledNamesRequest()
-        return await self.interface.RequestEnrolledNames(req)
+        return await self.grpc_interface.RequestEnrolledNames(req)
 
     @sync.Synchronizer.wrap
     async def update_enrolled_face_by_id(self, face_id: int, old_name: str, new_name: str):
@@ -271,7 +263,7 @@ class FaceComponent(util.Component):
         """
         req = protocol.UpdateEnrolledFaceByIDRequest(faceID=face_id,
                                                      oldName=old_name, newName=new_name)
-        return await self.interface.UpdateEnrolledFaceByID(req)
+        return await self.grpc_interface.UpdateEnrolledFaceByID(req)
 
     @sync.Synchronizer.wrap
     async def erase_enrolled_face_by_id(self, face_id: int):
@@ -280,15 +272,15 @@ class FaceComponent(util.Component):
         :param face_id: The ID of the face to erase.
         """
         req = protocol.EraseEnrolledFaceByIDRequest(faceID=face_id)
-        return await self.interface.EraseEnrolledFaceByID(req)
+        return await self.grpc_interface.EraseEnrolledFaceByID(req)
 
     @sync.Synchronizer.wrap
     async def erase_all_enrolled_faces(self):
         """Erase the enrollment (name) records for all faces."""
         req = protocol.EraseAllEnrolledFacesRequest()
-        return await self.interface.EraseAllEnrolledFaces(req)
+        return await self.grpc_interface.EraseAllEnrolledFaces(req)
 
-    # TODO document
+    # TODO document, sample code and add Anki internal test for all face enrollment methods
     @sync.Synchronizer.wrap
     async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot: bool = True, sayName: bool = False, useMusic: bool = False):
         req = protocol.SetFaceToEnrollRequest(name=name,
@@ -297,7 +289,7 @@ class FaceComponent(util.Component):
                                               saveToRobot=saveToRobot,
                                               sayName=sayName,
                                               useMusic=useMusic)
-        return await self.interface.SetFaceToEnroll(req)
+        return await self.grpc_interface.SetFaceToEnroll(req)
 
     # TODO move out of face component? This is general to objects, not specific to faces? Does this also live in robot?
     @sync.Synchronizer.wrap
@@ -308,4 +300,4 @@ class FaceComponent(util.Component):
         :param mode: Specifies the vision mode to edit.
         """
         enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=mode, enable=enable)
-        return await self.interface.EnableVisionMode(enable_vision_mode_request)
+        return await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)

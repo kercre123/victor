@@ -14,7 +14,7 @@
 
 
 class Color:
-    """A Color to be used with a Light or OLED.
+    """A Color to be used with a Light or Screen.
 
     Either int_color or rgb may be used to specify the actual color.
     Any alpha components (from int_color) are ignored - all colors are fully opaque.
@@ -42,8 +42,8 @@ class Color:
     def rgb565_bytepair(self):
         """bytes[]: two bytes representing an int16 color with rgb565 encoding
 
-        This format reflects the robot's oled color range, and performing this
-        conversion will reduce network traffic when sending oled data.
+        This format reflects the robot's Screen color range, and performing this
+        conversion will reduce network traffic when sending Screen data.
         """
 
         red5 = ((self._int_color >> 24) & 0xff) >> 3

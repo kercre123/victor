@@ -42,6 +42,7 @@ class BehaviorComponent(util.Component):
 
         self._motion_profile_map = {}
 
+    # TODO Make the motion_profile_map into a class. Make sure it is readable in the docs b/c currently motion_prof_map param is not readable.
     @property
     def motion_profile_map(self) -> dict:
         """Tells Vector how to drive when receiving navigation and movement actions
@@ -100,9 +101,9 @@ class BehaviorComponent(util.Component):
         return self._current_priority
 
     @property
-    def is_active(self):
+    def is_active(self) -> bool:
         # TODO implement
-        """bool: True if the behavior is currently active and may run on the robot."""
+        """True if the behavior is currently active and may run on the robot."""
         return self._is_active
 
     @classmethod
@@ -127,7 +128,7 @@ class BehaviorComponent(util.Component):
             robot.behavior.drive_off_charger()
         """
         drive_off_charger_request = protocol.DriveOffChargerRequest()
-        return await self.interface.DriveOffCharger(drive_off_charger_request)
+        return await self.grpc_interface.DriveOffCharger(drive_off_charger_request)
 
     @sync.Synchronizer.wrap
     async def drive_on_charger(self):
@@ -138,10 +139,10 @@ class BehaviorComponent(util.Component):
 
         .. code-block:: python
 
-            robot.behavior.drive_on_charger()        
+            robot.behavior.drive_on_charger()
         """
         drive_on_charger_request = protocol.DriveOnChargerRequest()
-        return await self.interface.DriveOnCharger(drive_on_charger_request)
+        return await self.grpc_interface.DriveOnCharger(drive_on_charger_request)
 
     @sync.Synchronizer.wrap
     async def go_to_pose(self,
@@ -185,7 +186,7 @@ class BehaviorComponent(util.Component):
                                                       id_tag=self._get_next_action_id(),
                                                       num_retries=num_retries)
 
-        return await self.interface.GoToPose(go_to_pose_request)
+        return await self.grpc_interface.GoToPose(go_to_pose_request)
 
     # TODO Check that num_retries is actually working (and if not, same for other num_retries).
     @sync.Synchronizer.wrap
@@ -231,7 +232,7 @@ class BehaviorComponent(util.Component):
         if distance_from_marker is not None:
             dock_request.distance_from_marker = distance_from_marker.distance_mm
 
-        return await self.interface.DockWithCube(dock_request)
+        return await self.grpc_interface.DockWithCube(dock_request)
 
     # Movement actions
     @sync.Synchronizer.wrap
@@ -271,7 +272,7 @@ class BehaviorComponent(util.Component):
                                                                id_tag=self._get_next_action_id(),
                                                                num_retries=num_retries)
 
-        return await self.interface.DriveStraight(drive_straight_request)
+        return await self.grpc_interface.DriveStraight(drive_straight_request)
 
     @sync.Synchronizer.wrap
     async def turn_in_place(self,
@@ -312,7 +313,7 @@ class BehaviorComponent(util.Component):
                                                             id_tag=self._get_next_action_id(),
                                                             num_retries=num_retries)
 
-        return await self.interface.TurnInPlace(turn_in_place_request)
+        return await self.grpc_interface.TurnInPlace(turn_in_place_request)
 
     @sync.Synchronizer.wrap
     async def set_head_angle(self,
@@ -345,7 +346,7 @@ class BehaviorComponent(util.Component):
                                                               id_tag=self._get_next_action_id(),
                                                               num_retries=num_retries)
 
-        return await self.interface.SetHeadAngle(set_head_angle_request)
+        return await self.grpc_interface.SetHeadAngle(set_head_angle_request)
 
     @sync.Synchronizer.wrap
     async def set_lift_height(self,
@@ -379,4 +380,4 @@ class BehaviorComponent(util.Component):
                                                                 id_tag=self._get_next_action_id(),
                                                                 num_retries=num_retries)
 
-        return await self.interface.SetLiftHeight(set_lift_height_request)
+        return await self.grpc_interface.SetLiftHeight(set_lift_height_request)

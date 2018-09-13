@@ -34,10 +34,8 @@ __all__ = ['VectorCameraFeedDisabledException',
 class VectorException(Exception):
     """Base class of all Vector SDK exceptions."""
 
-
+# Don't add a docstring here or it prints out at runtime undesirably.
 class VectorConnectionException(VectorException):
-    """Base class of exceptions that can occur when the Python script is connecting to the robot."""
-
     def __init__(self, cause):
         self._status = cause.code()
         self._details = cause.details()
@@ -72,6 +70,7 @@ class VectorTimeoutException(VectorConnectionException):
 
 
 def connection_error(rpc_error: RpcError) -> VectorConnectionException:
+    """Translates grpc-specific errors to user-friendly :class:`VectorConnectionException`"""
     code = rpc_error.code()
     if code is StatusCode.UNAUTHENTICATED:
         return VectorUnauthenticatedException(rpc_error)

@@ -79,7 +79,7 @@ class PhotographComponent(util.Component):
         :return: The response from the PhotosInfo rpc call
         """
         req = protocol.PhotosInfoRequest()
-        result = await self.interface.PhotosInfo(req)
+        result = await self.grpc_interface.PhotosInfo(req)
         self._photo_info = result.photo_infos
         return result
 
@@ -107,7 +107,7 @@ class PhotographComponent(util.Component):
                  another library (like :mod:`PIL`)
         """
         req = protocol.PhotoRequest(photo_id=photo_id)
-        return await self.interface.Photo(req)
+        return await self.grpc_interface.Photo(req)
 
     @sync.Synchronizer.wrap
     @sync.Synchronizer.disable_log
@@ -135,4 +135,4 @@ class PhotographComponent(util.Component):
                  another library (like :mod:`PIL`)
         """
         req = protocol.ThumbnailRequest(photo_id=photo_id)
-        return await self.interface.Thumbnail(req)
+        return await self.grpc_interface.Thumbnail(req)

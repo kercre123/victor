@@ -75,8 +75,22 @@ class AnimationComponent(util.Component):
     @sync.Synchronizer.wrap
     @sync.Synchronizer.disable_log
     async def load_animation_list(self):
+        """Request the list of animations from the robot
+
+        When the request has completed, anim_list will be populated with
+        the list of animations the robot knows how to run.
+
+        .. code-block:: python
+
+            with anki_vector.Robot("00e20115") as robot:
+                anim_request = robot.anim.load_animation_list()
+                anim_request.wait_for_completed()
+                anim_names = robot.anim.anim_list
+                for anim_name in anim_names:
+                    print(anim_name)
+        """
         req = protocol.ListAnimationsRequest()
-        result = await self.interface.ListAnimations(req)
+        result = await self.grpc_interface.ListAnimations(req)
         self.logger.debug(f"status: {result.status}, number_of_animations:{len(result.animation_names)}")
         self._anim_dict = {a.name: a for a in result.animation_names}
         return result
@@ -112,4 +126,4 @@ class AnimationComponent(util.Component):
                                             ignore_body_track=ignore_body_track,
                                             ignore_head_track=ignore_head_track,
                                             ignore_lift_track=ignore_lift_track)
-        return await self.interface.PlayAnimation(req)
+        return await self.grpc_interface.PlayAnimation(req)

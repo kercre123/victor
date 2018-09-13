@@ -23,13 +23,10 @@ simpler use cases where everything executes synchronously.
 __all__ = ['Synchronizer']
 
 import functools
-import logging
 
 import grpc
 
 from . import exceptions
-
-_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class Synchronizer:
@@ -37,6 +34,7 @@ class Synchronizer:
     Class for managing asynchronous functions in a synchronous world
     """
 
+    # TODO Add types. Also ideally need better docstring than "Create a Synchronizer"
     def __init__(self, loop, remove_pending, func, *args, **kwargs):
         """
         Create an Synchronizer
@@ -45,6 +43,7 @@ class Synchronizer:
         self.loop = loop
         self.task = self.loop.create_task(func(*args, **kwargs))
 
+    # TODO add sample code
     def wait_for_completed(self):
         """
         Wait until the task completes before continuing
@@ -55,22 +54,24 @@ class Synchronizer:
             self.remove_pending(self)
         return None
 
+    # TODO Need param type and sample code
+    # TODO: Might be better to instead have this as a parameter you can pass to wrap
     @staticmethod
     def disable_log(func):
         """
         Use this decorator to disable the automatic debug logging of wrap
-
-        TODO: Might be better to instead have this as a parameter you can pass to wrap
         """
         func.disable_log = True
         return func
 
+    # TODO Need param type and sample code
     @classmethod
     def wrap(cls, func):
         """
         Decorator to wrap a function for synchronous usage
         """
 
+        # TODO Need docstring
         @functools.wraps(func)
         def log_result(func, logger):
             if not hasattr(func, "disable_log"):
@@ -85,6 +86,7 @@ class Synchronizer:
                 return log
             return func
 
+        # TODO Need sample code
         @functools.wraps(func)
         def waitable(*args, **kwargs):
             """

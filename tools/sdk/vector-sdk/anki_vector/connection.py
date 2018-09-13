@@ -135,7 +135,7 @@ class Connection:
         conn.connect()
         # Run your commands (for example play animation)
         anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-        await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+        await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         # Close the connection
         conn.close()
 
@@ -161,7 +161,7 @@ class Connection:
         self._guid = guid
 
     @property
-    def interface(self) -> client.ExternalInterfaceStub:
+    def grpc_interface(self) -> client.ExternalInterfaceStub:
         """A direct reference to the connected aiogrpc interface.
 
         This may be used to directly call grpc messages bypassing :class:`anki_vector.Robot`
@@ -169,7 +169,7 @@ class Connection:
         .. code-block:: python
 
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-            await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+            await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         """
         return self._interface
 
@@ -217,7 +217,7 @@ class Connection:
             conn.connect(timeout=5.0)
             # Run your commands (for example play animation)
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-            await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+            await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()
 
@@ -285,7 +285,7 @@ class Connection:
             conn.connect()
             # Run your commands (for example play animation)
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-            await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+            await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()
         """

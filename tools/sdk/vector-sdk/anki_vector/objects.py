@@ -34,7 +34,7 @@ to recognize the object and its position and rotation("pose").
 """
 
 
-# TODO EvtObjectObserved, EvtObjectTapped, and others in Cozmo's object.py not implemented. Should they be? If not, remove from docs above?
+# TODO EvtObjectObserved, EvtObjectTapped, and others in Cozmo's object.py are not implemented. Should they be? If not, remove from docs above?
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['LightCube1Type',
@@ -59,7 +59,7 @@ LightCube1Type = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
 # TODO Instead inherit from ObservableObject, like for Cozmo?
 # TODO In this class, how are we deciding whether a member has a leading underscore or not?
 class LightCube(util.Component):
-    """The base type for anything Victor can see."""
+    """Represents Vector's Cube"""
 
     #: Length of time in seconds to go without receiving an observed event before
     #: assuming that Victor can no longer see an element. Can be overridden in sub
@@ -71,7 +71,6 @@ class LightCube(util.Component):
         #: :class:`anki_vector.world.World`: The robot's world in which this element is located.
         self._world = world
 
-        # TODO Document
         self._pose = None
 
         #: float: The time the object was last tapped
@@ -123,7 +122,6 @@ class LightCube(util.Component):
         self.last_observed_robot_timestamp = None
 
         # The object's up_axis value from the last time it changed.
-        # TODO Add more docs, like type description.
         self.up_axis = None
 
         #: bool: True if the cube's accelerometer indicates that the cube is moving.
@@ -206,7 +204,7 @@ class LightCube(util.Component):
             relative_to_y=0.0,
             rotate=False,
             make_relative=protocol.SetCubeLightsRequest.OFF)  # pylint: disable=no-member
-        return await self.interface.SetCubeLights(req)
+        return await self.grpc_interface.SetCubeLights(req)
 
     def set_lights(self, light: lights.Light, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights on the cube
@@ -300,8 +298,8 @@ class LightCube(util.Component):
     #### Properties ####
 
     @property
-    def factory_id(self):
-        """str: The unique hardware id of the physical cube."""
+    def factory_id(self) -> str:
+        """The unique hardware id of the physical cube."""
         return self._factory_id
 
     @factory_id.setter
@@ -309,38 +307,38 @@ class LightCube(util.Component):
         self._factory_id = factory_id
 
     @property
-    def descriptive_name(self):
-        """str: A descriptive name for this ObservableObject instance."""
+    def descriptive_name(self) -> str:
+        """A descriptive name for this ObservableObject instance."""
         # Note: Sub-classes should override this to add any other relevant info
         # for that object type.
         return "{0} id={1} factory_id={2} is_connected={3}".format(self.__class__.__name__, self.object_id, self._factory_id, self.is_connected)
 
     @property
-    def pose(self):
-        """:class:`anki_vector.util.Pose`: The pose of the element in the world.
+    def pose(self) -> util.Pose:
+        """The pose of the element in the world.
 
         Is ``None`` for elements that don't have pose information.
         """
         return self._pose
 
     @property
-    def time_since_last_seen(self):
-        """float: time since this element was last seen (math.inf if never)"""
+    def time_since_last_seen(self) -> float:
+        """The time since this element was last seen. math.inf if never seen."""
         if self.last_observed_time is None:
             return math.inf
         return time.time() - self.last_observed_time
 
     @property
-    def is_visible(self):
-        """bool: True if the element has been observed recently.
+    def is_visible(self) -> bool:
+        """True if the element has been observed recently, False otherwise.
 
         "recently" is defined as :attr:`visibility_timeout` seconds.
         """
         return self._is_visible
 
     @property
-    def object_id(self):
-        """int: The internal ID assigned to the object.
+    def object_id(self) -> int:
+        """The internal ID assigned to the object.
 
         This value can only be assigned once as it is static on the robot.
         """
@@ -371,6 +369,7 @@ class LightCube(util.Component):
         self.logger.debug('Object Disappeared (object_id: {0})'.format(self.object_id))
 
     #### Public Event Handlers ####
+    # TODO Should this be private? If not, need docstring
     def on_tapped(self, msg):
         now = time.time()
         self.last_event_time = now
@@ -378,6 +377,7 @@ class LightCube(util.Component):
         self.last_tapped_robot_timestamp = msg.timestamp
         self.logger.debug('Object Tapped (object_id: {0} at {1})'.format(self.object_id, msg.timestamp))
 
+    # TODO Should this be private? If not, need docstring
     def on_moved(self, msg):  # pylint: disable=unused-argument
         now = time.time()
         started_moving = not self.is_moving
@@ -391,6 +391,7 @@ class LightCube(util.Component):
             self.last_moved_start_robot_timestamp = msg.timestamp
             self.logger.debug('Object Moved (object_id: {0})'.format(self.object_id))
 
+    # TODO Should this be private? If not, need docstring
     def on_stopped_moving(self, msg):  # pylint: disable=unused-argument
         now = time.time()
         self.last_event_time = now
@@ -404,6 +405,7 @@ class LightCube(util.Component):
         # @TODO: Figure out events
         self.logger.debug('Object Stopped Moving (object_id: {0} after a duration of {1})'.format(self.object_id, move_duration))
 
+    # TODO Should this be private? If not, need docstring
     def on_up_axis_changed(self, msg):
         now = time.time()
         self.up_axis = msg.up_axis
@@ -413,6 +415,7 @@ class LightCube(util.Component):
         # @TODO: Figure out events
         self.logger.debug('Object Up Axis Changed (object_id: {0} now has up axis {1})'.format(self.object_id, msg.up_axis))
 
+    # TODO Should this be private? If not, need docstring
     def on_observed(self, msg):
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
@@ -425,6 +428,7 @@ class LightCube(util.Component):
         self._on_observed(image_rect, msg.timestamp)
         self._top_face_orientation_rad = msg.top_face_orientation_rad
 
+    # TODO Should this be private? If not, need docstring
     def on_connection_state_changed(self, connected, factory_id):
         if self._factory_id != factory_id:
             self.logger.debug('Factory id changed from {0} to {1}'.format(self._factory_id, factory_id))

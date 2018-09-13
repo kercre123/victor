@@ -22,19 +22,17 @@ __all__ = ['MAX_HEAD_ANGLE', 'MIN_HEAD_ANGLE', 'AsyncRobot', 'Robot']
 import asyncio
 import configparser
 import functools
-import logging
 from pathlib import Path
 
 from . import (animation, backpack, behavior, camera, connection,
                events, exceptions, faces, motors,
-               oled_face, photos, proximity, sync, util,
+               screen, photos, proximity, sync, util,
                viewer, world)
 from .messaging import protocol
 
-_MODULE_LOGGER = logging.getLogger(__name__)
-
 # Constants
 
+# TODO These two constants come out very ugly in the docs
 #: The minimum angle the robot's head can be set to
 MIN_HEAD_ANGLE = util.degrees(-22)
 
@@ -45,7 +43,7 @@ MAX_HEAD_ANGLE = util.degrees(45)
 # MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
 
 # TODO Consider adding Cozmo's LiftPosition class
-# TODO How are we deciding was has a leading underscore or not in Robot class?
+# TODO How are we deciding what has a leading underscore or not in Robot class?
 
 
 class Robot:
@@ -139,7 +137,7 @@ class Robot:
         self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
         self._motors: motors.MotorComponent = None
-        self._oled: oled_face.OledComponent = None
+        self._screen: screen.ScreenComponent = None
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
         self._viewer: viewer.ViewerComponent = None
@@ -183,22 +181,26 @@ class Robot:
 
     @property
     def robot(self) -> 'Robot':
+        """A reference to the Robot instance."""
         return self
 
     @property
     def anim(self) -> animation.AnimationComponent:
+        """A reference to the AnimationComponent instance."""
         if self._anim is None:
             raise exceptions.VectorNotReadyException("AnimationComponent is not yet initialized")
         return self._anim
 
     @property
     def backpack(self) -> backpack.BackpackComponent:
+        """A reference to the BackpackComponent instance."""
         if self._backpack is None:
             raise exceptions.VectorNotReadyException("BackpackComponent is not yet initialized")
         return self._backpack
 
     @property
     def behavior(self) -> behavior.BehaviorComponent:
+        """A reference to the BehaviorComponent instance."""
         return self._behavior
 
     @property
@@ -218,24 +220,28 @@ class Robot:
 
     @property
     def faces(self) -> faces.FaceComponent:
+        """A reference to the FaceComponent instance."""
         if self._faces is None:
             raise exceptions.VectorNotReadyException("FaceComponent is not yet initialized")
         return self._faces
 
     @property
     def motors(self) -> motors.MotorComponent:
+        """A reference to the MotorComponent instance."""
         if self._motors is None:
             raise exceptions.VectorNotReadyException("MotorComponent is not yet initialized")
         return self._motors
 
     @property
-    def oled(self) -> oled_face.OledComponent:
-        if self._oled is None:
-            raise exceptions.VectorNotReadyException("OledComponent is not yet initialized")
-        return self._oled
+    def screen(self) -> screen.ScreenComponent:
+        """A reference to the ScreenComponent instance."""
+        if self._screen is None:
+            raise exceptions.VectorNotReadyException("ScreenComponent is not yet initialized")
+        return self._screen
 
     @property
     def photos(self) -> photos.PhotographComponent:
+        """A reference to the PhotographComponent instance."""
         if self._photos is None:
             raise exceptions.VectorNotReadyException("PhotographyComponent is not yet initialized")
         return self._photos
@@ -269,6 +275,7 @@ class Robot:
 
     @property
     def world(self) -> world.World:
+        """A reference to the World instance, or None if the WorldComponent is not yet initialized."""
         if self._world is None:
             raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
         return self._world
@@ -284,7 +291,7 @@ class Robot:
         return self._pose
 
     @property
-    def pose_angle_rad(self):
+    def pose_angle_rad(self) -> float:
         """Vector's pose angle (heading in X-Y plane).
 
         .. code-block:: python
@@ -294,7 +301,7 @@ class Robot:
         return self._pose_angle_rad
 
     @property
-    def pose_pitch_rad(self):
+    def pose_pitch_rad(self) -> float:
         """Vector's pose pitch (angle up/down).
 
         .. code-block:: python
@@ -304,7 +311,7 @@ class Robot:
         return self._pose_pitch_rad
 
     @property
-    def left_wheel_speed_mmps(self):
+    def left_wheel_speed_mmps(self) -> float:
         """Vector's left wheel speed in mm/sec
 
         .. code-block:: python
@@ -314,7 +321,7 @@ class Robot:
         return self._left_wheel_speed_mmps
 
     @property
-    def right_wheel_speed_mmps(self):
+    def right_wheel_speed_mmps(self) -> float:
         """Vector's right wheel speed in mm/sec
 
         .. code-block:: python
@@ -324,7 +331,7 @@ class Robot:
         return self._right_wheel_speed_mmps
 
     @property
-    def head_angle_rad(self):
+    def head_angle_rad(self) -> float:
         """Vector's head angle (up/down).
 
         .. code-block:: python
@@ -334,7 +341,7 @@ class Robot:
         return self._head_angle_rad
 
     @property
-    def lift_height_mm(self):
+    def lift_height_mm(self) -> float:
         """Height of Vector's lift from the ground.
 
         .. code-block:: python
@@ -344,7 +351,7 @@ class Robot:
         return self._lift_height_mm
 
     @property
-    def accel(self):
+    def accel(self) -> util.Vector3:
         """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)
 
         .. code-block:: python
@@ -354,8 +361,8 @@ class Robot:
         return self._accel
 
     @property
-    def gyro(self):
-        """:class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)
+    def gyro(self) -> util.Vector3:
+        """The current gyroscope reading (x, y, z)
 
         .. code-block:: python
 
@@ -364,7 +371,7 @@ class Robot:
         return self._gyro
 
     @property
-    def carrying_object_id(self):
+    def carrying_object_id(self) -> int:
         """The ID of the object currently being carried (-1 if none)
 
         .. code-block:: python
@@ -373,8 +380,9 @@ class Robot:
         """
         return self._carrying_object_id
 
+    # TODO Is this really a thing in Vector?
     @property
-    def carrying_object_on_top_id(self):
+    def carrying_object_on_top_id(self) -> int:
         """The ID of the object on top of the object currently being carried (-1 if none)
 
         .. code-block:: python
@@ -384,7 +392,7 @@ class Robot:
         return self._carrying_object_on_top_id
 
     @property
-    def head_tracking_object_id(self):
+    def head_tracking_object_id(self) -> int:
         """The ID of the object the head is tracking to (-1 if none)
 
         .. code-block:: python
@@ -394,7 +402,7 @@ class Robot:
         return self._head_tracking_object_id
 
     @property
-    def localized_to_object_id(self):
+    def localized_to_object_id(self) -> int:
         """The ID of the object that the robot is localized to (-1 if none)
 
         .. code-block:: python
@@ -403,8 +411,9 @@ class Robot:
         """
         return self._localized_to_object_id
 
+    # TODO Should this be in photos or somewhere else?
     @property
-    def last_image_time_stamp(self):
+    def last_image_time_stamp(self) -> int:
         """The robot's timestamp for the last image seen.
 
         .. code-block:: python
@@ -414,6 +423,7 @@ class Robot:
         return self._last_image_time_stamp
 
     # TODO If we are going to keep this, need to tell people what the values mean. See RobotStatusFlag in robotStatusAndActions.clad?
+    # TODO Needs return type
     @property
     def status(self):
         """ Describes robot status.
@@ -499,7 +509,7 @@ class Robot:
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
         self._motors = motors.MotorComponent(self)
-        self._oled = oled_face.OledComponent(self)
+        self._screen = screen.ScreenComponent(self)
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
         self._viewer = viewer.ViewerComponent(self)
@@ -565,6 +575,7 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
+    # TODO BatteryStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
@@ -576,8 +587,9 @@ class Robot:
                 print("Robot Battery Voltage: {0}".format(battery_state.battery_volts))
         """
         get_battery_state_request = protocol.BatteryStateRequest()
-        return await self.conn.interface.BatteryState(get_battery_state_request)
+        return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
+    # TODO VersionStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_version_state(self) -> protocol.VersionStateResponse:
         """Get the versioning information of the Robot
@@ -587,8 +599,9 @@ class Robot:
             version_state = robot.get_version_state()
         """
         get_version_state_request = protocol.VersionStateRequest()
-        return await self.conn.interface.VersionState(get_version_state_request)
+        return await self.conn.grpc_interface.VersionState(get_version_state_request)
 
+    # TODO NetworkStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_network_state(self) -> protocol.NetworkStateResponse:
         """Get the network information of the Robot
@@ -598,8 +611,9 @@ class Robot:
             network_state = robot.get_version_state()
         """
         get_network_state_request = protocol.NetworkStateRequest()
-        return await self.conn.interface.NetworkState(get_network_state_request)
+        return await self.conn.grpc_interface.NetworkState(get_network_state_request)
 
+    # TODO SayTextResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         """Have Vector say text!
@@ -619,7 +633,7 @@ class Robot:
         say_text_request = protocol.SayTextRequest(text=text,
                                                    use_vector_voice=use_vector_voice,
                                                    duration_scalar=duration_scalar)
-        return await self.conn.interface.SayText(say_text_request)
+        return await self.conn.grpc_interface.SayText(say_text_request)
 
 
 class AsyncRobot(Robot):
@@ -671,8 +685,10 @@ class AsyncRobot(Robot):
         super(AsyncRobot, self).__init__(*args, **kwargs)
         self.is_async = True
 
+    # TODO Add docstring
     def add_pending(self, task):
         self.pending += [task]
 
+    # TODO Add docstring
     def remove_pending(self, task):
         self.pending = [x for x in self.pending if x is not task]

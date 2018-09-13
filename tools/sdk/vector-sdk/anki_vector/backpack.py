@@ -53,7 +53,7 @@ class BackpackComponent(util.Component):
         params = lights.package_request_params((light1, light2, light3), backpack_color_profile)
         set_backpack_lights_request = protocol.SetBackpackLightsRequest(**params)
 
-        return await self.interface.SetBackpackLights(set_backpack_lights_request)
+        return await self.grpc_interface.SetBackpackLights(set_backpack_lights_request)
 
     def set_all_backpack_lights(self,
                                 light: lights.Light,

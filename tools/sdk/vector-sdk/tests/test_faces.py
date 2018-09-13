@@ -34,7 +34,7 @@ def main():
             print(f"Expression: {face.expression}")
             print(f"Timestamp: {face.timestamp}")
             print(f"Pose: {face.pose}")
-            print(f"Image Rect: {face.img_rect}")
+            print(f"Image Rect: {face.face_rect}")
             print(f"Expression score: {face.expression_score}")
             print(f"Left eye: {face.left_eye}")
             print(f"Right eye: {face.right_eye}")

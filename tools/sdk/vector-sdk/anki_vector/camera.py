@@ -84,11 +84,6 @@ class CameraComponent(util.Component):
 
         return self._latest_image
 
-    # TODO Do we really allow setting the latest image? What is the purpose of this?
-    @latest_image.setter
-    def latest_image(self, img) -> None:
-        self._latest_image = img
-
     @property
     def latest_image_id(self) -> int:
         """The most recent processed image's id received from the robot.
@@ -99,11 +94,6 @@ class CameraComponent(util.Component):
         :setter: Sets the latest image's id
         """
         return self._latest_image_id
-
-    # TODO Do we really allow setting the latest image id? What is the purpose of this?
-    @latest_image_id.setter
-    def latest_image_id(self, img_id) -> None:
-        self._latest_image_id = img_id
 
     def init_camera_feed(self) -> None:
         """Begin camera feed task"""
@@ -136,7 +126,7 @@ class CameraComponent(util.Component):
         Recieved events are parsed by a helper function."""
         try:
             req = protocol.CameraFeedRequest()
-            async for evt in self.interface.CameraFeed(req):
+            async for evt in self.grpc_interface.CameraFeed(req):
                 # If the camera feed is disabled after stream is setup, exit the stream
                 # (the camera feed on the robot is disabled internally on stream exit)
                 if not self.robot.enable_camera_feed:
