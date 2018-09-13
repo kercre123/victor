@@ -58,7 +58,8 @@ inline Image& ImageCache::ResizedEntry::Get<Image>(bool computeFromOpposite)
   if(computeFromOpposite && !_hasValidGray)
   {
     DEV_ASSERT(_hasValidRGB, "ImageCache.ResizedEntry.GetGray.NoColorAvailable");
-    _rgb.FillGray(_gray);
+    // Using the green channel by default
+    _rgb.FillGray(_gray, ImageRGB::RGBToGrayMethod::GreenChannel);
     _hasValidGray = true;
   }
   

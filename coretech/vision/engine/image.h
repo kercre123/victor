@@ -295,6 +295,12 @@ namespace Vision {
   class ImageRGB : public ImageBase<PixelRGB>
   {
   public:
+
+    enum class RGBToGrayMethod : uchar {
+      DoubleGreen,        // (R + 2*G + B)/4
+      GreenChannel,       // just use the green channel
+    };
+
     ImageRGB();
     ImageRGB(s32 nrows, s32 ncols); // allocates
     ImageRGB(s32 nrows, s32 ncols, const PixelRGB& fillValue);
@@ -320,8 +326,9 @@ namespace Vision {
     // To/From Gray:
     // (Gray->Color replicates grayscale image across all three channels.)
     ImageRGB(const Image& imageGray);             // Construct new RGB image from a gray one
-    Image ToGray() const;                         // Return a new gray image from this RGB one
-    void FillGray(Image& grayOut) const;          // Fill existing gray image from this RGB image
+    Image ToGray(const RGBToGrayMethod = RGBToGrayMethod::GreenChannel) const;                         // Return a new gray image from this RGB one
+    void FillGray(Image& grayOut, const RGBToGrayMethod = RGBToGrayMethod::GreenChannel) const;          // Fill existing gray image from this RGB image
+
     ImageRGB& SetFromGray(const Image& grayIn);   // Set this RGB image from given gray image
     ImageRGB& SetFromRGB565(const ImageRGB565& rgb565); // Set from given RGB565 image
     
@@ -343,6 +350,11 @@ namespace Vision {
 
   protected:
     virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+
+    Image ToGrayFromDoubleGreen() const;         // Return a new gray image from the green channel of this RBG image
+    void FillGrayFromDoubleGreen(Image &grayImage) const;        // Fill existing gray image from the green channel of this RGB image
+    Image ToGrayFromGreenChannel() const;         // Return a new gray image from the green channel of this RBG image
+    void FillGrayFromGreenChannel(Image &grayImage) const;        // Fill existing gray image from the green channel of this RGB image
 
   }; // class ImageRGB
   
