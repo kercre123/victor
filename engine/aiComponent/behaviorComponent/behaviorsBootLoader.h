@@ -86,6 +86,9 @@ private:
   
   bool _hasGrabbedBootBehavior = false;
   
+  // The return value of GetBootBehavior() wasn't switched to, and won't be until SetNewBehavior is called again
+  bool _pendingBehavior = false;
+  
   std::string _saveFolder;
   
   struct Behaviors {
