@@ -276,13 +276,18 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID, bool requestStac
               "BehaviorsBootLoader.SetNewBehavior.Invalid",
               "No %s", BehaviorTypesWrapper::BehaviorIDToString(behaviorID)) )
   {
-    if( behavior != _bootBehavior ) {
+    if( (behavior != _bootBehavior) || _pendingBehavior ) {
       if( _hasGrabbedBootBehavior && requestStackReset ) {
         // need to wait until Update to reset the stack, since the bsm claims
         // this class as a dependent and may not have finished init
         _behaviorToSwitchTo = behavior;
       }
       _bootBehavior = behavior;
+      
+      // If not resetting the stack, flag so that it's possible to call SetNewBehavior() again
+      // with the same behaviorID when it's time to actually switch behaviors. Otherwise this if
+      // block won't run
+      _pendingBehavior = _hasGrabbedBootBehavior && !requestStackReset;
     }
   }
 }
