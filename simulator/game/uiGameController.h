@@ -584,6 +584,8 @@ private:
   
   std::string _locale = "en-US";
   
+  bool _isStreamingImages = false;
+  
 }; // class UiGameController
   
   

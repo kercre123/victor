@@ -510,6 +510,10 @@ namespace Anki {
     
     UiGameController::~UiGameController()
     {
+      if (_isStreamingImages) {
+        SendImageRequest(ImageSendMode::Off);
+      }
+      
       if (_gameComms) {
         delete _gameComms;
       }
@@ -1041,6 +1045,8 @@ namespace Anki {
       ExternalInterface::MessageGameToEngine message;
       message.Set_ImageRequest(m);
       SendMessage(message);
+      
+      _isStreamingImages = (mode == ImageSendMode::Stream);
     }
     
     void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode)
