@@ -114,6 +114,18 @@ void RobotHealthReporter::OncePerSecondCheck()
       _memoryAlert = info.alert;
     }
   }
+
+  // Report if cpu frequency has changed
+  {
+    const uint32_t cpuFreq_kHz = osState->GetCPUFreq_kHz();
+    if (cpuFreq_kHz != _cpuFreq_kHz) {
+      DASMSG(robot_cpu_frequency, "robot.cpu_frequency", "CPU frequency has changed");
+      DASMSG_SET(i1, cpuFreq_kHz, "New CPU frequency");
+      DASMSG_SET(i2, _cpuFreq_kHz, "Old CPU frequency");
+      DASMSG_SEND();
+      _cpuFreq_kHz = cpuFreq_kHz;
+    }
+  }
 }
 
 //

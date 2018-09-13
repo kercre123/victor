@@ -50,6 +50,7 @@ class RobotHealthReporter : public IDependencyManagedComponent<RobotComponentID>
     std::map<std::string, OSState::DiskInfo> _diskInfo;
     std::string _locale;
     std::string _timezone;
+    uint32_t _cpuFreq_kHz = 0;
 
     // Reporting tasks
     void OncePerBootCheck();
