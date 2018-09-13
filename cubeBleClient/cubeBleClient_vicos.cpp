@@ -67,8 +67,15 @@ namespace {
   // Always less than 0 if there is no pending connection attempt.
   float _connectionAttemptFailTime_sec = -1.f;
   
+  // Time after which we consider the firmware check/update step to have failed.
+  // Always less than 0 if there is no firmware check/update in progress.
+  float _firmwareUpdateFailTime_sec = -1.f;
+  
   // Max time a connection attempt is allowed to take before timing out
-  const float kConnectionAttemptTimeout_sec = 10.f;
+  const float kConnectionAttemptTimeout_sec = 20.f;
+  
+  // Max time the firmware check/update step is allowed to take before timing out
+  const float kFirmwareUpdateTimeout_sec = 15.f;
 }
 
   
@@ -132,14 +139,27 @@ bool CubeBleClient::UpdateInternal()
   }
   
   
-  // Check for connection attempt timeout
+  // Check for connection attempt timeout or firmware check/update timeout
   if (_cubeConnectionState == CubeConnectionState::PendingConnect) {
     const float now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
-    if (now_sec > _connectionAttemptFailTime_sec) {
-      // Connection attempt has timed out
-      PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.ConnectionAttemptTimeout",
-                          "Connection attempt has taken more than %.2f seconds - aborting.",
-                          kConnectionAttemptTimeout_sec);
+    // Check if we have just started firmware checking/updating
+    if (_firmwareUpdateFailTime_sec < 0.f &&
+        _bleClient->IsPendingFirmwareCheckOrUpdate()) {
+      PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.FirmwareCheckStart",
+                       "Firmware check/update started for cube %s",
+                       _currentCube.c_str());
+      _firmwareUpdateFailTime_sec = now_sec + kFirmwareUpdateTimeout_sec;
+      _connectionAttemptFailTime_sec = -1.f;
+    }
+    
+    const bool connectionAttemptTimedOut = (_connectionAttemptFailTime_sec > 0.f) && (now_sec > _connectionAttemptFailTime_sec);
+    const bool firmwareUpdateTimedOut = (_firmwareUpdateFailTime_sec > 0.f) && (now_sec > _firmwareUpdateFailTime_sec);
+    
+    if (connectionAttemptTimedOut || firmwareUpdateTimedOut) {
+      PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.ConnectionTimeout",
+                          "%s has taken more than %.2f seconds - aborting.",
+                          connectionAttemptTimedOut ? "Connection attempt" : "Firmware check or update",
+                          connectionAttemptTimedOut ? kConnectionAttemptTimeout_sec : kFirmwareUpdateTimeout_sec);
       // Inform callbacks that the connection attempt has failed
       for (const auto& callback : _connectionFailedCallbacks) {
         callback(_currentCube);
@@ -150,6 +170,7 @@ bool CubeBleClient::UpdateInternal()
     }
   } else {
     _connectionAttemptFailTime_sec = -1.f;
+    _firmwareUpdateFailTime_sec = -1.f;
   }
   
   
