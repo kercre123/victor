@@ -88,7 +88,7 @@ func newDatagramServer(conn net.PacketConn) (Server, error) {
 	// start reader thread
 	go func() {
 		defer closer.Do()
-		buf := make([]byte, 16384)
+		buf := make([]byte, 32768)
 		for {
 			if util.CanSelect(kill) {
 				return

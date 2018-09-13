@@ -63,7 +63,7 @@ func newBaseConn(conn io.ReadWriteCloser) Conn {
 	ret.wg.Add(1)
 	go func() {
 		defer ret.wg.Done()
-		buf := make([]byte, 8192)
+		buf := make([]byte, 32768)
 		for {
 			n, err := conn.Read(buf)
 			if err != nil {
