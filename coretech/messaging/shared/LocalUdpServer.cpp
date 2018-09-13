@@ -162,23 +162,33 @@ ssize_t LocalUdpServer::Send(const char* data, size_t size)
   }
 
   //LOG_DEBUG("LocalUdpServer.Send", "Sending %zu bytes to %s", size, _peername.c_str());
-  ssize_t bytes_sent = 0;
-  if (_bindClients) {
-    bytes_sent = send(_socketfd, data, size, 0);
-  }
-  else {
-    const socklen_t socklen = (socklen_t) SUN_LEN(&_client);
-    bytes_sent = sendto(_socketfd, data, size, 0, (sockaddr*)&_client, socklen);
+  int retry = 5;
+  while(retry > 0) {
+    ssize_t bytes_sent = 0;
+    if (_bindClients) {
+      bytes_sent = send(_socketfd, data, size, 0);
+    }
+    else {
+      const socklen_t socklen = (socklen_t) SUN_LEN(&_client);
+      bytes_sent = sendto(_socketfd, data, size, 0, (sockaddr*)&_client, socklen);
+    }
+
+    if (bytes_sent != size) {
+      if (errno == EDEADLK || errno == EAGAIN) {
+        --retry;
+        usleep(64); // 64ms or 2x a 32ms update loop
+      } else {
+        // If send fails, log it and report it to caller.  For everything except EDEADLK and EAGAIN it is caller's
+        // responsibility to retry at some appropriate interval.
+        LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %zu %d (%s)", bytes_sent, size, errno, strerror(errno));
+        break;
+      }
+    } else {
+      return bytes_sent;
+    }
   }
 
-  if (bytes_sent != size) {
-    // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
-    // some appropriate interval.
-    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %zu (%s)", bytes_sent, size, strerror(errno));
-  }
-
-  return bytes_sent;
-
+  return -1;
 }
 
 ssize_t LocalUdpServer::Recv(char* data, size_t maxSize)
