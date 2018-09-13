@@ -612,6 +612,31 @@ GTEST_TEST(ImageCache, DifferingSensorAndFullSize)
   ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
 }
 
+GTEST_TEST(ImageCache, PriorityResizeRGB)
+{
+  using namespace Anki::Vision;
+
+  ImageCache cache;
+
+  const s32 nrows = 16;
+  const s32 ncols = 32;
+  const f32 fullScaleFactor = 0.5f;
+  ImageRGB sensorImg(nrows, ncols);
+  cache.Reset(sensorImg, fullScaleFactor);
+
+  // We do not want to compute color data from an existing cached gray entry at the same size
+  // if there's color data to resize from instead
+  ImageCache::GetType getType;
+  const Image imgGray = cache.GetGray(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+
+  const ImageRGB imgRGB = cache.GetRGB(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(ImageCache::GetType::ResizeIntoExisting, getType);
+  
+  // the grayscale image should not have been invalidated by the request for RGB
+  const Image imgGray2 = cache.GetGray(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
+}
 
 GTEST_TEST(ImageRGB, NormalizedColor)
 {

@@ -125,8 +125,8 @@ private:
   {
     Image    _gray;
     ImageRGB _rgb;
-    bool     _hasValidGray;
-    bool     _hasValidRGB;
+    bool     _hasValidGray = false;
+    bool     _hasValidRGB  = false;
     
   public:
     template<class ImageType>
