@@ -35,6 +35,8 @@ protected:
   virtual void TransitionToShowClockInternal() override;
   virtual bool WantsToBeActivatedBehavior() const override;
 
+  virtual bool ShouldDimLeadingZeros() const override;
+
 private:
   BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
 

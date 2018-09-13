@@ -60,6 +60,14 @@ bool BehaviorDisplayWallTime::WantsToBeActivatedBehavior() const
   return WallTime::getInstance()->GetApproximateLocalTime(unused);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDisplayWallTime::ShouldDimLeadingZeros() const
+{
+  // in 24 hour clocks, show leading zeros as full brightness (e.g. 00:07), otherwise let them be dim (e.g. 01:30)
+  const bool is24Hour = ShouldDisplayAsMilitaryTime();
+  return !is24Hour;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFunction() const

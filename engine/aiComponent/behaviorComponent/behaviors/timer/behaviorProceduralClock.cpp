@@ -261,7 +261,7 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
 
   // set digits
-  bool isLeadingZero = true;
+  bool isLeadingZero = ShouldDimLeadingZeros();
 
   const std::map<Vision::SpriteBoxName, int> digitMap = _instanceParams.getDigitFunction(clockOffset_s);
 
