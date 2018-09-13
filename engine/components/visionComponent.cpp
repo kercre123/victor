@@ -2467,6 +2467,22 @@ namespace Vector {
 
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
+    if(oldName == newName)
+    {
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.RenameFace.SameOldAndNewNames",
+                    "Ignoring request to rename face %d from %s to %s",
+                    faceID,
+                    Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+                    Util::HidePersonallyIdentifiableInfo(newName.c_str()));
+      {
+        DASMSG(vision_enrolled_names_no_change, "vision.enrolled_names.no_change",
+               "An enrolled face/name was left unchanged");
+        DASMSG_SET(i1, faceID, "The face ID (int)");
+        DASMSG_SEND();
+      }
+      return RESULT_OK;
+    }
+    
     Vision::RobotRenamedEnrolledFace renamedFace;
     Lock();
     Result result = _visionSystem->RenameFace(faceID, oldName, newName, renamedFace);
