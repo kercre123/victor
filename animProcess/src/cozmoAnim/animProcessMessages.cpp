@@ -420,7 +420,8 @@ void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::Star
     return;
   }
 
-  micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
+  micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType),
+                                            msg.playGetInFromAnimProcess);
 }
 
 void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTriggerWordResponse& msg)

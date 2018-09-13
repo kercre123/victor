@@ -71,7 +71,7 @@ public:
   // should respond to the trigger word being detected
   // 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void StartWakeWordlessStreaming( CloudMic::StreamType streamType );
+  void StartWakeWordlessStreaming( CloudMic::StreamType streamType, bool playGetInFromAnimProcess = false );
   
   // Define how the user intent component should respond to the trigger word being detected
   void DisableEngineResponseToTriggerWord(const std::string& disablerName, bool disable);

@@ -145,7 +145,7 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
 }
 
-void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
+void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
   if(HasStreamingJob())
   {
@@ -201,7 +201,13 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
   if(showStreamState->HasValidTriggerResponse()){
     SetWillStream(true);
   }
-  showStreamState->SetPendingTriggerResponseWithoutGetIn(callback);
+
+  if(playGetInFromAnimProcess){
+    showStreamState->SetPendingTriggerResponseWithGetIn(callback);
+  }
+  else {
+    showStreamState->SetPendingTriggerResponseWithoutGetIn(callback);
+  }
 }
 
 void MicDataSystem::FakeTriggerWordDetection()

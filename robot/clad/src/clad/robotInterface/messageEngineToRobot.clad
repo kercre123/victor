@@ -432,7 +432,8 @@ message StartPlaybackAudio
 
 message StartWakeWordlessStreaming
 {
-  uint_8 streamType
+  uint_8 streamType,
+  bool   playGetInFromAnimProcess 
 }
 
 message SetTriggerWordResponse

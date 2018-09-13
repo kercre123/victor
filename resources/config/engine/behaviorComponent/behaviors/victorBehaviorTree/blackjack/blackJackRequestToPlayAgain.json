@@ -11,6 +11,5 @@
   "maxNumberOfReprompts"           : 1,
   "stopListeningOnIntents"         : true,
   "playListeningGetIn"             : true,
-  "playListeningGetOut"            : true,
-  "backpackLights"                 : true
+  "playListeningGetOut"            : true
 }

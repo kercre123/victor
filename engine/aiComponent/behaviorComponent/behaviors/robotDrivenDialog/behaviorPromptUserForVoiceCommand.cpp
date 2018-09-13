@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
@@ -23,7 +24,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
@@ -46,14 +46,10 @@ namespace {
   const char* kVocalResponseToIntentKey           = "vocalResponseToIntentString";
   const char* kVocalResponseToBadIntentKey        = "vocalResponseToBadIntentString";
   const char* kVocalRepromptKey                   = "vocalRepromptString";
-  const char* kListenGetInOverrideKey             = "listenGetInOverrideTrigger";
-  const char* kListenAnimOverrideKey              = "listenAnimOverrideTrigger";
-  const char* kListenGetOutOverrideKey            = "listenGetOutOverrideTrigger";
   const char* kStopListeningOnIntentsKey          = "stopListeningOnIntents";
-  const char* kListeningGetInKey                  = "playListeningGetIn";
-  const char* kListeningGetOutKey                 = "playListeningGetOut";
+  const char* kPlayListeningGetInKey              = "playListeningGetIn";
+  const char* kPlayListeningGetOutKey             = "playListeningGetOut";
   const char* kMaxRepromptKey                     = "maxNumberOfReprompts";
-  const char* kProceduralBackpackLights           = "backpackLights";
   constexpr float kMaxRecordTime_s                = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
 }
 
@@ -69,9 +65,6 @@ BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 , earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid )
 , ttsBehaviorID(kDefaultTTSBehaviorID)
 , ttsBehavior(nullptr)
-, listenGetInOverrideTrigger(AnimationTrigger::Count)
-, listenAnimOverrideTrigger(AnimationTrigger::Count)
-, listenGetOutOverrideTrigger(AnimationTrigger::Count)
 , maxNumReprompts(0)
 , shouldTurnToFace(false)
 , stopListeningOnIntents(true)
@@ -86,7 +79,6 @@ BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 BehaviorPromptUserForVoiceCommand::DynamicVariables::DynamicVariables()
 : state(EState::TurnToFace)
 , intentStatus(EIntentStatus::NoIntentHeard)
-, isListening(false)
 , repromptCount(0)
 {
 
@@ -128,27 +120,14 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
   JsonTools::GetValueOptional(config, kVocalResponseToBadIntentKey, _iConfig.vocalResponseToBadIntentString);
   _iConfig.wasRepromptSetFromJson = JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
 
-  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  JsonTools::GetCladEnumFromJSON(config, kListenGetInOverrideKey, _iConfig.listenGetInOverrideTrigger, 
-                                 debugName, false);
-  JsonTools::GetCladEnumFromJSON(config, kListenAnimOverrideKey, _iConfig.listenAnimOverrideTrigger,
-                                 debugName, false);
-  JsonTools::GetCladEnumFromJSON(config, kListenGetOutOverrideKey, _iConfig.listenGetOutOverrideTrigger,
-                                 debugName, false);
-
-   // Should we exit the behavior as soon as an intent is pending, or finish what we're doing first?
-  // TODO:(str) interrupting behaviors will prevent the ending earcon from playing
+  // Should we exit the behavior as soon as an intent is pending, or finish what we're doing first?
   JsonTools::GetValueOptional(config, kStopListeningOnIntentsKey, _iConfig.stopListeningOnIntents);
   // play the getIn animation for the listening anim?
-  JsonTools::GetValueOptional(config, kListeningGetInKey, _iConfig.playListeningGetIn);
+  JsonTools::GetValueOptional(config, kPlayListeningGetInKey, _iConfig.playListeningGetIn);
   // play the getOut animation for the listening anim?
-  JsonTools::GetValueOptional(config, kListeningGetOutKey, _iConfig.playListeningGetOut);
+  JsonTools::GetValueOptional(config, kPlayListeningGetOutKey, _iConfig.playListeningGetOut);
   // Should we repeat the prompt if it fails? If so, how many times
   JsonTools::GetValueOptional(config, kMaxRepromptKey, _iConfig.maxNumReprompts);
-  // Should behavior have fallback backpack lights - these will stay on the whole behavior lifecycle
-  // while the lights triggered by the anim process to indicate streaming may turn on/off as streams
-  // open/close
-  JsonTools::GetValueOptional(config, kProceduralBackpackLights, _iConfig.backpackLights);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -180,7 +159,7 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorOperationModifiers(BehaviorOp
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
-  modifiers.behaviorAlwaysDelegates = true;
+  modifiers.behaviorAlwaysDelegates = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -195,17 +174,13 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
     kVocalResponseToIntentKey,
     kVocalResponseToBadIntentKey,
     kVocalRepromptKey,
-    kListenGetInOverrideKey,
-    kListenAnimOverrideKey,
-    kListenGetOutOverrideKey,
     kVocalResponseToIntentKey,
     kVocalResponseToBadIntentKey,
     kVocalRepromptKey,
     kStopListeningOnIntentsKey,
     kMaxRepromptKey,
-    kProceduralBackpackLights,
-    kListeningGetInKey,
-    kListeningGetOutKey,
+    kPlayListeningGetInKey,
+    kPlayListeningGetOutKey,
     kStreamType
   };
 
@@ -254,6 +229,15 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
 
+  // Configure streaming params with defaults in case they're not set due to behaviorStack state
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  const auto postAudioEvent
+    = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
+                                  AudioMetaData::GameObjectType::Behavior, 0 );
+  SmartPushResponseToTriggerWord(AnimationTrigger::VC_ListeningGetIn,
+                                 postAudioEvent,
+                                 StreamAndLightEffect::StreamingEnabled );
+
   if(_iConfig.shouldTurnToFace){
     TransitionToTurnToFace();
   } else {
@@ -264,8 +248,6 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::OnBehaviorDeactivated()
 {
-  TurnOffBackpackLights();
-
   // Any resultant intents should be handled by external behaviors or transitions, let 'em roll
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled(true);
 }
@@ -278,6 +260,17 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
   }
 
   if(EState::Listening == _dVars.state){
+    if(!IsControlDelegated()){
+      bool waitingOnGetIn = _iConfig.playListeningGetIn &&
+                            GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish();
+      if(!waitingOnGetIn){
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningLoop,
+                                                      0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
+                                                      std::max(kMaxRecordTime_s, 1.0f)),
+                            &BehaviorPromptUserForVoiceCommand::TransitionToThinking);
+      }
+    }
+
     CheckForPendingIntents();
     if((EIntentStatus::IntentHeard == _dVars.intentStatus) && (_iConfig.stopListeningOnIntents)){
       // End the listening anim, which should push us into Thinking
@@ -332,47 +325,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
-  // Turn on backpack lights to indicate streaming
-  static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
-  {
-    .onColors               = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
-    .offColors              = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
-    .onPeriod_ms            = {{0,0,0}},
-    .offPeriod_ms           = {{0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
-
-  if(_iConfig.backpackLights){
-    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
-    blc.StartLoopingBackpackAnimation(kStreamingLights, _dVars.lightsHandle);
-  }
-
-
   SET_STATE(Listening);
-
-  // Start the getIn animation, then go straight into the listening loop from the callback
-  auto callback = [this](){
-    GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming(_iConfig.streamType);
-
-    AnimationTrigger listenTrigger = (AnimationTrigger::Count != _iConfig.listenAnimOverrideTrigger) ?
-      _iConfig.listenAnimOverrideTrigger : AnimationTrigger::VC_ListeningLoop;
-
-    DelegateIfInControl(new TriggerAnimationAction(listenTrigger,
-                                                   0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
-                                                   std::max(kMaxRecordTime_s, 1.0f)),
-                        &BehaviorPromptUserForVoiceCommand::TransitionToThinking);
-  };
-
-  if(_iConfig.playListeningGetIn){
-    AnimationTrigger listenGetInTrigger = (AnimationTrigger::Count != _iConfig.listenGetInOverrideTrigger) ?
-      _iConfig.listenGetInOverrideTrigger : AnimationTrigger::VC_ListeningGetIn;
-
-    DelegateIfInControl(new TriggerAnimationAction(listenGetInTrigger), callback);
-  } else {
-    callback();
-  }
+  GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming(_iConfig.streamType, _iConfig.playListeningGetIn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -381,9 +335,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToThinking()
   SET_STATE(Thinking);
 
   // Play the Listening getOut, then close out the streaming stuff in case an intent was just a little late
-  auto callback = [this](){    
+  auto callback = [this](){
     // Play "earCon end"
-    TurnOffBackpackLights();
     Audio::EngineRobotAudioClient& rac = GetBEI().GetRobotAudioClient();
 
     if(EIntentStatus::IntentHeard == _dVars.intentStatus){
@@ -400,14 +353,10 @@ void BehaviorPromptUserForVoiceCommand::TransitionToThinking()
   };
 
   if(_iConfig.playListeningGetOut){
-    AnimationTrigger listenGetOutTrigger = (AnimationTrigger::Count != _iConfig.listenGetOutOverrideTrigger) ?
-      _iConfig.listenGetOutOverrideTrigger : AnimationTrigger::VC_ListeningGetOut;
-
-    DelegateIfInControl(new TriggerAnimationAction(listenGetOutTrigger), callback);
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningGetOut), callback);
   } else {
     callback();
   }
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -478,16 +427,6 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 
   CancelSelf();
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::TurnOffBackpackLights()
-{
-  if(_iConfig.backpackLights && _dVars.lightsHandle.IsValid()){
-    BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
-    blc.StopLoopingBackpackAnimation(_dVars.lightsHandle);
-  }
-}
-
 
 } // namespace Vector 
 } // namespace Anki

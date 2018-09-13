@@ -607,10 +607,14 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
 }
 
 
-void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType streamType )
+void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType streamType, bool playGetInFromAnimProcess )
 {
-  RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType) };
+  RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType), playGetInFromAnimProcess};
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
+  if(playGetInFromAnimProcess){
+    _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess;
+    _waitingForTriggerWordGetInToFinish_setTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
 }
 
 
