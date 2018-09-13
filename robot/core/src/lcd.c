@@ -66,6 +66,10 @@ static const INIT_SCRIPT display_on_scr[] = {
   {0}
 };
 
+static const INIT_SCRIPT sleep_in[] = {
+  { 0x10, 1, { 0x00 }, 5 },
+  {0}
+};
 
 /************* LCD SPI Interface ***************/
 
@@ -258,8 +262,9 @@ int lcd_init(void) {
   gpio_set_value(RESET_PIN, 0);
   microwait(50);
   gpio_set_value(RESET_PIN, 1);
-  microwait(50);
-
+  // Wait 120 milliseconds after releasing reset before sending commands
+  milliwait(120);
+  
   lcd_device_init();
 
   return 0;
@@ -275,8 +280,7 @@ void lcd_shutdown(void) {
   }
 
   if (lcd_fd) {
-    static const uint8_t SLEEP = 0x10;
-    lcd_spi_transfer(TRUE, 1, &SLEEP);
+    lcd_run_script(sleep_in);
     close(lcd_fd);
   }
   if (DnC_PIN) {
