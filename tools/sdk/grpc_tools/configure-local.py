@@ -30,6 +30,7 @@ def main():
     config["Local"]["ip"] = "localhost"
     config["Local"]["name"] = "Vector-Local"
     config["Local"]["guid"] = "local"
+    config["Local"]["port"] = "8443"
     with os.fdopen(os.open(config_file, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as f:
         config.write(f)
     print(colored("SUCCESS!", "green"))

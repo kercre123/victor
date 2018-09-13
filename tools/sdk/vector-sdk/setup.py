@@ -26,13 +26,21 @@ def fetch_version():
 VERSION_DATA = fetch_version()
 VERSION = VERSION_DATA['__version__']
 
-def get_requirements() -> list:
+def get_requirements(filename = 'requirements.txt') -> list:
     """Load the requirements from requirements.txt into a list"""
     reqs = []
-    with open(os.path.join(HERE, 'requirements.txt')) as requirements_file:
+    with open(os.path.join(HERE, filename)) as requirements_file:
         for line in requirements_file:
             reqs.append(line.strip())
     return reqs
+
+def get_extra_requirements() -> dict:
+    """Load any extra requirements from requirements_{name}.txt into a dict of {name: [requirements]}"""
+    extras = {}
+    for f in [f for f in os.listdir() if f.startswith("requirements_") and f.endswith(".txt")]:
+        extras[f.replace("requirements_", "").replace(".txt", "")] = get_requirements(f)
+    extras['all'] = list(set([x for k, v in extras.items() for x in v]))
+    return extras
 
 setup(
     name='anki_vector',
@@ -54,4 +62,5 @@ setup(
     zip_safe=True,
     keywords='anki vector robot robotics sdk'.split(),
     install_requires=get_requirements(),
+    extras_require=get_extra_requirements(),
 )
