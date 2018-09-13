@@ -593,7 +593,10 @@ func SendFaceDataAsChunks(in *extint.DisplayFaceImageRGBRequest, chunkCount int,
 
 		firstByte := (pixelsPerChunk * 2) * i
 		finalByte := firstByte + (pixelCount * 2)
-		slicedBinaryData := in.FaceData[firstByte:finalByte] // TODO: Make this not implode on empty
+		if len(in.FaceData) < finalByte {
+			return grpc.Errorf(codes.InvalidArgument, "Invalid size of image")
+		}
+		slicedBinaryData := in.FaceData[firstByte:finalByte]
 
 		for j := 0; j < pixelCount; j++ {
 			uintAsBytes := slicedBinaryData[j*2 : j*2+2]
@@ -616,7 +619,10 @@ func (service *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.D
 	const totalPixels = 17664
 	chunkCount := (totalPixels + faceImagePixelsPerChunk + 1) / faceImagePixelsPerChunk
 
-	SendFaceDataAsChunks(in, chunkCount, faceImagePixelsPerChunk, totalPixels)
+	err := SendFaceDataAsChunks(in, chunkCount, faceImagePixelsPerChunk, totalPixels)
+	if err != nil {
+		return nil, err
+	}
 
 	return &extint.DisplayFaceImageRGBResponse{
 		Status: &extint.ResponseStatus{
@@ -1592,7 +1598,7 @@ func ValidateActionTag(idTag int32) error {
 	firstTag := int32(extint.ActionTagConstants_FIRST_SDK_TAG)
 	lastTag := int32(extint.ActionTagConstants_LAST_SDK_TAG)
 	if idTag < firstTag || idTag > lastTag {
-		return grpc.Errorf(codes.Internal, "Invalid Action tag_id")
+		return grpc.Errorf(codes.InvalidArgument, "Invalid Action tag_id")
 	}
 
 	return nil
@@ -1624,7 +1630,6 @@ func (service *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequ
 	response.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
-	log.Printf("Received rpc response GoToPose(%#v)\n", in)
 	return response, nil
 }
 
@@ -1974,7 +1979,6 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	}
 
 	for result := range cameraFeedChannel {
-
 		imageChunk := result.GetImageChunk()
 		readyToSend, err := UnpackCameraImageChunk(imageChunk, &cache)
 		if err != nil {

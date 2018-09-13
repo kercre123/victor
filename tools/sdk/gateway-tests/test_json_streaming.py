@@ -18,11 +18,11 @@ def test_event(vector_connection):
     vector_connection.send("v1/event_stream", p.EventRequest(), p.EventResponse(), stream=100)
 
 @pytest.mark.parametrize("request_params", [
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.UNKNOWN)},
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.OVERRIDE_ALL)},
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.TOP_PRIORITY_AI)},
-    {"control_request": p.ControlRequest()},
-    {"control_release": p.ControlRelease()}
+    pytest.param({"control_request": p.ControlRequest(priority=p.ControlRequest.UNKNOWN)}, id="priority=UNKNOWN"),
+    pytest.param({"control_request": p.ControlRequest(priority=p.ControlRequest.OVERRIDE_ALL)}, id="priority=OVERRIDE_ALL"),
+    pytest.param({"control_request": p.ControlRequest(priority=p.ControlRequest.TOP_PRIORITY_AI)}, id="priority=TOP_PRIORITY_AI"),
+    pytest.param({"control_request": p.ControlRequest()}, id="default_request"),
+    pytest.param({"control_release": p.ControlRelease()}, id="release"),
 ])
 def test_assume_behavior_control(vector_connection, request_params):
     vector_connection.send("v1/assume_behavior_control", p.BehaviorControlRequest(**request_params), p.BehaviorControlResponse(), stream=10)

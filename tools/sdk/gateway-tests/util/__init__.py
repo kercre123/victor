@@ -1,4 +1,5 @@
 import configparser
+import http
 import json
 import os
 from pathlib import Path
@@ -52,11 +53,27 @@ class Connection:
         self.session.mount("https://", host_header_ssl.HostHeaderSSLAdapter())
 
     @staticmethod
+    def custom_callback(response_fn=None, proto_fn=None):
+        def callback(response, response_type):
+            print("Default response: {}".format(colored(response.content, "cyan")))
+            if response_fn is not None:
+                response_fn(response)
+            Parse(response.content, response_type, ignore_unknown_fields=True)
+            print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
+            if proto_fn is not None:
+                proto_fn(response_type)
+        return callback
+
+    @staticmethod
+    def callback_with_status(status, proto_fn=None):
+        def response_fn(response):
+            code = response.status_code
+            assert code == status, "Received status code {} {} expecting {} {}".format(code, http.client.responses[code], status, http.client.responses[status])
+        return Connection.custom_callback(response_fn=response_fn, proto_fn=proto_fn)
+
+    @staticmethod
     def default_callback(response, response_type):
-        print("Default response: {}".format(colored(response.content, "cyan")))
-        assert response.status_code == 200, "Received failure status_code: {}".format(response.status_code)
-        Parse(response.content, response_type, ignore_unknown_fields=True)
-        print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
+        Connection.callback_with_status(http.client.OK)(response, response_type)
 
     @staticmethod
     def default_stream_callback(response, response_type, iterations=10):

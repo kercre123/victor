@@ -181,7 +181,6 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 		}(idx, listener, msg)
 	}
 	wg.Wait()
-
 }
 
 func (manager *EngineProtoIpcManager) ProcessMessages() {

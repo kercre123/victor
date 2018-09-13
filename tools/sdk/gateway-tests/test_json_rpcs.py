@@ -1,3 +1,4 @@
+import http
 import json
 import os
 import sys
@@ -9,7 +10,7 @@ try:
 except ImportError:
     sys.exit("Error: This script requires you to install the Vector SDK")
 
-from util import vector_connection
+from util import vector_connection, Connection
 
 # NOTE: Crashes when too long. Being temporarily removed by Ross until it works.
 # def test_status_history(vector_connection):
@@ -21,8 +22,8 @@ def test_protocol_version(vector_connection):
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
 
-# def test_display_face_image_rgb(vector_connection):
-#     vector_connection.send("v1/display_face_image_rgb", p.DisplayFaceImageRGBRequest(), p.DisplayFaceImageRGBResponse())
+def test_display_face_image_rgb(vector_connection):
+    vector_connection.send("v1/display_face_image_rgb", p.DisplayFaceImageRGBRequest(), p.DisplayFaceImageRGBResponse())
 
 def test_app_intent(vector_connection):
     vector_connection.send("v1/app_intent", p.AppIntentRequest(), p.AppIntentResponse())
@@ -48,11 +49,17 @@ def test_set_face_to_enroll(vector_connection):
 def test_enable_vision_mode(vector_connection):
     vector_connection.send("v1/enable_vision_mode", p.EnableVisionModeRequest(), p.EnableVisionModeResponse())
 
-def test_go_to_pose(vector_connection):
-    vector_connection.send("v1/go_to_pose", p.GoToPoseRequest(), p.GoToPoseResponse())
+@pytest.mark.parametrize("proto,callback", [
+    pytest.param(p.GoToPoseRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="Bad tag_id"),
+])
+def test_go_to_pose(vector_connection, proto, callback):
+    vector_connection.send("v1/go_to_pose", proto, p.GoToPoseResponse(), callback=callback)
 
-def test_dock_with_cube(vector_connection):
-    vector_connection.send("v1/dock_with_cube", p.DockWithCubeRequest(), p.DockWithCubeResponse())
+@pytest.mark.parametrize("proto,callback", [
+    pytest.param(p.DockWithCubeRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="Bad tag_id"),
+])
+def test_dock_with_cube(vector_connection, proto, callback):
+    vector_connection.send("v1/dock_with_cube", proto, p.DockWithCubeResponse(), callback=callback)
 
 # NOTE: hangs forever (needs behavior control maybe)
 # def test_drive_off_charger(vector_connection):
@@ -88,18 +95,18 @@ def test_pull_jdocs(vector_connection):
     vector_connection.send("v1/pull_jdocs", p.PullJdocsRequest(), p.PullJdocsResponse())
 
 @pytest.mark.parametrize("data", [
-    '{"settings": {"default_location":"San Francisco, California"}}',
-    '{"settings": {"eye_color": 0}}',
-    '{"settings": {"eye_color": 1}}',
-    '{"settings": {"eye_color": 2}}',
-    '{"settings": {"eye_color": 3}}',
-    '{"settings": {"eye_color": 4}}',
-    '{"settings": {"eye_color": 5}}',
-    '{"settings": {"eye_color": 6}}',
-    '{"settings": {"eye_color": 7}}',
-    '{"settings": {"eye_color": -1}}',
-    '{"settings":{"clock_24_hour":true,"eye_color":5}}',
-    '{"settings":{"clock_24_hour":true}}',
+    pytest.param('{"settings": {"default_location":"San Francisco, California"}}', id="location"),
+    pytest.param('{"settings": {"eye_color": 0}}', id="eye_color 0"),
+    pytest.param('{"settings": {"eye_color": 1}}', id="eye_color 1"),
+    pytest.param('{"settings": {"eye_color": 2}}', id="eye_color 2"),
+    pytest.param('{"settings": {"eye_color": 3}}', id="eye_color 3"),
+    pytest.param('{"settings": {"eye_color": 4}}', id="eye_color 4"),
+    pytest.param('{"settings": {"eye_color": 5}}', id="eye_color 5"),
+    pytest.param('{"settings": {"eye_color": 6}}', id="eye_color 6"),
+    pytest.param('{"settings": {"eye_color": 7}}', id="eye_color 7"),
+    pytest.param('{"settings": {"eye_color": -1}}', id="eye_color -1"),
+    pytest.param('{"settings":{"clock_24_hour":true}}', id="clock_24_hour"),
+    pytest.param('{"settings":{"clock_24_hour":true,"eye_color":5}}', id="multiple"),
 ])
 def test_update_settings_raw(vector_connection, data):
     def callback(response, response_type):
