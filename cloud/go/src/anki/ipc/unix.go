@@ -16,7 +16,7 @@ func NewUnixServer(path string) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newBaseServer(&listenerWrapper{listen}, newStreamConnection)
+	return newBaseServer(&listenerWrapper{&streamListener{listen}})
 }
 
 // NewUnixClient returns a new connection to the server at the specified path, assuming

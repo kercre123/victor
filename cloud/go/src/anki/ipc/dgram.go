@@ -23,7 +23,7 @@ type packetListener struct {
 // Defined in LocalUdpServer.cpp/UdpServer.cpp
 const connPacket = "ANKICONN"
 
-func (p *packetListener) Accept() (io.ReadWriteCloser, error) {
+func (p *packetListener) Accept() (Conn, error) {
 	select {
 	case conn := <-p.newClients:
 		return conn, nil
@@ -44,15 +44,23 @@ type packetClient struct {
 	kill chan struct{}
 }
 
-func (c *packetClient) Read(buf []byte) (int, error) {
+func (c *packetClient) Read() []byte {
 	select {
 	case <-c.kill:
-		return 0, io.EOF
+		return nil
 	case recv := <-c.read:
-		if len(buf) < len(recv) {
-			fmt.Println("overflow error", len(buf), len(recv))
-		}
-		return copy(buf, recv), nil
+		return recv
+	default:
+		return []byte{}
+	}
+}
+
+func (c *packetClient) ReadBlock() []byte {
+	select {
+	case <-c.kill:
+		return nil
+	case recv := <-c.read:
+		return recv
 	}
 }
 
@@ -129,5 +137,5 @@ func newDatagramServer(conn net.PacketConn) (Server, error) {
 		}
 	}()
 
-	return newBaseServer(listener, nil)
+	return newBaseServer(listener)
 }

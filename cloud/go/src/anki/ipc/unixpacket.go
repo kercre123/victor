@@ -16,7 +16,7 @@ func NewUnixPacketServer(path string) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newBaseServer(&listenerWrapper{listen}, nil)
+	return newBaseServer(&listenerWrapper{listen})
 }
 
 // NewUnixPacketClient returns a new server object listening for clients on the specified path,

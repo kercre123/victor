@@ -3,27 +3,30 @@ package ipc
 import (
 	"anki/util"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 )
 
-type netListenerLike interface {
-	Accept() (io.ReadWriteCloser, error)
+type connListener interface {
+	Accept() (Conn, error)
 	Close() error
 }
 
-// this is necessary to convert a net.Listener to a netListenerLike
+// this is necessary to convert a net.Listener to a connListener
 type listenerWrapper struct {
 	net.Listener
 }
 
-func (l listenerWrapper) Accept() (io.ReadWriteCloser, error) {
-	return l.Listener.Accept()
+func (l listenerWrapper) Accept() (Conn, error) {
+	c, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+	return newBaseConn(c), nil
 }
 
 type baseServer struct {
-	listen   netListenerLike
+	listen   connListener
 	kill     chan struct{}
 	conns    []Conn
 	newConns chan Conn
@@ -40,7 +43,7 @@ func (c *serverConn) Close() error {
 	return c.Conn.Close()
 }
 
-func newBaseServer(listen netListenerLike, connWrapper func(io.ReadWriteCloser) io.ReadWriteCloser) (Server, error) {
+func newBaseServer(listen connListener) (Server, error) {
 	serv := &baseServer{listen, make(chan struct{}), make([]Conn, 0, 8), make(chan Conn), sync.WaitGroup{}}
 
 	// start listen routine - adds new connections to array
@@ -49,9 +52,6 @@ func newBaseServer(listen netListenerLike, connWrapper func(io.ReadWriteCloser) 
 		defer serv.wg.Done()
 		for {
 			conn, err := serv.listen.Accept()
-			if connWrapper != nil {
-				conn = connWrapper(conn)
-			}
 			if err != nil {
 				// end of life errors are expected if we've been killed
 				if !util.CanSelect(serv.kill) {
@@ -59,13 +59,12 @@ func newBaseServer(listen netListenerLike, connWrapper func(io.ReadWriteCloser) 
 				}
 				return
 			}
-			newConn := newBaseConn(conn)
-			serv.conns = append(serv.conns, newConn)
+			serv.conns = append(serv.conns, conn)
 			serv.wg.Add(1)
 			go func() {
 				defer serv.wg.Done()
 				select {
-				case serv.newConns <- &serverConn{Conn: newConn, serv: serv}:
+				case serv.newConns <- &serverConn{Conn: conn, serv: serv}:
 				case <-serv.kill:
 				}
 			}()
