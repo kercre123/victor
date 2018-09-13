@@ -834,10 +834,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 		},
 	})
 	if err != nil {
-		log.Println("Closing Event stream (on send):", err)
 		return err
 	} else if err = stream.Context().Err(); err != nil {
-		log.Println("Closing Event stream:", err)
 		// This is the case where the user disconnects the stream
 		// We should still return the err in case the user doesn't think they disconnected
 		return err
@@ -872,10 +870,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 					Event: event,
 				}
 				if err := stream.Send(eventResponse); err != nil {
-					log.Println("Closing Event stream (on send):", err)
 					return err
 				} else if err = stream.Context().Err(); err != nil {
-					log.Println("Closing Event stream:", err)
 					// This is the case where the user disconnects the stream
 					// We should still return the err in case the user doesn't think they disconnected
 					return err
@@ -883,10 +879,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 			}
 		case <-time.After(time.Second): // ping to check connection liveness after one second.
 			if err := stream.Send(&ping); err != nil {
-				log.Println("Closing Event stream (on send):", err)
 				return err
 			} else if err = stream.Context().Err(); err != nil {
-				log.Println("Closing Event stream:", err)
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
 				return err
@@ -957,22 +951,18 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 			}
 			msg := response.GetBehaviorControlResponse()
 			if err := out.Send(msg); err != nil {
-				log.Println("Closing BehaviorControl stream (on send):", err)
 				return err
 			} else if err = out.Context().Err(); err != nil {
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
-				log.Println("Closing BehaviorControl stream:", err)
 				return err
 			}
 		case <-time.After(time.Second): // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
-				log.Println("Closing BehaviorControl stream (on send):", err)
 				return err
 			} else if err = out.Context().Err(); err != nil {
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
-				log.Println("Closing BehaviorControl stream:", err)
 				return err
 			}
 		}
@@ -1605,7 +1595,6 @@ func ValidateActionTag(idTag int32) error {
 }
 
 func (service *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequest) (*extint.GoToPoseResponse, error) {
-
 	if err := ValidateActionTag(in.IdTag); err != nil {
 		return nil, err
 	}

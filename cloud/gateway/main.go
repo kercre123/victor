@@ -56,7 +56,9 @@ func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
 	log.Printf("Received stream request %s(%#v)\n", name, srv)
-	return handler(srv, ss)
+	err := handler(srv, ss)
+	log.Printf("Closing %s stream: %v\n", name, err)
+	return err
 }
 
 func verboseHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
