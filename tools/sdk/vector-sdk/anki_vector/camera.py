@@ -41,6 +41,11 @@ try:
 except ImportError as exc:
     sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
 
+try:
+    from PIL import Image
+except ImportError:
+    sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
+
 
 class CameraComponent(util.Component):
     """Represents Vector's camera.
@@ -54,7 +59,7 @@ class CameraComponent(util.Component):
 
         from PIL import Image
         with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
-            image = Image.fromarray(camera.latest_image)
+            image = robot.camera.latest_image
             image.show()
 
     :param robot: A reference to the owner Robot object. (May be :class:`None`)
@@ -63,22 +68,20 @@ class CameraComponent(util.Component):
     def __init__(self, robot):
         super().__init__(robot)
 
-        self._latest_image: np.ndarray = None
+        self._latest_image: Image.Image = None
         self._latest_image_id: int = None
         self._camera_feed_task: asyncio.Task = None
 
-    # TODO For Cozmo, latest_image was of Cozmo type CameraImage. np.ndarray is less friendly to work with. Should we change it and maybe bury np.ndarray to a less accessible location, like CameraImage.raw_image?
     @property
-    def latest_image(self) -> np.ndarray:
-        """:class:`numpy.ndarray`: The most recent processed image received from the robot, represented as an N-dimensional array of bytes.
+    def latest_image(self) -> Image.Image:
+        """:class:`Image.Image`: The most recent processed image received from the robot.
 
-        :getter: Returns the ndarray representing the latest image
-        :setter: Sets the latest image
+        :getter: Returns the Pillow Image representing the latest image
 
         .. code-block:: python
 
             with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
-                image = Image.fromarray(robot.camera.latest_image)
+                image = robot.camera.latest_image
                 image.show()
         """
 
@@ -91,7 +94,6 @@ class CameraComponent(util.Component):
         Used only to track chunks of the same image.
 
         :getter: Returns the id for the latest image
-        :setter: Sets the latest image's id
         """
         return self._latest_image_id
 
@@ -118,7 +120,7 @@ class CameraComponent(util.Component):
         imageArray = cv2.imdecode(array, -1)
 
         # Convert to pillow image
-        self._latest_image = imageArray
+        self._latest_image = Image.fromarray(imageArray)
         self._latest_image_id = msg.image_id
 
     async def _request_and_handle_images(self) -> None:

@@ -33,6 +33,11 @@ try:
 except ImportError as exc:
     sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
 
+try:
+    from PIL import Image
+except ImportError:
+    sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
+
 from .exceptions import VectorCameraFeedDisabledException
 from . import util
 
@@ -60,9 +65,8 @@ class ViewerComponent(util.Component):
         cv2.destroyWindow(window_name)
         cv2.waitKey(1)
 
-    def _apply_overlays(self) -> None:
+    def _apply_overlays(self, image: Image.Image) -> None:
         """Apply all overlays attached to viewer instance on to image from camera feed."""
-        image = np.copy(self.robot.camera.latest_image)
         for overlay in self.overlays:
             overlay.apply_overlay(image)
         return image
@@ -85,11 +89,11 @@ class ViewerComponent(util.Component):
 
                 # Render image only if new image is available
                 if self.robot.camera.latest_image_id != latest_image_id:
+                    image = self.robot.camera.latest_image.copy()
                     if self.overlays:
-                        image = self._apply_overlays()
-                        cv2.imshow(opencv_window_name, image)
-                    else:
-                        cv2.imshow(opencv_window_name, self.robot.camera.latest_image)
+                        image = self._apply_overlays(image)
+
+                    cv2.imshow(opencv_window_name, np.array(image))
                     cv2.waitKey(1)
                     latest_image_id = self.robot.camera.latest_image_id
                 await asyncio.sleep(0.1)

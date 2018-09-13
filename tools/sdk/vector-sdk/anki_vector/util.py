@@ -47,14 +47,9 @@ import os
 import sys
 
 try:
-    import cv2
-except ImportError as exc:
-    sys.exit("Cannot import opencv-python: Do `pip3 install opencv-python` to install")
-
-try:
-    import numpy as np
-except ImportError as exc:
-    sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
+    from PIL import Image, ImageDraw
+except ImportError:
+    sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
 
 # TODO Are we keeping this for release? If so, rename? Build into the robot class?
@@ -929,6 +924,7 @@ class RectangleOverlay(BaseOverlay):
         :param line_color: The color of the line to be drawn.
     """
 
+    # @TODO: This overlay should be implemented using an ImageRect similar to cozmo, rather than a raw width&height
     def __init__(self, width: int, height: int, line_thickness: int = 5, line_color: tuple = (255, 0, 0)):
         super().__init__(line_thickness, line_color)
         self._width: int = width
@@ -944,15 +940,18 @@ class RectangleOverlay(BaseOverlay):
         """The height of the rectangle to be drawn."""
         return self._height
 
-    # TODO: Update to handle PIL images
-    def apply_overlay(self, image: np.ndarray) -> None:
+    def apply_overlay(self, image: Image.Image) -> None:
         """Draw a rectangle on top of the given image."""
-        image_width, image_height, _ = image.shape
+        d = ImageDraw.Draw(image)
+
+        image_width, image_height = image.size
         remaining_width = image_width - self.width
         remaining_height = image_height - self.height
-        top_left = (remaining_height // 2, remaining_width // 2)
-        bottom_right = ((image_height - (remaining_height // 2)), (image_width - (remaining_width // 2)))
-        cv2.rectangle(image, top_left, bottom_right, self.line_color, self.line_thickness)
+        x1, y1 = remaining_height // 2, remaining_width // 2
+        x2, y2 = (image_height - (remaining_height // 2)), (image_width - (remaining_width // 2))
+
+        for i in range(0, self.line_thickness):
+            d.rectangle([x1 + i, y1 + i, x2 - i, y2 - i], outline=self.line_color)
 
 
 class Component:

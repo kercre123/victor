@@ -21,18 +21,15 @@ try:
     from keras.layers import Conv2D, Dense, Dropout, Flatten, MaxPooling2D
     from keras.models import Sequential, model_from_json
     from keras.preprocessing.image import img_to_array
+
+    from sklearn.model_selection import train_test_split
 except ImportError as exc:
-    sys.exit("Cannot import keras: Do `pip3 install keras` to install")
+    sys.exit("Cannot import keras, tensorflow or scikit: Do `pip3 install keras tensorflow scikit` to install")
 
 try:
     import numpy as np
 except ImportError as exc:
     sys.exit("Cannot import numpy: Do `pip3 install numpy` to install")
-
-try:
-    from sklearn.model_selection import train_test_split
-except ImportError as exc:
-    sys.exit("Cannot import scikit: Do `pip3 install scikit-learn` to install")
 
 import anki_vector
 import util
@@ -260,6 +257,8 @@ def main():
             print("------ predicting hand signs, press ctrl+c to exit early ------")
             try:
                 # Add a rectangular overlay describing the portion of image that is used after cropping.
+
+                # @TODO: The rectangle overlay should feed in a full rect, not just a size
                 frame_of_interest = anki_vector.util.RectangleOverlay(util.NetworkConstants.IMAGE_WIDTH, util.NetworkConstants.IMAGE_HEIGHT)
                 robot.viewer.overlays.append(frame_of_interest)
                 robot.loop.run_until_complete(recognizer.predict_with_camera_feed(robot))

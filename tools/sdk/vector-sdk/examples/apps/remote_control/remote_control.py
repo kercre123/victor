@@ -543,7 +543,6 @@ def get_annotated_image():
     if image is None:
         return _default_camera_image
 
-    image = Image.fromarray(image)
     return image
 
 
