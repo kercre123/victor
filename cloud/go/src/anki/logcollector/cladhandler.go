@@ -12,10 +12,11 @@ type cladHandler struct {
 }
 
 func newCladHandler(opts *options) (*cladHandler, error) {
-	collector, err := New(opts)
+	collector, err := newLogCollector(opts)
 	if err != nil {
 		return nil, err
 	}
+
 	return &cladHandler{collector}, nil
 }
 

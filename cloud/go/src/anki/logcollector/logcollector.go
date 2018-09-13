@@ -5,60 +5,41 @@ import (
 	"anki/robot"
 	"anki/token"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-// AwsCredentials is set at build time and contains the following csv format: "AccessKeyID,SecretAccessKey"
-var AwsCredentials string
-
 // logCollector implements functionality for uploading log files to the cloud
 type logCollector struct {
-	// only used to obtain user ID for log file generation
 	tokener token.Accessor
 
-	deviceID string
+	certCommonName string
 
 	bucketName   string
 	s3BasePrefix string
 	awsRegion    string
-
-	AccessKeyID     string
-	SecretAccessKey string
 
 	httpClient *http.Client
 
 	uploader *s3manager.Uploader
 }
 
-// New is a factory function for creating a file logger instance
-func New(opts *options) (*logCollector, error) {
-	creds := strings.Split(AwsCredentials, ",")
-
-	if len(creds) != 2 {
-		err := fmt.Errorf("Empty / Invalid format for AWS credentials (%d instead of 2 parts)", len(creds))
-		return nil, err
-	}
-
+func newLogCollector(opts *options) (*logCollector, error) {
 	c := &logCollector{
 		tokener: opts.tokener,
 
 		bucketName:   opts.bucketName,
 		s3BasePrefix: opts.s3BasePrefix,
 		awsRegion:    opts.awsRegion,
-
-		AccessKeyID:     creds[0],
-		SecretAccessKey: creds[1],
 
 		httpClient: opts.httpClient,
 	}
@@ -67,17 +48,21 @@ func New(opts *options) (*logCollector, error) {
 		c.httpClient = http.DefaultClient
 	}
 
-	deviceID, err := robot.ReadESN()
+	certCommonName, err := robot.CertCommonName(robot.DefaultCloudDir)
 	if err != nil {
 		return nil, err
 	}
 
-	c.deviceID = deviceID
+	c.certCommonName = certCommonName
 
-	// Create static AWS credentials (in the future we will be using STS credentials)
+	awsCredentials, err := c.tokener.GetStsCredentials()
+	if err != nil {
+		return nil, err
+	}
+
 	awsSession, err := session.NewSession(&aws.Config{
 		HTTPClient:  c.httpClient,
-		Credentials: credentials.NewStaticCredentials(c.AccessKeyID, c.SecretAccessKey, ""),
+		Credentials: awsCredentials,
 		Region:      aws.String(c.awsRegion),
 	})
 	if err != nil {
@@ -100,7 +85,8 @@ func (c *logCollector) Upload(ctx context.Context, logFilePath string) (string, 
 
 	timestamp := time.Now().UTC()
 
-	s3Prefix := path.Join(c.s3BasePrefix, userID, c.deviceID)
+	encodedCertCommonName := base64.StdEncoding.EncodeToString([]byte(c.certCommonName))
+	s3Prefix := path.Join(c.s3BasePrefix, userID, encodedCertCommonName)
 	s3FileName := fmt.Sprintf("%s-%s", timestamp.Format("2006-01-02-15-04-05"), path.Base(logFilePath))
 	s3Key := path.Join(s3Prefix, s3FileName)
 

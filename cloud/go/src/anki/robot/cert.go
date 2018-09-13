@@ -21,8 +21,10 @@ type DeviceCertRecord struct {
 	CertSignature          string `json:"CertSignature"`
 }
 
-// Filenames for certificate/keys data
+// Filenames and default directory for certificate/keys data
 const (
+	DefaultCloudDir = "/factory/cloud"
+
 	CertFilename = "AnkiRobotDeviceCert.pem"
 	KeysFilename = "AnkiRobotDeviceKeys.pem"
 )

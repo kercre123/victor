@@ -76,7 +76,7 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 				return errorResp(cloud.TokenError_Connection), err
 			}
 			defer c.Close()
-			bundle, err := c.refreshToken(existing.String())
+			bundle, err := c.refreshJwtToken()
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}

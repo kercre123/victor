@@ -14,7 +14,7 @@ var robotCreds credentials.TransportCredentials
 
 func getTLSCert() (credentials.TransportCredentials, error) {
 	if robotCreds == nil {
-		cert, err := robot.TLSKeyPair("/factory/cloud")
+		cert, err := robot.TLSKeyPair(robot.DefaultCloudDir)
 		if err != nil {
 			return nil, err
 		}

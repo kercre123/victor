@@ -17,5 +17,5 @@ func checkCloudDataFiles() error {
 		return err
 	}
 
-	return robot.CheckFactoryCloudFiles("/factory/cloud", esn)
+	return robot.CheckFactoryCloudFiles(robot.DefaultCloudDir, esn)
 }

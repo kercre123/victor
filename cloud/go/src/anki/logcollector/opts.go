@@ -3,6 +3,7 @@ package logcollector
 import (
 	"anki/token"
 	"net/http"
+	"net/url"
 )
 
 type options struct {
@@ -41,17 +42,15 @@ func WithTokener(value token.Accessor) Option {
 	}
 }
 
-// WithBucketName specifies the S3 bucket name in the cloud
-func WithBucketName(bucketName string) Option {
+// WithS3UrlPrefix specifies the S3 bucket and key prefix in the cloud
+// E.g. s3://anki-device-logs-dev/victor
+func WithS3UrlPrefix(s3UrlPrefix string) Option {
 	return func(o *options) {
-		o.bucketName = bucketName
-	}
-}
-
-// WithS3BasePrefix specifies the S3 key prefix in the cloud
-func WithS3BasePrefix(s3BasePrefix string) Option {
-	return func(o *options) {
-		o.s3BasePrefix = s3BasePrefix
+		parsedURL, err := url.Parse(s3UrlPrefix)
+		if err == nil {
+			o.bucketName = parsedURL.Host
+			o.s3BasePrefix = parsedURL.Path
+		}
 	}
 }
 

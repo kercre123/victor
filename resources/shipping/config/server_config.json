@@ -3,5 +3,6 @@
 	"tms": "token.api.anki.com:443",
 	"chipper": "chipper.api.anki.com:443",
 	"ota": "ota-cdn.anki.com:443",
+	"logfiles": "s3://anki-device-logs-prod/victor",
 	"appkey": "oDoa0quieSeir6goowai7f"
 }

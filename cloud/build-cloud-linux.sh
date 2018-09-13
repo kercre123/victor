@@ -11,10 +11,6 @@ OUTPUT_DIR=${SCRIPT_PATH}/_build/cloud
 COMMAND="build"
 TARGET_DIR="process"
 
-# Note: only needed until STS support is deployed
-AWS_ACCESS_KEY_ID="xxx"
-AWS_SECRET_ACCESS_KEY="yyy"
-
 CHIPPER_SECRET="zzz"
 
 function usage() {
@@ -88,13 +84,13 @@ if [ $COMMAND = "test" ]; then
     go ${COMMAND} \
         -c -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
-        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ -X\ \'anki/logcollector.AwsCredentials=${AWS_ACCESS_KEY_ID},${AWS_SECRET_ACCESS_KEY}\' \
+        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
         ./${TARGET_DIR}
 else
     go ${COMMAND} \
         -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
-        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ -X\ \'anki/logcollector.AwsCredentials=${AWS_ACCESS_KEY_ID},${AWS_SECRET_ACCESS_KEY}\' \
+        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
         ./${TARGET_DIR}
 fi
 

@@ -119,6 +119,6 @@ func (c *client) handleUserRequest() (*cloud.DocResponse, error) {
 }
 
 func (c *client) handleThingRequest() (*cloud.DocResponse, error) {
-	thing, err := robot.CertCommonName("/factory/cloud")
+	thing, err := robot.CertCommonName(robot.DefaultCloudDir)
 	return cloud.NewDocResponseWithThing(&cloud.ThingResponse{ThingName: thing}), err
 }

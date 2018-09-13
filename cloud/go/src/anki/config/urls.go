@@ -7,21 +7,23 @@ import (
 
 // URLs represents a set of URLs where Anki's cloud services can be reached
 type URLs struct {
-	JDocs   string `json:"jdocs"`
-	Token   string `json:"tms"`
-	Chipper string `json:"chipper"`
-	OTA     string `json:"ota"`
-	AppKey  string `json:"appkey"`
+	JDocs    string `json:"jdocs"`
+	Token    string `json:"tms"`
+	Chipper  string `json:"chipper"`
+	OTA      string `json:"ota"`
+	LogFiles string `json:"logfiles"`
+	AppKey   string `json:"appkey"`
 }
 
 // DefaultURLs provides a default, hard-coded configuration that can be used
 // if an expected configuration is not found on disk
 var DefaultURLs = URLs{
-	JDocs:   "jdocs-dev.api.anki.com:443",
-	Token:   "token-dev.api.anki.com:443",
-	Chipper: "chipper-dev.api.anki.com:443",
-	OTA:     "ota-cdn.anki.com:443",
-	AppKey:  "xiepae8Ach2eequiphee4U",
+	JDocs:    "jdocs-dev.api.anki.com:443",
+	Token:    "token-dev.api.anki.com:443",
+	Chipper:  "chipper-dev.api.anki.com:443",
+	OTA:      "ota-cdn.anki.com:443",
+	LogFiles: "s3://anki-device-logs-dev/victor",
+	AppKey:   "xiepae8Ach2eequiphee4U",
 }
 
 // Env represents the URLs associated with the most recent successful call to

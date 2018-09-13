@@ -73,14 +73,20 @@ func (c *conn) reassociatePrimary(clientName, appID string) (*pb.TokenBundle, er
 	return response.Data, nil
 }
 
-func (c *conn) refreshToken(existingToken string) (*pb.TokenBundle, error) {
-	req := pb.RefreshTokenRequest{
-		RefreshJwtTokens: true}
+func (c *conn) refreshToken(req pb.RefreshTokenRequest) (*pb.TokenBundle, error) {
 	response, err := c.client.RefreshToken(context.Background(), &req)
 	if err != nil {
 		return nil, err
 	}
 	return response.Data, nil
+}
+
+func (c *conn) refreshJwtToken() (*pb.TokenBundle, error) {
+	return c.refreshToken(pb.RefreshTokenRequest{RefreshJwtTokens: true})
+}
+
+func (c *conn) refreshStsCredentials() (*pb.TokenBundle, error) {
+	return c.refreshToken(pb.RefreshTokenRequest{RefreshStsTokens: true})
 }
 
 func (c *conn) Close() error {

@@ -26,8 +26,8 @@ import (
 )
 
 var verbose bool
-var checkDataFunc func() error // overwritten by cert_verify_linux.go
-var certErrorFunc func() bool  // overwritten by cert_error_shipping.go, determines if error should cause exit
+var checkDataFunc func() error // overwritten by platform_linux.go
+var certErrorFunc func() bool  // overwritten by cert_error_dev.go, determines if error should cause exit
 var platformOpts []cloudproc.Option
 
 func getSocketWithRetry(name string, client string) ipc.Conn {
@@ -104,9 +104,6 @@ func main() {
 	ms := flag.Bool("ms", false, "force microsoft handling on the server end")
 	lex := flag.Bool("lex", false, "force amazon handling on the server end")
 
-	// TODO: what are sensible defaults here?
-	bucketName := flag.String("bucket-name", "sai-platform-temp", "Log S3 bucket name")
-	s3BasePrefix := flag.String("key-prefix", "joep", "S3 Key prefix for log files")
 	awsRegion := flag.String("region", "us-west-2", "AWS Region")
 
 	flag.Parse()
@@ -171,8 +168,7 @@ func main() {
 
 	logcollectorOpts := []logcollector.Option{logcollector.WithServer()}
 	logcollectorOpts = append(logcollectorOpts, logcollector.WithHTTPClient(getHTTPClient()))
-	logcollectorOpts = append(logcollectorOpts, logcollector.WithBucketName(*bucketName))
-	logcollectorOpts = append(logcollectorOpts, logcollector.WithS3BasePrefix(*s3BasePrefix))
+	logcollectorOpts = append(logcollectorOpts, logcollector.WithS3UrlPrefix(config.Env.LogFiles))
 	logcollectorOpts = append(logcollectorOpts, logcollector.WithAwsRegion(*awsRegion))
 	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorOpts...))
 

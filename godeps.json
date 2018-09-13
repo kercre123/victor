@@ -55,7 +55,7 @@
     "commit": "07f5e79768022f9a3265235f0db4ac8c3f675fec"
   },
   "github.com/anki/sai-token-service": {
-    "commit": "4188f3e672397277f78b920f3d0e16d9acdde040",
+    "commit": "f7310a209bc4dbbb3dca7e98eb5a191e5336fabb",
     "branch": "develop"
   },
   "github.com/dgrijalva/jwt-go": {
@@ -75,7 +75,7 @@
     "branch": "master"
   },
   "github.com/anki/sai-go-util": {
-    "commit": "24fb86de3bedd35337302c0cbc6ef7bf168c95ce",
+    "commit": "588110c3b212cfd636c288f91d405d0f63bbd14b",
     "branch": "master"
   },
   "github.com/aws/aws-sdk-go": {

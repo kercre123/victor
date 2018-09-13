@@ -46,16 +46,9 @@ if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
   message(FATAL_ERROR "Can't build cloud without chipper key")
 endif()
 
-if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/aws_credentials")
-  message(WARNING "Need aws_keys file to be able to connect to upload logs!")
-  message(WARNING "Check your VPN settings. You must be on VPN or office network to get AWS credentials.")
-  message(FATAL_ERROR "Can't build cloud without AWS credentials")
-endif()
-
 set(chipper_flags "")
 file(READ "${ANKI_EXTERNAL_DIR}/chipper_key" chipper_flags)
-file(READ "${ANKI_EXTERNAL_DIR}/aws_credentials" logcollector_flags)
-set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\' -X \\\\\'anki/logcollector.AwsCredentials=${logcollector_flags}\\\\\'")
+set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
 
 if(VICOS)
   set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)

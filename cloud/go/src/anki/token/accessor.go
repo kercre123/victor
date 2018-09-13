@@ -6,17 +6,19 @@ import (
 	"clad/cloud"
 	"fmt"
 
-	"google.golang.org/grpc/credentials"
+	ac "github.com/aws/aws-sdk-go/aws/credentials"
+	gc "google.golang.org/grpc/credentials"
 )
 
 type Accessor interface {
-	Credentials() (credentials.PerRPCCredentials, error)
+	Credentials() (gc.PerRPCCredentials, error)
+	GetStsCredentials() (*ac.Credentials, error)
 	UserID() string
 }
 
 type accessor struct{}
 
-func (accessor) Credentials() (credentials.PerRPCCredentials, error) {
+func (accessor) Credentials() (gc.PerRPCCredentials, error) {
 	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
 	resp, err := HandleRequest(req)
 	if err != nil {
@@ -27,6 +29,10 @@ func (accessor) Credentials() (credentials.PerRPCCredentials, error) {
 		return nil, fmt.Errorf("jwt error code %d", jwt.Error)
 	}
 	return tokenMetadata(resp.GetJwt().JwtToken), nil
+}
+
+func (accessor) GetStsCredentials() (*ac.Credentials, error) {
+	return getStsCredentials()
 }
 
 func (accessor) UserID() string {
