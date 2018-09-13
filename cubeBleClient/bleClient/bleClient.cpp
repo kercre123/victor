@@ -196,11 +196,11 @@ void BleClient::FlashCube()
 {
   const bool canFlashCube = IsConnectedToServer() &&
                             (_connectionId >= 0) &&
-                            _pendingFirmwareCheck;
+                            _pendingFirmwareCheckOrUpdate;
   if (!canFlashCube) {
     PRINT_NAMED_WARNING("BleClient.FlashCube.CannotFlashCube",
-                        "Cannot flash the cube - invalid BleClient state. ConnectedToServer %d, ConnectedToCube %d, PendingFirmwareCheck %d",
-                        IsConnectedToServer(), _connectionId >= 0, (int) _pendingFirmwareCheck);
+                        "Cannot flash the cube - invalid BleClient state. ConnectedToServer %d, ConnectedToCube %d, PendingFirmwareCheckOrUpdate %d",
+                        IsConnectedToServer(), _connectionId >= 0, (int) _pendingFirmwareCheckOrUpdate);
     return;
   }
   
@@ -264,12 +264,12 @@ void BleClient::OnOutboundConnectionChange(const std::string& address,
   if (connected) {
     _connectionId = connection_id;
     // Immediately read the cube firmware version
-    _pendingFirmwareCheck = true;
+    _pendingFirmwareCheckOrUpdate = true;
     ReadCharacteristic(_connectionId, Anki::kCubeAppVersion_128_BIT_UUID);
   } else if (_connectionId == connection_id) {
     _connectionId = -1;
     _cubeAddress.clear();
-    _pendingFirmwareCheck = false;
+    _pendingFirmwareCheckOrUpdate = false;
   }
 }
 
@@ -293,7 +293,7 @@ void BleClient::OnCharacteristicReadResult(const int connection_id,
   const bool isAppVersion = Util::StringCaseInsensitiveEquals(characteristic_uuid,
                                                               Anki::kCubeAppVersion_128_BIT_UUID);
 
-  if (isAppVersion && _pendingFirmwareCheck) {
+  if (isAppVersion && _pendingFirmwareCheckOrUpdate) {
     const auto& cubeFirmwareVersion = std::string(data.begin(), data.end());
 
     RequestConnectionParameterUpdate(_cubeAddress,
@@ -306,7 +306,7 @@ void BleClient::OnCharacteristicReadResult(const int connection_id,
     DEV_ASSERT(!_cubeFirmwareVersionOnDisk.empty(), "BleClient.OnCharacteristicReadResult.NoOnDiskFirmwareVersion");
     if (cubeFirmwareVersion == _cubeFirmwareVersionOnDisk) {
       // Firmware versions match! Yay.
-      _pendingFirmwareCheck = false;
+      _pendingFirmwareCheckOrUpdate = false;
     } else {
       // Flash the cube with the firmware we have on disk
       PRINT_NAMED_INFO("BleClient.OnCharacteristicReadResult.FirmwareVersionMismatch",
@@ -345,10 +345,13 @@ void BleClient::OnReceiveMessage(const int connection_id,
       DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
       DASMSG_SET(s3, _cubeFirmwareVersionOnDisk, "On disk firmware version");
       DASMSG_SEND();
+      
+      // Disconnect from the cube, since there is no use in keeping the connection with incorrect cube firmware
+      DisconnectFromCube();
     }
     
     // consider the firmware check complete now.
-    _pendingFirmwareCheck = false;
+    _pendingFirmwareCheckOrUpdate = false;
   } else if (Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppRead_128_BIT_UUID)) {
     if (_receiveDataCallback) {
       _receiveDataCallback(_cubeAddress, value);
@@ -385,7 +388,7 @@ void BleClient::ServerConnectionCheckTimerCallback(ev::timer& timer, int revents
       // so reset connectionId and cube address
       _connectionId = -1;
       _cubeAddress.clear();
-      _pendingFirmwareCheck = false;
+      _pendingFirmwareCheckOrUpdate = false;
       // Stop scanning for cubes timer
       _scanningTimer.stop();
     }
