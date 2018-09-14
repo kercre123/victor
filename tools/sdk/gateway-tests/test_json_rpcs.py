@@ -22,8 +22,11 @@ def test_protocol_version(vector_connection):
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
 
-def test_display_face_image_rgb(vector_connection):
-    vector_connection.send("v1/display_face_image_rgb", p.DisplayFaceImageRGBRequest(), p.DisplayFaceImageRGBResponse())
+@pytest.mark.parametrize("proto,callback", [
+    pytest.param(p.DisplayFaceImageRGBRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="no image"),
+])
+def test_display_face_image_rgb(vector_connection, proto, callback):
+    vector_connection.send("v1/display_face_image_rgb", proto, p.DisplayFaceImageRGBResponse(), callback=callback)
 
 def test_app_intent(vector_connection):
     vector_connection.send("v1/app_intent", p.AppIntentRequest(), p.AppIntentResponse())
@@ -50,13 +53,13 @@ def test_enable_vision_mode(vector_connection):
     vector_connection.send("v1/enable_vision_mode", p.EnableVisionModeRequest(), p.EnableVisionModeResponse())
 
 @pytest.mark.parametrize("proto,callback", [
-    pytest.param(p.GoToPoseRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="Bad tag_id"),
+    pytest.param(p.GoToPoseRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="bad tag_id"),
 ])
 def test_go_to_pose(vector_connection, proto, callback):
     vector_connection.send("v1/go_to_pose", proto, p.GoToPoseResponse(), callback=callback)
 
 @pytest.mark.parametrize("proto,callback", [
-    pytest.param(p.DockWithCubeRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="Bad tag_id"),
+    pytest.param(p.DockWithCubeRequest(), Connection.callback_with_status(http.client.BAD_REQUEST), id="bad tag_id"),
 ])
 def test_dock_with_cube(vector_connection, proto, callback):
     vector_connection.send("v1/dock_with_cube", proto, p.DockWithCubeResponse(), callback=callback)
@@ -105,6 +108,8 @@ def test_pull_jdocs(vector_connection):
     pytest.param('{"settings": {"eye_color": 6}}', id="eye_color 6"),
     pytest.param('{"settings": {"eye_color": 7}}', id="eye_color 7"),
     pytest.param('{"settings": {"eye_color": -1}}', id="eye_color -1"),
+    pytest.param('{"settings": {"eye_colour": 2}}', id="eye_colour misspelling"),
+    pytest.param('{"settings": {"eye_colour": "two"}}', id="eye_colour wrong type"),
     pytest.param('{"settings":{"clock_24_hour":true}}', id="clock_24_hour"),
     pytest.param('{"settings":{"clock_24_hour":true,"eye_color":5}}', id="multiple"),
 ])
@@ -114,6 +119,51 @@ def test_update_settings_raw(vector_connection, data):
         data = json.loads(response.content)
         assert "code" in data
         assert data["code"] == 0
+    vector_connection.send_raw("v1/update_settings", data, p.UpdateSettingsResponse(), callback=callback)
+
+@pytest.mark.parametrize("data,result", [
+    pytest.param('{"settings":{"locale":"en-IN"}}', 'en-IN', id="locale en-IN"),
+    pytest.param('{"settings":{"locale":"this is not a locale"}}', 'en-IN', id="locale wrong"),
+    pytest.param('{"settings":{"locale":"en-US"}}', 'en-US', id="locale en-US"),
+])
+def test_update_settings_raw_locale(vector_connection, data, result):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        data = json.loads(response.content)
+        assert "code" in data
+        assert data["code"] == 0
+        assert "doc" in data
+        doc = data["doc"]
+        assert "json_doc" in doc
+        jdoc = doc["json_doc"]
+        assert "locale" in jdoc
+        assert json.loads(jdoc)["locale"] == result
+    vector_connection.send_raw("v1/update_settings", data, p.UpdateSettingsResponse(), callback=callback)
+
+@pytest.mark.parametrize("data,result", [
+    pytest.param('{"settings":{"eye_color": 5}}', 5, id="eye_color 5", marks=pytest.mark.xfail(reason="eye colors don't update as expected")),
+    pytest.param('{"settings":{"eye_color": 3}}', 3, id="eye_color 3", marks=pytest.mark.xfail(reason="eye colors don't update as expected")),
+])
+def test_update_settings_raw_eye_color(vector_connection, data, result):
+    def callback(response, response_type):
+        Connection.default_callback(response, response_type)
+        data = json.loads(response.content)
+        assert "code" in data
+        assert data["code"] == 0
+        assert "doc" in data
+        doc = data["doc"]
+        assert "json_doc" in doc
+        jdoc = doc["json_doc"]
+        assert "eye_color" in jdoc
+        assert json.loads(jdoc)["eye_color"] == result
+    vector_connection.send_raw("v1/update_settings", data, p.UpdateSettingsResponse(), callback=callback)
+
+@pytest.mark.parametrize("data", [
+    pytest.param('{"settings":{"clock_24_hour":"true"}}', id="clock_24_hour wrong type"),
+    pytest.param('{"settings":{"default_location":1}}', id="default_location wrong type"),
+])
+def test_update_settings_raw_wrong_type(vector_connection, data):
+    callback = Connection.callback_with_status(http.client.BAD_REQUEST)
     vector_connection.send_raw("v1/update_settings", data, p.UpdateSettingsResponse(), callback=callback)
 
 def test_update_settings(vector_connection):
