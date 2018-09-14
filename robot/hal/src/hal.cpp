@@ -790,6 +790,10 @@ void HAL::Shutdown()
 void HAL::PowerSetDesiredMode(const PowerState state)
 {
   AnkiInfo("HAL.PowerSetDesiredMode", "%d", state);
+  DASMSG(hal_active_power_mode, "hal.active_power_mode", "Power mode status");
+  DASMSG_SET(i1, state == POWER_MODE_ACTIVE, "Active mode (1) or calm mode (0)");
+  DASMSG_SET(i2, HAL::BatteryGetTemperature_C(), "Battery temperature (C)");
+  DASMSG_SEND();
   desiredPowerMode_ = state;
   lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
 }
