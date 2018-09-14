@@ -34,8 +34,11 @@ namespace
 
 void Shutdown(int signum)
 {
-  LOG_DEBUG("main.Shutdown", "Shutdown on signal %d", signum);
   gShutdown = true;
+  // Call android log print instead of LOG_INFO so log channel is not prepended
+  // to the message, need "@@" to be at the beginning of the message so it is parsed
+  // as a termination event by dasManager
+  __android_log_print(ANDROID_LOG_INFO, "vic-dasmgr", "@@Shutdown on signal %d\n", signum);
 }
 
 static std::unique_ptr<DataPlatform> GetDataPlatform()
