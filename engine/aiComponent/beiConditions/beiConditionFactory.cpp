@@ -30,7 +30,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFaceKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionHighTemperatureCPU.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionHighTemperature.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsMaintenanceReboot.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsNightTime.h"
@@ -281,9 +281,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       condition = std::make_shared<ConditionFeatureGate>(config);
       break;
     }
-    case BEIConditionType::HighTemperatureCPU:
+    case BEIConditionType::HighTemperature:
     {
-      condition = std::make_shared<ConditionHighTemperatureCPU>(config);
+      condition = std::make_shared<ConditionHighTemperature>(config);
       break;
     }
     case BEIConditionType::IlluminationDetected:

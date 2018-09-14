@@ -806,7 +806,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   );
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_TOUCH, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Batt: %2.2f V", payload.batteryVolts);
+  sprintf(txt, "Batt: %2.2fV, %2uC [%c%c]", 
+    payload.batteryVolts,
+    payload.state.battTemp_C,
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED ? 'H' : ' ',
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED ? 'D' : ' ');
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Anim: %32s [%d], ProcFaceFrames: %d",
@@ -837,12 +841,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALL" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "   %8s %10s %7s %4s %8s",
+  sprintf(txt, "   %8s %10s %7s %4s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BUTTON_PRESSED ? "PWR_BTN" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE ? "CALM" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED ? "BATT_HOT" : "");
+    payload.state.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE ? "CALM" : "");
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   

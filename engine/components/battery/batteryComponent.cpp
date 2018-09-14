@@ -124,10 +124,10 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   }
   wasFakeLowBattery = kFakeLowBattery;
 
-  // Get battery temperature
-  _battTemperature_C = msg.battTemp_C;
+  SetTemperature(msg.battTemp_C);
 
-  // Check if battery is overheating
+  // Check if battery is _really_ overheating, enough for a shutdown to be coming.
+  // This is actually handled in vic-robot, but is recorded here for viz purposes.
   _battOverheated = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED;
 
   // Only update filtered value if the battery isn't disconnected
@@ -384,6 +384,31 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
     // pass filter here to more closely track the actual battery voltage.
     _batteryVoltsFilter->Reset();
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
+  }
+}
+
+void BatteryComponent::SetTemperature(const u8 temp_C)
+{
+  _battTemperature_C = temp_C;
+
+  // Print DAS if temperature crosses 50C
+  // Mostly for dev to see if conditionHighTemperature is making him too narcoleptic
+  const u8 kHotBatteryTemp_degC = 50;
+  const u8 kNoLongerHotTemp_degC = 45; // Still hot, but using hysteresis to prevent spamming
+  static bool exceededHotThreshold = false;
+
+  auto dasFunc = [kHotBatteryTemp_degC,kNoLongerHotTemp_degC](const bool exceeded) {
+    exceededHotThreshold = exceeded;
+    DASMSG(battery_temp_crossed_threshold, "battery.temp_crossed_threshold", "Indicates battery temperature exceeded a specified temperature");
+    DASMSG_SET(i1, exceeded, "Higher than threshold (1) or lower (0)");    
+    DASMSG_SET(i2, exceeded ? kHotBatteryTemp_degC : kNoLongerHotTemp_degC, "Temperature crossed (C)");
+    DASMSG_SEND();
+  };
+
+  if (!exceededHotThreshold && _battTemperature_C >= kHotBatteryTemp_degC) {
+    dasFunc(true);
+  } else if (exceededHotThreshold && _battTemperature_C <= kNoLongerHotTemp_degC) {
+    dasFunc(false);
   }
 }
 

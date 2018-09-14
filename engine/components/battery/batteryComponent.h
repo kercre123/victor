@@ -137,6 +137,7 @@ private:
   void SetIsCharging(const bool isCharging);
   void UpdateOnChargerPlatform();
   void UpdateSuggestedChargerTime(bool wasLowBattery, bool wasCharging);
+  void SetTemperature(const u8 temp_C);
   
   // Filtered and raw battery voltage in mV
   int GetBatteryVolts_mV() { return static_cast<int>(std::round(1000.f * _batteryVoltsFilt)); }

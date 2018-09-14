@@ -31,7 +31,7 @@ enum uint_8 BEIConditionType {
   FaceKnown,
   FacePositionUpdated,
   FeatureGate,
-  HighTemperatureCPU,
+  HighTemperature,
   IlluminationDetected,
   IsMaintenanceReboot,
   IsNightTime,

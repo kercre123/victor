@@ -13,7 +13,7 @@
       "targetBatteryLevel" : "Low"
     },
     {
-      "conditionType" : "HighTemperatureCPU"
+      "conditionType" : "HighTemperature"
     }
     ]
   },

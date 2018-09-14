@@ -24,7 +24,7 @@
       "behaviorClass" : "AnimSequence",
       "animTriggers": ["HighTemperatureWarningFace"],
       "wantsToBeActivatedCondition" : {
-        "conditionType" : "HighTemperatureCPU"
+        "conditionType" : "HighTemperature"
       }
     }
   ]
