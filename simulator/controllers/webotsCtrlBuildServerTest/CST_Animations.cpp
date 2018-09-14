@@ -64,19 +64,12 @@ s32 CST_Animations::UpdateSimInternal()
     case TestState::Setup: 
     {
       if(_startedWaitingForAnimations_s < 0){
-        // Sends a CLAD message to robot so that RobotAudioOutputSource is set to PlayOnRobot,
-        // otherwise a lot of the audio bugs will not occur. See robotAudioClient.h on the robot
-        // side for more information
-        using namespace ExternalInterface;
-        MessageGameToEngine audioOutputMsg;
-        audioOutputMsg.Set_SetRobotAudioOutputSource(SetRobotAudioOutputSource(RobotAudioOutputSourceCLAD::PlayOnRobot));
-        SendMessage(audioOutputMsg);
-        
         // Setup Sound Banks for Tests
         // Handle Text to Speech audio events
         // Note: MessageGameToEngine uses the UnityAudioClient Connection to set audio state
         using namespace AudioMetaData;
         using namespace AudioEngine::Multiplexer;
+        using namespace ExternalInterface;
         const auto stateId = static_cast<GameState::GenericState>(GameState::Robot_Vic_System_Tests::Unit_Test);
         MessageGameToEngine audioStateMsg;
         audioStateMsg.Set_PostAudioGameState(PostAudioGameState(GameState::StateGroupType::Robot_Vic_System_Tests,

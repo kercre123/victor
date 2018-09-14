@@ -18,12 +18,6 @@
 // to wait for this initial long state to complete
 #define SKIP_INITIAL_ENROLL_TIMEOUT 0
 
-// Audio causes problems (timeouts) on the build server, so turning this on is useful locally
-// for hearing the animation audio (including saying names after enrollment).
-// Otherwise, it is best to leave it off until audio throttling on the server is figered out.
-#define ENABLE_AUDIO 0
-
-
 namespace Anki {
 namespace Vector {
   
@@ -166,12 +160,6 @@ s32 CST_EnrollFace::UpdateSimInternal()
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_Timeout_sec", "8")));
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_TimeoutMax_sec", "15")));
         SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("EnrollFace_TimeoutExtraTime_sec", "4")));
-        
-        if(!ENABLE_AUDIO)
-        {
-          // Disable audio completely because it runs more slowly on the server and causes timeouts
-          SendMessage(MessageGameToEngine(SetRobotAudioOutputSource(RobotAudioOutputSourceCLAD::NoDevice)));
-        }
       }
       
       StartEnrollment(Vision::UnknownFaceID, "Face1");

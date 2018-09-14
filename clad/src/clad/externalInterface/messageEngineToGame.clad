@@ -14,7 +14,6 @@
 #include "clad/types/behaviorComponent/userIntent.clad"
 #include "clad/types/behaviorSlot.clad"
 #include "clad/types/debugConsoleTypes.clad"
-#include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
 #include "clad/types/engineState.clad"
 #include "clad/types/faceDetectionMetaData.clad"
@@ -86,20 +85,6 @@ message UiDeviceConnected {
     string  buildVersion
 }
 
-message EngineRobotCLADVersionMismatch {
-  bool engineToRobotMismatch,
-  bool robotToEngineMismatch,
-  string  engineEnginetoRobotHash,	// Engine's calculated hash for the engine to robot messages
-  string  engineRobotToEngineHash,	// Engine's calculated hash for the robot to engine messages
-  string  robotEnginetoRobotHash,	// Robot's calculated hash for the engine to robot messages
-  string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
-}
-
-// Responds to Unity request for feature toggles
-message FeatureToggles {
-  FeatureToggle features[uint_16]
-}
-
 message GoingToSleep {
   bool triggeredFromVoiceCommand = 0
 }
@@ -108,11 +93,6 @@ message EngineLoadingDataStatus {
   float_32 ratioComplete = 0.0
 }
 
-
-/*
-message Bogus {
-}
-*/
 
 message CurrentCameraParams {
   float_32 cameraGain,
@@ -201,19 +181,6 @@ message UnexpectedMovement {
   UnexpectedMovementSide movementSide
 }
 
-// Whether or not the restore was successful
-message RestoreRobotStatus {
-  bool isWipe,
-  bool success
-}
-
-// Sends an array of robot serial numbers that we have backup data for and whether or not
-// game should prompt for restore
-message RestoreRobotOptions {
-  bool shouldPromptForRestore,
-  uint_32 robotsWithBackupData[uint_8]
-}
-
 message RobotFallingEvent {
   uint_32 duration_ms,
   float_32 impactIntensity
@@ -223,13 +190,6 @@ message RobotFallingEvent {
 ///////////////////////////  DEBUG/PERFORMANCE  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// Generic string for sending debug string up to game
-message DebugString {
-    string    text
-}
-message DebugAnimationString {
-    string    text
-}
 message DebugPerformanceTick {
     string    systemName,
     float_32  lastTickTime
@@ -524,20 +484,6 @@ message PlaypenBehaviorFailed {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  ACTIONS  //////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// BlockPickedUp
-message BlockPickedUp {
-    bool didSucceed                       // true if robot thinks it picked up a block (from low or high position)
-}
-
-// BlockPlaced
-message BlockPlaced {
-    bool didSucceed                       // true if robot thinks it placed up a block (from low or high position)
-}
-
-///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////  ANIMATIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -708,17 +654,6 @@ message LatencyMessage {
   CurrentTimingInfo imageLatency
 }
 
-message DeviceDataMessage {
-  DeviceDataPair dataList[uint_8]
-}
-
-// Debug menu for taps
-message BlockTapFilterStatus {
-  bool  enabled,
-  int_16 tapIntensityMin,
-  uint_32 tapWaitOffset,
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // State
 ///////////////////////////////////////////////////////////////////////////////
@@ -755,13 +690,6 @@ message NVStorageOpResult {
 
 //notify the game that behavior has transitioned
 message BehaviorTransition{
-  //BehaviorID oldBehaviorID,
-  //BehaviorID newBehaviorID,
-  //BehaviorClass oldBehaviorClass,
-  //ExecutableBehaviorType oldBehaviorExecType,
-  //BehaviorClass newBehaviorClass,
-  //ExecutableBehaviorType newBehaviorExecType,
-  //string newBehaviorDisplayKey
 }
 
 message BehaviorObjectiveAchieved{
@@ -807,10 +735,6 @@ message MemoryMapMessageEnd
 //////////////////////////////////  MISC  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// Data to display in UI that's useful to customer support
-message SupportInfo {
-  string deviceId
-}
 
 //  Audio stages are map to different music updates that
 //  should be performed by Unity.
@@ -829,9 +753,6 @@ message AudioBehaviorStackUpdate {
   BehaviorID branchPath[uint_16],
 }
 
-message ResponseLocale {
-  string locale
-}
 
 // Anything that the robot wishes to push to the app that 
 // is not a response to a request from the app.

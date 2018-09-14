@@ -25,7 +25,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/cozmoEngine.h"
 #include "engine/debug/cladLoggerProvider.h"
-#include "engine/deviceData/deviceDataManager.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -204,7 +203,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get(), _protoMsgHandler.get()))
-  , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
 #if ANKI_CPU_PROFILER_ENABLED
@@ -249,11 +247,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
 
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
     _context->GetExperiments()->UpdateLabAssignments(assignments);
@@ -434,7 +430,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
     LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");
-    SendSupportInfo();
 
     if (_engineState == EngineState::Running) {
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(1.f);
@@ -642,16 +637,6 @@ void CozmoEngine::UpdateLatencyInfo()
   }
 }
 
-void CozmoEngine::SendSupportInfo() const
-{
-  #if USE_DAS
-  const DAS::IDASPlatform* platform = DASGetPlatform();
-  if (platform != nullptr) {
-    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::SupportInfo>(platform->GetDeviceId());
-  }
-  #endif
-}
-
 void CozmoEngine::SetEngineState(EngineState newState)
 {
   EngineState oldState = _engineState;
@@ -712,14 +697,6 @@ Robot* CozmoEngine::GetRobot() {
 }
 
 template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
-{
-  // TODO: Tell animation process to read the anim dir?
-  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadFaceAnimationDir.NotHookedUp", "");
-  //_context->GetRobotManager()->ReadFaceAnimationDir();
-}
-
-template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const ImageSendMode newMode = msg.mode;
@@ -767,28 +744,6 @@ void CozmoEngine::InitUnityLogger()
     }
   }
 #endif //ANKI_DEV_CHEATS
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::RequestLocale& msg)
-{
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::ResponseLocale>(
-                                                    _context->GetLocale()->GetLocaleStringLowerCase());
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::RequestDataCollectionOption& msg)
-{
-#if USE_DAS
-  if( msg.CollectionEnabled )
-  {
-    DASEnableNetwork(DASDisableNetworkReason_UserOptOut);
-  }
-  else
-  {
-    DASDisableNetwork(DASDisableNetworkReason_UserOptOut);
-  }
-#endif
 }
 
 

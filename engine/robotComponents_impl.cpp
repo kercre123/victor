@@ -56,7 +56,6 @@ class MoodManager;
 class StimulationFaceDisplay;
 class BlockTapFilterComponent;
 class RobotToEngineImplMessaging;
-class RobotIdleTimeoutComponent;
 class MicComponent;
 class BatteryComponent;
 class FullRobotPose;
@@ -118,7 +117,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                   RobotComponentID, Moo
 LINK_COMPONENT_TYPE_TO_ENUM(StimulationFaceDisplay,        RobotComponentID, StimulationFaceDisplay)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotToEngineImplMessaging,    RobotComponentID, RobotToEngineImplMessaging)
-LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, RobotIdleTimeout)
 LINK_COMPONENT_TYPE_TO_ENUM(MicComponent,                  RobotComponentID, MicComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
 LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, FullRobotPose)
@@ -191,7 +189,6 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(ProxSensor)
     CASE(PublicStateBroadcaster)
     CASE(RobotExternalRequestComponent)
-    CASE(RobotIdleTimeout)
     CASE(RobotHealthReporter)
     CASE(RobotStatsTracker)
     CASE(RobotToEngineImplMessaging)

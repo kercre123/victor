@@ -390,12 +390,6 @@ namespace Anki {
       HandleAnimationAborted(msg);
     }
     
-    void UiGameController::HandleDebugStringBase(const ExternalInterface::DebugString& msg)
-    {
-      //PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
-      HandleDebugString(msg);
-    }
-    
     void UiGameController::HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg)
     {
       PRINT_NAMED_INFO("HandleNVStorageOpResult",
@@ -644,9 +638,6 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
-            break;
-          case ExternalInterface::MessageEngineToGame::Tag::DebugString:
-            HandleDebugStringBase(message.Get_DebugString());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
@@ -1715,12 +1706,6 @@ namespace Anki {
       m.enable = enable;
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }  
-
-    void UiGameController::SendEnableBlockTapFilter(bool enable){
-      ExternalInterface::EnableBlockTapFilter m(enable);
-
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
-    }
 
     void UiGameController::SendConnectToCube()
     {

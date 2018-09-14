@@ -119,7 +119,6 @@ protected:
   virtual void HandleConnectedObjectStates(const ExternalInterface::ConnectedObjectStates& msg){};
   virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg){};
   virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg){};
-  virtual void HandleDebugString(const ExternalInterface::DebugString& msg){};
   virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg){};
   virtual void HandleFactoryTestResultEntry(const FactoryTestResultEntry& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
@@ -294,7 +293,6 @@ protected:
   void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   void SendNVClearPartialPendingWriteData();
-  void SendEnableBlockTapFilter(bool enable);
   void SendConnectToCube();
   void SendDisconnectFromCube(const float gracePeriod_sec);
   void SendForgetPreferredCube();
@@ -505,7 +503,6 @@ private:
   void HandleConnectedObjectStatesBase(const ExternalInterface::ConnectedObjectStates& msg);
   void HandleAnimationAvailableBase(const ExternalInterface::AnimationAvailable& msg);
   void HandleAnimationAbortedBase(const ExternalInterface::AnimationAborted& msg);
-  void HandleDebugStringBase(const ExternalInterface::DebugString& msg);
   void HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg);
   void HandleBehaviorTransitionBase(const ExternalInterface::BehaviorTransition& msg);
   void HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg);

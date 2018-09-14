@@ -358,15 +358,6 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
 
     _hasMismatchedRobotToEngineCLAD = true;
   }
-
-  if (_hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD) {
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineRobotCLADVersionMismatch(_hasMismatchedEngineToRobotCLAD,
-                                                                                                              _hasMismatchedRobotToEngineCLAD,
-                                                                                                              engineEngineToRobotStr,
-                                                                                                              engineRobotToEngineStr,
-                                                                                                              robotEngineToRobotStr,
-                                                                                                              robotRobotToEngineStr)));
-  }
 }
 
 void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message,

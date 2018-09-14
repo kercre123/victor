@@ -81,7 +81,6 @@
 #include "engine/petWorld.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
-#include "engine/robotIdleTimeoutComponent.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
@@ -366,7 +365,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::StimulationFaceDisplay,     new StimulationFaceDisplay());
     _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
     _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
-    _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
     _components->AddDependentComponent(RobotComponentID::MicComponent,               new MicComponent());
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
@@ -403,8 +401,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   _needToSendLocalizationUpdate = false;
 
   GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), this);
-
-  _lastDebugStringHash = 0;
 
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
@@ -1386,36 +1382,6 @@ Result Robot::Update()
 
   // update time since last image received
   _timeSinceLastImage_s = std::max(0.0, currentTime - GetRobotToEngineImplMessaging().GetLastImageReceivedTime());
-
-  // Sending debug string to game and viz
-  char buffer [128];
-
-  const float updateRatePerSec = 1.0f / (currentTime - _prevCurrentTime_sec);
-  _prevCurrentTime_sec = currentTime;
-
-  // So we can have an arbitrary number of data here that is likely to change want just hash it all
-  // together if anything changes without spamming
-  snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c%c %2dHz",
-           GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
-           GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
-           GetMoveComponent().IsMoving() ? 'B' : ' ',
-           GetCarryingComponent().IsCarryingObject() ? 'C' : ' ',
-           GetBatteryComponent().IsOnChargerPlatform() ? 'P' : ' ',
-           GetNVStorageComponent().HasPendingRequests() ? 'R' : ' ',
-           // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
-           // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-           // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-           // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-           (u8)MIN(((u8)updateRatePerSec), std::numeric_limits<u8>::max()));
-
-  std::hash<std::string> hasher;
-  size_t curr_hash = hasher(std::string(buffer));
-  if (_lastDebugStringHash != curr_hash)
-  {
-    SendDebugString(buffer);
-    _lastDebugStringHash = curr_hash;
-  }
 
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
@@ -2506,28 +2472,6 @@ Result Robot::SendAbortAnimation()
 {
   return SendMessage(RobotInterface::EngineToRobot(RobotInterface::AbortAnimation()));
 }
-
-Result Robot::SendDebugString(const char* format, ...)
-{
-  int len = 0;
-  const int kMaxDebugStringLen = std::numeric_limits<u8>::max();
-  char text[kMaxDebugStringLen];
-  strcpy(text, format);
-
-  // Create formatted text
-  va_list argptr;
-  va_start(argptr, format);
-  len = vsnprintf(text, kMaxDebugStringLen, format, argptr);
-  va_end(argptr);
-
-  std::string str(text);
-
-  // Send message to game
-  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
-
-  return RESULT_OK;
-}
-
 
 void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose) const
 {

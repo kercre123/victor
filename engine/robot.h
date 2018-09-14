@@ -103,7 +103,6 @@ class PowerStateManager;
 class RobotEventHandler;
 class RobotGyroDriftDetector;
 class RobotHealthReporter;
-class RobotIdleTimeoutComponent;
 class RobotStateHistory;
 class HistRobotState;
 class IExternalInterface;
@@ -275,9 +274,6 @@ public:
 
   inline MovementComponent& GetMoveComponent() {return GetComponent<MovementComponent>();}
   inline const MovementComponent& GetMoveComponent() const {return GetComponent<MovementComponent>();}
-
-  inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {return GetComponent<RobotIdleTimeoutComponent>();}
-  inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {return GetComponent<RobotIdleTimeoutComponent>();}
 
   ActionList& GetActionList() { return GetComponent<ActionList>(); }
 
@@ -644,11 +640,6 @@ protected:
   RobotTimeStamp_t _lastMsgTimestamp;
   bool             _newStateMsgAvailable = false;
 
-
-  // Hash to not spam debug messages
-  size_t _lastDebugStringHash;
-
-
   Pose3d         _driveCenterPose;
   PoseFrameID_t  _frameId                   = 0;
   ObjectID       _localizedToID; // ID of mat object robot is localized to
@@ -739,9 +730,6 @@ protected:
   Result SendSyncRobot() const;
 
   float _syncRobotSentTime_sec = 0.0f;
-
-  // Used to calculate tick rate
-  float _prevCurrentTime_sec = 0.0f;
 
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;

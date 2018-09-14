@@ -74,7 +74,6 @@ enum class RobotComponentID {
   SettingsCommManager,
   SettingsManager,
   RobotHealthReporter,
-  RobotIdleTimeout,
   RobotStatsTracker,
   RobotToEngineImplMessaging,
   StateHistory,
