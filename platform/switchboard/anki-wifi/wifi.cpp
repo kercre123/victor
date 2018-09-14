@@ -20,6 +20,7 @@
 #include "log.h"
 #include "wifi.h"
 #include "platform/switchboard/anki-wifi/fileutils.h"
+#include "exec_command.h"
 
 #include <algorithm>
 #include <fstream>
@@ -241,6 +242,8 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
       DASMSG(connman_error, "connman.error.call_scan", "Connman error.");
       DASMSG_SET(s1, error->message, "Error message");
       DASMSG_SEND();
+
+      RecoverNetworkServices();
 
       g_error_free(error);
       return WifiScanErrorCode::ERROR_SCANNING;
@@ -1491,6 +1494,13 @@ bool DisableAccessPointMode() {
   }
 
   return true;
+}
+
+void RecoverNetworkServices() {
+  DASMSG(recover_network_services, "wifi.recover_network_services", "Attempt to recover network services");
+    DASMSG_SEND();
+
+  ExecCommandInBackground({ "/bin/systemctl", "restart", "wpa_supplicant", "connman" }, nullptr);
 }
 
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
