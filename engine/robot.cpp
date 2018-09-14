@@ -3036,46 +3036,7 @@ void Robot::Shutdown(ShutdownReason reason)
     return;
   }
   _toldToShutdown = true;
-
-  // Write DAS message
-  float idleTime_sec;
-  auto upTime_sec   = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
-  auto numFreeBytes = Util::FileUtils::GetDirectoryFreeSize("/data");
-
-  LOG_INFO("Robot.Shutdown.ShuttingDown",
-           "Reason: %s, upTime: %u, numFreeBytes: %llu",
-           EnumToString(reason), upTime_sec, numFreeBytes);
-
-  DASMSG(robot_power_off, "robot.power_off", "Reason why robot powered off during the previous run");
-  DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
-  DASMSG_SET(i1, upTime_sec,           "Uptime (seconds)");
-  DASMSG_SET(i2, numFreeBytes,         "Free space in /data (bytes)");
-  DASMSG_SEND();
-
-
-  // Send fault code
-  // Fault code handler will kill vic-dasMgr and do other stuff as necessary
-
-  // For simplicity, make sure that the ShutdownReason and corresponding
-  // FaultCode are named the same.
-  #define SHUTDOWN_CASE(x) case ShutdownReason::x: \
-                             shutdownCode = FaultCode::x; \
-                             break;
-  auto shutdownCode = 0;
-  switch (reason) {
-    SHUTDOWN_CASE(SHUTDOWN_BATTERY_CRITICAL_VOLT)
-    SHUTDOWN_CASE(SHUTDOWN_BATTERY_CRITICAL_TEMP)
-    SHUTDOWN_CASE(SHUTDOWN_GYRO_NOT_CALIBRATING)
-    SHUTDOWN_CASE(SHUTDOWN_BUTTON)
-    default:
-      LOG_ERROR("Robot.Shutdown.UnknownFaultCode", "reason: %s", EnumToString(reason));
-      break;
-  }
-  #undef SHUTDOWN_CASE
-
-  if (shutdownCode != 0) {
-    FaultCode::DisplayFaultCode(shutdownCode);
-  }
+  _shutdownReason = reason;
 }
 
 

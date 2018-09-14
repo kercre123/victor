@@ -418,6 +418,9 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
   // Does this record look like a DAS entry?
   if (*message != Anki::Util::DAS::EVENT_MARKER) {
     return;
+  } else if (message[1] == Anki::Util::DAS::EVENT_MARKER) {
+    _gotTerminateEvent = true;
+    return;
   }
 
   _eventCount++;
@@ -746,10 +749,7 @@ void DASManager::SaveGlobalState()
 }
 
 //
-// Process log entries until shutdown flag becomes true.
-// The shutdown flag is declared const because this function
-// doesn't change it, but it may be changed by an asynchronous event
-// such as a signal handler.
+// Process log entries until error or the termination event is read ("@@")
 //
 Result DASManager::Run(const bool & shutdown)
 {
@@ -796,7 +796,9 @@ Result DASManager::Run(const bool & shutdown)
   Result result = RESULT_OK;
   _last_flush_time = std::chrono::steady_clock::now();
 
-  while (!shutdown) {
+  // Run forever until error or termination event ("@@")
+  // is read
+  while (true) {    
     struct log_msg logmsg;
     int rc = android_logger_list_read(log, &logmsg);
     if (rc <= 0 ) {
@@ -817,6 +819,25 @@ Result DASManager::Run(const bool & shutdown)
     // Dispose of this log entry
     ProcessLogEntry(logEntry);
 
+    if(_gotTerminateEvent)
+    {
+      if(shutdown)
+      {
+        LOG_INFO("DASManager.Run.Shutdown", "");
+        break;
+      }
+      else
+      {
+        _gotTerminateEvent = false;
+        // This can happen if, for some reason, we never parsed
+        // a terminate event from a previous run and the event was
+        // still sitting in the log buffer when dasManager was started.
+        // We should ignore it in this case
+        LOG_INFO("DASManager.Run.InvalidTerminateEvent",
+                 "Got terminate event but we aren't shutting down");
+      }
+    }
+    
     // If we have exceeded the threshold size, roll the log file now.
     // If we are allowed to upload and have gone over the flush interval, roll the log file now.
     // If we are NOT allowed to upload, let the file keep growing to avoid fragmentation.
@@ -876,7 +897,7 @@ Result DASManager::Run(const bool & shutdown)
 
   sync();
 
-  LOG_DEBUG("DASManager.Run", "Done(result %d)", result);
+  LOG_INFO("DASManager.Run", "Done(result %d)", result);
   return result;
 }
 

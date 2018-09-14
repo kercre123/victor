@@ -118,6 +118,7 @@ enum int_8 BodyColor
 // Make sure that there is a corresponding code in faultCodes.h
 // for each shutdown reason here.
 enum uint_8 ShutdownReason {
+  SHUTDOWN_UNKNOWN,
   SHUTDOWN_BUTTON,
   SHUTDOWN_BATTERY_CRITICAL_VOLT,
   SHUTDOWN_BATTERY_CRITICAL_TEMP,

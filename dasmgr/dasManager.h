@@ -32,7 +32,7 @@ public:
   // Class constructor
   DASManager(const DASConfig & dasConfig);
 
-  // Run until error or shutdown flag becomes true
+  // Run until error or termination log event ("@@") is read
   // Returns 0 on successful termination, else error code
   Result Run(const bool & shutdown);
 
@@ -64,6 +64,7 @@ private:
   bool _purge_backup_files = false;
   bool _exiting = false;
   bool _uploading = false;
+  bool _gotTerminateEvent = false;
   std::string _logFilePath;
   std::ofstream _logFile;
 

@@ -66,7 +66,7 @@ void CozmoContext::Shutdown()
 {
   // Order of destruction matters!  RobotManager makes calls back into context,
   // so manager must be shut down before context is destroyed.
-  _robotMgr->Shutdown();
+  _robotMgr->Shutdown(ShutdownReason::SHUTDOWN_UNKNOWN);
 }
 
 

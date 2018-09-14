@@ -611,12 +611,13 @@ public:
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
   void Shutdown(ShutdownReason reason);
-  bool ToldToShutdown() const { return _toldToShutdown; }
+  bool ToldToShutdown(ShutdownReason& reason) const { reason = _shutdownReason; return _toldToShutdown; }
 
   bool SetLocale(const std::string & locale);
 
 protected:
   bool _toldToShutdown = false;
+  ShutdownReason _shutdownReason = ShutdownReason::SHUTDOWN_UNKNOWN;
 
   CozmoContext* _context;
   std::unique_ptr<PoseOriginList> _poseOrigins;
