@@ -178,10 +178,10 @@ enum uint_8 BehaviorClass {
   ProxGetToDistance,
 
   // reactions
-  AskForHelp,
   AcknowledgeCubeMoved,
   AcknowledgeFace,
   AcknowledgeObject,
+  AskForHelp,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,

@@ -12,10 +12,6 @@
 {
   "handledByHighLevelAI": {
 
-    "system_charger": {
-      "type": "system_charger"
-    },
-
     "explore_start": {
       "type": "explore_start"
     }
@@ -23,6 +19,10 @@
   },
 
   "handledElsewhere": {
+    "system_charger": {
+      "type": "system_charger"
+    },
+  
     "system_sleep": {
       "type": "system_sleep"
     },

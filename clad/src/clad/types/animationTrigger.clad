@@ -46,6 +46,7 @@ enum int_32 AnimationTrigger
   BumpObjectFastLoop,
   BumpObjectFastGetOut,
 
+  ChargerDockingAlreadyHere,
   ChargerDockingDrivingEnd,
   ChargerDockingDrivingLoop,
   ChargerDockingDrivingStart,

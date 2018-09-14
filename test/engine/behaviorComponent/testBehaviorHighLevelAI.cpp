@@ -136,9 +136,6 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
   // There should be one entry per completed intent in completedUserIntents.json
   
   LabeledExceptions exceptionsList = {
-    { "system_charger",    {"ObservingOnCharger",
-                            "ObservingOnChargerRecentlyPlaced",
-    } },
     { "explore_start",     {} },
   };
   // OK YOUR JOB IS DONE

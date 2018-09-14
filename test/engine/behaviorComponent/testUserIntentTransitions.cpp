@@ -111,6 +111,12 @@ TEST_INTENT(UserIntentsTransitions, BeQuiet, "be_quiet")
   const bool res = IntentHelper( UserIntent::Createimperative_quiet({}), BehaviorID::BeQuietAnims, true );
   EXPECT_TRUE(res);
 }
+
+TEST_INTENT(UserIntentsTransitions, GoHome, "system_charger")
+{
+  const bool res = IntentHelper( UserIntent::Createsystem_charger({}), BehaviorID::FindAndGoToHome, true );
+  EXPECT_TRUE(res);
+}
   
 TEST_INTENT(UserIntentsTransitions, ShutUp, "shut_up")
 {

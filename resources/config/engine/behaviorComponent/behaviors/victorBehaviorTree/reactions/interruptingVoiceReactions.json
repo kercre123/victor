@@ -10,6 +10,7 @@
     "PlayAGameVoiceCommand",
     "FindYourCubeVoiceCommand",
     "FistBumpVoiceCommand",
+    "GoHomeVoiceCommand",
     "RollCubeVoiceCommand",
     "PopAWheelieVoiceCommand",
     "KeepawayVoiceCommand",

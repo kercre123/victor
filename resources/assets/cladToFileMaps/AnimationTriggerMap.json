@@ -128,6 +128,10 @@
     "AnimName":  "ag_cubeconnection_connectionsuccess"
   },
   {
+    "CladEvent": "ChargerDockingAlreadyHere",
+    "AnimName": "ag_generic_cantdothat"
+  },
+  {
     "CladEvent": "ChargerDockingDrivingEnd",
     "AnimName": "ag_chargerdocking_driving_end"
   },
