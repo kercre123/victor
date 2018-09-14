@@ -120,6 +120,24 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
            ttsID, EnumToString(triggerMode), Util::HidePersonallyIdentifiableInfo(text.c_str()),
            EnumToString(style), durationScalar);
 
+  // Add Acapela Silence tag to remove trailing silence at end of audio stream
+  // Trim white space
+  std::size_t firstScan = text.find_first_not_of(' ');
+  std::size_t first     = firstScan == std::string::npos ? text.length() : firstScan;
+  std::size_t last      = text.find_last_not_of(' ');
+  std::string ttsStr = text.substr(first, last-first+1);
+  // Check punctuation . ! ?
+  char lastChar = ttsStr[ttsStr.size() - 1];
+  if (!(lastChar == '.' || lastChar == '?' || lastChar == '!')) {
+    lastChar = '.'; // Set default
+  }
+  else {
+    ttsStr.pop_back();
+  }
+  // Set trailing silence pause to 10 ms and add punctuation to the end of the string
+  ttsStr += " \\pau=10\\";
+  ttsStr.push_back(lastChar);
+  
   // Get an empty data instance
   auto waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
 
@@ -140,7 +158,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
   }
 
   // Dispatch work onto another thread
-  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, text, durationScalar, waveData]
+  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, ttsStr, durationScalar, waveData]
   {
 
     // Have we sent TextToSpeechState::Playable for this utterance?
@@ -149,7 +167,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
     // Have we finished generating audio for this utterance?
     bool done = false;
 
-    Result result = GetFirstAudioData(text, durationScalar, waveData, done);
+    Result result = GetFirstAudioData(ttsStr, durationScalar, waveData, done);
     if (RESULT_OK != result) {
       LOG_ERROR("TextToSpeechComponent.CreateSpeech", "Unable to get first audio data (error %d)", result);
       PushEvent({ttsID, TextToSpeechState::Invalid, 0.f});
@@ -165,7 +183,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
       }
       if (!sentPlayable && waveData->GetNumberOfFramesReceived() >= kMinPlayableFrames) {
           LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is ready to play", ttsID);
-          const f32 duration_ms = GetEstimatedDuration_ms(text) * durationScalar;
+          const f32 duration_ms = GetEstimatedDuration_ms(ttsStr) * durationScalar;
           PushEvent({ttsID, TextToSpeechState::Playable, duration_ms});
           sentPlayable = true;
       }
@@ -187,7 +205,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
         }
         if (!sentPlayable && waveData->GetNumberOfFramesReceived() >= kMinPlayableFrames) {
           LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is ready to play", ttsID);
-          const f32 duration_ms = GetEstimatedDuration_ms(text) * durationScalar;
+          const f32 duration_ms = GetEstimatedDuration_ms(ttsStr) * durationScalar;
           bundle->state = AudioCreationState::Playable;
           PushEvent({ttsID, TextToSpeechState::Playable, duration_ms});
           sentPlayable = true;
