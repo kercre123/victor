@@ -1503,6 +1503,53 @@ void RecoverNetworkServices() {
   ExecCommandInBackground({ "/bin/systemctl", "restart", "wpa_supplicant", "connman" }, nullptr);
 }
 
+void WpaSupplicantScan() {
+  // Perform a wifi scan talking to Wpa Supplicant directly
+  GDBusConnection *gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
+                                                nullptr,
+                                                nullptr);
+
+  FiW1Wpa_supplicant1* wpa_sup = fi_w1_wpa_supplicant1_proxy_new_sync (
+      gdbusConn,
+      G_DBUS_PROXY_FLAGS_NONE,
+      "fi.w1.wpa_supplicant1",
+      "/fi/w1/wpa_supplicant1",
+      nullptr,
+      nullptr);
+
+  gchar* interface_path;
+  gboolean success = fi_w1_wpa_supplicant1_call_get_interface_sync (
+      wpa_sup,
+      "wlan0",
+      &interface_path,
+      nullptr,
+      nullptr);
+
+  FiW1Wpa_supplicant1Outerface* interfacePath = fi_w1_wpa_supplicant1_outerface_proxy_new_sync(
+    gdbusConn,
+    G_DBUS_PROXY_FLAGS_NONE, 
+    "fi.w1.wpa_supplicant1",
+    interface_path,
+    nullptr,
+    nullptr);
+
+  GVariantBuilder *b;
+  GVariant *dict;
+
+  b = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (b, "{sv}", "Type", g_variant_new_string ("passive"));
+  g_variant_builder_add (b, "{sv}", "AllowRoam", g_variant_new_boolean (false));
+  dict = g_variant_builder_end (b);
+
+  gboolean scanSuccess = fi_w1_wpa_supplicant1_outerface_call_scan_sync (
+    interfacePath,
+    dict,
+    nullptr,
+    nullptr);
+
+  Log::Write("Dbus-WpaSupplicant interface path [%d][%d][%s]", (int)scanSuccess, (int)success, interface_path);
+}
+
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   WiFiIpFlags wifiFlags = WiFiIpFlags::NONE;
 
