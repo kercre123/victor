@@ -61,6 +61,9 @@ namespace {
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
   const float kLowBatteryThresholdVolts = 3.6f;
   
+  // When we are off charger, we apply a small hysteresis band when transitioning between Nominal and Low battery
+  const float kLowBatteryOffChargerHysteresisVolts = 0.05f;
+  
   // Voltage below which battery is considered in a low charge state _when on charger_. When the robot is placed on the
   // charger, the voltage immediately increases by a step amount, so a different threshold is required. The value of
   // 4.0V was chosen because it takes about 5 minutes for the battery to reach 4.0V when placed on the charger at 3.6V
@@ -258,7 +261,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
-  const auto lowBattThreshold = _isCharging ? kOnChargerLowBatteryThresholdVolts : kLowBatteryThresholdVolts;
+  auto lowBattThreshold = _isCharging ? kOnChargerLowBatteryThresholdVolts : kLowBatteryThresholdVolts;
+  // Add a small hysteresis band if we are currently low battery (and not charging), so that we do not flicker between
+  // Low and Nominal if the voltage estimate is noisy
+  if ((oldBatteryLevel == BatteryLevel::Low) && !_isCharging) {
+    lowBattThreshold += kLowBatteryOffChargerHysteresisVolts;
+  }
   if (isFullyCharged) {
     // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state
     //       that can only be achieved while on charger
