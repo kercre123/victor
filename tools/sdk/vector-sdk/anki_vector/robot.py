@@ -59,7 +59,7 @@ class Robot:
     .. code-block:: python
 
         # Create the robot connection
-        with Robot("00e20115") as robot:
+        with anki_vector.Robot("my_robot_serial_number") as robot:
             # Run your commands (for example play animation)
             robot.play_animation("anim_blackjack_victorwin_01")
 
@@ -69,7 +69,7 @@ class Robot:
     .. code-block:: python
 
         # Create a Robot object
-        robot = Robot("00e20115")
+        robot = Robot("my_robot_serial_number")
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
@@ -77,7 +77,8 @@ class Robot:
         # Disconnect from the Robot
         robot.disconnect()
 
-    :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
+    :param serial: Vector's serial number. The Robot Serial Number (ex. 00e20100) is located on the underside of Vector,
+                   or accessible from Vector's debug screen. Used to identify which Vector configuration file to load.
     :param ip: Vector's IP Address. (optional)
     :param port: The port on which Vector is listening. Defaults to :code:`443`
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
@@ -210,7 +211,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115") as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
@@ -265,7 +266,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115", show_viewer=True) as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.viewer.stop_video()
         """
@@ -444,7 +445,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115", enable_camera_feed=True) as robot:
+            with anki_vector.Robot("my_robot_serial_number", enable_camera_feed=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.enable_camera_feed = False
                 robot.loop.run_until_complete(utilities.delay_close(5))
@@ -484,7 +485,7 @@ class Robot:
 
         .. code-block:: python
 
-            robot = Robot("00e20115")
+            robot = Robot("my_robot_serial_number")
             robot.connect()
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
@@ -540,7 +541,7 @@ class Robot:
 
         .. code-block:: python
 
-            robot = Robot("00e20115")
+            robot = Robot("my_robot_serial_number")
             robot.connect()
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
@@ -647,7 +648,7 @@ class AsyncRobot(Robot):
     .. code-block:: python
 
         # Create the robot connection
-        with AsyncRobot("00e20115") as robot:
+        with AsyncRobot("my_robot_serial_number") as robot:
             # Run your commands (for example play animation)
             robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
 
@@ -657,7 +658,7 @@ class AsyncRobot(Robot):
     .. code-block:: python
 
         # Create a Robot object
-        robot = AsyncRobot("00e20115")
+        robot = AsyncRobot("my_robot_serial_number")
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)

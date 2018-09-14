@@ -184,7 +184,7 @@ class SignLanguageRecognizer():
             recognizer = SignLanguageRecognizer()
             recognizer.load_model("/path/to/model_config_filename",
                                 "/path/to/model_weights_filename")
-            with anki_vector.Robot(args.serial, port=args.port, show_viewer=True) as robot:
+            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
                 print("------ predicting hand signs, press ctrl+c to exit early ------")
                 try:
                     robot.loop.run_until_complete(recognizer.predict_with_camera_feed(robot))

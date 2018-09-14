@@ -123,6 +123,7 @@ class _ControlEventManager:
         self._request_event.set()
 
 
+# TODO Add guid as last param to Connection() in sample code?
 class Connection:
     """Creates and maintains a aiogrpc connection.
 
@@ -205,6 +206,7 @@ class Connection:
         except futures.TimeoutError as e:
             raise exceptions.VectorControlException(f"Surpassed timeout of {timeout}s") from e
 
+    # TODO Add guid as last param to Connection() in sample code?
     def connect(self, loop: asyncio.BaseEventLoop, timeout: float = 10.0):
         """Connect to Vector
 
@@ -272,6 +274,7 @@ class Connection:
         except Exception as e:  # pylint: disable=broad-except
             self._logger.error(e)  # TODO: better handle errors due to auth failure (and remove pylint disable)
 
+    # TODO Add guid as last param to Connection() in sample code?
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.
 

@@ -58,7 +58,7 @@ class CameraComponent(util.Component):
     .. code-block:: python
 
         from PIL import Image
-        with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with anki_vector.Robot("my_robot_serial_number") as robot:
             image = robot.camera.latest_image
             image.show()
 
@@ -80,7 +80,7 @@ class CameraComponent(util.Component):
 
         .. code-block:: python
 
-            with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 image = robot.camera.latest_image
                 image.show()
         """

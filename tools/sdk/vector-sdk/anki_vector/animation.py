@@ -82,7 +82,7 @@ class AnimationComponent(util.Component):
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115") as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 anim_request = robot.anim.load_animation_list()
                 anim_request.wait_for_completed()
                 anim_names = robot.anim.anim_list

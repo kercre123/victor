@@ -136,7 +136,7 @@ class ProximityComponent(util.Component):
 
       .. code-block:: python
 
-         with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+         with anki_vector.Robot("my_robot_serial_number") as robot:
              proximity_data = robot.proximity.last_sensor_reading
              if proximity_data is not None:
                  print('Proximity distance: {0}, engine considers useful: {1}'.format(proximity_data.distance, proximity_data.is_valid))
