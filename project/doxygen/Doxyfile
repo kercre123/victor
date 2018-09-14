@@ -897,7 +897,12 @@ EXCLUDE_PATTERNS       = */_build/* \
                          */EXTERNALS/* \
                          */generated/* \
                          */lib/audio/* \
-                         */robot/* \
+                         */robot/test/* \
+                         */robot/cube_firmware/* \
+                         */robot/python/* \
+                         */robot/syscon/* \
+                         */robot/tools/* \
+                         */robot/fixture/* \
                          */apps/xamarin/* \
                          */unity/* \
                          */lib/das-client/testing/gtest/fused-src/* \
