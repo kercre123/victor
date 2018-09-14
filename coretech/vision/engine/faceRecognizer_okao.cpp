@@ -24,6 +24,7 @@
 #include "util/threading/threadPriority.h"
 #include "json/json.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/vision/engine/imageCache.h"
 
 #include "OkaoCoAPI.h"
 
@@ -46,6 +47,10 @@ namespace Vision {
   // Console Vars
   //
 
+  // Image and facial parts data will be resized until the detected eyes are less than this distance apart
+  // (should be about twice the minimum intra-eye required for reliable recognition)
+  CONSOLE_VAR_RANGED(s32, kMaxDistanceBetweenEyes_pix, "Vision.FaceRecognition", 48, 16, 640);
+  
   // Face must be recognized with score above this threshold to be considered a match
   CONSOLE_VAR_RANGED(s32, kFaceRecognitionThreshold, "Vision.FaceRecognition", 750, 0, 1000);
 
@@ -709,9 +714,6 @@ namespace Vision {
     const char* threadName = "FaceRecognizer";
     Util::SetThreadName(pthread_self(), threadName);
 
-
-
-
     while(_isRunningAsync)
     {
       _mutex.lock();
@@ -743,13 +745,13 @@ namespace Vision {
     INT32 nWidth  = _img.GetNumCols();
     INT32 nHeight = _img.GetNumRows();
     RAWIMAGE* dataPtr = _img.GetDataPointer();
-
+    
     Tic("OkaoFeatureExtraction");
-    OkaoResult okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
-                                                  dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
-                                                  _okaoPartDetectionResultHandle);
+    OkaoResult okaoResult = OKAO_FR_ExtractPoints_GRAY(_okaoRecognitionFeatureHandle,
+                                                       dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, PT_POINT_KIND_MAX,
+                                                       _aptPoint, _anConfidence);
     Toc("OkaoFeatureExtraction");
-
+    
     if(kFaceRecognitionSimulatedDelay_ms > 0)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(kFaceRecognitionSimulatedDelay_ms));
@@ -1012,9 +1014,11 @@ namespace Vision {
     }
   }
 
-  bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
+  bool FaceRecognizer::SetNextFaceToRecognize(ImageCache& imageCache,
                                               const DETECTION_INFO& detectionInfo,
-                                              HPTRESULT okaoPartDetectionResultHandle,
+                                              //HPTRESULT okaoPartDetectionResultHandle,
+                                              POINT* facialParts,
+                                              INT32* partConfidences,
                                               bool enableEnrollment)
   {
     // Nothing to do if we aren't allowed to enroll anyone and there's nobody
@@ -1027,9 +1031,38 @@ namespace Vision {
       // Not currently busy: copy in the given data and start working on it
 
       _mutex.lock();
-      img.CopyTo(_img);
+      
+      memcpy(_aptPoint, facialParts, PT_POINT_KIND_MAX*sizeof(POINT));
+      memcpy(_anConfidence, partConfidences, PT_POINT_KIND_MAX*sizeof(INT32));
+      //OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX, _aptPoint, _anConfidence);
+      const Point2f leftEye(_aptPoint[PT_POINT_LEFT_EYE].x, _aptPoint[PT_POINT_LEFT_EYE].y);
+      const Point2f rightEye(_aptPoint[PT_POINT_RIGHT_EYE].x, _aptPoint[PT_POINT_RIGHT_EYE].y);
+      f32 d = ComputeDistanceBetween(leftEye, rightEye);
+      
+      s32 subSample = 1;
+      while( d > kMaxDistanceBetweenEyes_pix )
+      {
+        subSample *= 2;
+        d *= 0.5f;
+      }
+      
+      const auto size = imageCache.GetSize(subSample, ResizeMethod::NearestNeighbor);
+      imageCache.GetGray(size).CopyTo(_img);
+      
+      if(subSample > 1)
+      {
+        const f32 resizeFactor = 1.f / static_cast<f32>(subSample);
+        for(auto & pt : _aptPoint)
+        {
+          pt.x = std::round( resizeFactor * (f32)pt.x );
+          pt.y = std::round( resizeFactor * (f32)pt.y );
+        }
+        PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.ExtractFeatures.ReducingResolution",
+                      "ResizeFactor: %.3f (%dx%d)", resizeFactor, _img.GetNumCols(), _img.GetNumRows());
+      }
+      
       _isEnrollmentEnabled = enableEnrollment;
-      _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
+      //_okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _detectionInfo = detectionInfo;
       _state = ProcessingState::HasNewImage;
       _mutex.unlock();

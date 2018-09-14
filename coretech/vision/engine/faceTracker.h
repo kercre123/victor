@@ -31,6 +31,7 @@ namespace Vision {
   
   class Camera;
   class Image;
+  class ImageCache;
   
   class FaceTracker
   {
@@ -44,7 +45,7 @@ namespace Vision {
     
     // Returns the faces found and any IDs that may have been updated (e.g. due
     // to a new recognition or a merge of existing records).
-    Result Update(const Vision::Image&        frameOrig,
+    Result Update(ImageCache&                 imageCache,
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
