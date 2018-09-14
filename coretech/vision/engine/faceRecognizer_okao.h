@@ -247,6 +247,7 @@ namespace Vision {
     std::map<AlbumEntryID_t,std::array<Vision::ImageRGB, kMaxEnrollDataPerAlbumEntry>> _enrollmentImages;
     void SetEnrollmentImage(AlbumEntryID_t albumEntry, s32 dataEntry);
     void DisplayEnrollmentImages() const;
+    void SaveEnrollmentImages() const;
     
   }; // class FaceRecognizer
   

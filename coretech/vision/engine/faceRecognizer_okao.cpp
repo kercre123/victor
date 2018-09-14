@@ -31,7 +31,7 @@
 
 #define LOG_CHANNEL "FaceRecognizer"
 
-#define DEBUG_ENROLLMENT_IMAGES 0 // Everything will need to be running synchronously!
+#define DEBUG_ENROLLMENT_IMAGES 1 // Everything will need to be running synchronously!
 
 namespace Anki {
 namespace Vision {
@@ -145,7 +145,7 @@ namespace Vision {
       if(DEBUG_ENROLLMENT_IMAGES)
       {
         // Have to run synchronously
-        _isRunningAsync = false;
+        // _isRunningAsync = false;
       }
       else
       {
@@ -400,7 +400,7 @@ namespace Vision {
     } else if(UnknownFaceID == faceID) {
       // We have not yet assigned a recognition ID to this tracker ID. Use the
       // one we just found via recognition.
-      PRINT_CH_DEBUG(LOG_CHANNEL, "UpdateRecognitionData.RecognizedNewTrackingID",
+      PRINT_CH_INFO(LOG_CHANNEL, "UpdateRecognitionData.RecognizedNewTrackingID",
                      "Tracking ID=%d recognized as FaceID=%d",
                      -_detectionInfo.nID, recognizedID);
 
@@ -566,9 +566,9 @@ namespace Vision {
       else
       {
         // Verbose, but useful for enrollment debugging
-        //  PRINT_CH_DEBUG("FaceRecognizer", "GetRecognitionData.EnrollmentStatus",
-        //                 "ForTrackingID:%d EnrollmentCount=%d EnrollID=%d",
-        //                 -_detectionInfo.nID, _enrollmentCount, _enrollmentID);
+        PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.EnrollmentStatus",
+                        "ForTrackingID:%d EnrollmentCount=%d EnrollID=%d",
+                        -_detectionInfo.nID, _enrollmentCount, _enrollmentID);
 
         // Feature extraction thread is done: finish the rest of the recognition
         // process so we can start accepting new requests to recognize
@@ -591,7 +591,8 @@ namespace Vision {
 
         if(DEBUG_ENROLLMENT_IMAGES)
         {
-          DisplayEnrollmentImages();
+          //DisplayEnrollmentImages();
+          // SaveEnrollmentImages();
         }
 
         if(ANKI_DEVELOPER_CODE)
@@ -1240,7 +1241,7 @@ namespace Vision {
     }
     else
     {
-      PRINT_CH_DEBUG(LOG_CHANNEL, "FaceRecognizer.UpdateExistingAlbumEntry.NotAddingEnrollmentEntry",
+      PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.UpdateExistingAlbumEntry.NotAddingEnrollmentEntry",
                      "FaceID:%d isEnabled:%d isNamed:%d hasSpaceLeft:%d haveCountAndID:%d enrollIfFull:%d isTime:%d",
                      faceID, isEnrollmentEnabled, isNamedFace, hasEnrollSpaceLeft,
                      haveEnrollmentCountAndID, enrollEvenIfFull, isTimeToEnroll);
@@ -1389,6 +1390,113 @@ namespace Vision {
     }
   }
 
+  void FaceRecognizer::SaveEnrollmentImages() const
+  {
+    // Parameters for creating tiled display of enrollment images
+    const s32 numDispRows = kMaxAlbumEntriesPerFace, numDispCols = kMaxEnrollDataPerAlbumEntry;
+    std::vector<s32> dispRows, dispCols;
+    dispRows.reserve(numDispRows * numDispCols);
+    dispCols.reserve(numDispRows * numDispCols);
+    for(s32 iRow=0; iRow<numDispRows; ++iRow)
+    {
+      for(s32 jCol=0; jCol<numDispCols; ++jCol)
+      {
+        dispRows.push_back(iRow);
+        dispCols.push_back(jCol);
+      }
+    }
+    const s32 dispResDownsample = 3;
+    const s32 dispWidth  = _img.GetNumCols() / dispResDownsample;
+    const s32 dispHeight = _img.GetNumRows() / dispResDownsample;
+
+    ImageRGB dispImg(dispHeight*numDispRows, dispWidth*numDispCols);
+
+    const EnrolledFaceEntry::Time currentTime = std::chrono::system_clock::now();
+
+    for(auto & enrollData : _enrollmentData)
+    {
+      if(enrollData.second.FindLastSeenTime() < currentTime - std::chrono::seconds(2))
+      {
+        // Don't bother if this entry hasn't been updated recently
+        continue;
+      }
+
+      dispImg.FillWith(0);
+
+      s32 iAlbumEntry=0;
+      EnrolledFaceEntry::Time lastSeenTime = EnrolledFaceEntry::Time(std::chrono::seconds(0));
+      s32 lastSeenIndex = -1;
+
+      const AlbumEntryID_t sessionOnlyEntry = enrollData.second.GetSessionOnlyAlbumEntry();
+      s32 sessionOnlyIndex = -1;
+
+      for(auto & albumEntry : enrollData.second.GetAlbumEntries())
+      {
+        auto enrollmentImgIter = _enrollmentImages.find(albumEntry.first);
+        if(enrollmentImgIter == _enrollmentImages.end())
+        {
+          // We don't have enrollment image data for this album entry (likely
+          // loaded from saved data)
+          continue;
+        }
+
+        for(s32 iDataEntry=0; iDataEntry<kMaxEnrollDataPerAlbumEntry; ++iDataEntry)
+        {
+          const ImageRGB& enrollmentImage = enrollmentImgIter->second[iDataEntry];
+
+          if(!enrollmentImage.IsEmpty())
+          {
+            // Get ROI for this tile in the display image
+            Rectangle<s32> dispRect(dispCols[iDataEntry]*dispWidth,
+                                    dispRows[iAlbumEntry]*dispHeight,
+                                    dispWidth, dispHeight);
+
+            ImageRGB dispROI = dispImg.GetROI(dispRect);
+
+            enrollmentImage.Resize(dispROI, Vision::ResizeMethod::NearestNeighbor);
+
+            dispROI.DrawText({2,dispROI.GetNumRows()-2},
+                             std::string("Score: ") + std::to_string(enrollData.second.GetScore()),
+                             NamedColors::RED, 0.15f, true);
+            dispROI.DrawText({0,10}, EnrolledFaceEntry::GetTimeString(enrollData.second.GetLastUpdateTime()),
+                             NamedColors::RED, 0.15f, true);
+          }
+
+          // Keep track of most-recently-seen album entry
+          if(albumEntry.second > lastSeenTime)
+          {
+            lastSeenTime = albumEntry.second;
+            lastSeenIndex = iAlbumEntry;
+          }
+
+          if(albumEntry.first == sessionOnlyEntry)
+          {
+            sessionOnlyIndex = iAlbumEntry;
+          }
+
+          ++iAlbumEntry;
+        }
+      }
+
+      // Draw a thick blue bar to the left of the row that's the session-only entry
+      if(sessionOnlyIndex >= 0 && sessionOnlyIndex < dispRows.size())
+      {
+        dispImg.DrawLine({2, dispRows[sessionOnlyIndex]*dispHeight},
+                         {2, (dispRows[sessionOnlyIndex]+1)*dispHeight},
+                         NamedColors::BLUE, 4);
+      }
+
+      // Draw a thick yellow bar to the right of the row that was seen most recently
+      if(lastSeenIndex >= 0 && lastSeenIndex < dispRows.size())
+      {
+        dispImg.DrawLine({(f32)dispImg.GetNumCols()-3, dispRows[lastSeenIndex]*dispHeight},
+                         {(f32)dispImg.GetNumCols()-3, (dispRows[lastSeenIndex]+1)*dispHeight},
+                         NamedColors::YELLOW, 4);
+      }
+      dispImg.Save("/tmp/" + std::to_string(std::chrono::system_clock::to_time_t(currentTime)) + ".jpg");
+    }
+  }
+
   FaceRecognizer::EnrollmentData::iterator FaceRecognizer::RemoveUser(EnrollmentData::iterator userIter)
   {
     _trackingToFaceID.erase(userIter->second.GetTrackingID());
@@ -1416,7 +1524,7 @@ namespace Vision {
 
     if(DEBUG_ENROLLMENT_IMAGES)
     {
-      Vision::Image::CloseDisplayWindow(GetDisplayName(userIter->second).c_str());
+      //Vision::Image::CloseDisplayWindow(GetDisplayName(userIter->second).c_str());
     }
 
     // TODO: Keep a reference to which trackerIDs are pointing to each faceID to avoid this search
@@ -1712,7 +1820,7 @@ namespace Vision {
 
                 if(ANKI_DEV_CHEATS)
                 {
-                  PRINT_CH_DEBUG(LOG_CHANNEL, "RecognizeFace.BeforeMergeOfLowerRankedMatch",
+                  PRINT_CH_INFO(LOG_CHANNEL, "RecognizeFace.BeforeMergeOfLowerRankedMatch",
                                  "Top match entries: %s. Next match entries: %s.",
                                  matchIter->second.GetAlbumEntriesString().c_str(),
                                  nextMatchIter->second.GetAlbumEntriesString().c_str());
@@ -1731,7 +1839,7 @@ namespace Vision {
                 if(ANKI_DEV_CHEATS)
                 {
                   // Note: matchIter is no longer valid -- its entry has been merged into nextMatchIter!
-                  PRINT_CH_DEBUG(LOG_CHANNEL, "RecognizeFace.AfterMergeOfLowerRankedMatch",
+                  PRINT_CH_INFO(LOG_CHANNEL, "RecognizeFace.AfterMergeOfLowerRankedMatch",
                                  "Merged match entries: %s",
                                  nextMatchIter->second.GetAlbumEntriesString().c_str());
                 }
@@ -2393,7 +2501,7 @@ namespace Vision {
     // Either way, we need to clean up the handle that is NOT being kept open.
     //
     if (loadedAlbum != NULL) {
-      PRINT_CH_DEBUG(LOG_CHANNEL, "FaceRecognizer.SetSerializedData.DeleteAlbumHandle",
+      PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.SetSerializedData.DeleteAlbumHandle",
                      "Delete album handle %p", loadedAlbum);
       DEV_ASSERT(loadedAlbum != _okaoFaceAlbum, "FaceRecognizer.SetSerializedData.InvalidAlbumHandle");
       OKAO_FR_DeleteAlbumHandle(loadedAlbum);
@@ -2454,7 +2562,7 @@ namespace Vision {
       if(loadedMaxAlbumEntries == currentMaxAlbumEntries && loadedMaxDataEntries == currentMaxDataEntries)
       {
         // Simple case: just swap in the new album
-        PRINT_CH_DEBUG(LOG_CHANNEL, "FaceRecognizer.UseLoadedAlbumAndEnrollmentData.Swap",
+        PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.UseLoadedAlbumAndEnrollmentData.Swap",
                        "Stop using %p, start using %p",
                        _okaoFaceAlbum, loadedAlbumData);
         std::swap(loadedAlbumData, _okaoFaceAlbum);
@@ -2464,7 +2572,7 @@ namespace Vision {
         // No way to update an album's max sizes, so copy all data over manually,
         // one at a time. We've already verified that the current album is large
         // enough in both dimensions (album entries and data entries)
-        PRINT_CH_DEBUG(LOG_CHANNEL, "FaceRecognizer.UseLoadedAlbumAndEnrollmentData.Update",
+        PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.UseLoadedAlbumAndEnrollmentData.Update",
                        "Keep using %p, copy data from %p",
                        _okaoFaceAlbum, loadedAlbumData);
 

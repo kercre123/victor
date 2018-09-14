@@ -1192,8 +1192,8 @@ namespace Vision {
         //
         // Face Recognition:
         //
-        const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
-        bool enableEnrollment = enrollable;
+        // const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
+        bool enableEnrollment = true;
 
         // If we have allowed tracked faces we should only enable enrollment
         // in two cases. First if the current face matches the face id returned
@@ -1370,12 +1370,18 @@ namespace Vision {
 
   bool FaceTracker::Impl::IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face, const f32 intraEyeDist)
   {
-#   define DEBUG_ENROLLABILITY 0
+#   define DEBUG_ENROLLABILITY 1
 
     using namespace FaceEnrollParams;
 
     bool enableEnrollment = false;
 
+    PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.Confidence", "Confidence=%d", detectionInfo.nConfidence);
+    PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingStraightClose",
+                      "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+                      face.GetHeadRoll().getDegrees(),
+                      face.GetHeadPitch().getDegrees(),
+                      face.GetHeadYaw().getDegrees());
     if(detectionInfo.nConfidence > kMinDetectionConfidence)
     {
       switch(_enrollPose)
@@ -1389,7 +1395,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraight",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingStraight",
                               "EyeDist=%.1f (vs. %.1f)",
                               intraEyeDist, kFarDistanceBetweenEyesMin);
           }
@@ -1407,7 +1413,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightClose",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingStraightClose",
                               "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
                               intraEyeDist, kCloseDistanceBetweenEyesMin, kCloseDistanceBetweenEyesMax,
                               face.GetHeadRoll().getDegrees(),
@@ -1428,7 +1434,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightFar",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingStraightFar",
                               "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
                               intraEyeDist, kFarDistanceBetweenEyesMin, kFarDistanceBetweenEyesMax,
                               face.GetHeadRoll().getDegrees(),
@@ -1450,7 +1456,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingLeft",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingLeft",
                               "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
                               face.GetHeadRoll().getDegrees(),
                               face.GetHeadPitch().getDegrees(),
@@ -1471,7 +1477,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingRight",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingRight",
                               "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
                               face.GetHeadRoll().getDegrees(),
                               face.GetHeadPitch().getDegrees(),
@@ -1492,7 +1498,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingUp",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingUp",
                               "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
                               face.GetHeadRoll().getDegrees(),
                               face.GetHeadPitch().getDegrees(),
@@ -1513,7 +1519,7 @@ namespace Vision {
             enableEnrollment = true;
           }
           else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingDown",
+            PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable.NotLookingDown",
                               "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
                               face.GetHeadRoll().getDegrees(),
                               face.GetHeadPitch().getDegrees(),
@@ -1529,7 +1535,7 @@ namespace Vision {
     } // if detectionConfidence high enough
 
     if(DEBUG_ENROLLABILITY && enableEnrollment) {
-      PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable", "Mode=%d", (u8)_enrollPose);
+      PRINT_NAMED_INFO("FaceTrackerImpl.IsEnrollable", "Mode=%d", (u8)_enrollPose);
     }
 
     return enableEnrollment;
