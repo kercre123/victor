@@ -1016,7 +1016,6 @@ namespace Vision {
 
   bool FaceRecognizer::SetNextFaceToRecognize(ImageCache& imageCache,
                                               const DETECTION_INFO& detectionInfo,
-                                              //HPTRESULT okaoPartDetectionResultHandle,
                                               POINT* facialParts,
                                               INT32* partConfidences,
                                               bool enableEnrollment)
@@ -1031,40 +1030,40 @@ namespace Vision {
       // Not currently busy: copy in the given data and start working on it
 
       _mutex.lock();
-      
-      memcpy(_aptPoint, facialParts, PT_POINT_KIND_MAX*sizeof(POINT));
-      memcpy(_anConfidence, partConfidences, PT_POINT_KIND_MAX*sizeof(INT32));
-      //OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX, _aptPoint, _anConfidence);
-      const Point2f leftEye(_aptPoint[PT_POINT_LEFT_EYE].x, _aptPoint[PT_POINT_LEFT_EYE].y);
-      const Point2f rightEye(_aptPoint[PT_POINT_RIGHT_EYE].x, _aptPoint[PT_POINT_RIGHT_EYE].y);
-      f32 d = ComputeDistanceBetween(leftEye, rightEye);
-      
-      s32 subSample = 1;
-      while( d > kMaxDistanceBetweenEyes_pix )
       {
-        subSample *= 2;
-        d *= 0.5f;
-      }
-      
-      const auto size = imageCache.GetSize(subSample, ResizeMethod::NearestNeighbor);
-      imageCache.GetGray(size).CopyTo(_img);
-      
-      if(subSample > 1)
-      {
-        const f32 resizeFactor = 1.f / static_cast<f32>(subSample);
-        for(auto & pt : _aptPoint)
+        memcpy(_aptPoint, facialParts, PT_POINT_KIND_MAX*sizeof(POINT));
+        memcpy(_anConfidence, partConfidences, PT_POINT_KIND_MAX*sizeof(INT32));
+        
+        const Point2f leftEye(_aptPoint[PT_POINT_LEFT_EYE].x, _aptPoint[PT_POINT_LEFT_EYE].y);
+        const Point2f rightEye(_aptPoint[PT_POINT_RIGHT_EYE].x, _aptPoint[PT_POINT_RIGHT_EYE].y);
+        f32 d = ComputeDistanceBetween(leftEye, rightEye);
+        
+        s32 subSample = 1;
+        while( d > kMaxDistanceBetweenEyes_pix )
         {
-          pt.x = std::round( resizeFactor * (f32)pt.x );
-          pt.y = std::round( resizeFactor * (f32)pt.y );
+          subSample *= 2;
+          d *= 0.5f;
         }
-        PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.ExtractFeatures.ReducingResolution",
-                      "ResizeFactor: %.3f (%dx%d)", resizeFactor, _img.GetNumCols(), _img.GetNumRows());
+        
+        const auto size = imageCache.GetSize(subSample, ResizeMethod::NearestNeighbor);
+        imageCache.GetGray(size).CopyTo(_img);
+        
+        if(subSample > 1)
+        {
+          const f32 resizeFactor = 1.f / static_cast<f32>(subSample);
+          for(auto & pt : _aptPoint)
+          {
+            pt.x = std::round( resizeFactor * (f32)pt.x );
+            pt.y = std::round( resizeFactor * (f32)pt.y );
+          }
+          PRINT_CH_INFO(LOG_CHANNEL, "FaceRecognizer.ExtractFeatures.ReducingResolution",
+                        "ResizeFactor: %.3f (%dx%d)", resizeFactor, _img.GetNumCols(), _img.GetNumRows());
+        }
+        
+        _isEnrollmentEnabled = enableEnrollment;
+        _detectionInfo = detectionInfo;
+        _state = ProcessingState::HasNewImage;
       }
-      
-      _isEnrollmentEnabled = enableEnrollment;
-      //_okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
-      _detectionInfo = detectionInfo;
-      _state = ProcessingState::HasNewImage;
       _mutex.unlock();
 
       //PRINT_CH_INFO("FaceRecognizer", "SetNextFaceToRecognize.SetNextFace",

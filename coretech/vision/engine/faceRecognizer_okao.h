@@ -76,10 +76,6 @@ namespace Vision {
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
     // If running synchronously, always returns true.
-//    bool SetNextFaceToRecognize(const Image& img,
-//                                const DETECTION_INFO& detectionInfo,
-//                                HPTRESULT okaoPartDetectionResultHandle,
-//                                bool enableEnrollment);
     bool SetNextFaceToRecognize(ImageCache& imageCache,
                                 const DETECTION_INFO& detectionInfo,
                                 POINT* facialParts,     // PT_POINT_KIND_MAX in length
@@ -231,7 +227,6 @@ namespace Vision {
     
     // Passed-in state for processing
     Image          _img;
-    //HPTRESULT      _okaoPartDetectionResultHandle = NULL;
     DETECTION_INFO _detectionInfo;
     
     // Internal bookkeeping and parameters
