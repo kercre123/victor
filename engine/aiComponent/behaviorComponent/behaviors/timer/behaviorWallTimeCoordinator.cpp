@@ -66,6 +66,7 @@ void BehaviorWallTimeCoordinator::GetAllDelegates(std::set<IBehavior*>& delegate
 void BehaviorWallTimeCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = false;
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
 
 

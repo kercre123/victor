@@ -38,6 +38,11 @@ BehaviorDisplayWallTime::~BehaviorDisplayWallTime()
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWallTime::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
+{
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWallTime::GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const 
