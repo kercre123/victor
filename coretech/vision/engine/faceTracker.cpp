@@ -14,6 +14,7 @@
 
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "util/fileUtils/fileUtils.h"
@@ -58,12 +59,12 @@ namespace Vision {
 
   }
   
-  Result FaceTracker::Update(const Vision::Image&        frameOrig,
+  Result FaceTracker::Update(ImageCache&                 imageCache,
                              const float                 cropFactor,
                              std::list<TrackedFace>&     faces,
                              std::list<UpdatedFaceID>&   updatedIDs)
   {
-    return _pImpl->Update(frameOrig, cropFactor, faces, updatedIDs);
+    return _pImpl->Update(imageCache, cropFactor, faces, updatedIDs);
   }
   
   void FaceTracker::AddAllowedTrackedFace(const FaceID_t faceID)

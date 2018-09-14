@@ -19,6 +19,7 @@
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
@@ -1021,7 +1022,7 @@ namespace Vision {
     
   }
 
-  Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
+  Result FaceTracker::Impl::Update(ImageCache& imageCache,
                                    const float cropFactor,
                                    std::list<TrackedFace>& faces,
                                    std::list<UpdatedFaceID>& updatedIDs)
@@ -1042,6 +1043,8 @@ namespace Vision {
     }
   #endif // REMOTE_CONSOLE_ENABLED
 
+    const Image& frameOrig = imageCache.GetGray();
+    
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
 
     const INT32 nWidth  = frameOrig.GetNumCols();
@@ -1273,7 +1276,8 @@ namespace Vision {
           
           const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                                       detectionInfo,
-                                                                      _okaoPartDetectionResultHandle,
+                                                                      _facialParts,
+                                                                      _facialPartConfs,
                                                                       enableEnrollment);
           if(recognizing) {
             // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
