@@ -898,24 +898,33 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
     _faceTracker->AccountForRobotMove();
   }
   
-  if(!detectionRects.empty())
-  {
-    // Black out previous detections so we don't find faces in them
-    Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
-    
-#     if DEBUG_FACE_DETECTION
-    //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
-#     endif
-    
-    _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-  } else {
-    // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-  }
+  _faceTracker->Update(imageCache, _currentResult.faces, _currentResult.updatedFaceIDs);
   
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
   {
     auto & currentFace = *faceIter;
+    
+    // Make sure this face doesn't overlap too much with existing detections (e.g. to avoid detecting faces in an
+    // already-detected vision marker, assuming marker detection ran first)
+    if(!detectionRects.empty())
+    {
+      bool overlapsExistingDetection = false;
+      const Rectangle<s32> faceRect(currentFace.GetRect().GetX(), currentFace.GetRect().GetY(),
+                                    currentFace.GetRect().GetWidth(), currentFace.GetRect().GetHeight());
+      for(auto const& detectionRect : detectionRects)
+      {
+        const f32 overlap = faceRect.ComputeOverlapScore(detectionRect);
+        if(overlap > 0.5)
+        {
+          overlapsExistingDetection = true;
+          break;
+        }
+      }
+      if(overlapsExistingDetection)
+      {
+        continue;
+      }
+    }
     
     DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
     

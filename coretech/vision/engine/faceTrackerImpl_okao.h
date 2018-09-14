@@ -54,7 +54,7 @@ namespace Vision {
     
     void SetRecognitionIsSynchronous(bool isSynchronous);
     
-    Result Update(const Vision::Image&        frameOrig,
+    Result Update(ImageCache&                 imageCache,
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     

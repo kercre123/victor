@@ -42,6 +42,8 @@ namespace Json {
 
 namespace Anki {
 namespace Vision {
+  
+  class ImageCache;
 
   class FaceRecognizer : public Profiler
   {
@@ -74,9 +76,14 @@ namespace Vision {
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
     // If running synchronously, always returns true.
-    bool SetNextFaceToRecognize(const Image& img,
+//    bool SetNextFaceToRecognize(const Image& img,
+//                                const DETECTION_INFO& detectionInfo,
+//                                HPTRESULT okaoPartDetectionResultHandle,
+//                                bool enableEnrollment);
+    bool SetNextFaceToRecognize(ImageCache& imageCache,
                                 const DETECTION_INFO& detectionInfo,
-                                HPTRESULT okaoPartDetectionResultHandle,
+                                POINT* facialParts,     // PT_POINT_KIND_MAX in length
+                                INT32* partConfidences, // PT_POINT_KIND_MAX in length
                                 bool enableEnrollment);
     
     // Use faceID = UnknownFaceID to allow enrollments for any face.
@@ -199,9 +206,12 @@ namespace Vision {
     HCOMMON     _okaoCommonHandle              = NULL; // not allocated here, passed in
     
     // Okao handles allocated by this class
-    HFEATURE    _okaoRecognitionFeatureHandle  = NULL;
+    HFEATURE    _okaoRecognitionFeatureHandle  = NULL; // TODO: remove?
     HFEATURE    _okaoRecogMergeFeatureHandle   = NULL;
     HALBUM      _okaoFaceAlbum                 = NULL;
+    
+    POINT       _aptPoint[PT_POINT_KIND_MAX];
+    INT32       _anConfidence[PT_POINT_KIND_MAX];
     
     // Threading
     enum class ProcessingState : u8 {
@@ -221,7 +231,7 @@ namespace Vision {
     
     // Passed-in state for processing
     Image          _img;
-    HPTRESULT      _okaoPartDetectionResultHandle = NULL;
+    //HPTRESULT      _okaoPartDetectionResultHandle = NULL;
     DETECTION_INFO _detectionInfo;
     
     // Internal bookkeeping and parameters

@@ -19,6 +19,7 @@
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
@@ -982,7 +983,7 @@ namespace Vision {
   }
 
 
-  Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
+  Result FaceTracker::Impl::Update(ImageCache& imageCache,
                                    std::list<TrackedFace>& faces,
                                    std::list<UpdatedFaceID>& updatedIDs)
   {
@@ -1002,6 +1003,8 @@ namespace Vision {
     }
   #endif // REMOTE_CONSOLE_ENABLED
 
+    const Image& frameOrig = imageCache.GetGray();
+    
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
 
     INT32 okaoResult = OKAO_NORMAL;
@@ -1054,9 +1057,10 @@ namespace Vision {
           return RESULT_FAIL;
         }
 
+        // Don't re-recognize faces we're tracking whose IDs we already know.
         // Note that we don't consider the face currently being enrolled to be
         // "known" because we're in the process of updating it and want to run
-        // recognition on it
+        // recognition on it.
         const bool isKnown = _recognizer.HasRecognitionData(detectionInfo.nID);
         if(isKnown && _recognizer.GetEnrollmentTrackID() != detectionInfo.nID)
         {
@@ -1064,15 +1068,13 @@ namespace Vision {
         }
       }
 
-      // If we know everyone, no need to prioritize anyone, so don't skip anyone
-      // and instead just re-recognize all, but in random order
-      if(skipRecognition.size() == numDetections)
+      // Shuffle the set of unrecognized faces so we don't always try the same one.
+      // If we know everyone, no need to random shuffle (skip all)
+      if(skipRecognition.size() != numDetections)
       {
-        skipRecognition.clear();
+        std::random_shuffle(detectionIndices.begin(), detectionIndices.end(),
+                            [this](int i) { return _rng->RandInt(i); });
       }
-
-      std::random_shuffle(detectionIndices.begin(), detectionIndices.end(),
-                          [this](int i) { return _rng->RandInt(i); });
     }
 
     for(auto const& detectionIndex : detectionIndices)
@@ -1219,9 +1221,10 @@ namespace Vision {
         const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
         if(doRecognition)
         {
-          const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
+          const bool recognizing = _recognizer.SetNextFaceToRecognize(imageCache,
                                                                       detectionInfo,
-                                                                      _okaoPartDetectionResultHandle,
+                                                                      _facialParts,
+                                                                      _facialPartConfs,
                                                                       enableEnrollment);
           if(recognizing) {
             // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
