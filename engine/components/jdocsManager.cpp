@@ -41,6 +41,7 @@ namespace
   static const char* kFmtVersionKey = "fmt_version";
   static const char* kClientMetadataKey = "client_metadata";
   static const char* kCloudDirtyRemainingSecKey = "cloud_dirty_remaining_sec";
+  static const char* kCloudAccessedKey = "cloud_accessed";
   static const char* kJdocKey = "jdoc";
   static const char* kDiskSavePeriodKey = "diskSavePeriod_s";
   static const char* kBodyOwnedByJdocsManagerKey = "bodyOwnedByJdocManager";
@@ -179,6 +180,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._nextCloudSaveTime = currTime_s + jdocInfo._cloudSavePeriod_s;
       jdocInfo._pendingCloudSave = false;
       jdocInfo._disabledDueToFmtVersion = false;
+      jdocInfo._hasAccessedCloud = false;
       jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
       jdocInfo._overwrittenCB = nullptr;
       jdocInfo._formatMigrationCB = nullptr;
@@ -623,6 +625,11 @@ bool JdocsManager::LoadJdocFile(const external_interface::JdocType jdocTypeKey)
   jdocItem._jdocClientMetadata = jdocJson[kClientMetadataKey].asString();
   jdocItem._jdocBody           = jdocJson[kJdocKey];
 
+  if (jdocJson.isMember(kCloudAccessedKey))
+  {
+    jdocItem._hasAccessedCloud = jdocJson[kCloudAccessedKey].asBool();
+  }
+
   if (jdocJson.isMember(kCloudDirtyRemainingSecKey))
   {
     // If this jdoc was 'cloud-dirty' when we shut down, we will have written this out
@@ -655,6 +662,7 @@ void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey,
   jdocJson[kFmtVersionKey]     = jdocItem._jdocFormatVersion;
   jdocJson[kClientMetadataKey] = jdocItem._jdocClientMetadata;
   jdocJson[kJdocKey]           = jdocItem._jdocBody;
+  jdocJson[kCloudAccessedKey]  = jdocItem._hasAccessedCloud;
   jdocJson[kCloudDirtyRemainingSecKey] = cloudDirtyRemaining_s;
 
   if (!_platform->writeAsJson(jdocItem._jdocFullPath, jdocJson))
@@ -965,6 +973,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
     const bool wasRequestingLatestVersion = requestItem.myDocVersion == 0;
     bool checkForFormatVersionMigration = false;
     bool pulledNewVersionFromCloud = false;
+    bool accessedCloud = true;
 
     if (responseItem.status == JDocs::ReadStatus::Changed)
     {
@@ -984,37 +993,54 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       }
       else if (responseItem.doc.docVersion > ourDocVersion)
       {
-        // Cloud has a newer version than we do; so pull in that version, overwriting our version
+        // Cloud has a newer version than robot does
+        static const size_t kBufferLen = 256;
+        char logMsg[kBufferLen];
+        snprintf(logMsg, kBufferLen, "Cloud version (%llu) of %s jdoc is later than robot version (%llu); %s",
+                 responseItem.doc.docVersion, requestItem.docName.c_str(), ourDocVersion,
+                 jdoc._hasAccessedCloud ? "pulling down newer version from cloud"
+                 : "submitting robot version to cloud");
         if (jdoc._errorOnCloudVersionLater)
         {
-          LOG_ERROR("JdocsManager.HandleReadResponse.LaterVersionError",
-                    "Overwriting robot version of jdoc %s with a later version from cloud",
-                    requestItem.docName.c_str());
+          LOG_ERROR("JdocsManager.HandleReadResponse.LaterVersionError", "%s", logMsg);
         }
         else if (jdoc._warnOnCloudVersionLater)
         {
-          LOG_WARNING("JdocsManager.HandleReadResponse.LaterVersionWarn",
-                      "Overwriting robot version of jdoc %s with a later version from cloud",
-                      requestItem.docName.c_str());
+          LOG_WARNING("JdocsManager.HandleReadResponse.LaterVersionWarn", "%s", logMsg);
         }
         else
         {
-          LOG_INFO("JdocsManager.HandleReadResponse.LaterVersionInfo",
-                   "Overwriting robot version of jdoc %s with a later version from cloud",
-                   requestItem.docName.c_str());
+          LOG_INFO("JdocsManager.HandleReadResponse.LaterVersionInfo", "%s", logMsg);
         }
-        if (responseItem.doc.fmtVersion <= jdoc._curFormatVersion)
+
+        if (jdoc._hasAccessedCloud)
         {
-          CopyJdocFromCloud(jdocType, responseItem.doc);
-          pulledNewVersionFromCloud = true;
+          // If we've accessed the cloud since clearing user data, this means this is NOT the first session
+          // since clearing user data. Therefore, another client must have updated the jdoc in the cloud,
+          // so pull it down and overwrite the robot's version.
+          // TODO later (VIC-6265, VIC-6529) we'll do fancier 'conflict resolution'
+          if (responseItem.doc.fmtVersion <= jdoc._curFormatVersion)
+          {
+            CopyJdocFromCloud(jdocType, responseItem.doc);
+            pulledNewVersionFromCloud = true;
+          }
+          checkForFormatVersionMigration = true;
         }
-        checkForFormatVersionMigration = true;
+        else
+        {
+          // If we HAVEN'T accessed the cloud since clearing user data, this means this IS the first logged-in
+          // session since clearing user data. Therefore, submit the robot's jdoc to the cloud, thus overwriting
+          // the one in the cloud.
+          // This currently (9/13/2018) can happen when dev/QA does an OTA/clear user data on a robot,
+          // and then runs with that same robot and user ID, because nothing deletes the prior jdocs in the cloud.
+          jdoc._jdocVersion = responseItem.doc.docVersion;
+          static const bool kIsJdocNewInCloud = false;
+          SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
+        }
       }
       else
       {
         // Doc version is the same on disk as in cloud
-        // TODO:  This is where we MAY need to compare a 'minor version' stored in client metadata.
-        // (e.g. for RobotLifetimeStats, which are updated more frequently than we submit its jdoc to the cloud)
         checkForFormatVersionMigration = true;
       }
     }
@@ -1033,6 +1059,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       LOG_ERROR("JdocsManager.HandleReadResponse.PermissionDenied",
                 "Read response for doc %s got 'permission denied'",
                 requestItem.docName.c_str());
+      accessedCloud = false;
     }
     else  // JDocs::ReadStatus::Unchanged
     {
@@ -1047,6 +1074,16 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       // only sending ReadRequest for 'get latest version' (upon startup, or log-in.)  And if we
       // were requesting a jdoc with a specific doc version, it would likely be for a past version
       // of the jdoc, so a format migration would probably not be appropriate or desired.
+    }
+
+    if (accessedCloud && !jdoc._hasAccessedCloud)
+    {
+      LOG_INFO("JdocsManager.HandleReadResponse.FirstCloudAccess",
+               "First cloud access for jdoc %s", requestItem.docName.c_str());
+      // Set the 'has accessed cloud' flag; it will be true from now until user data is cleared
+      jdoc._hasAccessedCloud = true;
+      jdoc._diskFileDirty = true;
+      SaveJdocFile(jdocType);
     }
 
     if (checkForFormatVersionMigration)

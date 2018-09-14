@@ -148,6 +148,7 @@ private:
     // This flag indicates the cloud has a higher format version of the jdoc than
     // the code can handle, so it is disabled for purposes of submitting to cloud
     bool                      _disabledDueToFmtVersion;
+    bool                      _hasAccessedCloud;  // Have we accessed the cloud for this jdoc since clearing user data?
 
     OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
     FormatMigrationCallback   _formatMigrationCB; // Called when this jdoc needs a format migration
