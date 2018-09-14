@@ -25,6 +25,7 @@ source ${SCRIPT_PATH}/victor_env.sh
 : ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
 : ${DEVICE_RSYNC_BIN_DIR:="${DEVTOOLS_INSTALL_ROOT}/bin"}
 : ${DEVICE_RSYNC_CONF_DIR:="/run/systemd/system"}
+: ${MIN_OS_VERSION:=0.14.1681}
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
@@ -113,6 +114,25 @@ function cleanup() {
 
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
+
+CUR_OS_VERSION=$(robot_sh "getprop ro.anki.victor.version")
+
+if [ "${CUR_OS_VERSION}" != "${MIN_OS_VERSION}" ]; then
+    # If the current os version is the lower of the two version
+    # -n numerical comparision
+    # -t. splits the strings into multiple columns separated by '.'
+    # -k#,# compares each set of columns individually
+    LOWER_VERSION=$(printf "%s\n%s" "${MIN_OS_VERSION}" "${CUR_OS_VERSION}" | sort -n -t. -k 1,1 -k 2,2 -k 3,3 | head -n 1)
+    if [ "${LOWER_VERSION}" == "${CUR_OS_VERSION}" ]; then
+        echo "Current OS version ${CUR_OS_VERSION} too old, minimum required version ${MIN_OS_VERSION}"
+        if [ $FORCE_DEPLOY -eq 1 ]; then
+            echo "Ignoring OS version mismatch"
+        else
+            cleanup
+            exit 1
+        fi
+    fi
+fi
 
 set +e
 ( # TRY deploy
