@@ -353,9 +353,8 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
       chargerInstance->SetID();
     }
 
-    // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
-    // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
-    // observation should set that timestamp)
+    // pretend the instance we created was an observation
+    chargerInstance->SetLastObservedTime((TimeStamp_t)_robot->GetLastMsgTimestamp());
     _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
     
     // Update the last OnChargeContacts pitch angle
