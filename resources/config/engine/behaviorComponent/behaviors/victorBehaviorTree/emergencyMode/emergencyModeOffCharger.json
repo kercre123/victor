@@ -6,8 +6,8 @@
   
   "behaviors" : [
     "MandatoryPhysicalReactions",
-    "EmergencyModeInAir",
     "EmergencyModeTriggerWord",
+    "EmergencyModeInAir",
     "EmergencyModeFindAndGoToHome"
   ]
   
