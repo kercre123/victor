@@ -217,7 +217,7 @@ void XYPlanner::StartPlanner()
     _status = EPlannerStatus::CompleteWithPlan;
   } else {
     PRINT_NAMED_WARNING("XYPlanner.StartPlanner", "No path found!" );
-    _status = EPlannerStatus::Error;
+    _status = EPlannerStatus::CompleteNoPlan;
   }
 
   // profile time it takes to smooth a plan into a valid robot path
