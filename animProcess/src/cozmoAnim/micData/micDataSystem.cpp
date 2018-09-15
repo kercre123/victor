@@ -60,7 +60,6 @@ namespace {
 
 #if ANKI_DEV_CHEATS
   CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
-  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
@@ -161,36 +160,18 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
     if(success){
       // it would be highly unlikely that we started another streaming job while waiting for the earcon,
       // but doesn't hurt to check
-      if(!HasStreamingJob()){
-        MicDataInfo* newJob = new MicDataInfo{};
-        newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
-        newJob->_writeNameBase = ""; //use autogen names
-        newJob->_numMaxFiles = 100;
-        newJob->_type = type;
-        bool saveToFile = false;
-    #if ANKI_DEV_CHEATS
-        saveToFile = true;
-        if(kMicData_SaveRawFullIntent_Wakewordless){
-          newJob->EnableDataCollect(MicDataType::Raw, true);
-        }
-        newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
-    #endif
-        newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-        newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
-
-        const bool isStreamingJob = true;
-        AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
-
+      if (!HasStreamingJob()) {
+        _micDataProcessor->CreateSteamJob(type, kTriggerLessOverlapSize_ms);
         PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
                          "Starting Wake Wordless streaming");
       }
-      else{
+      else {
         PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
                             "Started streaming job while waiting for StartTriggerResponseWithoutGetIn callback");
         SetWillStream(false);
       }
     }
-    else{
+    else {
       PRINT_NAMED_WARNING("MicDataSystem.CantStreamToCloud",
                           "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
       SetWillStream(false);
@@ -300,8 +281,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
         // Set up a message to send out about the triggerword
         RobotInterface::TriggerWordDetected twDetectedMessage;
-        const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
-        twDetectedMessage.timestamp = mostRecentTimestamp_ms;
         twDetectedMessage.direction = kFirstIndex;
         // TODO:(bn) check stream state here? Currently just assuming streaming is on
         twDetectedMessage.willOpenStream = true;

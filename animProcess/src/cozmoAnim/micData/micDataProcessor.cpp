@@ -99,6 +99,7 @@ namespace {
   size_t _triggerModelTypeIndex = (size_t) SupportedLocales::enUS_1mb;
   CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndex, CONSOLE_GROUP, _triggerModelTypeIndex, "enUS_1mb,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE");
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_WakeWordless, CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
@@ -214,7 +215,6 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
 
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
-  twDetectedMessage.timestamp = (TimeStamp_t)mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
   twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
   twDetectedMessage.triggerScore = (uint32_t) score;
@@ -240,97 +240,124 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                     (TimeStamp_t)mostRecentTimestamp);
 }
 
-RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+RobotTimeStamp_t MicDataProcessor::CreateSteamJob(CloudMic::StreamType streamType,
+                                                  uint32_t overlapLength_ms)
 {
+  // Setup Job
+  auto newJob = std::make_shared<MicDataInfo>();
+  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+  newJob->_writeNameBase = ""; //use autogen names
+  newJob->_numMaxFiles = 100;
+  newJob->_type = streamType;
+  bool saveToFile = false;
+#if ANKI_DEV_CHEATS
+  saveToFile = true;
+  // Simplify stream type
+  bool saveRawFullStream = false;
+  switch (streamType) {
+    case CloudMic::StreamType::Normal:
+      saveRawFullStream = kMicData_SaveRawFullIntent;
+      break;
+    case CloudMic::StreamType::Blackjack:
+    case CloudMic::StreamType::KnowledgeGraph:
+      saveRawFullStream = kMicData_SaveRawFullIntent_WakeWordless;
+      break;
+  }
+
+  if (saveRawFullStream) {
+    newJob->EnableDataCollect(MicDataType::Raw, true);
+  }
+  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+#endif
+  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+  
+  // Copy the current audio chunks in the trigger overlap buffer
+  // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was
+  // recognized), so that the immediate buffer also contains the trigger itself. So here we set our start index to
+  // only capture that in-between time, and push it into the streaming job for intent matching
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
-
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
-             "MicDataProcessor.CreateTriggerWordDetectedJobs.AudioProcIdx");
-  const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-  if (showStreamState->ShouldStreamAfterTriggerWordResponse())
-  {
-    // First we create the job responsible for streaming the intent after the trigger
-    auto newJob = std::make_shared<MicDataInfo>();
-    newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
-    newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-    newJob->_numMaxFiles = 100;
-    bool saveToFile = false;
-#  if ANKI_DEV_CHEATS
-    saveToFile = true;
-    if (kMicData_SaveRawFullIntent)
-    {
-      newJob->EnableDataCollect(MicDataType::Raw, true);
-    }
-    newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
-#  endif
-    newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-    newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
-
-    // Copy the current audio chunks in the trigger overlap buffer
-    // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was
-    // recognized), so that the immediate buffer also contains the trigger itself. So here we set our start index to
-    // only capture that in-between time, and push it into the streaming job for intent matching
-    constexpr uint32_t kOverlapCount = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
-    size_t triggerOverlapStartIdx = (maxIndex > kOverlapCount) ? (maxIndex - kOverlapCount) : 0;
+             "MicDataProcessor.CreateSteamJob.AudioProcIdx");
+  
+  if (overlapLength_ms > 0) {
+    const auto overlapCount = overlapLength_ms / kTimePerSEBlock_ms;
+    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+    size_t triggerOverlapStartIdx = (maxIndex > overlapCount) ? (maxIndex - overlapCount) : 0;
+    
     for (size_t i=triggerOverlapStartIdx; i<maxIndex; ++i)
     {
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
     }
-
+    
     // Copy the current audio chunks in the trigger overlap buffer
     for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
     {
       const auto& audioBlock = _immediateAudioBufferRaw[i];
       newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
     }
-    const auto isStreamingJob = true;
-    _micDataSystem->AddMicDataJob(newJob, isStreamingJob);
+  }
+
+  const bool isStreamingJob = true;
+  _micDataSystem->AddMicDataJob(newJob, isStreamingJob);
+  
+  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
+  return mostRecentTimestamp;
+}
+
+RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+{
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  RobotTimeStamp_t mostRecentTimestamp = 0;
+  
+  if (showStreamState->ShouldStreamAfterTriggerWordResponse())
+  {
+    // First we create the job responsible for streaming the intent after the trigger
+    mostRecentTimestamp = CreateSteamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
   } else {
     PRINT_NAMED_INFO("MicDataProcessor.CreateTriggerWordDetectedJobs.NoStreaming", "Not adding streaming jobs because disabled");
   }
 
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
-  {
-    bool saveTriggerOnly = false;
+  bool saveTriggerOnly = false;
 # if ANKI_DEV_CHEATS
-    saveTriggerOnly = true;
+  saveTriggerOnly = true;
 # endif // ANKI_DEV_CHEATS
-
-    if (saveTriggerOnly)
+  
+  if (saveTriggerOnly)
+  {
+    std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+    
+    auto triggerJob = std::make_shared<MicDataInfo>();
+    triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
+    triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
+    triggerJob->_numMaxFiles = 100;
+    triggerJob->EnableDataCollect(MicDataType::Processed, saveTriggerOnly);
+    if (kMicData_CollectRawTriggers)
     {
-      auto triggerJob = std::make_shared<MicDataInfo>();
-      triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
-      triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-      triggerJob->_numMaxFiles = 100;
-      triggerJob->EnableDataCollect(MicDataType::Processed, saveTriggerOnly);
-      if (kMicData_CollectRawTriggers)
-      {
-        triggerJob->EnableDataCollect(MicDataType::Raw, saveTriggerOnly);
-      }
-      triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
-
-      // We only record a little extra time beyond what we're stuffing in below
-      constexpr uint32_t timeAfterTriggerEnd_ms = 170;
-      triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
-
-      for (size_t i=0; i<maxIndex; ++i)
-      {
-        const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
-        triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
-      }
-      for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
-      {
-        const auto& audioBlock = _immediateAudioBufferRaw[i];
-        triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
-      }
-      const auto notStreamingJob = false;
-      _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
+      triggerJob->EnableDataCollect(MicDataType::Raw, saveTriggerOnly);
     }
+    triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+    
+    // We only record a little extra time beyond what we're stuffing in below
+    constexpr uint32_t timeAfterTriggerEnd_ms = 170;
+    triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
+    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+    for (size_t i=0; i<maxIndex; ++i)
+    {
+      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+      triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+    }
+    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
+    {
+      const auto& audioBlock = _immediateAudioBufferRaw[i];
+      triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
+    }
+    const auto notStreamingJob = false;
+    _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
   }
 
-  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
   return mostRecentTimestamp;
 }
 

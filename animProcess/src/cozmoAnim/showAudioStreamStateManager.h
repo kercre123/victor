@@ -46,7 +46,7 @@ public:
   
   // Start the robot's response to the trigger in order to indicate that the robot may be streaming audio
   // The GetInAnimation is optional, the earcon and backpack lights are not
-  using OnTriggerAudioCompleteCallback = std::function<void(bool)>;
+  using OnTriggerAudioCompleteCallback = std::function<void(bool success)>;
   void SetPendingTriggerResponseWithGetIn(OnTriggerAudioCompleteCallback = {});
   void SetPendingTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback = {});
 

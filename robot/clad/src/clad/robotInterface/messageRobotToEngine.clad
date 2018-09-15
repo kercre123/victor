@@ -42,7 +42,6 @@ message RobotPoked
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
-  uint_32 timestamp,
   uint_32 triggerScore,
   uint_16 direction,
   bool isButtonPress,

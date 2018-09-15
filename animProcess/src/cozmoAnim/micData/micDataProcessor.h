@@ -20,6 +20,7 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
 #include "audioUtil/audioDataTypes.h"
+#include "clad/cloud/mic.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
 
@@ -89,6 +90,11 @@ public:
                               MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
                               int searchFileIndex = -1);
 
+  // Create and start stream audio data job
+  // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
+  RobotTimeStamp_t CreateSteamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
+                                  uint32_t overlapLength_ms = 0);
+  
   void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
   
 private:
@@ -176,9 +182,14 @@ private:
   };
   
   void InitVAD();
+  
   void TriggerWordVoiceCallback(const char* resultFound, float score) { TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score ); }
+  
   void TriggerWordDetectCallback(TriggerWordDetectSource source, float score);
+  
+  // Return 0 if the stream job can not be created
   RobotTimeStamp_t CreateTriggerWordDetectedJobs();
+  
   void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,
