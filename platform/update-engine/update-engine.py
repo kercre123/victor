@@ -633,8 +633,10 @@ def generate_shard_id():
     b = int(sha256(esn).hexdigest(), 16) % 100
     return "{:02d}".format(b)
 
-def construct_update_url(os_version):
+def construct_update_url(os_version, cmdline):
     base_url = os.getenv("UPDATE_ENGINE_BASE_URL", None)
+    if "anki.dev" in cmdline:
+        base_url = os.getenv("UPDATE_ENGINE_ANKIDEV_BASE_URL", base_url)
     if not base_url:
         return None
     ota_type = os.getenv("UPDATE_ENGINE_OTA_TYPE", "diff")
@@ -656,7 +658,7 @@ if __name__ == '__main__':
         DEBUG = True
     if url == "auto":
         logv("Automatic update running.....")
-        url = construct_update_url(get_prop("ro.anki.version"))
+        url = construct_update_url(get_prop("ro.anki.version"), get_cmdline())
         if not url:
             loge("Unable to construct automatic update url")
             die(203, "Unable to construct automatic update url")
