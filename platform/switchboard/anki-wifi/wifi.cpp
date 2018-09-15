@@ -20,13 +20,11 @@
 #include "log.h"
 #include "wifi.h"
 #include "platform/switchboard/anki-wifi/fileutils.h"
-#include "exec_command.h"
 
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-#include <ctime>
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 
@@ -39,9 +37,6 @@ static gpointer ConnectionThread(gpointer data);
 static std::shared_ptr<TaskExecutor> sTaskExecutor;
 static Signal::Signal<void(bool, std::string)> sWifiChangedSignal;
 static Signal::Signal<void()> sWifiScanCompleteSignal;
-
-static std::time_t sLastWifiConnect_tm;
-static std::time_t sLastWifiDisconnect_tm;
 
 static void AgentCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -100,18 +95,9 @@ void OnTechnologyChanged (GDBusConnection *connection,
   }
 
   GVariant* valueChild = g_variant_get_child_value(parameters, 1);  
-  bool connected = g_variant_get_boolean(g_variant_get_variant(valueChild));
-  double duration_s = 0;
+  bool propertyValue = g_variant_get_boolean(g_variant_get_variant(valueChild));
 
-  std::time_t t = std::time(0);
-
-  if(connected) {
-    sLastWifiConnect_tm = t;
-  } else {
-    sLastWifiDisconnect_tm = t;
-  }
-
-  std::string connectionStatus = connected?"Connected.":"Disconnected.";
+  std::string connectionStatus = propertyValue?"Connected.":"Disconnected.";
 
   uint8_t apMac[MAC_BYTES];
   bool hasMac = GetApMacAddress(apMac);
@@ -127,28 +113,19 @@ void OnTechnologyChanged (GDBusConnection *connection,
     }
   }
 
-  sTaskExecutor->Wake([connected, apMacManufacturerBytes](){
-    sWifiChangedSignal.emit(connected, apMacManufacturerBytes);
+  sTaskExecutor->Wake([propertyValue, apMacManufacturerBytes](){
+    sWifiChangedSignal.emit(propertyValue, apMacManufacturerBytes);
   });
 
   Log::Write("WiFi connection status changed: [connected=%s / mac=%s]", 
-    connected?"true":"false", apMacManufacturerBytes.c_str());
+    propertyValue?"true":"false", apMacManufacturerBytes.c_str());
 
-  std::string event = connected?"wifi.connection":"wifi.disconnection";
-
-  duration_s = std::difftime(t, (connected? sLastWifiDisconnect_tm : sLastWifiConnect_tm));
+  std::string event = propertyValue?"wifi.connection":"wifi.disconnection";
 
   DASMSG(wifi_connection_status, event,
           "WiFi connection status changed.");
-  DASMSG_SET(i1, (int)duration_s, "Seconds from last connect/disconnect");
   DASMSG_SET(s4, apMacManufacturerBytes, "AP MAC manufacturer bytes");
   DASMSG_SEND();
-
-  if(connected) {
-    sLastWifiConnect_tm = t;
-  } else {
-    sLastWifiDisconnect_tm = t;
-  }
 
   g_variant_unref(valueChild);
 }
@@ -166,11 +143,6 @@ void Initialize(std::shared_ptr<TaskExecutor> taskExecutor) {
   GDBusConnection* gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
                               nullptr,
                               &error);
-
-  // Initialize wifi time trackers
-  std::time_t t = std::time(0);
-  sLastWifiConnect_tm = t;
-  sLastWifiDisconnect_tm = t;
 
   guint handle = g_dbus_connection_signal_subscribe (gdbusConn,
     "net.connman",
@@ -225,10 +197,6 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
                                                             &error);
     if (error) {
       loge("error getting proxy for net.connman /net/connman/technology/wifi");
-      DASMSG(connman_error, "connman.error.technology_proxy", "Connman error.");
-      DASMSG_SET(s1, error->message, "Error message");
-      DASMSG_SEND();
-
       g_error_free(error);
       return WifiScanErrorCode::ERROR_GETTING_PROXY;
     }
@@ -239,12 +207,6 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
     g_object_unref(tech_proxy);
     if (error) {
       loge("error asking connman to scan for wifi access points [%s]", error->message);
-      DASMSG(connman_error, "connman.error.call_scan", "Connman error.");
-      DASMSG_SET(s1, error->message, "Error message");
-      DASMSG_SEND();
-
-      RecoverNetworkServices();
-
       g_error_free(error);
       return WifiScanErrorCode::ERROR_SCANNING;
     }
@@ -1070,9 +1032,6 @@ ConnectWifiResult ConnectToWifiService(ConnManBusService* service) {
   g_mutex_unlock(&connectMutex);
 
   if(data.error != nullptr) {
-    DASMSG(connman_error, "connman.error.connect", "Connman error.");
-      DASMSG_SET(s1, data.error->message, "Error message");
-      DASMSG_SEND();
     Log::Write("Connect error: %s", data.error->message);
   }
 
@@ -1494,60 +1453,6 @@ bool DisableAccessPointMode() {
   }
 
   return true;
-}
-
-void RecoverNetworkServices() {
-  DASMSG(recover_network_services, "wifi.recover_network_services", "Attempt to recover network services");
-    DASMSG_SEND();
-
-  ExecCommandInBackground({ "/bin/systemctl", "restart", "wpa_supplicant", "connman" }, nullptr);
-}
-
-void WpaSupplicantScan() {
-  // Perform a wifi scan talking to Wpa Supplicant directly
-  GDBusConnection *gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
-                                                nullptr,
-                                                nullptr);
-
-  FiW1Wpa_supplicant1* wpa_sup = fi_w1_wpa_supplicant1_proxy_new_sync (
-      gdbusConn,
-      G_DBUS_PROXY_FLAGS_NONE,
-      "fi.w1.wpa_supplicant1",
-      "/fi/w1/wpa_supplicant1",
-      nullptr,
-      nullptr);
-
-  gchar* interface_path;
-  gboolean success = fi_w1_wpa_supplicant1_call_get_interface_sync (
-      wpa_sup,
-      "wlan0",
-      &interface_path,
-      nullptr,
-      nullptr);
-
-  FiW1Wpa_supplicant1Outerface* interfacePath = fi_w1_wpa_supplicant1_outerface_proxy_new_sync(
-    gdbusConn,
-    G_DBUS_PROXY_FLAGS_NONE, 
-    "fi.w1.wpa_supplicant1",
-    interface_path,
-    nullptr,
-    nullptr);
-
-  GVariantBuilder *b;
-  GVariant *dict;
-
-  b = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-  g_variant_builder_add (b, "{sv}", "Type", g_variant_new_string ("passive"));
-  g_variant_builder_add (b, "{sv}", "AllowRoam", g_variant_new_boolean (false));
-  dict = g_variant_builder_end (b);
-
-  gboolean scanSuccess = fi_w1_wpa_supplicant1_outerface_call_scan_sync (
-    interfacePath,
-    dict,
-    nullptr,
-    nullptr);
-
-  Log::Write("Dbus-WpaSupplicant interface path [%d][%d][%s]", (int)scanSuccess, (int)success, interface_path);
 }
 
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {

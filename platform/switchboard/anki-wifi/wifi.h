@@ -14,7 +14,6 @@
 #pragma once
 
 #include "connmanbus.h"
-#include "dbus_wpas.h"
 #include "signals/simpleSignal.hpp"
 
 #include <map>
@@ -149,8 +148,6 @@ bool DisableAccessPointMode();
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 bool GetApMacAddress(uint8_t* mac_48bits);
 WiFiState GetWiFiState();
-void RecoverNetworkServices();
-void WpaSupplicantScan();
 void Initialize(std::shared_ptr<TaskExecutor> taskExecutor);
 void Deinitialize();
 
