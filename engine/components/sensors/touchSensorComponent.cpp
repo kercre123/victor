@@ -151,13 +151,13 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
 // values chosen manually after inspecting some robots --- parameter sweep not necessary
 const TouchSensorComponent::FilterParameters TouchSensorComponent::_kFilterParamsForProd =
 {
-  .boxFilterSize = 1,
-  .dynamicThreshGap = 15,
-  .dynamicThreshDetectFollowOffset = 10,
-  .dynamicThreshUndetectFollowOffset = 19,
-  .dynamicThreshMaximumDetectOffset = 80,
-  .dynamicThreshMininumUndetectOffset =  40,
-  .minConsecCountToUpdateThresholds = 6,
+  .boxFilterSize                      = 1,
+  .dynamicThreshGap                   = 20,
+  .dynamicThreshDetectFollowOffset    = 10,
+  .dynamicThreshUndetectFollowOffset  = 19,
+  .dynamicThreshMaximumDetectOffset   = 100,
+  .dynamicThreshMininumUndetectOffset = 45,
+  .minConsecCountToUpdateThresholds   = 6,
 };
 
 TouchSensorComponent::TouchSensorComponent() 
