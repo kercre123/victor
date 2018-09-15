@@ -32,6 +32,7 @@
 #define TTS_PAUSECOMMA_MS       250
 #define TTS_PAUSEBRACKET_MS     100
 #define TTS_PAUSESPELLING_MS    100
+#define TTS_ENABLEPAUSEPARAMS   true
 
 //
 // Platform-specific defaults
@@ -39,8 +40,8 @@
 #define TTS_LEADINGSILENCE_MS   50
 #define TTS_TRAILINGSILENCE_MS  50
 #else
-#define TTS_LEADINGSILENCE_MS   0
-#define TTS_TRAILINGSILENCE_MS  0
+#define TTS_LEADINGSILENCE_MS   10
+#define TTS_TRAILINGSILENCE_MS  10
 #endif
 
 // Configuration keys
@@ -71,6 +72,7 @@ namespace {
   CONSOLE_VAR_RANGED(u32, kPauseComma_ms, CONSOLE_GROUP, TTS_PAUSECOMMA_MS, 50, 4000);
   CONSOLE_VAR_RANGED(u32, kPauseBracket_ms, CONSOLE_GROUP, TTS_PAUSEBRACKET_MS, 50, 4000);
   CONSOLE_VAR_RANGED(u32, kPauseSpelling_ms, CONSOLE_GROUP, TTS_PAUSESPELLING_MS, 50, 4000);
+  CONSOLE_VAR(bool, kEnablePausePrams, CONSOLE_GROUP, TTS_ENABLEPAUSEPARAMS);
 }
 
 #endif
@@ -203,6 +205,15 @@ int TextToSpeechProviderConfig::GetPauseSpelling_ms() const
   return kPauseSpelling_ms;
 #else
   return TTS_PAUSESPELLING_MS;
+#endif
+}
+
+bool TextToSpeechProviderConfig::GetEnablePauseParams() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kEnablePausePrams;
+#else
+  return TTS_ENABLEPAUSEPARAMS;
 #endif
 }
 

@@ -48,6 +48,7 @@ public:
   int GetPauseComma_ms() const;
   int GetPauseBracket_ms() const;
   int GetPauseSpelling_ms() const;
+  bool GetEnablePauseParams() const;
 
   //
   // Get base speed, adjusted for length, possibly modified by configuration traits.

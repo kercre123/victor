@@ -251,6 +251,8 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
     return RESULT_OK;
   }
 
+  // TODO: VIC-6894 [Tech Debt] Update Text to Speech Mac provider to be consistent with Vicos
+  
   // Get base speed for this utterance, then adjust by duration scalar
   const auto baseSpeed = _tts_config->GetSpeed(_rng, text.size());
   const auto adjustedSpeed = AcapelaTTS::GetSpeechRate(baseSpeed, durationScalar);
