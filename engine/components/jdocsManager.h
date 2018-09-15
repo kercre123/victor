@@ -15,6 +15,7 @@
 #ifndef __Cozmo_Basestation_Components_JdocsManager_H__
 #define __Cozmo_Basestation_Components_JdocsManager_H__
 
+#include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotComponents_fwd.h"
@@ -143,8 +144,27 @@ private:
     bool                      _errorOnCloudVersionLater;
     bool                      _cloudDirty;        // True when cloud copy of the jdoc needs to be updated
     int                       _cloudSavePeriod_s; // Cloud save period, or 0 for always save immediately
+    int                       _origCloudSavePeriod_s; // Original cloud save period (so we can restore if changed)
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
     bool                      _pendingCloudSave;  // True when cloud save is awaiting response from prior cloud save
+
+    struct CloudAbuseDetectionConfig
+    {
+      CloudAbuseDetectionConfig();
+      
+      struct Rule
+      {
+        RecentOccurrenceTracker::Handle _recentOccurrenceHandle;
+        int                             _numberOfTimes;
+        float                           _amountOfSeconds;
+        int                             _cloudAbuseSavePeriod_s;
+      };
+      std::vector<Rule>         _abuseRules;
+
+      RecentOccurrenceTracker   _cloudWriteTracker; // Used to detect cloud spam abuse
+      int                       _abuseLevel;
+    } _abuseConfig;
+
     // This flag indicates the cloud has a higher format version of the jdoc than
     // the code can handle, so it is disabled for purposes of submitting to cloud
     bool                      _disabledDueToFmtVersion;
