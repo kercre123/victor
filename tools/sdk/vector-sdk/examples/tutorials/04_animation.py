@@ -23,8 +23,8 @@ import anki_vector
 
 
 def main():
-    args = anki_vector.util.parse_test_args()
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    args = anki_vector.util.parse_command_args()
+    with anki_vector.Robot(args.serial) as robot:
         robot.behavior.drive_off_charger()
 
         # Play an animation via its name.

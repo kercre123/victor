@@ -670,9 +670,9 @@ def handle_updateVector():
 
 
 def run():
-    args = util.parse_test_args()
+    args = util.parse_command_args()
 
-    with anki_vector.AsyncRobot(args.serial, port=args.port) as robot:
+    with anki_vector.AsyncRobot(args.serial) as robot:
         flask_app.remote_control_vector = RemoteControlVector(robot)
         flask_helpers.run_flask(flask_app)
 

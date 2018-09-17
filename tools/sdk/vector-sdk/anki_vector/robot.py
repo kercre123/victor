@@ -80,7 +80,6 @@ class Robot:
     :param serial: Vector's serial number. The Robot Serial Number (ex. 00e20100) is located on the underside of Vector,
                    or accessible from Vector's debug screen. Used to identify which Vector configuration file to load.
     :param ip: Vector's IP Address. (optional)
-    :param port: The port on which Vector is listening. Defaults to :code:`443`
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-A1B2", "guid": "<secret_key>"}`
                    Where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
@@ -96,7 +95,6 @@ class Robot:
     def __init__(self,
                  serial: str = None,
                  ip: str = None,
-                 port: str = "443",
                  config: dict = None,
                  loop: asyncio.BaseEventLoop = None,
                  default_logging: bool = True,
@@ -123,13 +121,17 @@ class Robot:
         self._cert_file = config["cert"]
         self._guid = config["guid"]
 
+        self._port = "443"
+        if serial == "Local":
+            self._port = config["port"]
+
         if self._name is None or self._ip is None or self._cert_file is None or self._guid is None:
             raise ValueError("Robot requires a serial and for Vector to be logged in (using the app then configure.py).\n"
                              "You may also provide the values necessary for connection through the config parameter. ex: "
                              '{"name":"Vector-A1B2", "ip":"192.168.43.48", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
 
         #: :class:`anki_vector.connection.Connection`: The active connection to the robot.
-        self.conn = connection.Connection(self._name, ':'.join([self._ip, port]), self._cert_file, self._guid)
+        self.conn = connection.Connection(self._name, ':'.join([self._ip, self._port]), self._cert_file, self._guid)
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
@@ -668,7 +670,6 @@ class AsyncRobot(Robot):
 
     :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
     :param ip: Vector's IP Address. (optional)
-    :param port: The port on which Vector is listening. Defaults to :code:`443`
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-A1B2", "guid": "<secret_key>"}`
                    Where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face

@@ -35,7 +35,7 @@ __all__ = ['Angle',
            'distance_mm',
            'distance_inches',
            'get_class_logger',
-           'parse_test_args',
+           'parse_command_args',
            'radians',
            'setup_basic_logging',
            'speed_mmps']
@@ -52,26 +52,24 @@ except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
 
-# TODO Are we keeping this for release? If so, rename? Build into the robot class?
-# TODO Update this using the login credentials when they're available
-# TODO Add sample code and return value
-# TODO update the docstring to something more explanatory
-def parse_test_args(parser: argparse.ArgumentParser = None):
+def parse_command_args(parser: argparse.ArgumentParser = None):
     """
-    Provides the command line interface for all the tests
+    Parses command line args
 
-    :param parser: To add new arguments,
+    .. code-block:: python
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--new_param")
+        args = util.parse_command_args(parser)
+
+    :param parser: To add new command line arguments,
          pass an argparse parser with the new options
          already defined. Leave empty to use the defaults.
     """
     if parser is None:
         parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--serial", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
-    parser.add_argument("--port", nargs='?', default="443")
     args = parser.parse_args()
-
-    if args.port == "8443":
-        args.serial = "Local"
 
     if args.serial is None:
         parser.error('The "serial" argument is required '

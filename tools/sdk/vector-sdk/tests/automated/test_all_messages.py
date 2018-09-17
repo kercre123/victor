@@ -417,7 +417,7 @@ async def run_message_tests(robot, future):
 
 def main():
     """main execution"""
-    args = anki_vector.util.parse_test_args()
+    args = anki_vector.util.parse_command_args()
 
     logger = logging.getLogger('anki_vector')
     logger.setLevel(logging.DEBUG)
@@ -427,7 +427,7 @@ def main():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    with anki_vector.Robot(args.serial, port=args.port, default_logging=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()

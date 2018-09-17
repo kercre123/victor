@@ -14,12 +14,12 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 def main():
     """main execution"""
-    args = anki_vector.util.parse_test_args()
+    args = anki_vector.util.parse_command_args()
 
     print("------ begin cube interactions ------")
 
     # The robot shall drive straight, stop and then turn around
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    with anki_vector.Robot(args.serial) as robot:
         print("disconnecting from any connected cube...")
         robot.world.disconnect_cube()
 

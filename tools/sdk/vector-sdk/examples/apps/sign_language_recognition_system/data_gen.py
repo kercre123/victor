@@ -109,7 +109,7 @@ def main():
     else:
         stats = {}
 
-    with anki_vector.Robot(args.serial, port=args.port, show_viewer=True) as robot:
+    with anki_vector.Robot(args.serial, show_viewer=True) as robot:
         try:
             # Add a rectangular overlay describing the portion of image that is used after cropping.
 

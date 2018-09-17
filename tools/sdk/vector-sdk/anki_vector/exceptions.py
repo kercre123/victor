@@ -35,6 +35,8 @@ class VectorException(Exception):
     """Base class of all Vector SDK exceptions."""
 
 # Don't add a docstring here or it prints out at runtime undesirably.
+
+
 class VectorConnectionException(VectorException):
     def __init__(self, cause):
         self._status = cause.code()
