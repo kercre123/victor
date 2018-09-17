@@ -47,12 +47,20 @@ class RobotHealthReporter : public IDependencyManagedComponent<RobotComponentID>
 
     // Stuff we keep track of
     OSState::Alert _memoryAlert = OSState::Alert::None;
+    OSState::WifiInfo _wifiInfo;
     std::map<std::string, OSState::DiskInfo> _diskInfo;
     std::string _locale;
     std::string _timezone;
     uint32_t _cpuFreq_kHz = 0;
 
     // Reporting tasks
+    void BootInfoCheck(const OSState* osState);
+    void WifiInfoCheck(const OSState * osState);
+    void DiskInfoCheck(const OSState * osState);
+    void MemoryInfoCheck(const OSState * osState);
+    void CPUInfoCheck(const OSState * osState);
+
+    // Interval tasks
     void OncePerBootCheck();
     void OncePerStartupCheck();
     void OncePerMinuteCheck();

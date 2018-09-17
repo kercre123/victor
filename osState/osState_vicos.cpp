@@ -62,17 +62,23 @@ CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 
 namespace {
 
-  // When total/avail > this, report red alert
+  // When memory pressure > this, report red alert
   CONSOLE_VAR_RANGED(u32, kHighMemPressureMultiple, "OSState.MemoryInfo", 10, 0, 100);
 
-  // When total/avail > this, report yellow alert
+  // When memory pressure > this, report yellow alert
   CONSOLE_VAR_RANGED(u32, kMediumMemPressureMultiple, "OSState.MemoryInfo", 5, 0, 100);
 
- // When total/avail > this, report red alert
+ // When disk pressure > this, report red alert
   CONSOLE_VAR_RANGED(u32, kHighDiskPressureMultiple, "OSState.DiskInfo", 10, 0, 100);
 
-  // When total/avail > this, report yellow alert
+  // When disk pressure > this, report yellow alert
   CONSOLE_VAR_RANGED(u32, kMediumDiskPressureMultiple, "OSState.DiskInfo", 5, 0, 100);
+
+  // When wifi error rate > this, report red alert
+  CONSOLE_VAR_RANGED(u32, kHighWifiErrorRate, "OSState.WifiInfo", 2, 0, 100);
+
+  // When wifi error rate > this, report yellow alert
+  CONSOLE_VAR_RANGED(u32, kMediumWifiErrorRate, "OSState.WifiInfo", 1, 0, 100);
 
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
@@ -101,6 +107,8 @@ namespace {
   const char* kCPUTimeStatsFile   = "/proc/stat";
   const char* kWifiTxBytesFile    = "/sys/class/net/wlan0/statistics/tx_bytes";
   const char* kWifiRxBytesFile    = "/sys/class/net/wlan0/statistics/rx_bytes";
+  const char* kWifiTxErrorsFile    = "/sys/class/net/wlan0/statistics/tx_errors";
+  const char* kWifiRxErrorsFile    = "/sys/class/net/wlan0/statistics/rx_errors";
   const char* kBootIDFile         = "/proc/sys/kernel/random/boot_id";
   const char* kLocalTimeFile      = "/data/etc/localtime";
   const char* kCmdLineFile        = "/proc/cmdline";
@@ -648,28 +656,77 @@ std::string OSState::GetMACAddress() const
   return "";
 }
 
+static bool GetCounter(const char * path, uint64_t & val)
+{
+  std::ifstream rxFile;
+  rxFile.open(path);
+  if (rxFile.is_open()) {
+    rxFile >> val;
+    rxFile.close();
+    return true;
+  }
+  return false;
+}
+
+static OSState::Alert GetWifiAlert(uint64_t errors, uint64_t bytes)
+{
+  // Shortcut common cases
+  if (errors == 0) {
+    return OSState::Alert::None;
+  } else if (bytes == 0) {
+    return OSState::Alert::Red;
+  }
+
+  // Do the math
+  const float percent = (100.0 * errors) / bytes;
+  if (percent > kHighWifiErrorRate) {
+    return OSState::Alert::Red;
+  }
+  if (percent > kMediumWifiErrorRate) {
+    return OSState::Alert::Yellow;
+  }
+  return OSState::Alert::None;
+}
+
 uint64_t OSState::GetWifiTxBytes() const
 {
   uint64_t numBytes = 0;
-  std::ifstream txFile;
-  txFile.open(kWifiTxBytesFile);
-  if (txFile.is_open()) {
-    txFile >> numBytes;
-    txFile.close();
-  }
+  GetCounter(kWifiTxBytesFile, numBytes);
   return numBytes;
 }
 
 uint64_t OSState::GetWifiRxBytes() const
 {
   uint64_t numBytes = 0;
-  std::ifstream rxFile;
-  rxFile.open(kWifiRxBytesFile);
-  if (rxFile.is_open()) {
-    rxFile >> numBytes;
-    rxFile.close();
-  }
+  GetCounter(kWifiRxBytesFile, numBytes);
   return numBytes;
+}
+
+bool OSState::GetWifiInfo(WifiInfo & wifiInfo) const
+{
+  if (!GetCounter(kWifiRxBytesFile, wifiInfo.rx_bytes)) {
+    return false;
+  }
+
+  if (!GetCounter(kWifiTxBytesFile, wifiInfo.tx_bytes)) {
+    return false;
+  }
+
+  if (!GetCounter(kWifiRxErrorsFile, wifiInfo.rx_errors)) {
+    return false;
+  }
+
+  if (!GetCounter(kWifiTxErrorsFile, wifiInfo.tx_errors)) {
+    return false;
+  }
+
+  // Determine alert level based on worst of RX and TX error stats
+  const Alert rx_alert = GetWifiAlert(wifiInfo.rx_errors, wifiInfo.rx_bytes);
+  const Alert tx_alert = GetWifiAlert(wifiInfo.tx_errors, wifiInfo.tx_bytes);
+
+  wifiInfo.alert = std::max(rx_alert, tx_alert);
+
+  return true;
 }
 
 bool OSState::IsInRecoveryMode()
