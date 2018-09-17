@@ -53,6 +53,7 @@ namespace
   static const Json::Value emptyJson;
 
   static const std::string kNotLoggedIn = "NotLoggedIn";
+  static const float kUserLoginCheckPeriod_s = 3.0f;
 
   JdocsManager* s_JdocsManager = nullptr;
 
@@ -335,7 +336,13 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   if (_udpClient.IsConnected())
   {
-    if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
+    if (_userID == kNotLoggedIn && _currTime_s > _nextUserLoginCheckTime_s)
+    {
+      _userID = emptyString;  // Reset user ID so we can make the request again
+      const auto userReq = JDocs::DocRequest::Createuser(Void{});
+      SendJdocsRequest(userReq);
+    }
+    else if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
     {
       UpdatePeriodicCloudSaves();
     }
@@ -1121,6 +1128,7 @@ void JdocsManager::HandleErrResponse(const JDocs::ErrorResponse& errorResponse)
     // of getting a UserResponse, we actually get ErrorResponse (here), so
     // mark us as not logged in
     _userID = kNotLoggedIn;
+    _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
   }
 }
 
@@ -1133,6 +1141,7 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   {
     LOG_ERROR("JdocsManager.HandleUserResponse.Error", "Received user response from jdocs server, but ID is empty (not logged in?)");
     _userID = kNotLoggedIn;
+    _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
     return;
   }
 
