@@ -24,9 +24,12 @@ type logCollector struct {
 
 	certCommonName string
 
-	bucketName   string
-	s3BasePrefix string
-	awsRegion    string
+	bucketName       string
+	s3BasePrefix     string
+	awsRegion        string
+	endpoint         string
+	s3ForcePathStyle bool
+	disableSSL       bool
 
 	httpClient *http.Client
 
@@ -37,9 +40,12 @@ func newLogCollector(opts *options) (*logCollector, error) {
 	c := &logCollector{
 		tokener: opts.tokener,
 
-		bucketName:   opts.bucketName,
-		s3BasePrefix: opts.s3BasePrefix,
-		awsRegion:    opts.awsRegion,
+		bucketName:       opts.bucketName,
+		s3BasePrefix:     opts.s3BasePrefix,
+		awsRegion:        opts.awsRegion,
+		endpoint:         opts.endpoint,
+		s3ForcePathStyle: opts.s3ForcePathStyle,
+		disableSSL:       opts.disableSSL,
 
 		httpClient: opts.httpClient,
 	}
@@ -64,6 +70,11 @@ func newLogCollector(opts *options) (*logCollector, error) {
 		HTTPClient:  c.httpClient,
 		Credentials: awsCredentials,
 		Region:      aws.String(c.awsRegion),
+
+		// Required for testing purposes
+		Endpoint:         aws.String(c.endpoint),
+		S3ForcePathStyle: aws.Bool(c.s3ForcePathStyle),
+		DisableSSL:       aws.Bool(c.disableSSL),
 	})
 	if err != nil {
 		return nil, err
@@ -76,11 +87,16 @@ func newLogCollector(opts *options) (*logCollector, error) {
 
 // Upload uploads file to cloud
 func (c *logCollector) Upload(ctx context.Context, logFilePath string) (string, error) {
+	const defaultUserID = "unknown-user-id"
+
 	// As the user ID may (theoretically) change we retrieve it here for every upload
-	userID := c.tokener.UserID()
-	if userID == "" {
-		// Create a sensible fallback user ID for cloud uploads (in case no token is stored in file system)
-		userID = "unknown-user-id"
+	userID := defaultUserID
+	if c.tokener != nil {
+		userID = c.tokener.UserID()
+		if userID == "" {
+			// Create a sensible fallback user ID for cloud uploads (in case no token is stored in file system)
+			userID = defaultUserID
+		}
 	}
 
 	timestamp := time.Now().UTC()

@@ -11,9 +11,12 @@ type options struct {
 	tokener    token.Accessor
 	httpClient *http.Client
 
-	bucketName   string
-	s3BasePrefix string
-	awsRegion    string
+	bucketName       string
+	s3BasePrefix     string
+	awsRegion        string
+	endpoint         string
+	s3ForcePathStyle bool
+	disableSSL       bool
 }
 
 // Option defines an option that can be set on the server
@@ -39,6 +42,27 @@ func WithHTTPClient(httpClient *http.Client) Option {
 func WithTokener(value token.Accessor) Option {
 	return func(o *options) {
 		o.tokener = value
+	}
+}
+
+// WithEndpoint specifies the S3 endpoint
+func WithEndpoint(endpoint string) Option {
+	return func(o *options) {
+		o.endpoint = endpoint
+	}
+}
+
+// WithS3ForcePathStyle sets whether path style needs to be forced
+func WithS3ForcePathStyle(s3ForcePathStyle bool) Option {
+	return func(o *options) {
+		o.s3ForcePathStyle = s3ForcePathStyle
+	}
+}
+
+// WithDisableSSL sets whether SSL is used to access the cloud
+func WithDisableSSL(disableSSL bool) Option {
+	return func(o *options) {
+		o.disableSSL = disableSSL
 	}
 }
 
