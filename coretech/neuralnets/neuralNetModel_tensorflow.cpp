@@ -10,12 +10,12 @@
  **/
 
 // NOTE: this wrapper completely compiles out if we're using a different model (e.g. TFLite)
-#ifdef VIC_NEURALNETS_USE_TENSORFLOW
+#ifdef ANKI_NEURALNETS_USE_TENSORFLOW
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/vision/neuralnets/neuralNetModel_tensorflow.h"
+#include "coretech/neuralnets/neuralNetModel_tensorflow.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"
@@ -46,7 +46,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
 
 #define LOG_CHANNEL "NeuralNets"
 
@@ -497,7 +497,7 @@ Result NeuralNetModel::Run(tensorflow::Tensor imageTensor, std::vector<tensorflo
   }
 }
 
-} // namespace Vision
+} // namespace NeuralNets
 } // namespace Anki
 
-#endif /* VIC_NEURALNETS_USE_TENSORFLOW */
+#endif /* ANKI_NEURALNETS_USE_TENSORFLOW */

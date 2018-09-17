@@ -15,13 +15,13 @@
  **/
 
 // NOTE: this wrapper completely compiles out if we're using a different model (e.g. TFLite)
-#ifdef VIC_NEURALNETS_USE_TENSORFLOW
+#ifdef ANKI_NEURALNETS_USE_TENSORFLOW
 
 #ifndef __Anki_Vision_NeuralNetModel_TensorFlow_H__
 #define __Anki_Vision_NeuralNetModel_TensorFlow_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/vision/neuralnets/neuralNetModel_interface.h"
+#include "coretech/neuralnets/neuralNetModel_interface.h"
 
 #include "json/json.h"
 
@@ -40,7 +40,7 @@ namespace tensorflow {
 }
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
   
 class NeuralNetModel : public INeuralNetModel
 {
@@ -79,4 +79,4 @@ private:
 
 #endif /* __Anki_Vision_NeuralNetModel_TensorFlow_H__ */
 
-#endif /* VIC_NEURALNETS_USE_TENSORFLOW */
+#endif /* ANKI_NEURALNETS_USE_TENSORFLOW */

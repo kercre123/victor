@@ -491,18 +491,36 @@ endif()
 #
 # webotsCtrlNeuralNets
 #
-#
-# NOTE: This controller is actually built by coretech/vision/neuralnets/CMakeLists.txt
-#       because it shares a main.cpp with the robot's vic-neuralnets process. Since it
-#       it is not a target defined in this directory, we'll manually symlink it. This
-#       does mean we don't get a firewall certificate for this process, but since it
-#       doesn't open any ports, that should be ok. This also assumes the neuralnets
-#       build ran first, however.
-#
-add_custom_target(symLinkWebotsCtrlNeuralNets ALL
-  COMMENT "Symlinking webotsCtrlNeuralNets"
-  WORKING_DIRECTORY ${CONTROLLERS_DIR}
-  COMMAND ${CMAKE_COMMAND} -E make_directory webotsCtrlNeuralNets
-  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/bin/webotsCtrlNeuralNets webotsCtrlNeuralNets/webotsCtrlNeuralNets
-  COMMAND ${CMAKE_COMMAND} -E create_symlink ${BUILT_RESOURCES_DIR} webotsCtrlNeuralNets/resources
+
+webots_build_cxx_executable(webotsCtrlNeuralNets ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlNeuralNets "ANKI")
+
+include(webots)
+
+target_compile_definitions(webotsCtrlNeuralNets
+  PRIVATE
+  ${PLATFORM_DEFINITIONS}
+  SIMULATOR
+)
+
+target_link_libraries(webotsCtrlNeuralNets
+  PRIVATE
+  jsoncpp
+  util
+  cti_common
+  cti_vision_clad               # Just vision CLAD, not the whole enchilada (until VIC-6023 / VIC-3434)
+  ${OPENCV_LIBS}
+  cti_neuralnets
+  ${WEBOTS_LIBS}
+)
+
+symlink_target(
+  TARGET webotsCtrlNeuralNets
+  DST "${CONTROLLERS_DIR}/webotsCtrlNeuralNets/"
+)
+
+symlink_target(
+  TARGET webotsCtrlNeuralNets
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlNeuralNets/resources
 )

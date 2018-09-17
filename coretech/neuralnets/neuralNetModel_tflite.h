@@ -10,12 +10,12 @@
  **/
 
 // NOTE: this wrapper completely compiles out if we're using a different model (e.g. TensorFlow)
-#ifdef VIC_NEURALNETS_USE_TFLITE
+#ifdef ANKI_NEURALNETS_USE_TFLITE
 
-#ifndef __Anki_Vision_NeuralNetModel_TFLite_H__
-#define __Anki_Vision_NeuralNetModel_TFLite_H__
+#ifndef __Anki_NeuralNets_NeuralNetModel_TFLite_H__
+#define __Anki_NeuralNets_NeuralNetModel_TFLite_H__
 
-#include "coretech/vision/neuralnets/neuralNetModel_interface.h"
+#include "coretech/neuralnets/neuralNetModel_interface.h"
 
 #include <list>
 
@@ -27,7 +27,7 @@ namespace tflite
 }
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
 
 class NeuralNetModel : public INeuralNetModel
 {

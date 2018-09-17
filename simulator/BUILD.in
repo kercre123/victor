@@ -135,3 +135,16 @@ cxx_project(
     platform_headers = [
     ]
 )
+
+# NOTE: uses same "main.cpp" file as vic-neuralnets and thus grabs that from coretech/neuralnets
+cxx_project(
+    name = 'webotsCtrlNeuralNets',
+    srcs = cxx_src_glob(['controllers/webotsCtrlNeuralNets'],
+                        ),
+    platform_srcs = [
+    ],
+    headers = [
+    ],
+    platform_headers = [
+    ]
+)

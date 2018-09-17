@@ -1,13 +1,13 @@
-#if defined(VIC_NEURALNETS_USE_TENSORFLOW)
+#if defined(ANKI_NEURALNETS_USE_TENSORFLOW)
 #  include "neuralNetModel_tensorflow.h"
-#elif defined(VIC_NEURALNETS_USE_CAFFE2)
+#elif defined(ANKI_NEURALNETS_USE_CAFFE2)
 #  include "objectDetector_caffe2.h"
-#elif defined(VIC_NEURALNETS_USE_OPENCV_DNN)
+#elif defined(ANKI_NEURALNETS_USE_OPENCV_DNN)
 #  include "objectDetector_opencvdnn.h"
-#elif defined(VIC_NEURALNETS_USE_TFLITE)
+#elif defined(ANKI_NEURALNETS_USE_TFLITE)
 #  include "neuralNetModel_tflite.h"
 #else
-#  error One of VIC_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
+#  error One of ANKI_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
 #endif
 
 #include "util/fileUtils/fileUtils.h"
@@ -65,7 +65,7 @@ GTEST_TEST(NeuralNets, InitFromConfigAndLoadModel)
   ASSERT_TRUE(neuralNetConfig.isMember(JsonKeys::GraphFile));
   const std::string modelFileName = neuralNetConfig[JsonKeys::GraphFile].asString();
   
-  Vision::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
   
   const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, neuralNetConfig);
   ASSERT_EQ(RESULT_OK, loadResult);
@@ -79,10 +79,10 @@ GTEST_TEST(NeuralNets, MobileNet)
   // Read config file
   Json::Value config;
 
-# if defined(VIC_NEURALNETS_USE_TENSORFLOW)
+# if defined(ANKI_NEURALNETS_USE_TENSORFLOW)
   config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
   config["useFloatInput"] = true;
-# elif defined(VIC_NEURALNETS_USE_TFLITE)
+# elif defined(ANKI_NEURALNETS_USE_TFLITE)
   config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_quant.tflite";
   config["useFloatInput"] = false;
 # endif
@@ -101,7 +101,7 @@ GTEST_TEST(NeuralNets, MobileNet)
   config["verbose"] = true;
   config["benchmarkRuns"] = 0;
   
-  Vision::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
   const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, config);
   ASSERT_EQ(RESULT_OK, loadResult);
   
@@ -158,9 +158,9 @@ GTEST_TEST(NeuralNets, PersonDetection)
   using namespace Anki;
   
   // This is a little gross because it reaches out to engine's resources...
-  // The alternative is to duplicate the config and model within coretech/vision/neuralnets.
+  // The alternative is to duplicate the config and model within coretech/neuralnets.
   const std::string vectorResourcePath = Util::FileUtils::FullFilePath({
-    TestPaths::ModelPath, "..", "..", "..", "..", "..", "resources", "config", "engine"
+    TestPaths::ModelPath, "..", "..", "..", "..", "resources", "config", "engine"
   });
   ASSERT_TRUE(Util::FileUtils::DirectoryExists(vectorResourcePath));
   
@@ -182,7 +182,7 @@ GTEST_TEST(NeuralNets, PersonDetection)
   ASSERT_TRUE(config.isMember(JsonKeys::NeuralNets));
   const Json::Value& neuralNetConfig = config[JsonKeys::NeuralNets];
   
-  Vision::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
   const Result loadResult = neuralNet.LoadModel(vectorModelPath, neuralNetConfig);
   ASSERT_EQ(RESULT_OK, loadResult);
   

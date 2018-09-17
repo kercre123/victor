@@ -1,10 +1,10 @@
-#include "coretech/vision/neuralnets/neuralNetParams.h"
+#include "coretech/neuralnets/neuralNetParams.h"
 
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
   
 #define LOG_CHANNEL "NeuralNets"
   
@@ -199,5 +199,5 @@ Result NeuralNetParams::SetOutputTypeFromConfig(const Json::Value& config)
   return RESULT_OK;
 }
 
-} // namespace Vision
+} // namespace NeuralNets
 } // namespace Anki

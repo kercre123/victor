@@ -1,4 +1,24 @@
-# coretech/vision/neuralnets/CMakeLists.txt
+# coretech/neuralnets/CMakeLists.txt
+
+# Set this variable to the type of neural net platform to use
+set(NEURAL_NET_PLATFORM TFLite)
+
+# List of neural net options to validate the above with
+set(VALID_NEURAL_NET_PLATFORMS None TensorFlow TFLite)
+
+# Validate the setting
+list(FIND VALID_NEURAL_NET_PLATFORMS ${NEURAL_NET_PLATFORM} index)
+if(index EQUAL -1)
+  message(FATAL_ERROR "NEURAL_NET_PLATFORM must be one of ${VALID_NEURAL_NET_PLATFORMS}")
+endif()
+
+if (NEURAL_NET_PLATFORM STREQUAL "None")
+  return()
+endif()
+
+project(cti_neuralnets)
+
+include(anki_build_cxx)
 
 cmake_minimum_required(VERSION 3.6)
 
@@ -7,8 +27,6 @@ message(STATUS "Building NeuralNets process using ${NEURAL_NET_PLATFORM}")
 include(anki_build_cxx)
 include(anki_build_strip)
 include(protobuf)
-
-set(TARGET_NAME "")
 
 set(PLATFORM_LIBS "")
 set(COMMON_LIBS
@@ -34,8 +52,6 @@ set(TENSORFLOW_PATH ${ANKI_EXTERNAL_DIR}/tensorflow)
 if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
 
   if (VICOS)
-
-    set(TARGET_NAME vic-neuralnets)
 
     set(PLATFORM_FLAGS
       --std=c++11 
@@ -69,19 +85,9 @@ if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
     )
     
   elseif (MACOSX)
-    
-    # Note that for Mac builds we are really building a Webots controller 
-    # but since it shares the same main.cpp file as the vic-neuralnets process
-    # we're doing it here instead of in simulator/CMakeLists.txt with the other
-    # Webots controllers
-
-    set(TARGET_NAME webotsCtrlNeuralNets) 
-
-    include(webots)
 
     set(PLATFORM_FLAGS
-      --std=c++11 
-      -DSIMULATOR
+      --std=c++11
     )
     
     set(PLATFORM_INCLUDES
@@ -106,14 +112,12 @@ if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
   endif()
 
   set(PLATFORM_DEFINITIONS 
-    VIC_NEURALNETS_USE_TENSORFLOW
+    ANKI_NEURALNETS_USE_TENSORFLOW
   )
 
 elseif(NEURAL_NET_PLATFORM STREQUAL "TFLite")
 
   if (VICOS)
-
-    set(TARGET_NAME vic-neuralnets)
 
     set(TFLITE_DOWNLOADS_PATH ${TENSORFLOW_PATH}/tensorflow/contrib/lite/gen_VICOS/downloads)
     
@@ -125,19 +129,10 @@ elseif(NEURAL_NET_PLATFORM STREQUAL "TFLite")
 
   elseif (MACOSX)
 
-    set(TARGET_NAME webotsCtrlNeuralNets)
-
     set(TFLITE_DOWNLOADS_PATH ${TENSORFLOW_PATH}/tensorflow/contrib/lite/gen_OSX/downloads)
-    
-    include(webots)
-    
-    set(PLATFORM_FLAGS
-      -DSIMULATOR
-    )
 
     set(PLATFORM_LIBS
       ${TENSORFLOW_PATH}/tensorflow/contrib/lite/gen_OSX/lib/libtensorflow-lite.a
-      ${WEBOTS_LIBS}
     )
 
   endif()
@@ -149,7 +144,7 @@ elseif(NEURAL_NET_PLATFORM STREQUAL "TFLite")
   )
 
   set(PLATFORM_DEFINITIONS 
-    VIC_NEURALNETS_USE_TFLITE
+    ANKI_NEURALNETS_USE_TFLITE
     TFLITE_PROFILING_ENABLED
   )
   
@@ -159,32 +154,33 @@ else()
 
 endif()
 
-anki_build_cxx_executable(${TARGET_NAME} ${ANKI_SRCLIST_DIR})
-anki_build_target_license(${TARGET_NAME} "ANKI" "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/tensorflow.license")
+#
+# cti_neuralnets library
+#
+anki_build_cxx_library(cti_neuralnets ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_neuralnets "ANKI" "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/tensorflow.license")
 
-target_compile_options(${TARGET_NAME}
+target_compile_options(cti_neuralnets
   PRIVATE
   ${COMMON_FLAGS}
   ${PLATFORM_FLAGS}
 )
 
-target_include_directories(${TARGET_NAME}
+target_include_directories(cti_neuralnets
   PRIVATE
   ${PLATFORM_INCLUDES}
   ${OPENCV_INCLUDE_PATHS}
 )
 
-target_compile_definitions(${TARGET_NAME}
-  PRIVATE
+target_compile_definitions(cti_neuralnets
+  PUBLIC
   ${PLATFORM_DEFINITIONS}
 )
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(cti_neuralnets
   PRIVATE
   ${COMMON_LIBS}
   ${PLATFORM_LIBS}
 )
-
-anki_build_strip(TARGET ${TARGET_NAME})
 
 
 #
@@ -208,22 +204,10 @@ if (MACOSX)
     ${PLATFORM_DEFINITIONS}
   )
 
-  target_compile_options(${TEST_TARGET_NAME}
-    PRIVATE
-    ${COMMON_FLAGS}
-    ${PLATFORM_FLAGS}
-  )
-
-  target_include_directories(${TEST_TARGET_NAME}
-    PRIVATE
-    ${PLATFORM_INCLUDES}
-    ${OPENCV_INCLUDE_PATHS}
-  )
-
   target_link_libraries(${TEST_TARGET_NAME}
     PRIVATE
     ${COMMON_LIBS}
-    ${PLATFORM_LIBS}
+    cti_neuralnets
     gtest
   )
 

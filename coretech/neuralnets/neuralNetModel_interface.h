@@ -9,11 +9,11 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#ifndef __Anki_Vision_NeuralNetModel_Interface_H__
-#define __Anki_Vision_NeuralNetModel_Interface_H__
+#ifndef __Anki_NeuralNets_NeuralNetModel_Interface_H__
+#define __Anki_NeuralNets_NeuralNetModel_Interface_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/vision/neuralnets/neuralNetParams.h"
+#include "coretech/neuralnets/neuralNetParams.h"
 
 #include "clad/types/salientPointTypes.h"
 #include "json/json.h"
@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
     
 class INeuralNetModel
 {
@@ -93,7 +93,7 @@ private:
   std::string _cachePath;
 };
 
-} // namespace Vision
+} // namespace NeuralNets
 } // namespace Anki
 
-#endif /* __Anki_Vision_NeuralNetModel_Interface_H__ */
+#endif /* __Anki_NeuralNets_NeuralNetModel_Interface_H__ */

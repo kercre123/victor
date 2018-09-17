@@ -1,12 +1,12 @@
-#ifndef __Anki_Vision_NeuralNetParams_H__
-#define __Anki_Vision_NeuralNetParams_H__
+#ifndef __Anki_NeuralNets_NeuralNetParams_H__
+#define __Anki_NeuralNets_NeuralNetParams_H__
 
 #include "coretech/common/shared/types.h"
 
 #include "json/json.h"
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
 
 struct NeuralNetParams
 {
@@ -67,8 +67,8 @@ private:
   
 }; // struct NeuralNetParams
   
-} // namespace Vision
+} // namespace NeuralNets
 } // namespace Anki
 
-#endif /* __Anki_Vision_NeuralNetParams_H__ */
+#endif /* __Anki_NeuralNets_NeuralNetParams_H__ */
 

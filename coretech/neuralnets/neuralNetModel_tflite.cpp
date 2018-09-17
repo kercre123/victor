@@ -10,9 +10,9 @@
  **/
 
 // NOTE: this wrapper completely compiles out if we're using a different model (e.g. TensorFlow)
-#ifdef VIC_NEURALNETS_USE_TFLITE
+#ifdef ANKI_NEURALNETS_USE_TFLITE
 
-#include "coretech/vision/neuralnets/neuralNetModel_tflite.h"
+#include "coretech/neuralnets/neuralNetModel_tflite.h"
 #include <list>
 #include <queue>
 
@@ -27,7 +27,7 @@
 #include "tensorflow/contrib/lite/string_util.h"
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
 
 #define LOG_CHANNEL "NeuralNets"
   
@@ -285,4 +285,4 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
 } // namespace Vision
 } // namespace Anki
 
-#endif // #if VIC_NEURALNETS_USE_TFLITE
+#endif // #if ANKI_NEURALNETS_USE_TFLITE

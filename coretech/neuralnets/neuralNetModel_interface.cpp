@@ -11,7 +11,7 @@
 
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/vision/neuralnets/neuralNetModel_interface.h"
+#include "coretech/neuralnets/neuralNetModel_interface.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
@@ -22,7 +22,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Vision {
+namespace NeuralNets {
   
 #define LOG_CHANNEL "NeuralNets"
 
@@ -354,5 +354,5 @@ void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, con
   template void INeuralNetModel::ResponseMapOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
                                                          const int numberOfChannels,
                                                          std::list<Vision::SalientPoint>& salientPoints); 
-} // namespace Vision
+} // namespace NeuralNets
 } // namespace Anki
