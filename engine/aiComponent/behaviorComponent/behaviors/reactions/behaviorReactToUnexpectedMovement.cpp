@@ -221,7 +221,9 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
                   _iConfig.repeatedActivationDetectionsCheckWindow_sec);
       // We've commanded the emergency maneuever too frequently, we should just delegate to a behavior that indicates that
       // the robot is stuck on something.
-      DelegateIfInControl(_iConfig.askForHelpBehavior.get());
+      if (_iConfig.askForHelpBehavior->WantsToBeActivated()) {
+        DelegateIfInControl(_iConfig.askForHelpBehavior.get());
+      }
     } else {
       // Command the emergency maneuver of raising the lift as high as possible and then retreating slowly.
       CompoundActionSequential* seq_action = new CompoundActionSequential({
