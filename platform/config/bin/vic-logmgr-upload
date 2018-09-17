@@ -17,8 +17,6 @@
 set -eu
 
 : ${VIC_LOGMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-logmgr"}
-: ${VIC_LOGMGR_FORMAT:="printable"}
-: ${VIC_LOGMGR_FILTERSPECS:="*:D"}
 
 #
 # Callers must provide APP_URL, APP_KEY and APP_USER on command line.
@@ -85,8 +83,11 @@ blobdir=${VIC_LOGMGR_DIRECTORY}
 blobname="victor-${esn}-${timestamp}-${pid}.log.gz"
 blobpath="${blobdir}/${blobname}"
 bloburl="${APP_URL}/${blobname}"
+logpath="/var/log"
 
-/usr/bin/logcat -d -v ${VIC_LOGMGR_FORMAT} ${VIC_LOGMGR_FILTERSPECS} | /bin/gzip > ${blobpath}
+
+/bin/cp -f ${logpath}/messages.1.gz ${blobpath}
+/bin/cat ${logpath}/messages | /bin/gzip >> ${blobpath}
 
 upload ${bloburl} ${blobpath} ${blobname}
 
