@@ -68,6 +68,15 @@ public:
     Alert alert = Alert::None;
   } MemoryInfo;
 
+  // Wifi info stats
+  typedef struct WifiInfo {
+    uint64_t rx_bytes = 0;
+    uint64_t tx_bytes = 0;
+    uint64_t rx_errors = 0;
+    uint64_t tx_errors = 0;
+    Alert alert = Alert::None;
+  } WifiInfo;
+
   // Filesystem space stats
   typedef struct DiskInfo {
     // Total space, in kB
@@ -124,8 +133,14 @@ public:
   // Values are fetched once per update period
   void GetMemoryInfo(MemoryInfo & info) const;
 
-  // Get disk info for given path
-  // Values are fetched from file system each time
+  // Get current wifi info.
+  // Values are fetched from wlan device on each call.
+  // Returns true on success, false on error.
+  bool GetWifiInfo(WifiInfo & info) const;
+
+  // Get disk info for given path.
+  // Values are fetched from file system on each call.
+  // Returns true on success, false on error.
   bool GetDiskInfo(const std::string & path, DiskInfo & info) const;
 
   // Returns data about CPU times

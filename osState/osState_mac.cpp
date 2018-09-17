@@ -407,6 +407,17 @@ void OSState::GetMemoryInfo(MemoryInfo & info) const
   info.alert = GetAlert(info.pressure, kMediumMemPressureMultiple, kHighMemPressureMultiple);
 }
 
+bool OSState::GetWifiInfo(WifiInfo & wifiInfo) const
+{
+  // Not implemented on this platform
+  wifiInfo.rx_bytes = 0;
+  wifiInfo.tx_bytes = 0;
+  wifiInfo.rx_errors = 0;
+  wifiInfo.tx_errors = 0;
+  wifiInfo.alert = Alert::None;
+  return true;
+}
+
 bool OSState::GetDiskInfo(const std::string & path, DiskInfo & info) const
 {
   struct statfs fsinfo = {};
