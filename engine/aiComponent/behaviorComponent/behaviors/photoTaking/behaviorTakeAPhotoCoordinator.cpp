@@ -185,7 +185,7 @@ void BehaviorTakeAPhotoCoordinator::TransitionToFrameFaces()
                         } else {
                           PRINT_CH_INFO("Behaviors", "BehaviorTakeAPhotoCoordinator.TransitionToFrameFaces.NoFacesFound",
                                         "Did not see any faces - playing \"I don't know\" animation");
-                          DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_IntentNeutral));
+                          DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ICantDoThat));
                           static const bool kSucceeded = false;
                           GetBEI().GetPhotographyManager().SendDASEvent(kSucceeded, "UnableToFindFace");
                         }
