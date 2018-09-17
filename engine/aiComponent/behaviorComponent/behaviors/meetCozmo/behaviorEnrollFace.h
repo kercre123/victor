@@ -134,6 +134,7 @@ private:
   void TransitionToFailedState( State state, const std::string& stateName);
   
   void UpdateFaceToEnroll();
+  void UpdateFaceTime(const Face* newFace);
   void UpdateFaceIDandTime(const Face* newFace);
   
   IActionRunner* CreateTurnTowardsFaceAction(FaceID_t faceID, FaceID_t saveID, bool playScanningGetOut);
