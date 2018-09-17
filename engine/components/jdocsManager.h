@@ -118,6 +118,7 @@ private:
   bool                      _gotLatestCloudJdocsAtStartup = false;
   // We save currTime_s here each tick, because we need it in the destructor, and by then BasetationTimer is gone
   float                     _currTime_s;
+  float                     _nextUserLoginCheckTime_s;
 
   struct JdocInfo
   {
