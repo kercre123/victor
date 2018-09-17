@@ -524,6 +524,12 @@ message ErasePoseMarker {
 
 }
 
+message TwentyQuestionsQuestions {
+  int_8 questionNum,
+  string question,
+  string answers[uint_8],
+}
+
 // VisualizeQuad
 //  Draws the specified quadrilateral using the Visualization system.
 //  The quadID will be created if new or replaced if it already exists (i.e., you

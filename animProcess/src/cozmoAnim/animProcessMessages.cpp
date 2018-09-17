@@ -423,6 +423,16 @@ void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::Star
   micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType),
                                             msg.playGetInFromAnimProcess);
 }
+  
+  void Process_twentyQuestionsInput(const Anki::Vector::RobotInterface::TwentyQuestionsInput& msg)
+  {
+    auto* micDataSystem = _context->GetMicDataSystem();
+    if(micDataSystem == nullptr){
+      return;
+    }
+    
+    micDataSystem->TwentyQuestionsInput( msg.response );
+  }
 
 void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTriggerWordResponse& msg)
 {

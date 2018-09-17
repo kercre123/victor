@@ -66,12 +66,23 @@ structure ConnectionResult {
 	uint_8 expectedPackets,
 }
 
+structure TwentyQuestionsInput {
+	int_8 response,
+}
+
+structure TwentyQuestionsQuestions {
+	int_8 questionNum,
+	string question,
+  string answers[uint_8],
+}
+
 union dupes_allowed Message {
 	// anim -> cloud
 	Hotword hotword,
 	AudioData audio,
 	Void audioDone,
 	Void connectionCheck,
+	TwentyQuestionsInput twentyQuestionsInput,
 
 	// cloud -> anim
 	Void stopSignal,
@@ -83,7 +94,9 @@ union dupes_allowed Message {
 	Filename debugFile,
 	IntentResult result,
 	IntentError error,
-	StreamOpen streamOpen
+	StreamOpen streamOpen,
+
+	TwentyQuestionsQuestions twentyQuestionsQuestions,
 }
 
 

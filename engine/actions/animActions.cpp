@@ -344,6 +344,7 @@ namespace Anki {
       , _numLoops( numLoops )
       , _loopForever( 0 == numLoops )
       , _numLoopsRemaining( numLoops )
+      , _shouldEndImmediately( false )
     {
       _animParams.animEvent = animEvent;
       _animParams.interruptRunning = interruptRunning;
@@ -401,9 +402,12 @@ namespace Anki {
         return ActionResult::NULL_SUBACTION;
       }
       
+      if( _shouldEndImmediately ) {
+        return ActionResult::SUCCESS;
+      }
+      
       ActionResult subActionResult = _subAction->Update();
       const ActionResultCategory category = IActionRunner::GetActionResultCategory(subActionResult);
-      
       if( (category == ActionResultCategory::SUCCESS)
           && (_loopForever || (--_numLoopsRemaining > 0)) )
       {
@@ -416,7 +420,11 @@ namespace Anki {
     
     void ReselectingLoopAnimationAction::StopAfterNextLoop()
     {
-      if( _numLoopsRemaining > 1 ) {
+      if( !HasStarted() ) {
+        _shouldEndImmediately = true;
+      }
+      
+      if( (_numLoopsRemaining == 0) || (_numLoopsRemaining > 1) ) {
         _numLoopsRemaining = 1;
       }
       _loopForever = false;

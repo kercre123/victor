@@ -193,6 +193,7 @@ namespace Anki {
       u32        _numLoops;
       bool       _loopForever;
       u32        _numLoopsRemaining;
+      bool       _shouldEndImmediately;
       std::unique_ptr<TriggerLiftSafeAnimationAction> _subAction;
       
     };

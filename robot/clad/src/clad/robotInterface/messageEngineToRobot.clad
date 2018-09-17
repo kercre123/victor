@@ -629,6 +629,10 @@ message TriggerBackpackAnimation {
   BackpackAnimationTrigger trigger,
 }
 
+message TwentyQuestionsInput {
+  int_8 response, // -1 means reset and start 
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -778,6 +782,8 @@ union EngineToRobot
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
   AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
+
+  TwentyQuestionsInput twentyQuestionsInput = 0xA4,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

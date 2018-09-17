@@ -121,5 +121,21 @@
   "github.com/satori/go.uuid": {
     "commit": "36e9d2ebbde5e3f13ab2e25625fd453271d6522e",
     "branch": "master"
+  },
+  "github.com/headzoo/surf": {
+    "commit": "a4a8c16c01dc47ef3a25326d21745806f3e6797a",
+    "branch": "master"
+  },
+  "github.com/PuerkitoBio/goquery": {
+    "commit": "dc2ec5c7ca4d9aae063b79b9f581dd3ea6afd2b2",
+    "branch": "master"
+  },
+  "github.com/andybalholm/cascadia": {
+    "commit": "901648c87902174f774fac311d7f176f8647bdaa",
+    "branch": "master"
+  },
+  "gopkg.in/headzoo/surf.v1": {
+    "commit": "60198774ccce43e1d26c80e961497b7d262460b3",
+    "branch": "master"
   }
 }

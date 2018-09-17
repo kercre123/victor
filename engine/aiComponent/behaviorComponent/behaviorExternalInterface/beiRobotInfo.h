@@ -64,6 +64,10 @@ class VisionComponent;
 
 struct AccelData;
 struct GyroData;
+  
+  namespace RobotInterface {
+    class EngineToRobot;
+  }
 
   
 class BEIRobotInfo : public IDependencyManagedComponent<BCComponentID> {
@@ -82,6 +86,8 @@ public:
   //////
   // end IDependencyManagedComponent functions
   //////
+  
+  void SendRobotMessage( const RobotInterface::EngineToRobot& msg ) const;
 
   ActionList& GetActionList();
   BatteryLevel GetBatteryLevel() const;

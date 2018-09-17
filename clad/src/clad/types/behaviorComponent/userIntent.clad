@@ -90,6 +90,11 @@ structure UserIntent_Test_Name
   string name
 }
 
+structure UserIntent_ExactPhrase
+{
+  string phrase
+}
+
 union dupes_allowed UserIntent
 {
   UserIntent_Void unmatched_intent,
@@ -134,6 +139,9 @@ union dupes_allowed UserIntent
   UserIntent_KnowledgeResponse knowledge_response,
   UserIntent_Void             knowledge_unknown,
   UserIntent_Void             silence,
+
+  UserIntent_Void twenty_questions,
+  UserIntent_ExactPhrase exact_phrase,
 
 
   // for tests

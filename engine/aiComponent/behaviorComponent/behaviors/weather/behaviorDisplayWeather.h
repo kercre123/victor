@@ -34,6 +34,8 @@ class BehaviorDisplayWeather : public ICozmoBehavior
 {
 public: 
   virtual ~BehaviorDisplayWeather();
+  
+  void SetInput(int input) {_dVars.inputTemp = input;}
 
 protected:
 
@@ -83,6 +85,8 @@ private:
     UtteranceState  utteranceState;
     bool shouldSayTemperature;
     bool playingWeatherResponse;
+    
+    int inputTemp;
   };
 
   std::unique_ptr<InstanceConfig> _iConfig;

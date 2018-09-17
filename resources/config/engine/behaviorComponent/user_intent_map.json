@@ -19,6 +19,14 @@
       "user_intent": "imperative_shutup"
     },
     {
+      "cloud_intent": "intent_twenty_questions",
+      "user_intent": "twenty_questions"
+    },
+    {
+      "cloud_intent": "intent_exact_phrase",
+      "user_intent": "exact_phrase"
+    },
+    {
       "cloud_intent": "intent_imperative_come",
       "app_intent": "intent_imperative_come",
       "user_intent": "imperative_come"

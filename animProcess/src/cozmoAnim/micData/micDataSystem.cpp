@@ -209,7 +209,12 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
     showStreamState->SetPendingTriggerResponseWithoutGetIn(callback);
   }
 }
-
+void MicDataSystem::TwentyQuestionsInput(int8_t response)
+{
+  auto msg = CloudMic::TwentyQuestionsInput{ response };
+  SendUdpMessage(CloudMic::Message::CreatetwentyQuestionsInput(std::move(msg)));
+}
+  
 void MicDataSystem::FakeTriggerWordDetection()
 {
   _micDataProcessor->FakeTriggerWordDetection();

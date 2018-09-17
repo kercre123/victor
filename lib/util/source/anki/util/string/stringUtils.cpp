@@ -461,6 +461,20 @@ uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString)
   time_t epochSec = timegm(&ctime);
   return Anki::Util::numeric_cast<uint32_t>(epochSec);
 }
+  
+  std::vector<std::string> StringSplitStr(std::string string, const std::string& delim)
+  {
+    size_t pos = 0;
+    std::string token;
+    std::vector<std::string> result;
+    while( (pos = string.find(delim)) != std::string::npos ) {
+      token = string.substr( 0, pos );
+      result.push_back( std::move(token) );
+      string.erase(0, pos + delim.length());
+    }
+    result.push_back( std::move(string) );
+    return result;
+  }
 
 } // namespace Util
 } // namespace Anki

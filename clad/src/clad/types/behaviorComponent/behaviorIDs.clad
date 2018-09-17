@@ -412,6 +412,8 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree
   TriggerWordDetected,
+  TwentyQuestions,
+  TwentyQuestionsPrompt,
   UserDefinedBehaviorSelector,
   UserDefinedBehaviorTreeConfirmNewBehavior,
   UserDefinedBehaviorTreeRouter,

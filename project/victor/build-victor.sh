@@ -146,6 +146,10 @@ else
   echo "Ignore external dependencies"
 fi
 
+# replace the negative sign image (-) with a number sign (#) image
+cp ${TOPLEVEL}/weather_negative_indicator.png ${TOPLEVEL}/EXTERNALS/animation-assets/sprites/independentSprites/weather/weather_negative_indicator.png
+
+
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
 #

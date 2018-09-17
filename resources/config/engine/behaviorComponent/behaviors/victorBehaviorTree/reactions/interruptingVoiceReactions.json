@@ -6,6 +6,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
+    "TwentyQuestions",
     "DoATrickVoiceCommand",
     "PlayAGameVoiceCommand",
     "FindYourCubeVoiceCommand",

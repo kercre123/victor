@@ -37,6 +37,7 @@
 #include "clad/types/featureGateTypes.h"
 
 
+#include "util/console/consoleInterface.h"
 namespace Anki {
 namespace Vector {
   
@@ -44,6 +45,9 @@ namespace{
 const char* kImageLayoutListKey = "imageLayouts";
 const char* kImageMapListKey    = "imageMaps";
 const char* kAnimationNameKey   = "animationName";
+  
+  constexpr int kInvalidTemp = -123456;
+  CONSOLE_VAR_RANGED(float, kActiveTime_s, "AAA", 3.26f, 0.0f, 16.0f);
 
 // staticly defined for now - can be moved into JSON easily if
 // we need to support different asset designs
@@ -91,13 +95,15 @@ BehaviorDisplayWeather::DynamicVariables::DynamicVariables()
   utteranceState = UtteranceState::Invalid;
   shouldSayTemperature = false;
   playingWeatherResponse = false;
+  
+  inputTemp = kInvalidTemp;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDisplayWeather::BehaviorDisplayWeather(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  AddWaitForUserIntent(USER_INTENT(weather_response));
+  //AddWaitForUserIntent(USER_INTENT(weather_response));
   
   if(config.isMember(kImageLayoutListKey) && config.isMember(kImageMapListKey)){
     _iConfig =  std::make_unique<InstanceConfig>(config[kImageLayoutListKey], config[kImageMapListKey]);
@@ -118,7 +124,7 @@ BehaviorDisplayWeather::~BehaviorDisplayWeather()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWeather::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return _dVars.inputTemp != kInvalidTemp;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -257,24 +263,37 @@ void BehaviorDisplayWeather::InitBehavior()
 void BehaviorDisplayWeather::OnBehaviorActivated() 
 {
   // reset dynamic variables
+  int temp = _dVars.inputTemp;
   _dVars = DynamicVariables();
+  _dVars.inputTemp = temp;
+  PRINT_NAMED_WARNING("WHATNOW", "displaying weather");
 
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
+//  auto& uic = GetBehaviorComp<UserIntentComponent>();
+//
+//  _dVars.currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
+//  DEV_ASSERT(_dVars.currentIntent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+//
+//  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
+//  _iConfig->intentParser->SendDASEventForRepsonse(weatherResponse);
 
-  _dVars.currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
-  DEV_ASSERT(_dVars.currentIntent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
-
-  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
-  _iConfig->intentParser->SendDASEventForRepsonse(weatherResponse);
-
-  StartTTSGeneration();
-  TransitionToFindFaceInFront();
+  //StartTTSGeneration();
+  //TransitionToFindFaceInFront();
+  
+  TransitionToDisplayWeatherResponse();
+  _dVars.playingWeatherResponse = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::BehaviorUpdate()
 {
-  if(!IsActivated() || IsControlDelegated() || _dVars.playingWeatherResponse){
+  if(!IsActivated()){
+    return;
+  }
+  
+  if( IsControlDelegated() || _dVars.playingWeatherResponse){
+    if( GetActivatedDuration() >= kActiveTime_s ) {
+      CancelSelf();
+    }
     return;
   }
 
@@ -290,6 +309,7 @@ void BehaviorDisplayWeather::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorDeactivated()
 {
+  _dVars.inputTemp = kInvalidTemp;
   GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
 }
 
@@ -312,10 +332,12 @@ void BehaviorDisplayWeather::TransitionToFindFaceInFront()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
 {
-  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
+  //const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
 
   auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
-    CancelSelf();
+    if( IsActivated() ) {
+      CancelSelf();
+    }
   };
 
   int outAnimationDuration = 0;
@@ -329,9 +351,11 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
                                                           emptySpriteBoxesAllowed,
                                                           animationCallback);
   
-  int temperature = 0;
-  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
-  const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(weatherResponse);
+  int temperature = _dVars.inputTemp;
+  //auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
+  //const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(weatherResponse);
+  const bool isFahrenheit = true;
+  bool success = true;
   success &= GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
   if(!success){
     return;
@@ -361,6 +385,7 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg) const
 {
+  //temp = -temp; // negative is the Q symbol ("question")
   if(_iConfig->temperatureLayouts.size() != 6){
     PRINT_NAMED_ERROR("BehaviorDisplayWeather.GenerateTemperatureImage.TemperatureLayoutsNotFound",
                       "Temperature layouts has %zu elements, expected 6",
@@ -390,6 +415,14 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 
   
   // Grab the image from temperature layouts - indexed least -> greatest pos followed by least -> greatest neg
+//  if( temp < 10 ) {
+//    outImg = &_iConfig->temperatureLayouts[1];
+//  } else {
+//    outImg = &_iConfig->temperatureLayouts[2];
+//  }
+  
+  temp = -temp;
+  
   if(temp > 0){
     if(temp < 10){
       outImg = &_iConfig->temperatureLayouts[0];
@@ -407,7 +440,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
       outImg = &_iConfig->temperatureLayouts[5];
     }
   }
-  if(!ANKI_VERIFY(outImg->GetLayerLayoutMap().size() == 1, 
+  if(!ANKI_VERIFY(outImg->GetLayerLayoutMap().size() == 1,
                   "BehaviorDisplayWeather.GenerateTemperatureImage.ImproperNumberOfLayers",
                   "Expected one layer, but image has %zu",
                   outImg->GetLayerLayoutMap().size())){
@@ -422,12 +455,12 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
 
   // Add sprite boxes as appropriate to the layer
-  {
-    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Fahrenheit_Indicator : Vision::SpriteName::Weather_Celsius_Indicator;
-    layer.AddToImageMap(spriteCache, seqContainer,
-                        Vision::SpriteBoxName::TemperatureDegreeIndicator, 
-                        tempIndicator);
-  }
+//  {
+//    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Fahrenheit_Indicator : Vision::SpriteName::Weather_Celsius_Indicator;
+//    layer.AddToImageMap(spriteCache, seqContainer,
+//                        Vision::SpriteBoxName::TemperatureDegreeIndicator,
+//                        tempIndicator);
+//  }
   if(temp < 0){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureNegativeIndicator, 
@@ -437,7 +470,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   const auto absTemp = std::abs(temp);
   const auto onesDig = absTemp % 10;
   const auto tensDig = (absTemp / 10) % 10;
-  const auto hundredsDig = (absTemp / 100) % 10;
+  const auto hundredsDig = 0;//(absTemp / 100) % 10;
   {
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureOnesDigit, 
@@ -445,15 +478,17 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   }
   // Don't show leading zeroes
   if((tensDig > 0) || (hundredsDig > 0)){
+    auto& asset = _iConfig->temperatureAssets[tensDig];// : kWeatherQ;
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureTensDigit, 
-                        _iConfig->temperatureAssets[tensDig]);
+                        asset); // need special Q map
   }
-  if(hundredsDig > 0){
-    layer.AddToImageMap(spriteCache, seqContainer,
-                        Vision::SpriteBoxName::TemperatureHundredsDigit, 
-                        _iConfig->temperatureAssets[hundredsDig]);
-  }
+//  if(hundredsDig > 0){
+//    auto& asset = kWeatherQ;//_iConfig->temperatureAssets[hundredsDig];
+//    layer.AddToImageMap(spriteCache, seqContainer,
+//                        Vision::SpriteBoxName::TemperatureHundredsDigit,
+//                        asset); // need special Q map
+//  }
 
   ApplyModifiersToTemperatureDisplay(layer, temp);
   return true;

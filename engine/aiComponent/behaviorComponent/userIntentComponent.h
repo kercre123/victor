@@ -104,6 +104,12 @@ public:
 
 
   bool WaitingForTriggerWordGetInToFinish() const { return _waitingForTriggerWordGetInToFinish; }
+  
+  
+  void SetMustMatchExactPhrases( const std::set<std::string>& phrases,
+                                 const std::string& lockName,
+                                 const std::map<UserIntentTag, std::string>& matchedIntentMap = {}  );
+  void UnSetMustMatchExactPhrases( const std::string& lockName );
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,6 +231,10 @@ public:
 
 private:
   
+  std::string _exactPhrasesLock;
+  std::set<std::string> _exactPhrases;
+  std::map<UserIntentTag, std::string> _exactPhrasesMatchedIntents;
+  
   // callback from the cloud
   void OnCloudData(CloudMic::Message&& data);
   
@@ -245,6 +255,12 @@ private:
   void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
 
   void HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg);
+  
+  // if json looks like a dev intent, rewrite it and return the true. otherwise returns false
+  bool TryRewriteDevIntent( UserIntentTag possibleIntentTag, Json::Value& json ) const;
+  
+  bool ParseExactPhraseIntent( const std::string& input, UserIntentTag possibleIntentTag, Json::Value& json ) const;
+  bool ParseDevIntent( const std::string& input, Json::Value& json ) const;
 
   static size_t sActivatedIntentID;
 

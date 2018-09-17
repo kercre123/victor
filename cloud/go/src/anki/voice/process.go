@@ -12,6 +12,16 @@ import (
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
+
+	"gopkg.in/headzoo/surf.v1"
+	//"fmt"
+	"net/http"
+	"net/url"
+	"bytes"
+	"io/ioutil"
+	//"strings"
+	"regexp"
+	"strconv"
 )
 
 var (
@@ -19,6 +29,7 @@ var (
 	// key for Chipper use
 	ChipperSecret string
 	verbose       bool
+	answerUrlMap []string
 )
 
 const (
@@ -34,6 +45,7 @@ const (
 	HotwordMessage = "hotword"
 	// DefaultTimeout is the length of time before the process will cancel a voice request
 	DefaultTimeout = 9 * time.Second
+	kUserAgent = "Mozilla/5.0 (Windows NT 6.3; x64) Chrome/37.0.2049.0 Safari/537.36"
 )
 
 // Process contains the data associated with an instance of the cloud process,
@@ -104,6 +116,7 @@ type strmReceiver struct {
 	err        chan cloudError
 	open       chan cloudOpen
 	connection chan cloudConnCheck
+	//
 }
 
 func (c *strmReceiver) OnIntent(r *cloud.IntentResult) {
@@ -139,6 +152,155 @@ func (c *strmReceiver) Close() {
 	if c.connection != nil {
 		close(c.connection)
 	}
+}
+
+func ResetAndStartTwentyQuestions() (*cloud.Message, error) {
+	bow := surf.NewBrowser()
+	bow.SetUserAgent(kUserAgent)
+	err := bow.Open("http://www.20q.net/play.html")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	fmt.Println(bow.Title())
+
+	fmt.Println("****************CLICKING****************")
+	bow.Click("a[href='http://y.20q.net/gsq-en']")
+
+	fmt.Println(bow.Body())
+	form, _ := bow.Form("form")
+	fmt.Println(form)
+	formAction := form.Action()
+	fmt.Println(formAction)
+
+	// this site also rate-limits, which means we can't continue to use bow, since it doesn't rate limit.
+	// switch to regular GET commands at this point, with some settings to prevent too many connections
+	tr := &http.Transport{
+		MaxIdleConns:       20,
+		MaxIdleConnsPerHost:  20,
+	}
+	client := &http.Client{Transport: tr}
+
+	// the site seems to need partially-filled form values to continue
+	data := url.Values{}
+	data.Set("age", "")
+	data.Add("cctkr", "US")
+	data.Add("submit", "  Play  ")
+
+	req, err := http.NewRequest("POST", formAction, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Add("User-Agent", kUserAgent)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	f, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	
+	resp.Body.Close()
+	fmt.Println(string(f))
+
+	questionHTML := string(f)
+	return ParseAndGetQuestion( questionHTML )
+}
+
+func ContinueTwentyQuestions(response int) (*cloud.Message, error) {
+	if response >= len(answerUrlMap) {
+		return nil, fmt.Errorf("Index %v is out of range (max %v)", response, len(answerUrlMap))
+	}
+
+	newURL := "http://y.20q.net" + answerUrlMap[response]
+
+	// todo: add user agent
+	resp, err := http.Get(newURL)
+	if err != nil {
+		fmt.Printf("%s", err)
+		return nil, err
+	} else {
+		defer resp.Body.Close()
+		f, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Printf("%s", err)
+			return nil, err
+		}
+		questionHTML := string(f)
+		fmt.Println(questionHTML)
+		return ParseAndGetQuestion(questionHTML)
+	}
+}
+
+func ParseAndGetQuestion(questionHTML string) (*cloud.Message, error) {
+	startStr := "<big><b>Q"
+	endStr := "</b></big><hr"
+	startIdx := strings.Index(questionHTML, startStr)
+	endIdx := strings.Index(questionHTML, endStr)
+	if endIdx < 0 {
+		// done
+		msg := cloud.NewMessageWithTwentyQuestionsQuestions(&cloud.TwentyQuestionsQuestions{
+			QuestionNum: 0,
+			Question: "",
+			Answers: []string{},
+		})
+		return msg, nil
+	}
+	
+	startIdx += len(startStr)
+	fmt.Println("%d %d", startIdx, endIdx)
+	questionHTML = questionHTML[startIdx:endIdx]
+
+	//questionHTML := `1. &nbsp;Is it classified as Animal, Vegetable or Mineral?<br><nobr><a href="/gsq-en?7tcUAC1bCsj3UAg!Gix7JK9NpoOaPfPTNc4H8AuIe" target="mainFrame">Animal</a>, <a href="/gsq-en?nKhixic6iHftCxhAZLy1aEGeQ3!VUDwLpSBn1_DU4" target="mainFrame">Vegetable</a>, <a href="/gsq-en?Y4ArkueduPzsMkhV1gnbJNwRHUf_.lCn54qAxrMes" target="mainFrame">Mineral</a>, <a href="/gsq-en?jH5R,XQTXIWm6,Anb2vZu0SEtdGok_Uy,68cW9zq5" target="mainFrame">Concept</a>, <a href="/gsq-en?VAJFsO8bOLWe3sIG9QJMUN4tv1Ayk.wC.oT5QLvXd" target="mainFrame">Unknown</a></nobr><br>`
+	fmt.Println(questionHTML)
+
+	
+	// get question:
+	question := questionHTML[ strings.Index(questionHTML, "&nbsp;") + len("&nbsp;") : strings.Index(questionHTML, "<br>") ]
+	// sometimes there's html in it
+	var rexQuestion = regexp.MustCompile(`<small>[^<]+<\/small>`)
+	question = rexQuestion.ReplaceAllString(question, "")
+	questionNumber,err := strconv.Atoi(questionHTML[ : strings.Index(questionHTML, ".")])
+	if err != nil {
+		questionNumber = -1
+	}
+	fmt.Println(questionNumber, question)
+
+	rex := regexp.MustCompile(`<a href=\"([^\"]+)\"(?: target=\"mainFrame\")*>([^<]+)<\/a>`)
+	matches := rex.FindAllStringSubmatch(questionHTML, -1)
+	fmt.Println(matches)
+	if matches == nil {
+			return nil, fmt.Errorf("no matches")
+	}
+
+	answerList := make([]string, len(matches))
+	answerUrlMap = make([]string, len(matches))
+	for idx, match := range matches {
+		url := match[1]
+		answer := match[2]
+		answer = strings.Replace(answer, "&nbsp;", "", -1)
+		answer = strings.Replace(answer, " ", "", -1)
+		fmt.Println(idx, url, answer)
+		answerList[idx] = answer
+		answerUrlMap[idx] = url
+	}
+
+	msg := cloud.NewMessageWithTwentyQuestionsQuestions(&cloud.TwentyQuestionsQuestions{
+		QuestionNum: int8(questionNumber),
+		Question: question,
+		Answers: answerList,
+	})
+	
+	return msg, nil
 }
 
 // Run starts the cloud process, which will run until stopped on the given channel
@@ -243,6 +405,22 @@ procloop:
 					strm.AddSamples(buf)
 				} else {
 					logVerbose("No active context, discarding", len(buf), "samples")
+				}
+
+			case cloud.MessageTag_TwentyQuestionsInput:
+				SetVerbose(true)
+				response := int(msg.msg.GetTwentyQuestionsInput().Response)
+				log.Println("Got TwentyQuestionsInput ", response)
+				if response == -1 {
+					responseMsg, _ := ResetAndStartTwentyQuestions()
+					if responseMsg != nil {
+						p.writeResponse( responseMsg )
+					}
+				} else {
+					responseMsg, _ := ContinueTwentyQuestions( response )
+					if responseMsg != nil {
+						p.writeResponse( responseMsg )
+					}
 				}
 
 			case cloud.MessageTag_ConnectionCheck:

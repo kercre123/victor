@@ -75,6 +75,9 @@ public:
   void StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess);
   void FakeTriggerWordDetection();
   void Update(BaseStationTime_t currTime_nanosec);
+  
+  // -1 for reset and start.
+  void TwentyQuestionsInput(int8_t response);
 
 #if ANKI_DEV_CHEATS
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }

@@ -76,6 +76,8 @@ std::string RemovePII(const std::string& s);
   
 // Create random uuid string
 std::string GetUUIDString();
+  
+  std::vector<std::string> StringSplitStr(std::string string, const std::string& delim);
 
 // Url encode string
 std::string UrlEncodeString(const std::string& str);

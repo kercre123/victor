@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "osState/osState.h"
 
@@ -321,6 +322,12 @@ bool BEIRobotInfo::IsOnChargerContacts() const
 bool BEIRobotInfo::IsOnChargerPlatform() const
 {
   return _robot.GetBatteryComponent().IsOnChargerPlatform();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BEIRobotInfo::SendRobotMessage( const RobotInterface::EngineToRobot& msg ) const
+{
+  _robot.SendMessage(msg);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
