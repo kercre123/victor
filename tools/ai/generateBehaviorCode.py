@@ -6,6 +6,8 @@ from behavior.behavior_class import *
 from behavior.behavior_code_generation import *
 from behavior.behavior_instance import *
 
+import argparse
+
 
 TOOLS_PATH='tools/ai'
 BEHAVIOR_CODE_PATH='engine/aiComponent/behaviorComponent/behaviors'
@@ -77,19 +79,23 @@ def get_behavior_classes(behaviors_code_path):
 
 def get_behavior_instances(behaviors_config_path):
     behavior_instances = []
+    all_classes = set()
 
     for root, dirs, files in os.walk(behaviors_config_path):            
         for filename in files:
             if os.path.splitext(filename)[1] == '.json':
                 full_path = os.path.join(root, filename)
-                behavior_instance = get_behavior_instance(full_path, behaviors_config_path)
+                behavior_instance, instance_classes = get_behavior_instance(full_path, behaviors_config_path)
+                all_classes |= instance_classes
                 if behavior_instance:
                     behavior_instances.append(behavior_instance)
 
     behavior_instances.sort(key=rel_path_sorter)
-    return behavior_instances
+    return behavior_instances, all_classes
 
-def generate_all():
+def generate_all(options):
+
+
     
     repo_root = get_repo_root(__file__, TOOLS_PATH)
     print('repo root is {}'.format(repo_root))
@@ -113,7 +119,7 @@ def generate_all():
     behaviors_config_path = os.path.join(repo_root, BEHAVIOR_CONFIG_PATH)
     print('reading behavior jsons from {}'.format(behaviors_config_path))
 
-    behavior_instances = get_behavior_instances(behaviors_config_path)
+    behavior_instances, all_instance_classes = get_behavior_instances(behaviors_config_path)
     print('found {} behavior instance json files'.format(len(behavior_instances)))
 
     id_clad_path = os.path.join(repo_root, GENERATED_BEHAVIOR_ID_CLAD_PATH)
@@ -128,12 +134,29 @@ def generate_all():
             print('ERROR: file {} specifies behavior invalid behavior class: {}'.format(
                 instance.rel_path, instance.behavior_class))
             anyError = True
+        
+    if options.dangling_classes:   
+        for behavior_class in sorted(all_behavior_classes):
+            if behavior_class not in all_instance_classes:
+                print('WARNING: behavior class {} not found in any behavior instances'.format(behavior_class))
 
     if anyError:
         return False
     else:
         return True
 
+def parse_argv():
+    desc = 'Generate behavior code (CLAD files for BehaviorID and BehaviorClass '
+    'as well as factory methods) from C++ classes and behavior instance json files'
+    parser = argparse.ArgumentParser( description=desc )
+    parser.add_argument( '-d', '--dangling-classes', action="store_true", default=False,
+                        help='display behavior classes without a behavior instance' )
+
+    options = parser.parse_args()
+    return options
+
+
 if __name__ == "__main__":
-    if not generate_all():
+    options = parse_argv()
+    if not generate_all(options):
         exit(-1)

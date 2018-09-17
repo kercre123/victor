@@ -13,10 +13,8 @@ namespace Vector {
 // Only needs to include behaviors that make sense for e.g. SDK to request directly
 enum uint_8 ExecutableBehaviorType {
   EnrollFace,
-  FindFaces,
   FistBump,
   LiftLoadTest,
-  StackBlocks,
   Wait,
 
   Count

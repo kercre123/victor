@@ -1,5 +1,5 @@
 /**
- * File: behaviorExploreLookAroundInPlace
+ * File: behaviorLookAroundInPlace (previously behaviorExploreLookAroundInPlace)
  *
  * Author: Raul
  * Created: 03/11/16
@@ -12,7 +12,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorLookAroundInPlace.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -41,7 +41,7 @@ static const char* kConfigParamsKey = "params";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(const Json::Value& config)
+BehaviorLookAroundInPlace::BehaviorLookAroundInPlace(const Json::Value& config)
 : ICozmoBehavior(config)
 , _configParams{}
 , _iterationStartingBodyFacing_rad(0.0f)
@@ -69,18 +69,18 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(const Json::V
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
+BehaviorLookAroundInPlace::~BehaviorLookAroundInPlace()
 {  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+void BehaviorLookAroundInPlace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert( kConfigParamsKey );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreLookAroundInPlace::WantsToBeActivatedBehavior() const
+bool BehaviorLookAroundInPlace::WantsToBeActivatedBehavior() const
 {
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
@@ -115,10 +115,10 @@ bool BehaviorExploreLookAroundInPlace::WantsToBeActivatedBehavior() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
+void BehaviorLookAroundInPlace::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetDebugLabel() + ".BehaviorExploreLookAroundInPlace.LoadConfig";
+  const std::string& debugName = GetDebugLabel() + ".BehaviorLookAroundInPlace.LoadConfig";
 
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
   _configParams.behavior_CanCarryCube = ParseBool(config, "behavior_CanCarryCube", debugName);
@@ -196,7 +196,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::OnBehaviorActivated()
+void BehaviorLookAroundInPlace::OnBehaviorActivated()
 {
   PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".InitInternal").c_str(), "Starting first iteration");
 
@@ -225,7 +225,7 @@ void BehaviorExploreLookAroundInPlace::OnBehaviorActivated()
      && !(_configParams.behavior_CanCarryCube && robotInfo.GetCarryingComponent().IsCarryingObject())
   ){
     IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-    DelegateIfInControl(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
+    DelegateIfInControl(lowerLiftAction, &BehaviorLookAroundInPlace::BeginStateMachine);
   }
   else {
     BeginStateMachine();
@@ -235,7 +235,7 @@ void BehaviorExploreLookAroundInPlace::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::BeginStateMachine()
+void BehaviorLookAroundInPlace::BeginStateMachine()
 {
 
   if( kVizConeOfFocus ) {
@@ -277,7 +277,7 @@ void BehaviorExploreLookAroundInPlace::BeginStateMachine()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::AlwaysHandleInScope(const EngineToGameEvent& event)
+void BehaviorLookAroundInPlace::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
@@ -298,7 +298,7 @@ void BehaviorExploreLookAroundInPlace::AlwaysHandleInScope(const EngineToGameEve
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn()
+void BehaviorLookAroundInPlace::TransitionToS1_OppositeTurn()
 {
   SetDebugStateName("TransitionToS1_OppositeTurn");
 
@@ -313,11 +313,11 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn()
         _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS2_Pause );
+  DelegateIfInControl( turnAction, &BehaviorLookAroundInPlace::TransitionToS2_Pause );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause()
+void BehaviorLookAroundInPlace::TransitionToS2_Pause()
 {
   SetDebugStateName("TransitionToS2_Pause");
   
@@ -336,12 +336,12 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause()
   }
   
   // request action with transition to proper state
-  DEV_ASSERT(nullptr != pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
-  DelegateIfInControl(pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn);
+  DEV_ASSERT(nullptr != pauseAction, "BehaviorLookAroundInPlace::TransitionToS2_Pause.NullAction");
+  DelegateIfInControl(pauseAction, &BehaviorLookAroundInPlace::TransitionToS3_MainTurn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn()
+void BehaviorLookAroundInPlace::TransitionToS3_MainTurn()
 {
   SetDebugStateName("TransitionToS3_MainTurn");
   
@@ -360,16 +360,16 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn()
   // request action with transition to proper state
   if( _s4HeadMovesLeft != 0 )
   {
-    DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
+    DelegateIfInControl( turnAction, &BehaviorLookAroundInPlace::TransitionToS4_HeadOnlyUp );
   }
   else // avoid uint overflow and skip to turning back.
   {
-    DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
+    DelegateIfInControl( turnAction, &BehaviorLookAroundInPlace::TransitionToS6_MainTurnFinal );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp()
+void BehaviorLookAroundInPlace::TransitionToS4_HeadOnlyUp()
 {
   {
     std::string stateName = "TransitionToS4_HeadOnlyUp (" + std::to_string(_s4HeadMovesLeft) + "/" +
@@ -389,10 +389,10 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp()
   const bool isLastMove = (_s4HeadMovesLeft == 0);
 
   // check which transition method to call after the head move is done, S5 or S4 again?
-  using TransitionCallback = void(BehaviorExploreLookAroundInPlace::*)();
+  using TransitionCallback = void(BehaviorLookAroundInPlace::*)();
   TransitionCallback nextCallback = isLastMove ?
-    &BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown :
-    &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp;
+    &BehaviorLookAroundInPlace::TransitionToS5_HeadOnlyDown :
+    &BehaviorLookAroundInPlace::TransitionToS4_HeadOnlyUp;
 
   // this is the lambda that will run after the wait action finishes
   auto runAfterPause = [this, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
@@ -434,12 +434,12 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp()
     (trigger != AnimationTrigger::Count) ? AnimationTriggerToString(trigger) : "pause" );
   
   // request action with transition to proper state
-  DEV_ASSERT(nullptr != pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
+  DEV_ASSERT(nullptr != pauseAction, "BehaviorLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
   DelegateIfInControl(pauseAction, runAfterPause);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown()
+void BehaviorLookAroundInPlace::TransitionToS5_HeadOnlyDown()
 {
   SetDebugStateName("TransitionToS5_HeadOnlyDown");
   
@@ -454,11 +454,11 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown()
         _configParams.sxh_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  DelegateIfInControl( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
+  DelegateIfInControl( moveHeadAction, &BehaviorLookAroundInPlace::TransitionToS6_MainTurnFinal );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal()
+void BehaviorLookAroundInPlace::TransitionToS6_MainTurnFinal()
 {
   SetDebugStateName("TransitionToS6_MainTurnFinal");
   // create turn action for this state
@@ -469,11 +469,11 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal()
         _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd );
+  DelegateIfInControl( turnAction, &BehaviorLookAroundInPlace::TransitionToS7_IterationEnd );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd()
+void BehaviorLookAroundInPlace::TransitionToS7_IterationEnd()
 {
   SetDebugStateName("TransitionToS7_IterationEnd");
 
@@ -487,7 +487,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd()
   // assert we are not turning more than PI in one iteration (because of Radian rescaling)
   if( FLT_GT(doneThisIteration_rad,0.0f) != FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f) ) {
     // this can happen if the robot gets turned / messed with. Eventually, we should handle this in a reaction
-    PRINT_NAMED_WARNING("BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign",
+    PRINT_NAMED_WARNING("BehaviorLookAroundInPlace.TransitionToS7_IterationEnd.BadSign",
                         "doneThisIterationRad = %f, TurnSign=%f",
                         doneThisIteration_rad,
                         GetTurnSign(_mainTurnDirection));
@@ -559,7 +559,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::DecideTurnDirection()
+void BehaviorLookAroundInPlace::DecideTurnDirection()
 {
   // decide main turn direction
   const double randomDirection = GetRNG().RandDbl();
@@ -568,7 +568,7 @@ void BehaviorExploreLookAroundInPlace::DecideTurnDirection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(
+IAction* BehaviorLookAroundInPlace::CreateBodyAndHeadTurnAction(
   EClockDirection clockDirection,
   float bodyStartRelativeMin_deg, float bodyStartRelativeMax_deg,
   float headAbsoluteMin_deg, float headAbsoluteMax_deg,
@@ -607,7 +607,7 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(
+IAction* BehaviorLookAroundInPlace::CreateHeadTurnAction(
   float bodyRelativeMin_deg, float bodyRelativeMax_deg,
   float bodyReference_deg,
   float headAbsoluteMin_deg, float headAbsoluteMax_deg,

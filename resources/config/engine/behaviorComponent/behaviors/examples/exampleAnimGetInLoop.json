@@ -1,9 +1,0 @@
-{
-  "behaviorID"       : "ExampleAnimGetInLoop",
-  "behaviorClass"    : "AnimGetInLoop",
-  "getIn"            : "CubePounceGetIn",
-  "loopAnimation"    : "CubePounceIdleLiftUp",
-  "getOut"           : "CubePounceGetOutBored",
-  "emergencyGetOut"  : "CubePounceGetOutBored"
-  //"loopEndCondition" : ""
-}

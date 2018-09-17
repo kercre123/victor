@@ -15,6 +15,7 @@ enum uint_8 BehaviorClass {
   // <root>
   GreetAfterLongTime,
   HighLevelAI,
+  LookAroundInPlace,
   ResetState,
   Wait,
 
@@ -51,8 +52,6 @@ enum uint_8 BehaviorClass {
   PlaceCubeByCharger,
   PopAWheelie,
   RequestToGoHome,
-  SearchForFace,
-  StackBlocks,
   Turn,
   TurnToFace,
   WiggleOntoChargerContacts,
@@ -120,9 +119,6 @@ enum uint_8 BehaviorClass {
   Exploring,
   ExploringExamineObstacle,
 
-  // freeplay/exploration
-  ExploreLookAroundInPlace,
-
   // freeplay/putDownDispatch
   LookForFaceAndCube,
 
@@ -132,7 +128,6 @@ enum uint_8 BehaviorClass {
   Keepaway,
   PounceWithProx,
   PuzzleMaze,
-  TrackLaser,
 
   // gateBehaviors
   ConnectToCube,
@@ -178,9 +173,6 @@ enum uint_8 BehaviorClass {
   ProxGetToDistance,
 
   // reactions
-  AcknowledgeCubeMoved,
-  AcknowledgeFace,
-  AcknowledgeObject,
   AskForHelp,
   ReactToCliff,
   ReactToCubeTap,
@@ -188,9 +180,7 @@ enum uint_8 BehaviorClass {
   ReactToFrustration,
   ReactToMicDirection,
   ReactToMotion,
-  ReactToMotorCalibration,
   ReactToPlacedOnSlope,
-  ReactToReturnedToTreads,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
@@ -229,7 +219,6 @@ enum uint_8 BehaviorClass {
   UserDefinedBehaviorTreeRouter,
 
   // victor
-  ComeHere,
   ConfirmObject,
   PoweringRobotOff,
   ReactToTouchPetting,

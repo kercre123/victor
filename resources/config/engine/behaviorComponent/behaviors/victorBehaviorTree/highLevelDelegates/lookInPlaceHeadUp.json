@@ -1,5 +1,5 @@
 {
-  "behaviorClass": "ExploreLookAroundInPlace",
+  "behaviorClass": "LookAroundInPlace",
   "behaviorID": "LookInPlaceHeadUp",
 
   "params":

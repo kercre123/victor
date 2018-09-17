@@ -1,8 +1,0 @@
-{
-  "behaviorClass": "AnimSequence",
-  "behaviorID": "ExampleObjectPositionUpdated",
-  "animTriggers": ["ReactToCubeTapCubeFound"],
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "ObjectPositionUpdated"
-  }  
-}

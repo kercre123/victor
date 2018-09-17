@@ -179,7 +179,7 @@ void BehaviorVectorPlaysCubeSpinner::GetBehaviorJsonKeys(std::set<const char*>& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVectorPlaysCubeSpinner::InitBehavior()
 {
-  _iConfig.searchBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(Hiking_LookInPlace360));
+  _iConfig.searchBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(CubeSpinnerLookAroundInPlace));
 
   const auto& lightConfig = GetBEI().GetDataAccessorComponent().GetCubeSpinnerConfig();
   _iConfig.cubeSpinnerGame = std::make_unique<CubeSpinnerGame>(_iConfig.gameConfig, lightConfig,

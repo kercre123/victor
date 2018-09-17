@@ -15,10 +15,6 @@ enum uint_16 BehaviorID {
   DevExecuteBehaviorRerun,
   Wait_TestInjectable,
 
-  // <root>
-  FindFaces_sdk,
-  StackBlocks,
-
   // devBehaviors
   DevBaseBehavior,
   DevBatteryLogging,
@@ -57,31 +53,9 @@ enum uint_16 BehaviorID {
   // devBehaviors
   PowerSaveStressTest,
   PowerSaveTest,
-  TestStackMonitors,
-
-  // examples
-  ExampleAnimGetInLoop,
-  ExampleAnonymousBehaviors,
-  ExampleDispatcherScoring,
-  ExampleGlobalReactions,
-  ExampleProceduralClock,
-  ExampleTextToSpeechLoop,
-
-  // examples/globalReactionSubBehaviors
-  ExampleFacePositionUpdated,
-  ExampleFrustration,
-  ExampleObjectMoved,
-  ExampleObjectPositionUpdated,
-  ExamplePetInitialDetection,
-
-  // hiking
-  Hiking_LookInPlace360,
-
-  // inProgress
-  ReactToBody,
-
-  // puzzles
   PuzzleMaze,
+  ReactToBody,
+  TestStackMonitors,
 
   // victorBehaviorTree/appBehaviors
   ChangeEyeColor,
@@ -227,6 +201,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
   CubeSpinnerConnectionGate,
+  CubeSpinnerLookAroundInPlace,
   VectorPlaysCubeSpinner,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube

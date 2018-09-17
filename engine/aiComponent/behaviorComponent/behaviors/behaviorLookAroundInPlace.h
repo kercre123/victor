@@ -1,5 +1,5 @@
 /**
- * File: behaviorExploreLookAroundInPlace
+ * File: behaviorLookAroundInPlace (previously behaviorExploreLookAroundInPlace)
  *
  * Author: Raul
  * Created: 03/11/16
@@ -12,8 +12,8 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreLookAroundInPlace_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorExploreLookAroundInPlace_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorLookAroundInPlace_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorLookAroundInPlace_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -35,15 +35,15 @@ class IAction;
 struct PathMotionProfile;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// BehaviorExploreLookAroundInPlace
+// BehaviorLookAroundInPlace
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorExploreLookAroundInPlace : public ICozmoBehavior
+class BehaviorLookAroundInPlace : public ICozmoBehavior
 {
 protected:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorExploreLookAroundInPlace(const Json::Value& config);
+  BehaviorLookAroundInPlace(const Json::Value& config);
   
 public:
 
@@ -52,7 +52,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // destructor
-  virtual ~BehaviorExploreLookAroundInPlace() override;
+  virtual ~BehaviorLookAroundInPlace() override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
