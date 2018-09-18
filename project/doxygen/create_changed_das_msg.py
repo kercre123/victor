@@ -151,7 +151,7 @@ def get_new_dasmsgs(oldest_dasmsgs, current_dasmsgs):
 def get_dasmsgs_from_teamcity(user_name, password):
     all_das = []
     auth = (user_name, password)
-    lastest_doxygen_url = "{}/.lastSuccessful/{}".format(DOWNLOAD_DOXYGEN_LINK, GROUP_DASMSG_FILE)
+    lastest_doxygen_url = "{}/.lastSuccessful/{}/{}".format(DOWNLOAD_DOXYGEN_LINK, XML, GROUP_DASMSG_FILE)
     r = requests.get(lastest_doxygen_url, auth=auth, allow_redirects=True)
     if r.status_code == REQUEST_SUCCESS_CODE:
         all_das = get_dasmsgs_from_xml(r.content)
