@@ -344,6 +344,7 @@ namespace Anki {
       , _numLoops( numLoops )
       , _loopForever( 0 == numLoops )
       , _numLoopsRemaining( numLoops )
+      , _completeImmediately( false )
     {
       _animParams.animEvent = animEvent;
       _animParams.interruptRunning = interruptRunning;
@@ -400,6 +401,9 @@ namespace Anki {
       if( _subAction == nullptr ) {
         return ActionResult::NULL_SUBACTION;
       }
+      if( _completeImmediately ) {
+        return ActionResult::SUCCESS;
+      }
       
       ActionResult subActionResult = _subAction->Update();
       const ActionResultCategory category = IActionRunner::GetActionResultCategory(subActionResult);
@@ -416,9 +420,16 @@ namespace Anki {
     
     void ReselectingLoopAnimationAction::StopAfterNextLoop()
     {
-      if( _numLoopsRemaining > 1 ) {
-        _numLoopsRemaining = 1;
+      if( !HasStarted() )
+      {
+        // StopAfterNextLoop() was called before Init(). Set a flag to stop on the first call to
+        // CheckIfDone(), since the other flags (_numLoopsRemaining, etc) get set during Init().
+        _completeImmediately = true;
+        PRINT_NAMED_INFO("ReselectingLoopAnimationAction.StopAfterNextLoop.NotStarted",
+                         "Action was told to StopAfterNextLoop, but hasn't started, so will end before the first loop");
       }
+      
+      _numLoopsRemaining = 1;
       _loopForever = false;
     }
 
