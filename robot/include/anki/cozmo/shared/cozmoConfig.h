@@ -175,7 +175,7 @@ namespace Vector {
   const f32 MAX_CAMERA_EXPOSURE_TIME_MS = 66;
   
   // Range for exposure and white balance gains
-  const f32 MIN_CAMERA_GAIN = 0.1f;
+  const f32 MIN_CAMERA_GAIN = 0.25f; // Real min should be 0.1, but using 0.25 as a bandaid for VIC-6653
   const f32 MAX_CAMERA_GAIN = 3.8f;
   
   /***************************************************************************

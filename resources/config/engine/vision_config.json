@@ -72,7 +72,7 @@
     "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
     "LowPercentile"             : 0.10,  // [0.0, 1.0]  (Near 0.0)
     "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
-    "MaxChangeFraction"         : 1.0,   // [0.0, 1.0]  (Relative amount we can change current exposure/gain/wb each update)
+    "MaxChangeFraction"         : 0.0,   // [0.0, inf]  (Relative amount we can change current exposure/wb each update, zero disables)
     "SubSample"                 : 3,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
 

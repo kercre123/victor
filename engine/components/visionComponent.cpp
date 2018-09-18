@@ -2575,9 +2575,26 @@ namespace Vector {
     if(RESULT_OK != result)
     {
       PRINT_NAMED_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
+      return;
     }
+    
+    // Disable AE and WB computation on the vision thread
     EnableWhiteBalance(false);
     EnableAutoExposure(false);
+    
+    // Directly set the specified camera values, since they won't be coming from the
+    // VisionSystem in a VisionProcessingResult anymore. Also manually update Viz
+    auto cameraService = CameraService::getInstance();
+    if(cameraService)
+    {
+      cameraService->CameraSetParameters(params.exposureTime_ms,
+                                         params.gain);
+      cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
+                                                     params.whiteBalanceGainG,
+                                                     params.whiteBalanceGainB);
+      
+      _vizManager->SendCameraParams(params);
+    }
   }
 
   s32 VisionComponent::GetMinCameraExposureTime_ms() const
@@ -3076,8 +3093,28 @@ namespace Vector {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraSettings& payload)
   {
-    // TODO: Re-enable
-    PRINT_NAMED_ERROR("VisionComponent.HandleSetCameraSettings.DEPRECATED", "");
+    if(payload.enableAutoExposure)
+    {
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Auto",
+                    "Enabling auto exposure and auto whitebalance");
+      EnableAutoExposure(true);
+      EnableWhiteBalance(true);
+    }
+    else
+    {
+      auto const& currentParams = _visionSystem->GetCurrentCameraParams();
+      Vision::CameraParams params(payload.exposure_ms, payload.gain,
+                                  currentParams.whiteBalanceGainR,
+                                  currentParams.whiteBalanceGainG,
+                                  currentParams.whiteBalanceGainB);
+      
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Manual",
+                    "Setting camera params to: Exp:%dms / %.3f, WB:%.3f,%.3f,%.3f",
+                    params.exposureTime_ms, params.gain,
+                    params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
+      
+      SetAndDisableCameraControl(params);
+    }
   }
 
   void VisionComponent::SetSaveImageParameters(const ImageSaverParams& params)
