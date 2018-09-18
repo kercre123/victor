@@ -86,6 +86,10 @@ namespace
   // averaging the values to determine if a nearby obstacle
   // is too close that we need to backup away from
   const u32 kMaxTicksToWaitForProx = 10;
+  
+  // helper console variable to bypass the normal confirmHabitat
+  // triggers to force it to run faster (dev and testing purpose)
+  CONSOLE_VAR(bool, kDevForceBeginConfirmHabitat, "Habitat", false);
 }
 
 BehaviorConfirmHabitat::InstanceConfig::InstanceConfig()
@@ -140,6 +144,10 @@ void BehaviorConfirmHabitat::GetAllDelegates(std::set<IBehavior*>& delegates) co
 
 bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
 {
+  if(kDevForceBeginConfirmHabitat) {
+    return true;
+  }
+  
   // note
   //
   // conditions defined here:
@@ -214,7 +222,6 @@ void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
-  GetBEI().GetCliffSensorComponent().SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH);
   _dVars = DynamicVariables();
 }
 
@@ -520,36 +527,7 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
 {
   PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","%s",_dVars._cliffAlignRetry ? "Retry" : "");
   
-  IActionRunner* action = nullptr;
-  if(!_dVars._cliffAlignRetry) {
-    // first time attempt (since entering Habitat=Unknown)
-    action = new CliffAlignToWhiteAction();
-  } else {
-    // second time attempt
-    // + now use lowered thresholds for white detection
-    // + if this fails, we force set that we are not in habitat
-    CompoundActionSequential* compoundAction = new CompoundActionSequential(std::list<IActionRunner*>{
-      // note: temporarily lowers the white detection
-      // threshold. This allows us to retry with more
-      // margin for detecting the white region
-      // After the CliffAlignAction returns, it resets to the old threshold
-      new WaitForLambdaAction([](Robot& robot)->bool {
-        robot.GetComponentPtr<CliffSensorComponent>()->SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_LOW);
-        return true;
-      },0.1f)
-    });
-    compoundAction->AddAction(new CliffAlignToWhiteAction());
-    
-    // reset the white-detect threshold
-    compoundAction->AddAction(new WaitForLambdaAction(
-      [](Robot& robot)->bool {
-        robot.GetComponentPtr<CliffSensorComponent>()->SetWhiteDetectThreshold(MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH);
-        return true;
-      },
-    0.1f));
-    
-    action = compoundAction;
-  }
+  IActionRunner* action = new CliffAlignToWhiteAction();
   DEV_ASSERT_MSG(action != nullptr, "ConfirmHabitat.TransitionToCliffAlignWhite.NullActionPtr", "");
   
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {

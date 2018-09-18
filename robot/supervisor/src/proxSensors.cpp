@@ -59,7 +59,7 @@ namespace Anki {
         bool _wasPickedup         = false;
         bool _putdownOnCliff      = false;
 
-        u16 _whiteDetectThreshold = MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH;
+        u16 _whiteDetectThreshold[4] = {MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH, MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH, MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH, MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH};
 
         u16 _cliffDetectThresh[4] = {CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT};
 
@@ -178,9 +178,9 @@ namespace Anki {
 
           // Update white status
           const bool whiteAlreadyDetected = (_whiteDetectedFlags & (1<<i)) != 0;
-          if (!whiteAlreadyDetected && _cliffVals[i] > _whiteDetectThreshold) {
+          if (!whiteAlreadyDetected && _cliffVals[i] > _whiteDetectThreshold[i]) {
             _whiteDetectedFlags |= (1<<i);
-          } else if (whiteAlreadyDetected && (_cliffVals[i] < _whiteDetectThreshold - CLIFF_STOP_ON_WHITE_HYSTERSIS) ) {
+          } else if (whiteAlreadyDetected && (_cliffVals[i] < _whiteDetectThreshold[i] - CLIFF_STOP_ON_WHITE_HYSTERSIS) ) {
             _whiteDetectedFlags &= ~(1<<i);
           }
         }
@@ -345,9 +345,11 @@ namespace Anki {
         _stopOnWhite = enable;
       }
 
-      void SetWhiteDetectThreshold(u16 threshold)
+      void SetWhiteDetectThreshold(u32 ind, u16 level)
       {
-        _whiteDetectThreshold = threshold;
+        AnkiConditionalError(ind < HAL::CLIFF_COUNT, "ProxSensors.SetWhiteDetectThreshold.InvalidIndex", "Index %d is not valid", ind);
+        AnkiInfo("ProxSensors.SetWhiteDetectThreshold.NewLevel", "cliff sensor %d, threshold %d", ind, level);
+        _whiteDetectThreshold[ind] = level;
       }
 
       void SetCliffDetectThreshold(u32 ind, u16 level)

@@ -36,6 +36,11 @@ message SetCliffDetectThresholds
   uint_16 thresholds[4],  // New cliff threshold values for each sensor
 }
 
+message SetWhiteDetectThresholds
+{
+  uint_16 whiteThresholds[4]
+}
+
 structure ProxSensorDataRaw {
   float_32 signalIntensity,  // the intensity of the light (expressed in millions of counts per second) return to the sensor
   float_32 ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)

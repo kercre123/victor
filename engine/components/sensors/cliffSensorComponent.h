@@ -96,9 +96,6 @@ public:
   // Enable/Disable stopping the robot when cliff sensor detects something 
   // as reflective as the white border of the habitat.
   void EnableStopOnWhite(bool stopOnWhite);
-  
-  // Minimum cliff sensor value that is considered "white"
-  void SetWhiteDetectThreshold(uint16_t threshold) const;
 
   // Returns whether or not stop-on-white is enabled
   bool IsStopOnWhiteEnabled() const { return _stopOnWhiteEnabled; }

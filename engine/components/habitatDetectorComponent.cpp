@@ -20,6 +20,7 @@
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -29,6 +30,7 @@
 #include "engine/ankiEventUtil.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/featureGateTypes.h"
 
 #include "util/bitFlags/bitFlags.h"
@@ -50,7 +52,7 @@ namespace Vector {
 // when the robot is positioned such that its front two cliff
 // sensors see the white line of the habitat, then this is
 // the max expected of values for the sensor seeing the wall
-const int HabitatDetectorComponent::kConfirmationConfigProxMaxReading = 60;
+const int HabitatDetectorComponent::kConfirmationConfigProxMaxReading = 70;
 
 // "private" constants
 namespace 
@@ -59,6 +61,12 @@ namespace
   // highest expected value to come out of any cliff sensor
   // when it is observing the grey-matte surface of a habitat
   const int kCliffGreyMaxHabitat = 300;
+  
+  // minimum expected value to come out of the cliff sensor
+  // when observing the grey surface of the habitat
+  // note: this value is arbitrarily chosen to prevent the
+  // white detection threshold from getting too low (<300)
+  const int kCliffGreyMinHabitat = 100;
   
   // number of consecutive readings while the front two cliff
   // sensors are positioned on the white line to average over
@@ -70,7 +78,32 @@ namespace
   // of the habitat (in order to detect the wall, if present)
   const int kMaxTicksToWaitForProx = 15;
   
-  const f32 kMinTravelDistanceWithoutSeeingWhite_mm = 260; // length of largest diagonal in habitat
+  // length of largest diagonal in habitat
+  const f32 kMinTravelDistanceWithoutSeeingWhite_mm = 260;
+  
+  // offset from the nominal/minimum grey value, for white detection
+  const u16 kWhiteThresholdOffsetFromGrey = 200;
+  
+  // period to send updates to the robot process with white thresholds
+  const f32 kWhiteThresholdUpdatePeriod_s = 0.5f;
+  
+  // number of grey value readings required to switch over
+  // from using nominal grey to the measured mininum grey
+  const int kMinNumGreyCliffReadings = 20;
+  
+  // default value to assume as the grey detection
+  // note: this value is supplanted by the measured min
+  // as soon as there are enough readings, for the
+  // purposes of setting the white-detect threshold
+  const u16 kNominalGreyValue = 200;
+  
+  // the minimum required change in the estimated white
+  // threshold for either cliff sensor that requires sending
+  // a message down to the robot to update it
+  // note:
+  // fluctuation in the cliff sensor reading is ~10 units
+  // when looking at the same surface over time
+  const int kMinWhiteThreshChangeToMessage = 10;
   
   const std::string kWebVizHabitatModuleName = "habitat";
   const f32 kSendWebVizDataPeriod_sec = 0.5f;
@@ -120,7 +153,8 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
     PRINT_NAMED_WARNING("HabitatDetectorComponent.InitDependent.MissingExternalIterface","");
   }
 
-  _toSendJson["reason"] = "";
+  _toSendJson["reason"] = "~";
+  _toSendJson["whiteThresholds"] = "~";
 }
 
 template<>
@@ -134,6 +168,19 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTr
       _detectedWhiteFromCliffs = false;
       _proxReadingBuffer.clear();
       _numTicksWaitingForProx = 0;
+      
+      // reset the Cliff Grey measurement variables when the robot is moved and needs
+      // to re-determine whether it is inside the habitat or not
+      _numGreyCliffReadingsSincePutdown = 0;
+      _minGreyCliffFL = std::numeric_limits<u16>::max();
+      _minGreyCliffFR = std::numeric_limits<u16>::max();
+      
+      // initialized to zero to force a message to sent down with nominal thresholds
+      _lastSentWhiteThreshFL = 0;
+      _lastSentWhiteThreshFR = 0;
+      _timeForWhiteThresholdUpdate_s = 0.0;
+      
+      SendWhiteDetectThresholdsIfNeeded();
     }
   }
 }
@@ -202,11 +249,14 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     if(!_detectedWhiteFromCliffs && distance > kMinTravelDistanceWithoutSeeingWhite_mm) {
       SetBelief(HabitatBeliefState::NotInHabitat, "OdometryTooHigh");
     }
+    
+    // compute the minimum grey observed while the robot is moving
+    const auto& cliffValues = cliffSensor.GetCliffDataRaw();
+    UpdateWhiteDetectThreshold(cliffValues);
   
     u8 numGrey = 0;
     u8 numWhite = 0;
     std::array<HabitatCliffReadingType,kNumCliffSensors> cliffCats;
-    const auto& cliffValues = cliffSensor.GetCliffDataRaw();
     for(int i=0; i<kNumCliffSensors; ++i) {
       if(cliffSensor.IsWhiteDetected(static_cast<CliffSensor>(i))) {
         // determined from robot state message
@@ -300,6 +350,63 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
   if (now_sec > _nextSendWebVizDataTime_sec) {
     SendDataToWebViz();
     _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
+  }
+}
+  
+void HabitatDetectorComponent::UpdateWhiteDetectThreshold(const CliffSensorComponent::CliffSensorDataArray& cliffValues)
+{
+  // while the robot is:
+  // - moving
+  // - on treads
+  // then sample the cliff sensor and compute the running minimum for FL and FR
+  if(_robot->GetOffTreadsState()==OffTreadsState::OnTreads &&
+     _robot->GetMoveComponent().AreWheelsMoving()) {
+    auto cliffFL = cliffValues[(int)CliffSensor::CLIFF_FL] ;
+    if(cliffFL>= kCliffGreyMinHabitat && cliffFL<= kCliffGreyMaxHabitat && cliffFL < _minGreyCliffFL) {
+      _minGreyCliffFL = cliffFL;
+    }
+    auto cliffFR = cliffValues[(int)CliffSensor::CLIFF_FR] ;
+    if(cliffFR>= kCliffGreyMinHabitat && cliffFR<= kCliffGreyMaxHabitat && cliffFR < _minGreyCliffFR) {
+      _minGreyCliffFR = cliffFR;
+    }
+    _numGreyCliffReadingsSincePutdown++;
+  }
+  
+  SendWhiteDetectThresholdsIfNeeded();
+}
+  
+void HabitatDetectorComponent::SendWhiteDetectThresholdsIfNeeded()
+{
+  // if enough readings to compute a reasonable minimum have been collected,
+  // periodically send the new white-detect thresholds down to the robot
+  const bool enoughReadingsForMin = _numGreyCliffReadingsSincePutdown > kMinNumGreyCliffReadings;
+  const u16 whiteThreshFL = (enoughReadingsForMin ? _minGreyCliffFL : kNominalGreyValue) + kWhiteThresholdOffsetFromGrey;
+  const u16 whiteThreshFR = (enoughReadingsForMin ? _minGreyCliffFR : kNominalGreyValue) + kWhiteThresholdOffsetFromGrey;
+  const bool whiteThreshChanged = (ABS((int)whiteThreshFL-(int)_lastSentWhiteThreshFL) >= kMinWhiteThreshChangeToMessage) ||
+  (ABS((int)whiteThreshFR-(int)_lastSentWhiteThreshFR) >= kMinWhiteThreshChangeToMessage);
+  
+  const f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if(whiteThreshChanged && now >= _timeForWhiteThresholdUpdate_s) {
+    // note: we only care about the white thresholds for the front two sensors
+    // the back sensors can be supplied with the nominal values, without
+    // affecting how stop-on-white or cliff-align actions work
+    _robot->SendRobotMessage<SetWhiteDetectThresholds>(
+      CliffSensorComponent::CliffSensorDataArray{{
+        u16(whiteThreshFL),
+        u16(whiteThreshFR),
+        u16(kNominalGreyValue + kWhiteThresholdOffsetFromGrey),
+        u16(kNominalGreyValue + kWhiteThresholdOffsetFromGrey)
+    }});
+    
+    _timeForWhiteThresholdUpdate_s = now + kWhiteThresholdUpdatePeriod_s;
+    _lastSentWhiteThreshFL = whiteThreshFL;
+    _lastSentWhiteThreshFR = whiteThreshFR;
+    
+    // update the json blob with debug info
+    std::stringstream ss;
+    ss << "[" << (int)whiteThreshFL << "," << (int)whiteThreshFR << "]";
+    ss << " " << (int)_numGreyCliffReadingsSincePutdown << " readings so far";
+    _toSendJson["whiteThresholds"] = ss.str();
   }
 }
   

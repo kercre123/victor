@@ -549,9 +549,11 @@ namespace Anki {
         }
       }
       
-      void Process_setWhiteDetectThreshold(const RobotInterface::SetWhiteDetectThreshold& msg)
+      void Process_setWhiteDetectThresholds(const SetWhiteDetectThresholds& msg)
       {
-        ProxSensors::SetWhiteDetectThreshold(msg.threshold);
+        for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
+          ProxSensors::SetWhiteDetectThreshold(i, msg.whiteThresholds[i]);
+        }
       }
 
       void Process_cliffAlignToWhiteAction(const RobotInterface::CliffAlignToWhiteAction& msg)

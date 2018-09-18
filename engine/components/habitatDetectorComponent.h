@@ -99,6 +99,15 @@ protected:
   bool UpdateProxObservations();
 
   void SetBelief(HabitatBeliefState state, std::string devReasonStr);
+  
+  // helper method in charge of measuring the grey values and appropriately
+  // updating the robot process with new white detect thresholds periodically
+  void UpdateWhiteDetectThreshold(const CliffSensorComponent::CliffSensorDataArray& cliffValues);
+  
+  // message the robot with updated white detection thresholds if:
+  // - white thresholds changed appreciably since the last message
+  // - enough time has elapsed since the last message
+  void SendWhiteDetectThresholdsIfNeeded();
 
 private:
   
@@ -124,12 +133,38 @@ private:
   
   f32 _nextSendWebVizDataTime_sec = 0.0f;
   
+  // - - - - - - - - - -
+  // Prox Sensor Members
+  // - - - - - - - - - -
+  
   // readings aggregated from the prox sensor while the front two cliffs are positioned
   // on top of the white line of the habitat, used to compute an average distance
   std::vector<u16> _proxReadingBuffer = {};
   
   // counter for the number of ticks the robot has been collecting readings from prox
   u16 _numTicksWaitingForProx = 0;
+  
+  // - - - - - - - - - - -
+  // Cliff Sensor Members
+  // - - - - - - - - - - -
+  
+  // minimum reading of grey within the nominal range for the FL cliff sensor
+  u16 _minGreyCliffFL = std::numeric_limits<u16>::max();
+  
+  // minumum reading for grey within the nominal range for the FR cliff sensor
+  u16 _minGreyCliffFR = std::numeric_limits<u16>::max();
+  
+  // values sent in the last message used to determine whether thresholds
+  // have changed enough to warrant sending a new message
+  u16 _lastSentWhiteThreshFL = std::numeric_limits<u16>::max();
+  u16 _lastSentWhiteThreshFR = std::numeric_limits<u16>::max();
+  
+  // number of valid grey cliff readings accumulated so far (for computing the min)
+  u32 _numGreyCliffReadingsSincePutdown = 0;
+  
+  // time of last message to robot process with updated white-detect thresholds
+  f32 _timeForWhiteThresholdUpdate_s = 0.0f;
+  
 };
 
 } // end Cozmo
