@@ -82,7 +82,7 @@ fi
 
 # Flash the robot
 if [ $oswrite -gt 0 ]; then
-  ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0
+  ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0 2>&1
 else
   echo "OS WRITE DISABLED"
   exit 0

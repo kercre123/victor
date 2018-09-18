@@ -385,6 +385,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       status = dl.ConnectToFlashProg(4);
       if( status != 0 ) return status;
       printf("Connected to flash programmer, starting download\n");
+      fflush(stdout);
       
       // Download all XML files to device 
       for(int i=0; szXMLFile[i] != NULL; i++) {
@@ -413,7 +414,8 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       status = fh.ConnectToFlashProg(&m_cfg);
       if( status != 0 ) return status;
       printf("Connected to flash programmer, starting download\n");
-
+      fflush(stdout);
+      
       // Download all XML files to device
       for (int i = 0; szXMLFile[i] != NULL; i++) {
         Partition rawprg(0);
@@ -572,6 +574,7 @@ int main(int argc, char * argv[])
 
   // Print out the version first thing so we know this
   printf("Version %i.%i\n", VERSION_MAJOR, VERSION_MINOR);
+  fflush(stdout);
 
   if( argc < 2) {
     return PrintHelp();
@@ -803,15 +806,21 @@ int main(int argc, char * argv[])
   }
   
   if( szFlashProg != NULL ) {
+     printf("opening port %i\n", dnum);
+     fflush(stdout);
      status = m_port.Open(dnum);
      if (status < 0) return status;
+     printf("loading flash programmer %s\n", szFlashProg);
+     fflush(stdout);
      status = LoadFlashProg(szFlashProg);
      if (status == 0) {
        printf("Waiting for flash programmer to boot\n");
+       fflush(stdout);
        emmcdl_sleep_ms(2000);
      }
      else {
        printf("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n");
+       fflush(stdout);
        //exit(0);
      }
      m_emergency = true;
@@ -851,9 +860,11 @@ int main(int argc, char * argv[])
     }
     if( m_emergency ) {
       printf("EMERGENCY Programming image\n");
+      fflush(stdout);
       status = EDownloadProgram(szSingleImage, szXMLFile);
     } else {
       printf("Programming image\n");
+      fflush(stdout);
       status = RawDiskProgram(szXMLFile, szOutputFile, dnum);
     }
     break;
