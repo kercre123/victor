@@ -149,7 +149,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << cliffDataRaw[1] << '\n';
   ss << cliffDataRaw[2] << '\n';
   ss << cliffDataRaw[3] << '\n';
-  
+
   ss << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(0)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(1)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
@@ -282,11 +282,18 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _isInitialized = false;
 
+
+  auto * osState = OSState::getInstance();
+  DEV_ASSERT(osState != nullptr, "CozmoEngine.Init.InvalidOSState");
+
+  // set cpu frequency to default (in case we left it in a bad state last time)
+  osState->SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
+
   // engine checks the temperature of the OS now.
-  // The fluctation in the temperature is not expected to be fast
-  // hence the 5 second update period (to prevent excessive file io)
-  OSState::getInstance()->SetUpdatePeriod(5000);
-  OSState::getInstance()->SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpu", json); });
+  // The fluctuation in the temperature is not expected to be fast
+  // hence the 5 second update period (to prevent excessive file i/o)
+  osState->SetUpdatePeriod(5000);
+  osState->SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpu", json); });
 
   _config = config;
 
@@ -454,7 +461,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     robot->GetMoveComponent().AllowExternalMovementCommands(hasUiConnection, "ui");
     _updateMoveComponent = false;
   }
-  
+
   Result lastResult = _uiMsgHandler->Update();
   if (RESULT_OK != lastResult)
   {

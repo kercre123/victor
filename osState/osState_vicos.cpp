@@ -191,9 +191,6 @@ OSState::OSState()
 
   _buildSha = ANKI_BUILD_SHA;
 
-  // set cpu frequency to default (in case we left it in a bad state last time)
-  SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
-
   _lastWebvizUpdateTime_ms = _currentTime_ms;
 
   // read the OS versions once on boot up
