@@ -82,6 +82,7 @@ def build_remove_das_msgs(remove_dasmsgs):
     return remove_dasmsgs_content
 
 def write_to_file(content, file_path):
+    print("MYLOG : {} - {}".format(file_path, content))
     with open(file_path, "w+") as data_file:
         data_file.write(content)
 
@@ -165,6 +166,7 @@ def get_current_dasmsgs():
 def main():
     args = sys.argv[1:]
     parser, options = parse_arguments(args)
+    print("MYLOG")
     user_name = options.user_name
     password = options.password
     
