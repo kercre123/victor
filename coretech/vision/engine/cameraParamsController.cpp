@@ -72,10 +72,10 @@ Result CameraParamsController::SetExposureParameters(const u8               targ
                                                      const f32              maxChangeFraction,
                                                      const s32              subSample)
 {
-  if(!Util::InRange(maxChangeFraction, 0.f, 1.f))
+  if(Util::IsFltLTZero(maxChangeFraction))
   {
     PRINT_NAMED_ERROR("CameraParamsController.SetExposureParameters.BadMaxChangeFraction",
-                      "%f not on interval [0,1]", maxChangeFraction);
+                      "%f not >= zero", maxChangeFraction);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
@@ -527,8 +527,8 @@ Result CameraParamsController::ComputeAdjustmentFraction(const bool useCycling, 
   
   if(currentPercentileValue == 0)
   {
-    // Special case: avoid divide by zero and just increase by maximum amount possible
-    adjustmentFraction = 1.f + _maxChangeFraction;
+    // Special case: avoid divide by zero and just double exposure
+    adjustmentFraction = 2.f;
     return RESULT_OK;
   }
   
@@ -549,7 +549,10 @@ Result CameraParamsController::ComputeAdjustmentFraction(const bool useCycling, 
   
   // Normal case: Current exposure is "reasonable" so just figure out how to make it a bit better
   adjustmentFraction = static_cast<f32>(currentTargetValue) / static_cast<f32>(currentPercentileValue);
-  adjustmentFraction = Util::Clamp(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
+  if(Util::IsFltGTZero(_maxChangeFraction))
+  {
+    adjustmentFraction = Util::Clamp(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
+  }
   
   return RESULT_OK;
 }
@@ -702,8 +705,11 @@ Result CameraParamsController::ComputeWhiteBalanceAdjustment(const Vision::Image
   adjB = (sumB==0 ? 1.f : (f32)sumG/(f32)sumB);
   
   // Don't change too much at each update
-  adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
-  adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  if(Util::IsFltGTZero(_maxChangeFraction))
+  {
+    adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+    adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  }
 
   return RESULT_OK;
 }
@@ -774,8 +780,11 @@ Result CameraParamsController::ComputeExposureAndWhiteBalance(const Vision::Imag
   // not to adjust too much in a single update:
   adjR = (sumR==0 ? 1.f : (f32)sumG/(f32)sumR);
   adjB = (sumB==0 ? 1.f : (f32)sumG/(f32)sumB);
-  adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
-  adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  if(Util::IsFltGTZero(_maxChangeFraction))
+  {
+    adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+    adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  }
   
   const Result result = ComputeAdjustmentFraction(useCycling, adjExp);
   
