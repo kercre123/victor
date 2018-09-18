@@ -191,7 +191,10 @@ def get_qsn():
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0', 'qsn': None, 'ankidev': '0'})
+    config = ConfigParser.ConfigParser({'encryption': '0',
+                                        'qsn': None,
+                                        'ankidev': '0',
+                                        'reboot_after_install': '0'})
     config.readfp(fileobj)
     return config
 
@@ -540,6 +543,7 @@ def update_from_url(url):
     current_os_version = get_prop("ro.anki.version")
     next_boot_os_version = current_os_version
     is_factory_update = False
+    reboot_after_install = 0
     with make_tar_stream(stream) as tar_stream:
         # Get the manifest
         if DEBUG:
@@ -563,6 +567,7 @@ def update_from_url(url):
         # Inspect the manifest
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
+        reboot_after_install = manifest.getint("META", "reboot_after_install")
         next_boot_os_version = manifest.get("META", "update_version")
         validate_new_os_version(current_os_version, next_boot_os_version, cmdline)
         if DEBUG:
@@ -615,6 +620,8 @@ def update_from_url(url):
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
     das_event("robot.ota_download_end", "success", next_boot_os_version)
+    if reboot_after_install:
+        os.system("/sbin/reboot")
 
 def logv(msg):
     if DEBUG:
