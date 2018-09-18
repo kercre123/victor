@@ -64,8 +64,12 @@ void WifiWatcher::ConnectIfNoWifi() {
 
   Log::Write("WifiWatcher: detected no wifi. Scanning for networks...");
 
+  // Scan async ... this won't benefit us this tick, but it will populate the list for next time!
+  Anki::Wifi::ScanForWiFiAccessPointsAsync();
+
   std::vector<Anki::Wifi::WiFiScanResult> results;
-  Anki::Wifi::WifiScanErrorCode code = Anki::Wifi::ScanForWiFiAccessPoints(results);
+  bool shouldScan = false;
+  Anki::Wifi::WifiScanErrorCode code = Anki::Wifi::GetWiFiServices(results, shouldScan);
 
   if(code != Anki::Wifi::WifiScanErrorCode::SUCCESS) {
     // can't scan for wifi
