@@ -1661,6 +1661,12 @@ void ICozmoBehavior::SmartPushResponseToTriggerWord(const AnimationTrigger& getI
   _pushedCustomTriggerResponse = true;
   GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), getInAnimTrigger, postAudioEvent, streamAndLightEffect);
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartPushEmptyResponseToTriggerWord()
+{
+  SmartPushResponseToTriggerWord(AnimationTrigger::Count, {}, StreamAndLightEffect::StreamingDisabled);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState)

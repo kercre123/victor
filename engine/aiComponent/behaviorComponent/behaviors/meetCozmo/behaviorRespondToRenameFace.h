@@ -14,7 +14,6 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRespondToRenameFace_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Vector {
@@ -40,7 +39,6 @@ private:
   
   std::string      _name;
   Vision::FaceID_t _faceID;
-  // AnimationTrigger _animTrigger; // set by Json config
   
 }; // class BehaviorReactToRenameFace
   

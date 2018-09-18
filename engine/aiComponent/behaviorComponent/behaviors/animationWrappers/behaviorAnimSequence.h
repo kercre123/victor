@@ -15,10 +15,11 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iSubtaskListener.h"
-#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
   
 class BehaviorAnimSequence : public ICozmoBehavior
 {

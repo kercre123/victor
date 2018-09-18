@@ -39,6 +39,10 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorListenForBeats::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
+  preListeningAnim   = AnimationTrigger::Count;
+  listeningAnim      = AnimationTrigger::Count;
+  postListeningAnim  = AnimationTrigger::Count;
+  
   JsonTools::GetCladEnumFromJSON(config, kPreListeningAnim_key,  preListeningAnim,  debugName);
   JsonTools::GetCladEnumFromJSON(config, kListeningAnim_key,     listeningAnim,     debugName);
   JsonTools::GetCladEnumFromJSON(config, kPostListeningAnim_key, postListeningAnim, debugName);

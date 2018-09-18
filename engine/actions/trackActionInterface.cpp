@@ -60,7 +60,7 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 {
-
+  _turningSoundAnimTrigger = AnimationTrigger::Count;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -35,6 +35,10 @@ static const char * const kDontKnowText = "dontKnowText";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSayName::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
+  // default animations
+  knowNameAnimation = AnimationTrigger::MeetVictorSayNameAgain;
+  dontKnowNameAnimation = AnimationTrigger::MeetVictorSawWrongFace;
+  
   JsonTools::GetCladEnumFromJSON(config, JsonKeys::kDontKnowNameAnimation, dontKnowNameAnimation,
                                  "BehaviorSayName.InstanceConfig");
   

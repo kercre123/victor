@@ -45,6 +45,15 @@ static const char* kRandomDriveMaxAngleKey_deg = "randomDriveMaxAngle_deg";
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToFrustration::InstanceConfig::InstanceConfig()
+{
+  minDistanceToDrive_mm = 0;
+  maxDistanceToDrive_mm = 0;
+  randomDriveAngleMin_deg = 0;
+  randomDriveAngleMax_deg = 0;
+  animToPlay = AnimationTrigger::Count;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToFrustration::BehaviorReactToFrustration(const Json::Value& config)
@@ -62,7 +71,7 @@ void BehaviorReactToFrustration::OnBehaviorActivated()
   // push driving animations in case we decide to drive
   robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims, GetDebugLabel());
   
-  if(_animToPlay != AnimationTrigger::Count) {
+  if(_iConfig.animToPlay != AnimationTrigger::Count) {
     TransitionToReaction();
     
   }
@@ -84,7 +93,7 @@ void BehaviorReactToFrustration::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::TransitionToReaction()
 {
-  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(_animToPlay);
+  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(_iConfig.animToPlay);
 
   DelegateIfInControl(action, [this]() {
       AnimationComplete();
@@ -98,32 +107,32 @@ void BehaviorReactToFrustration::AnimationComplete()
   // mark cooldown and update emotion. Note that if we get interrupted, this won't happen
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  if( !_finalEmotionEvent.empty() ) {
+  if( !_iConfig.finalEmotionEvent.empty() ) {
     if(GetBEI().HasMoodManager()){
       auto& moodManager = GetBEI().GetMoodManager();
-      moodManager.TriggerEmotionEvent(_finalEmotionEvent, currTime_s);
+      moodManager.TriggerEmotionEvent(_iConfig.finalEmotionEvent, currTime_s);
     }
   }
 
-  for(auto listener: _frustrationListeners){
+  for(auto listener: _iConfig.frustrationListeners){
     listener->AnimationComplete();
   }
 
   // if we want to drive somewhere, do that AFTER the emotion update, so we don't get stuck in a loop if this
   // part gets interrupted
-  if( FLT_GT(_maxDistanceToDrive_mm, 0.0f) ) {
+  if( FLT_GT(_iConfig.maxDistanceToDrive_mm, 0.0f) ) {
     // pick a random pose
     // TODO:(bn) use memory map here
-    float randomAngleDeg = GetRNG().RandDblInRange(_randomDriveAngleMin_deg,
-                                                   _randomDriveAngleMax_deg);
+    float randomAngleDeg = GetRNG().RandDblInRange(_iConfig.randomDriveAngleMin_deg,
+                                                   _iConfig.randomDriveAngleMax_deg);
 
     bool randomAngleNegative = GetRNG().RandDbl() < 0.5;
     if( randomAngleNegative ) {
       randomAngleDeg = -randomAngleDeg;
     }
 
-    float randomDist_mm = GetRNG().RandDblInRange(_minDistanceToDrive_mm,
-                                                  _maxDistanceToDrive_mm);
+    float randomDist_mm = GetRNG().RandDblInRange(_iConfig.minDistanceToDrive_mm,
+                                                  _iConfig.maxDistanceToDrive_mm);
 
     auto& robotInfo = GetBEI().GetRobotInfo();
 
@@ -151,12 +160,12 @@ void BehaviorReactToFrustration::AnimationComplete()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::LoadJson(const Json::Value& config)
 {
-  _minDistanceToDrive_mm = config.get(kRandomDriveMinDistKey_mm, 0).asFloat();
-  _maxDistanceToDrive_mm = config.get(kRandomDriveMaxDistKey_mm, 0).asFloat();
-  _randomDriveAngleMin_deg = config.get(kRandomDriveMinAngleKey_deg, 0).asFloat();
-  _randomDriveAngleMax_deg = config.get(kRandomDriveMaxAngleKey_deg, 0).asFloat();
-  JsonTools::GetCladEnumFromJSON(config, kAnimationKey, _animToPlay, "BehaviorReactToFrustration");
-  _finalEmotionEvent = config.get(kEmotionEventKey, "").asString();
+  _iConfig.minDistanceToDrive_mm = config.get(kRandomDriveMinDistKey_mm, 0).asFloat();
+  _iConfig.maxDistanceToDrive_mm = config.get(kRandomDriveMaxDistKey_mm, 0).asFloat();
+  _iConfig.randomDriveAngleMin_deg = config.get(kRandomDriveMinAngleKey_deg, 0).asFloat();
+  _iConfig.randomDriveAngleMax_deg = config.get(kRandomDriveMaxAngleKey_deg, 0).asFloat();
+  JsonTools::GetCladEnumFromJSON(config, kAnimationKey, _iConfig.animToPlay, "BehaviorReactToFrustration");
+  _iConfig.finalEmotionEvent = config.get(kEmotionEventKey, "").asString();
   
 }
 
@@ -177,7 +186,7 @@ void BehaviorReactToFrustration::GetBehaviorJsonKeys(std::set<const char*>& expe
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::AddListener(ISubtaskListener* listener)
 {
-  _frustrationListeners.insert(listener);
+  _iConfig.frustrationListeners.insert(listener);
 }
 
 

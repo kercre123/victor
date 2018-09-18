@@ -65,7 +65,8 @@ class IReactToPetListener;
 class IFistBumpListener;
 class IFeedingListener;
 
-enum class CubeAnimationTrigger;
+enum class AnimationTrigger : int32_t;
+enum class CubeAnimationTrigger : int32_t;
 
 struct PathMotionProfile;
 struct TriggerWordResponseData;
@@ -486,9 +487,10 @@ protected:
   void SmartEnableEngineResponseToTriggerWord();
 
   // Change the response to the trigger word until the behavior is deactivated
-  void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger = AnimationTrigger::Count, 
-                                      const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {}, 
-                                      StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
+  void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger,
+                                      const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
+                                      StreamAndLightEffect streamAndLightEffect);
+  void SmartPushEmptyResponseToTriggerWord();
 
   void SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState);
   void SmartPopResponseToTriggerWord();

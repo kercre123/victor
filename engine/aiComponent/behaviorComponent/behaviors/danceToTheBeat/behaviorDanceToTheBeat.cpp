@@ -65,6 +65,8 @@ BehaviorDanceToTheBeat::BehaviorDanceToTheBeat(const Json::Value& config)
 BehaviorDanceToTheBeat::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
   : useBackpackLights(JsonTools::ParseBool(config, kUseBackpackLights_key, debugName))
 {
+  eyeHoldAnim = AnimationTrigger::Count;
+  getOutAnim = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kBackpackAnim_key,  backpackAnim,  debugName);
   JsonTools::GetCladEnumFromJSON(config, kEyeHoldAnim_key,   eyeHoldAnim,   debugName);
   JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,    getOutAnim,    debugName);

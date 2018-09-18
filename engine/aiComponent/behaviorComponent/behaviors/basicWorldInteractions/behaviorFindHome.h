@@ -15,8 +15,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "clad/types/animationTrigger.h"
-
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/pose.h"
@@ -32,6 +30,7 @@ namespace RobotPointSamplerHelper {
   class RejectIfCollidesWithMemoryMap;
 }
   
+enum class AnimationTrigger : int32_t;
 class BlockWorldFilter;
   
 class BehaviorFindHome : public ICozmoBehavior
@@ -73,10 +72,10 @@ private:
     // Default is auto exposure every 5 frames and cycle length 3, meaning 15 frames
     int         numImagesToWaitFor = 15;
     
-    AnimationTrigger searchTurnAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger searchTurnEndAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger waitForImagesAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger postSearchAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger searchTurnAnimTrigger;
+    AnimationTrigger searchTurnEndAnimTrigger;
+    AnimationTrigger waitForImagesAnimTrigger;
+    AnimationTrigger postSearchAnimTrigger;
     std::unique_ptr<BlockWorldFilter> homeFilter;
     
     std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> searchSpacePointEvaluator;

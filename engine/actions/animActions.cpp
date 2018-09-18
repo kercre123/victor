@@ -257,6 +257,11 @@ namespace Anki {
       SetAnimGroupFromTrigger(_animTrigger);
       OnRobotSetInternalTrigger();
     }
+    
+    bool TriggerAnimationAction::HasAnimTrigger() const
+    {
+      return _animTrigger != AnimationTrigger::Count;
+    }
 
     void TriggerAnimationAction::SetAnimGroupFromTrigger(AnimationTrigger animTrigger)
     {

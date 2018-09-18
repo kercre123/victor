@@ -22,12 +22,13 @@
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"
-#include "clad/types/animationTrigger.h"
 
 
 namespace Anki {
   
   namespace Vector {
+    
+    enum class AnimationTrigger : int32_t;
 
     class PlayAnimationAction : public IAction
     {
@@ -111,7 +112,7 @@ namespace Anki {
 
       void SetAnimGroupFromTrigger(AnimationTrigger animTrigger);
 
-      bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
+      bool HasAnimTrigger() const;
       virtual void OnRobotSetInternalAnim() override final;
       virtual void OnRobotSetInternalTrigger() {};
 

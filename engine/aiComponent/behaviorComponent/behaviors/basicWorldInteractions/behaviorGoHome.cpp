@@ -73,7 +73,15 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorGoHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
-{  
+{
+  leftTurnAnimTrigger     = AnimationTrigger::Count;
+  rightTurnAnimTrigger    = AnimationTrigger::Count;
+  drivingStartAnimTrigger = AnimationTrigger::Count;
+  drivingEndAnimTrigger   = AnimationTrigger::Count;
+  drivingLoopAnimTrigger  = AnimationTrigger::Count;
+  raiseLiftAnimTrigger    = AnimationTrigger::Count;
+  nuzzleAnimTrigger       = AnimationTrigger::Count;
+  
   useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
   
   JsonTools::GetCladEnumFromJSON(config, kLeftTurnAnimKey,     leftTurnAnimTrigger, debugName);

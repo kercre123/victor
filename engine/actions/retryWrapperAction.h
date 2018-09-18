@@ -15,11 +15,11 @@
 
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Vector {
   
+  enum class AnimationTrigger : int32_t;
   class IAction;
   class IActionRunner;
   class ICompoundAction;

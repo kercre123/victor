@@ -14,7 +14,6 @@
 #ifndef __Cozmo_Basestation_AI_ContinuityComponent_H__
 #define __Cozmo_Basestation_AI_ContinuityComponent_H__
 
-#include "clad/types/animationTrigger.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -25,6 +24,7 @@
 namespace Anki {
 namespace Vector {
 
+enum class AnimationTrigger : int32_t;
 class Robot;
 
 class ContinuityComponent : public IDependencyManagedComponent<AIComponentID>,

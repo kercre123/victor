@@ -18,7 +18,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "clad/cloud/mic.h"
-#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Vector {

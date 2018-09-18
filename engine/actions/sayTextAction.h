@@ -19,7 +19,6 @@
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/animActions.h"
-#include "clad/types/animationTrigger.h"
 #include "clad/types/textToSpeechTypes.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -27,6 +26,8 @@
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
 
 class SayTextAction : public IAction
 {
@@ -87,7 +88,7 @@ private:
   bool                            _fitToDuration      = false;
 
   // Accompanying animation, if any
-  AnimationTrigger                _animTrigger        = AnimationTrigger::Count; // Count == use built-in animation
+  AnimationTrigger                _animTrigger;  // Count == use built-in animation
   u8                              _ignoreAnimTracks   = (u8)AnimTrackFlag::NO_TRACKS;
   std::unique_ptr<IActionRunner>  _animAction         = nullptr;
 

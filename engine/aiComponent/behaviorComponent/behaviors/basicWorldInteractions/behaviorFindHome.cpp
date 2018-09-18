@@ -86,6 +86,11 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
+  searchTurnAnimTrigger = AnimationTrigger::Count;
+  searchTurnEndAnimTrigger = AnimationTrigger::Count;
+  waitForImagesAnimTrigger = AnimationTrigger::Count;
+  postSearchAnimTrigger = AnimationTrigger::Count;
+  
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnAnimKey, searchTurnAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnWaitingForImagesAnimKey, waitForImagesAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnEndAnimKey, searchTurnEndAnimTrigger, debugName);

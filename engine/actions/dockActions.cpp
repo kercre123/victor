@@ -112,7 +112,10 @@ namespace Anki {
     , _dockObjectID(objectID)
     , _dockingMethod((DockingMethod)kDefaultDockingMethod)
     {
-
+      _getInDockTrigger  = AnimationTrigger::DockStartDefault;
+      _loopDockTrigger   = AnimationTrigger::DockLoopDefault;
+      _getOutDockTrigger = AnimationTrigger::DockEndDefault;
+      _curDockTrigger    = AnimationTrigger::Count;
     }
 
     IDockAction::~IDockAction()

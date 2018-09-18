@@ -73,6 +73,7 @@ BehaviorVectorPlaysCubeSpinner::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVectorPlaysCubeSpinner::DynamicVariables::DynamicVariables()
 {
+  nextResponseAnimation = AnimationTrigger::Count;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

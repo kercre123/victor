@@ -524,7 +524,7 @@ void BehaviorOnboarding1p0::DisableWakeWord()
   
   _dVars.wakeWordState = WakeWordState::Disabled;
   
-  SmartPushResponseToTriggerWord();
+  SmartPushEmptyResponseToTriggerWord();
   SmartDisableEngineResponseToTriggerWord();
 }
   

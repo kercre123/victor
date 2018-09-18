@@ -43,7 +43,7 @@ SayTextAction::SayTextAction(const std::string& text,
 , _style(style)
 , _durationScalar(durationScalar)
 {
-
+  _animTrigger = AnimationTrigger::Count;
 } // SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

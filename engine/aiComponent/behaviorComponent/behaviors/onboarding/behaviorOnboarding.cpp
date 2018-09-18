@@ -1319,7 +1319,7 @@ void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
       
       // no trigger word allowed
       SmartDisableEngineResponseToTriggerWord();
-      SmartPushResponseToTriggerWord();
+      SmartPushEmptyResponseToTriggerWord();
       
     } else if( wakeWordState == WakeWordState::SpecialTriggerEnabledCloudDisabled ) {
       

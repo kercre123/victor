@@ -15,11 +15,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "clad/types/animationTrigger.h"
-
 namespace Anki {
 namespace Vector {
 
+enum class AnimationTrigger : int32_t;
 class BlockWorldFilter;
 class BehaviorClearChargerArea;
 class BehaviorRequestToGoHome;
@@ -58,13 +57,13 @@ private:
     }
     InstanceConfig(const Json::Value& config, const std::string& debugName);
 
-    AnimationTrigger leftTurnAnimTrigger     = AnimationTrigger::Count;
-    AnimationTrigger rightTurnAnimTrigger    = AnimationTrigger::Count;
-    AnimationTrigger drivingStartAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger drivingEndAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger drivingLoopAnimTrigger  = AnimationTrigger::Count;
-    AnimationTrigger raiseLiftAnimTrigger    = AnimationTrigger::Count;
-    AnimationTrigger nuzzleAnimTrigger       = AnimationTrigger::Count;
+    AnimationTrigger leftTurnAnimTrigger;
+    AnimationTrigger rightTurnAnimTrigger;
+    AnimationTrigger drivingStartAnimTrigger;
+    AnimationTrigger drivingEndAnimTrigger;
+    AnimationTrigger drivingLoopAnimTrigger;
+    AnimationTrigger raiseLiftAnimTrigger;
+    AnimationTrigger nuzzleAnimTrigger;
 
     bool useCliffSensorCorrection = true;
     std::unique_ptr<BlockWorldFilter> homeFilter;

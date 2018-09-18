@@ -22,11 +22,12 @@
 #include "engine/actions/actionInterface.h"
 
 #include "clad/types/actionTypes.h"
-#include "clad/types/animationTrigger.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
 
 // Forward Declarations:
 class Robot;
@@ -213,7 +214,7 @@ private:
   ActionResult _finalActionResult = ActionResult::NOT_STARTED;
   
   // TODO: Remove this old sound stuff?
-  AnimationTrigger _turningSoundAnimTrigger = AnimationTrigger::Count;
+  AnimationTrigger _turningSoundAnimTrigger;
   f32      _soundSpacingMin_sec = 0.5f;
   f32      _soundSpacingMax_sec = 1.0f;
   f32      _nextSoundTime = 0.f;

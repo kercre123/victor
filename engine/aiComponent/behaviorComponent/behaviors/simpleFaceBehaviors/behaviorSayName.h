@@ -46,10 +46,10 @@ private:
     InstanceConfig(const Json::Value& config);
     
     // The animation to use while saying name. Must have special TTS keyframe!
-    AnimationTrigger knowNameAnimation = AnimationTrigger::MeetVictorSayNameAgain;
+    AnimationTrigger knowNameAnimation;
     
     // The animation to use to indicate name is not known. No TTS keyframe!
-    AnimationTrigger dontKnowNameAnimation = AnimationTrigger::MeetVictorSawWrongFace;
+    AnimationTrigger dontKnowNameAnimation;
     
     // Text to speak *after* playing dontKnowNameAnimation (empty for none)
     std::string dontKnowText = "eye dont know";

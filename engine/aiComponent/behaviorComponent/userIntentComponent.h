@@ -18,7 +18,6 @@
 #include "anki/cozmo/shared/animationTag.h"
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -36,6 +35,7 @@
 namespace Anki {
 namespace Vector {
 
+enum class AnimationTrigger : int32_t;
 class BehaviorComponentCloudServer;
 class CozmoContext;
 class Robot;

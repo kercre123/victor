@@ -17,8 +17,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
-#include "clad/types/animationTrigger.h"
-
 namespace Anki {
 namespace Vector {
 
