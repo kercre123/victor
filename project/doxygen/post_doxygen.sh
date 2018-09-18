@@ -27,6 +27,7 @@ else
   echo "Please install python3"
 fi
 $PYTHON3_PATH -m pip install beautifulsoup4
+$PYTHON3_PATH -m pip install lxml
 $DOXYGEN Doxyfile
 
 #Generate the cpp files that contain new/remove das messages
