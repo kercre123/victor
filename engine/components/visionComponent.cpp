@@ -2575,6 +2575,7 @@ namespace Vector {
     if(RESULT_OK != result)
     {
       PRINT_NAMED_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
+      return;
     }
     
     // Disable AE and WB computation on the vision thread
