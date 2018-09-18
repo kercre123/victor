@@ -31,6 +31,24 @@ $DOXYGEN Doxyfile
 
 #Generate the cpp files that contain new/remove das messages
 ./create_changed_das_msg.py -u ngoc.b.nguyen -p L0gigear2020
+echo "COPY FILE"
+file="./das_new.cpp"
+
+if [ -f "$file" ]
+then
+  echo "$file found."
+else
+  echo "$file not found."
+fi
+
+file="./das_remove.cpp"
+if [ -f "$file" ]
+then
+  echo "$file found."
+else
+  echo "$file not found."
+fi
+
 
 cp ./das_new.cpp ./html/z_das_new.cpp
 cp ./das_remove.cpp ./html/z_das_remove.cpp
