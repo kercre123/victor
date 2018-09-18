@@ -911,8 +911,12 @@ bool JdocsManager::SendUdpMessage(const JDocs::DocRequest& msg)
 {
   std::vector<uint8_t> buf(msg.Size());
   msg.Pack(buf.data(), buf.size());
-  const size_t bytesSent = _udpClient.Send((const char*)buf.data(), buf.size());
-  return bytesSent > 0;
+  const ssize_t bytesSent = _udpClient.Send((const char*)buf.data(), buf.size());
+  if (bytesSent <= 0) {
+    LOG_ERROR("JdocsManager.SendUdpMessage", "Failed to send document request (%zd/%zu)", bytesSent, buf.size());
+    return false;
+  }
+  return true;
 }
 
 
