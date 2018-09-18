@@ -49,6 +49,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class ImuComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;
@@ -110,6 +111,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(DockingComponent,              RobotComponentID, Doc
 LINK_COMPONENT_TYPE_TO_ENUM(CarryingComponent,             RobotComponentID, Carrying)
 LINK_COMPONENT_TYPE_TO_ENUM(CliffSensorComponent,          RobotComponentID, CliffSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(ProxSensorComponent,           RobotComponentID, ProxSensor)
+LINK_COMPONENT_TYPE_TO_ENUM(ImuComponent,                  RobotComponentID, ImuSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(TouchSensorComponent,          RobotComponentID, TouchSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Animation)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStateHistory,             RobotComponentID, StateHistory)
@@ -175,6 +177,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(FullRobotPose)
     CASE(GyroDriftDetector)
     CASE(HabitatDetector)
+    CASE(ImuSensor)
     CASE(JdocsManager)
     CASE(Map)
     CASE(MicComponent)

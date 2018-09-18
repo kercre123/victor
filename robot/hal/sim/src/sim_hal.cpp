@@ -550,12 +550,20 @@ namespace Anki {
         IMUData.rate_z += DEG_TO_RAD(initialBias_dps[2] + biasDueToTemperature_dps);
       }
 
-      static ImageImuData imageImuData;
-      imageImuData.systemTimestamp_ms = HAL::GetTimeStamp();
-      imageImuData.rateX = IMUData.rate_x;
-      imageImuData.rateY = IMUData.rate_y;
-      imageImuData.rateZ = IMUData.rate_z;
-      RobotInterface::SendMessage(imageImuData);
+      static RobotInterface::ImuData batchData;
+      static uint8_t sampleIdx = 0;
+
+      // load the current sample onto the packet
+      batchData.frames[sampleIdx].timestamp = HAL::GetTimeStamp();
+      batchData.frames[sampleIdx].rateX = IMUData.rate_x;
+      batchData.frames[sampleIdx].rateY = IMUData.rate_y;
+      batchData.frames[sampleIdx].rateZ = IMUData.rate_z;
+
+      // reset index and send batch packet
+      if ( ++sampleIdx >= IMUConstants::IMU_BATCH_SIZE ) {
+        sampleIdx = 0;
+        RobotInterface::SendMessage(batchData);
+      }
 
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;

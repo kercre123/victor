@@ -866,12 +866,21 @@ namespace Anki {
         DetectFalling();
 
         // Send ImageImuData to engine
-        ImageImuData imageImuData;
-        imageImuData.systemTimestamp_ms = curTime;
-        imageImuData.rateX = gyro_robot_frame_filt[0];
-        imageImuData.rateY = gyro_robot_frame_filt[1];
-        imageImuData.rateZ = gyro_robot_frame_filt[2];
-        RobotInterface::SendMessage(imageImuData);
+        static RobotInterface::ImuData batchData;
+        static uint8_t sampleIdx = 0;
+
+        // load the current sample onto the packet
+        batchData.frames[sampleIdx].timestamp = curTime;
+        batchData.frames[sampleIdx].rateX = gyro_robot_frame_filt[0];
+        batchData.frames[sampleIdx].rateY = gyro_robot_frame_filt[1];
+        batchData.frames[sampleIdx].rateZ = gyro_robot_frame_filt[2];
+
+
+        // reset index and send batch packet
+        if ( ++sampleIdx >= IMUConstants::IMU_BATCH_SIZE ) {
+          sampleIdx = 0;
+          RobotInterface::SendMessage(batchData);
+        }
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {

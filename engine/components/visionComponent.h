@@ -251,9 +251,6 @@ struct DockingErrorSignal;
     // Used by FindFactoryTestDotCentroids iff camera is already calibrated.
     // Otherwise call manually by populating obsQuad with the dot centroids.
     Result ComputeCameraPoseVsIdeal(const Quad2f& obsQuad, Pose3d& pose) const;
-    
-    const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
-    ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
 
     // Return true if there is still room for a *new* named face.
     // No need to check this if *merging* with an existing named face.
@@ -395,8 +392,6 @@ struct DockingErrorSignal;
     Vision::ImageRGB _bufferedImg;
     
     Vision::DroppedFrameStats _dropStats;
-    
-    ImuDataHistory _imuHistory;
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;

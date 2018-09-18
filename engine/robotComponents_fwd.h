@@ -56,6 +56,7 @@ enum class RobotComponentID {
   FullRobotPose,
   GyroDriftDetector,
   HabitatDetector,
+  ImuSensor,
   JdocsManager,
   Map,
   MicComponent,

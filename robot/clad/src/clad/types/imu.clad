@@ -6,9 +6,10 @@ ROBOT_CLAD_SHARED
 namespace Anki {
 namespace Vector {
   
-enum uint_8 IMUConstants
+enum no_cpp_class uint_8 IMUConstants
 {
     IMU_CHUNK_SIZE = 8,
+    IMU_BATCH_SIZE = 16,
 }
 
 message IMURequest
@@ -56,16 +57,18 @@ message IMUTemperature {
   float_32 temperature_degC
 }
 
-} // RobotInterface
-
-
-message ImageImuData {
-  uint_32  systemTimestamp_ms,
+structure IMUDataFrame {
+  uint_32  timestamp,
   float_32 rateX,
   float_32 rateY,
   float_32 rateZ
 }
 
+message ImuData {
+  IMUDataFrame frames[16] // must match IMU_BATCH_SIZE
+}
+
+} // RobotInterface
 
 } // Cozmo
 } // Anki

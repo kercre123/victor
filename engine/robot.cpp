@@ -358,6 +358,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Carrying,                   new CarryingComponent());
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ProxSensor,                 new ProxSensorComponent());
+    _components->AddDependentComponent(RobotComponentID::ImuSensor,                  new ImuComponent());
     _components->AddDependentComponent(RobotComponentID::TouchSensor,                new TouchSensorComponent());
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());

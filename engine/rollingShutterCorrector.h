@@ -31,42 +31,6 @@ namespace Anki {
     class Robot;
     struct VisionPoseData;
     
-    class ImuDataHistory
-    {
-      public:
-        ImuDataHistory() {};
-      
-        void AddImuData(RobotTimeStamp_t systemTimestamp_ms, float rateX, float rateY, float rateZ);
-      
-        struct ImuData
-        {
-          float rateX = 0;
-          float rateY = 0;
-          float rateZ = 0;
-          RobotTimeStamp_t timestamp = 0;
-        };
-      
-        // Gets the imu data before and after the timestamp
-        bool GetImuDataBeforeAndAfter(RobotTimeStamp_t t, ImuData& before, ImuData& after) const;
-      
-        // Returns true if the any of the numToLookBack imu data before timestamp t have rates that are greater than
-        // the given rates
-        bool IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
-                                            const int numToLookBack,
-                                            const f32 rateX, const f32 rateY, const f32 rateZ) const;
-      
-        std::deque<ImuData>::const_iterator begin() const { return _history.begin(); }
-        std::deque<ImuData>::const_iterator end() const { return _history.end(); }
-        ImuData front() const { return _history.front(); }
-        ImuData back() const { return _history.back(); }
-        size_t size() const { return _history.size(); }
-        bool empty() const { return _history.empty(); }
-      
-      private:
-        std::deque<ImuData> _history;
-        static const int maxSizeOfHistory = 80;
-    };
-    
     class RollingShutterCorrector
     {
     public:

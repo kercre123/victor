@@ -23,6 +23,7 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/powerStateManager.h"
+#include "engine/components/sensors/imuComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/navMap/mapComponent.h"
@@ -690,7 +691,7 @@ namespace Vector {
                         cameraPose,
                         groundPlaneVisible,
                         groundPlaneHomography,
-                        _imuHistory);
+                        _robot->GetImuComponent().GetImuHistory());
       Unlock();
     }
 
@@ -1770,13 +1771,13 @@ namespace Vector {
     {
       if(numImuDataToLookBack > 0)
       {
-        return (_imuHistory.IsImuDataBeforeTimeGreaterThan(t,
-                                                           numImuDataToLookBack,
-                                                           0, headTurnSpeedLimit_radPerSec, 0));
+        return (_robot->GetImuComponent().IsImuDataBeforeTimeGreaterThan(t,
+                                                                         numImuDataToLookBack,
+                                                                         0, headTurnSpeedLimit_radPerSec, 0));
       }
 
-      ImuDataHistory::ImuData prev, next;
-      if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
+      RobotInterface::IMUDataFrame prev, next;
+      if(!_robot->GetImuComponent().GetImuDataBeforeAndAfter(t, prev, next))
       {
         PRINT_CH_INFO("VisionComponent",
                       "VisionComponent.VisionComponent.WasHeadRotatingTooFast.NoIMUData",
@@ -1803,13 +1804,13 @@ namespace Vector {
     {
       if(numImuDataToLookBack > 0)
       {
-        return (_imuHistory.IsImuDataBeforeTimeGreaterThan(t,
-                                                           numImuDataToLookBack,
-                                                           0, 0, bodyTurnSpeedLimit_radPerSec));
+        return (_robot->GetImuComponent().IsImuDataBeforeTimeGreaterThan(t,
+                                                                         numImuDataToLookBack,
+                                                                         0, 0, bodyTurnSpeedLimit_radPerSec));
       }
 
-      ImuDataHistory::ImuData prev, next;
-      if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
+      RobotInterface::IMUDataFrame prev, next;
+      if(!_robot->GetImuComponent().GetImuDataBeforeAndAfter(t, prev, next))
       {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyRotatingTooFast",
                       "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);

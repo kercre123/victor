@@ -121,6 +121,7 @@ class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
 class TouchSensorComponent;
+class ImuComponent;
 class AnimationComponent;
 class MapComponent;
 class MicComponent;
@@ -255,6 +256,7 @@ public:
   INLINE_GETTERS(PhotographyManager)
   INLINE_GETTERS(PowerStateManager)
   INLINE_GETTERS(ProxSensorComponent)
+  INLINE_GETTERS(ImuComponent)
   INLINE_GETTERS(PublicStateBroadcaster)
   INLINE_GETTERS(RobotHealthReporter)
   INLINE_GETTERS(RobotToEngineImplMessaging)

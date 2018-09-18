@@ -19,108 +19,11 @@
 
 namespace Anki {
   namespace Vector {
-  
-    void ImuDataHistory::AddImuData(RobotTimeStamp_t systemTimestamp_ms,
-                                    float rateX,
-                                    float rateY,
-                                    float rateZ)
-    {
-      ImuData data;
-      data.timestamp = systemTimestamp_ms;
-      data.rateX = rateX;
-      data.rateY = rateY;
-      data.rateZ = rateZ;
-      
-      if(_history.size() == maxSizeOfHistory)
-      {
-        _history.pop_front();
-      }
-      _history.push_back(data);
+
+    namespace {
+      const TimeStamp_t kMaxAllowedDelay_ms = 100; 
     }
-    
-    bool ImuDataHistory::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
-                                                  ImuDataHistory::ImuData& before,
-                                                  ImuDataHistory::ImuData& after) const
-    {
-      if(_history.size() < 2)
-      {
-        return false;
-      }
-    
-      // Start at beginning + 1 because there is no data before the first element
-      for(auto iter = _history.begin() + 1; iter != _history.end(); ++iter)
-      {
-        // If we get to the imu data after the timestamp
-        // or We have gotten to the imu data that has yet to be given a timestamp and
-        // our last known timestamped imu data is fairly close the time we are looking for
-        // so use it and the data after it that doesn't have a timestamp
-        const int64_t tDiff = ((int64_t)(TimeStamp_t)(iter - 1)->timestamp - (int64_t)(TimeStamp_t)t);
-        if(iter->timestamp > t ||
-           (iter->timestamp == 0 &&
-            ABS(tDiff) < RollingShutterCorrector::timeBetweenFrames_ms))
-        {
-          after = *iter;
-          before = *(iter - 1);
-          return true;
-        }
-      }
-      return false;
-    }
-    
-    bool ImuDataHistory::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
-                                                        const int numToLookBack,
-                                                        const f32 rateX, const f32 rateY, const f32 rateZ) const
-    {
-      if(_history.empty())
-      {
-        return false;
-      }
-      
-      auto iter = _history.begin();
-      // Separate check for the first element due to there not being anything before it
-      if(iter->timestamp > t)
-      {
-        if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
-        {
-          return true;
-        }
-      }
-      // If the first element has a timestamp of zero then nothing else will have valid timestamps
-      // due to how ImuData comes in during an image so the data that we get for an image that we are in the process of receiving will not
-      // have timestamps
-      else if(iter->timestamp == 0)
-      {
-        return false;
-      }
-      
-      for(iter = _history.begin() + 1; iter != _history.end(); ++iter)
-      {
-        // If we get to the imu data after the timestamp
-        // or We have gotten to the imu data that has yet to be given a timestamp and
-        // our last known timestamped imu data is fairly close the time we are looking for
-        const int64_t tDiff = ((int64_t)(TimeStamp_t)(iter - 1)->timestamp - (int64_t)(TimeStamp_t)t);
-        if(iter->timestamp > t ||
-           (iter->timestamp == 0 &&
-            ABS(tDiff) < RollingShutterCorrector::timeBetweenFrames_ms))
-        {          
-          // Once we get to the imu data after the timestamp look at the numToLookBack imu data before it
-          for(int i = 0; i < numToLookBack; i++)
-          {
-            if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
-            {
-              return true;
-            }
-            if(iter-- == _history.begin())
-            {
-              return false;
-            }
-          }
-          return false;
-        }
-      }
-      return false;
-    }
-    
+ 
     void RollingShutterCorrector::ComputePixelShifts(const VisionPoseData& poseData,
                                                      const VisionPoseData& prevPoseData,
                                                      const u32 numRows)
@@ -226,8 +129,8 @@ namespace Anki {
         return false;
       }
       
-      std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
-      std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
+      ImuComponent::ImuHistory::const_iterator ImuBeforeT;
+      ImuComponent::ImuHistory::const_iterator ImuAfterT;
 
       float rateY = 0;
       float rateZ = 0;
@@ -259,15 +162,21 @@ namespace Anki {
           rateZ = (((tMinusBeforeTime)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (afterMinusBeforeTime)) + ImuBeforeT->rateZ;
           
           break;
-        }
+        } 
       }
       
       // If we don't have imu data for the timestamps before and after the timestamp we are looking for just
       // use the latest data
       if(!beforeAfterSet && !poseData.imuDataHistory.empty())
       {
-        rateY = poseData.imuDataHistory.back().rateY;
-        rateZ = poseData.imuDataHistory.back().rateZ;
+        // if the IMU data is recent enough, just assume gyro data hasn't changed too much
+        if ( t - poseData.imuDataHistory.back().timestamp <= kMaxAllowedDelay_ms ) {
+          rateY = poseData.imuDataHistory.back().rateY;
+          rateZ = poseData.imuDataHistory.back().rateZ;
+        } else {          
+          shift = Vec2f(0, 0);
+          return false;
+        }
       }
       
       // If we aren't doing vertical correction then setting rateY to zero will ensure no Y shift
