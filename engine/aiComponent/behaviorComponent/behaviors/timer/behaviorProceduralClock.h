@@ -61,6 +61,8 @@ protected:
   virtual void BehaviorUpdate() override;
   virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
+  virtual void UpdateProceduralClockInternal(){};
+
   void TransitionToTurnToFace();
   void TransitionToGetIn();
   void TransitionToShowClock();

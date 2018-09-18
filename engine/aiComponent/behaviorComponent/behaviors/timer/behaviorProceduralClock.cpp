@@ -237,6 +237,8 @@ void BehaviorProceduralClock::BehaviorUpdate()
     return;
   }
 
+  UpdateProceduralClockInternal();
+
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
     auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     const int currentTime_s = timerUtility.GetSystemTime_s();

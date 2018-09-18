@@ -23,6 +23,10 @@ namespace Vector {
 namespace{
 const char* kStartTimeSecKey         = "startTime_sec";
 const char* kEndTimeSecKey           = "endTime_sec";
+// max number of composite image update messages sent per Engine tick. There should be no more than three anim
+// updates per Engine tick, so 10 updates worth of data should be sufficient to cover some long ticks on one side
+// or the other
+const int   kUpdateMsgBatchSize      = 10;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -60,13 +64,19 @@ void BehaviorAdvanceClock::SetAdvanceClockParams(int startTime_sec, int endTime_
   SetTimeDisplayClock_sec(displayTime_sec);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAdvanceClock::UpdateProceduralClockInternal(){
+  if(_sendingCompositeImageUpdates){
+    SendCompositeImageUpdateBatch();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAdvanceClock::TransitionToShowClockInternal()
 {
-  for(int i = 0; i <= GetTotalNumberOfUpdates(); i++){
-    BuildAndDisplayProceduralClock(i, i*ANIM_TIME_STEP_MS);   
-  }
+  _compositeImageUpdatesSent = 0;
+  _sendingCompositeImageUpdates = true;
+  SendCompositeImageUpdateBatch();
 
   {
     AudioEngine::Multiplexer::PostAudioEvent audioMessage;
@@ -86,7 +96,13 @@ void BehaviorAdvanceClock::TransitionToShowClockInternal()
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAdvanceClock::SendCompositeImageUpdateBatch(){
+  for(int i = 0; (i < kUpdateMsgBatchSize) && _sendingCompositeImageUpdates; i++){
+    BuildAndDisplayProceduralClock(_compositeImageUpdatesSent, _compositeImageUpdatesSent*ANIM_TIME_STEP_MS);   
+    _sendingCompositeImageUpdates = ++_compositeImageUpdatesSent < GetTotalNumberOfUpdates();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorProceduralClock::GetDigitsFunction BehaviorAdvanceClock::BuildTimerFunction() const
