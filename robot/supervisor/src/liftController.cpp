@@ -128,11 +128,6 @@ namespace Anki {
         // Current speed
         f32 radSpeed_ = 0;
 
-        // Number of tics that no encoders counts must be received
-        // before the raw speed is considered 0.
-        const u32 ZERO_SPEED_ENCODER_TIC_THRESH = 5;
-        u32 numTicsNoEncoderCounts_ = 0;
-
         // Currently applied power
         f32 power_ = 0;
 
@@ -472,18 +467,6 @@ namespace Anki {
 
         // Get encoder speed measurements
         f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
-
-        // If currHalPos matches prevHalPos for more than
-        // ZERO_SPEED_ENCODER_TIC_THRESH tics in a row, then assume
-        // zero speed
-        if (currHalPos == prevHalPos_ && measuredSpeed != 0.f) { 
-          if (++numTicsNoEncoderCounts_ >= ZERO_SPEED_ENCODER_TIC_THRESH) {
-            measuredSpeed = 0.f;
-            numTicsNoEncoderCounts_ = ZERO_SPEED_ENCODER_TIC_THRESH;
-          }
-        } else {
-          numTicsNoEncoderCounts_ = 0;
-        }
         
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +

@@ -387,14 +387,6 @@ namespace Anki {
       //Deactivate steering if: We are not really moving and the commanded speed is zero (or smaller than 0+eps)
       if (!WheelController::AreWheelsMoving() && ABS(desspeed) <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = false;
-
-        // Set wheel controller coast mode as we finish decelerating to 0
-        WheelController::SetCoastMode(true);
-      }
-
-      // If we're commanding any non-zero speed, don't coast
-      if(ABS(desspeed) > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
-        WheelController::SetCoastMode(false);
       }
 
       ///////////////////////////////////////////////////////////////////////////////

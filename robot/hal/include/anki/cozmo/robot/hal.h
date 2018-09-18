@@ -128,6 +128,7 @@ void MotorSetPower(const MotorID motor, const f32 power);
 void MotorResetPosition(const MotorID motor);
 
 /** Returns units based on the specified motor type:
+ * Note: this function must be called once per tick for each motor
  * @param[in] Motor to retrieve
  * @return Wheels are in mm/s, everything else is in radians/s.
  */
