@@ -51,10 +51,14 @@ try:
 except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
-
+# TODO Move to the robot class
 def parse_command_args(parser: argparse.ArgumentParser = None):
     """
-    Parses command line args
+    Parses command line arguments
+
+    Attempts to read the robot serial number from the command line arguments. If no serial number
+    is specified, we next attempt to read the robot serial number from environment variable ANKI_ROBOT_SERIAL.
+    If ANKI_ROBOT_SERIAL is specified, the value will be used as the robot's serial number.
 
     .. code-block:: python
 

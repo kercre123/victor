@@ -122,7 +122,7 @@ class Robot:
         self._guid = config["guid"]
 
         self._port = "443"
-        if serial == "Local":
+        if 'port' in config:
             self._port = config["port"]
 
         if self._name is None or self._ip is None or self._cert_file is None or self._guid is None:
