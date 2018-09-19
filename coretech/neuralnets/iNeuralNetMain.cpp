@@ -46,15 +46,13 @@
 namespace Anki {
 namespace NeuralNets {
   
-cv::Mat ReadBMP(const std::string& input_bmp_name);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Must be implemented here (in .cpp) due to use of unique_ptr with a forward declaration
 INeuralNetMain::INeuralNetMain() = default;
 INeuralNetMain::~INeuralNetMain() = default;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void INeuralNetMain::CleanupAndExit(Anki::Result result)
+void INeuralNetMain::CleanupAndExit(Result result)
 {
   LOG_INFO("INeuralNetMain.CleanupAndExit", "result:%d", result);
   Util::gLoggerProvider = nullptr;
@@ -88,7 +86,7 @@ Result INeuralNetMain::Init(const std::string& configFilename,
   // NOTE: cachePath need not exist yet as it will be created by the NeuralNetRunner
   if(!Util::FileUtils::FileExists(configFilename))
   {
-    LOG_ERROR("INeuralNetMain.Main.BadConfigFile", "ConfigFile:%s", configFilename.c_str());
+    LOG_ERROR("INeuralNetMain.Init.BadConfigFile", "ConfigFile:%s", configFilename.c_str());
     result = RESULT_FAIL;
   }
   if(!Util::FileUtils::DirectoryExists(modelPath))
@@ -190,19 +188,18 @@ Result INeuralNetMain::Run()
     {
       if(_neuralNet->IsVerbose())
       {
-        LOG_INFO("INeuralNetMain.Main.FoundImage", "%s", _imageFilename.c_str());
+        LOG_INFO("INeuralNetMain.Run.FoundImage", "%s", _imageFilename.c_str());
       }
       
       // Get the image
-      cv::Mat img;
-      TimeStamp_t timestamp=0;
+      Vision::ImageRGB img;
       {
         ScopedTicToc ticToc("GetImage", LOG_CHANNEL);
-        GetImage(_imageFilename, _timestampFilename, img, timestamp);
+        GetImage(_imageFilename, _timestampFilename, img);
         
-        if(img.empty())
+        if(img.IsEmpty())
         {
-          LOG_ERROR("INeuralNetMain.Main.ImageReadFailed", "Error while loading image %s", _imageFilename.c_str());
+          LOG_ERROR("INeuralNetMain.Run.ImageReadFailed", "Error while loading image %s", _imageFilename.c_str());
           if(_imageFileprovided)
           {
             // If we loaded in image file specified on the command line, we are done
@@ -215,7 +212,7 @@ Result INeuralNetMain::Run()
             // and ready for a new image, even if this one was corrupted
             if(_neuralNet->IsVerbose())
             {
-              LOG_INFO("INeuralNetMain.Main.DeletingImageFile", "%s", _imageFilename.c_str());
+              LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", _imageFilename.c_str());
             }
             remove(_imageFilename.c_str());
             continue; // no need to stop the process, it was just a bad image, won't happen again
@@ -227,11 +224,11 @@ Result INeuralNetMain::Run()
       std::list<Vision::SalientPoint> salientPoints;
       {
         ScopedTicToc ticToc("Detect", LOG_CHANNEL);
-        result = _neuralNet->Detect(img, timestamp, salientPoints);
-        
+        result = _neuralNet->Detect(img, salientPoints);
+      
         if(RESULT_OK != result)
         {
-          LOG_ERROR("INeuralNetMain.Main.DetectFailed", "");
+          LOG_ERROR("INeuralNetMain.Run.DetectFailed", "");
         }
       }
       
@@ -244,7 +241,7 @@ Result INeuralNetMain::Run()
         ScopedTicToc ticToc("WriteJSON", LOG_CHANNEL);
         if(_neuralNet->IsVerbose())
         {
-          LOG_INFO("INeuralNetMain.Main.WritingResults", "%s", _jsonFilename.c_str());
+          LOG_INFO("INeuralNetMain.Run.WritingResults", "%s", _jsonFilename.c_str());
         }
         
         const bool success = WriteResults(_jsonFilename, detectionResults);
@@ -267,14 +264,14 @@ Result INeuralNetMain::Run()
         // and ready for a new image
         if(_neuralNet->IsVerbose())
         {
-          LOG_INFO("INeuralNetMain.Main.DeletingImageFile", "%s", _imageFilename.c_str());
+          LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", _imageFilename.c_str());
         }
         remove(_imageFilename.c_str());
       }
     }
     else if(_imageFileprovided)
     {
-      LOG_ERROR("INeuralNetMain.Main.ImageFileDoesNotExist", "%s", _imageFilename.c_str());
+      LOG_ERROR("INeuralNetMain.Run.ImageFileDoesNotExist", "%s", _imageFilename.c_str());
       break;
     }
     else
@@ -285,7 +282,7 @@ Result INeuralNetMain::Run()
         static int count = 0;
         if(count++ * _pollPeriod_ms >= kVerbosePrintFreq_ms)
         {
-          LOG_INFO("INeuralNetMain.Main.WaitingForImage", "%s", _imageFilename.c_str());
+          LOG_INFO("INeuralNetMain.Run.WaitingForImage", "%s", _imageFilename.c_str());
           count = 0;
         }
       }
@@ -300,40 +297,31 @@ Result INeuralNetMain::Run()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void INeuralNetMain::GetImage(const std::string& imageFilename, const std::string timestampFilename, cv::Mat& img, TimeStamp_t& timestamp)
+void INeuralNetMain::GetImage(const std::string& imageFilename, const std::string& timestampFilename, Vision::ImageRGB& img)
 {
-  const std::string ext = imageFilename.substr(imageFilename.size()-3,3);
-  if(ext == "bmp")
+  using namespace Anki;
+  const Result loadResult = img.Load(imageFilename);
+
+  if(RESULT_OK != loadResult)
   {
-    img = ReadBMP(imageFilename); // Converts to RGB internally
-  }
-  else {
-    img = cv::imread(imageFilename);
-    if(! img.empty()) // otherwise opencv crashes at the cvtColor
-    {
-      cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
-    }
-  }
-  
-  if(img.empty()) // catches both bmp and other cases
-  {
-    // Don't bother reading the timestamp file
+    PRINT_NAMED_ERROR("INeuralNetMain.GetImage.EmptyImageRead", "%s", imageFilename.c_str());
     return;
   }
   
-  if(Anki::Util::FileUtils::FileExists(timestampFilename))
+  if(Util::FileUtils::FileExists(timestampFilename))
   {
     std::ifstream file(timestampFilename);
     std::string line;
     std::getline(file, line);
-    timestamp = uint(std::stol(line));
+    const TimeStamp_t timestamp = uint(std::stol(line));
+    img.SetTimestamp(timestamp);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void INeuralNetMain::ConvertSalientPointsToJson(const std::list<Anki::Vision::SalientPoint>& salientPoints,
-                                                   const bool isVerbose,
-                                                   Json::Value& detectionResults)
+void INeuralNetMain::ConvertSalientPointsToJson(const std::list<Vision::SalientPoint>& salientPoints,
+                                                const bool isVerbose,
+                                                Json::Value& detectionResults)
 {
   std::string salientPointsStr;
   
@@ -347,7 +335,7 @@ void INeuralNetMain::ConvertSalientPointsToJson(const std::list<Anki::Vision::Sa
   
   if(isVerbose && !salientPoints.empty())
   {
-    LOG_INFO("INeuralNetMain.Main.ConvertSalientPointsToJson",
+    LOG_INFO("INeuralNetMain.ConvertSalientPointsToJson",
              "Detected %zu objects: %s", salientPoints.size(), salientPointsStr.c_str());
   }
 }
@@ -361,7 +349,7 @@ bool INeuralNetMain::WriteResults(const std::string jsonFilename, const Json::Va
   std::fstream fs;
   fs.open(tempFilename, std::ios::out);
   if (!fs.is_open()) {
-    LOG_ERROR("INeuralNetMain.Main.OutputFileOpenFailed", "%s", jsonFilename.c_str());
+    LOG_ERROR("INeuralNetMain.WriteResults.OutputFileOpenFailed", "%s", jsonFilename.c_str());
     return false;
   }
   writer.write(fs, detectionResults);
@@ -377,89 +365,7 @@ bool INeuralNetMain::WriteResults(const std::string jsonFilename, const Json::Va
   
   return true;
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// NOTE: This will be moved to the Image class with VIC-6023
-cv::Mat ReadBMP(const std::string& input_bmp_name)
-{
-  std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
-  if (!file) {
-    LOG_ERROR("ReadBMP.FileNotFound", "%s", input_bmp_name.c_str());
-    return cv::Mat();
-  }
-  
-  const auto begin = file.tellg();
-  file.seekg(0, std::ios::end);
-  const auto end = file.tellg();
-  assert(end >= begin);
-  const size_t len = (size_t) (end - begin);
-  
-  // Decode the bmp header
-  const uint8_t* img_bytes = new uint8_t[len];
-  file.seekg(0, std::ios::beg);
-  file.read((char*)img_bytes, len);
-  const int32_t header_size = *(reinterpret_cast<const int32_t*>(img_bytes + 10));
-  const int32_t width = *(reinterpret_cast<const int32_t*>(img_bytes + 18));
-  const int32_t height = *(reinterpret_cast<const int32_t*>(img_bytes + 22));
-  const int32_t bpp = *(reinterpret_cast<const int32_t*>(img_bytes + 28));
-  const int32_t channels = bpp / 8;
-  
-  // there may be padding bytes when the width is not a multiple of 4 bytes
-  // 8 * channels == bits per pixel
-  const int row_size = (8 * channels * width + 31) / 32 * 4;
-  
-  // if height is negative, data layout is top down
-  // otherwise, it's bottom up
-  const bool top_down = (height < 0);
-  const int32_t absHeight = abs(height);
-  
-  // Decode image, allocating tensor once the image size is known
-  cv::Mat img(height, width, CV_8UC(channels));
-  uint8_t* output = img.data;
-  
-  const uint8_t* input = &img_bytes[header_size];
-  
-  for (int i = 0; i < absHeight; i++)
-  {
-    int src_pos;
-    int dst_pos;
-    
-    for (int j = 0; j < width; j++)
-    {
-      if (!top_down) {
-        src_pos = ((absHeight - 1 - i) * row_size) + j * channels;
-      } else {
-        src_pos = i * row_size + j * channels;
-      }
-      
-      dst_pos = (i * width + j) * channels;
-      
-      switch (channels) {
-        case 1:
-          output[dst_pos] = input[src_pos];
-          break;
-        case 3:
-          // BGR -> RGB
-          output[dst_pos] = input[src_pos + 2];
-          output[dst_pos + 1] = input[src_pos + 1];
-          output[dst_pos + 2] = input[src_pos];
-          break;
-        case 4:
-          // BGRA -> RGBA
-          output[dst_pos] = input[src_pos + 2];
-          output[dst_pos + 1] = input[src_pos + 1];
-          output[dst_pos + 2] = input[src_pos];
-          output[dst_pos + 3] = input[src_pos + 3];
-          break;
-        default:
-          LOG_ERROR("ReadBMP.UnexpectedNumChannels", "%d", channels);
-          return cv::Mat();
-      }
-    }
-  }
-  
-  return img;
-}
   
 } // namespace NeuralNets
 } // namespace Anki
+

@@ -38,7 +38,7 @@ protected:
     return _shouldStop;
   }
   
-  virtual Anki::Util::ILoggerProvider* GetLoggerProvider() override
+  virtual Util::ILoggerProvider* GetLoggerProvider() override
   {
     const bool colorizeStderrOutput = false; // TODO: Get from Webots proto in simulation?
     _logger.reset(new Util::PrintfLoggerProvider(Util::LOG_LEVEL_DEBUG, colorizeStderrOutput));

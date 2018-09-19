@@ -23,8 +23,8 @@ if(VICOS)
     util
     cti_common
     cti_neuralnets
-    cti_vision_clad               # Just vision CLAD, not the whole enchilada (until VIC-6023 / VIC-3434)
-    ${OPENCV_LIBS}                # NOTE: Order may matter here? (OpenCV before platform libs added below?)
+    cti_vision
+    ${OPENCV_LIBS}
   )
 
   anki_build_strip(TARGET vic-neuralnets)

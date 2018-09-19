@@ -10,6 +10,8 @@
 #  error One of ANKI_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
 #endif
 
+#include "coretech/vision/engine/image.h"
+
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
@@ -17,10 +19,6 @@
 
 #include "gtest/gtest.h"
 #include "json/json.h"
-
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgcodecs/imgcodecs.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 #include <fstream>
 
@@ -120,12 +118,13 @@ GTEST_TEST(NeuralNets, MobileNet)
   {
     const std::string testImageFile = Util::FileUtils::FullFilePath({TestPaths::ImagePath, test.imageFile});
     
-    cv::Mat img = cv::imread(testImageFile);
-    ASSERT_FALSE(img.empty());
-    cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
+    Vision::ImageRGB img;
+    const Result imgLoadResult = img.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, imgLoadResult);
+    img.SetTimestamp(timestamp);
     
     std::list<Vision::SalientPoint> salientPoints;
-    const Result detectResult = neuralNet.Detect(img, timestamp, salientPoints);
+    const Result detectResult = neuralNet.Detect(img, salientPoints);
     ASSERT_EQ(RESULT_OK, detectResult);
     
     for(auto const& salientPoint : salientPoints)
@@ -191,16 +190,16 @@ GTEST_TEST(NeuralNets, PersonDetection)
   
   ASSERT_FALSE(files.empty());
   
-  cv::Mat img;
+  Vision::ImageRGB img;
   TimeStamp_t timestamp = 0;
   for(auto const& file : files)
   {
-    img = cv::imread(file);
-    ASSERT_FALSE(img.empty());
-    cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
+    const Result imgLoadResult = img.Load(file);
+    ASSERT_EQ(RESULT_OK, imgLoadResult);
+    img.SetTimestamp(timestamp);
     
     std::list<Vision::SalientPoint> salientPoints;
-    const Result detectResult = neuralNet.Detect(img, timestamp, salientPoints);
+    const Result detectResult = neuralNet.Detect(img, salientPoints);
     ASSERT_EQ(RESULT_OK, detectResult);
     
     EXPECT_FALSE(salientPoints.empty());
@@ -213,8 +212,8 @@ GTEST_TEST(NeuralNets, PersonDetection)
     
     if(DebugViz::Disable != kDebugViz)
     {
-      cv::Mat dispImg;
-      img.copyTo(dispImg);
+      Vision::ImageRGB dispImg;
+      img.CopyTo(dispImg);
       
       const bool isFailure = salientPoints.empty();
       
@@ -225,15 +224,15 @@ GTEST_TEST(NeuralNets, PersonDetection)
           for(int i=0; i<salientPoint.shape.size(); ++i)
           {
             const int iNext = (i == (salientPoint.shape.size()-1) ? 0 : i+1);
-            const cv::Point pt1(std::round(salientPoint.shape[i].x * (f32)img.cols),
-                                std::round(salientPoint.shape[i].y * (f32)img.rows));
-            const cv::Point pt2(std::round(salientPoint.shape[iNext].x * (f32)img.cols),
-                                std::round(salientPoint.shape[iNext].y * (f32)img.rows));
-            cv::line(dispImg, pt1, pt2, cv::Scalar(0,255,0));
+            const Point2f pt1(salientPoint.shape[i].x * (f32)img.GetNumCols(),
+                              salientPoint.shape[i].y * (f32)img.GetNumRows());
+            const Point2f pt2(salientPoint.shape[iNext].x * (f32)img.GetNumCols(),
+                              salientPoint.shape[iNext].y * (f32)img.GetNumRows());
+            
+            img.DrawLine(pt1, pt2, NamedColors::GREEN);
           }
         }
-        cv::imshow("PersonDetection", dispImg);
-        cv::waitKey();
+        dispImg.Display("PersonDetection", 0);
       }
     }
     

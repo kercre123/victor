@@ -9,9 +9,11 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+#include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/neuralnets/neuralNetModel_interface.h"
+#include "coretech/vision/engine/image_impl.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
@@ -134,13 +136,13 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
   // DEV_ASSERT( !(outputTensor.tensor<float, 2>().Options & Eigen::RowMajor),
   //           "NeuralNetModel.GetLocalizedBinaryClassification.OutputNotRowMajor");
   
-  _detectionGrid.create(_params.numGridRows, _params.numGridCols);
+  _detectionGrid.Allocate(_params.numGridRows, _params.numGridCols);
   
   bool anyDetections = false;
-  for(int i=0; i<_detectionGrid.rows; ++i)
+  for(int i=0; i<_detectionGrid.GetNumRows(); ++i)
   {
-    uint8_t* detectionGrid_i = _detectionGrid.ptr(i);
-    for(int j=0; j<_detectionGrid.cols; ++j)
+    uint8_t* detectionGrid_i = _detectionGrid.GetRow(i);
+    for(int j=0; j<_detectionGrid.GetNumCols(); ++j)
     {
       // Compute the column-major index to get data from the output tensor
       const int outputIndex = j*_params.numGridRows + i;
@@ -160,11 +162,11 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
   
   if(anyDetections)
   {
-    // Someday if we ever link vic-neuralnets against coretech vision, we could use our own connected
-    // components API, but for now, rely directly on OpenCV. Because we want to get average score,
-    // we'll do our own "stats" computation below instead of using connectedComponentsWithStats()
-    const s32 count = cv::connectedComponents(_detectionGrid, _labelsGrid);
-    DEV_ASSERT((_detectionGrid.rows == _labelsGrid.rows) && (_detectionGrid.cols == _labelsGrid.cols),
+    // Because we want to get average score, we'll do our own "stats" computation below instead of using
+    // ConnectedComponentsWithStats()
+    const s32 count = _detectionGrid.GetConnectedComponents(_labelsGrid);
+    DEV_ASSERT((_detectionGrid.GetNumRows() == _labelsGrid.GetNumRows()) &&
+               (_detectionGrid.GetNumCols() == _labelsGrid.GetNumCols()),
                "INeuralNetModel.LocalizedBinaryOutputHelper.MismatchedLabelsGridSize");
     
     if(_params.verbose)
@@ -180,13 +182,13 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
       Point2f centroid;
       int xmin, xmax, ymin, ymax;
     };
-    std::vector<Stat> stats(count, {0,0,{0.f,0.f},_detectionGrid.cols, -1, _detectionGrid.rows, -1});
+    std::vector<Stat> stats(count, {0,0,{0.f,0.f},_detectionGrid.GetNumCols(), -1, _detectionGrid.GetNumRows(), -1});
     
-    for(int i=0; i<_detectionGrid.rows; ++i)
+    for(int i=0; i<_detectionGrid.GetNumRows(); ++i)
     {
-      const uint8_t* detectionGrid_i = _detectionGrid.ptr<uint8_t>(i);
-      const int32_t* labelsGrid_i    = _labelsGrid.ptr<int32_t>(i);
-      for(int j=0; j<_detectionGrid.cols; ++j)
+      const uint8_t* detectionGrid_i = _detectionGrid.GetRow(i);
+      const int32_t* labelsGrid_i    = _labelsGrid.GetRow(i);
+      for(int j=0; j<_detectionGrid.GetNumCols(); ++j)
       {
         const int32_t label = labelsGrid_i[j];
         if(label > 0) // zero is background (not part of any connected component)
@@ -209,8 +211,8 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
     }
     
     // Create a SalientPoint to return for each connected component (skipping background component 0)
-    const float widthScale  = 1.f / static_cast<float>(_detectionGrid.cols);
-    const float heightScale = 1.f / static_cast<float>(_detectionGrid.rows);
+    const float widthScale  = 1.f / static_cast<float>(_detectionGrid.GetNumCols());
+    const float heightScale = 1.f / static_cast<float>(_detectionGrid.GetNumRows());
     for(s32 iComp=1; iComp < count; ++iComp)
     {
       Stat& stat = stats[iComp];

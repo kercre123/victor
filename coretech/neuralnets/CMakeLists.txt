@@ -33,8 +33,8 @@ set(COMMON_LIBS
   jsoncpp
   util
   cti_common
-  cti_vision_clad               # Just vision CLAD, not the whole enchilada
-  ${OPENCV_LIBS}                # NOTE: Order may matter here? (OpenCV before platform libs added below?)
+  cti_vision
+  ${OPENCV_LIBS}
 )
 
 set(PLATFORM_INCLUDES "")

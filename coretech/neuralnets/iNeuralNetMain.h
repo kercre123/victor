@@ -36,6 +36,7 @@ namespace Util {
 }
   
 namespace Vision {
+  class ImageRGB;
   struct SalientPoint;
 }
   
@@ -56,6 +57,7 @@ public:
               const std::string& imageFileToProcess = "");
   
   // Wait for and process images until ShouldShutdown() returns true (is blocking)
+  // (Unless imageFileToProcess was provided in Init(), in which case it is processed and Run completes immediately)
   Result Run();
   
   virtual ~INeuralNetMain();
@@ -88,9 +90,8 @@ private:
   void CleanupAndExit(Result result);
   
   static void GetImage(const std::string& imageFilename,
-                       const std::string timestampFilename,
-                       cv::Mat& img,
-                       TimeStamp_t& timestamp);
+                       const std::string& timestampFilename,
+                       Vision::ImageRGB&  img);
   
   static void ConvertSalientPointsToJson(const std::list<Vision::SalientPoint>& salientPoints,
                                          const bool isVerbose, Json::Value& detectionResults);

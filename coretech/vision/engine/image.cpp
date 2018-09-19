@@ -28,6 +28,8 @@
 
 #endif
 
+#include <fstream>
+
 namespace {
   
 template <typename T>
@@ -73,15 +75,129 @@ namespace Vision {
   
 #pragma mark --- ImageBase ---
   
+  // Helper to read bitmap files when using Image::Load()
+  static cv::Mat ReadBMP(const std::string& input_bmp_name)
+  {
+    std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
+    if (!file) {
+      PRINT_NAMED_ERROR("ReadBMP.FileNotFound", "%s", input_bmp_name.c_str());
+      return cv::Mat();
+    }
+    
+    const auto begin = file.tellg();
+    file.seekg(0, std::ios::end);
+    const auto end = file.tellg();
+    assert(end >= begin);
+    const size_t len = (size_t) (end - begin);
+    
+    // Decode the bmp header
+    const uint8_t* img_bytes = new uint8_t[len];
+    file.seekg(0, std::ios::beg);
+    file.read((char*)img_bytes, len);
+    const int32_t header_size = *(reinterpret_cast<const int32_t*>(img_bytes + 10));
+    const int32_t width = *(reinterpret_cast<const int32_t*>(img_bytes + 18));
+    const int32_t height = *(reinterpret_cast<const int32_t*>(img_bytes + 22));
+    const int32_t bpp = *(reinterpret_cast<const int32_t*>(img_bytes + 28));
+    const int32_t channels = bpp / 8;
+    
+    // there may be padding bytes when the width is not a multiple of 4 bytes
+    // 8 * channels == bits per pixel
+    const int row_size = (8 * channels * width + 31) / 32 * 4;
+    
+    // if height is negative, data layout is top down
+    // otherwise, it's bottom up
+    const bool top_down = (height < 0);
+    const int32_t absHeight = abs(height);
+    
+    // Decode image, allocating tensor once the image size is known
+    cv::Mat img(height, width, CV_8UC(channels));
+    uint8_t* output = img.data;
+    
+    const uint8_t* input = &img_bytes[header_size];
+    
+    for (int i = 0; i < absHeight; i++)
+    {
+      int src_pos;
+      int dst_pos;
+      
+      for (int j = 0; j < width; j++)
+      {
+        if (!top_down) {
+          src_pos = ((absHeight - 1 - i) * row_size) + j * channels;
+        } else {
+          src_pos = i * row_size + j * channels;
+        }
+        
+        dst_pos = (i * width + j) * channels;
+        
+        switch (channels) {
+          case 1:
+            output[dst_pos] = input[src_pos];
+            break;
+          case 3:
+            // BGR -> RGB
+            output[dst_pos] = input[src_pos + 2];
+            output[dst_pos + 1] = input[src_pos + 1];
+            output[dst_pos + 2] = input[src_pos];
+            break;
+          case 4:
+            // BGRA -> RGBA
+            output[dst_pos] = input[src_pos + 2];
+            output[dst_pos + 1] = input[src_pos + 1];
+            output[dst_pos + 2] = input[src_pos];
+            output[dst_pos + 3] = input[src_pos + 3];
+            break;
+          default:
+            PRINT_NAMED_ERROR("ReadBMP.UnexpectedNumChannels", "%d", channels);
+            return cv::Mat();
+        }
+      }
+    }
+    
+    return img;
+  }
+  
   template<typename T>
   Result ImageBase<T>::Load(const std::string& filename)
   {
-    const cv::Mat showableImage = cv::imread(filename, (GetNumChannels() == 1 ?
-                                             CV_LOAD_IMAGE_GRAYSCALE :
-                                             CV_LOAD_IMAGE_COLOR));
+    const std::string ext = filename.substr(filename.size()-3,3);
+    if(ext == "bmp" || ext == "BMP")
+    {
+      if(GetNumChannels() == 3)
+      {
+        // Converts to RGB internally (not BGR), so no need to use the SetFromShowableFormat call below
+        this->get_CvMat_() = ReadBMP(filename);
+      }
+      else
+      {
+        // TODO: provide mechanism to convert to grayscale internally?
+        // Workaround: Caller can load into ImageRGB and then convert to Image.
+        PRINT_NAMED_ERROR("ImageBase.Load.BMPNotSupportedWithSingleChannel",
+                          "Bitmap images must be loaded into 3-channel images.");
+        return RESULT_FAIL;
+      }
+    }
+    else
+    {
+      cv::Mat showableImage;
+      try {
+        showableImage = cv::imread(filename, (GetNumChannels() == 1 ?
+                                              CV_LOAD_IMAGE_GRAYSCALE :
+                                              CV_LOAD_IMAGE_COLOR));
+      }
+      catch(const cv::Exception& e)
+      {
+        PRINT_NAMED_ERROR("ImageBase.Load.CvImreadFailed",
+                          "OpenCV Error: %s", e.what());
+        return RESULT_FAIL;
+      }
+      
+      if(!showableImage.empty())
+      {
+        SetFromShowableFormat(showableImage);
+      }
+    }
     
-    SetFromShowableFormat(showableImage);
-
     if(IsEmpty()) {
       return RESULT_FAIL;
     } else {

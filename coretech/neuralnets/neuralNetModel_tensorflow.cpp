@@ -16,6 +16,7 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/neuralnets/neuralNetModel_tensorflow.h"
+#include "coretech/vision/engine/image_impl.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"
@@ -285,13 +286,14 @@ void NeuralNetModel::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints)
+Result NeuralNetModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints)
 {
   tensorflow::Tensor imageTensor;
 
   if(_params.useGrayscale)
   {
-    cv::cvtColor(img, img, CV_BGR2GRAY);
+    LOG_ERROR("NeuralNetModel.Detect.UseGrayscaleDeprecated", "Now assuming RGB data");
+    return RESULT_FAIL;
   }
 
   const char* typeStr = (_params.useFloatInput ? "FLOAT" : "UINT8");
@@ -299,38 +301,38 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
   if(_params.verbose)
   {
     LOG_INFO("NeuralNetModel.Detect.Resizing", "From [%dx%dx%d] image to [%dx%dx%d] %s tensor",
-             img.cols, img.rows, img.channels(), 
+             img.GetNumCols(), img.GetNumRows(), img.GetNumChannels(),
              _params.inputWidth, _params.inputHeight, (_params.useGrayscale ? 1 : 3), 
              typeStr);
   }
 
-  const auto kResizeMethod = CV_INTER_LINEAR;
+  const auto kResizeMethod = Vision::ResizeMethod::Linear;
 
   if(_params.useFloatInput)
   {
     // Resize uint8 image data, and *then* convert smaller image to float below
     // TODO: Resize and convert directly into the tensor
-    if(img.rows != _params.inputHeight || img.cols != _params.inputWidth)
+    if(img.GetNumRows() != _params.inputHeight || img.GetNumCols() != _params.inputWidth)
     {
-      cv::resize(img, img, cv::Size(_params.inputWidth,_params.inputHeight), 0, 0, kResizeMethod);
+      img.Resize(_params.inputHeight, _params.inputWidth, kResizeMethod);
     } 
     else if(_params.verbose)
     {
       LOG_INFO("NeuralNetModel.Detect.SkipResize", "Skipping actual resize: image already correct size");
     }
-    DEV_ASSERT(img.isContinuous(), "NeuralNetModel.Detect.ImageNotContinuous");
+    DEV_ASSERT(img.IsContinuous(), "NeuralNetModel.Detect.ImageNotContinuous");
 
     imageTensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
       1, _params.inputHeight, _params.inputWidth, img.channels()
     });
 
-    // Scale/shift resized image directly into the tensor data    
-    const auto cvType = (img.channels() == 1 ? CV_32FC1 : CV_32FC3);
+    // Scale/shift resized image directly into the tensor data
+    DEV_ASSERT(img.GetNumChannels() == 3, "NeuralNetModel.Detect.BadNumChannels");
     
-    cv::Mat cvTensor(_params.inputHeight, _params.inputWidth, cvType,
+    cv::Mat cvTensor(_params.inputHeight, _params.inputWidth, CV_32FC3,
                      imageTensor.tensor<float, 4>().data());
 
-    img.convertTo(cvTensor, cvType, 1.f/_params.inputScale, _params.inputShift);
+    img.get_CvMat_().convertTo(cvTensor, CV_32FC3, 1.f/_params.inputScale, _params.inputShift);
   
   }
   else 
@@ -339,18 +341,15 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
       1, _params.inputHeight, _params.inputWidth, img.channels()
     });
 
-    // Resize uint8 input image directly into the uint8 tensor data    
-    cv::Mat cvTensor(_params.inputHeight, _params.inputWidth, 
-                     (img.channels() == 1 ? CV_8UC1 : CV_8UC3),
-                     imageTensor.tensor<uint8_t, 4>().data());
-
-    cv::resize(img, cvTensor, cv::Size(_params.inputWidth, _params.inputHeight), 0, 0, kResizeMethod);
+    // Resize uint8 input image directly into the uint8 tensor data
+    Vision::ImageRGB imgTensor(_params.inputHeight, _params.inputWidth, imageTensor.tensor<uint8_t, 4>().data());
+    img.Resize(imgTensor, kResizeMethod);
   }
     
   if(_params.verbose)
   {
     LOG_INFO("NeuralNetModel.Detect.RunningSession", "Input=[%dx%dx%d], %s, %d output(s)",
-             img.cols, img.rows, img.channels(), typeStr, (int)_params.outputLayerNames.size());
+             img.GetNumCols(), img.GetNumRows(), img.GetNumChannels(), typeStr, (int)_params.outputLayerNames.size());
   }
 
   std::vector<tensorflow::Tensor> outputTensors;
@@ -373,7 +372,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
     {
       DEV_ASSERT(outputTensors.size() == 1, "NeuralNetModel.Detect.Classification.WrongNumOutputTensors");
       const float* outputData = outputTensors[0].tensor<float, 2>().data();
-      ClassificationOutputHelper(outputData, t, salientPoints);
+      ClassificationOutputHelper(outputData, img.GetTimeStamp(), salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::BinaryLocalization:
@@ -387,12 +386,12 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
       
       const float* outputData = outputTensor.tensor<float, 2>().data();
       
-      LocalizedBinaryOutputHelper(outputData, t, 1.f, 0, salientPoints);
+      LocalizedBinaryOutputHelper(outputData, img.GetTimeStamp(), 1.f, 0, salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::AnchorBoxes:
     {
-      GetDetectedObjects(outputTensors, t, salientPoints);  
+      GetDetectedObjects(outputTensors, img.GetTimeStamp(), salientPoints);
       break;
     }
     case NeuralNetParams::OutputType::Segmentation:
@@ -414,7 +413,7 @@ Result NeuralNetModel::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Visio
         return RESULT_FAIL;
       }
       const float* outputData = squeezedTensor.tensor<float, 3>().data();
-      ResponseMapOutputHelper(outputData, t, numberOfChannels, salientPoints);
+      ResponseMapOutputHelper(outputData, img.GetTimeStamp(), numberOfChannels, salientPoints);
       break;
     }
     default:

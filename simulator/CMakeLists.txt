@@ -508,7 +508,7 @@ target_link_libraries(webotsCtrlNeuralNets
   jsoncpp
   util
   cti_common
-  cti_vision_clad               # Just vision CLAD, not the whole enchilada (until VIC-6023 / VIC-3434)
+  cti_vision
   ${OPENCV_LIBS}
   cti_neuralnets
   ${WEBOTS_LIBS}

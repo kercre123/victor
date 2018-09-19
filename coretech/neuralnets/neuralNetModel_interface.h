@@ -12,18 +12,18 @@
 #ifndef __Anki_NeuralNets_NeuralNetModel_Interface_H__
 #define __Anki_NeuralNets_NeuralNetModel_Interface_H__
 
+#include "coretech/common/engine/array2d.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/neuralnets/neuralNetParams.h"
+#include "coretech/vision/engine/image.h"
 
 #include "clad/types/salientPointTypes.h"
 #include "json/json.h"
 
-#include "opencv2/core/core.hpp"
-
 #include <list>
 #include <vector>
 
-namespace Anki {
+namespace Anki {  
 namespace NeuralNets {
     
 class INeuralNetModel
@@ -48,8 +48,9 @@ public:
   // Load the model/labels files specified in the config and set up assocated parameters
   Result LoadModel(const std::string& modelPath, const Json::Value& config);
   
-  // Run forward inference on the given image/timestamp and return any SalientPoints found
-  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<Vision::SalientPoint>& salientPoints);
+  // Run forward inference on the given image and return any SalientPoints found
+  // Note that the input imge could be modified (e.g. resized in place)
+  Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints);
   
 protected:
   
@@ -83,8 +84,8 @@ protected:
   std::vector<std::string>                  _labels;
   
   // For OutputType::BinaryLocalization
-  cv::Mat_<uint8_t>                         _detectionGrid;
-  cv::Mat_<int32_t>                         _labelsGrid;
+  Vision::Image                             _detectionGrid;
+  Array2d<int32_t>                          _labelsGrid;
 
 private:
 
