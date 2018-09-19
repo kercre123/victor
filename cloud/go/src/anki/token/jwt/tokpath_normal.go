@@ -2,6 +2,4 @@
 
 package jwt
 
-func tokenPath() string {
-	return "/tmp/victoken"
-}
+const DefaultTokenPath = "/tmp/victoken"

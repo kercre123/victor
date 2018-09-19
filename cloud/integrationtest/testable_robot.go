@@ -7,6 +7,7 @@ import (
 	"anki/log"
 	"anki/logcollector"
 	"anki/token"
+	"anki/token/jwt"
 	"anki/voice"
 	"clad/cloud"
 	"context"
@@ -67,6 +68,8 @@ func voiceServiceOptions(ms, lex bool) []voice.Option {
 }
 
 type testableRobot struct {
+	id int
+
 	io      voice.MsgIO
 	process *voice.Process
 
@@ -133,10 +136,16 @@ func (r *testableRobot) closeClients() {
 	}
 }
 
-func (r *testableRobot) run() {
-	tokener := token.GetAccessor()
+func (r *testableRobot) run(urlConfigFile string) {
+	if err := config.SetGlobal(urlConfigFile); err != nil {
+		log.Println("Could not load server config! This is not good!:", err)
+	}
 
-	var options []cloudproc.Option
+	path := fmt.Sprintf("%s_%04d", jwt.DefaultTokenPath, r.id)
+	identityProvider := jwt.NewIdentityProvider(path)
+	tokener := token.GetAccessor(identityProvider)
+
+	options := []cloudproc.Option{cloudproc.WithIdentityProvider(identityProvider)}
 
 	options = append(options, cloudproc.WithVoice(r.process))
 	options = append(options, cloudproc.WithVoiceOptions(voiceServiceOptions(false, false)...))

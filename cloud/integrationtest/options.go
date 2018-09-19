@@ -10,7 +10,7 @@ import (
 type options struct {
 	envName *string
 
-	defaultTestID *int
+	testID *int
 
 	enableAccountCreation *bool
 
@@ -53,7 +53,7 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "loadtest",
 	})
 
-	options.defaultTestID = app.Int(cli.IntOpt{
+	options.testID = app.Int(cli.IntOpt{
 		Name:   "i test-id",
 		Desc:   "Test ID (used for identifying user)",
 		EnvVar: "TEST_ID",
@@ -162,8 +162,10 @@ func (o *options) finalizeIdentity() {
 	testID, err := getUniqueTestID(*o.redisAddress)
 	if err == nil {
 		testID %= *o.numberOfCerts
+		*o.testID = testID
 	} else {
-		testID = *o.defaultTestID
+		testID = *o.testID
+
 		fmt.Printf("Could not assign unique testID (defaulting to %d), error: %v\n", testID, err)
 	}
 
