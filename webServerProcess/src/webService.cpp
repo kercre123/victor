@@ -64,6 +64,9 @@ enum {
   WebSocketsTypeCloseConnection = 0x8
 };
 
+// 256KB to accommodate output of animation names
+static const size_t kBigBufferSize = 256*1024;
+
 class ExternalOnlyConsoleChannel : public Anki::Util::IConsoleChannel
 {
 public:
@@ -155,7 +158,7 @@ public:
 
 private:
 
-  static const size_t kTempBufferSize = 1024;
+  static const size_t kTempBufferSize = kBigBufferSize;
 
   char*     _tempBuffer;
   char*     _outText;
@@ -1132,8 +1135,7 @@ void WebService::Update()
 
             Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
-              // 256KB to accommodate output of animation names
-              char outText[256*1024+1] = {0};
+              char outText[kBigBufferSize + 1] = {0};
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);

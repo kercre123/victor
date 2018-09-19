@@ -48,6 +48,11 @@
     function onCheckboxClickHandler(element){
         $.post("consolevarset", {key: element.id, value: element.checked}, function(result){});
     }
+
+    function newlineToBr(str) {
+      var breakTag = '<br>';
+      return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
+    }
     
     $(function() {
         $(".slider").each(function() {
@@ -104,7 +109,9 @@
             console.log("Call consolefunccall with func:" + func + " and args:" + args);
             // Passing as string (instead of json object) prevents encoding of commas
             var optionsString = "func=" + func + "&args=" + args;
-            $.post("consolefunccall", optionsString, function(result){});
+            $.post("consolefunccall", optionsString, function(result){
+              $("#id_consolefunc_result").html(newlineToBr(result));
+            });
         })
     });
 // -- generated script --
@@ -119,6 +126,8 @@
         <h3 class="ui-widget-header" style="text-align: center; margin: 0;">Console Vars and Functions</h3>
         <div id="main">
 <!-- generated html -->
+        <div>Output from last console func call:</div><br>
+        <div id='id_consolefunc_result'></div>
         </div>
     </div>
 </body>
