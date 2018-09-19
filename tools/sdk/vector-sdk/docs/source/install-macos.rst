@@ -6,6 +6,16 @@ Installation - macOS / OS X
 
 This guide provides instructions on installing the Vector SDK for computers running with a macOS operating system.
 
+^^^^^^^^^^^^^
+Prerequisites
+^^^^^^^^^^^^^
+
+* Your Vector robot has been set up with the Vector companion app.
+* You have successfully created an Anki account.
+* Vector is powered on.
+* Vector is connected to the same network as your computer.
+
+
 ^^^^^^^^^^^^^^^^^^^
 Python Installation
 ^^^^^^^^^^^^^^^^^^^
@@ -18,12 +28,32 @@ Python Installation
 
     brew install python3
 
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Vector Authentication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To authenticate with the robot, type the following into the Terminal window:
+
+    cd vector_sdk
+    ./configure.py
+
+You will be prompted for your robot's name, ip address and serial number. You will also be asked for your Anki login and password.
+
+.. note:: Running `configure.py` will automatically download the Vector robot certificate to your computer and store credentials to allow you to connect to Vector. These credentials will be stored under your home directory in folder `.anki-vector`.
+
+.. warning:: These credentials give full access to your robot, including camera stream, audio stream and data. Do not share these credentials.
+
+
+
 ^^^^^^^^^^^^^^^
 Troubleshooting
 ^^^^^^^^^^^^^^^
 
-Please see the :ref:`trouble` section of the Initial Setup page for tips, or visit the `Vector SDK Forums <https://forums.anki.com/>`_ to ask questions, find solutions, or for general discussion.
+Please see the :doc:`Troubleshooting </troubleshooting>` page for tips, or visit the `Anki SDK Forums <https://forums.anki.com/>`_ to ask questions, find solutions, or for general discussion.
 
 ----
 
-`Click here to return to the Vector Developer website. <http://developer.anki.com>`_
+`Terms and Conditions <https://www.anki.com/en-us/company/terms-and-conditions>`_ and `Privacy Policy <https://www.anki.com/en-us/company/privacy>`_
+
+`Click here to return to the Anki Developer website. <http://developer.anki.com>`_

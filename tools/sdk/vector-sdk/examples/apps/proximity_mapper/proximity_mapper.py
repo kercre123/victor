@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Maps a region around victor using the proximity sensor.
+"""Maps a region around Vector using the proximity sensor.
 
 Vector will turn in place and use his sensor to detect walls in his
 local environment.  These walls are displayed in a 3d viewer.  The

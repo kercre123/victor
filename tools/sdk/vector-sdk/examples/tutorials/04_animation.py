@@ -15,8 +15,6 @@
 # limitations under the License.
 
 """Play an animation on Vector
-
-Play an animation by name.
 """
 
 import anki_vector

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Management of the connection to and from a Vector Robot
+Management of the connection to and from Vector
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -34,7 +34,7 @@ class CONTROL_PRIORITY_LEVEL(Enum):
     """Enum used to specify the priority level that the program requests to run at"""
 
     #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
-    #: Victor may safely react to events such as falling.
+    #: Vector may safely react to events such as falling.
     OVERRIDE_ALL = protocol.ControlRequest.OVERRIDE_ALL  # pylint: disable=no-member
 
     #: Runs below Mandatory Physical Reactions such as tucking Vector's head and lift during a fall,

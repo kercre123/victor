@@ -42,7 +42,7 @@ def main():
 
             robot.world.flash_cube_lights()
 
-        print("for the next 8 second, please tap, move, or allow victor to observe the cube, events will be logged to console.")
+        print("for the next 8 second, please tap, move, or allow Vector to observe the cube, events will be logged to console.")
         for _ in range(16):
             if connected_cube:
                 print(connected_cube)

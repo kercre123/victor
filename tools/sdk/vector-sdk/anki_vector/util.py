@@ -52,6 +52,8 @@ except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
 # TODO Move to the robot class
+
+
 def parse_command_args(parser: argparse.ArgumentParser = None):
     """
     Parses command line arguments
@@ -754,22 +756,22 @@ class ImageRect:
 
     @property
     def x_top_left(self) -> float:
-        """The top left x value of where the object was last visible within Victor's camera view."""
+        """The top left x value of where the object was last visible within Vector's camera view."""
         return self._x_top_left
 
     @property
     def y_top_left(self) -> float:
-        """The top left y value of where the object was last visible within Victor's camera view."""
+        """The top left y value of where the object was last visible within Vector's camera view."""
         return self._y_top_left
 
     @property
     def width(self) -> float:
-        """The width of the object from when it was last visible within Victor's camera view."""
+        """The width of the object from when it was last visible within Vector's camera view."""
         return self._width
 
     @property
     def height(self) -> float:
-        """The height of the object from when it was last visible within Victor's camera view."""
+        """The height of the object from when it was last visible within Vector's camera view."""
         return self._height
 
 
