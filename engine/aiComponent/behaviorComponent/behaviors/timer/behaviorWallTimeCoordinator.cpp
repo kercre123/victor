@@ -104,9 +104,8 @@ void BehaviorWallTimeCoordinator::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
-  StartTTSGeneration();
-  struct tm unused;
-  if(WallTime::getInstance()->GetApproximateLocalTime(unused)){
+  if(WallTime::getInstance()->GetApproximateLocalTime(_dVars.time)){
+    StartTTSGeneration();
     TransitionToFindFaceInFront();
   }else{
     TransitionToICantDoThat();
@@ -171,6 +170,8 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
   };
   _iConfig.showWallTime->SetShowClockCallback(playUtteranceCallback);
 
+  _iConfig.showWallTime->SetOverrideDisplayTime(_dVars.time);
+
   ANKI_VERIFY(_iConfig.showWallTime->WantsToBeActivated(),
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
   DelegateIfInControl(_iConfig.showWallTime.get(), [this](){
@@ -182,15 +183,10 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::StartTTSGeneration()
 {
-  struct tm localTime;
-  if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
-    return;
-  }
-
   const auto& settingsManager = GetBEI().GetSettingsManager();
   const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(external_interface::RobotSetting::clock_24_hour);
 
-  auto textOfTime = GetTTSStringForTime(localTime, clockIs24Hour);
+  auto textOfTime = GetTTSStringForTime(_dVars.time, clockIs24Hour);
 
   const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
   const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;

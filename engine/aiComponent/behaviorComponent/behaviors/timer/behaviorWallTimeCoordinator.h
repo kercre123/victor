@@ -61,6 +61,7 @@ private:
     bool shouldSayTime;
     uint8_t utteranceID;
     UtteranceState  utteranceState;
+    struct tm time;
   };
 
   InstanceConfig _iConfig;

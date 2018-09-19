@@ -25,10 +25,16 @@ class BehaviorDisplayWallTime : public BehaviorProceduralClock
 public: 
   virtual ~BehaviorDisplayWallTime();
 
+  // override the time that is displayed the next time this behavior is called. This will automatically be
+  // cleared after this behavior activated
+  void SetOverrideDisplayTime(struct tm& time);
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorDisplayWallTime(const Json::Value& config);  
+  explicit BehaviorDisplayWallTime(const Json::Value& config);
+
+  virtual void OnBehaviorDeactivated() override;
 
   virtual void GetBehaviorOperationModifiersProceduralClock(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const override;
@@ -39,6 +45,10 @@ protected:
   virtual bool ShouldDimLeadingZeros() const override;
 
 private:
+
+  bool _hasTimeOverride;
+  struct tm _timeOverride;
+
   BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
 
   // Checks to see whether to display the time as 12 vs 24 hour clock
