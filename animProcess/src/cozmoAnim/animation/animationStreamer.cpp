@@ -123,7 +123,7 @@ namespace Vector {
       const int channels = tga.GetNumChannels();
       if (width != 256 || height != 1) {
         const std::string html = std::string("<html>\n") +filename+" must be either a 256x1 image file\n" + "</html>\n";
-        context->channel->WriteLog(html.c_str());
+        context->channel->WriteLog("%s", html.c_str());
       } else {
         for(int channel = 0; channel < 3; ++channel) {
           // greyscale: offset = 0 always, RGB and RGBA: offset is channel, A is ignored
@@ -141,17 +141,17 @@ namespace Vector {
       std::vector<uint8_t> tga = Anki::Util::FileUtils::ReadFileAsBinary(cacheFilename);
       if(tga.size() < 18) {
         const std::string html = std::string("<html>\n") +filename+" is not a .tga file\n" + "</html>\n";
-        context->channel->WriteLog(html.c_str());
+        context->channel->WriteLog("%s", html.c_str());
       } else {
         const int width = tga[12]+tga[13]*256;
         const int height = tga[14]+tga[15]*256;
         const int bytesPerPixel = tga[16] / 8;
         if(tga[2] != 2 && tga[2] != 3) {
           const std::string html = std::string("<html>\n") +filename+" is not an uncompressed, true-color or grayscale .tga file\n" + "</html>\n";
-          context->channel->WriteLog(html.c_str());
+          context->channel->WriteLog("%s", html.c_str());
         } else if (width != 256 || height != 1) {
           const std::string html = std::string("<html>\n") +filename+" must be a 256x1 .tga file\n" + "</html>\n";
-          context->channel->WriteLog(html.c_str());
+          context->channel->WriteLog("%s", html.c_str());
         } else {
           for(int channel = 0; channel < 3; ++channel) {
             // greyscale: offset = 0 always, RGB and RGBA: offset is channel, A is ignored
@@ -378,7 +378,7 @@ namespace Vector {
       html = std::string("Capture already in progress as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
     }
 
-    context->channel->WriteLog(html.c_str());
+    context->channel->WriteLog("%s", html.c_str());
   }
 
   CONSOLE_FUNC(CaptureFace, "Face", optional const char* filename, optional int numFrames);

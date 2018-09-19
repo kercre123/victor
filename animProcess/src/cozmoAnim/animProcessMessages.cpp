@@ -106,7 +106,7 @@ namespace {
     for(const auto& name : names) {
       std::string url = "consolefunccall?func=playanimation&args="+name+"+1";
       std::string html = "<a href=\""+url+"\">"+name+"</a>&nbsp\n";
-      context->channel->WriteLog(html.c_str());
+      context->channel->WriteLog("%s", html.c_str());
     }
     context->channel->WriteLog("</html>\n");
   }
@@ -128,7 +128,7 @@ namespace {
       char numLoopsStr[4+1];
       snprintf(numLoopsStr, sizeof(numLoopsStr), "%d", (numLoops > 9999) ? 9999 : numLoops);
       std::string text = std::string("Playing ")+name+" "+numLoopsStr+" times<br>";
-      context->channel->WriteLog(text.c_str());
+      context->channel->WriteLog("%s", text.c_str());
     } else {
       context->channel->WriteLog("PlayAnimation name not specified.");
     }
@@ -154,7 +154,7 @@ namespace {
 
       std::string text = "Adding animation ";
       text += animationPath;
-      context->channel->WriteLog(text.c_str());
+      context->channel->WriteLog("%s", text.c_str());
     } else {
       context->channel->WriteLog("AddAnimation file not specified.");
     }
@@ -164,7 +164,7 @@ namespace {
   {
     const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
     context->channel->WriteLog("<html>\n");
-    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("%s", currentAnimation.c_str());
     context->channel->WriteLog("</html>\n");
   }
 
@@ -173,7 +173,7 @@ namespace {
     const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
     _animStreamer -> Abort();
     context->channel->WriteLog("<html>\n");
-    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("%s", currentAnimation.c_str());
     context->channel->WriteLog("</html>\n");
   }
 
@@ -512,7 +512,7 @@ void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetCo
   bc.SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
                       msg.status == ConnectionStatus::SHOW_PRE_PIN ||
                       msg.status == ConnectionStatus::SHOW_PIN));
-    
+
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
