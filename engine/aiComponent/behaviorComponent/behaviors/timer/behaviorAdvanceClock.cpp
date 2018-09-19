@@ -30,6 +30,13 @@ const int   kUpdateMsgBatchSize      = 10;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorAdvanceClock::DynamicVariables::DynamicVariables()
+: sendingCompositeImageUpdates(false)
+, compositeImageUpdatesSent(0)
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAdvanceClock::BehaviorAdvanceClock(const Json::Value& config)
 : BehaviorProceduralClock(config)
 {
@@ -65,8 +72,14 @@ void BehaviorAdvanceClock::SetAdvanceClockParams(int startTime_sec, int endTime_
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAdvanceClock::OnProceduralClockActivatedInternal()
+{
+  _dVars = DynamicVariables();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAdvanceClock::UpdateProceduralClockInternal(){
-  if(_sendingCompositeImageUpdates){
+  if(_dVars.sendingCompositeImageUpdates){
     SendCompositeImageUpdateBatch();
   }
 }
@@ -74,8 +87,8 @@ void BehaviorAdvanceClock::UpdateProceduralClockInternal(){
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAdvanceClock::TransitionToShowClockInternal()
 {
-  _compositeImageUpdatesSent = 0;
-  _sendingCompositeImageUpdates = true;
+  _dVars.compositeImageUpdatesSent = 0;
+  _dVars.sendingCompositeImageUpdates = true;
   SendCompositeImageUpdateBatch();
 
   {
@@ -98,9 +111,9 @@ void BehaviorAdvanceClock::TransitionToShowClockInternal()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAdvanceClock::SendCompositeImageUpdateBatch(){
-  for(int i = 0; (i < kUpdateMsgBatchSize) && _sendingCompositeImageUpdates; i++){
-    BuildAndDisplayProceduralClock(_compositeImageUpdatesSent, _compositeImageUpdatesSent*ANIM_TIME_STEP_MS);   
-    _sendingCompositeImageUpdates = ++_compositeImageUpdatesSent < GetTotalNumberOfUpdates();
+  for(int i = 0; (i < kUpdateMsgBatchSize) && _dVars.sendingCompositeImageUpdates; i++){
+    BuildAndDisplayProceduralClock(_dVars.compositeImageUpdatesSent, _dVars.compositeImageUpdatesSent*ANIM_TIME_STEP_MS);   
+    _dVars.sendingCompositeImageUpdates = ++_dVars.compositeImageUpdatesSent < GetTotalNumberOfUpdates();
   }
 }
 

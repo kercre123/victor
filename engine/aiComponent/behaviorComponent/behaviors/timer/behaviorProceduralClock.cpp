@@ -168,6 +168,8 @@ void BehaviorProceduralClock::OnBehaviorActivated()
 {
   _lifetimeParams = LifetimeParams();
 
+  OnProceduralClockActivatedInternal();
+
   if(_instanceParams.shouldTurnToFace && UpdateTargetFace().IsValid()){
     TransitionToTurnToFace();
   }else{
