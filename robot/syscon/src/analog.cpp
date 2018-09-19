@@ -245,15 +245,15 @@ static bool handleTemperature() {
   }
 
   // Our filtered temp is cool enough to reset the counter
-  if (temperature < 40) {
+  if (temperature < 45) {
     temp_alarm = TEMP_ALARM_SAFE;
     if (heat_counter > 0) heat_counter--;
   } else {
     // Start processing our overheat alarms
     bool disable_vmain = false
       || alarmTimer<TEMP_ALARM_HOT, MAX_HEAT_COUNTDOWN>(temperature, 60) // Fire immediately
-      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, 45) // Fire in ~2H
-      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 40) // Fire in ~4H
+      || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, 50) // Fire in ~2H
+      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 45) // Fire in ~4H
       ;
 
     if (overheated == 0 && disable_vmain) {
