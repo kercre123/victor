@@ -1,0 +1,54 @@
+origin ./fixture0002.log line 4
+
+[000.004769] >>logstart [TEST:START]
+[000.004931] fixture,hw,1,2.0,serial,3,003,seq,00004
+[000.005042] fixture,build,Victor PVT,Jul  2 2018 18:43:42
+[000.005148] fixture,fw,029,release,mode,12,HEAD1-OL
+[000.005253] fixture,rtc,0,0000000000,Thu Jan 1 00:00 1970
+[000.005356] [RUN:1/4]
+[000.005460] >>lcdshow 1 b 01/04
+[001.045357] Force USB Boot
+[001.246201] VBAT startup current: peak 61mA, avg 13mA (108 samples)
+[001.446150] VEXT startup current: peak 0mA, avg -11mA (108 samples)
+[001.446335] [RUN:2/4]
+[001.446445] >>lcdshow 1 b 02/04
+[001.504889] >>dutprogram 150 00100000 0001 0001 nocert nos
+[001.505193] -BEGIN SHELL- "./headprogram 00100000 0001 0001 nocert nos" (150s)
+[001.593058] headprogram esn 00100000 hwvers 0001 model 0001
+[001.821743] cloud cert disabled
+[001.903932] os write disabled
+[001.924051] otg mode peripheral
+[003.162182] emmcdl/factory.img is not a block special device.
+[003.165174] Proceed anyway? (y,n) Filesystem label=
+[003.165337] OS type: Linux
+[003.165459] Block size=1024 (log=0)
+[003.165576] Fragment size=1024 (log=0)
+[003.165691] Stride=0 blocks, Stripe width=0 blocks
+[003.165808] 1024 inodes, 4096 blocks
+[003.165970] 204 blocks (4.98%) reserved for the super user
+[003.166086] First data block=1
+[003.166200] Maximum filesystem blocks=4194304
+[003.166310] 1 block group
+[003.166422] 8192 blocks per group, 8192 fragments per group
+[003.166532] 1024 inodes per group
+[003.166640] 
+[003.167278] Allocating group tables: 0/1   done                            
+[003.168009] Writing inode tables: 0/1   done                            
+[003.180180] Creating journal (1024 blocks): done
+[003.336889] Writing superblocks and filesystem accounting information: 0/1   done
+[003.337153] 
+[003.447364] wrote emmcdl/emr.img with ESN=0x00100000, hwver=0x0001, model=0x0001
+[003.449441] CLOUD CERT DISABLED
+[003.493508] Bus 001 Device 002: ID 05c6:9008
+[003.493694] Bus 001 Device 001: ID 1d6b:0002
+[003.504710] OS WRITE DISABLED
+[003.504936] --END SHELL-- "./headprogram 00100000 0001 0001 nocert nos"
+[003.507764] <<dutprogram 0 [2002ms]
+[003.507857] [RUN:3/4]
+[003.507924] >>lcdshow 1 b 03/04
+[009.658932] blow secdat fuses...done
+[009.758540] [RUN:4/4]
+[009.758723] >>lcdshow 1 b 04/04
+[009.804460] <flex> ESN 00100000 </flex>
+[009.804726] [RESULT:000]
+[009.804858] [TEST:END]

@@ -1,0 +1,53 @@
+origin ./fixture0001.log line 113
+
+[000.004749] >>logstart [TEST:START]
+[000.004930] fixture,hw,1,2.0,serial,3,003,seq,00004
+[000.005062] fixture,build,Victor PVT,Jul  2 2018 18:43:42
+[000.005190] fixture,fw,029,release,mode,12,HEAD1-OL
+[000.005314] fixture,rtc,0,0000000000,Thu Jan 1 00:00 1970
+[000.005438] [RUN:1/4]
+[000.005562] >>lcdshow 1 b 01/04
+[001.060588] Force USB Boot
+[001.262447] VBAT startup current: peak 133mA, avg 15mA (108 samples)
+[001.463622] VEXT startup current: peak 0mA, avg -11mA (108 samples)
+[001.463936] [RUN:2/4]
+[001.464075] >>lcdshow 1 b 02/04
+[001.517394] >>dutprogram 150 00100000 0001 0001 nocert nos
+[001.517718] -BEGIN SHELL- "./headprogram 00100000 0001 0001 nocert nos" (150s)
+[001.593564] headprogram esn 00100000 hwvers 0001 model 0001
+[001.798708] cloud cert disabled
+[001.836722] os write disabled
+[001.940482] emmcdl/factory.img is not a block special device.
+[001.943620] Proceed anyway? (y,n) Filesystem label=
+[001.943712] OS type: Linux
+[001.943767] Block size=1024 (log=0)
+[001.943819] Fragment size=1024 (log=0)
+[001.943874] Stride=0 blocks, Stripe width=0 blocks
+[001.943930] 1024 inodes, 4096 blocks
+[001.943983] 204 blocks (4.98%) reserved for the super user
+[001.944035] First data block=1
+[001.944088] Maximum filesystem blocks=4194304
+[001.944139] 1 block group
+[001.944193] 8192 blocks per group, 8192 fragments per group
+[001.944243] 1024 inodes per group
+[001.944309] 
+[001.944401] Allocating group tables: 0/1   done                            
+[001.944460] Writing inode tables: 0/1   done                            
+[001.957405] Creating journal (1024 blocks): done
+[002.124808] Writing superblocks and filesystem accounting information: 0/1   done
+[002.125270] 
+[002.251774] wrote emmcdl/emr.img with ESN=0x00100000, hwver=0x0001, model=0x0001
+[002.253727] CLOUD CERT DISABLED
+[002.302023] Bus 001 Device 006: ID 05c6:9008
+[002.302207] Bus 001 Device 001: ID 1d6b:0002
+[002.313542] OS WRITE DISABLED
+[002.313779] --END SHELL-- "./headprogram 00100000 0001 0001 nocert nos"
+[002.317866] <<dutprogram 0 [798ms]
+[002.317961] [RUN:3/4]
+[002.318028] >>lcdshow 1 b 03/04
+[008.472526] blow secdat fuses...done
+[008.572047] [RUN:4/4]
+[008.572404] >>lcdshow 1 b 04/04
+[008.623024] <flex> ESN 00100000 </flex>
+[008.623736] [RESULT:000]
+[008.624214] [TEST:END]
