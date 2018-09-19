@@ -45,12 +45,12 @@ var stsCache stsCredentialsCache
 // used. The only current use (uploading of log files) is not time critical.
 // In the future we may implement a pro-active refreshing mechanism (similar
 // to the one in refresher.go).
-func getStsCredentials() (*credentials.Credentials, error) {
+func getStsCredentials(accessor Accessor) (*credentials.Credentials, error) {
 	if !stsCache.expired() && stsCache.credentials != nil {
 		return stsCache.credentials, nil
 	}
 
-	perRPCCreds, err := GetAccessor().Credentials()
+	perRPCCreds, err := accessor.Credentials()
 	if err != nil {
 		return nil, err
 	}

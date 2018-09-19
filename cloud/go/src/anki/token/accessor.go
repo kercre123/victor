@@ -16,7 +16,9 @@ type Accessor interface {
 	UserID() string
 }
 
-type accessor struct{}
+type accessor struct {
+	identityProvider *jwt.IdentityProvider
+}
 
 func (accessor) Credentials() (gc.PerRPCCredentials, error) {
 	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
@@ -31,20 +33,20 @@ func (accessor) Credentials() (gc.PerRPCCredentials, error) {
 	return tokenMetadata(resp.GetJwt().JwtToken), nil
 }
 
-func (accessor) GetStsCredentials() (*ac.Credentials, error) {
-	return getStsCredentials()
+func (a accessor) GetStsCredentials() (*ac.Credentials, error) {
+	return getStsCredentials(a)
 }
 
-func (accessor) UserID() string {
-	token := jwt.GetToken()
+func (a accessor) UserID() string {
+	token := a.identityProvider.GetToken()
 	if token == nil {
 		return ""
 	}
 	return token.UserID()
 }
 
-func GetAccessor() Accessor {
-	return accessor{}
+func GetAccessor(identityProvider *jwt.IdentityProvider) Accessor {
+	return accessor{identityProvider}
 }
 
 func tokenMetadata(jwtToken string) util.MapCredentials {
