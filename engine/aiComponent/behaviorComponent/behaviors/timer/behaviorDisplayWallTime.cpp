@@ -39,7 +39,7 @@ BehaviorDisplayWallTime::~BehaviorDisplayWallTime()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDisplayWallTime::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
+void BehaviorDisplayWallTime::GetBehaviorOperationModifiersProceduralClock( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenOffTreads = true;
 }

@@ -30,7 +30,7 @@ protected:
   friend class BehaviorFactory;
   explicit BehaviorDisplayWallTime(const Json::Value& config);  
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers&) const override;
+  virtual void GetBehaviorOperationModifiersProceduralClock(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const override;
 
   virtual void TransitionToShowClockInternal() override;
