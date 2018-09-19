@@ -156,25 +156,15 @@ ssize_t LocalUdpClient::Send(const char* data, size_t size)
 
   //LOG_DEBUG("LocalUdpClient.Send", "Sending %zu bytes", size);
 
-  int retry = 5;
-  while(retry > 0) {
-    const ssize_t bytes_sent = send(_socketfd, data, size, 0);
+  const ssize_t bytes_sent = send(_socketfd, data, size, 0);
 
-    if (bytes_sent != size) {
-      if (errno == EDEADLK || errno == EAGAIN) {
-        --retry;
-        usleep(64); // 64ms or 2x a 32ms update loop
-      } else {
-        break;
-      }
-    } else {
-      return bytes_sent;
-    }
+  if (bytes_sent != size) {
+    LOG_ERROR("LocalUdpClient.Send", "Send error, disconnecting (%s)", strerror(errno));
+    Disconnect();
+    return -1;
   }
 
-  LOG_ERROR("LocalUdpClient.Send", "Send error, disconnecting %d (%s)", errno, strerror(errno));
-  Disconnect();
-  return -1;
+  return bytes_sent;
 }
 
 ssize_t LocalUdpClient::Recv(char* data, size_t maxSize)
