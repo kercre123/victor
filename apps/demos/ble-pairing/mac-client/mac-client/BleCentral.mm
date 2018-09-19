@@ -461,6 +461,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     Clad::SendRtsMessage<Anki::Vector::ExternalComms::RtsChallengeMessage>(self, _commVersion, 000000);
     _rtsState = Raw;
     
+    free(msgBuffer);
     return;
   }
   
@@ -1852,6 +1853,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     const char* authorizedPrompt = "☁️  ";
     const char* factoryPrompt = "🏭  ";
     
+    const char* shellNameCStr = [shellName UTF8String];
+    
     if(_commVersion > 2) {
       if(!_hasOwner) {
         printf("  => \033[0;43;30mRobot does not have an Anki account owner yet. Cloud services will not work. Please use `anki-auth SESSION_TOKEN`.\033[0m\n");
@@ -1863,9 +1866,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     // Start shell
     while(true) {
       if(_commVersion > 2) {
-        sprintf(prompt, "%s\033[0;%dmvector-%s#\033[0m ", ((!_hasOwner)?unownedPrompt:(_hasAuthed?authorizedPrompt:unauthorizedPrompt)), vColor, [shellName UTF8String]);
+        sprintf(prompt, "%s\033[0;%dmvector-%s#\033[0m ", ((!_hasOwner)?unownedPrompt:(_hasAuthed?authorizedPrompt:unauthorizedPrompt)), vColor, shellNameCStr);
       } else {
-        sprintf(prompt, "%s\033[0;%dmvector-%s#\033[0m ", factoryPrompt, vColor, [shellName UTF8String]);
+        sprintf(prompt, "%s\033[0;%dmvector-%s#\033[0m ", factoryPrompt, vColor, shellNameCStr);
       }
       
       if(!_readyForNextCommand) {
