@@ -235,7 +235,8 @@ PATTERNS = {
   'BI': '^[Bb][Ii][- ]?(\d+)[\w:-]*(.+)',
   'VIC': '^[Vv][Ii][Cc][- ]?(\d+)[\w:-]*(.+)',
   'CLAI': '^[Cc][Ll][Aa][Ii][- ]?(\d+)[\w:-]*(.+)',
-  'SAI': '^[Ss][Aa][Ii][- ]?(\d+)[\w:-]*(.+)'
+  'SAI': '^[Ss][Aa][Ii][- ]?(\d+)[\w:-]*(.+)',
+  'SAIP': '^[Ss][Aa][Ii][Pp][- ]?(\d+)[\w:-]*(.+)'
 }
 
 def append_sheet_commits(options, commits):
