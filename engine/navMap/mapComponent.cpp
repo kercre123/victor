@@ -1071,20 +1071,6 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
 
         // store in as a reported pose
         _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
-
-        // since we added an obstacle, any borders we saw while dropping it should not be interesting
-        // const float kScaledQuadToIncludeEdges = 2.0f;
-        // kScaledQuadToIncludeEdges: we want to consider interesting edges around this obstacle as non-interesting,
-        // since we know they belong to this object. The quad to search for these edges has to be equal to the
-        // obstacle quad plus the margin in which we would find edges. For example, a good tight limit would be the size
-        // of the smallest quad in the memory map, since edges should be adjacent to the cube. This quad however is merely
-        // to limit the search for interesting edges, so it being bigger than the tightest threshold should not
-        // incur in a big penalty hit
-        // const Quad2f& edgeQuad = newQuad.GetScaled(kScaledQuadToIncludeEdges);
-        // if (memoryMap)
-        // {
-        //   ReviewInterestingEdges(edgeQuad, memoryMap);
-        // }
       }
     }
     else
