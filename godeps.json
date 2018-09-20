@@ -121,5 +121,9 @@
   "github.com/satori/go.uuid": {
     "commit": "36e9d2ebbde5e3f13ab2e25625fd453271d6522e",
     "branch": "master"
+  },
+  "github.com/stretchr/testify": {
+    "commit": "f35b8ab0b5a2cef36673838d662e249dd9c94686",
+    "branch": "master"
   }
 }

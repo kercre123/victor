@@ -57,7 +57,7 @@ endmacro()
 
 # internal use - execute go build with the environment
 # set up in `__go_compile_env`, `__go_build_flags`, and `__go_deps`
-macro(__anki_run_go_build target_name extra_deps)
+macro(__anki_setup_go_build target_name)
 
   set(__include_dirs $<TARGET_PROPERTY:${target_name}_fake_dep,INCLUDE_DIRECTORIES>)
   set(__link_libs $<TARGET_PROPERTY:${target_name}_fake_dep,LINK_LIBRARIES>)
@@ -97,13 +97,25 @@ macro(__anki_run_go_build target_name extra_deps)
   endif()
   set(__go_build_ldflags $<TARGET_PROPERTY:${target_name},GO_LDFLAGS>\ ${__go_platform_ldflags})
   set(__ldflags_str $<$<BOOL:${__go_build_ldflags}>:-ldflags>)
+endmacro()
 
+macro(__anki_run_go_build extra_deps)
   add_custom_command(
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__cppflags_env} ${__ldflags_env} ${__cxxflags_env}
                              ${GOROOT}/bin/go build ${__go_build_flags}
                              ${__ldflags_str} ${__go_build_ldflags}
                              ${__gobuild_basedir}
+    DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps} ${extra_deps} ${GO_VERSION_FILE}
+  )
+endmacro()
+
+macro(__anki_run_go_test package_name extra_deps)
+  add_custom_command(
+    OUTPUT ${__gobuild_out}
+    COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__cppflags_env} ${__ldflags_env} ${__cxxflags_env}
+                             ${GOROOT}/bin/go test ${package_name} -test -c
+                             ${__ldflags_str} ${__go_build_ldflags} ${__go_build_flags}
     DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps} ${extra_deps} ${GO_VERSION_FILE}
   )
 endmacro()
@@ -186,7 +198,8 @@ macro(anki_build_go_c_library target_name gensrc_var srclist_dir extra_deps)
 
   set_target_properties(${target_name} PROPERTIES GO_CLINK_FOLDERS "")
 
-  __anki_run_go_build(${target_name} "${extra_deps}")
+  __anki_setup_go_build(${target_name})
+  __anki_run_go_build("${extra_deps}")
 
   # export the location of the generated C header:
   set(${gensrc_var} ${__gobuild_header})
@@ -223,7 +236,8 @@ macro(anki_build_go_executable target_name srclist_dir extra_deps)
   set_property(TARGET ${target_name} APPEND PROPERTY SOURCES "${SRCS}")
 
   __anki_setup_go_environment(${_ab_GO_DIR})
-  __anki_run_go_build(${target_name} "${extra_deps}")
+  __anki_setup_go_build(${target_name})
+  __anki_run_go_build("${extra_deps}")
 
 
 endmacro()
@@ -261,4 +275,65 @@ endmacro()
 
 macro(anki_go_set_cgo_ldflags target_name flags)
   set_target_properties(${target_name} PROPERTIES CGO_LDFLAGS "${flags}")
+endmacro()
+
+# take the metabuild-generated list of test packages and add them one by one
+macro(anki_go_add_test_dir dir_name srclist_dir created_targets_var)
+  set(__gotest_dir_file "${srclist_dir}/${dir_name}.gotestdir.lst")
+  if (EXISTS ${__gotest_dir_file})
+    file(STRINGS ${__gotest_dir_file} __gotest_packages)
+  else()
+    message(FATAL_ERROR ${__gotest_dir_file} " not found, need to run with -f?")
+  endif()
+
+  set(__gotest_added_targets "")
+  foreach(i ${__gotest_packages})
+    anki_go_add_test(${i} ${srclist_dir})
+  endforeach(i)
+  set(${created_targets_var} ${__gotest_added_targets})
+endmacro()
+
+# add test executable for a given package
+macro(anki_go_add_test package_name srclist_dir)
+  string(REPLACE "/" "_" __gotest_unslashed ${package_name})
+  set(__gotest_dir_file "${srclist_dir}/${__gotest_unslashed}.gotest.lst")
+  if (EXISTS ${__gotest_dir_file})
+    file(STRINGS ${__gotest_dir_file} __gotest_deps)
+  else()
+    message(FATAL_ERROR ${__gotest_dir_file} " not found, need to run with -f?")
+  endif()
+
+  set(SRCS ${__gotest_deps})
+  set(_ab_PLATFORM_SRCS "")
+  anki_build_go_test_exe(${package_name} "gotest_${__gotest_unslashed}")
+  list(APPEND __gotest_added_targets "gotest_${__gotest_unslashed}")
+
+endmacro()
+
+# set up test executable build
+macro(anki_build_go_test_exe package_name target_name)
+
+  set(__gobuild_out "${CMAKE_CURRENT_BINARY_DIR}/testbin/${target_name}")
+  add_custom_target(${target_name} DEPENDS ${__gobuild_out})
+
+  __anki_build_go_fake_target(${target_name})
+
+  set_target_properties(${target_name} PROPERTIES GO_CLINK_FOLDERS ""
+                                                  ANKI_OUT_PATH ${__gobuild_out}
+                                                  EXCLUDE_FROM_ALL FALSE)
+
+  set_property(TARGET ${target_name} APPEND PROPERTY SOURCES "${SRCS}")
+
+  __anki_setup_go_environment(${_ab_GO_DIR})
+  __anki_setup_go_build(${target_name})
+  __anki_run_go_test(${package_name} "${extra_deps}")
+  # test executables don't need license
+  anki_build_target_license(${target_name} "ANKI")
+
+  enable_testing()
+  add_test(NAME ${target_name}
+    COMMAND ${target_name}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testbin
+  )
+
 endmacro()

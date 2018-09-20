@@ -246,11 +246,15 @@ function runRoutine(args) {
   const syncResults = startDeps.map(dep => syncDep(dep));
 
   // get list of .godir.lst files in generated dir
-  const godirFiles = fs.readdirSync(args[0]).filter(val => val.endsWith('godir.lst')).map(val => path.join(args[0], val));
+  const filesEndingWith = str => fs.readdirSync(args[0]).filter(val => val.endsWith(str)).map(val => path.join(args[0], val));
+  const godirFiles = filesEndingWith('godir.lst');
   if (godirFiles.length === 0) {
     console.error('could not find any godir.lst files in ' + args[0]);
     return;
   }
+
+  // add test packages from .gotestdir.lst files
+  const gotestdirFiles = filesEndingWith('.gotestdir.lst');
 
   const stdLibPackages = execSyncTrim('go list std').split('\n')
     .concat(execSyncTrim('GOOS="android" go list std').split('\n'))
@@ -260,12 +264,23 @@ function runRoutine(args) {
     .map(filename => fs.readFileSync(filename, 'utf8'))
     .join(' ');
 
+  const allGoTestPackages = gotestdirFiles
+    .map(filename => fs.readFileSync(filename, 'utf8').split('\n').join(' '))
+    .join(' ');
+
   // step 2: run 'go get' on all godir-specified folders - will pick up any new dependencies
   execSync('go get -d -v ' + allGoDirs, { stdio: 'inherit' });
+  if (allGoTestPackages) {
+    execSync('go get -d -v -t ' + allGoTestPackages, { stdio: 'inherit' });
+  }
 
   const extraIncludes = ["github.com/golang/protobuf/protoc-gen-go", "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway", "github.com/golang/glog"];
   // now that 'go get' has pulled everything we need, get full dependency list for packages
-  const allDeps = [...new Set(execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + allGoDirs).split('\n'))].concat(extraIncludes)
+  const normalDeps = execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + allGoDirs).split('\n');
+  const testDeps = allGoTestPackages ?
+    execSyncTrim('go list -test -f \'{{ join .Deps "\\n" }}\' ' + allGoTestPackages).split('\n')
+    : [];
+  const allDeps = [...new Set(normalDeps.concat(testDeps, extraIncludes))]
     .filter(dep => !stdLibPackages.includes(dep)).sort();
 
   // step 3: check that all remote dependencies are tracked by us and checked out at correct commit
