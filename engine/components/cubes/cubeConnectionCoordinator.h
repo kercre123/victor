@@ -128,6 +128,11 @@ private:
   // Private Member Vars
   ECoordinatorState _coordinatorState;
 
+  // Connection info
+  std::string _firstSubscriber;
+  std::string _lastSubscriber;
+  float _connectionStartTime_s;
+
   std::set<SubscriberRecord> _subscriptionRecords;
   std::set<ICubeConnectionSubscriber*> _subscribersDumpedByConnectionLoss;
   int _nonBackgroundSubscriberCount;

@@ -34,9 +34,10 @@
 #include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/jsonWriter/jsonWriter.h"
-#include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #include "webServerProcess/src/webService.h"
 #include "webServerProcess/src/webVizSender.h"
@@ -690,6 +691,10 @@ void CubeCommsComponent::HandleScanForCubesFinished()
   PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
                    "Done scanning for cubes. Number of available cubes %zu",
                    _cubeScanResults.size());
+
+  DASMSG(cube_scan_results, "cube.scan_result", "Cube scan completed");
+  DASMSG_SET(i1, _cubeScanResults.size(), "Number of advertising cubes found during scan");
+  DASMSG_SEND();
   
   if (!_connectAfterScan) {
     PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.IgnoringScanResults",
