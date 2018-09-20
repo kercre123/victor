@@ -1236,9 +1236,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           Anki::Vector::ExternalComms::RtsStatusResponse_4 msg = rtsMsg.Get_RtsStatusResponse_4();
           _hasOwner = msg.hasOwner;
           if(msg.hasOwner) {
-            _hasAuthed = true;
+            // do auth check
+            Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, false, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+          } else {
+            [self startPrompt];
           }
-          [self startPrompt];
           break;
         }
         
@@ -1277,6 +1279,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         break;
       }
       case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsWifiForgetResponse: {
+        if(!_hasStartedPrompt) {
+          _hasAuthed = true;
+          
+          [self startPrompt];
+          break;
+        }
+        
         Anki::Vector::ExternalComms::RtsWifiForgetResponse msg = rtsMsg.Get_RtsWifiForgetResponse();
         
         if(_currentCommand == "wifi-forget" && !_readyForNextCommand) {
@@ -1857,6 +1866,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         printf("  => \033[0;43;30mRobot does not have an Anki account owner yet. Cloud services will not work. Please use `anki-auth SESSION_TOKEN`.\033[0m\n");
       } else if(!_hasAuthed) {
         printf("  => \033[0;41;97mmac-client is currently unauthorized. Please use `anki-auth SESSION_TOKEN`.\033[0m\n");
+        printf("  => \033[0;41;97mNote: 'status', 'wifi-scan', 'wifi-connect', and 'wifi-ip' will work.\033[0m\n");
       }
     }
     
