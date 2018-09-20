@@ -42,11 +42,14 @@ PRIVATE
   util
   victorCrashReports
   anki-ble
+  libavahi-core.so
+  libavahi-common.so
 )
 
 target_compile_options(switchboard
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  -fPIC
 )
 
 target_compile_definitions(switchboard
@@ -67,6 +70,7 @@ target_include_directories(switchboard
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/glib-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/lib/glib-2.0/include>
+  /Users/paul/Downloads/avahi-0.6.31
   ${PLATFORM_INCLUDES}
 )
 
@@ -76,6 +80,7 @@ anki_build_target_license(vic-switchboard "ANKI")
 target_compile_options(vic-switchboard
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  -fPIC
 )
 
 target_link_libraries(vic-switchboard
@@ -101,6 +106,8 @@ target_link_libraries(vic-switchboard
   util
   victorCrashReports
   anki-ble
+  libavahi-core.so
+  libavahi-common.so
 )
 
 anki_build_strip(TARGET vic-switchboard)

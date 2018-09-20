@@ -726,8 +726,10 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
   // noop
 }
 
+#include "avahi-test.h"
 int SwitchboardMain() {
-
+  avahi_main();
+  
   Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
 
   Anki::Util::VictorLogger logger(LOG_PROCNAME);
