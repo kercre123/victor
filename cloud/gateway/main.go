@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 
@@ -20,6 +21,7 @@ import (
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -43,7 +45,13 @@ var (
 	engineCladManager EngineCladIpcManager
 )
 
-func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, errOut error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from fatal error in %s \"%s\": %s\n", info.FullMethod, err, debug.Stack())
+			errOut = grpc.Errorf(codes.Internal, "%s", err)
+		}
+	}()
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
 	log.Printf("Received rpc request %s(%#v)\n", name, req)
@@ -52,7 +60,13 @@ func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Un
 	return resp, err
 }
 
-func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (errOut error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from fatal error in %s \"%s\": %s\n", info.FullMethod, err, debug.Stack())
+			errOut = grpc.Errorf(codes.Internal, "%s", err)
+		}
+	}()
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
 	log.Printf("Received stream request %s(%#v)\n", name, srv)

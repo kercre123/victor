@@ -181,13 +181,12 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Printf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				log.Errorf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
 	}
 	wg.Wait()
-
 }
 
 func (manager *EngineProtoIpcManager) ProcessMessages() {
@@ -371,7 +370,7 @@ func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardRes
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Printf("SwitchboardIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				log.Errorf("SwitchboardIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
@@ -496,7 +495,7 @@ func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToE
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Printf("EngineCladIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				log.Errorf("EngineCladIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)

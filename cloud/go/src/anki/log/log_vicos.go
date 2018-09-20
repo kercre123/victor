@@ -48,6 +48,18 @@ func Errorf(format string, a ...interface{}) (int, error) {
 	return androidLog(C.ANDROID_LOG_ERROR, Tag, str), nil
 }
 
+func Errorln(a ...interface{}) (int, error) {
+	str := fmt.Sprintln(a...)
+	ret := C.android_log(C.ANDROID_LOG_ERROR, C.CString(Tag), C.CString(str))
+	return int(ret), nil
+}
+
+func Errorf(format string, a ...interface{}) (int, error) {
+	str := fmt.Sprintf(format, a...)
+	ret := C.android_log(C.ANDROID_LOG_ERROR, C.CString(Tag), C.CString(str))
+	return int(ret), nil
+}
+
 func init() {
 	logVicos = Println
 }
