@@ -81,8 +81,6 @@ using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 RobotToEngineImplMessaging::RobotToEngineImplMessaging()
 : IDependencyManagedComponent(this, RobotComponentID::RobotToEngineImplMessaging)
-, _hasMismatchedEngineToRobotCLAD(false)
-, _hasMismatchedRobotToEngineCLAD(false)
 {
    _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 }
@@ -108,7 +106,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   };
 
   // bind to specific handlers in the robotImplMessaging class
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallingEvent,                   &RobotToEngineImplMessaging::HandleFallingEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::goalPose,                       &RobotToEngineImplMessaging::HandleGoalPose);
@@ -119,12 +116,9 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncRobotAck,                   &RobotToEngineImplMessaging::HandleSyncRobotAck);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetHeadID);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                &RobotToEngineImplMessaging::HandleFirmwareVersion);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorCalibration,               &RobotToEngineImplMessaging::HandleMotorCalibration);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorAutoEnabled,               &RobotToEngineImplMessaging::HandleMotorAutoEnabled);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDataState,                   &RobotToEngineImplMessaging::HandleMicDataState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::streamCameraImages,             &RobotToEngineImplMessaging::HandleStreamCameraImages);
@@ -252,112 +246,6 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   }
 
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorAutoEnabled(payload)));
-}
-
-void RobotToEngineImplMessaging::HandleRobotSetHeadID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleRobotSetHeadID");
-
-  const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
-  const auto hwRev  = payload.hwRevision;
-  const auto headID = payload.serialNumber;
-
-  // Set DAS Global on all messages
-  char string_id[32] = {};
-  snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", hwRev, headID);
-  Anki::Util::sSetGlobal(DGROUP, string_id);
-
-  // This should be definition always have a phys ID
-  Anki::Util::sInfo("robot.handle_robot_set_head_id", {{DDATA,string_id}}, string_id);
-
-  robot->SetHeadSerialNumber(headID);
-  robot->SetModelNumber(hwRev);
-}
-
-void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleRobotSetBodyID");
-
-  const RobotInterface::ManufacturingID& payload = message.GetData().Get_mfgId();
-  const int32_t hwVersion = payload.hw_version;
-  const uint32_t bodyID = payload.esn;
-  const int32_t bodyColor = payload.body_color;
-
-  // Set DAS Global on all messages
-  char string_id[32] = {};
-  snprintf(string_id, sizeof(string_id),
-           "0xbeef%04x%04x%08x",
-           Util::numeric_cast<uint16_t>(bodyColor), // We expect bodyColor and hwVersion to always be +ve
-           Util::numeric_cast<uint16_t>(hwVersion),
-           bodyID);
-
-  Anki::Util::sSetGlobal(DPHYS, string_id);
-  Anki::Util::sInfo("robot.handle_robot_set_body_id", {{DDATA,string_id}}, string_id);
-
-  robot->SetBodySerialNumber(bodyID);
-  robot->SetBodyHWVersion(hwVersion);
-  robot->SetBodyColor(bodyColor);
-
-  // Activate A/B tests for robot now that we have its serial
-  robot->GetContext()->GetExperiments()->AutoActivateExperiments(std::to_string(bodyID));
-}
-
-void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  // Extract sim flag from json
-  const auto& fwData = message.GetData().Get_firmwareVersion().json;
-  std::string jsonString{fwData.begin(), fwData.end()};
-  Json::Reader reader;
-  Json::Value headerData;
-  if (!reader.parse(jsonString, headerData))
-  {
-    return;
-  }
-
-  // simulated robot will have special tag in json
-  const bool robotIsPhysical = headerData["sim"].isNull();
-
-  LOG_INFO("RobotIsPhysical", "%d", robotIsPhysical);
-  robot->SetPhysicalRobot(robotIsPhysical);
-}
-
-void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleFWVersionInfo");
-
-  static_assert(decltype(RobotInterface::FWVersionInfo::toRobotCLADHash)().size() == sizeof(messageEngineToRobotHash), "Incorrect sizes in CLAD version mismatch message");
-  static_assert(decltype(RobotInterface::FWVersionInfo::toEngineCLADHash)().size() == sizeof(messageRobotToEngineHash), "Incorrect sizes in CLAD version mismatch message");
-
-  _factoryFirmwareVersion = message.GetData().Get_factoryFirmwareVersion();
-
-  std::string robotEngineToRobotStr;
-  std::string engineEngineToRobotStr;
-  if (memcmp(_factoryFirmwareVersion.toRobotCLADHash.data(), messageEngineToRobotHash, _factoryFirmwareVersion.toRobotCLADHash.size())) {
-    robotEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(_factoryFirmwareVersion.toRobotCLADHash.data(), static_cast<uint32_t>(_factoryFirmwareVersion.toRobotCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
-    engineEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(messageEngineToRobotHash, sizeof(messageEngineToRobotHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
-
-    LOG_WARNING("RobotFirmware.VersionMismatch",
-                "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.",
-                robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
-
-    _hasMismatchedEngineToRobotCLAD = true;
-  }
-
-  std::string robotRobotToEngineStr;
-  std::string engineRobotToEngineStr;
-
-  if (memcmp(_factoryFirmwareVersion.toEngineCLADHash.data(), messageRobotToEngineHash, _factoryFirmwareVersion.toEngineCLADHash.size())) {
-
-    robotRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(_factoryFirmwareVersion.toEngineCLADHash.data(), static_cast<uint32_t>(_factoryFirmwareVersion.toEngineCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
-
-    engineRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(messageRobotToEngineHash, sizeof(messageRobotToEngineHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
-
-    LOG_WARNING("RobotFirmware.VersionMismatch",
-                "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.",
-                robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
-
-    _hasMismatchedRobotToEngineCLAD = true;
-  }
 }
 
 void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message,

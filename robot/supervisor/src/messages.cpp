@@ -596,10 +596,6 @@ namespace Anki {
         BackpackLightController::SetParams(msg);
       }
 
-      void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
-      {
-        RobotInterface::SendMessage(RobotInterface::ManufacturingID());
-      }
 
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
         BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);

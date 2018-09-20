@@ -85,5 +85,9 @@ message DebugScreenMode
   bool enabled,
 }
 
+message RobotAvailable
+{
+}
+
 } // Cozmo
 } // Anki

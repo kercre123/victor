@@ -42,17 +42,8 @@ public:
   // end IDependencyManagedComponent functions
   //////
   
-  // Version checks
-  const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _factoryFirmwareVersion; }
-  bool HasMismatchedCLAD() const { return _hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD; }
-  
-  
   void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, Robot* const robot);
-  void HandleRobotSetHeadID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleRobotSetBodyID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleFallingEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
@@ -81,12 +72,7 @@ public:
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
   
 private:
-  // Copy of last received firmware version info from robot
-  RobotInterface::FWVersionInfo _factoryFirmwareVersion;
-  bool _hasMismatchedEngineToRobotCLAD;
-  bool _hasMismatchedRobotToEngineCLAD;
 
-  
   ///////// Messaging ////////
   // These methods actually do the creation of messages and sending
   // (via MessageHandler) to the physical robot

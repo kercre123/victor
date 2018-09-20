@@ -2208,7 +2208,6 @@ TEST(Localization, UnexpectedMovement)
 
   Robot robot(1, cozmoContext);
   robot.FakeSyncRobotAck();
-  robot.SetPhysicalRobot(true);
 
   BlockWorld& blockWorld = robot.GetBlockWorld();
 

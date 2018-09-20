@@ -184,6 +184,32 @@ void populate_boot_body_data(const struct SpineMessageHeader* hdr)
   }
 }
 
+void das_log_version_info(const VersionInfo* versionInfo)
+{
+  // Stringify ein in hex
+  // "* 2" because 2 hex chars for each byte, "+ 1" for null byte
+  char ein[sizeof(versionInfo->ein) * 2 + 1] = {0};
+  const int ein_arr_len = sizeof(versionInfo->ein) / sizeof(versionInfo->ein[0]);
+  for (int i=0; i < ein_arr_len; ++i) {
+    sprintf(&ein[2*i], "%02x", versionInfo->ein[i]);
+  }
+
+  // Stringify app version in hex
+  // "* 2" because 2 hex chars for each byte, "+ 1" for null byte
+  char app_version[sizeof(versionInfo->app_version) * 2 + 1] = {0};
+  const int app_version_arr_len = sizeof(versionInfo->app_version) / sizeof(versionInfo->app_version[0]);
+  for (int i=0; i < app_version_arr_len; ++i) {
+    sprintf(&app_version[2*i], "%02x", versionInfo->app_version[i]);
+  }
+
+  DASMSG(hal_body_version, "hal.body_version", "Body version info");
+  DASMSG_SET(i1, versionInfo->hw_revision, "Hardware revision");
+  DASMSG_SET(i2, versionInfo->hw_model,    "Hardware model");
+  DASMSG_SET(s1, ein,                      "Electronic Identification Number");
+  DASMSG_SET(s2, app_version,              "Application version");
+  DASMSG_SEND();
+}
+
 Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 {
   TimeStamp_t startWait_ms = HAL::GetTimeStamp();
@@ -218,7 +244,9 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
         continue;
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
-        record_body_version( (VersionInfo*)(hdr+1) );
+        const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
+        record_body_version(versionInfo);
+        das_log_version_info(versionInfo);
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
 
@@ -358,7 +386,9 @@ Result spine_get_frame() {
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         LOGD("Handling VR payload type %x\n", hdr->payload_type);
-        record_body_version( (VersionInfo*)(hdr+1) );
+        const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
+        record_body_version(versionInfo);
+        das_log_version_info(versionInfo);
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
         populate_boot_body_data(hdr);

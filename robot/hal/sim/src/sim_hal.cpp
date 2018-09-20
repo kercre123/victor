@@ -720,32 +720,6 @@ namespace Anki {
          */
 
 
-        // Send block connection state when engine connects
-        static bool wasConnected = false;
-        if (!wasConnected && HAL::RadioIsConnected()) {
-
-          // Send RobotAvailable indicating sim robot
-          RobotInterface::RobotAvailable idMsg;
-          idMsg.serialNumber = 0;
-          idMsg.hwRevision = 0;
-          RobotInterface::SendMessage(idMsg);
-
-
-          // send firmware info indicating simulated robot
-          {
-            std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":1}"};
-            RobotInterface::FirmwareVersion msg;
-            msg.RESRVED = 0;
-            msg.json_length = firmwareJson.size() + 1;
-            std::memcpy(msg.json, firmwareJson.c_str(), firmwareJson.size() + 1);
-            RobotInterface::SendMessage(msg);
-          }
-
-          wasConnected = true;
-        } else if (wasConnected && !HAL::RadioIsConnected()) {
-          wasConnected = false;
-        }
-
         // Check charging status (Debug)
         if (BatteryIsOnCharger() && !wasOnCharger_) {
           PRINT_NAMED_DEBUG("simHAL.Step.OnCharger", "");

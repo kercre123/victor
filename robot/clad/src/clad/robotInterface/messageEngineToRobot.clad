@@ -6,7 +6,6 @@
  */
 
 #include "clad/audio/audioMessage.clad"
-#include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
 #include "clad/types/backpackAnimationTriggers.clad"
 #include "clad/types/cameraFOVInfo.clad"
@@ -247,10 +246,6 @@ message SetMotionModelParams
 message BackpackSetLayer
 {
   uint_8 layer
-}
-
-message GetManufacturingInfo
-{
 }
 
 message CheckLiftLoad
@@ -652,7 +647,6 @@ union EngineToRobot
   // 0x01 to 0x4f: Messages to robot (supervisor) process
 
   // Init
-  GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncRobot                     syncRobot                   = 0x02,
   Shutdown                      shutdown                    = 0x03,
   CalmPowerMode                 calmPowerMode               = 0x04,
