@@ -32,8 +32,14 @@
 
 #include <mutex>
 #include <unordered_set>
+#include <list>
 
 namespace Anki {
+  
+namespace Util {
+  class IConsoleFunction;
+}
+  
 namespace Vector {
 
 class BehaviorComponentCloudServer;
@@ -245,6 +251,8 @@ private:
   void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
 
   void HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg);
+  
+  void SetupConsoleFuncs();
 
   static size_t sActivatedIntentID;
 
@@ -282,6 +290,7 @@ private:
   std::string _devLastReceivedCloudIntent;
   std::string _devLastReceivedAppIntent;
   
+  std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 
   std::unordered_set<std::string> _disableTriggerWordNames;
 
