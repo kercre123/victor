@@ -779,7 +779,8 @@ func (service *rpcService) onDisconnect() {
 func (service *rpcService) checkConnectionID(id string) bool {
 	connectionIdLock.Lock()
 	defer connectionIdLock.Unlock()
-	if len(connectionId) != 0 {
+	if len(connectionId) != 0 && id != connectionId {
+		log.Println("Connection id already set: current='%s', incoming='%s'", connectionId, id)
 		return false
 	}
 	// Check whether we are in Webots.
@@ -800,7 +801,7 @@ func (service *rpcService) checkConnectionID(id string) bool {
 		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
 			// Someone is connected over BLE and they are not the primary connection.
 			// We return false so the app can tell you not to connect.
-			log.Printf("Detected mismatched BLE connection id: %s\n", connectionResponse.ConnectionId)
+			log.Printf("Detected mismatched BLE connection id: BLE='%s', incoming='%s'\n", connectionResponse.ConnectionId, id)
 			return false
 		}
 	}
@@ -815,7 +816,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 		service.onConnect(connectionId)
 		defer service.onDisconnect()
 	}
-	err := stream.Send(&extint.EventResponse{
+	resp := &extint.EventResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 		},
@@ -826,7 +827,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 				},
 			},
 		},
-	})
+	}
+	err := stream.Send(resp)
 	if err != nil {
 		log.Println("Closing Event stream (on send):", err)
 		return err
@@ -835,6 +837,12 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 		// This is the case where the user disconnects the stream
 		// We should still return the err in case the user doesn't think they disconnected
 		return err
+	}
+
+	if isPrimary {
+		log.Printf("EventStream: Sent primary connection response '%s'\n", connectionId)
+	} else {
+		log.Printf("EventStream: Sent secondary connection response given='%s', current='%s'\n", in.ConnectionId, connectionId)
 	}
 
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 512)
