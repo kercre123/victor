@@ -344,7 +344,7 @@ void RtsHandlerV4::HandleRtsWifiIpRequest(const Vector::ExternalComms::RtsConnec
 }
 
 void RtsHandlerV4::HandleRtsStatusRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -822,7 +822,7 @@ void RtsHandlerV4::SendChallengeSuccess() {
 }
 
 void RtsHandlerV4::SendStatusResponse() {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
