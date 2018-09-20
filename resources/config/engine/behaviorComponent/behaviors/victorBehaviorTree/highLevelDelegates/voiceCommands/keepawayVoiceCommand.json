@@ -4,7 +4,7 @@
 
   "wantsToBeActivatedCondition": {
     "conditionType": "FeatureGate",
-    "feature": "CubeBehaviors"
+    "feature": "Keepaway"
   },
   
   "respondToUserIntents" : [

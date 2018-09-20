@@ -1,8 +1,24 @@
 {
   "behaviorID": "NormalWakeUp",
-  "behaviorClass" : "AnimSequence",
+  "behaviorClass": "AnimSequence",
 
   "associatedActiveFeature": "NoFeature",
+
+  // don't play for overnight automatic reboots
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "Compound",
+      "and": [
+        {
+          "conditionType": "IsMaintenanceReboot"
+        },
+        {
+          "conditionType": "IsNightTime"
+        }
+      ]
+    }
+  },
 
   "animTriggers": ["InitialWakeUp"]
 }

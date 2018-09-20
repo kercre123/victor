@@ -37,10 +37,31 @@ using LogLevel = Anki::Util::LogLevel;
 #define LOG_CHANNEL "DASManager"
 
 // Local constants
-
 namespace {
+
   // How often do we process statistics? Counted by log records.
   constexpr const int PROCESS_STATS_INTERVAL = 1000;
+
+  // JSON attribute keys
+  constexpr const char * kDASGlobalsKey = "dasGlobals";
+  constexpr const char * kSequenceKey = "sequence";
+  constexpr const char * kProfileIDKey = "profile_id";
+  constexpr const char * kAllowUploadKey = "allow_upload";
+  constexpr const char * kLastEventKey = "last_event_ts";
+
+  // DAS column offsets
+  // If field count changes, we need to update this code.
+  // Unused columns are commented out until needed.
+  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
+  constexpr const int DAS_NAME = 0;
+  constexpr const int DAS_STR1 = 1;
+  //constexpr const int DAS_STR2 = 2;
+  constexpr const int DAS_STR3 = 3;
+  constexpr const int DAS_STR4 = 4;
+  constexpr const int DAS_INT1 = 5;
+  //constexpr const int DAS_INT2 = 6;
+  //constexpr const int DAS_INT3 = 7;
+  //constexpr const int DAS_INT4 = 8;
 }
 
 //
@@ -147,13 +168,11 @@ DASManager::DASManager(const DASConfig & dasConfig)
 //
 bool DASManager::PostToServer(const std::string& pathToLogFile)
 {
-  if (_exiting) {
-    return false;
-  }
-  std::string json = Util::FileUtils::ReadFile(pathToLogFile);
+  const std::string & json = Util::FileUtils::ReadFile(pathToLogFile);
   if (json.empty()) {
     return true;
   }
+
   std::string response;
 
   const bool success = DAS::PostToServer(_dasConfig.GetURL(), json, response);
@@ -183,39 +202,85 @@ bool DASManager::PostToServer(const std::string& pathToLogFile)
 
 void DASManager::PostLogsToServer()
 {
-  std::vector<std::string> directories = {_dasConfig.GetStoragePath(), _dasConfig.GetBackupPath()};
+  const auto & directories = {_dasConfig.GetStoragePath(), _dasConfig.GetBackupPath()};
 
-  for (auto const& dir : directories) {
-    std::vector<std::string> jsonFiles = GetJsonFiles(dir);
-    for (auto const& jsonFile : jsonFiles) {
-      bool result = PostToServer(jsonFile);
-      if (result) {
-        Util::FileUtils::DeleteFile(jsonFile);
-      } else {
+  for (const auto & dir : directories) {
+    const auto & jsonFiles = GetJsonFiles(dir);
+    for (const auto & jsonFile : jsonFiles) {
+
+      // Shortcut exit?
+      if (_exiting) {
+        LOG_DEBUG("DASManager.PostLogsToServer", "Server is exiting");
         return;
       }
+
+      // Attempt upload
+      const bool posted = PostToServer(jsonFile);
+      if (!posted) {
+        LOG_ERROR("DASManager.PostLogsToServer", "Failed to upload %s", jsonFile.c_str());
+        return;
+      }
+
+      // Clean up file
+      Util::FileUtils::DeleteFile(jsonFile);
     }
   }
 }
 
 void DASManager::BackupLogFiles()
 {
-  std::vector<std::string> jsonFiles = GetJsonFiles(_dasConfig.GetStoragePath());
-  for (auto const& jsonFile : jsonFiles) {
+  const auto & storagePath = _dasConfig.GetStoragePath();
+  const auto & backupPath = _dasConfig.GetBackupPath();
+  const auto backupQuota = _dasConfig.GetBackupQuota();
+
+  const auto & jsonFiles = GetJsonFiles(storagePath);
+  for (const auto & jsonFile : jsonFiles) {
     // Create the directory that will hold the json
-    if (!Util::FileUtils::CreateDirectory(_dasConfig.GetBackupPath(), false, true)) {
-      LOG_ERROR("DASManager.BackupLogFiles.CreateBackupDir",
-                "Failed to create Backup Path");
+    if (!Util::FileUtils::CreateDirectory(backupPath, false, true, S_IRWXU)) {
+      LOG_ERROR("DASManager.BackupLogFiles.CreateBackupDir", "Failed to create backup path %s", backupPath.c_str());
       return;
     }
-    if (Util::FileUtils::GetDirectorySize(_dasConfig.GetBackupPath()) > (ssize_t) _dasConfig.GetBackupQuota()) {
-      LOG_INFO("DASManager.BackupLogFiles.QuotaExceeded", "Exceeded quota for %s",
-               _dasConfig.GetBackupPath().c_str());
+    if (Util::FileUtils::GetDirectorySize(backupPath) > (ssize_t) backupQuota) {
+      LOG_INFO("DASManager.BackupLogFiles.QuotaExceeded", "Exceeded quota for %s", backupPath.c_str());
       return;
     }
-    LOG_DEBUG("DASManager.BackupLogFiles.MovingFile", "Moving %s into to %s/",
-              jsonFile.c_str(), _dasConfig.GetBackupPath().c_str());
-    (void) Util::FileUtils::MoveFile(_dasConfig.GetBackupPath(), jsonFile);
+    LOG_DEBUG("DASManager.BackupLogFiles.MovingFile", "Moving %s into %s", jsonFile.c_str(), backupPath.c_str());
+    (void) Util::FileUtils::MoveFile(backupPath, jsonFile);
+  }
+}
+
+void DASManager::PurgeBackupFiles()
+{
+  LOG_DEBUG("DASManager.PurgeBackupFiles", "Purge backup files");
+  const auto & backupPath = _dasConfig.GetBackupPath();
+  const auto & jsonFiles = GetJsonFiles(backupPath);
+  for (const auto & jsonFile : jsonFiles) {
+    LOG_DEBUG("DASManager.PurgeBackupFiles", "Purge %s", jsonFile.c_str());
+    Util::FileUtils::DeleteFile(jsonFile);
+  }
+}
+
+void DASManager::EnforceStorageQuota()
+{
+  //
+  // Delete files to make room for incoming data.
+  // GetJsonFiles() returns a sorted list so we remove the oldest files first.
+  //
+  const ssize_t quota = (ssize_t) _dasConfig.GetStorageQuota();
+  const ssize_t fileThresholdSize = (ssize_t) _dasConfig.GetFileThresholdSize();
+  const auto & path = _dasConfig.GetStoragePath();
+
+  LOG_DEBUG("DASManager.EnforceStorageQuota", "Enforce quota %zd on path %s", quota, path.c_str());
+
+  ssize_t directorySize = Util::FileUtils::GetDirectorySize(path);
+  if (directorySize + fileThresholdSize > quota) {
+    auto jsonFiles = GetJsonFiles(path);
+    while (directorySize + fileThresholdSize > quota && !jsonFiles.empty()) {
+      LOG_DEBUG("DASManager.EnforceQuota", "Delete %s", jsonFiles.front().c_str());
+      Util::FileUtils::DeleteFile(jsonFiles.front());
+      jsonFiles.erase(jsonFiles.begin());
+      directorySize = Util::FileUtils::GetDirectorySize(path);
+    }
   }
 }
 
@@ -244,15 +309,20 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     return "";
   }
 
-  // If field count changes, we need to update this code
-  static_assert(Anki::Util::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
 
-  std::string name = values[0];
-
+  const auto & name = values[DAS_NAME];
   if (name.empty()) {
     LOG_ERROR("DASManager.ConvertLogEntryToJson", "Missing event name");
     return "";
   }
+
+  // Is this a recycled event?
+  const auto ts = GetTimeStamp(logEntry);
+  if (ts <= _first_event_ts) {
+    return "";
+  }
+
+  _last_event_ts = ts;
 
   //
   // DAS manager uses magic event names to track global state.
@@ -261,29 +331,36 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
   //
   // If magic event names change, this code should be reviewed for compatibility.
   //
-
   if (name == DASMSG_FEATURE_START) {
-    _feature_run_id = values[3]; // s3
-    _feature_type = values[4]; // s4
+    _feature_run_id = values[DAS_STR3];
+    _feature_type = values[DAS_STR4];
   } else if (name == DASMSG_BLE_CONN_ID_START) {
-    _ble_conn_id = values[1]; // s1
+    _ble_conn_id = values[DAS_STR1];
   } else if (name == DASMSG_BLE_CONN_ID_STOP) {
     _ble_conn_id.clear();
   } else if (name == DASMSG_WIFI_CONN_ID_START) {
-    _wifi_conn_id = values[1]; // s1
+    _wifi_conn_id = values[DAS_STR1];
   } else if (name == DASMSG_WIFI_CONN_ID_STOP) {
     _wifi_conn_id.clear();
   } else if (name == DASMSG_PROFILE_ID_START) {
-    _profile_id = values[1]; // s1
+    _profile_id = values[DAS_STR1];
   } else if (name == DASMSG_PROFILE_ID_STOP) {
     _profile_id.clear();
+  } else if (name == DASMSG_DAS_ALLOW_UPLOAD) {
+    const auto i1 = std::atoi(values[DAS_INT1].c_str());
+    const bool allow_upload = (i1 != 0);
+    if (_allow_upload && !allow_upload) {
+      // User has opted out of data collection
+      _purge_backup_files = true;
+    }
+    _allow_upload = allow_upload;
   }
 
   std::ostringstream ostr;
   ostr << '{';
   serialize(ostr, "source", logEntry.tag);
   ostr << ',';
-  serialize(ostr, "ts", GetTimeStamp(logEntry));
+  serialize(ostr, "ts", ts);
   ostr << ',';
   serialize(ostr, "seq", (int64_t) _seq++);
   ostr << ',';
@@ -341,6 +418,9 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
   // Does this record look like a DAS entry?
   if (*message != Anki::Util::DAS::EVENT_MARKER) {
     return;
+  } else if (message[1] == Anki::Util::DAS::EVENT_MARKER) {
+    _gotTerminateEvent = true;
+    return;
   }
 
   _eventCount++;
@@ -351,16 +431,11 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
   }
 
   // Create the directory that will hold the json
-  if (!Util::FileUtils::CreateDirectory(_dasConfig.GetStoragePath(), false, true)) {
+  const auto & storagePath = _dasConfig.GetStoragePath();
+  if (!Util::FileUtils::CreateDirectory(storagePath, false, true, S_IRWXU)) {
     LOG_ERROR("DASManager.ProcessLogEntry.CreateStoragePathFailure",
-              "Failed to create Storage Path");
-    return;
-  }
-
-  // Make sure we are not over quota
-  if (Util::FileUtils::GetDirectorySize(_dasConfig.GetStoragePath()) > (ssize_t) _dasConfig.GetStorageQuota()) {
-    LOG_INFO("DASManager.ProcessLogEntry.OverQuota", "We have exceeded the quota for %s",
-             _dasConfig.GetStoragePath().c_str());
+              "Failed to create storage path %s",
+              storagePath.c_str());
     return;
   }
 
@@ -368,6 +443,7 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
   if (!_logFile.is_open()) {
     _logFile.open(_logFilePath, std::ios::out | std::ofstream::binary | std::ofstream::ate);
   }
+
   off_t logFilePos = (off_t) _logFile.tellp();
   if (logFilePos == 0) {
     // This is a new file. Start with '[' to open the array
@@ -383,23 +459,36 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
 
 }
 
-void DASManager::RollLogFile() {
+void DASManager::RollLogFile()
+{
+  // Close current file
   _logFile.close();
+
+  // Rename current file
   const std::string& fileName = GetPathNameForNextJsonLogFile();
   Util::FileUtils::MoveFile(fileName, _logFilePath);
+
+  // Reset flush time
   _last_flush_time = std::chrono::steady_clock::now();
 
-  if (!_uploading) {
+  // Enqueue upload task?
+  if (_allow_upload && !_uploading && !_exiting) {
     auto uploadTask = [this]() {
       _uploading = true;
       PostLogsToServer();
       _uploading = false;
     };
-
     _worker.Wake(uploadTask, "uploadTask");
   }
-}
 
+  // Enqueue quota task?
+  if (!_exiting) {
+    auto quotaTask = [this]() {
+      EnforceStorageQuota();
+    };
+    _worker.Wake(quotaTask, "quotaTask");
+  }
+}
 
 //
 // Log some process stats
@@ -424,6 +513,7 @@ void DASManager::ProcessStats()
       "maxrss=%ld ixrss=%ld idrss=%ld isrss=%ld",
       ru.ru_maxrss, ru.ru_ixrss, ru.ru_idrss, ru.ru_isrss);
   }
+
 }
 
 //
@@ -441,8 +531,7 @@ uint32_t DASManager::GetSecondsSinceLastFlush()
 
 std::vector<std::string> DASManager::GetJsonFiles(const std::string& path)
 {
-  std::vector<std::string> jsonFiles =
-    Util::FileUtils::FilesInDirectory(path, true, ".json", false);
+  auto jsonFiles = Util::FileUtils::FilesInDirectory(path, true, ".json", false);
 
   std::sort(jsonFiles.begin(), jsonFiles.end());
 
@@ -452,11 +541,10 @@ std::vector<std::string> DASManager::GetJsonFiles(const std::string& path)
 uint32_t DASManager::GetNextIndexForJsonFile()
 {
   uint32_t index = 0;
-  std::vector<std::string> storagePaths =
-    {_dasConfig.GetStoragePath(), _dasConfig.GetBackupPath()};
+  const auto & storagePaths = {_dasConfig.GetStoragePath(), _dasConfig.GetBackupPath()};
 
-  for (auto const& path : storagePaths) {
-    std::vector<std::string> jsonFiles = GetJsonFiles(path);
+  for (const auto & path : storagePaths) {
+    const auto & jsonFiles = GetJsonFiles(path);
 
     if (!jsonFiles.empty()) {
       const std::string& lastFile = jsonFiles.back();
@@ -480,30 +568,66 @@ std::string DASManager::GetPathNameForNextJsonLogFile()
   return Util::FileUtils::FullFilePath({_dasConfig.GetStoragePath(), filename});
 }
 
-void DASManager::LoadGlobalState(const std::string & globals_path)
+
+static void LoadGlobals(Json::Value & json, const std::string & path)
 {
-  // Read json from file
+  // Read json from persistent storage
   Json::Reader reader;
-  Json::Value json;
-  std::ifstream ifs(globals_path);
+  std::ifstream ifs(path);
 
   if (!reader.parse(ifs, json)) {
     const auto & errors = reader.getFormattedErrorMessages();
-    LOG_ERROR("DASManager.LoadGlobalState", "Failed to parse [%s] (%s)",
-      globals_path.c_str(), errors.c_str());
+    LOG_ERROR("DASManager.LoadGlobals", "Failed to parse [%s] (%s)",
+      path.c_str(), errors.c_str());
     return;
   }
+}
+
+void DASManager::LoadTransientGlobals(const std::string & path)
+{
+  // Read json from transient storage
+  Json::Value json;
+  LoadGlobals(json, path);
+
+  // Read transient values from json
+  const auto & dasGlobals = json[kDASGlobalsKey];
+  if (!dasGlobals.isObject()) {
+    LOG_ERROR("DASManager.LoadTransientGlobals", "Invalid json object");
+    return;
+  }
+
+  const auto & sequence = dasGlobals[kSequenceKey];
+  if (sequence.isNumeric()) {
+    _seq = sequence.asUInt64();
+  }
+
+  const auto & last_event_ts = dasGlobals[kLastEventKey];
+  if (last_event_ts.isNumeric()) {
+    _last_event_ts = last_event_ts.asInt64();
+  }
+}
+
+void DASManager::LoadPersistentGlobals(const std::string & path)
+{
+  // Read json from path
+  Json::Value json;
+  LoadGlobals(json, path);
 
   // Read values from json
-  const auto & dasGlobals = json["dasGlobals"];
+  const auto & dasGlobals = json[kDASGlobalsKey];
   if (!dasGlobals.isObject()) {
-    LOG_ERROR("DASManager.LoadGlobalState", "Invalid json object");
+    LOG_ERROR("DASManager.LoadPersistentGlobals", "Invalid json object");
     return;
   }
 
-  const auto & profile_id = dasGlobals["profile_id"];
+  const auto & profile_id = dasGlobals[kProfileIDKey];
   if (profile_id.isString()) {
     _profile_id = profile_id.asString();
+  }
+
+  const auto & allow_upload = dasGlobals[kAllowUploadKey];
+  if (allow_upload.isBool()) {
+    _allow_upload = allow_upload.asBool();
   }
 }
 
@@ -527,22 +651,45 @@ void DASManager::LoadGlobalState()
     Vector::OSState::removeInstance();
   }
 
-  // Get persistent values from DASGlobals.json
-  const std::string & globals_path = _dasConfig.GetGlobalsPath();
-  if (!globals_path.empty() && Util::FileUtils::FileExists(globals_path)) {
-    LoadGlobalState(globals_path);
+  // Get transient globals from transient storage
+  const std::string & transient_globals_path = _dasConfig.GetTransientGlobalsPath();
+  if (!transient_globals_path.empty() && Util::FileUtils::FileExists(transient_globals_path)) {
+    LoadTransientGlobals(transient_globals_path);
   }
+
+  // Get persistent globals from persistent storage
+  const std::string & persistent_globals_path = _dasConfig.GetPersistentGlobalsPath();
+  if (!persistent_globals_path.empty() && Util::FileUtils::FileExists(persistent_globals_path)) {
+    LoadPersistentGlobals(persistent_globals_path);
+  }
+
+  //
+  // LAST timestamp from previous run becomes FIRST timestamp for current run.
+  // This allows us to avoid processing events multiple times if the service
+  // is restarted without clearing the log buffer.
+  //
+  // Timestamps are saved to transient storage and will be cleared automatically
+  // when robot is rebooted.
+  //
+  // Note that android log buffer uses a realtime clock, not a steady clock, and
+  // timestamps may drift backward when system clock is adjusted.  If this happens
+  // during service restart, events may be dropped.
+  //
+  if (_last_event_ts != 0) {
+    _first_event_ts = _last_event_ts;
+  }
+
+  // Call out global state for diagnostics
+  LOG_DEBUG("DASManager.LoadGlobalState",
+            "robot_id=%s robot_version=%s boot_id=%s sequence=%llu profile_id=%s allow_upload=%d",
+            _robot_id.c_str(), _robot_version.c_str(), _boot_id.c_str(), _seq, _profile_id.c_str(), _allow_upload);
 
 }
 
-void DASManager::SaveGlobalState(const std::string & globals_path)
+static void SaveGlobals(const Json::Value & json, const std::string & path)
 {
-  // Construct json container
-  Json::Value json;
-  json["dasGlobals"]["profile_id"] = _profile_id;
-
   // Write json to temp file
-  const auto & tmp = globals_path + ".tmp";
+  const auto & tmp = path + ".tmp";
   if (Util::FileUtils::FileExists(tmp)) {
     Util::FileUtils::DeleteFile(tmp);
   }
@@ -552,31 +699,57 @@ void DASManager::SaveGlobalState(const std::string & globals_path)
     std::ofstream ofs(tmp);
     ofs << writer.write(json);
   } catch (const std::exception & ex) {
-    LOG_ERROR("DASManager.SaveGlobalState", "Unable to write %s (%s)", tmp.c_str(), ex.what());
+    LOG_ERROR("DASManager.SaveGlobals", "Unable to write %s (%s)", tmp.c_str(), ex.what());
     return;
   }
 
   // Move temp file into place
   // Yes, the arguments are MoveFile(dest, src)
-  const bool ok = Util::FileUtils::MoveFile(globals_path, tmp);
+  const bool ok = Util::FileUtils::MoveFile(path, tmp);
   if (!ok) {
-    LOG_ERROR("DASManager.SaveGlobalState", "Unable to move %s to %s", tmp.c_str(), globals_path.c_str());
+    LOG_ERROR("DASManager.SaveGlobals", "Unable to move %s to %s", tmp.c_str(), path.c_str());
   }
+}
+
+void DASManager::SaveTransientGlobals(const std::string & path)
+{
+  // Construct json container
+  Json::Value json;
+  json[kDASGlobalsKey][kSequenceKey] = _seq;
+  json[kDASGlobalsKey][kLastEventKey] = _last_event_ts;
+
+  // Save json to file
+  SaveGlobals(json, path);
+}
+
+void DASManager::SavePersistentGlobals(const std::string & path)
+{
+  // Construct json container
+  Json::Value json;
+  json[kDASGlobalsKey][kProfileIDKey] = _profile_id;
+  json[kDASGlobalsKey][kAllowUploadKey] = _allow_upload;
+
+  // Save json to file
+  SaveGlobals(json, path);
 }
 
 void DASManager::SaveGlobalState()
 {
-  const std::string & globals_path = _dasConfig.GetGlobalsPath();
-  if (!globals_path.empty()) {
-    SaveGlobalState(globals_path);
+  // Save transient globals to transient storage
+  const std::string & transient_globals_path = _dasConfig.GetTransientGlobalsPath();
+  if (!transient_globals_path.empty()) {
+    SaveTransientGlobals(transient_globals_path);
+  }
+
+  // Save persistent globals to persistent storage
+  const std::string & persistent_globals_path = _dasConfig.GetPersistentGlobalsPath();
+  if (!persistent_globals_path.empty()) {
+    SavePersistentGlobals(persistent_globals_path);
   }
 }
 
 //
-// Process log entries until shutdown flag becomes true.
-// The shutdown flag is declared const because this function
-// doesn't change it, but it may be changed by an asynchronous event
-// such as a signal handler.
+// Process log entries until error or the termination event is read ("@@")
 //
 Result DASManager::Run(const bool & shutdown)
 {
@@ -596,11 +769,13 @@ Result DASManager::Run(const bool & shutdown)
   LOG_INFO("DASManager.Run", "robot_id=%s robot_version=%s boot_id=%s feature_run_id=%s",
            _robot_id.c_str(), _robot_version.c_str(), _boot_id.c_str(), _feature_run_id.c_str());
 
+  // Make sure we have room to write logs
+  EnforceStorageQuota();
+
   //
   // Android log API is documented here:
   // https://android.googlesource.com/platform/system/core/+/master/liblog/README
   //
-
 
   // Open the log buffer
   struct logger_list * log = android_logger_list_open(LOG_ID_MAIN, ANDROID_LOG_RDONLY, 0, 0);
@@ -615,10 +790,15 @@ Result DASManager::Run(const bool & shutdown)
   //
   // Read log records until shutdown flag becomes true.
   //
+  const auto flushInterval = _dasConfig.GetFlushInterval();
+  const auto fileThresholdSize = _dasConfig.GetFileThresholdSize();
+
   Result result = RESULT_OK;
   _last_flush_time = std::chrono::steady_clock::now();
 
-  while (!shutdown) {
+  // Run forever until error or termination event ("@@")
+  // is read
+  while (true) {    
     struct log_msg logmsg;
     int rc = android_logger_list_read(log, &logmsg);
     if (rc <= 0 ) {
@@ -637,14 +817,48 @@ Result DASManager::Run(const bool & shutdown)
     }
 
     // Dispose of this log entry
-    // TODO: need to check our storage quota so we don't exceed it
     ProcessLogEntry(logEntry);
 
-    // If we have exceeded the threshold size or gone over the flush interval,
-    // time to roll this log file
-    if ( (GetSecondsSinceLastFlush() > _dasConfig.GetFlushInterval())
-         || (_logFile.tellp() > _dasConfig.GetFileThresholdSize()) ){
+    if(_gotTerminateEvent)
+    {
+      if(shutdown)
+      {
+        LOG_INFO("DASManager.Run.Shutdown", "");
+        break;
+      }
+      else
+      {
+        _gotTerminateEvent = false;
+        // This can happen if, for some reason, we never parsed
+        // a terminate event from a previous run and the event was
+        // still sitting in the log buffer when dasManager was started.
+        // We should ignore it in this case
+        LOG_INFO("DASManager.Run.InvalidTerminateEvent",
+                 "Got terminate event but we aren't shutting down");
+      }
+    }
+    
+    // If we have exceeded the threshold size, roll the log file now.
+    // If we are allowed to upload and have gone over the flush interval, roll the log file now.
+    // If we are NOT allowed to upload, let the file keep growing to avoid fragmentation.
+    //
+    bool rollNow = false;
+    if (_logFile.tellp() > fileThresholdSize) {
+      rollNow = true;
+    } else if (_allow_upload && GetSecondsSinceLastFlush() > flushInterval) {
+      rollNow = true;
+    }
+
+    if (rollNow) {
       RollLogFile();
+    }
+
+    if (_purge_backup_files) {
+      auto purgeTask = [this]() {
+        PurgeBackupFiles();
+      };
+      _worker.Wake(purgeTask, "purgeTask");
+      _purge_backup_files = false;
     }
 
     // Print stats at regular intervals
@@ -653,19 +867,27 @@ Result DASManager::Run(const bool & shutdown)
     }
 
   }
-  _exiting = true;
-  LOG_DEBUG("DASManager.Run", "End reading loop");
 
-  // Clean up
   LOG_DEBUG("DASManager.Run", "Cleaning up");
+
+  _exiting = true;
+
   android_logger_list_close(log);
 
   RollLogFile();
 
+  //
+  // If uploads are allowed, move transient logs to persistent storage
+  // so they can be sent after service restarts.
+  //
+  // Note shutdown task is performed as a synchronous operation to
+  // ensure that task queue is empty at shutdown.
+  //
   auto shutdownTask = [this]() {
-    BackupLogFiles();
+    if (_allow_upload) {
+      BackupLogFiles();
+    }
   };
-
   _worker.WakeSync(shutdownTask, "shutdownTask");
 
   // Report final stats
@@ -673,7 +895,9 @@ Result DASManager::Run(const bool & shutdown)
 
   SaveGlobalState();
 
-  LOG_DEBUG("DASManager.Run", "Done(result %d)", result);
+  sync();
+
+  LOG_INFO("DASManager.Run", "Done(result %d)", result);
   return result;
 }
 

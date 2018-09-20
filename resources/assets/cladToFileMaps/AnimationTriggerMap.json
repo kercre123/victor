@@ -14,15 +14,7 @@
   {
     "CladEvent": "AlreadyAtFace",
     "AnimName": "ag_vc_reaction_alreadyhere"
-  },
-  {
-    "CladEvent": "DEPRECATED_AskToBeRightedLeft",
-    "AnimName": "ag_reacttocliff_stuckleftside_01"
-  },
-  {
-    "CladEvent": "DEPRECATED_AskToBeRightedRight",
-    "AnimName": "ag_reacttocliff_stuckrightside_01"
-  },
+  },  
   {
     "CladEvent": "AudioOnlyHuh",
     "AnimName": "ag_explorer_huh"
@@ -136,6 +128,10 @@
     "AnimName":  "ag_cubeconnection_connectionsuccess"
   },
   {
+    "CladEvent": "ChargerDockingAlreadyHere",
+    "AnimName": "ag_generic_cantdothat"
+  },
+  {
     "CladEvent": "ChargerDockingDrivingEnd",
     "AnimName": "ag_chargerdocking_driving_end"
   },
@@ -146,6 +142,10 @@
   {
     "CladEvent": "ChargerDockingDrivingStart",
     "AnimName": "ag_chargerdocking_drive_start"
+  },
+  {
+    "CladEvent": "ChargerDockingFailure",
+    "AnimName": "ag_chargerdocking_searchforcharger_canthelp"
   },
   {
     "CladEvent": "ChargerDockingLeftTurn",
@@ -174,6 +174,10 @@
   {
     "CladEvent": "ChargerDockingRightTurn",
     "AnimName": "ag_chargerdocking_rightturn"
+  },
+  {
+    "CladEvent": "ChargerDockingSearchAfterCompletedSearch",
+    "AnimName": "ag_chargerdocking_searchforcharger_canthelp"
   },
   {
     "CladEvent": "ChargerDockingSearchSingleTurn",
@@ -326,6 +330,10 @@
   {
     "CladEvent": "DanceBeatListening",
     "AnimName": "ag_dancebeat_listening"
+  },
+  {
+    "CladEvent" : "DanceBeatNoBeatDetected",
+    "AnimName": "ag_generic_cantdothat"
   },
   {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
@@ -488,15 +496,15 @@
     "AnimName": "ag_explorer_center_left"
   },
   {
-    "CladEvent": "DEPRECATED_FacePlantRoll",
+    "CladEvent": "FacePlantRoll",
     "AnimName": "ag_reacttocliff_faceplantroll_01"
   },
   {
-    "CladEvent": "DEPRECATED_FacePlantRollArmUp",
+    "CladEvent": "FacePlantRollArmUp",
     "AnimName": "ag_reacttocliff_faceplantroll_armup_01"
   },
   {
-    "CladEvent": "DEPRECATED_FailedToRightFromFace",
+    "CladEvent": "FailedToRightFromFace",
     "AnimName": "ag_reacttocliff_turtlerollfail_01"
   },
   {
@@ -710,19 +718,7 @@
   {
     "CladEvent": "NothingToDoBoredIdle",
     "AnimName": "ag_hiking_lookaround"
-  },
-  {
-    "CladEvent": "DEPRECATED_NothingToDoBoredIntro",
-    "AnimName": "ag_bored"
-  },
-  {
-    "CladEvent": "DEPRECATED_NothingToDoBoredEvent",
-    "AnimName": "ag_bored_event"
-  },
-  {
-    "CladEvent": "DEPRECATED_NothingToDoBoredOutro",
-    "AnimName": "ag_bored_getout"
-  },
+  },  
   {
     "CladEvent": "OnboardingComeHere",
     "AnimName": "ag_onboarding_drive_to_face"
@@ -750,6 +746,14 @@
   {
     "CladEvent": "OnboardingDriveOffCharger",
     "AnimName": "ag_onboarding_drive_straight"
+  },
+  {
+    "CladEvent": "OnboardingDriveOffCharger_1p0",
+    "AnimName": "ag_onboarding_drive_straight_alternative"
+  },
+  {
+    "CladEvent": "OnboardingLookAtUserGetOut_1p0",
+    "AnimName": "ag_onboarding_eyecontact_getout"
   },
   {
     "CladEvent": "OnboardingLookAround",
@@ -952,8 +956,16 @@
     "AnimName": "ag_reacttoblock_stuckonblock"
   },
   {
-    "CladEvent": "ReactToPickup",
-    "AnimName": "ag_reacttocliff_pickup"
+    "CladEvent": "ReactToPickupInitial",
+    "AnimName": "ag_rtpickup_reaction"
+  },
+  {
+    "CladEvent": "ReactToPickupLoop",
+    "AnimName": "ag_rtpickup_loop"
+  },
+  {
+    "CladEvent": "ReactToPutDown",
+    "AnimName": "ag_rtpickup_putdown"
   },
   {
     "CladEvent": "ReactToUnexpectedMovement",
@@ -1030,6 +1042,22 @@
   {
     "CladEvent": "StuckOnEdgeIdle",
     "AnimName": "ag_reacttocliff_stuckonedge_01"
+  },
+  {
+    "CladEvent": "StuckOnEdgeLeftGetIn",
+    "AnimName": "ag_reacttocliff_stuckonedge_left_getin"
+  },
+  {
+    "CladEvent": "StuckOnEdgeLeftIdle",
+    "AnimName": "ag_reacttocliff_stuckonedge_left_01"
+  },
+  {
+    "CladEvent": "StuckOnEdgeRightGetIn",
+    "AnimName": "ag_reacttocliff_stuckonedge_right_getin"
+  },
+  {
+    "CladEvent": "StuckOnEdgeRightIdle",
+    "AnimName": "ag_reacttocliff_stuckonedge_right_01"
   },
   {
     "CladEvent": "SuccessfulWheelie",
@@ -1157,10 +1185,6 @@
     "AnimName": "ag_vc_laser_lookdown"
   },
   {
-    "CladEvent": "ReactToPutDown",
-    "AnimName": "ag_generic_look_up_idle"
-  },
-  {
     "CladEvent": "RTS_OffCharger_Sleep_Ambient",
     "AnimName": "ag_rtsound_offcharger_asleep_ambient"
   },
@@ -1266,7 +1290,7 @@
   },
   {
     "CladEvent": "RTS_OnCharger_Sleep_Ambient",
-    "AnimName": "ag_rtsound_oncharger_asleep_ambient"
+    "AnimName": "ag_rtsound_oncharger_asleep_front"
   },
   {
     "CladEvent": "RTS_OnCharger_Sleep_Front",
@@ -1318,7 +1342,7 @@
   },
   {
     "CladEvent": "RTS_OnCharger_Awake_Ambient",
-    "AnimName": "ag_rtsound_oncharger_observe_ambient"
+    "AnimName": "ag_rtsound_oncharger_observe_front"
   },
   {
     "CladEvent": "RTS_OnCharger_Awake_Front",
@@ -1403,6 +1427,10 @@
   {
     "CladEvent": "ReactToAffirmative",
     "AnimName": "ag_vc_greeting"
+  },
+  {
+    "CladEvent": "ReactToNegative",
+    "AnimName": "ag_vc_abuse"
   },
   {
     "CladEvent": "ReactToGoodBye",

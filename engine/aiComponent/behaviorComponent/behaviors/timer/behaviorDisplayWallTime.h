@@ -30,10 +30,13 @@ protected:
   friend class BehaviorFactory;
   explicit BehaviorDisplayWallTime(const Json::Value& config);  
 
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers&) const override;
   virtual void GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const override;
 
   virtual void TransitionToShowClockInternal() override;
   virtual bool WantsToBeActivatedBehavior() const override;
+
+  virtual bool ShouldDimLeadingZeros() const override;
 
 private:
   BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;

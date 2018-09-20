@@ -42,6 +42,8 @@ CONSOLE_VAR_RANGED(s32,   kExposure_TargetValue,           CONSOLE_GROUP, 128, 0
 CONSOLE_VAR_RANGED(f32,   kMaxFractionOverexposed,         CONSOLE_GROUP, 0.8f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32,   kOverExposedAdjustmentFraction,  CONSOLE_GROUP, 0.5f, 0.f, 1.f);
 
+CONSOLE_VAR(bool,         kUseCenterWeightedMetering,      CONSOLE_GROUP, true);
+  
 #undef CONSOLE_GROUP
 }
   
@@ -70,10 +72,10 @@ Result CameraParamsController::SetExposureParameters(const u8               targ
                                                      const f32              maxChangeFraction,
                                                      const s32              subSample)
 {
-  if(!Util::InRange(maxChangeFraction, 0.f, 1.f))
+  if(Util::IsFltLTZero(maxChangeFraction))
   {
     PRINT_NAMED_ERROR("CameraParamsController.SetExposureParameters.BadMaxChangeFraction",
-                      "%f not on interval [0,1]", maxChangeFraction);
+                      "%f not >= zero", maxChangeFraction);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
   
@@ -525,8 +527,8 @@ Result CameraParamsController::ComputeAdjustmentFraction(const bool useCycling, 
   
   if(currentPercentileValue == 0)
   {
-    // Special case: avoid divide by zero and just increase by maximum amount possible
-    adjustmentFraction = 1.f + _maxChangeFraction;
+    // Special case: avoid divide by zero and just double exposure
+    adjustmentFraction = 2.f;
     return RESULT_OK;
   }
   
@@ -547,7 +549,10 @@ Result CameraParamsController::ComputeAdjustmentFraction(const bool useCycling, 
   
   // Normal case: Current exposure is "reasonable" so just figure out how to make it a bit better
   adjustmentFraction = static_cast<f32>(currentTargetValue) / static_cast<f32>(currentPercentileValue);
-  adjustmentFraction = Util::Clamp(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
+  if(Util::IsFltGTZero(_maxChangeFraction))
+  {
+    adjustmentFraction = Util::Clamp(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
+  }
   
   return RESULT_OK;
 }
@@ -700,8 +705,11 @@ Result CameraParamsController::ComputeWhiteBalanceAdjustment(const Vision::Image
   adjB = (sumB==0 ? 1.f : (f32)sumG/(f32)sumB);
   
   // Don't change too much at each update
-  adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
-  adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  if(Util::IsFltGTZero(_maxChangeFraction))
+  {
+    adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+    adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  }
 
   return RESULT_OK;
 }
@@ -724,13 +732,17 @@ Result CameraParamsController::ComputeExposureAndWhiteBalance(const Vision::Imag
   Vision::Image weights;
   const bool haveWeights = GetMeteringWeightMask(img.GetNumRows(), img.GetNumCols(), weights);
   
+  // NOTE: These are only used for center-weighted metering
+  const f32 xNorm = 2.f / (f32)img.GetNumCols();
+  const f32 yNorm = 2.f / (f32)img.GetNumRows();
+  
   // Use green channel to compute the desired exposure update
-  for(u32 i = 0; i < img.GetNumRows(); i += _subSample)
+  for(s32 i = 0; i < img.GetNumRows(); i += _subSample)
   {
     const Vision::PixelRGB* image_i = img.GetRow(i);
     const u8* weight_i = (haveWeights ? weights.GetRow(i) : nullptr);
     
-    for(u32 j = 0; j < img.GetNumCols(); j += _subSample)
+    for(s32 j = 0; j < img.GetNumCols(); j += _subSample)
     {
       const Vision::PixelRGB& pixel = image_i[j];
       
@@ -749,6 +761,14 @@ Result CameraParamsController::ComputeExposureAndWhiteBalance(const Vision::Imag
         const u8 weight = weight_i[j];
         _hist.IncrementBin(pixel.g(), weight);
       }
+      else if(kUseCenterWeightedMetering)
+      {
+        // Simple weighting based on L1 distance from the image center
+        const f32 xWeight = xNorm * static_cast<f32>(img.GetNumCols()/2 - std::abs(j-img.GetNumCols()/2));
+        const f32 yWeight = yNorm * static_cast<f32>(img.GetNumRows()/2 - std::abs(i-img.GetNumRows()/2));
+        const u8 weight = Util::numeric_cast_clamped<u8>(255.f*std::min(xWeight, yWeight));
+        _hist.IncrementBin(pixel.g(), weight);
+      }
       else
       {
         _hist.IncrementBin(pixel.g());
@@ -760,8 +780,11 @@ Result CameraParamsController::ComputeExposureAndWhiteBalance(const Vision::Imag
   // not to adjust too much in a single update:
   adjR = (sumR==0 ? 1.f : (f32)sumG/(f32)sumR);
   adjB = (sumB==0 ? 1.f : (f32)sumG/(f32)sumB);
-  adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
-  adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  if(Util::IsFltGTZero(_maxChangeFraction))
+  {
+    adjR = Util::Clamp(adjR, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+    adjB = Util::Clamp(adjB, 1.f-_maxChangeFraction, 1.f+_maxChangeFraction);
+  }
   
   const Result result = ComputeAdjustmentFraction(useCycling, adjExp);
   

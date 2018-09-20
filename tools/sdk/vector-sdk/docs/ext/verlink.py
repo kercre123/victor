@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Generate versioned links for example files.
+"""Generate versioned links for example files.
 
 This extension adds a new role to generate links to the correct version
 of files referenced by the documentation.
@@ -32,7 +32,7 @@ to http:/example.com/files/1.2.3/examples-1.2.3.zip
 
 :verlink:`Examples for 0.0.0 <examples-0.0.0.zip>` will display
 "Examples for 1.2.3" and link to http:/example.com/files/1.2.3/examples-1.2.3.zip
-'''
+"""
 
 
 from docutils import nodes, utils

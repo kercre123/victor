@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Grabs the pictures off of Vector and open them via PIL
 
 This assumes the user has taken some pictures on their robot
 using the "Hey Vector, Take a Selfie"-style voice command.
-'''
+"""
 
 import io
 import os
@@ -21,10 +21,10 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
-    args = anki_vector.util.parse_test_args()
+    """main execution"""
+    args = anki_vector.util.parse_command_args()
 
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    with anki_vector.Robot(args.serial) as robot:
         print("------ begin testing ------")
 
         for photo in robot.photos.photo_info:

@@ -16,6 +16,7 @@
 #include "engine/components/jdocsManager.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/messaging/shared/socketConstants.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "osState/osState.h"
@@ -35,24 +36,27 @@ namespace
   static const std::string kJdocsManagerFolder = "jdocs";
 
   static const char* kManagedJdocsKey = "managedJdocs";
-  static const char* kSavedOnDiskKey = "savedOnDisk";
   static const char* kDocNameKey = "docName";
   static const char* kDocVersionKey = "doc_version";
   static const char* kFmtVersionKey = "fmt_version";
   static const char* kClientMetadataKey = "client_metadata";
-  static const char* kFingerprintKey = "fingerprint"; // for backwards compatibility
+  static const char* kCloudDirtyRemainingSecKey = "cloud_dirty_remaining_sec";
+  static const char* kCloudAccessedKey = "cloud_accessed";
   static const char* kJdocKey = "jdoc";
   static const char* kDiskSavePeriodKey = "diskSavePeriod_s";
   static const char* kBodyOwnedByJdocsManagerKey = "bodyOwnedByJdocManager";
   static const char* kWarnOnCloudVersionLaterKey = "warnOnCloudVersionLater";
   static const char* kErrorOnCloudVersionLaterKey = "errorOnCloudVersionLater";
   static const char* kCloudSavePeriodKey = "cloudSavePeriod_s";
+  static const char* kCloudAbuseRulesKey = "cloudAbuseRules";
+  static const char* kCloudAbuseSavePeriodKey = "cloudAbuseSavePeriod_s";
   static const char* kJdocFormatVersionKey = "jdocFormatVersion";
 
   static const std::string emptyString;
   static const Json::Value emptyJson;
-  
+
   static const std::string kNotLoggedIn = "NotLoggedIn";
+  static const float kUserLoginCheckPeriod_s = 3.0f;
 
   JdocsManager* s_JdocsManager = nullptr;
 
@@ -60,29 +64,21 @@ namespace
 
   static const char* kConsoleGroup = "JdocsManager";
 
-  // Keep this in sync with JodcType enum
+  // Keep this in sync with JdocType enum in settings.proto
   constexpr const char* kJdocTypes = "RobotSettings,RobotLifetimeStats,AccountSettings,UserEntitlements";
   CONSOLE_VAR_ENUM(u8, kJdocType, kConsoleGroup, 0, kJdocTypes);
 
   void DebugDeleteSelectedJdocInCloud(ConsoleFunctionContextRef context)
   {
-    std::string userID, thing;
-    s_JdocsManager->GetUserAndThingIDs(userID, thing);
-    const auto& docName = s_JdocsManager->GetJdocName(static_cast<external_interface::JdocType>(kJdocType));
-    const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{userID, thing, docName});
-    s_JdocsManager->SendJdocsRequest(deleteReq);
+    s_JdocsManager->DeleteJdocInCloud(static_cast<external_interface::JdocType>(kJdocType));
   }
   CONSOLE_FUNC(DebugDeleteSelectedJdocInCloud, kConsoleGroup);
 
   void DebugDeleteAllJdocsInCloud(ConsoleFunctionContextRef context)
   {
-    std::string userID, thing;
-    s_JdocsManager->GetUserAndThingIDs(userID, thing);
     for (int i = 0; i < external_interface::JdocType_ARRAYSIZE; i++)
     {
-      const auto& docName = s_JdocsManager->GetJdocName(static_cast<external_interface::JdocType>(i));
-      const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{userID, thing, docName});
-      s_JdocsManager->SendJdocsRequest(deleteReq);
+      s_JdocsManager->DeleteJdocInCloud(static_cast<external_interface::JdocType>(i));
     }
   }
   CONSOLE_FUNC(DebugDeleteAllJdocsInCloud, kConsoleGroup);
@@ -113,10 +109,27 @@ JdocsManager::JdocsManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 JdocsManager::~JdocsManager()
 {
+  // Immediately save to disk any jdocs that are disk-dirty, OR cloud-dirty
+  static const bool kIsShuttingDown = true;
+  UpdatePeriodicFileSaves(kIsShuttingDown);
+
+  for (auto& jdoc : _jdocs)
+  {
+    // To release the handles
+    jdoc.second._abuseConfig._abuseRules.clear();
+  }
+
   if (_udpClient.IsConnected())
   {
     _udpClient.Disconnect();
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JdocsManager::JdocInfo::CloudAbuseDetectionConfig::CloudAbuseDetectionConfig()
+: _cloudWriteTracker("JdocCloudWriteTracker")
+{
 }
 
 
@@ -128,9 +141,6 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "JdocsManager.InitDependent.DataPlatformIsNull");
-
-  auto *osstate = OSState::getInstance();
-  _thingID = "vic:" + osstate->GetSerialNumberAsString();
 
   _savePath = _platform->pathToResource(Util::Data::Scope::Persistent, kJdocsManagerFolder);
   if (!Util::FileUtils::CreateDirectory(_savePath))
@@ -147,8 +157,8 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 
   for (const auto& name : memberNames)
   {
-    JdocType jdocType;
-    const bool valid = EnumFromString(name, jdocType);
+    external_interface::JdocType jdocType;
+    const bool valid = external_interface::JdocType_Parse(name, &jdocType);
     if (!valid)
     {
       LOG_ERROR("JdocsManager.InitDependent.InvalidJdocTypeInConfig",
@@ -156,87 +166,115 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       continue;
     }
     const auto& jdocConfig = jdocsConfig[name];
-    const external_interface::JdocType jdocTypeKey = static_cast<external_interface::JdocType>(jdocType);
-    if (_jdocs.find(jdocTypeKey) != _jdocs.end())
+    if (_jdocs.find(jdocType) != _jdocs.end())
     {
       LOG_ERROR("JdocsManager.InitDependent.DuplicateJdocTypeInConfig",
                 "Duplicate jdoc type %s in jdoc config file; ignoring duplicate", name.c_str());
       continue;
     }
-    JdocInfo jdocInfo;
+
+    // Create and initialize a JdocInfo struct for this jdoc
+    auto& jdocInfo = _jdocs[jdocType];
+
     jdocInfo._jdocVersion = 0;
-    jdocInfo._jdocFormatVersion = jdocConfig[kJdocFormatVersionKey].asUInt64();
+    jdocInfo._curFormatVersion = jdocConfig[kJdocFormatVersionKey].asUInt64();
+    // Create new jdocs with the latest format version for this type of jdoc
+    jdocInfo._jdocFormatVersion = jdocInfo._curFormatVersion;
     jdocInfo._jdocClientMetadata = "";
     jdocInfo._jdocBody = {};
     jdocInfo._jdocName = jdocConfig[kDocNameKey].asString();
     jdocInfo._needsCreation = false;
     jdocInfo._needsMigration = false;
-    jdocInfo._savedOnDisk = jdocConfig[kSavedOnDiskKey].asBool();
     jdocInfo._diskFileDirty = false;
-    jdocInfo._diskSavePeriod_s = currTime_s + jdocConfig[kDiskSavePeriodKey].asInt();
-    jdocInfo._nextDiskSaveTime = jdocInfo._diskSavePeriod_s;
+    jdocInfo._diskSavePeriod_s = jdocConfig[kDiskSavePeriodKey].asInt();
+    jdocInfo._nextDiskSaveTime = currTime_s + jdocInfo._diskSavePeriod_s;
     jdocInfo._bodyOwnedByJM = jdocConfig[kBodyOwnedByJdocsManagerKey].asBool();
     jdocInfo._warnOnCloudVersionLater = jdocConfig[kWarnOnCloudVersionLaterKey].asBool();
     jdocInfo._errorOnCloudVersionLater = jdocConfig[kErrorOnCloudVersionLaterKey].asBool();
     jdocInfo._cloudDirty = false;
-    jdocInfo._cloudSavePeriod_s = jdocConfig[kCloudSavePeriodKey].asInt();
-    jdocInfo._nextCloudSaveTime = jdocInfo._cloudSavePeriod_s;
-    if (jdocInfo._savedOnDisk)
-    {
-      jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
-    }
-    jdocInfo._overwrittenCB = nullptr;
+    jdocInfo._origCloudSavePeriod_s = jdocConfig[kCloudSavePeriodKey].asInt();
+    jdocInfo._cloudSavePeriod_s = jdocInfo._origCloudSavePeriod_s;
+    jdocInfo._nextCloudSaveTime = currTime_s + jdocInfo._cloudSavePeriod_s;
+    jdocInfo._pendingCloudSave = false;
 
-    _jdocs[jdocTypeKey] = jdocInfo;
+    const auto& cloudAbuseRules = jdocConfig[kCloudAbuseRulesKey];
+    const auto numRules = cloudAbuseRules.size();
+    auto& abuseConfig = jdocInfo._abuseConfig;
+    abuseConfig._abuseLevel = 0;
+    abuseConfig._abuseRules.resize(numRules);
 
-    auto& jdocItem = _jdocs[jdocTypeKey];
-    if (jdocItem._savedOnDisk)
+    for (int i = 0; i < numRules; i++)
     {
-      if (Util::FileUtils::FileExists(jdocItem._jdocFullPath))
+      const auto& ruleConfig = cloudAbuseRules[i];
+      auto& rule = abuseConfig._abuseRules[i];
+
+      if (RecentOccurrenceTracker::ParseConfig(ruleConfig, rule._numberOfTimes, rule._amountOfSeconds))
       {
-        if (LoadJdocFile(jdocTypeKey))
+        rule._recentOccurrenceHandle = abuseConfig._cloudWriteTracker.GetHandle(rule._numberOfTimes,
+                                                                                rule._amountOfSeconds);
+        rule._cloudAbuseSavePeriod_s = ruleConfig[kCloudAbuseSavePeriodKey].asInt();
+      }
+      else
+      {
+        LOG_ERROR("JdocsManager.InitDependent.ErrorParsingRule",
+                  "Error parsing cloud abuse rule");
+      }
+    }
+
+    jdocInfo._disabledDueToFmtVersion = false;
+    jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
+    jdocInfo._overwrittenCB = nullptr;
+    jdocInfo._formatMigrationCB = nullptr;
+
+    if (Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
+    {
+      if (LoadJdocFile(jdocType))
+      {
+        const auto latestFormatVersion = jdocInfo._curFormatVersion;
+        if (jdocInfo._jdocFormatVersion < latestFormatVersion)
         {
-          const auto latestFormatVersion = jdocConfig[kJdocFormatVersionKey].asUInt64();
-          if (jdocInfo._jdocFormatVersion < latestFormatVersion)
-          {
-            LOG_INFO("JdocsManager.InitDependent.FormatVersionMigration",
-                     "Jdoc %s loaded from disk has older format version (%llu); migrating to %llu",
-                     jdocInfo._jdocName.c_str(), jdocInfo._jdocFormatVersion, latestFormatVersion);
-            jdocInfo._needsMigration = true;
-          }
-          else if (jdocInfo._jdocFormatVersion > latestFormatVersion)
-          {
-            LOG_ERROR("JdocsManager.InitDependent.FormatVersionError",
-                      "Jdoc %s loaded from disk has newer format version (%llu) than robot handles (%llu); should not be possible",
-                      jdocInfo._jdocName.c_str(), jdocInfo._jdocFormatVersion, latestFormatVersion);
-          }
+          LOG_INFO("JdocsManager.InitDependent.FormatVersionMigration",
+                   "Jdoc %s loaded from disk has older format version (%llu); migrating to %llu",
+                   jdocInfo._jdocName.c_str(), jdocInfo._jdocFormatVersion, latestFormatVersion);
+          jdocInfo._needsMigration = true;
         }
-        else
+        else if (jdocInfo._jdocFormatVersion > latestFormatVersion)
         {
-          LOG_ERROR("JdocsManager.InitDependent.ErrorReadingJdocFile",
-                    "Error reading jdoc file %s", jdocItem._jdocFullPath.c_str());
-          jdocItem._needsCreation = true;
+          LOG_ERROR("JdocsManager.InitDependent.FormatVersionError",
+                    "Jdoc %s loaded from disk has newer format version (%llu) than robot handles (%llu); should not be possible",
+                    jdocInfo._jdocName.c_str(), jdocInfo._jdocFormatVersion, latestFormatVersion);
+          // This is fairly impossible.  So let's just pretend the disk file didn't exist.
+          // The corresponding manager will immediately create default data in the format it knows.
+          // Then this disk file will be overwritten.
+          jdocInfo._needsCreation = true;
         }
       }
       else
       {
-        LOG_WARNING("JdocsManager.InitDependent.NoJdocFile", "Serialized jdoc file not found; to be created by owning subsystem");
-        jdocItem._needsCreation = true;
+        LOG_ERROR("JdocsManager.InitDependent.ErrorReadingJdocFile",
+                  "Error reading jdoc file %s", jdocInfo._jdocFullPath.c_str());
+        jdocInfo._needsCreation = true;
       }
+    }
+    else
+    {
+      LOG_WARNING("JdocsManager.InitDependent.NoJdocFile", "Serialized jdoc file not found; to be created by owning subsystem");
+      jdocInfo._needsCreation = true;
     }
   }
 
-  // Now queue up a reqeust to the jdocs server (vic-cloud) for the userID
+  // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
   SendJdocsRequest(userReq);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::GetUserAndThingIDs(std::string& userID, std::string& thingID) const
+void JdocsManager::DeleteJdocInCloud(const external_interface::JdocType jdocTypeKey)
 {
-  userID  = _userID;
-  thingID = _thingID;
+  const auto& docName = s_JdocsManager->GetJdocName(jdocTypeKey);
+  const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{_userID, _thingID, docName});
+  s_JdocsManager->SendJdocsRequest(deleteReq);
 }
 
 
@@ -254,7 +292,7 @@ void JdocsManager::DebugCheckForUser()
   LOG_INFO("JdocsManager.DebugCheckForUser", "Re-requesting user id from vic-cloud");
   _userID = emptyString;  // Reset user ID so we can make the request again
 
-  // Now queue up a reqeust to the jdocs server (vic-cloud) for the userID
+  // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
   SendJdocsRequest(userReq);
 }
@@ -272,25 +310,51 @@ void JdocsManager::RegisterOverwriteNotificationCallback(const external_interfac
     return;
   }
   auto& jdocItem = (*it).second;
+  if (jdocItem._overwrittenCB != nullptr)
+  {
+    LOG_WARNING("JdocsManager.RegisterOverwriteNotificationCallback.AlreadyRegistered",
+                "Registering overwrite notification callback again...is that intended?");
+  }
   jdocItem._overwrittenCB = cb;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::RegisterFormatMigrationCallback(const external_interface::JdocType jdocTypeKey,
+                                                   const FormatMigrationCallback cb)
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.RegisterFormatMigrationCallback.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return;
+  }
+  auto& jdocItem = (*it).second;
+  if (jdocItem._formatMigrationCB != nullptr)
+  {
+    LOG_WARNING("JdocsManager.RegisterFormatMigrationCallback.AlreadyRegistered",
+                "Registering format migration callback again...is that intended?");
+  }
+  jdocItem._formatMigrationCB = cb;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  UpdatePeriodicFileSaves(currTime_s);
+  UpdatePeriodicFileSaves();
 
   if (!_udpClient.IsConnected())
   {
 #ifndef SIMULATOR // vic-cloud jdocs stuff doesn't work on webots yet
     static const float kTimeBetweenConnectionAttempts_s = 1.0f;
     static float nextAttemptTime_s = 0.0f;
-    if (currTime_s >= nextAttemptTime_s)
+    if (_currTime_s >= nextAttemptTime_s)
     {
-      nextAttemptTime_s = currTime_s + kTimeBetweenConnectionAttempts_s;
+      nextAttemptTime_s = _currTime_s + kTimeBetweenConnectionAttempts_s;
       const bool nowConnected = ConnectToJdocsServer();
       if (nowConnected)
       {
@@ -311,9 +375,15 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   if (_udpClient.IsConnected())
   {
-    if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
+    if (_userID == kNotLoggedIn && _currTime_s > _nextUserLoginCheckTime_s)
     {
-      UpdatePeriodicCloudSaves(currTime_s);
+      _userID = emptyString;  // Reset user ID so we can make the request again
+      const auto userReq = JDocs::DocRequest::Createuser(Void{});
+      SendJdocsRequest(userReq);
+    }
+    else if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
+    {
+      UpdatePeriodicCloudSaves();
     }
 
     UpdateJdocsServerResponses();
@@ -378,6 +448,51 @@ const uint64_t JdocsManager::GetJdocDocVersion(const external_interface::JdocTyp
   }
   const auto& jdocItem = (*it).second;
   return jdocItem._jdocVersion;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const uint64_t JdocsManager::GetJdocFmtVersion(const external_interface::JdocType jdocTypeKey) const
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.GetJdocFmtVersion.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return 0;
+  }
+  const auto& jdocItem = (*it).second;
+  return jdocItem._jdocFormatVersion;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const uint64_t JdocsManager::GetCurFmtVersion(const external_interface::JdocType jdocTypeKey) const
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.GetCurFmtVersion.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return 0;
+  }
+  const auto& jdocItem = (*it).second;
+  return jdocItem._curFormatVersion;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::SetJdocFmtVersionToCurrent(const external_interface::JdocType jdocTypeKey)
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.SetJdocFmtVersionToCurrent.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return;
+  }
+  auto& jdocItem = (*it).second;
+  jdocItem._jdocFormatVersion = jdocItem._curFormatVersion;
 }
 
 
@@ -478,12 +593,86 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
     }
   }
 
-  // TODO: Increment some sort of 'minor version'
-
   if (saveToCloudImmediately)
   {
-    static const bool kIsNewJdocInCloud = false;
-    SubmitJdocToCloud(jdocTypeKey, kIsNewJdocInCloud);
+    auto& abuseConfig = jdocItem._abuseConfig;
+    const auto numRules = abuseConfig._abuseRules.size();
+    if (numRules > 0)
+    {
+      abuseConfig._cloudWriteTracker.AddOccurrence();
+
+      // Check for de-escalation except on the lowest level
+      bool deEscalated = false;
+      if (abuseConfig._abuseLevel > 0)
+      {
+        const auto& rule = abuseConfig._abuseRules[abuseConfig._abuseLevel - 1];
+        if (!rule._recentOccurrenceHandle->AreConditionsMet())
+        {
+          deEscalated = true;
+          abuseConfig._abuseLevel--;
+          int newCloudSavePeriod_s;
+          if (abuseConfig._abuseLevel == 0)
+          {
+            // When all levels have cooled off, restore the original cloud save period
+            newCloudSavePeriod_s = jdocItem._origCloudSavePeriod_s;
+          }
+          else
+          {
+            newCloudSavePeriod_s = abuseConfig._abuseRules[abuseConfig._abuseLevel - 1]._cloudAbuseSavePeriod_s;
+          }
+
+          LOG_INFO("JdocsManager.UpdateJdoc.AbuseCooldown",
+                   "Cloud write abuse cooldown; de-escalating to level %i; changing cloud save period from %i to %i seconds",
+                   abuseConfig._abuseLevel, jdocItem._cloudSavePeriod_s, newCloudSavePeriod_s);
+
+          jdocItem._cloudSavePeriod_s = newCloudSavePeriod_s;
+          // Re-set the periodic timer to the new period, UNLESS the timer is set to go off sooner
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          if ((jdocItem._nextCloudSaveTime - currTime_s) > jdocItem._cloudSavePeriod_s)
+          {
+            jdocItem._nextCloudSaveTime = currTime_s + static_cast<float>(jdocItem._cloudSavePeriod_s);
+          }
+        }
+      }
+
+      // Check for escalation except on the highest level which cannot be escalated from
+      if (abuseConfig._abuseLevel < numRules && !deEscalated)
+      {
+        // Check all rules that are at or greater than the current abuse level, in reverse order
+        for (int ruleIndex = static_cast<int>(numRules) - 1; ruleIndex >= abuseConfig._abuseLevel; ruleIndex--)
+        {
+          const auto& rule = abuseConfig._abuseRules[ruleIndex];
+          if (rule._recentOccurrenceHandle->AreConditionsMet())
+          {
+            abuseConfig._abuseLevel = ruleIndex + 1;
+
+            LOG_WARNING("JdocsManager.UpdateJdoc.AbuseDetected",
+                        "Cloud write abuse detected; escalating to level %i; changing cloud save period from %i to %i seconds",
+                        abuseConfig._abuseLevel, jdocItem._cloudSavePeriod_s, rule._cloudAbuseSavePeriod_s);
+
+            jdocItem._cloudSavePeriod_s = rule._cloudAbuseSavePeriod_s;
+            // Immediately re-set the periodic cloud save timer to wait for the new period
+            const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+            jdocItem._nextCloudSaveTime = currTime_s + static_cast<float>(jdocItem._cloudSavePeriod_s);
+
+            break;
+          }
+        }
+      }
+    }
+
+    if (abuseConfig._abuseLevel == 0)
+    {
+      static const bool kIsJdocNewInCloud = false;
+      SubmitJdocToCloud(jdocTypeKey, kIsJdocNewInCloud);
+    }
+    else
+    {
+      LOG_INFO("JdocsManager.UpdateJdoc.CloudWritePostponed",
+               "Postponing jdoc submission to cloud due to spam abuse");
+      jdocItem._cloudDirty = true;
+      SaveJdocFile(jdocTypeKey);
+    }
   }
   else
   {
@@ -493,24 +682,21 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
     }
   }
 
-  if (jdocItem._savedOnDisk)
+  if (saveToDiskImmediately)
   {
-    if (saveToDiskImmediately)
+    // If we're saving to cloud now (above), don't save to disk, because
+    // when we receive the WriteResponse, we'll save to disk then (and
+    // with an updated doc version).  So avoid doing two saves.
+    // Note:  Can't set diskFileDirty flag, because then the periodic
+    // save would pick it up and do the save.
+    if (!saveToCloudImmediately || (_userID == kNotLoggedIn))
     {
-      // If we're saving to cloud now (above), don't save to disk, because
-      // when we receive the WriteResponse, we'll save to disk then (and
-      // with an updated doc version).  So avoid doing two saves.
-      // Note:  Can't set diskFileDirty flag, because then the periodic
-      // save would pick it up and do the save.
-      if (!saveToCloudImmediately || (_userID == kNotLoggedIn))
-      {
-        SaveJdocFile(jdocTypeKey);
-      }
+      SaveJdocFile(jdocTypeKey);
     }
-    else
-    {
-      jdocItem._diskFileDirty = true;
-    }
+  }
+  else
+  {
+    jdocItem._diskFileDirty = true;
   }
 
   return true;
@@ -555,24 +741,37 @@ bool JdocsManager::LoadJdocFile(const external_interface::JdocType jdocTypeKey)
 
   jdocItem._jdocVersion        = jdocJson[kDocVersionKey].asUInt64();
   jdocItem._jdocFormatVersion  = jdocJson[kFmtVersionKey].asUInt64();
-  if (jdocJson.isMember(kClientMetadataKey))
-  {
-    jdocItem._jdocClientMetadata = jdocJson[kClientMetadataKey].asString();
-  }
-  else
-  {
-    // Temp code for backwards compatibility due to field rename
-    jdocItem._jdocClientMetadata = jdocJson[kFingerprintKey].asString();
-    jdocItem._diskFileDirty = true; // So we write it out with the correct key string
-  }
+  jdocItem._jdocClientMetadata = jdocJson[kClientMetadataKey].asString();
   jdocItem._jdocBody           = jdocJson[kJdocKey];
+
+  if (jdocJson.isMember(kCloudAccessedKey))
+  {
+    jdocItem._hasAccessedCloud = jdocJson[kCloudAccessedKey].asBool();
+  }
+
+  if (jdocJson.isMember(kCloudDirtyRemainingSecKey))
+  {
+    // If this jdoc was 'cloud-dirty' when we shut down, we will have written this out
+    // as a non-zero positive value
+    const int cloudDirtyRemaining_sec = jdocJson[kCloudDirtyRemainingSecKey].asInt();
+    if (cloudDirtyRemaining_sec > 0)
+    {
+      LOG_INFO("JdocsManager.LoadJdocFile",
+               "Restoring periodic cloud save timer for jdoc %s to %i seconds",
+               GetJdocName(jdocTypeKey).c_str(), cloudDirtyRemaining_sec);
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      jdocItem._nextCloudSaveTime = currTime_s + static_cast<float>(cloudDirtyRemaining_sec);
+      jdocItem._cloudDirty = true;
+    }
+  }
 
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey)
+void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey,
+                                const int cloudDirtyRemaining_s)
 {
   const auto& it = _jdocs.find(jdocTypeKey);
   auto& jdocItem = (*it).second;
@@ -582,6 +781,8 @@ void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey)
   jdocJson[kFmtVersionKey]     = jdocItem._jdocFormatVersion;
   jdocJson[kClientMetadataKey] = jdocItem._jdocClientMetadata;
   jdocJson[kJdocKey]           = jdocItem._jdocBody;
+  jdocJson[kCloudAccessedKey]  = jdocItem._hasAccessedCloud;
+  jdocJson[kCloudDirtyRemainingSecKey] = cloudDirtyRemaining_s;
 
   if (!_platform->writeAsJson(jdocItem._jdocFullPath, jdocJson))
   {
@@ -598,14 +799,44 @@ void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::UpdatePeriodicFileSaves(const float currTime_s)
+void JdocsManager::UpdatePeriodicFileSaves(const bool isShuttingDown)
 {
   for (auto& jdocPair : _jdocs)
   {
     auto& jdoc = jdocPair.second;
-    if (jdoc._savedOnDisk && jdoc._diskFileDirty && currTime_s > jdoc._nextDiskSaveTime)
+
+    // We want to save the jdoc to disk if either:
+    //    (A) jdoc is disk-dirty and "it's time"
+    // or (B) we are shutting down, and the jdoc is disk-dirty OR cloud-dirty OR has been disabled due to a format version issue
+
+    if ((jdoc._diskFileDirty && (_currTime_s > jdoc._nextDiskSaveTime)) ||
+        (isShuttingDown && (jdoc._diskFileDirty || jdoc._cloudDirty || jdoc._disabledDueToFmtVersion)))
     {
-      SaveJdocFile(jdocPair.first);
+      int cloudDirtyRemaining_s = 0;
+      if (isShuttingDown)
+      {
+        if (jdoc._cloudDirty || jdoc._disabledDueToFmtVersion)
+        {
+          if (jdoc._abuseConfig._abuseLevel > 0)
+          {
+            // User had been penalized for causing too many cloud submissions.  Instead of
+            // enforcing the remaining time penalty on startup, let's just submit right
+            // after startup.  (The user can start spamming then anyway.  To prevent that
+            // we would have to start saving abuse level here and restoring it on startup.)
+            cloudDirtyRemaining_s = 1;
+          }
+          else
+          {
+            cloudDirtyRemaining_s = static_cast<int>(jdoc._nextCloudSaveTime - _currTime_s);
+          }
+          // Make sure this value is greater than zero because zero means 'not cloud dirty':
+          if (cloudDirtyRemaining_s < 1)
+          {
+            cloudDirtyRemaining_s = 1;
+          }
+        }
+      }
+      SaveJdocFile(jdocPair.first, cloudDirtyRemaining_s);
     }
   }
 }
@@ -614,8 +845,8 @@ void JdocsManager::UpdatePeriodicFileSaves(const float currTime_s)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::ConnectToJdocsServer()
 {
-  static const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "jdocs_engine_client";
-  static const std::string peerName = std::string{LOCAL_SOCKET_PATH} + "jdocs_server";
+  static const std::string sockName = std::string{Victor::JDOCS_ENGINE_CLIENT_PATH};
+  static const std::string peerName = std::string{Victor::JDOCS_SERVER_PATH};
   const bool udpSuccess = _udpClient.Connect(sockName, peerName);
   LOG_INFO("JdocsManager.ConnectToJdocsServer.Attempt", "Attempted connection from %s to %s: Result: %s",
            sockName.c_str(), peerName.c_str(), udpSuccess ? "SUCCESS" : "Failed");
@@ -641,14 +872,14 @@ bool JdocsManager::SendJdocsRequest(const JDocs::DocRequest& docRequest)
     static const size_t kMaxUnsentQueueSize = 20;
     if (unsentQueueSize >= kMaxUnsentQueueSize)
     {
-      LOG_ERROR("JdocsManager.SendJdocsRequest",
+      LOG_ERROR("JdocsManager.SendJdocsRequest.QueueTooBig",
                 "Unsent queue size is at max at %zu items; IGNORING jdocs request operation!",
                 unsentQueueSize);
       return false;
     }
 
     _unsentDocRequestQueue.push(docRequest);
-    LOG_INFO("JdocsManager.SendJdocsRequest",
+    LOG_INFO("JdocsManager.SendJdocsRequest.QueuedUnsentRequest",
              "Jdocs server not connected; adding request with tag %i to unsent requests (size now %zu)",
              static_cast<int>(docRequest.GetTag()), unsentQueueSize + 1);
 
@@ -668,9 +899,9 @@ bool JdocsManager::SendJdocsRequest(const JDocs::DocRequest& docRequest)
   {
     return false;
   }
-  LOG_INFO("JdocsManager.SendJdocsRequest", "Sent request with tag %i",
+  LOG_INFO("JdocsManager.SendJdocsRequest.Sent", "Sent request with tag %i",
            static_cast<int>(docRequest.GetTag()));
-  _docRequestQueue.push(docRequest);
+  _docRequestQueue.push_back(docRequest);
   return true;
 }
 
@@ -680,23 +911,27 @@ bool JdocsManager::SendUdpMessage(const JDocs::DocRequest& msg)
 {
   std::vector<uint8_t> buf(msg.Size());
   msg.Pack(buf.data(), buf.size());
-  const size_t bytesSent = _udpClient.Send((const char*)buf.data(), buf.size());
-  return bytesSent > 0;
+  const ssize_t bytesSent = _udpClient.Send((const char*)buf.data(), buf.size());
+  if (bytesSent <= 0) {
+    LOG_ERROR("JdocsManager.SendUdpMessage", "Failed to send document request (%zd/%zu)", bytesSent, buf.size());
+    return false;
+  }
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::UpdatePeriodicCloudSaves(const float currTime_s)
+void JdocsManager::UpdatePeriodicCloudSaves()
 {
   for (auto& jdocPair : _jdocs)
   {
     auto& jdoc = jdocPair.second;
-    if (jdoc._cloudDirty && currTime_s > jdoc._nextCloudSaveTime)
+    if (jdoc._cloudDirty && _currTime_s > jdoc._nextCloudSaveTime)
     {
-      jdoc._nextCloudSaveTime = currTime_s + jdoc._cloudSavePeriod_s;
+      jdoc._nextCloudSaveTime = _currTime_s + jdoc._cloudSavePeriod_s;
 
-      static const bool kIsNewJdocInCloud = false;
-      SubmitJdocToCloud(jdocPair.first, kIsNewJdocInCloud);
+      static const bool kIsJdocNewInCloud = false;
+      SubmitJdocToCloud(jdocPair.first, kIsJdocNewInCloud);
     }
   }
 }
@@ -712,9 +947,11 @@ void JdocsManager::UpdateJdocsServerResponses()
   if (bytesReceived > 0)
   {
     DEV_ASSERT(!_docRequestQueue.empty(), "Doc request queue is empty but we're receiving a response");
-    const auto& docRequest = _docRequestQueue.front();
+    // Make a copy of the doc request, and remove it from the queue. We remove from queue now
+    // because some code below can check the queue and we want it to be up to date
+    const auto docRequest = _docRequestQueue.front();
+    _docRequestQueue.pop_front();
     JDocs::DocResponse response{receiveArray, (size_t)bytesReceived};
-    bool valid = true;
     switch (response.GetTag())
     {
       case JDocs::DocResponseTag::write:
@@ -747,18 +984,18 @@ void JdocsManager::UpdateJdocsServerResponses()
       }
       break;
 
+      case JDocs::DocResponseTag::thing:
+      {
+        HandleThingResponse(response.Get_thing());
+      }
+      break;
+
       default:
       {
         LOG_INFO("JdocsManager.UpdateJdocsServerResponses.UnexpectedSignal",
                  "0x%x 0x%x", receiveArray[0], receiveArray[1]);
-        valid = false;
       }
       break;
-    }
-
-    if (valid)
-    {
-      _docRequestQueue.pop();
     }
   }
 }
@@ -778,17 +1015,27 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
     // Cloud has accepted the new or updated jdoc, and incremented the cloud-managed
     // version number, so update that version number in our jdoc in memory
     jdoc._jdocVersion = writeResponse.latestVersion;
-    
+
     if (jdocType == external_interface::JdocType::ROBOT_SETTINGS)
     {
       DASMSG(robot_settings_passed_to_cloud_jdoc, "robot.settings.passed_to_cloud_jdoc", "The robot settings jdoc was submitted to cloud");
       DASMSG_SEND();
+    }
+
+    if (jdoc._pendingCloudSave)
+    {
+      // If we had detected an 'overlap' of write requests for this jdoc earlier,
+      // now submit the next revision of the jdoc to the cloud
+      jdoc._pendingCloudSave = false;
+      static const bool kIsJdocNewInCloud = false;
+      SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
     }
   }
   else if (writeResponse.status == JDocs::WriteStatus::RejectedDocVersion)
   {
     if (writeRequest.doc.docVersion > writeResponse.latestVersion)
     {
+      // This is not possible because only the cloud can increment the doc version
       LOG_ERROR("JdocsManager.HandleWriteResponse.RejectedDocVersion",
                 "Submitted jdoc's version %llu is later than the version in the cloud (%llu); this should not be possible",
                 writeRequest.doc.docVersion, writeResponse.latestVersion);
@@ -800,33 +1047,38 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
                   writeRequest.doc.docVersion, writeResponse.latestVersion);
 
       // Let's just re-submit the jdoc, using the latest version number we got from cloud
+      // In future we might want to change this behavior for certain documents (e.g. if
+      // customer care can change UserEntitlements jdoc directly)
+      // TODO: Deal with _pendingCloudSave flag if set...
       jdoc._jdocVersion = writeResponse.latestVersion;
-      static const bool kIsNewJdocInCloud = false;
-      SubmitJdocToCloud(jdocType, kIsNewJdocInCloud);
-      
+      static const bool kIsJdocNewInCloud = false;
+      SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
+
       saveToDisk = false; // Let's wait until we succeed
     }
   }
   else if (writeResponse.status == JDocs::WriteStatus::RejectedFmtVersion)
   {
     // The client format version is less than the server format version; update not allowed
-    LOG_ERROR("JodcsManager.HandleWriteResponse.RejectedFmtVersion",
-              "Submitted jdoc's format version %llu is less than the format version in the cloud; update not allowed",
+    LOG_ERROR("JdocsManager.HandleWriteResponse.RejectedFmtVersion",
+              "Submitted jdoc's format version %llu is earlier than the format version in the cloud; update not allowed",
               writeRequest.doc.fmtVersion);
-    // Not sure what to do here quite yet
+
+    // Mark this jdoc type as 'disabled' so we don't try to submit it again.
+    // After startup, we guarantee that all jdocs the jdocs manager owns are at the latest format version
+    // that the code knows about.  So this scenario could occur if, AFTER startup, ANOTHER client were to
+    // submit this jdoc type to the cloud with a newer format version.
+    jdoc._disabledDueToFmtVersion = true;
   }
   else  // writeResponse.status == JDocs::WriteStatus::Error
   {
-    LOG_ERROR("JodcsManager.HandleWriteResponse.Error", "Error returned from write jdoc attempt");
+    LOG_ERROR("JdocsManager.HandleWriteResponse.Error", "Error returned from write jdoc attempt");
     // Not sure (yet) what to do if we get this
   }
 
   if (saveToDisk)
   {
-    if (jdoc._savedOnDisk)
-    {
-      SaveJdocFile(jdocType);
-    }
+    SaveJdocFile(jdocType);
   }
 }
 
@@ -851,13 +1103,17 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
   {
     const auto& requestItem = readRequest.items[index];
     const auto jdocType = JdocTypeFromDocName(requestItem.docName);
-    const auto& jdoc = _jdocs[jdocType];
+    auto& jdoc = _jdocs[jdocType];
     const bool wasRequestingLatestVersion = requestItem.myDocVersion == 0;
+    bool checkForFormatVersionMigration = false;
+    bool pulledNewVersionFromCloud = false;
+    bool accessedCloud = true;
 
     if (responseItem.status == JDocs::ReadStatus::Changed)
     {
-      // When we've requested 'get latest', if it exists, we got "Changed" status
-      const auto& ourDocVersion = GetJdocDocVersion(jdocType);
+      // When we've requested 'get latest', if it exists, we get "Changed" status
+      // (even though it really hasn't changed)
+      const auto ourDocVersion = GetJdocDocVersion(jdocType);
       LOG_INFO("JdocsManager.HandleReadResponse.Found",
                "Read response for doc %s got 'changed'; cloud version %llu, our version %llu",
                requestItem.docName.c_str(), responseItem.doc.docVersion, ourDocVersion);
@@ -871,53 +1127,55 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       }
       else if (responseItem.doc.docVersion > ourDocVersion)
       {
-        // Cloud has a newer version than we do; so pull in that version, overwriting our version
+        // Cloud has a newer version than robot does
+        static const size_t kBufferLen = 256;
+        char logMsg[kBufferLen];
+        snprintf(logMsg, kBufferLen, "Cloud version (%llu) of %s jdoc is later than robot version (%llu); %s",
+                 responseItem.doc.docVersion, requestItem.docName.c_str(), ourDocVersion,
+                 jdoc._hasAccessedCloud ? "pulling down newer version from cloud"
+                 : "submitting robot version to cloud");
         if (jdoc._errorOnCloudVersionLater)
         {
-          LOG_ERROR("JdocsManager.HandleReadResponse.LaterVersionError",
-                    "Overwriting robot version of jdoc %s with a later version from cloud",
-                    requestItem.docName.c_str());
+          LOG_ERROR("JdocsManager.HandleReadResponse.LaterVersionError", "%s", logMsg);
         }
         else if (jdoc._warnOnCloudVersionLater)
         {
-          LOG_WARNING("JdocsManager.HandleReadResponse.LaterVersionWarn",
-                      "Overwriting robot version of jdoc %s with a later version from cloud",
-                      requestItem.docName.c_str());
+          LOG_WARNING("JdocsManager.HandleReadResponse.LaterVersionWarn", "%s", logMsg);
         }
         else
         {
-          LOG_INFO("JdocsManager.HandleReadResponse.LaterVersionInfo",
-                   "Overwriting robot version of jdoc %s with a later version from cloud",
-                   requestItem.docName.c_str());
+          LOG_INFO("JdocsManager.HandleReadResponse.LaterVersionInfo", "%s", logMsg);
         }
 
-        // Check 'format version' which is our method for occasionally changing the format of the jdoc body
-        bool formatVersionOK = true;
-        if (responseItem.doc.fmtVersion > jdoc._jdocFormatVersion)
+        if (jdoc._hasAccessedCloud)
         {
-          LOG_ERROR("JdocsManager.HandleReadResponse.FmtVersionError",
-                    "Rejecting jdoc from cloud because its format version (%llu) is later than what robot can handle (%llu)",
-                    responseItem.doc.fmtVersion, jdoc._jdocFormatVersion);
-          formatVersionOK = false;
+          // If we've accessed the cloud since clearing user data, this means this is NOT the first session
+          // since clearing user data. Therefore, another client must have updated the jdoc in the cloud,
+          // so pull it down and overwrite the robot's version.
+          // TODO later (VIC-6265, VIC-6529) we'll do fancier 'conflict resolution'
+          if (responseItem.doc.fmtVersion <= jdoc._curFormatVersion)
+          {
+            CopyJdocFromCloud(jdocType, responseItem.doc);
+            pulledNewVersionFromCloud = true;
+          }
+          checkForFormatVersionMigration = true;
         }
-        else if (responseItem.doc.fmtVersion < jdoc._jdocFormatVersion)
+        else
         {
-          LOG_INFO("JdocsManager.HandleReadResponse.FmtVersionWarn",
-                   "Jdoc from cloud has older format version (%llu) than robot has (%llu); migrating to newer version",
-                   responseItem.doc.fmtVersion, jdoc._jdocFormatVersion);
-          //responseItem.doc.fmtVersion = jdoc._jdocFormatVersion;
-          // This is where we would call any needed backwards-compatibility migration code
-        }
-        if (formatVersionOK)
-        {
-          CopyJdocFromCloud(jdocType, responseItem.doc);
+          // If we HAVEN'T accessed the cloud since clearing user data, this means this IS the first logged-in
+          // session since clearing user data. Therefore, submit the robot's jdoc to the cloud, thus overwriting
+          // the one in the cloud.
+          // This currently (9/13/2018) can happen when dev/QA does an OTA/clear user data on a robot,
+          // and then runs with that same robot and user ID, because nothing deletes the prior jdocs in the cloud.
+          jdoc._jdocVersion = responseItem.doc.docVersion;
+          static const bool kIsJdocNewInCloud = false;
+          SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
         }
       }
       else
       {
-        // Do nothing.
-        // TODO:  This is where we MAY need to compare a 'minor version' stored in client metadata.
-        // (e.g. for RobotLifetimeStats, which are updated more frequently than we submit its jdoc to the cloud)
+        // Doc version is the same on disk as in cloud
+        checkForFormatVersionMigration = true;
       }
     }
     else if (responseItem.status == JDocs::ReadStatus::NotFound)
@@ -927,21 +1185,90 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
                "Read response for doc %s got 'not found', so creating one",
                requestItem.docName.c_str());
 
-      static const bool kIsNewJdocInCloud = true;
-      SubmitJdocToCloud(jdocType, kIsNewJdocInCloud);
+      static const bool kIsJdocNewInCloud = true;
+      SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
     }
     else if (responseItem.status == JDocs::ReadStatus::PermissionDenied)
     {
       LOG_ERROR("JdocsManager.HandleReadResponse.PermissionDenied",
                 "Read response for doc %s got 'permission denied'",
                 requestItem.docName.c_str());
+      accessedCloud = false;
     }
     else  // JDocs::ReadStatus::Unchanged
     {
       if (wasRequestingLatestVersion)
       {
+        // "get latest version" always returns "Changed", not "Unchanged"
         LOG_ERROR("JdocsManager.HandleReadResponse.Unchanged",
                   "Unexpected 'unchanged' status returned for 'get latest' read request");
+      }
+      // No need to handle format migration here, because we're not using this code path at all.
+      // "Unchanged" can only be returned from a ReadRequest for a specific doc version, and we're
+      // only sending ReadRequest for 'get latest version' (upon startup, or log-in.)  And if we
+      // were requesting a jdoc with a specific doc version, it would likely be for a past version
+      // of the jdoc, so a format migration would probably not be appropriate or desired.
+    }
+
+    if (accessedCloud && !jdoc._hasAccessedCloud)
+    {
+      LOG_INFO("JdocsManager.HandleReadResponse.FirstCloudAccess",
+               "First cloud access for jdoc %s", requestItem.docName.c_str());
+      // Set the 'has accessed cloud' flag; it will be true from now until user data is cleared
+      jdoc._hasAccessedCloud = true;
+      jdoc._diskFileDirty = true;
+      SaveJdocFile(jdocType);
+    }
+
+    if (checkForFormatVersionMigration)
+    {
+      // Check 'format version' which is our method for occasionally changing the format of the jdoc body
+      if (responseItem.doc.fmtVersion > jdoc._curFormatVersion)
+      {
+        LOG_ERROR("JdocsManager.HandleReadResponse.FmtVersionError",
+                  "Rejecting jdoc from cloud because its format version (%llu) is later than what robot can handle (%llu)",
+                  responseItem.doc.fmtVersion, jdoc._curFormatVersion);
+        // Mark this jdoc type as 'disabled' so we don't try to submit it again
+        jdoc._disabledDueToFmtVersion = true;
+        // Note that above, we didn't call CopyJdocFromCloud in this case, so we still
+        // have a jdoc in a format version that the code understands.
+      }
+      else if (responseItem.doc.fmtVersion < jdoc._curFormatVersion)
+      {
+        LOG_INFO("JdocsManager.HandleReadResponse.FmtVersionWarn",
+                 "Jdoc from cloud has older format version (%llu) than robot has (%llu); migrating to newer version",
+                 responseItem.doc.fmtVersion, jdoc._curFormatVersion);
+
+        // If we just pulled a new version from the cloud (a newer DOC version),
+        // then we need to do the format migration on that jdoc.  (If not, then
+        // we've already done the format migration at startup, after loading jdoc from disk.)
+        if (pulledNewVersionFromCloud)
+        {
+          if (jdoc._formatMigrationCB != nullptr)
+          {
+            jdoc._formatMigrationCB();
+          }
+        }
+        static const bool kIsJdocNewInCloud = false;
+        SubmitJdocToCloud(jdocType, kIsJdocNewInCloud);
+      }
+      else
+      {
+        // No format migration needed.  But if we've pulled a new
+        // version from the cloud, we need to save it to disk now.
+        if (pulledNewVersionFromCloud)
+        {
+          SaveJdocFile(jdocType);
+        }
+      }
+    }
+
+    if (pulledNewVersionFromCloud)
+    {
+      // Notify the manager that handles this jdoc data that the data has just been replaced
+      if (jdoc._overwrittenCB != nullptr)
+      {
+        jdoc._overwrittenCB();
       }
     }
 
@@ -972,6 +1299,7 @@ void JdocsManager::HandleErrResponse(const JDocs::ErrorResponse& errorResponse)
     // of getting a UserResponse, we actually get ErrorResponse (here), so
     // mark us as not logged in
     _userID = kNotLoggedIn;
+    _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
   }
 }
 
@@ -984,13 +1312,33 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   {
     LOG_ERROR("JdocsManager.HandleUserResponse.Error", "Received user response from jdocs server, but ID is empty (not logged in?)");
     _userID = kNotLoggedIn;
+    _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
     return;
   }
 
   LOG_INFO("JdocsManager.HandleUserResponse", "Received user response from jdocs server, with userID: '%s'",
             _userID.c_str());
 
-  // Now ask the jdocs server to get the latest versions it has of each of these jdocs
+  // Now send a request to the jdocs server for the thingID
+  const auto thingReq = JDocs::DocRequest::Creatething(Void{});
+  SendJdocsRequest(thingReq);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::HandleThingResponse(const JDocs::ThingResponse& thingResponse)
+{
+  _thingID = thingResponse.thingName;
+  if (_thingID.empty())
+  {
+    LOG_ERROR("JdocsManager.HandleThingResponse.Error", "Received thing response from jdocs server, but thingID is empty");
+    return;
+  }
+
+  LOG_INFO("JdocsManager.HandleThingResponse", "Received thing response from jdocs server, with thingID: '%s'",
+           _thingID.c_str());
+
+  // Now ask the jdocs server to get the latest versions it has of each of the jdocs
   std::vector<JDocs::ReadItem> itemsToRequest;
   for (const auto& jdoc : _jdocs)
   {
@@ -1001,7 +1349,7 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   SendJdocsRequest(readReq);
 
   // Finally, if there are any jdoc operations waiting to be sent,
-  // send them now, and for each one, fill in the missing userID
+  // send them now, and for each one, fill in the missing userID and thingID
   while (!_unsentDocRequestQueue.empty())
   {
     auto unsentRequest = _unsentDocRequestQueue.front();
@@ -1011,18 +1359,21 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
     {
       auto readReq = unsentRequest.Get_read();
       readReq.account = _userID;
+      readReq.thing = _thingID;
       unsentRequest.Set_read(readReq);
     }
     else if (unsentRequest.GetTag() == JDocs::DocRequestTag::write)
     {
       auto writeReq = unsentRequest.Get_write();
       writeReq.account = _userID;
+      writeReq.thing = _thingID;
       unsentRequest.Set_write(writeReq);
     }
     else if (unsentRequest.GetTag() == JDocs::DocRequestTag::deleteReq)
     {
       auto deleteReq = unsentRequest.Get_deleteReq();
       deleteReq.account = _userID;
+      deleteReq.thing = _thingID;
       unsentRequest.Set_deleteReq(deleteReq);
     }
 
@@ -1032,29 +1383,66 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isNewJdocInCloud)
+void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud)
 {
+  auto& jdocItem = _jdocs[jdocTypeKey];
+  jdocItem._cloudDirty = false;
+
+  if (jdocItem._disabledDueToFmtVersion)
+  {
+    LOG_WARNING("JdocsManager.SubmitJdocToCloud.DisabledDueToFmtVersion",
+                "NOT submitting jdoc %s to cloud, because cloud has a newer format version than this code can handle",
+                external_interface::JdocType_Name(jdocTypeKey).c_str());
+    return;
+  }
+
+  // If there is an outstanding cloud write request for this jdoc, just set a flag and exit;
+  // we will submit this request later, after the current write request gets a response
+  if (jdocItem._pendingCloudSave)
+  {
+    LOG_INFO("JdocsManager.SubmitJdocToCloud.MultipleWriteOverlap",
+             "Multiple cloud write overlap detected; delaying submission of this jdoc");
+    return;
+  }
+  for (const auto& request : _docRequestQueue)
+  {
+    if (request.GetTag() == JDocs::DocRequestTag::write)
+    {
+      if (request.Get_write().docName == jdocItem._jdocName)
+      {
+        LOG_INFO("JdocsManager.SubmitJdocToCloud.WriteOverlap",
+                 "Cloud write overlap detected; delaying submission of this jdoc");
+        jdocItem._pendingCloudSave = true;
+        return;
+      }
+    }
+  }
+
   // Jdocs are sent to/from the app with protobuf; jdocs are sent to/from vic-cloud with CLAD
   // Hence the differences/copying code here
   external_interface::Jdoc jdoc;
   GetJdoc(jdocTypeKey, jdoc);
-  if (isNewJdocInCloud)
+  if (isJdocNewInCloud && jdoc.doc_version() != 0)
   {
-    DEV_ASSERT(jdoc.doc_version() == 0, "Error: Non-zero jdoc version for one not found in the cloud");
+    // This would occur if the userID or thingID was somehow changed on this robot.  However,
+    // we recover gracefully when we get the write response for this submission; we copy down
+    // the new version (which will be 1) and then save the jdoc to disk.  At that point the
+    // jdoc on disk will be in sync with the jdoc in cloud.
+    LOG_WARNING("JdocsManager.SubmitJdocToCloud.NonZeroFirstTimeJdoc",
+                "Submitting a jdoc not found in the cloud, but that has non-zero doc version %llu",
+                jdoc.doc_version());
   }
 
   LOG_INFO("JdocsManager.SubmitJdocToCloud", "Submitted jdoc to cloud: %s, doc version %llu, fmt version %llu",
            external_interface::JdocType_Name(jdocTypeKey).c_str(), jdoc.doc_version(), jdoc.fmt_version());
   JDocs::Doc jdocForCloud;
-  jdocForCloud.docVersion = isNewJdocInCloud ? 0 : jdoc.doc_version();  // Zero means 'create new'
+  jdocForCloud.docVersion = isJdocNewInCloud ? 0 : jdoc.doc_version();  // Zero means 'create new'
   jdocForCloud.fmtVersion = jdoc.fmt_version();
   jdocForCloud.metadata   = jdoc.client_metadata();
   jdocForCloud.jsonDoc    = jdoc.json_doc();
 
   const auto writeReq = JDocs::DocRequest::Createwrite(JDocs::WriteRequest{_userID, _thingID, GetJdocName(jdocTypeKey), jdocForCloud});
   SendJdocsRequest(writeReq);
-
-  _jdocs[jdocTypeKey]._cloudDirty = false;
 }
 
 
@@ -1082,17 +1470,6 @@ bool JdocsManager::CopyJdocFromCloud(const external_interface::JdocType jdocType
     LOG_ERROR("JdocsManager.CopyJdocFromCloud.JsonError",
               "Failed to parse json string for jdoc %s body, received from cloud",
               jdocItem._jdocName.c_str());
-  }
-
-  // Notify the manager that handles this jdoc data that the data has just been replaced
-  if (jdocItem._overwrittenCB != nullptr)
-  {
-    jdocItem._overwrittenCB();
-  }
-
-  if (jdocItem._savedOnDisk)
-  {
-    SaveJdocFile(jdocTypeKey);
   }
 
   return true;

@@ -31,9 +31,9 @@ from anki_vector.util import degrees
 
 
 def main():
-    args = anki_vector.util.parse_test_args()
+    args = anki_vector.util.parse_command_args()
 
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    with anki_vector.Robot(args.serial) as robot:
         # If necessary, Move Vector's Head and Lift to make it easy to see his face
         robot.behavior.set_head_angle(degrees(50.0))
         robot.behavior.set_lift_height(0.0)
@@ -44,10 +44,10 @@ def main():
         # Load an image
         image_file = Image.open(image_path)
 
-        # Convert the image to the format used by the oled screen
+        # Convert the image to the format used by the Screen
         print("Display image on Vector's face...")
-        screen_data = anki_vector.oled_face.convert_image_to_screen_data(image_file)
-        robot.oled.set_oled_with_screen_data(screen_data, 4.0)
+        screen_data = anki_vector.screen.convert_image_to_screen_data(image_file)
+        robot.screen.set_screen_with_image_data(screen_data, 4.0)
         time.sleep(5)
 
 

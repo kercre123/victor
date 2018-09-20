@@ -146,7 +146,7 @@ void DependencyManagedEntity<EnumType>::AddDependentComponent(EnumType enumID,
                                                               bool shouldManage)
 {
   auto pair = DependencyManagedEntity<EnumType>::_components.emplace(
-    std::make_pair(std::move(enumID), ComponentPtrWrapper(component)));
+    std::make_pair(enumID, ComponentPtrWrapper(component)));
   ANKI_VERIFY(pair.second,
               "DependencyManagedEntity.AddDependentComponentManaged.FailedToInsert","Failed to insert enum");
 

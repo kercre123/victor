@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Anki, Inc.
+# Copyright (c) 2018 Anki, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ Example:
         def my_function(robot):
             robot.play_animation("anim_blackjack_victorwin_01")
 
-        with anki_vector.Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with anki_vector.Robot("my_robot_serial_number") as robot:
             viewer = opengl.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
@@ -455,7 +455,7 @@ class OpenGLViewer():
         robot_frame = world_frame.robot_frame
         robot_pose = robot_frame.pose
 
-        # Render the cubes
+        # Render the cube
         for i in range(1):
             cube_frame = world_frame.cube_frames[i]
             if cube_frame is None:

@@ -41,8 +41,8 @@ namespace CladProtoTypeTranslator {
   #define CLAD_PROTO_COMPARE_ASSERT2(T,V,U) static_assert(ToProtoEnum(T::V) == external_interface::T::U, "Invalid cast " #T "::" #V " to " #T "::" #U )
   
   CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, NotStarted);
-  CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, FinishedComeHere);
-  CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, FinishedMeetVictor);
+  //CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, FinishedComeHere);
+  //CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, FinishedMeetVictor);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, Complete);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, DevDoNothing);
 

@@ -19,6 +19,7 @@ enum uint_8 SleepStateID {
 
   // deep sleep where only voice command will wake (not movement)
   Comatose,
+  EmergencySleep,
 
   DeepSleep,
   LightSleep,
@@ -45,6 +46,9 @@ enum uint_8 WakeReason {
 
   // slept long enough, time to wake up
   NotSleepy,
+
+  // SleepCycle behavior was interrupted
+  Interrupted
 }
 
 enum_concept bool ShouldPlayWakeUpAnimForReason[WakeReason] {
@@ -58,7 +62,8 @@ enum_concept bool ShouldPlayWakeUpAnimForReason[WakeReason] {
   Sound = 0, // already awake from the sound reaction
   LightsOn = 1, // TODO:(bn) use a custom wake up here (change this concept to return AnimTrigger?)
   SawPerson = 0,
-  NotSleepy = 1
+  NotSleepy = 1,
+  Interrupted = 0
 }
 
 enum uint_8 SleepReason {
@@ -74,6 +79,18 @@ enum uint_8 SleepReason {
 
   // decided autonomously (stim level, sleep debt)
   Sleepy,
+
+  // e.g. low battery or high temp
+  Emergency,
+
+  NightTimeReboot,
+}
+
+enum uint_8 SleepReactionType {
+  NotReacting = 0,
+  Sound,
+  TriggerWord,
+  WiggleOntoCharger
 }
 
 }

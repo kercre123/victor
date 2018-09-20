@@ -38,7 +38,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
@@ -47,7 +47,6 @@ protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
   virtual void BehaviorUpdate() override;
 
@@ -63,7 +62,14 @@ private:
   
   struct InstanceConfig {
     InstanceConfig();
+    InstanceConfig(const Json::Value& config, const std::string& debugName);
+    
     ICozmoBehaviorPtr stuckOnEdgeBehavior;
+    
+    float cliffBackupDist_mm;
+    float cliffBackupSpeed_mmps;
+    
+    float eventFlagTimeout_sec;
   };
 
   InstanceConfig _iConfig;
@@ -74,11 +80,12 @@ private:
     DynamicVariables();
     bool quitReaction;
     bool gotStop;
-    bool putdownOnCliff;
-    bool shouldStopDueToCharger;
+    bool putDownOnCliff;
     bool wantsToBeActivated;
     struct Persistent {
       int numStops;
+      float lastStopTime_sec;
+      float lastPutDownOnCliffTime_sec;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;

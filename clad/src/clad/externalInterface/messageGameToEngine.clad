@@ -63,21 +63,6 @@ message DisconnectFromUiDevice {
     uint_8 deviceID
 }
 
-message StartIdleTimeout {
-  float_32 faceOffTime_s = -1.0,
-  float_32 disconnectTime_s = -1.0
-}
-
-message CancelIdleTimeout {
-  
-}
-
-message RequestLocale {
-}
-
-message RequestDataCollectionOption {
-  bool CollectionEnabled
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Low-level Robot Controls
@@ -126,16 +111,8 @@ message EnableStopOnCliff {
     bool enable
 }
 
-message EnableBlockTapFilter {
-  bool enable
-}
-
-message GetBlockTapFilterStatus {
-}
-
 // StopAllMotors
 message StopAllMotors {
-
 }
 
 // ControllerGains
@@ -167,38 +144,7 @@ message SetRobotVolume {
   float_32 volume
 }
 
-
-// !!! Be sure to update RobotAudioOutputSource in robotAudioClient.h if this enum is updated. !!!
-enum uint_8 RobotAudioOutputSourceCLAD
-{
-  NoDevice,       // No audio
-  PlayOnDevice,   // Play on Device - This is not perfectly synced to animations
-  PlayOnRobot     // Play on Robot by using Hijack Audio plug-in to get audio stream from Wwise
-}
-
-message SetRobotAudioOutputSource
-{
-  RobotAudioOutputSourceCLAD source
-}
-
 message ForceDelocalizeRobot {
-}
-
-// Will restore the currently connected robot with either an automatically determined
-// backup file or from the specified one
-message RestoreRobotFromBackup {
-  uint_32 robotToRestoreFrom = 0
-}
-
-// Requests data about the backups we have and whether or not to prompt the user
-// to restore this robot
-message RequestRobotRestoreData {
-
-}
-
-// Wipes all game data on the robot
-message WipeRobotGameData {
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -291,7 +237,6 @@ message ExecuteTestPlan {
 message PlannerRunMode {
     bool isSync
 }
-
 
 // SelectNextObject
 message SelectNextObject {
@@ -549,13 +494,6 @@ message SetDefaultHeadAndLiftState {
   float_32 liftHeight
 }
 
-message SetSparkedMusicState{
-  AudioMetaData::SwitchState::Sparked sparkedMusicState
-}
-
-// A message for Game to let engine know that Cozmo is waking up
-message NotifyCozmoWakeup{
-}
 
 // The app requests that the robot perform some non-instantaneous action, usually
 // an action with an associated voice command, such as "go to your charger"
@@ -568,19 +506,6 @@ message AppIntent {
   string param,
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// BlockWorld
-///////////////////////////////////////////////////////////////////////////////
-
-// request currently located instances of objects in the current origin
-// pose information can be trusted from this objects
-message RequestLocatedObjectStates {
-}
-
-// request currently connected objects, regardless of their pose state in current or any origin
-// pose information is not provided for this objects
-message RequestConnectedObjects {
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Visualization (Viz) Related
@@ -631,10 +556,6 @@ message EraseQuad {
 // Animation Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-
-// ReadFaceAnimationDir
-message ReadFaceAnimationDir {
-}
 
 // ReadAnimationFile
 message ReadAnimationFile {
@@ -828,13 +749,6 @@ union MoodMessageUnion {
 
 message MoodMessage {
   MoodMessageUnion  MoodMessageUnion
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Request engine to send data like device id, app run id, etc
-message RequestDeviceData {
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////

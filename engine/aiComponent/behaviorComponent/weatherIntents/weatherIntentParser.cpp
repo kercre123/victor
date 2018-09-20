@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
@@ -119,6 +120,26 @@ bool WeatherIntentParser::GetTemperature(const UserIntent_WeatherResponse& weath
     return false;
   }
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void WeatherIntentParser::SendDASEventForRepsonse(const UserIntent_WeatherResponse& intent) const
+{
+  const bool isForecast = IsForecast(intent);
+  const bool isFahrenheit = IsFahrenheit(intent);
+  auto condition = GetCondition(intent);
+  int temp = 0;
+  const bool tempOK = GetTemperature(intent, temp);
+
+  DASMSG(weather_response, "behavior.weather.response", "The robot is responding to a weather request");
+  DASMSG_SET(s1, WeatherConditionTypeToString(condition), "displayed weather condition");
+  DASMSG_SET(s2, intent.condition, "raw condition response from cloud");
+  DASMSG_SET(i1, isForecast ? 1 : 0, "1 if request is for a forecast, 0 otherwise");
+  if( tempOK ) {
+    DASMSG_SET(i2, temp, "Returned temperature");
+    DASMSG_SET(s3, isFahrenheit ? "F" : "C", "temperature units (F or C, null if no temperature)");
+  }
+  DASMSG_SEND();
 }
 
 

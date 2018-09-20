@@ -9,9 +9,11 @@
 #include "coretech/common/shared/radians.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/DAS.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/motorTypes.h"
 
 #include <math.h>
 
@@ -125,11 +127,6 @@ namespace Anki {
 
         // Current speed
         f32 radSpeed_ = 0;
-
-        // Number of tics that no encoders counts must be received
-        // before the raw speed is considered 0.
-        const u32 ZERO_SPEED_ENCODER_TIC_THRESH = 5;
-        u32 numTicsNoEncoderCounts_ = 0;
 
         // Currently applied power
         f32 power_ = 0;
@@ -258,8 +255,22 @@ namespace Anki {
         DisableInternal(autoReEnable);
       }
 
-      void StartCalibrationRoutine(bool autoStarted)
+      void StartCalibrationRoutine(bool autoStarted, const char* calibrationReason)
       {
+        if(calibrationReason!=NULL && strlen(calibrationReason)!=0) {
+          // this DAS message mimics a similar message sent from engine
+          // by the CalibrateMotorAction. It has the same event string
+          // and i1 represents whether the head is being calibrated,
+          // and i2 represents whether the lift is being calibrated
+          DASMSG(lift_controller_motor_calib_reason,
+                 "calibrate_motors",
+                 "send when the robot triggers calibration");
+          DASMSG_SET(s1, calibrationReason, "reason for triggering calibration");
+          DASMSG_SET(i1, 0, "is head motor being calibrated");
+          DASMSG_SET(i2, 1, "is lift motor being calibrated");
+          DASMSG_SEND();
+        }
+        
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         inPosition_ = false;
@@ -456,18 +467,6 @@ namespace Anki {
 
         // Get encoder speed measurements
         f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
-
-        // If currHalPos matches prevHalPos for more than
-        // ZERO_SPEED_ENCODER_TIC_THRESH tics in a row, then assume
-        // zero speed
-        if (currHalPos == prevHalPos_ && measuredSpeed != 0.f) { 
-          if (++numTicsNoEncoderCounts_ >= ZERO_SPEED_ENCODER_TIC_THRESH) {
-            measuredSpeed = 0.f;
-            numTicsNoEncoderCounts_ = ZERO_SPEED_ENCODER_TIC_THRESH;
-          }
-        } else {
-          numTicsNoEncoderCounts_ = 0;
-        }
         
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
@@ -642,7 +641,7 @@ namespace Anki {
           } else {
             // Burnout protection triggered. Recalibrating.
             AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");
-            StartCalibrationRoutine(true);
+            StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::LiftMotorBurnoutProtection));
           }
           return true;
         }

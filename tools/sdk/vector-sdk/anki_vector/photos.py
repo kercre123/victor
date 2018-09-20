@@ -1,19 +1,30 @@
-'''
-Photo related classes, functions, events and values.
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Copyright(c) 2018 Anki, Inc.
-'''
+"""
+Photo related classes, functions, events and values.
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["PhotographComponent"]
+
 from typing import List
 
 from . import sync, util
 from .messaging import protocol
 
 
-# TODO: Add option to request a single image from the robot(SingleShot) once
-# VIC-5529 is resolved which depends on VIC-5159.
 class PhotographComponent(util.Component):
     """Manage the state of all the photos on the robot.
 
@@ -21,7 +32,7 @@ class PhotographComponent(util.Component):
 
         from PIL import Image
 
-        with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+        with anki_vector.Robot("my_robot_serial_number") as robot:
             if len(robot.photo_info) > 0:
                 first_photo = robot.photo_info[0]
                 photo = robot.photos.get_photo(first_photo)
@@ -68,7 +79,7 @@ class PhotographComponent(util.Component):
         :return: The response from the PhotosInfo rpc call
         """
         req = protocol.PhotosInfoRequest()
-        result = await self.interface.PhotosInfo(req)
+        result = await self.grpc_interface.PhotosInfo(req)
         self._photo_info = result.photo_infos
         return result
 
@@ -82,7 +93,7 @@ class PhotographComponent(util.Component):
 
             from PIL import Image
 
-            with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 if len(robot.photo_info) > 0:
                     first_photo = robot.photo_info[0]
                     photo = robot.photos.get_photo(first_photo)
@@ -96,7 +107,7 @@ class PhotographComponent(util.Component):
                  another library (like :mod:`PIL`)
         """
         req = protocol.PhotoRequest(photo_id=photo_id)
-        return await self.interface.Photo(req)
+        return await self.grpc_interface.Photo(req)
 
     @sync.Synchronizer.wrap
     @sync.Synchronizer.disable_log
@@ -111,7 +122,7 @@ class PhotographComponent(util.Component):
 
             from PIL import Image
 
-            with Robot("Vector-XXXX", "XX.XX.XX.XX", "/some/path/robot.cert") as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 for photo in robot.photo_info:
                     photo = robot.photos.get_thumbnail(photo)
                     image = Image.open(io.BytesIO(photo.image))
@@ -124,4 +135,4 @@ class PhotographComponent(util.Component):
                  another library (like :mod:`PIL`)
         """
         req = protocol.ThumbnailRequest(photo_id=photo_id)
-        return await self.interface.Thumbnail(req)
+        return await self.grpc_interface.Thumbnail(req)

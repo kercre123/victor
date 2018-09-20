@@ -49,28 +49,14 @@ namespace Anki {
       f32 filterWheelSpeedL_ = 0.f;
       f32 filterWheelSpeedR_ = 0.f;
 
-      // Whether we're in coast mode (not actively running wheel controllers)
-      bool coastMode_ = true;
-
-      // One-shot coast-until-stop flag
-      bool coastUntilStop_ = false;
-
       // Integral gain sums for wheel controllers
       f32 error_sumL_ = 0;
       f32 error_sumR_ = 0;
 
       // Whether or not controller should run
       bool enable_ = true;
-      
-      TimeStamp_t lastMovedTime_ = 0;
-      
-      // Amount of time the wheels have stopped moving for before the wheels
-      // are externally considered to have stopped moving.
-      const u32 HAS_STOPPED_MOVING_THRESHOLD_MS = 200;
 
     } // private namespace
-
-    inline void DoCoastUntilStop() {coastUntilStop_ = true;}
 
     // Resets the integral gain sums
     void ResetIntegralGainSums(void);
@@ -137,7 +123,6 @@ namespace Anki {
                                      !AreWheelsPowered();
 
       if(!skipActiveControl) {
-//      if(!coastMode_ && !coastUntilStop_) {
 
 #if(DEBUG_WHEEL_CONTROLLER)
         AnkiDebug( "WheelController", "speeds: %f (L), %f (R)   (Curr: %d, %d)",
@@ -205,12 +190,6 @@ namespace Anki {
         power_r_ = 0;
         error_sumL_ = 0;
         error_sumR_ = 0;
-
-        // Cancel coast until stop if we've stopped.
-        if (coastUntilStop_ &&
-            measuredWheelSpeedL_ == 0 && measuredWheelSpeedR_ == 0) {
-          coastUntilStop_ = FALSE;
-        }
       }
 
 #if(DEBUG_WHEEL_CONTROLLER)
@@ -220,11 +199,6 @@ namespace Anki {
       //Command the computed motor power values
       HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, power_l_);
       HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, power_r_);
-
-      // Update last moved time
-      if (!(NEAR_ZERO(filterWheelSpeedL_) && NEAR_ZERO(filterWheelSpeedR_))) {
-        lastMovedTime_ = HAL::GetTimeStamp();
-      }
 
     } // Run()
 
@@ -312,18 +286,6 @@ namespace Anki {
       SetDesiredWheelSpeeds( (s16)leftspeed, (s16)rightspeed);
     }
 
-
-    // Whether the wheel controller should be coasting (not actively trying to run
-    // wheel controllers
-    void SetCoastMode(const bool isOn)
-    {
-      coastMode_ = isOn;
-
-      if(coastMode_) {
-        ResetIntegralGainSums();
-      }
-    }
-
     bool AreWheelsPowered()
     {
       return (power_l_ != 0 || power_r_ != 0);
@@ -331,7 +293,7 @@ namespace Anki {
 
     bool AreWheelsMoving()
     {
-      return (HAL::GetTimeStamp() - lastMovedTime_) < HAS_STOPPED_MOVING_THRESHOLD_MS;
+      return !NEAR_ZERO(filterWheelSpeedL_) || !NEAR_ZERO(filterWheelSpeedR_);
     }
 
     void ResetIntegralGainSums(void)

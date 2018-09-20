@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Test the cube lights
 
 Attempts to connect to a cube.
 If successful sets its lights all to yellow for 2.5 seconds, then red, green, blue & white for 2.5 seconds
-'''
+"""
 
 import os
 import sys
@@ -16,20 +16,19 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
-    args = anki_vector.util.parse_test_args()
+    """main execution"""
+    args = anki_vector.util.parse_command_args()
 
     print("------ begin cube light interactions ------")
 
     # The robot connects to a cube, and performs a number of manipulations on its lights
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    with anki_vector.Robot(args.serial) as robot:
 
         # ensure we are connected to a cube
         robot.world.connect_cube()
 
-        connected_cubes = robot.world.connected_light_cubes
-        if connected_cubes:
-            cube = connected_cubes[0]
+        if robot.world.connected_light_cube:
+            cube = robot.world.connected_light_cube
 
             # Set cube lights to yellow
             cube.set_lights(anki_vector.lights.yellow_light)
@@ -47,7 +46,7 @@ def main():
 
             print("------ finish cube light interactions ------")
         else:
-            print("------ FAILURE: No connected cubes found ------")
+            print("------ FAILURE: No connected cube found ------")
 
 
 if __name__ == "__main__":

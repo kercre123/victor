@@ -2,3 +2,5 @@
 # Ignore doxygen output
 html
 xml
+das_new.cpp
+das_remove.cpp

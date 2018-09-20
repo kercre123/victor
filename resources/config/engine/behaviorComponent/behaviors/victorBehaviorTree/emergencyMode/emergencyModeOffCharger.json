@@ -4,14 +4,10 @@
   
   "interruptActiveBehavior" : true,
   
-  "wantsToCancelSelfCondition": {
-    "conditionType": "OnCharger"
-  },
-  
   "behaviors" : [
     "MandatoryPhysicalReactions",
-    "EmergencyModeInAir",
     "EmergencyModeTriggerWord",
+    "EmergencyModeInAir",
     "EmergencyModeFindAndGoToHome"
   ]
   

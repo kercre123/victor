@@ -38,6 +38,8 @@
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
 
+#include "util/logging/DAS.h"
+
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorGoHome", "BehaviorGoHome.%s", __func__);
 
 namespace Anki {
@@ -71,7 +73,15 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorGoHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
-{  
+{
+  leftTurnAnimTrigger     = AnimationTrigger::Count;
+  rightTurnAnimTrigger    = AnimationTrigger::Count;
+  drivingStartAnimTrigger = AnimationTrigger::Count;
+  drivingEndAnimTrigger   = AnimationTrigger::Count;
+  drivingLoopAnimTrigger  = AnimationTrigger::Count;
+  raiseLiftAnimTrigger    = AnimationTrigger::Count;
+  nuzzleAnimTrigger       = AnimationTrigger::Count;
+  
   useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
   
   JsonTools::GetCladEnumFromJSON(config, kLeftTurnAnimKey,     leftTurnAnimTrigger, debugName);
@@ -187,13 +197,11 @@ void BehaviorGoHome::OnBehaviorActivated()
   if (times.size() > kNumRepeatedActivationsAllowed) {
     PRINT_NAMED_WARNING("BehaviorGoHome.OnBehaviorActivated.RepeatedlyActivated",
                         "We have been activated %zu times in the past %.1f seconds, so instead of continuing "
-                        "with this behavior, we are delegating to the RequestToGoHomeBehavior.",
+                        "with this behavior, we are playing the failure anim and exiting.",
                         times.size(), kRepeatedActivationCheckWindow_sec);
-    const bool requestWantsToRun = _iConfig.requestHomeBehavior->WantsToBeActivated();
-    ANKI_VERIFY(requestWantsToRun, "BehaviorGoHome.OnBehaviorActivated.RequestDoesNotWantToRun", "");
-    if (requestWantsToRun) {
-      DelegateIfInControl(_iConfig.requestHomeBehavior.get());
-    }
+    // Clear the list of activated times (so that we don't get stuck in a loop here) and play the 'failure' anim
+    _dVars.persistent.activatedTimes.clear();
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ChargerDockingFailure));
     return;
   }
   
@@ -237,6 +245,13 @@ void BehaviorGoHome::OnBehaviorActivated()
 void BehaviorGoHome::OnBehaviorDeactivated()
 {
   PopDrivingAnims();
+  
+  // If we had a clear success or failure, log it here
+  if (_dVars.HasResult()) {
+    DASMSG(go_home_result, "go_home.result", "Result of GoHome behavior");
+    DASMSG_SET(i1, _dVars.HasSucceeded(), "Success or failure to get onto the charger (1 for success, 0 for failure)");
+    DASMSG_SEND();
+  }
 }
 
 
@@ -476,6 +491,7 @@ void BehaviorGoHome::TransitionToMountCharger()
                         const auto resultCategory = IActionRunner::GetActionResultCategory(result);
                         if (resultCategory == ActionResultCategory::SUCCESS) {
                           GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::MountedCharger);
+                          _dVars.SetSucceeded(true);
                           TransitionToPlayingNuzzleAnim();
                         } else if ((resultCategory == ActionResultCategory::RETRY) &&
                                    (_dVars.mountChargerRetryCount++ < _iConfig.mountChargerRetryCount)) {
@@ -558,15 +574,10 @@ void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
     GetBEI().GetBlockWorld().DeleteLocatedObjects(deleteFilter);
   }
   
-  // Delegate to the "request to go home" behavior, but only if we are _not_ removing the charger from the world. If we
-  // _are_ removing the charger from the world, we should just exit this behavior so that the "find charger" behavior
-  // can get a chance to run again.
-  if (!removeChargerFromBlockWorld) {
-    const bool requestWantsToRun = _iConfig.requestHomeBehavior->WantsToBeActivated();
-    if (requestWantsToRun) {
-      DelegateIfInControl(_iConfig.requestHomeBehavior.get());
-    }
-  }
+  // Play the "charger face" animation indicating that we have failed, then allow the behavior to exit
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ChargerDockingFailure));
+  
+  _dVars.SetSucceeded(false);
 }
 
 

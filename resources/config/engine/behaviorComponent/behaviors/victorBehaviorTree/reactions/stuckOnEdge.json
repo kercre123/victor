@@ -1,5 +1,15 @@
 {
-  "behaviorClass": "StuckOnEdge",
+  "behaviorClass": "AskForHelp",
   "behaviorID": "StuckOnEdge",
-  "associatedActiveFeature": "StuckOnEdge"
+  "associatedActiveFeature": "AskForHelp",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "StuckOnEdge"
+  },
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "StuckOnEdge"
+    }
+  }
 }

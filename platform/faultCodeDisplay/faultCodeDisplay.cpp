@@ -10,6 +10,7 @@
 **/
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 #include "core/lcd.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
@@ -17,12 +18,18 @@
 #include "opencv2/highgui.hpp"
 
 #include <inttypes.h>
+#include <unordered_map>
 
 namespace Anki {
 namespace Vector {
    
 namespace {
   static const std::string kFaultURL = "support.anki.com";
+
+  // Map of fault codes that map to images that should be drawn instead of the number
+  std::unordered_map<uint16_t, std::string> kFaultImageMap = {
+    {FaultCode::SHUTDOWN_BATTERY_CRITICAL_TEMP, "/anki/data/assets/cozmo_resources/config/devOnlySprites/independentSprites/battery_overheated.png"},
+  };
 }
 
 void DrawFaultCode(uint16_t fault)
@@ -58,6 +65,22 @@ void DrawFaultCode(uint16_t fault)
   lcd_draw_frame2(reinterpret_cast<u16*>(img565.GetDataPointer()), img565.GetNumRows() * img565.GetNumCols() * sizeof(u16));
 }
 
+bool DrawImage(std::string& image_path)
+{
+  Vision::ImageRGB565 img565;
+  if (img565.Load(image_path) != RESULT_OK) {
+    return false;
+  }
+
+  // Fail if the image isn't the right size
+  if (img565.GetNumCols() != FACE_DISPLAY_WIDTH || img565.GetNumRows() != FACE_DISPLAY_HEIGHT) {
+    return false;
+  }
+
+  lcd_draw_frame2(reinterpret_cast<u16*>(img565.GetDataPointer()), img565.GetNumRows() * img565.GetNumCols() * sizeof(u16));
+  return true;
+}
+
 }
 }
 
@@ -71,13 +94,27 @@ int main(int argc, char * argv[])
 {
   using namespace Anki::Vector;
   
-  lcd_init();
-
   char* end;
   // Convert first argument from a string to a uint16_t
-  uint16_t code = (uint16_t)strtoimax(argv[1], &end, 10);
+  auto res = strtoumax(argv[1], &end, 10);
+  if (res > std::numeric_limits<uint16_t>::max() || res == 0) {
+    return -1;
+  }
+  uint16_t code = (uint16_t)res;
 
-  DrawFaultCode(code);
+  lcd_init();
+
+  // See if an image or number should be drawn
+  bool imageDrawn = false;
+  auto faultImageIt = kFaultImageMap.find(code);
+  if (faultImageIt != kFaultImageMap.end()) {
+    imageDrawn = DrawImage(faultImageIt->second);
+  } 
+  
+  // Draw fault code if no image to draw or DrawImage() failed
+  if (!imageDrawn) {
+    DrawFaultCode(code);
+  }
 
   // Don't shutdown the lcd in order to keep the fault code displayed
   //lcd_shutdown();

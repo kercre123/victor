@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Calls specific messages on the robot, with expected results and verifies that the robot's responses match up
  - Exceptions will be raised if a response is of the wrong type, or has the wrong data
  - Exceptions will be raised if the interface defines a message that is neither on the test list or ignore list
@@ -11,7 +11,7 @@ requested pose due to a wall, etc.):
  - DriveOnCharger/DriveOffCharger
  - GoToPose
  - MeetVictor
-'''
+"""
 
 import asyncio
 import logging
@@ -41,19 +41,19 @@ MESSAGES_TO_IGNORE = [
 
 
 class TestResultMatches:
-    '''Result that matches'''
+    """Result that matches"""
     _value = None
 
     def __init__(self, value):
-        '''Create a TestResultMatches object'''
+        """Create a TestResultMatches object"""
         self._value = value
 
     def get_target_type(self):
-        '''Get the expected return type'''
+        """Get the expected return type"""
         return type(self._value)
 
     def test_with(self, target):
-        '''test with'''
+        """test with"""
         errors = []
 
         expected_type = type(self._value)
@@ -89,23 +89,23 @@ class TestResultMatches:
 
 
 class TestResultIsTypeWithStatusAndFieldNames:
-    '''Result with status and field names'''
+    """Result with status and field names"""
     _expected_type = None
     _status = None
     _field_names = []
 
     def __init__(self, expected_type, status, field_names):
-        '''Create a TestResultIsTypeWithStatusAndFieldNames object'''
+        """Create a TestResultIsTypeWithStatusAndFieldNames object"""
         self._expected_type = expected_type
         self._status = status
         self._field_names = field_names
 
     def get_target_type(self):
-        '''Get the expected return type'''
+        """Get the expected return type"""
         return self._expected_type
 
     def test_with(self, target):
-        '''test with'''
+        """test with"""
         errors = []
 
         target_type = type(target)
@@ -145,10 +145,6 @@ MESSAGES_TO_TEST = [
                                  left_wheel_mmps2=0.0,
                                  right_wheel_mmps2=0.0),
      TestResultMatches(protocol.DriveWheelsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
-    # DriveArc message
-    (Interface.DriveArc,
-     protocol.DriveArcRequest(speed=0.0, accel=0.0, curvature_radius_mm=0),
-     TestResultMatches(protocol.DriveArcResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
     # MoveHead message
     (Interface.MoveHead,
      protocol.MoveHeadRequest(speed_rad_per_sec=0.0),
@@ -209,8 +205,10 @@ MESSAGES_TO_TEST = [
     (client.ExternalInterfaceServicer.DriveStraight,
      protocol.DriveStraightRequest(speed_mmps=0.0,
                                    dist_mm=0.0,
-                                   should_play_animation=False),
-     TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                   should_play_animation=False,
+                                   id_tag=protocol.FIRST_SDK_TAG + 1),
+     TestResultMatches(protocol.DriveStraightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                      result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # TurnInPlace message
     (client.ExternalInterfaceServicer.TurnInPlace,
@@ -218,24 +216,30 @@ MESSAGES_TO_TEST = [
                                  speed_rad_per_sec=0.0,
                                  accel_rad_per_sec2=0.0,
                                  tol_rad=0.0,
-                                 is_absolute=False),
-     TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                 is_absolute=False,
+                                 id_tag=protocol.FIRST_SDK_TAG + 2),
+     TestResultMatches(protocol.TurnInPlaceResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                    result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetHeadAngle message
     (client.ExternalInterfaceServicer.SetHeadAngle,
      protocol.SetHeadAngleRequest(angle_rad=0.0,
                                   max_speed_rad_per_sec=0.0,
                                   accel_rad_per_sec2=0.0,
-                                  duration_sec=0.0),
-     TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                  duration_sec=0.0,
+                                  id_tag=protocol.FIRST_SDK_TAG + 3),
+     TestResultMatches(protocol.SetHeadAngleResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                     result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetLiftHeight message
     (client.ExternalInterfaceServicer.SetLiftHeight,
      protocol.SetLiftHeightRequest(height_mm=0.0,
                                    max_speed_rad_per_sec=0.0,
                                    accel_rad_per_sec2=0.0,
-                                   duration_sec=0.0),
-     TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+                                   duration_sec=0.0,
+                                   id_tag=protocol.FIRST_SDK_TAG + 4),
+     TestResultMatches(protocol.SetLiftHeightResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+                                                      result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetBackpackLights message
     (client.ExternalInterfaceServicer.SetBackpackLights,
@@ -248,7 +252,7 @@ MESSAGES_TO_TEST = [
      protocol.ConnectCubeRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
                                              protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["success", "object_id", "factory_id"])),
+                                             ["success", "factory_id"])),
 
     # DisconnectCube message
     (client.ExternalInterfaceServicer.DisconnectCube,
@@ -324,10 +328,10 @@ MESSAGES_TO_TEST = [
 
 
 async def test_message(robot, message_name, message_input, test_class, errors):
-    '''Test a single message'''
+    """Test a single message"""
     # The message_src is used mostly so we can easily verify that the name is supported by the servicer.
     # In terms of actually making the call its simpler to invoke on the robot
-    message_call = getattr(robot.conn.interface, message_name)
+    message_call = getattr(robot.conn.grpc_interface, message_name)
 
     print(
         "Sending: \"{0}\"".format(MessageToJson(message_input,
@@ -346,7 +350,7 @@ async def test_message(robot, message_name, message_input, test_class, errors):
 
 
 async def run_message_test(robot, message, expected_test_list, errors):
-    '''Run the test on a messages'''
+    """Run the test on a messages"""
     message_call = message[0]
     input_data = message[1]
     test_class = message[2]
@@ -377,7 +381,7 @@ async def run_message_test(robot, message, expected_test_list, errors):
 
 
 async def run_message_tests(robot, future):
-    '''Run all the tests on messages'''
+    """Run all the tests on messages"""
     warnings = []
     errors = []
 
@@ -412,8 +416,8 @@ async def run_message_tests(robot, future):
 
 
 def main():
-    '''main execution'''
-    args = anki_vector.util.parse_test_args()
+    """main execution"""
+    args = anki_vector.util.parse_command_args()
 
     logger = logging.getLogger('anki_vector')
     logger.setLevel(logging.DEBUG)
@@ -423,7 +427,7 @@ def main():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    with anki_vector.Robot(args.serial, port=args.port, default_logging=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()

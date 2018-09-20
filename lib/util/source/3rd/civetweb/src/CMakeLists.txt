@@ -227,6 +227,12 @@ if (CIVETWEB_ENABLE_LUA)
   target_link_libraries(c-library ${LUA_LIBRARIES})
 endif()
 
+# <anki> Strip library for deployment to robot </anki>
+if (VICOS)
+  include(anki_build_strip)
+  anki_build_strip(TARGET c-library)
+endif(VICOS)
+
 #
 # The web server executable
 #

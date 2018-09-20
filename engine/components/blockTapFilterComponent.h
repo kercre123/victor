@@ -68,13 +68,9 @@ public:
 
 private:
   
-  void HandleEnableTapFilter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);
-  
   void CheckForDoubleTap(const ObjectID& objectID);
   
   Robot* _robot = nullptr;
-
-  Signal::SmartHandle _gameToEngineSignalHandle;
   
   std::list<Signal::SmartHandle> _eventHandles;
   
@@ -96,11 +92,6 @@ private:
   
   std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;
   std::vector<ExternalInterface::ObjectTapped> _tapInfo;
-  
-#if ANKI_DEV_CHEATS
-  void HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);
-  Signal::SmartHandle _debugGameToEngineSignalHandle;
-#endif
 
 };
 

@@ -2,6 +2,6 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "InitialPickupAnimation",
   
-  "animTriggers": ["DriveOffChargerLeft"]
+  "animTriggers": ["ReactToPickupInitial"]
 
 }

@@ -56,7 +56,7 @@ private:
     HitOrStand,
     ReactToPlayerCard,
     VictorsTurn,
-    VictorHitOrStand,
+    DealToVictor,
     ReactToDealerCard,
     EndGame,
     PlayAgainPrompt,
@@ -88,6 +88,7 @@ private:
   void TransitionToHitOrStandPrompt();
   void TransitionToHitOrStand();
   void TransitionToVictorsTurn();
+  void TransitionToDealToVictor();
   void TransitionToReactToDealerCard();
   void TransitionToEndGame();
   void TransitionToPlayAgainPrompt();
@@ -99,6 +100,7 @@ private:
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> hitOrStandPromptBehavior;
     std::shared_ptr<BehaviorPromptUserForVoiceCommand> playAgainPromptBehavior;
     std::shared_ptr<BehaviorTextToSpeechLoop>          ttsBehavior;
+    std::shared_ptr<BehaviorTextToSpeechLoop>          goodLuckTTSBehavior;
     std::shared_ptr<BehaviorLookAtFaceInFront>         lookAtFaceInFrontBehavior;
   };
 
@@ -107,6 +109,7 @@ private:
     EState              state;
     EDealingState       dealingState;
     EOutcome            outcome;
+    float               gameStartTime_s;
   };
 
   InstanceConfig _iConfig;
@@ -114,6 +117,13 @@ private:
 
   BlackJackGame _game;
   BlackJackVisualizer _visualizer;
+
+  // DAS Session tracking
+  float _sessionStartTime_s;
+  int _humanWinsInSession;
+  int _robotWinsInSession;
+  int _gamesInSession;
+  bool _newSession;
 
   // Helper functions
   IBehavior* SetUpSpeakingBehavior(const std::string& vocalizationString);

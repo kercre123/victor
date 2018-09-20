@@ -39,6 +39,7 @@
     habitatInfoDiv.append('<div class="detectionTitle">' + "Detection state: " + data["habitatState"] + '</div>');
     habitatInfoDiv.append('<div class="stopOnWhiteEnabled">' + "Stop-On-White enabled: " + data["stopOnWhiteEnabled"] + '</div>');
     habitatInfoDiv.append('<div class="reasonTitle">' + "Reason: " + data["reason"] + '</div>');
+    habitatInfoDiv.append('<div class="whiteThresholdTitle">' + "White Thresholds: " + data["whiteThresholds"] + '</div>');
   };
 
   myMethods.update = function(dt, elem) { };
@@ -55,6 +56,10 @@
       }
       
       .reasonTitle {
+        margin-bottom:10px;
+      }
+      
+      .whiteThresholdTitle {
         margin-bottom:10px;
       }
       

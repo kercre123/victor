@@ -13,7 +13,6 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
-#include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
@@ -60,6 +59,7 @@ namespace Vector {
 
 // forward declarations
 class AnimationGroupContainer;
+enum class AnimationTrigger : int32_t;
 class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
@@ -104,6 +104,7 @@ public:
   std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
   
   const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
+  const std::set<std::string>& GetDasBlacklistedAnimationNames() const { return _dasBlacklistedAnimationNames; }
 
   // all clips that are allowed to move the body while on the charger
   const std::set<std::string>& GetAllWhitelistedChargerAnimationClips() const {
@@ -192,7 +193,7 @@ private:
   void LoadEmotionEvents();
   void LoadBehaviors();
 
-  void LoadDasBlacklistedAnimationTriggers();
+  void LoadDasBlacklistedAnimations();
   
   void LoadSpritePaths();
 
@@ -283,6 +284,7 @@ private:
   std::atomic<bool>     _abortLoad{false};
   
   std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
+  std::set<std::string> _dasBlacklistedAnimationNames;
 
   std::set<std::string> _allWhitelistedChargerAnimationClips;
   std::set<std::string> _whitelistedChargerSafeAnimationClips;

@@ -15,7 +15,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/robot.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 
 #include "osState/osState.h"
@@ -40,7 +40,7 @@ BatteryLevel BEIRobotInfo::GetBatteryLevel() const
 {
   return _robot.GetBatteryComponent().GetBatteryLevel();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f BEIRobotInfo::GetBoundingQuadXY(const Pose3d& atPose) const
 {
@@ -375,6 +375,12 @@ Util::Data::DataPlatform* BEIRobotInfo::GetDataPlatform() const
 NVStorageComponent& BEIRobotInfo::GetNVStorageComponent() const
 {
   return _robot.GetNVStorageComponent();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BatteryComponent& BEIRobotInfo::GetBatteryComponent() const
+{
+  return _robot.GetBatteryComponent();
 }
 
   

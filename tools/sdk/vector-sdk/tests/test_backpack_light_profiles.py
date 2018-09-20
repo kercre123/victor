@@ -9,12 +9,12 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    '''main execution'''
-    args = anki_vector.util.parse_test_args()
+    """main execution"""
+    args = anki_vector.util.parse_command_args()
 
     print("------ begin testing backpack light profiles ------")
 
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    with anki_vector.Robot(args.serial) as robot:
 
         # Set backpack to White Lights using the max brightness profile for 4 seconds
         robot.backpack.set_all_backpack_lights(anki_vector.lights.white_light, anki_vector.lights.MAX_COLOR_PROFILE)

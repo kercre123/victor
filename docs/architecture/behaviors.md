@@ -38,7 +38,7 @@ field and pressing "Shift+C"
 1. The very simple ["observing without turn"](/engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h) behavior
    which simply looks up and down with random delays (and can run on the charger)
 
-2. The ["come here"](/engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h) behavior
+2. The ["come here"](/engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h) behavior
    in response to a voice command which turns and drives towards a face, handling some edge cases
    
 ## Basic concepts

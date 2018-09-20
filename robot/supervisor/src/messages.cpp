@@ -36,24 +36,6 @@ namespace Anki {
 
       namespace {
 
-
-        constexpr auto IS_MOVING = EnumToUnderlyingType(RobotStatusFlag::IS_MOVING);
-        constexpr auto IS_CARRYING_BLOCK = EnumToUnderlyingType(RobotStatusFlag::IS_CARRYING_BLOCK);
-        constexpr auto IS_PICKING_OR_PLACING = EnumToUnderlyingType(RobotStatusFlag::IS_PICKING_OR_PLACING);
-        constexpr auto IS_BUTTON_PRESSED = EnumToUnderlyingType(RobotStatusFlag::IS_BUTTON_PRESSED);
-        constexpr auto IS_PICKED_UP = EnumToUnderlyingType(RobotStatusFlag::IS_PICKED_UP);
-        constexpr auto IS_FALLING = EnumToUnderlyingType(RobotStatusFlag::IS_FALLING);
-        constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
-        constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
-        constexpr auto HEAD_IN_POS = EnumToUnderlyingType(RobotStatusFlag::HEAD_IN_POS);
-        constexpr auto CALM_POWER_MODE = EnumToUnderlyingType(RobotStatusFlag::CALM_POWER_MODE);
-        constexpr auto IS_BATTERY_DISCONNECTED = EnumToUnderlyingType(RobotStatusFlag::IS_BATTERY_DISCONNECTED);
-        constexpr auto IS_ON_CHARGER = EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER);
-        constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
-        constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
-        constexpr auto ARE_WHEELS_MOVING = EnumToUnderlyingType(RobotStatusFlag::ARE_WHEELS_MOVING);
-        constexpr auto IS_BEING_HELD = EnumToUnderlyingType(RobotStatusFlag::IS_BEING_HELD);
-
         u8 pktBuffer_[2048];
 
         static RobotState robotState_;
@@ -122,36 +104,37 @@ namespace Anki {
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
-        robotState_.status = 0;
-        // TODO: Make this a parameters somewhere?
-        robotState_.status |= (WheelController::AreWheelsMoving() ||
-                              SteeringController::GetMode() == SteeringController::SM_POINT_TURN ? ARE_WHEELS_MOVING : 0);
-        robotState_.status |= (HeadController::IsMoving() ||
-                               LiftController::IsMoving() ||
-                               (robotState_.status & ARE_WHEELS_MOVING) ? IS_MOVING : 0);
-        robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
-        robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
-        robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
-        robotState_.status |= (IMUFilter::IsBeingHeld() ? IS_BEING_HELD : 0);
-        robotState_.status |= (HAL::GetButtonState(HAL::BUTTON_POWER) > 0 ? IS_BUTTON_PRESSED : 0 );
-        robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
-        robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
-        robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
-        robotState_.status |= HAL::PowerGetMode() == HAL::POWER_MODE_CALM ? CALM_POWER_MODE : 0;
-        robotState_.status |= HAL::BatteryIsDisconnected() ? IS_BATTERY_DISCONNECTED : 0;
-        robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
-        robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
-        robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
-        robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
         robotState_.chargerVoltage = HAL::ChargerGetVoltage();
         robotState_.battTemp_C = HAL::BatteryGetTemperature_C();
+
+        robotState_.status = 0;
+        #define SET_STATUS_BIT(expr, bit) robotState_.status |= ((expr) ? EnumToUnderlyingType(RobotStatusFlag::bit) : 0)
+        const bool areWheelsMoving = WheelController::AreWheelsMoving() || 
+                                     SteeringController::GetMode() == SteeringController::SM_POINT_TURN;
+        const bool isMoving        = HeadController::IsMoving() || LiftController::IsMoving() || areWheelsMoving;
+        SET_STATUS_BIT(areWheelsMoving,                             ARE_WHEELS_MOVING);
+        SET_STATUS_BIT(isMoving,                                    IS_MOVING);
+        SET_STATUS_BIT(PickAndPlaceController::IsCarryingBlock(),   IS_CARRYING_BLOCK);
+        SET_STATUS_BIT(PickAndPlaceController::IsBusy(),            IS_PICKING_OR_PLACING);
+        SET_STATUS_BIT(IMUFilter::IsPickedUp(),                     IS_PICKED_UP);
+        SET_STATUS_BIT(IMUFilter::IsBeingHeld(),                    IS_BEING_HELD);
+        SET_STATUS_BIT(IMUFilter::IsMotionDetected(),               IS_MOTION_DETECTED);
+        SET_STATUS_BIT(HAL::GetButtonState(HAL::BUTTON_POWER) > 0,  IS_BUTTON_PRESSED);
+        SET_STATUS_BIT(PathFollower::IsTraversingPath(),            IS_PATHING);
+        SET_STATUS_BIT(LiftController::IsInPosition(),              LIFT_IN_POS);
+        SET_STATUS_BIT(HeadController::IsInPosition(),              HEAD_IN_POS);
+        SET_STATUS_BIT(HAL::PowerGetMode() == HAL::POWER_MODE_CALM, CALM_POWER_MODE);
+        SET_STATUS_BIT(HAL::BatteryIsDisconnected(),                IS_BATTERY_DISCONNECTED);
+        SET_STATUS_BIT(HAL::BatteryIsOnCharger(),                   IS_ON_CHARGER);
+        SET_STATUS_BIT(HAL::BatteryIsCharging(),                    IS_CHARGING);
+        SET_STATUS_BIT(HAL::BatteryIsOverheated(),                  IS_BATTERY_OVERHEATED);
+        SET_STATUS_BIT(ProxSensors::IsAnyCliffDetected(),           CLIFF_DETECTED);
+        SET_STATUS_BIT(IMUFilter::IsFalling(),                      IS_FALLING);
 #ifdef  SIMULATOR
-        if(isForcedDelocalizing_)
-        {
-          robotState_.status |= IS_PICKED_UP;
-        }
+        SET_STATUS_BIT(isForcedDelocalizing_,                       IS_PICKED_UP);
 #endif
+        #undef SET_STATUS_BIT
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -563,6 +546,13 @@ namespace Anki {
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
+        }
+      }
+      
+      void Process_setWhiteDetectThresholds(const SetWhiteDetectThresholds& msg)
+      {
+        for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
+          ProxSensors::SetWhiteDetectThreshold(i, msg.whiteThresholds[i]);
         }
       }
 

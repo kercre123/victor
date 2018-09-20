@@ -46,6 +46,10 @@ void ConditionBecameTrueThisTick::SetActiveInternal(BehaviorExternalInterface& b
   if(_subCondition){
     _subCondition->SetActive(bei, setActive);
   }
+  if( !setActive ) {
+    // reset, so that the next time this is active, the subcondition must again show a transition from false to true
+    _lastResult = -1;
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

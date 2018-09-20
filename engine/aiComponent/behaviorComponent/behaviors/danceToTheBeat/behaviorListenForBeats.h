@@ -18,6 +18,8 @@
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
 
 class BehaviorListenForBeats : public ICozmoBehavior
 {
@@ -43,9 +45,9 @@ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config, const std::string& debugName);
     
-    AnimationTrigger preListeningAnim   = AnimationTrigger::Count;
-    AnimationTrigger listeningAnim      = AnimationTrigger::Count;
-    AnimationTrigger postListeningAnim  = AnimationTrigger::Count;
+    AnimationTrigger preListeningAnim;
+    AnimationTrigger listeningAnim;
+    AnimationTrigger postListeningAnim;
     
     float minListeningTime_sec = 0.f;
     float maxListeningTime_sec = 0.f;

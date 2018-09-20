@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/behaviorBlackJack.h"
 
-#include "clad/types/behaviorComponent/behaviorStats.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
@@ -22,6 +21,10 @@
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/clad/types/animationTypes.h"
+
+#include "clad/types/behaviorComponent/behaviorStats.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "util/logging/DAS.h"
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
@@ -52,14 +55,20 @@ BehaviorBlackJack::DynamicVariables::DynamicVariables()
 : state(EState::TurnToFace)
 , dealingState(EDealingState::PlayerFirstCard)
 , outcome(EOutcome::Tie)
+, gameStartTime_s(0.0f)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBlackJack::BehaviorBlackJack(const Json::Value& config)
- : ICozmoBehavior(config)
- , _game()
- , _visualizer(&_game)
+: ICozmoBehavior(config)
+, _game()
+, _visualizer(&_game)
+, _sessionStartTime_s(0.0f)
+, _humanWinsInSession(0)
+, _robotWinsInSession(0)
+, _gamesInSession(0)
+, _newSession(true)
 {
 }
 
@@ -82,6 +91,7 @@ void BehaviorBlackJack::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.hitOrStandPromptBehavior.get());
   delegates.insert(_iConfig.playAgainPromptBehavior.get());
   delegates.insert(_iConfig.ttsBehavior.get());
+  delegates.insert(_iConfig.goodLuckTTSBehavior.get());
   delegates.insert(_iConfig.lookAtFaceInFrontBehavior.get());
 }
 
@@ -107,6 +117,10 @@ void BehaviorBlackJack::InitBehavior()
                                   BEHAVIOR_CLASS(TextToSpeechLoop),
                                   _iConfig.ttsBehavior );
 
+  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackGoodLuckTTS),
+                                  BEHAVIOR_CLASS(TextToSpeechLoop),
+                                  _iConfig.goodLuckTTSBehavior );
+
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackLookAtFaceInFront),
                                   BEHAVIOR_CLASS(LookAtFaceInFront),
                                   _iConfig.lookAtFaceInFrontBehavior );
@@ -120,6 +134,26 @@ void BehaviorBlackJack::OnBehaviorActivated()
   _game.Init(&GetRNG());
   _visualizer.Init(GetBEI());
 
+  _dVars.gameStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // --- Log DAS events ---
+  // Session DAS
+  if(_newSession){
+    DASMSG(behavior_blackjack_session_start,
+           "behavior.blackjack_session_start",
+           "A new session of BlackJack has started");
+    DASMSG_SEND();
+    _sessionStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _newSession = false;
+  }
+
+  // Game DAS
+  DASMSG(behavior_blackjack_game_start,
+         "behavior.blackjack_game_start",
+         "A Game of BlackJack has just started");
+  DASMSG_SEND();
+
+  // --- On With the Game ---
   TransitionToTurnToFace();
 }
 
@@ -127,6 +161,23 @@ void BehaviorBlackJack::OnBehaviorActivated()
 void BehaviorBlackJack::OnBehaviorDeactivated()
 {
   _visualizer.ReleaseControlAndClearState(GetBEI());
+
+  // Log session end DAS events and track DAS related state
+  std::string sessionWinLoseString(std::to_string(_humanWinsInSession) + "," + std::to_string(_robotWinsInSession));
+  float timeInSession_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _sessionStartTime_s;
+  DASMSG(behavior_blackjack_session_end,
+         "behavior.blackjack_session_end",
+         "User has ended blackjack session");
+  DASMSG_SET(s1, sessionWinLoseString, "win/lose status: 'numHumanWins,numRobotWins'");
+  DASMSG_SET(s2, _gamesInSession, "Games in session (played back to back)");
+  DASMSG_SET(i1, std::round(timeInSession_s), "Time spent in current session (seconds)");
+  DASMSG_SEND();
+
+  _sessionStartTime_s = 0.0f;
+  _humanWinsInSession = 0;
+  _robotWinsInSession = 0;
+  _gamesInSession = 0;
+  _newSession = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -171,8 +222,15 @@ void BehaviorBlackJack::TransitionToDealing()
           _dVars.dealingState = EDealingState::DealerFirstCard;
           // keep an eye out for Aces
           if(_game.LastCard().IsAnAce()){
-            DelegateIfInControl(SetUpSpeakingBehavior("Good luck!"),
-                                &BehaviorBlackJack::TransitionToDealing);
+            _iConfig.goodLuckTTSBehavior->SetTextToSay("Good Luck!");
+            if(!ANKI_VERIFY(_iConfig.goodLuckTTSBehavior->WantsToBeActivated(),
+                            "BehaviorBlackjack.TTSError",
+                            "The Good Luck TTS behavior did not want to be activated, this indicates a usage error")){
+              CancelSelf();
+            } else{
+              DelegateIfInControl(_iConfig.goodLuckTTSBehavior.get(),
+                                  &BehaviorBlackJack::TransitionToDealing);
+            }
           } else {
             TransitionToDealing();
           }
@@ -237,11 +295,7 @@ void BehaviorBlackJack::TransitionToDealing()
 void BehaviorBlackJack::TransitionToReactToPlayerCard()
 {
   SET_STATE(ReactToPlayerCard);
-  if(_game.PlayerHasBlackJack()){
-    // Player got a BlackJack, but Victor could still tie
-    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
-                        &BehaviorBlackJack::TransitionToVictorsTurn);
-  } else if(_game.PlayerBusted()) {
+  if(_game.PlayerBusted()) {
     // Build the card value and bust string and action
     std::string playerScoreString(std::to_string(_game.GetPlayerScore()) + ". You busted!");
     _dVars.outcome = EOutcome::VictorWins;
@@ -253,12 +307,16 @@ void BehaviorBlackJack::TransitionToReactToPlayerCard()
       {
         _visualizer.DisplayCharlieFrame(GetBEI(), [this]()
           {
-            _dVars.outcome = EOutcome::VictorLoses;
+            _dVars.outcome = EOutcome::VictorLosesBlackJack;
             DelegateIfInControl(SetUpSpeakingBehavior("5 Card Charlie! You win!"), &BehaviorBlackJack::TransitionToEndGame);
           }
         );
       }
     );
+  }else if(_game.PlayerHasBlackJack()){
+    // Player got a BlackJack, but Victor could still tie
+    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
+                        &BehaviorBlackJack::TransitionToVictorsTurn);
   } else {
     // Build the card value string and read out action
     std::string playerScoreString(std::to_string(_game.GetPlayerScore()));
@@ -282,24 +340,32 @@ void BehaviorBlackJack::TransitionToHitOrStand()
   SET_STATE(HitOrStand);
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
 
-  if(uic.IsUserIntentPending(playerHitIntent)){     
-    uic.DropUserIntent(playerHitIntent);
+  if(uic.IsUserIntentPending(playerHitIntent) ||
+     uic.IsUserIntentPending(affirmativeIntent) ){
+
+    if(uic.IsUserIntentPending(playerHitIntent)){
+      uic.DropUserIntent(playerHitIntent);
+    } else if (uic.IsUserIntentPending(affirmativeIntent)){
+      uic.DropUserIntent(affirmativeIntent);
+    }
+
     _game.DealToPlayer();
     _visualizer.DealToPlayer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToPlayerCard, this));
+
   } else {
     // Stand if:
-    // 1. We received a valid playerStandIntent
+    // 1. We received a valid playerStandIntent or imperative_negative
     if (uic.IsUserIntentPending(playerStandIntent)) {
       uic.DropUserIntent(playerStandIntent);
+    } else if(uic.IsUserIntentPending(negativeIntent)) {
+      uic.DropUserIntent(negativeIntent);
     }
 
     // 2. We didn't receive any intents at all
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Response), [this]()
-      {
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Spread),
-                            &BehaviorBlackJack::TransitionToVictorsTurn);
-      }
-    );
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Response),
+      [this](){
+        TransitionToVictorsTurn();
+      });
   }
 }
 
@@ -311,14 +377,20 @@ void BehaviorBlackJack::TransitionToVictorsTurn()
   // TODO:(str) work out whether a "spread" is happening or not, dependent on dynamic layouts
   // _visualizer.VisualizeSpread();
 
-  if(!_game.DealerHasFlopped()){
-    _game.Flop();
-    _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
-  } else {
-    // The only reason Victor takes a turn after the flop is to hit
-    _game.DealToDealer();
-    _visualizer.DealToDealer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
-  }
+  DelegateIfInControl(SetUpSpeakingBehavior("Dealers Turn!"),
+    [this](){
+      _game.Flop();
+      _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
+    });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBlackJack::TransitionToDealToVictor()
+{
+  SET_STATE(DealToVictor);
+
+  _game.DealToDealer();
+  _visualizer.DealToDealer(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -329,30 +401,30 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
   if(_game.DealerBusted()){
     // Announce score and bust
     _dVars.outcome = EOutcome::VictorBusts;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerTied()){
     _dVars.outcome = EOutcome::Tie;
-    std::string tieString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". We tied." );
+    std::string tieString(std::to_string(_game.GetDealerScore()) + ". Push." );
     DelegateIfInControl(SetUpSpeakingBehavior(tieString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasBlackJack()){
     _dVars.outcome = EOutcome::VictorWinsBlackJack;
-    DelegateIfInControl(SetUpSpeakingBehavior("Dealer has 21!"),
+    DelegateIfInControl(SetUpSpeakingBehavior("21!"),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasWon()){
     _dVars.outcome = EOutcome::VictorWins;
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
-  } else if(_game.DealerHasTooManyCards() || _game.DealerShouldStandPerVegasRules()) {
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) + ". You win!" );
+  } else if(_game.DealerHasLost()) {
+    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". You win!" );
     _dVars.outcome = EOutcome::VictorLoses;
     DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString),
                         &BehaviorBlackJack::TransitionToEndGame);
   } else {
     // Announce score and Hit again
-    std::string dealerScoreString("Dealer has " + std::to_string(_game.GetDealerScore()) );
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToVictorsTurn);
+    std::string dealerScoreString( std::to_string(_game.GetDealerScore()) );
+    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToDealToVictor);
   }
 
 }
@@ -364,48 +436,79 @@ void BehaviorBlackJack::TransitionToEndGame(){
 
   GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BlackjackGameComplete);
 
+  // dasOutcome represents the HUMAN outcome of the game
+  std::string dasOutcome;
   TriggerAnimationAction* endGameAction = nullptr;
   switch(_dVars.outcome){
     case EOutcome::Tie:
     {
+      dasOutcome = "tie";
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorPush);
       break;
     }
     case EOutcome::VictorWinsBlackJack:
     {
       GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BlackjackDealerWon);
+      dasOutcome = "loss";
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBlackJackWin);
       break;
     }
     case EOutcome::VictorWins:
     {
       GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::BlackjackDealerWon);
+      dasOutcome = "loss";
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorWin);
       break;
     }
     case EOutcome::VictorLosesBlackJack:
     {
+      dasOutcome = "win";
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBlackJackLose);
       break;
     }
     case EOutcome::VictorBusts:
     {
+      dasOutcome = "win";
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorBust);
       break;
     }
     case EOutcome::VictorLoses:
     {
+      dasOutcome = "win";
       endGameAction = new TriggerAnimationAction(AnimationTrigger::BlackJack_VictorLose);
       break;
     }
   }
 
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Swipe), [this, endGameAction]()
-    {
-      _visualizer.ClearCards(GetBEI());
+  _visualizer.SwipeToClearFace(GetBEI(),
+    [this, endGameAction](){
       DelegateIfInControl(endGameAction, &BehaviorBlackJack::TransitionToPlayAgainPrompt);
-    }
-  );
+    });
+
+  // --- Log DAS Events ---
+  _gamesInSession++;
+  std::string dasWinningScoreString;
+  if(dasOutcome == "win"){
+    dasWinningScoreString = std::to_string(_game.GetPlayerScore());
+    _humanWinsInSession++;
+  }
+  else if (dasOutcome == "loss"){
+    dasWinningScoreString = std::to_string(_game.GetDealerScore());
+    _robotWinsInSession++;
+  }
+  else if (dasOutcome == "tie"){
+    dasWinningScoreString = std::to_string(_game.GetDealerScore());
+  }
+
+  float timeInGame_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _dVars.gameStartTime_s;
+
+  DASMSG(behavior_blackjack_game_end,
+         "behavior.blackjack_game_end",
+         "BlackJack game finished, reporting outcome");
+  DASMSG_SET(s1, dasOutcome, "Outcome of the game for the user (win, loss, tie)");
+  DASMSG_SET(s2, dasWinningScoreString, "Winning score i.e. user score if user won, robot score if robot won");
+  DASMSG_SET(i1, std::round(timeInGame_s), "time spent in this round of the game (seconds)");
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -452,9 +555,11 @@ void BehaviorBlackJack::TransitionToGetOut()
 IBehavior* BehaviorBlackJack::SetUpSpeakingBehavior(const std::string& vocalizationString)
 {
   _iConfig.ttsBehavior->SetTextToSay(vocalizationString);
-  ANKI_VERIFY(_iConfig.ttsBehavior->WantsToBeActivated(),
-              "BehaviorBlackjack.TTSError",
-              "The TTSLoop behavior did not want to be activated, this indicates a usage error");
+  if(!ANKI_VERIFY(_iConfig.ttsBehavior->WantsToBeActivated(),
+                 "BehaviorBlackjack.TTSError",
+                 "The TTSLoop behavior did not want to be activated, this indicates a usage error")){
+    CancelSelf();
+  }
   return _iConfig.ttsBehavior.get();
 }
 

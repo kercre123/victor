@@ -56,7 +56,8 @@ public:
   // Returns true if successful
   bool SetAccountSetting(const external_interface::AccountSetting accountSetting,
                          const Json::Value& valueJson,
-                         const bool updateSettingsJdoc);
+                         const bool updateSettingsJdoc,
+                         bool& ignoredDueToNoChange);
 
   // Return the account setting value (currently strings, bools, uints supported)
   std::string GetAccountSettingAsString(const external_interface::AccountSetting key) const;
@@ -73,6 +74,9 @@ private:
   void ApplyAllCurrentAccountSettings();
   bool ApplyAccountSetting(const external_interface::AccountSetting key);
   bool ApplyAccountSettingDataCollection();
+  bool ValidateAccountSettingAppLocale();
+
+  void DoJdocFormatMigration();
 
   Json::Value               _currentAccountSettings;
   const Json::Value*        _accountSettingsConfig;

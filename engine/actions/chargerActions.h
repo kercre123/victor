@@ -45,6 +45,7 @@ protected:
   
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
+  virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
     
 private:
   const ObjectID _chargerID;
@@ -85,6 +86,7 @@ protected:
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
+  virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
   
 private:
   const ObjectID _chargerID;

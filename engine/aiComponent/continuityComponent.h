@@ -14,7 +14,6 @@
 #ifndef __Cozmo_Basestation_AI_ContinuityComponent_H__
 #define __Cozmo_Basestation_AI_ContinuityComponent_H__
 
-#include "clad/types/animationTrigger.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -25,6 +24,7 @@
 namespace Anki {
 namespace Vector {
 
+enum class AnimationTrigger : int32_t;
 class Robot;
 
 class ContinuityComponent : public IDependencyManagedComponent<AIComponentID>,
@@ -40,7 +40,11 @@ public:
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
 
-
+  // Inform the continuity component when we are displaying information on the face
+  // like pairing or CC screens
+  // Prevents emergency getouts from playing as they can draw over the info screens
+  void UpdateInfoFace(bool displayingInfoFace) { _displayingInfoFace = displayingInfoFace; }
+  
   // Inform the continuity component of the next desired action
   bool GetIntoAction(IActionRunner* action);
 
@@ -57,6 +61,7 @@ private:
   uint32_t _animTag;
   IActionRunner* _nextActionToQueue = nullptr;
   std::vector<Signal::SmartHandle> _signalHandles;
+  bool _displayingInfoFace = false;
 
   bool QueueAction(IActionRunner* action);
 

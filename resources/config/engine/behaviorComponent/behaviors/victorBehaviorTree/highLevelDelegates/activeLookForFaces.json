@@ -1,7 +1,7 @@
 // a copy of LookInPlaceHeadUp but with louder, more active animations
 {
   "behaviorID": "ActiveLookForFaces",
-  "behaviorClass": "ExploreLookAroundInPlace",
+  "behaviorClass": "LookAroundInPlace",
 
   "params":
   {

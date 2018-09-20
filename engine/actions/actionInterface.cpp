@@ -18,7 +18,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/actionWatcher.h"
 #include "engine/components/animTrackHelpers.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -208,29 +208,25 @@ namespace Anki {
       }
 
       // Stop motion on any movement tracks that are locked by this action
-      // and that are currently moving.
       const auto& mc = GetRobot().GetMoveComponent();
       const auto& lockStr = std::to_string(GetTag());
       std::string debugStr;
-      if (mc.IsHeadMoving() &&
-          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
+      if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
         GetRobot().GetMoveComponent().StopHead();
         debugStr += "HEAD_TRACK, ";
       }
-      if (mc.IsLiftMoving() &&
-          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::LIFT_TRACK, lockStr)) {
+      if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::LIFT_TRACK, lockStr)) {
         GetRobot().GetMoveComponent().StopLift();
         debugStr += "LIFT_TRACK, ";
       }
-      if (mc.AreWheelsMoving() &&
-          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::BODY_TRACK, lockStr)) {
+      if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::BODY_TRACK, lockStr)) {
         GetRobot().GetMoveComponent().StopBody();
         debugStr += "BODY_TRACK, ";
       }
       // Log if we've stopped movement on any tracks
       if (!debugStr.empty()) {
         PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destroy.StopMovement",
-                      "Stopping movement on the following tracks since they were locked and are still moving: %s[%s][%d]",
+                      "Stopping movement on the following tracks since they were locked: %s[%s][%d]",
                       debugStr.c_str(), _name.c_str(), _idTag);
       }
 
@@ -580,7 +576,9 @@ namespace Anki {
 
     void IAction::Reset(bool shouldUnlockTracks)
     {
-      _preconditionsMet = false;
+      PRINT_CH_DEBUG(kLogChannelName, "IAction.Reset",
+                     "Resetting action,%s unlocking tracks", (shouldUnlockTracks ? "" : " NOT"));
+      _actionSpecificPreconditionsMet = false;
       _startTime_sec = -1.f;
       if(shouldUnlockTracks)
       {
@@ -592,6 +590,12 @@ namespace Anki {
     Util::RandomGenerator& IAction::GetRNG() const
     {
       return GetRobot().GetRNG();
+    }
+    
+    bool IAction::DidTreadStateChangeFromOnTreads() const
+    {
+      const auto& currTreadState = GetRobot().GetOffTreadsState();
+      return _prevTreadsState == OffTreadsState::OnTreads && currTreadState != OffTreadsState::OnTreads;
     }
 
     ActionResult IAction::UpdateInternal()
@@ -611,7 +615,8 @@ namespace Anki {
       // started. Time to wait until is always relative to original start, however.
       // (Include CheckIfDoneDelay in wait time if we have already met pre-conditions
       const f32 waitUntilTime = (_startTime_sec + GetStartDelayInSeconds() +
-                                 (_preconditionsMet ? GetCheckIfDoneDelayInSeconds() : 0.f));
+                                 (_actionSpecificPreconditionsMet ?
+                                  GetCheckIfDoneDelayInSeconds() : 0.f));
       const f32 timeoutTime   = _startTime_sec + GetTimeoutInSeconds();
 
       // Fail if we have exceeded timeout time
@@ -627,19 +632,20 @@ namespace Anki {
       // Don't do anything until we have reached the waitUntilTime
       else if(currentTimeInSeconds >= waitUntilTime)
       {
-        if(!_preconditionsMet) {
+        // Check the action-specific preconditions.
+        if(!_actionSpecificPreconditionsMet) {
           //PRINT_CH_INFO(kLogChannelName, "IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
-          SetStatus(GetName() + ": check preconditions");
+          SetStatus(GetName() + ": check action-specific preconditions");
 
-          // Note that derived classes will define what to do when pre-conditions
-          // are not met: if they return RUNNING, then the action will effectively
-          // just wait for the preconditions to be met. Otherwise, a failure
+          // Note that derived classes will define what to do when action-specific
+          // pre-conditions are not met: if they return RUNNING, then the action will
+          // effectively wait for the preconditions to be met. Otherwise, a failure
           // will get propagated out as the return value of the Update method.
           result = Init();
 
           if(result == ActionResult::SUCCESS) {
             if(IsMessageDisplayEnabled()) {
-              PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.PreconditionsMet",
+              PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.ActionSpecificPreconditionsMet",
                              "Preconditions for %s [%d] successfully met.",
                              GetName().c_str(),
                              GetTag());
@@ -655,22 +661,32 @@ namespace Anki {
               GetRobot().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, _requiredVisionModes);
             }
 
-            // If preconditions were successfully met, switch result to RUNNING
+            // If ALL preconditions were successfully met, switch result to RUNNING
             // so that we don't think the entire action is completed. (We still
             // need to do CheckIfDone() calls!)
             // TODO: there's probably a tidier way to do this.
-            _preconditionsMet = true;
+            _actionSpecificPreconditionsMet = true;
             result = ActionResult::RUNNING;
           }
+          // When attempting to initialize, cache the current treads state for comparison at runtime.
+          _prevTreadsState = GetRobot().GetOffTreadsState();
         }
 
-        // Re-check if preconditions are met, since they could have _just_ been met
-        if(_preconditionsMet && currentTimeInSeconds >= waitUntilTime) {
+        // Re-check if ALL preconditions are met, since they could have _just_ been met
+        if(_actionSpecificPreconditionsMet && currentTimeInSeconds >= waitUntilTime) {
           //PRINT_CH_INFO(kLogChannelName, "IAction.Update", "Updating %s: checking if done.", GetName().c_str());
           SetStatus(GetName() + ": check if done");
 
-          // Pre-conditions already met, just run until done
-          result = CheckIfDone();
+          // Check if the previous OffTreadsState has changed from OnTreads.
+          // If so, stop and fail the action.
+          if (ShouldFailOnTransitionOffTreads() && DidTreadStateChangeFromOnTreads()) {
+            result = ActionResult::INVALID_OFF_TREADS_STATE;
+          } else {
+            // Pre-conditions already met, just run until done
+            result = CheckIfDone();
+          }
+          // Cache the current treads state for comparison at the next time that the action is updated.
+          _prevTreadsState = GetRobot().GetOffTreadsState();
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
 

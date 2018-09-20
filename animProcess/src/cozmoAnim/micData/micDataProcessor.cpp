@@ -28,17 +28,16 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
-
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
-
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-
+#include <sched.h>
 
 
 namespace Anki {
@@ -47,8 +46,7 @@ namespace MicData {
 
 namespace {
 # define CONSOLE_GROUP "MicData"
-  CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
-  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
 
@@ -57,6 +55,12 @@ namespace {
   CONSOLE_VAR_RANGED(uint32_t, kMicData_QuietTimeCooldown_ms, CONSOLE_GROUP, 1000, 500, 10000);
 
 #if ANKI_DEV_CHEATS
+
+  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, 0,
+                   "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
+
   // NOTE: This enum needs to EXACTLY match the number and ordering of the kTriggerModelDataList array below
   enum class SupportedLocales
   {
@@ -95,9 +99,12 @@ namespace {
   size_t _triggerModelTypeIndex = (size_t) SupportedLocales::enUS_1mb;
   CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndex, CONSOLE_GROUP, _triggerModelTypeIndex, "enUS_1mb,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE");
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_WakeWordless, CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
+  using MicProcessingState = MicDataProcessor::ProcessingState;
+  const MicProcessingState kLowPowerModeProcessingState = MicProcessingState::NoProcessingSingleMic;
 
 } // anonymous namespace
 
@@ -170,6 +177,11 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
 #endif // ANKI_DEVELOPER_CODE
 
   UpdateTriggerForLocale(locale);
+  
+  // Set initial processing state
+  const auto initProcessState = ProcessingState::SigEsBeamformingOff;
+  SetPreferredMicDataProcessingState(initProcessState);
+  SetActiveMicDataProcessingState(initProcessState);
 }
 
 void MicDataProcessor::InitVAD()
@@ -193,17 +205,20 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
     return;
   }
 
-  showStreamState->StartTriggerResponseWithGetIn();
+  showStreamState->SetPendingTriggerResponseWithGetIn();
 
   RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
 
+  const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
+                               !_micDataSystem->ShouldSimulateStreaming();
+
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
-  twDetectedMessage.timestamp = (TimeStamp_t)mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
   twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
   twDetectedMessage.triggerScore = (uint32_t) score;
+  twDetectedMessage.willOpenStream = willStreamAudio;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
@@ -225,97 +240,124 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                     (TimeStamp_t)mostRecentTimestamp);
 }
 
-RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+RobotTimeStamp_t MicDataProcessor::CreateSteamJob(CloudMic::StreamType streamType,
+                                                  uint32_t overlapLength_ms)
 {
+  // Setup Job
+  auto newJob = std::make_shared<MicDataInfo>();
+  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+  newJob->_writeNameBase = ""; //use autogen names
+  newJob->_numMaxFiles = 100;
+  newJob->_type = streamType;
+  bool saveToFile = false;
+#if ANKI_DEV_CHEATS
+  saveToFile = true;
+  // Simplify stream type
+  bool saveRawFullStream = false;
+  switch (streamType) {
+    case CloudMic::StreamType::Normal:
+      saveRawFullStream = kMicData_SaveRawFullIntent;
+      break;
+    case CloudMic::StreamType::Blackjack:
+    case CloudMic::StreamType::KnowledgeGraph:
+      saveRawFullStream = kMicData_SaveRawFullIntent_WakeWordless;
+      break;
+  }
+
+  if (saveRawFullStream) {
+    newJob->EnableDataCollect(MicDataType::Raw, true);
+  }
+  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+#endif
+  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+  
+  // Copy the current audio chunks in the trigger overlap buffer
+  // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was
+  // recognized), so that the immediate buffer also contains the trigger itself. So here we set our start index to
+  // only capture that in-between time, and push it into the streaming job for intent matching
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
-
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
-             "MicDataProcessor.CreateTriggerWordDetectedJobs.AudioProcIdx");
-  const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-  if (showStreamState->ShouldStreamAfterTriggerWordResponse())
-  {
-    // First we create the job responsible for streaming the intent after the trigger
-    auto newJob = std::make_shared<MicDataInfo>();
-    newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
-    newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-    newJob->_numMaxFiles = 100;
-    bool saveToFile = false;
-#  if ANKI_DEV_CHEATS
-    saveToFile = true;
-    if (kMicData_SaveRawFullIntent)
-    {
-      newJob->EnableDataCollect(MicDataType::Raw, true);
-    }
-    newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
-#  endif
-    newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-    newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
-
-    // Copy the current audio chunks in the trigger overlap buffer
-    // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was
-    // recognized), so that the immediate buffer also contains the trigger itself. So here we set our start index to
-    // only capture that in-between time, and push it into the streaming job for intent matching
-    constexpr uint32_t kOverlapCount = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
-    size_t triggerOverlapStartIdx = (maxIndex > kOverlapCount) ? (maxIndex - kOverlapCount) : 0;
+             "MicDataProcessor.CreateSteamJob.AudioProcIdx");
+  
+  if (overlapLength_ms > 0) {
+    const auto overlapCount = overlapLength_ms / kTimePerSEBlock_ms;
+    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+    size_t triggerOverlapStartIdx = (maxIndex > overlapCount) ? (maxIndex - overlapCount) : 0;
+    
     for (size_t i=triggerOverlapStartIdx; i<maxIndex; ++i)
     {
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
     }
-
+    
     // Copy the current audio chunks in the trigger overlap buffer
     for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
     {
       const auto& audioBlock = _immediateAudioBufferRaw[i];
       newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
     }
-    const auto isStreamingJob = true;
-    _micDataSystem->AddMicDataJob(newJob, isStreamingJob);
+  }
+
+  const bool isStreamingJob = true;
+  _micDataSystem->AddMicDataJob(newJob, isStreamingJob);
+  
+  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
+  return mostRecentTimestamp;
+}
+
+RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+{
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  RobotTimeStamp_t mostRecentTimestamp = 0;
+  
+  if (showStreamState->ShouldStreamAfterTriggerWordResponse())
+  {
+    // First we create the job responsible for streaming the intent after the trigger
+    mostRecentTimestamp = CreateSteamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
   } else {
     PRINT_NAMED_INFO("MicDataProcessor.CreateTriggerWordDetectedJobs.NoStreaming", "Not adding streaming jobs because disabled");
   }
 
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
-  {
-    bool saveTriggerOnly = false;
+  bool saveTriggerOnly = false;
 # if ANKI_DEV_CHEATS
-    saveTriggerOnly = true;
+  saveTriggerOnly = true;
 # endif // ANKI_DEV_CHEATS
-
-    if (saveTriggerOnly)
+  
+  if (saveTriggerOnly)
+  {
+    std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+    
+    auto triggerJob = std::make_shared<MicDataInfo>();
+    triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
+    triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
+    triggerJob->_numMaxFiles = 100;
+    triggerJob->EnableDataCollect(MicDataType::Processed, saveTriggerOnly);
+    if (kMicData_CollectRawTriggers)
     {
-      auto triggerJob = std::make_shared<MicDataInfo>();
-      triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
-      triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-      triggerJob->_numMaxFiles = 100;
-      triggerJob->EnableDataCollect(MicDataType::Processed, saveTriggerOnly);
-      if (kMicData_CollectRawTriggers)
-      {
-        triggerJob->EnableDataCollect(MicDataType::Raw, saveTriggerOnly);
-      }
-      triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
-
-      // We only record a little extra time beyond what we're stuffing in below
-      constexpr uint32_t timeAfterTriggerEnd_ms = 170;
-      triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
-
-      for (size_t i=0; i<maxIndex; ++i)
-      {
-        const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
-        triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
-      }
-      for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
-      {
-        const auto& audioBlock = _immediateAudioBufferRaw[i];
-        triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
-      }
-      const auto notStreamingJob = false;
-      _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
+      triggerJob->EnableDataCollect(MicDataType::Raw, saveTriggerOnly);
     }
+    triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
+    
+    // We only record a little extra time beyond what we're stuffing in below
+    constexpr uint32_t timeAfterTriggerEnd_ms = 170;
+    triggerJob->SetTimeToRecord(timeAfterTriggerEnd_ms);
+    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+    for (size_t i=0; i<maxIndex; ++i)
+    {
+      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+      triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+    }
+    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
+    {
+      const auto& audioBlock = _immediateAudioBufferRaw[i];
+      triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
+    }
+    const auto notStreamingJob = false;
+    _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
   }
 
-  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
   return mostRecentTimestamp;
 }
 
@@ -447,6 +489,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
   const bool robotIsMoving = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::IS_MOVING);
+  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
   _robotWasMoving = robotIsMoving;
 
@@ -465,17 +508,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   const bool speakerStoppedPlaying = !_isSpeakerActive && _wasSpeakerActive;
   _wasSpeakerActive = _isSpeakerActive;
   
-  // When the robot is moving or the speaker is playing, we use the "fallback policy", meaning we essentially disable
-  // beamforming so that we aren't focusing on the gear/speaker noise (note we still run SE processing to combine the
-  // channels when using the fallback policy).
-  const bool shouldUseFallbackPolicy = robotIsMoving || _isSpeakerActive;
-  if (shouldUseFallbackPolicy != _usingFallbackPolicy) {
-    const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
-    SEDiagSetInt32(_policyFallbackFlag, newSetting);
-    PRINT_NAMED_DEBUG("MicDataProcessor.ProcessMicrophonesSE.SetUseFallbackBeam", "%s (robot moving %d, speaker playing %d)",
-                      newSetting > 0 ? "true" : "false", robotIsMoving, _isSpeakerActive);
-    _usingFallbackPolicy = shouldUseFallbackPolicy;
-  }
+  // The robot is either moving or playing audio
+  const bool hasRobotNoise = (robotIsMoving || (_isSpeakerActive && kMicData_SpeakerNoiseDisablesMics));
 
   if (robotStoppedMoving || speakerStoppedPlaying)
   {
@@ -502,7 +536,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
                           (int16_t*)audioChunk);       // pointer to input data
     latestPowerValue = _sVadObject->AvePowerInBlock;
     latestNoiseFloor = _sVadObject->NoiseFloor;
-    if (robotIsMoving || _isSpeakerActive)
+  
+    if (hasRobotNoise)
     {
       activityFlag = 1;
     }
@@ -526,7 +561,18 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     }
   }
 
-  // Allow overriding (for testing) to force enable or disable mic data processing
+  // Check if the power mode state needs to be updated
+  ProcessingState processingState = _activeProcState;
+  // Low Power Mode toggle
+  if (isLowPowerMode != _isInLowPowerMode) {
+    // Update Power mode state
+    processingState = isLowPowerMode ? kLowPowerModeProcessingState : _preferredProcState.load();
+    _isInLowPowerMode = isLowPowerMode;
+  }
+
+  
+#if ANKI_DEV_CHEATS
+  // Allow overriding (for testing) to force enable or disable mic data processing & force processing state
   if (kMicData_ForceEnableMicDataProc)
   {
     activityFlag = 1;
@@ -535,36 +581,73 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   {
     activityFlag = 0;
   }
-
-  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
-  // If we've detected activity, SE signal processing (which includes the fallback policy
-  // that will skip spatial filtering, which is enabled while the robot is moving).
-  if (!isLowPowerMode && activityFlag == 1)
-  {
-    static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
-    {
-      ANKI_CPU_PROFILE("ProcessMicrophonesSE");
-      // Process the current audio block with SE software
-      MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
-    }
+  
+  switch (kDevForceProcessState) {
+    case 0:
+      // Do Noting
+      break;
+    case 1:
+      processingState = ProcessingState::None;
+      break;
+    case 2:
+      processingState = ProcessingState::NoProcessingSingleMic;
+      break;
+    case 3:
+      processingState = ProcessingState::SigEsBeamformingOff;
+      break;
+    case 4:
+      processingState = ProcessingState::SigEsBeamformingOn;
+      break;
+    default:
+      // Do Nothing
+      break;
   }
-  else
-  {
-    // Otherwise if it's determined there's really no activity right now, we're skipping the standard SE processing
-    // We simply remove the DC bias and apply some gain to the first mic channel and pass it along
-    
-    // Our bias is stored as a fixed-point value
-    constexpr int iirCoefPower = 10;
-    constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
-    static int bias = audioChunk[0] << iirCoefPower;
-    for (int i=0; i<kSamplesPerBlock; ++i)
+#endif
+  
+  // Update State
+  SetActiveMicDataProcessingState(processingState);
+  bool directionIsAvailable = false;
+  
+  switch (_activeProcState) {
+    case ProcessingState::None:
     {
-      // First update our bias with the latest audio sample
-      bias = ((bias * iirMult) >> iirCoefPower) + audioChunk[i];
-      // Push out the next sample using the updated bias
-      bufferOut[i] = audioChunk[i] - (bias >> iirCoefPower);
-      // Gain multiplier of 8 gives good results
-      bufferOut[i] <<= 3;
+      // Use raw mic data from single source
+      ANKI_CPU_PROFILE("ProcessRawSingleMicrophoneCopy");
+      memcpy(bufferOut, audioChunk, sizeof(AudioUtil::AudioSample) * kSamplesPerBlock);
+      break;
+    }
+    case ProcessingState::NoProcessingSingleMic:
+    {
+      // Remove the DC bias and apply some gain to the first mic channel and pass it along
+      ANKI_CPU_PROFILE("ProcessSingleMicrophone");
+      
+      // Our bias is stored as a fixed-point value
+      constexpr int iirCoefPower = 10;
+      constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
+      static int bias = audioChunk[0] << iirCoefPower;
+      for (int i=0; i<kSamplesPerBlock; ++i)
+      {
+        // First update our bias with the latest audio sample
+        bias = ((bias * iirMult) >> iirCoefPower) + audioChunk[i];
+        // Push out the next sample using the updated bias
+        bufferOut[i] = audioChunk[i] - (bias >> iirCoefPower);
+        // Gain multiplier of 8 gives good results
+        bufferOut[i] <<= 3;
+      }
+      break;
+    }
+    case ProcessingState::SigEsBeamformingOff:
+    case ProcessingState::SigEsBeamformingOn:
+    {
+      // Signal Essense Processing
+      static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+      {
+        ANKI_CPU_PROFILE("ProcessMicrophonesSE");
+        // Process the current audio block with SE software
+        MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
+      }
+      directionIsAvailable = true;
+      break;
     }
   }
 
@@ -573,9 +656,9 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   result.latestPowerValue = latestPowerValue;
   result.latestNoiseFloor = latestNoiseFloor;
 
-  // When we know the robot is moving, or speaker is playing, or low power mode, or there's no
-  //  current activity (so we didn't do beamforming) clear direction data
-  if (robotIsMoving || ( _isSpeakerActive && kMicData_SpeakerNoiseDisablesMics ) || (activityFlag != 1) || isLowPowerMode)
+  // When we know the robot is making noise (via moving or speaker is playing) or not using a Signal Essense processing
+  // we clear direction data
+  if (hasRobotNoise || !directionIsAvailable)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }
@@ -601,6 +684,18 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 void MicDataProcessor::ProcessRawLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "MicProcRaw");
+  
+#if defined(ANKI_PLATFORM_VICOS)
+  // Setup the thread's affinity mask
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  CPU_SET(2, &cpu_set);
+  int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set);
+  if (error != 0) {
+    LOG_ERROR("MicDataProcessor.ProcessRawLoop", "SetAffinityMaskError %d", error);
+  }
+#endif
+  
   static constexpr uint32_t expectedAudioDropsPerAnimLoop = 7;
   static const uint32_t maxProcTime_ms = expectedAudioDropsPerAnimLoop * maxProcessingTimePerDrop_ms;
   const auto maxProcTime = std::chrono::milliseconds(maxProcTime_ms);
@@ -664,6 +759,18 @@ void MicDataProcessor::ProcessRawLoop()
 void MicDataProcessor::ProcessTriggerLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "MicProcTrigger");
+  
+#if defined(ANKI_PLATFORM_VICOS)
+  // Setup the thread's affinity mask
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  CPU_SET(1, &cpu_set);
+  int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set);
+  if (error != 0) {
+    LOG_ERROR("MicDataProcessor.ProcessTriggerLoop", "SetAffinityMaskError %d", error);
+  }
+#endif
+  
   while (!_processThreadStop)
   {
     ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorTrigger_Logging));
@@ -813,6 +920,46 @@ void MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
                         "locale: %s modelType: %d searchFileIndex: %d",
                         newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
   }
+}
+
+void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::ProcessingState state)
+{
+  if (state != _activeProcState) {
+    
+    PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
+                     GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
+    
+    switch (state) {
+      case ProcessingState::None:
+      case ProcessingState::NoProcessingSingleMic:
+        // Do Nothing
+        break;
+      case ProcessingState::SigEsBeamformingOff:
+      case ProcessingState::SigEsBeamformingOn:
+      {
+        const bool shouldUseFallbackPolicy = (state == ProcessingState::SigEsBeamformingOff);
+        const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
+        SEDiagSetInt32(_policyFallbackFlag, newSetting);
+        break;
+      }
+    }
+    _activeProcState = state;
+  }
+}
+  
+const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::ProcessingState state) const
+{
+  switch (state) {
+    case ProcessingState::None:
+      return "None";
+    case ProcessingState::NoProcessingSingleMic:
+      return "NoProcessingSingleMic";
+    case ProcessingState::SigEsBeamformingOff:
+      return "SigEsBeamformingOff";
+    case ProcessingState::SigEsBeamformingOn:
+      return "SigEsBeamformingOn";
+  }
+  return "";
 }
 
 } // namespace MicData

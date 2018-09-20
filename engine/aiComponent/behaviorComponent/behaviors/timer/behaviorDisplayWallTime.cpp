@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/settingsManager.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -38,6 +38,11 @@ BehaviorDisplayWallTime::~BehaviorDisplayWallTime()
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWallTime::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
+{
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWallTime::GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const 
@@ -57,7 +62,15 @@ bool BehaviorDisplayWallTime::WantsToBeActivatedBehavior() const
 {
   // Ensure we can get local time
   struct tm unused;
-  return WallTime::getInstance()->GetLocalTime(unused);
+  return WallTime::getInstance()->GetApproximateLocalTime(unused);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDisplayWallTime::ShouldDimLeadingZeros() const
+{
+  // in 24 hour clocks, show leading zeros as full brightness (e.g. 00:07), otherwise let them be dim (e.g. 01:30)
+  const bool is24Hour = ShouldDisplayAsMilitaryTime();
+  return !is24Hour;
 }
 
 
@@ -67,7 +80,7 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
   return [this](const int offset){
     std::map<Vision::SpriteBoxName, int> outMap;
     struct tm localTime;
-    if(!WallTime::getInstance()->GetLocalTime(localTime)){
+    if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
       return outMap;
     }
     
@@ -77,6 +90,10 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
 
     if(!ShouldDisplayAsMilitaryTime()){
       currentHours = currentHours % 12;
+
+      if( currentHours == 0 ) {
+        currentHours = 12;
+      }
     }
 
     // Tens Digit (left of colon)
@@ -112,7 +129,7 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
 bool BehaviorDisplayWallTime::ShouldDisplayAsMilitaryTime() const
 {
   const auto& settingsManager = GetBEI().GetSettingsManager();
-  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(RobotSetting::clock_24_hour);
+  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(external_interface::RobotSetting::clock_24_hour);
   return clockIs24Hour;
 }
 

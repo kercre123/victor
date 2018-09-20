@@ -54,26 +54,12 @@ void BlockTapFilterComponent::InitDependent(Vector::Robot* robot, const RobotCom
   // Null for unit tests
   if( _robot->GetContext()->GetExternalInterface() )
   {
-    _gameToEngineSignalHandle = (_robot->GetContext()->GetExternalInterface()->Subscribe(
-                                                                                        ExternalInterface::MessageGameToEngineTag::EnableBlockTapFilter,
-                                                                                        std::bind(&BlockTapFilterComponent::HandleEnableTapFilter, this, std::placeholders::_1)));
-    
     // Subscribe to messages
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectStoppedMoving>();
   }
-#if ANKI_DEV_CHEATS
-  if( _robot->GetContext()->GetExternalInterface() )
-  {
-    _debugGameToEngineSignalHandle =(_robot->GetContext()->GetExternalInterface()->Subscribe(
-                                                                                            ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus,
-                                                                                            std::bind(&BlockTapFilterComponent::HandleSendTapFilterStatus, this, std::placeholders::_1)));;
-  }
-#endif
-
-  
 }
 
 
@@ -129,28 +115,8 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
     }
   }
 }
-  
-void BlockTapFilterComponent::HandleEnableTapFilter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message)
-{
-  if( message.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::EnableBlockTapFilter)
-  {
-    const Anki::Vector::ExternalInterface::EnableBlockTapFilter& msg = message.GetData().Get_EnableBlockTapFilter();
-    _enabled = msg.enable;
-    PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleEnableTapFilter","on %d",_enabled);
-  }
-}
-  
-#if ANKI_DEV_CHEATS
-void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message)
-{
-  if( message.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus)
-  {
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                                        Anki::Vector::ExternalInterface::BlockTapFilterStatus(_enabled,kTapIntensityMin,kTapWaitOffset_ms)));
-  }
-}
-#endif
-  
+
+
 void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::ObjectTapped& payload)
 {
   // find connected object by objectID

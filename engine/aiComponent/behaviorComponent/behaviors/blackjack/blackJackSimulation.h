@@ -102,8 +102,15 @@ public:
   bool DealerHasBlackJack() const {return _dealerScore == kBlackJackValue;}
   bool DealerHasTooManyCards() const {return _dealerHand.size() >= kHandSizeLimit;}
   bool DealerShouldStandPerVegasRules() const {return _dealerScore >= kVegasRulesLimit;}
-  bool DealerTied() const {return DealerShouldStandPerVegasRules() && (_dealerScore == _playerScore);}
-  bool DealerHasWon() const {return DealerShouldStandPerVegasRules() && (_dealerScore > _playerScore);}
+  bool DealerTied() const {
+    return (DealerHasTooManyCards() || DealerShouldStandPerVegasRules()) && (_dealerScore == _playerScore);
+  }
+  bool DealerHasWon() const {
+    return (DealerHasTooManyCards() || DealerShouldStandPerVegasRules()) && (_dealerScore > _playerScore);
+  }
+  bool DealerHasLost() const {
+    return (DealerHasTooManyCards() || DealerShouldStandPerVegasRules()) && (_dealerScore < _playerScore);
+  }
 
   // Debug/Test
   static void StackDeck(const std::vector<int>& stackedDeckOrder);

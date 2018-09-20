@@ -24,6 +24,7 @@ RtsComms::RtsComms(INetworkStream* stream,
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<ConnectionIdManager> connectionIdManager,
+    std::shared_ptr<WifiWatcher> wifiWatcher,
     std::shared_ptr<TaskExecutor> taskExecutor,
     bool isPairing,
     bool isOtaUpdating,
@@ -35,6 +36,7 @@ _engineClient(engineClient),
 _gatewayServer(gatewayServer),
 _tokenClient(tokenClient),
 _connectionIdManager(connectionIdManager),
+_wifiWatcher(wifiWatcher),
 _taskExecutor(taskExecutor),
 _isPairing(isPairing),
 _isOtaUpdating(isOtaUpdating),
@@ -45,11 +47,6 @@ _rtsVersion(0)
 {
   // Initialize safe handle
   _safeHandle = SafeHandle::Create();
-
-  // Register with stream events
-  _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
-    std::bind(&RtsComms::HandleMessageReceived,
-    this, std::placeholders::_1, std::placeholders::_2));
 
   // pairing timeout
   _onPairingTimeoutReceived = _pairingTimeoutSignal.ScopedSubscribe(std::bind(&RtsComms::HandleTimeout, this));
@@ -85,6 +82,11 @@ void RtsComms::Init() {
 
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   }
+
+  // Register with stream events
+  _onReceivePlainTextHandle = _stream->OnReceivedPlainTextEvent().ScopedSubscribe(
+    std::bind(&RtsComms::HandleMessageReceived,
+    this, std::placeholders::_1, std::placeholders::_2));
 
   // Send Handshake
   ev_timer_again(_loop, &_handleTimeoutTimer.timer);
@@ -259,6 +261,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                               _gatewayServer,
                               _connectionIdManager,
                               _taskExecutor,
+                              _wifiWatcher,
                               _isPairing,
                               _isOtaUpdating,
                               _hasCloudOwner);
@@ -288,6 +291,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
                               _engineClient,
                               _tokenClient,
                               _taskExecutor,
+                              _wifiWatcher,
                               _isPairing,
                               _isOtaUpdating,
                               _hasCloudOwner);

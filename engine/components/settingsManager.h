@@ -21,7 +21,7 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 
-#include "clad/types/robotSettingsTypes.h"
+#include "proto/external_interface/settings.pb.h"
 
 #include "json/json.h"
 #include <map>
@@ -55,17 +55,17 @@ public:
   //////
 
   // Returns true if successful
-  bool SetRobotSetting(const RobotSetting robotSetting,
+  bool SetRobotSetting(const external_interface::RobotSetting robotSetting,
                        const Json::Value& valueJson,
                        const bool updateSettingsJdoc,
                        bool& ignoredDueToNoChange);
 
   // Return the setting value (currently strings, bools, uints supported)
-  std::string GetRobotSettingAsString(const RobotSetting key) const;
-  bool        GetRobotSettingAsBool  (const RobotSetting key) const;
-  uint32_t    GetRobotSettingAsUInt  (const RobotSetting key) const;
+  std::string GetRobotSettingAsString(const external_interface::RobotSetting key) const;
+  bool        GetRobotSettingAsBool  (const external_interface::RobotSetting key) const;
+  uint32_t    GetRobotSettingAsUInt  (const external_interface::RobotSetting key) const;
   
-  bool DoesSettingUpdateCloudImmediately(const RobotSetting key) const;
+  bool DoesSettingUpdateCloudImmediately(const external_interface::RobotSetting key) const;
 
   bool UpdateSettingsJdoc(const bool saveToCloudImmediately,
                           const bool setCloudDirtyIfNotImmediate);
@@ -76,16 +76,16 @@ public:
 
   // test whether or not we have a pending request for a latent settings update
   bool IsSettingsUpdateRequestPending() const;
-  bool IsSettingsUpdateRequestPending(RobotSetting setting) const;
-  RobotSetting GetPendingSettingsUpdate() const;
+  bool IsSettingsUpdateRequestPending(const external_interface::RobotSetting setting) const;
+  external_interface::RobotSetting GetPendingSettingsUpdate() const;
 
   // claiming the pending update request tells the system that "somebody" is going to take care of this update so
   // there's no need to force the update if it's not set in time
   // ** note: if you claim a pending event, it is up to you to clear it when you're done!
-  bool ClaimPendingSettingsUpdate(RobotSetting setting);
+  bool ClaimPendingSettingsUpdate(const external_interface::RobotSetting setting);
   // applying the update actually applies the settings change that was requested
   // note: does nothing if the requested setting was not formerly pending
-  bool ApplyPendingSettingsUpdate(RobotSetting setting, bool clearRequest = true);
+  bool ApplyPendingSettingsUpdate(const external_interface::RobotSetting setting, const bool clearRequest = true);
   // this will clear out the pending request to allow new requests to be made
   // ** note: if you claim a pending event, it is up to you to clear it when you're done!
   void ClearPendingSettingsUpdate();
@@ -94,18 +94,22 @@ public:
 private:
 
   void ApplyAllCurrentSettings();
-  bool ApplyRobotSetting(const RobotSetting robotSetting, bool force = true);
+  bool ApplyRobotSetting(const external_interface::RobotSetting robotSetting, bool force = true);
   bool ApplySettingMasterVolume();
   bool ApplySettingEyeColor();
   bool ApplySettingLocale();
   bool ApplySettingTimeZone();
   bool ValidateSettingMasterVolume();
   bool ValidateSettingEyeColor();
+  bool ValidateSettingLocale();
+  bool ValidateSettingDefaultLocation();
   bool ExecCommand(const std::vector<std::string>& args);
 
   // request that the specified RobotSetting is not immediately applied, but some other source will apply it
-  bool RequestLatentSettingsUpdate( RobotSetting setting );
-  void OnSettingsUpdateNotClaimed(RobotSetting setting);
+  bool RequestLatentSettingsUpdate(const external_interface::RobotSetting setting);
+  void OnSettingsUpdateNotClaimed(const external_interface::RobotSetting setting);
+
+  void DoJdocFormatMigration();
 
   Json::Value               _currentSettings;
   Robot*                    _robot = nullptr;
@@ -119,12 +123,12 @@ private:
     SettingFunction         validationFunction;
     SettingFunction         applicationFunction;
   };
-  using SettingSetters = std::map<RobotSetting, SettingSetter>;
+  using SettingSetters = std::map<external_interface::RobotSetting, SettingSetter>;
   SettingSetters            _settingSetters;
 
   struct LatentSettingsRequest
   {
-    RobotSetting            setting;
+    external_interface::RobotSetting setting;
     size_t                  tickRequested;
     bool                    isClaimed;
   };

@@ -24,7 +24,11 @@
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
+#include "image.h"
+
 #endif
+
+#include <fstream>
 
 namespace {
   
@@ -59,6 +63,7 @@ void ResizeKeepAspectRatioHelper(const cv::Mat_<T>& src, cv::Mat_<T>& dest, s32 
       PRINT_NAMED_ERROR("ResizeKeepAspectRatioHelper.CvResizeException", "Error while resizing image: %s,"
                         "ratio %f, rows: %d, cols: %d, desiredSize: (%d, %d)",
                         e.what(), ratio, src.rows, src.cols, desiredSize.width, desiredSize.height);
+      return;
     }
   }
 }
@@ -70,15 +75,129 @@ namespace Vision {
   
 #pragma mark --- ImageBase ---
   
+  // Helper to read bitmap files when using Image::Load()
+  static cv::Mat ReadBMP(const std::string& input_bmp_name)
+  {
+    std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
+    if (!file) {
+      PRINT_NAMED_ERROR("ReadBMP.FileNotFound", "%s", input_bmp_name.c_str());
+      return cv::Mat();
+    }
+    
+    const auto begin = file.tellg();
+    file.seekg(0, std::ios::end);
+    const auto end = file.tellg();
+    assert(end >= begin);
+    const size_t len = (size_t) (end - begin);
+    
+    // Decode the bmp header
+    const uint8_t* img_bytes = new uint8_t[len];
+    file.seekg(0, std::ios::beg);
+    file.read((char*)img_bytes, len);
+    const int32_t header_size = *(reinterpret_cast<const int32_t*>(img_bytes + 10));
+    const int32_t width = *(reinterpret_cast<const int32_t*>(img_bytes + 18));
+    const int32_t height = *(reinterpret_cast<const int32_t*>(img_bytes + 22));
+    const int32_t bpp = *(reinterpret_cast<const int32_t*>(img_bytes + 28));
+    const int32_t channels = bpp / 8;
+    
+    // there may be padding bytes when the width is not a multiple of 4 bytes
+    // 8 * channels == bits per pixel
+    const int row_size = (8 * channels * width + 31) / 32 * 4;
+    
+    // if height is negative, data layout is top down
+    // otherwise, it's bottom up
+    const bool top_down = (height < 0);
+    const int32_t absHeight = abs(height);
+    
+    // Decode image, allocating tensor once the image size is known
+    cv::Mat img(height, width, CV_8UC(channels));
+    uint8_t* output = img.data;
+    
+    const uint8_t* input = &img_bytes[header_size];
+    
+    for (int i = 0; i < absHeight; i++)
+    {
+      int src_pos;
+      int dst_pos;
+      
+      for (int j = 0; j < width; j++)
+      {
+        if (!top_down) {
+          src_pos = ((absHeight - 1 - i) * row_size) + j * channels;
+        } else {
+          src_pos = i * row_size + j * channels;
+        }
+        
+        dst_pos = (i * width + j) * channels;
+        
+        switch (channels) {
+          case 1:
+            output[dst_pos] = input[src_pos];
+            break;
+          case 3:
+            // BGR -> RGB
+            output[dst_pos] = input[src_pos + 2];
+            output[dst_pos + 1] = input[src_pos + 1];
+            output[dst_pos + 2] = input[src_pos];
+            break;
+          case 4:
+            // BGRA -> RGBA
+            output[dst_pos] = input[src_pos + 2];
+            output[dst_pos + 1] = input[src_pos + 1];
+            output[dst_pos + 2] = input[src_pos];
+            output[dst_pos + 3] = input[src_pos + 3];
+            break;
+          default:
+            PRINT_NAMED_ERROR("ReadBMP.UnexpectedNumChannels", "%d", channels);
+            return cv::Mat();
+        }
+      }
+    }
+    
+    return img;
+  }
+  
   template<typename T>
   Result ImageBase<T>::Load(const std::string& filename)
   {
-    const cv::Mat showableImage = cv::imread(filename, (GetNumChannels() == 1 ?
-                                             CV_LOAD_IMAGE_GRAYSCALE :
-                                             CV_LOAD_IMAGE_COLOR));
+    const std::string ext = filename.substr(filename.size()-3,3);
+    if(ext == "bmp" || ext == "BMP")
+    {
+      if(GetNumChannels() == 3)
+      {
+        // Converts to RGB internally (not BGR), so no need to use the SetFromShowableFormat call below
+        this->get_CvMat_() = ReadBMP(filename);
+      }
+      else
+      {
+        // TODO: provide mechanism to convert to grayscale internally?
+        // Workaround: Caller can load into ImageRGB and then convert to Image.
+        PRINT_NAMED_ERROR("ImageBase.Load.BMPNotSupportedWithSingleChannel",
+                          "Bitmap images must be loaded into 3-channel images.");
+        return RESULT_FAIL;
+      }
+    }
+    else
+    {
+      cv::Mat showableImage;
+      try {
+        showableImage = cv::imread(filename, (GetNumChannels() == 1 ?
+                                              CV_LOAD_IMAGE_GRAYSCALE :
+                                              CV_LOAD_IMAGE_COLOR));
+      }
+      catch(const cv::Exception& e)
+      {
+        PRINT_NAMED_ERROR("ImageBase.Load.CvImreadFailed",
+                          "OpenCV Error: %s", e.what());
+        return RESULT_FAIL;
+      }
+      
+      if(!showableImage.empty())
+      {
+        SetFromShowableFormat(showableImage);
+      }
+    }
     
-    SetFromShowableFormat(showableImage);
-
     if(IsEmpty()) {
       return RESULT_FAIL;
     } else {
@@ -850,8 +969,8 @@ namespace Vision {
     u32 i = floor(h);
     f32 dh = h - i; // decimal part of h
     
-    u32 numRows = GetNumRows();
-    u32 numCols = GetNumCols();
+    s32 numRows = GetNumRows();
+    s32 numCols = GetNumCols();
 
     if(this->IsContinuous() && output.IsContinuous())
     {
@@ -973,8 +1092,8 @@ namespace Vision {
     const float32x4_t bt_whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
 
     const float32x4_t kOne = vdupq_n_f32(1.f);
-
-    const u32 kNumElementsProcessedPerLoop = 8;
+    
+    const s32 kNumElementsProcessedPerLoop = 8;
 #endif
     
     for(u32 r = 0; r < numRows; r++)
@@ -1697,14 +1816,38 @@ namespace Vision {
     return *this;
   }
 
-  Image ImageRGB::ToGray() const
+  Image ImageRGB::ToGray(const ImageRGB::RGBToGrayMethod method) const
+  {
+    switch(method) {
+      case ImageRGB::RGBToGrayMethod::GreenChannel:
+        return ToGrayFromGreenChannel();
+
+      case RGBToGrayMethod::DoubleGreen:
+        return  ToGrayFromDoubleGreen();
+    }
+  }
+
+  void ImageRGB::FillGray(Image &grayOut, const ImageRGB::RGBToGrayMethod method) const
+  {
+    switch(method) {
+      case RGBToGrayMethod::DoubleGreen:
+        FillGrayFromDoubleGreen(grayOut);
+        break;
+
+      case RGBToGrayMethod::GreenChannel:
+        FillGrayFromGreenChannel(grayOut);
+        break;
+    }
+  }
+
+  Image ImageRGB::ToGrayFromDoubleGreen() const
   {
     Image grayImage(GetNumRows(), GetNumCols());
     FillGray(grayImage);
     return grayImage;
   }
   
-  void ImageRGB::FillGray(Image& grayImage) const
+  void ImageRGB::FillGrayFromDoubleGreen(Anki::Vision::Image &grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
     grayImage.SetImageId(GetImageId());
@@ -1756,6 +1899,29 @@ namespace Vision {
         imageRGBPtr++;
         grayPtr++;
       }
+    }
+  }
+
+  Image ImageRGB::ToGrayFromGreenChannel() const
+  {
+    Image grayImage(GetNumRows(), GetNumCols());
+    FillGrayFromGreenChannel(grayImage);
+    return grayImage;
+  }
+
+  void ImageRGB::FillGrayFromGreenChannel(Image& grayImage) const
+  {
+    grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
+    grayImage.SetImageId(GetImageId());
+
+    cv::Mat_<u8>& cvGrayImage = grayImage.get_CvMat_();
+
+    try {
+      cv::extractChannel(get_CvMat_(), cvGrayImage, 1); // gets green channel from BGR (or RGB!)
+    }
+    catch (const cv::Exception &e) {
+      PRINT_NAMED_ERROR("ImageRGB.FillGrayFromGreenChannel.ExtractChannelError",
+                        "Error while extracting channel: %s", e.what());
     }
   }
   

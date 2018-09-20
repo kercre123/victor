@@ -1,26 +1,50 @@
 package util
 
 import (
-	multierr "github.com/hashicorp/go-multierror"
+	"strings"
 )
 
+type multierror []error
+
 type Errors struct {
-	err error
+	err multierror
 }
 
 func (e *Errors) Append(err error) {
 	if err == nil {
 		return
 	}
-	e.err = multierr.Append(e.err, err)
+	e.err = append(e.err, err)
 }
 
 func (e *Errors) AppendMulti(errs ...error) {
 	for _, err := range errs {
-		e.Append(err)
+		if err != nil {
+			e.err = append(e.err, err)
+		}
 	}
 }
 
 func (e *Errors) Error() error {
-	return e.err
+	if len(e.err) == 0 {
+		return nil
+	} else if len(e.err) == 1 {
+		return e.err[0]
+	} else {
+		return e.err
+	}
+}
+
+func (m multierror) Error() string {
+	if len(m) == 0 {
+		return ""
+	} else if len(m) == 1 {
+		return m[0].Error()
+	} else {
+		strs := make([]string, len(m))
+		for i, e := range m {
+			strs[i] = e.Error()
+		}
+		return "[{" + strings.Join(strs, "}, {") + "}]"
+	}
 }

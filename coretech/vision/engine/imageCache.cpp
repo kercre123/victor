@@ -58,7 +58,8 @@ inline Image& ImageCache::ResizedEntry::Get<Image>(bool computeFromOpposite)
   if(computeFromOpposite && !_hasValidGray)
   {
     DEV_ASSERT(_hasValidRGB, "ImageCache.ResizedEntry.GetGray.NoColorAvailable");
-    _rgb.FillGray(_gray);
+    // Using the green channel by default
+    _rgb.FillGray(_gray, ImageRGB::RGBToGrayMethod::GreenChannel);
     _hasValidGray = true;
   }
   
@@ -182,7 +183,6 @@ void ImageCache::ResizedEntry::Update(const Image& origImg, f32 scaleFactor, Res
   {
     ResizeHelper(origImg, scaleFactor, method, _gray);
   }
-  _hasValidRGB  = false;
   _hasValidGray = true;
 }
 
@@ -199,7 +199,6 @@ void ImageCache::ResizedEntry::Update(const ImageRGB& origImg, f32 scaleFactor, 
     ResizeHelper(origImg, scaleFactor, method, _rgb);
   }
   _hasValidRGB  = true;
-  _hasValidGray = false;
 }
   
 
@@ -419,6 +418,17 @@ const ImageRGB& ImageCache::GetRGB(Size size, GetType* getType)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class ImageType>
+static inline bool IsRequestingColor() {
+  return false;
+}
+
+template<>
+inline bool IsRequestingColor<ImageRGB>() {
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class ImageType>
 const ImageType& ImageCache::GetImageHelper(Size size, GetType& getType)
 {
   DEV_ASSERT(!_resizedVersions.empty(), "ImageCache.GetImageHelper.EmptyCache");
@@ -433,7 +443,16 @@ const ImageType& ImageCache::GetImageHelper(Size size, GetType& getType)
   }
   
   auto iter = _resizedVersions.find(size);
-  if(iter == _resizedVersions.end() || !iter->second.IsValid<void>())
+  
+  // We should compute a new entry (either "completely new" or reusing an invalidated entry at the same size) if:
+  //  - there is no entry at the requested size, OR
+  //  - the entry at the requested size is not valid for either ImageType, OR
+  //  - there is a valid entry at the requested (non-sensor) size, but color data is being requested and the cache
+  //     was originally reset with color data from which we could resize (instead of computing from gray)
+  const bool shouldComputeNewValidEntry = (iter == _resizedVersions.end() ||
+                                           !iter->second.IsValid<void>() ||
+                                           ((Size::Sensor != size) && HasColor() && IsRequestingColor<ImageType>()));
+  if(shouldComputeNewValidEntry)
   {
     // No valid entry available at this ImageCache::Size, so compute, cache, and return it.
     DEV_ASSERT(Size::Sensor != size, "ImageCache.GetImageHelper.NoOriginalVersion");

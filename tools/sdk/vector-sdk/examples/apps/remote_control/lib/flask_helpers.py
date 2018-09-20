@@ -1,8 +1,22 @@
-'''Wrappers and helpers for using Flask with Vector.
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Wrappers and helpers for using Flask with Vector.
 
 Flask is a Python web framework. remote_control_vector.py and other scripts may use
 these utility functions to interact with a web browser.
-'''
+"""
 
 import logging
 import sys
@@ -17,11 +31,11 @@ except ImportError:
 
 
 def _delayed_open_web_browser(url, delay, new=0, autoraise=True, specific_browser=None):
-    '''
+    """
     Spawn a thread and call sleep_and_open_web_browser from within it so that main thread can keep executing at the
     same time. Insert a small sleep before opening a web-browser
     this gives Flask a chance to start running before the browser starts requesting data from Flask.
-    '''
+    """
 
     def _sleep_and_open_web_browser(url, delay, new, autoraise, specific_browser):
         sleep(delay)
@@ -42,10 +56,10 @@ def _delayed_open_web_browser(url, delay, new=0, autoraise=True, specific_browse
 
 def run_flask(flask_app, host_ip="127.0.0.1", host_port=5000, enable_flask_logging=False,
               open_page=True, open_page_delay=1.0):
-    '''
+    """
     Run the Flask webserver on specified host and port
     optionally also open that same host:port page in your browser to connect
-    '''
+    """
 
     if not enable_flask_logging:
         # disable logging in Flask (it's enabled by default)
@@ -82,7 +96,7 @@ def make_uncached_response(in_file):
 
 
 def serve_pil_image(pil_img, serve_as_jpeg=False, jpeg_quality=70):
-    '''Convert PIL image to relevant image file and send it'''
+    """Convert PIL image to relevant image file and send it"""
     img_io = BytesIO()
 
     if serve_as_jpeg:

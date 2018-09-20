@@ -56,7 +56,8 @@ public:
   // Returns true if successful
   bool SetUserEntitlement(const external_interface::UserEntitlement userEntitlement,
                           const Json::Value& valueJson,
-                          const bool updateUserEntitlementsJdoc);
+                          const bool updateUserEntitlementsJdoc,
+                          bool& ignoredDueToNoChange);
 
   // Return the user entitlement value (currently strings, bools, uints supported)
   std::string GetUserEntitlementAsString(const external_interface::UserEntitlement key) const;
@@ -73,6 +74,8 @@ private:
   void ApplyAllCurrentUserEntitlements();
   bool ApplyUserEntitlement(const external_interface::UserEntitlement key);
   bool ApplyUserEntitlementKickstarterEyes();
+
+  void DoJdocFormatMigration();
 
   Json::Value               _currentUserEntitlements;
   Robot*                    _robot = nullptr;

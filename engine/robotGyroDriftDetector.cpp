@@ -11,6 +11,8 @@
 #include "engine/components/movementComponent.h"
 #include "engine/robot.h"
 
+#include "util/logging/DAS.h"
+
 #include <limits> // std::numeric_limits<>
 
 namespace Anki {
@@ -89,12 +91,17 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
 
       if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session
-        Util::sWarningF("robot.detect_gyro_drift.drift_detected",
-                        {{DDATA, std::to_string(RAD_TO_DEG(headingAngleChange)).c_str()}},
-                        "mean: %f, min: %f, max: %f",
-                        RAD_TO_DEG(_cumSumGyroZ_rad_per_sec / _numReadings),
-                        RAD_TO_DEG(_minGyroZ_rad_per_sec),
-                        RAD_TO_DEG(_maxGyroZ_rad_per_sec));
+        const int min_mdeg_per_sec = std::round(RAD_TO_DEG(1000.f * _minGyroZ_rad_per_sec));
+        const int max_mdeg_per_sec = std::round(RAD_TO_DEG(1000.f * _maxGyroZ_rad_per_sec));
+        const int mean_mdeg_per_sec = std::round(RAD_TO_DEG(1000.f * _cumSumGyroZ_rad_per_sec) / _numReadings);
+        const int headingAngleChange_mdeg_per_sec = std::round(RAD_TO_DEG(1000.f * headingAngleChange));
+        
+        DASMSG(gyro_bias_detected, "gyro.drift_detected", "We have detected gyro bias drift ('legacy' detection method)");
+        DASMSG_SET(i1, min_mdeg_per_sec, "min gyro z value (millidegrees per sec)");
+        DASMSG_SET(i2, max_mdeg_per_sec, "max gyro z value (millidegrees per sec)");
+        DASMSG_SET(i3, mean_mdeg_per_sec, "mean gyro z value (millidegrees per sec)");
+        DASMSG_SET(i4, headingAngleChange_mdeg_per_sec, "heading angle change (millidegrees per sec)");
+        DASMSG_SEND();
         _gyroDriftReported = true;
       }
 
@@ -154,18 +161,15 @@ void RobotGyroDriftDetector::DetectBias(const RobotState& msg)
               std::abs(maxGyro) > kBiasDetectionThresh_rad_per_sec &&
               range < kBiasMaxRange_rad_per_sec) {
             // Log a DAS event and warning
-            const std::string& minGyroStr = std::to_string(std::round(1000.f * RAD_TO_DEG(minGyro)));
-            const std::string& maxGyroStr = std::to_string(std::round(1000.f * RAD_TO_DEG(maxGyro)));
-            // DAS Event: "robot.detect_gyro_bias.bias_detected"
-            // s_val: "<min gyro value>,<max gyro value>" (values in 1000s of deg/sec, e.g. 1000 = 1 deg/sec)
-            // data: axis of bias
-            const char* axisStr = (i==0 ? "x" : (i==1 ? "y" : "z"));
-            Anki::Util::sInfo("robot.detect_gyro_bias.bias_detected",
-                              {{DDATA, axisStr}},
-                              (minGyroStr + "," + maxGyroStr).c_str());
+            const std::string axisStr = (i==0 ? "x" : (i==1 ? "y" : "z"));
+            DASMSG(gyro_bias_detected, "gyro.bias_detected", "We have detected gyro bias drift");
+            DASMSG_SET(i1, std::round(1000.f * RAD_TO_DEG(minGyro)), "min gyro value (millidegrees per sec)");
+            DASMSG_SET(i2, std::round(1000.f * RAD_TO_DEG(maxGyro)), "max gyro value (millidegrees per sec)");
+            DASMSG_SET(s1, axisStr, "axis of bias");
+            DASMSG_SEND();
             PRINT_NAMED_WARNING("RobotGyroDriftDetector.BiasDetected",
                                 "Gyro bias detected on %s axis (min=%.2f deg/sec, max=%.2f deg/sec)",
-                                axisStr,
+                                axisStr.c_str(),
                                 RAD_TO_DEG(minGyro),
                                 RAD_TO_DEG(maxGyro));
             _gyroBiasReported = true;

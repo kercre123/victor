@@ -374,7 +374,7 @@ def convert_json_to_binary(file_path, flatc_dir, schema_file, bin_file_ext):
         raise EnvironmentError("%s is not a file so JSON data cannot be converted to binary" % flatc)
     args = [flatc, "-o", output_dir, "-b", schema_file, file_path]
     #print("Running: %s" % " ".join(args))
-    p = subprocess.Popen(args)
+    p = subprocess.Popen(args, close_fds=True)
     stdout, stderr = p.communicate()
     exit_status = p.poll()
     output_file = os.path.splitext(file_path)[0] + bin_file_ext

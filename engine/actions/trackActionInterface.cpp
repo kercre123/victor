@@ -60,7 +60,7 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 {
-
+  _turningSoundAnimTrigger = AnimationTrigger::Count;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -487,7 +487,7 @@ ActionResult ITrackAction::CheckIfDone()
       
       // Pan Body:
       f32 relPanAngle = (absPanAngle - GetRobot().GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
-      
+
       const bool isPanWithinTol = Util::IsFltLE(std::abs(relPanAngle), _panTolerance.ToFloat());
       // If enabled, always move at least the tolerance amount
       if(shouldClampSmallAngles && isPanWithinTol)

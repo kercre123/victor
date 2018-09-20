@@ -61,6 +61,8 @@ protected:
   virtual void BehaviorUpdate() override;
   virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
+  virtual bool ShouldDimLeadingZeros() const { return true; }
+
   void TransitionToTurnToFace();
   void TransitionToGetIn();
   void TransitionToShowClock();

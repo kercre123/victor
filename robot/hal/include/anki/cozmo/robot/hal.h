@@ -128,6 +128,7 @@ void MotorSetPower(const MotorID motor, const f32 power);
 void MotorResetPosition(const MotorID motor);
 
 /** Returns units based on the specified motor type:
+ * Note: this function must be called once per tick for each motor
  * @param[in] Motor to retrieve
  * @return Wheels are in mm/s, everything else is in radians/s.
  */
@@ -214,6 +215,10 @@ bool BatteryIsDisconnected();
 
 // Return temperature of battery in C
 u8 BatteryGetTemperature_C();
+
+// Whether or not the battery is overheating.
+// Syscon will shutoff 30s after this first becomes true.
+bool BatteryIsOverheated();
 
 /// Return detected charger voltage
 f32 ChargerGetVoltage();

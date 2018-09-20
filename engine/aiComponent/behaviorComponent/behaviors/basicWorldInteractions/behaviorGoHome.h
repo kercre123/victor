@@ -15,11 +15,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "clad/types/animationTrigger.h"
-
 namespace Anki {
 namespace Vector {
 
+enum class AnimationTrigger : int32_t;
 class BlockWorldFilter;
 class BehaviorClearChargerArea;
 class BehaviorRequestToGoHome;
@@ -58,13 +57,13 @@ private:
     }
     InstanceConfig(const Json::Value& config, const std::string& debugName);
 
-    AnimationTrigger leftTurnAnimTrigger     = AnimationTrigger::Count;
-    AnimationTrigger rightTurnAnimTrigger    = AnimationTrigger::Count;
-    AnimationTrigger drivingStartAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger drivingEndAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger drivingLoopAnimTrigger  = AnimationTrigger::Count;
-    AnimationTrigger raiseLiftAnimTrigger    = AnimationTrigger::Count;
-    AnimationTrigger nuzzleAnimTrigger       = AnimationTrigger::Count;
+    AnimationTrigger leftTurnAnimTrigger;
+    AnimationTrigger rightTurnAnimTrigger;
+    AnimationTrigger drivingStartAnimTrigger;
+    AnimationTrigger drivingEndAnimTrigger;
+    AnimationTrigger drivingLoopAnimTrigger;
+    AnimationTrigger raiseLiftAnimTrigger;
+    AnimationTrigger nuzzleAnimTrigger;
 
     bool useCliffSensorCorrection = true;
     std::unique_ptr<BlockWorldFilter> homeFilter;
@@ -84,6 +83,16 @@ private:
     int      driveToRetryCount = 0;
     int      turnToDockRetryCount = 0;
     int      mountChargerRetryCount = 0;
+    
+    // For logging/DAS, keep track of whether we succeeded at getting onto the charger. Note that it's possible for the
+    // behavior to end without a definite result (e.g. if it was interrupted). The result of HasSucceeded() is only
+    // valid if HasResult() returns true.
+    bool HasSucceeded() { DEV_ASSERT(hasResult, "BehaviorGoHome.dVars.NoResult"); return succeeded; };
+    bool HasResult() { return hasResult; }
+    void SetSucceeded(const bool b) { succeeded = b; hasResult = true; }
+    
+    bool hasResult = false;
+    bool succeeded = false;
     
     struct Persistent {
       std::set<float> activatedTimes; // set of basestation times at which we've been activated

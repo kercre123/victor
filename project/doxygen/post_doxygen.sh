@@ -17,5 +17,22 @@ DOXYGEN=`which doxygen`
 
 fi
 
+PYTHON3_PATH=`which python3`
+if [ -n $PYTHON3_PATH ];then
+  pips=`$PYTHON3_PATH -m pip list`
+  if ! [[ $pips = *"requests"* ]]; then
+    $PYTHON3_PATH -m pip install requests
+  fi
+else
+  echo "Please install python3"
+fi
+
 $DOXYGEN Doxyfile
+
+#Generate the cpp files that contain new/remove das messages
+./create_changed_das_msg.py -u $2 -p $3
+
+#Re-run doxygen for above cpp files
+$DOXYGEN Doxyfile
+
 ./report_to_slack.py -t "Nightly DAS Documentation" -l $1

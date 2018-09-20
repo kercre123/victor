@@ -29,11 +29,19 @@ public:
   // dashP (-p)    - Create intermediate directories as required.  If this option is not specified,
   // the full path prefix of each operand must already exist.  On the other hand, with this
   // option specified, no error will be reported if a directory given as an operand already exists.
-  static bool CreateDirectory(const std::string& path, const bool stripFilename = false, bool dashP = true);
+  // mode          - Create directory with specified mode for permissions. Note that the underlying 
+  //                 call to mkdir(...) will mask this value with the current umask 
+  //                 (mode & ~umask & 0777)
+  static bool CreateDirectory(const std::string& path,
+                              const bool stripFilename = false,
+                              bool dashP = true,
+                              const mode_t mode = S_IRWXU|S_IRWXG);
   
   static void RemoveDirectory(const std::string& path);
 
   static ssize_t GetDirectorySize(const std::string& path);
+
+  static int64_t GetDirectoryFreeSize(const std::string& path);
   
   // If useFullPath is true, the returned vector will contain full paths to each file found
   // (i.e., path/to/file/filename.ext). If extensions are provided (with or without "."), only

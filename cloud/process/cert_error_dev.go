@@ -1,4 +1,4 @@
-// +build !shipping,linux
+// +build !shipping,vicos
 
 package main
 

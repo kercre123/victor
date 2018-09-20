@@ -85,12 +85,12 @@ message GatewayWrapper {
     OnboardingRestart             onboarding_restart                 = 8;
     OnboardingGetStep             onboarding_get_step                = 9;
     OnboardingStepResponse        onboarding_step_response           = 10;
-    
-
-    // ------------ test request/response pairs --------------------------
-    // TODO: remove these once the app no longer needs them (ping in event stream)
-    Ping                          ping                               = 20;
-    Pong                          pong                               = 21;
+    OnboardingCompleteRequest     onboarding_complete_request        = 11;
+    OnboardingCompleteResponse    onboarding_complete_response       = 12;
+    OnboardingWakeUpRequest       onboarding_wake_up_request         = 13;
+    OnboardingWakeUpResponse      onboarding_wake_up_response        = 14;
+    OnboardingWakeUpStartedRequest  onboarding_wake_up_started_request = 15;
+    OnboardingWakeUpStartedResponse onboarding_wake_up_started_response = 16;
 
     // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 30;
@@ -105,6 +105,7 @@ message GatewayWrapper {
     ThumbnailPathMessage          thumbnail_path_message             = 45;
     DeletePhotoRequest            delete_photo_request               = 46;
     DeletePhotoResponse           delete_photo_response              = 47;
+
     // ------------ settings pairs ---------------------------------------
     PullJdocsRequest              pull_jdocs_request                 = 60;
     PullJdocsResponse             pull_jdocs_response                = 61;
@@ -132,6 +133,10 @@ message GatewayWrapper {
     SetLiftHeightResponse         set_lift_height_response           = 97;
     PlayAnimationRequest          play_animation_request             = 98;
     PlayAnimationResponse         play_animation_response            = 99;
+    GoToPoseRequest               go_to_pose_request                 = 150;
+    GoToPoseResponse              go_to_pose_response                = 151;
+    DockWithCubeRequest           dock_with_cube_request             = 152;
+    DockWithCubeResponse          dock_with_cube_response            = 153;
 
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 80;

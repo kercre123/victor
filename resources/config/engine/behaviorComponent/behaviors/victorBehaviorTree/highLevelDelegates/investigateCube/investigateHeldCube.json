@@ -4,5 +4,10 @@
 
   "PlayWithCubeBehaviorID" : "InvestigateCubeConnectionGate",
 
+  "wantsToBeActivatedCondition" : {
+    "conditionType" : "FeatureGate",
+    "feature" : "ReactToHeldCube"
+  },
+
   "postBehaviorSuggestion": "Socialize"
 }

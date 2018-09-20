@@ -49,7 +49,8 @@ public:
 
   void Flop(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
   void DisplayCharlieFrame(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
-  void ClearCards(BehaviorExternalInterface& bei);
+  void SwipeToClearFace(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
+  void ClearCards(BehaviorExternalInterface& bei, uint32_t applyAt_ms = 0);
 
   // If the visualizer has control of parts of the robot (face track etc) this function
   // will release that control (probably becasue the behavior is ending) and clear out any lasting
@@ -75,6 +76,7 @@ private:
 
   uint _dealCardSeqApplyAt_ms = 0;
   uint _displayDealtCardsAt_ms = 0;
+  uint _clearCardsDuringSwipeAt_ms = 0;
 
   bool                  _shouldClearLocksOnCallback = false;
   bool                  _animCompletedLastFrame = false;

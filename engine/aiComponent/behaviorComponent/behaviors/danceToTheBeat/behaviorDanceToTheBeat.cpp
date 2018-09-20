@@ -32,6 +32,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/cladHelpers/cladFromJSONHelpers.h"
+#include "util/logging/DAS.h"
 #include "util/random/randomGenerator.h"
 #include "util/time/universalTime.h"
 
@@ -64,6 +65,8 @@ BehaviorDanceToTheBeat::BehaviorDanceToTheBeat(const Json::Value& config)
 BehaviorDanceToTheBeat::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
   : useBackpackLights(JsonTools::ParseBool(config, kUseBackpackLights_key, debugName))
 {
+  eyeHoldAnim = AnimationTrigger::Count;
+  getOutAnim = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kBackpackAnim_key,  backpackAnim,  debugName);
   JsonTools::GetCladEnumFromJSON(config, kEyeHoldAnim_key,   eyeHoldAnim,   debugName);
   JsonTools::GetCladEnumFromJSON(config, kGetOutAnim_key,    getOutAnim,    debugName);
@@ -156,6 +159,14 @@ void BehaviorDanceToTheBeat::OnBehaviorActivated()
                              animSequence.begin(),
                              animSequence.end());
   }
+  
+  // Log DAS event
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  DASMSG(dttb_activated, "dttb.activated", "DanceToTheBeat behavior activated");
+  DASMSG_SET(i1, beatDetector.GetCurrTempo_bpm(), "Current tempo estimate (beats per minute)");
+  DASMSG_SET(i2, 1000.f * beatDetector.GetCurrConfidence(), "Current detection confidence (unitless). This is the raw confidence value multiplied by 1000");
+  DASMSG_SET(i3, (int) _dVars.danceAnims.size(), "Number of dance animations that have been queued to play");
+  DASMSG_SEND();
 
   TransitionToDancing();
 }
@@ -185,6 +196,14 @@ void BehaviorDanceToTheBeat::OnBehaviorDeactivated()
   StopBackpackLights();
   UnregisterOnBeatCallback();
   
+  // Log DAS event
+  const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  DASMSG(dttb_end, "dttb.end", "DanceToTheBeat deactivated");
+  DASMSG_SET(i1, beatDetector.GetCurrTempo_bpm(), "Current tempo estimate (beats per minute)");
+  DASMSG_SET(i2, 1000.f * beatDetector.GetCurrConfidence(), "Current detection confidence (unitless). This is the raw confidence value multiplied by 1000");
+  DASMSG_SET(i3, (int) _dVars.danceAnims.size(), "Number of unplayed dance animations remaining in the queue");
+  DASMSG_SEND();
+  
   // Clear out any remaining queued anims to free memory
   _dVars.danceAnims.clear();
 }
@@ -194,6 +213,18 @@ void BehaviorDanceToTheBeat::OnBehaviorDeactivated()
 void BehaviorDanceToTheBeat::TransitionToDancing()
 {
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  
+  // Double check that a beat is still detected. If no beat is detected, do not queue a dance animation. This will cause
+  // the behavior to cancel itself in Update(). Note: We cannot cancel the behavior here since unit tests disallow
+  // cancelling a behavior on the same tick it was activated.
+  if (!beatDetector.IsBeatDetected()) {
+    PRINT_NAMED_WARNING("BehaviorDanceToTheBeat.TransitionToDancing.NoBeat",
+                        "Beat no longer detected - not queuing any dance animations");
+    _dVars.nextBeatTime_sec = -1.f;
+    _dVars.beatPeriod_sec = -1.f;
+    _dVars.nextAnimTriggerTime_sec = -1.f;
+    return;
+  }
   
   // grab the next beat time here and wait to play the anim until the appropriate time
   _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
@@ -215,6 +246,11 @@ void BehaviorDanceToTheBeat::WhileDancing()
                         "Cancelling behavior since we are currently listening for beats "
                         "and BeatDetectorComponent says beat is no longer detected (play getout anim: %d)",
                         _dVars.playGetoutIfBeatLost);
+    DASMSG(dttb_cancel_beat_lost, "dttb.cancel_beat_lost", "DanceToTheBeat cancelling because beat is lost");
+    DASMSG_SET(i1, beatDetector.GetCurrTempo_bpm(), "Current tempo estimate (beats per minute)");
+    DASMSG_SET(i2, 1000.f * beatDetector.GetCurrConfidence(), "Current detection confidence (unitless). This is the raw confidence value multiplied by 1000");
+    DASMSG_SET(i3, (int) _dVars.danceAnims.size(), "Number of unplayed dance animations remaining in the queue");
+    DASMSG_SEND();
     _dVars.nextAnimTriggerTime_sec = -1.f;
     SetListeningForBeats(false);
     if (_dVars.playGetoutIfBeatLost) {
@@ -268,8 +304,8 @@ void BehaviorDanceToTheBeat::PlayNextDanceAnim()
     SetNextAnimTriggerTime();
   }
   
-  // Since we've played a dancing animation, reset the dancing behavior timer
-  GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::LastDance).Reset();
+  // Since we've played a dancing animation, reset the dancing cooldown behavior timer
+  GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::DancingCooldown).Reset();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -316,11 +352,15 @@ void BehaviorDanceToTheBeat::OnBeat()
 
   // If we're currently listening for beats, then this means we have new information from the BeatDetectorComponent.
   if (_dVars.listeningForBeats) {
-    // Update some stuff now that we have new beat information from BeatDetectorComponent.
+    // Update some stuff now that we have new beat information from BeatDetectorComponent. Only update if there is
+    // still a beat currently detected (to avoid invalid values for tempo and nextBeatTime). If the beat has stopped,
+    // WhileDancing() will take care of cancelling the behavior.
     const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
-    _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
-    _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
-
+    if (beatDetector.IsBeatDetected()) {
+      _dVars.nextBeatTime_sec = beatDetector.GetNextBeatTime_sec();
+      _dVars.beatPeriod_sec = 60.f / beatDetector.GetCurrTempo_bpm();
+    }
+      
     // Update the next animation trigger time if we still have animations in the queue.
     if (!_dVars.danceAnims.empty()) {
       SetNextAnimTriggerTime();

@@ -153,10 +153,7 @@ namespace Vector {
                                        subActionResults,
                                        completionUnion);
         
-        // Reset the subAction before calling the retryCallback in case the callback modifies
-        // things that would be reset by reset (ie action's state)
-        _subAction->Reset(true);
-        
+        // Retry callback should NOT modify things that would be reset by reset (ie action's state)
         PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.CallingRetryCallback", "");
         AnimationTrigger animTrigger = AnimationTrigger::Count;
         bool shouldRetry = _retryCallback(robotCompletedAction, _retryCount, animTrigger);
@@ -178,10 +175,16 @@ namespace Vector {
             PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone.MaxRetriesReached","");
             return res;
           }
+          // Reset the subaction and unlock the tracks locked by the subaction.
+          _subAction->Reset(true);
           return ActionResult::RUNNING;
         }
         else
         {
+          PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.Animation",
+                            "Resetting subaction and unlocking tracks");
+          // Reset the subaction again, and unlock the tracks locked by the subaction.
+          _subAction->Reset(true);
           _animationAction.reset(new TriggerLiftSafeAnimationAction(animTrigger));
           _animationAction->SetRobot(&GetRobot());
         }

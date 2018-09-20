@@ -46,7 +46,8 @@ BehaviorPoweringRobotOff::InstanceConfig::InstanceConfig(const Json::Value& conf
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPoweringRobotOff::DynamicVariables::DynamicVariables()
-: timeLastPowerAnimStopped_ms(0)
+: waitingForAnimationCallback(false)
+, timeLastPowerAnimStopped_ms(0)
 , shouldStartPowerOffAnimaiton(false)
 {
 }
@@ -120,8 +121,14 @@ void BehaviorPoweringRobotOff::OnBehaviorEnteredActivatableScope()
 void BehaviorPoweringRobotOff::OnBehaviorActivated() 
 {
   // reset dynamic variables
+  const bool prevShouldStartPowerOffAnimaiton = _dVars.shouldStartPowerOffAnimaiton;
   _dVars = DynamicVariables();
-  SmartPushResponseToTriggerWord();
+  
+  // make shouldStartPowerOffAnimaiton persist if _iConfig.waitForAnimMsg, since this behavior WantToBeActivated
+  // iff shouldStartPowerOffAnimaiton, whenever _iConfig.waitForAnimMsg
+  if( _iConfig.waitForAnimMsg ) {
+    _dVars.shouldStartPowerOffAnimaiton = prevShouldStartPowerOffAnimaiton;
+  }
 }
 
 

@@ -3,6 +3,7 @@ package token
 import (
 	"anki/log"
 	"anki/robot"
+	"anki/util"
 	"context"
 	"io/ioutil"
 
@@ -16,16 +17,12 @@ type conn struct {
 	client pb.TokenClient
 }
 
-var platformOpts []grpc.DialOption
-
 func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, error) {
 	dialOpts, err := getDialOptions(creds)
 	if err != nil {
 		return nil, err
 	}
-	if platformOpts != nil && len(platformOpts) > 0 {
-		dialOpts = append(dialOpts, platformOpts...)
-	}
+	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	rpcConn, err := grpc.Dial(serverURL, dialOpts...)
 	if err != nil {
 		return nil, err
@@ -39,7 +36,7 @@ func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, erro
 	return ret, nil
 }
 
-func (c *conn) associatePrimary(session, robotID string) (*pb.TokenBundle, error) {
+func (c *conn) associatePrimary(session string) (*pb.TokenBundle, error) {
 	req := pb.AssociatePrimaryUserRequest{}
 	cert, err := ioutil.ReadFile(robot.GatewayCert)
 	if err != nil {
@@ -76,14 +73,20 @@ func (c *conn) reassociatePrimary(clientName, appID string) (*pb.TokenBundle, er
 	return response.Data, nil
 }
 
-func (c *conn) refreshToken(existingToken string) (*pb.TokenBundle, error) {
-	req := pb.RefreshTokenRequest{
-		RefreshJwtTokens: true}
+func (c *conn) refreshToken(req pb.RefreshTokenRequest) (*pb.TokenBundle, error) {
 	response, err := c.client.RefreshToken(context.Background(), &req)
 	if err != nil {
 		return nil, err
 	}
 	return response.Data, nil
+}
+
+func (c *conn) refreshJwtToken() (*pb.TokenBundle, error) {
+	return c.refreshToken(pb.RefreshTokenRequest{RefreshJwtTokens: true})
+}
+
+func (c *conn) refreshStsCredentials() (*pb.TokenBundle, error) {
+	return c.refreshToken(pb.RefreshTokenRequest{RefreshStsTokens: true})
 }
 
 func (c *conn) Close() error {

@@ -51,5 +51,17 @@
   // these values are irrelevant in the habitat environment (we will not drive
   // around looking for the charger, only spin in place)
   "minDrivingDist_mm" : 0,
-  "maxDrivingDist_mm" : 400
+  "maxDrivingDist_mm" : 400,
+  
+  // Enable to use exposure cycling while for searching for charger to improve chances
+  // of seeing it in difficult illumination (backlight, harsh sunlight).
+  // NOTE: numImagesToWaitFor (below) also should be increased to accommodate the cycling time.
+  "useExposureCycling" : true,
+  
+  // If using exposure cycling to find charger (above), we need to wait at least cycle_length * auto_exp_period frames
+  // Default is auto exposure every 5 frames and cycle length 3, meaning 15 frames.
+  "numImagesToWaitFor" : 15,
+  
+  "numSearchesBeforePlayingPostSearchAnim" : -1,
+  "postSearchAnimTrigger" : "Count"
 }

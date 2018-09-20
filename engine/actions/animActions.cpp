@@ -17,7 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -30,6 +30,7 @@
 #include "clad/types/behaviorComponent/behaviorStats.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 
@@ -41,6 +42,9 @@ namespace Anki {
 
     namespace {
       static constexpr const char* kManualBodyTrackLockName = "PlayAnimationOnChargerSpecialLock";
+      
+      // Toggle to true so animators can play any animation on charger for testing
+      CONSOLE_VAR(bool, kIgnoreAnimWhitelist, "Animation", false);
     }
 
     #pragma mark ---- PlayAnimationAction ----
@@ -103,7 +107,7 @@ namespace Anki {
         return;
       }
 
-      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() ) {
+      if( GetRobot().GetBatteryComponent().IsOnChargerPlatform() && !kIgnoreAnimWhitelist ) {
         // default here is now to LOCK the body track, but first check the whitelist
 
         auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
@@ -139,9 +143,9 @@ namespace Anki {
         }
       };
 
-      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, 
+      Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining,
                                                                      _interruptRunning, callback, GetTag(), 
-                                                                     _timeout_sec, _startAtTime_ms);
+                                                                     _timeout_sec, _startAtTime_ms, _renderInEyeHue);
 
       if(res != RESULT_OK) {
         _stoppedPlaying = true;
@@ -173,25 +177,31 @@ namespace Anki {
       const auto simpleMood = GetRobot().GetMoodManager().GetSimpleMood();
       const float headAngle_deg = Util::RadToDeg(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle());
 
+      bool isBlacklisted = false;
+      std::string animTriggerStr;
+      
+      auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
       if( animTrigger != AnimationTrigger::Count ) {
-        auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
         const std::set<AnimationTrigger>& dasBlacklistedTriggers = dataLoader->GetDasBlacklistedAnimationTriggers();
+        isBlacklisted = dasBlacklistedTriggers.find(animTrigger) != dasBlacklistedTriggers.end();
+        animTriggerStr = AnimationTriggerToString(animTrigger);
+      } else {
+        const std::set<std::string>& dasBlacklistedNames = dataLoader->GetDasBlacklistedAnimationNames();
+        isBlacklisted = dasBlacklistedNames.find(animClipName) != dasBlacklistedNames.end();
+      }
+      
+      if( !isBlacklisted ) {
+        // NOTE: you can add events to the blacklist in das_event_config.json to block them from sending
+        // here.
 
-        const bool isBlacklisted = dasBlacklistedTriggers.find(animTrigger) != dasBlacklistedTriggers.end();
-
-        if( !isBlacklisted ) {
-          // NOTE: you can add events to the blacklist in das_event_config.json to block them from sending
-          // here.
-
-          DASMSG(action_play_animation, "action.play_animation",
-                 "An animation action has been started on the robot (that wasn't blacklisted for DAS)");
-          DASMSG_SET(s1, animClipName, "The animation clip name");
-          DASMSG_SET(s2, animGroupName, "The animation group name");
-          DASMSG_SET(s3, AnimationTriggerToString(animTrigger), "The animation trigger name");
-          DASMSG_SET(s4, EnumToString(simpleMood), "The current SimpleMood value");
-          DASMSG_SET(i1, std::round(headAngle_deg), "The current head angle (in degrees)");
-          DASMSG_SEND();
-        }
+        DASMSG(action_play_animation, "action.play_animation",
+               "An animation action has been started on the robot (that wasn't blacklisted for DAS)");
+        DASMSG_SET(s1, animClipName, "The animation clip name");
+        DASMSG_SET(s2, animGroupName, "The animation group name");
+        DASMSG_SET(s3, animTriggerStr, "The animation trigger name (may be null)");
+        DASMSG_SET(s4, EnumToString(simpleMood), "The current SimpleMood value");
+        DASMSG_SET(i1, std::round(headAngle_deg), "The current head angle (in degrees)");
+        DASMSG_SEND();
       }
 
 
@@ -246,6 +256,11 @@ namespace Anki {
     {
       SetAnimGroupFromTrigger(_animTrigger);
       OnRobotSetInternalTrigger();
+    }
+    
+    bool TriggerAnimationAction::HasAnimTrigger() const
+    {
+      return _animTrigger != AnimationTrigger::Count;
     }
 
     void TriggerAnimationAction::SetAnimGroupFromTrigger(AnimationTrigger animTrigger)
@@ -334,6 +349,7 @@ namespace Anki {
       , _numLoops( numLoops )
       , _loopForever( 0 == numLoops )
       , _numLoopsRemaining( numLoops )
+      , _completeImmediately( false )
     {
       _animParams.animEvent = animEvent;
       _animParams.interruptRunning = interruptRunning;
@@ -390,6 +406,9 @@ namespace Anki {
       if( _subAction == nullptr ) {
         return ActionResult::NULL_SUBACTION;
       }
+      if( _completeImmediately ) {
+        return ActionResult::SUCCESS;
+      }
       
       ActionResult subActionResult = _subAction->Update();
       const ActionResultCategory category = IActionRunner::GetActionResultCategory(subActionResult);
@@ -406,9 +425,16 @@ namespace Anki {
     
     void ReselectingLoopAnimationAction::StopAfterNextLoop()
     {
-      if( _numLoopsRemaining > 1 ) {
-        _numLoopsRemaining = 1;
+      if( !HasStarted() )
+      {
+        // StopAfterNextLoop() was called before Init(). Set a flag to stop on the first call to
+        // CheckIfDone(), since the other flags (_numLoopsRemaining, etc) get set during Init().
+        _completeImmediately = true;
+        PRINT_NAMED_INFO("ReselectingLoopAnimationAction.StopAfterNextLoop.NotStarted",
+                         "Action was told to StopAfterNextLoop, but hasn't started, so will end before the first loop");
       }
+      
+      _numLoopsRemaining = 1;
       _loopForever = false;
     }
 

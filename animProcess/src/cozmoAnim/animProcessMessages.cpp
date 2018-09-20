@@ -51,6 +51,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -93,8 +94,10 @@ namespace {
 
   // Whether or not we have already told the boot anim to stop
   bool _bootAnimStopped = false;
-  
+
 #if REMOTE_CONSOLE_ENABLED
+  Anki::Util::Dispatch::Queue* _dispatchQueue = nullptr;
+
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
@@ -103,7 +106,7 @@ namespace {
     for(const auto& name : names) {
       std::string url = "consolefunccall?func=playanimation&args="+name+"+1";
       std::string html = "<a href=\""+url+"\">"+name+"</a>&nbsp\n";
-      context->channel->WriteLog(html.c_str());
+      context->channel->WriteLog("%s", html.c_str());
     }
     context->channel->WriteLog("</html>\n");
   }
@@ -112,13 +115,20 @@ namespace {
   {
     const char* name = ConsoleArg_Get_String(context, "name");
     if (name) {
+
       int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
-      _animStreamer->SetStreamingAnimation(name, /*tag*/ 1, numLoops, /*interruptRunning*/ true);
+
+      if (!_dispatchQueue) {
+        _dispatchQueue = Anki::Util::Dispatch::Create("AddAnimation", Anki::Util::ThreadPriority::Low);
+      }
+      Anki::Util::Dispatch::Async(_dispatchQueue, [name, numLoops] {
+        _animStreamer->SetPendingStreamingAnimation(name, numLoops);
+      });
 
       char numLoopsStr[4+1];
       snprintf(numLoopsStr, sizeof(numLoopsStr), "%d", (numLoops > 9999) ? 9999 : numLoops);
       std::string text = std::string("Playing ")+name+" "+numLoopsStr+" times<br>";
-      context->channel->WriteLog(text.c_str());
+      context->channel->WriteLog("%s", text.c_str());
     } else {
       context->channel->WriteLog("PlayAnimation name not specified.");
     }
@@ -131,11 +141,20 @@ namespace {
       const std::string animationFolder = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
       std::string animationPath = animationFolder + path;
 
-      _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+      if (!_dispatchQueue) {
+        _dispatchQueue = Anki::Util::Dispatch::Create("AddAnimation", Anki::Util::ThreadPriority::Low);
+      }
+
+      Anki::Util::Dispatch::Async(_dispatchQueue, [animationPath] {
+        // _context: global in scope
+        // animationPath: local in scope, on our heap
+        // GetDataLoader: downwards, self contained and threaded all by itself
+        _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+      });
 
       std::string text = "Adding animation ";
       text += animationPath;
-      context->channel->WriteLog(text.c_str());
+      context->channel->WriteLog("%s", text.c_str());
     } else {
       context->channel->WriteLog("AddAnimation file not specified.");
     }
@@ -145,7 +164,7 @@ namespace {
   {
     const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
     context->channel->WriteLog("<html>\n");
-    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("%s", currentAnimation.c_str());
     context->channel->WriteLog("</html>\n");
   }
 
@@ -154,7 +173,7 @@ namespace {
     const std::string currentAnimation = _animStreamer->GetStreamingAnimationName();
     _animStreamer -> Abort();
     context->channel->WriteLog("<html>\n");
-    context->channel->WriteLog(currentAnimation.c_str());
+    context->channel->WriteLog("%s", currentAnimation.c_str());
     context->channel->WriteLog("</html>\n");
   }
 
@@ -182,6 +201,14 @@ namespace Vector {
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
+void Process_checkCloudConnectivity(const Anki::Vector::RobotInterface::CheckCloudConnectivity& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->RequestConnectionStatus();
+  }
+}
+
 void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFullAnimTrackLockState& msg)
 {
   //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);
@@ -206,7 +233,9 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
            "Anim: %s, Tag: %d",
            animName.c_str(), msg.tag);
 
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms);
+  const bool interruptRunning = true;
+  const bool overrideEyes = !msg.renderInEyeHue;
+  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
@@ -391,7 +420,8 @@ void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::Star
     return;
   }
 
-  micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType));
+  micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType),
+                                            msg.playGetInFromAnimProcess);
 }
 
 void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTriggerWordResponse& msg)
@@ -482,13 +512,18 @@ void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetCo
   bc.SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
                       msg.status == ConnectionStatus::SHOW_PRE_PIN ||
                       msg.status == ConnectionStatus::SHOW_PIN));
-    
+
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
 void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);
+}
+
+void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)
+{
+  // todo
 }
 
 void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg)
@@ -626,6 +661,8 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     case RobotInterface::RobotToEngine::Tag_state:
     {
       HandleRobotStateUpdate(msg.state);
+      const bool onChargerContacts = (msg.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
+      _animStreamer->SetBodyWhitelistActive(onChargerContacts);
     }
     break;
     case RobotInterface::RobotToEngine::Tag_robotStopped:
@@ -779,6 +816,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
   _context->GetMicDataSystem()->Update(currTime_nanosec);
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
+  _context->GetShowAudioStreamStateManager()->Update();
 
   // Process incoming messages from engine
   u32 dataLen;

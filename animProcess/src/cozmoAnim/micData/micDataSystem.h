@@ -72,7 +72,7 @@ public:
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
-  void StartWakeWordlessStreaming(CloudMic::StreamType type);
+  void StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess);
   void FakeTriggerWordDetection();
   void Update(BaseStationTime_t currTime_nanosec);
 
@@ -115,9 +115,14 @@ public:
     { _streamUpdatedCallbacks.push_back(callback); }
 
   bool HasConnectionToCloud() const;
+  void RequestConnectionStatus();
 
   void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
-  
+
+  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
+  // sending any data to the cloud; this lasts for a set duration
+  bool ShouldSimulateStreaming() const;
+
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
@@ -163,9 +168,6 @@ private:
   bool _batteryLow = false;
 
   void SetWillStream(bool willStream) const;
-  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
-  // sending any data to the cloud; this lasts for a set duration
-  bool ShouldSimulateStreaming() const;
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();

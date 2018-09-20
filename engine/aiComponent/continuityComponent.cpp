@@ -96,6 +96,16 @@ void ContinuityComponent::PlayEmergencyGetOut(AnimationTrigger anim)
                          "Continuity component is trying to play multiple emergency getouts (%s)",
                          AnimationTriggerToString(anim) );
   }
+
+  // Prevent emergency getouts from playing when we are displaying info screens
+  // such as pairing or CC screens as the getout animations can draw over the info screens
+  if(_displayingInfoFace)
+  {
+    PRINT_NAMED_INFO("ContinuityComponent.PlayEmergencyGetOut.DisplayingInfoFace",
+                     "Not playing emergency get out %s due to info face being displayed",
+                     EnumToString(anim));
+    return;
+  }
   
   // Queue now to cancel current action
   IActionRunner* animAction = new TriggerAnimationAction(anim);

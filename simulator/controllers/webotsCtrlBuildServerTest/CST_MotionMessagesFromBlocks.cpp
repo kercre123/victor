@@ -50,8 +50,6 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
   switch(_testState) {
     case TestState::Init:
     {
-      SendEnableBlockTapFilter(false);
-      
       // Request a cube connection
       SendConnectToCube();
 

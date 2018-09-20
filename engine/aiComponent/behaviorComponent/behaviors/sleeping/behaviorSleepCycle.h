@@ -60,8 +60,11 @@ private:
   void TransitionToCharger();
   void TransitionToCheckingForPerson();
   void TransitionToComatose();
+  void TransitionToEmergencySleep();
   void TransitionToDeepSleep();
   void TransitionToLightSleep();
+
+  void SleepTransitionHelper(const SleepStateID& newState, const bool playSleepGetIn = true);
 
   void RespondToPersonCheck();
 
@@ -72,7 +75,7 @@ private:
 
   bool GoToSleepIfNeeded();
 
-  void SendToGoSleepDasEvent(const SleepReason& reason);
+  void SendGoToSleepDasEvent(const SleepReason& reason);
 
   void SleepIfInControl(bool playGetIn = true);
 
@@ -81,12 +84,19 @@ private:
   void SetConditionsActiveForState(SleepStateID state, bool active);
 
   void SetState(SleepStateID state);
+  void SetReactionState(SleepReactionType reaction);
 
   static bool ShouldReactToSoundInState(const SleepStateID& state);
 
   bool ShouldWiggleOntoChargerFromSleep();
 
   void PopulateWebVizJson(Json::Value& data) const;
+
+  void MuteForPersonCheck( bool mute );
+
+  void SetAudioActive( bool active );
+
+  bool WasNighlyReboot() const;
 
   struct InstanceConfig {
     std::string awakeDelegateName;
@@ -101,18 +111,16 @@ private:
     ICozmoBehaviorPtr sleepingSoundReactionBehavior;
     ICozmoBehaviorPtr sleepingWakeWordBehavior;
     ICozmoBehaviorPtr wiggleBackOntoChargerBehavior;
+    ICozmoBehaviorPtr emergencyModeAnimBehavior;
 
     std::map< WakeReason, IBEIConditionPtr > wakeConditions;
 
+    // high temp or low battery.
+    // eventually we may want general "sleep conditions" similar to how "wake conditions" work
+    IBEIConditionPtr emergencyCondition;
+
     std::vector< WakeReason > alwaysWakeReasons;
     std::map< SleepStateID, std::vector< WakeReason > > wakeReasonsPerState;
-  };
-
-  enum class SleepReactionType : uint8_t {
-    None = 0,
-    Sound,
-    TriggerWord,
-    WiggleOntoCharger
   };
 
   struct DynamicVariables {
@@ -123,8 +131,9 @@ private:
     float lastWakeUpTime_s = -1.0f;
     float comatoseStartTime_s = -1.0f;
 
-    SleepReactionType reactionState = SleepReactionType::None;
+    SleepReactionType reactionState = SleepReactionType::NotReacting;
     bool wasOnChargerContacts = false;
+    bool isMuted = false;
 
 #if ANKI_DEV_CHEATS
     WakeReason lastWakeReason = WakeReason::Invalid;

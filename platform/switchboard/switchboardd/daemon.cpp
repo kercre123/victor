@@ -53,12 +53,12 @@ namespace Anki {
 namespace Switchboard {
 
 void Daemon::Start() {
-  Log::Write("Loading up Switchboard Daemon");
   setAndroidLoggingTag("vic-switchboard");
+  Log::Write("Loading up Switchboard Daemon");
 
   _loop = ev_default_loop(0);
 
-  _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
+  _taskExecutor = std::make_shared<Anki::TaskExecutor>(_loop);
   _connectionIdManager = std::make_shared<ConnectionIdManager>();
 
   // Saved session manager
@@ -78,7 +78,9 @@ void Daemon::Start() {
   ev_timer_init(&_pairingTimer.timer, &Daemon::sEvTimerHandler, kPairingPreConnectionTimeout_s, 0);
 
   // Initialize wifi listeners
-  Anki::Wifi::Initialize();
+  Anki::Wifi::Initialize(_taskExecutor);
+  _wifiWatcher = std::make_shared<WifiWatcher>(_loop);
+  _wifiChangedHandle = Anki::Wifi::GetWifiChangedSignal().ScopedSubscribe(std::bind(&Daemon::OnWifiChanged, this, std::placeholders::_1, std::placeholders::_2));
 
   // Initialize IPC connections
   InitializeCloudComms();   // must come before gateway comms
@@ -100,6 +102,13 @@ void Daemon::Stop() {
 
   ev_timer_stop(_loop, &_engineTimer);
   ev_timer_stop(_loop, &_handleOtaTimer.timer);
+}
+
+void Daemon::OnWifiChanged(bool connected, std::string manufacturerMac) {
+  if(!connected) {
+    Log::Write("Daemon: OnWifiChanged -- trying to connect to wifi");
+    _wifiWatcher->ConnectIfNoWifi();
+  }
 }
 
 void Daemon::InitializeEngineComms() {
@@ -234,7 +243,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     _connectionId = connId;
 
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _connectionIdManager, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
+      _securePairing = std::make_unique<Anki::Switchboard::RtsComms>(stream, _loop, _engineMessagingClient, _gatewayMessagingServer, _tokenClient, _connectionIdManager, _wifiWatcher, _taskExecutor, _isPairing, _isOtaUpdating, _hasCloudOwner);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
@@ -255,6 +264,9 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _securePairing->SetHasOwner(_hasCloudOwner);
       _securePairing->BeginPairing();
     });
+
+    // tell engine that we have BLE connection
+    _engineMessagingClient->SendBLEConnectionStatus(true);
   });
   Log::Write("Done OnConnected");
 
@@ -283,6 +295,13 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     }
 
     UpdateAdvertisement(false);
+
+    // Re-enable autoconnect in case BLE disconnected before 
+    // RtsHandler could re-enable WifiWatcher
+    _wifiWatcher->Enable();
+
+    // tell engine that we lost BLE connection
+    _engineMessagingClient->SendBLEConnectionStatus(false);
 
     DASMSG(ble_connection_status, "ble.disconnection",
             "BLE connection status has changed.");

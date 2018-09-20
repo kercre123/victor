@@ -38,9 +38,8 @@ namespace {
 #define CONSOLE_GROUP "PowerSave"
 
 CONSOLE_VAR( bool, kPowerSave_CalmMode, CONSOLE_GROUP, true);
-// TODO (Al): Reenable once VIC-4615 is solved or find work around to reduce cpu usage
-// without stopping the camera
-CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, false);
+CONSOLE_VAR( bool, kPowerSave_Camera, CONSOLE_GROUP, true);
+CONSOLE_VAR( bool, kPowerSave_CameraStopCameraStream, CONSOLE_GROUP, false);
 CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);
@@ -112,11 +111,51 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     }
   }
 
-  if( _cameraState == CameraState::ShouldDelete ) {
+  if( _cameraState == CameraState::ShouldDelete )
+  {
     auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
-    if( visionComponent.TryReleaseInternalImages() ) {
-      CameraService::getInstance()->DeleteCamera();
-      _cameraState = CameraState::Deleted;
+    Result res = RESULT_OK;
+    if( visionComponent.TryReleaseInternalImages() )
+    {
+      if(kPowerSave_CameraStopCameraStream)
+      {
+        res = CameraService::getInstance()->DeleteCamera();
+      }
+      else
+      {
+        visionComponent.EnableImageCapture(false);
+      }
+        
+      if(res == RESULT_OK)
+      {
+        _cameraState = CameraState::Deleted;
+      }
+    }
+    
+  }
+  else if(_cameraState == CameraState::ShouldInit)
+  {
+    auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
+    Result res = RESULT_OK;
+    if(kPowerSave_CameraStopCameraStream)
+    {
+      // Should InitCamera fail, it will get called again next tick which may end up working
+      // This is just a hunch that camera init sometimes can fail but will work if called again
+      // I've seen CameraService get into a mismatched state after InitCamera (should be fixed)
+      // and restarting engine (calls InitCamera) fixes things
+      // Worst case InitCamera will never work and VisionComponent will show a fault code
+      // due to not receiving any images for some amount of time
+      res = CameraService::getInstance()->InitCamera();
+    }
+    else
+    {
+      visionComponent.EnableImageCapture(true);
+    }
+    
+    if(res == RESULT_OK)
+    {
+      visionComponent.Pause(false);
+      _cameraState = CameraState::Running;
     }
   }
 
@@ -231,21 +270,18 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
             _cameraState = CameraState::ShouldDelete;
           }
         }
-        else {
-          if( _cameraState == CameraState::Deleted ) {
-            if( CameraService::getInstance()->InitCamera() == RESULT_OK ) {
-              _cameraState = CameraState::Running;
-            }
-            else {
-              PRINT_NAMED_ERROR("PowerStateManager.Toggle.FailedToInitCamera",
-                                "Camera service init failed! Camera may be in a bad state");
-            }
+        else
+        {
+          if(_cameraState != CameraState::Running)
+          {
+            _cameraState = CameraState::ShouldInit;
           }
-          else {
-            _cameraState = CameraState::Running;
+          else
+          {
+            PRINT_NAMED_WARNING("PowerStateManager.ToggleOn.CameraServiceAlreadyRunning",
+                                "CameraState:%d not initing",
+                                _cameraState);
           }
-
-          visionComponent.Pause(false);
         }
       }
 

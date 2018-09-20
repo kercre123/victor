@@ -20,6 +20,7 @@
 #include "switchboardd/taskExecutor.h"
 #include "engine/clad/cloud/token.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -52,8 +53,8 @@ public:
   std::shared_ptr<TokenResponseHandle> SendJwtRequest(JwtRequestCallback callback);
 
 private:
-  const char* kDomainSocketServer = "/dev/token_server";
-  const char* kDomainSocketClient = "/dev/token_client_switchboard";
+  const char* kDomainSocketServer = Victor::TOKEN_SERVER_PATH;
+  const char* kDomainSocketClient = Victor::TOKEN_SWITCHBOARD_CLIENT_PATH;
 
   static uint8_t sMessageData[2048];
   const float kMessageFrequency_s = 0.1;

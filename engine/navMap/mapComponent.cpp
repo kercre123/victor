@@ -261,7 +261,7 @@ MapComponent::MapComponent()
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)
 , _webMessageDirty(false) // web must request it
-, _isRenderEnabled(true)
+, _isRenderEnabled(false)
 , _broadcastRate_sec(-1.0f)
 , _enableProxCollisions(true)
 {

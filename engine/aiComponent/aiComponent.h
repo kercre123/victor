@@ -69,7 +69,6 @@ public:
     dependencies.insert(RobotComponentID::MoodManager);
     dependencies.insert(RobotComponentID::PetWorld);
     dependencies.insert(RobotComponentID::ProxSensor);
-    dependencies.insert(RobotComponentID::RobotIdleTimeout);
     dependencies.insert(RobotComponentID::TouchSensor);
     dependencies.insert(RobotComponentID::Vision);
     dependencies.insert(RobotComponentID::VisionScheduleMediator);

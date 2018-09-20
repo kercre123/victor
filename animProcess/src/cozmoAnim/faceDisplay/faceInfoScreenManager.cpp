@@ -40,6 +40,7 @@
 
 #include "json/json.h"
 #include "osState/osState.h"
+#include "osState/wallTime.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
@@ -68,18 +69,6 @@
 #endif
 
 #if !FACTORY_TEST
-
-// Return true if we can connect to Anki OTA service
-static bool HasOTAAccess()
-{
-  return Anki::Util::InternetUtils::CanConnectToHostName("ota-cdn.anki.com", 443);
-}
-
-// Return true if we can connect to Anki voice service
-static bool HasVoiceAccess()
-{
-  return Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
-}
 
 #endif
 
@@ -116,9 +105,8 @@ namespace {
   std::atomic<bool> _quitNetworkChecks{true};
   std::atomic<bool> _redrawMain{false};
   std::atomic<bool> _redrawNetwork{false};
-  std::atomic<bool> _hasAuthAccess{false};
-  std::atomic<bool> _hasOTAAccess{false};
-  std::atomic<bool> _hasVoiceAccess{false};
+  std::atomic<bool> _testingNetwork{true};
+  std::atomic<CloudMic::ConnectionCode> _networkStatus{CloudMic::ConnectionCode::Connectivity};
 
   // How often connectivity checks are performed while on 
   // Main and Network screens.
@@ -276,8 +264,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
       _quitMainChecks = false;
       auto mainChecksLambda = []() {
         while (!_quitMainChecks) {
-          LOG_INFO("FaceInfoScreenManager.MainCheckLoop.CheckingConnectivity", "");        
-          _hasOTAAccess = HasOTAAccess();
           _redrawMain = true;
           std::this_thread::sleep_for(std::chrono::seconds(kIPCheckPeriod_sec));
         }
@@ -325,17 +311,11 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
       // Redraw Network screen after connection checks have completed
       _redrawNetwork = false;
       _quitNetworkChecks = false;
-      auto networkChecksLambda = []() {
+      auto networkChecksLambda = [this]() {
         while (!_quitNetworkChecks) {
-          // TODO (VIC-1816): Check actual hosts for connectivity
-          LOG_INFO("FaceInfoScreenManager.NetworkCheckLoop.CheckingConnectivity", "");
-          auto t1 = std::thread([](){ _hasAuthAccess = false; });
-          auto t2 = std::thread([](){ _hasOTAAccess  = HasOTAAccess(); });
-          _hasVoiceAccess = HasVoiceAccess();
-
-          t1.join();
-          t2.join();
-          _redrawNetwork = true;
+          LOG_INFO("FaceInfoScreenManager.MainCheckLoop.CheckingConnectivity", "");  
+          _context->GetMicDataSystem()->RequestConnectionStatus();     
+          _testingNetwork = true; 
 
           std::this_thread::sleep_for(std::chrono::seconds(kIPCheckPeriod_sec));
         }
@@ -408,6 +388,13 @@ FaceInfoScreen* FaceInfoScreenManager::GetScreen(ScreenName name)
   DEV_ASSERT(it != _screenMap.end(), "FaceInfoScreenManager.GetScreen.ScreenNotFound");
 
   return &(it->second);
+}
+
+void FaceInfoScreenManager::SetNetworkStatus(const CloudMic::ConnectionCode& code)
+{
+  _networkStatus = code;
+  _testingNetwork = false;
+  _redrawNetwork = true;
 }
 
 bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
@@ -578,7 +565,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   // of these default values change the server gets them too
 
   const auto& confList = micData.confidenceList;
-  const auto& winningIndex = micData.selectedDirection;
+  const auto& winningIndex = micData.direction;
   auto maxCurConf = (float)micData.confidence;
   for (int i=0; i<12; ++i)
   {
@@ -626,8 +613,9 @@ void FaceInfoScreenManager::DrawConfidenceClock(
         Json::Value webData;
         webData["time"] = currentTime;
         webData["confidence"] = micData.confidence;
-        // 'selectedDirection' is what's being used (locked-in), whereas 'dominant' is just the strongest direction
-        webData["dominant"] = micData.direction;
+        webData["activeState"] = micData.activeState;
+        // 'direction' is the strongest direction, whereas 'selectedDirection' is what's being used (locked-in)
+        webData["direction"] = micData.direction;
         webData["selectedDirection"] = micData.selectedDirection;
         webData["maxConfidence"] = maxConf;
         webData["triggerDetected"] = triggerRecognized;
@@ -1209,13 +1197,28 @@ void FaceInfoScreenManager::DrawNetwork()
     ip = "XXX.XXX.XXX.XXX";
   }
 
+  std::tm timeObj;
+  char timeFormat[50];
+  const bool gotTime = WallTime::getInstance()->GetUTCTime(timeObj);
+  
+  strftime(timeFormat, 50, "%F %R UTC", &timeObj);
+  const std::string currTime = gotTime ? timeFormat : "NO CLOCK";
+
 #if !FACTORY_TEST
   const ColoredText reachable("REACHABLE", NamedColors::GREEN);
   const ColoredText unreachable("UNREACHABLE", NamedColors::RED);
 
-  const ColoredText authStatus  = _hasAuthAccess  ? reachable : unreachable;
-  const ColoredText otaStatus   = _hasOTAAccess   ? reachable : unreachable;
-  const ColoredText voiceStatus = _hasVoiceAccess ? reachable : unreachable;
+  auto getStatusString = [](const auto& status) {
+    switch (status) {
+      case CloudMic::ConnectionCode::Available:   { return ColoredText("AVAILABLE",    NamedColors::GREEN); }
+      case CloudMic::ConnectionCode::Connectivity:{ return ColoredText("CONNECTIVITY", NamedColors::RED); }
+      case CloudMic::ConnectionCode::Tls:         { return ColoredText("TLS",          NamedColors::RED); }
+      case CloudMic::ConnectionCode::Auth:        { return ColoredText("AUTH",         NamedColors::RED); }
+      case CloudMic::ConnectionCode::Bandwidth:   { return ColoredText("BANDWIDTH",    NamedColors::RED); }
+      default:                                    { return ColoredText("CHECKING...",  NamedColors::BLUE); }
+    }
+  };
+
 #endif
 
   ColoredTextLines lines = { {ble},
@@ -1224,11 +1227,12 @@ void FaceInfoScreenManager::DrawNetwork()
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
+                            // TODO: re-enable after security team has confirmed showing email is allowed
+                            //  { {"EMAIL: "}, {"dummy...@a...com"} },
                              { {"IP: "}, {ip, (osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
-                             { {"AUTH:  "}, authStatus },
-                             { {"OTA:   "}, otaStatus },
-                             { {"VOICE: "}, voiceStatus }
+                             { {currTime} },
+                             { {"NETWORK: "}, _testingNetwork ? ColoredText("") : getStatusString(_networkStatus) }
                            };
 #endif
   DrawTextOnScreen(lines);
@@ -1264,9 +1268,11 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
+  const bool batteryDisconnected = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
   sprintf(temp,
-          "BATT:  %0.2fV",
-          state.batteryVoltage);
+          "BATT:  %0.2fV   %s",
+          state.batteryVoltage,
+          batteryDisconnected ? "D" : "");
   const std::string batt = temp;
 
   sprintf(temp,
@@ -1455,13 +1461,6 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
   if (enable && GetCurrScreenName() != ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Enable", "");
-    // Clear any fault code so we can draw to the face and
-    // actually pair. If the fault code is from a process crashing
-    // this will not execute when the button is double pressed since
-    // we need robot, anim, engine, and switchboard all communicating
-    // for pairing to start. If the fault code is something besides a
-    // process crash, this will clear it.
-    FaultCode::DisplayFaultCode(0);
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
@@ -1491,11 +1490,6 @@ void FaceInfoScreenManager::Reboot()
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
   return;
 #else
-
-  // Suppress any error codes that might appear 
-  // as a result of the following reboot
-  FaceDisplay::getInstance()->EnableFaultCodeDisplay(false);
-
   // Need to call reboot in forked process for some reason.
   // Otherwise, reboot doesn't actually happen.
   // Also useful for transitioning to "REBOOTING..." screen anyway.

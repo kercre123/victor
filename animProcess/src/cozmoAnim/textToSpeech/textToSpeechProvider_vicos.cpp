@@ -269,6 +269,8 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
   const auto speed = Anki::Util::numeric_cast<int>(std::round(adjustedSpeed));
   const auto shaping = _tts_config->GetShaping();
   const auto pitch = _tts_config->GetPitch();
+
+  // Adjust silence parameters to match configuration
   const auto leadingSilence_ms = _tts_config->GetLeadingSilence_ms();
   const auto trailingSilence_ms = _tts_config->GetTrailingSilence_ms();
   const auto pausePunctuation_ms = _tts_config->GetPausePunctuation_ms();
@@ -276,9 +278,15 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
   const auto pauseComma_ms = _tts_config->GetPauseComma_ms();
   const auto pauseBracket_ms = _tts_config->GetPauseBracket_ms();
   const auto pauseSpelling_ms = _tts_config->GetPauseSpelling_ms();
+  const auto enablePauseParams = _tts_config->GetEnablePauseParams();
 
-  // Reset TTS processing state & error state
+  // Reset TTS processing states, params & errors
   BB_ERROR bbError = BABILE_reset(_BAB_Obj);
+  if (BB_OK != bbError) {
+    LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to reset TTS (error %ld)", bbError);
+  }
+
+  bbError = BABILE_setDefaultParams(_BAB_Obj);
   if (BB_OK != bbError) {
     LOG_WARNING("TextToSpeechProvider.GetFirstAudioData", "Unable to reset TTS (error %ld)", bbError);
   }
@@ -298,13 +306,17 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
   SETPARAM(BABIL_PARM_SPEED, speed);
   SETPARAM(BABIL_PARM_SEL_VOICESHAPE, shaping);
   SETPARAM(BABIL_PARM_PITCH, pitch);
-  SETPARAM(BABIL_PARM_LEADINGSILENCE, leadingSilence_ms);
-  SETPARAM(BABIL_PARM_TRAILINGSILENCE, trailingSilence_ms);
-  SETPARAM(BABIL_PARM_PAUSE1SILENCE, pausePunctuation_ms);
-  SETPARAM(BABIL_PARM_PAUSE2SILENCE, pauseSemicolon_ms);
-  SETPARAM(BABIL_PARM_PAUSE3SILENCE, pauseComma_ms);
-  SETPARAM(BABIL_PARM_PAUSE4SILENCE, pauseBracket_ms);
-  SETPARAM(BABIL_PARM_PAUSE5SILENCE, pauseSpelling_ms);
+
+  // If you set any of these params, the rest also need to be set
+  if (enablePauseParams) {
+    SETPARAM(BABIL_PARM_LEADINGSILENCE, leadingSilence_ms);
+    SETPARAM(BABIL_PARM_TRAILINGSILENCE, trailingSilence_ms);
+    SETPARAM(BABIL_PARM_PAUSE1SILENCE, pausePunctuation_ms);
+    SETPARAM(BABIL_PARM_PAUSE2SILENCE, pauseSemicolon_ms);
+    SETPARAM(BABIL_PARM_PAUSE3SILENCE, pauseComma_ms);
+    SETPARAM(BABIL_PARM_PAUSE4SILENCE, pauseBracket_ms);
+    SETPARAM(BABIL_PARM_PAUSE5SILENCE, pauseSpelling_ms);
+  }
 
   #undef SETPARAM
 

@@ -35,6 +35,10 @@ namespace RobotInterface {
  * and to make debugging from message dumps more sane.
  */
 
+message CheckCloudConnectivity
+{
+}
+
 message StartMotorCalibration
 {
   bool calibrateHead,
@@ -304,7 +308,8 @@ message PlayAnim
   uint_32 numLoops = 1,
   uint_32 startAt_ms = 0, // time to start the animation playback at
   uint_8  tag,
-  string animName,
+  bool renderInEyeHue = 1,
+  string animName, // must be last
 }
 
 // Aborts the specified animation.
@@ -422,7 +427,8 @@ message StartPlaybackAudio
 
 message StartWakeWordlessStreaming
 {
-  uint_8 streamType
+  uint_8 streamType,
+  bool   playGetInFromAnimProcess 
 }
 
 message SetTriggerWordResponse
@@ -702,6 +708,7 @@ union EngineToRobot
   IMURequest                    imuRequest                  = 0x30,
   CheckLiftLoad                 checkLiftLoad               = 0x31,
   SetCliffDetectThresholds      setCliffDetectThresholds    = 0x32,
+  SetWhiteDetectThresholds      setWhiteDetectThresholds    = 0x39,
 
   // Calibration
   StartMotorCalibration         startMotorCalibration       = 0x33,
@@ -762,9 +769,10 @@ union EngineToRobot
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
-  SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
-  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
-  AlterStreamingAnimationAtTime             alterStreamingAnimation   = 0xA2,
+  SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
+  SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
+  AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
+  SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 
@@ -773,6 +781,8 @@ union EngineToRobot
   TriggerBackpackAnimation triggerBackpackAnimation = 0xAC,
 
   EngineFullyLoaded engineFullyLoaded = 0xAD,
+
+  CheckCloudConnectivity checkCloudConnectivity = 0xAE,  
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

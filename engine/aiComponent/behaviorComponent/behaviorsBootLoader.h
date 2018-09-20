@@ -61,6 +61,9 @@ public:
   virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
   
+  // Returns the behavior that should be at the base of the stack. Note that this may not be the
+  // current behavior at the base of the stack if some other component has reset the stack recently,
+  // or if there is a "pending" behavior that should be the next base behavior upon reset
   IBehavior* GetBootBehavior();
 
 private:
@@ -69,7 +72,7 @@ private:
   
   void RestartOnboarding();
   
-  void SetNewBehavior(BehaviorID behavior);
+  void SetNewBehavior(BehaviorID behavior, bool requestStackReset = true);
   
   IExternalInterface* _externalInterface = nullptr;
   IGatewayInterface* _gatewayInterface = nullptr;
@@ -82,6 +85,9 @@ private:
   std::vector<Signal::SmartHandle> _eventHandles;
   
   bool _hasGrabbedBootBehavior = false;
+  
+  // The return value of GetBootBehavior() wasn't switched to, and won't be until SetNewBehavior is called again
+  bool _pendingBehavior = false;
   
   std::string _saveFolder;
   

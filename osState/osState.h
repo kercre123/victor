@@ -47,7 +47,51 @@ class OSState : public Util::DynamicSingleton<OSState>
   ANKIUTIL_FRIEND_SINGLETON(OSState);
 
 public:
+  // Public types
+  typedef enum Alert {
+    None = 0,
+    Yellow = 1,
+    Red = 2
+  } Alert;
 
+  // System-wide memory stats
+  typedef struct MemoryInfo {
+    // Total memory, in kB
+    uint32_t totalMem_kB = 0;
+    // Memory available to processes, in kB
+    uint32_t availMem_kB = 0;
+    // Unused memory, in kB
+    uint32_t freeMem_kB = 0;
+    // "Memory pressure" aka (total / avail)
+    uint32_t pressure = 0;
+    // Alert level for current pressure
+    Alert alert = Alert::None;
+  } MemoryInfo;
+
+  // Wifi info stats
+  typedef struct WifiInfo {
+    uint64_t rx_bytes = 0;
+    uint64_t tx_bytes = 0;
+    uint64_t rx_errors = 0;
+    uint64_t tx_errors = 0;
+    Alert alert = Alert::None;
+  } WifiInfo;
+
+  // Filesystem space stats
+  typedef struct DiskInfo {
+    // Total space, in kB
+    uint32_t total_kB = 0;
+    // Space available to non-root users, in kB
+    uint32_t avail_kB = 0;
+    // Unused space, in kB
+    uint32_t free_kB = 0;
+    // "Disk pressure" aka (total / avail)
+    uint32_t pressure = 0;
+    // Alert level for current pressure
+    Alert alert = Alert::None;
+  } DiskInfo;
+
+// Public destructor
 ~OSState();
 
 #ifdef SIMULATOR
@@ -57,7 +101,7 @@ public:
   static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
-  void Update();
+  void Update(BaseStationTime_t currTime_nanosec);
 
   RobotID_t GetRobotID() const;
 
@@ -85,11 +129,22 @@ public:
   // Returns uptime (and idle time) in seconds
   float GetUptimeAndIdleTime(float &idleTime_s) const;
 
-  // Returns total and free/available memory in kB
-  uint32_t GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const;
+  // Get system-wide memory info
+  // Values are fetched once per update period
+  void GetMemoryInfo(MemoryInfo & info) const;
+
+  // Get current wifi info.
+  // Values are fetched from wlan device on each call.
+  // Returns true on success, false on error.
+  bool GetWifiInfo(WifiInfo & info) const;
+
+  // Get disk info for given path.
+  // Values are fetched from file system on each call.
+  // Returns true on success, false on error.
+  bool GetDiskInfo(const std::string & path, DiskInfo & info) const;
 
   // Returns data about CPU times
-  const std::vector<std::string>& GetCPUTimeStats() const;
+  void GetCPUTimeStats(std::vector<std::string> & stats) const;
 
   // Returns our ip address
   const std::string& GetIPAddress(bool update = false);
@@ -124,7 +179,7 @@ public:
 
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
-  
+
   void GetOSBuildVersion(int& major, int& minor, int& incremental) const;
 
   // Returns "major.minor.build" for reporting to DAS
@@ -145,6 +200,10 @@ public:
   // while robot is on charger
   bool IsInRecoveryMode();
 
+  // True if this current boot of the robot was the result of an automatic reboot, as opposed to the user
+  // turning off the robot or it powering off for some other reason, like a dead battery
+  bool RebootedForMaintenance() const;
+
   // True if we've synced time with a time server
   bool IsWallTimeSynced() const;
 
@@ -153,7 +212,7 @@ public:
 
   // True if user space is secure
   bool IsUserSpaceSecure();
-  
+
   // For the engine to let the OS State know if we are on/off the charge contacts
   void SetOnChargeContacts(const bool onChargeContacts) const;
 
@@ -199,7 +258,23 @@ private:
   std::string _bootID          = "";
   bool        _isUserSpaceSecure = false;
   bool        _hasValidIPAddress = false;
-  
+
+  inline uint32_t GetPressure(uint32_t avail, uint32_t total) const
+  {
+    return (avail > 0 ? total / avail : std::numeric_limits<uint32_t>::max());
+  }
+
+  inline Alert GetAlert(uint32_t pressure, uint32_t yellow, uint32_t red) const
+  {
+    if (pressure > red) {
+      return Alert::Red;
+    }
+    if (pressure > yellow) {
+      return Alert::Yellow;
+    }
+    return Alert::None;
+  }
+
 }; // class OSState
 
 } // namespace Vector

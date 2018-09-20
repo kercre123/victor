@@ -122,6 +122,7 @@ struct DockingErrorSignal;
     Result SetNextImage(Vision::ImageRGB& image);
 
     void Pause(bool isPaused);
+    void EnableImageCapture(bool enable) { _enableImageCapture = enable; }
 
     // If the vision thread isn't busy, grab the lock and release all internally held images and return
     // true. Otherwise, return false
@@ -250,9 +251,6 @@ struct DockingErrorSignal;
     // Used by FindFactoryTestDotCentroids iff camera is already calibrated.
     // Otherwise call manually by populating obsQuad with the dot centroids.
     Result ComputeCameraPoseVsIdeal(const Quad2f& obsQuad, Pose3d& pose) const;
-    
-    const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
-    ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
 
     // Return true if there is still room for a *new* named face.
     // No need to check this if *merging* with an existing named face.
@@ -337,6 +335,17 @@ struct DockingErrorSignal;
 
     void EnableSensorRes(bool sensorRes);
 
+    // These methods control which faces are tracked, and turn face
+    // recognition on/off. The goal here is to avoid resetting face
+    // detection when in an action that tracks a face
+    // (e.g. TrackFaceAction). Note these methods are not safe
+    // to call from more than one place and only work now because
+    // they are only called from track face action. If there are
+    // going to be other callers of these methods we should rework
+    // how this is exposed.
+    void AddAllowedTrackedFace(const Vision::FaceID_t faceID);
+    void ClearAllowedTrackedFaces();
+
   protected:
     
     // Non-rotated points representing the lift cross bar
@@ -383,8 +392,6 @@ struct DockingErrorSignal;
     Vision::ImageRGB _bufferedImg;
     
     Vision::DroppedFrameStats _dropStats;
-    
-    ImuDataHistory _imuHistory;
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
@@ -468,6 +475,8 @@ struct DockingErrorSignal;
     
     // Threading for OpenCV
     int _openCvNumThreads = 1;
+
+    bool _enableImageCapture = true;
     
   }; // class VisionComponent
   

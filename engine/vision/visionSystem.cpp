@@ -712,6 +712,8 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     wbMode = Vision::CameraParamsController::WhiteBalanceMode::GrayWorld;
   }
   
+  _cameraParamsController->ClearMeteringRegions();
+  
   bool useCycling = false;
   if(!kMeterFromDetections || _meteringRegions.empty())
   {
@@ -730,7 +732,6 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     useCycling = false;
     
     _lastMeteringTimestamp_ms = imageCache.GetTimeStamp();
-    _cameraParamsController->ClearMeteringRegions();
     
     for(auto const& entry : _meteringRegions)
     {
@@ -894,7 +895,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
   {
     PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
                       "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
-    _faceTracker->Reset();
+    _faceTracker->AccountForRobotMove();
   }
   
   if(!detectionRects.empty())
@@ -1667,7 +1668,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
   
   // Check for illumination state
-  if(ShouldProcessVisionMode(VisionMode::DetectingIllumination))
+  if(ShouldProcessVisionMode(VisionMode::DetectingIllumination) &&
+     !ShouldProcessVisionMode(VisionMode::CyclingExposure)) // don't check for illumination if cycling exposure
   {
     Tic("DetectingIllumination");
     lastResult = DetectIllumination(imageCache);
@@ -1696,7 +1698,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.UpdateCameraParamsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::AutoExposure,      isAutoExposing);
+      visionModesProcessed.SetBitFlag(VisionMode::AutoExposure, isAutoExposing);
       visionModesProcessed.SetBitFlag(VisionMode::WhiteBalance, isWhiteBalancing);
     }
   }
@@ -1927,6 +1929,16 @@ void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
 void VisionSystem::ClearImageCache()
 {
   _imageCache->ReleaseMemory();
+}
+
+void VisionSystem::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
+{
+  _faceTracker->AddAllowedTrackedFace(faceID);
+}
+
+void VisionSystem::ClearAllowedTrackedFaces()
+{
+  _faceTracker->ClearAllowedTrackedFaces();
 }
 
 } // namespace Vector

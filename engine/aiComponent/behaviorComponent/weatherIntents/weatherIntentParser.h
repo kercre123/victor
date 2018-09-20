@@ -40,6 +40,7 @@ public:
   bool GetTemperature(const UserIntent_WeatherResponse& weatherIntent,
                       int& outTemp) const;
 
+  void SendDASEventForRepsonse(const UserIntent_WeatherResponse& weatherIntent) const;
 
 private:
   class ConditionRemaps{

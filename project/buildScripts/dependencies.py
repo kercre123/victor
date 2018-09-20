@@ -77,7 +77,7 @@ def is_tool(name):
     """
     try:
         devnull = open(os.devnull)
-        subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
+        subprocess.Popen([name], stdout=devnull, stderr=devnull, close_fds=True).communicate()
     except OSError as e:
         if e.errno == os.errno.ENOENT:
             return False
@@ -287,7 +287,7 @@ def get_svn_file_rev(file_from_svn, cred=''):
   svn_info_cmd = SVN_INFO_CMD % (cred, file_from_svn)
   #print("Running: %s" % svn_info_cmd)
   p = subprocess.Popen(svn_info_cmd.split(), stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE)
+                       stderr=subprocess.PIPE, close_fds=True)
   (stdout, stderr) = p.communicate()
   status = p.poll()
   if status != 0:
@@ -304,14 +304,14 @@ def get_svn_file_rev(file_from_svn, cred=''):
 
 
 def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=VERBOSE):
-    pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
     successful, err = pipe.communicate()
     status = pipe.poll()
     #print("status = %s" % status)
     if err == '' and status == 0:
         print(successful.strip())
         # Equivalent to a git clean
-        pipe = subprocess.Popen(cleanup, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pipe = subprocess.Popen(cleanup, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         extract_message, error = pipe.communicate()
         if extract_message != '' and not allow_extra_files:
             last_column = re.compile(r'\S+\s+(\S+)')
@@ -323,7 +323,7 @@ def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=
                     os.remove(a_file)
         if os.path.isfile(package):
             # call waits for the result.  Moving on to the next checkout doesnt need this to finish.
-            pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             successful, err = pipe.communicate()
             if verbose:
                 print(err)

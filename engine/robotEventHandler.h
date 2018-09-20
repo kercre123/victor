@@ -38,7 +38,6 @@ enum class QueueActionPosition : uint8_t;
 template <typename Type>
 class AnkiEvent;
 
-
 class RobotEventHandler : private Util::noncopyable
 {
 public:
@@ -67,6 +66,8 @@ private:
 
   static u32 _gameActionTagCounter;
 
+  // Helper function allowing for proto messages to be wrapped similar to the clad QueueSingleAction
+  void QueueActionWithIdTag(IActionRunner* action, int numRetries, int idTag) const;
 };
 
   

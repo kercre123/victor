@@ -22,6 +22,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
+#include "util/environment/locale.h"
+#include "util/logging/DAS.h"
 
 #define LOG_CHANNEL "AccountSettingsManager"
 
@@ -32,6 +34,17 @@ namespace
 {
   static const char* kConfigDefaultValueKey = "defaultValue";
   static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
+
+}
+
+//
+// Static methods to publish magic DAS events
+//
+static void EnableDataCollection(bool enable)
+{
+  DASMSG(das_allow_upload, DASMSG_DAS_ALLOW_UPLOAD, "Allow DAS upload");
+  DASMSG_SET(i1, (enable ? 1 : 0), "0/1")
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -63,13 +76,8 @@ void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dep
 
     if (_jdocsManager->JdocNeedsMigration(external_interface::JdocType::ACCOUNT_SETTINGS))
     {
-      // TODO (this has its own ticket, VIC-5669):
-      //   Handle format migration (from loaded jdoc file) here.  We need to know the old
-      //   and new format versions.  Also put it in a function, and call that ALSO in the
-      //   case of migration triggered when pulling a new version of jdoc from the cloud.
-      //   consider another callback, similar to the 'overwritten' callback, but for this
-      //   format migration.
-      // Not doing this now because we're not changing format versions yet.
+      DoJdocFormatMigration();
+      settingsDirty = true;
     }
   }
 
@@ -114,10 +122,15 @@ void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dep
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
   _settingSetters[external_interface::AccountSetting::DATA_COLLECTION] = { nullptr, &AccountSettingsManager::ApplyAccountSettingDataCollection };
+  _settingSetters[external_interface::AccountSetting::APP_LOCALE]      = { &AccountSettingsManager::ValidateAccountSettingAppLocale, nullptr   };
 
-  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
+  _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ACCOUNT_SETTINGS, [this]() {
     _currentAccountSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ACCOUNT_SETTINGS);
     ApplyAllCurrentAccountSettings();
+  });
+
+  _jdocsManager->RegisterFormatMigrationCallback(external_interface::JdocType::ACCOUNT_SETTINGS, [this]() {
+    DoJdocFormatMigration();
   });
 
   // Finally, set a flag so we will apply all of the settings
@@ -139,9 +152,12 @@ void AccountSettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AccountSettingsManager::SetAccountSetting(const external_interface::AccountSetting accountSetting,
                                                const Json::Value& valueJson,
-                                               const bool updateSettingsJdoc)
+                                               const bool updateSettingsJdoc,
+                                               bool& ignoredDueToNoChange)
 {
-  const std::string& key = external_interface::AccountSetting_Name(accountSetting);
+  ignoredDueToNoChange = false;
+
+  const std::string& key = AccountSetting_Name(accountSetting);
   if (!_currentAccountSettings.isMember(key))
   {
     LOG_ERROR("AccountSettingsManager.SetAccountSetting.InvalidKey", "Invalid key %s; ignoring", key.c_str());
@@ -149,6 +165,12 @@ bool AccountSettingsManager::SetAccountSetting(const external_interface::Account
   }
 
   const Json::Value prevValue = _currentAccountSettings[key];
+  if (prevValue == valueJson)
+  {
+    // If the value is not actually changing, don't do anything.
+    ignoredDueToNoChange = true;
+    return false;
+  }
   _currentAccountSettings[key] = valueJson;
 
   bool success = ApplyAccountSetting(accountSetting);
@@ -172,7 +194,7 @@ bool AccountSettingsManager::SetAccountSetting(const external_interface::Account
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string AccountSettingsManager::GetAccountSettingAsString(const external_interface::AccountSetting key) const
 {
-  const std::string& keyString = external_interface::AccountSetting_Name(key);
+  const std::string& keyString = AccountSetting_Name(key);
   if (!_currentAccountSettings.isMember(keyString))
   {
     LOG_ERROR("AccountSettingsManager.GetRobotSettingAsString.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -186,7 +208,7 @@ std::string AccountSettingsManager::GetAccountSettingAsString(const external_int
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AccountSettingsManager::GetAccountSettingAsBool(const external_interface::AccountSetting key) const
 {
-  const std::string& keyString = external_interface::AccountSetting_Name(key);
+  const std::string& keyString = AccountSetting_Name(key);
   if (!_currentAccountSettings.isMember(keyString))
   {
     LOG_ERROR("AccountSettingsManager.GetRobotSettingAsBool.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -200,7 +222,7 @@ bool AccountSettingsManager::GetAccountSettingAsBool(const external_interface::A
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uint32_t AccountSettingsManager::GetAccountSettingAsUInt(const external_interface::AccountSetting key) const
 {
-  const std::string& keyString = external_interface::AccountSetting_Name(key);
+  const std::string& keyString = AccountSetting_Name(key);
   if (!_currentAccountSettings.isMember(keyString))
   {
     LOG_ERROR("AccountSettingsManager.GetRobotSettingAsUInt.InvalidKey", "Invalid key %s", keyString.c_str());
@@ -214,7 +236,7 @@ uint32_t AccountSettingsManager::GetAccountSettingAsUInt(const external_interfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AccountSettingsManager::DoesSettingUpdateCloudImmediately(const external_interface::AccountSetting key) const
 {
-  const std::string& keyString = external_interface::AccountSetting_Name(key);
+  const std::string& keyString = AccountSetting_Name(key);
   const auto& config = (*_accountSettingsConfig)[keyString];
   const bool saveToCloudImmediately = config[kConfigUpdateCloudOnChangeKey].asBool();
   return saveToCloudImmediately;
@@ -263,19 +285,23 @@ bool AccountSettingsManager::ApplyAccountSetting(const external_interface::Accou
       if (!success)
       {
         LOG_ERROR("AccountSettingsManager.ApplyAccountSetting.ValidateFunctionFailed", "Error attempting to apply %s setting",
-                  external_interface::AccountSetting_Name(setting).c_str());
+                  AccountSetting_Name(setting).c_str());
         return false;
       }
     }
 
-    LOG_DEBUG("AccountSettingsManager.ApplyAccountSetting", "Applying Account Setting '%s'",
-              external_interface::AccountSetting_Name(setting).c_str());
-    success = (this->*(it->second.applicationFunction))();
-
-    if (!success)
+    const auto applicationFunc = it->second.applicationFunction;
+    if (applicationFunc != nullptr)
     {
-      LOG_ERROR("AccountSettingsManager.ApplyAccountSetting.ApplyFunctionFailed", "Error attempting to apply %s setting",
-                external_interface::AccountSetting_Name(setting).c_str());
+      LOG_DEBUG("AccountSettingsManager.ApplyAccountSetting", "Applying Account Setting '%s'",
+                AccountSetting_Name(setting).c_str());
+      success = (this->*(applicationFunc))();
+      
+      if (!success)
+      {
+        LOG_ERROR("AccountSettingsManager.ApplyAccountSetting.ApplyFunctionFailed", "Error attempting to apply %s setting",
+                  AccountSetting_Name(setting).c_str());
+      }
     }
   }
   return success;
@@ -285,14 +311,55 @@ bool AccountSettingsManager::ApplyAccountSetting(const external_interface::Accou
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AccountSettingsManager::ApplyAccountSettingDataCollection()
 {
-  static const std::string& key = external_interface::AccountSetting_Name(external_interface::AccountSetting::DATA_COLLECTION);
-  const auto& value = _currentAccountSettings[key].asBool();
+  static const std::string& key = AccountSetting_Name(external_interface::AccountSetting::DATA_COLLECTION);
+  const bool value = _currentAccountSettings[key].asBool();
   LOG_INFO("AccountSettingsManager.ApplyAccountSettingDataCollection.Apply",
            "Setting data collection flag to %s", value ? "true" : "false");
-  
-  // TODO:  Can call whereever here
+
+  // Publish choice to DAS manager
+  EnableDataCollection(value);
+
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AccountSettingsManager::ValidateAccountSettingAppLocale()
+{
+  static const std::string& key = AccountSetting_Name(external_interface::AccountSetting::APP_LOCALE);
+  const auto& value = _currentAccountSettings[key].asString();
+  if (!Anki::Util::Locale::IsValidLocaleString(value))
+  {
+    LOG_ERROR("AccountSettingsManager.ValidateAccountSettingAppLocale.Invalid",
+              "Invalid locale: %s", value.c_str());
+    return false;
+  }
   
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AccountSettingsManager::DoJdocFormatMigration()
+{
+  const auto jdocType = external_interface::JdocType::ACCOUNT_SETTINGS;
+  const auto docFormatVersion = _jdocsManager->GetJdocFmtVersion(jdocType);
+  const auto curFormatVersion = _jdocsManager->GetCurFmtVersion(jdocType);
+  LOG_INFO("AccountSettingsManager.DoJdocFormatMigration",
+           "Migrating account settings jdoc from format version %llu to %llu",
+           docFormatVersion, curFormatVersion);
+  if (docFormatVersion > curFormatVersion)
+  {
+    LOG_ERROR("AccountSettingsManager.DoJdocFormatMigration.Error",
+              "Jdoc format version is newer than what victor code can handle; no migration possible");
+    return;
+  }
+
+  // When we change 'format version' on this jdoc, migration
+  // to a newer format version is performed here
+
+  // Now update the format version of this jdoc to the current format version
+  _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
 }
 
 

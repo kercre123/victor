@@ -139,6 +139,7 @@ private:
     std::string         responseString; // the text we got back from knowledge graph
     EGenerationStatus   ttsGenerationStatus; // track the status of the reponse tts
     BackpackLightDataLocator  lightsHandle; // lights, camera, action!
+    bool                wasPickedUp;
 
   } _dVars;
 

@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/cozmoContext.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"

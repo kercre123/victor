@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/actions/basicActions.h"
 #include "engine/components/animationComponent.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/robot.h"
@@ -79,10 +79,10 @@ BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig()
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevBatteryLogging::BehaviorDevBatteryLogging(const Json::Value& config)
 : ICozmoBehavior(config)
-{ 
+{
   _iConfig.wheelSpeed_mmps = config.get(kWheelSpeedKey, 0.f).asInt();
   _iConfig.liftSpeed_radps = DEG_TO_RAD(config.get(kLiftSpeedKey, 0.f).asInt());
   _iConfig.headSpeed_radps = DEG_TO_RAD(config.get(kHeadSpeedKey, 0.f).asInt());
@@ -108,20 +108,20 @@ void BehaviorDevBatteryLogging::GetBehaviorJsonKeys(std::set<const char*>& expec
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDevBatteryLogging::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::InitBehavior()
 {
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::OnBehaviorActivated()
 {
   // Stop all actions?
@@ -134,14 +134,14 @@ void BehaviorDevBatteryLogging::OnBehaviorActivated()
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::EnqueueMotorActions()
 {
   if (!NEAR_ZERO(_iConfig.wheelSpeed_mmps)) {
-    auto& moveComp = GetBEI().GetRobotInfo()._robot.GetMoveComponent();    
+    auto& moveComp = GetBEI().GetRobotInfo()._robot.GetMoveComponent();
     moveComp.DriveWheels(_iConfig.wheelSpeed_mmps, _iConfig.wheelSpeed_mmps, 0.f, 0.f);
   }
-  
+
   static bool goingUp = true;
   auto liftHeight = goingUp ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK;
   auto headAngle  = goingUp ? MAX_HEAD_ANGLE    : MIN_HEAD_ANGLE;
@@ -168,9 +168,9 @@ void BehaviorDevBatteryLogging::EnqueueMotorActions()
 
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::BehaviorUpdate()
-{  
+{
   if(!IsActivated()){
     return;
   }
@@ -225,7 +225,7 @@ void BehaviorDevBatteryLogging::InitLog()
 {
   // Initialize log file
   std::string outputPath = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "battery_logs");
-  Util::FileUtils::CreateDirectory(outputPath); 
+  Util::FileUtils::CreateDirectory(outputPath);
 
   // Get robot serial number
   std::stringstream ss;
@@ -258,7 +258,7 @@ void BehaviorDevBatteryLogging::InitLog()
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::LogData() const
 {
   EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -270,12 +270,13 @@ void BehaviorDevBatteryLogging::LogData() const
     const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
     f32 battVoltage = battComp.GetBatteryVolts();
     f32 battVoltageRaw = battComp.GetBatteryVoltsRaw();
-    
+
     // Get CPU usage
     int activeTime = 0;
-    int idleTime = 0; 
-    auto& cpuTimeStatsStrVec = OSState::getInstance()->GetCPUTimeStats();
-    if (cpuTimeStatsStrVec.size() > 0) {      
+    int idleTime = 0;
+    std::vector<std::string> cpuTimeStatsStrVec;
+    OSState::getInstance()->GetCPUTimeStats(cpuTimeStatsStrVec);
+    if (cpuTimeStatsStrVec.size() > 0) {
       std::stringstream ss(cpuTimeStatsStrVec[0]);  // First line is the overall CPU stats
       std::string junk;
       ss >> junk; // Toss out "cpu" at front
@@ -300,7 +301,7 @@ void BehaviorDevBatteryLogging::LogData() const
       << battVoltage << ", "
       << txBytes << ", "
       << rxBytes << ", "
-      << activeTime << ", " 
+      << activeTime << ", "
       << idleTime << ", "
       << "\n";
     fs.close();
@@ -310,7 +311,7 @@ void BehaviorDevBatteryLogging::LogData() const
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::OnBehaviorDeactivated()
 {
   // Stop motors

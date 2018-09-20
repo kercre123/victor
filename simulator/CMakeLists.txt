@@ -12,7 +12,7 @@ include(symlink_target)
 include(anki_build_cxx)
 
 # Build options
-option(WEBOTS_SETUP_EXE "Set up controller executables for use with webots firewall certificate" ON)
+option(WEBOTS_SETUP_FIREWALL "Set up controller executables for use with webots firewall certificate" ON)
 
 # Path to controllers
 set(CONTROLLERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/controllers")
@@ -22,6 +22,9 @@ set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources")
 
 # Path to webotsTest.py
 set(WEBOTS_TEST "${CMAKE_SOURCE_DIR}/project/build-scripts/webots/webotsTest.py")
+
+# Webots setup command
+set(WEBOTS_SETUP ${WEBOTS_TEST} -g ${CMAKE_GENERATOR} -b ${CMAKE_BUILD_TYPE})
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -98,25 +101,38 @@ target_compile_definitions(webotsCtrlCommon
 #
 # webots controller macros
 #
-macro(webots_setup_exe target)
-  set(generator ${CMAKE_GENERATOR})
-  set(build ${CMAKE_BUILD_TYPE})
-  set(exe $<TARGET_FILE:${target}>)
+macro(webots_setup_target target)
+  # Add post-build command for known target
   add_custom_command(
     TARGET ${target}
     POST_BUILD
     COMMENT "Set up webots firewall exception for ${target}"
-    COMMAND ${WEBOTS_TEST} -g ${generator} -b ${build} -x ${exe}
+    COMMAND ${WEBOTS_SETUP} -x $<TARGET_FILE:${target}>
   )
+endmacro(webots_setup_target)
+
+macro(webots_setup_exe target exe)
+  # Use a timestamp file to determine if exe has changed
+  # Add a custom command to create timestamp file,
+  # then add a custom target that depends on timestamp.
+  set(stamp ${exe}.webots_setup_stamp)
+  add_custom_command(
+    OUTPUT ${stamp}
+    DEPENDS ${exe}
+    COMMENT "Set up webots firewall exception for ${exe}"
+    COMMAND ${WEBOTS_SETUP} -x ${exe}
+    COMMAND ${CMAKE_COMMAND} -E touch ${stamp}
+  )
+  add_custom_target(${target} ALL DEPENDS ${stamp})
 endmacro(webots_setup_exe)
 
 macro(webots_build_cxx_executable target srclist_dir)
   # Build the executable
   anki_build_cxx_executable(${target} ${srclist_dir})
   # Sign executable for use with webots firewall certificate
-  if (WEBOTS_SETUP_EXE)
-    webots_setup_exe(${target})
-  endif(WEBOTS_SETUP_EXE)
+  if (WEBOTS_SETUP_FIREWALL)
+    webots_setup_target(${target})
+  endif(WEBOTS_SETUP_FIREWALL)
 endmacro(webots_build_cxx_executable)
 
 #
@@ -468,21 +484,43 @@ symlink_target(
   DST "${CONTROLLERS_DIR}/webotsCtrlGateway/"
 )
 
+if (WEBOTS_SETUP_FIREWALL)
+  webots_setup_exe(webotsCtrlGatewayFirewall ${CMAKE_BINARY_DIR}/bin/vic-gateway)
+endif()
+
 #
 # webotsCtrlNeuralNets
 #
-#
-# NOTE: This controller is actually built by coretech/vision/neuralnets/CMakeLists.txt
-#       because it shares a main.cpp with the robot's vic-neuralnets process. Since it
-#       it is not a target defined in this directory, we'll manually symlink it. This
-#       does mean we don't get a firewall certificate for this process, but since it
-#       doesn't open any ports, that should be ok. This also assumes the neuralnets
-#       build ran first, however.
-#
-add_custom_target(symLinkWebotsCtrlNeuralNets ALL
-  COMMENT "Symlinking webotsCtrlNeuralNets"
-  WORKING_DIRECTORY ${CONTROLLERS_DIR}
-  COMMAND ${CMAKE_COMMAND} -E make_directory webotsCtrlNeuralNets
-  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/bin/webotsCtrlNeuralNets webotsCtrlNeuralNets/webotsCtrlNeuralNets
-  COMMAND ${CMAKE_COMMAND} -E create_symlink ${BUILT_RESOURCES_DIR} webotsCtrlNeuralNets/resources
+
+webots_build_cxx_executable(webotsCtrlNeuralNets ${ANKI_SRCLIST_DIR})
+anki_build_target_license(webotsCtrlNeuralNets "ANKI")
+
+include(webots)
+
+target_compile_definitions(webotsCtrlNeuralNets
+  PRIVATE
+  ${PLATFORM_DEFINITIONS}
+  SIMULATOR
+)
+
+target_link_libraries(webotsCtrlNeuralNets
+  PRIVATE
+  jsoncpp
+  util
+  cti_common
+  cti_vision
+  ${OPENCV_LIBS}
+  cti_neuralnets
+  ${WEBOTS_LIBS}
+)
+
+symlink_target(
+  TARGET webotsCtrlNeuralNets
+  DST "${CONTROLLERS_DIR}/webotsCtrlNeuralNets/"
+)
+
+symlink_target(
+  TARGET webotsCtrlNeuralNets
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlNeuralNets/resources
 )

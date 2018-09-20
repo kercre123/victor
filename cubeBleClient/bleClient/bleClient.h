@@ -47,9 +47,13 @@ namespace Vector {
     
     void DisconnectFromCube();
     
-    bool IsConnectedToCube() {
-      return (_connectionId >= 0) && !_pendingFirmwareCheck;
+    bool IsConnectedToCube() const {
+      return (_connectionId >= 0) && !_pendingFirmwareCheckOrUpdate;
     };
+    
+    bool IsPendingFirmwareCheckOrUpdate() const {
+      return _pendingFirmwareCheckOrUpdate;
+    }
     
     // Are we connected to the bluetooth daemon?
     bool IsConnectedToServer() {
@@ -132,7 +136,7 @@ namespace Vector {
     
     // True if we are in the process of checking the cube firmware version or
     // OTA'ing the cube.
-    std::atomic<bool> _pendingFirmwareCheck{false};
+    std::atomic<bool> _pendingFirmwareCheckOrUpdate{false};
     
     AdvertisementCallback          _advertisementCallback;
     ReceiveDataCallback            _receiveDataCallback;

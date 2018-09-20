@@ -92,13 +92,13 @@ SoftReset       CPSID I
                 LDR     R6, =0x08000000
                 LDR     R0, [R6, #0x00]     ; Setup Stack
                 MSR     MSP, R0
+                CMP     R0, #0              ; We are on charger, we don't need to hack the heap
+                BNE     _SafeBoot
                 LDR     R0, [R6, #0x28]     ; Test for legacy bootloader
                 CMP     R0, #0
-                BEQ     _HackHeap
-                LDR     R0, [R6, #0x04]
-                BX      R0
+                BNE     _SafeBoot
 
-_HackHeap       LDR     R7, =0x20000000     ; Setup heap
+                LDR     R7, =0x20000000     ; Setup heap
                 MOVS    R0, #0x00
                 STR     R0, [R7, #0x00]
                 STR     R0, [R7, #0x04]
@@ -133,6 +133,9 @@ _HackHeap       LDR     R7, =0x20000000     ; Setup heap
                 STRB    R1, [R7, #0x10]     ; Allow Power
 
                 LDR     R0, =0x0800195B     ; Branch to main
+                BX      R0
+
+_SafeBoot       LDR     R0, [R6, #0x04]     ; We are on charger, or we are running a new bootloader
                 BX      R0
 
 ;*******************************************************************************

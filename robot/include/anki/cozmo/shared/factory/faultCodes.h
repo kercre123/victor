@@ -26,7 +26,7 @@ namespace Vector {
 
 namespace FaultCode {
 
-static const char* kFaultCodeFifoName = "/run/error_code";
+static const char* kFaultCodeFifoName = "/run/fault_code";
 
 // Enum of fault codes, range 800 - 999
 // Higher numbers take precedence when displaying
@@ -37,6 +37,7 @@ enum : uint16_t {
   //display precedence over (external) body tests
   DISPLAY_FAILURE       = 990, //nobody will ever see this :(
 
+  CAMERA_STOPPED        = 981,
   CAMERA_FAILURE        = 980,
 
   //WIFI                  = 970,
@@ -45,10 +46,13 @@ enum : uint16_t {
   IMU_FAILURE           = 960,
 
   //critical processes
+  NO_CLOUD_PROCESS      = 923,
   NO_GATEWAY            = 921,
   SYSTEMD               = 919,
   NO_ROBOT_COMMS        = 917,
+  NO_ROBOT_PROCESS      = 916,
   NO_ENGINE_COMMS       = 915,
+  NO_ENGINE_PROCESS     = 914,
   NO_SWITCHBOARD        = 913,
   AUDIO_FAILURE         = 911,
   STOP_BOOT_ANIM_FAILED = 909,
@@ -84,6 +88,21 @@ enum : uint16_t {
   DFU_FAILED            = 801,
   NO_ANIM_PROCESS       = 800,
 
+
+  // --------- Shutdown codes ----------
+
+  // The battery_overheated icon is displayed by faultCodeDisplay.cpp
+  // when it receives this code. Power will be cut in 30s.
+  SHUTDOWN_BATTERY_CRITICAL_TEMP  = 705,
+
+  // These codes result in only vic-dasmgr be stopped
+  // Also, no fault code is displayed since power to the
+  // head will be cut shortly.
+  SHUTDOWN_BATTERY_CRITICAL_VOLT  = 702,
+  SHUTDOWN_GYRO_NOT_CALIBRATING   = 701,
+  SHUTDOWN_BUTTON                 = 700,
+  // ------ End of Shutdown codes ------
+
   COUNT = 1000
 };
 
@@ -92,31 +111,22 @@ enum : uint16_t {
 // from the fifo
 static int DisplayFaultCode(uint16_t code)
 {
-  // If the fifo doesn't exist create it
-  if(access(FaultCode::kFaultCodeFifoName, F_OK) == -1)
-  {
-    int res = mkfifo(FaultCode::kFaultCodeFifoName, S_IRUSR | S_IWUSR);
-    if(res < 0)
-    {
-      printf("DisplayFaultCode: mkfifo failed %d", errno);
-      return errno;
-    }
-  }
-
+  printf("DisplayFaultCode: %u\n", code);
   int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
-  if(fifo < 0)
-  {
+  if (fifo == -1) {
     printf("DisplayFaultCode: Failed to open fifo %d\n", errno);
-    return errno;
+    return -1;
   }
 
-  // Write the fault code to the socket
-  ssize_t numBytes = write(fifo, &code, sizeof(code));
-  if(numBytes != sizeof(code))
+  char faultCode[7] = {0};
+  snprintf(faultCode, sizeof(faultCode)-1, "%u\n", code);
+
+  ssize_t numBytes = write(fifo, faultCode, sizeof(faultCode));
+  if(numBytes != sizeof(faultCode))
   {
     printf("DisplayFaultCode: Expected to write %zu bytes but only wrote %zd\n",
-	   sizeof(code),
-	   numBytes);
+	    sizeof(faultCode),
+	    numBytes);
 
     if(numBytes == 0)
     {

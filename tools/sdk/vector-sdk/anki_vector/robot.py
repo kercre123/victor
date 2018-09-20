@@ -1,32 +1,49 @@
-'''
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
 The main robot class for managing the Vector SDK
+"""
 
-Copyright (c) 2018 Anki, Inc.
-'''
-
-__all__ = ['Robot', 'AsyncRobot', 'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE']
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['MAX_HEAD_ANGLE', 'MIN_HEAD_ANGLE', 'AsyncRobot', 'Robot']
 
 import asyncio
 import configparser
 import functools
-import logging
 from pathlib import Path
 
 from . import (animation, backpack, behavior, camera, connection,
                events, exceptions, faces, motors,
-               oled_face, photos, proximity, sync, util,
+               screen, photos, proximity, sync, util,
                viewer, world)
 from .messaging import protocol
 
-MODULE_LOGGER = logging.getLogger(__name__)
-
 # Constants
 
+# TODO These two constants come out very ugly in the docs
 #: The minimum angle the robot's head can be set to
 MIN_HEAD_ANGLE = util.degrees(-22)
 
 #: The maximum angle the robot's head can be set to
 MAX_HEAD_ANGLE = util.degrees(45)
+
+# TODO Consider adding constants from Cozmo's robot.py for MIN_LIFT_HEIGHT_MM, MIN_LIFT_HEIGHT,
+# MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
+
+# TODO Consider adding Cozmo's LiftPosition class
+# TODO How are we deciding what has a leading underscore or not in Robot class?
 
 
 class Robot:
@@ -42,7 +59,7 @@ class Robot:
     .. code-block:: python
 
         # Create the robot connection
-        with Robot("00e20115") as robot:
+        with anki_vector.Robot("my_robot_serial_number") as robot:
             # Run your commands (for example play animation)
             robot.play_animation("anim_blackjack_victorwin_01")
 
@@ -52,7 +69,7 @@ class Robot:
     .. code-block:: python
 
         # Create a Robot object
-        robot = Robot("00e20115")
+        robot = Robot("my_robot_serial_number")
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
@@ -60,9 +77,9 @@ class Robot:
         # Disconnect from the Robot
         robot.disconnect()
 
-    :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
+    :param serial: Vector's serial number. The Robot Serial Number (ex. 00e20100) is located on the underside of Vector,
+                   or accessible from Vector's debug screen. Used to identify which Vector configuration file to load.
     :param ip: Vector's IP Address. (optional)
-    :param port: The port on which Vector is listening. Defaults to :code:`443`
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-A1B2", "guid": "<secret_key>"}`
                    Where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
@@ -78,7 +95,6 @@ class Robot:
     def __init__(self,
                  serial: str = None,
                  ip: str = None,
-                 port: str = "443",
                  config: dict = None,
                  loop: asyncio.BaseEventLoop = None,
                  default_logging: bool = True,
@@ -105,12 +121,17 @@ class Robot:
         self._cert_file = config["cert"]
         self._guid = config["guid"]
 
+        self._port = "443"
+        if 'port' in config:
+            self._port = config["port"]
+
         if self._name is None or self._ip is None or self._cert_file is None or self._guid is None:
             raise ValueError("Robot requires a serial and for Vector to be logged in (using the app then configure.py).\n"
                              "You may also provide the values necessary for connection through the config parameter. ex: "
                              '{"name":"Vector-A1B2", "ip":"192.168.43.48", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
 
-        self.conn = connection.Connection(self._name, ':'.join([self._ip, port]), self._cert_file, self._guid)
+        #: :class:`anki_vector.connection.Connection`: The active connection to the robot.
+        self.conn = connection.Connection(self._name, ':'.join([self._ip, self._port]), self._cert_file, self._guid)
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
@@ -119,7 +140,7 @@ class Robot:
         self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
         self._motors: motors.MotorComponent = None
-        self._oled: oled_face.OledComponent = None
+        self._screen: screen.ScreenComponent = None
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
         self._viewer: viewer.ViewerComponent = None
@@ -163,22 +184,26 @@ class Robot:
 
     @property
     def robot(self) -> 'Robot':
+        """A reference to the Robot instance."""
         return self
 
     @property
     def anim(self) -> animation.AnimationComponent:
+        """A reference to the AnimationComponent instance."""
         if self._anim is None:
             raise exceptions.VectorNotReadyException("AnimationComponent is not yet initialized")
         return self._anim
 
     @property
     def backpack(self) -> backpack.BackpackComponent:
+        """A reference to the BackpackComponent instance."""
         if self._backpack is None:
             raise exceptions.VectorNotReadyException("BackpackComponent is not yet initialized")
         return self._backpack
 
     @property
     def behavior(self) -> behavior.BehaviorComponent:
+        """A reference to the BehaviorComponent instance."""
         return self._behavior
 
     @property
@@ -188,7 +213,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115") as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
@@ -198,32 +223,42 @@ class Robot:
 
     @property
     def faces(self) -> faces.FaceComponent:
+        """A reference to the FaceComponent instance."""
         if self._faces is None:
             raise exceptions.VectorNotReadyException("FaceComponent is not yet initialized")
         return self._faces
 
     @property
     def motors(self) -> motors.MotorComponent:
+        """A reference to the MotorComponent instance."""
         if self._motors is None:
             raise exceptions.VectorNotReadyException("MotorComponent is not yet initialized")
         return self._motors
 
     @property
-    def oled(self) -> oled_face.OledComponent:
-        if self._oled is None:
-            raise exceptions.VectorNotReadyException("OledComponent is not yet initialized")
-        return self._oled
+    def screen(self) -> screen.ScreenComponent:
+        """A reference to the ScreenComponent instance."""
+        if self._screen is None:
+            raise exceptions.VectorNotReadyException("ScreenComponent is not yet initialized")
+        return self._screen
 
     @property
     def photos(self) -> photos.PhotographComponent:
+        """A reference to the PhotographComponent instance."""
         if self._photos is None:
             raise exceptions.VectorNotReadyException("PhotographyComponent is not yet initialized")
         return self._photos
 
     @property
     def proximity(self) -> proximity.ProximityComponent:
-        '''Component containing state related to object proximity detection
-        '''
+        """Component containing state related to object proximity detection
+
+        .. code-block:: python
+
+            proximity_data = robot.proximity.last_valid_sensor_reading
+            if proximity_data is not None:
+                print(proximity_data.distance)
+        """
         return self._proximity
 
     @property
@@ -233,7 +268,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115", show_viewer=True) as robot:
+            with anki_vector.Robot("my_robot_serial_number") as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.viewer.stop_video()
         """
@@ -243,82 +278,163 @@ class Robot:
 
     @property
     def world(self) -> world.World:
+        """A reference to the World instance, or None if the WorldComponent is not yet initialized."""
         if self._world is None:
             raise exceptions.VectorNotReadyException("WorldComponent is not yet initialized")
         return self._world
 
     @property
     def pose(self) -> util.Pose:
-        ''':class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector'''
+        """:class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector
+
+        .. code-block:: python
+
+            current_robot_pose = robot.pose
+        """
         return self._pose
 
     @property
-    def pose_angle_rad(self):
-        '''Vector's pose angle (heading in X-Y plane).'''
+    def pose_angle_rad(self) -> float:
+        """Vector's pose angle (heading in X-Y plane).
+
+        .. code-block:: python
+
+            current_pose_angle_rad = robot.pose_angle_rad
+        """
         return self._pose_angle_rad
 
     @property
-    def pose_pitch_rad(self):
-        '''Vector's pose pitch (angle up/down).'''
+    def pose_pitch_rad(self) -> float:
+        """Vector's pose pitch (angle up/down).
+
+        .. code-block:: python
+
+            current_pose_pitch_rad = robot.pose_pitch_rad
+        """
         return self._pose_pitch_rad
 
     @property
-    def left_wheel_speed_mmps(self):
-        '''Vector's left wheel speed in mm/sec'''
+    def left_wheel_speed_mmps(self) -> float:
+        """Vector's left wheel speed in mm/sec
+
+        .. code-block:: python
+
+            current_left_wheel_speed_mmps = robot.left_wheel_speed_mmps
+        """
         return self._left_wheel_speed_mmps
 
     @property
-    def right_wheel_speed_mmps(self):
-        '''Vector's right wheel speed in mm/sec'''
+    def right_wheel_speed_mmps(self) -> float:
+        """Vector's right wheel speed in mm/sec
+
+        .. code-block:: python
+
+            current_right_wheel_speed_mmps = robot.right_wheel_speed_mmps
+        """
         return self._right_wheel_speed_mmps
 
     @property
-    def head_angle_rad(self):
-        '''Vector's head angle (up/down).'''
+    def head_angle_rad(self) -> float:
+        """Vector's head angle (up/down).
+
+        .. code-block:: python
+
+            current_head_angle_rad = robot.head_angle_rad
+        """
         return self._head_angle_rad
 
     @property
-    def lift_height_mm(self):
-        '''Height of Vector's lift from the ground.'''
+    def lift_height_mm(self) -> float:
+        """Height of Vector's lift from the ground.
+
+        .. code-block:: python
+
+            current_lift_height_mm = robot.lift_height_mm
+        """
         return self._lift_height_mm
 
     @property
-    def accel(self):
-        ''':class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)'''
+    def accel(self) -> util.Vector3:
+        """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)
+
+        .. code-block:: python
+
+            current_accel = robot.accel
+        """
         return self._accel
 
     @property
-    def gyro(self):
-        ''':class:`anki_vector.util.Vector3`: The current gyroscope reading (x, y, z)'''
+    def gyro(self) -> util.Vector3:
+        """The current gyroscope reading (x, y, z)
+
+        .. code-block:: python
+
+            current_gyro = robot.gyro
+        """
         return self._gyro
 
     @property
-    def carrying_object_id(self):
-        '''The ID of the object currently being carried (-1 if none)'''
+    def carrying_object_id(self) -> int:
+        """The ID of the object currently being carried (-1 if none)
+
+        .. code-block:: python
+
+            current_carrying_object_id = robot.carrying_object_id
+        """
         return self._carrying_object_id
 
+    # TODO Is this really a thing in Vector?
     @property
-    def carrying_object_on_top_id(self):
-        '''The ID of the object on top of the object currently being carried (-1 if none)'''
+    def carrying_object_on_top_id(self) -> int:
+        """The ID of the object on top of the object currently being carried (-1 if none)
+
+        .. code-block:: python
+
+            current_carrying_object_on_top_id = robot.carrying_object_on_top_id
+        """
         return self._carrying_object_on_top_id
 
     @property
-    def head_tracking_object_id(self):
-        '''The ID of the object the head is tracking to (-1 if none)'''
+    def head_tracking_object_id(self) -> int:
+        """The ID of the object the head is tracking to (-1 if none)
+
+        .. code-block:: python
+
+            current_head_tracking_object_id = robot.head_tracking_object_id
+        """
         return self._head_tracking_object_id
 
     @property
-    def localized_to_object_id(self):
-        '''The ID of the object that the robot is localized to (-1 if none)'''
+    def localized_to_object_id(self) -> int:
+        """The ID of the object that the robot is localized to (-1 if none)
+
+        .. code-block:: python
+
+            current_localized_to_object_id = robot.localized_to_object_id
+        """
         return self._localized_to_object_id
 
+    # TODO Should this be in photos or somewhere else?
     @property
-    def last_image_time_stamp(self):
-        '''The robot's timestamp for the last image seen.'''
+    def last_image_time_stamp(self) -> int:
+        """The robot's timestamp for the last image seen.
+
+        .. code-block:: python
+
+            current_last_image_time_stamp = robot.last_image_time_stamp
+        """
         return self._last_image_time_stamp
 
+    # TODO If we are going to keep this, need to tell people what the values mean. See RobotStatusFlag in robotStatusAndActions.clad?
+    # TODO Needs return type
     @property
     def status(self):
+        """ Describes robot status.
+
+        .. code-block:: python
+
+            current_status = robot.status
+        """
         return self._status
 
     # TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
@@ -331,7 +447,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("00e20115", enable_camera_feed=True) as robot:
+            with anki_vector.Robot("my_robot_serial_number", enable_camera_feed=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.enable_camera_feed = False
                 robot.loop.run_until_complete(utilities.delay_close(5))
@@ -371,7 +487,7 @@ class Robot:
 
         .. code-block:: python
 
-            robot = Robot("00e20115")
+            robot = Robot("my_robot_serial_number")
             robot.connect()
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
@@ -396,7 +512,7 @@ class Robot:
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
         self._motors = motors.MotorComponent(self)
-        self._oled = oled_face.OledComponent(self)
+        self._screen = screen.ScreenComponent(self)
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
         self._viewer = viewer.ViewerComponent(self)
@@ -427,7 +543,7 @@ class Robot:
 
         .. code-block:: python
 
-            robot = Robot("00e20115")
+            robot = Robot("my_robot_serial_number")
             robot.connect()
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
@@ -462,6 +578,7 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
+    # TODO BatteryStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
@@ -469,10 +586,13 @@ class Robot:
         .. code-block:: python
 
             battery_state = robot.get_battery_state()
+            if battery_state:
+                print("Robot Battery Voltage: {0}".format(battery_state.battery_volts))
         """
         get_battery_state_request = protocol.BatteryStateRequest()
-        return await self.conn.interface.BatteryState(get_battery_state_request)
+        return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
+    # TODO VersionStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_version_state(self) -> protocol.VersionStateResponse:
         """Get the versioning information of the Robot
@@ -482,8 +602,9 @@ class Robot:
             version_state = robot.get_version_state()
         """
         get_version_state_request = protocol.VersionStateRequest()
-        return await self.conn.interface.VersionState(get_version_state_request)
+        return await self.conn.grpc_interface.VersionState(get_version_state_request)
 
+    # TODO NetworkStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_network_state(self) -> protocol.NetworkStateResponse:
         """Get the network information of the Robot
@@ -493,11 +614,16 @@ class Robot:
             network_state = robot.get_version_state()
         """
         get_network_state_request = protocol.NetworkStateRequest()
-        return await self.conn.interface.NetworkState(get_network_state_request)
+        return await self.conn.grpc_interface.NetworkState(get_network_state_request)
 
+    # TODO SayTextResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
-        '''Have Vector say text!
+        """Have Vector say text!
+
+        .. code-block:: python
+
+            robot.say_text("Hello World")
 
         :param text: The words for Vector to say.
         :param use_vector_voice: Whether to use Vector's robot voice
@@ -506,11 +632,11 @@ class Robot:
                 generated text to speech audio.
 
         :return: object that provides the status and utterance state
-        '''
+        """
         say_text_request = protocol.SayTextRequest(text=text,
                                                    use_vector_voice=use_vector_voice,
                                                    duration_scalar=duration_scalar)
-        return await self.conn.interface.SayText(say_text_request)
+        return await self.conn.grpc_interface.SayText(say_text_request)
 
 
 class AsyncRobot(Robot):
@@ -524,7 +650,7 @@ class AsyncRobot(Robot):
     .. code-block:: python
 
         # Create the robot connection
-        with AsyncRobot("00e20115") as robot:
+        with AsyncRobot("my_robot_serial_number") as robot:
             # Run your commands (for example play animation)
             robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
 
@@ -534,7 +660,7 @@ class AsyncRobot(Robot):
     .. code-block:: python
 
         # Create a Robot object
-        robot = AsyncRobot("00e20115")
+        robot = AsyncRobot("my_robot_serial_number")
         # Connect to the Robot
         robot.connect()
         # Run your commands (for example play animation)
@@ -544,7 +670,6 @@ class AsyncRobot(Robot):
 
     :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
     :param ip: Vector's IP Address. (optional)
-    :param port: The port on which Vector is listening. Defaults to :code:`443`
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-A1B2", "guid": "<secret_key>"}`
                    Where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
@@ -562,8 +687,10 @@ class AsyncRobot(Robot):
         super(AsyncRobot, self).__init__(*args, **kwargs)
         self.is_async = True
 
+    # TODO Add docstring
     def add_pending(self, task):
         self.pending += [task]
 
+    # TODO Add docstring
     def remove_pending(self, task):
         self.pending = [x for x in self.pending if x is not task]

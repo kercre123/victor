@@ -63,9 +63,6 @@ function(anki_build_target_license target)
     if(arg STREQUAL "ANKI")
       continue()
     endif()
-    if(arg STREQUAL "Commercial")
-      continue()
-    endif()
 
     # split string separated by comma, e.g. "license,file"
 
@@ -85,6 +82,12 @@ function(anki_build_target_license target)
       # missing license, missing file
       message(${MESSAGE_STATUS} "WARNING: missing license information for ${target} target")
       return()
+    endif()
+
+    # don't publish commercial licenses
+
+    if(license STREQUAL "Commercial")
+      continue()
     endif()
 
     # check against known, caution and stop lists
@@ -136,20 +139,35 @@ function(anki_build_target_license target)
       if(IS_ABSOLUTE ${file})
         get_filename_component(filename ${file} NAME)
 
+        if (file MATCHES "/go/")
+          # Go targets have all licenses in a single target, separate using the last
+          # directory path
+
+          # last directory path
+
+          get_filename_component(dir ${file} DIRECTORY)
+          string(REPLACE "/" ";" dir "${dir}")
+          list(REVERSE dir)
+          list(GET dir 0 dir)
+          set(dir "/${dir}")
+        else()
+          set(dir)
+        endif()
+
         # copy license to folder
         file(COPY ${file}
-             DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license})
+             DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license}${dir})
 
         if (NOT ${filename} MATCHES ".txt")
           # add .txt if it's missing
           file(RENAME
-               ${CMAKE_BINARY_DIR}/licences/${target}-${license}/${filename}
-               ${CMAKE_BINARY_DIR}/licences/${target}-${license}/${filename}.txt)
+               ${CMAKE_BINARY_DIR}/licences/${target}-${license}${dir}/${filename}
+               ${CMAKE_BINARY_DIR}/licences/${target}-${license}${dir}/${filename}.txt)
           set(filename "${filename}.txt")
         endif()
 
         # create html link to folder/file
-        file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "<a href=\"${target}-${license}/${filename}\"\>${target} ${license}</a><br/>\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "<a href=\"${target}-${license}${dir}/${filename}\"\>${target}${dir} ${license}</a><br/>\n")
       else()
         message(FATAL_ERROR "${target} target is using a relative path, ${file}, for it's ${license} license")
         return()
@@ -173,6 +191,17 @@ function(check_licenses)
     get_property(type TARGET ${target} PROPERTY TYPE)
     if(${type} STREQUAL "EXECUTABLE" OR ${type} STREQUAL "SHARED_LIBRARY")
       list(APPEND all_executables ${target})
+
+    elseif(${type} STREQUAL "UTILITY")
+      get_property(anki_out_path_isset TARGET ${target} PROPERTY ANKI_OUT_PATH SET)
+      get_property(exclude_from_all_isset TARGET ${target} PROPERTY EXCLUDE_FROM_ALL SET)
+      if(anki_out_path_isset AND exclude_from_all_isset)
+        get_property(exclude_from_all TARGET ${target} PROPERTY EXCLUDE_FROM_ALL)
+        if (NOT exclude_from_all)
+          # Go executables, deployed to the rebot, have EXCLUDE_FROM_ALL set to FALSE
+          list(APPEND all_executables ${target})
+        endif()
+      endif()
     endif()
   endforeach()
 
@@ -219,10 +248,7 @@ function(check_licenses)
 
     if(TARGET ${target})
       get_property(type TARGET ${target} PROPERTY TYPE)
-      if(${type} STREQUAL "UTILITY")
-        # non-source code target, maybe GO
-
-      elseif(${type} STREQUAL "INTERFACE_LIBRARY")
+      if(${type} STREQUAL "INTERFACE_LIBRARY")
         # non-source code target
 
       else()
@@ -301,16 +327,26 @@ function(guess_license_for_file filename licenses_result)
 
     if(contents MATCHES "mit license")
       list(APPEND licenses "MIT")
+
+    elseif(contents MATCHES "permission is hereby granted, free of charge, to any person" AND
+           contents MATCHES "the above copyright notice and this permission notice shall" AND
+           contents MATCHES "the software is provided \"as is\", without warranty of any kind")
+      list(APPEND licenses "MIT")
     endif()
 
-    if(contents MATCHES "redistributions of source code must retain the above copyright" AND
-           contents MATCHES "redistributions in binary form must reproduce the above copyright" AND
-           contents MATCHES "endorse or promote products")
+    if(contents MATCHES "apache license")
+      if(contents MATCHES "version 2.0")
+        list(APPEND licenses "Apache-2.0")
+      endif()
+    endif()
+
+    if(contents MATCHES "redistributions of source code must retain the" AND
+       contents MATCHES "redistributions in binary form must reproduce" AND
+       contents MATCHES "endorse or promote products")
       list(APPEND licenses "BSD-3")
-    endif()
 
-    if(contents MATCHES "redistributions of source code must retain the above copyright" AND
-           contents MATCHES "redistributions in binary form must reproduce the above copyright")
+    elseif(contents MATCHES "redistributions of source code must retain the" AND
+           contents MATCHES "redistributions in binary form must reproduce")
       list(APPEND licenses "BSD-2")
     endif()
 
@@ -322,11 +358,11 @@ function(guess_license_for_file filename licenses_result)
       list(APPEND licenses "RSA")
     endif()
 
-    if(contents MATCHES "gnu " AND
-           contents MATCHES "license version 2")
+    if(contents MATCHES "gnu general public license" AND
+       contents MATCHES "version 2")
       list(APPEND licenses "GPL-2.0")
-    elseif(contents MATCHES "gnu " AND
-           contents MATCHES "license")
+
+    elseif(contents MATCHES "gnu general public license")
       list(APPEND licenses "GPL")
     endif()
 
@@ -344,6 +380,17 @@ function(guess_license_for_file filename licenses_result)
 
     if(contents MATCHES "luke benstead")
       list(APPEND licenses "modified BSD")
+    endif()
+
+    if(contents MATCHES "mozilla public license")
+      if(contents MATCHES "version 2.0")
+        list(APPEND licenses "MPL-2.0")
+      endif()
+    endif()
+
+    if(contents MATCHES "permission to use, copy, modify, and/or distribute" AND
+       contents MATCHES "the software is provided \"as is\" and the author disclaims all warranties")
+      list(APPEND licenses "ISC")
     endif()
 
     foreach(license ${licenses})
@@ -365,20 +412,25 @@ function(guess_license_for_target target licenses_result)
 
   get_property(sources TARGET ${target} PROPERTY SOURCES)
   get_property(source_dir TARGET ${target} PROPERTY SOURCE_DIR)
+
   foreach(src ${sources})
     if(NOT IS_ABSOLUTE ${src})
       set(src "${source_dir}/${src}")
     endif()
 
-    guess_license_for_file(${src} addtional_licenses)
-    list(APPEND licenses ${addtional_licenses})
+    guess_license_for_file(${src} additional_licenses)
+    list(APPEND licenses ${additional_licenses})
 
     # check same directory for license files
     get_filename_component(dir ${src} DIRECTORY)
     foreach(license_file LICENSE.md LICENSE COPYING)
       if(EXISTS "${dir}/${license_file}")
-        guess_license_for_file(${dir}/${license_file} addtional_licenses)
-        list(APPEND licenses ${addtional_licenses})
+        guess_license_for_file(${dir}/${license_file} additional_licenses)
+        if(additional_licenses)
+          list(APPEND licenses "${additional_licenses},${dir}/${license_file}")
+        else()
+          list(APPEND licenses "UNKNOWN,${dir}/${license_file}")
+        endif()
       endif()
     endforeach()
 
@@ -386,8 +438,8 @@ function(guess_license_for_target target licenses_result)
     get_filename_component(dir ${dir} DIRECTORY)
     foreach(license_file LICENSE.md LICENSE COPYING)
       if(EXISTS "${dir}/${license_file}")
-        guess_license_for_file(${dir}/${license_file} addtional_licenses)
-        list(APPEND licenses ${addtional_licenses})
+        guess_license_for_file(${dir}/${license_file} additional_licenses)
+        list(APPEND licenses ${additional_licenses})
       endif()
     endforeach()
   endforeach()

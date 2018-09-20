@@ -117,6 +117,7 @@ enum class RtsConnection_4Tag : uint8_t {
   RtsCloudSessionResponse    = 0x1e, // 30
   RtsAppConnectionIdRequest  = 0x1f, // 31
   RtsAppConnectionIdResponse = 0x20, // 32
+  RtsResponse                = 0x21, // 33
   INVALID                    = 255
 };
 

@@ -12,6 +12,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
@@ -21,18 +22,27 @@
 //
 // Programmatic defaults. These values are used when unless overridden by configuration.
 //
-#define TTS_DEFAULT_LANGUAGE   "en"
-#define TTS_DEFAULT_VOICE      "Ryan22k_CO"
-#define TTS_DEFAULT_SPEED      100
-#define TTS_DEFAULT_SHAPING    100
-#define TTS_DEFAULT_PITCH      100
-#define TTS_LEADINGSILENCE_MS  50
-#define TTS_TRAILINGSILENCE_MS 50
+#define TTS_DEFAULT_LANGUAGE    "en"
+#define TTS_DEFAULT_VOICE       "Ryan22k_CO"
+#define TTS_DEFAULT_SPEED       100
+#define TTS_DEFAULT_SHAPING     100
+#define TTS_DEFAULT_PITCH       100
 #define TTS_PAUSEPUNCTUATION_MS 1000
 #define TTS_PAUSESEMICOLON_MS   500
 #define TTS_PAUSECOMMA_MS       250
 #define TTS_PAUSEBRACKET_MS     100
 #define TTS_PAUSESPELLING_MS    100
+#define TTS_ENABLEPAUSEPARAMS   true
+
+//
+// Platform-specific defaults
+#ifdef ANKI_PLATFORM_OSX
+#define TTS_LEADINGSILENCE_MS   50
+#define TTS_TRAILINGSILENCE_MS  50
+#else
+#define TTS_LEADINGSILENCE_MS   10
+#define TTS_TRAILINGSILENCE_MS  10
+#endif
 
 // Configuration keys
 #define TTS_VOICE_KEY   "voice"
@@ -62,6 +72,7 @@ namespace {
   CONSOLE_VAR_RANGED(u32, kPauseComma_ms, CONSOLE_GROUP, TTS_PAUSECOMMA_MS, 50, 4000);
   CONSOLE_VAR_RANGED(u32, kPauseBracket_ms, CONSOLE_GROUP, TTS_PAUSEBRACKET_MS, 50, 4000);
   CONSOLE_VAR_RANGED(u32, kPauseSpelling_ms, CONSOLE_GROUP, TTS_PAUSESPELLING_MS, 50, 4000);
+  CONSOLE_VAR(bool, kEnablePausePrams, CONSOLE_GROUP, TTS_ENABLEPAUSEPARAMS);
 }
 
 #endif
@@ -194,6 +205,15 @@ int TextToSpeechProviderConfig::GetPauseSpelling_ms() const
   return kPauseSpelling_ms;
 #else
   return TTS_PAUSESPELLING_MS;
+#endif
+}
+
+bool TextToSpeechProviderConfig::GetEnablePauseParams() const
+{
+#if REMOTE_CONSOLE_ENABLED
+  return kEnablePausePrams;
+#else
+  return TTS_ENABLEPAUSEPARAMS;
 #endif
 }
 

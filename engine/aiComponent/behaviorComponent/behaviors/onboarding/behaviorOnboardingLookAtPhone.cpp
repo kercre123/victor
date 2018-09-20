@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 
 namespace Anki {
 namespace Vector {
@@ -62,13 +63,24 @@ void BehaviorOnboardingLookAtPhone::OnBehaviorActivated()
   bool hasRun = _dVars.hasRun;
   _dVars = DynamicVariables();
   _dVars.hasRun = true;
-  if( hasRun ) {
-    // start with the loop action, which has a delayed head keyframe in the UP position, instead
-    // of MoveHeadUp, which has an initial keyframe in the DOWN position, to avoid a head snap
-    RunLoopAction();
-  } else {
-    MoveHeadUp();
-  }
+  
+  // since this behavior runs on and off charger without any user facing battery alerts, make sure it's in low power
+  // mode to avoid overheating the battery. We should be able to still receive app messages during this time to wake
+  // up (which ends low power mode).
+  SmartRequestPowerSaveMode();
+  
+  // if the app requests we restart onboarding in the middle of something else, make sure the lift is down
+  auto* moveLiftAction = new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::LOW_DOCK );
+  DelegateIfInControl( moveLiftAction, [this, hasRun]() {
+    if( hasRun ) {
+      // start with the loop action, which has a delayed head keyframe in the UP position, instead
+      // of MoveHeadUp, which has an initial keyframe in the DOWN position, to avoid a head snap
+      RunLoopAction();
+    } else {
+      MoveHeadUp();
+    }
+  });
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -88,6 +100,7 @@ void BehaviorOnboardingLookAtPhone::BehaviorUpdate()
 void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneUp };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl(action, [this](const ActionResult& res){
     RunLoopAction();
   });
@@ -97,6 +110,7 @@ void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 void BehaviorOnboardingLookAtPhone::RunLoopAction()
 {
   auto* loopAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop, 0 };
+  loopAction->SetRenderInEyeHue( false );
   DelegateIfInControl( loopAction ); // loop forever, waiting for a message
 }
  
@@ -104,6 +118,7 @@ void BehaviorOnboardingLookAtPhone::RunLoopAction()
 void BehaviorOnboardingLookAtPhone::MoveHeadDown()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneDown };
+  action->SetRenderInEyeHue( false );
   DelegateNow( action, [this](const ActionResult& res){
     CancelSelf();
   });

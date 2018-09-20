@@ -12,8 +12,9 @@ namespace Vector {
 enum uint_8 BehaviorTimerTypes {
   Invalid,
 
+  DancingCooldown,
   FistBump,
-  LastDance,
+  ListenForBeatsCooldown,
   PlayingWithCube,
   ReactToIllumination,
   Socializing,

@@ -50,19 +50,10 @@ namespace Anki {
     //This will only work if the steering controller does not overwrite the values.
     void utilSetVehicleOLTrajectory( u16 radius, u16 vspeed );
     
-    // Whether the wheel controller should be coasting (not actively trying to run
-    // wheel controllers
-    void SetCoastMode(bool isOn);
-    
     bool AreWheelsPowered();
     bool AreWheelsMoving();
     
     void ResetIntegralGainSums(void);
-    
-    
-    // Call this to suppress drive to motors until car is stopped.
-    // Used to make sure car doesn't keep driving when it delocalizes.
-    void DoCoastUntilStop(void);
     
   } // namespace WheelController
   } // namespace Vector

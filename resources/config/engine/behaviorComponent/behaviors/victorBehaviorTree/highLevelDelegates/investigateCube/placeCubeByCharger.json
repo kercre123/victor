@@ -1,5 +1,10 @@
 {
   "behaviorID" : "PlaceCubeByCharger",
   "behaviorClass" : "PlaceCubeByCharger",
-  "associatedActiveFeature" : "MoveCube"
+  "associatedActiveFeature" : "MoveCube",
+
+  "wantsToBeActivatedCondition" : {
+    "conditionType" : "FeatureGate",
+    "feature" : "MoveCube"
+  }
 }

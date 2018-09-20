@@ -1,4 +1,4 @@
-// +build !linux
+// +build !vicos
 
 package token
 
@@ -6,12 +6,6 @@ import (
 	"github.com/gwatts/rootcerts"
 	"google.golang.org/grpc/credentials"
 )
-
-func init() {
-	defaultESN = func() string {
-		return "00000000"
-	}
-}
 
 var (
 	defaultTLSCert = rootcerts.ServerCertPool()

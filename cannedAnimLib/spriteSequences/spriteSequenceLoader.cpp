@@ -70,7 +70,7 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
       Vision::SpriteName sequenceName = Vision::SpriteName::Count;
       const bool res = spriteMap->GetKeyForValue(fullDirPath, sequenceName);
       if(!res){
-        PRINT_NAMED_WARNING("SpriteSequenceLoader.LoadSequences.NoSpritenameForPath",
+        PRINT_NAMED_WARNING("SpriteSequenceLoader.LoadSpriteSequences.NoSpritenameForPath",
                             "Path %s not found in spritemap - adding it to the tmp map",
                             fullDirPath.c_str());
       }
@@ -84,8 +84,11 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
     worker.Process();
   }
 
-  return new Vision::SpriteSequenceContainer(std::move(_mappedSequences), std::move(_unmappedSequences));
-
+  auto* container = new Vision::SpriteSequenceContainer(std::move(_mappedSequences), std::move(_unmappedSequences));
+  _mappedSequences.clear();
+  _unmappedSequences.clear();
+  
+  return container;
 } // LoadSpriteSequences()
 
 
@@ -152,17 +155,17 @@ void SpriteSequenceLoader::LoadSequenceLegacy(Vision::SpriteCache* cache,
     size_t underscorePos = filename.find_last_of("_");
     size_t dotPos = filename.find_last_of(".");
     if(dotPos == std::string::npos) {
-      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequence",
+      PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy",
                         "Could not find '.' in frame filename %s",
                         filename.c_str());
       return;
     } else if(underscorePos == std::string::npos) {
-      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequence",
+      PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy",
                         "Could not find '_' in frame filename %s",
                         filename.c_str());
       return;
     } else if(dotPos <= underscorePos+1) {
-      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequence",
+      PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy",
                         "Unexpected relative positions for '.' and '_' in frame filename %s",
                         filename.c_str());
       return;
@@ -175,7 +178,7 @@ void SpriteSequenceLoader::LoadSequenceLegacy(Vision::SpriteCache* cache,
     try {
       frameNum = std::stoi(digitStr);
     } catch (std::invalid_argument&) {
-      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequence",
+      PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy",
                         "Could not get frame number from substring '%s' "
                         "of filename '%s'.",
                         digitStr.c_str(), filename.c_str());
@@ -183,14 +186,14 @@ void SpriteSequenceLoader::LoadSequenceLegacy(Vision::SpriteCache* cache,
     }
     
     if(frameNum < 0) {
-      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequence",
+      PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy",
                         "Found negative frame number (%d) for filename '%s'.",
                         frameNum, filename.c_str());
       return;
     }
     
     if(frameNum < outSeq.GetNumFrames()){
-      PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadSequence",
+      PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy",
                         "Image %s has frame number %d, but sequence already has %d frames - skipping frame",
                         filename.c_str(), frameNum, outSeq.GetNumFrames());
       continue;

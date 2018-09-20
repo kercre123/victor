@@ -68,7 +68,8 @@ BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
 BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
   state( EState::GettingIn ),
   streamingBeginTime( 0.0 ),
-  ttsGenerationStatus( EGenerationStatus::None )
+  ttsGenerationStatus( EGenerationStatus::None ),
+  wasPickedUp( false )
 {
 
 }
@@ -124,7 +125,7 @@ void BehaviorKnowledgeGraphQuestion::GetBehaviorOperationModifiers( BehaviorOper
 {
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
-  modifiers.wantsToBeActivatedWhenOffTreads       = false;
+  modifiers.wantsToBeActivatedWhenOffTreads       = true;
   modifiers.behaviorAlwaysDelegates               = true;
 }
 
@@ -235,12 +236,16 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
     }
     else if ( EState::Responding == _dVars.state )
     {
-      // if we're playing our response, allow victor to be interrupted
       const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
-      if ( isPickedUp )
+
+      // if we're playing our response, allow victor to be interrupted
+      // require victor to be on the ground prior to being picked up, else ignore it if he's already in the air
+      if ( !_dVars.wasPickedUp && isPickedUp )
       {
         OnResponseInterrupted();
       }
+
+      _dVars.wasPickedUp = isPickedUp;
     }
   }
 }
@@ -373,8 +378,12 @@ void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
   {
     auto callback = [this]()
     {
-      // play our "woot woot" animation
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSuccessReaction ) );
+      // don't play the success anim if we've been interrupted
+      if ( EState::Interrupted != _dVars.state )
+      {
+        // play our "woot woot" animation
+        DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSuccessReaction ) );
+      }
     };
 
     DelegateIfInControl( _iVars.ttsBehavior.get(), callback );
@@ -420,6 +429,8 @@ void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
   _dVars.state = EState::Responding;
 
   DEV_ASSERT( !_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists" );
+
+  _dVars.wasPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
 
   // nothing to do but speak the response
   BeginResponseTTS();

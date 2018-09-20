@@ -1,0 +1,32 @@
+{
+  "behaviorID" : "PlayAGameVoiceCommand",
+  "behaviorClass" : "DispatcherQueue",
+
+  "respondToUserIntents" : [
+    {
+      "type" : "play_anygame"
+    }
+  ],
+
+  "behaviors" : [
+    "DriveOffChargerFace",
+    "PlayAGameInternal"
+  ],
+
+  "anonymousBehaviors" : [
+    {
+      "behaviorName" : "PlayAGameInternal",
+      "behaviorClass" : "DispatcherRandom",
+
+      "behaviors" : [
+        {
+          "behavior" : "BlackJack",
+          "cooldown_s" : 300.0,
+          "weight" : 1.0
+        }
+      ]
+    }
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
+}

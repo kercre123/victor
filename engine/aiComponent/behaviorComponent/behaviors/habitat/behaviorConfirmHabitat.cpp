@@ -86,6 +86,10 @@ namespace
   // averaging the values to determine if a nearby obstacle
   // is too close that we need to backup away from
   const u32 kMaxTicksToWaitForProx = 10;
+  
+  // helper console variable to bypass the normal confirmHabitat
+  // triggers to force it to run faster (dev and testing purpose)
+  CONSOLE_VAR(bool, kDevForceBeginConfirmHabitat, "Habitat", false);
 }
 
 BehaviorConfirmHabitat::InstanceConfig::InstanceConfig()
@@ -140,6 +144,10 @@ void BehaviorConfirmHabitat::GetAllDelegates(std::set<IBehavior*>& delegates) co
 
 bool BehaviorConfirmHabitat::WantsToBeActivatedBehavior() const
 {
+  if(kDevForceBeginConfirmHabitat) {
+    return true;
+  }
+  
   // note
   //
   // conditions defined here:
@@ -517,12 +525,31 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 
 void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","");
+  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","%s",_dVars._cliffAlignRetry ? "Retry" : "");
+  
   IActionRunner* action = new CliffAlignToWhiteAction();
+  DEV_ASSERT_MSG(action != nullptr, "ConfirmHabitat.TransitionToCliffAlignWhite.NullActionPtr", "");
+  
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void {
     switch(msg.result) {
       case ActionResult::SUCCESS: { break; }
       case ActionResult::CLIFF_ALIGN_FAILED_TIMEOUT:
+      {
+        if(!_dVars._cliffAlignRetry) {
+          // indicates we failed our first attempt at cliff alignment
+          // + perturb our current position
+          // + resume doing a random walk
+          // the expected result is that the robot will eventually
+          // attempt to do cliff alignment a second time
+          // if that 2nd try fails, then the whole behavior will exit
+          _dVars._cliffAlignRetry = true;
+          _dVars._phase = ConfirmHabitatPhase::RandomWalk;
+          TransitionToBackupTurnForward(-30, RandomSign()*DEG_TO_RAD(30.0f), 40);
+          break;
+        }
+        // deliberate fall-through: if we already retried CliffAlignment
+        // then we don't retry and instead fail to confirm the habitat
+      }
       case ActionResult::CLIFF_ALIGN_FAILED_OVER_TURNING: // deliberate fall through
       {
         // this is probably indicative that we are not in the habitat

@@ -1,0 +1,2 @@
+[raspbian]
+berry1 ansible_ssh_host=PUT_RASPBERRY_IP_HERE ansible_ssh_user=pi ansible_ssh_pass=PUT_RASPBERRY_PASS_HERE host_key_checking=false

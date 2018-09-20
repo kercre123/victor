@@ -1,8 +1,11 @@
 package jdocs
 
 import (
+	"anki/config"
 	"anki/log"
+	"anki/robot"
 	"anki/token"
+	"anki/util"
 	"clad/cloud"
 	"context"
 	"fmt"
@@ -13,8 +16,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-const jdocsURL = "jdocs-dev.api.anki.com:443"
-
 type conn struct {
 	conn   *grpc.ClientConn
 	client pb.JdocsClient
@@ -22,15 +23,12 @@ type conn struct {
 }
 
 var (
-	platformOpts   []grpc.DialOption
 	defaultTLSCert = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
 )
 
 func newConn(ctx context.Context, opts *options) (*conn, error) {
 	var dialOpts []grpc.DialOption
-	if platformOpts != nil && len(platformOpts) > 0 {
-		dialOpts = append(dialOpts, platformOpts...)
-	}
+	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
 	if opts.tokener != nil {
 		creds, err := opts.tokener.Credentials()
@@ -39,7 +37,7 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 		}
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	}
-	rpcConn, err := grpc.DialContext(ctx, jdocsURL, dialOpts...)
+	rpcConn, err := grpc.DialContext(ctx, config.Env.JDocs, dialOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +51,10 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 	return ret, nil
 }
 
+func (c *conn) close() error {
+	return c.conn.Close()
+}
+
 func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud.DocResponse, error) {
 	switch req.Tag() {
 	case cloud.DocRequestTag_Read:
@@ -61,8 +63,6 @@ func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud
 		return c.writeRequest(ctx, req.GetWrite())
 	case cloud.DocRequestTag_DeleteReq:
 		return c.deleteRequest(ctx, req.GetDeleteReq())
-	case cloud.DocRequestTag_User:
-		return c.userRequest()
 	}
 	err := fmt.Errorf("Major error: received unknown tag %d", req.Tag())
 	log.Println(err)
@@ -98,10 +98,27 @@ func (c *conn) deleteRequest(ctx context.Context, cladReq *cloud.DeleteRequest) 
 	return cloud.NewDocResponseWithDeleteResp(&cloud.Void{}), nil
 }
 
-func (c *conn) userRequest() (*cloud.DocResponse, error) {
+func (c *client) handleConnectionless(req *cloud.DocRequest) (bool, *cloud.DocResponse, error) {
+	switch req.Tag() {
+	case cloud.DocRequestTag_User:
+		r, e := c.handleUserRequest()
+		return true, r, e
+	case cloud.DocRequestTag_Thing:
+		r, e := c.handleThingRequest()
+		return true, r, e
+	}
+	return false, nil, nil
+}
+
+func (c *client) handleUserRequest() (*cloud.DocResponse, error) {
 	var user string
-	if c.tok != nil {
-		user = c.tok.UserID()
+	if c.opts.tokener != nil {
+		user = c.opts.tokener.UserID()
 	}
 	return cloud.NewDocResponseWithUser(&cloud.UserResponse{UserId: user}), nil
+}
+
+func (c *client) handleThingRequest() (*cloud.DocResponse, error) {
+	thing, err := robot.CertCommonName(robot.DefaultCloudDir)
+	return cloud.NewDocResponseWithThing(&cloud.ThingResponse{ThingName: thing}), err
 }

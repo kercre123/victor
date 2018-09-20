@@ -18,7 +18,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "clad/cloud/mic.h"
-#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Vector {
@@ -77,33 +76,19 @@ private:
   void TransitionToIntentReceived();
   void TransitionToReprompt();
 
-  void OnStreamingBegin();
-  void OnStreamingEnd();
-
-  void OnVictorListeningBegin();
-  void OnVictorListeningEnd();
-
-
   // Accessory helpers
   void CheckForPendingIntents();
-  void TurnOffBackpackLights();
-  IBehavior* SelectPromptBehavior(std::string& speechString, ICozmoBehaviorPtr& altPromptBehavior);
 
   struct InstanceConfig {
     InstanceConfig();
 
     CloudMic::StreamType streamType;
 
-    // earcon is an audible cue to tell the user victor is listening
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
 
     std::string ttsBehaviorID;
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
-
-    AnimationTrigger listenGetInOverrideTrigger;
-    AnimationTrigger listenAnimOverrideTrigger;
-    AnimationTrigger listenGetOutOverrideTrigger;
 
     std::string vocalPromptString;
     std::string vocalResponseToIntentString;
@@ -124,9 +109,7 @@ private:
     DynamicVariables();
 
     EState                    state;
-    BackpackLightDataLocator  lightsHandle;
     EIntentStatus             intentStatus;
-    bool                      isListening;
     uint8_t                   repromptCount;
   };
 

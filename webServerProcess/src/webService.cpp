@@ -64,6 +64,9 @@ enum {
   WebSocketsTypeCloseConnection = 0x8
 };
 
+// 256KB to accommodate output of animation names
+static const size_t kBigBufferSize = 256*1024;
+
 class ExternalOnlyConsoleChannel : public Anki::Util::IConsoleChannel
 {
 public:
@@ -155,7 +158,7 @@ public:
 
 private:
 
-  static const size_t kTempBufferSize = 1024;
+  static const size_t kTempBufferSize = kBigBufferSize;
 
   char*     _tempBuffer;
   char*     _outText;
@@ -667,15 +670,15 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   std::string stat_mem1;
   std::string stat_mem2;
   if (active[kStat_MemoryInfo1] || active[kStat_MemoryInfo2]) {
-    uint32_t freeMem_kB, availableMem_kB;
-    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB, availableMem_kB);
+    OSState::MemoryInfo info;
+    osState->GetMemoryInfo(info);
     if (active[kStat_MemoryInfo1]) {
       // Memory use 1
-      stat_mem1 = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB);
+      stat_mem1 = std::to_string(info.totalMem_kB) + "," + std::to_string(info.freeMem_kB);
     }
     if (active[kStat_MemoryInfo2]) {
       // Memory use 2
-      stat_mem2 = std::to_string(totalMem_kB) + "," + std::to_string(availableMem_kB);
+      stat_mem2 = std::to_string(info.totalMem_kB) + "," + std::to_string(info.availMem_kB);
     }
   }
 
@@ -684,10 +687,11 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
       active[kStat_Cpu0] || active[kStat_Cpu1] ||
       active[kStat_Cpu2] || active[kStat_Cpu3]) {
     // CPU time stats
-    stat_cpuStat = osState->GetCPUTimeStats();
+    osState->GetCPUTimeStats(stat_cpuStat);
   }
-  else {
-    static const size_t kNumCPUTimeStats = 5;
+
+  static constexpr size_t kNumCPUTimeStats = 5;
+  if (stat_cpuStat.size() < kNumCPUTimeStats) {
     stat_cpuStat.resize(kNumCPUTimeStats);
   }
 
@@ -984,7 +988,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
-  
+
   _dispatchQueue = Util::Dispatch::Create("WebsocketSender");
 }
 
@@ -1131,8 +1135,7 @@ void WebService::Update()
 
             Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
-              // 256KB to accommodate output of animation names
-              char outText[256*1024+1] = {0};
+              char outText[kBigBufferSize + 1] = {0};
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);

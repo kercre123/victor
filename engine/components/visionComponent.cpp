@@ -23,6 +23,7 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/powerStateManager.h"
+#include "engine/components/sensors/imuComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/navMap/mapComponent.h"
@@ -479,6 +480,32 @@ namespace Vector {
       const bool gotImage = CaptureImage(_bufferedImg);
       _hasStartedCapturingImages = true;
 
+      // Display a fault code in case we have not received an image from the camera for some amount of time
+      // and we aren't in power save mode in which case we expect to not be receiving images
+      // This is a catch-all for any issues with the camera server/daemon should something go wrong and we
+      // stop receiving images
+      static const EngineTimeStamp_t kNoImageFaultCodeTimeout_ms = 60000;
+      static EngineTimeStamp_t sTimeSinceValidImg_ms = 0;
+
+      const bool inPowerSave = _robot->GetComponent<PowerStateManager>().InPowerSaveMode();
+      if(!gotImage && !inPowerSave)
+      {
+        const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        if(sTimeSinceValidImg_ms == 0)
+        {
+          sTimeSinceValidImg_ms = curTime_ms;
+        }
+        else if(curTime_ms - sTimeSinceValidImg_ms > kNoImageFaultCodeTimeout_ms)
+        {
+          FaultCode::DisplayFaultCode(FaultCode::CAMERA_STOPPED);
+          sTimeSinceValidImg_ms = 0;
+        }
+      }
+      else
+      {
+        sTimeSinceValidImg_ms = 0;
+      }
+
       if(gotImage)
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");
@@ -664,7 +691,7 @@ namespace Vector {
                         cameraPose,
                         groundPlaneVisible,
                         groundPlaneHomography,
-                        _imuHistory);
+                        _robot->GetImuComponent().GetImuHistory());
       Unlock();
     }
 
@@ -1744,13 +1771,13 @@ namespace Vector {
     {
       if(numImuDataToLookBack > 0)
       {
-        return (_imuHistory.IsImuDataBeforeTimeGreaterThan(t,
-                                                           numImuDataToLookBack,
-                                                           0, headTurnSpeedLimit_radPerSec, 0));
+        return (_robot->GetImuComponent().IsImuDataBeforeTimeGreaterThan(t,
+                                                                         numImuDataToLookBack,
+                                                                         0, headTurnSpeedLimit_radPerSec, 0));
       }
 
-      ImuDataHistory::ImuData prev, next;
-      if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
+      RobotInterface::IMUDataFrame prev, next;
+      if(!_robot->GetImuComponent().GetImuDataBeforeAndAfter(t, prev, next))
       {
         PRINT_CH_INFO("VisionComponent",
                       "VisionComponent.VisionComponent.WasHeadRotatingTooFast.NoIMUData",
@@ -1777,13 +1804,13 @@ namespace Vector {
     {
       if(numImuDataToLookBack > 0)
       {
-        return (_imuHistory.IsImuDataBeforeTimeGreaterThan(t,
-                                                           numImuDataToLookBack,
-                                                           0, 0, bodyTurnSpeedLimit_radPerSec));
+        return (_robot->GetImuComponent().IsImuDataBeforeTimeGreaterThan(t,
+                                                                         numImuDataToLookBack,
+                                                                         0, 0, bodyTurnSpeedLimit_radPerSec));
       }
 
-      ImuDataHistory::ImuData prev, next;
-      if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
+      RobotInterface::IMUDataFrame prev, next;
+      if(!_robot->GetImuComponent().GetImuDataBeforeAndAfter(t, prev, next))
       {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyRotatingTooFast",
                       "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
@@ -2332,6 +2359,45 @@ namespace Vector {
 
   void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
   {
+    // These are "failsafe" checks to avoid getting duplicate names in the face records.
+    // This is a pretty gross, heavy-handed way to achieve this, but is meant to try
+    // to catch bugs in the complex EnrollFace behavior in the wild.
+    const auto& idsWithName = GetFaceIDsWithName(name);
+    if(mergeWithID == Vision::UnknownFaceID)
+    {
+      if(!idsWithName.empty())
+      {
+        // This should not happen (caller error?), but for now wallpaper over it and avoid duplicate names polluting
+        // the system
+        mergeWithID = *idsWithName.begin(); // Just use first. Existence of multiple will be checked in next 'if'
+        std::string idStr;
+        for(auto idWithName : idsWithName)
+        {
+          idStr += std::to_string(idWithName);
+          idStr += " ";
+        }
+        PRINT_NAMED_ERROR("VisionComponent.AssignNameToFace.DuplicateNameWithoutMerge",
+                          "Name '%s' already in use (IDs:%s) with no mergeID specified. Forcing merge with ID:%d",
+                          Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str(), mergeWithID);
+      }
+    }
+    if(mergeWithID != Vision::UnknownFaceID) // deliberate recheck of mergeWithID, not "else"
+    {
+      if(idsWithName.size() != 1)
+      {
+        // THIS IS VERY BAD! WE HAVE SOMEHOW ENROLLED TWO RECORDS WITH THE SAME NAME!
+        std::string idStr;
+        for(auto idWithName : idsWithName)
+        {
+          idStr += std::to_string(idWithName);
+          idStr += " ";
+        }
+        PRINT_NAMED_ERROR("VisionComponent.AssignNameToFace.MultipleIDsWithSameName",
+                          "Found %zu IDs with name '%s': %s",
+                          idsWithName.size(), Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str());
+      }
+    }
+    
     // Pair this name and ID in the vision system
     Lock();
     _visionSystem->AssignNameToFace(faceID, name, mergeWithID);
@@ -2402,6 +2468,22 @@ namespace Vector {
 
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
+    if(oldName == newName)
+    {
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.RenameFace.SameOldAndNewNames",
+                    "Ignoring request to rename face %d from %s to %s",
+                    faceID,
+                    Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+                    Util::HidePersonallyIdentifiableInfo(newName.c_str()));
+      {
+        DASMSG(vision_enrolled_names_no_change, "vision.enrolled_names.no_change",
+               "An enrolled face/name was left unchanged");
+        DASMSG_SET(i1, faceID, "The face ID (int)");
+        DASMSG_SEND();
+      }
+      return RESULT_OK;
+    }
+    
     Vision::RobotRenamedEnrolledFace renamedFace;
     Lock();
     Result result = _visionSystem->RenameFace(faceID, oldName, newName, renamedFace);
@@ -2494,9 +2576,26 @@ namespace Vector {
     if(RESULT_OK != result)
     {
       PRINT_NAMED_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
+      return;
     }
+    
+    // Disable AE and WB computation on the vision thread
     EnableWhiteBalance(false);
     EnableAutoExposure(false);
+    
+    // Directly set the specified camera values, since they won't be coming from the
+    // VisionSystem in a VisionProcessingResult anymore. Also manually update Viz
+    auto cameraService = CameraService::getInstance();
+    if(cameraService)
+    {
+      cameraService->CameraSetParameters(params.exposureTime_ms,
+                                         params.gain);
+      cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
+                                                     params.whiteBalanceGainG,
+                                                     params.whiteBalanceGainB);
+      
+      _vizManager->SendCameraParams(params);
+    }
   }
 
   s32 VisionComponent::GetMinCameraExposureTime_ms() const
@@ -2535,6 +2634,11 @@ namespace Vector {
 
   bool VisionComponent::TryReleaseInternalImages()
   {
+    if(_cvtFuture.valid())
+    {
+      return false;
+    }
+    
     if( _lock.try_lock() ) {
       ReleaseImage(_currentImg);
       ReleaseImage(_nextImg);
@@ -2546,7 +2650,12 @@ namespace Vector {
   }
 
   bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
-  {    
+  {
+    if(!_enableImageCapture)
+    {
+      return false;
+    }
+    
     // Wait until the current async conversion is finished before getting another
     // frame
     if(_cvtFuture.valid())
@@ -2985,8 +3094,28 @@ namespace Vector {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraSettings& payload)
   {
-    // TODO: Re-enable
-    PRINT_NAMED_ERROR("VisionComponent.HandleSetCameraSettings.DEPRECATED", "");
+    if(payload.enableAutoExposure)
+    {
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Auto",
+                    "Enabling auto exposure and auto whitebalance");
+      EnableAutoExposure(true);
+      EnableWhiteBalance(true);
+    }
+    else
+    {
+      auto const& currentParams = _visionSystem->GetCurrentCameraParams();
+      Vision::CameraParams params(payload.exposure_ms, payload.gain,
+                                  currentParams.whiteBalanceGainR,
+                                  currentParams.whiteBalanceGainG,
+                                  currentParams.whiteBalanceGainB);
+      
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Manual",
+                    "Setting camera params to: Exp:%dms / %.3f, WB:%.3f,%.3f,%.3f",
+                    params.exposureTime_ms, params.gain,
+                    params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
+      
+      SetAndDisableCameraControl(params);
+    }
   }
 
   void VisionComponent::SetSaveImageParameters(const ImageSaverParams& params)
@@ -3159,5 +3288,14 @@ namespace Vector {
     }
   }
 
+  void VisionComponent::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
+  {
+    _visionSystem->AddAllowedTrackedFace(faceID);
+  }
+
+  void VisionComponent::ClearAllowedTrackedFaces()
+  {
+    _visionSystem->ClearAllowedTrackedFaces();
+  }
 } // namespace Vector
 } // namespace Anki

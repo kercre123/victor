@@ -31,7 +31,8 @@ public:
             size_t storage_quota,
             const std::string& backup_path,
             size_t backup_quota,
-            const std::string & globals_path);
+            const std::string & persistent_globals_path,
+            const std::string & transient_globals_path);
 
   // DAS endpoint URL
   const std::string & GetURL() const { return _url; }
@@ -66,7 +67,13 @@ public:
   // startup and write at shutdown. We expect this storage to persist
   // when the robot reboots. If robot's persistent data is cleared,
   // these values are lost.
-  const std::string & GetGlobalsPath() const { return _globals_path; }
+  const std::string & GetPersistentGlobalsPath() const { return _persistent_globals_path; }
+
+  // Where should we store transient global variables?
+  // We expect this to be a temporary file system that will be
+  // initialized when robot boots but can be used to save
+  // values when service restarts without reboot.
+  const std::string & GetTransientGlobalsPath() const { return _transient_globals_path; }
 
   // Helper methods to parse DAS configuration file.
   // Helper methods return nullptr on error.
@@ -80,7 +87,8 @@ public:
   //     "storage_quota": uint,
   //     "backup_path": string,
   //     "backup_quota": uint,
-  //     "globals_path": string
+  //     "persistent_globals_path": string
+  //     "transient_globals_path": string
   //   }
   // }
   //
@@ -95,7 +103,8 @@ private:
   size_t _storage_quota;
   std::string _backup_path;
   size_t _backup_quota;
-  std::string _globals_path;
+  std::string _persistent_globals_path;
+  std::string _transient_globals_path;
 };
 
 } // end namespace Victor

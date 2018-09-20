@@ -1,9 +1,0 @@
-{
-  "behaviorClass": "AnimSequence",
-  "behaviorID": "ExampleFacePositionUpdated",
-  "animTriggers": ["InteractWithFacesInitialUnnamed"],
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "FacePositionUpdated"
-  }
-
-}

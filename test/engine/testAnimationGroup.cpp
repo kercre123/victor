@@ -13,6 +13,7 @@
 
 #include "gtest/gtest.h"
 
+#include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "engine/cozmoContext.h"

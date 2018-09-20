@@ -175,7 +175,7 @@ namespace Vector {
   const f32 MAX_CAMERA_EXPOSURE_TIME_MS = 66;
   
   // Range for exposure and white balance gains
-  const f32 MIN_CAMERA_GAIN = 0.1f;
+  const f32 MIN_CAMERA_GAIN = 0.25f; // Real min should be 0.1, but using 0.25 as a bandaid for VIC-6653
   const f32 MAX_CAMERA_GAIN = 3.8f;
   
   /***************************************************************************
@@ -206,8 +206,15 @@ namespace Vector {
 
   // The minimum value expected of cliff sensor when
   // it's detecting a white line in the habitat
-  // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold? 
-  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL = 450;
+  // TODO (VIC-3550): Merge with kChargerCliffBlackThreshold?
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL_HIGH = 400;
+  
+  // if cliff-alignment fails, we may wish to retry cliff alignment
+  // with a lowered threshold in case we are dealing with values
+  // that are marginally lower than the threshold
+  // note: this is to counteract variability in appearance of
+  // habitat white w.r.t. individual robots
+  const u16 MIN_CLIFF_STOP_ON_WHITE_VAL_LOW = 350;
 
   // Amount below MIN_CLIFF_STOP_ON_WHITE_VAL at which a white
   // value is undetected
@@ -349,24 +356,6 @@ namespace Vector {
   // THIS IS CURRENTLY USED FOR R&D ONLY - CONSULT KEVIN YOON ABOUT PERFORMANCE BEFORE TURNING
   // THIS ON IN MASTER
   #define SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE false
-  
-  //
-  // Local (unix-domain) socket paths.
-  // RobotID will be appended to generate unique paths for each robot.
-  //
-  #ifdef SIMULATOR
-  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/tmp/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/tmp/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/tmp/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/tmp/_engine_anim_client_";
-  #else
-  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
-  #endif
   
 } // namespace Vector
 } // namespace Anki

@@ -21,7 +21,6 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 #include "clad/types/dockingSignals.h"
-#include "clad/types/animationTrigger.h"
 
 
 #include "util/helpers/templateHelpers.h"
@@ -40,6 +39,7 @@ namespace Anki {
     
     // Forward Declarations:
     class Animation;
+    enum class AnimationTrigger : int32_t;
     class BlockWorld;
     class CarryingComponent;
     class DriveToPlaceCarriedObjectAction;
@@ -61,6 +61,8 @@ namespace Anki {
                   const RobotActionType type);
       
       virtual ~IDockAction();
+
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
 
       virtual void OnRobotSet() override final;
 
@@ -297,11 +299,11 @@ namespace Anki {
       bool _visuallyVerifyObjectOnly = false;
 
       // These default docking animation triggers can be overridden with SetDockAnimations()
-      AnimationTrigger _getInDockTrigger  = AnimationTrigger::DockStartDefault;
-      AnimationTrigger _loopDockTrigger   = AnimationTrigger::DockLoopDefault;
-      AnimationTrigger _getOutDockTrigger = AnimationTrigger::DockEndDefault;
+      AnimationTrigger _getInDockTrigger;
+      AnimationTrigger _loopDockTrigger;
+      AnimationTrigger _getOutDockTrigger;
       
-      AnimationTrigger _curDockTrigger    = AnimationTrigger::Count;
+      AnimationTrigger _curDockTrigger;
 
     }; // class IDockAction
     
@@ -316,6 +318,8 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
     protected:
+      
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return false; }
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       

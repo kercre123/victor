@@ -1,9 +1,8 @@
 //
-//  consoleChannel.h
-//  BaseStation
+//  util/console/consoleChannel.h
 //
 //  Created by Brian Chapados on 4/22/14.
-//  Copyright (c) 2014 Anki. All rights reserved.
+//  Copyright (c) 2014-2018 Anki Inc. All rights reserved.
 //
 
 #ifndef ANKIUTIL_CONSOLE_CHANNEL_H
@@ -15,31 +14,33 @@
 
 #ifdef __cplusplus
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 
 class IConsoleChannel {
 public:
-  
-  virtual ~IConsoleChannel() {};
-  
+
+  virtual ~IConsoleChannel() = default;
+
   // Returns true if channel is ready for I/O
   virtual bool IsOpen() = 0;
-  
+
   virtual int WriteData(uint8_t *buffer, int len) = 0;
-  
-  virtual int WriteLog(const char *format, ...) = 0;
+
+  virtual int WriteLog(const char *format, ...) __attribute__((format(printf,2,3))) = 0;
   virtual int WriteLogv(const char *format, va_list args) = 0;
-  
+
   virtual bool Flush() = 0;
-  
+
   virtual bool IsTTYLoggingEnabled() const = 0;
   virtual void SetTTYLoggingEnabled(bool newVal) = 0;
-  
+
   virtual const char* GetChannelName() const = 0;
   virtual void SetChannelName(const char* newName) = 0;
 };
 
-} }
+} // end namespace Util
+} // end namespace Anki
 
 typedef Anki::Util::IConsoleChannel* ConsoleChannelRef;
 

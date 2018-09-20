@@ -7,9 +7,12 @@
 
   "behaviors": [
     "DoATrickVoiceCommand",
+    "PlayAGameVoiceCommand",
     "FindYourCubeVoiceCommand",
     "FistBumpVoiceCommand",
+    "GoHomeVoiceCommand",
     "RollCubeVoiceCommand",
+    "PopAWheelieVoiceCommand",
     "KeepawayVoiceCommand",
     "BlackJackVoiceCommand",
     "PRDemoComeHere",

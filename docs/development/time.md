@@ -35,13 +35,13 @@ needs if you just need to count seconds since things happened. If not, peruse th
 
 * Do you need the time to be consistent across boots (it can't reset)? E.g. you are tracking how many days
   it's been since you've seen a face
-    * Do you care about local time of day? If yes, use [`WallTime::GetLocalTime()`](../../engine/wallTime.h)
-    * Otherwise, prefer [`WallTime::GetUTCTime()`](../../engine/wallTime.h) to get UTC time so that you don't
+    * Do you care about local time of day? If yes, use [`WallTime::GetLocalTime()`](../../osState/wallTime.h)
+    * Otherwise, prefer [`WallTime::GetUTCTime()`](../../osState/wallTime.h) to get UTC time so that you don't
       have to worry about time zone jumps causing issues
     * If you want wall time but are OK with it being too old (because it couldn't sync) you can use the
-      approximate versions in [wallTime.h](../../engine/wallTime.h)
+      approximate versions in [wallTime.h](../../osState/wallTime.h)
     * If you want wall time in an std::chrono format (convenient for comparisons and storage), you can use
-      [`WallTime::GetTime()`](../../engine/wallTime.h)
+      [`WallTime::GetTime()`](../../osState/wallTime.h)
     * *Warning*: time and timezone can change out from under you during operation, so be careful. Local time
       can jump backwards if the user changes timezone!
 

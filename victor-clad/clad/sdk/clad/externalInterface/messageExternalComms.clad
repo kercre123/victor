@@ -28,6 +28,10 @@ enum uint_8 RtsConnType {
     Reconnection,
 }
 
+enum uint_16 RtsResponseCode {
+    NotCloudAuthorized,
+}
+
 enum uint_8 RtsCloudStatus {
     UnknownError,
     ConnectionError,
@@ -265,6 +269,11 @@ message RtsAppConnectionIdResponse {
     //
 }
 
+message RtsResponse {
+    RtsResponseCode       code,
+    string[uint_16]       responseMessage,
+}
+
 message Error {
     //
 }
@@ -373,8 +382,9 @@ union RtsConnection_4 {
     RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  
     RtsCloudSessionRequest          RtsCloudSessionRequest      = 0x1D,  
     RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  
-    RtsAppConnectionIdRequest       RtsAppConnectionIdRequest   = 0x1F,  // * new in V3
-    RtsAppConnectionIdResponse      RtsAppConnectionIdResponse  = 0x20,  // * new in V3
+    RtsAppConnectionIdRequest       RtsAppConnectionIdRequest   = 0x1F,  // * new in V4
+    RtsAppConnectionIdResponse      RtsAppConnectionIdResponse  = 0x20,  // * new in V4
+    RtsResponse                     RtsResponse                 = 0x21, // * new in V4
 }
 
 // The factory set of supported messages

@@ -17,6 +17,7 @@
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/tokenClient.h"
+#include "switchboardd/wifiWatcher.h"
 #include "switchboardd/log.h"
 
 namespace Anki {
@@ -78,6 +79,7 @@ protected:
   bool _isPairing;
   bool _isOtaUpdating;
   std::shared_ptr<TokenClient> _tokenClient;
+  std::shared_ptr<WifiWatcher> _wifiWatcher;
   bool _hasOwner;
 };
 

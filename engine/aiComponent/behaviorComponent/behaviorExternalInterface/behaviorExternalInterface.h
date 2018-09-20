@@ -72,6 +72,7 @@ class TouchSensorComponent;
 class VariableSnapshotComponent;
 class VisionComponent;
 class VisionScheduleMediator;
+class SleepTracker;
   
 namespace Audio {
 class EngineRobotAudioClient;
@@ -123,6 +124,7 @@ public:
     components.insert(BCComponentID::BlockWorld);
     components.insert(BCComponentID::FaceWorld);
     components.insert(BCComponentID::RobotInfo);
+    components.insert(BCComponentID::SleepTracker);
   }
   //////
   // end IDependencyManagedComponent functions
@@ -164,7 +166,8 @@ public:
             VariableSnapshotComponent*     variableSnapshotComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator,
-            SettingsManager*               settingsManager);
+            SettingsManager*               settingsManager,
+            SleepTracker*                  sleepTracker);
     
   virtual ~BehaviorExternalInterface();
 
@@ -269,6 +272,9 @@ public:
   inline bool HasSettingsManager() const { return GetComponentWrapper(BEIComponentID::SettingsManager).IsComponentValid();}
   SettingsManager& GetSettingsManager() const {return GetComponentWrapper(BEIComponentID::SettingsManager).GetComponent<SettingsManager>();}
 
+  inline bool HasSleepTracker() const { return GetComponentWrapper(BEIComponentID::SleepTracker).IsComponentValid();}
+  SleepTracker& GetSleepTracker() const {return GetComponentWrapper(BEIComponentID::SleepTracker).GetComponent<SleepTracker>();}
+
   inline bool HasVariableSnapshotComponent() const { return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).IsComponentValid();}
   VariableSnapshotComponent& GetVariableSnapshotComponent() const {return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).GetComponent<VariableSnapshotComponent>();}
   
@@ -315,7 +321,8 @@ private:
                        VariableSnapshotComponent*     variableSnapshotComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator,
-                       SettingsManager*               settingsManager);
+                       SettingsManager*               settingsManager,
+                       SleepTracker*                  sleepTracker);
       ~CompArrayWrapper(){};
       EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
   };

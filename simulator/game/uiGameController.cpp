@@ -390,12 +390,6 @@ namespace Anki {
       HandleAnimationAborted(msg);
     }
     
-    void UiGameController::HandleDebugStringBase(const ExternalInterface::DebugString& msg)
-    {
-      //PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
-      HandleDebugString(msg);
-    }
-    
     void UiGameController::HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg)
     {
       PRINT_NAMED_INFO("HandleNVStorageOpResult",
@@ -510,6 +504,10 @@ namespace Anki {
     
     UiGameController::~UiGameController()
     {
+      if (_isStreamingImages) {
+        SendImageRequest(ImageSendMode::Off);
+      }
+      
       if (_gameComms) {
         delete _gameComms;
       }
@@ -641,9 +639,6 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::DebugString:
-            HandleDebugStringBase(message.Get_DebugString());
-            break;
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
             break;
@@ -732,6 +727,8 @@ namespace Anki {
           if (_engineLoadedRatio >= 1.0f)
           {
             _uiState = UI_RUNNING;
+            
+            OnEngineLoaded();
           }
           break;
         }
@@ -757,6 +754,15 @@ namespace Anki {
       } // switch(_uiState)
       
       return res;
+    }
+    
+    void UiGameController::OnEngineLoaded()
+    {
+      // Set Render Enable in Map Component
+      ExternalInterface::SetMemoryMapRenderEnabled m;
+      m.enabled = true;
+      ExternalInterface::MessageGameToEngine message(std::move(m));
+      SendMessage(message);
     }
     
     void UiGameController::UpdateActualObjectPoses()
@@ -1030,6 +1036,8 @@ namespace Anki {
       ExternalInterface::MessageGameToEngine message;
       message.Set_ImageRequest(m);
       SendMessage(message);
+      
+      _isStreamingImages = (mode == ImageSendMode::Stream);
     }
     
     void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode)
@@ -1698,12 +1706,6 @@ namespace Anki {
       m.enable = enable;
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }  
-
-    void UiGameController::SendEnableBlockTapFilter(bool enable){
-      ExternalInterface::EnableBlockTapFilter m(enable);
-
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
-    }
 
     void UiGameController::SendConnectToCube()
     {

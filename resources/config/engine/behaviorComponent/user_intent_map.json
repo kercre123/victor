@@ -5,6 +5,10 @@
       "user_intent": "play_anytrick"
     },
     {
+      "cloud_intent": "intent_play_anygame",
+      "user_intent": "play_anygame"
+    },
+    {
       "cloud_intent": "intent_imperative_quiet",
       "app_intent": "intent_imperative_quiet",
       "user_intent": "imperative_quiet"
@@ -30,6 +34,18 @@
     },
     {
       "cloud_intent": "intent_imperative_negative",
+      "user_intent": "imperative_negative"
+    },
+    {
+      "cloud_intent": "intent_imperative_praise",
+      "user_intent": "imperative_affirmative"
+    },
+    {
+      "cloud_intent": "intent_imperative_apologize",
+      "user_intent": "imperative_affirmative"
+    },
+    {
+      "cloud_intent": "intent_imperative_scold",
       "user_intent": "imperative_negative"
     },
     {

@@ -21,6 +21,15 @@ namespace Vector {
 
 namespace external_interface {
   class GatewayWrapper;
+
+  class PathMotionProfile;
+
+  class GoToPoseRequest;
+  class DockWithCubeRequest;
+  class DriveStraightRequest;
+  class TurnInPlaceRequest;
+  class SetLiftHeightRequest;
+  class SetHeadAngleRequest;
 }
 
 class Robot;
@@ -29,16 +38,16 @@ class Robot;
 class SDKComponent : public IDependencyManagedComponent<RobotComponentID>
 {
 public:
-  
+
   SDKComponent();
   ~SDKComponent();
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IDependencyManagedComponent functions
-  
+
   virtual void GetInitDependencies( RobotCompIDSet& dependencies ) const override;
   virtual void GetUpdateDependencies( RobotCompIDSet& dependencies ) const override {};
-  
+
   virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
@@ -47,9 +56,11 @@ public:
 
   bool SDKWantsControl();
   void SDKBehaviorActivation(bool enabled);
-  
+
+  void OnActionCompleted(ExternalInterface::RobotCompletedAction msg);
+
 private:
-  
+
   Robot* _robot = nullptr;  
   bool _sdkWantsControl = false;
   bool _sdkBehaviorActivated = false;

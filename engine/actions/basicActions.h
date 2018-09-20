@@ -78,6 +78,7 @@ namespace Vector {
       
     protected:
       
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -144,6 +145,7 @@ namespace Vector {
 
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       virtual void OnRobotSet() override final;
@@ -187,8 +189,12 @@ namespace Vector {
 
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
+      virtual f32 GetTimeoutInSeconds() const override { return _timeout_s; }
+      void SetTimeoutInSeconds(float timeout_s);
+      
     protected:
-      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override; 
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override;
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -205,6 +211,8 @@ namespace Vector {
       bool _shouldPlayDrivingAnimation = true;
 
       bool _canMoveOnCharger = false;
+      
+      float _timeout_s;
       
     }; // class DriveStraightAction
     
@@ -234,6 +242,7 @@ namespace Vector {
       Radians GetHeadTiltAngleTolerance() const { return _tiltAngleTol; }
 
     protected:
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -276,7 +285,8 @@ namespace Vector {
     {
     public:
       CalibrateMotorAction(bool calibrateHead,
-                           bool calibrateLift);
+                           bool calibrateLift,
+                           std::string calibrationReason = "");
 
       // Template for all events we subscribe to
       template<typename T>
@@ -290,6 +300,8 @@ namespace Vector {
     private:
       bool _calibHead;
       bool _calibLift;
+      
+      std::string _calibReason;
       
       bool _headCalibStarted;
       bool _liftCalibStarted;
@@ -799,6 +811,7 @@ namespace Vector {
       
     protected:
       
+      virtual bool ShouldFailOnTransitionOffTreads() const override { return true; }
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       

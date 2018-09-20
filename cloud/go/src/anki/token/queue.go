@@ -2,12 +2,10 @@ package token
 
 import (
 	"anki/log"
-	"anki/robot"
 	"anki/token/jwt"
 	"anki/util"
 	"clad/cloud"
 	"context"
-	"fmt"
 	"time"
 
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
@@ -26,24 +24,10 @@ type response struct {
 	err  error
 }
 
-var defaultESN func() string
-
 var queue = make(chan request)
-var url = "token-dev.api.anki.com:443"
-var robotESN string
+var url string
 
 func queueInit(ctx context.Context) error {
-	esn, err := robot.ReadESN()
-	if err != nil {
-		if defaultESN == nil {
-			if err := robot.WriteFaceErrorCode(852); err != nil {
-				log.Println("Couldn't print face error:", err)
-			}
-			return fmt.Errorf("error reading ESN: %s", err.Error())
-		}
-		esn = defaultESN()
-	}
-	robotESN = esn
 	go queueRoutine(ctx)
 	return nil
 }
@@ -92,7 +76,7 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 				return errorResp(cloud.TokenError_Connection), err
 			}
 			defer c.Close()
-			bundle, err := c.refreshToken(existing.String())
+			bundle, err := c.refreshJwtToken()
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
@@ -123,7 +107,7 @@ func sessionMetadata(sessionToken string) credentials.PerRPCCredentials {
 func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
 	metadata := sessionMetadata(session)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
-		return c.associatePrimary(session, robotESN)
+		return c.associatePrimary(session)
 	}
 	return authRequester(metadata, requester, true)
 }

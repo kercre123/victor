@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#if defined(VIC_NEURALNETS_USE_OPENCVDNN)
+#if defined(ANKI_NEURALNETS_USE_OPENCVDNN)
 
 #include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/image.h"
@@ -371,5 +371,5 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
 } // namespace Vision
 } // namespace Anki
 
-#endif /* defined(VIC_NEURALNETS_USE_OPENCVDNN) */
+#endif /* defined(ANKI_NEURALNETS_USE_OPENCVDNN) */
 

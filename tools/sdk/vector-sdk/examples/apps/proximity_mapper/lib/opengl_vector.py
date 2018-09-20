@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Anki, Inc.
+# Copyright (c) 2018 Anki, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -376,7 +376,7 @@ class VectorViewManifest():
         robot_mesh_data = opengl.MeshData(resource_context, VECTOR_MODEL_FILE)
         self._robot_view = RobotView(robot_mesh_data)
 
-        # Load the cubes, reusing the same file geometry for all 3.
+        # Load the cube
         cube_mesh_data = opengl.MeshData(resource_context, CUBE_MODEL_FILE)
         self._light_cube_view = LightCubeView(cube_mesh_data)
 
@@ -449,13 +449,10 @@ class WorldRenderFrame():  # pylint: disable=too-few-public-methods
         self.robot_frame = RobotRenderFrame(robot)
 
         self.cube_frames: List[CubeRenderFrame] = []
-        connected_cubes = robot.world.connected_light_cubes
-        if not connected_cubes:
-            self.cube_frames.append(None)
-        elif connected_cubes[0] is None:
+        if robot.world.connected_light_cube is None:
             self.cube_frames.append(None)
         else:
-            self.cube_frames.append(CubeRenderFrame(connected_cubes[0]))
+            self.cube_frames.append(CubeRenderFrame(robot.world.connected_light_cube))
 
         self.face_frames: List[FaceRenderFrame] = []
         for face in robot.world.visible_faces:

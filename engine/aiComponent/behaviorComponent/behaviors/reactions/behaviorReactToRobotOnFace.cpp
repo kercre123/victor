@@ -20,6 +20,9 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 
+#include "util/logging/DAS.h"
+#include "clad/types/motorTypes.h"
+
 namespace Anki {
 namespace Vector {
   
@@ -82,9 +85,9 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
     if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
       AnimationTrigger anim;
       if(robotInfo.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
-        anim = AnimationTrigger::DEPRECATED_FacePlantRoll;
+        anim = AnimationTrigger::FacePlantRoll;
       }else{
-        anim = AnimationTrigger::DEPRECATED_FacePlantRollArmUp;
+        anim = AnimationTrigger::FacePlantRollArmUp;
       }
       DelegateIfInControl(new TriggerAnimationAction(anim),
                           &BehaviorReactToRobotOnFace::DelayThenCheckState);
@@ -92,7 +95,7 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
       const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
       PRINT_NAMED_INFO("BehaviorReactToRobotOnFace.FlipOverIfNeeded.CalibratingHead",
                        "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
-      DelegateIfInControl(new CalibrateMotorAction(true, false),
+      DelegateIfInControl(new CalibrateMotorAction(true, false, EnumToString(MotorCalibrationReason::BehaviorReactToOnFace)),
                           &BehaviorReactToRobotOnFace::DelayThenCheckState);
     }
   }
@@ -114,7 +117,7 @@ void BehaviorReactToRobotOnFace::DelayThenCheckState()
 void BehaviorReactToRobotOnFace::CheckFlipSuccess()
 {
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnFace) {
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_FailedToRightFromFace),
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }else{
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnFace);

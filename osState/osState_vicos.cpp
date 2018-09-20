@@ -28,23 +28,24 @@
 
 // For getting our ip address
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <sys/types.h>
 #include <ifaddrs.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/timex.h>
-#include <sys/stat.h>
-
 #include <linux/wireless.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/timex.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <fstream>
 #include <array>
 #include <iomanip>
-#include <stdlib.h>
+
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
@@ -60,6 +61,25 @@ CONSOLE_VAR(bool, kSendFakeCpuTemperature,  "OSState.Temperature", false);
 CONSOLE_VAR(u32,  kFakeCpuTemperature_degC, "OSState.Temperature", 20);
 
 namespace {
+
+  // When memory pressure > this, report red alert
+  CONSOLE_VAR_RANGED(u32, kHighMemPressureMultiple, "OSState.MemoryInfo", 10, 0, 100);
+
+  // When memory pressure > this, report yellow alert
+  CONSOLE_VAR_RANGED(u32, kMediumMemPressureMultiple, "OSState.MemoryInfo", 5, 0, 100);
+
+ // When disk pressure > this, report red alert
+  CONSOLE_VAR_RANGED(u32, kHighDiskPressureMultiple, "OSState.DiskInfo", 10, 0, 100);
+
+  // When disk pressure > this, report yellow alert
+  CONSOLE_VAR_RANGED(u32, kMediumDiskPressureMultiple, "OSState.DiskInfo", 5, 0, 100);
+
+  // When wifi error rate > this, report red alert
+  CONSOLE_VAR_RANGED(u32, kHighWifiErrorRate, "OSState.WifiInfo", 2, 0, 100);
+
+  // When wifi error rate > this, report yellow alert
+  CONSOLE_VAR_RANGED(u32, kMediumWifiErrorRate, "OSState.WifiInfo", 1, 0, 100);
+
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
   std::ifstream _cpuFile;
@@ -87,33 +107,37 @@ namespace {
   const char* kCPUTimeStatsFile   = "/proc/stat";
   const char* kWifiTxBytesFile    = "/sys/class/net/wlan0/statistics/tx_bytes";
   const char* kWifiRxBytesFile    = "/sys/class/net/wlan0/statistics/rx_bytes";
+  const char* kWifiTxErrorsFile    = "/sys/class/net/wlan0/statistics/tx_errors";
+  const char* kWifiRxErrorsFile    = "/sys/class/net/wlan0/statistics/rx_errors";
   const char* kBootIDFile         = "/proc/sys/kernel/random/boot_id";
   const char* kLocalTimeFile      = "/data/etc/localtime";
   const char* kCmdLineFile        = "/proc/cmdline";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
   constexpr const char* kRobotVersionFile = "/anki/etc/version";
   constexpr const char* kOnChargeContactsPath = "/run/on-charge-contacts";
+  constexpr const char* kMaintenanceRebootFile = "/run/after_maintenance_reboot";
 
   const char* kAutomaticGovernor = "interactive";
   const char* kManualGovernor = "userspace";
 
   const char* const kWifiInterfaceName = "wlan0";
-  
+
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
   uint32_t _cpuTemp_C;        // Temperature in Celsius
   float _uptime_s;            // Uptime in seconds
   float _idleTime_s;          // Idle time in seconds
-  uint32_t _memTotal_kB;      // Total memory in kB
-  uint32_t _memFree_kB;       // Free memory in kB
-  uint32_t _memAvailable_kb;  // Available memory in kB
+  uint32_t _totalMem_kB;      // Total memory in kB
+  uint32_t _availMem_kB;      // Available memory in kB
+  uint32_t _freeMem_kB;       // Free memory in kB
+
   std::vector<std::string> _CPUTimeStats; // CPU time stats lines
 
 
   // How often state variables are updated
-  uint32_t _updatePeriod_ms = 0;
-  uint32_t _lastUpdateTime_ms = 0;
-  uint32_t _lastWebvizUpdateTime_ms = 0;
+  uint64_t _currentTime_ms = 0;
+  uint64_t _updatePeriod_ms = 0;
+  uint64_t _lastWebvizUpdateTime_ms = 0;
 
   std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
@@ -122,7 +146,7 @@ namespace {
   {
     return *str ? 1 + GetConstStrLength(str + 1) : 0;
   }
-  
+
   // OS version numbers
   int _majorVersion = -1;
   int _minorVersion = -1;
@@ -167,11 +191,8 @@ OSState::OSState()
 
   _buildSha = ANKI_BUILD_SHA;
 
-  // set cpu frequency to default (in case we left it in a bad state last time)
-  SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
+  _lastWebvizUpdateTime_ms = _currentTime_ms;
 
-  _lastWebvizUpdateTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  
   // read the OS versions once on boot up
   if(Util::FileUtils::FileExists("/etc/os-version")) {
     std::string osv = Util::FileUtils::ReadFile("/etc/os-version");
@@ -189,6 +210,10 @@ OSState::OSState()
         _incrementalVersion = -1;
       }
     }
+
+    // Initialize memory info
+    UpdateMemoryInfo();
+
   }
   const bool versionsValid = _majorVersion >= 0 &&
                              _minorVersion >= 0 &&
@@ -205,46 +230,27 @@ RobotID_t OSState::GetRobotID() const
   return DEFAULT_ROBOT_ID;
 }
 
-void OSState::Update()
+void OSState::Update(BaseStationTime_t currTime_nanosec)
 {
-  if (_updatePeriod_ms != 0) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      using namespace std::chrono;
-      // const auto startTime = steady_clock::now();
-
-      // Update cpu freq
-      UpdateCPUFreq_kHz();
-
-      // Update temperature reading
-      UpdateTemperature_C();
-
-      // Update memory info
-      UpdateMemoryInfo();
-
-      // const auto now = steady_clock::now();
-      // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
-      // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
-
-      _lastUpdateTime_ms = now_ms;
-
-    }
-  }
-
+  _currentTime_ms = currTime_nanosec/1000000;
   if (kWebvizUpdatePeriod != 0 && _webServiceCallback) {
-    const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    if (now_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
+    if (_currentTime_ms - _lastWebvizUpdateTime_ms > kPeriodEnumToMS[kWebvizUpdatePeriod]) {
       UpdateCPUTimeStats();
 
       Json::Value json;
-      json["deltaTime_ms"] = now_ms - _lastWebvizUpdateTime_ms;
-      auto& usage = json["usage"];
-      for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
-        usage.append( _CPUTimeStats[i] );
+      json["deltaTime_ms"] = _currentTime_ms - _lastWebvizUpdateTime_ms;
+
+      {
+        auto& usage = json["usage"];
+        std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
+        for(size_t i = 0; i < _CPUTimeStats.size(); ++i) {
+          usage.append( _CPUTimeStats[i] );
+        }
       }
+
       _webServiceCallback(json);
 
-      _lastWebvizUpdateTime_ms = now_ms;
+      _lastWebvizUpdateTime_ms = _currentTime_ms;
     }
   }
 }
@@ -304,7 +310,7 @@ void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
       return;
     }
 
-    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manaul cpu frequency %u",
+    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manual cpu frequency %u",
                      freqVal);
   }
   else {
@@ -346,7 +352,7 @@ void OSState::UpdateMemoryInfo() const
   _memInfoFile.open(kMemInfoFile, std::ifstream::in);
   if (_memInfoFile.is_open()) {
     std::string discard;
-    _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB >> discard >> discard >> _memAvailable_kb;
+    _memInfoFile >> discard >> _totalMem_kB >> discard >> discard >> _freeMem_kB >> discard >> discard >> _availMem_kB;
     _memInfoFile.close();
   }
 }
@@ -368,9 +374,12 @@ void OSState::UpdateCPUTimeStats() const
 
 uint32_t OSState::GetCPUFreq_kHz() const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateCPUFreq_kHz();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   return _cpuFreq_kHz;
 }
 
@@ -383,9 +392,12 @@ bool OSState::IsCPUThrottling() const
 
 uint32_t OSState::GetTemperature_C() const
 {
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateTemperature_C();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   if(kSendFakeCpuTemperature) {
     return kFakeCpuTemperature_degC;
   }
@@ -394,33 +406,64 @@ uint32_t OSState::GetTemperature_C() const
 
 float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetUptimeAndIdleTime.NonZeroUpdate");
-  if (_updatePeriod_ms == 0) {
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateUptimeAndIdleTime();
+    lastUpdate_ms = _currentTime_ms;
   }
+
   idleTime_s = _idleTime_s;
   return _uptime_s;
 }
 
-uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB, uint32_t &availableMem_kB) const
+void OSState::GetMemoryInfo(MemoryInfo & info) const
 {
-  if (_updatePeriod_ms == 0) {
+  // Update current stats?
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
     UpdateMemoryInfo();
+    lastUpdate_ms = _currentTime_ms;
   }
-  freeMem_kB = _memFree_kB;
-  availableMem_kB = _memAvailable_kb;
-  return _memTotal_kB;
+
+  // Populate return struct
+  info.totalMem_kB = _totalMem_kB;
+  info.availMem_kB = _availMem_kB;
+  info.freeMem_kB = _freeMem_kB;
+  info.pressure = GetPressure(info.availMem_kB, info.totalMem_kB);
+  info.alert = GetAlert(info.pressure, kMediumMemPressureMultiple, kHighMemPressureMultiple);
+
 }
 
-const std::vector<std::string>& OSState::GetCPUTimeStats() const
+bool OSState::GetDiskInfo(const std::string & path, DiskInfo & info) const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetCPUTimeStats.NonZeroUpdate");
-  if (_updatePeriod_ms == 0) {
-    UpdateCPUTimeStats();
+  struct statfs fsinfo = {};
+
+  if (statfs(path.c_str(), &fsinfo) != 0) {
+    LOG_ERROR("OSState::GetDiskInfo", "Unable to get disk info for %s (errno %d)", path.c_str(), errno);
+    return false;
   }
-  return _CPUTimeStats;
+
+  // Populate return struct
+  info.total_kB = (fsinfo.f_blocks * fsinfo.f_bsize / 1024);
+  info.avail_kB = (fsinfo.f_bavail * fsinfo.f_bsize / 1024);
+  info.free_kB = (fsinfo.f_bfree * fsinfo.f_bsize / 1024);
+  info.pressure = GetPressure(info.avail_kB, info.total_kB);
+  info.alert = GetAlert(info.pressure, kMediumDiskPressureMultiple, kHighDiskPressureMultiple);
+  return true;
+}
+
+void OSState::GetCPUTimeStats(std::vector<std::string> & stats) const
+{
+  static uint64_t lastUpdate_ms = 0;
+  if ((_currentTime_ms - lastUpdate_ms > _updatePeriod_ms) || (_updatePeriod_ms == 0)) {
+    UpdateCPUTimeStats();
+    lastUpdate_ms = _currentTime_ms;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(_cpuTimeStatsMutex);
+    stats = _CPUTimeStats;
+  }
 }
 
 
@@ -517,14 +560,27 @@ static std::string GetIPV4AddressForInterface(const char* if_name) {
     }
   }
 
-  if (host[0]) {
-    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
-                     if_name, host);
-  } else {
+  const std::string ip(host);
+  if (host[0])
+  {
+    static std::string sPrevIface = "";
+    static std::string sPrevIP = "";
+    const std::string iface(if_name);
+    if(sPrevIP != ip || sPrevIface != iface)
+    {
+      sPrevIP = ip;
+      sPrevIface = iface;
+      PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
+                       if_name, host);
+    }
+  }
+  else
+  {
     PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
   }
   freeifaddrs(ifaddr);
-  return std::string(host);
+
+  return ip;
 }
 
 static std::string GetWiFiSSIDForInterface(const char* if_name) {
@@ -597,33 +653,87 @@ std::string OSState::GetMACAddress() const
   return "";
 }
 
+static bool GetCounter(const char * path, uint64_t & val)
+{
+  std::ifstream rxFile;
+  rxFile.open(path);
+  if (rxFile.is_open()) {
+    rxFile >> val;
+    rxFile.close();
+    return true;
+  }
+  return false;
+}
+
+static OSState::Alert GetWifiAlert(uint64_t errors, uint64_t bytes)
+{
+  // Shortcut common cases
+  if (errors == 0) {
+    return OSState::Alert::None;
+  } else if (bytes == 0) {
+    return OSState::Alert::Red;
+  }
+
+  // Do the math
+  const float percent = (100.0 * errors) / bytes;
+  if (percent > kHighWifiErrorRate) {
+    return OSState::Alert::Red;
+  }
+  if (percent > kMediumWifiErrorRate) {
+    return OSState::Alert::Yellow;
+  }
+  return OSState::Alert::None;
+}
+
 uint64_t OSState::GetWifiTxBytes() const
 {
   uint64_t numBytes = 0;
-  std::ifstream txFile;
-  txFile.open(kWifiTxBytesFile);
-  if (txFile.is_open()) {
-    txFile >> numBytes;
-    txFile.close();
-  }
+  GetCounter(kWifiTxBytesFile, numBytes);
   return numBytes;
 }
 
 uint64_t OSState::GetWifiRxBytes() const
 {
   uint64_t numBytes = 0;
-  std::ifstream rxFile;
-  rxFile.open(kWifiRxBytesFile);
-  if (rxFile.is_open()) {
-    rxFile >> numBytes;
-    rxFile.close();
-  }
+  GetCounter(kWifiRxBytesFile, numBytes);
   return numBytes;
+}
+
+bool OSState::GetWifiInfo(WifiInfo & wifiInfo) const
+{
+  if (!GetCounter(kWifiRxBytesFile, wifiInfo.rx_bytes)) {
+    return false;
+  }
+
+  if (!GetCounter(kWifiTxBytesFile, wifiInfo.tx_bytes)) {
+    return false;
+  }
+
+  if (!GetCounter(kWifiRxErrorsFile, wifiInfo.rx_errors)) {
+    return false;
+  }
+
+  if (!GetCounter(kWifiTxErrorsFile, wifiInfo.tx_errors)) {
+    return false;
+  }
+
+  // Determine alert level based on worst of RX and TX error stats
+  const Alert rx_alert = GetWifiAlert(wifiInfo.rx_errors, wifiInfo.rx_bytes);
+  const Alert tx_alert = GetWifiAlert(wifiInfo.tx_errors, wifiInfo.tx_bytes);
+
+  wifiInfo.alert = std::max(rx_alert, tx_alert);
+
+  return true;
 }
 
 bool OSState::IsInRecoveryMode()
 {
   return Util::FileUtils::FileExists(kRecoveryModeFile);
+}
+
+bool OSState::RebootedForMaintenance() const
+{
+  return Util::FileUtils::FileExists(kMaintenanceRebootFile);
 }
 
 bool OSState::HasValidEMR() const
@@ -776,18 +886,18 @@ bool OSState::IsUserSpaceSecure()
   if(!read)
   {
     read = true;
-    std::ifstream infile(kCmdLineFile);	
+    std::ifstream infile(kCmdLineFile);
     std::string line;
-    while(std::getline(infile, line))	
+    while(std::getline(infile, line))
     {
       static const char* kKey = "dm=";
-      size_t index = line.find(kKey);	
-      if(index != std::string::npos)	
+      size_t index = line.find(kKey);
+      if(index != std::string::npos)
       {
         _isUserSpaceSecure = true;
         break;
-      }	
-    }	
+      }
+    }
     infile.close();
   }
 

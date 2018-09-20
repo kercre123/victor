@@ -33,6 +33,7 @@ namespace Switchboard {
 
 class GatewayMessagingServer {
   typedef std::function<void(bool, std::string)> ConnectionIdRequestCallback;
+  typedef std::function<void(bool)> ClientGuidRefreshRequestCallback;
 
 public:
   using GatewayMessageSignal = Signal::Signal<void (SwitchboardRequest)>;
@@ -42,12 +43,13 @@ public:
   bool Disconnect();
 
   std::shared_ptr<SafeHandle> SendConnectionIdRequest(ConnectionIdRequestCallback callback);
+  std::shared_ptr<SafeHandle> SendClientGuidRefreshRequest(ClientGuidRefreshRequestCallback callback);
 
   void HandleAuthRequest(const SwitchboardRequest& message);
   void HandleConnectionIdRequest(const SwitchboardRequest& message);
   void HandleConnectionIdResponse(const SwitchboardRequest& message);
+  void HandleClientGuidRefreshResponse(const SwitchboardRequest& message);
   void ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken);
-  bool SendMessage(const SwitchboardResponse& message);
   static void sEvGatewayMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 
   std::weak_ptr<TokenClient> _tokenClient;
@@ -58,6 +60,11 @@ private:
   std::shared_ptr<TaskExecutor> _taskExecutor;
   std::queue<ConnectionIdRequestCallback> _connectionIdRequestCallbackQueue;
   std::queue<std::weak_ptr<SafeHandle>> _connectionIdRequestHandlesQueue;
+
+  std::queue<ClientGuidRefreshRequestCallback> _refreshClientGuidRequestCallbackQueue;
+  std::queue<std::weak_ptr<SafeHandle>> _refreshClientGuidRequestHandlesQueue;
+
+  bool SendMessage(const SwitchboardResponse& message);
 
   struct ev_loop* loop_;
 

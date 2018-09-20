@@ -24,7 +24,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -115,7 +115,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::potentialCliff,                 &RobotToEngineImplMessaging::HandlePotentialCliffEvent);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imageGyro,                      &RobotToEngineImplMessaging::HandleImageImuData);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuData,                        &RobotToEngineImplMessaging::HandleImageImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncRobotAck,                   &RobotToEngineImplMessaging::HandleSyncRobotAck);
@@ -179,7 +179,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::prepForShutdown,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        LOG_INFO("RobotMessageHandler.ProcessMessage.Shutdown","");
-                                                       robot->Shutdown();
+                                                       robot->Shutdown(message.GetData().Get_prepForShutdown().reason);
                                                      }));
 
   
@@ -357,15 +357,6 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
                 robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
 
     _hasMismatchedRobotToEngineCLAD = true;
-  }
-
-  if (_hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD) {
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineRobotCLADVersionMismatch(_hasMismatchedEngineToRobotCLAD,
-                                                                                                              _hasMismatchedRobotToEngineCLAD,
-                                                                                                              engineEngineToRobotStr,
-                                                                                                              engineRobotToEngineStr,
-                                                                                                              robotEngineToRobotStr,
-                                                                                                              robotRobotToEngineStr)));
   }
 }
 
@@ -654,14 +645,12 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
 
 void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
-  ANKI_CPU_PROFILE("Robot::HandleImageImuData");
+  ANKI_CPU_PROFILE("Robot::HandleImuData");
 
-  const ImageImuData& payload = message.GetData().Get_imageGyro();
-
-  robot->GetVisionComponent().GetImuDataHistory().AddImuData(payload.systemTimestamp_ms,
-                                                             payload.rateX,
-                                                             payload.rateY,
-                                                             payload.rateZ);
+  RobotInterface::ImuData payload = message.GetData().Get_imuData();
+  for (int i = 0; i < IMUConstants::IMU_BATCH_SIZE; ++i ) {
+    robot->GetImuComponent().AddData( std::move(payload.frames[i]) );
+  }
 }
 
 void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

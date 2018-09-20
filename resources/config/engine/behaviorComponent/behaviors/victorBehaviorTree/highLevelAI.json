@@ -72,15 +72,6 @@
     {
       "name": "PlayingWithCube",
       "behavior": "PlayWithCube"
-    },    
-    {
-      "name": "ReturningToCharger",
-      "behavior": "FindAndGoToHome",
-      "activateIntent": "system_charger"
-    },
-    {
-      "name": "FailedToFindCharger",
-      "behavior": "ObservingFailedToFindCharger"
     }
   ],
 
@@ -96,10 +87,6 @@
     {
       "name": "NoLongerRecentlyPlaced",
       "begin_s": 150.0
-    },    
-    {
-      "name": "FailedToFindCharger",
-      "begin_s": 300.0
     }
   ],
 
@@ -156,7 +143,15 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
+              },
+              {
+                "conditionType": "Compound",
+                "not":
+                {
+                  "conditionType": "BatteryLevel",
+                  "targetBatteryLevel" : "Low"
+                }
               }
             ]
           }
@@ -249,7 +244,15 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
+              },
+              {
+                "conditionType": "Compound",
+                "not":
+                {
+                  "conditionType": "BatteryLevel",
+                  "targetBatteryLevel" : "Low"
+                }
               }
             ]
           }
@@ -448,7 +451,7 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
               }
             ]
           }
@@ -480,7 +483,7 @@
               },
               {
                 "conditionType": "FeatureGate",
-                "feature": "CubeBehaviors"
+                "feature": "ReactToHeldCube"
               }
             ]
           }
@@ -557,109 +560,11 @@
         }
       ]
     },
-    
-    
-    {
-      "from": "ReturningToCharger",
-      "interruptingTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "OffTreadsState",
-            "targetState": "InAir"
-          }
-        }
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "FailedToFindCharger",
-          "condition": {
-            "customCondition": "FailedToFindCharger"
-          }
-        }
-      ],
-      "exitTransitions": [
-        {
-          "to": "ObservingOnChargerRecentlyPlaced",
-          "condition": {
-            "conditionType": "OnCharger"
-          }
-        }
-      ]
-    },
 
-    {
-      "from": "FailedToFindCharger",
-      "interruptingTransitions": [
-        {
-          "to": "ReturningToCharger",
-          "condition": {
-            "customCondition": "ChargerLocated"
-          }
-        }
-      ],
-      "exitTransitions": [
-        {
-          "to": "ObservingOnChargerRecentlyPlaced",
-          "condition": {
-            "conditionType": "OnCharger"
-          },
-          "emotionEvent": "PlacedOnCharger"
-        },
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition" 
-          }
-        }
-      ]
-    },
 
     //***************************
     // VOICE COMMANDS   
-    //*************************** 
-
-    // go to your charger
-    {
-      "from": [
-        "ObservingDriveOffCharger",
-        "DriveOffChargerIntoSocializing",
-        "Observing",
-        "ReturningToCharger", // to avoid unclaimed intent
-        "Socializing",
-        "Exploring",
-        "ExploringVoiceCommand",
-        "FailedToFindCharger",
-        "InvestigateHeldCube"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "ReturningToCharger",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {"type": "system_charger"}
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "from": [
-        "PlayingWithCube"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "ReturningToCharger",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {"type": "system_charger"}
-            ]
-          }
-        }
-      ]
-    },
+    //***************************
 
     // explore voice command
     {
@@ -670,8 +575,6 @@
         "ObservingOnCharger",
         "ObservingOnChargerRecentlyPlaced",
         "Socializing",
-        "ReturningToCharger",
-        "FailedToFindCharger",
         "PlayingWithCube",
         "Exploring",
         "ExploringVoiceCommand",

@@ -121,16 +121,16 @@ TEST(UserIntentMap, TriggerWord)
 
   EXPECT_FALSE(comp->IsTriggerWordPending());
 
-  comp->SetTriggerWordPending();
+  comp->SetTriggerWordPending(true);
   EXPECT_TRUE(comp->IsTriggerWordPending());
 
   comp->ClearPendingTriggerWord();
   EXPECT_FALSE(comp->IsTriggerWordPending());
 
-  comp->SetTriggerWordPending();
+  comp->SetTriggerWordPending(true);
   EXPECT_TRUE(comp->IsTriggerWordPending());
 
-  comp->SetTriggerWordPending();
+  comp->SetTriggerWordPending(true);
   EXPECT_TRUE(comp->IsTriggerWordPending());
 
   comp->ClearPendingTriggerWord();

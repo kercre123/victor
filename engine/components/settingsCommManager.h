@@ -23,7 +23,7 @@
 
 #include "proto/external_interface/settings.pb.h"
 
-#include "clad/types/robotSettingsTypes.h"
+#include "json/json.h"
 
 namespace Anki {
 namespace Vector {
@@ -63,10 +63,10 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  bool HandleRobotSettingChangeRequest   (const RobotSetting robotSetting,
+  bool HandleRobotSettingChangeRequest   (const external_interface::RobotSetting robotSetting,
                                           const Json::Value& settingJson,
                                           const bool updateSettingsJdoc = false);
-  bool ToggleRobotSettingHelper          (const RobotSetting robotSetting);
+  bool ToggleRobotSettingHelper          (const external_interface::RobotSetting robotSetting);
 
   bool HandleAccountSettingChangeRequest (const external_interface::AccountSetting accountSetting,
                                           const Json::Value& settingJson,
@@ -87,7 +87,9 @@ private:
   void OnRequestUpdateSettings        (const external_interface::UpdateSettingsRequest& updateSettingsRequest);
   void OnRequestUpdateAccountSettings (const external_interface::UpdateAccountSettingsRequest& updateAccountSettingsRequest);
   void OnRequestUpdateUserEntitlements(const external_interface::UpdateUserEntitlementsRequest& updateUserEntitlementsRequest);
+  void OnRequestCheckCloud            (const external_interface::CheckCloudRequest& checkCloudRequest);
 
+  Robot*                   _robot = nullptr;
   SettingsManager*         _settingsManager = nullptr;
   AccountSettingsManager*  _accountSettingsManager = nullptr;
   UserEntitlementsManager* _userEntitlementsManager = nullptr;

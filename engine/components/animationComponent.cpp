@@ -262,7 +262,8 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           AnimationCompleteCallback callback,
                                           const u32 actionTag,
                                           float timeout_sec,
-                                          u32 startAt_ms)
+                                          u32 startAt_ms,
+                                          bool renderInEyeHue)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
@@ -292,7 +293,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   }
 
   const Tag currTag = GetNextTag();
-  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, startAt_ms, currTag, animName) == RESULT_OK) {
+  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, startAt_ms, currTag, renderInEyeHue, animName) == RESULT_OK) {
     SetAnimationCallback(animName, callback, currTag, actionTag, numLoops, timeout_sec);
   }
   
@@ -948,8 +949,8 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   }
 
   _isAnimating = false;
-  DEV_ASSERT_MSG(_currAnimName == payload.animName, "AnimationComponent.AnimEnded.UnexpectedName", "Got %s, expected %s", payload.animName.c_str(), _currAnimName.c_str());
-  DEV_ASSERT_MSG(_currAnimTag == payload.tag, "AnimationComponent.AnimEnded.UnexpectedTag", "Got %d, expected %d", payload.tag, _currAnimTag);
+  DEV_ASSERT_MSG(_currAnimName.empty() || _currAnimName == payload.animName, "AnimationComponent.AnimEnded.UnexpectedName", "Got %s, expected %s", payload.animName.c_str(), _currAnimName.c_str());
+  DEV_ASSERT_MSG(_currAnimTag == kNotAnimatingTag || _currAnimTag == payload.tag, "AnimationComponent.AnimEnded.UnexpectedTag", "Got %d, expected %d", payload.tag, _currAnimTag);
 
   _currAnimName = "";
   _currAnimTag = kNotAnimatingTag;

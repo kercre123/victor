@@ -25,7 +25,6 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/robotSettingsTypes.h"
 #include "util/logging/logging.h"
 
 
@@ -54,28 +53,30 @@ void EngineRobotAudioClient::InitDependent(Vector::Robot* robot, const RobotComp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Engine Robot Audio Client Helper Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioClient::SetRobotMasterVolume( MasterVolume volume )
+void EngineRobotAudioClient::SetRobotMasterVolume( external_interface::Volume volume )
 {
   using AudioVolumeState = AudioMetaData::GameState::Robot_Vic_Volume;
   auto audioState = AudioVolumeState::Invalid;
   switch (volume) {
-    case MasterVolume::Mute:
+    case external_interface::Volume::MUTE:
       audioState = AudioVolumeState::Mute;
       break;
-    case MasterVolume::Low:
+    case external_interface::Volume::LOW:
       audioState = AudioVolumeState::Low;
       break;
-    case MasterVolume::MediumLow:
+    case external_interface::Volume::MEDIUM_LOW:
       audioState = AudioVolumeState::Mediumlow;
       break;
-    case MasterVolume::Medium:
+    case external_interface::Volume::MEDIUM:
       audioState = AudioVolumeState::Medium;
       break;
-    case MasterVolume::MediumHigh:
+    case external_interface::Volume::MEDIUM_HIGH:
       audioState = AudioVolumeState::Mediumhigh;
       break;
-    case MasterVolume::High:
+    case external_interface::Volume::HIGH:
       audioState = AudioVolumeState::High;
+      break;
+    default:
       break;
   }
   PostGameState( AudioMetaData::GameState::StateGroupType::Robot_Vic_Volume,

@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/animationComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
@@ -203,6 +204,9 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
     return;
   }
 
+  auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
+  contComp.UpdateInfoFace(true);
+
   bsm.ResetBehaviorStack(waitBehavior.get());
   
   // Disable neutral eyes while in the dev screens, because symmetry with another call to
@@ -219,7 +223,7 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   uic.DisableEngineResponseToTriggerWord(kDisableTriggerWordName, true);
 
-  uic.AlterStreamStateForCurrentResponse(kLockName, false);
+  uic.AlterStreamStateForCurrentResponse(kLockName, StreamAndLightEffect::StreamingDisabled);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -229,6 +233,9 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
 {
   
   PRINT_CH_INFO("BehaviorSystem", "BehaviorComponentMessageHandler.OnInfoFaceStarted.ExitPairing", "");
+
+  auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
+  contComp.UpdateInfoFace(false);
   
   // ignore any unclaimed trigger word or intent warnings, if a user said the wake word or a command
   // just prior to accessing a dev screen
@@ -260,7 +267,8 @@ void BehaviorComponentMessageHandler::SetupUserIntentEvents()
   auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
     PRINT_CH_INFO("BehaviorSystem","BehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
     auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-    uic.SetTriggerWordPending();
+    const bool willStreamAudio = false;
+    uic.SetTriggerWordPending(willStreamAudio);
   };
   _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeTriggerWordDetected, fakeTriggerWordCallback ) );
   

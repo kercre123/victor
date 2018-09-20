@@ -54,7 +54,11 @@ protected:
 
     for( const auto& entry : _tags ) {
 
-      std::string type = TypeFromMaxValue( entry.second.size() );
+      uint64_t maxFieldNum = 255;
+      for( const auto& elem : entry.second ) {
+        maxFieldNum = elem.second > maxFieldNum ? elem.second : maxFieldNum;
+      }
+      std::string type = TypeFromMaxValue( maxFieldNum );
       printer->Print( {{"tagClass", entry.first}, {"underlying", type}}, "enum class $tagClass$ : $underlying$\n" );
       printer->Print( "{\n" );
 

@@ -2,6 +2,8 @@
   "behaviorClass": "DanceToTheBeatCoordinator",
   "behaviorID": "DanceToTheBeatCoordinator",
   
+  "associatedActiveFeature" : "ListeningForBeats",
+  
   "wantsToBeActivatedCondition": {
     "conditionType" : "Compound",
     "and" : [
@@ -10,19 +12,11 @@
         "allowPotentialBeat" : true
       },
       {
-        "conditionType": "Compound",
-        "not": {
-          "conditionType": "CarryingCube"
-        }
-      },
-      {
         "conditionType": "FeatureGate",
         "feature" : "Dancing"
       }
     ]
   },
-  
-  "associatedActiveFeature" : "DanceToTheBeat",
 
   "listeningBehavior"         : "ListenForBeats",
   "longListeningBehavior"     : "ListenForBeatsLong",

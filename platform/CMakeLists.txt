@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+
 # config files that live in /anki/etc
 add_subdirectory(config)
 
@@ -13,3 +14,52 @@ add_subdirectory(diagnostics-logger)
 add_subdirectory(victorCrashReports)
 
 add_subdirectory(faultCodeDisplay)
+
+#
+# Macro command to create build rules for full symbol files
+#
+macro(add_symbol_target so)
+  # Add a custom command to generate the .full file,
+  # then add a custom target that depends on the file
+  set(lib ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${so})
+  set(libfull ${lib}.full)
+  set(STRIP_CMD "${VICOS_TOOLCHAIN_PREFIX}strip")
+  set(OBJCOPY_CMD "${VICOS_TOOLCHAIN_PREFIX}objcopy")
+  add_custom_command(
+    OUTPUT ${libfull}
+    DEPENDS ${lib}
+    COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${libfull}
+    COMMAND ${STRIP_CMD} --strip-unneeded ${lib}
+    COMMAND ${OBJCOPY_CMD} --add-gnu-debuglink ${libfull} ${lib}
+    COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${libfull}
+    COMMENT "strip lib ${lib} -> ${libfull}"
+    VERBATIM
+  )
+  add_custom_target(${so} DEPENDS ${libfull})
+endmacro()
+
+if (VICOS)
+  # For each imported library, create a target to generate the symbol file
+  set(SYMBOL_TARGETS
+    libatomic.so.1
+    libc++.so.1
+    libopencv_calib3d.so.3.4
+    libopencv_core.so.3.4
+    libopencv_features2d.so.3.4
+    libopencv_flann.so.3.4
+    libopencv_highgui.so.3.4
+    libopencv_imgcodecs.so.3.4
+    libopencv_imgproc.so.3.4
+    libopencv_ml.so.3.4
+    libopencv_objdetect.so.3.4
+    libopencv_video.so.3.4
+    libopencv_videoio.so.3.4
+    libopus.so.0
+  )
+  foreach (so ${SYMBOL_TARGETS})
+    add_symbol_target(${so})
+  endforeach()
+
+  # Create one top-level target that depends on all the symbol targets
+  add_custom_target(platform_symbols ALL DEPENDS ${SYMBOL_TARGETS})
+endif()

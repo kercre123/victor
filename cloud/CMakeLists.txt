@@ -88,12 +88,10 @@ macro(_build_cloud_executable target_name)
   anki_build_go_executable(${target_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
   get_target_property(__util_include_dirs util INCLUDE_DIRECTORIES)
   anki_go_add_include_dir(${target_name} ${__util_include_dirs})
-  anki_build_target_license(${target_name} "ANKI")
 endmacro()
 
 macro(_build_cloud_c_library target_name header_name)
   anki_build_go_c_library(${target_name} ${header_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
-  anki_build_target_license(${target_name} "ANKI")
 endmacro()
 
 # voicetest project (mac only)
@@ -101,6 +99,7 @@ if (MACOSX)
 
   # create Go target
   _build_cloud_c_library(voicego VOICEGO_HEADER)
+  anki_build_target_license(voicego "ANKI")
   _add_chipper_flags(voicego)
   get_filename_component(VOICEGO_HEADER_DIR ${VOICEGO_HEADER} DIRECTORY)
 
@@ -133,6 +132,7 @@ if (MACOSX)
 
   # proctest - test victor audio process w/ laptop mic
   _build_cloud_c_library(proctest_go PROCTEST_GO_HEADER)
+  anki_build_target_license(proctest_go "ANKI")
   _add_chipper_flags(proctest_go)
   get_filename_component(PROCTEST_HEADER_DIR ${PROCTEST_GO_HEADER} DIRECTORY)
   anki_build_cxx_executable(proctest ${ANKI_SRCLIST_DIR} ${PROCTEST_GO_HEADER})
@@ -149,8 +149,13 @@ if (MACOSX)
   anki_disable_default_build(sessiondl)
 
   _build_cloud_executable(tokprovision)
+  anki_build_target_license(tokprovision "ANKI")
 
 endif()
+
+# CLI tool for testing logcollector (log uploads)
+_build_cloud_executable(logcollectorcli)
+anki_disable_default_build(logcollectorcli)
 
 # ipctest - for testing interop capability of C++ and Go socket code
 _build_cloud_executable(ipctest_go)
@@ -166,6 +171,31 @@ anki_disable_default_build(servbench)
 
 # cloud process
 _build_cloud_executable(vic-cloud)
+
+# see also VIC-6541 Solve keeping list of approved open-source licenses up-to-date with the license checks
+
+anki_build_target_license(vic-cloud
+  "ANKI"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/aws/aws-sdk-go/vendor/github.com/go-ini/ini/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/aws/aws-sdk-go/vendor/github.com/jmespath/go-jmespath/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/golang/glog/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/google/martian/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/google.golang.org/genproto/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/google.golang.org/grpc/LICENSE"
+  "BSD-2,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/aalpern/go-metrics/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/google/uuid/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gorilla/context/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/grd/ogg/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/golang.org/x/text/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/anki/opus-go/libopus/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/cenkalti/backoff/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/dgrijalva/jwt-go/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gwatts/iniconf/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gwatts/rootcerts/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/jawher/mow.cli/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/satori/go.uuid/LICENSE"
+)
+
 _add_chipper_flags(vic-cloud)
 _add_crash_reporter_flags(vic-cloud)
 
@@ -178,6 +208,7 @@ endif()
 # wavtest
 #
 _build_cloud_executable(wavtest)
+anki_build_target_license(wavtest "ANKI")
 _add_chipper_flags(wavtest)
 
 if (VICOS)
@@ -220,6 +251,31 @@ add_custom_command(
 )
 
 _build_cloud_executable(vic-gateway)
+
+# see also VIC-6541 Solve keeping list of approved open-source licenses up-to-date with the license checks
+
+anki_build_target_license(vic-gateway
+  "ANKI"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/aws/aws-sdk-go/vendor/github.com/go-ini/ini/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/aws/aws-sdk-go/vendor/github.com/jmespath/go-jmespath/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/golang/glog/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/google/martian/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/google.golang.org/genproto/LICENSE"
+  "Apache-2.0,${CMAKE_SOURCE_DIR}/cloud/go/src/google.golang.org/grpc/LICENSE"
+  "BSD-2,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/aalpern/go-metrics/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/google/uuid/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gorilla/context/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/grd/ogg/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/golang.org/x/text/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/anki/opus-go/libopus/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/cenkalti/backoff/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/dgrijalva/jwt-go/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gwatts/iniconf/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gwatts/rootcerts/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/jawher/mow.cli/LICENSE"
+  "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/satori/go.uuid/LICENSE"
+)
+
 _add_chipper_flags(vic-gateway)
 _add_crash_reporter_flags(vic-gateway)
 

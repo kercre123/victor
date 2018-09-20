@@ -43,26 +43,38 @@ namespace Vector {
 
 using namespace ExternalInterface;
 
-namespace{
-static const float kCliffBackupDist_mm = 60.0f;
-static const float kCliffBackupSpeed_mmps = 100.0f;
+namespace {
+  const char* kCliffBackupDistKey = "cliffBackupDistance_mm";
+  const char* kCliffBackupSpeedKey = "cliffBackupSpeed_mmps";
+  const char* kEventFlagTimeoutKey = "eventFlagTimeout_sec";
 
-// If the value of the cliff when it started stopping is 
-// this much less than the value when it stopped, then
-// the cliff is considered suspicious (i.e. something like
-// carpet) and the reaction is aborted.
-// In general you'd expect the start value to be _higher_
-// that the stop value if it's true cliff, but we
-// use some margin here to account for sensor noise.
-static const u16   kSuspiciousCliffValDiff = 20;
+  // If the value of the cliff when it started stopping is
+  // this much less than the value when it stopped, then
+  // the cliff is considered suspicious (i.e. something like
+  // carpet) and the reaction is aborted.
+  // In general you'd expect the start value to be _higher_
+  // that the stop value if it's true cliff, but we
+  // use some margin here to account for sensor noise.
+  static const u16   kSuspiciousCliffValDiff = 20;
 
-// Cooldown for playing more dramatic react to cliff reaction
-CONSOLE_VAR(float, kDramaticReactToCliffCooldown_sec, CONSOLE_GROUP, 3 * 60.f);
+  // Cooldown for playing more dramatic react to cliff reaction
+  CONSOLE_VAR(float, kDramaticReactToCliffCooldown_sec, CONSOLE_GROUP, 3 * 60.f);
 
-// If this many RobotStopped messages are received
-// while activated, then just give up and go to StuckOnEdge.
-// It's probably too dangerous to keep trying anything
-CONSOLE_VAR(uint32_t, kMaxNumRobotStopsBeforeGivingUp, CONSOLE_GROUP, 5);
+  // If this many RobotStopped messages are received
+  // while activated, then just give up and go to StuckOnEdge.
+  // It's probably too dangerous to keep trying anything
+  CONSOLE_VAR(uint32_t, kMaxNumRobotStopsBeforeGivingUp, CONSOLE_GROUP, 5);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kCliffBackupDistKey,
+    kCliffBackupSpeedKey,
+    kEventFlagTimeoutKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -72,26 +84,53 @@ BehaviorReactToCliff::InstanceConfig::InstanceConfig()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToCliff::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
+{
+  cliffBackupDist_mm = JsonTools::ParseFloat(config, kCliffBackupDistKey, debugName);
+  // Verify that backup distance is valid.
+  ANKI_VERIFY(Util::IsFltGTZero(cliffBackupDist_mm), (debugName + ".InvalidCliffBackupDistance").c_str(),
+              "Value should be greater than 0.0 (not %.2f).", cliffBackupDist_mm);
+  
+  cliffBackupSpeed_mmps = JsonTools::ParseFloat(config, kCliffBackupSpeedKey, debugName);
+  // Verify that backup speed is valid.
+  ANKI_VERIFY(Util::IsFltGTZero(cliffBackupSpeed_mmps), (debugName + ".InvalidCliffBackupSpeed").c_str(),
+              "Value should be greater than 0.0 (not %.2f).", cliffBackupSpeed_mmps);
+  
+  eventFlagTimeout_sec = JsonTools::ParseFloat(config, kEventFlagTimeoutKey, debugName);
+  // Verify that the stop event timeout limit is valid.
+  if (!ANKI_VERIFY(Util::IsFltGEZero(eventFlagTimeout_sec),
+                   (debugName + ".InvalidEventFlagTimeout").c_str(),
+                   "Value should always be greater than or equal to 0.0 (not %.2f). Making positive.",
+                   eventFlagTimeout_sec))
+  {
+    eventFlagTimeout_sec *= -1.0;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 {
   quitReaction = false;
   gotStop = false;
-  putdownOnCliff = false;
-  shouldStopDueToCharger = false;
+  putDownOnCliff = false;
   wantsToBeActivated = false;
 
   const auto kInitVal = std::numeric_limits<u16>::max();
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
   persistent.numStops = 0;
+  persistent.lastStopTime_sec = 0.f;
+  persistent.lastPutDownOnCliffTime_sec = 0.f;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
+  _iConfig = InstanceConfig(config, debugName);
+  
   SubscribeToTags({{
     EngineToGameTag::RobotStopped,
-    EngineToGameTag::ChargerEvent,
     EngineToGameTag::RobotOffTreadsStateChanged
   }});
 }
@@ -107,9 +146,8 @@ void BehaviorReactToCliff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _dVars.gotStop || _dVars.putdownOnCliff || _dVars.wantsToBeActivated;
+  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.putDownOnCliff;
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorActivated()
@@ -150,7 +188,7 @@ void BehaviorReactToCliff::OnBehaviorActivated()
           _dVars.quitReaction = true;    
         }
       }
-    } 
+    }
 
     return true;
   };
@@ -184,7 +222,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
   
   // send DAS event for activation. don't send it if quitReaction is false, because the user likely didn't notice
   {
-    DASMSG(behavior_cliffreaction, "behaviors.cliffreaction", "The robot reacted to a cliff");
+    DASMSG(behavior_cliffreaction, "behavior.cliffreaction", "The robot reacted to a cliff");
     DASMSG_SET(i1, _dVars.persistent.cliffValsAtStart[0], "Sensor value 1");
     DASMSG_SET(i2, _dVars.persistent.cliffValsAtStart[1], "Sensor value 2");
     DASMSG_SET(i3, _dVars.persistent.cliffValsAtStart[2], "Sensor value 3");
@@ -248,7 +286,7 @@ void BehaviorReactToCliff::TransitionToBackingUp()
     }
 
     PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.DoingExtraRecoveryMotion", "");
-    DelegateIfInControl(new DriveStraightAction(direction * kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
+    DelegateIfInControl(new DriveStraightAction(direction * _iConfig.cliffBackupDist_mm, _iConfig.cliffBackupSpeed_mmps),
                   [this](){
                       PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.ExtraRecoveryMotionComplete", "");
 
@@ -283,9 +321,24 @@ void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) cons
 void BehaviorReactToCliff::BehaviorUpdate()
 {
   if(!IsActivated()){
+    const auto& currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (_dVars.gotStop) {
+      const auto& timeSinceLastStop_sec = currentTime_sec - _dVars.persistent.lastStopTime_sec;
+      if (timeSinceLastStop_sec > _iConfig.eventFlagTimeout_sec) {
+        _dVars.gotStop = false;
+        PRINT_NAMED_INFO("BehaviorReactToCliff.Update.IgnoreLastStopEvent", "");
+      }
+    }
+    if (_dVars.putDownOnCliff) {
+      const auto& timeSinceLastPutDownOnCliff_sec = currentTime_sec - _dVars.persistent.lastPutDownOnCliffTime_sec;
+      if (timeSinceLastPutDownOnCliff_sec > _iConfig.eventFlagTimeout_sec) {
+        _dVars.putDownOnCliff = false;
+        PRINT_NAMED_INFO("BehaviorReactToCliff.Update.IgnoreLastPossiblePutDownOnCliffEvent", "");
+      }
+    }
     // Set wantsToBeActivated to effectively give the activation conditions
     // an extra tick to be evaluated.
-    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.putdownOnCliff;
+    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.putDownOnCliff;
     _dVars.gotStop = false;
     return;
   }
@@ -311,11 +364,6 @@ void BehaviorReactToCliff::BehaviorUpdate()
     PRINT_NAMED_INFO("BehaviorReactToCliff.Update.CancelDueToPickup", "");
     CancelSelf();
   }
-
-  if(_dVars.shouldStopDueToCharger){
-    _dVars.shouldStopDueToCharger = false;
-    CancelSelf();
-  }
 }
 
 
@@ -331,6 +379,7 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       
       _dVars.quitReaction = false;
       _dVars.gotStop = true;
+      _dVars.persistent.lastStopTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       ++_dVars.persistent.numStops;
 
       // Record triggered cliff sensor value(s) and compare to what they are when wheels
@@ -353,47 +402,25 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       }
       break;
     }
-    case EngineToGameTag::ChargerEvent:
-    {
-      // This is fine, we don't care about this event when we're not running
-      break;
-    }
     case EngineToGameTag::RobotOffTreadsStateChanged:
     {
       const auto treadsState = event.GetData().Get_RobotOffTreadsStateChanged().treadsState;
       const bool cliffsDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
-
+      
       if (treadsState == OffTreadsState::OnTreads && cliffsDetected) {
-        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.AlwaysHandleInScope.PutdownOnCliff", "");
-        _dVars.putdownOnCliff = true;
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.AlwaysHandleInScope", "Possibly put down on cliff");
+        _dVars.putDownOnCliff = true;
+        _dVars.persistent.lastPutDownOnCliffTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      } else {
+        _dVars.putDownOnCliff = false;
       }
       break;
     }
-
     default:
       PRINT_NAMED_ERROR("BehaviorReactToCliff.ShouldRunForEvent.BadEventType",
                         "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
       break;
 
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
-{
-  switch( event.GetData().GetTag() ) {
-    case EngineToGameTag::ChargerEvent:
-    {
-      // This isn't a real cliff, cozmo should stop reacting and let the drive off
-      // charger action be selected
-      if(event.GetData().Get_ChargerEvent().onCharger){
-        _dVars.shouldStopDueToCharger = true;
-      }
-      break;
-    }
-    default:
-      break;
   }
 }
 

@@ -41,7 +41,6 @@ namespace Vector {
 #endif
 
 namespace {
-  int _faultCodeFifo = -1;
   uint16_t _fault = FaultCode::NONE;
 
   static const std::string kFaultURL = "support.anki.com";
@@ -90,8 +89,6 @@ FaceDisplay::FaceDisplay()
   _faceDrawImg[1].reset(new Vision::ImageRGB565());
   _faceDrawImg[1]->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   _faceDrawThread = std::thread(&FaceDisplay::DrawFaceLoop, this);
-
-  _faultCodeThread = std::thread(&FaceDisplay::FaultCodeLoop, this);
 }
 
 FaceDisplay::~FaceDisplay()
@@ -102,8 +99,6 @@ FaceDisplay::~FaceDisplay()
 
   _stopDrawFace = true;
   _faceDrawThread.join();
-
-  StopFaultCodeThread();
 }
 
 void FaceDisplay::UpdateNextImgPtr()
@@ -163,69 +158,6 @@ void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB565& img)
     UpdateNextImgPtr();
     img.CopyTo(*_faceDrawNextImg);
   }
-}
-
-void FaceDisplay::DrawFaultCode(uint16_t fault)
-{
-  std::lock_guard<std::mutex> lock(_faceDrawMutex);
-
-  // Image in which the fault code is drawn
-  static Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-
-  // Copy of what was being displayed on the face before showing the fault code
-  static Vision::ImageRGB565 imgBeforeFault(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-
-  // Save the current image being displayed if we did not have a fault code
-  // but do now and there has been an image drawn
-  const bool saveCurImg = (_fault == 0 && fault != 0);
-
-  // If fault code 0, then show the saved image
-  // as long as there has been one. Otherwise
-  // imgBeforeFault will be empty
-  if(fault == 0)
-  {
-    if(_faceDrawLastImg != nullptr && _fault != 0)
-    {
-      UpdateNextImgPtr();
-      imgBeforeFault.CopyTo(*_faceDrawNextImg);
-    }
-    _fault = fault;
-    return;
-  }
-
-  if(saveCurImg && _faceDrawLastImg != nullptr)
-  {
-    _faceDrawLastImg->CopyTo(imgBeforeFault);
-  }
-
-  _fault = fault;
-
-  img.FillWith(0);
-
-  // Draw the fault code centered horizontally
-  const std::string faultString = std::to_string(fault);
-  Vec2f size = Vision::Image::GetTextSize(faultString, 1.5,  1);
-  img.DrawTextCenteredHorizontally(faultString,
-				   CV_FONT_NORMAL,
-				   1.5,
-				   2,
-				   NamedColors::WHITE,
-				   (FACE_DISPLAY_HEIGHT/2 + size.y()/4),
-				   false);
-
-  // Draw fault URL centered horizontally and slightly above
-  // the bottom of the screen
-  size = Vision::Image::GetTextSize(kFaultURL, 0.5, 1);
-  img.DrawTextCenteredHorizontally(kFaultURL,
-				   CV_FONT_NORMAL,
-				   0.5,
-				   1,
-				   NamedColors::WHITE,
-				   FACE_DISPLAY_HEIGHT - size.y(),
-				   false);
-
-  UpdateNextImgPtr();
-  _faceDrawNextImg->SetFromImageRGB(img);
 }
 
 void FaceDisplay::DrawFaceLoop()
@@ -288,136 +220,6 @@ void FaceDisplay::DrawFaceLoop()
       // Sleep before checking again whether we've got an image to draw
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-  }
-}
-
-void FaceDisplay::FaultCodeLoop()
-{
-  // If the fifo doesn't exist create it
-  if(access(FaultCode::kFaultCodeFifoName, F_OK) == -1)
-  {
-    int res = mkfifo(FaultCode::kFaultCodeFifoName, S_IRUSR | S_IWUSR);
-    if(res < 0)
-    {
-      printf("FaceDisplay.FaultCodeLoop.mkfifoFailed %d", errno);
-      return;
-    }
-  }
-
-  // Open fifo for read+write to avoid blocking on open.
-  _faultCodeFifo = open(FaultCode::kFaultCodeFifoName, O_RDWR);
-  if(_faultCodeFifo < 0)
-  {
-    LOG_WARNING("FaceDisplay.FaultCodeLoop.OpenFifoFailed", "%d", errno);
-    return;
-  }
-
-  // Wait 10 seconds before trying to read and draw fault codes
-  // in order to let things stabilize and have time to do startup fault checks.
-  // If condition variable is signalled for shutdown, the wait returns immediately.
-
-  {
-    using namespace std::chrono_literals;
-    std::unique_lock<std::mutex> lock(_faultCodeMutex);
-    if (!_faultCodeStop) {
-      _faultCodeCondition.wait_for(lock, 10s);
-    }
-  }
-
-  const ssize_t kFaultSize = sizeof(uint16_t);
-  u8 buf[128];
-
-  while (!_faultCodeStop)
-  {
-    // Blocks until there is data available
-    const ssize_t rc = read(_faultCodeFifo, buf, sizeof(buf));
-    if (rc < 0)
-    {
-      LOG_WARNING("FaceDisplay.FaultCodeLoop.ReadFailed", "rc %zd errno %d", rc, errno);
-      close(_faultCodeFifo);
-      _faultCodeFifo = -1;
-      return;
-    }
-
-    ssize_t numBytes = rc;
-
-    // Pull off kFaultSize number of bytes from the read data
-    // and try to draw it, repeat until there is not enough data
-    // left
-    uint16_t maxFault = _fault;
-    while(numBytes >= kFaultSize)
-    {
-      uint16_t newFault;
-      memcpy(&newFault, buf, kFaultSize);
-      memmove(buf, buf + kFaultSize, numBytes - kFaultSize);
-      numBytes -= kFaultSize;
-
-      // Only show largest fault code
-      // or 0 which clears the fault code screen
-      if(newFault > maxFault || newFault == 0)
-      {
-        maxFault = newFault;
-      }
-    }
-
-    if (_enableFaultCodeDisplay) {
-
-      if(!_stopBootAnim)
-      {
-        StopBootAnim();
-
-        uint32_t count = 0;
-        // Sleep spin waiting for the boot animation to be stopped
-        // since it is stopped by a background task
-        while(!_stopBootAnim)
-        {
-          static const uint32_t kSleepTime_ms = 10;
-          std::this_thread::sleep_for(std::chrono::milliseconds(kSleepTime_ms));
-
-          static const uint32_t kMaxWait_ms = 5000;
-          if(count++ > (kMaxWait_ms / kSleepTime_ms))
-          {
-            // Something has gone horrible wrong, we have been waiting for the boot anim
-            // to stop for kMaxWait_ms. Time to completely give up and exit
-            PRINT_NAMED_ERROR("FaceDisplay.FaultCodeLoop.WaitingForBootAnimToStop",
-                              "Boot anim hasn't stopped after %dms, exiting",
-                              kMaxWait_ms);
-            exit(1);
-          }
-        }
-      }
-      
-      DrawFaultCode(maxFault);
-    }
-  }
-}
-
-void FaceDisplay::StopFaultCodeThread()
-{
-  //
-  // Set stop flag and notify any waiters on condition.
-  // If worker thread is waiting on condition, wait will return immediately.
-  //
-  {
-    std::lock_guard<std::mutex> lock(_faultCodeMutex);
-    _faultCodeStop = true;
-    _faultCodeCondition.notify_all();
-  }
-
-  //
-  // If fifo is open, write a no-op value and then close it.
-  // If worker thread is blocked in read, it will wake up immediately
-  // to process the no-op.
-  if (_faultCodeFifo > 0)
-  {
-    (void) write(_faultCodeFifo, &_fault, sizeof(_fault));
-    close(_faultCodeFifo);
-    _faultCodeFifo = -1;
-  }
-
-  // Wait for worker thread to exit.
-  if (_faultCodeThread.joinable()) {
-    _faultCodeThread.join();
   }
 }
 

@@ -251,7 +251,9 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    void CameraService::DeleteCamera() {
+    Result CameraService::DeleteCamera()
+    {
+      return RESULT_OK;
     }
 
     // Starts camera frame synchronization

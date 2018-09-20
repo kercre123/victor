@@ -12,7 +12,8 @@
     "ReactToHello",
     "ReactToGoodMorning",
     "ReactToGoodBye",
-    "ReactToAffirmative"
+    "ReactToAffirmative",
+    "ReactToNegative"
 
     // NOTE: "goodnight" greeting is handled by the sleep cycle behavior, not here
   ],

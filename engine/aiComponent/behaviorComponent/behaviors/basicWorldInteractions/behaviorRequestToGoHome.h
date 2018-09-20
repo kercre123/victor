@@ -16,12 +16,12 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "clad/types/animationTrigger.h"
-
 #include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
   
 class BehaviorRequestToGoHome : public ICozmoBehavior
 {
@@ -59,13 +59,14 @@ private:
   };
   
   struct RequestParams {
-    int numRequests = 0;
-    AnimationTrigger requestAnimTrigger  = AnimationTrigger::Count;
-    AnimationTrigger getoutAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger waitLoopAnimTrigger = AnimationTrigger::Count;
+    RequestParams();
+    int numRequests;
+    AnimationTrigger requestAnimTrigger;
+    AnimationTrigger getoutAnimTrigger;
+    AnimationTrigger waitLoopAnimTrigger;
     
     // How long to loop idle anims before transitioning to next request/stage
-    float idleWaitTime_sec = 0.f;
+    float idleWaitTime_sec;
   };
   
 

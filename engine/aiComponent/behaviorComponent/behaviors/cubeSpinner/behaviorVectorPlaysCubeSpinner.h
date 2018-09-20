@@ -87,7 +87,7 @@ private:
     EngineTimeStamp_t timeOfLastTap = 0;
     bool wasLastCycleTarget = false;
     int lightIdxToLock = CubeLightAnimation::kNumCubeLEDs;
-    AnimationTrigger nextResponseAnimation = AnimationTrigger::Count;
+    AnimationTrigger nextResponseAnimation;
   };
 
   InstanceConfig _iConfig;

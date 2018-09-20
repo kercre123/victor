@@ -10,6 +10,7 @@
 
     var setDisableTouchSensor = $('<input class="touchButton" type="button" value="Disable touch sensor"/>');
     var setEnableTouchSensor = $('<input class="touchButton" type="button" value="Enable touch sensor"/>');
+    var resetTouchCount = $('<input class="touchButton" type="button" value="Reset touch count"/>');
 
     setDisableTouchSensor.click( function(){
       var payload = { 'enabled' : 'false' };
@@ -22,6 +23,12 @@
       sendData( payload );
     });
     setEnableTouchSensor.appendTo( elem );
+
+    resetTouchCount.click( function(){
+      var payload = { 'resetCount' : 'true' };
+      sendData( payload );
+    });
+    resetTouchCount.appendTo( elem );
     
     touchInfoDiv = $('<h3 id="touchInfo"></h3>').appendTo( elem );
   };

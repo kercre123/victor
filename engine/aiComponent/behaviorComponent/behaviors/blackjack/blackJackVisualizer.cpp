@@ -181,6 +181,7 @@ const std::vector<Vision::SpriteName> kDealerCardAssets = {
 };
 
 const char* kDealAnimationName = "anim_blackjack_deal_01";
+const char* kSwipeAnimationName = "anim_blackjack_swipe_01";
 const char* kTrackLockingKey = "BlackJackVisualizer_track_lock";
 }
 
@@ -198,14 +199,24 @@ void BlackJackVisualizer::Init(BehaviorExternalInterface& bei)
   // Find the time stamps for animation driven events
   const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
   if(nullptr != animContainer){
-    const Animation* animPtr = animContainer->GetAnimation(kDealAnimationName);
-    if(nullptr == animPtr){
+    const Animation* dealAnimPtr = animContainer->GetAnimation(kDealAnimationName);
+    if(nullptr == dealAnimPtr){
       PRINT_NAMED_ERROR("BlackJackVisualizer.Init.AnimationNotFoundInContainer",
                         "Animations need to be manually loaded on engine side - %s is not",
                         kDealAnimationName);
     } else {
-      const auto& track = animPtr->GetTrack<EventKeyFrame>();
+      const auto& track = dealAnimPtr->GetTrack<EventKeyFrame>();
       _dealCardSeqApplyAt_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
+    }
+
+    const Animation* swipeAnimPtr = animContainer->GetAnimation(kSwipeAnimationName);
+    if(nullptr == swipeAnimPtr){
+      PRINT_NAMED_ERROR("BlackJackVisualizer.Init.AnimationNotFoundInContainer",
+                        "Animations need to be manually loaded on engine side - %s is not",
+                        kDealAnimationName);
+    } else {
+      const auto& track = swipeAnimPtr->GetTrack<EventKeyFrame>();
+      _clearCardsDuringSwipeAt_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
     }
   }
 
@@ -427,19 +438,48 @@ void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExtern
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlackJackVisualizer::ClearCards(BehaviorExternalInterface& bei)
+void BlackJackVisualizer::SwipeToClearFace(BehaviorExternalInterface& bei, std::function<void()> callback)
+{
+  _animCompletedCallback = callback;
+
+  auto animationCallback = [this, &bei](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
+  {
+    if(_shouldClearLocksOnCallback){
+      bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+    }
+    // Note that the anim has completed to exercise callbacks
+    _animCompletedLastFrame = true;
+  };
+
+  // Set up the pre-animation image with the composite anim to get things rolling
+  int outAnimationDuration_ms = 0;
+  bool shouldInterrupt = true;
+  bool emptySpriteBoxesAreValid = true;
+  bei.GetAnimationComponent().PlayCompositeAnimation(kSwipeAnimationName,
+                                                     *(_compImg.get()),
+                                                     ANIM_TIME_STEP_MS,
+                                                     outAnimationDuration_ms,
+                                                     shouldInterrupt,
+                                                     emptySpriteBoxesAreValid,
+                                                     animationCallback);
+
+  ClearCards(bei, _clearCardsDuringSwipeAt_ms);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlackJackVisualizer::ClearCards(BehaviorExternalInterface& bei, uint32_t applyAt_ms)
 {
   bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
 
   for(auto layerName : kPlayerCardLayers){
-    bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, 0);
+    bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, applyAt_ms);
   }
 
   for(auto layerName : kDealerCardLayers){
-    bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, 0);
+    bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, applyAt_ms);
   }
 
-  bei.GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::PlayerCardOverlay, 0);
+  bei.GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::PlayerCardOverlay, applyAt_ms);
 
   Init(bei);
 }

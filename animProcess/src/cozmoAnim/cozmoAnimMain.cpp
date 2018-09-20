@@ -116,8 +116,7 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-  static char const* filenamePrefix = "anim";
-  Anki::Victor::InstallCrashReporter(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
 
   // - create and set logger
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
@@ -162,6 +161,12 @@ int main(void)
     result = animEngine->Update(curTime_ns);
     if (RESULT_OK != result) {
       PRINT_NAMED_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
+
+      // Don't exit with error code so as not to trigger
+      // fault code 800 on what is actually a clean shutdown.
+      if (result == RESULT_SHUTDOWN) {
+        result = RESULT_OK;
+      }
       break;
     }
 

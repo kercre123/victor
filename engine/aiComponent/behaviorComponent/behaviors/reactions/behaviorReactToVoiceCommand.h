@@ -107,6 +107,7 @@ protected:
   void OnVictorListeningBegin();
   void OnVictorListeningEnd();
 
+  void HandleStreamFailure();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Direction Helpers
@@ -119,9 +120,6 @@ protected:
   // get the "best recent" direction from the mic history
   MicDirectionIndex GetDirectionFromMicHistory() const;
   
-  void UpdateDAS();
-
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Time Helpers
 
@@ -132,7 +130,6 @@ protected:
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   struct InstanceConfig
   {
     InstanceConfig();
@@ -171,14 +168,12 @@ private:
     float _errorTrackingWindow_s = 0.0f;
     int _numErrorsToTriggerAnim = 0;
     RecentOccurrenceTracker cloudErrorTracker;
+    RecentOccurrenceTracker wifiErrorTracker;
     // when this handle's conditions are met, we animate to show the user there was a failure (and possibly
     // trigger an attention transfer)
+    RecentOccurrenceTracker::Handle wifiErrorHandle;
     RecentOccurrenceTracker::Handle cloudErrorHandle;
-    
-    // for das
-    std::vector<uint32_t> triggerWordScores;
-    int lastTriggerWordScore;
-    float nextTimeSendDas_s;
+
 
   } _iVars;
 
@@ -198,6 +193,8 @@ private:
 
     EIntentStatus             intentStatus;
     EngineTimeStamp_t         timestampToDisableTurnFor;
+
+    bool                      expectingStream;
   } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...

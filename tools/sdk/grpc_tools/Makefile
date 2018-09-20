@@ -163,32 +163,6 @@ test_curl_battery_state: .require_ip
 	$(curl_command)/v1/battery_state -d '{}'
 	@echo
 
-test_eye_colors: .require_ip
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 0}}'
-	@echo
-	sleep 4
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 1}}'
-	@echo
-	sleep 4
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 2}}'
-	@echo
-	sleep 4
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 3}}'
-	@echo
-	sleep 4
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 4}}'
-	@echo
-	sleep 4
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 5}}'
-	@echo
-	sleep 4
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 6}}'
-	@echo
-	sleep 4
-	# To test enum out of range: (The animation will occur but no color changes occurs, and we don't crash)
-	$(curl_command)/v1/update_settings -d '{"settings": {"eye_color": 7}}'
-	@echo
-
 test_drive_off_charger: .require_ip
 	$(curl_command)/v1/drive_off_charger -d '{}'
 	@echo
@@ -209,6 +183,12 @@ test_onboarding: .require_ip
 	$(curl_command)/v1/send_onboarding_input -d '{"onboarding_get_step":{}}'
 	@echo
 	$(curl_command)/v1/send_onboarding_input -d '{"onboarding_continue":{}}'
+	@echo
+
+test_onboarding_1p0: .require_ip
+	$(curl_command)/v1/get_onboarding_complete -d '{}'
+	@echo
+	$(curl_command)/v1/send_onboarding_wake_up -d '{}'
 	@echo
 
 test_wifi: .require_ip
@@ -263,7 +243,7 @@ test_curl: .require_ip
 	$(curl_command)/v1/sdk_activation -d '{"slot":0, "enable":false}'
 	@echo
 
-	$(curl_command)/v1/display_face_image_rgb -d @test_assets/oled_color.json
+	$(curl_command)/v1/display_face_image_rgb -d @test_assets/screen_color.json
 	@echo
 
 	$(curl_command)/v1/list_animations -d '{}'
@@ -343,11 +323,8 @@ test_attention_transfer: .require_ip
 	$(curl_command)/v1/get_latest_attention_transfer -d '{}'
 	@echo 
 
-test_settings: .require_ip
+test_pull_jdocs: .require_ip
 	$(curl_command)/v1/pull_jdocs -d '{"jdoc_types":["ROBOT_SETTINGS", "ROBOT_LIFETIME_STATS"]}'
-	@echo
-
-	$(curl_command)/v1/update_settings -d '{"settings":{"clock_24_hour":true,"eye_color":1}}'
 	@echo
 
 test_account_settings: .require_ip

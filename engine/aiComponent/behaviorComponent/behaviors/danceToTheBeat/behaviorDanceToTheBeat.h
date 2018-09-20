@@ -18,11 +18,12 @@
 
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 
-#include "clad/types/animationTrigger.h"
 #include "clad/types/backpackAnimationTriggers.h"
 
 namespace Anki {
 namespace Vector {
+  
+enum class AnimationTrigger : int32_t;
 
 class BehaviorDanceToTheBeat : public ICozmoBehavior
 {
@@ -60,8 +61,8 @@ private:
     
     BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::Count;
     
-    AnimationTrigger eyeHoldAnim    = AnimationTrigger::Count;
-    AnimationTrigger getOutAnim     = AnimationTrigger::Count;
+    AnimationTrigger eyeHoldAnim;
+    AnimationTrigger getOutAnim;
     
     std::vector<DanceSession> danceSessionConfigs;
   };

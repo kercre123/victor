@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
@@ -78,6 +78,8 @@ private:
 
   bool UpdateStatsJdoc(const bool saveToDiskImmediately,
                        const bool saveToCloudImmediately = false);
+
+  void DoJdocFormatMigration();
 
   bool _dirtyJdoc = false;
   JdocsManager* _jdocsManager = nullptr;

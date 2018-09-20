@@ -22,12 +22,13 @@
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"
-#include "clad/types/animationTrigger.h"
 
 
 namespace Anki {
   
   namespace Vector {
+    
+    enum class AnimationTrigger : int32_t;
 
     class PlayAnimationAction : public IAction
     {
@@ -49,6 +50,8 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
+      
+      virtual void SetRenderInEyeHue(bool renderInEyeHue) { _renderInEyeHue = renderInEyeHue; }
 
       static constexpr f32 GetDefaultTimeoutInSeconds() { return _kDefaultTimeout_sec; }
       static constexpr f32 GetInfiniteTimeoutInSeconds() { return _kDefaultTimeoutForInfiniteLoops_sec; }
@@ -79,6 +82,7 @@ namespace Anki {
       float                     _timeout_sec = _kDefaultTimeout_sec;
       bool                      _bodyTrackManuallyLocked = false;
       TimeStamp_t               _startAtTime_ms = 0;
+      bool                      _renderInEyeHue = true;
       AnimationComponent::AnimationCompleteCallback _passedInCallback = nullptr;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;
@@ -108,7 +112,7 @@ namespace Anki {
 
       void SetAnimGroupFromTrigger(AnimationTrigger animTrigger);
 
-      bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
+      bool HasAnimTrigger() const;
       virtual void OnRobotSetInternalAnim() override final;
       virtual void OnRobotSetInternalTrigger() {};
 
@@ -190,6 +194,7 @@ namespace Anki {
       u32        _numLoops;
       bool       _loopForever;
       u32        _numLoopsRemaining;
+      bool       _completeImmediately;
       std::unique_ptr<TriggerLiftSafeAnimationAction> _subAction;
       
     };

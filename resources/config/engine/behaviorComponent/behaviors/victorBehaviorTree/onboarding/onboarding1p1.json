@@ -1,0 +1,21 @@
+{
+  "behaviorID": "Onboarding1p1",
+  "behaviorClass": "Onboarding",
+
+  "associatedActiveFeature": "Onboarding",
+
+  "interruptions": [
+    "OnboardingPowerOff",         // is suppressed during first stage 
+    "OnboardingPhysicalReactions", 
+    "OnboardingLowBattery",
+    "OnboardingDetectHabitat",
+    "OnboardingPickedUp",         // is suppressed during first stage
+    "DriveOffChargerStraight",    // is suppressed during first stage and only runs after continue messages
+    "OnboardingPlacedOnCharger",  // is suppressed during first stage
+    "OnboardingFirstTriggerWord", // only runs once, or never if booting after the first stage
+    "OnboardingTriggerWord"       // may sometimes be suppressed
+  ],
+
+  // for stages after the initial wakeup stage
+  "wakeUpBehavior": "NormalWakeUp"
+}

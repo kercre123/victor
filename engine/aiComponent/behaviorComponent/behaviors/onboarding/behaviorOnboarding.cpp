@@ -35,6 +35,7 @@
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/moodSystem/moodManager.h"
 #include "proto/external_interface/shared.pb.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
@@ -97,6 +98,8 @@ BehaviorOnboarding::DynamicVariables::DynamicVariables()
   robotHeardTrigger = false;
   
   shouldDriveOffCharger = false;
+  
+  isStimMaxed = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -272,28 +275,28 @@ void BehaviorOnboarding::InitBehavior()
       // save here, which may save twice if onboarding is running, but ensures it saves at least once outside of onboarding
       SaveToDisk( _dVars.devConsoleStage );
     };
-    _iConfig.consoleFuncs.emplace_front( "MoveToStage", std::move(setStageFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldMoveToStage", std::move(setStageFunc), "Onboarding", "" );
     
     auto continueFunc = [this](ConsoleFunctionContextRef context) {
       // cheat and request the continue that's expected
       RequestContinue( _dVars.lastExpectedStep );
     };
-    _iConfig.consoleFuncs.emplace_front( "Continue", std::move(continueFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldContinue", std::move(continueFunc), "Onboarding", "" );
     
     auto skipFunc = [this](ConsoleFunctionContextRef context) {
       RequestSkip();
     };
-    _iConfig.consoleFuncs.emplace_front( "Skip", std::move(skipFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldSkip", std::move(skipFunc), "Onboarding", "" );
     
     auto skipEverythingFunc = [this](ConsoleFunctionContextRef context) {
       RequestSkipRobotOnboarding();
     };
-    _iConfig.consoleFuncs.emplace_front( "SkipEverything", std::move(skipEverythingFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldSkipEverything", std::move(skipEverythingFunc), "Onboarding", "" );
     
     auto retryChargingFunc = [this](ConsoleFunctionContextRef context) {
       RequestRetryCharging();
     };
-    _iConfig.consoleFuncs.emplace_front( "RetryCharging", std::move(retryChargingFunc), "Onboarding", "" );
+    _iConfig.consoleFuncs.emplace_front( "OldRetryCharging", std::move(retryChargingFunc), "Onboarding", "" );
   }
   
   {
@@ -350,6 +353,8 @@ void BehaviorOnboarding::OnBehaviorActivated()
       _dVars.wakeUpState = WakeUpState::Complete;
     });
   }
+  
+  FixStimAtMax();
 }
 
 void BehaviorOnboarding::OnBehaviorDeactivated()
@@ -357,6 +362,8 @@ void BehaviorOnboarding::OnBehaviorDeactivated()
   PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.OnBehaviorDeactivated.OnboardingStatus", "Onboarding complete (deactivated)");
   SmartEnableEngineResponseToTriggerWord();
   SetAllowAnyIntent();
+  
+  UnFixStim();
 }
 
 
@@ -614,6 +621,11 @@ void BehaviorOnboarding::MoveToStage( const OnboardingStages& stage )
     ei->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msg)} );
   }
   
+  if( stage == OnboardingStages::Complete ) {
+    // let stim float once in app onboarding
+    UnFixStim();
+  }
+  
   SendStageToApp( stage );
   
   // save to whiteboard for convenience
@@ -751,7 +763,6 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   }
   CancelDelegates(false);
   
-  
   // if a stage was running, tell it it was interrupted
   if( _dVars.state == BehaviorState::StageRunning ) {
     auto& currStage = GetCurrentStage();
@@ -786,7 +797,7 @@ void BehaviorOnboarding::Interrupt( ICozmoBehaviorPtr interruption, BehaviorID i
   // disable trigger word during most interruptions, except trigger word obviously. Trigger word wouldn't
   // be activating if it was disabled by the behavior.
   if( interruptionID != BEHAVIOR_ID(OnboardingTriggerWord) ) {
-    SmartDisableEngineResponseToTriggerWord();
+    SetWakeWordState( WakeWordState::TriggerDisabled );
   }
 }
   
@@ -905,6 +916,7 @@ void BehaviorOnboarding::TerminateOnboarding()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::RequestContinue( int step )
 {
+  PRINT_NAMED_INFO("BehaviorOnboarding.RequestContinue.OnboardingStatus", "App requesting %d, expecting %d", step, _dVars.lastExpectedStep);
   if( (_dVars.state == BehaviorState::Interrupted)
       || (_dVars.state == BehaviorState::InterruptedButComplete)
       || (_dVars.state == BehaviorState::StageNotStarted) )
@@ -1155,13 +1167,20 @@ void BehaviorOnboarding::SendContinueResponse( bool acceptedContinue, int step )
   }
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse{ acceptedContinue };
+    auto* onboardingContinueResponse = new external_interface::OnboardingContinueResponse;
+    
+    external_interface::OnboardingSteps expectedStep = static_cast<external_interface::OnboardingSteps>(_dVars.lastExpectedStep);
+    external_interface::OnboardingSteps requestedStep = static_cast<external_interface::OnboardingSteps>(step);
+    
+    onboardingContinueResponse->set_accepted( acceptedContinue );
+    onboardingContinueResponse->set_robot_step_number( expectedStep );
+    onboardingContinueResponse->set_request_step_number( requestedStep );
     gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingContinueResponse) );
     
+    // we probably don't need this now that the response sends the last expected step, but I won't change until after 1.0
     if( !acceptedContinue ) {
       // resend expected state
-      external_interface::OnboardingSteps stepEnum = static_cast<external_interface::OnboardingSteps>(_dVars.lastExpectedStep);
-      auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ stepEnum };
+      auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ expectedStep };
       gi->Broadcast( ExternalMessageRouter::Wrap(onboardingExpectedStep) );
     }
   }
@@ -1183,6 +1202,7 @@ void BehaviorOnboarding::SetRobotExpectingStep( int step )
   
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( (gi != nullptr) && (_dVars.lastExpectedStep != step) ) {
+    PRINT_NAMED_INFO("BehaviorOnboarding.SetRobotExpectingStep.OnboardingStatus", "Robot expecting step %d", step);
     external_interface::OnboardingSteps stepEnum{ static_cast<external_interface::OnboardingSteps>(step) };
     auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ stepEnum };
     gi->Broadcast( ExternalMessageRouter::Wrap(onboardingExpectedStep) );
@@ -1299,7 +1319,7 @@ void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
       
       // no trigger word allowed
       SmartDisableEngineResponseToTriggerWord();
-      SmartPushResponseToTriggerWord();
+      SmartPushEmptyResponseToTriggerWord();
       
     } else if( wakeWordState == WakeWordState::SpecialTriggerEnabledCloudDisabled ) {
       
@@ -1323,6 +1343,28 @@ void BehaviorOnboarding::SetWakeWordState( WakeWordState wakeWordState )
     }
   }
   
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::FixStimAtMax()
+{
+  if( GetBEI().HasMoodManager() && !_dVars.isStimMaxed ) {
+    auto& moodManager = GetBEI().GetMoodManager();
+    moodManager.TriggerEmotionEvent("OnboardingStarted");
+    moodManager.SetEmotionFixed( EmotionType::Stimulated, true );
+    _dVars.isStimMaxed = true;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding::UnFixStim()
+{
+  if( GetBEI().HasMoodManager() && _dVars.isStimMaxed ) {
+    auto& moodManager = GetBEI().GetMoodManager();
+    // since this behavior is always at the base of the stack (todo: unit test this), just set it fixed==false
+    moodManager.SetEmotionFixed( EmotionType::Stimulated, false );
+    _dVars.isStimMaxed = false;
+  }
 }
 
 }

@@ -17,6 +17,7 @@
 #include "switchboardd/tokenClient.h"
 #include "switchboardd/connectionIdManager.h"
 #include "switchboardd/INetworkStream.h"
+#include "switchboardd/wifiWatcher.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/gatewayMessagingServer.h"
 #include "switchboardd/externalCommsCladHandlerV4.h"
@@ -34,6 +35,7 @@ public:
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
     std::shared_ptr<ConnectionIdManager> connectionIdManager,
     std::shared_ptr<TaskExecutor> taskExecutor,
+    std::shared_ptr<WifiWatcher> wifiWatcher,
     bool isPairing,
     bool isOtaUpdating,
     bool hasOwner);
@@ -102,6 +104,7 @@ private:
   std::shared_ptr<GatewayMessagingServer> _gatewayServer;
   std::shared_ptr<ConnectionIdManager> _connectionIdManager;
   std::shared_ptr<TaskExecutor> _taskExecutor;
+  std::shared_ptr<WifiWatcher> _wifiWatcher;
   std::unique_ptr<ExternalCommsCladHandlerV4> _cladHandler;
   std::vector<std::weak_ptr<TokenResponseHandle>> _tokenClientHandles;
 
@@ -143,6 +146,8 @@ private:
   BoolSignal _resetSignal;
 
   VoidSignal _internetTimerSignal;
+
+  std::vector<std::shared_ptr<SafeHandle>> _handles;
 
   //
   // V3 Request to Listen for

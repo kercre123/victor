@@ -51,6 +51,20 @@ extern const uint8_t RtsConnTypeVersionHash[16];
 
 constexpr uint8_t RtsConnTypeNumEntries = 2;
 
+// ENUM RtsResponseCode
+enum class RtsResponseCode : uint16_t {
+  NotCloudAuthorized = 0,
+};
+
+const char* EnumToString(const RtsResponseCode m);
+inline const char* RtsResponseCodeToString(const RtsResponseCode m) { return EnumToString(m); }
+
+
+extern const char* RtsResponseCodeVersionHashStr;
+extern const uint8_t RtsResponseCodeVersionHash[16];
+
+constexpr uint16_t RtsResponseCodeNumEntries = 1;
+
 // ENUM RtsCloudStatus
 enum class RtsCloudStatus : uint8_t {
   UnknownError          = 0,
@@ -1937,6 +1951,51 @@ struct RtsAppConnectionIdResponse
 extern const char* RtsAppConnectionIdResponseVersionHashStr;
 extern const uint8_t RtsAppConnectionIdResponseVersionHash[16];
 
+// MESSAGE RtsResponse
+struct RtsResponse
+{
+  Anki::Vector::ExternalComms::RtsResponseCode code;
+  std::string responseMessage;
+  
+  /**** Constructors ****/
+  RtsResponse() = default;
+  RtsResponse(const RtsResponse& other) = default;
+  RtsResponse(RtsResponse& other) = default;
+  RtsResponse(RtsResponse&& other) noexcept = default;
+  RtsResponse& operator=(const RtsResponse& other) = default;
+  RtsResponse& operator=(RtsResponse&& other) = default;
+  
+  explicit RtsResponse(Anki::Vector::ExternalComms::RtsResponseCode code,
+    const std::string& responseMessage)
+  : code(code)
+  , responseMessage(responseMessage)
+  {}
+  
+  explicit RtsResponse(const uint8_t* buff, size_t len);
+  explicit RtsResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsResponse& other) const;
+  bool operator!=(const RtsResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(code, responseMessage);
+  }
+};
+
+extern const char* RtsResponseVersionHashStr;
+extern const uint8_t RtsResponseVersionHash[16];
+
 // MESSAGE Error
 struct Error
 {
@@ -2908,6 +2967,10 @@ template<>
 struct RtsConnection_4_TagToType<RtsConnection_4Tag::RtsAppConnectionIdResponse> {
   using type = Anki::Vector::ExternalComms::RtsAppConnectionIdResponse;
 };
+template<>
+struct RtsConnection_4_TagToType<RtsConnection_4Tag::RtsResponse> {
+  using type = Anki::Vector::ExternalComms::RtsResponse;
+};
 
 // UNION RtsConnection_4
 class RtsConnection_4
@@ -3166,6 +3229,13 @@ public:
   void Set_RtsAppConnectionIdResponse(const Anki::Vector::ExternalComms::RtsAppConnectionIdResponse& new_RtsAppConnectionIdResponse);
   void Set_RtsAppConnectionIdResponse(Anki::Vector::ExternalComms::RtsAppConnectionIdResponse&& new_RtsAppConnectionIdResponse);
   
+  /** RtsResponse **/
+  static RtsConnection_4 CreateRtsResponse(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse);
+  explicit RtsConnection_4(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse);
+  const Anki::Vector::ExternalComms::RtsResponse& Get_RtsResponse() const;
+  void Set_RtsResponse(const Anki::Vector::ExternalComms::RtsResponse& new_RtsResponse);
+  void Set_RtsResponse(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -3214,6 +3284,7 @@ private:
     Anki::Vector::ExternalComms::RtsCloudSessionResponse _RtsCloudSessionResponse;
     Anki::Vector::ExternalComms::RtsAppConnectionIdRequest _RtsAppConnectionIdRequest;
     Anki::Vector::ExternalComms::RtsAppConnectionIdResponse _RtsAppConnectionIdResponse;
+    Anki::Vector::ExternalComms::RtsResponse _RtsResponse;
   };
 };
 extern const char* RtsConnection_4VersionHashStr;

@@ -31,6 +31,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
@@ -45,8 +46,11 @@ namespace Vector {
 // Forward declaration
 class IReactionTriggerStrategy;
 
-namespace{
-const int kArbitrarilyLargeCancelBound = 1000000;
+namespace {
+  const int kArbitrarilyLargeCancelBound = 1000000;
+
+  #define CONSOLE_GROUP "Behaviors.BehaviorSystemManager"
+  CONSOLE_VAR(bool, kDebugBehaviorStack, CONSOLE_GROUP, false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -96,7 +100,7 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   _behaviorExternalInterface = &behaviorExternalInterface;
   _asyncMessageComponent = asyncMessageComponent;
   ResetBehaviorStack(baseBehavior);
-  
+
   if(robot.HasExternalInterface()){
     _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(EngineToGameTag::RobotCompletedAction,
                                             [this](const EngineToGameEvent& event) {
@@ -105,11 +109,11 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
                                               _actionsCompletedThisTick.push_back(event.GetData().Get_RobotCompletedAction());
                                             }));
   }
-  
+
   return RESULT_OK;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior, bool waitUntilNextTick)
 {
@@ -117,7 +121,7 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior, bool wai
     _baseBehaviorOnNextTick = baseBehavior;
     return;
   }
-  
+
   _initializationStage = InitializationStage::StackNotInitialized;
   _baseBehaviorTmp = baseBehavior;
   if(_behaviorStack != nullptr){
@@ -134,15 +138,15 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
     ResetBehaviorStack(_baseBehaviorOnNextTick);
     _baseBehaviorOnNextTick = nullptr;
   }
-  
+
   auto& bei = dependentComps.GetComponent<BehaviorExternalInterface>();
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
-  
+
   if(_initializationStage == InitializationStage::SystemNotInitialized) {
     PRINT_NAMED_ERROR("BehaviorSystemManager.Update.NotInitialized", "");
     return;
   }
-  
+
   // There's a delay between init and first robot update tick - this messes with
   // time checks in IBehavior, so Activate the base here instead of in init
   if(_initializationStage == InitializationStage::StackNotInitialized){
@@ -150,7 +154,7 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
 
 
     IBehavior* baseBehavior = _baseBehaviorTmp;
-    
+
     _behaviorStack->InitBehaviorStack(baseBehavior, bei.GetRobotInfo().GetExternalInterface());
     _baseBehaviorTmp = nullptr;
   }
@@ -158,9 +162,9 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
   for( const auto& completionMsg : _actionsCompletedThisTick ) {
     bei.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
   }
-  
+
   _asyncMessageComponent->PrepareCache();
-  
+
   std::set<IBehavior*> behaviorsUpdatesTickedInStack;
   // First update the behavior stack and allow it to make any delegation/canceling
   // decisions that it needs to make
@@ -172,7 +176,7 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComps)
   // Then once all of that's done, update anything that's in activatable scope
   // but isn't currently on the behavior stack
   UpdateInActivatableScope(bei, behaviorsUpdatesTickedInStack);
-  
+
   _asyncMessageComponent->ClearCache();
 } // Update()
 
@@ -187,7 +191,7 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     if(tickedInStack.find(entry) != tickedInStack.end()){
       continue;
     }
-    
+
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
@@ -292,13 +296,13 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
                   "")){
     return false;
   }
-  
+
   if(!ANKI_VERIFY(delegated != nullptr,
                   "BehaviorSystemManager.Delegate.DelegatingToNullptr", "")){
     return false;
   }
-  
-  
+
+
   {
     // Ensure that the delegated behavior is in the delegates map
     if(!ANKI_VERIFY(_behaviorStack->IsValidDelegation(delegator, delegated),
@@ -309,7 +313,7 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
       return false;
     }
   }
-  
+
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
                 "'%s' will delegate to '%s'",
                 delegator != nullptr ? delegator->GetDebugLabel().c_str() : "Empty Stack",
@@ -317,11 +321,13 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
 
   // Activate the new behavior and add it to the top of the stack
   _behaviorStack->PushOntoStack(delegated);
-  
-  _behaviorStack->DebugPrintStack("AfterDelegation");
+
+  if (kDebugBehaviorStack) {
+    _behaviorStack->DebugPrintStack("AfterDelegation");
+  }
 
   _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
-  
+
   return true;
 }
 
@@ -344,7 +350,9 @@ bool BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
                   "'%s' canceled its delegates",
                   delegator->GetDebugLabel().c_str());
 
-    _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+    if (kDebugBehaviorStack) {
+      _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+    }
   }
 
   if( anyPopped ) {
@@ -364,9 +372,9 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
                   delegator->GetDebugLabel().c_str())){
     return;
   }
-  
+
   CancelDelegates(delegator);
-  
+
   if(ANKI_VERIFY(!IsControlDelegated(delegator),
                  "BehaviorSystemManager.CancelSelf.ControlStillDelegated",
                  "CancelDelegates was called, but the delegator is not on the top of the stack")){
@@ -377,7 +385,9 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
                 "'%s' canceled itself",
                 delegator->GetDebugLabel().c_str());
 
-  _behaviorStack->DebugPrintStack("AfterCancelSelf");
+  if (kDebugBehaviorStack) {
+    _behaviorStack->DebugPrintStack("AfterCancelSelf");
+  }
 
   _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
 

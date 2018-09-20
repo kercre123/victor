@@ -13,7 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 
 #include "clad/types/backpackAnimationTriggers.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"

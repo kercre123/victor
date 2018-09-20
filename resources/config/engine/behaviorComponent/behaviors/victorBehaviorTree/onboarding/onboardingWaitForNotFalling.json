@@ -1,0 +1,9 @@
+{
+  "behaviorID": "OnboardingWaitForNotFalling",
+  "behaviorClass": "Wait",
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
+}

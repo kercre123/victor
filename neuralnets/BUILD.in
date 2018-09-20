@@ -1,0 +1,12 @@
+cxx_project(
+    name = 'vic-neuralnets',
+    srcs = [
+    ],
+    platform_srcs = [
+      ('vicos', glob(['**/*.cpp']))
+    ],
+    headers = [
+    ],
+    platform_headers = [
+    ]
+)

@@ -1,7 +1,7 @@
 {
   "emotionEvents": [
     {
-      "name": "ANTICIPATED_ReactToUnexpectedMovement",
+      "name": "ReactToUnexpectedMovement",
       "emotionAffectors": [
          {
             "emotionType": "Confident",

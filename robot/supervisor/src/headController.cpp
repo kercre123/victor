@@ -1,5 +1,7 @@
 #include "headController.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/DAS.h"
+#include "clad/types/motorTypes.h"
 #include "coretech/common/shared/radians.h"
 #include "velocityProfileGenerator.h"
 #include "anki/cozmo/robot/logging.h"
@@ -154,8 +156,22 @@ namespace HeadController {
     }
 
 
-    void StartCalibrationRoutine(bool autoStarted)
+    void StartCalibrationRoutine(bool autoStarted, const char* calibrationReason)
     {
+      if(calibrationReason!=NULL && strlen(calibrationReason)!=0) {
+        // this DAS message mimics a similar message sent from engine
+        // by the CalibrateMotorAction. It has the same event string
+        // and i1 represents whether the head is being calibrated,
+        // and i2 represents whether the lift is being calibrated
+        DASMSG(head_controller_motor_calib_reason,
+               "calibrate_motors",
+               "send when the robot triggers calibration");
+        DASMSG_SET(s1, calibrationReason, "reason for triggering calibration");
+        DASMSG_SET(i1, 1, "is head motor being calibrated");
+        DASMSG_SET(i2, 0, "is lift motor being calibrated");
+        DASMSG_SEND();
+      }
+      
       potentialBurnoutStartTime_ms_ = 0;
       calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
       isCalibrated_ = false;
@@ -277,8 +293,9 @@ namespace HeadController {
             Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
 
             firstCalibration_ = false;
-            calState_ = HCS_IDLE;
-            inPosition_ = true;
+            isCalibrated_     = true;
+            calState_         = HCS_IDLE;
+            inPosition_       = true;
             break;
           }
         } // end switch(calState_)
@@ -302,9 +319,7 @@ namespace HeadController {
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
 
-
               // Pretend calibration is fine
-              isCalibrated_ = true;
               calState_ = HCS_COMPLETE;
             }
           }
@@ -536,7 +551,7 @@ namespace HeadController {
         } else {
           // Burnout protection triggered. Recalibrating.
           AnkiWarn( "HeadController.MotorBurnoutProtection", "Recalibrating (power = %f)", power_);
-          StartCalibrationRoutine(true);
+          StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::HeadMotorBurnoutProtection));
         }
         return true;
       }

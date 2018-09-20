@@ -62,9 +62,13 @@ var reqMutex sync.Mutex
 func (c *client) handleRequest(ctx context.Context, msg *cloud.DocRequest) (*cloud.DocResponse, error) {
 	reqMutex.Lock()
 	defer reqMutex.Unlock()
+	if ok, resp, err := c.handleConnectionless(msg); ok {
+		return resp, err
+	}
 	conn, err := newConn(ctx, c.opts)
 	if err != nil {
 		return connectErrorResponse, err
 	}
+	defer conn.close()
 	return conn.handleRequest(ctx, msg)
 }

@@ -1,7 +1,7 @@
 
 include(anki_build_source_list)
 
-set(ANKI_GO_VERSION 1.10.2)
+set(ANKI_GO_VERSION 1.11)
 
 # Check correct Go version
 execute_process(COMMAND ${GOROOT}/bin/go version
@@ -122,6 +122,7 @@ macro(__anki_build_go_fake_target target_name)
   define_property(TARGET PROPERTY CGO_LDFLAGS BRIEF_DOCS "a" FULL_DOCS "b")
   set_target_properties(${target_name}_fake_dep PROPERTIES EXCLUDE_FROM_ALL TRUE
                                                            INCLUDE_DIRECTORIES "")
+  # prevent license warnings for these fake targets
   anki_build_target_license(${target_name}_fake_dep "ANKI")
 endmacro()
 
@@ -215,10 +216,11 @@ macro(anki_build_go_executable target_name srclist_dir extra_deps)
 
   __anki_build_go_fake_target(${target_name})
 
-
   set_target_properties(${target_name} PROPERTIES GO_CLINK_FOLDERS ""
                                                   ANKI_OUT_PATH ${__gobuild_out}
                                                   EXCLUDE_FROM_ALL FALSE)
+
+  set_property(TARGET ${target_name} APPEND PROPERTY SOURCES "${SRCS}")
 
   __anki_setup_go_environment(${_ab_GO_DIR})
   __anki_run_go_build(${target_name} "${extra_deps}")

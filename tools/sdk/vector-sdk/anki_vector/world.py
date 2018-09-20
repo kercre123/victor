@@ -1,9 +1,23 @@
 # Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-'''
+"""
 The "world" represents the robot's known view of its environment.
-It keeps track of all the faces Vector has observed.
-'''
+
+This view includes objects and faces it knows about and can currently
+"see" with its camera.
+"""
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['World']
@@ -15,9 +29,11 @@ from . import util
 
 from .messaging import protocol
 
+# TODO How do we decide what does and does not have a leading underscore, below?
+
 
 class World(util.Component):
-    '''Represents the state of the world, as known to Vector.'''
+    """Represents the state of the world, as known to Vector."""
 
     #: callable: The factory function that returns a
     #: :class:`faces.Face` class or subclass instance
@@ -48,32 +64,50 @@ class World(util.Component):
 
     @property
     def visible_faces(self):
-        '''generator: yields each face that Vector can currently see.
+        """generator: yields each face that Vector can currently see.
+
+        .. code-block:: python
+
+            # Print the visible face's attributes
+            for face in robot.world.visible_faces:
+                print("Face attributes:")
+                print(f"Face id: {face.face_id}")
+                print(f"Updated face id: {face.updated_face_id}")
+                print(f"Name: {face.name}")
+                print(f"Expression: {face.expression}")
+                print(f"Timestamp: {face.timestamp}")
+                print(f"Pose: {face.pose}")
+                print(f"Image Rect: {face.face_rect}")
+                print(f"Expression score: {face.expression_score}")
+                print(f"Left eye: {face.left_eye}")
+                print(f"Right eye: {face.right_eye}")
+                print(f"Nose: {face.nose}")
+                print(f"Mouth: {face.mouth}")
 
         Returns:
             A generator yielding :class:`anki_vector.faces.Face` instances
-        '''
+        """
         for face in self._faces.values():
             yield face
 
-    def get_face(self, face_id):
-        '''anki_vector.faces.Face: Fetch a Face instance with the given id'''
+    def get_face(self, face_id: int) -> faces.Face:
+        """Fetches a Face instance with the given id"""
         return self._faces.get(face_id)
 
     def add_update_face_to_world_view(self, _, msg):
-        '''Adds/Updates the world view when a face is observed'''
+        """Adds/Updates the world view when a face is observed"""
         face = self.face_factory()
         face.unpack_face_stream_data(msg)
         self._faces[face.face_id] = face
 
     def update_face_id(self, _, msg):
-        '''Updates the face id when a tracked face (negative ID) is recognized and
-        receives a positive ID or when face records get merged'''
+        """Updates the face id when a tracked face (negative ID) is recognized and
+        receives a positive ID or when face records get merged"""
         face = self.get_face(msg.old_id)
         if face:
             face.updated_face_id = msg.new_id
 
-    def _allocate_light_cube(self, object_type, object_id, factory_id):
+    def _allocate_light_cube(self, object_type: objects.LightCube, object_id: int, factory_id: str):
         cube = self.light_cube.get(object_type)
         if not cube:
             self.robot.logger.error('Received invalid cube object_type=%s', object_type)
@@ -85,20 +119,21 @@ class World(util.Component):
         return cube
 
     def get_light_cube(self):
-        '''Returns the connected light cube
+        """Returns the connected light cube
 
         Returns:
             :class:`anki_vector.objects.LightCube`: The LightCube object with that cube_id
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
-        '''
+        """
         cube = self.light_cube.get(objects.LightCube1Type)
         # Only return the cube if it has an object_id
         if cube.object_id is not None:
             return cube
         return None
 
+    # TODO add docstring and return type. Note no one is calling this. Do we need this?
     def get_object_by_id(self, object_id):
         if object_id not in self._objects:
             raise ValueError("Invalid object_id %s" % object_id)
@@ -106,23 +141,39 @@ class World(util.Component):
         return self._objects[object_id]
 
     @property
-    def connected_light_cubes(self):
-        '''Returns all light cube attached to anki_vector
+    def connected_light_cube(self):
+        """A light cube attached to Vector, if any
+
+        .. code-block:: python
+
+            robot.world.connect_cube()
+            if robot.world.connected_light_cube:
+                dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
 
         Returns:
-            A list of :class:`anki_vector.objects.LightCube` instances
-        '''
-        result = []
+            A :class:`anki_vector.objects.LightCube` instance, or None
+        """
+        result = None
         cube = self.light_cube.get(objects.LightCube1Type)
         if cube and cube.is_connected:
-            result.append(cube)
+            result = cube
 
         return result
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def connect_cube(self):
+        """ Attempt to connect to a cube
+
+        Attempt to connect to a cube. If a cube is currently connected,
+        this will do nothing.
+
+        .. code-block:: python
+
+            robot.world.connect_cube()
+        """
         req = protocol.ConnectCubeRequest()
-        result = await self.interface.ConnectCube(req)
+        result = await self.grpc_interface.ConnectCube(req)
 
         if not result.object_id in self._objects:
             self.light_cube[objects.LightCube1Type] = self._allocate_light_cube(objects.LightCube1Type, result.object_id, result.factory_id)
@@ -130,29 +181,70 @@ class World(util.Component):
 
         return result
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def disconnect_cube(self):
-        req = protocol.DisconnectCubeRequest()
-        return await self.interface.DisconnectCube(req)
+        """ Requests a disconnection from the currently connected cube
 
+        .. code-block:: python
+
+            robot.world.disconnect_cube()
+        """
+        req = protocol.DisconnectCubeRequest()
+        return await self.grpc_interface.DisconnectCube(req)
+
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def flash_cube_lights(self):
-        req = protocol.FlashCubeLightsRequest()
-        return await self.interface.FlashCubeLights(req)
+        """ Flash cube lights
 
+        Plays the default cube connection animation on the currently
+        connected cube's lights.
+        """
+        req = protocol.FlashCubeLightsRequest()
+        return await self.grpc_interface.FlashCubeLights(req)
+
+    # TODO Needs return type
     @sync.Synchronizer.wrap
     async def forget_preferred_cube(self):
+        """ Forget preferred cube
+
+        'Forget' the robot's preferred cube. This will cause the robot to
+        connect to the cube with the highest RSSI (signal strength) next
+        time a connection is requested.
+
+        .. code-block:: python
+
+            robot.world.forget_preferred_cube()
+        """
         req = protocol.ForgetPreferredCubeRequest()
-        return await self.interface.ForgetPreferredCube(req)
+        return await self.grpc_interface.ForgetPreferredCube(req)
 
+    # TODO Needs return type
     @sync.Synchronizer.wrap
-    async def set_preferred_cube(self, factory_id):
-        req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
-        return await self.interface.SetPreferredCube(req)
+    async def set_preferred_cube(self, factory_id: str):
+        """ Set preferred cube
 
+        Set the robot's preferred cube and save it to disk. The robot
+        will always attempt to connect to this cube if it is available.
+        This is only used in simulation (for now).
+
+        .. code-block:: python
+
+            connected_cube = robot.world.connected_light_cube
+            if connected_cube:
+                robot.world.set_preferred_cube(connected_cube.factory_id)
+
+        :param factory_id: The unique hardware id of the physical cube.
+        """
+        req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
+        return await self.grpc_interface.SetPreferredCube(req)
+
+    # TODO Add docstring
     def on_object_event(self, _, msg):
         object_event_type = msg.WhichOneof("object_event_type")
 
+        # TODO How can we document these better? These are a bit buried right now.
         object_event_handlers = {
             "object_connection_state": self._on_object_connection_state,
             "object_moved": self._on_object_moved,
@@ -165,7 +257,7 @@ class World(util.Component):
             handler = object_event_handlers[object_event_type]
             handler(object_event_type, getattr(msg, object_event_type))
         else:
-            self.logger.warning('An object_event was recieved with unknown type:{0}'.format(object_event_type))
+            self.logger.warning('An object_event was received with unknown type:{0}'.format(object_event_type))
 
     def _on_object_connection_state(self, _, msg):
         self.logger.debug('Got Object Connection State Message ( object_id: {0}, factory_id: {1}, object_type: {2}, connected: {3} )'.format(msg.object_id, msg.factory_id, msg.object_type, msg.connected))

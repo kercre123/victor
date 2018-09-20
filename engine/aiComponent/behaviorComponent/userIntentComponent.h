@@ -18,7 +18,6 @@
 #include "anki/cozmo/shared/animationTag.h"
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -36,14 +35,21 @@
 namespace Anki {
 namespace Vector {
 
+enum class AnimationTrigger : int32_t;
 class BehaviorComponentCloudServer;
 class CozmoContext;
 class Robot;
 class UserIntent;
 class UserIntentMap;
-  
+
+struct TriggerWordResponseData;
+
 namespace ExternalInterface{
 struct AppIntent;
+}
+
+namespace RobotInterface{
+struct TriggerWordDetected;
 }
 
 // helper to avoid .h dependency on userIntent.clad
@@ -65,7 +71,7 @@ public:
   // should respond to the trigger word being detected
   // 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void StartWakeWordlessStreaming( CloudMic::StreamType streamType );
+  void StartWakeWordlessStreaming( CloudMic::StreamType streamType, bool playGetInFromAnimProcess = false );
   
   // Define how the user intent component should respond to the trigger word being detected
   void DisableEngineResponseToTriggerWord(const std::string& disablerName, bool disable);
@@ -83,6 +89,7 @@ public:
   // Note that the animationTrigger passed in here does not follow traditional trigger/group conventions regarding
   // animations being re-selected each time one is played. A single animation is selected from the group when this
   // function is called and that animation will persist until this function is called again with the same id/trigger
+  void PushResponseToTriggerWord(const std::string& id, const TriggerWordResponseData& newState);
   void PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
                                  const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
                                  StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
@@ -91,14 +98,10 @@ public:
                                  StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
   void PopResponseToTriggerWord(const std::string& id);
 
-  // Copies the current response to the trigger word but overrides the shouldTriggerWordStartStream field
-  // Pop this new response in the same way any other response would be popped
-  void AlterStreamStateForCurrentResponse(const std::string& id,  bool shouldTriggerWordStartStream);
+  // Copies the current response to the trigger word but overrides the shouldStream and ShouldSimulateStream
+  // to match the desired StreamAndLightEffect
+  void AlterStreamStateForCurrentResponse(const std::string& id, const StreamAndLightEffect newEffect);
 
-  bool GetShouldStreamAfterWakeWord() const 
-  { 
-    return _responseToTriggerWordMap.empty() ? true : _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordStartStream;
-  }
 
   bool WaitingForTriggerWordGetInToFinish() const { return _waitingForTriggerWordGetInToFinish; }
 
@@ -114,12 +117,15 @@ public:
   
   // Returns true if the trigger / wake word is pending
   bool IsTriggerWordPending() const;
+
+  // if trigger word is pending, return whether or not the anim process will automatically open a stream
+  bool WillPendingTriggerWordOpenStream() const { return _pendingTriggerWillStream; }
   
   // Clear the pending trigger word. All subsequent calls to IsTriggerWordPending will return false until
   // another trigger word comes in.
   void ClearPendingTriggerWord();
 
-  void SetTriggerWordPending();
+  void SetTriggerWordPending(const bool willOpenStream);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // User Intent:
@@ -224,6 +230,10 @@ private:
   
   // message received from app
   void OnAppIntent( const ExternalInterface::AppIntent& appIntent );
+
+  // helper to apply a "stream and light" effect to the given trigger word response message
+  void ApplyStreamAndLightEffect(const StreamAndLightEffect streamAndLightEffect,
+                                 RobotInterface::SetTriggerWordResponse& message);
   
   std::string GetServerName(const Robot& robot) const;
   
@@ -234,12 +244,15 @@ private:
 
   void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
 
+  void HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg);
+
   static size_t sActivatedIntentID;
 
   Robot*                    _robot = nullptr;
   std::unique_ptr<UserIntentMap> _intentMap;
 
   bool _pendingTrigger = false;
+  bool _pendingTriggerWillStream = false;
   
   std::unique_ptr<UserIntentData> _pendingIntent;
   std::shared_ptr<UserIntentData> _activeIntent;
@@ -284,6 +297,7 @@ private:
   std::vector<TriggerWordResponseEntry> _responseToTriggerWordMap;
   AnimationTag _tagForTriggerWordGetInCallbacks;
   bool _waitingForTriggerWordGetInToFinish = false;
+  float _waitingForTriggerWordGetInToFinish_setTime_s = 0.0f;
 
 };
 

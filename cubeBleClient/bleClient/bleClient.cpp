@@ -16,6 +16,7 @@
 #include "bleClient.h"
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "anki-ble/common/gatt_constants.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/string/stringUtils.h"
@@ -195,11 +196,11 @@ void BleClient::FlashCube()
 {
   const bool canFlashCube = IsConnectedToServer() &&
                             (_connectionId >= 0) &&
-                            _pendingFirmwareCheck;
+                            _pendingFirmwareCheckOrUpdate;
   if (!canFlashCube) {
     PRINT_NAMED_WARNING("BleClient.FlashCube.CannotFlashCube",
-                        "Cannot flash the cube - invalid BleClient state. ConnectedToServer %d, ConnectedToCube %d, PendingFirmwareCheck %d",
-                        IsConnectedToServer(), _connectionId >= 0, (int) _pendingFirmwareCheck);
+                        "Cannot flash the cube - invalid BleClient state. ConnectedToServer %d, ConnectedToCube %d, PendingFirmwareCheckOrUpdate %d",
+                        IsConnectedToServer(), _connectionId >= 0, (int) _pendingFirmwareCheckOrUpdate);
     return;
   }
   
@@ -263,12 +264,12 @@ void BleClient::OnOutboundConnectionChange(const std::string& address,
   if (connected) {
     _connectionId = connection_id;
     // Immediately read the cube firmware version
-    _pendingFirmwareCheck = true;
+    _pendingFirmwareCheckOrUpdate = true;
     ReadCharacteristic(_connectionId, Anki::kCubeAppVersion_128_BIT_UUID);
   } else if (_connectionId == connection_id) {
     _connectionId = -1;
     _cubeAddress.clear();
-    _pendingFirmwareCheck = false;
+    _pendingFirmwareCheckOrUpdate = false;
   }
 }
 
@@ -292,7 +293,7 @@ void BleClient::OnCharacteristicReadResult(const int connection_id,
   const bool isAppVersion = Util::StringCaseInsensitiveEquals(characteristic_uuid,
                                                               Anki::kCubeAppVersion_128_BIT_UUID);
 
-  if (isAppVersion && _pendingFirmwareCheck) {
+  if (isAppVersion && _pendingFirmwareCheckOrUpdate) {
     const auto& cubeFirmwareVersion = std::string(data.begin(), data.end());
 
     RequestConnectionParameterUpdate(_cubeAddress,
@@ -305,12 +306,17 @@ void BleClient::OnCharacteristicReadResult(const int connection_id,
     DEV_ASSERT(!_cubeFirmwareVersionOnDisk.empty(), "BleClient.OnCharacteristicReadResult.NoOnDiskFirmwareVersion");
     if (cubeFirmwareVersion == _cubeFirmwareVersionOnDisk) {
       // Firmware versions match! Yay.
-      _pendingFirmwareCheck = false;
+      _pendingFirmwareCheckOrUpdate = false;
     } else {
       // Flash the cube with the firmware we have on disk
       PRINT_NAMED_INFO("BleClient.OnCharacteristicReadResult.FirmwareVersionMismatch",
                        "Flashing cube since its firmware version (%s) does not match that on disk (%s)",
                        cubeFirmwareVersion.c_str(), _cubeFirmwareVersionOnDisk.c_str());
+      DASMSG(cube_firmware_mismatch, "cube.firmware_mismatch", "Flashing cube since its firmware version does not match that on disk");
+      DASMSG_SET(s1, _cubeAddress, "Cube factory ID");
+      DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
+      DASMSG_SET(s3, _cubeFirmwareVersionOnDisk, "On disk firmware version");
+      DASMSG_SEND();
       FlashCube();
     }
   }
@@ -328,12 +334,24 @@ void BleClient::OnReceiveMessage(const int connection_id,
     const auto& cubeFirmwareVersion = std::string(value.begin(), value.end());
     if (cubeFirmwareVersion == _cubeFirmwareVersionOnDisk) {
       PRINT_NAMED_INFO("BleClient.OnReceiveMessage.FlashingSuccess","%s",cubeFirmwareVersion.c_str());
+      DASMSG(cube_firmware_flash_success, "cube.firmware_flash_success", "Flashing cube firmware succeeded");
+      DASMSG_SET(s1, _cubeAddress, "Cube factory ID");
+      DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
+      DASMSG_SEND();
     } else {
       PRINT_NAMED_WARNING("BleClient.OnReceiveMessage.FlashingFailure","got = %s exp = %s",cubeFirmwareVersion.c_str(), _cubeFirmwareVersionOnDisk.c_str());
+      DASMSG(cube_firmware_flash_fail, "cube.firmware_flash_fail", "Flashing cube firmware failed");
+      DASMSG_SET(s1, _cubeAddress, "Cube factory ID");
+      DASMSG_SET(s2, cubeFirmwareVersion, "Cube firmware version");
+      DASMSG_SET(s3, _cubeFirmwareVersionOnDisk, "On disk firmware version");
+      DASMSG_SEND();
+      
+      // Disconnect from the cube, since there is no use in keeping the connection with incorrect cube firmware
+      DisconnectFromCube();
     }
     
     // consider the firmware check complete now.
-    _pendingFirmwareCheck = false;
+    _pendingFirmwareCheckOrUpdate = false;
   } else if (Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppRead_128_BIT_UUID)) {
     if (_receiveDataCallback) {
       _receiveDataCallback(_cubeAddress, value);
@@ -370,7 +388,7 @@ void BleClient::ServerConnectionCheckTimerCallback(ev::timer& timer, int revents
       // so reset connectionId and cube address
       _connectionId = -1;
       _cubeAddress.clear();
-      _pendingFirmwareCheck = false;
+      _pendingFirmwareCheckOrUpdate = false;
       // Stop scanning for cubes timer
       _scanningTimer.stop();
     }

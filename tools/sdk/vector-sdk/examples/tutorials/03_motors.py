@@ -26,8 +26,8 @@ import anki_vector
 
 
 def main():
-    args = anki_vector.util.parse_test_args()
-    with anki_vector.Robot(args.serial, port=args.port) as robot:
+    args = anki_vector.util.parse_command_args()
+    with anki_vector.Robot(args.serial) as robot:
         robot.behavior.drive_off_charger()
 
         # Tell the head motor to start lowering the head (at 5 radians per second)
@@ -42,7 +42,7 @@ def main():
         # and the right wheel at 50 mmps (so Vector will drive Forwards while also
         # turning to the left
         print("Set Vector's wheel motors...")
-        #robot.motors.set_wheel_motors(25, 50)
+        robot.motors.set_wheel_motors(25, 50)
 
         # wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
@@ -58,14 +58,15 @@ def main():
         # Tell Vector to drive the left wheel at 50 mmps (millimeters per second),
         # and the right wheel at -50 mmps (so Vector will turn in-place to the right)
         print("Set Vector's wheel motors...")
-        #robot.motors.set_wheel_motors(50, -50)
+        robot.motors.set_wheel_motors(50, -50)
 
         # Wait for 3 seconds (the head, lift and wheels will move while we wait)
         time.sleep(3)
 
-        # Stop the wheels
-        print("Stop Vector's wheels...")
+        # Stop the motors, which unlocks the tracks
         robot.motors.set_wheel_motors(0, 0)
+        robot.motors.set_lift_motor(0)
+        robot.motors.set_head_motor(0)
 
 
 if __name__ == "__main__":

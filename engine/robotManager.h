@@ -12,6 +12,7 @@
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
 #include "engine/robotEventHandler.h"
+#include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/noncopyable.h"
 #include <memory>
 
@@ -44,7 +45,7 @@ public:
   ~RobotManager();
 
   void Init(const Json::Value& config);
-  void Shutdown();
+  void Shutdown(ShutdownReason reason);
 
   // Return raw pointer to robot
   Robot* GetRobot();

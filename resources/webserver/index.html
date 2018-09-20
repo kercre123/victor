@@ -81,6 +81,7 @@
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (raw)",             units:"volts" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Charger (raw)",             units:"volts" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery level",             units:"" },
+        { activeUpdate:true, val:"", hasGraph:true, graphMax:60,      desc:"Battery temp",              units:"C" },        
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery charging",          units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger contacts",       units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger platform",       units:"" },
@@ -363,15 +364,17 @@
         var deltaTotalTime = totalTime - prev["prevTotalTime"];
         var deltaUsedTime = usedTime - prev["prevUsedTime"];
 
-        var usedPct = deltaUsedTime * 100 / deltaTotalTime;
-        // Note: In future, more of this data could be displayed.  Perhaps in a multi-section progress bar
-        $("#id_perf_row_value_" + itemIndex).html(usedPct.toFixed(2));
-        var graph = $('#' + 'id_graph_' + itemIndex);
-        graph.progressbar( "option", "value", usedPct );
+        if (deltaTotalTime > 0) {
+            var usedPct = deltaUsedTime * 100 / deltaTotalTime;
+            // Note: In future, more of this data could be displayed.  Perhaps in a multi-section progress bar
+            $("#id_perf_row_value_" + itemIndex).html(usedPct.toFixed(2));
+            var graph = $('#' + 'id_graph_' + itemIndex);
+            graph.progressbar( "option", "value", usedPct );
 
-        // Save the last reading for this CPU so it can be used next call
-        prev["prevUsedTime"] = usedTime;
-        prev["prevTotalTime"] = totalTime;
+            // Save the last reading for this CPU so it can be used next call
+            prev["prevUsedTime"] = usedTime;
+            prev["prevTotalTime"] = totalTime;
+        }
     }
 
     function UpdateProcHeader() {

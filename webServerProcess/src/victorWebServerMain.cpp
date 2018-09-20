@@ -31,6 +31,7 @@
 using namespace Anki;
 using namespace Anki::Vector;
 
+#define LOG_PROCNAME "vic-webserver"
 #define LOG_CHANNEL "VictorWebServer"
 
 namespace {
@@ -112,11 +113,10 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-  static char const* filenamePrefix = "webserver";
-  Anki::Victor::InstallCrashReporter(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
 
   // - create and set logger
-  Util::VictorLogger logger("vic-webserver");
+  Util::VictorLogger logger(LOG_PROCNAME);
   Util::gLoggerProvider = &logger;
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();

@@ -66,7 +66,6 @@ class UiMessageHandler;
 class ProtoMessageHandler;
 class GameMessagePort;
 class AnimationTransfer;
-class DeviceDataManager;
 
 template <typename Type>
 class AnkiEvent;
@@ -123,7 +122,6 @@ protected:
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
   std::unique_ptr<ProtoMessageHandler>                      _protoMsgHandler;
   std::unique_ptr<CozmoContext>                             _context;
-  std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
   Anki::Vector::DebugConsoleManager                          _debugConsoleManager;
   Anki::Vector::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
@@ -139,7 +137,6 @@ protected:
   Result AddRobot(RobotID_t robotID);
 
   void UpdateLatencyInfo();
-  void SendSupportInfo() const;
   void InitUnityLogger();
 
   EngineState _engineState = EngineState::Stopped;

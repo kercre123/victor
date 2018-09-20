@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
 )
@@ -58,6 +60,30 @@ func (strm *Streamer) bufferRoutine(streamSize int) {
 	}
 }
 
+func (strm *Streamer) addBytes(buf []byte) {
+	strm.byteChan <- buf
+}
+
+func (strm *Streamer) testRoutine(streamSize int) {
+	// start go routine to shove random bytes up to the server. This is more conservative,
+	// as these will have a worse compression ratio
+	buf := make([]byte, streamSize)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	opts := strm.opts.checkOpts
+	numChunks := int(opts.TotalAudioMs / opts.AudioPerRequestMs)
+	for i := 0; i < numChunks; i++ {
+		n, err := r.Read(buf)
+		if n != streamSize || err != nil {
+			log.Println("Error reading random bytes for connection check")
+		}
+		strm.addBytes(buf)
+		if util.SleepSelect(time.Duration(opts.AudioPerRequestMs)*time.Millisecond, strm.ctx.Done()) {
+			return
+		}
+	}
+	return
+}
+
 // responseRoutine should be started after streaming begins, and will wait for a response
 // to send back to the main routine on the given channels
 func (strm *Streamer) responseRoutine() {
@@ -82,7 +108,24 @@ func (strm *Streamer) responseRoutine() {
 			sendIntentResponse(r, strm.receiver)
 		case *chipper.KnowledgeGraphResponse:
 			sendKGResponse(r, strm.receiver)
+		case *chipper.ConnectionCheckResponse:
+			sendConnectionCheckResponse(r, strm.receiver, strm.opts.checkOpts)
 		}
+	})
+}
+
+func (strm *Streamer) cancelResponse() {
+	done := strm.ctx.Done()
+	if done == nil {
+		return
+	}
+	<-strm.ctx.Done()
+	// if we pulled from the Done channel because of a call to strm.cancel(), the closed bool will be set
+	if strm.closed {
+		return
+	}
+	strm.respOnce.Do(func() {
+		strm.receiver.OnError(cloud.ErrorType_Timeout, strm.ctx.Err())
 	})
 }
 
@@ -123,6 +166,20 @@ func sendKGResponse(resp *chipper.KnowledgeGraphResponse, receiver Receiver) {
 		Parameters: buf.String(),
 		Metadata:   "",
 	})
+}
+
+func sendConnectionCheckResponse(resp *chipper.ConnectionCheckResponse, receiver Receiver, opts *chipper.ConnectOpts) {
+	toSend := &cloud.ConnectionResult{
+		Status:          resp.Status,
+		NumPackets:      uint8(resp.FramesReceived),
+		ExpectedPackets: uint8(opts.TotalAudioMs / opts.AudioPerRequestMs),
+	}
+	if resp.Status == "Success" {
+		toSend.Code = cloud.ConnectionCode_Available
+	} else {
+		toSend.Code = cloud.ConnectionCode_Bandwidth
+	}
+	receiver.OnConnectionResult(toSend)
 }
 
 func errorReason(err error) cloud.ErrorType {

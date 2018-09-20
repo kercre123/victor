@@ -15,12 +15,14 @@ namespace Vector {
   // when generated audio becomes playable.  Callers do not need to send an explicit
   // TextToSpeechPlay request.
   //
-  // If trigger mode is "manual", audio data will be generated but kept in memory until the caller
-  // sends an explicit TextToSpeechPlay request.
+  // If trigger mode is "manual", audio data will be generated and kept in memory until the caller
+  // sends a corresponding TextToSpeechPlay request.  TextToSpeechPlay will enqueue audio data
+  // and post a TTS trigger event to start playback.
   //
-  // If trigger mode is "keyframe", audio data will be generated and enqueued automatically, but
-  // will not be triggered by the TTS engine. Callers are expected to trigger playback by playing
-  // an animation sequence containing an embedded TTS audio event.
+  // If trigger mode is "keyframe", audio data will be generated and kept in memory until the caller
+  // sends a corresponding TextToSpeechPlay request.  TextToSpeechPlay will enqueue audio data.
+  // The caller is expected to trigger playback by performing an animation containing an embedded
+  // TTS trigger event.
   //
   enum uint_8 TextToSpeechTriggerMode
   {

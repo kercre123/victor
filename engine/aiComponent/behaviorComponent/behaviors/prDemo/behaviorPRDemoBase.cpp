@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemoBase.h"
 
+#include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -96,7 +97,7 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
 {
 
   // for now we want to disable streaming until we're awake
-  SmartAlterStreamStateForCurrentResponse(false);
+  SmartAlterStreamStateForCurrentResponse(StreamAndLightEffect::StreamingDisabled);
 
   // also disable face keep-alive
   GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kPRDemoDisableLockName);

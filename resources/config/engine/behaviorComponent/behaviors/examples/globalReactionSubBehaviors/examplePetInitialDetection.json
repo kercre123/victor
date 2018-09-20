@@ -1,8 +1,0 @@
-{
-  "behaviorClass": "AnimSequence",
-  "behaviorID": "ExamplePetInitialDetection",
-  "animTriggers": ["ReactToCubeTapCubeFound"],
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "PetInitialDetection"
-  }  
-}

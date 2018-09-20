@@ -253,13 +253,6 @@ namespace Vector {
     printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %lld seconds ago, last updated %lld seconds ago, last seen %lld seconds ago\n",
            msg.name.c_str(), msg.faceID, msg.secondsSinceFirstEnrolled, msg.secondsSinceLastUpdated, msg.secondsSinceLastSeen);
   }
-  
-  void WebotsKeyboardController::HandleDebugString(const ExternalInterface::DebugString& msg)
-  {
-    // Useful for debug, but otherwise unneeded since this is displayed in the
-    // status window
-    //printf("HandleDebugString: %s\n", msg.text.c_str());
-  }
 
   void WebotsKeyboardController::HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg)
   {

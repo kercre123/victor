@@ -236,7 +236,8 @@ const bool TextToSpeechCoordinator::PlayUtterance(const uint8_t utteranceID)
     return false;
   }
 
-  if (UtteranceTriggerType::Manual != utterance.triggerType) {
+  const auto triggerType = utterance.triggerType;
+  if (UtteranceTriggerType::Manual != triggerType && UtteranceTriggerType::KeyFrame != triggerType) {
     LOG_ERROR("TextToSpeechCoordinator.PlayUtterance.NotManuallyPlayable",
               "Requested to play utterance %d, which is not manually playable",
               utteranceID);
@@ -341,12 +342,6 @@ void TextToSpeechCoordinator::UpdateUtteranceState(const uint8_t& ttsID,
       LOG_INFO("TextToSpeechCoordinator.StateUpdate", "ttsID %d is now playing", ttsID);
       utterance.state = UtteranceState::Playing;
       utterance.timeStartedPlaying_s = currentTime_s;
-      if (UtteranceTriggerType::KeyFrame == utterance.triggerType) {
-        // Keyframe driven utterances will never transition to finished, mark invalid since future
-        // data and commands are not usable.
-        LOG_ERROR("TextToSpeechState.StateUpdate", "Unexpected state for keyframe trigger ttsID %d", ttsID);
-        utterance.state = UtteranceState::Invalid;
-      }
       break;
     }
     case TextToSpeechState::Finished:

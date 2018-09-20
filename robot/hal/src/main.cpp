@@ -14,6 +14,8 @@
 
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
+#define LOG_PROCNAME "vic-robot"
+
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
   #define HAL_NOT_PROVIDING_CLOCK
@@ -58,8 +60,7 @@ int main(int argc, const char* argv[])
 
   signal(SIGTERM, Shutdown);
 
-  static char const* filenamePrefix = "robot";
-  Anki::Victor::InstallCrashReporter(filenamePrefix);
+  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
 
   if (argc > 1) {
     ccc_set_shutdown_function(Shutdown);

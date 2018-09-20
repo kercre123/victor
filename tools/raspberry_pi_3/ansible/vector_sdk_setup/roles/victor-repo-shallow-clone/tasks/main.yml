@@ -1,0 +1,46 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "vars/protected.yml"
+
+# Following these instructions https://stackoverflow.com/a/28039894 to do a shallow clone
+- name: Create victor directory
+  file: 
+    path: "{{ victor_repo }}"
+    state: directory
+
+- name: Add victor repo origin, without downloading content
+  shell: |
+    git init
+    git config core.sparsecheckout true
+    git remote add origin "{{ GIT_PULL_URL }}"
+  args:
+    chdir: "{{ victor_repo }}"
+
+- name: Modify sparse checkout file
+  blockinfile:
+    path: "{{ victor_repo }}/.git/info/sparse-checkout"
+    create: yes
+    block: |
+        tools/sdk/*
+        cloud/*
+        !cloud/go/
+
+- name: Pull the victor repo
+  shell: git pull origin master
+  args:
+    chdir: "{{ victor_repo }}"
+
+- name: Copy over cloud/go tar.gz 
+  unarchive:
+    src: files_to_remote/victor-cloud-go-dir.zip
+    dest: "{{ victor_repo }}/cloud/"
+    mode: 0755
+
+- name: Copy over corrected Makefile for gRPC
+  copy:
+    src: files_to_remote/Makefile
+    dest: "{{ victor_repo}}/tools/sdk/grpc_tools"
+    force: yes
+    owner: pi
+    group: pi
+    mode: 0744

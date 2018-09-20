@@ -45,18 +45,6 @@ LightCube {
   rotation 0 0 1 0.523599
   colorizeStderrOutput TRUE
 }
-LightCube {
-  translation -0.010376264 0.32666562 0.0219929
-  rotation 1.3953699998618023e-5 -1.8370399998180594e-6 0.9999999999009599 0.261799
-  colorizeStderrOutput TRUE
-  objectType "Block_LIGHTCUBE3"
-}
-LightCube {
-  translation 0.08610605 0.32966413 0.0219929
-  rotation 0 0 -1 6.23319
-  colorizeStderrOutput TRUE
-  objectType "Block_LIGHTCUBE2"
-}
 CozmoBot2 {
   translation 0 0 0.005
   rotation 0 1 0 0.1222

@@ -61,6 +61,7 @@ public:
   int GetIntVal() const {return (int)round(val_);};
   int GetIntMax() const {return (int)round(max_);};
   int GetIntMin() const {return (int)round(min_);};
+  int GetIntMean() const {return (int)round(ak_);};
 
   void Clear() {
     val_ = 0.0;

@@ -1,8 +1,6 @@
 {
   "behaviorClass": "ListenForBeats",
   "behaviorID": "ListenForBeatsLong",
-  
-  "associatedActiveFeature" : "DanceToTheBeat",
 
   "preListeningAnim"  : "DanceBeatGetIn",
   "listeningAnim"     : "DanceBeatListening",

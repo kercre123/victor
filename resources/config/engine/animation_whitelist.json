@@ -1,4 +1,6 @@
 {
+  // NOTE: for now, see also InvalidateBannedTracks
+  
   // animations which start on the charger, need to move the body, but are not expected to end on the charger
   "driveOffChargerAnims": [
     "anim_chargerdocking_comeoff_left_01",
@@ -7,7 +9,8 @@
     "anim_chargerdocking_comeoff_right_02",
     "anim_chargerdocking_comeoff_straight_01",
     "anim_onboarding_driveoff_charger_01",
-    "anim_onboarding_wakeup_01"
+    "anim_onboarding_wakeup_01",
+    "anim_onboarding_driveoff_charger_alt_01"
   ],
 
 

@@ -10,9 +10,9 @@
  *
  **/
 
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -35,6 +35,8 @@ namespace {
   const char* kNumRepeatedActivationsAllowedKey = "numRepeatedActivationsAllowed";
   const char* kRetreatDistanceKey = "retreatDistance_mm";
   const char* kRetreatSpeedKey = "retreatSpeed_mmps";
+  const char* kRepeatedActivationDetectionWindowKey = "repeatedActivationDetectionWindow_sec";
+  const char* kNumRepeatedActivationDetectionsAllowedKey = "numRepeatedActivationDetectionsAllowed";
 }
 
 void BehaviorReactToUnexpectedMovement::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -45,8 +47,16 @@ void BehaviorReactToUnexpectedMovement::GetBehaviorJsonKeys(std::set<const char*
     kNumRepeatedActivationsAllowedKey,
     kRetreatDistanceKey,
     kRetreatSpeedKey,
+    kRepeatedActivationDetectionWindowKey,
+    kNumRepeatedActivationDetectionsAllowedKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToUnexpectedMovement::InstanceConfig::InstanceConfig()
+{
+  askForHelpBehavior = nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -83,6 +93,14 @@ BehaviorReactToUnexpectedMovement::InstanceConfig::InstanceConfig(const Json::Va
   {
     retreatSpeed_mmps *= -1.0;
   }
+  
+  repeatedActivationDetectionsCheckWindow_sec = JsonTools::ParseFloat(config,
+                                                                      kRepeatedActivationDetectionWindowKey,
+                                                                      debugName);
+  numRepeatedActivationDetectionsAllowed = JsonTools::ParseUInt32(config,
+                                                                  kNumRepeatedActivationDetectionsAllowedKey,
+                                                                  debugName);
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -91,11 +109,6 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json:
 {
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   _iConfig = InstanceConfig(config, debugName);
-
-  _unexpectedMovementCondition
-    = BEIConditionFactory::CreateBEICondition( IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnexpectedMovement),
-                                               GetDebugLabel() );
-  DEV_ASSERT( _unexpectedMovementCondition != nullptr, "BehaviorReactToUnexpectedMovement.Ctor.NullCond" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,9 +143,29 @@ void BehaviorReactToUnexpectedMovement::UpdateActivationHistory()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToUnexpectedMovement::UpdateRepeatedActivationDetectionHistory()
+{
+  // Have we detected frequent activations too often?
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto& times = _dVars.persistent.repeatedActivationDetectionTimes_sec;
+  
+  // Discard records of activations outside of time window.
+  times.erase(times.begin(), times.lower_bound(now_sec - _iConfig.repeatedActivationDetectionsCheckWindow_sec));
+
+  // Record the new activation instance.
+  times.insert(now_sec);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUnexpectedMovement::HasBeenReactivatedFrequently() const
 {
   return _dVars.persistent.activatedTimes_sec.size() > _iConfig.numRepeatedActivationsAllowed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToUnexpectedMovement::ShouldAskForHelp() const
+{
+  return _dVars.persistent.repeatedActivationDetectionTimes_sec.size() > _iConfig.numRepeatedActivationDetectionsAllowed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -143,26 +176,16 @@ void BehaviorReactToUnexpectedMovement::ResetActivationHistory()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
+void BehaviorReactToUnexpectedMovement::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  return _unexpectedMovementCondition->AreConditionsMet(GetBEI());;
+  delegates.insert(_iConfig.askForHelpBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToUnexpectedMovement::InitBehavior()
 {
-  _unexpectedMovementCondition->Init(GetBEI());
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::OnBehaviorEnteredActivatableScope() {
-  _unexpectedMovementCondition->SetActive(GetBEI(), true);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::OnBehaviorLeftActivatableScope()
-{
-  _unexpectedMovementCondition->SetActive(GetBEI(), false);
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(AskForHelp));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -188,13 +211,26 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
     LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.RepeatedlyActivated",
                 "Activated %zu times in the past %.1f seconds.",
                 _dVars.persistent.activatedTimes_sec.size(), _iConfig.repeatedActivationCheckWindow_sec);
+    UpdateRepeatedActivationDetectionHistory();
     // Reset the records of activation times to prevent getting stuck in a loop with this emergency maneuver.
     ResetActivationHistory();
-    // Command the emergency maneuver of raising the lift as high as possible and then retreating slowly.
-    CompoundActionSequential* seq_action = new CompoundActionSequential({
-      new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
-      new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
-    DelegateIfInControl(seq_action);
+    if (ShouldAskForHelp()) {
+      LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.DelegateToAskForHelp",
+                  "Emergency maneuver executed %zu times in the past %.1f seconds, delegating to AskForHelp.",
+                  _dVars.persistent.repeatedActivationDetectionTimes_sec.size(),
+                  _iConfig.repeatedActivationDetectionsCheckWindow_sec);
+      // We've commanded the emergency maneuever too frequently, we should just delegate to a behavior that indicates that
+      // the robot is stuck on something.
+      if (_iConfig.askForHelpBehavior->WantsToBeActivated()) {
+        DelegateIfInControl(_iConfig.askForHelpBehavior.get());
+      }
+    } else {
+      // Command the emergency maneuver of raising the lift as high as possible and then retreating slowly.
+      CompoundActionSequential* seq_action = new CompoundActionSequential({
+        new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
+        new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
+      DelegateIfInControl(seq_action);
+    }
     return;
   }
 

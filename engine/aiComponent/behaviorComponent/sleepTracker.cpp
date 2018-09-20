@@ -17,7 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/cozmoContext.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "lib/util/source/anki/util/entityComponent/dependencyManagedEntity.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Vector {
 
-#define CONSOLE_GROUP "Sleeping"
+#define CONSOLE_GROUP "Sleeping.SleepTracker"
 
 CONSOLE_VAR_RANGED(int, kSleepTracker_moning_hour, CONSOLE_GROUP, 7, 0, 23);
 CONSOLE_VAR_RANGED(int, kSleepTracker_moning_minute, CONSOLE_GROUP, 0, 0, 59);
@@ -147,8 +147,9 @@ bool SleepTracker::IsSleepy(const bool fromSleep) const
 bool SleepTracker::IsNightTime() const
 {
   struct tm localTime;
-  if(!WallTime::getInstance()->GetLocalTime(localTime)){
-    // arbitrarily default to "night"
+  if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
+    // arbitrarily default to "night", if timezone isn't set or system reports some other time failure
+    // (doesn't need to be synced accurately though)
     return true;
   }
 

@@ -184,6 +184,7 @@ void BehaviorQuietModeCoordinator::BehaviorUpdate()
     // note that this means the trigger word was used (to break us out of the quiet behavior)
     // but that the stimulation was still fixed at 0. we might consider issuing a fake "ReactToTriggerWord"
     // emotion event here to compensate
+    // note that this also doesn't send any wake word triggered DAS events or help accumulate wake word stats!
     CancelSelf();
     return;
   }
@@ -192,7 +193,7 @@ void BehaviorQuietModeCoordinator::BehaviorUpdate()
   if( (_iConfig.timerBehavior != nullptr) && (_iConfig.wakeWordBehavior != nullptr) && _iConfig.timerBehavior->IsTimerRinging() ) {
     _iConfig.wakeWordBehavior->SetDontActivateThisTick( GetDebugLabel() );
     // disable streaming when wake work behavior is suppressed
-    SmartPushResponseToTriggerWord();
+    SmartPushEmptyResponseToTriggerWord();
   } else {
     SmartPopResponseToTriggerWord();
   }

@@ -6,7 +6,7 @@
 
   "wantsToBeActivatedCondition": {
     "conditionType": "FeatureGate",
-    "feature": "CubeBehaviors"
+    "feature": "RollCube"
   },
 
   "isBlockRotationImportant" : true

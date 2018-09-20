@@ -7,6 +7,8 @@
     "CriticalTemperatureAnimInternal"
   ],
 
+  "associatedActiveFeature": "NoFeature",
+
   "anonymousBehaviors": [
     {
       "behaviorName" : "EmergencyModeAnimInternal",
@@ -22,7 +24,7 @@
       "behaviorClass" : "AnimSequence",
       "animTriggers": ["HighTemperatureWarningFace"],
       "wantsToBeActivatedCondition" : {
-        "conditionType" : "HighTemperatureCPU"
+        "conditionType" : "HighTemperature"
       }
     }
   ]

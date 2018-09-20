@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageCubeToEngine.h"
 #include "clad/externalInterface/messageEngineToCube.h"
 
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/string/stringUtils.h"
@@ -66,8 +67,15 @@ namespace {
   // Always less than 0 if there is no pending connection attempt.
   float _connectionAttemptFailTime_sec = -1.f;
   
+  // Time after which we consider the firmware check/update step to have failed.
+  // Always less than 0 if there is no firmware check/update in progress.
+  float _firmwareUpdateFailTime_sec = -1.f;
+  
   // Max time a connection attempt is allowed to take before timing out
-  const float kConnectionAttemptTimeout_sec = 10.f;
+  const float kConnectionAttemptTimeout_sec = 20.f;
+  
+  // Max time the firmware check/update step is allowed to take before timing out
+  const float kFirmwareUpdateTimeout_sec = 15.f;
 }
 
   
@@ -131,14 +139,27 @@ bool CubeBleClient::UpdateInternal()
   }
   
   
-  // Check for connection attempt timeout
+  // Check for connection attempt timeout or firmware check/update timeout
   if (_cubeConnectionState == CubeConnectionState::PendingConnect) {
     const float now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
-    if (now_sec > _connectionAttemptFailTime_sec) {
-      // Connection attempt has timed out
-      PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.ConnectionAttemptTimeout",
-                          "Connection attempt has taken more than %.2f seconds - aborting.",
-                          kConnectionAttemptTimeout_sec);
+    // Check if we have just started firmware checking/updating
+    if (_firmwareUpdateFailTime_sec < 0.f &&
+        _bleClient->IsPendingFirmwareCheckOrUpdate()) {
+      PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.FirmwareCheckStart",
+                       "Firmware check/update started for cube %s",
+                       _currentCube.c_str());
+      _firmwareUpdateFailTime_sec = now_sec + kFirmwareUpdateTimeout_sec;
+      _connectionAttemptFailTime_sec = -1.f;
+    }
+    
+    const bool connectionAttemptTimedOut = (_connectionAttemptFailTime_sec > 0.f) && (now_sec > _connectionAttemptFailTime_sec);
+    const bool firmwareUpdateTimedOut = (_firmwareUpdateFailTime_sec > 0.f) && (now_sec > _firmwareUpdateFailTime_sec);
+    
+    if (connectionAttemptTimedOut || firmwareUpdateTimedOut) {
+      PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.ConnectionTimeout",
+                          "%s has taken more than %.2f seconds - aborting.",
+                          connectionAttemptTimedOut ? "Connection attempt" : "Firmware check or update",
+                          connectionAttemptTimedOut ? kConnectionAttemptTimeout_sec : kFirmwareUpdateTimeout_sec);
       // Inform callbacks that the connection attempt has failed
       for (const auto& callback : _connectionFailedCallbacks) {
         callback(_currentCube);
@@ -149,43 +170,64 @@ bool CubeBleClient::UpdateInternal()
     }
   } else {
     _connectionAttemptFailTime_sec = -1.f;
+    _firmwareUpdateFailTime_sec = -1.f;
   }
   
   
   // Check for connection state changes
-  const bool connectedToCube = _bleClient->IsConnectedToCube();
-  if (connectedToCube != _wasConnectedToCube) {
-    if (connectedToCube) {
-      PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.ConnectedToCube",
-                       "Connected to cube %s",
-                       _currentCube.c_str());
-      if (_cubeConnectionState != CubeConnectionState::PendingConnect) {
-        PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.UnexpectedConnection",
-                            "Received unexpected connection. Previous connection state: %s",
-                            CubeConnectionStateToString(_cubeConnectionState));
-      }
-      _cubeConnectionState = CubeConnectionState::Connected;
-      for (const auto& callback : _cubeConnectionCallbacks) {
-        callback(_currentCube, true);
-      }
-    } else {
-      PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.DisconnectedFromCube",
-                       "Disconnected from cube %s",
-                       _currentCube.c_str());
-      if (_cubeConnectionState != CubeConnectionState::PendingDisconnect) {
-        PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.UnexpectedDisconnection",
-                            "Received unexpected disconnection. Previous connection state: %s",
-                            CubeConnectionStateToString(_cubeConnectionState));
-      }
-      _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
-      for (const auto& callback : _cubeConnectionCallbacks) {
-        callback(_currentCube, false);
-      }
-      _currentCube.clear();
+  auto onConnect = [this](){
+    PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.ConnectedToCube",
+                     "Connected to cube %s",
+                     _currentCube.c_str());
+    DASMSG(cube_connected, "cube.connected", "We have connected to a cube");
+    DASMSG_SET(s1, _currentCube, "Cube factory ID");
+    DASMSG_SEND();
+    _cubeConnectionState = CubeConnectionState::Connected;
+    for (const auto& callback : _cubeConnectionCallbacks) {
+      callback(_currentCube, true);
     }
-    
-    _wasConnectedToCube = connectedToCube;
+  };
+  
+  auto onDisconnect = [this](){
+    PRINT_NAMED_INFO("CubeBleClient.UpdateInternal.DisconnectedFromCube",
+                     "Disconnected from cube %s",
+                     _currentCube.c_str());
+    DASMSG(cube_disconnected, "cube.disconnected", "We have disconnected from a cube");
+    DASMSG_SET(s1, _currentCube, "Cube factory ID");
+    DASMSG_SEND();
+    _cubeConnectionState = CubeConnectionState::UnconnectedIdle;
+    for (const auto& callback : _cubeConnectionCallbacks) {
+      callback(_currentCube, false);
+    }
+    _currentCube.clear();
+  };
+  
+  // Check for connection state changes (both expected and unexpected)
+  const bool connectedToCube = _bleClient->IsConnectedToCube();
+  if (connectedToCube && _cubeConnectionState == CubeConnectionState::PendingConnect) {
+    // Successfully connected
+    onConnect();
+  } else if (!connectedToCube && _cubeConnectionState == CubeConnectionState::PendingDisconnect) {
+    // Successfully disconnected
+    onDisconnect();
+  } else if (connectedToCube != _wasConnectedToCube) {
+    // Unexpected cube connection/disconnection!
+    PRINT_NAMED_WARNING("CubeBleClient.UpdateInternal.UnexpectedConnectOrDisconnect",
+                        "Received unexpected %s. Previous connection state: %s",
+                        connectedToCube ? "connection" : "disconnection",
+                        CubeConnectionStateToString(_cubeConnectionState));
+    DASMSG(cube_unexpected_connect_disconnect, "cube.unexpected_connect_disconnect", "Unexpectedly connected or disconnected from a cube");
+    DASMSG_SET(i1, connectedToCube, "1 if we have connected to a cube, 0 or null if we have disconnected");
+    DASMSG_SET(s1, _currentCube, "Cube factory ID");
+    DASMSG_SET(s2, CubeConnectionStateToString(_cubeConnectionState), "Previous connection state");
+    DASMSG_SEND();
+    if (connectedToCube) {
+      onConnect();
+    } else {
+      onDisconnect();
+    }
   }
+  _wasConnectedToCube = connectedToCube;
   
   // Pull advertisement messages from queue into a temp queue,
   // to avoid holding onto the mutex for too long.

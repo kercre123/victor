@@ -213,8 +213,8 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
-      LoadDasBlacklistedAnimationTriggers();
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimations");
+      LoadDasBlacklistedAnimations();
     }
 
     {
@@ -944,7 +944,7 @@ void RobotDataLoader::LoadCubeAnimationTriggerMap()
 
 
 
-void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
+void RobotDataLoader::LoadDasBlacklistedAnimations()
 {
   static const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
   const Json::Value& blacklistedTriggers = _dasEventConfig[kBlacklistedAnimationTriggersConfigKey];
@@ -952,6 +952,13 @@ void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
   {
     const std::string& trigger = blacklistedTriggers[i].asString();
     _dasBlacklistedAnimationTriggers.insert(AnimationTriggerFromString(trigger));
+  }
+  static const std::string kBlacklistedAnimationNamesConfigKey = "blacklisted_animation_names";
+  const Json::Value& blacklistedAnims = _dasEventConfig[kBlacklistedAnimationNamesConfigKey];
+  for (int i = 0; i < blacklistedAnims.size(); i++)
+  {
+    const std::string& animName = blacklistedAnims[i].asString();
+    _dasBlacklistedAnimationNames.insert( animName );
   }
 }
 

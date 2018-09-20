@@ -686,7 +686,14 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
 
   dev_log_folder = os.path.join(log_folder, "playbackLogs", "webotsCtrlGameEngine2", "gameLogs","devLogger")
   print("Path to DevLogger folder: " + dev_log_folder)
-  assert os.path.isdir(dev_log_folder)
+
+  try:
+    print(dev_log_folder + " does not exist, creating directory.")
+    os.makedirs(dev_log_folder, mode=0o777, exist_ok=True)
+  except OSError:
+    if not os.path.isdir(dev_log_folder):
+      raise
+
   dirs = [entry.path for entry in os.scandir(dev_log_folder) if entry.is_dir()]
   assert len(dirs) == 1
 

@@ -1,4 +1,4 @@
-// +build !linux
+// +build !vicos
 
 package jwt
 

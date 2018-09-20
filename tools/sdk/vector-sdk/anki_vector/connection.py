@@ -1,8 +1,23 @@
-'''
-Management of the connection to and from a Vector Robot
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Copyright (c) 2018 Anki, Inc.
-'''
+"""
+Management of the connection to and from a Vector Robot
+"""
+
+# __all__ should order by constants, event classes, other classes, functions.
+__all__ = ['CONTROL_PRIORITY_LEVEL', 'Connection']
 
 import asyncio
 from enum import Enum
@@ -15,6 +30,7 @@ from .messaging import client, protocol
 
 
 class CONTROL_PRIORITY_LEVEL(Enum):
+    # TODO Review these levels to make sure they represent what we are shipping
     """Enum used to specify the priority level that the program requests to run at"""
 
     #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
@@ -107,6 +123,7 @@ class _ControlEventManager:
         self._request_event.set()
 
 
+# TODO Add guid as last param to Connection() in sample code?
 class Connection:
     """Creates and maintains a aiogrpc connection.
 
@@ -119,7 +136,7 @@ class Connection:
         conn.connect()
         # Run your commands (for example play animation)
         anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-        await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+        await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         # Close the connection
         conn.close()
 
@@ -145,7 +162,7 @@ class Connection:
         self._guid = guid
 
     @property
-    def interface(self) -> client.ExternalInterfaceStub:
+    def grpc_interface(self) -> client.ExternalInterfaceStub:
         """A direct reference to the connected aiogrpc interface.
 
         This may be used to directly call grpc messages bypassing :class:`anki_vector.Robot`
@@ -153,7 +170,7 @@ class Connection:
         .. code-block:: python
 
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-            await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+            await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         """
         return self._interface
 
@@ -189,6 +206,7 @@ class Connection:
         except futures.TimeoutError as e:
             raise exceptions.VectorControlException(f"Surpassed timeout of {timeout}s") from e
 
+    # TODO Add guid as last param to Connection() in sample code?
     def connect(self, loop: asyncio.BaseEventLoop, timeout: float = 10.0):
         """Connect to Vector
 
@@ -201,7 +219,7 @@ class Connection:
             conn.connect(timeout=5.0)
             # Run your commands (for example play animation)
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-            await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+            await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()
 
@@ -241,7 +259,7 @@ class Connection:
             await asyncio.sleep(0.1)
 
     async def _open_connections(self):
-        """Starts the BehaviorControl stream, and handles the messages coming back from the engine."""
+        """Starts the BehaviorControl stream, and handles the messages coming back from the robot."""
         try:
             async for response in self._interface.BehaviorControl(self._request_handler()):
                 response_type = response.WhichOneof("response_type")
@@ -256,6 +274,7 @@ class Connection:
         except Exception as e:  # pylint: disable=broad-except
             self._logger.error(e)  # TODO: better handle errors due to auth failure (and remove pylint disable)
 
+    # TODO Add guid as last param to Connection() in sample code?
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.
 
@@ -269,7 +288,7 @@ class Connection:
             conn.connect()
             # Run your commands (for example play animation)
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
-            await conn.interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
+            await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()
         """

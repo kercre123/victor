@@ -17,7 +17,7 @@ namespace Anki {
 namespace Vector {
 
 // Forward declarations
-namespace Audio{
+namespace Audio {
 class EngineRobotAudioClient;
 }
 
@@ -49,6 +49,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class ImuComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;
@@ -56,7 +57,6 @@ class MoodManager;
 class StimulationFaceDisplay;
 class BlockTapFilterComponent;
 class RobotToEngineImplMessaging;
-class RobotIdleTimeoutComponent;
 class MicComponent;
 class BatteryComponent;
 class FullRobotPose;
@@ -66,6 +66,7 @@ class HabitatDetectorComponent;
 class TextToSpeechCoordinator;
 class SDKComponent;
 class PhotographyManager;
+class RobotHealthReporter;
 class RobotStatsTracker;
 class SettingsCommManager;
 class SettingsManager;
@@ -75,6 +76,7 @@ class JdocsManager;
 class RobotExternalRequestComponent;
 class AccountSettingsManager;
 class UserEntitlementsManager;
+
 
 } // namespace Vector
 
@@ -109,6 +111,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(DockingComponent,              RobotComponentID, Doc
 LINK_COMPONENT_TYPE_TO_ENUM(CarryingComponent,             RobotComponentID, Carrying)
 LINK_COMPONENT_TYPE_TO_ENUM(CliffSensorComponent,          RobotComponentID, CliffSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(ProxSensorComponent,           RobotComponentID, ProxSensor)
+LINK_COMPONENT_TYPE_TO_ENUM(ImuComponent,                  RobotComponentID, ImuSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(TouchSensorComponent,          RobotComponentID, TouchSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Animation)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStateHistory,             RobotComponentID, StateHistory)
@@ -116,7 +119,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                   RobotComponentID, Moo
 LINK_COMPONENT_TYPE_TO_ENUM(StimulationFaceDisplay,        RobotComponentID, StimulationFaceDisplay)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotToEngineImplMessaging,    RobotComponentID, RobotToEngineImplMessaging)
-LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, RobotIdleTimeout)
 LINK_COMPONENT_TYPE_TO_ENUM(MicComponent,                  RobotComponentID, MicComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
 LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, FullRobotPose)
@@ -127,6 +129,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(SDKComponent,                  RobotComponentID, SDK
 LINK_COMPONENT_TYPE_TO_ENUM(PhotographyManager,            RobotComponentID, PhotographyManager)
 LINK_COMPONENT_TYPE_TO_ENUM(SettingsCommManager,           RobotComponentID, SettingsCommManager)
 LINK_COMPONENT_TYPE_TO_ENUM(SettingsManager,               RobotComponentID, SettingsManager)
+LINK_COMPONENT_TYPE_TO_ENUM(RobotHealthReporter,           RobotComponentID, RobotHealthReporter)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, RobotStatsTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
@@ -142,66 +145,70 @@ std::string GetEntityNameForEnumType<Vector::RobotComponentID>(){ return "RobotC
 template<>
 std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotComponentID enumID)
 {
-  switch(enumID){
-    case Vector::RobotComponentID::AccountSettingsManager:       { return "AccountSettingsManager";}
-    case Vector::RobotComponentID::AIComponent:                  { return "AIComponent";}
-    case Vector::RobotComponentID::ActionList:                   { return "ActionList";}
-    case Vector::RobotComponentID::Animation:                    { return "Animation";}
-    case Vector::RobotComponentID::AppCubeConnectionSubscriber:  { return "AppCubeConnectionSubscriber";}
-    case Vector::RobotComponentID::Battery:                      { return "Battery";}
-    case Vector::RobotComponentID::BeatDetector:                 { return "BeatDetector";}
-    case Vector::RobotComponentID::BlockTapFilter:               { return "BlockTapFilter";}
-    case Vector::RobotComponentID::BlockWorld:                   { return "BlockWorld";}
-    case Vector::RobotComponentID::BackpackLights:               { return "BackpackLights";}
-    case Vector::RobotComponentID::Carrying:                     { return "Carrying";}
-    case Vector::RobotComponentID::CliffSensor:                  { return "CliffSensor";}
-    case Vector::RobotComponentID::CozmoContextWrapper:          { return "CozmoContextWrapper";}
-    case Vector::RobotComponentID::CubeAccel:                    { return "CubeAccel";}
-    case Vector::RobotComponentID::CubeBattery:                  { return "CubeBattery";}
-    case Vector::RobotComponentID::CubeComms:                    { return "CubeComms";}
-    case Vector::RobotComponentID::CubeConnectionCoordinator:    { return "CubeConnectionCoordinator";}
-    case Vector::RobotComponentID::CubeInteractionTracker:       { return "CubeInteractionTracker";}
-    case Vector::RobotComponentID::CubeLights:                   { return "CubeLights";}
-    case Vector::RobotComponentID::DataAccessor:                 { return "DataAccessor";}
-    case Vector::RobotComponentID::Docking:                      { return "Docking";}
-    case Vector::RobotComponentID::DrivingAnimationHandler:      { return "DrivingAnimationHandler";}
-    case Vector::RobotComponentID::EngineAudioClient:            { return "EngineAudioClient";}
-    case Vector::RobotComponentID::FaceWorld:                    { return "FaceWorld";}
-    case Vector::RobotComponentID::GyroDriftDetector:            { return "GyroDriftDetector";}
-    case Vector::RobotComponentID::HabitatDetector:              { return "HabitatDetector";}
-    case Vector::RobotComponentID::JdocsManager:                 { return "JdocsManager";}
-    case Vector::RobotComponentID::Map:                          { return "Map";}
-    case Vector::RobotComponentID::MicComponent:                 { return "MicComponent"; }
-    case Vector::RobotComponentID::MoodManager:                  { return "MoodManager";}
-    case Vector::RobotComponentID::StimulationFaceDisplay:       { return "StimulationFaceDisplay";}
-    case Vector::RobotComponentID::Movement:                     { return "Movement";}
-    case Vector::RobotComponentID::NVStorage:                    { return "NVStorage";}
-    case Vector::RobotComponentID::ObjectPoseConfirmer:          { return "ObjectPoseConfirmer";}
-    case Vector::RobotComponentID::PathPlanning:                 { return "PathPlanning";}
-    case Vector::RobotComponentID::PetWorld:                     { return "PetWorld";}
-    case Vector::RobotComponentID::PhotographyManager:           { return "PhotographyManager";}
-    case Vector::RobotComponentID::ProxSensor:                   { return "ProxSensor";}
-    case Vector::RobotComponentID::PublicStateBroadcaster:       { return "PublicStateBroadcaster";}
-    case Vector::RobotComponentID::SDK:                          { return "SDK";}
-    case Vector::RobotComponentID::SettingsCommManager:          { return "SettingsCommManager";}
-    case Vector::RobotComponentID::SettingsManager:              { return "SettingsManager";}
-    case Vector::RobotComponentID::FullRobotPose:                { return "FullRobotPose";}
-    case Vector::RobotComponentID::RobotIdleTimeout:             { return "RobotIdleTimeout";}
-    case Vector::RobotComponentID::RobotStatsTracker:            { return "RobotStatsTracker";}      
-    case Vector::RobotComponentID::RobotToEngineImplMessaging:   { return "RobotToEngineImplMessaging";}
-    case Vector::RobotComponentID::StateHistory:                 { return "StateHistory";}
-    case Vector::RobotComponentID::TextToSpeechCoordinator:      { return "TextToSpeechCoordinator";}
-    case Vector::RobotComponentID::TouchSensor:                  { return "TouchSensor";}
-    case Vector::RobotComponentID::UserEntitlementsManager:      { return "UserEntitlementsManager";}
-    case Vector::RobotComponentID::VariableSnapshotComponent:    { return "VariableSnapshotComponent"; }
-    case Vector::RobotComponentID::Vision:                       { return "Vision";}
-    case Vector::RobotComponentID::VisionScheduleMediator:       { return "VisionScheduleMediator";}
-    case Vector::RobotComponentID::PowerStateManager:            { return "PowerStateManager";}
-    case Vector::RobotComponentID::RobotExternalRequestComponent:{ return "RobotExternalRequestComponent";}
-    case Vector::RobotComponentID::Count:                        { return "Count";}
-  }
-}
+  // Handy macro tricks: Use #param to stringify macro parameters
+  #define CASE(id) case Vector::RobotComponentID::id: { return #id ; }
 
-// Translate enum values into strings
+  // Note that list must stay in alphabetical order!
+  switch (enumID) {
+    CASE(AccountSettingsManager)
+    CASE(ActionList)
+    CASE(AIComponent)
+    CASE(Animation)
+    CASE(AppCubeConnectionSubscriber)
+    CASE(BackpackLights)
+    CASE(Battery)
+    CASE(BeatDetector)
+    CASE(BlockTapFilter)
+    CASE(BlockWorld)
+    CASE(Carrying)
+    CASE(CliffSensor)
+    CASE(CozmoContextWrapper)
+    CASE(CubeAccel)
+    CASE(CubeBattery)
+    CASE(CubeComms)
+    CASE(CubeConnectionCoordinator)
+    CASE(CubeInteractionTracker)
+    CASE(CubeLights)
+    CASE(DataAccessor)
+    CASE(Docking)
+    CASE(DrivingAnimationHandler)
+    CASE(EngineAudioClient)
+    CASE(FaceWorld)
+    CASE(FullRobotPose)
+    CASE(GyroDriftDetector)
+    CASE(HabitatDetector)
+    CASE(ImuSensor)
+    CASE(JdocsManager)
+    CASE(Map)
+    CASE(MicComponent)
+    CASE(MoodManager)
+    CASE(Movement)
+    CASE(NVStorage)
+    CASE(ObjectPoseConfirmer)
+    CASE(PathPlanning)
+    CASE(PetWorld)
+    CASE(PhotographyManager)
+    CASE(PowerStateManager)
+    CASE(ProxSensor)
+    CASE(PublicStateBroadcaster)
+    CASE(RobotExternalRequestComponent)
+    CASE(RobotHealthReporter)
+    CASE(RobotStatsTracker)
+    CASE(RobotToEngineImplMessaging)
+    CASE(SDK)
+    CASE(SettingsCommManager)
+    CASE(SettingsManager)
+    CASE(StateHistory)
+    CASE(StimulationFaceDisplay)
+    CASE(TextToSpeechCoordinator)
+    CASE(TouchSensor)
+    CASE(UserEntitlementsManager)
+    CASE(VariableSnapshotComponent)
+    CASE(Vision)
+    CASE(VisionScheduleMediator)
+    CASE(Count)
+  }
+  #undef CASE
+}
 
 } // namespace Anki

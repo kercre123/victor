@@ -16,6 +16,22 @@
     "enabled": true
   },
   {
+    "feature": "Keepaway",
+    "enabled": true
+  },
+  {
+    "feature": "MoveCube",
+    "enabled": false
+  },
+  {
+    "feature": "ReactToHeldCube",
+    "enabled": true
+  },
+  {
+    "feature": "RollCube",
+    "enabled": true
+  },
+  {
     "feature": "Messaging",
     "enabled": false
   },
@@ -25,10 +41,6 @@
   },
   {
     "feature": "Dancing",
-    "enabled": true
-  },
-  {
-    "feature": "CubeBehaviors",
     "enabled": true
   },
   {

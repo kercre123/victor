@@ -15,6 +15,7 @@ enum uint_8 BehaviorClass {
   // <root>
   GreetAfterLongTime,
   HighLevelAI,
+  LookAroundInPlace,
   ResetState,
   Wait,
 
@@ -51,8 +52,6 @@ enum uint_8 BehaviorClass {
   PlaceCubeByCharger,
   PopAWheelie,
   RequestToGoHome,
-  SearchForFace,
-  StackBlocks,
   Turn,
   TurnToFace,
   WiggleOntoChargerContacts,
@@ -90,6 +89,7 @@ enum uint_8 BehaviorClass {
   FactoryCentroidExtractor,
   LiftLoadTest,
   PlannerTest,
+  PowerSaveStressTest,
   PowerSaveTest,
   ReactToBody,
 
@@ -119,9 +119,6 @@ enum uint_8 BehaviorClass {
   Exploring,
   ExploringExamineObstacle,
 
-  // freeplay/exploration
-  ExploreLookAroundInPlace,
-
   // freeplay/putDownDispatch
   LookForFaceAndCube,
 
@@ -131,7 +128,6 @@ enum uint_8 BehaviorClass {
   Keepaway,
   PounceWithProx,
   PuzzleMaze,
-  TrackLaser,
 
   // gateBehaviors
   ConnectToCube,
@@ -162,6 +158,9 @@ enum uint_8 BehaviorClass {
   OnboardingInterruptionHead,
   OnboardingLookAtPhone,
 
+  // onboarding_1p0
+  Onboarding1p0,
+
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,
@@ -174,18 +173,14 @@ enum uint_8 BehaviorClass {
   ProxGetToDistance,
 
   // reactions
-  AcknowledgeCubeMoved,
-  AcknowledgeFace,
-  AcknowledgeObject,
+  AskForHelp,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,
   ReactToFrustration,
   ReactToMicDirection,
   ReactToMotion,
-  ReactToMotorCalibration,
   ReactToPlacedOnSlope,
-  ReactToReturnedToTreads,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
@@ -194,7 +189,6 @@ enum uint_8 BehaviorClass {
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
-  StuckOnEdge,
 
   // robotDrivenDialog
   PromptUserForVoiceCommand,
@@ -225,7 +219,6 @@ enum uint_8 BehaviorClass {
   UserDefinedBehaviorTreeRouter,
 
   // victor
-  ComeHere,
   ConfirmObject,
   PoweringRobotOff,
   ReactToTouchPetting,

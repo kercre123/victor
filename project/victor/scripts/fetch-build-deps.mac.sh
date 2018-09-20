@@ -46,13 +46,18 @@ vlog "Go"
 vlog "protobuf"
 ./tools/build/tools/ankibuild/protobuf.py --install
 
-vlog "check webots version"
-webotsVer=`cat /Applications/Webots.app/resources/version.txt`
-supportedVerFile=./simulator/supportedWebotsVersions.txt
-if ! grep -Fxq "$webotsVer" $supportedVerFile ; then
-  vlog "Webots version $webotsVer is unsupported. Here are the supported versions:"
-  cat $supportedVerFile
-  exit 1
+vlog "git-lfs"
+$GIT lfs install
+
+if [ -d "/Applications/Webots.app" ]; then
+  vlog "check webots version"
+  webotsVer=`cat /Applications/Webots.app/resources/version.txt`
+  supportedVerFile=./simulator/supportedWebotsVersions.txt
+  if ! grep -Fxq "$webotsVer" $supportedVerFile ; then
+    vlog "Webots version $webotsVer is unsupported. Here are the supported versions:"
+    cat $supportedVerFile
+    exit 1
+  fi
 fi
 
 vlog "Build output dirs"

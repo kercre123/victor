@@ -334,7 +334,10 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 
     float rate = 0.0f;
     float accel = 0.0f;
-    emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta, rate, accel);
+    
+    if( !IsEmotionFixed( emotionType ) ) {
+      emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta, rate, accel);
+    }
     
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
     

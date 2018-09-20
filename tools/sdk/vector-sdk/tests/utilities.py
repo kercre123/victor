@@ -1,6 +1,6 @@
-'''
+"""
 Shared utilities for running tests.
-'''
+"""
 
 import asyncio
 

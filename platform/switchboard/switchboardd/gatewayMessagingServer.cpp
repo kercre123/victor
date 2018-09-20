@@ -77,6 +77,18 @@ std::shared_ptr<SafeHandle> GatewayMessagingServer::SendConnectionIdRequest(Conn
   return sharedHandle;
 }
 
+std::shared_ptr<SafeHandle> GatewayMessagingServer::SendClientGuidRefreshRequest(ClientGuidRefreshRequestCallback callback) {
+  std::shared_ptr<SafeHandle> sharedHandle = std::make_shared<SafeHandle>();
+
+  _refreshClientGuidRequestCallbackQueue.push(callback);
+  _refreshClientGuidRequestHandlesQueue.push(std::weak_ptr<SafeHandle>(sharedHandle));
+
+  SendMessage(SwitchboardResponse(ClientGuidRefreshRequest()));
+
+  return sharedHandle;
+}
+
+
 void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message) {
   if(_tokenClient.expired()) {
     return;
@@ -157,6 +169,19 @@ void GatewayMessagingServer::HandleConnectionIdResponse(const SwitchboardRequest
   });
 }
 
+void GatewayMessagingServer::HandleClientGuidRefreshResponse(const SwitchboardRequest& message) {
+  _taskExecutor->Wake([this, message]() {
+    // Receive client guid refresh from Gateway
+    ClientGuidRefreshRequestCallback cb = _refreshClientGuidRequestCallbackQueue.front();
+    _refreshClientGuidRequestCallbackQueue.pop();
+    std::weak_ptr<SafeHandle> handle = _refreshClientGuidRequestHandlesQueue.front();
+    _refreshClientGuidRequestHandlesQueue.pop();
+    if(!handle.expired()) {
+      cb(true);
+    }
+  });
+}
+
 void GatewayMessagingServer::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
   // Send SwitchboardResponse
   SwitchboardResponse res = SwitchboardResponse(Anki::Vector::AuthResponse(appToken, "", authError));
@@ -197,6 +222,11 @@ void GatewayMessagingServer::sEvGatewayMessageHandler(struct ev_loop* loop, stru
       case SwitchboardRequestTag::ExternalConnectionResponse:
       {
         self->HandleConnectionIdResponse(message);
+        break;
+      }
+      case SwitchboardRequestTag::ClientGuidRefreshResponse:
+      {
+        self->HandleClientGuidRefreshResponse(message);
         break;
       }
       default:

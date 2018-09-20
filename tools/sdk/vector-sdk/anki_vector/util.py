@@ -1,4 +1,16 @@
 # Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """
 Utility functions and classes for the Vector SDK
@@ -6,53 +18,67 @@ Utility functions and classes for the Vector SDK
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['Angle',
+           'BaseOverlay',
            'Component',
+           'Distance',
+           'ImageRect',
+           'Matrix44',
            'Pose',
            'Position',
            'Quaternion',
-           'Vector3',
-           'Distance',
+           'RectangleOverlay',
            'Speed',
-           'degrees',
-           'radians',
+           'Vector2',
+           'Vector3',
            'angle_z_to_quaternion',
+           'degrees',
            'distance_mm',
            'distance_inches',
-           'speed_mmps',
+           'get_class_logger',
+           'parse_command_args',
+           'radians',
            'setup_basic_logging',
-           'get_class_logger']
+           'speed_mmps']
 
 import argparse
 import logging
 import math
 import os
-from pathlib import Path
+import sys
 
-MODULE_LOGGER = logging.getLogger(__name__)
+try:
+    from PIL import Image, ImageDraw
+except ImportError:
+    sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
-
-# TODO: Update this using the login credentials when they're available
-def parse_test_args(parser: argparse.ArgumentParser = None):
+# TODO Move to the robot class
+def parse_command_args(parser: argparse.ArgumentParser = None):
     """
-    Provides the command line interface for all the tests
+    Parses command line arguments
 
-    :param parser: To add new arguments,
+    Attempts to read the robot serial number from the command line arguments. If no serial number
+    is specified, we next attempt to read the robot serial number from environment variable ANKI_ROBOT_SERIAL.
+    If ANKI_ROBOT_SERIAL is specified, the value will be used as the robot's serial number.
+
+    .. code-block:: python
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--new_param")
+        args = util.parse_command_args(parser)
+
+    :param parser: To add new command line arguments,
          pass an argparse parser with the new options
          already defined. Leave empty to use the defaults.
     """
     if parser is None:
         parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--serial", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
-    parser.add_argument("--port", nargs='?', default="443")
     args = parser.parse_args()
-
-    if args.port == "8443":
-        args.serial = "Local"
 
     if args.serial is None:
         parser.error('The "serial" argument is required '
                      'or it may be set with the environment variable '
-                     '"VECTOR_ROBOT_SERIAL"')
+                     '"ANKI_ROBOT_SERIAL"')
     return args
 
 
@@ -60,6 +86,10 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
                         general_log_level: str = None,
                         target: object = None):
     """Helper to perform basic setup of the Python logging machinery.
+
+    .. code-block:: python
+
+        util.setup_basic_logging()
 
     :param custom_handler: provide an external logger for custom logging locations
     :param general_log_level: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
@@ -85,68 +115,46 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 def get_class_logger(module: str, obj: object) -> logging.Logger:
     """Helper to create logger for a given class (and module)
 
+    .. code-block:: python
+
+        logger = util.get_class_logger(module_name, my_object)
+
     :param module: The name of the module to which the object belongs.
     :param obj: the object that owns the logger.
     """
     return logging.getLogger(".".join([module, type(obj).__name__]))
 
 
-def angle_z_to_quaternion(angle_z):
-    """This function converts an angle in the z axis (Euler angle z component) to a quaternion.
-
-    Args:
-        angle_z (:class:`anki_vector.util.Angle`): The z axis angle.
-
-    Returns:
-        q0, q1, q2, q3 (float, float, float, float): A tuple with all the members
-            of a quaternion defined by angle_z.
-    """
-
-    # Define the quaternion to be converted from a Euler angle (x,y,z) of 0,0,angle_z
-    # These equations have their original equations above, and simplified implemented
-    # q0 = cos(x/2)*cos(y/2)*cos(z/2) + sin(x/2)*sin(y/2)*sin(z/2)
-    q0 = math.cos(angle_z.radians / 2)
-    # q1 = sin(x/2)*cos(y/2)*cos(z/2) - cos(x/2)*sin(y/2)*sin(z/2)
-    q1 = 0
-    # q2 = cos(x/2)*sin(y/2)*cos(z/2) + sin(x/2)*cos(y/2)*sin(z/2)
-    q2 = 0
-    # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
-    q3 = math.sin(angle_z.radians / 2)
-    return q0, q1, q2, q3
-
-
 class Vector2:
     """Represents a 2D Vector (type/units aren't specified)
 
-    Args:
-        x (float): X component
-        y (float): Y component
+    :param x: X component
+    :param y: Y component
     """
 
     __slots__ = ('_x', '_y')
 
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float):
         self._x = x
         self._y = y
 
     def set_to(self, rhs):
         """Copy the x and y components of the given Vector2 instance.
 
-        Args:
-            rhs (:class:`Vector2`): The right-hand-side of this assignment - the
+        :param rhs: The right-hand-side of this assignment - the
                 source Vector2 to copy into this Vector2 instance.
         """
         self._x = rhs.x
         self._y = rhs.y
 
     @property
-    def x(self):
-        """float: The x component."""
+    def x(self) -> float:
+        """The x component."""
         return self._x
 
     @property
-    def y(self):
-        """float: The y component."""
+    def y(self) -> float:
+        """The y component."""
         return self._y
 
     @property
@@ -196,8 +204,7 @@ class Vector3:
     def set_to(self, rhs):
         """Copy the x, y and z components of the given Vector3 instance.
 
-        Args:
-            rhs (:class:`Vector3`): The right-hand-side of this assignment - the
+        :param rhs: The right-hand-side of this assignment - the
                 source Vector3 to copy into this Vector3 instance.
         """
         self._x = rhs.x
@@ -205,46 +212,46 @@ class Vector3:
         self._z = rhs.z
 
     @property
-    def x(self):
-        """float: The x component."""
+    def x(self) -> float:
+        """The x component."""
         return self._x
 
     @property
-    def y(self):
-        """float: The y component."""
+    def y(self) -> float:
+        """The y component."""
         return self._y
 
     @property
-    def z(self):
-        """float: The z component."""
+    def z(self) -> float:
+        """The z component."""
         return self._z
 
     @property
-    def magnitude_squared(self):
+    def magnitude_squared(self) -> float:
         """float: The magnitude of the Vector3 instance"""
         return self._x**2 + self._y**2 + self._z**2
 
     @property
-    def magnitude(self):
-        """float: The magnitude of the Vector3 instance"""
+    def magnitude(self) -> float:
+        """The magnitude of the Vector3 instance"""
         return math.sqrt(self.magnitude_squared)
 
     @property
     def normalized(self):
-        """:class:`Vector3`: Returns a Vector3 instance with the same direction and unit magnitude"""
+        """A Vector3 instance with the same direction and unit magnitude"""
         mag = self.magnitude
         if mag == 0:
             return Vector3(0, 0, 0)
         return Vector3(self._x / mag, self._y / mag, self._z / mag)
 
     def dot(self, other):
-        """:class:`Vector3`: Returns the dot product of this and another Vector3 instance"""
+        """The dot product of this and another Vector3 instance"""
         if not isinstance(other, Vector3):
             raise TypeError("Unsupported argument for dot product, expected Vector3")
         return self._x * other.x + self._y * other.y + self._z * other.z
 
     def cross(self, other):
-        """:class:`Vector3`: Returns the cross product of this and another Vector3 instance"""
+        """The cross product of this and another Vector3 instance"""
         if not isinstance(other, Vector3):
             raise TypeError("Unsupported argument for cross product, expected Vector3")
 
@@ -307,13 +314,13 @@ class Angle:
         self._radians = float(radians)
 
     @property
-    def radians(self):  # pylint: disable=redefined-outer-name
-        """float: The angle in radians."""
+    def radians(self) -> float:  # pylint: disable=redefined-outer-name
+        """The angle in radians."""
         return self._radians
 
     @property
-    def degrees(self):  # pylint: disable=redefined-outer-name
-        """float: The angle in degrees."""
+    def degrees(self) -> float:  # pylint: disable=redefined-outer-name
+        """The angle in degrees."""
         return self._radians / math.pi * 180
 
     def __repr__(self):
@@ -335,13 +342,36 @@ class Angle:
         return Angle(radians=(self.radians * other))
 
 
-def degrees(degrees: float):  # pylint: disable=redefined-outer-name
-    """Returns an :class:`anki_vector.util.Angle` instance set to the specified number of degrees."""
+def angle_z_to_quaternion(angle_z: Angle):
+    """This function converts an angle in the z axis (Euler angle z component) to a quaternion.
+
+    :param angle_z: The z axis angle.
+
+    Returns:
+        q0, q1, q2, q3 (float, float, float, float): A tuple with all the members
+            of a quaternion defined by angle_z.
+    """
+
+    # Define the quaternion to be converted from a Euler angle (x,y,z) of 0,0,angle_z
+    # These equations have their original equations above, and simplified implemented
+    # q0 = cos(x/2)*cos(y/2)*cos(z/2) + sin(x/2)*sin(y/2)*sin(z/2)
+    q0 = math.cos(angle_z.radians / 2)
+    # q1 = sin(x/2)*cos(y/2)*cos(z/2) - cos(x/2)*sin(y/2)*sin(z/2)
+    q1 = 0
+    # q2 = cos(x/2)*sin(y/2)*cos(z/2) + sin(x/2)*cos(y/2)*sin(z/2)
+    q2 = 0
+    # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
+    q3 = math.sin(angle_z.radians / 2)
+    return q0, q1, q2, q3
+
+
+def degrees(degrees: float) -> Angle:  # pylint: disable=redefined-outer-name
+    """An Angle instance set to the specified number of degrees."""
     return Angle(degrees=degrees)
 
 
-def radians(radians: float):  # pylint: disable=redefined-outer-name
-    """Returns an :class:`anki_vector.util.Angle` instance set to the specified number of radians."""
+def radians(radians: float) -> Angle:  # pylint: disable=redefined-outer-name
+    """An Angle instance set to the specified number of radians."""
     return Angle(radians=radians)
 
 
@@ -389,8 +419,8 @@ class Matrix44:
                     self.__class__.__name__, *self.in_row_order))
 
     @property
-    def tabulated_string(self):
-        """str: A multi-line string formatted with tabs to show the matrix contents."""
+    def tabulated_string(self) -> str:
+        """A multi-line string formatted with tabs to show the matrix contents."""
         return ("%.1f\t%.1f\t%.1f\t%.1f\n"
                 "%.1f\t%.1f\t%.1f\t%.1f\n"
                 "%.1f\t%.1f\t%.1f\t%.1f\n"
@@ -432,61 +462,58 @@ class Matrix44:
         """tuple of 3 floats: The x,y,z components representing the matrix's position vector."""
         return self.m30, self.m31, self.m32
 
-    def set_forward(self, x, y, z):
+    def set_forward(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's forward vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m00 = x
         self.m01 = y
         self.m02 = z
 
-    def set_left(self, x, y, z):
+    def set_left(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's left vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m10 = x
         self.m11 = y
         self.m12 = z
 
-    def set_up(self, x, y, z):
+    def set_up(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's up vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m20 = x
         self.m21 = y
         self.m22 = z
 
-    def set_pos(self, x, y, z):
+    def set_pos(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's position vector.
 
-        Args:
-            x (float): The X component.
-            y (float): The Y component.
-            z (float): The Z component.
+        :param x: The X component.
+        :param y: The Y component.
+        :param z: The Z component.
         """
         self.m30 = x
         self.m31 = y
         self.m32 = z
 
 
+# TODO See Cozmo class Quaternion definition. Use some/all of that here, including helper methods?
 class Quaternion:
     """Represents the rotation of an object in the world."""
 
     __slots__ = ('_q0', '_q1', '_q2', '_q3')
 
-    def __init__(self, q0=None, q1=None, q2=None, q3=None, angle_z=None):
+    def __init__(self, q0: float = None, q1: float = None, q2: float = None, q3: float = None, angle_z: Angle = None):
         is_quaternion = q0 is not None and q1 is not None and q2 is not None and q3 is not None
 
         if not is_quaternion and angle_z is None:
@@ -505,24 +532,28 @@ class Quaternion:
         self._q3 = q3
 
     @property
-    def q0(self):
+    def q0(self) -> float:
+        """The q0 (w) value of the quaternion."""
         return self._q0
 
     @property
-    def q1(self):
+    def q1(self) -> float:
+        """The q1 (i) value of the quaternion."""
         return self._q1
 
     @property
-    def q2(self):
+    def q2(self) -> float:
+        """The q2 (j) value of the quaternion."""
         return self._q2
 
     @property
-    def q3(self):
+    def q3(self) -> float:
+        """The q3 (k) value of the quaternion."""
         return self._q3
 
     @property
-    def angle_z(self):
-        """class:`Angle`: The z Euler component of the object's rotation.
+    def angle_z(self) -> Angle:
+        """An Angle instance representing the z Euler component of the object's rotation.
 
         Defined as the rotation in the z axis.
         """
@@ -534,18 +565,17 @@ class Quaternion:
         """tuple of float: Contains all elements of the quaternion (q0,q1,q2,q3)"""
         return self._q0, self._q1, self._q2, self._q3
 
-    def to_matrix(self, pos_x=0.0, pos_y=0.0, pos_z=0.0):
+    def to_matrix(self, pos_x: float = 0.0, pos_y: float = 0.0, pos_z: float = 0.0):
         """Convert the Quaternion to a 4x4 matrix representing this rotation.
 
         A position can also be provided to generate a full translation matrix.
 
-        Args:
-            pos_x (float): The x component for the position.
-            pos_y (float): The y component for the position.
-            pos_z (float): The z component for the position.
+        :param pos_x: The x component for the position.
+        :param pos_y: The y component for the position.
+        :param pos_z: The z component for the position.
 
         Returns:
-            :class:`cozmo.util.Matrix44`: A matrix representing this Quaternion's
+            :class:`anki_vector.util.Matrix44`: A matrix representing this Quaternion's
             rotation, with the provided position (which defaults to 0,0,0).
         """
         # See https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
@@ -597,27 +627,59 @@ class Position(Vector3):
     __slots__ = ()
 
 
+# TODO In Cozmo, this class has an `invalidate` method that is used in the SDK. Why not in Vector?
+# TODO add pose_quaternion and pose_z_angle from Cozmo or remove from docs below
 class Pose:
-    """Represents the current pose (position and orientation) of the robot"""
+    """Represents where an object is in the world.
 
+    Use the :func:'pose_quaternion' to return pose in the form of
+    position and rotation defined by a quaternion
+
+    Use the :func:'pose_z_angle' to return pose in the form of
+    position and rotation defined by rotation about the z axis
+
+    Whenever Vector is de-localized (i.e. whenever Vector no longer knows
+    where he is - e.g. when he's picked up), Vector creates a new pose starting at
+    (0,0,0) with no rotation, with origin_id incremented to show that these poses
+    cannot be compared with earlier ones. As Vector drives around, his pose (and the
+    pose of other objects he observes - e.g. faces, cubes etc.) is relative to this
+    initial position and orientation.
+
+    The coordinate space is relative to Vector, where Vector's origin is the
+    point on the ground between Vector's two front wheels:
+
+    The X axis is Vector's forward direction
+    The Y axis is to Vector's left
+    The Z axis is up
+
+    Only poses of the same origin_id can safely be compared or operated on.
+
+    .. code-block:: python
+
+        pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
+        robot.behavior.go_to_pose(pose)
+    """
     __slots__ = ('_position', '_rotation', '_origin_id')
 
-    def __init__(self, x, y, z, q0=None, q1=None, q2=None, q3=None,
-                 angle_z=None, origin_id=-1):
+    def __init__(self, x: float, y: float, z: float, q0: float = None, q1: float = None, q2: float = None, q3: float = None,
+                 angle_z: Angle = None, origin_id: int = -1):
         self._position = Position(x, y, z)
         self._rotation = Quaternion(q0, q1, q2, q3, angle_z)
         self._origin_id = origin_id
 
     @property
-    def position(self):
+    def position(self) -> Position:
+        """The position component of this pose."""
         return self._position
 
     @property
-    def rotation(self):
+    def rotation(self) -> Quaternion:
+        """The rotation component of this pose."""
         return self._rotation
 
     @property
-    def origin_id(self):
+    def origin_id(self) -> int:
+        """An ID maintained by the robot which represents which coordinate frame this pose is in."""
         return self._origin_id
 
     def __repr__(self):
@@ -627,13 +689,11 @@ class Pose:
     def define_pose_relative_this(self, new_pose):
         """Creates a new pose such that new_pose's origin is now at the location of this pose.
 
-        Args:
-            new_pose (:class:`anki_vector.util.Pose`): The pose which origin is being changed.
+        :param new_pose: The pose which origin is being changed. Type is Pose.
 
         Returns:
             A :class:`anki_vector.util.pose` object for which the origin was this pose's origin.
         """
-
         if not isinstance(new_pose, Pose):
             raise TypeError("Unsupported type for new_origin, must be of type Pose")
         x, y, z = self.position.x_y_z
@@ -654,17 +714,17 @@ class Pose:
                     origin_id=self._origin_id)
 
     @property
-    def is_valid(self):
-        """bool: Returns True if this is a valid, usable pose."""
+    def is_valid(self) -> bool:
+        """True if this is a valid, usable pose."""
         return self.origin_id >= 0
 
-    def is_comparable(self, other_pose):
-        """Are these two poses comparable.
+    def is_comparable(self, other_pose) -> bool:
+        """Checks whether these two poses are comparable.
 
         Poses are comparable if they're valid and having matching origin IDs.
 
-        Args:
-            other_pose (:class:`anki_vector.util.Pose`): The other pose to compare against.
+        :param other_pose: The other pose to compare against. Type is Pose.
+
         Returns:
             bool: True if the two poses are comparable, False otherwise.
         """
@@ -682,7 +742,7 @@ class Pose:
 
 
 class ImageRect:
-    """Image co-ordinates and size"""
+    """Image coordinates and size"""
 
     __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
 
@@ -693,19 +753,23 @@ class ImageRect:
         self._height = height
 
     @property
-    def x_top_left(self):
+    def x_top_left(self) -> float:
+        """The top left x value of where the object was last visible within Victor's camera view."""
         return self._x_top_left
 
     @property
-    def y_top_left(self):
+    def y_top_left(self) -> float:
+        """The top left y value of where the object was last visible within Victor's camera view."""
         return self._y_top_left
 
     @property
-    def width(self):
+    def width(self) -> float:
+        """The width of the object from when it was last visible within Victor's camera view."""
         return self._width
 
     @property
-    def height(self):
+    def height(self) -> float:
+        """The height of the object from when it was last visible within Victor's camera view."""
         return self._height
 
 
@@ -717,16 +781,15 @@ class Distance:
     Use the :func:`distance_inches` or :func:`distance_mm` convenience methods to generate
     a Distance instance.
 
-    Args:
-        distance_mm (float): The number of millimeters the distance should
+    :param distance_mm: The number of millimeters the distance should
             represent (cannot be combined with ``distance_inches``).
-        distance_inches (float): The number of inches the distance should
+    :param distance_inches: The number of inches the distance should
             represent (cannot be combined with ``distance_mm``).
     """
 
     __slots__ = ('_distance_mm')
 
-    def __init__(self, distance_mm=None, distance_inches=None):  # pylint: disable=redefined-outer-name
+    def __init__(self, distance_mm: float = None, distance_inches: float = None):  # pylint: disable=redefined-outer-name
         if distance_mm is None and distance_inches is None:
             raise ValueError("Expected either the distance_mm or distance_inches keyword argument")
         if distance_mm and distance_inches:
@@ -760,22 +823,21 @@ class Distance:
         return distance_mm(self.distance_mm / other)
 
     @property
-    def distance_mm(self):  # pylint: disable=redefined-outer-name
-        """float: The distance in millimeters"""
+    def distance_mm(self) -> float:  # pylint: disable=redefined-outer-name
+        """The distance in millimeters"""
         return self._distance_mm
 
     @property
-    def distance_inches(self):  # pylint: disable=redefined-outer-name
-        """float: The distance in inches"""
+    def distance_inches(self) -> float:  # pylint: disable=redefined-outer-name
         return self._distance_mm / 25.4
 
 
-def distance_mm(distance_mm):  # pylint: disable=redefined-outer-name
+def distance_mm(distance_mm: float):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Distance` instance set to the specified number of millimeters."""
     return Distance(distance_mm=distance_mm)
 
 
-def distance_inches(distance_inches):  # pylint: disable=redefined-outer-name
+def distance_inches(distance_inches: float):  # pylint: disable=redefined-outer-name
     """Returns an :class:`anki_vector.util.Distance` instance set to the specified number of inches."""
     return Distance(distance_inches=distance_inches)
 
@@ -783,19 +845,18 @@ def distance_inches(distance_inches):  # pylint: disable=redefined-outer-name
 class Speed:
     """Represents a speed.
 
-    This class allows speeds to be measured  in millimeters per second.
+    This class allows speeds to be measured in millimeters per second.
 
     Use :func:`speed_mmps` convenience methods to generate
     a Speed instance.
 
-    Args:
-        speed_mmps (float): The number of millimeters per second the speed
+    :param speed_mmps: The number of millimeters per second the speed
             should represent.
     """
 
     __slots__ = ('_speed_mmps')
 
-    def __init__(self, speed_mmps=None):  # pylint: disable=redefined-outer-name
+    def __init__(self, speed_mmps: float = None):  # pylint: disable=redefined-outer-name
         if speed_mmps is None:
             raise ValueError("Expected speed_mmps keyword argument")
         self._speed_mmps = speed_mmps
@@ -824,17 +885,80 @@ class Speed:
         return speed_mmps(self.speed_mmps / other)
 
     @property
-    def speed_mmps(self):  # pylint: disable=redefined-outer-name
-        """float: The speed in millimeters per second (mmps)."""
+    def speed_mmps(self: float) -> float:  # pylint: disable=redefined-outer-name
+        """The speed in millimeters per second (mmps)."""
         return self._speed_mmps
 
 
-def speed_mmps(speed_mmps):  # pylint: disable=redefined-outer-name
-    """Returns an :class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed"""
+def speed_mmps(speed_mmps: float):  # pylint: disable=redefined-outer-name
+    """:class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed"""
     return Speed(speed_mmps=speed_mmps)
 
 
+class BaseOverlay:
+    """A base overlay is used as a base class for other forms of overlays that can be drawn on top of an image.
+
+        :param line_thickness: The thickness of the line being drawn.
+        :param line_color: The color of the line to be drawn.
+    """
+
+    def __init__(self, line_thickness: int, line_color: tuple):
+        self._line_thickness: int = line_thickness
+        self._line_color: tuple = line_color
+
+    @property
+    def line_thickness(self) -> int:
+        """The thickness of the line being drawn."""
+        return self._line_thickness
+
+    @property
+    def line_color(self) -> tuple:
+        """The color of the line to be drawn."""
+        return self._line_color
+
+
+class RectangleOverlay(BaseOverlay):
+    """A rectangle that can be drawn on top of a given image.
+
+        :param width: The width of the rectangle to be drawn.
+        :param height: The height of the rectangle to be drawn.
+        :param line_thickness: The thickness of the line being drawn.
+        :param line_color: The color of the line to be drawn.
+    """
+
+    # @TODO: This overlay should be implemented using an ImageRect similar to cozmo, rather than a raw width&height
+    def __init__(self, width: int, height: int, line_thickness: int = 5, line_color: tuple = (255, 0, 0)):
+        super().__init__(line_thickness, line_color)
+        self._width: int = width
+        self._height: int = height
+
+    @property
+    def width(self) -> int:
+        """The width of the rectangle to be drawn."""
+        return self._width
+
+    @property
+    def height(self) -> int:
+        """The height of the rectangle to be drawn."""
+        return self._height
+
+    def apply_overlay(self, image: Image.Image) -> None:
+        """Draw a rectangle on top of the given image."""
+        d = ImageDraw.Draw(image)
+
+        image_width, image_height = image.size
+        remaining_width = image_width - self.width
+        remaining_height = image_height - self.height
+        x1, y1 = remaining_height // 2, remaining_width // 2
+        x2, y2 = (image_height - (remaining_height // 2)), (image_width - (remaining_width // 2))
+
+        for i in range(0, self.line_thickness):
+            d.rectangle([x1 + i, y1 + i, x2 - i, y2 - i], outline=self.line_color)
+
+
 class Component:
+    """ Base class for all components."""
+
     def __init__(self, robot):
         self.logger = get_class_logger(__name__, self)
         self._robot = robot
@@ -844,5 +968,7 @@ class Component:
         return self._robot
 
     @property
-    def interface(self):
-        return self._robot.conn.interface
+    def grpc_interface(self):
+        """A direct reference to the connected aiogrpc interface.
+        """
+        return self._robot.conn.grpc_interface

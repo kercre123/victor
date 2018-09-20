@@ -11,6 +11,7 @@
 #include <assert.h>
 
 // Our Includes
+#include "anki/cozmo/robot/DAS.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logEvent.h"
@@ -24,6 +25,10 @@
 #include "clad/types/proxMessages.h"
 
 #include <errno.h>
+
+// will log all the touch sensor data to /data/misc/touch.csv
+// disable when you aren't trying to debug the touch sensor
+#define DEBUG_TOUCH_SENSOR 0
 
 namespace Anki {
 namespace Vector {
@@ -91,7 +96,9 @@ void StopRadio();
 void InitIMU();
 void StopIMU();
 void ProcessIMUEvents();
+void ProcessFailureCode();
 void ProcessTouchLevel(void);
+void ProcessMicError();
 void PrintConsoleOutput(void);
 
 
@@ -468,7 +475,19 @@ Result HAL::Step(void)
 
 #endif // #ifndef HAL_DUMMY_BODY
 
+  ProcessFailureCode();
+
+  ProcessMicError();
+  
   ProcessTouchLevel(); // filter invalid values from touch sensor
+  
+#if(DEBUG_TOUCH_SENSOR)
+  static FILE* fp = nullptr;
+  if(fp == nullptr) {
+    fp = fopen("/data/misc/touch.csv","w+");
+  }
+  fprintf(fp, "%d\n", lastValidTouchIntensity_);
+#endif
 
   // Monitor body temperature (For debugging only)
   if (bodyData_ != nullptr) {
@@ -495,9 +514,17 @@ Result HAL::Step(void)
   return (commander_is_active) ? RESULT_FAIL_IO_UNSYNCHRONIZED : result;
 }
 
+void StopMotors()
+{
+  for (int m = 0; m < MOTOR_COUNT; m++) {
+    HAL::MotorSetPower((MotorID)m, 0.f);
+  }
+}
+
 void HAL::Stop()
 {
   AnkiInfo("HAL.Stop", "");
+  StopMotors();
   StopRadio();
   StopIMU();
   DisconnectRadio();
@@ -508,6 +535,88 @@ void ProcessTouchLevel(void)
   if(bodyData_->touchHires[HAL::BUTTON_CAPACITIVE] != 0xFFFF) {
     lastValidTouchIntensity_ = bodyData_->touchHires[HAL::BUTTON_CAPACITIVE];
   }
+}
+
+void ProcessFailureCode()
+{
+#define DRAW_FAULT(fault) \
+  if(!faultCodeDrawn) { \
+    faultCodeDrawn = true; \
+    FaultCode::DisplayFaultCode(fault); \
+  }
+  
+  static bool faultCodeDrawn = false;
+  switch(bodyData_->failureCode)
+  {
+    case BOOT_FAIL_NONE:
+      break;
+    case BOOT_FAIL_TOF:
+      DRAW_FAULT(FaultCode::TOF);
+      break;
+    case BOOT_FAIL_CLIFF1:
+      DRAW_FAULT(FaultCode::CLIFF_FL);
+      break;
+    case BOOT_FAIL_CLIFF2:
+      DRAW_FAULT(FaultCode::CLIFF_FR);
+      break;
+    case BOOT_FAIL_CLIFF3:
+      DRAW_FAULT(FaultCode::CLIFF_BL);
+      break;
+    case BOOT_FAIL_CLIFF4:
+      DRAW_FAULT(FaultCode::CLIFF_BR);
+      break;
+  }
+#undef DRAW_FAULT
+}
+
+void ProcessMicError()
+{
+  static uint8_t sameBitsArr[32] = {0};
+  static uint32_t prevMicError = 0;
+
+  uint32_t micError = *((uint32_t*)bodyData_->micError);
+
+  // Negation of XOR tells you which bits are the same
+  uint32_t sameBits = ~(prevMicError ^ micError);
+
+  static uint8_t whichChannelsStuck = 0;
+  
+  for(int i = 0; i < 32; ++i)
+  {
+    if((sameBits >> i) & 1)
+    {
+      sameBitsArr[i]++;
+    }
+    else
+    {
+      sameBitsArr[i] = 0;
+    }
+
+    if(sameBitsArr[i] > 254)
+    {
+      uint8_t iEven = (i % 2) + 1; // 0b01 if even, 0b10 if odd
+      whichChannelsStuck |= (i >= 16 ? (iEven << 2): iEven) ;
+    }
+  }
+
+  static bool sentDAS = false;
+  if(whichChannelsStuck > 0)
+  {
+    sentDAS = true;
+    
+    AnkiError("HAL.ProcessMicError.StuckBitDetected", "0x%x", whichChannelsStuck);
+    
+    DASMSG(mic_stuck_bit,
+           "robot.stuck_mic_bit",
+           "Indicates that one or more of the microphones is not functioning properly");
+    DASMSG_SET(i1,
+               whichChannelsStuck,
+               "Bit mask indicating which of the 4 mic channels have stuck bits");
+    DASMSG_SEND();
+
+  }
+  
+  prevMicError = micError;
 }
 
 // Get the number of microseconds since boot
@@ -645,6 +754,11 @@ bool HAL::BatteryIsDisconnected()
   return bodyData_->battery.flags & POWER_BATTERY_DISCONNECTED;
 }
 
+bool HAL::BatteryIsOverheated()
+{
+  return bodyData_->battery.flags & POWER_IS_OVERHEATED;
+}
+
 f32 HAL::ChargerGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
@@ -676,6 +790,10 @@ void HAL::Shutdown()
 void HAL::PowerSetDesiredMode(const PowerState state)
 {
   AnkiInfo("HAL.PowerSetDesiredMode", "%d", state);
+  DASMSG(hal_active_power_mode, "hal.active_power_mode", "Power mode status");
+  DASMSG_SET(i1, state == POWER_MODE_ACTIVE, "Active mode (1) or calm mode (0)");
+  DASMSG_SET(i2, HAL::BatteryGetTemperature_C(), "Battery temperature (C)");
+  DASMSG_SEND();
   desiredPowerMode_ = state;
   lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
 }

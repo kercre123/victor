@@ -41,6 +41,7 @@ enum uint_32 ActiveFeature {
 
   NoFeature = 0,
   
+  AskForHelp,
   BeQuiet,
   Blackjack,
   CantDoThat,
@@ -57,6 +58,7 @@ enum uint_32 ActiveFeature {
   InteractWithFaces,
   Keepaway,
   KnowledgeGraph,
+  ListeningForBeats,
   LookAtMe,
   LowBattery,
   MeetVictor,
@@ -75,7 +77,6 @@ enum uint_32 ActiveFeature {
   SDK,
   Sleeping,
   ShutUp,
-  StuckOnEdge,
   TakeAPhoto,
   TimerCanceled,
   TimerChecked,
@@ -92,6 +93,7 @@ enum uint_32 ActiveFeature {
 enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   NoFeature = verbatim ActiveFeatureType::System,
   
+  AskForHelp              = verbatim ActiveFeatureType::Failure,
   BeQuiet                 = verbatim ActiveFeatureType::Autonomous,
   Blackjack               = verbatim ActiveFeatureType::Play,
   CantDoThat              = verbatim ActiveFeatureType::Failure,
@@ -108,6 +110,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   InteractWithFaces       = verbatim ActiveFeatureType::Social,
   Keepaway                = verbatim ActiveFeatureType::Play,
   KnowledgeGraph          = verbatim ActiveFeatureType::Utility,
+  ListeningForBeats       = verbatim ActiveFeatureType::Autonomous,
   LookAtMe                = verbatim ActiveFeatureType::Social,
   LowBattery              = verbatim ActiveFeatureType::Autonomous,
   MeetVictor              = verbatim ActiveFeatureType::Social,
@@ -126,7 +129,6 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   SDK                     = verbatim ActiveFeatureType::SDK,
   Sleeping                = verbatim ActiveFeatureType::Sleep,
   ShutUp                  = verbatim ActiveFeatureType::Autonomous,
-  StuckOnEdge             = verbatim ActiveFeatureType::Failure,
   TakeAPhoto              = verbatim ActiveFeatureType::Utility,
   TimerCanceled           = verbatim ActiveFeatureType::Utility,
   TimerChecked            = verbatim ActiveFeatureType::Utility,

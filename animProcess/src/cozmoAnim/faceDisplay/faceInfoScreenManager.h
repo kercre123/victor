@@ -23,6 +23,7 @@
 #include "coretech/common/engine/math/point.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/cloud/mic.h"
 
 #include "util/singleton/dynamicSingleton.h"
 
@@ -73,6 +74,7 @@ public:
 
   void SetShouldDrawFAC(bool draw);
   void SetCustomText(const RobotInterface::DrawTextOnScreen& text);  
+  void SetNetworkStatus(const CloudMic::ConnectionCode& code);
 
   // When BLE pairing mode is enabled/disabled, this screen should
   // be called so that the physical inputs (head, lift, button) wheels

@@ -11,10 +11,19 @@
 
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
-    "not": {
-      "conditionType": "OffTreadsState",
-      "targetState": "InAir"
-    }
+    "and": [
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OffTreadsState",
+          "targetState": "InAir"
+        }
+      },
+      {
+        "conditionType": "BeingHeld",
+        "shouldBeHeld": false
+      }
+    ]
   },
 
   "tracksToLockWhileActivated" : [
@@ -25,19 +34,7 @@
   "behaviors": [
     "InitialPickupAnimation",
     "WhileInAirResponses",
-    "WhileInAirResponsesPRDemo",
-    "WaitForPutDown"
-  ],
-  
-  "anonymousBehaviors": [
-    {
-      "behaviorName": "WaitForPutDown",
-      "behaviorClass": "Wait",
-      "wantsToCancelSelfCondition": {
-        "conditionType": "TimerInRange",
-        "begin_s": 1.0
-      }
-    }
+    "WhileInAirResponsesPRDemo"
   ]
 
 }

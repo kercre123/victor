@@ -210,8 +210,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomBox>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomCube>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomWall>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocatedObjectStates>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestConnectedObjects>();
   }
 
   BlockWorld::~BlockWorld()
@@ -409,18 +407,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     }
 
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(success);
-  };
-
-  template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::RequestLocatedObjectStates& msg)
-  {
-    BroadcastLocatedObjectStates();
-  };
-
-  template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::RequestConnectedObjects& msg)
-  {
-    BroadcastConnectedObjects();
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

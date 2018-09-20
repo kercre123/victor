@@ -14,6 +14,8 @@
 #pragma once
 
 #include "connmanbus.h"
+#include "dbus_wpas.h"
+#include "signals/simpleSignal.hpp"
 
 #include <map>
 #include <string>
@@ -21,6 +23,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
+#include "switchboardd/taskExecutor.h"
 
 namespace Anki {
 namespace Wifi {
@@ -123,6 +126,9 @@ struct WPAConnectInfo {
   ConnectWifiResult status;
 };
 
+Signal::Signal<void(bool, std::string)>& GetWifiChangedSignal();
+Signal::Signal<void()>& GetWifiScanCompleteSignal(); 
+
 std::string GetObjectPathForService(GVariant* service);
 ConnectWifiResult ConnectToWifiService(ConnManBusService* service);
 bool RemoveWifiService(std::string ssid);
@@ -132,6 +138,8 @@ std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
 ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
+WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool scan);
+void ScanForWiFiAccessPointsAsync();
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void HandleOutputCallback(int rc, const std::string& output);
 bool GetIpFromHostName(char* hostname, char* ip);
@@ -141,7 +149,9 @@ bool DisableAccessPointMode();
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 bool GetApMacAddress(uint8_t* mac_48bits);
 WiFiState GetWiFiState();
-void Initialize();
+void RecoverNetworkServices();
+void WpaSupplicantScan();
+void Initialize(std::shared_ptr<TaskExecutor> taskExecutor);
 void Deinitialize();
 
 } // namespace Wifi

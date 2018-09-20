@@ -1,0 +1,11 @@
+---
+victor_repo:  /home/pi/Documents/repos/victor
+victor_grpc_dir: "{{ victor_repo }}/tools/sdk/grpc_tools"
+
+vector_ip: "{{ vector_ip }}"
+vector_name: "{{ vector_name }}"
+vector_cert: "{{ victor_repo }}/tools/sdk/grpc_tools/trust.cert"
+
+shared_ssh_url: https://www.dropbox.com/s/mgxgdouo0id6j9m/id_rsa_victor_shared?dl=0
+shared_ssh_output: /home/pi/.ssh/id_rsa_victor_shared
+ssh_config: /home/pi/.ssh/config

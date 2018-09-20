@@ -1,11 +1,11 @@
 # Copyright (c) 2018 Anki, Inc.
 
-'''
+"""
 Vector SDK, by Anki.
 
 Requirements:
     * Python 3.5.1 or later
-'''
+"""
 
 import os.path
 import sys

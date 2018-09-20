@@ -13,7 +13,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
 #include "engine/components/movementComponent.h"
@@ -25,7 +25,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/cozmoEngine.h"
 #include "engine/debug/cladLoggerProvider.h"
-#include "engine/deviceData/deviceDataManager.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -38,7 +37,7 @@
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "webServerProcess/src/webService.h"
 
@@ -118,6 +117,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw() << '\n';
   ss << std::fixed << std::setprecision(3) << batteryComponent.GetChargerVoltsRaw() << '\n';
   ss << EnumToString(batteryComponent.GetBatteryLevel()) << '\n';
+  ss << std::to_string(static_cast<int>(batteryComponent.GetBatteryTemperature_C())) << '\n';
   ss << (batteryComponent.IsCharging() ? "true" : "false") << '\n';
   ss << (batteryComponent.IsOnChargerContacts() ? "true" : "false") << '\n';
   ss << (batteryComponent.IsOnChargerPlatform() ? "true" : "false") << '\n';
@@ -149,7 +149,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << cliffDataRaw[1] << '\n';
   ss << cliffDataRaw[2] << '\n';
   ss << cliffDataRaw[3] << '\n';
-  
+
   ss << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(0)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(1)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
@@ -204,7 +204,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get(), _protoMsgHandler.get()))
-  , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
 #if ANKI_CPU_PROFILER_ENABLED
@@ -249,11 +248,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
 
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
     _context->GetExperiments()->UpdateLabAssignments(assignments);
@@ -285,11 +282,18 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _isInitialized = false;
 
+
+  auto * osState = OSState::getInstance();
+  DEV_ASSERT(osState != nullptr, "CozmoEngine.Init.InvalidOSState");
+
+  // set cpu frequency to default (in case we left it in a bad state last time)
+  osState->SetDesiredCPUFrequency(DesiredCPUFrequency::Automatic);
+
   // engine checks the temperature of the OS now.
-  // The fluctation in the temperature is not expected to be fast
-  // hence the 5 second update period (to prevent excessive file io)
-  OSState::getInstance()->SetUpdatePeriod(5000);
-  OSState::getInstance()->SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpu", json); });
+  // The fluctuation in the temperature is not expected to be fast
+  // hence the 5 second update period (to prevent excessive file i/o)
+  osState->SetUpdatePeriod(5000);
+  osState->SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpu", json); });
 
   _config = config;
 
@@ -434,7 +438,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
     LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");
-    SendSupportInfo();
 
     if (_engineState == EngineState::Running) {
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(1.f);
@@ -458,7 +461,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     robot->GetMoveComponent().AllowExternalMovementCommands(hasUiConnection, "ui");
     _updateMoveComponent = false;
   }
-  
+
   Result lastResult = _uiMsgHandler->Update();
   if (RESULT_OK != lastResult)
   {
@@ -519,7 +522,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
       // Update OSState
-      OSState::getInstance()->Update();
+      OSState::getInstance()->Update(currTime_nanosec);
 
       Result result = _context->GetRobotManager()->UpdateRobotConnection();
       if (RESULT_OK != result) {
@@ -642,16 +645,6 @@ void CozmoEngine::UpdateLatencyInfo()
   }
 }
 
-void CozmoEngine::SendSupportInfo() const
-{
-  #if USE_DAS
-  const DAS::IDASPlatform* platform = DASGetPlatform();
-  if (platform != nullptr) {
-    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::SupportInfo>(platform->GetDeviceId());
-  }
-  #endif
-}
-
 void CozmoEngine::SetEngineState(EngineState newState)
 {
   EngineState oldState = _engineState;
@@ -712,14 +705,6 @@ Robot* CozmoEngine::GetRobot() {
 }
 
 template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
-{
-  // TODO: Tell animation process to read the anim dir?
-  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadFaceAnimationDir.NotHookedUp", "");
-  //_context->GetRobotManager()->ReadFaceAnimationDir();
-}
-
-template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const ImageSendMode newMode = msg.mode;
@@ -767,28 +752,6 @@ void CozmoEngine::InitUnityLogger()
     }
   }
 #endif //ANKI_DEV_CHEATS
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::RequestLocale& msg)
-{
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::ResponseLocale>(
-                                                    _context->GetLocale()->GetLocaleStringLowerCase());
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::RequestDataCollectionOption& msg)
-{
-#if USE_DAS
-  if( msg.CollectionEnabled )
-  {
-    DASEnableNetwork(DASDisableNetworkReason_UserOptOut);
-  }
-  else
-  {
-    DASDisableNetwork(DASDisableNetworkReason_UserOptOut);
-  }
-#endif
 }
 
 

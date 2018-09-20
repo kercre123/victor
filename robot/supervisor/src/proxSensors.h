@@ -38,6 +38,8 @@ namespace Anki {
 
       void EnableStopOnWhite(bool enable);
 
+      void SetWhiteDetectThreshold(u32 ind, u16 level);
+
       bool IsAnyCliffDetected();
 
       bool IsCliffDetected(u32 ind);

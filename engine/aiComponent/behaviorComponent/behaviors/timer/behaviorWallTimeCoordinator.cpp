@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
 #include "engine/components/settingsManager.h"
 #include "engine/faceWorld.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 
 namespace Anki {
 namespace Vector {
@@ -66,6 +66,7 @@ void BehaviorWallTimeCoordinator::GetAllDelegates(std::set<IBehavior*>& delegate
 void BehaviorWallTimeCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = false;
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
 
 
@@ -103,7 +104,7 @@ void BehaviorWallTimeCoordinator::OnBehaviorActivated()
 
   StartTTSGeneration();
   struct tm unused;
-  if(WallTime::getInstance()->GetLocalTime(unused)){
+  if(WallTime::getInstance()->GetApproximateLocalTime(unused)){
     TransitionToFindFaceInFront();
   }else{
     TransitionToICantDoThat();
@@ -180,12 +181,20 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
 void BehaviorWallTimeCoordinator::StartTTSGeneration()
 {
   struct tm localTime;
-  if(!WallTime::getInstance()->GetLocalTime(localTime)){
+  if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
     return;
   }
 
+  const auto& settingsManager = GetBEI().GetSettingsManager();
+  const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(external_interface::RobotSetting::clock_24_hour);
+  const int divisor = clockIs24Hour ? 24 : 12;
+
   const int currentMins = localTime.tm_min;
-  int currentHours = localTime.tm_hour % 12;
+  int currentHours = localTime.tm_hour % divisor;
+
+  if( !clockIs24Hour && currentHours == 0 ) {
+    currentHours = 12;
+  }
 
   auto callback = [this](const UtteranceState& utteranceState)
   {

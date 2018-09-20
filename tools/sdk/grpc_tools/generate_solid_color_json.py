@@ -12,6 +12,6 @@ encoded_data = (base64.b64encode(raw_565_data)).decode('utf-8')
 
 jsonText = '{"face_data":"' + encoded_data + '", "duration_ms":2000, "interrupt_running":false}'
 
-f = open('test_assets/oled_color.json', 'w')
+f = open('test_assets/screen_color.json', 'w')
 f.write(jsonText)
 f.close()

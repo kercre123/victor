@@ -14,7 +14,7 @@ import sys
 import toolget
 
 GO = 'go'
-DEFAULT_VERSION = '1.10.2'
+DEFAULT_VERSION = '1.11'
 
 def get_go_version_from_command(go_exe):
     version = None
@@ -52,7 +52,11 @@ def install_go(version):
         '1.10.1-darwin': '0a5bbcbbb0d150338ba346151d2864fd326873beaedf964e2057008c8a4dc557',
         '1.10.1-linux': '72d820dec546752e5a8303b33b009079c15c2390ce76d67cf514991646c6127b',
         '1.10.2-darwin': '360ad908840217ee1b2a0b4654666b9abb3a12c8593405ba88ab9bba6e64eeda',
-        '1.10.2-linux': '4b677d698c65370afa33757b6954ade60347aaca310ea92a63ed717d7cb0c2ff'
+        '1.10.2-linux': '4b677d698c65370afa33757b6954ade60347aaca310ea92a63ed717d7cb0c2ff',
+        '1.10.4-darwin': '2ba324f01de2b2ece0376f6d696570a4c5c13db67d00aadfd612adc56feff587',
+        '1.10.4-linux': 'fa04efdb17a275a0c6e137f969a1c4eb878939e91e1da16060ce42f02c2ec5ec',
+        '1.11-darwin': '9749e6cb9c6d05cf10445a7c9899b58e72325c54fee9783ed1ac679be8e1e073',
+        '1.11-linux': 'b3fcf280ff86558e0559e185b601c9eade0fd24c900b4c63cd14d1d38613e499'
     }
 
     platform_name = platform.system().lower()

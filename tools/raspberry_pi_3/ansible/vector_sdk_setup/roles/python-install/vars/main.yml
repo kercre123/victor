@@ -1,0 +1,7 @@
+---
+base_dir: "/home/pi/Downloads"
+python_version: "3.6.0"
+python_folder: "Python-{{ python_version }}"
+python_dir: "{{ base_dir }}/{{ python_folder }}"
+python_tarball_name: "{{ python_folder }}.tgz"
+tarball_url: "https://www.python.org/ftp/python/{{ python_version }}/{{ python_tarball_name }}"

@@ -92,6 +92,7 @@ target_link_libraries(cozmo_engine
   # cti
   cti_vision
   cti_planning
+  cti_neuralnets
   cubeBleClient
   osState
   micdata

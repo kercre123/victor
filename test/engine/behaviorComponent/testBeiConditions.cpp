@@ -39,7 +39,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/components/batteryComponent.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 #include "test/engine/helpers/cubePlacementHelper.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -1162,10 +1162,10 @@ TEST(BeiConditions, TriggerWordPending)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
   auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-  uic.SetTriggerWordPending();
+  uic.SetTriggerWordPending(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
-  uic.SetTriggerWordPending();
+  uic.SetTriggerWordPending(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   
   uic.ClearPendingTriggerWord();

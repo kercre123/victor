@@ -24,10 +24,14 @@
 #include "pickAndPlaceController.h"
 #include "powerModeManager.h"
 #include "proxSensors.h"
+#include "messages.h"
+
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
-#include "messages.h"
+#include "anki/cozmo/robot/DAS.h"
+
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/motorTypes.h"
 
 #define DEBUG_IMU_FILTER 0
 
@@ -125,7 +129,7 @@ namespace Anki {
         TimeStamp_t _peakGyroStartTime = 0;
         TimeStamp_t _peakGyroMaxTime = 0;
         const u32 POKE_DETECT_COOLDOWN_MS = 1000;
-        const f32 PEAK_GYRO_THRESHOLD = 3.f;
+        const f32 PEAK_GYRO_THRESHOLD = DEG_TO_RAD_F32(5.f);  // rad/s
         const u32 MAX_GYRO_PEAK_DURATION_MS = 75;
 
         // Recorded buffer
@@ -283,9 +287,8 @@ namespace Anki {
         if (bracingEnabled_) {
           LiftController::Unbrace();
           HeadController::Unbrace();
-
-          LiftController::StartCalibrationRoutine(true);
-          HeadController::StartCalibrationRoutine(true);
+          LiftController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::UnbraceAfterImpact));
+          HeadController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::UnbraceAfterImpact));
         }
       }
 
@@ -428,9 +431,7 @@ namespace Anki {
       }
 
       bool AreMotorsMoving() {
-        return  WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving()
-                || HeadController::IsMoving() || !HeadController::IsInPosition()
-                || LiftController::IsMoving() || !LiftController::IsInPosition();
+        return  WheelController::AreWheelsMoving() || HeadController::IsMoving() || LiftController::IsMoving();
       }
 
       // Checks for conditions to enter/exit picked up state
@@ -865,12 +866,21 @@ namespace Anki {
         DetectFalling();
 
         // Send ImageImuData to engine
-        ImageImuData imageImuData;
-        imageImuData.systemTimestamp_ms = curTime;
-        imageImuData.rateX = gyro_robot_frame_filt[0];
-        imageImuData.rateY = gyro_robot_frame_filt[1];
-        imageImuData.rateZ = gyro_robot_frame_filt[2];
-        RobotInterface::SendMessage(imageImuData);
+        static RobotInterface::ImuData batchData;
+        static uint8_t sampleIdx = 0;
+
+        // load the current sample onto the packet
+        batchData.frames[sampleIdx].timestamp = curTime;
+        batchData.frames[sampleIdx].rateX = gyro_robot_frame_filt[0];
+        batchData.frames[sampleIdx].rateY = gyro_robot_frame_filt[1];
+        batchData.frames[sampleIdx].rateZ = gyro_robot_frame_filt[2];
+
+
+        // reset index and send batch packet
+        if ( ++sampleIdx >= IMUConstants::IMU_BATCH_SIZE ) {
+          sampleIdx = 0;
+          RobotInterface::SendMessage(batchData);
+        }
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {
@@ -957,6 +967,11 @@ namespace Anki {
       bool IsBeingHeld()
       {
         return IsPickedUp() && isMotionDetected_;
+      }
+      
+      bool IsMotionDetected()
+      {
+        return isMotionDetected_;
       }
 
       bool IsFalling()

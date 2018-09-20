@@ -18,13 +18,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vector {
 
-namespace{
-static const int kBSTickInterval = 1;
+namespace {
+  const int kBSTickInterval = 1;
+  CONSOLE_VAR(bool, kDebugActivationState, "Behaviors.ActivationState", false);
 }
 
 
@@ -103,9 +105,12 @@ bool IBehavior::WantsToBeActivated() const
 #if ANKI_DEV_CHEATS
   // It's possible that this behavior appears in multiple places in the tree, so it may be active when checking
   // WantsToBeActivated.
-  DEV_ASSERT((_currentActivationState == ActivationState::Activated) ||
-             (_currentActivationState == ActivationState::InScope),
-             "IBehavior.WantsToBeActivated.InvalidActivationState");
+  DEV_ASSERT_MSG((_currentActivationState == ActivationState::Activated) ||
+                 (_currentActivationState == ActivationState::InScope),
+                 "IBehavior.WantsToBeActivated.InvalidActivationState",
+                 "Behavior '%s' in activation state '%s' should not get WantsToBeActivated call",
+                 _debugLabel.c_str(),
+                 ActivationStateToString(_currentActivationState));
 #endif
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
@@ -170,12 +175,14 @@ void IBehavior::OnLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SetActivationState_DevOnly(ActivationState state, const std::string& debugStr)
 {
-  PRINT_CH_DEBUG("Behaviors",
-                 "IBehavior.SetActivationState",
-                 "%s: Behavior '%s' Activation state set to %s",
-                 debugStr.c_str(),
-                 _debugLabel.c_str(),
-                 ActivationStateToString(state));
+  if (kDebugActivationState) {
+    PRINT_CH_DEBUG("Behaviors",
+                   "IBehavior.SetActivationState",
+                   "%s: Behavior '%s' Activation state set to %s",
+                   debugStr.c_str(),
+                   _debugLabel.c_str(),
+                   ActivationStateToString(state));
+  }
 
   #if ANKI_DEV_CHEATS
     _currentActivationState = state;

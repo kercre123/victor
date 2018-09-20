@@ -13,7 +13,7 @@
 */
 
 #include "engine/externalInterface/externalMessageRouter.h"
-#include "engine/wallTime.h"
+#include "osState/wallTime.h"
 
 namespace Anki {
 namespace Vector {

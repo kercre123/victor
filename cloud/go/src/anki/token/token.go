@@ -1,6 +1,7 @@
 package token
 
 import (
+	"anki/config"
 	"anki/ipc"
 	"anki/log"
 	"anki/token/jwt"
@@ -14,6 +15,7 @@ import (
 var initialized = false
 
 func Init() error {
+	url = config.Env.Token
 	if err := jwt.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return err
@@ -106,11 +108,13 @@ func initServer(ctx context.Context) (ipc.Server, error) {
 		return nil, err
 	}
 
-	go func() {
-		<-ctx.Done()
-		if err := serv.Close(); err != nil {
-			log.Println("error closing token server:", err)
-		}
-	}()
+	if done := ctx.Done(); done != nil {
+		go func() {
+			<-done
+			if err := serv.Close(); err != nil {
+				log.Println("error closing token server:", err)
+			}
+		}()
+	}
 	return serv, nil
 }

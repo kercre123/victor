@@ -14,7 +14,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/danceToTheBeat/behaviorListenForBeats.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/components/mics/beatDetectorComponent.h"
+
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -36,6 +39,10 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorListenForBeats::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
+  preListeningAnim   = AnimationTrigger::Count;
+  listeningAnim      = AnimationTrigger::Count;
+  postListeningAnim  = AnimationTrigger::Count;
+  
   JsonTools::GetCladEnumFromJSON(config, kPreListeningAnim_key,  preListeningAnim,  debugName);
   JsonTools::GetCladEnumFromJSON(config, kListeningAnim_key,     listeningAnim,     debugName);
   JsonTools::GetCladEnumFromJSON(config, kPostListeningAnim_key, postListeningAnim, debugName);
@@ -112,6 +119,9 @@ void BehaviorListenForBeats::BehaviorUpdate()
     return;
   }
 
+  // Since we are now listening for beats, reset the listen for beats cooldown timer
+  GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::ListenForBeatsCooldown).Reset();
+  
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const float listeningTime_sec = now_sec - _dVars.listeningStartTime_sec;
   

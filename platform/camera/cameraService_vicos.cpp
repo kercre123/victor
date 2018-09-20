@@ -44,6 +44,15 @@ namespace Anki {
       
       bool _waitingForFormatChange = false;
       ImageEncoding _curFormat = ImageEncoding::NoneImageEncoding;
+
+      enum class CameraPowerState {
+        Off,
+        WaitingToInit,
+        Running,
+        WaitingToDelete,
+      };
+
+      CameraPowerState _powerState = CameraPowerState::Off;
     } // "private" namespace
 
 
@@ -95,41 +104,89 @@ namespace Anki {
       _onCameraRestart = callback;
     }
 
+    bool IsCameraReady()
+    {
+      return (_camera != NULL &&
+              _powerState == CameraPowerState::Running);
+    }
+
     Result CameraService::InitCamera()
     {
       std::lock_guard<std::mutex> lock(_lock);
+
+      anki_camera_status_t status = camera_status(_camera);
+      if(status == ANKI_CAMERA_STATUS_RUNNING &&
+         _powerState == CameraPowerState::Running)
+      {
+        LOG_INFO("CameraService.InitCamera.AlreadyInited", "");
+        
+        return RESULT_OK;
+      }
+      else if(status != ANKI_CAMERA_STATUS_OFFLINE ||
+              _powerState != CameraPowerState::Off)
+      {
+        LOG_WARNING("CameraService.InitCamera.CameraStillRunning",
+                    "Camera is in state %d, power state %d",
+                    status,
+                    _powerState);
+        
+        return RESULT_FAIL;
+      }
+      
       LOG_INFO("CameraService.InitCamera.StartingInit", "");
 
+      _powerState = CameraPowerState::WaitingToInit;
+      
       int rc = camera_init(&_camera);
       if (rc != 0) {
         LOG_ERROR("CameraService.InitCamera.CameraInitFailed", "camera_init error %d", rc);
+        _powerState = CameraPowerState::Off;
         return RESULT_FAIL;
       }
 
       rc = camera_start(_camera);
       if (rc != 0) {
         LOG_ERROR("CameraService.InitCamera.CameraStartFailed", "camera_start error %d", rc);
+        _powerState = CameraPowerState::Off;
         return RESULT_FAIL;
       }
 
       return RESULT_OK;
     }
 
-    void CameraService::DeleteCamera() {
+    Result CameraService::DeleteCamera()
+    {
       std::lock_guard<std::mutex> lock(_lock);
-      if (_camera == NULL) {
-        return;
+
+      if(_camera == NULL ||
+         _powerState == CameraPowerState::Off)
+      {
+        LOG_INFO("CameraService.DeleteCamera.AlreadyDeleted", "");
+        return RESULT_OK;
       }
+      else if(_powerState != CameraPowerState::Running)
+      {
+        LOG_WARNING("CameraService.DeleteCamera.CameraNotRunning", "");
+        return RESULT_FAIL;
+      }
+
+      _powerState = CameraPowerState::WaitingToDelete;
+      
       int res = camera_stop(_camera);
       if (res != 0) {
         LOG_ERROR("CameraService.DeleteCamera.CameraStopFailed", "camera_stop error %d", res);
+        _powerState = CameraPowerState::Running;
+        return RESULT_FAIL;
       }
 
       res = camera_release(_camera);
       if (res != 0) {
         LOG_ERROR("CameraService.DeleteCamera.CameraReleaseFailed", "camera_release error %d", res);
+        _powerState = CameraPowerState::Running;
+        return RESULT_FAIL;
       }
-      _camera = NULL;
+
+      return RESULT_OK;
     }
 
     Result CameraService::Update()
@@ -141,11 +198,36 @@ namespace Anki {
         return RESULT_OK;
       }
 
+      // Ask the camera if it has successfully stopped/released itself
+      if(_powerState == CameraPowerState::WaitingToDelete)
+      {
+        if(camera_destroy(_camera))
+        {
+          _powerState = CameraPowerState::Off;
+          _camera = NULL;
+        }
+        
+        return RESULT_OK;
+      }
+
       int rc = 0;
       anki_camera_status_t status = camera_status(_camera);
+      
+      if(_powerState == CameraPowerState::WaitingToInit)
+      {
+        if(status == ANKI_CAMERA_STATUS_RUNNING)
+        {
+          _powerState = CameraPowerState::Running;
+        }
+        
+        return RESULT_OK;
+      }
 
-      if (_isRestartingCamera && (status == ANKI_CAMERA_STATUS_RUNNING)) {
+      
+      if (_isRestartingCamera && (status == ANKI_CAMERA_STATUS_RUNNING))
+      {
         LOG_INFO("CameraService.Update.RestartedCameraClient", "");
+
         _isRestartingCamera = false;
         _waitingForFormatChange = false;
         _curFormat = ImageEncoding::NoneImageEncoding;
@@ -156,18 +238,30 @@ namespace Anki {
         }
       }
 
-      if (status != ANKI_CAMERA_STATUS_RUNNING) {
+      if (status != ANKI_CAMERA_STATUS_RUNNING)
+      {
         _isRestartingCamera = true;
-        if (status == ANKI_CAMERA_STATUS_OFFLINE) {
+        
+        if (status == ANKI_CAMERA_STATUS_OFFLINE)
+        {
+          LOG_INFO("CameraService.Update.Offline",
+                   "Camera is offline, re-initing");
+
           rc = camera_init(&_camera);
           status = camera_status(_camera);
         }
-        if ((rc == 0) && (status == ANKI_CAMERA_STATUS_IDLE)) {
+
+        if((rc == 0) && (status == ANKI_CAMERA_STATUS_IDLE))
+        {
+          LOG_INFO("CameraService.Update.Idle",
+                   "Camera is idle, restarting");
+
           rc = camera_start(_camera);
           status = camera_status(_camera);
         }
       }
-      return RESULT_OK;
+      
+      return (rc == 0 ? RESULT_OK : RESULT_FAIL);
     }
 
     TimeStamp_t CameraService::GetTimeStamp(void)
@@ -178,7 +272,7 @@ namespace Anki {
 
     void CameraService::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
-      if( nullptr == _camera ) {
+      if(!IsCameraReady()) {
         return;
       }
 
@@ -194,7 +288,7 @@ namespace Anki {
 
     void CameraService::CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain)
     {
-      if( nullptr == _camera ) {
+      if(!IsCameraReady()) {
         return;
       }
       
@@ -211,7 +305,7 @@ namespace Anki {
 
     void CameraService::CameraSetCaptureFormat(ImageEncoding format)
     {
-      if( nullptr == _camera ) {
+      if(!IsCameraReady()) {
         return;
       }
 
@@ -239,6 +333,11 @@ namespace Anki {
 
     void CameraService::CameraSetCaptureSnapshot(bool start)
     {
+      if(!IsCameraReady())
+      {
+        return;
+      }
+      
       PRINT_NAMED_INFO("CameraService.CameraSetCaptureSnapshot",
                        "%s snapshot mode",
                        (start ? "Starting" : "Stopping"));
@@ -247,7 +346,7 @@ namespace Anki {
     
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
     {
-      if( nullptr == _camera ) {
+      if(!IsCameraReady()) {
         return false;
       }
 
@@ -303,7 +402,7 @@ namespace Anki {
 
     bool CameraService::CameraReleaseFrame(u32 imageID)
     {
-      if( nullptr == _camera ) {
+      if(!IsCameraReady()) {
         return false;
       }
 

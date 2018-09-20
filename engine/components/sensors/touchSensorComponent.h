@@ -193,9 +193,8 @@ protected:
   virtual std::string GetLogHeader() override;
   virtual std::string GetLogRow() override;
   
-  // returns true if there is a state change between pressed/released
-  // additionally updates the state of press/release internally which
-  // can be queried with GetIsPressed()
+  // returns the current detected press state using the input
+  // signal and passed in baseline measurement
   bool ProcessWithDynamicThreshold(const int baseline, const int input);
   
   int GetDetectLevelOffset() const;
@@ -257,8 +256,17 @@ private:
   int _countAboveDetectLevel;
   int _countBelowUndetectLevel;
   
-  // time in seconds of the last touch press
+  // time in seconds of the last touch press (using BaseStationTimer)
   float _touchPressTime;
+  
+  // counter for press state: number of consecutive
+  // detections for either pressed or released state
+  unsigned int _counterPressState;
+  
+  // whether or not the touch press state is confirmed:
+  // true, if pressed confirmed
+  // false, if released confirmed
+  bool _confirmedPressState;
   
   // dev-only logging members for debugging touch
   struct DevLogTouchRow

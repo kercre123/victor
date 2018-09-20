@@ -25,4 +25,5 @@ type Receiver interface {
 	OnError(cloud.ErrorType, error)
 	OnStreamOpen(string)
 	OnIntent(*cloud.IntentResult)
+	OnConnectionResult(*cloud.ConnectionResult)
 }

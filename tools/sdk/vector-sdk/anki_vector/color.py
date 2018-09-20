@@ -1,20 +1,31 @@
-#!/usr/bin/env python3
+# Copyright (c) 2018 Anki, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License in the file LICENSE.txt or at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
 class Color:
-    '''A Color to be used with a Light or OLED.
+    """A Color to be used with a Light or Screen.
 
     Either int_color or rgb may be used to specify the actual color.
     Any alpha components (from int_color) are ignored - all colors are fully opaque.
 
-    Args:
-        int_color (int): A 32 bit value holding the binary RGBA value (where A
+    :param int_color: A 32 bit value holding the binary RGBA value (where A
             is ignored and forced to be fully opaque).
-        rgb (tuple): A tuple holding the integer values from 0-255 for (reg, green, blue)
-        name (str): A name to assign to this color
-    '''
+    :param rgb: A tuple holding the integer values from 0-255 for (reg, green, blue)
+    :param name: A name to assign to this color.
+    """
 
-    def __init__(self, int_color=None, rgb=None, name=None):
+    def __init__(self, int_color: int = None, rgb: tuple = None, name: str = None):
         self.name = name
         self._int_color = 0
         if int_color is not None:
@@ -23,17 +34,17 @@ class Color:
             self._int_color = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
 
     @property
-    def int_color(self):
-        '''int: The encoded integer value of the color.'''
+    def int_color(self) -> int:
+        """The encoded integer value of the color."""
         return self._int_color
 
     @property
     def rgb565_bytepair(self):
-        '''bytes[]: two bytes representing an int16 color with rgb565 encoding
+        """bytes[]: two bytes representing an int16 color with rgb565 encoding
 
-        This format reflects the robot's oled color range, and performing this
-        conversion will reduce network traffic when sending oled data.
-        '''
+        This format reflects the robot's Screen color range, and performing this
+        conversion will reduce network traffic when sending Screen data.
+        """
 
         red5 = ((self._int_color >> 24) & 0xff) >> 3
         green6 = ((self._int_color >> 16) & 0xff) >> 2

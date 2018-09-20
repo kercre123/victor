@@ -26,8 +26,13 @@
 #include "util/time/stepTimers.h"
 #include <sys/stat.h>
 
+#include "osState/osState.h"
+
+#include "anki/cozmo/shared/factory/faultCodes.h"
+
 #include "coretech/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
+#include "util/logging/DAS.h"
 
 #define LOG_CHANNEL "RobotState"
 
@@ -75,12 +80,60 @@ void RobotManager::Init(const Json::Value& config)
   PRINT_NAMED_INFO("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 }
 
-void RobotManager::Shutdown()
+void RobotManager::Shutdown(ShutdownReason reason)
 {
   // Order of destruction matters! Robot actions call back into robot manager, so
   // they must be released before robot manager itself.
   LOG_INFO("RobotManager.Shutdown", "Shutting down");
-  _robot.reset();
+
+  if(_robot != nullptr)
+  {
+    _robot.reset();
+
+    // SHUTDOWN_UNKNOWN can occur when the process is being stopped
+    // so ignore it for the purposes of DAS and fault codes
+    if(reason != ShutdownReason::SHUTDOWN_UNKNOWN)
+    {
+      // Write DAS message
+      float idleTime_sec;
+      auto upTime_sec   = static_cast<uint32_t>(OSState::getInstance()->GetUptimeAndIdleTime(idleTime_sec));
+      auto numFreeBytes = Util::FileUtils::GetDirectoryFreeSize("/data");
+
+      LOG_INFO("Robot.Shutdown.ShuttingDown",
+               "Reason: %s, upTime: %u, numFreeBytes: %llu",
+               EnumToString(reason), upTime_sec, numFreeBytes);
+
+      DASMSG(robot_power_off, "robot.power_off", "Reason why robot powered off during the previous run");
+      DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
+      DASMSG_SET(i1, upTime_sec,           "Uptime (seconds)");
+      DASMSG_SET(i2, numFreeBytes,         "Free space in /data (bytes)");
+      DASMSG_SEND();
+  
+      // Send fault code
+      // Fault code handler will kill vic-dasMgr and do other stuff as necessary
+
+      // For simplicity, make sure that the ShutdownReason and corresponding
+      // FaultCode are named the same.
+#define SHUTDOWN_CASE(x) case ShutdownReason::x:        \
+      shutdownCode = FaultCode::x;                      \
+      break;
+      auto shutdownCode = 0;
+      switch (reason) {
+        SHUTDOWN_CASE(SHUTDOWN_BATTERY_CRITICAL_VOLT)
+        SHUTDOWN_CASE(SHUTDOWN_BATTERY_CRITICAL_TEMP)
+        SHUTDOWN_CASE(SHUTDOWN_GYRO_NOT_CALIBRATING)
+        SHUTDOWN_CASE(SHUTDOWN_BUTTON)
+        default:
+          LOG_ERROR("Robot.Shutdown.UnknownFaultCode", "reason: %s", EnumToString(reason));
+          break;
+      }
+#undef SHUTDOWN_CASE
+
+      if (shutdownCode != 0) {
+        FaultCode::DisplayFaultCode(shutdownCode);
+      }
+    }
+  }
 }
 
 void RobotManager::AddRobot(const RobotID_t withID)
@@ -171,10 +224,11 @@ Result RobotManager::UpdateRobot()
     }
 
     // If the robot got a message to shutdown
-    if(_robot->ToldToShutdown())
+    ShutdownReason shutdownReason = ShutdownReason::SHUTDOWN_UNKNOWN;
+    if(_robot->ToldToShutdown(shutdownReason))
     {
       LOG_INFO("RobotManager.UpdateRobot.Shutdown","");
-      Shutdown();
+      Shutdown(shutdownReason);
       return RESULT_SHUTDOWN;
     }
   }

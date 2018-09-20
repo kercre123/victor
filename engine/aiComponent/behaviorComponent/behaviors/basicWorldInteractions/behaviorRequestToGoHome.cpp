@@ -49,7 +49,16 @@ BehaviorRequestToGoHome::InstanceConfig::InstanceConfig()
   pickupAnimTrigger = AnimationTrigger::Count;
   maxFaceAge_sec = 0.f;
 }
-
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorRequestToGoHome::RequestParams::RequestParams()
+{
+  numRequests = 0;
+  requestAnimTrigger = AnimationTrigger::Count;
+  getoutAnimTrigger = AnimationTrigger::Count;
+  waitLoopAnimTrigger = AnimationTrigger::Count;
+  idleWaitTime_sec = 0.f;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRequestToGoHome::DynamicVariables::DynamicVariables(const InstanceConfig& iConfig)

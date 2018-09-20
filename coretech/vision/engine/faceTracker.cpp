@@ -63,14 +63,32 @@ namespace Vision {
     return _pImpl->Update(frameOrig, faces, updatedIDs);
   }
   
-  void FaceTracker::Reset()
+  void FaceTracker::AddAllowedTrackedFace(const FaceID_t faceID)
   {
-    _pImpl->Reset();
+    _pImpl->AddAllowedTrackedFace(faceID);
   }
   
   void FaceTracker::SetRecognitionIsSynchronous(bool isSynchronous)
   {
     _pImpl->SetRecognitionIsSynchronous(isSynchronous);
+  }
+
+  bool FaceTracker::HaveAllowedTrackedFaces()
+  {
+    return _pImpl->HaveAllowedTrackedFaces();
+  }
+
+  void FaceTracker::ClearAllowedTrackedFaces()
+  {
+    _pImpl->ClearAllowedTrackedFaces();
+  }
+
+  void FaceTracker::AccountForRobotMove()
+  {
+    if (!_pImpl->HaveAllowedTrackedFaces())
+    {
+      _pImpl->ClearAllowedTrackedFaces();
+    }
   }
   
   bool FaceTracker::IsRecognitionSupported()

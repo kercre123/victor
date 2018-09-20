@@ -32,6 +32,7 @@ message RobotServerDisconnect
 
 message PrepForShutdown
 {
+  ShutdownReason reason
 }
 
 message RobotPoked
@@ -41,10 +42,10 @@ message RobotPoked
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
-  uint_32 timestamp,
   uint_32 triggerScore,
   uint_16 direction,
   bool isButtonPress,
+  bool willOpenStream,
 }
 
 message MicDirection
@@ -205,6 +206,8 @@ union RobotToEngine {
   // Messages from animation process to engine
   StartShutdownAnim          startShutdownAnim      = 0xD0,
 
+  ReportCloudConnectivity    reportCloudConnectivity = 0xD1,
+
   AnimationAdded             animAdded              = 0xD3,
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
@@ -242,7 +245,7 @@ union RobotToEngine {
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process
   RobotState                 state                  = 0xF0,
-  ImageImuData               imageGyro              = 0xF1,
+  ImuData                    imuData                = 0xF1,
   MicData                    micData                = 0xF2,
 
   // From anim process

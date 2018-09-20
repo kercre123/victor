@@ -12,6 +12,7 @@
 */
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -59,7 +60,6 @@ namespace {
 
 #if ANKI_DEV_CHEATS
   CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
-  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
@@ -107,7 +107,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "mic_sock" + (robotID == 0 ? "" : std::to_string(robotID));
+  const std::string sockName = std::string{Victor::MIC_SERVER_BASE_PATH} + (robotID == 0 ? "" : std::to_string(robotID));
   _udpServer->SetBindClients(false);
   const bool udpSuccess = _udpServer->StartListening(sockName);
   ANKI_VERIFY(udpSuccess,
@@ -144,7 +144,7 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
 }
 
-void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
+void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
   if(HasStreamingJob())
   {
@@ -160,36 +160,18 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
     if(success){
       // it would be highly unlikely that we started another streaming job while waiting for the earcon,
       // but doesn't hurt to check
-      if(!HasStreamingJob()){
-        MicDataInfo* newJob = new MicDataInfo{};
-        newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
-        newJob->_writeNameBase = ""; //use autogen names
-        newJob->_numMaxFiles = 100;
-        newJob->_type = type;
-        bool saveToFile = false;
-    #if ANKI_DEV_CHEATS
-        saveToFile = true;
-        if(kMicData_SaveRawFullIntent_Wakewordless){
-          newJob->EnableDataCollect(MicDataType::Raw, true);
-        }
-        newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
-    #endif
-        newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
-        newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
-
-        const bool isStreamingJob = true;
-        AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
-
+      if (!HasStreamingJob()) {
+        _micDataProcessor->CreateSteamJob(type, kTriggerLessOverlapSize_ms);
         PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
                          "Starting Wake Wordless streaming");
       }
-      else{
+      else {
         PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
                             "Started streaming job while waiting for StartTriggerResponseWithoutGetIn callback");
         SetWillStream(false);
       }
     }
-    else{
+    else {
       PRINT_NAMED_WARNING("MicDataSystem.CantStreamToCloud",
                           "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
       SetWillStream(false);
@@ -200,7 +182,13 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type)
   if(showStreamState->HasValidTriggerResponse()){
     SetWillStream(true);
   }
-  showStreamState->StartTriggerResponseWithoutGetIn(callback);
+
+  if(playGetInFromAnimProcess){
+    showStreamState->SetPendingTriggerResponseWithGetIn(callback);
+  }
+  else {
+    showStreamState->SetPendingTriggerResponseWithoutGetIn(callback);
+  }
 }
 
 void MicDataSystem::FakeTriggerWordDetection()
@@ -293,9 +281,9 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
         // Set up a message to send out about the triggerword
         RobotInterface::TriggerWordDetected twDetectedMessage;
-        const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
-        twDetectedMessage.timestamp = mostRecentTimestamp_ms;
         twDetectedMessage.direction = kFirstIndex;
+        // TODO:(bn) check stream state here? Currently just assuming streaming is on
+        twDetectedMessage.willOpenStream = true;
         auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
         {
           std::lock_guard<std::mutex> lock(_msgsMutex);
@@ -304,6 +292,19 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         break;
       }
       #endif
+      case CloudMic::MessageTag::connectionResult:
+      {
+        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
+        FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
+
+        // Send the results back to engine
+        ReportCloudConnectivity msgToEngine;
+        msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
+        msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
+        msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
+        RobotInterface::SendAnimToEngine(msgToEngine);
+        break;
+      }
 
       default:
         PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
@@ -709,6 +710,15 @@ bool MicDataSystem::ShouldSimulateStreaming() const
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     const bool fakeIt = showStreamState->ShouldSimulateStreamAfterTriggerWord();
     return fakeIt;
+  }
+}
+
+void MicDataSystem::RequestConnectionStatus()
+{   
+  if (_udpServer->HasClient())
+  {
+    PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");    
+    SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
 }
 

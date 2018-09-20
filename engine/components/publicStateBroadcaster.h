@@ -74,7 +74,6 @@ public:
     dependencies.insert(RobotComponentID::MoodManager);
     dependencies.insert(RobotComponentID::BlockTapFilter);
     dependencies.insert(RobotComponentID::RobotToEngineImplMessaging);
-    dependencies.insert(RobotComponentID::RobotIdleTimeout);
     dependencies.insert(RobotComponentID::MicComponent);
   };
   
