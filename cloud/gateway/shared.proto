@@ -175,8 +175,8 @@ message GatewayWrapper {
     ImageChunk                    image_chunk                        = 141;
 
     // ------------ Message and response for cloud connectivity check ------------
-    CheckCloudRequest             check_cloud_request               = 160;
-    CheckCloudResponse            check_cloud_response              = 161;
+    CheckCloudRequest             check_cloud_request                = 160;
+    CheckCloudResponse            check_cloud_response               = 161;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

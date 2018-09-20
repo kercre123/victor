@@ -24,8 +24,8 @@ import configparser
 import functools
 from pathlib import Path
 
-from . import (animation, backpack, behavior, camera, connection,
-               events, exceptions, faces, motors,
+from . import (animation, audio, backpack, behavior, camera,
+               connection, events, exceptions, faces, motors,
                screen, photos, proximity, sync, util,
                viewer, world)
 from .messaging import protocol
@@ -90,6 +90,7 @@ class Robot:
     :param behavior_timeout: The time to wait for control of the robot before failing. Defaults to :code:`10`
     :param enable_vision_mode: Turn on face detection. Defaults to :code:`False`
     :param enable_camera_feed: Turn camera feed on/off. Defaults to :code:`True`
+    :param enable_audio_feed: Turn audio feed on/off. Defaults to :code:`False`
     :param show_viewer: Render camera feed on/off. Defaults to :code:`False`"""
 
     def __init__(self,
@@ -102,6 +103,7 @@ class Robot:
                  cache_animation_list: bool = True,
                  enable_vision_mode: bool = False,
                  enable_camera_feed: bool = True,
+                 enable_audio_feed: bool = False,
                  show_viewer: bool = False):
 
         if default_logging:
@@ -135,6 +137,7 @@ class Robot:
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
+        self._audio: audio.AudioComponent = None
         self._backpack: backpack.BackpackComponent = None
         self._behavior: behavior.BehaviorComponent = None
         self._camera: camera.CameraComponent = None
@@ -168,6 +171,7 @@ class Robot:
         self.pending = []
 
         self._enable_camera_feed = enable_camera_feed
+        self._enable_audio_feed = enable_audio_feed
         self._show_viewer = show_viewer
 
     @staticmethod
@@ -193,6 +197,15 @@ class Robot:
         if self._anim is None:
             raise exceptions.VectorNotReadyException("AnimationComponent is not yet initialized")
         return self._anim
+
+    @property
+    def audio(self) -> audio.AudioComponent:
+        """:class:`anki_vector.audio.AudioComponent`: The audio instance used to control
+        Vector's audio feed
+        """
+        if self._audio is None:
+            raise exceptions.VectorNotReadyException("AudioComponent is not yet initialized")
+        return self._audio
 
     @property
     def backpack(self) -> backpack.BackpackComponent:
@@ -437,6 +450,28 @@ class Robot:
         """
         return self._status
 
+    @property
+    def enable_audio_feed(self) -> bool:
+        """The audio feed enabled/disabled
+
+        :getter: Returns whether the audio feed is enabled
+        :setter: Enable/disable the audio feeed
+
+        .. code-block:: python
+
+            with anki_vector.Robot("my_robot_serial_number", enable_audio_feed=True) as robot:
+                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.enable_audio_feed = False
+                robot.loop.run_until_complete(utilities.delay_close(5))
+        """
+        return self._enable_audio_feed
+
+    @enable_audio_feed.setter
+    def enable_audio_feed(self, enable) -> None:
+        self._enable_audio_feed = enable
+        if self.enable_audio_feed:
+            self.audio.init_audio_feed()
+
     # TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
     @property
     def enable_camera_feed(self) -> bool:
@@ -507,6 +542,7 @@ class Robot:
 
         # Initialize components
         self._anim = animation.AnimationComponent(self)
+        self._audio = audio.AudioComponent(self)
         self._backpack = backpack.BackpackComponent(self)
         self._behavior = behavior.BehaviorComponent(self)
         self._camera = camera.CameraComponent(self)
@@ -523,6 +559,10 @@ class Robot:
             anim_request = self._anim.load_animation_list()
             if isinstance(anim_request, sync.Synchronizer):
                 anim_request.wait_for_completed()
+
+        # Start audio feed
+        if self.enable_audio_feed:
+            self.audio.init_audio_feed()
 
         # Start camera feed
         if self.enable_camera_feed:
@@ -560,6 +600,8 @@ class Robot:
         self.viewer.stop_video()
         # Shutdown camera feed
         self.camera.close_camera_feed()
+        # Shutdown audio feed
+        self.audio.close_audio_feed()
 
         self.events.close()
         self.conn.close()
@@ -680,6 +722,7 @@ class AsyncRobot(Robot):
     :param behavior_timeout: The time to wait for control of the robot before failing. Defaults to :code:`10`
     :param enable_vision_mode: Turn on face detection. Defaults to :code:`False`
     :param enable_camera_feed: Turn camera feed on/off. Defaults to :code:`True`
+    :param enable_audio_feed: Turn audio feed on/off. Defaults to :code:`False`
     :param show_viewer: Render camera feed on/off. Defaults to :code:`False`"""
 
     @functools.wraps(Robot.__init__)

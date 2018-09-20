@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io/ioutil"
+	"math"
 	"os"
 	"os/exec"
 	"reflect"
@@ -1880,6 +1882,59 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
 	return sayTextResponse, nil
+}
+
+// Long running message for sending audio feed to listening sdk users
+func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.ExternalInterface_AudioFeedServer) error {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return grpc.Errorf(codes.Unimplemented, "AudioFeed disabled in message_handler.go")
+	}
+
+	// temporary 1 kHz sine wave generator to test over the wire transfer
+	// @TODO: delete this when the engine is modified to send audio (VIC-3024)
+	for i := 0; i < 1000; i++ {
+		power_array := make([]byte, 3200)
+		direction_array := make([]byte, 12)
+		var buffer bytes.Buffer
+		for i := 0; i < 1600; i++ {
+			// sin(pi*i/8) will cycle every 16 samples, the robot's sample rate is 16,000
+			// using '12000' rather than max_int so its not so painful to listen to.
+			//
+			// the robot's audio data is in the form of 16 bit signed integers, but the proto
+			// stores it as a byte array
+			theta := (math.Pi * float64(i)) / float64(8)
+			entry := int16(math.Sin(theta) * 12000)
+			binary.Write(&buffer, binary.LittleEndian, entry)
+			buffer.Read(power_array[i*2 : i*2+1])
+		}
+
+		audioFeedResponse := &extint.AudioFeedResponse{
+			Data: &extint.AudioChunk{
+				RobotTimeStamp:     0,
+				SignalPower:        power_array,
+				DirectionStrengths: direction_array,
+				SourceDirection:    12, // '12' represents invalid under the hood, while '0' is a valid direction
+				SourceConfidence:   0,
+				NoiseFloorPower:    0,
+			},
+		}
+
+		if err := stream.Send(audioFeedResponse); err != nil {
+			return err
+		} else if err = stream.Context().Err(); err != nil {
+			// This is the case where the user disconnects the stream
+			// We should still return the err in case the user doesn't think they disconnected
+			return err
+		}
+
+		// The robot will send audio data in chunks of 1600 samples, and the animProcess operates
+		// at a sampling rate of 16000.  The rate at which the robot generates these chunks (and the
+		// minimum latency of the audiostream) is 100ms on the golden path.
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return nil
 }
 
 // TODO: Add option to request a single image from the robot(SingleShot) once VIC-5159 is resolved.

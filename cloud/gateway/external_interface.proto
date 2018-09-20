@@ -367,6 +367,14 @@ service ExternalInterface {
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
 
+  // Request an audio feed from the robot
+  rpc AudioFeed(AudioFeedRequest) returns (stream AudioFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/audio_feed",
+      body: "*"
+    };
+  }
+
   // Request a camera feed from the robot
   rpc CameraFeed(CameraFeedRequest) returns (stream CameraFeedResponse) {
     option (google.api.http) = {

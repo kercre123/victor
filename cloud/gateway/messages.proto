@@ -949,8 +949,53 @@ message StimulationInfo {
   float  max_value                = 7;
 }
 
+// Constants associated with the audio feed
+enum AudioConstants {
+  AUDIO_CONSTANTS_NULL      = 0;
+  SAMPLE_COUNTS_PER_MESSAGE = 1600; // The number of audio samples delivered from the robot per chunk
+  MICROPHONE_SAMPLE_RATE    = 15625; // The sampling rate victor's microphones record at
+  PROCESSED_SAMPLE_RATE     = 16000; // The sampling rate the robot processes audio at
+}
 
-// ImageRequest
+// The robot can process audio in a variety of ways
+enum AudioProcessingMode {
+  OFF                          = 0; // deactivates audio SDK mode
+  FAST_MODE                    = 1; // unprocessed single microphone data - most performant on robot
+  DIRECTIONAL_MODE             = 2; // beamforming support for focusing on specific direction - sounds cleanest
+  VOICE_DETECT_MODE            = 3; // multi-microphone non-beamforming - best for voice detection programs
+}
+
+// Request how the robot should process and send audio
+message AudioSendModeRequest {
+  AudioProcessingMode mode = 1;
+}
+
+// Event sent when the robot changes the mode it's processing and sending audio
+message AudioSendModeChanged {
+  AudioProcessingMode mode = 1;
+}
+
+// One frame of audio data and associated metadata
+message AudioChunk {
+  uint32 robot_time_stamp    = 1;
+  bytes  signal_power        = 2; // mono audio amplitude samples
+  bytes  direction_strengths = 3; // histogram data of which directions this audio chunk came from
+  uint32 source_direction    = 4; // 0-11, with 12 representing "invalid"
+  uint32 source_confidence   = 5; // accuracy of the calculated source_direction
+  uint32 noise_floor_power   = 6; // power value, convert to db with log_10(value)
+}
+
+// Request the robot to send audio data
+message AudioFeedRequest {}
+
+// Streamed audio data from the robot
+message AudioFeedResponse {
+  option (streamed) = true;
+
+  AudioChunk   data = 1;
+}
+
+// Request how the robot should send image data
 message ImageRequest {
   enum ImageSendMode {
     OFF                          = 0;
@@ -961,6 +1006,7 @@ message ImageRequest {
   ImageSendMode mode = 1;
 }
 
+// One frame of image data and associated metadata
 message ImageChunk {
   enum ImageEncoding
   {
