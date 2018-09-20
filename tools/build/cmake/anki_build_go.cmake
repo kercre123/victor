@@ -278,7 +278,7 @@ macro(anki_go_set_cgo_ldflags target_name flags)
 endmacro()
 
 # take the metabuild-generated list of test packages and add them one by one
-macro(anki_go_add_test_dir dir_name srclist_dir created_targets_var)
+macro(anki_go_add_test_dir dir_name srclist_dir created_targets_var extra_deps)
   set(__gotest_dir_file "${srclist_dir}/${dir_name}.gotestdir.lst")
   if (EXISTS ${__gotest_dir_file})
     file(STRINGS ${__gotest_dir_file} __gotest_packages)
@@ -288,13 +288,13 @@ macro(anki_go_add_test_dir dir_name srclist_dir created_targets_var)
 
   set(__gotest_added_targets "")
   foreach(i ${__gotest_packages})
-    anki_go_add_test(${i} ${srclist_dir})
+    anki_go_add_test(${i} ${srclist_dir} ${extra_deps})
   endforeach(i)
   set(${created_targets_var} ${__gotest_added_targets})
 endmacro()
 
 # add test executable for a given package
-macro(anki_go_add_test package_name srclist_dir)
+macro(anki_go_add_test package_name srclist_dir extra_deps)
   string(REPLACE "/" "_" __gotest_unslashed ${package_name})
   set(__gotest_dir_file "${srclist_dir}/${__gotest_unslashed}.gotest.lst")
   if (EXISTS ${__gotest_dir_file})
@@ -305,13 +305,13 @@ macro(anki_go_add_test package_name srclist_dir)
 
   set(SRCS ${__gotest_deps})
   set(_ab_PLATFORM_SRCS "")
-  anki_build_go_test_exe(${package_name} "gotest_${__gotest_unslashed}")
+  anki_build_go_test_exe(${package_name} "gotest_${__gotest_unslashed}" ${extra_deps})
   list(APPEND __gotest_added_targets "gotest_${__gotest_unslashed}")
 
 endmacro()
 
 # set up test executable build
-macro(anki_build_go_test_exe package_name target_name)
+macro(anki_build_go_test_exe package_name target_name extra_deps)
 
   set(__gobuild_out "${CMAKE_CURRENT_BINARY_DIR}/testbin/${target_name}")
   add_custom_target(${target_name} DEPENDS ${__gobuild_out})

@@ -152,7 +152,7 @@ if (MACOSX)
   anki_build_target_license(tokprovision "ANKI")
 
   # unit tests
-  anki_go_add_test_dir("anki" ${ANKI_SRCLIST_DIR} ANKI_GO_TEST_TARGETS)
+  anki_go_add_test_dir("anki" ${ANKI_SRCLIST_DIR} ANKI_GO_TEST_TARGETS "${CLAD_GO_GEN_SRCS}")
   foreach(i ${ANKI_GO_TEST_TARGETS})
     anki_go_add_c_library(${i} util)
   endforeach(i)
