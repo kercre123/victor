@@ -265,6 +265,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
 
 CozmoEngine::~CozmoEngine()
 {
+  _engineState = EngineState::ShuttingDown;
+  _context->GetWebService()->Stop();
+
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
   }
