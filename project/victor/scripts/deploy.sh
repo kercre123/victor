@@ -115,23 +115,55 @@ function cleanup() {
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
 
-CUR_OS_VERSION=$(robot_sh "getprop ro.anki.victor.version")
+# echo 0  if versions are equal
+# echo -1 if $1 < $2
+# echo 1  if $1 > $2
+function compare_anki_version() {
+  local A_VER=( ${1//./ })
+  local B_VER=( ${2//./ })
 
-if [ "${CUR_OS_VERSION}" != "${MIN_OS_VERSION}" ]; then
-    # If the current os version is the lower of the two version
-    # -n numerical comparision
-    # -t. splits the strings into multiple columns separated by '.'
-    # -k#,# compares each set of columns individually
-    LOWER_VERSION=$(printf "%s\n%s" "${MIN_OS_VERSION}" "${CUR_OS_VERSION}" | sort -n -t. -k 1,1 -k 2,2 -k 3,3 | head -n 1)
-    if [ "${LOWER_VERSION}" == "${CUR_OS_VERSION}" ]; then
-        echo "Current OS version ${CUR_OS_VERSION} too old, minimum required version ${MIN_OS_VERSION}"
-        if [ $FORCE_DEPLOY -eq 1 ]; then
-            echo "Ignoring OS version mismatch"
-        else
-            cleanup
-            exit 1
-        fi
+  if [ ${#A_VER[@]} -gt ${#B_VER[@]} ]; then
+    echo 1 && return 0
+  elif [ ${#A_VER[@]} -lt ${#B_VER[@]} ]; then
+    echo -1 && return 0
+  fi
+
+  # Only compare version numbers that are not build-numbers
+  # Either X.Y or X.Y.Z
+  local MAX_IDX=$((${#A_VER[@]} - 2))    # subtract 1 for build-number, 1 for zero-index
+
+  for i in $(seq 0 ${MAX_IDX}); do
+    if [ ${A_VER[i]} -lt ${B_VER[i]} ]; then
+      echo -1 && return 0
+    elif [ ${A_VER[i]} -gt ${B_VER[i]} ]; then
+      echo 1 && return 0
     fi
+  done
+
+  echo 0
+}
+
+# run version check
+CUR_OS_VERSION=$(robot_sh "cat /etc/os-version")
+DEPLOY_VERSION=$(cat ${STAGING_DIR}/anki/etc/version)
+
+VER_CMP=$(compare_anki_version $DEPLOY_VERSION $CUR_OS_VERSION)
+
+if [ ${VER_CMP} -eq 1 ]; then
+  # deploy > os : 
+  echo "Target deploy version (${DEPLOY_VERSION} is newer than Robot OS version (${CUR_OS_VERSION})."
+elif [ ${VER_CMP} -eq -1 ]; then
+  # deploy < os
+  echo "Target deploy version (${DEPLOY_VERSION}) is older than Robot OS version (${CUR_OS_VERSION})."
+fi
+
+if [ ${VER_CMP} -ne 0 ]; then
+  if [ $FORCE_DEPLOY -eq 1 ]; then
+    echo "Ignoring OS version mismatch"
+  else
+    cleanup
+    exit 1
+  fi
 fi
 
 set +e
