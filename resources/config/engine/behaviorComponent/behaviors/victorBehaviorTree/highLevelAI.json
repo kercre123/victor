@@ -299,8 +299,22 @@
         "DriveOffChargerIntoSocializing",
         "PlayingWithCube",
         "Exploring",
-        "ExploringVoiceCommand",
         "InvestigateHeldCube"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          },
+          "emotionEvent": "PlacedOnCharger"
+        }
+      ]
+    },
+
+    {
+      "from": [
+        "ExploringVoiceCommand"
       ],
       "interruptingTransitions": [
         {
