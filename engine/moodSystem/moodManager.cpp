@@ -122,7 +122,7 @@ void MoodManager::ReadMoodConfig(const Json::Value& inJson)
   LoadAudioParameterMap(inJson[kAudioParametersMapKey]);
   LoadAudioSimpleMoodMap(inJson[kSimpleMoodAudioKey]);
   VerifyAudioEvents();
-    
+
   LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);
 
   // set values per mood if we have them
@@ -196,7 +196,7 @@ void MoodManager::LoadAudioParameterMap(const Json::Value& inJson)
   if( inJson.isNull() ) {
     return;
   }
-  
+
   if( ANKI_VERIFY( ! inJson.isArray(), "MoodManager.LoadAudioParameterMap.MissingKey",
                    "No audio parameter map specified, or it isn't a list" ) ) {
 
@@ -228,7 +228,7 @@ void MoodManager::LoadAudioSimpleMoodMap(const Json::Value& inJson)
   const std::string& audioParamStr = JsonTools::ParseString(inJson,
                                                             "event",
                                                             "MoodManager.AudioSimpleMoodMap.ConfigError");
-  
+
   ANKI_VERIFY( AudioMetaData::GameParameter::ParameterTypeFromString( audioParamStr, _simpleMoodAudioParameter ),
                "MoodManager.LoadAudioSimpleMoodMap.InvalidAudioParameter",
                "Audio parameter type '%s' cannot be converted to enum value",
@@ -245,11 +245,11 @@ void MoodManager::LoadAudioSimpleMoodMap(const Json::Value& inJson)
                        "MoodManager.LoadAudioSimpleMoodMap.InvalidSimpleValue",
                        "event map key '%s' does not map to numeric value",
                        mapIt.key().asCString() ) ) {
-        
+
         _simpleMoodAudioEventMap.emplace( simpleMood, mapIt->asFloat() );
       }
     }
-  }  
+  }
 }
 
 void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
@@ -321,7 +321,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( VizInterface::RobotMood robotMood );
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.reserve((size_t)EmotionType::Count) );
-  
+
   float stimulatedValue = 0.0f;
   float stimulatedRate = 0.0f;
   float stimulatedAccel = 0.0f;
@@ -334,13 +334,13 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 
     float rate = 0.0f;
     float accel = 0.0f;
-    
+
     if( !IsEmotionFixed( emotionType ) ) {
       emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta, rate, accel);
     }
-    
+
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
-    
+
     if( emotionType == EmotionType::Stimulated ) {
       stimulatedValue = emotion.GetValue();
       stimulatedRate = rate;
@@ -374,9 +374,9 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
       _cumlPosStimDeltaToAdd = 0.0;
     }
   }
-  
+
   SendEmotionsToGame();
-  
+
   if( !_pendingAppEvents.empty() || (currentTime - _lastAppSentStimTime_s >= kMoodManager_AppPeriod_s) ) {
     // this won't send a new stim rate/accel the moment it changes, but since this is currently the only
     // user-facing viz of stim, that's ok. It _will_ send a new stim/rate accel when an event affects it,
@@ -426,7 +426,7 @@ void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::strin
   }
 
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   const auto* webService = context->GetWebService();
   if( nullptr != webService && webService->IsWebVizClientSubscribed(kWebVizModuleName)) {
 
@@ -561,23 +561,23 @@ void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient
       }
     }
   }
-  
+
   if( !_simpleMoodAudioEventMap.empty() ) {
     auto simpleMoodIt = _simpleMoodAudioEventMap.find( GetSimpleMood() );
     if( simpleMoodIt != _simpleMoodAudioEventMap.end() ) {
       const float val = simpleMoodIt->second;
       audioClient.PostParameter( _simpleMoodAudioParameter, val );
     }
-  }  
+  }
 }
-  
+
 void MoodManager::SendStimToApp(float velocity, float accel)
 {
   const auto& emotion = GetEmotion( EmotionType::Stimulated );
   const float value = emotion.GetValue();
   if( (_robot != nullptr) && _robot->HasGatewayInterface() ) {
     auto* gi = _robot->GetGatewayInterface();
-  
+
     external_interface::StimulationInfo* msg = new external_interface::StimulationInfo;
     // todo: extend proto plugin to take repeated types so this can be done in the ctor, to ensure we fill out all params
     *msg->mutable_emotion_events() = {_pendingAppEvents.begin(), _pendingAppEvents.end()};
@@ -587,10 +587,10 @@ void MoodManager::SendStimToApp(float velocity, float accel)
     msg->set_value_before_event( _pendingAppEvents.empty() ? value : _lastStimValue );
     msg->set_min_value( emotion.GetMin() );
     msg->set_max_value( emotion.GetMax() );
-    
+
     gi->Broadcast( ExternalMessageRouter::Wrap( msg ) );
   }
-  
+
   _lastAppSentStimTime_s = GetCurrentTimeInSeconds();
   _pendingAppEvents.clear();
 }
@@ -672,7 +672,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     const float timeSinceLastOccurrence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
     const auto& defaultPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty();
     const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurrence, defaultPenalty);
-    
+
     bool modified = false;
 
     std::map<EmotionType, int> eventEmotionDeltas;
@@ -692,7 +692,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
 
         // use 1000x fixed point
         eventEmotionDeltas[ emotionAffector.GetType() ] = std::round( (after - before) * 1000 );
-        
+
         if( emotionAffector.GetType() == EmotionType::Stimulated ) {
           // for stats tracking in the update loop
           _cumlPosStimDeltaToAdd += penalizedDeltaValue;
@@ -703,7 +703,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
         PRINT_CH_INFO("Mood", "MoodManager.TriggerFixedEmotion",
                       "Skipping TriggerEmotionEvent for emotion '%s' since it's fixed",
                       EmotionTypeToString(emotionAffector.GetType()));
-      }      
+      }
     }
 
     if( modified ) {
@@ -768,7 +768,7 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
     const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
     GetEmotion(emotionType1).Add(penalizedDeltaValue1);
   }
-  
+
   if( !IsEmotionFixed( emotionType2 ) ) {
     modified = true;
     const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
@@ -797,13 +797,13 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
     const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
     GetEmotion(emotionType1).Add(penalizedDeltaValue1);
   }
-  
+
   if( !IsEmotionFixed( emotionType2 ) ) {
     modified = true;
     const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
     GetEmotion(emotionType2).Add(penalizedDeltaValue2);
   }
-  
+
   if( !IsEmotionFixed( emotionType3 ) ) {
     modified = true;
     const float penalizedDeltaValue3 = baseValue3 * repetitionPenalty;
@@ -918,7 +918,7 @@ void MoodManager::SubscribeToWebViz()
     return;
   }
 
-  auto onSubscribedBehaviors = [this](const std::function<void(const Json::Value&)>& sendToClient) {
+  auto onSubscribedBehaviors = [](const std::function<void(const Json::Value&)>& sendToClient) {
     // a client subscribed. send them min/max values for each emotion, and a list of SimpleMoods
     // and arbitrary emotion values for each SimpleMood
 
