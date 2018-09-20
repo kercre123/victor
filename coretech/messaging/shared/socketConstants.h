@@ -9,9 +9,9 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
-  
+
   #pragma once
-  
+
 namespace Anki {
 namespace Victor {
 
@@ -47,7 +47,9 @@ namespace Victor {
   constexpr char TOKEN_SWITCHBOARD_CLIENT_PATH[]    = LOCAL_SOCKET_PATH "_token_switchboard_client_";
   constexpr char JDOCS_SERVER_PATH[]                = LOCAL_SOCKET_PATH "jdocs_server";
   constexpr char JDOCS_ENGINE_CLIENT_PATH[]         = LOCAL_SOCKET_PATH "_jdocs_engine_client_";
+  constexpr char LOGCOLLECTOR_CLIENT_PATH[]         = LOCAL_SOCKET_PATH "logcollector_client_";
+  constexpr char LOGCOLLECTOR_SERVER_PATH[]         = LOCAL_SOCKET_PATH "logcollector_server";
 
-  // 
+  //
 } // Victor
 } // Anki

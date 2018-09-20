@@ -17,6 +17,7 @@
 #include "engine/cozmoAPI/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageShared.h"
+#include "platform/robotLogUploader/robotLogUploader.h"
 #include "util/ankiLab/ankiLabDef.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -24,6 +25,32 @@
 #include "util/logging/logging.h"
 #include "util/threading/threadPriority.h"
 #include <chrono>
+
+#if REMOTE_CONSOLE_ENABLED
+namespace {
+  void UploadDebugLogs(ConsoleFunctionContextRef context)
+  {
+    using namespace Anki;
+    using namespace Anki::Vector;
+
+    std::string status;
+    const Result result = RobotLogUploader::UploadDebugLogs(status);
+
+    auto * channel = context->channel;
+
+    if (result == RESULT_OK) {
+      channel->WriteLog("<a href=%s>%s</a>\n", status.c_str(), status.c_str());
+    } else {
+      channel->WriteLog("Unable to upload debug logs (error %d)\n", result);
+      if (!status.empty()) {
+        channel->WriteLog("%s\n", status.c_str());
+      }
+    }
+  }
+
+  CONSOLE_FUNC(UploadDebugLogs, "Debug");
+}
+#endif
 
 namespace Anki {
 namespace Vector {

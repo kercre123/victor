@@ -15,6 +15,10 @@ add_subdirectory(victorCrashReports)
 
 add_subdirectory(faultCodeDisplay)
 
+add_subdirectory(robotLogUploader)
+
+add_subdirectory(vic-log-upload)
+
 #
 # Macro command to create build rules for full symbol files
 #

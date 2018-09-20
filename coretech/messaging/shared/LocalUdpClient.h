@@ -26,7 +26,10 @@ public:
 
   ssize_t Send(const char* data, size_t size);
   ssize_t Recv(char* data, size_t maxSize);
-  
+
+  // For use with select etc
+  int GetSocket() const { return _socketfd; }
+
 private:
 
   // Socket descriptor
