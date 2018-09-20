@@ -1035,7 +1035,6 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
       {
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
-        // const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
         Poly2f boundingPoly(object.GetBoundingQuadXY(newPoseWrtOrigin));
         switch(objectFam)
         {
