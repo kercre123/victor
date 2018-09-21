@@ -22,7 +22,6 @@ namespace Vector {
 class BlockWorldFilter;
 class BehaviorPickUpCube;
 class BehaviorRequestToGoHome;
-class BehaviorRollBlock;
   
 class BehaviorClearChargerArea : public ICozmoBehavior
 {
@@ -55,9 +54,9 @@ private:
     InstanceConfig(const Json::Value& config, const std::string& debugName);
 
     std::shared_ptr<BehaviorPickUpCube>       pickupBehavior;
-    std::shared_ptr<BehaviorRollBlock>        rollBehavior;
     std::shared_ptr<BehaviorRequestToGoHome>  requestHomeBehavior;
     const int maxNumAttempts;
+    const bool tryToPickUpCube;
     std::unique_ptr<BlockWorldFilter> chargerFilter;
     std::unique_ptr<BlockWorldFilter> cubesFilter;
   };
@@ -72,7 +71,8 @@ private:
   DynamicVariables _dVars;
 
   void TransitionToCheckDockingArea();
-  void TransitionToRollCube();
+  void TransitionToPositionForRamming();
+  void TransitionToRamCube();
   void TransitionToPlacingCubeOnGround();
   
   // Get a pointer to a cube that is in the charger's
