@@ -637,22 +637,9 @@ structure CurrentTimingInfo
   float_32 currentTime_ms
 }
 
-message LatencyMessage {
-  TimingInfo wifiLatency,
-  TimingInfo extSendQueueTime,
-  TimingInfo sendQueueTime,
-  TimingInfo recvQueueTime,
-  TimingInfo unityEngineLatency,
-  CurrentTimingInfo imageLatency
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // State
 ///////////////////////////////////////////////////////////////////////////////
-message UpdateEngineState {
-  EngineState oldState,
-  EngineState newState
-}
 
 message EngineErrorCodeMessage {
   EngineErrorCode errorCode

@@ -15,7 +15,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 
 #include "coretech/common/engine/jsonTools.h"
 
@@ -55,12 +56,6 @@ BehaviorContainer::BehaviorContainer(const BehaviorIDJsonMap& behaviorData)
                           BehaviorIDToString(behaviorID));
     }
     // don't print anything if we read an empty json
-  }
-  
-  // If we didn't load any behaviors from data, there's no reason to check to
-  // see if all executable behaviors have a 1-to-1 matching
-  if(behaviorData.size() > 0){
-    VerifyExecutableBehaviors();
   }
 }
 
@@ -113,19 +108,6 @@ ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) con
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
-{
-  for (const auto & behavior : _idToBehaviorMap)
-  {
-    if (behavior.second->GetExecutableType() == type)
-    {
-      return behavior.second;
-    }
-  }
-  return nullptr;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<ICozmoBehaviorPtr> BehaviorContainer::FindBehaviorsByClass(BehaviorClass behaviorClass) const
 {
   std::set<ICozmoBehaviorPtr> behaviorList;
@@ -137,41 +119,6 @@ std::set<ICozmoBehaviorPtr> BehaviorContainer::FindBehaviorsByClass(BehaviorClas
     }
   }
   return behaviorList;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorContainer::VerifyExecutableBehaviors() const
-{
-
-  std::map< ExecutableBehaviorType, BehaviorID > executableBehaviorMap;
-    
-  for( const auto& it : _idToBehaviorMap ) {
-    ICozmoBehaviorPtr behaviorPtr = it.second;
-    const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
-    if( executableBehaviorType != ExecutableBehaviorType::Count )
-    {
-#if (ANKI_DEV_ASSERT_ENABLED)
-      const auto mapIt = executableBehaviorMap.find(executableBehaviorType);      
-      DEV_ASSERT_MSG((mapIt == executableBehaviorMap.end()), "ExecutableBehaviorType.NotUnique",
-                     "Multiple behaviors marked as %s including '%s' and '%s'",
-                     EnumToString(executableBehaviorType),
-                     BehaviorIDToString(it.first),
-                     BehaviorIDToString(mapIt->second));
-#endif
-      executableBehaviorMap[executableBehaviorType] = it.first;
-    }
-  }
-  
-  #if (ANKI_DEV_ASSERT_ENABLED)
-    for( size_t i = 0; i < (size_t)ExecutableBehaviorType::Count; ++i)
-    {
-      const ExecutableBehaviorType executableBehaviorType = (ExecutableBehaviorType)i;
-      const auto mapIt = executableBehaviorMap.find(executableBehaviorType);
-      DEV_ASSERT_MSG((mapIt != executableBehaviorMap.end()), "ExecutableBehaviorType.NoMapping",
-                     "Should be one behavior marked as %s but found none",
-                     EnumToString(executableBehaviorType));
-    }
-  #endif
 }
 
 

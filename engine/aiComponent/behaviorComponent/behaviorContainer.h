@@ -58,7 +58,6 @@ public:
 
 
   ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
-  ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
   
   std::set<ICozmoBehaviorPtr> FindBehaviorsByClass(BehaviorClass behaviorClass) const;
 
@@ -90,9 +89,6 @@ public:
   void Init(BehaviorExternalInterface& behaviorExternalInterface);
 protected:
   friend class BehaviorComponentMessageHandler;
-  // Check to ensure that the factory only includes one behavior per executable
-  // type
-  void VerifyExecutableBehaviors() const;
 
   using BehaviorIDToBehaviorMap = std::map<BehaviorID, ICozmoBehaviorPtr>;
 
@@ -110,7 +106,7 @@ private:
   // helper to avoid including ICozmoBehavior.h here
   BehaviorClass GetBehaviorClass(ICozmoBehaviorPtr behavior) const;
 
-  // hide behaviorTypes.h file in .cpp
+  // hide behaviorClasses.h file in .cpp
   std::string GetClassString(BehaviorClass behaviorClass) const;
 
   // ============================== Private Member Vars ==============================

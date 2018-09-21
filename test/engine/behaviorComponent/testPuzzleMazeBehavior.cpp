@@ -15,7 +15,8 @@
 
 #include "gtest/gtest.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"

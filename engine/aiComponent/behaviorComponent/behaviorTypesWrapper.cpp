@@ -14,11 +14,11 @@
  *
  **/
 
-// only include this here in the cpp
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "util/logging/logging.h"
+
+#include "clad/types/behaviorComponent/behaviorClasses.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 
 namespace Anki {
 namespace Vector {
@@ -51,11 +51,6 @@ bool IsValidBehaviorID(const std::string& name)
   return Anki::Vector::BehaviorIDFromString(name, waste);
 }
 
-ExecutableBehaviorType ExecutableBehaviorTypeFromString(const std::string& name)
-{
-  return Anki::Vector::ExecutableBehaviorTypeFromString(name);
-}
-
 const char* BehaviorIDToString(const BehaviorID in)
 {
   return Anki::Vector::BehaviorIDToString(in);
@@ -65,11 +60,6 @@ const char* BehaviorClassToString(const BehaviorClass in)
 {
   return Anki::Vector::BehaviorClassToString(in);
 }
-
-const char* ExecutableBehaviorTypeToString(const ExecutableBehaviorType in)
-{
-  return Anki::Vector::ExecutableBehaviorTypeToString(in);
-}
   
 #if BEHAVIOR_ID_DEV_MODE
 uint16_t GetBehaviorIDNumEntries()
@@ -78,10 +68,6 @@ uint16_t GetBehaviorIDNumEntries()
 }
 #endif
 
-ExecutableBehaviorType GetDefaultExecutableBehaviorType()
-{
-  return ExecutableBehaviorType::Count;
-}
 
 }
 }

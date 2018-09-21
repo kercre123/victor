@@ -24,7 +24,6 @@ class IBehavior;
 class ICozmoBehavior;
 enum class BehaviorID: uint16_t;
 enum class BehaviorClass: uint8_t;
-enum class ExecutableBehaviorType: uint8_t;
 
 namespace ExternalInterface {
   class MessageEngineToGame;
