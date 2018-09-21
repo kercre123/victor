@@ -124,7 +124,7 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
     return false;
   }
 
-  LOG_DEBUG("LocalUdpServer.StartListening", "Socket is bound at %s", _sockname.c_str());
+  LOG_DEBUG("LocalUdpServer.StartListening", "Socket %d is bound at %s", _socketfd, _sockname.c_str());
 
   return true;
 
@@ -144,7 +144,7 @@ void LocalUdpServer::StopListening()
   }
 
   if (close(_socketfd) < 0) {
-    LOG_ERROR("LocalUdpServer.StopListening", "Error closing socket (%s)", strerror(errno));
+    LOG_ERROR("LocalUdpServer.StopListening", "Error closing socket %d (%s)", _socketfd, strerror(errno));
   }
   _socketfd = -1;
 }
@@ -174,7 +174,7 @@ ssize_t LocalUdpServer::Send(const char* data, size_t size)
   if (bytes_sent != size) {
     // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
     // some appropriate interval.
-    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %zu (%s)", bytes_sent, size, strerror(errno));
+    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %zu on %d (%s)", bytes_sent, size, _socketfd, strerror(errno));
   }
 
   return bytes_sent;
@@ -193,7 +193,7 @@ ssize_t LocalUdpServer::Recv(char* data, size_t maxSize)
       //LOG_DEBUG("LocalUdpServer.Recv", "No data available");
       return 0;
     } else {
-      LOG_ERROR("LocalUdpServer.Recv", "Receive error (%s)", strerror(errno));
+      LOG_ERROR("LocalUdpServer.Recv", "Receive error on %d (%s)", _socketfd, strerror(errno));
       return -1;
     }
   }
@@ -250,7 +250,7 @@ void LocalUdpServer::Disconnect()
     return;
   }
 
-  LOG_DEBUG("LocalUdpServer.Disconnect", "Disconnect from peer %s", _peername.c_str());
+  LOG_DEBUG("LocalUdpServer.Disconnect", "Disconnect %d from peer %s", _socketfd, _peername.c_str());
 
   if (_bindClients) {
     // Undo effects of connect() by resetting peer to an unspecified address

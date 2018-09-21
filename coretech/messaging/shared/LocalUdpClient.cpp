@@ -130,6 +130,8 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
     return false;
   }
 
+  LOG_DEBUG("LocalUdpClient.Connect", "Connect from %s to %s on %d", sockname.c_str(), peername.c_str(), _socketfd);
+
   // Send connection packet (i.e. something so that the server adds us to the client list)
   Send(LocalUdpServer::kConnectionPacket, sizeof(LocalUdpServer::kConnectionPacket));
 
@@ -140,8 +142,9 @@ bool LocalUdpClient::Disconnect()
 {
   if (_socketfd > -1) {
     if (close(_socketfd) < 0) {
-      LOG_ERROR("LocalUdpClient.Disconnect", "Error closing socket (%s)", strerror(errno));
+      LOG_ERROR("LocalUdpClient.Disconnect", "Error closing socket %d (%s)", _socketfd, strerror(errno));
     };
+    LOG_DEBUG("LocalUdpClient.Disconnect", "Disconnected %d", _socketfd);
     _socketfd = -1;
   }
   return true;
@@ -159,7 +162,7 @@ ssize_t LocalUdpClient::Send(const char* data, size_t size)
   const ssize_t bytes_sent = send(_socketfd, data, size, 0);
 
   if (bytes_sent != size) {
-    LOG_ERROR("LocalUdpClient.Send", "Send error, disconnecting (%s)", strerror(errno));
+    LOG_ERROR("LocalUdpClient.Send", "Send error on %d, disconnecting (%s)", _socketfd, strerror(errno));
     Disconnect();
     return -1;
   }
@@ -183,7 +186,7 @@ ssize_t LocalUdpClient::Recv(char* data, size_t maxSize)
       //LOG_DEBUG("LocalUdpClient.Recv", "No data available");
       return 0;
     } else {
-      LOG_ERROR("LocalUdpClient.Recv", "Receive error, dropping connection (%s)", strerror(errno));
+      LOG_ERROR("LocalUdpClient.Recv", "Receive error on %d, dropping connection (%s)", _socketfd, strerror(errno));
       Disconnect();
       return -1;
     }
