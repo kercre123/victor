@@ -168,6 +168,8 @@ void BehaviorProceduralClock::OnBehaviorActivated()
 {
   _lifetimeParams = LifetimeParams();
 
+  OnProceduralClockActivatedInternal();
+
   if(_instanceParams.shouldTurnToFace && UpdateTargetFace().IsValid()){
     TransitionToTurnToFace();
   }else{
@@ -236,6 +238,8 @@ void BehaviorProceduralClock::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
+
+  UpdateProceduralClockInternal();
 
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
     auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
