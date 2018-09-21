@@ -33,7 +33,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	token.UseClientCert = true
 	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
-	s.robotInstance = newTestableRobot(s.options.urlConfigFile)
+	s.robotInstance = newTestableRobot(*s.options.testID, *s.options.urlConfigFile)
 	go s.robotInstance.run()
 
 	s.robotInstance.waitUntilReady()

@@ -51,7 +51,12 @@ func Run(ctx context.Context, optionValues ...Option) {
 	initRefresher(ctx, identityProvider)
 
 	if opts.server {
-		serv, err := initServer(ctx)
+		socketName := "token_server"
+		if opts.socketNameSuffix != "" {
+			socketName = fmt.Sprintf("%s_%s", socketName, opts.socketNameSuffix)
+		}
+
+		serv, err := initServer(ctx, socketName)
 		if err != nil {
 			log.Println("Error creating token server:", err)
 			return
@@ -107,8 +112,8 @@ func handleRequest(m *cloud.TokenRequest) (*cloud.TokenResponse, error) {
 	return resp.resp, resp.err
 }
 
-func initServer(ctx context.Context) (ipc.Server, error) {
-	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("token_server"))
+func initServer(ctx context.Context, socketName string) (ipc.Server, error) {
+	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath(socketName))
 	if err != nil {
 		return nil, err
 	}

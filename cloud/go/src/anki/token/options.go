@@ -5,6 +5,7 @@ import "anki/token/jwt"
 type options struct {
 	server           bool
 	identityProvider *jwt.IdentityProvider
+	socketNameSuffix string
 }
 
 // Option defines an option that can be set on the token server
@@ -18,8 +19,16 @@ func WithServer() Option {
 	}
 }
 
+// WithIdentityProvider specifies a non-default identity provider
 func WithIdentityProvider(identityProvider *jwt.IdentityProvider) Option {
 	return func(o *options) {
 		o.identityProvider = identityProvider
+	}
+}
+
+// WithSocketNameSuffix specifies the (optional) suffix of the socket name
+func WithSocketNameSuffix(socketNameSuffix string) Option {
+	return func(o *options) {
+		o.socketNameSuffix = socketNameSuffix
 	}
 }

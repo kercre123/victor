@@ -34,8 +34,8 @@ func newRobotSimulator(options *options) (*robotSimulator, error) {
 	token.UseClientCert = true
 	robot.DefaultCloudDir = *options.defaultCloudDir
 
-	simulator.robotInstance = &testableRobot{id: *options.testID}
-	go simulator.robotInstance.run(*options.urlConfigFile)
+	simulator.robotInstance = newTestableRobot(*options.testID, *options.urlConfigFile)
+	go simulator.robotInstance.run()
 
 	simulator.robotInstance.waitUntilReady()
 

@@ -8,10 +8,11 @@ import (
 )
 
 type options struct {
-	server      bool
-	tokener     token.Accessor
-	httpClient  *http.Client
-	errListener util.ErrorListener
+	server           bool
+	socketNameSuffix string
+	tokener          token.Accessor
+	httpClient       *http.Client
+	errListener      util.ErrorListener
 
 	bucketName       string
 	s3BasePrefix     string
@@ -29,6 +30,13 @@ type Option func(o *options)
 func WithServer() Option {
 	return func(o *options) {
 		o.server = true
+	}
+}
+
+// WithSocketNameSuffix specifies the (optional) suffix of the socket name
+func WithSocketNameSuffix(socketNameSuffix string) Option {
+	return func(o *options) {
+		o.socketNameSuffix = socketNameSuffix
 	}
 }
 
