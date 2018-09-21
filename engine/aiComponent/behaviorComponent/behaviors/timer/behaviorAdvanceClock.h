@@ -34,12 +34,23 @@ protected:
 
   virtual void GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const override;
 
+  virtual void OnProceduralClockActivatedInternal() override;
+  virtual void UpdateProceduralClockInternal() override;
+
   virtual void TransitionToShowClockInternal() override;
 
 
 private:
+  struct DynamicVariables{
+    DynamicVariables();
+    bool sendingCompositeImageUpdates;
+    int  compositeImageUpdatesSent;
+  };
+
   int _startTime_sec = 0;
   int _endTime_sec   = 0;
+
+  DynamicVariables _dVars;
 
   BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
 
@@ -49,6 +60,8 @@ private:
   }
   int GetTotalSecToAdvance() const { return std::abs(_endTime_sec - _startTime_sec);}
   bool TimeGoesUp() const { return _endTime_sec > _startTime_sec; }
+
+  void SendCompositeImageUpdateBatch();
 
 };
 

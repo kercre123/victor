@@ -62,10 +62,12 @@ protected:
 
   virtual void OnBehaviorActivated() override final;
   virtual void InitBehavior() override;
-  virtual void BehaviorUpdate() override;
+  virtual void BehaviorUpdate() override final;
   virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
   virtual bool ShouldDimLeadingZeros() const { return true; }
+  virtual void OnProceduralClockActivatedInternal(){}
+  virtual void UpdateProceduralClockInternal(){}
 
   void TransitionToTurnToFace();
   void TransitionToGetIn();
