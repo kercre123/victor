@@ -1,3 +1,7 @@
+# This file runs via pytest, and will test the SDK.
+#
+# This test provides an extensible way to write complicated SDK tests.
+#
 import os
 from pathlib import Path
 import sys

@@ -44,13 +44,12 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.Message
 	if msg.Animation == nil {
 		return nil
 	}
-	log.Println("Animation name:", msg.Animation.Name)
 	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
 		NumLoops:        msg.Loops,
 		AnimationName:   msg.Animation.Name,
-		IgnoreBodyTrack: false,
-		IgnoreHeadTrack: false,
-		IgnoreLiftTrack: false,
+		IgnoreBodyTrack: msg.IgnoreBodyTrack,
+		IgnoreHeadTrack: msg.IgnoreHeadTrack,
+		IgnoreLiftTrack: msg.IgnoreLiftTrack,
 	})
 }
 
@@ -1602,7 +1601,7 @@ func ValidateActionTag(idTag int32) error {
 	firstTag := int32(extint.ActionTagConstants_FIRST_SDK_TAG)
 	lastTag := int32(extint.ActionTagConstants_LAST_SDK_TAG)
 	if idTag < firstTag || idTag > lastTag {
-		return grpc.Errorf(codes.Internal, "Invalid Action tag_id")
+		return grpc.Errorf(codes.InvalidArgument, "Invalid Action tag_id")
 	}
 
 	return nil

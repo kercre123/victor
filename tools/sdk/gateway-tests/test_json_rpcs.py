@@ -1,3 +1,7 @@
+# This test file runs via pytest, and will test the json endpoints for all of the unary rpcs.
+#
+# This file reproduces a connection that is similar to the way the app will talk to Vector.
+#
 import json
 import os
 import sys
