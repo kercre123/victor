@@ -45,6 +45,8 @@
 
 #include "webServerProcess/src/webService.h"
 
+#include <numeric>
+
 // Giving this its own local define, in case we want to control it independently of DEV_CHEATS / NDEBUG, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
@@ -823,6 +825,40 @@ void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& map
   _robot->Broadcast(MessageEngineToGame(MemoryMapMessageEnd()));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const
+{
+  if ( mapOriginID != PoseOriginList::UnknownOriginID )
+  {
+    const auto it = _navMaps.find(mapOriginID);
+    if ( ANKI_VERIFY( (it != _navMaps.end()) && (it->second.map != nullptr),
+                      "MapComponent.SendDASInfoAboutMap.NotFound",
+                      "Could not find orgin %u, or the map is null",
+                      mapOriginID ) )
+    {
+      const float explored_mm2 = 1e6f * it->second.map->GetExploredRegionAreaM2();
+      const float collision_mm2 = GetCollisionArea( it->second.map );
+      TimeStamp_t activeDuration_ms = 0;
+      if ( mapOriginID == _currentMapOriginID )
+      {
+        // still active, so need to append the time since activated to the duration
+        const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const EngineTimeStamp_t& activationTime = it->second.activationTime_ms;
+        activeDuration_ms = it->second.activeDuration_ms + TimeStamp_t(currTime_ms - activationTime);
+      } else {
+        // inactive. just use the cached activation time
+        activeDuration_ms = it->second.activeDuration_ms;
+      }
+      
+      DASMSG(robot_delocalized_env, "robot.delocalized_env", "When the robot is delocalized, information about the environment");
+      DASMSG_SET(i1, (int64_t)explored_mm2, "Total surface area known (mm2)");
+      DASMSG_SET(i2, (int64_t)collision_mm2, "Total surface area that is an obstacle (mm2), a subset of i1");
+      DASMSG_SET(i3, (int64_t)activeDuration_ms, "Duration (ms) of the map, perhaps after multiple delocalizations" );
+      DASMSG_SEND();
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRender()
 {
@@ -999,7 +1035,6 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
       {
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
-        const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
         Poly2f boundingPoly(object.GetBoundingQuadXY(newPoseWrtOrigin));
         switch(objectFam)
         {
@@ -1035,20 +1070,6 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
 
         // store in as a reported pose
         _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
-
-        // since we added an obstacle, any borders we saw while dropping it should not be interesting
-        const float kScaledQuadToIncludeEdges = 2.0f;
-        // kScaledQuadToIncludeEdges: we want to consider interesting edges around this obstacle as non-interesting,
-        // since we know they belong to this object. The quad to search for these edges has to be equal to the
-        // obstacle quad plus the margin in which we would find edges. For example, a good tight limit would be the size
-        // of the smallest quad in the memory map, since edges should be adjacent to the cube. This quad however is merely
-        // to limit the search for interesting edges, so it being bigger than the tightest threshold should not
-        // incur in a big penalty hit
-        const Quad2f& edgeQuad = newQuad.GetScaled(kScaledQuadToIncludeEdges);
-        if (memoryMap)
-        {
-          ReviewInterestingEdges(edgeQuad, memoryMap);
-        }
       }
     }
     else
@@ -1392,18 +1413,6 @@ float MapComponent::GetCollisionArea(const std::shared_ptr<const INavMap>& memor
   return 0.f;
 }
 
-
-// NOTE: mrw: we probably want to separate the vision processing code into its own file at some point.
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  inline Point3f EdgePointToPoint3f(const OverheadEdgePoint& point, const Pose3d& pose, float z=0.0f) {
-    Point3f ret = pose * Point3f(point.position.x(), point.position.y(), z);
-    return ret;
-  }
-} // anonymous namespace
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MapComponent::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 {
@@ -1424,48 +1433,6 @@ Result MapComponent::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameIn
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, std::shared_ptr<INavMap> map)
-{
-  // Note1: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
-  // modifications. Leave here for legacy purposes. We surely enable it soon, because performance needs
-  // improvement.
-  // Note2: Actually FindBorder is very fast compared to having to check each node against the quad, depending
-  // on how many nodes of each type there are (interesting vs quads within 'withinQuad'), so it can potentially
-  // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note
-
-
-  // check if merge is enabled
-  if ( !kReviewInterestingEdges ) {
-    return;
-  }
-
-  // ask the memory map to do the merge
-  // some implementations make require parameters like max distance to merge, but for now trust continuity
-  if( map )
-  {
-    // interesting edges adjacent to any of these types will be deemed not interesting
-    constexpr FullContentArray typesWhoseEdgesAreNotInteresting =
-    {
-      {EContentType::Unknown               , false},
-      {EContentType::ClearOfObstacle       , false},
-      {EContentType::ClearOfCliff          , false},
-      {EContentType::ObstacleObservable    , true },
-      {EContentType::ObstacleProx          , true },
-      {EContentType::ObstacleUnrecognized  , true },
-      {EContentType::Cliff                 , false},
-      {EContentType::InterestingEdge       , false},
-      {EContentType::NotInterestingEdge    , true }
-    };
-    static_assert(IsSequentialArray(typesWhoseEdgesAreNotInteresting),
-      "This array does not define all types once and only once.");
-
-    // fill border in memory map
-    MemoryMapData toAdd( EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
-    map->FillBorder(EContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, toAdd.Clone());
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
 {
   // TODO: Do something different with these vs. "interesting" overhead edges?
@@ -1476,585 +1443,54 @@ void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
+Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo) 
 {
-  ANKI_CPU_PROFILE("MapComponent::AddVisionOverheadEdges");
-  _robot->GetContext()->GetVizManager()->EraseSegments("MapComponent.AddVisionOverheadEdges");
-
-  // check conditions to add edges
-  DEV_ASSERT(!frameInfo.chains.GetVector().empty(), "AddVisionOverheadEdges.NoEdges");
-  DEV_ASSERT(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
-
-  // we are only processing edges for the memory map, so if there's no map, don't do anything
-  auto currentNavMemoryMap = GetCurrentMemoryMap();
-  if( nullptr == currentNavMemoryMap && !kDebugRenderOverheadEdges )
-  {
-    return RESULT_OK;
-  }
-  const float kDebugRenderOverheadEdgesZ_mm = 31.0f;
-
-  // grab the robot pose at the timestamp of this frame
-  RobotTimeStamp_t t;
-  HistRobotState* histState = nullptr;
-  HistStateKey histStateKey;
-  const Result poseRet = _robot->GetStateHistory()->ComputeAndInsertStateAt(frameInfo.timestamp, t, &histState, &histStateKey, true);
-  if(RESULT_FAIL_ORIGIN_MISMATCH == poseRet)
-  {
-    // "Failing" because of an origin mismatch is OK, so don't freak out, but don't
-    // go any further either.
+  const auto currentMap = GetCurrentMemoryMap();
+  if (!currentMap) {
     return RESULT_OK;
   }
 
-  const bool poseIsGood = ( RESULT_OK == poseRet ) && (histState != nullptr);
-  if ( !poseIsGood ) {
-    // this can happen if robot status messages are lost
-    PRINT_CH_INFO("MapComponent", "MapComponent.AddVisionOverheadEdges.HistoricalPoseNotFound",
-                  "Pose not found for timestamp %u (hist: %u to %u). Edges ignored for this timestamp.",
-                  (TimeStamp_t)frameInfo.timestamp,
-                  (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
-                  (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
-    return RESULT_OK;
-  }
+  const Pose2d& robotPose = _robot->GetPose();
+  MemoryMapData_Cliff cliffData(_robot->GetPose(), frameInfo.timestamp);
+  NodePredicate isCliffType     = [] (const auto& data) { return  data->type == EContentType::Cliff; };
+  NodePredicate isCollisionType = [] (const auto& data) { return (data->type == EContentType::ObstacleProx) ||
+                                                                 (data->type == EContentType::ObstacleObservable) ||
+                                                                 (data->type == EContentType::ObstacleUnrecognized); };
 
-  // If we can't transfor the observedPose to the current origin, it's ok, that means that the timestamp
-  // for the edges we just received is from before delocalizing, so we should discard it.
-  Pose3d observedPose;
-  if ( !histState->GetPose().GetWithRespectTo( _robot->GetWorldOrigin(), observedPose) ) {
-    PRINT_CH_INFO("MapComponent", "MapComponent.AddVisionOverheadEdges.NotInThisWorld",
-                  "Received timestamp %d, but could not translate that timestamp into current origin.", (TimeStamp_t)frameInfo.timestamp);
-    return RESULT_OK;
-  }
-
-  const Point3f& cameraOrigin = observedPose.GetTranslation();
-
-  // Ideally we would do clamping with quad in robot coordinates, but this is an optimization to prevent
-  // having to transform segments twice. We transform the segments to world space so that we can
-  // calculate variations in angles, in order to merge together small variations. Once we have transformed
-  // the segments, we can clamp the merged segments. We could do this in 2D, but we would have to transform
-  // those segments again into world space. As a minor optimization, transform ground-plane's near-plane instead
-  Point2f nearPlaneLeft  = observedPose *
-    Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
-            frameInfo.groundplane[Quad::BottomLeft].y(),
-            0.0f);
-  Point2f nearPlaneRight = observedPose *
-    Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
-            frameInfo.groundplane[Quad::BottomRight].y(),
-            0.0f);
-
-  // quads that are clear, either because there are not borders behind them or from the camera to that border
-  std::vector<Quad2f> visionQuadsClear;
-
-  // detected borders are simply lines
-  struct Segment {
-    Segment(const Point2f& f, const Point2f& t) : from(f), to(t) {}
-    Point2f from;
-    Point2f to;
-  };
-  std::vector<Segment> visionSegmentsWithInterestingBorders;
-
-  // we store the closest detected edge every time in the whiteboard
-  float closestPointDist_mm2 = std::numeric_limits<float>::quiet_NaN();
-
-  // iterate every chain finding contiguous segments
+  std::vector<std::vector<Point2f>> possibleEdges;
   for( const auto& chain : frameInfo.chains.GetVector() )
   {
-
-    // debug render
-    if ( kDebugRenderOverheadEdges )
-    {
-      // renders every segment reported by vision
-      for (size_t i=0; i<chain.points.size()-1; ++i)
-      {
-        Point3f start = EdgePointToPoint3f(chain.points[i], observedPose, kDebugRenderOverheadEdgesZ_mm);
-        Point3f end   = EdgePointToPoint3f(chain.points[i+1], observedPose, kDebugRenderOverheadEdgesZ_mm);
-        ColorRGBA color = ((i%2) == 0) ? NamedColors::YELLOW : NamedColors::ORANGE;
-        VizManager* vizManager = _robot->GetContext()->GetVizManager();
-        vizManager->DrawSegment("MapComponent.AddVisionOverheadEdges", start, end, color, false);
-      }
-    }
-    else if ( kDebugRenderOverheadEdgeBorderQuads || kDebugRenderOverheadEdgeClearQuads )
-    {
-      Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
-                                                     frameInfo.groundplane[Quad::TopLeft].y(),
-                                                     0.0f);
-      Point2f wrtOrigin2DBL = observedPose * Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
-                                                     frameInfo.groundplane[Quad::BottomLeft].y(),
-                                                     0.0f);
-      Point2f wrtOrigin2DTR = observedPose * Point3f(frameInfo.groundplane[Quad::TopRight].x(),
-                                                     frameInfo.groundplane[Quad::TopRight].y(),
-                                                     0.0f);
-      Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
-                                                     frameInfo.groundplane[Quad::BottomRight].y(),
-                                                     0.0f);
-
-      Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
-      VizManager* vizManager = _robot->GetContext()->GetVizManager();
-      vizManager->DrawQuadAsSegments("MapComponent.AddVisionOverheadEdges", groundPlaneWRTOrigin, kDebugRenderOverheadEdgesZ_mm, NamedColors::BLACK, false);
-    }
-
-    DEV_ASSERT(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
-
-    // when we are processing a non-edge chain, points can be discarded. Variables to track segments
-    bool hasValidSegmentStart = false;
-    Point3f segmentStart;
-    bool hasValidSegmentEnd   = false;
-    Point3f segmentEnd;
-    Vec3f segmentNormal;
-    size_t curPointInChainIdx = 0;
-    do
-    {
-      // get candidate point to merge into previous segment
-      Point3f candidate3D = EdgePointToPoint3f(chain.points[curPointInChainIdx], observedPose);
-
-      // this is to prevent vision clear quads that cross an object from clearing that object. This could be
-      // optimized by passing in a flag to AddQuad that tells the QuadTree that it should not override
-      // these types. However, if we have not seen an edge, and we crossed an object, it can potentially clear
-      // behind that object, which is equally wrong. Ideally, HasCollisionWithRay would provide the closest
-      // collision point to "from", so that we can clear up to that point, and discard any information after.
-      // Consider that in the future if performance-wise it's ok top have these checks here, and the memory
-      // map can efficiently figure out the order in which to check for collision (there's a fast check
-      // I can think of that involves simply knowing from which quadrant the ray starts)
-
-      bool occludedBeforeNearPlane = false;
-      bool occludedInsideROI = false;
-      Vec2f innerRayFrom = cameraOrigin; // it will be updated with the intersection with the near plane (if found)
-
-      // - calculate occlusion between camera and near plane of ROI
-      {
-        // check if we cross something between the camera and the near plane (outside of ROI plane)
-        // from camera to candidate
-        kmRay2 fullRay;
-        kmVec2 kmFrom{cameraOrigin.x(), cameraOrigin.y()};
-        kmVec2 kmTo  {candidate3D.x() , candidate3D.y() };
-        kmRay2FillWithEndpoints(&fullRay, &kmFrom, &kmTo);
-
-        // near plane segment
-        kmRay2 nearPlaneSegment;
-        kmVec2 kmNearL{nearPlaneLeft.x() , nearPlaneLeft.y() };
-        kmVec2 kmNearR{nearPlaneRight.x(), nearPlaneRight.y()};
-        kmRay2FillWithEndpoints(&nearPlaneSegment, &kmNearL, &kmNearR);
-
-        // find the intersection between the two
-        kmVec2 rayAtNearPlane;
-        const kmBool foundNearPlane = kmSegment2WithSegmentIntersection(&fullRay, &nearPlaneSegment , &rayAtNearPlane);
-        if ( foundNearPlane )
-        {
-          /*
-            Note on occludedBeforeNearPlane vs occludedInsideROI:
-            We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D.
-            The first one, being out of the current ground ROI can be more restrictive (fail on borders), since we
-            literally have no information to back up a ClearOfObstacle, however the second one can't fail on borders,
-            since borders are exactly what we are detecting, so the point can't become invalid when a border is detected.
-            That should be the main difference between typesThatOccludeValidInfoOutOfROI vs typesThatOccludeValidInfoInsideROI.
-          */
-          // typesThatOccludeValidInfoOutOfROI = types to check against outside ground ROI:
-          constexpr MemoryMapTypes::FullContentArray typesThatOccludeValidInfoOutOfROI =
-          {
-            {MemoryMapTypes::EContentType::Unknown               , false},
-            {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-            {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-            {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-            {MemoryMapTypes::EContentType::ObstacleProx          , true },
-            {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-            {MemoryMapTypes::EContentType::Cliff                 , true },
-            {MemoryMapTypes::EContentType::InterestingEdge       , true },
-            {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
-          };
-          static_assert(MemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoOutOfROI),
-            "This array does not define all types once and only once.");
-
-          // check if it's occluded before the near plane
-          const Vec2f& outerRayFrom = cameraOrigin;
-          const Vec2f outerRayTo(rayAtNearPlane.x, rayAtNearPlane.y);
-          Poly2f ray = {{outerRayFrom, outerRayTo}};
-          occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionWithTypes(FastPolygon(ray), typesThatOccludeValidInfoOutOfROI);
-
-          // update innerRayFrom so that the second ray (if needed) only checks the inside of the ROI plane
-          innerRayFrom = outerRayTo; // start inner (innerFrom) where the outer ends (outerTo)
-        }
-      }
-
-      // - calculate occlusion inside ROI
-      if ( !occludedBeforeNearPlane )
-      {
-        /*
-          Note on occludedBeforeNearPlane vs occludedInsideROI:
-          We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D.
-          The first one, being out of the current ground ROI can be more restrictive (fail on borders), since we
-          literally have no information to back up a ClearOfObstacle, however the second one can't fail on borders,
-          since borders are exactly what we are detecting, so the point can't become invalid when a border is detected.
-          That should be the main difference between typesThatOccludeValidInfoOutOfROI vs typesThatOccludeValidInfoInsideROI.
-        */
-        // typesThatOccludeValidInfoInsideROI = types to check against inside ground ROI:
-        constexpr MemoryMapTypes::FullContentArray typesThatOccludeValidInfoInsideROI =
-        {
-          {MemoryMapTypes::EContentType::Unknown               , false},
-          {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-          {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-          {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-          {MemoryMapTypes::EContentType::ObstacleProx          , true },
-          {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-          {MemoryMapTypes::EContentType::Cliff                 , false},
-          {MemoryMapTypes::EContentType::InterestingEdge       , false },
-          {MemoryMapTypes::EContentType::NotInterestingEdge    , false }
-        };
-        static_assert(MemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoInsideROI),
-          "This array does not define all types once and only once.");
-
-        // Vec2f innerRayFrom: already calculated for us
-        const Vec2f& innerRayTo = candidate3D;
-
-        Poly2f ray = {{innerRayFrom, innerRayTo}};
-        occludedInsideROI = currentNavMemoryMap->HasCollisionWithTypes(FastPolygon(ray), typesThatOccludeValidInfoInsideROI);
-      }
-
-      // if we cross an object, ignore this point, regardless of whether we saw a border or not
-      // this is because if we are crossing an object, chances are we are seeing its border, of we should have,
-      // so the info is more often disrupting than helpful
-      bool isValidPoint = !occludedBeforeNearPlane && !occludedInsideROI;
-
-      // this flag is set by a point that can't merge into the previous segment and wants to start one
-      // on its own
-      bool shouldCreateNewSegment = false;
-
-      // valid points have to be checked to see what to do with them
-      if ( isValidPoint )
-      {
-        // this point is valid, check whether:
-        // a) it's the first of a segment
-        // b) it's the second of a segment, which defines the normal of the running segment
-        // c) it can be merged into a running segment
-        // d) it can't be merged into a running segment
-        if ( !hasValidSegmentStart )
-        {
-          // it's the first of a segment
-          segmentStart = candidate3D;
-          hasValidSegmentStart = true;
-        }
-        else if ( !hasValidSegmentEnd )
-        {
-          // it's the second of a segment (defines normal)
-          segmentEnd = candidate3D;
-          hasValidSegmentEnd = true;
-          // calculate normal now
-          segmentNormal = (segmentEnd-segmentStart);
-          segmentNormal.MakeUnitLength();
-        }
-        else
-        {
-          // there's a running segment already, check if we can merge into it
-
-          // epsilon to merge points into the same edge segment. If adding a point to a segment creates
-          // a deviation with respect to the first direction of the segment bigger than this epsilon,
-          // then the point will not be added to that segment
-          // cos(10deg) = 0.984807...
-          // cos(20deg) = 0.939692...
-          // cos(30deg) = 0.866025...
-          // cos(40deg) = 0.766044...
-          const float kDotBorderEpsilon = 0.7660f;
-
-          // calculate the normal that this candidate would have with respect to the previous point
-          Vec3f candidateNormal = candidate3D - segmentEnd;
-          candidateNormal.MakeUnitLength();
-
-          // check the dot product of that normal with respect to the running segment's normal
-          const float dotProduct = DotProduct(segmentNormal, candidateNormal);
-          bool canMerge = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
-          if ( canMerge )
-          {
-            // it can merge into the previous point because the angle between the running normal and the new one
-            // is within the threshold. Make this point the new end and update the running normal
-            segmentEnd = candidate3D;
-            segmentNormal = candidateNormal;
-          }
-          else
-          {
-            // it can't merge into the previous segment, set the flag that we want a new segment
-            shouldCreateNewSegment = true;
-          }
-        }
-
-        // store distance to valid points that belong to a detected border for behaviors quick access
-        if ( chain.isBorder )
-        {
-          // compute distance from current robot position to the candidate3D, because whiteboard likes to know
-          // the closest border at all times
-          const Pose3d& currentRobotPose = _robot->GetPose();
-          const float candidateDist_mm2 = (currentRobotPose.GetTranslation() - candidate3D).LengthSq();
-          if ( std::isnan(closestPointDist_mm2) || FLT_LT(candidateDist_mm2, closestPointDist_mm2) )
-          {
-            closestPointDist_mm2 = candidateDist_mm2;
-          }
-        }
-      }
-
-      // should we send the segment we have so far as a quad to the memory map?
-      const bool isLastPoint = (curPointInChainIdx == (chain.points.size()-1));
-      const bool sendSegmentToMap = shouldCreateNewSegment || isLastPoint || !isValidPoint;
-      if ( sendSegmentToMap )
-      {
-        // check if we have a valid segment so far
-        const bool isValidSegment = hasValidSegmentStart && hasValidSegmentEnd;
-        if ( isValidSegment )
-        {
-          // min length of the segment so that we can discard noise
-          const float segLenSQ_mm = (segmentStart - segmentEnd).LengthSq();
-          const bool isLongSegment = FLT_GT(segLenSQ_mm, kOverheadEdgeSegmentNoiseLen_mm);
-          if ( isLongSegment )
-          {
-            // we have a valid and long segment add clear from camera to segment
-            Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
-            DEV_ASSERT(success, "AddVisionOverheadEdges.FailedQuadClamp");
-            if ( success ) {
-              visionQuadsClear.emplace_back(clearQuad);
-            }
-            // if it's a detected border, add the segment
-            if ( chain.isBorder ) {
-              visionSegmentsWithInterestingBorders.emplace_back(segmentStart, segmentEnd);
-            }
-          }
-        }
-        // else { not enough points in the segment to send. That's ok, just do not send }
-
-        // if it was a valid point but could not merge, it wanted to start a new segment
-        if ( shouldCreateNewSegment )
-        {
-          // if we can reuse the last point from the previous segment
-          if ( hasValidSegmentEnd )
-          {
-            // then that one becomes the start
-            // and we become the end of the new segment
-            segmentStart = segmentEnd;
-            hasValidSegmentStart = true;
-            segmentEnd = candidate3D;
-            hasValidSegmentEnd = true;
-            // and update normal for this new segment
-            segmentNormal = (segmentEnd-segmentStart);
-            segmentNormal.MakeUnitLength();
-          }
-          else
-          {
-            // need to create a new segment, and there was not a valid one previously
-            // this should be impossible, since we would have become either start or end
-            // of a segment, and shouldCreateNewSegment would have been false
-            DEV_ASSERT(false, "AddVisionOverheadEdges.NewSegmentCouldNotFindPreviousEnd");
-          }
-        }
-        else
-        {
-          // we don't want to start a new segment, either we are the last point or we are not a valid point
-          DEV_ASSERT(!isValidPoint || isLastPoint, "AddVisionOverheadEdges.ValidPointNotStartingSegment");
-          hasValidSegmentStart = false;
-          hasValidSegmentEnd   = false;
-        }
-      } // sendSegmentToMap?
-
-      // move to next point
-      ++curPointInChainIdx;
-    } while (curPointInChainIdx < chain.points.size()); // while we still have points
-  }
-
-  // send clear quads/triangles to memory map
-  // clear information should be quads, since the ground plane has a min dist that truncates the cone that spans
-  // from the camera to the max ground plane distance. If the quad close segment is short though, it becomes
-  // narrower, thus more similar to a triangle. As a performance optimization we are going to consider narrow
-  // quads as triangles. This should be ok since the information is currently stored in quads that have a minimum
-  // size, so the likelyhood that a quad that should be covered with the quads won't be hit by the triangles is
-  // very small, and we are willing to take that risk to optimize this.
-  /*
-        Quad as it should be         Quad split into 3 quads with
-                                        narrow close segment
-                v                                 v
-             ________                         __     --
-             \      /                         \ |---| /
-              \    /                           \ | | /
-               \__/                             \_|_/
-
-  */
-  // for the same reason, if the far edge is too small, the triangle is very narrow, so it can be turned into a line,
-  // and thanks to intersection we will probably not notice anything
-
-  // Any quad whose closest edge is smaller than kOverheadEdgeNarrowCone_mm will be considered a triangle
-  // const float minFarLenToBeReportedSq = kOverheadEdgeFarMinLenForClearReport_mm*kOverheadEdgeFarMinLenForClearReport_mm;
-  const float maxFarLenToBeLineSq = kOverheadEdgeFarMaxLenForLine_mm*kOverheadEdgeFarMaxLenForLine_mm;
-  const float maxCloseLenToBeTriangleSq = kOverheadEdgeCloseMaxLenForTriangle_mm*kOverheadEdgeCloseMaxLenForTriangle_mm;
-  for ( const auto& potentialClearQuad2D : visionQuadsClear )
-  {
-
-// rsam note: I want to filter out small ones, but there were instances were this was not very good, for example if it
-// happened at the border, since we would completely miss it. I will leave this out unless profiling says we need
-// more optimizations
-//      // quads that are too small are discarded. This is because in the general case they will be covered by nearby
-//      // borders. If we discarded all because detection was too fine-grained, then we could run this loop again
-//      // without this min restriction, but I don't think it will be an issue based on my tests, and the fact that we
-//      // care more about big detectable borders, rather than small differences in the image (for example, we want
-//      // to detect objects in real life that are similar to Cozmo's size)
-//      const float farLenSq   = (potentialClearQuad2D.GetTopLeft() - potentialClearQuad2D.GetTopRight()).LengthSq();
-//      const bool isTooSmall = FLT_LE(farLenSq, minFarLenToBeReportedSq);
-//      if ( isTooSmall ) {
-//        if ( kDebugRenderOverheadEdgeClearQuads )
-//        {
-//          ColorRGBA color = Anki::NamedColors::DARKGRAY;
-//          VizManager* vizManager = _robot->GetContext()->GetVizManager();
-//          vizManager->DrawQuadAsSegments("MapComponent.AddVisionOverheadEdges", potentialClearQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
-//        }
-//        continue;
-//      }
-    const float farLenSq   = (potentialClearQuad2D.GetTopLeft() - potentialClearQuad2D.GetTopRight()).LengthSq();
-
-    // test whether we can report as Line, Triangle or Quad
-    const bool isLine = FLT_LE(farLenSq, maxFarLenToBeLineSq);
-    if ( isLine )
-    {
-      // far segment is small enough that a single line would be fine
-      const Point2f& clearFrom = (potentialClearQuad2D.GetBottomLeft() + potentialClearQuad2D.GetBottomRight()) * 0.5f;
-      const Point2f& clearTo   = (potentialClearQuad2D.GetTopLeft()    + potentialClearQuad2D.GetTopRight()   ) * 0.5f;
-
-      if ( kDebugRenderOverheadEdgeClearQuads )
-      {
-        ColorRGBA color = Anki::NamedColors::CYAN;
-        VizManager* vizManager = _robot->GetContext()->GetVizManager();
-        vizManager->DrawSegment("MapComponent.AddVisionOverheadEdges",
-          Point3f(clearFrom.x(), clearFrom.y(), kDebugRenderOverheadEdgesZ_mm),
-          Point3f(clearTo.x(), clearTo.y(), kDebugRenderOverheadEdgesZ_mm),
-          color, false);
-      }
-
-      // add clear info to map
-      InsertData({clearFrom, clearTo}, MemoryMapData(EContentType::ClearOfObstacle, frameInfo.timestamp));
-    }
-    else
-    {
-      const float closeLenSq = (potentialClearQuad2D.GetBottomLeft() - potentialClearQuad2D.GetBottomRight()).LengthSq();
-      const bool isTriangle = FLT_LE(closeLenSq, maxCloseLenToBeTriangleSq);
-      if ( isTriangle )
-      {
-        // far segment is big, but close one is small enough that a triangle would be fine
-        const Point2f& triangleClosePoint = (potentialClearQuad2D.GetBottomLeft() + potentialClearQuad2D.GetBottomRight()) * 0.5f;
-
-        Triangle2f clearTri2D(triangleClosePoint, potentialClearQuad2D.GetTopLeft(), potentialClearQuad2D.GetTopRight());
-        if ( kDebugRenderOverheadEdgeClearQuads )
-        {
-          ColorRGBA color = Anki::NamedColors::DARKGREEN;
-          VizManager* vizManager = _robot->GetContext()->GetVizManager();
-          vizManager->DrawSegment("MapComponent.AddVisionOverheadEdges",
-            Point3f(clearTri2D[0].x(), clearTri2D[0].y(), kDebugRenderOverheadEdgesZ_mm),
-            Point3f(clearTri2D[1].x(), clearTri2D[1].y(), kDebugRenderOverheadEdgesZ_mm),
-            color, false);
-          vizManager->DrawSegment("MapComponent.AddVisionOverheadEdges",
-            Point3f(clearTri2D[1].x(), clearTri2D[1].y(), kDebugRenderOverheadEdgesZ_mm),
-            Point3f(clearTri2D[2].x(), clearTri2D[2].y(), kDebugRenderOverheadEdgesZ_mm),
-            color, false);
-          vizManager->DrawSegment("MapComponent.AddVisionOverheadEdges",
-            Point3f(clearTri2D[2].x(), clearTri2D[2].y(), kDebugRenderOverheadEdgesZ_mm),
-            Point3f(clearTri2D[0].x(), clearTri2D[0].y(), kDebugRenderOverheadEdgesZ_mm),
-            color, false);
-        }
-
-        // add clear info to map
-        InsertData({clearTri2D[0], clearTri2D[1], clearTri2D[2]}, MemoryMapData(EContentType::ClearOfObstacle, frameInfo.timestamp));
-      }
-      else
-      {
-        // segments are too big, we need to report as quad
-        if ( kDebugRenderOverheadEdgeClearQuads )
-        {
-          ColorRGBA color = Anki::NamedColors::GREEN;
-          VizManager* vizManager = _robot->GetContext()->GetVizManager();
-          vizManager->DrawQuadAsSegments("MapComponent.AddVisionOverheadEdges", potentialClearQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
-        }
-
-        // add clear info to map
-        InsertData(Poly2f(potentialClearQuad2D), MemoryMapData(EContentType::ClearOfObstacle, frameInfo.timestamp));
+    possibleEdges.push_back({});
+    // We only want to use this classifier for negative space obstacles (we assume the prox sensor
+    // will pickup obstructions), so make sure the line formed by the camera and point is free of 
+    // positive space obstacles
+    for( const auto& imagePt : chain.points) {
+      if ( currentMap->AnyOf( {robotPose.GetTranslation(), imagePt.position}, isCollisionType) ) {
+        // ray is obstructed, so start a new set
+        if (!possibleEdges.back().empty()) { possibleEdges.push_back({}); }
+      } else {
+        possibleEdges.back().push_back(robotPose * imagePt.position);
       }
     }
   }
 
-  // send border segments to memory map
-  for ( const auto& borderSegment : visionSegmentsWithInterestingBorders )
-  {
-    if ( kDebugRenderOverheadEdgeBorderQuads )
-    {
-      ColorRGBA color = Anki::NamedColors::BLUE;
-      VizManager* vizManager = _robot->GetContext()->GetVizManager();
-      vizManager->DrawSegment("MapComponent.AddVisionOverheadEdges",
-        Point3f(borderSegment.from.x(), borderSegment.from.y(), kDebugRenderOverheadEdgesZ_mm),
-        Point3f(borderSegment.to.x(), borderSegment.to.y(), kDebugRenderOverheadEdgesZ_mm),
-        color, false);
-    }
+  // build a polyline set for insertion
+  for(const auto& pointSet : possibleEdges) {
+    std::vector<FastPolygon> polyLines;
+    if (pointSet.size() > 1) {
+      for (int i = 1; i < pointSet.size(); ++i) {
+        polyLines.emplace_back(FastPolygon({pointSet[i-1], pointSet[i]}));
+      }
 
-    // add interesting edge
-    InsertData({borderSegment.from, borderSegment.to}, MemoryMapData(EContentType::InterestingEdge, frameInfo.timestamp));
-  }
-
-  // now merge interesting edges into non-interesting
-  const bool addedEdges = !visionSegmentsWithInterestingBorders.empty();
-  if ( addedEdges )
-  {
-    // TODO Optimization, build bounding box from detected edges, rather than doing the whole ground plane
-    Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
-                                                   frameInfo.groundplane[Quad::TopLeft].y(),
-                                                   0.0f);
-    Point2f wrtOrigin2DBL = observedPose * Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
-                                                   frameInfo.groundplane[Quad::BottomLeft].y(),
-                                                   0.0f);
-    Point2f wrtOrigin2DTR = observedPose * Point3f(frameInfo.groundplane[Quad::TopRight].x(),
-                                                   frameInfo.groundplane[Quad::TopRight].y(),
-                                                   0.0f);
-    Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
-                                                   frameInfo.groundplane[Quad::BottomRight].y(),
-                                                   0.0f);
-
-    Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
-    if (currentNavMemoryMap)
-    {
-      ReviewInterestingEdges(groundPlaneWRTOrigin, currentNavMemoryMap);
+      // if any of the segments in this pointset intersect with a cliff, then insert all of them
+      if (std::any_of(polyLines.begin(), polyLines.end(), [&](const auto& seg) { return currentMap->AnyOf(seg, isCliffType); } )) {
+        for(const auto& seg : polyLines) { currentMap->Insert(seg, cliffData); }
+      }
     }
   }
-
-  // notify the whiteboard we just processed edge information from a frame
-  const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
-    std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
-  _robot->GetAIComponent().GetComponent<AIWhiteboard>().SetLastEdgeInformation(closestPointDist_mm);
 
   return RESULT_OK;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const
-{
-  if ( mapOriginID != PoseOriginList::UnknownOriginID )
-  {
-    const auto it = _navMaps.find(mapOriginID);
-    if ( ANKI_VERIFY( (it != _navMaps.end()) && (it->second.map != nullptr),
-                      "MapComponent.SendDASInfoAboutMap.NotFound",
-                      "Could not find orgin %u, or the map is null",
-                      mapOriginID ) )
-    {
-      const float explored_mm2 = 1e6f * it->second.map->GetExploredRegionAreaM2();
-      const float collision_mm2 = GetCollisionArea( it->second.map );
-      TimeStamp_t activeDuration_ms = 0;
-      if ( mapOriginID == _currentMapOriginID )
-      {
-        // still active, so need to append the time since activated to the duration
-        const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        const EngineTimeStamp_t& activationTime = it->second.activationTime_ms;
-        activeDuration_ms = it->second.activeDuration_ms + TimeStamp_t(currTime_ms - activationTime);
-      } else {
-        // inactive. just use the cached activation time
-        activeDuration_ms = it->second.activeDuration_ms;
-      }
-      
-      DASMSG(robot_delocalized_env, "robot.delocalized_env", "When the robot is delocalized, information about the environment");
-      DASMSG_SET(i1, (int64_t)explored_mm2, "Total surface area known (mm2)");
-      DASMSG_SET(i2, (int64_t)collision_mm2, "Total surface area that is an obstacle (mm2), a subset of i1");
-      DASMSG_SET(i3, (int64_t)activeDuration_ms, "Duration (ms) of the map, perhaps after multiple delocalizations" );
-      DASMSG_SEND();
-    }
-  }
-}
-
 
 }
 }
