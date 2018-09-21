@@ -14,6 +14,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gwatts/rootcerts"
@@ -28,24 +29,29 @@ func getHTTPClient() *http.Client {
 	}
 }
 
-func formatSocketName(socketName, suffix string) string {
-	return fmt.Sprintf("%s_%s", socketName, suffix)
+func formatSocketName(socketName string, id int) string {
+	return fmt.Sprintf("%s_%d", socketName, id)
 }
 
-func tokenServiceOptions() []token.Option {
-	return []token.Option{token.WithServer()}
+func tokenServiceOptions(socketNameSuffix string) []token.Option {
+	return []token.Option{
+		token.WithServer(),
+		token.WithSocketNameSuffix(socketNameSuffix),
+	}
 }
 
-func jdocsServiceOptions(tokener token.Accessor) []jdocs.Option {
+func jdocsServiceOptions(socketNameSuffix string, tokener token.Accessor) []jdocs.Option {
 	return []jdocs.Option{
 		jdocs.WithServer(),
+		jdocs.WithSocketNameSuffix(socketNameSuffix),
 		jdocs.WithTokener(tokener),
 	}
 }
 
-func logcollectorServiceOptions(tokener token.Accessor) []logcollector.Option {
+func logcollectorServiceOptions(socketNameSuffix string, tokener token.Accessor) []logcollector.Option {
 	return []logcollector.Option{
 		logcollector.WithServer(),
+		logcollector.WithSocketNameSuffix(socketNameSuffix),
 		logcollector.WithTokener(tokener),
 		logcollector.WithHTTPClient(getHTTPClient()),
 		logcollector.WithS3UrlPrefix(config.Env.LogFiles),
@@ -79,8 +85,8 @@ type testableRobot struct {
 	micClient          *micClient
 }
 
-func newTestableRobot(urlConfigFile string) *testableRobot {
-	testableRobot := new(testableRobot)
+func newTestableRobot(id int, urlConfigFile string) *testableRobot {
+	testableRobot := &testableRobot{id: id}
 
 	if err := config.SetGlobal(urlConfigFile); err != nil {
 		log.Println("Could not load server config! This is not good!:", err)
@@ -103,17 +109,17 @@ func newTestableRobot(urlConfigFile string) *testableRobot {
 func (r *testableRobot) connectClients() error {
 	r.tokenClient = new(tokenClient)
 
-	if err := r.tokenClient.connect("token_server"); err != nil {
+	if err := r.tokenClient.connect(formatSocketName("token_server", r.id)); err != nil {
 		return err
 	}
 
 	r.jdocsClient = new(jdocsClient)
-	if err := r.jdocsClient.connect("jdocs_server"); err != nil {
+	if err := r.jdocsClient.connect(formatSocketName("jdocs_server", r.id)); err != nil {
 		return err
 	}
 
 	r.logcollectorClient = new(logcollectorClient)
-	if err := r.logcollectorClient.connect("logcollector_server"); err != nil {
+	if err := r.logcollectorClient.connect(formatSocketName("logcollector_server", r.id)); err != nil {
 		return err
 	}
 
@@ -136,22 +142,21 @@ func (r *testableRobot) closeClients() {
 	}
 }
 
-func (r *testableRobot) run(urlConfigFile string) {
-	if err := config.SetGlobal(urlConfigFile); err != nil {
-		log.Println("Could not load server config! This is not good!:", err)
-	}
-
-	path := fmt.Sprintf("%s_%04d", jwt.DefaultTokenPath, r.id)
+func (r *testableRobot) run() {
+	path := fmt.Sprintf("%s_%d", jwt.DefaultTokenPath, r.id)
 	identityProvider := jwt.NewIdentityProvider(path)
+
 	tokener := token.GetAccessor(identityProvider)
 
 	options := []cloudproc.Option{cloudproc.WithIdentityProvider(identityProvider)}
 
 	options = append(options, cloudproc.WithVoice(r.process))
 	options = append(options, cloudproc.WithVoiceOptions(voiceServiceOptions(false, false)...))
-	options = append(options, cloudproc.WithTokenOptions(tokenServiceOptions()...))
-	options = append(options, cloudproc.WithJdocs(jdocsServiceOptions(tokener)...))
-	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorServiceOptions(tokener)...))
+
+	socketNameSuffix := strconv.Itoa(r.id)
+	options = append(options, cloudproc.WithTokenOptions(tokenServiceOptions(socketNameSuffix)...))
+	options = append(options, cloudproc.WithJdocs(jdocsServiceOptions(socketNameSuffix, tokener)...))
+	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorServiceOptions(socketNameSuffix, tokener)...))
 
 	cloudproc.Run(context.Background(), options...)
 }
