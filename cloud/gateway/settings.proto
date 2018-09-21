@@ -18,10 +18,9 @@ enum JdocType {
   USER_ENTITLEMENTS = 3;
 }
 
-// These are not in all caps like the others, for historical reasons.
-// (Originally this was a CLAD enum.)  Changing that now would involve
-// a format migration because we're now saving robot settings jdocs in
-// the cloud.
+// RobotSetting enum values are not in all caps for historical reasons.
+// Changing that now would involve a format migration because we're now
+// saving robot settings jdocs in the cloud.
 enum RobotSetting {
   clock_24_hour      = 0;
   eye_color          = 1;
@@ -83,7 +82,7 @@ message UserEntitlementsConfig {
 
 enum ResultCode {
   SETTINGS_ACCEPTED        = 0;
-  ERROR_UPDATE_IN_PROGRESS = 1; // Temporary error while gateway cannot handle multiple requests
+  ERROR_UPDATE_IN_PROGRESS = 1;
 }
 
 message Jdoc {

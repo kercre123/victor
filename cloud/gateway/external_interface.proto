@@ -1,8 +1,5 @@
 // External interface for robot <-> app and robot <-> sdk communication
 //
-// IMPORTANT: After changing this file, you will need to regenerate the
-// Python files by running make in victor/tools/sdk/grpc_tools.
-//
 // TODO: Improve the comments in these files because they are exposed as
 //       part of the SDK.
 
@@ -17,7 +14,7 @@ import "messages.proto";
 import "settings.proto";
 import "shared.proto";
 
-// The grpc-defined connection between the SDK and Anki's Vector Robot
+// The grpc-defined connection between the SDK and Anki's Vector robot
 service ExternalInterface {
   // Check the supported protocol version
   rpc ProtocolVersion(ProtocolVersionRequest) returns (ProtocolVersionResponse) {
@@ -47,7 +44,7 @@ service ExternalInterface {
   // Moves the Lift
   rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
   
-  // Sets LCD to a solid color
+  // Sets screen to a solid color
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {
     option (google.api.http) = {
       post: "/v1/display_face_image_rgb",
@@ -55,7 +52,7 @@ service ExternalInterface {
     };
   }
 
-  // Current groundwork for a streaming events endpoint
+  // Streaming events endpoint
   rpc EventStream(EventRequest) returns (stream EventResponse) {
     option (google.api.http) = {
       post: "/v1/event_stream",
@@ -68,19 +65,16 @@ service ExternalInterface {
 
   // Integrate with and acquire control of Vector's AI system
   rpc BehaviorControl(stream BehaviorControlRequest) returns (stream BehaviorControlResponse) {
-    // Cannot be used by the REST interface because it does not support stream-to-stream RPCs
   }
 
   // Acquire control of Vector's AI system
   rpc AssumeBehaviorControl(BehaviorControlRequest) returns (stream BehaviorControlResponse) {
-    // REST users should use this api instead of BehaviorControl
     option (google.api.http) = {
       post: "/v1/assume_behavior_control",
       body: "*"
     };
   }
 
-  // Meet Victor
   rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
     option (google.api.http) = {
       post: "/v1/app_intent",
@@ -131,7 +125,6 @@ service ExternalInterface {
     };
   }
   
-  // Request to go to pose
   rpc GoToPose(GoToPoseRequest) returns (GoToPoseResponse) {
     option (google.api.http) = {
       post: "/v1/go_to_pose",
@@ -160,7 +153,6 @@ service ExternalInterface {
     };
   }
 
-  // Request onboarding state
   rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
     option (google.api.http) = {
       post: "/v1/get_onboarding_state",
@@ -168,15 +160,12 @@ service ExternalInterface {
     };
   }
 
-  // Send onboarding input
   rpc SendOnboardingInput(OnboardingInputRequest) returns (OnboardingInputResponse) {
     option (google.api.http) = {
       post: "/v1/send_onboarding_input",
       body: "*"
     };
   }
-
-  // Photos
 
   // Get the photos info
   rpc PhotosInfo(PhotosInfoRequest) returns (PhotosInfoResponse) {
@@ -224,14 +213,6 @@ service ExternalInterface {
       body: "*"
     };
   }
-
-  // Disabled for 1.0
-  // rpc RobotStatusHistory(RobotHistoryRequest) returns (RobotHistoryResponse) {
-  //  option (google.api.http) = {
-  //    post: "/v1/status_history",
-  //    body: "*"
-  //  };
-  // }
 
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
     option (google.api.http) = {
@@ -314,11 +295,6 @@ service ExternalInterface {
   }
 
   // Requests a disconnection from the currently connected cube.
-  // The connection will be held for gracePeriod_sec before actually
-  // disconnecting. Any attempt to connect during this "grace period"
-  // will succeed instantaneously, so this is useful if you are
-  // frequently disconnecting/connecting to the cube. A grace period
-  // of 0 will immediately disconnect the cube.
   rpc DisconnectCube(DisconnectCubeRequest) returns (DisconnectCubeResponse) {
     option (google.api.http) = {
       post: "/v1/disconnect_cube",
@@ -341,7 +317,7 @@ service ExternalInterface {
     };
   }
 
-  // 'Forget' the robot's preferred cube. This will cause the robot to
+  // Forget the robot's preferred cube. This will cause the robot to
   // connect to the cube with the highest RSSI (signal strength) next
   // time a connection is requested. Saves this preference to disk.
   // The next cube that the robot connects to will become its
@@ -355,7 +331,7 @@ service ExternalInterface {
 
   // Set the robot's preferred cube and save it to disk. The robot
   // will always attempt to connect to this cube if it is available.
-  // This is only used in simulation (for now).
+  // This is only used in simulation for now.
   rpc SetPreferredCube(SetPreferredCubeRequest) returns (SetPreferredCubeResponse) {
     option (google.api.http) = {
       post: "/v1/set_preferred_cube",
@@ -363,7 +339,7 @@ service ExternalInterface {
     };
   }
 
-  // Set each the lights on the currently connected cube based on two
+  // Set each of the lights on the currently connected cube based on two
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
 

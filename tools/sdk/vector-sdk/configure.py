@@ -156,7 +156,7 @@ def main():
 
     # Write cert to a file located in user's home direction: sdk_config.ini
     home = Path.home()
-    anki_dir = home / ".anki-vector"
+    anki_dir = home / ".anki_vector"
     os.makedirs(str(anki_dir), exist_ok=True)
     cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
     print("Writing certificate file to '{}'...".format(colored(cert_file, "cyan")))

@@ -234,7 +234,7 @@ class Connection:
         # Pin the robot certificate for opening the channel
         channel_credentials = aiogrpc.ssl_channel_credentials(root_certificates=trusted_certs)
         # Add authorization header for all the calls
-        call_credentials = aiogrpc.access_token_call_credentials(self._guid)  # TODO: get real credentials here or nothing will work
+        call_credentials = aiogrpc.access_token_call_credentials(self._guid)
 
         credentials = aiogrpc.composite_channel_credentials(channel_credentials, call_credentials)
 

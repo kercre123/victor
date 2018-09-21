@@ -112,7 +112,7 @@ class RemoteControlVector:
                                   "anim_blackjack_victorwin_01",  # 1
                                   "anim_pounce_success_02",  # 2
                                   "vig_alwayshelpful_photo",  # 3
-                                  "anim_weather_snow_01",  # 4
+                                  "anim_hiking_lookaround_03",  # 4
                                   "anim_wakeword_groggyeyes_listenloop_01",  # 5
                                   "anim_fistbump_success_01",  # 6
                                   "anim_reacttoface_unidentified_02",  # 7
@@ -674,6 +674,9 @@ def run():
 
     with anki_vector.AsyncRobot(args.serial) as robot:
         flask_app.remote_control_vector = RemoteControlVector(robot)
+
+        robot.behavior.drive_off_charger()
+
         flask_helpers.run_flask(flask_app)
 
 

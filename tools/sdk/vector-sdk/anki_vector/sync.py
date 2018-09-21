@@ -34,7 +34,7 @@ class Synchronizer:
     Class for managing asynchronous functions in a synchronous world
     """
 
-    # TODO Add types. Also ideally need better docstring than "Create a Synchronizer"
+    # TODO Add types, sample code. Also ideally need better docstring than "Create a Synchronizer".
     def __init__(self, loop, remove_pending, func, *args, **kwargs):
         """
         Create an Synchronizer

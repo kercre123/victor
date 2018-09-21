@@ -43,7 +43,6 @@ MAX_HEAD_ANGLE = util.degrees(45)
 # MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
 
 # TODO Consider adding Cozmo's LiftPosition class
-# TODO How are we deciding what has a leading underscore or not in Robot class?
 
 
 class Robot:
@@ -180,7 +179,7 @@ class Robot:
 
         :param serial: Vector's serial number
         """
-        home = Path.home() / ".anki-vector"
+        home = Path.home() / ".anki_vector"
         conf_file = str(home / "sdk_config.ini")
         parser = configparser.ConfigParser()
         parser.read(conf_file)
@@ -427,7 +426,7 @@ class Robot:
         """
         return self._localized_to_object_id
 
-    # TODO Should this be in photos or somewhere else?
+    # TODO Move to photos or somewhere else
     @property
     def last_image_time_stamp(self) -> int:
         """The robot's timestamp for the last image seen.

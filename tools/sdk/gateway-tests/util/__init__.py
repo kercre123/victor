@@ -41,7 +41,7 @@ except ImportError:
 
 class Connection:
     def __init__(self, serial, port=443):
-        config_file = str(Path.home() / ".anki-vector" / "sdk_config.ini")
+        config_file = str(Path.home() / ".anki_vector" / "sdk_config.ini")
         config = configparser.ConfigParser()
         config.read(config_file)
         self.info = {**config[serial]}

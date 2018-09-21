@@ -2105,6 +2105,7 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 }
 
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
+// TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
 	return nil, grpc.Errorf(codes.Unimplemented, "Not implemented yet")
 }

@@ -34,8 +34,6 @@ import time
 from . import sync, util
 from .messaging import protocol
 
-# TODO: Add event classes in to this module once event subscription logic changes
-
 
 class Expression(Enum):
     """Facial expressions that Vector can distinguish
@@ -247,7 +245,6 @@ class FaceComponent(util.Component):
         return await self.grpc_interface.CancelFaceEnrollment(req)
 
     # TODO document, needs sample code and return value. It returns an array of LoadedKnownFace but is that availble in Python?
-    # TODO This doesn't seem to be in Cozmo. Are we sure we want to expose it?
     @sync.Synchronizer.wrap
     async def request_enrolled_names(self):
         req = protocol.RequestEnrolledNamesRequest()
@@ -291,7 +288,7 @@ class FaceComponent(util.Component):
                                               useMusic=useMusic)
         return await self.grpc_interface.SetFaceToEnroll(req)
 
-    # TODO move out of face component? This is general to objects, not specific to faces? Does this also live in robot?
+    # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component?
     @sync.Synchronizer.wrap
     async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
         """Edit the vision mode
