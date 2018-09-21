@@ -33,6 +33,10 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/motorTypes.h"
 
+#include "util/container/minMaxQueue.h"
+
+#include <array>
+
 #define DEBUG_IMU_FILTER 0
 
 // Define type of data to send when IMURequest received
@@ -75,11 +79,24 @@ namespace Anki {
 
         const f32 GYRO_BIAS_FILT_COEFF_TEMP_CHANGING = 0.0025f; // Gyro bias filter coefficient used while the IMU temperature is changing (due to initial warming up)
 
-        const f32 GYRO_BIAS_FILT_COEFF_PRECALIB = 0.2f;   // Gyro bias filter coefficient. Relatively fast before calibration.
+        const f32 GYRO_BIAS_FILT_COEFF_PRECALIB = 0.017f;   // Gyro bias filter coefficient. Relatively fast before calibration.
         f32 gyroBiasCoeff_              = GYRO_BIAS_FILT_COEFF_PRECALIB;
-        u16 biasFiltCnt_                = 0;
-        const f32 BIAS_FILT_RESTART_THRESH = DEG_TO_RAD_F32(0.5f); // Max difference allowed between bias filter output and gyro input before filter is restarted
-        const u16 BIAS_FILT_COMPLETE_COUNT = 200;    // Number of consecutive gyro readings required while robot not moving before bias filter switches to slower rate
+        
+        // Are we finished initial calibration for the gyro zero-rate bias?
+        bool biasFilterComplete_        = false;
+        
+        // During initial gyro bias calibration, store recent bias estimates in a queue. This allows us to compute a
+        // min and max of recent bias estimates, to ensure that all readings are within a small band before declaring
+        // the gyro bias 'calibrated'.
+        std::array<Util::MinMaxQueue<f32>, 3> gyroBiasCalibValues_;
+        
+        // Max difference between the max and min of recent gyro bias estimates. If any recent readings that fall
+        // outside this band, then the gyro bias is not yet calibrated.
+        const f32 BIAS_FILT_ALLOWED_BAND = DEG_TO_RAD_F32(0.35f);
+        
+        // Number of consecutive gyro bias estimates required to fall within a small min/max window before declaring the gyro 'calibrated'
+        const u16 BIAS_FILT_COMPLETE_COUNT = 200;
+        
         bool gyro_sign[3] = {false}; // true is negative, false is positive
 
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
@@ -358,6 +375,75 @@ namespace Anki {
         output[2] = coeff * (output[2] + input[2] - prev_input[2]);
       }
 
+      void ClearGyroBiasCalibValues()
+      {
+        for (auto& biasVals : gyroBiasCalibValues_) {
+          biasVals.clear();
+        }
+      }
+      
+      void UpdateGyroBiasFilter(const float rawGyro[3])
+      {
+        // Gyro bias filter update/calibration:
+        //
+        // During initial calibration, we maintain a filtered gyro bias estimate for each of the three axes. Once the
+        // filtered bias estimates converge on a near-constant value, we declare the gyro bias filter 'complete'. The
+        // criterion for convergence is that the filtered bias estimate has remained within a small window
+        // (BIAS_FILT_ALLOWED_BAND) for the required number of ticks (BIAS_FILT_COMPLETE_COUNT).
+        //
+        // Once the initial calibration is complete (i.e. IsBiasFilterComplete() == true), we switch to a much slower
+        // filter which keeps track of slow drifting of gyro zero-rate bias over time and temperature changes.
+        
+        if (!isMotionDetected_) {
+          // Update gyro bias offset while not moving. If the gyro bias value queue is just starting, then set the
+          // filtered gyro bias to the actual gyro value to initialize it. Otherwise, pass it through the low pass filter.
+          for (int i=0 ; i<3 ; i++) {
+            if (!IsBiasFilterComplete() && gyroBiasCalibValues_[i].empty()) {
+              gyro_bias_filt[i] = rawGyro[i];
+            } else {
+              gyro_bias_filt[i] = LowPassFilter_single(gyro_bias_filt[i], rawGyro[i], gyroBiasCoeff_);
+            }
+          }
+          
+          AnkiInfoPeriodic(12000, "IMUFilter.Bias", "%f %f %f (deg/sec)",
+                           RAD_TO_DEG_F32(gyro_bias_filt[0]),
+                           RAD_TO_DEG_F32(gyro_bias_filt[1]),
+                           RAD_TO_DEG_F32(gyro_bias_filt[2]));
+          
+          // If initial bias estimate not complete, accumulate
+          if (!IsBiasFilterComplete()) {
+            for (int i=0 ; i<3 ; i++) {
+              auto& biasVals = gyroBiasCalibValues_[i];
+              biasVals.push(gyro_bias_filt[i]);
+              while (biasVals.size() > BIAS_FILT_COMPLETE_COUNT) {
+                biasVals.pop();
+              }
+            }
+            // Only declare the bias filter complete if we have enough filtered bias readings, and they all fall within
+            // the required window.
+            biasFilterComplete_ = std::all_of(gyroBiasCalibValues_.begin(), gyroBiasCalibValues_.end(),
+                                              [](const Util::MinMaxQueue<f32>& biasVals) {
+                                                return (biasVals.size() >= BIAS_FILT_COMPLETE_COUNT) &&
+                                                       (biasVals.max() - biasVals.min() < BIAS_FILT_ALLOWED_BAND);
+                                              });
+            if (IsBiasFilterComplete()) {
+              // Bias filter has accumulated enough measurements while not moving.
+              // Switch to slow filtering.
+              AnkiInfo("IMUFilter.GyroCalibrated", "%f %f %f (deg/sec)",
+                       RAD_TO_DEG_F32(gyro_bias_filt[0]),
+                       RAD_TO_DEG_F32(gyro_bias_filt[1]),
+                       RAD_TO_DEG_F32(gyro_bias_filt[2]));
+              gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF_NORMAL;
+              // No longer need to keep the gyro bias calibration values, so discard them to save memory
+              ClearGyroBiasCalibValues();
+            }
+          }
+        } else if (!IsBiasFilterComplete()) {
+          // Since we're moving, clear out the initial gyro bias value queues so that we restart gyro bias calibration
+          ClearGyroBiasCalibValues();
+        }
+      }
+      
       void DetectFalling()
       {
         // Fall detection accelerometer thresholds:
@@ -704,54 +790,9 @@ namespace Anki {
         // Update gyro bias filter
         DetectMotion();
 
-        if (!isMotionDetected_) {
-
-          if (biasFiltCnt_ == 0) {
-            // Initialize bias filter
-            gyro_bias_filt[0] = imu_data_.rate_x;
-            gyro_bias_filt[1] = imu_data_.rate_y;
-            gyro_bias_filt[2] = imu_data_.rate_z;
-            AnkiInfo( "IMUFilter.Update.GyroBiasInit", "%f %f %f",
-                     RAD_TO_DEG_F32(gyro_bias_filt[0]),
-                     RAD_TO_DEG_F32(gyro_bias_filt[1]),
-                     RAD_TO_DEG_F32(gyro_bias_filt[2]));
-          } else {
-            // Update gyro bias offset while not moving
-            gyro_bias_filt[0] = LowPassFilter_single(gyro_bias_filt[0], imu_data_.rate_x, gyroBiasCoeff_);
-            gyro_bias_filt[1] = LowPassFilter_single(gyro_bias_filt[1], imu_data_.rate_y, gyroBiasCoeff_);
-            gyro_bias_filt[2] = LowPassFilter_single(gyro_bias_filt[2], imu_data_.rate_z, gyroBiasCoeff_);
-          }
-
-          AnkiDebugPeriodic(12000, "IMUFilter.Bias", "%f %f %f",
-                            RAD_TO_DEG_F32(gyro_bias_filt[0]),
-                            RAD_TO_DEG_F32(gyro_bias_filt[1]),
-                            RAD_TO_DEG_F32(gyro_bias_filt[2]));
-
-          // If initial bias estimate not complete, accumulate
-          if (!IsBiasFilterComplete()) {
-            biasFiltCnt_++;
-            if (biasFiltCnt_ == BIAS_FILT_COMPLETE_COUNT) {
-              // Bias filter has accumulated enough measurements while not moving.
-              // Switch to slow filtering.
-              AnkiInfo("IMUFilter.Update.GyroCalibrated", "%f %f %f",
-                       RAD_TO_DEG_F32(gyro_bias_filt[0]),
-                       RAD_TO_DEG_F32(gyro_bias_filt[1]),
-                       RAD_TO_DEG_F32(gyro_bias_filt[2]));
-              gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF_NORMAL;
-            }
-            else if ( (fabsf(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
-                      (fabsf(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
-                      (fabsf(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {
-              // Bias filter saw evidence of motion by virtue of the fact that the filter value differs from
-              // the input. Reset the counter.
-              biasFiltCnt_ = 0;
-            }
-          }
-
-        } else if (!IsBiasFilterComplete()) {
-          biasFiltCnt_ = 0;
-        }
-
+        const f32 rawGyro[3] = { imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z };
+        UpdateGyroBiasFilter(rawGyro);
+          
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
           pitch_ = 0.f;
@@ -981,7 +1022,7 @@ namespace Anki {
 
       bool IsBiasFilterComplete()
       {
-        return biasFiltCnt_ >= BIAS_FILT_COMPLETE_COUNT;
+        return biasFilterComplete_;
       }
 
       const f32* GetGyroBias()
