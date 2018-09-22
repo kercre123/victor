@@ -223,5 +223,6 @@ include(sodium)
 include(aubio)
 include(sensory)
 include(signalessence)
+include(avs-device-sdk)
 
 check_licenses()

@@ -9,6 +9,7 @@ include(opencv)
 include(text2speech)
 include(sensory)
 include(robot_core)
+include(avs-device-sdk)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h")
@@ -59,6 +60,7 @@ target_link_libraries(victor_anim
   ${PLATFORM_LIBS}
   # Aubio beat detection
   ${AUBIO_LIBS}
+  ${AVS_LIBS}
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
