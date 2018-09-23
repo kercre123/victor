@@ -62,7 +62,8 @@
 namespace Anki {
 namespace Vector {
 
-class AlexaClient : private Util::noncopyable, public std::enable_shared_from_this<AlexaClient>
+  class AlexaClient : public alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface,
+  private Util::noncopyable, public std::enable_shared_from_this<AlexaClient>
 {
 public:
   
@@ -75,10 +76,19 @@ public:
     alexaDialogStateObservers,
     std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
     connectionObservers,
-    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
+    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker
   );
   
   void Connect(const std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface>& capabilitiesDelegate);
+  
+  std::future<bool> notifyOfTapToTalk(
+                                      alexaClientSDK::capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
+                                      alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex = alexaClientSDK::capabilityAgents::aip::AudioInputProcessor::INVALID_INDEX);
+  
+  void onCapabilitiesStateChange(
+                                 alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::State newState,
+                                 alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::Error newError) override;
 private:
   AlexaClient(){}
   bool Init(
@@ -90,9 +100,12 @@ private:
     alexaDialogStateObservers,
     std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
     connectionObservers,
-    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
+    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker
   );
   
+  void addConnectionObserver(
+                             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer);
   
   std::shared_ptr<alexaClientSDK::avsCommon::avs::DialogUXStateAggregator> m_dialogUXStateAggregator;
   
@@ -112,11 +125,22 @@ private:
   std::shared_ptr<alexaClientSDK::avsCommon::avs::ExceptionEncounteredSender> m_exceptionSender;
   
   /// The speech synthesizer.
-  //std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::SpeechSynthesizer> m_speechSynthesizer;
-  std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer> m_speechSynthesizer;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::SpeechSynthesizer> m_speechSynthesizer;
+  //std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer> m_speechSynthesizer;
   
   /// The directive sequencer.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DirectiveSequencerInterface> m_directiveSequencer;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::system::UserInactivityMonitor> m_userInactivityMonitor;
+  
+  /// The focus manager for audio channels.
+  std::shared_ptr<alexaClientSDK::afml::FocusManager> m_audioFocusManager;
+  
+  /// The audio activity tracker.
+  std::shared_ptr<alexaClientSDK::afml::AudioActivityTracker> m_audioActivityTracker;
+  
+  /// The audio input processor.
+  std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioInputProcessor> m_audioInputProcessor;
 };
 
 

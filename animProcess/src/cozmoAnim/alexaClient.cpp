@@ -12,7 +12,7 @@
 
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
-#include "cozmoAnim/alexaSpeechSynthesizer.h"
+//#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -37,6 +37,7 @@
 #include <SQLiteStorage/SQLiteMiscStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
 #include <DefaultClient/DefaultClient.h>
+#include <SpeechSynthesizer/SpeechSynthesizer.h>
 
 #include <memory>
 #include <vector>
@@ -62,7 +63,8 @@ std::shared_ptr<AlexaClient> AlexaClient::create(
                                                    alexaDialogStateObservers,
                                                    std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
                                                    connectionObservers,
-                                                   std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate)
+                                                   std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
+                                                 std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker)
 {
   std::unique_ptr<AlexaClient> client(new AlexaClient());
   if (!client->Init(deviceInfo,
@@ -71,7 +73,8 @@ std::shared_ptr<AlexaClient> AlexaClient::create(
                     messageStorage,
                     alexaDialogStateObservers,
                     connectionObservers,
-                    capabilitiesDelegate))
+                    capabilitiesDelegate,
+                    speaker))
   {
     return nullptr;
   }
@@ -87,7 +90,8 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
                          alexaDialogStateObservers,
                          std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
                          connectionObservers,
-                         std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate)
+                         std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
+                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker)
 {
   
   m_dialogUXStateAggregator = std::make_shared<avsCommon::avs::DialogUXStateAggregator>();
@@ -190,29 +194,72 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   m_connectionManager->addMessageObserver(messageInterpreter);
   
   // m_registrationManager
-  // m_audioActivityTracker
-  // m_audioFocusManager
-  // m_userInactivityMonitor
-  // m_audioInputProcessor
+  
+  /*
+   * Creating the Audio Activity Tracker - This component is responsibly for reporting the audio channel focus
+   * information to AVS.
+   */
+  m_audioActivityTracker = afml::AudioActivityTracker::create(contextManager);
+  
+  /*
+   * Creating the Focus Manager - This component deals with the management of layered audio focus across various
+   * components. It handles granting access to Channels as well as pushing different "Channels" to foreground,
+   * background, or no focus based on which other Channels are active and the priorities of those Channels. Each
+   * Capability Agent will require the Focus Manager in order to request access to the Channel it wishes to play on.
+   */
+  m_audioFocusManager =
+    std::make_shared<afml::FocusManager>(afml::FocusManager::getDefaultAudioChannels(), m_audioActivityTracker);
+  
+  /*
+   * Creating the User Inactivity Monitor - This component is responsibly for updating AVS of user inactivity as
+   * described in the System Interface of AVS.
+   */
+  m_userInactivityMonitor =
+    capabilityAgents::system::UserInactivityMonitor::create(m_connectionManager, m_exceptionSender);
+  if (!m_userInactivityMonitor) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateUserInactivityMonitor"));
+    return false;
+  }
+  
+  /*
+   * Creating the Audio Input Processor - This component is the Capability Agent that implments the SpeechRecognizer
+   * interface of AVS.
+   */
+  m_audioInputProcessor = capabilityAgents::aip::AudioInputProcessor::create(
+                                                                             m_directiveSequencer,
+                                                                             m_connectionManager,
+                                                                             contextManager,
+                                                                             m_audioFocusManager,
+                                                                             m_dialogUXStateAggregator,
+                                                                             m_exceptionSender,
+                                                                             m_userInactivityMonitor);
+  if (!m_audioInputProcessor) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAudioInputProcessor"));
+    return false;
+  }
+  
+  m_audioInputProcessor->addObserver(m_dialogUXStateAggregator);
 
   
     /*
      * Creating the Speech Synthesizer - This component is the Capability Agent that implements the SpeechSynthesizer
      * interface of AVS.
      */
-  m_speechSynthesizer = capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer::create(m_exceptionSender);
-//    auto m_speechSynthesizer = capabilityAgents::speechSynthesizer::SpeechSynthesizer::create(
-//                                                                                         speakMediaPlayer,
-//                                                                                         m_connectionManager,
-//                                                                                         m_audioFocusManager,
-//                                                                                         contextManager,
-//                                                                                         m_exceptionSender,
-//                                                                                         m_dialogUXStateAggregator);
+//  m_speechSynthesizer = capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer::create(m_exceptionSender);
+    m_speechSynthesizer = capabilityAgents::speechSynthesizer::SpeechSynthesizer::create(
+                                                                                         speaker,
+                                                                                         m_connectionManager,
+                                                                                         m_audioFocusManager,
+                                                                                         contextManager,
+                                                                                         m_exceptionSender,
+                                                                                         m_dialogUXStateAggregator);
   if (!m_speechSynthesizer) {
     ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSpeechSynthesizer"));
     return false;
   }
-  //m_speechSynthesizer->addObserver(m_dialogUXStateAggregator);
+  m_speechSynthesizer->addObserver(m_dialogUXStateAggregator);
+  
+  addConnectionObserver(m_dialogUXStateAggregator);
 
   
   // m_playbackController
@@ -235,12 +282,43 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
     return false;
   }
   
+  if (!m_directiveSequencer->addDirectiveHandler(m_audioInputProcessor)) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "AudioInputProcessor"));
+    return false;
+  }
+  
+  if (!m_directiveSequencer->addDirectiveHandler(m_userInactivityMonitor)) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "UserInactivityMonitor"));
+    return false;
+  }
+  
+  
+  
+  if (!(capabilitiesDelegate->registerCapability(m_audioActivityTracker))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "AudioActivityTracker"));
+    return false;
+  }
+  
+  if (!(capabilitiesDelegate->registerCapability(m_audioInputProcessor))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "SpeechRecognizer"));
+    return false;
+  }
+  
   if (!(capabilitiesDelegate->registerCapability(m_speechSynthesizer))) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")
                 .d("capabilitiesDelegate", "SpeechSynthesizer"));
     return false;
   }
+  
   
   return true;
 }
@@ -251,6 +329,25 @@ void AlexaClient::Connect(const std::shared_ptr<avsCommon::sdkInterfaces::Capabi
   capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();
   
   PRINT_NAMED_WARNING("WHATNOW", "worked");
+}
+  
+std::future<bool> AlexaClient::notifyOfTapToTalk(
+                                                   capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
+                                                   avsCommon::avs::AudioInputStream::Index beginIndex) {
+  return m_audioInputProcessor->recognize(tapToTalkAudioProvider, capabilityAgents::aip::Initiator::TAP, beginIndex);
+}
+  
+void AlexaClient::addConnectionObserver(
+                                          std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer) {
+  m_connectionManager->addConnectionStatusObserver(observer);
+}
+  
+void AlexaClient::onCapabilitiesStateChange( CapabilitiesObserverInterface::State newState,
+                                             CapabilitiesObserverInterface::Error newError)
+{
+  if (CapabilitiesObserverInterface::State::SUCCESS == newState) {
+      m_connectionManager->enable();
+  }
 }
   
 } // namespace Vector

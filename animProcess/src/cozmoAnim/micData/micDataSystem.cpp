@@ -196,7 +196,8 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
-  _micDataProcessor->FakeTriggerWordDetection();
+  _alexa->ButtonPress();
+  //_micDataProcessor->FakeTriggerWordDetection();
 }
 
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)

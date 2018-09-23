@@ -18,13 +18,17 @@ endif()
 set(AVS_LIBS
   ACL
   ADSL
+  AFML
+  AIP
   AVSCommon
+  AVSSystem
   CapabilitiesDelegate
   CBLAuthDelegate
-  RegistrationManager
-  SQLiteStorage
-  ContextManager
   CertifiedSender
+  ContextManager
+  RegistrationManager
+  SpeechSynthesizer
+  SQLiteStorage
 )
 
 #ACL

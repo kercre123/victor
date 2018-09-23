@@ -13,7 +13,8 @@
 #include "cozmoAnim/alexa.h"
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
-#include "cozmoAnim/alexaSpeechSynthesizer.h"
+#include "cozmoAnim/alexaSpeaker.h"
+//#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -325,17 +326,21 @@ void Alexa::Init()
   
   auto messageStorage = alexaClientSDK::certifiedSender::SQLiteMessageStorage::create(config);
   
-  std::shared_ptr<AlexaClient> client = AlexaClient::create(
+  // setup "speaker"
+  m_TTSSpeaker = std::make_shared<AlexaSpeaker>();
+  
+  m_client = AlexaClient::create(
     deviceInfo,
     customerDataManager,
     authDelegate,
     std::move(messageStorage),
     {userInterfaceManager},
     {userInterfaceManager},
-    m_capabilitiesDelegate
+    m_capabilitiesDelegate,
+    m_TTSSpeaker
   );
   
-  if (!client) {
+  if (!m_client) {
     ACSDK_CRITICAL(LX("Failed to create default SDK client!"));
     return;
   }
@@ -372,21 +377,22 @@ void Alexa::Init()
   bool tapCanOverride = true;
   bool tapCanBeOverridden = true;
   
-  alexaClientSDK::capabilityAgents::aip::AudioProvider tapToTalkAudioProvider(
-                                                                              sharedDataStream,
+  m_tapToTalkAudioProvider = std::make_shared<alexaClientSDK::capabilityAgents::aip::AudioProvider>(
+                                                                                                    sharedDataStream,
                                                                               compatibleAudioFormat,
                                                                               alexaClientSDK::capabilityAgents::aip::ASRProfile::NEAR_FIELD,
                                                                               tapAlwaysReadable,
                                                                               tapCanOverride,
                                                                               tapCanBeOverridden);
   
-  (void)tapToTalkAudioProvider;
 
   
 //  m_interactionManager = std::make_shared<alexaClientSDK::sampleApp::InteractionManager>(
 //                                                                                         client, micWrapper, userInterfaceManager, holdToTalkAudioProvider, tapToTalkAudioProvider, m_guiRenderer);
 //
 //  m_dialogUXStateAggregator->addObserver(m_interactionManager);
+  
+  //m_client->addAlexaDialogStateObserver(m_interactionManager);
   
 //  // Creating the input observer.
 //  m_userInputManager = alexaClientSDK::sampleApp::UserInputManager::create(m_interactionManager, consoleReader);
@@ -395,14 +401,24 @@ void Alexa::Init()
 //    return;
 //  }
   
+  m_capabilitiesDelegate->addCapabilitiesObserver(m_client);
   
   // try connecting
-  client->Connect( m_capabilitiesDelegate );
+  m_client->Connect( m_capabilitiesDelegate );
   
   PRINT_NAMED_WARNING("WHATNOW", "worked");
   return;
 
 }
+  
+  
+void Alexa::ButtonPress()
+{
+  if( !m_client->notifyOfTapToTalk(*m_tapToTalkAudioProvider).get() ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Failed to notify tap to talk");
+  }
+}
+  
   
 } // namespace Vector
 } // namespace Anki
