@@ -17,7 +17,41 @@ endif()
 
 set(AVS_LIBS
   AVSCommon
+  CapabilitiesDelegate
+  CBLAuthDelegate
+  RegistrationManager
+  SQLiteStorage
 )
+
+#ACL
+#ADSL
+#AFML
+#AIP
+#AVSCommon
+#AVSSystem
+#Alerts
+#AudioPlayer
+#AudioResources
+#Bluetooth
+#CBLAuthDelegate
+#CapabilitiesDelegate
+#CertifiedSender
+#ContextManager
+#vDefaultClient
+#ESP
+#ExternalMediaPlayer
+#InteractionModel
+#KWD
+#MRM
+#Notifications
+#PlaybackController
+#PlaylistParser
+#RegistrationManager
+#SQLiteStorage
+#Settings
+#SpeakerManager
+#SpeechSynthesizer
+#TemplateRuntime
 
 foreach(LIB ${AVS_LIBS})
   add_library(${LIB} SHARED IMPORTED)
@@ -28,6 +62,17 @@ foreach(LIB ${AVS_LIBS})
     "${LIBAVS_INCLUDE_PATH}")
   anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/protobuf.license") # TODO: USE REAL LICENSE
 endforeach()
+
+# add SQLite 
+list(APPEND AVS_LIBS sqlite3)
+add_library(sqlite3 SHARED IMPORTED)
+set_target_properties(sqlite3 PROPERTIES
+  IMPORTED_LOCATION
+  "${LIBAVS_LIB_PATH}/libsqlite3.so.0"
+  INTERFACE_INCLUDE_DIRECTORIES
+  "${LIBAVS_INCLUDE_PATH}")
+anki_build_target_license(sqlite3 "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/protobuf.license") # TODO: USE REAL LICENSE
+
 
 #only needed for vicos
 if (TARGET copy_avs_libs)

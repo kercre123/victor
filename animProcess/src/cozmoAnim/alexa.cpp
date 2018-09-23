@@ -10,281 +10,353 @@
  * Modifications:
  */
 
-#include "cozmoAnim/animEngine.h"
-#include "cozmoAnim/animContext.h"
-#include "cozmoAnim/animProcessMessages.h"
-
-#include "cozmoAnim/audio/cozmoAudioController.h"
-#include "cozmoAnim/audio/microphoneAudioClient.h"
-#include "cozmoAnim/audio/engineRobotAudioInput.h"
-#include "cozmoAnim/animation/animationStreamer.h"
-#include "cozmoAnim/animation/streamingAnimationModifier.h"
-#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
-#include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
-#include "cozmoAnim/micData/micDataSystem.h"
-#include "cozmoAnim/robotDataLoader.h"
-#include "cozmoAnim/showAudioStreamStateManager.h"
-#include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
-
-#include "coretech/common/engine/opencvThreading.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "coretech/common/engine/utils/timer.h"
-#include "audioEngine/multiplexer/audioMultiplexer.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
-
-#include "webServerProcess/src/webService.h"
-
-#include "osState/osState.h"
-
-#include "util/console/consoleInterface.h"
-#include "util/cpuProfiler/cpuProfiler.h"
+#include "cozmoAnim/alexa.h"
+#include "cozmoAnim/alexaLogger.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include "util/time/universalTime.h"
 
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
+#include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
+#include <AVSCommon/Utils/Configuration/ConfigurationNode.h>
+#include <AVSCommon/Utils/DeviceInfo.h>
+#include <AVSCommon/Utils/LibcurlUtils/HTTPContentFetcherFactory.h>
+#include <AVSCommon/Utils/LibcurlUtils/HttpPut.h>
+#include <AVSCommon/Utils/Logger/Logger.h>
+#include <AVSCommon/Utils/Logger/LoggerSinkManager.h>
+#include <AVSCommon/Utils/Network/InternetConnectionMonitor.h>
+#include <Alerts/Storage/SQLiteAlertStorage.h>
+#include <Audio/AudioFactory.h>
+#include <Bluetooth/SQLiteBluetoothStorage.h>
+#include <CBLAuthDelegate/CBLAuthDelegate.h>
+#include <CBLAuthDelegate/SQLiteCBLAuthDelegateStorage.h>
+#include <CapabilitiesDelegate/CapabilitiesDelegate.h>
+#include <Notifications/SQLiteNotificationsStorage.h>
+#include <SQLiteStorage/SQLiteMiscStorage.h>
+#include <Settings/SQLiteSettingStorage.h>
+#include <DefaultClient/DefaultClient.h>
 
-#define LOG_CHANNEL    "AnimEngine"
-
-#if ANKI_PROFILING_ENABLED && !defined(SIMULATOR)
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
-#else
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
-#endif
-#define NUM_ANIM_OPENCV_THREADS 0
+#include <memory>
+#include <vector>
+#include <iostream>
 
 namespace Anki {
 namespace Vector {
-
-#if ANKI_CPU_PROFILER_ENABLED
-  CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
-  CONSOLE_VAR_ENUM(u8,      kAnimEngine_TimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
-#endif
-
-AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
-  : _isInitialized(false)
-  , _context(std::make_unique<AnimContext>(dataPlatform))
-  , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
-  , _backpackLightComponent(std::make_unique<BackpackLightComponent>(_context.get()))
-{
-#if ANKI_CPU_PROFILER_ENABLED
-  // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
-  Anki::Util::CpuProfiler::GetInstance();
-  Anki::Util::CpuThreadProfiler::SetChromeTracingFile(
-      dataPlatform->pathToResource(Util::Data::Scope::Cache, "vic-anim-tracing.json").c_str());
-  Anki::Util::CpuThreadProfiler::SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpuprofile", json); });
-#endif
-
-  if (Anki::Util::gTickTimeProvider == nullptr) {
-    Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
-  }
-
-  _microphoneAudioClient.reset(new Audio::MicrophoneAudioClient(_context->GetAudioController()));
-}
-
-AnimEngine::~AnimEngine()
-{
-  if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
-    Anki::Util::gTickTimeProvider = nullptr;
-  }
-  BaseStationTimer::removeInstance();
-}
-
-Result AnimEngine::Init()
-{
-  if (_isInitialized) {
-    LOG_INFO("AnimEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
-  }
-
-  uint32_t seed = 0; // will choose random seed
-# ifdef ANKI_PLATFORM_OSX
-  {
-    seed = 1; // Setting to non-zero value for now for repeatable testing.
-  }
-# endif
-  _context->SetRandomSeed(seed);
-
-  OSState::getInstance()->SetUpdatePeriod(1000);
-
-  RobotDataLoader * dataLoader = _context->GetDataLoader();
-  dataLoader->LoadConfigData();
-  dataLoader->LoadNonConfigData();
-
-  _ttsComponent = std::make_unique<TextToSpeechComponent>(_context.get());
-  _context->GetMicDataSystem()->Init(*dataLoader);
-
-  // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
-  _animationStreamer->Init(_ttsComponent.get());
-  _backpackLightComponent->Init();
-
-  // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
-  auto* audioMux = _context->GetAudioMultiplexer();
-  auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
-  // Easy access to Audio Controller
-  _audioControllerPtr = _context->GetAudioController();
-
-  // Set up message handler
-  auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
-  _streamingAnimationModifier = std::make_unique<StreamingAnimationModifier>(_animationStreamer.get(), audioInput, _ttsComponent.get());
-
-  // set up audio stream state manager
-  {
-    _context->GetShowAudioStreamStateManager()->SetAnimationStreamer(_animationStreamer.get());
-  }
-
-
-
-  AnimProcessMessages::Init(this, _animationStreamer.get(), _streamingAnimationModifier.get(), audioInput, _context.get());
-
-  _context->GetWebService()->Start(_context->GetDataPlatform(),
-                                   _context->GetDataLoader()->GetWebServerAnimConfig());
-  FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
-
-
-
-  // Make sure OpenCV isn't threading
-  Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );
-  if( RESULT_OK != cvResult )
-  {
-    return cvResult;
-  }
-
-  LOG_INFO("AnimEngine.Init.Success","Success");
-  _isInitialized = true;
-
-  return RESULT_OK;
-}
-
-Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
-{
-  ANKI_CPU_TICK("AnimEngine::Update", kAnimEngine_TimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kAnimEngine_TimeLogging));
-  if (!_isInitialized) {
-    LOG_ERROR("AnimEngine.Update", "Cannot update AnimEngine before it is initialized.");
-    return RESULT_FAIL;
-  }
-
-  // Declare some invariants
-  DEV_ASSERT(_context, "AnimEngine.Update.InvalidContext");
-  DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
-  DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
-
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
-  const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#endif
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
-  {
-    static bool firstUpdate = true;
-    static double lastUpdateTimeMs = 0.0;
-    //const double currentTimeMs = (double)currTime_nanosec / 1e+6;
-    if (!firstUpdate)
-    {
-      const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
-      if (timeSinceLastUpdate > maxLatency)
-      {
-        DASMSG(cozmo_anim_update_sleep_slow,
-               "cozmo_anim.update.sleep.slow",
-               "This will be shown on the slow updates and as such should not be seen very often")
-        DASMSG_SET(s1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
-        DASMSG_SEND()
-      }
+  
+  namespace {
+      const std::string kConfig = R"4Nk1({
+      "cblAuthDelegate":{
+        // Path to CBLAuthDelegate's database file. e.g. /home/ubuntu/Build/cblAuthDelegate.db
+        // Note: The directory specified must be valid.
+        // The database file (cblAuthDelegate.db) will be created by SampleApp, do not create it yourself.
+        // The database file should only be used for CBLAuthDelegate (don't use it for other components of SDK)
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/cblAuthDelegate.db"
+      },
+      "deviceInfo":{
+        // Unique device serial number. e.g. 123456
+        "deviceSerialNumber":"123457",
+        // The Client ID of the Product from developer.amazon.com
+        "clientId": "amzn1.application-oa2-client.35a58ee8f3444563aed328cb189da216",
+        // Product ID from developer.amazon.com
+        "productId": "test_product_1"
+      },
+      "capabilitiesDelegate":{
+        // The endpoint to connect in order to send device capabilities.
+        // This will only be used in DEBUG builds.
+        // e.g. "endpoint": "https://api.amazonalexa.com"
+        // Override the message to be sent out to the Capabilities API.
+        // This will only be used in DEBUG builds.
+        // e.g. "overridenCapabilitiesPublishMessageBody": {
+        //          "envelopeVersion":"20160207",
+        //          "capabilities":[
+        //              {
+        //                "type":"AlexaInterface",
+        //                "interface":"Alerts",
+        //                "version":"1.1"
+        //              }
+        //          ]
+        //      }
+      },
+      "miscDatabase":{
+        // Path to misc database file. e.g. /home/ubuntu/Build/miscDatabase.db
+        // Note: The directory specified must be valid.
+        // The database file (miscDatabase.db) will be created by SampleApp, do not create it yourself.
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/miscDatabase.db"
+      },
+      "alertsCapabilityAgent":{
+        // Path to Alerts database file. e.g. /home/ubuntu/Build/alerts.db
+        // Note: The directory specified must be valid.
+        // The database file (alerts.db) will be created by SampleApp, do not create it yourself.
+        // The database file should only be used for alerts (don't use it for other components of SDK)
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/alerts.db"
+      },
+      "settings":{
+        // Path to Settings database file. e.g. /home/ubuntu/Build/settings.db
+        // Note: The directory specified must be valid.
+        // The database file (settings.db) will be created by SampleApp, do not create it yourself.
+        // The database file should only be used for settings (don't use it for other components of SDK)
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/settings.db",
+        "defaultAVSClientSettings":{
+          // Default language for Alexa.
+          // See https://developer.amazon.com/docs/alexa-voice-service/settings.html#settingsupdated for valid values.
+          "locale":"en-US"
+        }
+      },
+      "bluetooth" : {
+        // Path to Bluetooth database file. e.g. /home/ubuntu/Build/bluetooth.db
+        // Note: The directory specified must be valid.
+        // The database file (bluetooth.db) will be created by SampleApp, do not create it yourself.
+        // The database file should only be used for bluetooth (don't use it for other components of SDK)
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/bluetooth.db"
+      },
+      "certifiedSender":{
+        // Path to Certified Sender database file. e.g. /home/ubuntu/Build/certifiedsender.db
+        // Note: The directory specified must be valid.
+        // The database file (certifiedsender.db) will be created by SampleApp, do not create it yourself.
+        // The database file should only be used for certifiedSender (don't use it for other components of SDK)
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/certifiedsender.db"
+      },
+      "notifications":{
+        // Path to Notifications database file. e.g. /home/ubuntu/Build/notifications.db
+        // Note: The directory specified must be valid.
+        // The database file (notifications.db) will be created by SampleApp, do not create it yourself.
+        // The database file should only be used for notifications (don't use it for other components of SDK)
+        "databaseFilePath":"/data/data/com.anki.victor/persistent/alexa/notifications.db"
+      },
+      "sampleApp":{
+        // To specify if the SampleApp supports display cards.
+        "displayCardsSupported":true
+        // The firmware version of the device to send in SoftwareInfo event.
+        // Note: The firmware version should be a positive 32-bit integer in the range [1-2147483647].
+        // e.g. "firmwareVersion": 123
+        // The default endpoint to connect to.
+        // See https://developer.amazon.com/docs/alexa-voice-service/api-overview.html#endpoints for regions and values
+        // e.g. "endpoint": "https://avs-alexa-na.amazon.com"
+        
+        // Example of specifying suggested latency in seconds when openning PortAudio stream. By default,
+        // when this paramater isn't specified, SampleApp calls Pa_OpenDefaultStream to use the default value.
+        // See http://portaudio.com/docs/v19-doxydocs/structPaStreamParameters.html for further explanation
+        // on this parameter.
+        //"portAudio":{
+        //    "suggestedLatency": 0.150
+        //}
+      },
+      
+      // Example of specifying output format and the audioSink for the gstreamer-based MediaPlayer bundled with the SDK.
+      // Many platforms will automatically set the output format correctly, but in some cases where the hardware requires
+      // a specific format and the software stack is not automatically setting it correctly, these parameters can be used
+      // to manually specify the output format.  Supported rate/format/channels values are documented in detail here:
+      // https://gstreamer.freedesktop.org/documentation/design/mediatype-audio-raw.html
+      //
+      // By default the "autoaudiosink" element is used in the pipeline.  This element automatically selects the best sink
+      // to use based on the configuration in the system.  But sometimes the wrong sink is selected and that prevented sound
+      // from being played.  A new configuration is added where the audio sink can be specified for their system.
+      // "gstreamerMediaPlayer":{
+      //     "outputConversion":{
+      //         "rate":16000,
+      //         "format":"S16LE",
+      //         "channels":1
+      //     },
+      //     "audioSink":"autoaudiosink"
+      // },
+      
+      // Example of specifiying curl options that is different from the default values used by libcurl.
+      // "libcurlUtils":{
+      //
+      //     By default libcurl is built with paths to a CA bundle and a directory containing CA certificates. You can
+      //     direct the AVS Device SDK to configure libcurl to use an additional path to directories containing CA
+      //     certificates via the CURLOPT_CAPATH setting.  Additional details of this curl option can be found in:
+      //     https://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
+      //     "CURLOPT_CAPATH":"INSERT_YOUR_CA_CERTIFICATE_PATH_HERE",
+      //
+      //     You can specify the AVS Device SDK to use a specific outgoing network interface.  More information of
+      //     this curl option can be found here:
+      //     https://curl.haxx.se/libcurl/c/CURLOPT_INTERFACE.html
+      //     "CURLOPT_INTERFACE":"INSERT_YOUR_INTERFACE_HERE"
+      // },
+      
+      // Example of specifying a default log level for all ModuleLoggers.  If not specified, ModuleLoggers get
+      // their log level from the sink logger.
+       "logging":{
+           "logLevel":"DEBUG9"
+       }
+    
+      // Example of overriding a specific ModuleLogger's log level whether it was specified by the default value
+      // provided by the logging.logLevel value (as in the above example) or the log level of the sink logger.
+      // "acl":{
+      //     "logLevel":"DEBUG9"
+      // }
     }
-    lastUpdateTimeMs = startUpdateTimeMs;
-    firstUpdate = false;
+    
+    
+    )4Nk1";
+
   }
-#endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
-
-  BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
-
-  _context->GetWebService()->Update();
-
-  Result result = AnimProcessMessages::Update(currTime_nanosec);
-  if (RESULT_OK != result) {
-    LOG_WARNING("AnimEngine.Update", "Unable to process messages (result %d)", result);
-    return result;
-  }
-
-  OSState::getInstance()->Update(currTime_nanosec);
-
-  _ttsComponent->Update();
-
-  // Clear out sprites that have passed their cache time
-  _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
-
-  if(_streamingAnimationModifier != nullptr){
-    _streamingAnimationModifier->ApplyAlterationsBeforeUpdate(_animationStreamer.get());
-  }
-  _animationStreamer->Update();
-  if(_streamingAnimationModifier != nullptr){
-    _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
-  }
-
-  if (_audioControllerPtr != nullptr) {
-    // Update mic info in Audio Engine
-    const auto& micDirectionMsg = _context->GetMicDataSystem()->GetLatestMicDirectionMsg();
-    _microphoneAudioClient->ProcessMessage(micDirectionMsg);
-    // Tick the Audio Engine at the end of each anim frame
-    _audioControllerPtr->Update();
-  }
-
-  if(_backpackLightComponent != nullptr)
-  {
-    _backpackLightComponent->Update();
-  }
-
-#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
-  {
-    const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = ANIM_TIME_STEP_MS;
-    if (updateLengthMs > maxUpdateDuration)
-    {
-      Anki::Util::sInfoF("cozmo_anim.update.run.slow",
-                         {{DDATA,std::to_string(ANIM_TIME_STEP_MS).c_str()}},
-                         "%.2f", updateLengthMs);
-    }
-  }
-#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
-
-  return RESULT_OK;
-}
-
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
+  
+void Alexa::Init()
 {
-  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPrepare.InvalidTTSComponent");
-  _ttsComponent->HandleMessage(msg);
-}
-
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPlay & msg)
-{
-  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPlay.InvalidTTSComponent");
-  _ttsComponent->HandleMessage(msg);
-}
-
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechCancel & msg)
-{
-  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechCancel.InvalidTTSComponent");
-  _ttsComponent->HandleMessage(msg);
-}
-
-void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
-{
-  const std::string locale(msg.locale, msg.locale_length);
-
-  LOG_INFO("AnimEngine.SetLocale", "Set locale to %s", locale.c_str());
-
-  if (_context != nullptr) {
-    _context->SetLocale(locale);
+  if( Util::FileUtils::DirectoryDoesNotExist( "/data/data/com.anki.victor/persistent/alexa" ) ) {
+    Util::FileUtils::CreateDirectory( "/data/data/com.anki.victor/persistent/alexa", false, true );
   }
-
-  if (_ttsComponent != nullptr) {
-    _ttsComponent->SetLocale(locale);
+  
+  using namespace alexaClientSDK;
+  std::vector<std::shared_ptr<std::istream>> configJsonStreams;
+  
+  // todo: load from data loader
+  configJsonStreams.push_back( std::shared_ptr<std::istringstream>(new std::istringstream(kConfig)) );
+  
+  // for (auto configFile : configFiles) {
+  //   if (configFile.empty()) {
+  //     alexaClientSDK::sampleApp::ConsolePrinter::simplePrint("Config filename is empty!");
+  //     return false;
+  //   }
+  
+  //   auto configInFile = std::shared_ptr<std::ifstream>(new std::ifstream(configFile));
+  //   if (!configInFile->good()) {
+  //     ACSDK_CRITICAL(LX("Failed to read config file").d("filename", configFile));
+  //     alexaClientSDK::sampleApp::ConsolePrinter::simplePrint("Failed to read config file " + configFile);
+  //     return false;
+  //   }
+  
+  //   configJsonStreams.push_back(configInFile);
+  // }
+  PRINT_NAMED_WARNING("WHATNOW", "calling");
+  
+  #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
+  
+  // todo: this should be called befpre any other threads start (acccording to docs)
+  if (!avsCommon::avs::initialization::AlexaClientSDKInit::initialize(configJsonStreams)) {
+    //ACSDK_CRITICAL(LX("Failed to initialize SDK!"));
+    PRINT_NAMED_WARNING("WHATNOW", "failed to init");
+    return;
   }
+  
+  const auto& config = avsCommon::utils::configuration::ConfigurationNode::getRoot();
+  
+  /*
+   * Creating customerDataManager which will be used by the registrationManager and all classes that extend
+   * CustomerDataHandler
+   */
+  auto customerDataManager = std::make_shared<registrationManager::CustomerDataManager>();
+  
+  /*
+   * Creating the deviceInfo object
+   */
+  std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo = avsCommon::utils::DeviceInfo::create(config);
+  if (!deviceInfo) {
+    ACSDK_CRITICAL(LX("Creation of DeviceInfo failed!"));
+    PRINT_NAMED_WARNING("WHATNOW", "deviceinfo failed");
+    return;
+  }
+  
+  /*
+   * Creating the UI component that observes various components and prints to the console accordingly.
+   */
+  auto userInterfaceManager = std::make_shared<AlexaLogger>();
+  
+  //  /*
+  //   * Creating the AuthDelegate - this component takes care of LWA and authorization of the client.
+  //   */
+  auto authDelegateStorage = authorization::cblAuthDelegate::SQLiteCBLAuthDelegateStorage::create(config);
+  std::shared_ptr<avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate =
+  authorization::cblAuthDelegate::CBLAuthDelegate::create(
+                                                          config, customerDataManager, std::move(authDelegateStorage), userInterfaceManager, nullptr, deviceInfo);
+  
+  // Creating the misc DB object to be used by various components.
+  std::shared_ptr<alexaClientSDK::storage::sqliteStorage::SQLiteMiscStorage> miscStorage =
+    alexaClientSDK::storage::sqliteStorage::SQLiteMiscStorage::create(config);
+  
+  // Create HTTP Put handler
+  std::shared_ptr<avsCommon::utils::libcurlUtils::HttpPut> httpPut =
+    avsCommon::utils::libcurlUtils::HttpPut::create();
+
+  if (!authDelegate) {
+    ACSDK_CRITICAL(LX("Creation of AuthDelegate failed!"));
+    PRINT_NAMED_WARNING("WHATNOW", "Creation of AuthDelegate failed!");
+    return;
+  }
+  authDelegate->addAuthObserver(userInterfaceManager);
+  
+  /*
+   * Creating the CapabilitiesDelegate - This component provides the client with the ability to send messages to the
+   * Capabilities API.
+   */
+  m_capabilitiesDelegate = alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate::create(
+    authDelegate, miscStorage, httpPut, customerDataManager, config, deviceInfo
+  );
+  if (!m_capabilitiesDelegate) {
+    PRINT_NAMED_WARNING("WHATNOW", "Creation of CapabilitiesDelegate failed!");
+    return;
+  }
+  m_capabilitiesDelegate->addCapabilitiesObserver(userInterfaceManager);
+  
+  // try connecting
+  m_capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();
+
+//  const bool displayCardsSupported = false;
+//  const int firmwareVersion = 1;
+//  std::unordered_map<std::string, std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface>>
+//    m_externalMusicProviderMediaPlayersMap;
+//
+//  /// The map of the adapters and their mediaPlayers.
+//  std::unordered_map<std::string, std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface>>
+//    m_externalMusicProviderSpeakersMap;
+//
+//  /// The vector of mediaPlayers for the adapters.
+//  class ApplicationMediaPlayer;
+//  std::vector<std::shared_ptr<ApplicationMediaPlayer>> m_adapterMediaPlayers;
+//
+//  /// The singleton map from @c playerId to @c ExternalMediaAdapter creation functions.
+//  static capabilityAgents::externalMediaPlayer::ExternalMediaPlayer::AdapterCreationMap m_adapterToCreateFuncMap;
+//
+//  std::vector<std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface>> additionalSpeakers;
+//
+//  auto audioFactory = std::make_shared<alexaClientSDK::applicationUtilities::resources::audio::AudioFactory>();
+//
+//  // build "DefaultClient"
+//  std::shared_ptr<alexaClientSDK::defaultClient::DefaultClient> client =
+//  alexaClientSDK::defaultClient::DefaultClient::create(
+//       deviceInfo,
+//       customerDataManager,
+//       m_externalMusicProviderMediaPlayersMap,
+//       m_externalMusicProviderSpeakersMap,
+//       m_adapterToCreateFuncMap,
+//       nullptr,//m_speakMediaPlayer,
+//       nullptr,//m_audioMediaPlayer,
+//       nullptr,//m_alertsMediaPlayer,
+//       nullptr,//m_notificationsMediaPlayer,
+//       nullptr,//m_bluetoothMediaPlayer,
+//       nullptr,//m_ringtoneMediaPlayer,
+//       nullptr,//speakSpeaker,
+//       nullptr,//audioSpeaker,
+//       nullptr,//alertsSpeaker,
+//       nullptr,//notificationsSpeaker,
+//       nullptr,//bluetoothSpeaker,
+//       nullptr,//ringtoneSpeaker,
+//       additionalSpeakers,
+//       audioFactory,
+//       authDelegate,
+//       nullptr,//std::move(alertStorage),
+//       nullptr,//std::move(messageStorage),
+//       nullptr,//std::move(notificationsStorage),
+//       nullptr,//std::move(settingsStorage),
+//       nullptr,//std::move(bluetoothStorage),
+//       {userInterfaceManager},
+//       {userInterfaceManager},
+//       nullptr,//std::move(internetConnectionMonitor),
+//       displayCardsSupported,
+//       nullptr,//m_capabilitiesDelegate,
+//       firmwareVersion,
+//       true,
+//       nullptr);
+//
+//  if (!client) {
+//    ACSDK_CRITICAL(LX("Failed to create default SDK client!"));
+//    return;
+//  }
+  
+  PRINT_NAMED_WARNING("WHATNOW", "worked");
+  return;
+
 }
+  
 } // namespace Vector
 } // namespace Anki
