@@ -17,6 +17,7 @@ endif()
 
 set(AVS_LIBS
   ACL
+  ADSL
   AVSCommon
   CapabilitiesDelegate
   CBLAuthDelegate
