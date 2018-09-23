@@ -542,7 +542,6 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
             "close\r\n\r\n");
 
   const auto& osState = OSState::getInstance();
-  const std::string robotID        = std::to_string(osState->GetRobotID());
   const std::string serialNo       = osState->GetSerialNumberAsString();
   const std::string ip             = osState->GetIPAddress();
   const std::string robotName      = osState->GetRobotName();
@@ -581,8 +580,8 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 #endif
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
-            robotID.c_str(), serialNo.c_str(), ip.c_str(),
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+            serialNo.c_str(), ip.c_str(),
             buildConfig.c_str(),
             procVersion.c_str(), procCmdLine.c_str(),
             robotName.c_str(), osBuildVersion.c_str(), sha.c_str(),
