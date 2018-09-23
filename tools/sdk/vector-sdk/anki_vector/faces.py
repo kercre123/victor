@@ -238,13 +238,7 @@ class Face:
 class FaceComponent(util.Component):
     """Manage the state of the faces on the robot"""
 
-    # TODO document, sample code and add Anki internal test for all face enrollment methods
-    @sync.Synchronizer.wrap
-    async def cancel_face_enrollment(self):
-        req = protocol.CancelFaceEnrollmentRequest()
-        return await self.grpc_interface.CancelFaceEnrollment(req)
-
-    # TODO document, needs sample code and return value. It returns an array of LoadedKnownFace but is that availble in Python?
+    # TODO document, needs sample code and return value. It returns an array of LoadedKnownFace
     @sync.Synchronizer.wrap
     async def request_enrolled_names(self):
         req = protocol.RequestEnrolledNamesRequest()
@@ -276,17 +270,6 @@ class FaceComponent(util.Component):
         """Erase the enrollment (name) records for all faces."""
         req = protocol.EraseAllEnrolledFacesRequest()
         return await self.grpc_interface.EraseAllEnrolledFaces(req)
-
-    # TODO document, sample code and add Anki internal test for all face enrollment methods
-    @sync.Synchronizer.wrap
-    async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot: bool = True, sayName: bool = False, useMusic: bool = False):
-        req = protocol.SetFaceToEnrollRequest(name=name,
-                                              observedID=observedID,
-                                              saveID=saveID,
-                                              saveToRobot=saveToRobot,
-                                              sayName=sayName,
-                                              useMusic=useMusic)
-        return await self.grpc_interface.SetFaceToEnroll(req)
 
     # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component?
     @sync.Synchronizer.wrap

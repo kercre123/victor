@@ -17,9 +17,6 @@ The API
     anki_vector.exceptions
     anki_vector.faces
     anki_vector.lights
-    anki_vector.messaging
-    anki_vector.messaging.client
-    anki_vector.messaging.protocol
     anki_vector.motors
     anki_vector.objects
     anki_vector.photos
@@ -30,6 +27,7 @@ The API
     anki_vector.util
     anki_vector.viewer
     anki_vector.world
+    anki_vector.messaging.client
 
 ..
 

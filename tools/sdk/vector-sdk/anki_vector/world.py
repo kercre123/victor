@@ -163,10 +163,9 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def connect_cube(self):
-        """ Attempt to connect to a cube
+        """Attempt to connect to a cube.
 
-        Attempt to connect to a cube. If a cube is currently connected,
-        this will do nothing.
+        If a cube is currently connected, this will do nothing.
 
         .. code-block:: python
 
@@ -184,7 +183,7 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def disconnect_cube(self):
-        """ Requests a disconnection from the currently connected cube
+        """Requests a disconnection from the currently connected cube.
 
         .. code-block:: python
 
@@ -196,7 +195,7 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def flash_cube_lights(self):
-        """ Flash cube lights
+        """Flash cube lights
 
         Plays the default cube connection animation on the currently
         connected cube's lights.
@@ -207,7 +206,7 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def forget_preferred_cube(self):
-        """ Forget preferred cube
+        """Forget preferred cube
 
         'Forget' the robot's preferred cube. This will cause the robot to
         connect to the cube with the highest RSSI (signal strength) next
@@ -223,7 +222,7 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def set_preferred_cube(self, factory_id: str):
-        """ Set preferred cube
+        """Set preferred cube
 
         Set the robot's preferred cube and save it to disk. The robot
         will always attempt to connect to this cube if it is available.

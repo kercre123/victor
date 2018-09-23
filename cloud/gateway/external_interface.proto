@@ -1,7 +1,18 @@
-// External interface for robot <-> app and robot <-> sdk communication
+// Copyright (c) 2018 Anki, Inc.
 //
-// TODO: Improve the comments in these files because they are exposed as
-//       part of the SDK.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License in the file LICENSE.txt or at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// External interface for robot <-> app and robot <-> sdk communication
 
 syntax = "proto3";
 
@@ -14,9 +25,10 @@ import "messages.proto";
 import "settings.proto";
 import "shared.proto";
 
-// The grpc-defined connection between the SDK and Anki's Vector robot
+// The grpc-defined connection between the SDK and Anki's Vector robot.
 service ExternalInterface {
-  // Check the supported protocol version
+  // Checks the supported protocol version by passing in the client version and
+  // minimum host version and receiving a response to see whether the versions are supported.
   rpc ProtocolVersion(ProtocolVersionRequest) returns (ProtocolVersionResponse) {
     option (google.api.http) = {
       post: "/v1/protocol_version",
@@ -24,13 +36,13 @@ service ExternalInterface {
     };
   }
 
-  // Sets the speed and acceleration for Vector's wheel motors
+  // Sets the speed and acceleration for Vector's wheel motors.
   rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResponse) {}
 
-  // Requests that Vector play an animation
+  // Requests that Vector play an animation.
   rpc PlayAnimation(PlayAnimationRequest) returns (PlayAnimationResponse) {}
 
-  // Constructs and returns a list of animations
+  // Constructs and returns a list of animations.
   rpc ListAnimations(ListAnimationsRequest) returns (ListAnimationsResponse) {
     option (google.api.http) = {
       post: "/v1/list_animations",
@@ -38,13 +50,13 @@ service ExternalInterface {
     };
   }
 
-  // Moves the Head
+  // Moves Vector's head.
   rpc MoveHead(MoveHeadRequest) returns (MoveHeadResponse) {}
 
-  // Moves the Lift
+  // Moves Vector's lift.
   rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
   
-  // Sets screen to a solid color
+  // Sets screen (Vector's face) to a solid color.
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {
     option (google.api.http) = {
       post: "/v1/display_face_image_rgb",
@@ -63,11 +75,11 @@ service ExternalInterface {
     };
   }
 
-  // Integrate with and acquire control of Vector's AI system
+  // Integrate with and acquire control of Vector's AI system.
   rpc BehaviorControl(stream BehaviorControlRequest) returns (stream BehaviorControlResponse) {
   }
 
-  // Acquire control of Vector's AI system
+  // Acquire control of Vector's AI system.
   rpc AssumeBehaviorControl(BehaviorControlRequest) returns (stream BehaviorControlResponse) {
     option (google.api.http) = {
       post: "/v1/assume_behavior_control",
@@ -87,30 +99,39 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // Get a list of names and their IDs.
   rpc RequestEnrolledNames(RequestEnrolledNamesRequest) returns (RequestEnrolledNamesResponse) {
     option (google.api.http) = {
       post: "/v1/request_enrolled_names",
       body: "*"
     };
   }
+
+  // Update the name enrolled for a given face.
   rpc UpdateEnrolledFaceByID(UpdateEnrolledFaceByIDRequest) returns (UpdateEnrolledFaceByIDResponse) {
     option (google.api.http) = {
       post: "/v1/update_enrolled_face_by_id",
       body: "*"
     };
   }
+
+  // Erase the enrollment (name) record for the face with this ID.
   rpc EraseEnrolledFaceByID(EraseEnrolledFaceByIDRequest) returns (EraseEnrolledFaceByIDResponse) {
     option (google.api.http) = {
       post: "/v1/erase_enrolled_face_by_id",
       body: "*"
     };
   }
+
+  // Erase the enrollment (name) records for all faces.
   rpc EraseAllEnrolledFaces(EraseAllEnrolledFacesRequest) returns (EraseAllEnrolledFacesResponse) {
     option (google.api.http) = {
       post: "/v1/erase_all_enrolled_faces",
       body: "*"
     };
   }
+
   rpc SetFaceToEnroll(SetFaceToEnrollRequest) returns (SetFaceToEnrollResponse) {
     option (google.api.http) = {
       post: "/v1/set_face_to_enroll",
@@ -118,6 +139,7 @@ service ExternalInterface {
     };
   }
 
+  // Turns on the provided vision mode.
   rpc EnableVisionMode(EnableVisionModeRequest) returns (EnableVisionModeResponse) {
     option (google.api.http) = {
       post: "/v1/enable_vision_mode",
@@ -125,6 +147,7 @@ service ExternalInterface {
     };
   }
   
+  // Tells Vector to drive to the specified pose and orientation.
   rpc GoToPose(GoToPoseRequest) returns (GoToPoseResponse) {
     option (google.api.http) = {
       post: "/v1/go_to_pose",
@@ -132,6 +155,7 @@ service ExternalInterface {
     };
   }
 
+  // Tells Vector to dock with a light cube with a given approach angle and distance.
   rpc DockWithCube(DockWithCubeRequest) returns (DockWithCubeResponse) {
     option (google.api.http) = {
       post: "/v1/dock_with_cube",
@@ -139,6 +163,7 @@ service ExternalInterface {
     };
   }
 
+  // Drive Vector off the charger.
   rpc DriveOffCharger(DriveOffChargerRequest) returns (DriveOffChargerResponse) {
     option (google.api.http) = {
       post: "/v1/drive_off_charger",
@@ -146,6 +171,7 @@ service ExternalInterface {
     };
   }
 
+  // Drive Vector onto the charger.
   rpc DriveOnCharger(DriveOnChargerRequest) returns (DriveOnChargerResponse) {
     option (google.api.http) = {
       post: "/v1/drive_on_charger",
@@ -167,7 +193,7 @@ service ExternalInterface {
     };
   }
 
-  // Get the photos info
+  // Get the photos info.
   rpc PhotosInfo(PhotosInfoRequest) returns (PhotosInfoResponse) {
     option (google.api.http) = {
       post: "/v1/photos_info",
@@ -175,7 +201,7 @@ service ExternalInterface {
     };
   }
 
-  // Get a photo by ID
+  // Get a photo by ID.
   rpc Photo(PhotoRequest) returns (PhotoResponse) {
     option (google.api.http) = {
       post: "/v1/photo",
@@ -183,7 +209,7 @@ service ExternalInterface {
     };
   }
 
-  // Get a thumbnail by ID
+  // Get a thumbnail by ID.
   rpc Thumbnail(ThumbnailRequest) returns (ThumbnailResponse) {
     option (google.api.http) = {
       post: "/v1/thumbnail",
@@ -191,7 +217,7 @@ service ExternalInterface {
     };
   }
 
-  // Delete a photo by ID
+  // Delete a photo by ID.
   rpc DeletePhoto(DeletePhotoRequest) returns (DeletePhotoResponse) {
     option (google.api.http) = {
       post: "/v1/delete_photo",
@@ -199,7 +225,6 @@ service ExternalInterface {
     };
   }
 
-  // Request latest attention transfer message (after connection)
   rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
     option (google.api.http) = {
       post: "/v1/get_latest_attention_transfer",
@@ -235,12 +260,16 @@ service ExternalInterface {
     };
   }
 
+  // Tells Vector to drive in a straight line.
   rpc DriveStraight(DriveStraightRequest) returns (DriveStraightResponse) {}
 
+  // Turn the robot around its current position.
   rpc TurnInPlace(TurnInPlaceRequest) returns (TurnInPlaceResponse) {}
 
+  // Tell Vector's head to move to a given angle.
   rpc SetHeadAngle(SetHeadAngleRequest) returns (SetHeadAngleResponse) {}
 
+  // Tell Vector's lift to move to a given height.
   rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {}
 
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
@@ -257,6 +286,7 @@ service ExternalInterface {
     };
   }
 
+  // Check the current state of the battery.
   rpc BatteryState(BatteryStateRequest) returns (BatteryStateResponse) {
     option (google.api.http) = {
       post: "/v1/battery_state",
@@ -264,6 +294,7 @@ service ExternalInterface {
     };
   }
 
+  // Get the versioning information for Vector.
   rpc VersionState(VersionStateRequest) returns (VersionStateResponse) {
     option (google.api.http) = {
       post: "/v1/version_state",
@@ -271,6 +302,7 @@ service ExternalInterface {
     };
   }
 
+  // Get the network information for Vector.
   rpc NetworkState(NetworkStateRequest) returns (NetworkStateResponse) {
     option (google.api.http) = {
       post: "/v1/network_state",
@@ -278,6 +310,7 @@ service ExternalInterface {
     };
   }
 
+  // Make Vector speak text.
   rpc SayText(SayTextRequest) returns (SayTextResponse) {
     option (google.api.http) = {
       post: "/v1/say_text",
@@ -308,6 +341,7 @@ service ExternalInterface {
       body: "*"
     };
   }
+
   // Signal a connected cube to flash its lights using the default cube
   // flash animation.
   rpc FlashCubeLights(FlashCubeLightsRequest) returns (FlashCubeLightsResponse) {
@@ -343,7 +377,7 @@ service ExternalInterface {
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
 
-  // Request an audio feed from the robot
+  // Request an audio feed from the robot.
   rpc AudioFeed(AudioFeedRequest) returns (stream AudioFeedResponse) {
     option (google.api.http) = {
       post: "/v1/audio_feed",
@@ -351,7 +385,7 @@ service ExternalInterface {
     };
   }
 
-  // Request a camera feed from the robot
+  // Request a camera feed from the robot.
   rpc CameraFeed(CameraFeedRequest) returns (stream CameraFeedResponse) {
     option (google.api.http) = {
       post: "/v1/camera_feed",
@@ -367,8 +401,6 @@ service ExternalInterface {
     };
   }
 
-  // UpdateAndRestart reboots the robot when an update is available.
-  // This will apply the update when the robot starts up.
   rpc UpdateAndRestart(UpdateAndRestartRequest) returns (UpdateAndRestartResponse) {
     option (google.api.http) = {
       post: "/v1/update_and_restart",
@@ -376,7 +408,6 @@ service ExternalInterface {
     };
   }
 
-  // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
   rpc UploadDebugLogs(UploadDebugLogsRequest) returns (UploadDebugLogsResponse) {
     option (google.api.http) = {
       post: "/v1/upload_debug_logs",
@@ -384,7 +415,6 @@ service ExternalInterface {
     };
   }
 
-  // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud.
   rpc CheckCloudConnection(CheckCloudRequest) returns (CheckCloudResponse) {
     option (google.api.http) = {
       post: "/v1/check_cloud_connection",
