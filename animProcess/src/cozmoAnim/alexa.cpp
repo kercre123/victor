@@ -12,9 +12,11 @@
 
 #include "cozmoAnim/alexa.h"
 #include "cozmoAnim/alexaLogger.h"
+#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
+#include <ACL/Transport/HTTP2TransportFactory.h>
 #include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
 #include <AVSCommon/Utils/Configuration/ConfigurationNode.h>
 #include <AVSCommon/Utils/DeviceInfo.h>
@@ -29,6 +31,7 @@
 #include <CBLAuthDelegate/CBLAuthDelegate.h>
 #include <CBLAuthDelegate/SQLiteCBLAuthDelegateStorage.h>
 #include <CapabilitiesDelegate/CapabilitiesDelegate.h>
+#include <ContextManager/ContextManager.h>
 #include <Notifications/SQLiteNotificationsStorage.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
@@ -206,14 +209,14 @@ void Alexa::Init()
   // for (auto configFile : configFiles) {
   //   if (configFile.empty()) {
   //     alexaClientSDK::sampleApp::ConsolePrinter::simplePrint("Config filename is empty!");
-  //     return false;
+  //     return;
   //   }
   
   //   auto configInFile = std::shared_ptr<std::ifstream>(new std::ifstream(configFile));
   //   if (!configInFile->good()) {
   //     ACSDK_CRITICAL(LX("Failed to read config file").d("filename", configFile));
   //     alexaClientSDK::sampleApp::ConsolePrinter::simplePrint("Failed to read config file " + configFile);
-  //     return false;
+  //     return;
   //   }
   
   //   configJsonStreams.push_back(configInFile);
@@ -279,7 +282,7 @@ void Alexa::Init()
    * Creating the CapabilitiesDelegate - This component provides the client with the ability to send messages to the
    * Capabilities API.
    */
-  m_capabilitiesDelegate = alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate::create(
+  auto m_capabilitiesDelegate = alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate::create(
     authDelegate, miscStorage, httpPut, customerDataManager, config, deviceInfo
   );
   if (!m_capabilitiesDelegate) {
@@ -287,6 +290,137 @@ void Alexa::Init()
     return;
   }
   m_capabilitiesDelegate->addCapabilitiesObserver(userInterfaceManager);
+  
+  // add a capability (authentication won't work without it)
+  // this one doesnt work
+//  {
+//    auto systemCapabilityProvider = capabilityAgents::system::SystemCapabilityProvider::create();
+//    if (!systemCapabilityProvider) {
+//      ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSystemCapabilityProvider"));
+//      return;
+//    }
+//    if (!(m_capabilitiesDelegate->registerCapability(systemCapabilityProvider))) {
+//      ACSDK_ERROR(
+//                  LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "System"));
+//      return;
+//    }
+//  }
+  
+  /*
+   * Creating the Attachment Manager - This component deals with managing attachments and allows for readers and
+   * writers to be created to handle the attachment.
+   */
+  auto attachmentManager = std::make_shared<avsCommon::avs::attachment::AttachmentManager>(
+                                                                                           avsCommon::avs::attachment::AttachmentManager::AttachmentType::IN_PROCESS);
+  
+  /*
+   * Creating the Context Manager - This component manages the context of each of the components to update to AVS.
+   * It is required for each of the capability agents so that they may provide their state just before any event is
+   * fired off.
+   */
+  auto contextManager = contextManager::ContextManager::create();
+  if (!contextManager) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateContextManager"));
+    return;
+  }
+  
+  /*
+   * Create a factory for creating objects that handle tasks that need to be performed right after establishing
+   * a connection to AVS.
+   */
+  auto m_postConnectSynchronizerFactory = acl::PostConnectSynchronizerFactory::create(contextManager);
+  
+  /*
+   * Create a factory to create objects that establish a connection with AVS.
+   */
+  auto transportFactory = std::make_shared<acl::HTTP2TransportFactory>(m_postConnectSynchronizerFactory);
+  
+  /*
+   * Creating the message router - This component actually maintains the connection to AVS over HTTP2. It is created
+   * using the auth delegate, which provides authorization to connect to AVS, and the attachment manager, which helps
+   * ACL write attachments received from AVS.
+   */
+  auto m_messageRouter = std::make_shared<acl::MessageRouter>(authDelegate, attachmentManager, transportFactory);
+  
+  auto m_dialogUXStateAggregator = std::make_shared<avsCommon::avs::DialogUXStateAggregator>();
+  m_dialogUXStateAggregator->addObserver(userInterfaceManager);
+  
+  std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
+    connectionObservers = {userInterfaceManager};
+  
+  /*
+   * Creating the connection manager - This component is the overarching connection manager that glues together all
+   * the other networking components into one easy-to-use component.
+   */
+  auto m_connectionManager =
+  acl::AVSConnectionManager::create(m_messageRouter, false, connectionObservers, {m_dialogUXStateAggregator});
+  if (!m_connectionManager) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateConnectionManager"));
+    return;
+  }
+  
+  auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
+  auto internetConnectionMonitor =
+  avsCommon::utils::network::InternetConnectionMonitor::create(httpContentFetcherFactory);
+  
+  if (!internetConnectionMonitor) {
+    ACSDK_CRITICAL(LX("initializeFailed").d("reason", "internetConnectionMonitor was nullptr"));
+    return;
+  }
+  
+  auto messageStorage1 = alexaClientSDK::certifiedSender::SQLiteMessageStorage::create(config);
+  std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage{std::move(messageStorage1)};
+  /*
+   * Creating our certified sender - this component guarantees that messages given to it (expected to be JSON
+   * formatted AVS Events) will be sent to AVS.  This nicely decouples strict message sending from components which
+   * require an Event be sent, even in conditions when there is no active AVS connection.
+   */
+  auto m_certifiedSender = certifiedSender::CertifiedSender::create(
+                                                               m_connectionManager, m_connectionManager, messageStorage, customerDataManager);
+  if (!m_certifiedSender) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateCertifiedSender"));
+    return;
+  }
+  
+  
+  /*
+   * Creating the Exception Sender - This component helps the SDK send exceptions when it is unable to handle a
+   * directive sent by AVS. For that reason, the Directive Sequencer and each Capability Agent will need this
+   * component.
+   */
+  auto m_exceptionSender1 = avsCommon::avs::ExceptionEncounteredSender::create(m_connectionManager);
+  if (!m_exceptionSender1) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateExceptionSender"));
+    return;
+  }
+  std::shared_ptr<avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> m_exceptionSender{m_exceptionSender1.release()};
+  
+    /*
+     * Creating the Speech Synthesizer - This component is the Capability Agent that implements the SpeechSynthesizer
+     * interface of AVS.
+     */
+  auto m_speechSynthesizer = capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer::create(m_exceptionSender);
+//    auto m_speechSynthesizer = capabilityAgents::speechSynthesizer::SpeechSynthesizer::create(
+//                                                                                         speakMediaPlayer,
+//                                                                                         m_connectionManager,
+//                                                                                         m_audioFocusManager,
+//                                                                                         contextManager,
+//                                                                                         m_exceptionSender,
+//                                                                                         m_dialogUXStateAggregator);
+  if (!m_speechSynthesizer) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSpeechSynthesizer"));
+    return;
+  }
+
+  //m_speechSynthesizer->addObserver(m_dialogUXStateAggregator);
+  if (!(m_capabilitiesDelegate->registerCapability(m_speechSynthesizer))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "SpeechSynthesizer"));
+    return;
+  }
+  
+  
   
   // try connecting
   m_capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();

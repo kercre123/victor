@@ -16,11 +16,14 @@ if (VICOS)
 endif()
 
 set(AVS_LIBS
+  ACL
   AVSCommon
   CapabilitiesDelegate
   CBLAuthDelegate
   RegistrationManager
   SQLiteStorage
+  ContextManager
+  CertifiedSender
 )
 
 #ACL

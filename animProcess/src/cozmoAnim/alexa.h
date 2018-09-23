@@ -11,6 +11,7 @@ namespace Anki {
 namespace Vector {
 
 class Alexa : private Util::noncopyable
+{
 public:
   void Init();
 private:
