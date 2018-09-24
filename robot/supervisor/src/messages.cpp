@@ -84,9 +84,9 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
-        robotState_.accel.x = imuData.acc_x;
-        robotState_.accel.y = imuData.acc_y;
-        robotState_.accel.z = imuData.acc_z;
+        robotState_.accel.x = imuData.accel[0];
+        robotState_.accel.y = imuData.accel[1];
+        robotState_.accel.z = imuData.accel[2];
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];

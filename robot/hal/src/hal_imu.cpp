@@ -111,12 +111,10 @@ void ProcessIMUEvents()
   }
   
   for (int i=0; i < imu_read_samples; i++) {
-    imuData.acc_x = rawData[i].acc[0] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
-    imuData.acc_y = rawData[i].acc[1] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
-    imuData.acc_z = rawData[i].acc[2] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
-    imuData.rate_x = rawData[i].gyro[0] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
-    imuData.rate_y = rawData[i].gyro[1] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
-    imuData.rate_z = rawData[i].gyro[2] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+    for (int j=0 ; j<3 ; j++) {
+      imuData.accel[j] = rawData[i].acc[j]  * IMU_ACCEL_SCALE_G  * MMPS2_PER_GEE;
+      imuData.gyro[j]  = rawData[i].gyro[j] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+    }
     imuData.temperature_degC = IMU_TEMP_RAW_TO_C(rawData[i].temperature);
     PushIMU(imuData);
   }
@@ -216,12 +214,12 @@ bool HAL::IMUReadData(HAL::IMU_DataStructure &imuData)
   TimeStamp_t now = HAL::GetTimeStamp();
   if (now - lastIMURead > 4) {
     // TEMP HACK: Send 0s because on my Nexus 5x, the gyro values are kinda crazy.
-    imuData.acc_x = 0.f;
-    imuData.acc_y = 0.f;
-    imuData.acc_z = 9800.f;
-    imuData.rate_x = 0.f;
-    imuData.rate_y = 0.f;
-    imuData.rate_z = 0.f;
+    imuData.accel[0] = 0.f;
+    imuData.accel[1] = 0.f;
+    imuData.accel[2] = 9800.f;
+    imuData.gyro[0] = 0.f;
+    imuData.gyro[1] = 0.f;
+    imuData.gyro[2] = 0.f;
 
     lastIMURead = now;
     return true;

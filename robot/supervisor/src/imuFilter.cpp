@@ -36,6 +36,7 @@
 #include "util/container/minMaxQueue.h"
 
 #include <array>
+#include <cmath>
 
 #define DEBUG_IMU_FILTER 0
 
@@ -662,9 +663,9 @@ namespace Anki {
              ABS(gyro_[2]) > GYRO_MOTION_THRESHOLD)) ||
 
             (!IsBiasFilterComplete() &&
-             (ABS(imu_data_.rate_x) > GYRO_MOTION_PRECALIB_THRESHOLD ||
-              ABS(imu_data_.rate_y) > GYRO_MOTION_PRECALIB_THRESHOLD ||
-              ABS(imu_data_.rate_z) > GYRO_MOTION_PRECALIB_THRESHOLD)) ||
+             (ABS(imu_data_.gyro[0]) > GYRO_MOTION_PRECALIB_THRESHOLD ||
+              ABS(imu_data_.gyro[1]) > GYRO_MOTION_PRECALIB_THRESHOLD ||
+              ABS(imu_data_.gyro[2]) > GYRO_MOTION_PRECALIB_THRESHOLD)) ||
 
             ABS(accel_robot_frame_high_pass[0]) > ACCEL_MOTION_THRESH ||
             ABS(accel_robot_frame_high_pass[1]) > ACCEL_MOTION_THRESH ||
@@ -721,7 +722,7 @@ namespace Anki {
         f32 headAngle = HeadController::GetAngleRad();
 
         if (prevHeadAngle_ != UNINIT_HEAD_ANGLE) {
-          const f32 accelBasedPitch = atan2f(imu_data_.acc_x, imu_data_.acc_z) - headAngle;
+          const f32 accelBasedPitch = atan2f(imu_data_.accel[0], imu_data_.accel[2]) - headAngle;
           const f32 gyroBasedPitch = pitch_ - (gyro_robot_frame[1] * CONTROL_DT) - (headAngle - prevHeadAngle_);
 
           // Complementary filter to mostly trust gyro integration for current pitch in the short term
@@ -775,9 +776,9 @@ namespace Anki {
         ////// Gyro Update //////
 
         // Bias corrected gyro readings
-        gyro_[0] = imu_data_.rate_x - gyro_bias_filt[0];
-        gyro_[1] = imu_data_.rate_y - gyro_bias_filt[1];
-        gyro_[2] = imu_data_.rate_z - gyro_bias_filt[2];
+        for (int i=0 ; i<3 ; i++) {
+          gyro_[i] = imu_data_.gyro[i] - gyro_bias_filt[i];
+        }
 
 #ifndef SIMULATOR
         // VECTOR: Correct for observed sensitivity error on z axis of gyro (VIC-285)
@@ -790,8 +791,7 @@ namespace Anki {
         // Update gyro bias filter
         DetectMotion();
 
-        const f32 rawGyro[3] = { imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z };
-        UpdateGyroBiasFilter(rawGyro);
+        UpdateGyroBiasFilter(imu_data_.gyro);
           
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
@@ -838,18 +838,16 @@ namespace Anki {
 
 
         ///// Accelerometer update /////
-
-        accel_filt[0] = LowPassFilter_single(accel_filt[0], imu_data_.acc_x, ACCEL_FILT_COEFF);
-        accel_filt[1] = LowPassFilter_single(accel_filt[1], imu_data_.acc_y, ACCEL_FILT_COEFF);
-        accel_filt[2] = LowPassFilter_single(accel_filt[2], imu_data_.acc_z, ACCEL_FILT_COEFF);
+          
+        LowPassFilter(accel_filt, imu_data_.accel, ACCEL_FILT_COEFF);
 
         // Compute accelerations in robot frame
-        const f32 xzAccelMagnitude = sqrtf(imu_data_.acc_x * imu_data_.acc_x + imu_data_.acc_z * imu_data_.acc_z);
-        const f32 accel_angle_imu_frame = atan2_fast(imu_data_.acc_z, imu_data_.acc_x);
+        const f32 xzAccelMagnitude = std::hypot(imu_data_.accel[0], imu_data_.accel[2]);
+        const f32 accel_angle_imu_frame = atan2_fast(imu_data_.accel[2], imu_data_.accel[0]);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
 
         accel_robot_frame[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
-        accel_robot_frame[1] = imu_data_.acc_y;
+        accel_robot_frame[1] = imu_data_.accel[1];
         accel_robot_frame[2] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
 
 
@@ -864,15 +862,11 @@ namespace Anki {
         HighPassFilter(accel_robot_frame_high_pass, accel_robot_frame_filt, prev_accel_robot_frame_filt, HP_ACCEL_FILT_COEFF);
 
         // Absolute values (fall-detection)
-        abs_accel_robot_frame_filt[0] = ABS(accel_robot_frame_filt[0]);
-        abs_accel_robot_frame_filt[1] = ABS(accel_robot_frame_filt[1]);
-        abs_accel_robot_frame_filt[2] = ABS(accel_robot_frame_filt[2]);
-
-        accelMagnitudeSqrd_ = imu_data_.acc_x * imu_data_.acc_x +
-                              imu_data_.acc_y * imu_data_.acc_y +
-                              imu_data_.acc_z * imu_data_.acc_z;
-
-
+        accelMagnitudeSqrd_ = 0;
+        for (int i=0 ; i<3 ; i++) {
+          abs_accel_robot_frame_filt[i] = ABS(accel_robot_frame_filt[i]);
+          accelMagnitudeSqrd_ += (imu_data_.accel[i] * imu_data_.accel[i]);
+        }
 
 #if(DEBUG_IMU_FILTER)
         PERIODIC_PRINT(200, "Accel angle %f %f\n", accel_angle_imu_frame, accel_angle_robot_frame);
@@ -892,7 +886,7 @@ namespace Anki {
         rot_ += dAngle;
 
         //MadgwickAHRSupdateIMU(gyro_[0], gyro_[1], gyro_[2],
-        //                      imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
+        //                      imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
 
 
         // XXX: Commenting this out because pickup detection seems to be firing
@@ -955,12 +949,10 @@ namespace Anki {
             imuRawDataMsg_.order = 2;  // 2 == last msg of sequence
           }
 
-          imuRawDataMsg_.a[0] = (int16_t) imu_data_.acc_x; // mm/s^2
-          imuRawDataMsg_.a[1] = (int16_t) imu_data_.acc_y;
-          imuRawDataMsg_.a[2] = (int16_t) imu_data_.acc_z;
-          imuRawDataMsg_.g[0] = (int16_t) 1000.f * imu_data_.rate_x; // millirad/sec
-          imuRawDataMsg_.g[1] = (int16_t) 1000.f * imu_data_.rate_y;
-          imuRawDataMsg_.g[2] = (int16_t) 1000.f * imu_data_.rate_z;
+          for (int i=0 ; i<3 ; i++) {
+            imuRawDataMsg_.a[i] = (int16_t) imu_data_.accel[i]; // mm/s^2
+            imuRawDataMsg_.g[i] = (int16_t) 1000.f * imu_data_.gyro[i]; // millirad/sec
+          }
 
           RobotInterface::SendMessage(imuRawDataMsg_);
           imuRawDataMsg_.order = 1;    // 1 == intermediate msg of sequence

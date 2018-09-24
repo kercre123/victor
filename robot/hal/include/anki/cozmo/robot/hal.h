@@ -90,13 +90,8 @@ u8 GetWatchdogResetCounter(void);
 /// IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
 struct IMU_DataStructure
 {
-  f32 acc_x;  ///< mm/s/s
-  f32 acc_y;  ///< mm/s/s
-  f32 acc_z;  ///< mm/s/s
-  f32 rate_x; ///< rad/s
-  f32 rate_y; ///< rad/s
-  f32 rate_z; ///< rad/s
-
+  f32 accel[3];  ///< mm/s/s
+  f32 gyro[3]; ///< rad/s
   f32 temperature_degC;
 };
 
