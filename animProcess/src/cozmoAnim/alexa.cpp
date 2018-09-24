@@ -13,6 +13,7 @@
 #include "cozmoAnim/alexa.h"
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
+#include "cozmoAnim/alexaMicrophone.h"
 #include "cozmoAnim/alexaSpeaker.h"
 //#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
@@ -401,6 +402,10 @@ void Alexa::Init()
 //    return;
 //  }
   
+  // create a microphone
+  m_microphone = AlexaMicrophone::create(sharedDataStream);
+  m_microphone->startStreamingMicrophoneData();
+  
   m_capabilitiesDelegate->addCapabilitiesObserver(m_client);
   
   // try connecting
@@ -416,6 +421,13 @@ void Alexa::ButtonPress()
 {
   if( !m_client->notifyOfTapToTalk(*m_tapToTalkAudioProvider).get() ) {
     PRINT_NAMED_WARNING("WHATNOW", "Failed to notify tap to talk");
+  }
+}
+
+void Alexa::ProcessMicDataPayload(const RobotInterface::MicData& payload)
+{
+  if( m_microphone ) {
+    m_microphone->ProcessMicDataPayload(payload);
   }
 }
   

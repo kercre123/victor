@@ -1,3 +1,4 @@
+#include "cozmoAnim/alexaSpeaker.h"
 ///*
 // * File:          cozmoAnim/animEngine.cpp
 // * Date:          6/26/2017

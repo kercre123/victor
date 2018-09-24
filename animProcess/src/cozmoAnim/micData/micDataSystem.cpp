@@ -135,6 +135,7 @@ MicDataSystem::~MicDataSystem()
 void MicDataSystem::ProcessMicDataPayload(const RobotInterface::MicData& payload)
 {
   _micDataProcessor->ProcessMicDataPayload(payload);
+  _alexa->ProcessMicDataPayload(payload);
 }
 
 void MicDataSystem::RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT)

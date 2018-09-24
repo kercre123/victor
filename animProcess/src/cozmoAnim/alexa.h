@@ -17,6 +17,11 @@ namespace Anki {
 namespace Vector {
 
 class AlexaClient;
+class AlexaMicrophone;
+  
+  namespace RobotInterface {
+    struct MicData;
+  }
   
 class Alexa : private Util::noncopyable
 {
@@ -24,12 +29,16 @@ public:
   void Init();
   
   void ButtonPress();
+  
+  void ProcessMicDataPayload(const RobotInterface::MicData& payload);
 private:
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> m_capabilitiesDelegate;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> m_tapToTalkAudioProvider;
   
   std::shared_ptr<AlexaClient> m_client;
+  
+  std::shared_ptr<AlexaMicrophone> m_microphone;
   
   std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> m_TTSSpeaker;
 };

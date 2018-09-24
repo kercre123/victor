@@ -5,7 +5,8 @@
 #include "util/logging/logging.h"
 #include <memory>
 
-#include "cozmoAnim/alexaSpeaker.h"
+#include <AVSCommon/Utils/MediaPlayer/MediaPlayerInterface.h>
+
 
 namespace Anki {
 namespace Vector {
