@@ -6,8 +6,8 @@ import (
 
 // CheckUsername returns whether or not the given username is available
 // (and an error if it could not be determined)
-func CheckUsername(username string) (bool, error) {
-	c, _, err := newClient()
+func CheckUsername(envName, username string) (bool, error) {
+	c, _, err := newClient(envName)
 	if err != nil {
 		return false, err
 	}

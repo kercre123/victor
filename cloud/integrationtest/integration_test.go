@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/anki/sai-go-cli/config"
+	"github.com/anki/sai-go-util/http/apiclient"
 	"github.com/anki/sai-token-service/model"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
@@ -16,7 +18,9 @@ import (
 )
 
 const (
-	testUserID       = "joep.vangassel@anki.com"
+	envName               = "dev"
+	enableAccountCreation = true
+
 	testUserPassword = "ankisecret"
 
 	testLogFile   = "/var/log/syslog"
@@ -47,10 +51,17 @@ func parseToken(token string) (*model.Token, error) {
 type IntegrationTestSuite struct {
 	suite.Suite
 
+	testID           string
+	testUserID       string
+	testUserPassword string
+
 	robotInstance *testableRobot
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
+	// Create credentials for test user
+	s.testID = "0000"
+	s.testUserID = fmt.Sprintf("test.%s@anki.com", s.testID)
 
 	s.robotInstance = &testableRobot{}
 	go s.robotInstance.run(urlConfigFile)
@@ -74,6 +85,21 @@ func (s *IntegrationTestSuite) getCredentials() (*model.Token, error) {
 	return parseToken(jwtResponse.JwtToken)
 }
 
+func (s *IntegrationTestSuite) createTestAccount() (apiclient.Json, error) {
+	if _, err := config.Load("", true, envName, "default"); err != nil {
+		return nil, err
+	}
+
+	if ok, err := accounts.CheckUsername(envName, s.testUserID); err != nil {
+		return nil, err
+	} else if !ok {
+		fmt.Printf("Email %s already has an account\n", s.testUserID)
+		return nil, nil
+	}
+
+	return accounts.DoCreate(envName, s.testUserID, testUserPassword)
+}
+
 func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 	require := require.New(s.T())
 
@@ -83,9 +109,16 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 	// time). Not all steps are included as some entities (e.g. switchboard and gateway) are
 	// not part of the test setup.
 
+	// Step 0: Create a new user test account
+	if enableAccountCreation {
+		json, err := s.createTestAccount()
+		require.NoError(err)
+		logIfNoError(err, "Created account %v\n", json)
+	}
+
 	// Step 1 & 2: User Authentication request to Accounts (user logs into Chewie)
 	// Note: this is currently hardwired to the dev environment
-	session, _, err := accounts.DoLogin(testUserID, testUserPassword)
+	session, _, err := accounts.DoLogin(envName, s.testUserID, testUserPassword)
 	require.NoError(err)
 	logIfNoError(err, "Logged in %q obtained session token %q\n", session.UserID, session.Token)
 
