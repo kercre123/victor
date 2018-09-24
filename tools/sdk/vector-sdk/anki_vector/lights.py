@@ -15,7 +15,7 @@
 """Helper routines for dealing with Vector's lights and colors."""
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['MAX_COLOR_PROFILE', 'WHITE_BALANCED_BACKPACK_PROFILE', 'WHITE_BALANCED_CUBE_PROFILE',
+__all__ = ['MAX_COLOR_PROFILE', 'WHITE_BALANCED_CUBE_PROFILE',
            'blue_light', 'cyan_light', 'green_light', 'magenta_light', 'off_light',
            'red_light', 'white_light', 'yellow_light',
            'Color', 'ColorProfile', 'Light', 'package_request_params']
@@ -80,20 +80,13 @@ MAX_COLOR_PROFILE = ColorProfile(red_multiplier=1.0,
 #: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
 # TODO: Balance this more carefully once robots with proper color pipe
 # hardware becomes available
-WHITE_BALANCED_BACKPACK_PROFILE = ColorProfile(red_multiplier=1.0,
-                                               green_multiplier=0.825,
-                                               blue_multiplier=0.81)
-
-#: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
-# TODO: Balance this more carefully once robots with proper color pipe
-# hardware becomes available
 WHITE_BALANCED_CUBE_PROFILE = ColorProfile(red_multiplier=1.0,
                                            green_multiplier=0.95,
                                            blue_multiplier=0.7)
 
 
 class Light:
-    """Lights are used with Vector's LightCube and backpack.
+    """Lights are used with Vector's Cube
 
     Lights may either be "on" or "off", though in practice any colors may be
     assigned to either state (including no color/light).

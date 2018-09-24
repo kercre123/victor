@@ -279,13 +279,6 @@ service ExternalInterface {
     };
   }
 
-  rpc SetBackpackLights(SetBackpackLightsRequest) returns (SetBackpackLightsResponse) {
-    option (google.api.http) = {
-      post: "/v1/set_backpack_lights",
-      body: "*"
-    };
-  }
-
   // Check the current state of the battery.
   rpc BatteryState(BatteryStateRequest) returns (BatteryStateResponse) {
     option (google.api.http) = {

@@ -24,7 +24,7 @@ import configparser
 import functools
 from pathlib import Path
 
-from . import (animation, audio, backpack, behavior, camera,
+from . import (animation, audio, behavior, camera,
                connection, events, exceptions, faces, motors,
                screen, photos, proximity, sync, util,
                viewer, world)
@@ -137,7 +137,6 @@ class Robot:
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
         self._audio: audio.AudioComponent = None
-        self._backpack: backpack.BackpackComponent = None
         self._behavior: behavior.BehaviorComponent = None
         self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
@@ -205,13 +204,6 @@ class Robot:
         if self._audio is None:
             raise exceptions.VectorNotReadyException("AudioComponent is not yet initialized")
         return self._audio
-
-    @property
-    def backpack(self) -> backpack.BackpackComponent:
-        """A reference to the BackpackComponent instance."""
-        if self._backpack is None:
-            raise exceptions.VectorNotReadyException("BackpackComponent is not yet initialized")
-        return self._backpack
 
     @property
     def behavior(self) -> behavior.BehaviorComponent:
@@ -542,7 +534,6 @@ class Robot:
         # Initialize components
         self._anim = animation.AnimationComponent(self)
         self._audio = audio.AudioComponent(self)
-        self._backpack = backpack.BackpackComponent(self)
         self._behavior = behavior.BehaviorComponent(self)
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)

@@ -349,7 +349,7 @@ update_time: .require_ip
 help: .PHONY
 	@env -i make -rnpq --no-print-directory .DEFAULT 2>/dev/null | grep "^[^%[:space:]]*:" | grep -v Makefile | awk '{ print substr($$1, 1, length($$1)-1) }' | sort | uniq | column
 
-IGNORE_FILES := test_backpack_light_profiles.py test_backpack_lights.py test_cube_lights.py test_say_text.py
+IGNORE_FILES := test_cube_lights.py test_say_text.py
 TEST_FILES := $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 $(foreach file,$(IGNORE_FILES),| grep -v $(file)))
 
 $(addprefix run_,$(TEST_FILES)): run_%: % .require_ip

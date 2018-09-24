@@ -8,7 +8,6 @@ The API
 
     anki_vector
     anki_vector.animation
-    anki_vector.backpack
     anki_vector.behavior
     anki_vector.camera
     anki_vector.color

@@ -140,18 +140,6 @@ func SliceToArray(msg []uint32) [3]uint32 {
 	return arr
 }
 
-func ProtoSetBackpackLightsToClad(msg *extint.SetBackpackLightsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetBackpackLEDs(&gw_clad.SetBackpackLEDs{
-		OnColor:               SliceToArray(msg.OnColor),
-		OffColor:              SliceToArray(msg.OffColor),
-		OnPeriodMs:            SliceToArray(msg.OnPeriodMs),
-		OffPeriodMs:           SliceToArray(msg.OffPeriodMs),
-		TransitionOnPeriodMs:  SliceToArray(msg.TransitionOnPeriodMs),
-		TransitionOffPeriodMs: SliceToArray(msg.TransitionOffPeriodMs),
-		Offset:                [3]int32{0, 0, 0},
-	})
-}
-
 func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
 	return &extint.CladRect{
 		XTopLeft: msg.XTopLeft,
@@ -1795,18 +1783,6 @@ func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLift
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
 	return response, nil
-}
-
-func (service *rpcService) SetBackpackLights(ctx context.Context, in *extint.SetBackpackLightsRequest) (*extint.SetBackpackLightsResponse, error) {
-	_, err := engineCladManager.Write(ProtoSetBackpackLightsToClad(in))
-	if err != nil {
-		return nil, err
-	}
-	return &extint.SetBackpackLightsResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
 }
 
 func (service *rpcService) BatteryState(ctx context.Context, in *extint.BatteryStateRequest) (*extint.BatteryStateResponse, error) {
