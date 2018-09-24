@@ -4,6 +4,8 @@ package integrationtest
 // flows (that can also be used for load testing).
 
 import (
+	"anki/robot"
+	"anki/token"
 	"ankidev/accounts"
 	"clad/cloud"
 	"fmt"
@@ -25,6 +27,7 @@ const (
 
 	testLogFile   = "/var/log/syslog"
 	urlConfigFile = "integrationtest/server_config.json"
+	certDir       = "/device_certs"
 )
 
 func logIfNoError(err error, format string, a ...interface{}) {
@@ -59,6 +62,10 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
+	// Enable client certs and set custom key pair dir
+	token.UseClientCert = true
+	robot.DefaultCloudDir = certDir
+
 	// Create credentials for test user
 	s.testID = "0000"
 	s.testUserID = fmt.Sprintf("test.%s@anki.com", s.testID)
