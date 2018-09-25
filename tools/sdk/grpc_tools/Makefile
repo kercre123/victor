@@ -20,9 +20,9 @@ endif
 MAC_VECTOR_HOSTNAME := Vector-Local
 
 ifeq ("$(WEBOTS)","1")
-curl_command := curl --resolve $(MAC_VECTOR_HOSTNAME):8443:127.0.0.1 --cacert trust_mac.cert --header "Authorization: Bearer 8675309" https://$(MAC_VECTOR_HOSTNAME):8443
+curl_command := $(shell ../victor_curl.py -s Local) 
 else
-curl_command := curl --resolve $(ROBOT_HOSTNAME):443:$(ANKI_ROBOT_HOST) --cacert trust.cert --header "Authorization: Bearer 8675309" https://$(ROBOT_HOSTNAME)
+curl_command := $(shell ../victor_curl.py)
 endif
 
 all: go python

@@ -40,13 +40,16 @@ except ImportError:
                 ))
 
 class Connection:
-    def __init__(self, serial, port=443):
+    def __init__(self, serial):
         config_file = str(Path.home() / ".anki_vector" / "sdk_config.ini")
         config = configparser.ConfigParser()
         config.read(config_file)
         self.info = {**config[serial]}
-        self.port = port
-        self.proxies = {'https://{}'.format(self.info["name"]): 'https://{}:{}'.format(self.info["ip"], port)}
+        if "port" in self.info:
+            self.port = self.info["port"]
+        else:
+            self.port = "443"
+        self.proxies = {'https://{}'.format(self.info["name"]): 'https://{}:{}'.format(self.info["ip"], self.port)}
         print(self.info)
         self.session = requests.Session()
         self.session.mount("https://", host_header_ssl.HostHeaderSSLAdapter())
@@ -89,9 +92,7 @@ class Connection:
 
 @pytest.fixture(scope="module")
 def vector_connection():
-    if os.environ.get('FORCE_LIVE_ROBOT', None) is not None:
-        serial = os.environ.get('ANKI_ROBOT_SERIAL', None)
-        if serial is None:
-            sys.exit("Please set 'ANKI_ROBOT_SERIAL' or unset 'FORCE_LIVE_ROBOT'")
-        return Connection(serial)
-    return Connection("Local", port=8443)
+    serial = os.environ.get('ANKI_ROBOT_SERIAL', None)
+    if serial is None:
+        sys.exit("Please set 'ANKI_ROBOT_SERIAL' environment variable with 'export ANKI_ROBOT_SERIAL=<your robot's serial number>'. To run with webots set your serial number to 'Local'")
+    return Connection(serial)
