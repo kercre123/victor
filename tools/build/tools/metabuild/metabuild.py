@@ -362,16 +362,10 @@ def go_project(name,
                search_base,
                dir):
 
-    gopaths = os.environ['GOPATH'].split(':')
-    deps = cxx_glob(search_base,
-                    [os.path.relpath(gopaths[0], search_base)],
-                    FindSrc.ANKI_GO_SRC_EXTS,
-                    platform=list(FindSrc.ANKI_BUILD_PLATFORMS))
-
-    srcs = all_glob(search_base, [dir])
+    deps = go_deps('./' + os.path.join(search_base, dir))
 
     file_map = {
-        name + ".srcs.lst" : srcs + deps,
+        name + ".srcs.lst" : deps,
     }
 
     return file_map
@@ -409,6 +403,10 @@ def go_deps(pkg, testonly = False):
     # convert string that looks like [file1 file2 file3] to array of files, and prefix
     # with the given dir
     def get_sources(prefix, s):
+        if prefix.startswith('/src/_/'):
+            # lack of trailing slash compared to above (included there to be specific w/ matching)
+            # is intentional
+            prefix = prefix[len('/src/_'):]
         filenames = s.replace('[', '').replace(']', '').split()
         return [os.path.join(prefix, x) for x in filenames]
 

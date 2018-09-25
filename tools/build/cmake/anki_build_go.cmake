@@ -171,7 +171,7 @@ endmacro()
 # usage: anki_build_go_c_library(mytarget generated_header_variable "path/to/source/directory"
 #                                "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
 macro(anki_build_go_c_library target_name gensrc_var srclist_dir extra_deps)
-  anki_build_absolute_source_list(${target_name} ${srclist_dir})
+  anki_build_source_list(${target_name} ${srclist_dir})
 
   # set the locations of the .a and .h files that will be generated
   set(__gobuild_out "${CMAKE_CURRENT_BINARY_DIR}/${target_name}/${target_name}.a")
@@ -210,7 +210,7 @@ endmacro()
 # usage: anki_build_go_executable(mytarget "path/to/source/directory" "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
 
 macro(anki_build_go_executable target_name srclist_dir extra_deps)
-  anki_build_absolute_source_list(${target_name} ${srclist_dir})
+  anki_build_source_list(${target_name} ${srclist_dir})
 
   set(__gobuild_out "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${target_name}")
   set(__gobuild_out_full "")
