@@ -216,7 +216,7 @@ TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
   // a list of the named completedUserIntents(.json), the behavior that responds to it, and the HLAI state that should follow
   std::vector< std::tuple<std::string, BehaviorID, std::string> > expected = {
     { "fist_bump",       BEHAVIOR_ID(FistBumpVoiceCommand),   "Observing" },
-    { "keep_away",       BEHAVIOR_ID(KeepawayVoiceCommand),   "Socializing" },
+  //{ "keep_away",       BEHAVIOR_ID(KeepawayVoiceCommand),   "Socializing" }, // removed in https://github.com/anki/voice-intent-resolution-config/pull/33/files
     { "roll_cube",       BEHAVIOR_ID(RollCubeVoiceCommand),   "Observing"   },
     { "meet_victor",     BEHAVIOR_ID(MeetVictor),             "Socializing" },
   //{ "imperative_come", BEHAVIOR_ID(ComeHereVoiceCommand),   "Socializing" }, // todo: come here needs a look for face in order to activate
