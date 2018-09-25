@@ -28,7 +28,7 @@
     #define ANKI_DEV_CHEATS         1 // This is the expected behavior on "release" builds, overridden with command-line defines for shipping builds
   #endif
   #ifndef ANKI_PROFILING_ENABLED
-    #define ANKI_PROFILING_ENABLED  1
+    #define ANKI_PROFILING_ENABLED  0
   #endif
 #else
   #define ANKI_DEVELOPER_CODE     1
