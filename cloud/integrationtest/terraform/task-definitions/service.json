@@ -1,0 +1,31 @@
+[
+    {
+        "environment": [
+            {
+                "name": "ENVIRONMENT",
+                "value": "loadtest"
+            },
+            {
+                "name": "ENABLE_ACCOUNT_CREATION",
+                "value": "${enable_account_creation}"
+            },
+            {
+                "name": "TEST_ID",
+                "value": "${test_id}"
+            }
+        ],
+        "name": "container_name",
+        "cpu": ${cpu},
+        "image": "${image}",
+        "memory": ${memory},
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-create-group": "true",
+                "awslogs-group": "awslogs-load-test",
+                "awslogs-region": "${region}",
+                "awslogs-stream-prefix": "awslogs-load-test"
+            }
+        }
+    }
+  ]
