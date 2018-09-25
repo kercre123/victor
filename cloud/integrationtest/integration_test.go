@@ -13,6 +13,7 @@ import (
 
 	"github.com/anki/sai-go-cli/config"
 	"github.com/anki/sai-go-util/http/apiclient"
+	"github.com/anki/sai-go-util/log"
 	"github.com/anki/sai-token-service/model"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
@@ -30,12 +31,8 @@ const (
 	certDir       = "/device_certs"
 )
 
-func logIfNoError(err error, format string, a ...interface{}) {
-	if err != nil {
-		fmt.Println("Error", err)
-	} else {
-		fmt.Printf(format, a...)
-	}
+func init() {
+	alog.ToStdout()
 }
 
 // Copied from "anki/token/jwt" (unexported)
@@ -83,6 +80,28 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.robotInstance.closeClients()
 }
 
+func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a ...interface{}) {
+	testName := s.T().Name()
+
+	if err != nil {
+		alog.Error{
+			"test_name":      testName,
+			"action":         action,
+			"test_user_name": s.testUserID,
+			"status":         "error",
+			"error":          err,
+		}.Log()
+	} else {
+		alog.Info{
+			"test_name":      testName,
+			"action":         action,
+			"test_user_name": s.testUserID,
+			"status":         "ok",
+			"message":        fmt.Sprintf(format, a...),
+		}.Log()
+	}
+}
+
 func (s *IntegrationTestSuite) getCredentials() (*model.Token, error) {
 	jwtResponse, err := s.robotInstance.tokenClient.Jwt()
 	if err != nil {
@@ -119,25 +138,30 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 	// Step 0: Create a new user test account
 	if enableAccountCreation {
 		json, err := s.createTestAccount()
+		s.logIfNoError(err, "create_account", "Created account %v\n", json)
 		require.NoError(err)
-		logIfNoError(err, "Created account %v\n", json)
 	}
 
 	// Step 1 & 2: User Authentication request to Accounts (user logs into Chewie)
 	// Note: this is currently hardwired to the dev environment
 	session, _, err := accounts.DoLogin(envName, s.testUserID, testUserPassword)
+	if session != nil {
+		s.logIfNoError(err, "account_login", "Logged in user %q obtained session %q\n", session.UserID, session.Token)
+	} else {
+		s.logIfNoError(err, "account_login", "Login returned nil session\n")
+	}
 	require.NoError(err)
-	logIfNoError(err, "Logged in %q obtained session token %q\n", session.UserID, session.Token)
+	require.NotNil(session)
 
 	// Step 4 & 5: Switchboard sends a token request to the cloud process (no token present)
 	jwtResponse, err := s.robotInstance.tokenClient.Jwt()
+	s.logIfNoError(err, "token_jwt", "Token Jwt response=%v\n", jwtResponse)
 	require.NoError(err)
-	logIfNoError(err, "Token Jwt response=%v\n", jwtResponse)
 
 	// Step 6 & 9: Switchboard sends an auth request to the cloud process (with session token)
 	authResponse, err := s.robotInstance.tokenClient.Auth(session.Token)
+	s.logIfNoError(err, "token_auth", "Token Auth response=%v\n", authResponse)
 	require.NoError(err)
-	logIfNoError(err, "Token Auth response=%v\n", authResponse)
 	s.Equal(cloud.TokenError_NoError, authResponse.Error)
 
 	token, err := parseToken(authResponse.JwtToken)
@@ -154,16 +178,15 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 			},
 		},
 	})
+	s.logIfNoError(err, "jdocs_read", "JDOCS AppTokens Read response=%v\n", readResponse)
 	require.NoError(err)
-
-	logIfNoError(err, "JDOCS AppTokens Read response=%v\n", readResponse)
 }
 
 func (s *IntegrationTestSuite) TestLogCollector() {
 	s3Url, err := s.robotInstance.logcollectorClient.upload(testLogFile)
 	s.NoError(err)
 
-	logIfNoError(err, "File uploaded, url=%q (err=%v)", s3Url, err)
+	s.logIfNoError(err, "log_upload", "File uploaded, url=%q (err=%v)\n", s3Url, err)
 	require.NoError(s.T(), err)
 	s.NotEmpty(s3Url)
 }
@@ -184,8 +207,8 @@ func (s *IntegrationTestSuite) JdocsReadAndWriteSettings() {
 			},
 		},
 	})
+	s.logIfNoError(err, "jdocs_read", "JDOCS RobotSettings Read response=%v\n", readResponse)
 	require.NoError(err)
-	logIfNoError(err, "JDOCS RobotSettings Read response=%v\n", readResponse)
 	require.Len(readResponse.Items, 1)
 
 	writeResponse, err := s.robotInstance.jdocsClient.Write(&cloud.WriteRequest{
@@ -194,16 +217,16 @@ func (s *IntegrationTestSuite) JdocsReadAndWriteSettings() {
 		DocName: "vic.RobotSettings",
 		Doc:     readResponse.Items[0].Doc,
 	})
+	s.logIfNoError(err, "jdocs_write", "JDOCS RobotSettings Write response=%v\n", writeResponse)
 	require.NoError(err)
-	logIfNoError(err, "JDOCS RobotSettings Write response=%v\n", writeResponse)
 }
 
 func (s *IntegrationTestSuite) TestTokenRefresh() {
 	// Note: this is also tested as part of primary pairing sequence
 
 	jwtResponse, err := s.robotInstance.tokenClient.Jwt()
+	s.logIfNoError(err, "token_jwt", "Token Jwt response=%v\n", jwtResponse)
 	s.NoError(err)
-	logIfNoError(err, "Token Jwt response=%v\n", jwtResponse)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
