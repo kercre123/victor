@@ -247,21 +247,25 @@ class Connection:
         self.request_control(timeout=timeout)
 
     async def _request_handler(self):
-        """Handles generating messages for the BehaviorControl stream."""
+        """Handles generating messages for the BehaviorControl stream.""" # should be sending a msg but isn't
         while await self._control_events.request_event.wait():
             self._control_events.request_event.clear()
             if self._control_events.is_shutdown:
                 return
             msg = protocol.ControlRequest(priority=self._control_events.priority.value)
             msg = protocol.BehaviorControlRequest(control_request=msg)
-            self._logger.debug(f"Sending: {msg}")
-            yield msg
+            self._logger.debug(f"Sending: {msg}") # prove this got sent
+            print("test 1")
+            yield msg # prove that it got sent out
+            print("test 2")
+            print(msg)
             await asyncio.sleep(0.1)
+            print("test 3")
 
     async def _open_connections(self):
         """Starts the BehaviorControl stream, and handles the messages coming back from the robot."""
         try:
-            async for response in self._interface.BehaviorControl(self._request_handler()):
+            async for response in self._interface.BehaviorControl(self._request_handler()): # creates the stream. get responses/message back from gateway in this for loop.
                 response_type = response.WhichOneof("response_type")
                 if response_type == 'control_granted_response':
                     self._logger.debug(response)

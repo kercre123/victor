@@ -111,6 +111,7 @@ func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels
 	reflectedType := reflect.TypeOf(tag).String()
 	log.Println("Listening for", reflectedType)
 	manager.managerMutex.Lock()
+	log.Println("Listened for", reflectedType) // TODO put "Listened for" after each lock line
 	defer manager.managerMutex.Unlock()
 	slice := manager.managedChannels[reflectedType]
 	if slice == nil {

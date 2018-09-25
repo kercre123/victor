@@ -915,6 +915,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 }
 
 func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.BehaviorControlRequest) (*extint.GatewayWrapper, error) {
+	log.Println("BehaviorRequestToGatewayWrapper")
 	msg := &extint.GatewayWrapper{}
 	switch x := request.RequestType.(type) {
 	case *extint.BehaviorControlRequest_ControlRelease:
@@ -939,6 +940,7 @@ func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInter
 		},
 	})
 	for {
+		log.Println("BehaviorControlRequestHandler prepares request")
 		request, err := in.Recv()
 		if err != nil {
 			log.Printf("BehaviorControlRequestHandler.close: %s\n", err.Error())
@@ -953,12 +955,14 @@ func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInter
 		}
 		_, err = engineProtoManager.Write(msg)
 		if err != nil {
+			log.Println(err)
 			return
 		}
 	}
 }
 
 func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.GatewayWrapper, done chan struct{}) error {
+	log.Println("BehaviorControlResponseHandler")
 	ping := extint.BehaviorControlResponse{
 		ResponseType: &extint.BehaviorControlResponse_KeepAlive{
 			KeepAlive: &extint.KeepAlivePing{},
@@ -968,6 +972,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 	for {
 		select {
 		case <-done:
+			log.Println("BehaviorControlResponseHandler done case")
 			return nil
 		case response, ok := <-responses:
 			if !ok {
@@ -990,7 +995,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 			} else if err = out.Context().Err(); err != nil {
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
-				log.Println("Closing BehaviorControl stream:", err)
+				log.Println("Closing BehaviorControl stream in connection liveness case:", err)
 				return err
 			}
 		}
@@ -999,6 +1004,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 }
 
 func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
+	log.Println("BehaviorControl")
 	if disableStreams {
 		// Disabled for Vector 1.0 release
 		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")
@@ -1006,7 +1012,9 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 
 	done := make(chan struct{})
 
+	log.Println("BehaviorControl create channel")
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
+	log.Println("BehaviorControl channel created")
 	defer f()
 
 	go service.BehaviorControlRequestHandler(bidirectionalStream, done)
@@ -1014,6 +1022,7 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 }
 
 func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
+	log.Println("AssumeBehaviorControl")
 	if disableStreams {
 		// Disabled for Vector 1.0 release
 		return grpc.Errorf(codes.Unimplemented, "AssumeBehaviorControl disabled in message_handler.go")
@@ -1021,16 +1030,19 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 
 	done := make(chan struct{})
 
+	log.Println("AssumeBehaviorControl create channel")
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
 	defer f()
 
 	msg, err := service.BehaviorRequestToGatewayWrapper(in)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
 	_, err = engineProtoManager.Write(msg)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 

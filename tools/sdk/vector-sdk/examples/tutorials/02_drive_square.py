@@ -32,9 +32,9 @@ def main():
 
         # Use a "for loop" to repeat the indented code 4 times
         # Note: the _ variable name can be used when you don't need the value
-        for _ in range(4):
+        for _ in range(1):
             print("Drive Vector straight...")
-            robot.behavior.drive_straight(distance_mm(200), speed_mmps(50))
+            robot.behavior.drive_straight(distance_mm(100), speed_mmps(50))
 
             print("Turn Vector in place...")
             robot.behavior.turn_in_place(degrees(90))
