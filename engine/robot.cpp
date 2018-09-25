@@ -1272,6 +1272,8 @@ Result Robot::Update()
 
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
+  _cpuStats.Update();
+
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 

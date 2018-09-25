@@ -430,10 +430,21 @@ namespace Anki {
             if (IsBiasFilterComplete()) {
               // Bias filter has accumulated enough measurements while not moving.
               // Switch to slow filtering.
+              const f32 gyro_bias_deg[] = {RAD_TO_DEG_F32(gyro_bias_filt[0]),
+                                           RAD_TO_DEG_F32(gyro_bias_filt[1]),
+                                           RAD_TO_DEG_F32(gyro_bias_filt[2])};
               AnkiInfo("IMUFilter.GyroCalibrated", "%f %f %f (deg/sec)",
-                       RAD_TO_DEG_F32(gyro_bias_filt[0]),
-                       RAD_TO_DEG_F32(gyro_bias_filt[1]),
-                       RAD_TO_DEG_F32(gyro_bias_filt[2]));
+                       gyro_bias_deg[0],
+                       gyro_bias_deg[1],
+                       gyro_bias_deg[2]);
+
+              DASMSG(imu_filter_gyro_calibrated, "imu_filter.gyro_calibrated", "Gyro calibration values and duration");
+              DASMSG_SET(i1, 1000 * gyro_bias_deg[0], "X-axis gyro bias (milli-degrees)");
+              DASMSG_SET(i2, 1000 * gyro_bias_deg[1], "Y-axis gyro bias (milli-degrees)");
+              DASMSG_SET(i3, 1000 * gyro_bias_deg[2], "Z-axis gyro bias (milli-degrees)");
+              DASMSG_SET(i4, HAL::GetTimeStamp() - lastMotionDetectedTime_ms, "Time since last motion detected (ms)");
+              DASMSG_SEND();
+
               gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF_NORMAL;
               // No longer need to keep the gyro bias calibration values, so discard them to save memory
               ClearGyroBiasCalibValues();

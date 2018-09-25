@@ -24,6 +24,7 @@
 
 #include "engine/actionableObject.h"
 #include "engine/contextWrapper.h"
+#include "engine/cpuStats.h"
 #include "engine/encodedImage.h"
 #include "engine/engineTimeStamp.h"
 #include "engine/events/ankiEvent.h"
@@ -707,6 +708,8 @@ protected:
   double       _timeSinceLastImage_s = 0.0;
   double       _lastImageLatencyTime_s = 0.0;
   Util::Stats::RecentStatsAccumulator _imageStats{50};
+
+  CPUStats     _cpuStats;
 
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);
