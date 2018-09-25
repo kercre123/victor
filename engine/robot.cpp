@@ -2116,12 +2116,6 @@ Result Robot::SendAbsLocalizationUpdate() const
   return SendAbsLocalizationUpdate(histState.GetPose().GetWithRespectToRoot(), t, histState.GetFrameId());
 }
 
-Result Robot::SendHeadAngleUpdate() const
-{
-  return SendMessage(RobotInterface::EngineToRobot(
-                       RobotInterface::HeadAngleUpdate(GetComponent<FullRobotPose>().GetHeadAngle())));
-}
-
 Result Robot::SendIMURequest(const u32 length_ms) const
 {
   return SendRobotMessage<IMURequest>(length_ms);

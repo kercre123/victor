@@ -94,11 +94,6 @@ message SetHeadAngle
   uint_8   actionID = 0,
 }
 
-message HeadAngleUpdate
-{
-  float_32 newAngle,
-}
-
 // This is a turn in place to an absolute angle
 message SetBodyAngle
 {
@@ -665,7 +660,7 @@ union EngineToRobot
   MoveHead                      moveHead                    = 0x13,
   SetLiftHeight                 liftHeight                  = 0x14,
   SetHeadAngle                  headAngle                   = 0x15,
-  HeadAngleUpdate               headAngleUpdate             = 0x16,
+  //   FREE SLOT                                            = 0x16,
   SetBodyAngle                  setBodyAngle                = 0x17,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x18,
   RecordHeading                 recordHeading               = 0x19,

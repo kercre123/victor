@@ -390,10 +390,6 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
-      void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
-        HeadController::SetAngleRad(msg.newAngle);
-      }
-
       void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
       {
         SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,

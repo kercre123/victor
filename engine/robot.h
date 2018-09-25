@@ -726,9 +726,6 @@ protected:
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;
 
-  // Update the head angle on the robot
-  Result SendHeadAngleUpdate() const;
-
   // Request imu log from robot
   Result SendIMURequest(const u32 length_ms) const;
 
