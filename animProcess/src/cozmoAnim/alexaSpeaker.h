@@ -113,7 +113,6 @@ private:
   // audio controller provided by context
   AudioController* _audioController = nullptr;
   
-  StreamingWaveDataPtr _waveData;
 };
 
 } // namespace Vector

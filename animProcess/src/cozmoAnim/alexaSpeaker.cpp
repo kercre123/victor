@@ -33,6 +33,7 @@ namespace Vector{
     mp3dec_t mp3d;
     
     constexpr uint32_t kMinPlayableFrames = 8192;
+    constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kAlexaPluginId = 5;
   }
 
 using namespace alexaClientSDK;
@@ -80,52 +81,26 @@ void AlexaSpeaker::Update()
   }
   
   if( needsToPlay ) {
-    
-    // reset plugin
-    {
-      auto* pluginInterface = _audioController->GetPluginInterface();
-      DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
-      auto* plugin = pluginInterface->GetStreamingWavePortalPlugIn();
-      constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kTtsPluginId = 0;
-      plugin->ClearAudioData(kTtsPluginId);
-      // todo: lock for _waveData?
-      plugin->AddDataInstance(_waveData, kTtsPluginId);
-    }
-    
-    
-    using namespace Anki::AudioMetaData;
-    using namespace AudioEngine;
-    using AudioTtsProcessingStyle = SwitchState::Robot_Vic_External_Processing;
-    
-    //const auto gameObject = AudioEngine::ToAudioGameObject( GameObjectType::VoiceRecording );
-    //const auto eventID = AudioEngine::ToAudioEventId( GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Message );
-    const auto gameObject = AudioEngine::ToAudioGameObject( GameObjectType::TextToSpeech );
-    const auto eventID = AudioEngine::ToAudioEventId( GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Text );
-    
-    // set switch state
-    {
-      const auto switchGroup = AudioMetaData::SwitchState::SwitchGroupType::Robot_Vic_External_Processing;
-      const auto style = AudioTtsProcessingStyle::Unprocessed;
-      _audioController->SetSwitchState( static_cast<AudioEngine::AudioSwitchGroupId>(switchGroup),
-                                       static_cast<AudioEngine::AudioSwitchStateId>(style),
-                                       static_cast<AudioEngine::AudioGameObject>(gameObject) );
-    }
-    
+
     // post event
     {
+      using namespace Anki::AudioMetaData;
+      using namespace AudioEngine;
+      
+      const auto gameObject = ToAudioGameObject( GameObjectType::Default );
+      const auto eventID = ToAudioEventId( GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback );
       auto* callbackContext = new AudioCallbackContext();
       callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
       callbackContext->SetExecuteAsync( false ); // callback should run on main thread
       callbackContext->SetEventCallbackFunc( []( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
         PRINT_NAMED_ERROR("WHATNOW", "Audio finished streaming (callback)");
       });
-      
-      const auto playingID = _audioController->PostAudioEvent(eventID, gameObject );
+
+      const auto playingID = _audioController->PostAudioEvent(eventID, gameObject, callbackContext );
       if (AudioEngine::kInvalidAudioPlayingId == playingID) {
         PRINT_NAMED_ERROR("WHATNOW", "Could not play (post)");
       }
     }
-    
   }
   
 }
@@ -174,7 +149,16 @@ bool   AlexaSpeaker::play (SourceId id)
     bool sent=false;
     _offset_ms = 0;
     _first = true;
-    _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
+    
+    auto waveDataInst = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
+    {
+      auto* pluginInterface = _audioController->GetPluginInterface();
+      DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
+      auto* plugin = pluginInterface->GetStreamingWavePortalPlugIn();
+      plugin->ClearAudioData(kAlexaPluginId);
+      plugin->AddDataInstance(waveDataInst, kAlexaPluginId);
+    }
+    
     _mp3Buffer->Reset();
     
     std::array<uint8_t,kMaxReadSize> input;
@@ -216,7 +200,7 @@ bool   AlexaSpeaker::play (SourceId id)
       //if( (numRead > 0) && statusOK ) {
       PRINT_NAMED_WARNING("WHATNOW", "flush=%d", flush);
       // decode everything in the buffer thus far, leaving perhaps something that wasnt a full mp3 frame
-      const int timeDecoded_ms = Decode( _waveData, flush );
+      const int timeDecoded_ms = Decode( waveDataInst, flush );
       PRINT_NAMED_WARNING("WHATNOW", "decoded %d ms", timeDecoded_ms);
       
       if (_fd < 0) {
@@ -232,7 +216,7 @@ bool   AlexaSpeaker::play (SourceId id)
       }
     
       if( flush ) {
-        _waveData->DoneProducingData();
+        waveDataInst->DoneProducingData();
         std::stringstream ss;
         ss << readStatus;
         PRINT_NAMED_WARNING("WHATNOW", "ending because readStatus=%s", ss.str().c_str());
