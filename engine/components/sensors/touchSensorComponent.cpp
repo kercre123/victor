@@ -25,6 +25,8 @@
 #include "osState/osState.h"
 #include "webServerProcess/src/webService.h"
 
+#include "util/logging/DAS.h"
+
 namespace Anki {
 namespace Vector {
   
@@ -49,12 +51,44 @@ namespace {
   // -- min no-touch cycles since last touch to reenable baseline accumulation
   const int kBaselineMinCountNoTouch = 100; // ~3 seconds of no-touch
   
+  // maximum drift from the baseline the input reading signal to tolerate
+  const int kAllowedDifferenceFromBaseline = 25;
+  
+  // number of ticks to stay in fast calibration when trying to recover
+  // from a deviated baseline
+  const int kFastCalibrationDuration = 50;
+  
+  // minimum number of TooLow readings before we enter fast calibration
+  const int kMinTooLowReadingsForFastCalib = 50;
+  
   // press-state represented as a bool, however we require a minimum
   // number of consecutive readings in order to confirm as true
   // note: this is a filtering measure to prevent false touches from
   // firing (they tend to fluctuate wildly, and are less like to trip this)
   const int kMinConsecReadingsToConfirmPressState = 4;
   
+  // --- charger mode check constants
+  
+  // maximum number of ticks after a charger mode change was detected
+  // after which we determine that no drastic change to the
+  // measured baseline is needed
+  const int kChargerModeCheckTimeout = 135;
+  
+  // number of ticks after enabling the charger mode check to wait before
+  // taking a initial reading for accumulating into the proposal baseline
+  const int kChargerModeCheckDelayAccumulation = 10;
+  
+  // minimum number of readings to be accumulated into the proposal
+  // baseline for a post charger-mode change check
+  const int kChargerModeCheckMinBaselineReadings = 50;
+  
+  // max allowed difference between proposal and current baseline touch
+  const int kChargerModeCheckAllowedDifference = 25;
+  
+  // minimum required number of overly large difference between proposal
+  // and current touch baseline to force the current baseline to be
+  // overwritten
+  const int kChargerModeCheckMinLargeDiffCount = 50;
   
   bool devSendTouchSensor = false;
   bool devTouchSensorPressed = false;
@@ -139,11 +173,97 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
       _numConsecNoTouch++;
       if(_numConsecNoTouch >= kBaselineMinCountNoTouch) {
         DEV_ASSERT_MSG(_baseline > 0.0f, "TouchBaselineCalibrator.BaselineNotFastCalibrated", "");
-        _baseline = kBaselineFilterCoeffSlow*reading + (1.0f-kBaselineFilterCoeffSlow)*_baseline;
+        if( _durationForFastCalibration > 0 ) {
+          _baseline = kBaselineFilterCoeffFast*reading + (1.0f-kBaselineFilterCoeffFast)*_baseline;
+          _durationForFastCalibration--;
+          if(_durationForFastCalibration == 0) {
+            DASMSG(touch_baseline_fast_calibration_finished,
+                   "touch_sensor.baseline_fast_calibration_finished",
+                   "when the robot finishes fast calibration");
+            DASMSG_SET(i1, std::round(_baseline), "baseline value after fast calibration");
+            DASMSG_SEND();
+          }
+        } else {
+          _baseline = kBaselineFilterCoeffSlow*reading + (1.0f-kBaselineFilterCoeffSlow)*_baseline;
+        }
         _numConsecNoTouch = kBaselineMinCountNoTouch;
       }
     } else {
       _numConsecNoTouch = 0;
+    }
+  }
+  
+  // charger mode check handles the case where the baseline of the touch
+  // signal shifts by a large amount after switching from off-to-on or
+  // vice versa.
+  // In this mode, we:
+  // + initialize and accumulate proposal baseline, separate from the current baseline
+  // + compare the proposal and current baselines
+  // + if the difference is too large for too long, then we overwrite
+  //   the current baseline with the proposal. Otherwise, time out of
+  //   the charger mode check since it is within bounds.
+  if(_chargerModeChanged) {
+    if(_numPostChargerModeReadings < kChargerModeCheckDelayAccumulation) {
+      // built-in delay for accumulation in to the proposal baseline
+      // this is done to avoid fluctuations in the signal soon after
+      // being taken off or onto the charger
+      _numPostChargerModeReadings++;
+    } else if(_numPostChargerModeReadings == kChargerModeCheckDelayAccumulation) {
+      // first possible reading for the post charger-change for new baseline
+      _postChargerModeChangeBaseline = reading;
+      _numPostChargerModeReadings++;
+    } else {
+      // accumulate quickly because we have a finite
+      // number of readings to come up with a proposal baseline
+      _postChargerModeChangeBaseline = kBaselineFilterCoeffFast*reading + (1.0f-kBaselineFilterCoeffFast)*_postChargerModeChangeBaseline;
+      _numPostChargerModeReadings++;
+      if(_numPostChargerModeReadings > kChargerModeCheckTimeout) {
+        // did not receive enough evidence that we should overwrite the current baseline
+        PRINT_NAMED_INFO("TouchBaselineCalibrator.UpdateBaseline.NoBaselineChangeDueToChargerModeSwitch","%d",_numTicksLargeDifferenceInBaselines);
+        DASMSG(touch_charger_mode_check_no_baseline_change,
+               "touch_sensor.charger_mode_check.no_baseline_change",
+               "send when robot determines no change in the baseline needed");
+        DASMSG_SET(i1, (int)_numTicksLargeDifferenceInBaselines, "number of ticks of large deviation between proposal/current baseline");
+        DASMSG_SEND();
+        _chargerModeChanged = false;
+        ResetBaselineMonitoring();
+      } else if (_numPostChargerModeReadings > kChargerModeCheckMinBaselineReadings) {
+        _numTicksLargeDifferenceInBaselines += fabsf(_baseline - _postChargerModeChangeBaseline) > kChargerModeCheckAllowedDifference;
+        if(_numTicksLargeDifferenceInBaselines > kChargerModeCheckMinLargeDiffCount) {
+          // received enough evidence since initializing the proposal baseline to overwrite
+          PRINT_NAMED_INFO("TouchBaselineCalibrator.UpdateBaseline.BaselineChangedDueToChargerModeSwitch","%4.2f, %4.2f", _baseline, _postChargerModeChangeBaseline);
+          DASMSG(touch_charger_mode_check_baseline_changed,
+                 "touch_sensor.charger_mode_check.baseline_changed",
+                 "send when robot determines baseline should be changed");
+          DASMSG_SET(i1, std::round(_baseline), "old baseline value");
+          DASMSG_SET(i2, std::round(_postChargerModeChangeBaseline), "new baseline value");
+          DASMSG_SEND();
+          _baseline = _postChargerModeChangeBaseline;
+          _chargerModeChanged = false;
+          ResetBaselineMonitoring();
+        }
+      }
+    }
+  } else {
+    // check for the fast calibration recovery mode:
+    // if the input signal is lower than the baseline by enough units for
+    // enough consecutive readings, then we enter fast calibration mode
+    // for a preset number of ticks ( to speed up the recovery process )
+    const bool readingTooLow = (_baseline - reading) > kAllowedDifferenceFromBaseline;
+    if(readingTooLow && _durationForFastCalibration==0) {
+      _numTicksReadingsTooLowFromBaseline++;
+      if(_numTicksReadingsTooLowFromBaseline > kMinTooLowReadingsForFastCalib) {
+        PRINT_NAMED_INFO("TouchBaselineCalibrator.UpdateBaseline.FastCalibrationDueToLowSignal","%4.2f",_baseline);
+        DASMSG(touch_baseline_reading_difference_too_low,
+               "touch_sensor.baseline_reading_difference_monitor_too_low",
+               "send when robot detects the current signal input is deviating below the baseline too much for too long");
+        DASMSG_SET(i1, std::round(_baseline), "current baseline value");
+        DASMSG_SEND();
+        _durationForFastCalibration = kFastCalibrationDuration;
+        ResetBaselineMonitoring();
+      }
+    } else {
+      _numTicksReadingsTooLowFromBaseline = 0;
     }
   }
 }
@@ -151,7 +271,7 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
 // values chosen manually after inspecting some robots --- parameter sweep not necessary
 const TouchSensorComponent::FilterParameters TouchSensorComponent::_kFilterParamsForProd =
 {
-  .boxFilterSize                      = 1,
+  .boxFilterSize                      = 5,
   .dynamicThreshGap                   = 20,
   .dynamicThreshDetectFollowOffset    = 10,
   .dynamicThreshUndetectFollowOffset  = 19,
@@ -334,14 +454,28 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   }
   
   const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
   _lastRawTouchValue = msg.backpackTouchSensorRaw;
-  
   float boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw);
-
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
-
+  bool wasOnCharger = _isOnCharger;
+  _isOnCharger = (msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER) != 0;
   bool lastPressed = _isPressed; // after this tick, state may change
+  
+  // activate the charger mode check if:
+  // + we detect a change between the charger modes (off and on)
+  // + we aren't already running the charger mode check
+  // + we are not fast calibrating currently (potentially may cancel out drift)
+  if(wasOnCharger != _isOnCharger &&
+     !_baselineCalibrator.IsChargerModeCheckRunning() &&
+     !_baselineCalibrator.IsInFastCalibrationMode()) {
+    PRINT_NAMED_INFO("TouchSensorComponent.NotifyOfRobotStateInternal.BaselineChargerModeCheckActivated","");
+    DASMSG(touch_charger_mode_check_activate,
+           "touch_sensor.activate_charger_mode_check",
+           "send when robot is checking the baseline because of a charger state change");
+    DASMSG_SET(i1, (int)_isOnCharger, "whether the robot is on the charger or not");
+    DASMSG_SEND();
+    _baselineCalibrator.ActivateChargerModeCheck();
+  }
   
   if( devSendTouchSensor ) {
     _robot->Broadcast(
@@ -357,11 +491,18 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     // note: treat isPressed as false, because we cannot detect touch while uncalibrated
     _baselineCalibrator.UpdateBaseline(boxFiltVal, isPickedUp, false);
   } else {
-    // handle checks for touch input, when calibrated
     bool lastPressed = _isPressed;
-    _isPressed = ProcessWithDynamicThreshold(std::floor(_baselineCalibrator.GetBaseline()),
-                                             std::round(boxFiltVal));
+    if(!_baselineCalibrator.IsChargerModeCheckRunning()) {
+      _isPressed = ProcessWithDynamicThreshold(std::floor(_baselineCalibrator.GetBaseline()),
+                                               std::round(boxFiltVal));
+    } else {
+      // while monitoring the baseline after a charger-mode change
+      // disable touch detections (since we cannot trust it yet)
+      _isPressed = false;
+    }
     
+    // check to confirm the press state by counting the number of
+    // consecutive detections from _isPressed
     bool lastConfirmedPressState = _confirmedPressState;
     if(lastPressed != _isPressed) {
       _counterPressState = 0;
@@ -373,20 +514,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       }
     }
     
-#if ANKI_DEV_CHEATS
-    if(kTestOnlyLoggingEnabled) {
-      static FILE* fp = nullptr;
-      if(fp==nullptr) {
-        fp = fopen("/data/misc/touch.csv","w+");
-      }
-      fprintf(fp, "%d,%d,%d,%d\n",
-              _lastRawTouchValue,
-              _isPressed,
-              (int)_baselineCalibrator.GetBaseline(),
-              _confirmedPressState);
-    }
-#endif    
-    
+    // message any change in the confirmed press state
     if(lastConfirmedPressState != _confirmedPressState) {
       _robot->Broadcast(
         ExternalInterface::MessageEngineToGame(
@@ -396,6 +524,22 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
         _touchCountForWebviz++;
       }
     }
+    
+#if ANKI_DEV_CHEATS
+    if(kTestOnlyLoggingEnabled) {
+      static FILE* fp = nullptr;
+      if(fp==nullptr) {
+        fp = fopen("/data/misc/touch.csv","w+");
+      }
+      fprintf(fp, "%d,%d,%d,%d,%d\n",
+              _lastRawTouchValue,
+              _isPressed,
+              (int)_baselineCalibrator.GetBaseline(),
+              _confirmedPressState,
+              _baselineCalibrator.IsChargerModeCheckRunning());
+    }
+#endif    
+    
     DEV_ASSERT( _baselineCalibrator.IsCalibrated(), "TouchSensorComponent.ClassifyingBeforeCalibration");
     // note: the baseline calibrator uses the raw touch detection, instead of the confirmed
     //  one instead, because we prefer it to be consevative in the values that it will accumulate

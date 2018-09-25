@@ -71,6 +71,12 @@ public:
   , _numCalibrationReadings(0)
   , _numConsecNoTouch(0)
   , _maxAllowedOffsetFromBaseline(maxAllowedOffsetFromBaseline)
+  , _chargerModeChanged(false)
+  , _numPostChargerModeReadings(0)
+  , _postChargerModeChangeBaseline(-1.0f)
+  , _numTicksLargeDifferenceInBaselines(0)
+  , _numTicksReadingsTooLowFromBaseline(0)
+  , _durationForFastCalibration(0)
   {
   }
   
@@ -86,6 +92,40 @@ public:
     _numConsecNoTouch = 0;
     _numCalibrationReadings = 0;
     _numStableBaselineReadings = 0;
+    _durationForFastCalibration = 0;
+    _chargerModeChanged = false;
+    
+    ResetBaselineMonitoring();
+  }
+  
+  void ResetBaselineMonitoring()
+  {
+    // charger mode check vars
+    _postChargerModeChangeBaseline = -1.0f;
+    _numPostChargerModeReadings = 0;
+    _numTicksLargeDifferenceInBaselines = 0;
+    
+    // too-low signal detection vars
+    _numTicksReadingsTooLowFromBaseline = 0;
+  }
+  
+  void ActivateChargerModeCheck()
+  {
+    _chargerModeChanged = true;
+    
+    _postChargerModeChangeBaseline = -1.0f;
+    _numPostChargerModeReadings = 0;
+    _numTicksLargeDifferenceInBaselines = 0;
+  }
+  
+  bool IsChargerModeCheckRunning() const
+  {
+    return _chargerModeChanged;
+  }
+  
+  bool IsInFastCalibrationMode() const
+  {
+    return _durationForFastCalibration != 0 || !IsCalibrated();
   }
   
   void UpdateBaseline(float reading, bool isPickedUp, bool isPressed);
@@ -116,6 +156,29 @@ protected:
   // accummulated into the filter per tick. This value
   // is used to prevent soft touches from raising the baseline
   int _maxAllowedOffsetFromBaseline;
+  
+  // when transitioning between the on vs off charger case
+  // there is usually a DC offset between the steady states
+  bool _chargerModeChanged;
+  
+  // counter for number of accumulated readings since entering
+  // the charger mode check
+  int _numPostChargerModeReadings;
+  
+  // special baseline accumulator for when a charger mode change occurs
+  float _postChargerModeChangeBaseline;
+  
+  // counts of ticks where the preChargerBaseline and postChargerBaseline
+  // differ by too large of an amount
+  int _numTicksLargeDifferenceInBaselines;
+  
+  // counter for the number of consecutive ticks where the input readings
+  // is lower than the baseline by too great of a margin
+  int _numTicksReadingsTooLowFromBaseline;
+  
+  // the time duration in which the robot will use fast calibration
+  // for baseline accumulation
+  int _durationForFastCalibration;
 };
 
 class TouchSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
@@ -267,6 +330,12 @@ private:
   // true, if pressed confirmed
   // false, if released confirmed
   bool _confirmedPressState;
+  
+  // cache charger state of the robot, used to determine
+  // when it's may be necessary to recalibrate the touch
+  // sensor because of larger differences between off vs.
+  // on charger states
+  bool _isOnCharger;
   
   // dev-only logging members for debugging touch
   struct DevLogTouchRow
