@@ -53,7 +53,7 @@ namespace {
 
   // for checking if the state has changed since the last measurement
   const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};
-  const float   kMeasurementTolerance = .05f;
+  const float   kMeasurementTolerance = .05f;  // percentage based tolerance
   const Radians kRobotRotationTolerance_rad = 0.01f;
   const u8      kNumMeasurementsAtPose = 32;
 } // end anonymous namespace
