@@ -43,6 +43,7 @@
 
     // keep_away was removed from entity_behavior_entries_en.json in April
     // (see https://github.com/anki/voice-intent-resolution-config/pull/33/files)
+    //
     //"keep_away": {
     //  "type": "play_specific",
     //  "entity_behavior": "keep_away"
