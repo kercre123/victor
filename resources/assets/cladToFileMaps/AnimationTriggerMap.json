@@ -709,7 +709,7 @@
   },
   {
     "CladEvent": "DEPRECATED_NamedFaceInitialGreeting",
-    "AnimName" : "ag_greeting_happy"
+    "AnimName" : "ag_greeting_hello"
   },
   {
     "CladEvent": "NeutralFace",
@@ -1434,7 +1434,7 @@
   },
   {
     "CladEvent": "ReactToGoodBye",
-    "AnimName": "ag_vc_goodbye"
+    "AnimName": "ag_greeting_goodbye"
   },
   {
     "CladEvent": "ReactToGoodMorning",
