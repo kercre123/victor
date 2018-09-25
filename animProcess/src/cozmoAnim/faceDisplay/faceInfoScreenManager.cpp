@@ -99,11 +99,6 @@ namespace {
 
   // Variables for performing connectivity checks in threads
   // and triggering redrawing of screens
-  std::future<void> _mainChecksFuture;
-  std::future<void> _networkChecksFuture;
-  std::atomic<bool> _quitMainChecks{true};
-  std::atomic<bool> _quitNetworkChecks{true};
-  std::atomic<bool> _redrawMain{false};
   std::atomic<bool> _redrawNetwork{false};
   std::atomic<bool> _testingNetwork{true};
   std::atomic<CloudMic::ConnectionCode> _networkStatus{CloudMic::ConnectionCode::Connectivity};
@@ -258,25 +253,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // === Main screen ===
   auto mainEnterFcn = [this]() {
     DrawMain();
-    if (!FACTORY_TEST) {
-      // Redraw Main screen after connection checks have completed
-      _redrawMain = false;
-      _quitMainChecks = false;
-      auto mainChecksLambda = []() {
-        while (!_quitMainChecks) {
-          _redrawMain = true;
-          std::this_thread::sleep_for(std::chrono::seconds(kIPCheckPeriod_sec));
-        }
-        LOG_INFO("FaceInfoScreenManager.MainCheckLoop.Quit", "");
-      };
-      AsyncExec(_mainChecksFuture, mainChecksLambda);
-    }
-  };
-  auto mainExitFcn = []() {
-    _quitMainChecks = true;
   };
   SET_ENTER_ACTION(Main, mainEnterFcn);
-  SET_EXIT_ACTION(Main, mainExitFcn);
 
   ADD_MENU_ITEM(Main, "EXIT", None);
   // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
@@ -307,29 +285,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // === Network screen ===
   auto networkEnterFcn = [this]() {
     DrawNetwork();
-    if (!FACTORY_TEST) {
-      // Redraw Network screen after connection checks have completed
-      _redrawNetwork = false;
-      _quitNetworkChecks = false;
-      auto networkChecksLambda = [this]() {
-        while (!_quitNetworkChecks) {
-          LOG_INFO("FaceInfoScreenManager.MainCheckLoop.CheckingConnectivity", "");  
-          _context->GetMicDataSystem()->RequestConnectionStatus();     
-          _testingNetwork = true; 
-
-          std::this_thread::sleep_for(std::chrono::seconds(kIPCheckPeriod_sec));
-        }
-        LOG_INFO("FaceInfoScreenManager.NetworkCheckLoop.Quit", "");
-      };
-      AsyncExec(_networkChecksFuture, networkChecksLambda);
-    }
-  };
-  auto networkExitFcn = []() {
-    _quitNetworkChecks = true;
   };
   SET_ENTER_ACTION(Network, networkEnterFcn);
-  SET_EXIT_ACTION(Network, networkExitFcn);
-
 
   // === Recovery screen ===
   FaceInfoScreen::MenuItemAction rebootAction = [this]() {
@@ -503,20 +460,6 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   _wheelMovingForwardsCount = 0;
   _wheelMovingBackwardsCount = 0;
 
-}
-
-bool FaceInfoScreenManager::AsyncExec(std::future<void>& fut, std::function<void()> func)
-{
-  bool valid = fut.valid();
-  std::future_status status = std::future_status::ready;
-  if (valid) {
-    status = fut.wait_for(std::chrono::milliseconds(0));
-  }
-  if (status == std::future_status::ready) {
-    fut = std::async(std::launch::async, func);
-    return true;
-  } 
-  return false;
 }
 
 void FaceInfoScreenManager::DrawFAC()
@@ -1087,17 +1030,32 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 
   switch(currScreenName) {
     case ScreenName::Main:
-      if (_redrawMain) {
-        _redrawMain = false;
+    {
+      static float lastTime = 0;
+      const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if ( (now - lastTime) > kIPCheckPeriod_sec ) {
+        lastTime = now;
         DrawMain();
       }
-      break;
+      break; 
+    }
     case ScreenName::Network:
+    {
+      static float lastTime = 0;
+      const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       if (_redrawNetwork) {
         _redrawNetwork = false;
         DrawNetwork();
+      } 
+
+      if ( !FACTORY_TEST && ((now - lastTime) > kIPCheckPeriod_sec) ) {
+        LOG_INFO("FaceInfoScreenManager.Update.CheckingConnectivity", "");  
+        _context->GetMicDataSystem()->RequestConnectionStatus();   
+        _testingNetwork = true;  
+        lastTime = now;
       }
-      break;
+      break; 
+    }
     case ScreenName::SensorInfo:
       DrawSensorInfo(state);
       break;

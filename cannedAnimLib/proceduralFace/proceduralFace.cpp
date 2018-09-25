@@ -109,7 +109,7 @@ namespace {
     {ProceduralFace::Parameter::LowerLidBend,      { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {-1.f, 1.f}    }     },
     {ProceduralFace::Parameter::Saturation,        { false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::Lightness,         { false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::GlowSize,          { false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::GlowSize,          { false, true,  -1.f, 0.0f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::HotSpotCenterX,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::HotSpotCenterY,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::GlowLightness,     { false, true,  0.f, 0.f,   EyeParamCombineMethod::None,     {0.f, 1.f}   }     },
@@ -290,8 +290,7 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
       const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
       if(paramInfo.canBeUnset)
       {
-        _eyeParams[WhichEye::Left][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
-        _eyeParams[WhichEye::Right][iParam] = paramInfo.defaultValueIfCombiningWithUnset;
+        _eyeParams[eye][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
       }
     }
   }
@@ -303,8 +302,7 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
       const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
       if(paramInfo.canBeUnset)
       {
-        _eyeParams[WhichEye::Left][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
-        _eyeParams[WhichEye::Right][iParam] = paramInfo.defaultValueIfCombiningWithUnset;
+        _eyeParams[eye][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
       }
     }
   }

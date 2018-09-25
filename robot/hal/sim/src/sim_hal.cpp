@@ -515,15 +515,13 @@ namespace Anki {
 
     bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
-      const double* vals = gyro_->getValues();  // rad/s
-      IMUData.rate_x = (f32)(vals[0]);
-      IMUData.rate_y = (f32)(vals[1]);
-      IMUData.rate_z = (f32)(vals[2]);
-
-      vals = accel_->getValues();   // m/s^2
-      IMUData.acc_x = (f32)(vals[0] * 1000);  // convert to mm/s^2
-      IMUData.acc_y = (f32)(vals[1] * 1000);
-      IMUData.acc_z = (f32)(vals[2] * 1000);
+      const double* gyroVals = gyro_->getValues();  // rad/s
+      const double* accelVals = accel_->getValues();   // m/s^2
+      
+      for (int i=0 ; i<3 ; i++) {
+        IMUData.gyro[i]  = (f32)(gyroVals[i]);
+        IMUData.accel[i] = (f32)(accelVals[i] * 1000);
+      }
 
       // Compute estimated IMU temperature based on measured data from Victor prototype
 
@@ -545,9 +543,9 @@ namespace Anki {
         const float biasChangeDueToTemp_dps_per_degC = 0.08f; // zero-rate offset change as temperature changes. worst case 0.08 deg/sec per degC
         const float biasDueToTemperature_dps = (IMUData.temperature_degC - T_initial) * biasChangeDueToTemp_dps_per_degC;
 
-        IMUData.rate_x += DEG_TO_RAD(initialBias_dps[0] + biasDueToTemperature_dps);
-        IMUData.rate_y += DEG_TO_RAD(initialBias_dps[1] + biasDueToTemperature_dps);
-        IMUData.rate_z += DEG_TO_RAD(initialBias_dps[2] + biasDueToTemperature_dps);
+        for (int i=0 ; i<3 ; i++) {
+          IMUData.gyro[i] += DEG_TO_RAD(initialBias_dps[i] + biasDueToTemperature_dps);
+        }
       }
 
       static RobotInterface::ImuData batchData;
@@ -555,9 +553,9 @@ namespace Anki {
 
       // load the current sample onto the packet
       batchData.frames[sampleIdx].timestamp = HAL::GetTimeStamp();
-      batchData.frames[sampleIdx].rateX = IMUData.rate_x;
-      batchData.frames[sampleIdx].rateY = IMUData.rate_y;
-      batchData.frames[sampleIdx].rateZ = IMUData.rate_z;
+      batchData.frames[sampleIdx].rateX = IMUData.gyro[0];
+      batchData.frames[sampleIdx].rateY = IMUData.gyro[1];
+      batchData.frames[sampleIdx].rateZ = IMUData.gyro[2];
 
       // reset index and send batch packet
       if ( ++sampleIdx >= IMUConstants::IMU_BATCH_SIZE ) {
@@ -719,32 +717,6 @@ namespace Anki {
         }
          */
 
-
-        // Send block connection state when engine connects
-        static bool wasConnected = false;
-        if (!wasConnected && HAL::RadioIsConnected()) {
-
-          // Send RobotAvailable indicating sim robot
-          RobotInterface::RobotAvailable idMsg;
-          idMsg.serialNumber = 0;
-          idMsg.hwRevision = 0;
-          RobotInterface::SendMessage(idMsg);
-
-
-          // send firmware info indicating simulated robot
-          {
-            std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":1}"};
-            RobotInterface::FirmwareVersion msg;
-            msg.RESRVED = 0;
-            msg.json_length = firmwareJson.size() + 1;
-            std::memcpy(msg.json, firmwareJson.c_str(), firmwareJson.size() + 1);
-            RobotInterface::SendMessage(msg);
-          }
-
-          wasConnected = true;
-        } else if (wasConnected && !HAL::RadioIsConnected()) {
-          wasConnected = false;
-        }
 
         // Check charging status (Debug)
         if (BatteryIsOnCharger() && !wasOnCharger_) {

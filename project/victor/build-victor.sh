@@ -310,7 +310,7 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     METABUILD_INPUTS=`find . -name BUILD.in`
 
     # Process BUILD.in files (creates list of Go projects to fetch)
-    ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
+    PATH="$(dirname $GO_EXE):$PATH" ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
       -o ${GEN_SRC_DIR} \
       ${METABUILD_INPUTS}
 fi
@@ -344,7 +344,7 @@ if [ $CONFIGURE -eq 1 ]; then
     fi
 
     # Process BUILD.in files
-    ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
+    PATH="$(dirname $GO_EXE):$PATH" ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
         -o ${GEN_SRC_DIR} \
         ${METABUILD_INPUTS}
 

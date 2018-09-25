@@ -8,6 +8,7 @@
   "maxPouncesForSoloPlay":            4,
   "targetUnmovedGameEndTimeout_s":    10.0,  // Game will end with "Bored" if the cube is visibly unmoved for this long
   "noVisibleTargetGameEndTimeout_s":  8.0,   // Game will end with "Bored" if the cube goes this long unseen
+  "outOfPlayGameEndTimeout_s":        5.0,   // Game will end with "Bored" if the cube is beyond inPlayDistance too long
   "targetVisibleTimeout_s":           1.0,   // Timeout to allow brief target occlusion (e.g. finger on marker)
   "globalOffsetDist_mm":              0.0,   // Tuneable value to compensate animations vs. physical distances
   "inPlayDistance_mm":                190.0, // If the cube moves beyond here, victor goes to a standby posture

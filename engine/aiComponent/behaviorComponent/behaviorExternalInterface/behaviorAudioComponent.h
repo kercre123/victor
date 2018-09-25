@@ -19,12 +19,12 @@
 #define __Basestation_Audio_BehaviorAudioComponent_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/events/ankiEventMgr.h"
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/robotPublicState.h"
 
 
@@ -65,7 +65,7 @@ public:
   int GetRound() const { return _round; }
   
   // Change music switch state for Ai Goals in freeplay
-  void UpdateActivityMusicState(BehaviorID activityID);
+  void UpdateActivityMusicState(const BehaviorID& activityID);
   
 protected:
   

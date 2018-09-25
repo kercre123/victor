@@ -62,11 +62,7 @@ message UiDeviceAvailable {
 }
 
 message RobotConnectionResponse {
-    RobotConnectionResult result,
-    uint_32 fwVersion,
-    uint_32 serialNumber,
-    int_32  bodyHWVersion,
-    BodyColor bodyColor // see robotStatusAndActions.clad
+    RobotConnectionResult result
 }
 
 message RobotDisconnected {
@@ -117,11 +113,7 @@ structure CameraConfig {
 // All settings that are static and unique for a given robot
 message PerRobotSettings {
   uint_32 serialNumberHead,
-  uint_32 serialNumberBody,
-  uint_32 modelNumber,
-  int_32  hwVersion,
-  CameraConfig cameraConfig,
-  BodyColor color // see robotStatusAndActions.clad
+  CameraConfig cameraConfig
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -645,22 +637,9 @@ structure CurrentTimingInfo
   float_32 currentTime_ms
 }
 
-message LatencyMessage {
-  TimingInfo wifiLatency,
-  TimingInfo extSendQueueTime,
-  TimingInfo sendQueueTime,
-  TimingInfo recvQueueTime,
-  TimingInfo unityEngineLatency,
-  CurrentTimingInfo imageLatency
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // State
 ///////////////////////////////////////////////////////////////////////////////
-message UpdateEngineState {
-  EngineState oldState,
-  EngineState newState
-}
 
 message EngineErrorCodeMessage {
   EngineErrorCode errorCode

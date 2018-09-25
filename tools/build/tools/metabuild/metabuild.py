@@ -9,6 +9,9 @@ import re
 import os
 import sys
 
+import subprocess
+check_output = lambda x : subprocess.check_output(x).decode('cp437').strip()
+
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.insert(0, os.path.join(THIS_DIR, '..'))
@@ -383,6 +386,79 @@ def go_pathfiles(name,
 
     return file_map
 
+# helper function - use `go list` command to generate array of source files that the given package depends
+# on, recursively
+# if testonly == True, will only return array of test files in the given package (non-recursive)
+def go_deps(pkg, testonly = False):
+    import_dir = os.path.join("{{.Root}}", "src", "{{.ImportPath}}")
+    file_string = " {{.GoFiles}} {{.CgoFiles}} {{.IgnoredGoFiles}} {{.HFiles}} {{.CFiles}} {{.CXXFiles}}" \
+        if not testonly else " {{.TestGoFiles}} {{.XTestGoFiles}}"
+    deps_str = "{{.Goroot}} " + import_dir + file_string
+    pkg_args = ["go", "list", "-f", deps_str]
+    if not testonly:
+        pkg_args += ["-deps"]
+    pkg_args += [pkg]
+
+    pkg_deps = check_output(pkg_args).split('\n')
+
+    # filter out standard library packages - first item will be true/false for whether
+    # dep package is in standard library
+    pkg_deps = [x.split(' ', 1) for x in pkg_deps]
+    pkg_deps = [x[1] for x in pkg_deps if x[0] != "true"]
+
+    # convert string that looks like [file1 file2 file3] to array of files, and prefix
+    # with the given dir
+    def get_sources(prefix, s):
+        filenames = s.replace('[', '').replace(']', '').split()
+        return [os.path.join(prefix, x) for x in filenames]
+
+    # next token is the directory these files live in, followed by filename lists
+    pkg_deps = [x.split(' ', 1) for x in pkg_deps]
+    pkg_deps = [get_sources(x[0], x[1]) for x in pkg_deps]
+
+    # pkg_deps is now an array of filename arrays - unify them into one
+    pkg_deps = sum(pkg_deps, [])
+    return pkg_deps
+
+# given a directory, make a file map with dirname.gotestdir.lst, which contains list of all packages
+# inside it that contain Go test files, and thus can run unit tests
+def go_testdirs(dir, exclude):
+    unslashed = dir.replace('/', '_')
+    gopaths = os.environ['GOPATH'].split(':')
+    gopath_src = os.path.join(gopaths[0], "src")
+    search_base = os.path.join(gopath_src, dir)
+
+    all_subdirs = check_output("find {} -type d -mindepth 1".format(search_base).split(' ')).split('\n')
+    # map full path subdirs to relative package paths
+    all_packages = [os.path.relpath(x, gopath_src) for x in all_subdirs]
+    def has_test_files(pkg):
+        return check_output(["go", "list", "-f", "{{.TestGoFiles}} {{.XTestGoFiles}}", pkg]) != "[] []"
+    test_packages = [x for x in all_packages if has_test_files(x) and x not in exclude]
+
+    file_map = {
+        unslashed + ".gotestdir.lst": test_packages
+    }
+    return file_map
+
+# for each testable package in the above list: package.gotest.lst contains a list of all the source
+# files that package (and its tests) depend on to build
+def go_testdeps(dir, exclude):
+    unslashed = dir.replace('/', '_')
+
+    base_map = go_testdirs(dir, exclude)
+    test_packages = list(base_map.items())[0][1]
+
+    file_map = {}
+
+    for pkg in test_packages:
+        pkg_test = go_deps(pkg, True)
+        pkg_deps = go_deps(pkg)
+        deps = pkg_deps + pkg_test
+        unslashed = pkg.replace('/', '_')
+        file_map[unslashed + ".gotest.lst"] = deps
+
+    return file_map
+
 class BuildContext(object):
     def __init__(self):
         self.globals = {}
@@ -421,6 +497,14 @@ class BuildProcessor(object):
         filemap = go_pathfiles(name, self.build_env.dirname, dir)
         self.projects[name] = filemap
 
+    def _go_testdirs(self, dir, exclude=[]):
+        filemap = go_testdirs(dir, exclude)
+        self.projects[dir] = filemap
+
+    def _go_testdeps(self, dir, exclude=[]):
+        filemap = go_testdeps(dir, exclude)
+        self.projects[dir] = filemap
+
     def _cxx_src_glob(self, include_paths, includes=[], excludes=[], platform=None):
         return cxx_src_glob(self.build_env.dirname, include_paths, includes, excludes, platform)
 
@@ -448,6 +532,7 @@ class BuildProcessor(object):
             'cxx_header_glob': self._nofunc_stub,
             'cxx_project': self._nofunc_stub,
             'go_project': self._go_pathfiles,
+            'go_testdir': self._go_testdirs,
             'asset_project': self._nofunc_stub,
             'glob': self._nofunc_stub,
             'subdir_glob': self._nofunc_stub,
@@ -461,6 +546,7 @@ class BuildProcessor(object):
             'cxx_header_glob': self._cxx_header_glob,
             'cxx_project': self._cxx_project,
             'go_project': self._go_project,
+            'go_testdir': self._go_testdeps,
             'asset_project': self._asset_project,
             'glob': self._glob,
             'subdir_glob': self._subdir_glob,

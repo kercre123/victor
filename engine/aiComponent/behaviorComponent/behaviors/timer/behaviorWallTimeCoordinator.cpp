@@ -21,6 +21,8 @@
 #include "engine/faceWorld.h"
 #include "osState/wallTime.h"
 
+#include <iomanip>
+
 namespace Anki {
 namespace Vector {
   
@@ -102,9 +104,8 @@ void BehaviorWallTimeCoordinator::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
-  StartTTSGeneration();
-  struct tm unused;
-  if(WallTime::getInstance()->GetApproximateLocalTime(unused)){
+  if(WallTime::getInstance()->GetApproximateLocalTime(_dVars.time)){
+    StartTTSGeneration();
     TransitionToFindFaceInFront();
   }else{
     TransitionToICantDoThat();
@@ -169,6 +170,8 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
   };
   _iConfig.showWallTime->SetShowClockCallback(playUtteranceCallback);
 
+  _iConfig.showWallTime->SetOverrideDisplayTime(_dVars.time);
+
   ANKI_VERIFY(_iConfig.showWallTime->WantsToBeActivated(),
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
   DelegateIfInControl(_iConfig.showWallTime.get(), [this](){
@@ -180,36 +183,35 @@ void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::StartTTSGeneration()
 {
-  struct tm localTime;
-  if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
-    return;
-  }
-
   const auto& settingsManager = GetBEI().GetSettingsManager();
   const bool clockIs24Hour = settingsManager.GetRobotSettingAsBool(external_interface::RobotSetting::clock_24_hour);
-  const int divisor = clockIs24Hour ? 24 : 12;
 
-  const int currentMins = localTime.tm_min;
-  int currentHours = localTime.tm_hour % divisor;
+  auto textOfTime = GetTTSStringForTime(_dVars.time, clockIs24Hour);
 
-  if( !clockIs24Hour && currentHours == 0 ) {
-    currentHours = 12;
-  }
+  const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
+  const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
 
   auto callback = [this](const UtteranceState& utteranceState)
   {
     _dVars.utteranceState = utteranceState;
   };
-  
-  const std::string hourStr = currentHours < 10 ? "0" + std::to_string(currentHours) : std::to_string(currentHours);
-  const std::string minStr  = currentMins  < 10 ? "0" + std::to_string(currentMins)  : std::to_string(currentMins);
-
-  std::string textOfTime = hourStr + ":" + minStr;
-  const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
-  const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
 
   _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(textOfTime, triggerType, style,
                                                                              1.0f, callback);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorWallTimeCoordinator::GetTTSStringForTime(struct tm& localTime, const bool clockIs24Hour)
+{
+  std::stringstream ss;
+  if( clockIs24Hour ) {
+    ss << std::put_time(&localTime, "%H:%M");
+  }
+  else {
+    ss << std::put_time(&localTime, "%I:%M");
+  }
+
+  return ss.str();
 }
 
 

@@ -39,7 +39,7 @@ BehaviorDisplayWallTime::~BehaviorDisplayWallTime()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDisplayWallTime::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
+void BehaviorDisplayWallTime::GetBehaviorOperationModifiersProceduralClock( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
@@ -47,6 +47,24 @@ void BehaviorDisplayWallTime::GetBehaviorOperationModifiers( BehaviorOperationMo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWallTime::GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const 
 {
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWallTime::SetOverrideDisplayTime(struct tm& time)
+{
+  if( _hasTimeOverride ) {
+    PRINT_NAMED_WARNING("BehaviorDisplayWallTime.TimeAlreadyOverriden",
+                        "attempting to overide time but there is already an overide presnt");
+  }
+  _timeOverride = time;
+  _hasTimeOverride = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWallTime::OnBehaviorDeactivated()
+{
+  _hasTimeOverride = false;
 }
 
 
@@ -62,7 +80,7 @@ bool BehaviorDisplayWallTime::WantsToBeActivatedBehavior() const
 {
   // Ensure we can get local time
   struct tm unused;
-  return WallTime::getInstance()->GetApproximateLocalTime(unused);
+  return _hasTimeOverride || WallTime::getInstance()->GetApproximateLocalTime(unused);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,15 +91,22 @@ bool BehaviorDisplayWallTime::ShouldDimLeadingZeros() const
   return !is24Hour;
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFunction() const
 {
   return [this](const int offset){
     std::map<Vision::SpriteBoxName, int> outMap;
     struct tm localTime;
-    if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
-      return outMap;
+    if( _hasTimeOverride ) {
+      localTime = _timeOverride;
+    }
+    else {
+      if(!WallTime::getInstance()->GetApproximateLocalTime(localTime)){
+        PRINT_NAMED_ERROR("BehaviorProceduralClock.BuildTimerFunction.NoTime",
+                          "Behavior '%s' activated when it had a valid wall time, but now it does not",
+                          GetDebugLabel().c_str());
+        return outMap;
+      }
     }
     
     // Convert to seconds

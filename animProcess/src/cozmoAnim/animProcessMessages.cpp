@@ -724,30 +724,13 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   // to display the NO_ENGINE_COMMS fault code
   static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
 
-  // Check for changes in connection state to engine and send RobotAvailable and
-  // FirmwareVersion messages when engine connects
+  // Check for changes in connection state to engine and send RobotAvailable
+  // message when engine connects
   static bool wasConnected = false;
   const bool isConnected = AnimComms::IsConnectedToEngine();
   if (!wasConnected && isConnected) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
-    RobotInterface::RobotAvailable idMsg;
-    idMsg.hwRevision = 0;
-    idMsg.serialNumber = OSState::getInstance()->GetSerialNumber();
-    RobotInterface::SendAnimToEngine(idMsg);
-
-    // send firmware info indicating simulated or physical robot type
-    {
-#ifdef SIMULATOR
-      std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":0}"};
-#else
-      std::string firmwareJson{"{\"version\":0,\"time\":0}"};
-#endif
-      RobotInterface::FirmwareVersion msg;
-      msg.RESRVED = 0;
-      msg.json_length = firmwareJson.size() + 1;
-      std::memcpy(msg.json, firmwareJson.c_str(), firmwareJson.size() + 1);
-      RobotInterface::SendAnimToEngine(msg);
-    }
+    RobotInterface::SendAnimToEngine(RobotAvailable());
 
     // Clear any scheduled fault code display
     displayFaultCodeTime_nanosec = 0;

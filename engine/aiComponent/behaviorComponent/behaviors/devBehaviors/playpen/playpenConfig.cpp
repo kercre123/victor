@@ -15,55 +15,6 @@
 
 namespace Anki {
 namespace Util {
-  
-// ConsoleVar specialization for BodyColor
-template<>
-ConsoleVar<Vector::BodyColor>::ConsoleVar(Vector::BodyColor& value, const char* id, const char* category, bool unregisterInDestructor)
-: IConsoleVariable( id, category, unregisterInDestructor )
-, _value( value )
-, _minValue( Vector::BodyColor::UNKNOWN )
-, _maxValue( Vector::BodyColor::COUNT )
-, _defaultValue( value )
-{
-}
-
-template<> bool ConsoleVar<Vector::BodyColor>::ParseText(const char* text)
-{
-  _value = Vector::BodyColorFromString(text);
-  return true;
-}
-
-template<> std::string ConsoleVar<Vector::BodyColor>::ToString() const
-{
-  return Vector::EnumToString(_value);
-}
-  
-template<> std::string ConsoleVar<Vector::BodyColor>::GetDefaultAsString() const
-{
-  return Vector::EnumToString(_defaultValue);
-}
-  
-template<> int64_t ConsoleVar<Vector::BodyColor>::GetMinAsInt64() const
-{
-  return numeric_cast_clamped<int64_t>((int)_minValue);
-}
-
-template<> int64_t ConsoleVar<Vector::BodyColor>::GetMaxAsInt64() const
-{
-  return numeric_cast_clamped<int64_t>((int)_maxValue);
-}
-
-template<> uint64_t ConsoleVar<Vector::BodyColor>::GetMinAsUInt64() const
-{
-  return numeric_cast_clamped<uint64_t>((int)_minValue);
-}
-
-template<> uint64_t ConsoleVar<Vector::BodyColor>::GetMaxAsUInt64() const
-{
-  return numeric_cast_clamped<uint64_t>((int)_maxValue);
-}
-
-template<> void ConsoleVar<Vector::BodyColor>::ToggleValue() { _value = (Vector::BodyColor)(!(((bool)(_value)))); }
 
 // ConsoleVar specialization for CustomObjectMarker
 template<>
@@ -135,7 +86,6 @@ WRAP_EXTERN_CONSOLE_VAR(f32,  kMinBatteryVoltage,     "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32,  kMinFirmwareVersion,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(int,  kMinHardwareVersion,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32,  kMfgIDTimeout_ms,       "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(BodyColor, kMinBodyColor,     "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u16,  kMinExpectedTouchValue, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u16,  kMaxExpectedTouchValue, "Playpen");
 

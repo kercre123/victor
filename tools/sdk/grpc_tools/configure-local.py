@@ -15,7 +15,7 @@ except:
 def main():
     # Write cert to a file
     home = Path.home()
-    anki_dir = home / ".anki-vector"
+    anki_dir = home / ".anki_vector"
     os.makedirs(str(anki_dir), exist_ok=True)
     config_file = str(anki_dir / "sdk_config.ini")
     print("Writing config file to '{}'...".format(colored(config_file, "cyan")))

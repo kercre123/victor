@@ -42,6 +42,7 @@
 #include "clad/types/dockingSignals.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/pathMotionProfile.h"
+#include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 #include <ctime>
 
@@ -210,23 +211,8 @@ void BehaviorDockingTestSimple::OnBehaviorActivated()
   struct tm* now = localtime(&t);
   
   Write("=====Start DockingTestSimple=====");
-  const RobotInterface::FWVersionInfo& fw = robot.GetRobotToEngineImplMessaging().GetFWVersionInfo();
   std::stringstream ss;
-  ss << "Firmware Version\n";
-  ss << "Body Version: " << std::hex << fw.bodyVersion << "\n";
-  ss << "RTIP Version: " << std::hex << fw.rtipVersion << "\n";
-  ss << "Wifi Version: " << std::hex << fw.wifiVersion << "\n";
-  ss << "ToEngineCLADHash: ";
-  for(auto iter = fw.toEngineCLADHash.begin(); iter != fw.toEngineCLADHash.end(); ++iter)
-  {
-    ss << std::hex << (int)(*iter) << " ";
-  }
-  ss << "\nToRobotCLADHash: ";
-  for(auto iter = fw.toRobotCLADHash.begin(); iter != fw.toRobotCLADHash.end(); ++iter)
-  {
-    ss << std::hex << (int)(*iter) << " ";
-  }
-  ss << "\n";
+  ss << "OS Version: " << OSState::getInstance()->GetOSBuildVersion() << "\n";
   Write(ss.str());
   
   ss.clear();

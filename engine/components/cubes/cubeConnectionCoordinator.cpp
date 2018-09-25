@@ -16,6 +16,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
@@ -23,7 +24,9 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotComponents_fwd.h"
+
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 #include "webServerProcess/src/webService.h"
@@ -77,6 +80,7 @@ CubeConnectionCoordinator::SubscriberRecord::SubscriberRecord(ICubeConnectionSub
 CubeConnectionCoordinator::CubeConnectionCoordinator()
 : IDependencyManagedComponent( this, RobotComponentID::CubeConnectionCoordinator )
 , _coordinatorState(ECoordinatorState::UnConnected)
+, _connectionStartTime_s(0.0f)
 , _nonBackgroundSubscriberCount(0)
 , _connectionAttemptFinished(false)
 , _connectionAttemptSucceeded(false)
@@ -198,6 +202,10 @@ void CubeConnectionCoordinator::SubscribeToCubeConnection(ICubeConnectionSubscri
                                                           const bool connectInBackground, 
                                                           const float expireIn_s)
 {
+  if(_subscriptionRecords.empty()){
+    _firstSubscriber = subscriber->GetCubeConnectionDebugName();
+  }
+
   SubscriberRecord newRecord(subscriber, connectInBackground, expireIn_s);
 
   // Prevent duplicate subscriptions
@@ -268,6 +276,7 @@ bool CubeConnectionCoordinator::UnsubscribeFromCubeConnection(ICubeConnectionSub
     // This timeout gets reset in TransitionToConnectedBackground, but it should be set from here so that we know
     // when to disconnect if already in ConnectedBackground state when our last subscriber drops
     _timeToDisconnect_s = currentTime_s + kBackgroundConnectionTimeout_s;
+    _lastSubscriber = subscriber->GetCubeConnectionDebugName();
   }
 
 #if ANKI_DEV_CHEATS
@@ -292,6 +301,14 @@ void CubeConnectionCoordinator::CheckForConnectionLoss(const RobotCompMap& depen
       _subscribersDumpedByConnectionLoss.insert(subscriberRecord.subscriber);
       subscribersRemovedThisTick.insert(subscriberRecord.subscriber);
     }
+
+    float connectionDuration_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _connectionStartTime_s; 
+    DASMSG(cube_connection_lost,
+           "cube_connection_coordinator.unexpected_disconnect",
+           "Coordinator detected unexpected connection loss");
+    DASMSG_SET(i1, !_subscriptionRecords.empty(), "1 if there were any subscribers at disconnect, 0 or null otherwise");
+    DASMSG_SET(i2, std::round(connectionDuration_s), "Connection duration in seconds");
+    DASMSG_SEND();
 
     // Clear out antequated state
     _subscriptionRecords.clear();
@@ -424,6 +441,12 @@ void CubeConnectionCoordinator::RequestConnection(const RobotCompMap& dependentC
 {
   SET_STATE(Connecting);
 
+  DASMSG(cube_connection_requested,
+         "cube_connection_coordinator.connection_requested",
+         "Cube connection request sent from Coordinator");
+  DASMSG_SET(s1, _firstSubscriber, "First subscription for current connection");
+  DASMSG_SEND();
+
   PRINT_NAMED_INFO("CubeConnectionCoordinator.RequestingConnection",
                     "Requesting cube connection from CubeCommsComponent");
 
@@ -449,6 +472,14 @@ void CubeConnectionCoordinator::RequestConnection(const RobotCompMap& dependentC
 void CubeConnectionCoordinator::RequestDisconnect(const RobotCompMap& dependentComps)
 {
   SET_STATE(Disconnecting);
+
+  float connectionDuration_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _connectionStartTime_s; 
+  DASMSG(cube_disconnect_requested,
+         "cube_connection_coordinator.disconnect_requested",
+         "No subscribers remaining. Disconnect requested by coordinator");
+  DASMSG_SET(s1, _lastSubscriber, "Last subscriber before current connection closed");
+  DASMSG_SET(i1, std::round(connectionDuration_s), "Connection duration in seconds");
+  DASMSG_SEND();
 
   PRINT_NAMED_INFO("CubeConnectionCoordinator.RequestingDisconnect",
                     "Requesting disconnection from CubeCommsComponent");
@@ -493,6 +524,7 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
     }
 
   } else {
+    _connectionStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     auto& cubeComms = dependentComps.GetComponent<CubeCommsComponent>();
     auto& bw = dependentComps.GetComponent<BlockWorld>();
     _connectedCubeActiveID = cubeComms.GetConnectedCubeActiveId();

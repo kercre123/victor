@@ -20,9 +20,9 @@ endif
 MAC_VECTOR_HOSTNAME := Vector-Local
 
 ifeq ("$(WEBOTS)","1")
-curl_command := curl --resolve $(MAC_VECTOR_HOSTNAME):8443:127.0.0.1 --cacert trust_mac.cert --header "Authorization: Bearer 8675309" https://$(MAC_VECTOR_HOSTNAME):8443
+curl_command := $(shell ../victor_curl.py -s Local) 
 else
-curl_command := curl --resolve $(ROBOT_HOSTNAME):443:$(ANKI_ROBOT_HOST) --cacert trust.cert --header "Authorization: Bearer 8675309" https://$(ROBOT_HOSTNAME)
+curl_command := $(shell ../victor_curl.py)
 endif
 
 all: go python
@@ -349,7 +349,7 @@ update_time: .require_ip
 help: .PHONY
 	@env -i make -rnpq --no-print-directory .DEFAULT 2>/dev/null | grep "^[^%[:space:]]*:" | grep -v Makefile | awk '{ print substr($$1, 1, length($$1)-1) }' | sort | uniq | column
 
-IGNORE_FILES := test_backpack_light_profiles.py test_backpack_lights.py test_cube_lights.py test_say_text.py
+IGNORE_FILES := test_cube_lights.py test_say_text.py
 TEST_FILES := $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 $(foreach file,$(IGNORE_FILES),| grep -v $(file)))
 
 $(addprefix run_,$(TEST_FILES)): run_%: % .require_ip

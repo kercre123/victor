@@ -24,6 +24,7 @@
 
 #include "engine/actionableObject.h"
 #include "engine/contextWrapper.h"
+#include "engine/cpuStats.h"
 #include "engine/encodedImage.h"
 #include "engine/engineTimeStamp.h"
 #include "engine/events/ankiEvent.h"
@@ -165,10 +166,13 @@ public:
 
   const RobotID_t GetID() const;
 
-  // Specify whether this robot is a physical robot or not.
-  // Currently, adjusts headCamPose by slop factor if it's physical.
-  void SetPhysicalRobot(bool isPhysical);
-  bool IsPhysical() const {return _isPhysical;}
+  bool IsPhysical() const {
+#ifdef SIMULATOR
+    return false;
+#else        
+    return true;
+#endif    
+  }
 
   // Whether or not to ignore all incoming external messages that create/queue actions
   // Use with care: Make sure a call to ignore is eventually followed by a call to unignore
@@ -594,17 +598,6 @@ public:
   static RobotState GetDefaultRobotState();
 
   const u32 GetHeadSerialNumber() const { return _serialNumberHead; }
-  void SetHeadSerialNumber(const u32 num) { _serialNumberHead = num; }
-  const u32 GetBodySerialNumber() const { return _serialNumberBody; }
-  void SetBodySerialNumber(const u32 num) { _serialNumberBody = num; }
-
-  void SetModelNumber(const u32 num) { _modelNumber = num; }
-
-  void SetBodyHWVersion(const s32 num) { _bodyHWVersion = num; }
-  const s32 GetBodyHWVersion() const   { return _bodyHWVersion;}
-
-  void SetBodyColor(const s32 color);
-  const BodyColor GetBodyColor() const { return _bodyColor; }
 
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
@@ -628,13 +621,8 @@ protected:
   RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier
   RobotID_t _ID;
-  bool      _isPhysical       = false;
   u32       _serialNumberHead = 0;
-  u32       _serialNumberBody = 0;
-  u32       _modelNumber      = 0;
-  s32       _bodyHWVersion    = -1;
-  BodyColor _bodyColor        = BodyColor::UNKNOWN;
-
+  
   // Whether or not sync was acknowledged by physical robot
   bool _syncRobotAcked = false;
 
@@ -721,6 +709,8 @@ protected:
   double       _lastImageLatencyTime_s = 0.0;
   Util::Stats::RecentStatsAccumulator _imageStats{50};
 
+  CPUStats     _cpuStats;
+
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);
 
@@ -735,9 +725,6 @@ protected:
 
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;
-
-  // Update the head angle on the robot
-  Result SendHeadAngleUpdate() const;
 
   // Request imu log from robot
   Result SendIMURequest(const u32 length_ms) const;

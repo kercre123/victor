@@ -17,7 +17,8 @@
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"

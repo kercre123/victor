@@ -96,6 +96,7 @@ target_link_libraries(cozmo_engine
   cubeBleClient
   osState
   micdata
+  robotLogUploader
   # vendor
   ${PROTOBUF_LIBS}
   ${FLATBUFFERS_LIBS}

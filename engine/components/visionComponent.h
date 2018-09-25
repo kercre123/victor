@@ -326,8 +326,6 @@ struct DockingErrorSignal;
     bool ReleaseImage(Vision::ImageRGB& image);
 
     f32 GetBodyTurnSpeedThresh_degPerSec() const;
-    
-    void SetPhysicalRobot(const bool isPhysical);
 
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
@@ -445,6 +443,7 @@ struct DockingErrorSignal;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
 
+    void SetLiftCrossBar();
 
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));

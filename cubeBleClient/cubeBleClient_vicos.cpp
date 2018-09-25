@@ -160,6 +160,9 @@ bool CubeBleClient::UpdateInternal()
                           "%s has taken more than %.2f seconds - aborting.",
                           connectionAttemptTimedOut ? "Connection attempt" : "Firmware check or update",
                           connectionAttemptTimedOut ? kConnectionAttemptTimeout_sec : kFirmwareUpdateTimeout_sec);
+      DASMSG(cube_connection_failed, "cube.connection_failed", "Connection attempt timed out");
+      DASMSG_SET(s1, _currentCube, "Cube factory ID");
+      DASMSG_SEND();
       // Inform callbacks that the connection attempt has failed
       for (const auto& callback : _connectionFailedCallbacks) {
         callback(_currentCube);

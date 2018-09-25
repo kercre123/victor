@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
 
-#TODO Update this comment and anything else in file to be good for the public.
+#TODO Update disclaimer text and anything else in file to be good for the public.
 
 """
-This script is needed to use the python sdk as of now (when this file was created) because
-we have turned on client authorization on the robot. This means that all connections will
-require a client token guid to be valid.
+This script must be run successfully in order to use the Anki Vector Python SDK.
 
-Running this script requires that the Robot be on and connected to the same network as your
-laptop. If you have any trouble, please mention it immediately in the #vic-coz-sdk channel.
+This script will set up your computer to be able to authenticate with the Vector
+robot when you run a Vector Python SDK program.
 
-
-**IMPORTANT NOTE**
-
-Use _build/mac/Release/bin/tokprovision to provision your robot (not needed if you have connected with a recent build of Chewie)
-
-******************
+Vector must be on and connected to the same network as your computer.
 """
-
-# TODO: Update doc with actual copy
 
 import configparser
 from getpass import getpass
@@ -31,7 +22,6 @@ import sys
 from google.protobuf.json_format import MessageToJson
 import grpc
 try:
-    # Non-critical import to add color output
     from termcolor import colored
 except:
     def colored(text, color=None, on_color=None, attrs=None):
@@ -78,13 +68,13 @@ class Api:
 def get_esn():
     esn = os.environ.get('ANKI_ROBOT_SERIAL')
     if esn is None or len(esn) == 0:
-        print("Please find your Robot Serial Number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.\n")
-        esn = input('Enter Robot Serial Number: ')
+        print("Please find your robot serial number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.\n")
+        esn = input('Enter robot serial number: ')
     else:
-        print("Found Robot Serial Number in environment variable '{}'".format(colored("ANKI_ROBOT_SERIAL", "green")))
+        print("Found robot serial number in environment variable '{}'".format(colored("ANKI_ROBOT_SERIAL", "green")))
     esn = esn.lower()
-    print("Using Robot Serial Number: {}".format(colored(esn, "cyan")))
-    print("\nDownloading certificate from the cloud...", end="")
+    print("Using robot serial number: {}".format(colored(esn, "cyan")))
+    print("\nDownloading Vector certificate from Anki...", end="")
     sys.stdout.flush()
     r = requests.get('https://session-certs.token.global.anki-services.com/vic/{}'.format(esn))
     if r.status_code != 200:
@@ -108,11 +98,11 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
     if response.code != api.protocol.UserAuthenticationResponse.AUTHORIZED:
         print(colored(" ERROR", "red"))
         sys.exit("Failed to authorize request: {}\n\n"
-                 "Make sure to either connect via Chewie (preferred) or follow the steps for logging a Vector into an account first: "
-                 "https://ankiinc.atlassian.net/wiki/spaces/VD/pages/449380359/Logging+a+Victor+into+an+Anki+account".format(MessageToJson(response, including_default_value_fields=True)))
+                 "Please be sure to connect via the Vector companion app and log into a Vector into an account first.")
     print(colored(" DONE\n", "green"))
     return response.client_token_guid
 
+# TODO Remove everything that is not prod
 def get_session_token():
     valid = ["prod", "beta", "dev"]
     environ = input("Select an environment [(dev)/beta/prod]? ")
@@ -121,12 +111,12 @@ def get_session_token():
     if environ not in valid:
         sys.exit("{}: That is not a valid environment".format(colored("ERROR", "red")))
 
-    print("Enter your email and password. Make sure to use the same account that was used to set up Vector.")
+    print("Enter your email and password. Make sure to use the same account that was used to set up your Vector.")
     username = input("Enter Email: ")
     password = getpass("Enter Password: ")
     payload = {'username': username, 'password': password}
 
-    print("\nAuthenticating user with the cloud...", end="")
+    print("\nAuthenticating with Anki...", end="")
     sys.stdout.flush()
     api = Api(environ)
     r = requests.post(api.handler.url, data=payload, headers=api.handler.headers)
@@ -139,18 +129,18 @@ def get_session_token():
 def get_name_and_ip():
     robot_name = os.environ.get('VECTOR_ROBOT_NAME')
     if robot_name is None or len(robot_name) == 0:
-        print("Find your Robot Name (ex. Vector-A1B2) by placing Vector on the charger, and double clicking Vector's backpack button.")
-        robot_name = input("Enter Robot Name: ")
+        print("Find your robot name (ex. Vector-A1B2) by placing Vector on the charger and double clicking Vector's backpack button.")
+        robot_name = input("Enter robot name: ")
     else:
-        print("Found Robot Name in environment variable '{}'".format(colored("VECTOR_ROBOT_NAME", "green")))
-    print("Using Robot Name: {}".format(colored(robot_name, "cyan")))
+        print("Found robot name in environment variable '{}'".format(colored("VECTOR_ROBOT_NAME", "green")))
+    print("Using robot name: {}".format(colored(robot_name, "cyan")))
     ip = os.environ.get('ANKI_ROBOT_HOST')
     if ip is None or len(ip) == 0:
-        print("Find your Robot IP (ex. 192.168.42.42) by placing Vector on the charger, and double clicking Vector's backpack button.\n"
+        print("Find your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, and double clicking Vector's backpack button.\n"
               "If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
-        ip = input("Enter Robot IP: ")
+        ip = input("Enter robot ip: ")
     else:
-        print("Found Robot IP in environment variable '{}'".format(colored("ANKI_ROBOT_HOST", "green")))
+        print("Found robot ip address in environment variable '{}'".format(colored("ANKI_ROBOT_HOST", "green")))
     print("Using IP: {}".format(colored(ip, "cyan")))
     return robot_name, ip
 
@@ -164,9 +154,9 @@ def main():
         sys.exit("Session error: {}".format(token))
     guid = user_authentication(token["session"]["session_token"], cert, ip, name)
 
-    # Write cert to a file
+    # Write cert to a file located in user's home direction: sdk_config.ini
     home = Path.home()
-    anki_dir = home / ".anki-vector"
+    anki_dir = home / ".anki_vector"
     os.makedirs(str(anki_dir), exist_ok=True)
     cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
     print("Writing certificate file to '{}'...".format(colored(cert_file, "cyan")))

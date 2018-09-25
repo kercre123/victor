@@ -94,7 +94,7 @@ def convert_pixels_to_screen_data(pixel_data: list, image_width: int, image_heig
 
 
 def convert_image_to_screen_data(pil_image: Image.Image):
-    """ Convert an image into the correct format to display on Vector's face.
+    """Convert an image into the correct format to display on Vector's face.
 
     .. code-block:: python
 

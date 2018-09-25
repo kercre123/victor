@@ -49,19 +49,25 @@ protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
   BehaviorProceduralClock(const Json::Value& config);
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override final {
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
+    GetBehaviorOperationModifiersProceduralClock(modifiers);
   }
+
+  virtual void GetBehaviorOperationModifiersProceduralClock(BehaviorOperationModifiers& modifiers) const {}
+
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override final;
   virtual void GetBehaviorJsonKeysInternal(std::set<const char*>& expectedKeys) const {};
 
-  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorActivated() override final;
   virtual void InitBehavior() override;
-  virtual void BehaviorUpdate() override;
+  virtual void BehaviorUpdate() override final;
   virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
   virtual bool ShouldDimLeadingZeros() const { return true; }
+  virtual void OnProceduralClockActivatedInternal(){}
+  virtual void UpdateProceduralClockInternal(){}
 
   void TransitionToTurnToFace();
   void TransitionToGetIn();

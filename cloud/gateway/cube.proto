@@ -1,3 +1,17 @@
+// Copyright (c) 2018 Anki, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License in the file LICENSE.txt or at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // External interface for robot <-> app and robot <-> sdk communication
 
 syntax = "proto3";
@@ -10,6 +24,7 @@ import "messages.proto";
 // this will do nothing.
 message ConnectCubeRequest {
 }
+
 message ConnectCubeResponse {
   ResponseStatus status     = 1;
   bool         success    = 2;
@@ -28,6 +43,7 @@ message CubesAvailableResponse {
 // Requests a disconnection from the currently connected cube.
 message DisconnectCubeRequest {
 }
+
 message DisconnectCubeResponse {
   ResponseStatus status = 1;
 }
@@ -37,27 +53,30 @@ message DisconnectCubeResponse {
 // surfacing of cube connectivity, not for sdk cube light control.
 message FlashCubeLightsRequest {
 }
+
 message FlashCubeLightsResponse {
   ResponseStatus status = 1;
 }
 
-// 'Forget' the robot's preferred cube. This will cause the robot to
+// Forget the robot's preferred cube. This will cause the robot to
 // connect to the cube with the highest RSSI (signal strength) next
 // time a connection is requested. Saves this preference to disk.
 // The next cube that the robot connects to will become its
 // preferred cube.
 message ForgetPreferredCubeRequest {
 }
+
 message ForgetPreferredCubeResponse {
   ResponseStatus status = 1;
 }
 
 // Set the robot's preferred cube and save it to disk. The robot
 // will always attempt to connect to this cube if it is available.
-// This is only used in simulation (for now).
+// This is only used in simulation for now.
 message SetPreferredCubeRequest {
   string factory_id = 1;
 }
+
 message SetPreferredCubeResponse {
   ResponseStatus status = 1;
 }
@@ -91,8 +110,6 @@ message SetCubeLightsRequest {
 message SetCubeLightsResponse {
   ResponseStatus status = 1;
 }
-
-// @TODO: Add a GetPreferredCube rpc to the proto interface VIC-4642
 
 // This is an int_32 on the clad side.
 enum ObjectType

@@ -62,7 +62,7 @@ class CameraComponent(util.Component):
             image = robot.camera.latest_image
             image.show()
 
-    :param robot: A reference to the owner Robot object. (May be :class:`None`)
+    :param robot: A reference to the owner Robot object.
     """
 
     def __init__(self, robot):
@@ -132,7 +132,7 @@ class CameraComponent(util.Component):
                 # If the camera feed is disabled after stream is setup, exit the stream
                 # (the camera feed on the robot is disabled internally on stream exit)
                 if not self.robot.enable_camera_feed:
-                    self.logger.debug('Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data')
+                    self.logger.warning('Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data')
                     return
                 self._unpack_image(evt)
         except CancelledError:

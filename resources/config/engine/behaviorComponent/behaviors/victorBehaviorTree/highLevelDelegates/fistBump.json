@@ -1,7 +1,6 @@
 {
   "behaviorClass": "FistBump",
   "behaviorID": "FistBump",
-  "executableBehaviorType": "FistBump",
   "associatedActiveFeature": "FistBump",
 
   "maxTimeToLookForFace_s": 3.0,

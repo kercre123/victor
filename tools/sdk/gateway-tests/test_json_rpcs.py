@@ -1,3 +1,7 @@
+# This test file runs via pytest, and will test the json endpoints for all of the unary rpcs.
+#
+# This file reproduces a connection that is similar to the way the app will talk to Vector.
+#
 import json
 import os
 import sys
@@ -120,9 +124,6 @@ def test_update_user_entitlements(vector_connection):
 
 def test_user_authentication(vector_connection):
     vector_connection.send("v1/user_authentication", p.UserAuthenticationRequest(), p.UserAuthenticationResponse())
-
-def test_set_backpack_lights(vector_connection):
-    vector_connection.send("v1/set_backpack_lights", p.SetBackpackLightsRequest(), p.SetBackpackLightsResponse())
 
 def test_battery_state(vector_connection):
     vector_connection.send("v1/battery_state", p.BatteryStateRequest(), p.BatteryStateResponse())

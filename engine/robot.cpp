@@ -102,7 +102,6 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
-#include "util/transport/reliableConnection.h"
 
 #include "osState/osState.h"
 
@@ -298,6 +297,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 : _context(context)
 , _poseOrigins(new PoseOriginList())
 , _ID(robotID)
+, _serialNumberHead(OSState::getInstance()->GetSerialNumber())
 , _syncRobotAcked(false)
 , _lastMsgTimestamp(0)
 , _offTreadsState(OffTreadsState::OnTreads)
@@ -414,7 +414,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
-
 
 } // Constructor: Robot
 
@@ -1208,35 +1207,6 @@ bool Robot::HasReceivedRobotState() const
   return _newStateMsgAvailable;
 }
 
-
-void Robot::SetPhysicalRobot(bool isPhysical)
-{
-  // TODO: Move somewhere else? This might not the best place for this, but it's where we
-  // know whether or not we're talking to a physical robot or not so do things that depend on that here.
-  // Assumes this function is only called once following connection.
-
-  _isPhysical = isPhysical;
-
-  // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug
-  // them We do this regardless of previous state to ensure it works when adding 1st simulated robot (as
-  // _isPhysical already == false in that case) Note: We don't do this on phone by default, they also have a
-  // remote connection to the simulator so removing timeout would force user to restart both sides each time.
-  #if !(defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
-  {
-    static const double kPhysicalRobotNetConnectionTimeoutInMS =
-      Anki::Util::ReliableConnection::GetConnectionTimeoutInMS(); // grab default on 1st call
-    const double kSimulatedRobotNetConnectionTimeoutInMS = FLT_MAX;
-    const double netConnectionTimeoutInMS =
-      isPhysical ? kPhysicalRobotNetConnectionTimeoutInMS : kSimulatedRobotNetConnectionTimeoutInMS;
-    LOG_INFO("Robot.SetPhysicalRobot", "ReliableConnection::SetConnectionTimeoutInMS(%f) for %s Robot",
-             netConnectionTimeoutInMS, isPhysical ? "Physical" : "Simulated");
-    Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
-  }
-  #endif // !(ANKI_PLATFORM_IOS || ANKI_PLATFORM_ANDROID)
-
-  GetVisionComponent().SetPhysicalRobot(_isPhysical);
-}
-
 Result Robot::GetHistoricalCamera(RobotTimeStamp_t t_request, Vision::Camera& camera) const
 {
   HistRobotState histState;
@@ -1301,6 +1271,8 @@ Result Robot::Update()
   ANKI_CPU_PROFILE("Robot::Update");
 
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  _cpuStats.Update();
 
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
@@ -2144,12 +2116,6 @@ Result Robot::SendAbsLocalizationUpdate() const
   return SendAbsLocalizationUpdate(histState.GetPose().GetWithRespectToRoot(), t, histState.GetFrameId());
 }
 
-Result Robot::SendHeadAngleUpdate() const
-{
-  return SendMessage(RobotInterface::EngineToRobot(
-                       RobotInterface::HeadAngleUpdate(GetComponent<FullRobotPose>().GetHeadAngle())));
-}
-
 Result Robot::SendIMURequest(const u32 length_ms) const
 {
   return SendRobotMessage<IMURequest>(length_ms);
@@ -2218,11 +2184,7 @@ void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
                                                visionComponent.GetMaxCameraGain());
 
   ExternalInterface::PerRobotSettings robotSettings(GetHeadSerialNumber(),
-                                                    GetBodySerialNumber(),
-                                                    _modelNumber,
-                                                    GetBodyHWVersion(),
-                                                    std::move(cameraConfig),
-                                                    GetBodyColor());
+                                                    std::move(cameraConfig));
 
   Broadcast( ExternalInterface::MessageEngineToGame(std::move(robotSettings)) );
 }
@@ -2825,20 +2787,6 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + histState.GetPose().GetRotation().GetAngleAroundZaxis();
 
   return RESULT_OK;
-}
-
-void Robot::SetBodyColor(const s32 color)
-{
-  const BodyColor bodyColor = static_cast<BodyColor>(color);
-  if (bodyColor <= BodyColor::UNKNOWN ||
-      bodyColor >= BodyColor::COUNT ||
-      bodyColor == BodyColor::RESERVED)
-  {
-    LOG_ERROR("Robot.SetBodyColor.InvalidColor", "Robot has invalid body color %d", color);
-    return;
-  }
-
-  _bodyColor = bodyColor;
 }
 
 void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)

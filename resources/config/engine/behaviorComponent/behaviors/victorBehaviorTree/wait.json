@@ -1,5 +1,4 @@
 {
   "behaviorClass" : "Wait",
-  "behaviorID" : "Wait",
-  "executableBehaviorType": "Wait"
+  "behaviorID" : "Wait"
 }

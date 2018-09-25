@@ -119,7 +119,7 @@ class BehaviorComponent(util.Component):
     # Navigation actions
     @sync.Synchronizer.wrap
     async def drive_off_charger(self):
-        """ Drive Vector off the charger
+        """Drive Vector off the charger
 
         If Vector is on the charger, drives him off the charger.
 
@@ -132,7 +132,7 @@ class BehaviorComponent(util.Component):
 
     @sync.Synchronizer.wrap
     async def drive_on_charger(self):
-        """ Drive Vector onto the charger
+        """Drive Vector onto the charger
 
         Vector will attempt to find the charger and, if successful, he will
         back onto it and start charging.
@@ -241,7 +241,7 @@ class BehaviorComponent(util.Component):
                              speed: util.Speed,
                              should_play_anim: bool = True,
                              num_retries: int = 0) -> protocol.DriveStraightResponse:
-        """Tells Vector to drive in a straight line
+        """Tells Vector to drive in a straight line.
 
         Vector will drive for the specified distance (forwards or backwards)
 
@@ -355,7 +355,7 @@ class BehaviorComponent(util.Component):
                               max_speed: float = 10.0,
                               duration: float = 0.0,
                               num_retries: int = 0) -> protocol.SetLiftHeightResponse:
-        """Tell Vector's lift to move to a given height
+        """Tell Vector's lift to move to a given height.
 
         :param height: desired height for Vector's lift 0.0 (bottom) to
                 1.0 (top) (we clamp it to this range internally).

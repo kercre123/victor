@@ -15,7 +15,6 @@
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/pose.h"
 #include "engine/actions/animActions.h"
@@ -45,6 +44,7 @@
 #include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 
+#include "clad/types/behaviorComponent/behaviorClasses.h"
 
 #include "coretech/common/engine/utils/timer.h"
 

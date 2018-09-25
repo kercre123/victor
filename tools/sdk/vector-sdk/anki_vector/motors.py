@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Control the motors of Victor
+Control the motors of Vector
 """
 
 # __all__ should order by constants, event classes, other classes, functions.

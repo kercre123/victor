@@ -24,8 +24,8 @@ import configparser
 import functools
 from pathlib import Path
 
-from . import (animation, backpack, behavior, camera, connection,
-               events, exceptions, faces, motors,
+from . import (animation, audio, behavior, camera,
+               connection, events, exceptions, faces, motors,
                screen, photos, proximity, sync, util,
                viewer, world)
 from .messaging import protocol
@@ -43,7 +43,6 @@ MAX_HEAD_ANGLE = util.degrees(45)
 # MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
 
 # TODO Consider adding Cozmo's LiftPosition class
-# TODO How are we deciding what has a leading underscore or not in Robot class?
 
 
 class Robot:
@@ -74,10 +73,10 @@ class Robot:
         robot.connect()
         # Run your commands (for example play animation)
         robot.play_animation("anim_blackjack_victorwin_01")
-        # Disconnect from the Robot
+        # Disconnect from Vector
         robot.disconnect()
 
-    :param serial: Vector's serial number. The Robot Serial Number (ex. 00e20100) is located on the underside of Vector,
+    :param serial: Vector's serial number. The robot's serial number (ex. 00e20100) is located on the underside of Vector,
                    or accessible from Vector's debug screen. Used to identify which Vector configuration file to load.
     :param ip: Vector's IP Address. (optional)
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
@@ -90,6 +89,7 @@ class Robot:
     :param behavior_timeout: The time to wait for control of the robot before failing. Defaults to :code:`10`
     :param enable_vision_mode: Turn on face detection. Defaults to :code:`False`
     :param enable_camera_feed: Turn camera feed on/off. Defaults to :code:`True`
+    :param enable_audio_feed: Turn audio feed on/off. Defaults to :code:`False`
     :param show_viewer: Render camera feed on/off. Defaults to :code:`False`"""
 
     def __init__(self,
@@ -102,6 +102,7 @@ class Robot:
                  cache_animation_list: bool = True,
                  enable_vision_mode: bool = False,
                  enable_camera_feed: bool = True,
+                 enable_audio_feed: bool = False,
                  show_viewer: bool = False):
 
         if default_logging:
@@ -126,7 +127,7 @@ class Robot:
             self._port = config["port"]
 
         if self._name is None or self._ip is None or self._cert_file is None or self._guid is None:
-            raise ValueError("Robot requires a serial and for Vector to be logged in (using the app then configure.py).\n"
+            raise ValueError("The Robot object requires a serial and for Vector to be logged in (using the app then configure.py).\n"
                              "You may also provide the values necessary for connection through the config parameter. ex: "
                              '{"name":"Vector-A1B2", "ip":"192.168.43.48", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
 
@@ -135,7 +136,7 @@ class Robot:
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
-        self._backpack: backpack.BackpackComponent = None
+        self._audio: audio.AudioComponent = None
         self._behavior: behavior.BehaviorComponent = None
         self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
@@ -168,6 +169,7 @@ class Robot:
         self.pending = []
 
         self._enable_camera_feed = enable_camera_feed
+        self._enable_audio_feed = enable_audio_feed
         self._show_viewer = show_viewer
 
     @staticmethod
@@ -176,7 +178,7 @@ class Robot:
 
         :param serial: Vector's serial number
         """
-        home = Path.home() / ".anki-vector"
+        home = Path.home() / ".anki_vector"
         conf_file = str(home / "sdk_config.ini")
         parser = configparser.ConfigParser()
         parser.read(conf_file)
@@ -184,7 +186,7 @@ class Robot:
 
     @property
     def robot(self) -> 'Robot':
-        """A reference to the Robot instance."""
+        """A reference to the Robot object instance."""
         return self
 
     @property
@@ -195,11 +197,13 @@ class Robot:
         return self._anim
 
     @property
-    def backpack(self) -> backpack.BackpackComponent:
-        """A reference to the BackpackComponent instance."""
-        if self._backpack is None:
-            raise exceptions.VectorNotReadyException("BackpackComponent is not yet initialized")
-        return self._backpack
+    def audio(self) -> audio.AudioComponent:
+        """:class:`anki_vector.audio.AudioComponent`: The audio instance used to control
+        Vector's audio feed
+        """
+        if self._audio is None:
+            raise exceptions.VectorNotReadyException("AudioComponent is not yet initialized")
+        return self._audio
 
     @property
     def behavior(self) -> behavior.BehaviorComponent:
@@ -414,7 +418,7 @@ class Robot:
         """
         return self._localized_to_object_id
 
-    # TODO Should this be in photos or somewhere else?
+    # TODO Move to photos or somewhere else
     @property
     def last_image_time_stamp(self) -> int:
         """The robot's timestamp for the last image seen.
@@ -429,13 +433,35 @@ class Robot:
     # TODO Needs return type
     @property
     def status(self):
-        """ Describes robot status.
+        """Describes robot status.
 
         .. code-block:: python
 
             current_status = robot.status
         """
         return self._status
+
+    @property
+    def enable_audio_feed(self) -> bool:
+        """The audio feed enabled/disabled
+
+        :getter: Returns whether the audio feed is enabled
+        :setter: Enable/disable the audio feeed
+
+        .. code-block:: python
+
+            with anki_vector.Robot("my_robot_serial_number", enable_audio_feed=True) as robot:
+                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.enable_audio_feed = False
+                robot.loop.run_until_complete(utilities.delay_close(5))
+        """
+        return self._enable_audio_feed
+
+    @enable_audio_feed.setter
+    def enable_audio_feed(self, enable) -> None:
+        self._enable_audio_feed = enable
+        if self.enable_audio_feed:
+            self.audio.init_audio_feed()
 
     # TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
     @property
@@ -507,7 +533,7 @@ class Robot:
 
         # Initialize components
         self._anim = animation.AnimationComponent(self)
-        self._backpack = backpack.BackpackComponent(self)
+        self._audio = audio.AudioComponent(self)
         self._behavior = behavior.BehaviorComponent(self)
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
@@ -523,6 +549,10 @@ class Robot:
             anim_request = self._anim.load_animation_list()
             if isinstance(anim_request, sync.Synchronizer):
                 anim_request.wait_for_completed()
+
+        # Start audio feed
+        if self.enable_audio_feed:
+            self.audio.init_audio_feed()
 
         # Start camera feed
         if self.enable_camera_feed:
@@ -560,6 +590,8 @@ class Robot:
         self.viewer.stop_video()
         # Shutdown camera feed
         self.camera.close_camera_feed()
+        # Shutdown audio feed
+        self.audio.close_audio_feed()
 
         self.events.close()
         self.conn.close()
@@ -578,7 +610,6 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-    # TODO BatteryStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
@@ -587,15 +618,14 @@ class Robot:
 
             battery_state = robot.get_battery_state()
             if battery_state:
-                print("Robot Battery Voltage: {0}".format(battery_state.battery_volts))
+                print("Vector's Battery Voltage: {0}".format(battery_state.battery_volts))
         """
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
-    # TODO VersionStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_version_state(self) -> protocol.VersionStateResponse:
-        """Get the versioning information of the Robot
+        """Get the versioning information for Vector.
 
         .. code-block:: python
 
@@ -604,10 +634,9 @@ class Robot:
         get_version_state_request = protocol.VersionStateRequest()
         return await self.conn.grpc_interface.VersionState(get_version_state_request)
 
-    # TODO NetworkStateResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def get_network_state(self) -> protocol.NetworkStateResponse:
-        """Get the network information of the Robot
+        """Get the network information for Vector.
 
         .. code-block:: python
 
@@ -616,10 +645,9 @@ class Robot:
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.grpc_interface.NetworkState(get_network_state_request)
 
-    # TODO SayTextResponse is not a visible structure to the Python user
     @sync.Synchronizer.wrap
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
-        """Have Vector say text!
+        """Make Vector speak text.
 
         .. code-block:: python
 
@@ -661,11 +689,11 @@ class AsyncRobot(Robot):
 
         # Create a Robot object
         robot = AsyncRobot("my_robot_serial_number")
-        # Connect to the Robot
+        # Connect to Vector
         robot.connect()
         # Run your commands (for example play animation)
         robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        # Disconnect from the Robot
+        # Disconnect from Vector
         robot.disconnect()
 
     :param serial: Vector's serial number. Used to identify which Vector configuration file to load.
@@ -680,6 +708,7 @@ class AsyncRobot(Robot):
     :param behavior_timeout: The time to wait for control of the robot before failing. Defaults to :code:`10`
     :param enable_vision_mode: Turn on face detection. Defaults to :code:`False`
     :param enable_camera_feed: Turn camera feed on/off. Defaults to :code:`True`
+    :param enable_audio_feed: Turn audio feed on/off. Defaults to :code:`False`
     :param show_viewer: Render camera feed on/off. Defaults to :code:`False`"""
 
     @functools.wraps(Robot.__init__)

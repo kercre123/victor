@@ -6,7 +6,6 @@
  */
 
 #include "clad/audio/audioMessage.clad"
-#include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
 #include "clad/types/backpackAnimationTriggers.clad"
 #include "clad/types/cameraFOVInfo.clad"
@@ -93,11 +92,6 @@ message SetHeadAngle
   float_32 accel_rad_per_sec2,
   float_32 duration_sec,
   uint_8   actionID = 0,
-}
-
-message HeadAngleUpdate
-{
-  float_32 newAngle,
 }
 
 // This is a turn in place to an absolute angle
@@ -247,10 +241,6 @@ message SetMotionModelParams
 message BackpackSetLayer
 {
   uint_8 layer
-}
-
-message GetManufacturingInfo
-{
 }
 
 message CheckLiftLoad
@@ -652,7 +642,6 @@ union EngineToRobot
   // 0x01 to 0x4f: Messages to robot (supervisor) process
 
   // Init
-  GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncRobot                     syncRobot                   = 0x02,
   Shutdown                      shutdown                    = 0x03,
   CalmPowerMode                 calmPowerMode               = 0x04,
@@ -671,7 +660,7 @@ union EngineToRobot
   MoveHead                      moveHead                    = 0x13,
   SetLiftHeight                 liftHeight                  = 0x14,
   SetHeadAngle                  headAngle                   = 0x15,
-  HeadAngleUpdate               headAngleUpdate             = 0x16,
+  //   FREE SLOT                                            = 0x16,
   SetBodyAngle                  setBodyAngle                = 0x17,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x18,
   RecordHeading                 recordHeading               = 0x19,

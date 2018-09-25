@@ -1,3 +1,17 @@
+// Copyright (c) 2018 Anki, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License in the file LICENSE.txt or at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // External interface for robot <-> app and robot <-> sdk communication
 
 syntax = "proto3";
@@ -19,7 +33,7 @@ message ResponseStatus {
     OK = 3;
     FORBIDDEN = 100; // The user was not authorizied
     NOT_FOUND = 101; // The requested attribute was not found
-    ERROR_UPDATE_IN_PROGRESS = 102; // The current rpc is currently updating values from another call
+    ERROR_UPDATE_IN_PROGRESS = 102; // Currently updating values from another call
   }
   StatusCode code = 1;
 }
@@ -55,13 +69,12 @@ message MoveLiftResponse {
   ResponseStatus status = 1;
 }
 
-// TODO: hook up ignore tracks and test that they work in the new world
 message PlayAnimationRequest {
   Animation animation = 1;
   uint32 loops = 2;
-  bool ignore_body_track = 3;
-  bool ignore_head_track = 4;
-  bool ignore_lift_track = 5;
+  bool ignore_body_track = 3; // not yet implemented
+  bool ignore_head_track = 4; // not yet implemented
+  bool ignore_lift_track = 5; // not yet implemented
 }
 
 message PlayAnimationResponse {
@@ -238,7 +251,7 @@ message RobotObservedFace {
   FacialExpression expression = 6;
 
   // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
-  repeated uint32 expression_values = 7; // This is a uint32 on the clad side
+  repeated uint32 expression_values = 7;
 
   // Face landmarks
   repeated CladPoint left_eye = 8;
@@ -255,7 +268,6 @@ message RobotChangedObservedFaceID {
   int32   new_id = 2;
 }
 
-// Meet Victor
 message AppIntentRequest {
   string intent = 1;
   string param = 2;
@@ -346,11 +358,11 @@ message SetFaceToEnrollRequest {
 
   int32   observed_id = 2;  // The ID of a specific observed face to enroll (0 for next one we see)
   int32   save_id = 3;      // The ID of an existing face to merge final enrollment into (0 for none,
-                        // i.e. use observedID)
+                            // i.e. use observedID)
 
-  bool    save_to_robot = 4;   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+  bool    save_to_robot = 4;  // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
   bool    say_name = 5;       // Play say-name/celebration animations on success before completing
-  bool    use_music = 6;       // Starts special music during say-name animations (will leave music playing!)
+  bool    use_music = 6;      // Starts special music during say-name animations (will leave music playing!)
 }
 message SetFaceToEnrollResponse {
   ResponseStatus status = 1;
@@ -403,7 +415,6 @@ message OnboardingLowBattery {
   bool low_battery = 1;
 }
 
-// these are sent in case the copy needs to change
 enum OnboardingPhysicalInterruptions {
   ONBOARDING_INTERRUPTION_NONE         = 0;
   ONBOARDING_INTERRUPTION_PICKED_UP    = 1;
@@ -526,10 +537,8 @@ message WakeWordBegin {
 
 message WakeWordEnd {
   bool intent_heard = 1;
-  string intent_json = 2; // todo: we send json as a string for now since the engine handling of intents is tightly coupled with clad
+  string intent_json = 2;
 }
-
-// Photos
 
 message PhotoInfo {
   uint32 photo_id = 1;
@@ -617,7 +626,6 @@ message LatestAttentionTransferResponse {
   LatestAttentionTransfer latest_attention_transfer = 2;
 }
 
-// Proto field names are prefixed with "VISION_MODE_"
 enum VisionMode {
   VISION_MODE_IDLE = 0;
   VISION_MODE_DETECTING_MARKERS = 1;
@@ -630,9 +638,9 @@ enum VisionMode {
   VISION_MODE_COMPUTING_STATISTICS = 8;
   VISION_MODE_DETECTING_PETS = 9;
   VISION_MODE_ESTIMATING_FACIAL_EXPRESSION = 10;  // No effect if DetectingFaces not enabled
-  VISION_MODE_DETECTING_SMILE_AMOUNT = 11;        //  "
-  VISION_MODE_DETECTING_GAZE = 12;               //  "
-  VISION_MODE_DETECTING_BLINK_AMOUNT = 13;        //  "
+  VISION_MODE_DETECTING_SMILE_AMOUNT = 11;        // No effect if DetectingFaces not enabled
+  VISION_MODE_DETECTING_GAZE = 12;                // No effect if DetectingFaces not enabled
+  VISION_MODE_DETECTING_BLINK_AMOUNT = 13;        // No effect if DetectingFaces not enabled
   VISION_MODE_LIMITED_EXPOSURE = 14;
   VISION_MODE_DETECTING_LASER_POINTS = 15;
   VISION_MODE_BUILDING_OVERHEAD_MAP = 16;
@@ -655,7 +663,6 @@ message EnableVisionModeResponse {
 
 // Struct containing all the information relevant to how a 
 // path should be modified or traversed.
-// TODO: Include path wonkification parameters
 message PathMotionProfile {
   float speed_mmps = 1;
   float accel_mmps2 = 2;
@@ -670,7 +677,7 @@ message PathMotionProfile {
   bool  is_custom = 11;
 }
 
-// TODO: These codes are duplicated from actionResults.clad file and need to be kept in sync. Need to find a solution to this issue.
+// These codes are duplicated from actionResults.clad file and need to be kept in sync
 message ActionResult {
   enum ActionResultCode {
     ACTION_RESULT_SUCCESS                 = 0;
@@ -740,8 +747,6 @@ enum ActionTagConstants {
   LAST_SDK_TAG    = 3000000;
 }
 
-// TODO VIC-5920: Add Cancel by id message, and add ids to all action response messages
-
 // GotoPose
 message GoToPoseRequest {
   float x_mm                    = 1;
@@ -797,15 +802,15 @@ message DriveStraightResponse {
 }
 
 // TurnInPlace
-// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute == 0, turns the specified number of radians, relative to the robot's current heading*
 // If isAbsolute != 0, turns to the specified absolute orientation.
 message TurnInPlaceRequest {
-  float  angle_rad          = 1; // relative mode: postive turns left negative turns right
+  float  angle_rad          = 1; // relative mode: positive turns left negative turns right
   float  speed_rad_per_sec  = 2;
   float  accel_rad_per_sec2 = 3;
-  float  tol_rad            = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
-                                // Smaller values are ignored except 0 which is interpreted to mean
-                                // default tolerance of POINT_TURN_ANGLE_TOL.
+  float  tol_rad            = 4; // This should be no smaller than POINT_TURN_ANGLE_TOL (DEG_TO_RAD(2.f)).
+                                 // Smaller values are ignored except 0 which is interpreted to mean
+                                 // default tolerance of POINT_TURN_ANGLE_TOL.
   uint32 is_absolute        = 5; // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
   int32  id_tag             = 6;
   int32  num_retries        = 7;
@@ -844,20 +849,6 @@ message SetLiftHeightRequest {
 message SetLiftHeightResponse {
   ResponseStatus status = 1;
   ActionResult   result = 2;
-}
-
-// SetBackpackLights
-message SetBackpackLightsRequest {
-  repeated uint32  on_color = 1;
-  repeated uint32  off_color = 2;
-  repeated uint32  on_period_ms = 3;
-  repeated uint32  off_period_ms = 4;
-  repeated uint32  transition_on_period_ms = 5;
-  repeated uint32  transition_off_period_ms = 6;
-}
-
-message SetBackpackLightsResponse {
-  ResponseStatus status = 1;
 }
 
 enum BatteryLevel {
@@ -949,8 +940,53 @@ message StimulationInfo {
   float  max_value                = 7;
 }
 
+// Constants associated with the audio feed
+enum AudioConstants {
+  AUDIO_CONSTANTS_NULL      = 0;
+  SAMPLE_COUNTS_PER_MESSAGE = 1600; // The number of audio samples delivered from the robot per chunk
+  MICROPHONE_SAMPLE_RATE    = 15625; // The sampling rate victor's microphones record at
+  PROCESSED_SAMPLE_RATE     = 16000; // The sampling rate the robot processes audio at
+}
 
-// ImageRequest
+// The robot can process audio in a variety of ways
+enum AudioProcessingMode {
+  OFF                          = 0; // deactivates audio SDK mode
+  FAST_MODE                    = 1; // unprocessed single microphone data - most performant on robot
+  DIRECTIONAL_MODE             = 2; // beamforming support for focusing on specific direction - sounds cleanest
+  VOICE_DETECT_MODE            = 3; // multi-microphone non-beamforming - best for voice detection programs
+}
+
+// Request how the robot should process and send audio
+message AudioSendModeRequest {
+  AudioProcessingMode mode = 1;
+}
+
+// Event sent when the robot changes the mode it's processing and sending audio
+message AudioSendModeChanged {
+  AudioProcessingMode mode = 1;
+}
+
+// One frame of audio data and associated metadata
+message AudioChunk {
+  uint32 robot_time_stamp    = 1;
+  bytes  signal_power        = 2; // mono audio amplitude samples
+  bytes  direction_strengths = 3; // histogram data of which directions this audio chunk came from
+  uint32 source_direction    = 4; // 0-11, with 12 representing "invalid"
+  uint32 source_confidence   = 5; // accuracy of the calculated source_direction
+  uint32 noise_floor_power   = 6; // power value, convert to db with log_10(value)
+}
+
+// Request the robot to send audio data
+message AudioFeedRequest {}
+
+// Streamed audio data from the robot
+message AudioFeedResponse {
+  option (streamed) = true;
+
+  AudioChunk   data = 1;
+}
+
+// Request how the robot should send image data
 message ImageRequest {
   enum ImageSendMode {
     OFF                          = 0;
@@ -961,6 +997,7 @@ message ImageRequest {
   ImageSendMode mode = 1;
 }
 
+// One frame of image data and associated metadata
 message ImageChunk {
   enum ImageEncoding
   {
@@ -998,7 +1035,6 @@ message CameraFeedResponse {
   bytes                    data = 4;
 }
 
-// Check to see if an update is available for the robot
 message CheckUpdateStatusRequest{}
 
 message CheckUpdateStatusResponse{
@@ -1010,14 +1046,12 @@ message CheckUpdateStatusResponse{
   UpdateStatus update_status = 2;
 }
 
-// Apply updates to the robot (if available)
 message UpdateAndRestartRequest{}
 
 message UpdateAndRestartResponse{
   ResponseStatus status = 1;
 }
 
-// Upload debug logs for customer care
 message UploadDebugLogsRequest{}
 
 message UploadDebugLogsResponse{
@@ -1025,7 +1059,6 @@ message UploadDebugLogsResponse{
   string url = 2;
 }
 
-// Verify Vector's connection to the Anki Cloud
 message CheckCloudRequest{}
 
 message CheckCloudResponse{

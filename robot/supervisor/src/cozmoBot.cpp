@@ -48,15 +48,23 @@ namespace Anki {
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
         u32 mainTooLateCnt_ = 0;
-        u32 maxMainTooLongTime_ = 0;
-        u32 maxMainTooLateTime_ = 0;
-        u32 avgMainTooLongTime_ = 0;
-        u32 avgMainTooLateTime_ = 0;
-        u32 lastCycleStartTime_ = 0;
-        u32 lastMainCycleTimeErrorReportTime_ = 0;
+        u32 maxMainTooLongTime_usec_ = 0;
+        u32 maxMainTooLateTime_usec_ = 0;
+        u32 avgMainTooLongTime_usec_ = 0;
+        u32 avgMainTooLateTime_usec_ = 0;
+        u32 lastCycleStartTime_usec_ = 0;
+        u32 nextMainCycleTimeErrorReportTime_usec_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = ROBOT_TIME_STEP_MS * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 2000;
+        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 2500;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
+
+        // If there are more than this many TooLates in a reporting period
+        // a warning is issued
+        const u32 MIN_TOO_LATE_COUNT_PER_REPORTING_PERIOD = 5;
+
+        // If a single tick is late by this amount in a reporting period
+        // a warning is issued
+        const u32 INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC = 15000;
 
         bool shutdownInProgress_ = false;
       } // Robot private namespace
@@ -335,15 +343,15 @@ namespace Anki {
 
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
-        if (lastCycleStartTime_ != 0) {
-          u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_;
+        if (lastCycleStartTime_usec_ != 0) {
+          u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_usec_;
           if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH_USEC) {
             EventStart(EventType::MAIN_CYCLE_TOO_LATE);
             ++mainTooLateCnt_;
             EventStop(EventType::MAIN_CYCLE_TOO_LATE);
-            avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
-            if (maxMainTooLateTime_ < timeBetweenCycles) {
-              maxMainTooLateTime_ = timeBetweenCycles;
+            avgMainTooLateTime_usec_ = (u32)((f32)(avgMainTooLateTime_usec_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
+            if (maxMainTooLateTime_usec_ < timeBetweenCycles) {
+              maxMainTooLateTime_usec_ = timeBetweenCycles;
             }
           }
         }
@@ -478,28 +486,54 @@ namespace Anki {
           EventStart(EventType::MAIN_CYCLE_TOO_LONG);
           ++mainTooLongCnt_;
           EventStop(EventType::MAIN_CYCLE_TOO_LONG);
-          avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
-          if (maxMainTooLongTime_ < cycleTime) {
-            maxMainTooLongTime_ = cycleTime;
+          avgMainTooLongTime_usec_ = (u32)((f32)(avgMainTooLongTime_usec_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
+          if (maxMainTooLongTime_usec_ < cycleTime) {
+            maxMainTooLongTime_usec_ = cycleTime;
           }
         }
-        lastCycleStartTime_ = cycleStartTime;          
+        lastCycleStartTime_usec_ = cycleStartTime;          
 
         // Report main cycle time error
-        if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
-            (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
+        if (nextMainCycleTimeErrorReportTime_usec_ > cycleEndTime) {
 
-          AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
-                   mainTooLateCnt_, avgMainTooLateTime_, maxMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_, maxMainTooLongTime_);
+          const bool reportTooLate = (mainTooLateCnt_ > MIN_TOO_LATE_COUNT_PER_REPORTING_PERIOD) || 
+                                     (maxMainTooLateTime_usec_ > INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC);
+          const bool reportTooLong = (mainTooLongCnt_ > 0);
+          if (reportTooLate || reportTooLong) {
+            AnkiWarn( "CozmoBot.MainCycleTimeError", 
+                      "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
+                      mainTooLateCnt_, 
+                      avgMainTooLateTime_usec_, 
+                      maxMainTooLateTime_usec_, 
+                      mainTooLongCnt_, 
+                      avgMainTooLongTime_usec_, 
+                      maxMainTooLongTime_usec_);
+
+            if (reportTooLate) {
+              DASMSG(vectorbot_main_cycle_too_late,    "vectorbot.main_cycle_too_late", "Report upto once/sec when robot tick is too late");
+              DASMSG_SET(i1, mainTooLateCnt_,          "Number of ticks that exceed MAIN_TOO_LATE_TIME_THRESH_USEC");
+              DASMSG_SET(i2, avgMainTooLateTime_usec_, "Of the late ticks, average time since start of previous tick (usec)");
+              DASMSG_SET(i3, maxMainTooLateTime_usec_, "Of the late ticks, maximum time since start of previous tick (usec)");
+              DASMSG_SEND();
+            }
+            if (reportTooLong) {
+              DASMSG(vectorbot_main_cycle_too_long,    "vectorbot.main_cycle_too_long", "Report upto once/sec when robot tick is too long");
+              DASMSG_SET(i1, mainTooLongCnt_,          "Number of ticks that exceed MAIN_TOO_LONG_TIME_THRESH_USEC");
+              DASMSG_SET(i2, avgMainTooLongTime_usec_, "Average duration of too long ticks (usec)");
+              DASMSG_SET(i3, maxMainTooLongTime_usec_, "Maximum duration of too long ticks (usec)");
+              DASMSG_SEND();
+            }
+
+          }
 
           mainTooLateCnt_ = 0;
-          avgMainTooLateTime_ = 0;
-          maxMainTooLateTime_ = 0;
+          avgMainTooLateTime_usec_ = 0;
+          maxMainTooLateTime_usec_ = 0;
           mainTooLongCnt_ = 0;
-          avgMainTooLongTime_ = 0;
-          maxMainTooLongTime_ = 0;
+          avgMainTooLongTime_usec_ = 0;
+          maxMainTooLongTime_usec_ = 0;
 
-          lastMainCycleTimeErrorReportTime_ = cycleEndTime;
+          nextMainCycleTimeErrorReportTime_usec_ += MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC;
         }
 
         EventStop(EventType::MAIN_STEP);

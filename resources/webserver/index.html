@@ -100,7 +100,7 @@
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Gyro X",                    units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Gyro Y",                    units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Gyro Z",                    units:"" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:700,    desc:"Backpack touch sensor",     units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5000,   desc:"Backpack touch sensor",     units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 0 (FL)",       units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 1 (FR)",       units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 2 (BL)",       units:"" },
@@ -109,7 +109,7 @@
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:30,     desc:"Prox signal intensity",     units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:0.5,    desc:"Prox ambient intensity",    units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:196,    desc:"Prox SPAD count",           units:"" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:600,    desc:"Prox distance",             units:"mm" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1000,   desc:"Prox distance",             units:"mm" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Prox range status",         units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Carrying object ID",        units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Carrying object on top ID", units:"" },
@@ -161,17 +161,16 @@
                 mainPageInitialized = true;
                 $.post("/getmainrobotinfo", function(data) {
                     var payload = data.split("\n");
-                    $("#main_robot_id").html(payload[0]);
-                    $("#main_robot_serial_number").html(payload[1]);
-                    $("#main_robot_ip_address").html(payload[2]);
-                    $("#main_build_config").html(payload[3]);
-                    $("#main_os_version").html(payload[4]);
-                    $("#main_cmd_line").html(payload[5]);
-                    $("#main_robot_name").html(payload[6]);
-                    $("#main_os_build_version").html(payload[7]);
-                    $("#main_build_sha").html(payload[8]);
-                    $("#main_robot_mac_address").html(payload[9]);
-                    $("#main_robot_ssid").html(payload[10]);
+                    $("#main_robot_serial_number").html(payload[0]);
+                    $("#main_robot_ip_address").html(payload[1]);
+                    $("#main_build_config").html(payload[2]);
+                    $("#main_os_version").html(payload[3]);
+                    $("#main_cmd_line").html(payload[4]);
+                    $("#main_robot_name").html(payload[5]);
+                    $("#main_os_build_version").html(payload[6]);
+                    $("#main_build_sha").html(payload[7]);
+                    $("#main_robot_mac_address").html(payload[8]);
+                    $("#main_robot_ssid").html(payload[9]);
                 })
             }
         } else if (pageName == "page_consolevars") {
@@ -675,9 +674,6 @@
             <table border=0>
                 <tr>
                     <td width='160px' style='text-align:right'>Connected to:</td><td id="main_robot_connection_type"></td>
-                </tr>
-                <tr>
-                    <td style='text-align:right'>Robot ID:</td><td id="main_robot_id"></td>
                 </tr>
                 <tr>
                     <td style='text-align:right'>Robot Name:</td><td id="main_robot_name"></td>

@@ -32,6 +32,8 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
+#include "util/console/consoleFunction.h"
 #include "util/logging/DAS.h"
 #include "webServerProcess/src/webVizSender.h"
 
@@ -49,6 +51,9 @@ static const float kTimeToClearWaitingForTriggerWordGetIn_s = 3.0f;
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
+  
+  CONSOLE_VAR(bool, kStreamAfterDevWakeWord, "UserIntentComponent", false);
+  CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, "UserIntentComponent", false);
 
 }
 
@@ -95,6 +100,8 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
     };
     _eventHandles.push_back( robot.GetExternalInterface()->Subscribe( MessageGameToEngineTag::AppIntent, onEvent ));
   }
+  
+  SetupConsoleFuncs();
   
 }
 
@@ -899,6 +906,29 @@ void UserIntentComponent::SendWebVizIntents()
         _devLastReceivedAppIntent.clear();
       }
     } // if (webSender ...
+  }
+}
+  
+void UserIntentComponent::SetupConsoleFuncs()
+{
+  if( ANKI_DEV_CHEATS ) {
+    // allows developers to enable the trigger word in any behavior. there's no pop operation, so this is
+    // just for testing (and all of this might change due to concurrent refactoring)
+    auto enableTrigger = [this](ConsoleFunctionContextRef context) {
+      namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+      const auto earConBegin = AudioMetaData::GameEvent::GenericEventFromString("Play__Robot_Vic_Sfx__Wake_Word_On");
+      auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
+      PushResponseToTriggerWord( "UserIntentComponent",
+                                 kPlayGetInAfterDevWakeWord
+                                   ? AnimationTrigger::VC_ListeningGetIn
+                                   : AnimationTrigger::Count,
+                                 postAudioEvent, // required if there is to be any effect at all
+                                 kStreamAfterDevWakeWord
+                                   ? StreamAndLightEffect::StreamingEnabled
+                                   : StreamAndLightEffect::StreamingDisabled
+                                );
+    };
+    _consoleFuncs.emplace_front( "EnableDevTriggerWord", std::move(enableTrigger), "UserIntentComponent", "" );
   }
 }
 

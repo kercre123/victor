@@ -1,11 +1,10 @@
 /**
-* File: behaviorSystemManager.h
+* File: behaviorStack.cpp
 *
 * Author: Kevin Karol
 * Date:   8/17/2017
 *
-* Description: Manages and enforces the lifecycle and transitions
-* of parts of the behavior system
+* Description: Class for repesenting and managing stack of behaviors
 *
 * Copyright: Anki, Inc. 2017
 **/

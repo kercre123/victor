@@ -53,18 +53,14 @@ private:
   void HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void HandleRobotAvailable(const AnkiEvent<RobotInterface::RobotToEngine>&);
-  void OnNotified(RobotConnectionResult result, uint32_t robotFwVersion);
-  void SendConnectionResponse(RobotConnectionResult result, uint32_t robotFwVersion);
+  void OnNotified(RobotConnectionResult result);
+  void SendConnectionResponse(RobotConnectionResult result);
 
   bool _notified;
   IExternalInterface* _externalInterface;
   const CozmoContext* _context;
   RobotInterface::MessageHandler* _robotMessageHandler;
-  uint32_t _serialNumber = 0;
-  int32_t  _bodyHWVersion = -1;
-  BodyColor _bodyColor = BodyColor::UNKNOWN;
   bool _validFirmware;
-  bool _robotIsAvailable;
 };
 
 }

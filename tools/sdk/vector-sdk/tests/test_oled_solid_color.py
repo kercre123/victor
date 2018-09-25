@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-This test cycles Victor's Screen 4 times between solid colors:
+This test cycles Vector's Screen 4 times between solid colors:
 yellow-orange, green, azure, and purple
 
-NOTE: Currently, victor's default eye animations will override the solid colors, so
+NOTE: Currently, Vector's default eye animations will override the solid colors, so
       when testing the colors will flicker back and forth between the eyes and color.
 """
 

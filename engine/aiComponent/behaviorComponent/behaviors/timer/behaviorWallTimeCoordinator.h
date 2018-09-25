@@ -28,6 +28,9 @@ class BehaviorWallTimeCoordinator : public ICozmoBehavior
 public: 
   virtual ~BehaviorWallTimeCoordinator();
 
+  // return a string which can be passed into TTS to say the time correctly 
+  static std::string GetTTSStringForTime(struct tm& localTime, const bool use24HourTime);
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -58,6 +61,7 @@ private:
     bool shouldSayTime;
     uint8_t utteranceID;
     UtteranceState  utteranceState;
+    struct tm time;
   };
 
   InstanceConfig _iConfig;

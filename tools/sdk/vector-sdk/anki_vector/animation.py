@@ -96,7 +96,7 @@ class AnimationComponent(util.Component):
         return result
 
     @sync.Synchronizer.wrap
-    async def play_animation(self, anim: str, loop_count: int = 1, ignore_body_track: bool = True, ignore_head_track: bool = True, ignore_lift_track: bool = True):
+    async def play_animation(self, anim: str, loop_count: int = 1, ignore_body_track: bool = False, ignore_head_track: bool = False, ignore_lift_track: bool = False):
         """Starts an animation playing on a robot.
 
         Vector must be off of the charger to play an animation.

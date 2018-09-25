@@ -226,6 +226,8 @@ namespace Vector {
           _captureFormatState = CaptureFormatState::None;
         }
       });
+
+    SetLiftCrossBar();
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)
@@ -2848,9 +2850,9 @@ namespace Vector {
     return kBodyTurnSpeedThreshBlock_degs;
   }
 
-  void VisionComponent::SetPhysicalRobot(const bool isPhysical)
+  void VisionComponent::SetLiftCrossBar()
   {
-    const f32 padding = isPhysical ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
+    const f32 padding = LIFT_HARDWARE_FALL_SLACK_MM;
     const std::vector<Point3f> liftCrossBar{
       // NOTE: adding points for front and back because which will be outermost in projection
       //       depends on lift angle, so let Occluder, which uses bounding box of all the

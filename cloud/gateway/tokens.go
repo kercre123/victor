@@ -191,7 +191,7 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	if err = request.Pack(&buf); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Printf("%T: writing '%#v' message to JDoc Manager\n", *ctm, *request)
+	log.Printf("%T.sendBlock: writing DocRequest message to JDoc Manager\n", *ctm)
 	// TODO: use channel to a jdoc read/write manager goroutine
 	_, err = ctm.jdocIPC.conn.Write(buf.Bytes())
 	if err != nil {
@@ -200,14 +200,14 @@ func (ctm *ClientTokenManager) sendBlock(request *cloud_clad.DocRequest) (*cloud
 	// Read the response
 	msgBuffer := ctm.jdocIPC.conn.ReadBlock()
 	if msgBuffer == nil {
-		log.Println()
+		log.Errorf("%T.sendBlock: engine socket returned empty message\n", *ctm)
 		return nil, grpc.Errorf(codes.Internal, "engine socket returned empty message")
 	}
 	var recvBuf bytes.Buffer
 	recvBuf.Write(msgBuffer)
 	msg := &cloud_clad.DocResponse{}
 	if err := msg.Unpack(&recvBuf); err != nil {
-		log.Printf("JdocIpcManager Call Err: %#v\n", err)
+		log.Errorf("%T.sendBlock: Unpack response error = %#v\n", *ctm, err)
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	return msg, nil

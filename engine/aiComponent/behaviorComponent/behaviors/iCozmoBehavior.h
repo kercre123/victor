@@ -198,7 +198,6 @@ public:
   BehaviorID         GetID()      const { return _id; }
 
   const std::string& GetDebugStateName() const { return _debugStateName;}
-  ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
 
 
@@ -572,7 +571,6 @@ private:
   
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID;
-  ExecutableBehaviorType _executableType;
   int _timesResumedFromPossibleInfiniteLoop = 0;
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0.f;
 

@@ -84,9 +84,9 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
-        robotState_.accel.x = imuData.acc_x;
-        robotState_.accel.y = imuData.acc_y;
-        robotState_.accel.z = imuData.acc_z;
+        robotState_.accel.x = imuData.accel[0];
+        robotState_.accel.y = imuData.accel[1];
+        robotState_.accel.z = imuData.accel[2];
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
@@ -390,10 +390,6 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
-      void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
-        HeadController::SetAngleRad(msg.newAngle);
-      }
-
       void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
       {
         SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,
@@ -596,10 +592,6 @@ namespace Anki {
         BackpackLightController::SetParams(msg);
       }
 
-      void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
-      {
-        RobotInterface::SendMessage(RobotInterface::ManufacturingID());
-      }
 
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
         BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);

@@ -99,6 +99,7 @@ private:
     InstanceConfig(const Json::Value& config);
     float   targetUnmovedGameEndTimeout_s;
     float   noVisibleTargetGameEndTimeout_s;
+    float   outOfPlayGameEndTimeout_s;
     float   targetVisibleTimeout_s;
     float   globalOffsetDist_mm;
     float   inPlayDistance_mm;
@@ -142,6 +143,7 @@ private:
     KeepawayTarget   target;
     PounceReadyState pounceReadyState;
     float            gameStartTime_s;
+    float            outOfPlayExitTime_s;
     float            creepTime;
     float            pounceChance;
     float            pounceTime;

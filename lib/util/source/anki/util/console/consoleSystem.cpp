@@ -426,12 +426,12 @@ ConsoleSystem& ConsoleSystem::Instance()
 //==============================================================================================================================
 #if REMOTE_CONSOLE_ENABLED
 
-void CrashTheApp( ConsoleFunctionContextRef context )
+void IntentionalCrash( ConsoleFunctionContextRef context )
 {
   volatile int* a = reinterpret_cast<volatile int*>(0);
   *a = 42;
 }
-CONSOLE_FUNC( CrashTheApp, "Debug" );
+CONSOLE_FUNC( IntentionalCrash, "Debug" );
 
 void ResetConsoleVars( ConsoleFunctionContextRef context )
 {

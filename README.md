@@ -57,6 +57,8 @@ Follow these steps to add a Personal Access Token to fix this error:
 
 1. Try cloning again.
 
+Additional note: check the error very closely as it may direct you to a URL to authenticate your account, follow the URL as required.
+
 ### Submodules
 Update the submodules:
 

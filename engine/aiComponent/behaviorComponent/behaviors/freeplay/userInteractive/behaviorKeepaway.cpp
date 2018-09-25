@@ -69,6 +69,7 @@ BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
 
   SET_FLOAT_HELPER(targetUnmovedGameEndTimeout_s);
   SET_FLOAT_HELPER(noVisibleTargetGameEndTimeout_s);
+  SET_FLOAT_HELPER(outOfPlayGameEndTimeout_s);
   SET_FLOAT_HELPER(targetVisibleTimeout_s);
   SET_FLOAT_HELPER(globalOffsetDist_mm);
   SET_FLOAT_HELPER(inPlayDistance_mm);
@@ -111,6 +112,7 @@ BehaviorKeepaway::DynamicVariables::DynamicVariables(const InstanceConfig& iConf
 , target(KeepawayTarget())
 , pounceReadyState(PounceReadyState::Unready)
 , gameStartTime_s(0.0f)
+, outOfPlayExitTime_s(0.0f)
 , creepTime(0.0f)
 , pounceChance(iConfig.basePounceChance)
 , pounceTime(0.0f)
@@ -138,6 +140,7 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
   MakeMemberTunable(_iConfig.maxPouncesForSoloPlay, "maxPouncesForSoloPlay", kDebugName);
   MakeMemberTunable(_iConfig.targetUnmovedGameEndTimeout_s, "targetUnmovedGameEndTimeout_s", kDebugName);
   MakeMemberTunable(_iConfig.noVisibleTargetGameEndTimeout_s, "noVisibleTargetGameEndTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.outOfPlayGameEndTimeout_s, "outOfPlayGameEndTimeout_s", kDebugName);
   MakeMemberTunable(_iConfig.targetVisibleTimeout_s, "targetVisibleTimeout_s", kDebugName);
   MakeMemberTunable(_iConfig.globalOffsetDist_mm, "globalOffsetDist_mm", kDebugName);
   MakeMemberTunable(_iConfig.inPlayDistance_mm, "inPlayDistance_mm", kDebugName);
@@ -323,6 +326,15 @@ void BehaviorKeepaway::CheckGetOutTimeOuts()
     }
   }
 
+  if( KeepawayState::Stalking == _dVars.state &&
+      _dVars.outOfPlayExitTime_s != 0.0f && 
+      GetCurrentTimeInSeconds() > _dVars.outOfPlayExitTime_s ){
+    PRINT_CH_INFO(kLogChannelName,
+                  "BehaviorKeepaway.OutOfPlayTimeout",
+                  "Victor got bored and quit because his cube was out of play for %f seconds",
+                  _iConfig.outOfPlayGameEndTimeout_s);
+    victorIsBored = true;
+  }
 
   if(victorIsBored){
     TransitionToGetOutBored();
@@ -377,6 +389,8 @@ void BehaviorKeepaway::TransitionToStalking()
   float pounceDelay = GetRNG().RandDblInRange(_iConfig.pounceDelayTimeMin_s, _iConfig.pounceDelayTimeMax_s);
   _dVars.pounceTime = GetCurrentTimeInSeconds() + pounceDelay;
 
+  _dVars.outOfPlayExitTime_s = GetCurrentTimeInSeconds() + _iConfig.outOfPlayGameEndTimeout_s;
+
   StartIdleAnimation();
 }
 
@@ -409,10 +423,11 @@ void BehaviorKeepaway::UpdateStalking()
           // If the target goes outOfPlay but not outOfSight, TransitionToUnready
           StopIdleAnimation();
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetUnready),
-                              [this](){
-                                _dVars.pounceReadyState = PounceReadyState::Unready;
-                                StartIdleAnimation();
-                              });
+            [this](){
+              _dVars.pounceReadyState = PounceReadyState::Unready;
+              _dVars.outOfPlayExitTime_s = GetCurrentTimeInSeconds() + _iConfig.outOfPlayGameEndTimeout_s; 
+              StartIdleAnimation();
+            });
         } else if(_dVars.target.isInMousetrapRange){
           if(GetRNG().RandDbl() < _iConfig.probBackupInsteadOfMousetrap){
             PRINT_NAMED_INFO("BehaviorKeepaway.BackupInsteadOfPounce","");
@@ -442,6 +457,7 @@ void BehaviorKeepaway::UpdateStalking()
         if(_dVars.target.isInPlay){
           // When the target comes back into play, TransitionToReady
           StopIdleAnimation();
+          _dVars.outOfPlayExitTime_s = 0.0f;
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetReady),
                               [this](){
                                 _dVars.pounceReadyState = PounceReadyState::Ready;
@@ -642,7 +658,7 @@ void BehaviorKeepaway::StartIdleAnimation()
 {
   AnimationTrigger idleAnimationTrigger = (PounceReadyState::Ready == _dVars.pounceReadyState) ?
                                           AnimationTrigger::CubePounceIdleLiftUp :
-                                          AnimationTrigger::CubePounceIdleLiftUp;
+                                          AnimationTrigger::CubePounceIdleLiftDown;
 
   if(IsControlDelegated()){
     PRINT_NAMED_ERROR("BehaviorKeepaway.InvalidStartIdleAnimationCall",

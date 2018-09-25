@@ -265,6 +265,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
 
 CozmoEngine::~CozmoEngine()
 {
+  _engineState = EngineState::ShuttingDown;
+  _context->GetWebService()->Stop();
+
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
   }
@@ -615,14 +618,6 @@ void CozmoEngine::UpdateLatencyInfo()
     ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
     ExternalInterface::CurrentTimingInfo imageLatency(imageStats.GetMean(), imageStats.GetMin(), imageStats.GetMax(), currentImageDelay * 1000.0);
 
-    ExternalInterface::MessageEngineToGame debugLatencyMessage(ExternalInterface::LatencyMessage(
-                                                                                     std::move(wifiLatency),
-                                                                                     std::move(extSendQueueTime),
-                                                                                     std::move(sendQueueTime),
-                                                                                     std::move(recvQueueTime),
-                                                                                     std::move(unityEngineLatency),
-                                                                                     std::move(imageLatency) ));
-
     #if REMOTE_CONSOLE_ENABLED
     if (kLogMessageLatencyOnce)
     {
@@ -640,8 +635,6 @@ void CozmoEngine::UpdateLatencyInfo()
       kLogMessageLatencyOnce = false;
     }
     #endif // REMOTE_CONSOLE_ENABLED
-
-    _context->GetExternalInterface()->Broadcast( std::move(debugLatencyMessage) );
   }
 }
 
@@ -654,8 +647,6 @@ void CozmoEngine::SetEngineState(EngineState newState)
   }
 
   _engineState = newState;
-
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
 
   Anki::Util::sInfoF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
 }

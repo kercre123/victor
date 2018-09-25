@@ -26,7 +26,7 @@ ${auto_generated_comment}
 
 $includes
 
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
 
 namespace Anki {
 namespace Vector {

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io/ioutil"
+	"math"
 	"os"
 	"os/exec"
 	"reflect"
@@ -42,13 +44,12 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.Message
 	if msg.Animation == nil {
 		return nil
 	}
-	log.Println("Animation name:", msg.Animation.Name)
 	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
 		NumLoops:        msg.Loops,
 		AnimationName:   msg.Animation.Name,
-		IgnoreBodyTrack: false,
-		IgnoreHeadTrack: false,
-		IgnoreLiftTrack: false,
+		IgnoreBodyTrack: msg.IgnoreBodyTrack,
+		IgnoreHeadTrack: msg.IgnoreHeadTrack,
+		IgnoreLiftTrack: msg.IgnoreLiftTrack,
 	})
 }
 
@@ -137,18 +138,6 @@ func SliceToArray(msg []uint32) [3]uint32 {
 	var arr [3]uint32
 	copy(arr[:], msg)
 	return arr
-}
-
-func ProtoSetBackpackLightsToClad(msg *extint.SetBackpackLightsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetBackpackLEDs(&gw_clad.SetBackpackLEDs{
-		OnColor:               SliceToArray(msg.OnColor),
-		OffColor:              SliceToArray(msg.OffColor),
-		OnPeriodMs:            SliceToArray(msg.OnPeriodMs),
-		OffPeriodMs:           SliceToArray(msg.OffPeriodMs),
-		TransitionOnPeriodMs:  SliceToArray(msg.TransitionOnPeriodMs),
-		TransitionOffPeriodMs: SliceToArray(msg.TransitionOffPeriodMs),
-		Offset:                [3]int32{0, 0, 0},
-	})
 }
 
 func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
@@ -779,7 +768,8 @@ func (service *rpcService) onDisconnect() {
 func (service *rpcService) checkConnectionID(id string) bool {
 	connectionIdLock.Lock()
 	defer connectionIdLock.Unlock()
-	if len(connectionId) != 0 {
+	if len(connectionId) != 0 && id != connectionId {
+		log.Println("Connection id already set: current='%s', incoming='%s'", connectionId, id)
 		return false
 	}
 	// Check whether we are in Webots.
@@ -800,7 +790,7 @@ func (service *rpcService) checkConnectionID(id string) bool {
 		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
 			// Someone is connected over BLE and they are not the primary connection.
 			// We return false so the app can tell you not to connect.
-			log.Printf("Detected mismatched BLE connection id: %s\n", connectionResponse.ConnectionId)
+			log.Printf("Detected mismatched BLE connection id: BLE='%s', incoming='%s'\n", connectionResponse.ConnectionId, id)
 			return false
 		}
 	}
@@ -810,12 +800,23 @@ func (service *rpcService) checkConnectionID(id string) bool {
 
 // Long running message for sending events to listening sdk users
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
+	// TODO: v Remove the tempEventStream handling below when the app connection properly closes v
+	tempEventStreamMutex1.Lock()
+	if tempEventStreamDone != nil {
+		close(tempEventStreamDone)
+	}
+	tempEventStreamMutex2.Lock()
+	defer tempEventStreamMutex2.Unlock()
+	tempEventStreamDone = make(chan struct{})
+	tempEventStreamMutex1.Unlock()
+	// TODO: ^ Remove the tempEventStream handling above when the app connection properly closes ^
+
 	isPrimary := service.checkConnectionID(in.ConnectionId)
 	if isPrimary {
 		service.onConnect(connectionId)
 		defer service.onDisconnect()
 	}
-	err := stream.Send(&extint.EventResponse{
+	resp := &extint.EventResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 		},
@@ -826,7 +827,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 				},
 			},
 		},
-	})
+	}
+	err := stream.Send(resp)
 	if err != nil {
 		log.Println("Closing Event stream (on send):", err)
 		return err
@@ -835,6 +837,12 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 		// This is the case where the user disconnects the stream
 		// We should still return the err in case the user doesn't think they disconnected
 		return err
+	}
+
+	if isPrimary {
+		log.Printf("EventStream: Sent primary connection response '%s'\n", connectionId)
+	} else {
+		log.Printf("EventStream: Sent secondary connection response given='%s', current='%s'\n", in.ConnectionId, connectionId)
 	}
 
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 512)
@@ -853,6 +861,10 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 
 	for {
 		select {
+		// TODO: remove entire tempEventStreamDone case when the app connection properly closes
+		case <-tempEventStreamDone:
+			log.Println("EventStream closing because another stream has opened")
+			return grpc.Errorf(codes.Unavailable, "Connection closed because another event stream has opened")
 		case response, ok := <-eventsChannel:
 			if !ok {
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
@@ -1592,7 +1604,7 @@ func ValidateActionTag(idTag int32) error {
 	firstTag := int32(extint.ActionTagConstants_FIRST_SDK_TAG)
 	lastTag := int32(extint.ActionTagConstants_LAST_SDK_TAG)
 	if idTag < firstTag || idTag > lastTag {
-		return grpc.Errorf(codes.Internal, "Invalid Action tag_id")
+		return grpc.Errorf(codes.InvalidArgument, "Invalid Action tag_id")
 	}
 
 	return nil
@@ -1773,18 +1785,6 @@ func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLift
 	return response, nil
 }
 
-func (service *rpcService) SetBackpackLights(ctx context.Context, in *extint.SetBackpackLightsRequest) (*extint.SetBackpackLightsResponse, error) {
-	_, err := engineCladManager.Write(ProtoSetBackpackLightsToClad(in))
-	if err != nil {
-		return nil, err
-	}
-	return &extint.SetBackpackLightsResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
-}
-
 func (service *rpcService) BatteryState(ctx context.Context, in *extint.BatteryStateRequest) (*extint.BatteryStateResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BatteryStateResponse{}, 1)
 	defer f()
@@ -1872,6 +1872,59 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
 	return sayTextResponse, nil
+}
+
+// Long running message for sending audio feed to listening sdk users
+func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.ExternalInterface_AudioFeedServer) error {
+	if disableStreams {
+		// Disabled for Vector 1.0 release
+		return grpc.Errorf(codes.Unimplemented, "AudioFeed disabled in message_handler.go")
+	}
+
+	// temporary 1 kHz sine wave generator to test over the wire transfer
+	// @TODO: delete this when the engine is modified to send audio (VIC-3024)
+	for i := 0; i < 1000; i++ {
+		power_array := make([]byte, 3200)
+		direction_array := make([]byte, 12)
+		var buffer bytes.Buffer
+		for i := 0; i < 1600; i++ {
+			// sin(pi*i/8) will cycle every 16 samples, the robot's sample rate is 16,000
+			// using '12000' rather than max_int so its not so painful to listen to.
+			//
+			// the robot's audio data is in the form of 16 bit signed integers, but the proto
+			// stores it as a byte array
+			theta := (math.Pi * float64(i)) / float64(8)
+			entry := int16(math.Sin(theta) * 12000)
+			binary.Write(&buffer, binary.LittleEndian, entry)
+			buffer.Read(power_array[i*2 : i*2+1])
+		}
+
+		audioFeedResponse := &extint.AudioFeedResponse{
+			Data: &extint.AudioChunk{
+				RobotTimeStamp:     0,
+				SignalPower:        power_array,
+				DirectionStrengths: direction_array,
+				SourceDirection:    12, // '12' represents invalid under the hood, while '0' is a valid direction
+				SourceConfidence:   0,
+				NoiseFloorPower:    0,
+			},
+		}
+
+		if err := stream.Send(audioFeedResponse); err != nil {
+			return err
+		} else if err = stream.Context().Err(); err != nil {
+			// This is the case where the user disconnects the stream
+			// We should still return the err in case the user doesn't think they disconnected
+			return err
+		}
+
+		// The robot will send audio data in chunks of 1600 samples, and the animProcess operates
+		// at a sampling rate of 16000.  The rate at which the robot generates these chunks (and the
+		// minimum latency of the audiostream) is 100ms on the golden path.
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return nil
 }
 
 // TODO: Add option to request a single image from the robot(SingleShot) once VIC-5159 is resolved.
@@ -2042,6 +2095,7 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 }
 
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
+// TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
 	return nil, grpc.Errorf(codes.Unimplemented, "Not implemented yet")
 }

@@ -94,14 +94,8 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
     }
   }
 
-  
   auto procFaceData = keyframes->ProceduralFaceKeyFrame();
-  // These animations contain procedural faces, even though there is a png sequence that should
-  // be displayed
-  // todo: remove this if block once (VIC-4929) is resolved, or these animations no longer contain
-  // procedural faces, whichever comes first
-  const bool blacklistedProcFaces = (_name == "anim_lookatphone_getin_01") || (_name == "anim_lookatphone_getout_01");
-  if (procFaceData != nullptr && !blacklistedProcFaces) {
+  if (procFaceData != nullptr) {
     for (int pfIdx=0; pfIdx < procFaceData->size(); pfIdx++) {
       const CozmoAnim::ProceduralFace* procFaceKeyframe = procFaceData->Get(pfIdx);
       Result addResult = _proceduralFaceTrack.AddKeyFrameToBack(procFaceKeyframe, name);

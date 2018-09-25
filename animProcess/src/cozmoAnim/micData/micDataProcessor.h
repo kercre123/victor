@@ -85,8 +85,9 @@ public:
   
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
-  // Note 'Count' and '-1' values indicate to use default
-  void UpdateTriggerForLocale(Util::Locale newLocale,
+  // Note: 'Count' and '-1' values indicate to use default
+  // Return true for success
+  bool UpdateTriggerForLocale(Util::Locale newLocale,
                               MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
                               int searchFileIndex = -1);
 
@@ -205,6 +206,8 @@ private:
   
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;
+  
+  void SetupConsoleFuncs();
 };
 
 } // namespace MicData

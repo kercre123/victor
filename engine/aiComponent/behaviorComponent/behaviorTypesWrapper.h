@@ -32,12 +32,12 @@ namespace Anki {
 namespace Vector {
 enum class BehaviorID : uint16_t;
 enum class BehaviorClass : uint8_t;
-enum class ExecutableBehaviorType : uint8_t;
 const char* EnumToString( const BehaviorID id );
 }
 }
 #else
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/behaviorClasses.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 #endif
 
 #if BEHAVIOR_ID_DEV_MODE
@@ -56,19 +56,15 @@ BehaviorID BehaviorIDFromString(const std::string& name);
 bool BehaviorIDFromString(const std::string& name, BehaviorID& id);
 bool IsValidBehaviorID(const std::string& name);
 BehaviorClass BehaviorClassFromString(const std::string& name);
-ExecutableBehaviorType ExecutableBehaviorTypeFromString(const std::string& name);
 
 const char* BehaviorIDToString(const BehaviorID in);
 const char* BehaviorClassToString(const BehaviorClass in);
-const char* BehaviorClassToString(const ExecutableBehaviorType in);
   
 #if BEHAVIOR_ID_DEV_MODE
 uint16_t GetBehaviorIDNumEntries();
 #else
 constexpr uint16_t GetBehaviorIDNumEntries() { return BehaviorIDNumEntries; }
 #endif
-
-ExecutableBehaviorType GetDefaultExecutableBehaviorType();
 
 }
 }

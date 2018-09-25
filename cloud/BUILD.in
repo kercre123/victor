@@ -25,6 +25,11 @@ go_project(
     dir = 'process'
 )
 
+go_testdir(
+    dir = 'anki',
+    exclude = ['anki/logcollector']
+)
+
 go_project(
     name = 'vic-gateway',
     dir = 'gateway'

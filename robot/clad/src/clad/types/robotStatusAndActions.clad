@@ -102,19 +102,6 @@ structure RobotState
   int_8   currPathSegment, // -1 if not traversing a path
 }
 
-// These enum values should match the body color
-// enum in robot/fixture/app/robotTest.c (factory-1.5 branch)
-enum int_8 BodyColor
-{
-  UNKNOWN   = -1,
-  WHITE_v10 = 0,  // White Cozmo 1.0
-  RESERVED  = 1,  // Unused reserved value
-  WHITE_v15 = 2,  // White Cozmo 1.5
-  CE_LM_v15 = 3,  // Black/Collector's Edition/Liquid Metal Cozmo 1.5
-
-  COUNT
-}
-
 // Make sure that there is a corresponding code in faultCodes.h
 // for each shutdown reason here.
 enum uint_8 ShutdownReason {

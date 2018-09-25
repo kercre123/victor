@@ -78,7 +78,6 @@ static const char* kBehaviorIDConfigKey              = "behaviorID";
 
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
-static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
@@ -204,7 +203,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 , _activatedTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
-, _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
 , _intentToDeactivate( UserIntentTag::INVALID )
 , _respondToTriggerWord( false )
 , _emotionEventOnActivated("")
@@ -238,12 +236,6 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     DEV_ASSERT_MSG(requiredSwitchToParentJson.isNumeric(), "ICozmoBehavior.ReadFromJson", "Not a float: %s",
                    kRequiredParentSwitchKey);
     _requiredRecentSwitchToParent_sec = requiredSwitchToParentJson.asFloat();
-  }
-
-  const Json::Value& executableBehaviorTypeJson = config[kExecutableBehaviorTypeKey];
-  if (executableBehaviorTypeJson.isString())
-  {
-    _executableType = BehaviorTypesWrapper::ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
   }
 
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
@@ -398,7 +390,6 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kBehaviorIDConfigKey,
     kRequiredDriveOffChargerKey,
     kRequiredParentSwitchKey,
-    kExecutableBehaviorTypeKey,
     kAlwaysStreamlineKey,
     kWantsToBeActivatedCondConfigKey,
     kWantsToCancelSelfConfigKey,

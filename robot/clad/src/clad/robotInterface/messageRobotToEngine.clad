@@ -11,10 +11,8 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/otaMessages.clad"
 #include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/pathEventTypes.clad"
-#include "clad/types/factoryFWOnly.clad"
 #include "clad/types/robotToSwitchboard.clad"
 #include "clad/robotInterface/factoryMessages.clad"
 
@@ -85,13 +83,6 @@ message PathFollowingEvent
 {
   uint_16        pathID,
   PathEventType  eventType
-}
-
-message ManufacturingID
-{ // See definitions in syscon/hal/hardware.h
-  uint_32 esn,
-  int_32  hw_version,
-  int_32  body_color,
 }
 
 message LiftLoad
@@ -192,12 +183,7 @@ union RobotToEngine {
   FallingEvent               fallingEvent           = 0xC7,
   RobotPoked                 robotPoked             = 0xC8,
 
-  // TODO: Can probably get rid of these eventually since engine
-  //       can access most of this info directly now.
-  FWVersionInfo              factoryFirmwareVersion = 0xC9, ///< DEPRECATED, only used by factory firmware
   RunFactoryTest             runFactoryTest         = 0xCA,
-  ManufacturingID            mfgId                  = 0xCB,
-  FirmwareVersion            firmwareVersion        = 0xCC,
 
   RobotServerDisconnect      robotServerDisconnect  = 0xCD,
 

@@ -26,6 +26,7 @@
 
 #include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 
@@ -144,7 +145,7 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioComponent::UpdateActivityMusicState(BehaviorID activityID)
+void BehaviorAudioComponent::UpdateActivityMusicState(const BehaviorID& activityID)
 {
 //  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
 //                "RobotAudioClient.SetFreeplayMusic",

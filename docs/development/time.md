@@ -57,10 +57,8 @@ needs if you just need to count seconds since things happened. If not, peruse th
       [`BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()`](../../coretech/common/engine/utils/timer.h)
       or
       [`BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds()`](../../coretech/common/engine/utils/timer.h)
-    * Note that these are computed based on the tick number, so may lag behind real time if engine is running
-      slow
-    * This is likely the most _efficient_ timer to use because it only calculates anything once per tick, so
-      it a good default
+    * This uses `steady_clock` behind the scenes, so it should reflect the 'real' time, but it is only the real time at the beginning of the tick. So within a single tick, this may lag behind real time if engine is running slow
+    * This is likely the most _efficient_ timer to use because it only calculates anything once per tick, so it a good default
 
 * Do you want a monotonic timer that tells you the time _right now_ within a tick? E.g. if you are computing
   exact timing on when a light should turn on

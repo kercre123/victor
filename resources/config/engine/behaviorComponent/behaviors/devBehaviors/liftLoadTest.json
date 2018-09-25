@@ -1,5 +1,4 @@
 {
   "behaviorClass": "LiftLoadTest",
-  "behaviorID": "LiftLoadTest",
-  "executableBehaviorType": "LiftLoadTest"
+  "behaviorID": "LiftLoadTest"
 }

@@ -380,7 +380,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'VectorSDK', 'Vector SDK Documentation',
-     author, 'VectorSDK', 'The SDK for directly controlling your Vector Robot',
+     author, 'VectorSDK', 'The SDK for directly controlling your Vector',
      'Miscellaneous'), # TODO: clean this up
 ]
 

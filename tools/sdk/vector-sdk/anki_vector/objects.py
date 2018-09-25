@@ -14,7 +14,7 @@
 
 """Object and Power Cube recognition.
 
-Victor can recognize and track a number of different types of objects.
+Vector can recognize and track a number of different types of objects.
 
 These objects may be visible (currently observed by the robot's camera)
 and tappable (in the case of the Power Cube that ships with the robot).
@@ -29,7 +29,7 @@ the robot sees (or continues to see) the object with its camera, or
 can either observe the object's instance directly, or capture all such events
 for all objects by observing them on :class:`anki_vector.world.World` instead.
 
-All observable objects have a marker attached to them, which allows Victor
+All observable objects have a marker attached to them, which allows Vector
 to recognize the object and its position and rotation("pose").
 """
 
@@ -49,7 +49,7 @@ from . import lights, sync, util
 from .messaging import protocol
 
 #: Length of time in seconds to go without receiving an observed event before
-#: assuming that Victor can no longer see an object.
+#: assuming that Vector can no longer see an object.
 OBJECT_VISIBILITY_TIMEOUT = 0.4
 
 #: LightCube1Type's markers look like 2 concentric circles with lines and gaps
@@ -62,7 +62,7 @@ class LightCube(util.Component):
     """Represents Vector's Cube"""
 
     #: Length of time in seconds to go without receiving an observed event before
-    #: assuming that Victor can no longer see an element. Can be overridden in sub
+    #: assuming that Vector can no longer see an element. Can be overridden in sub
     #: classes.
     visibility_timeout = OBJECT_VISIBILITY_TIMEOUT
 
@@ -131,7 +131,7 @@ class LightCube(util.Component):
         self.is_connected = False
 
         #: :class:`~anki_vector.util.ImageRect`: The ImageRect defining where the
-        #: object was last visible within Victor's camera view.
+        #: object was last visible within Vector's camera view.
         #: ``None`` if the element has not yet been observed.
         self._last_observed_image_rect = None
 
@@ -267,12 +267,12 @@ class LightCube(util.Component):
 
     def _dispatch_observed_event(self, image_rect):
         # @TODO: feed this into a proper event system
-        # Image Rect refers to the bounding rect in victors vision where the object was seen
+        # Image Rect refers to the bounding rect in Vector's vision where the object was seen
         pass
 
     def _dispatch_appeared_event(self, image_rect):
         # @TODO: feed this into a proper event system
-        # Image Rect refers to the bounding rect in victors vision where the object was seen
+        # Image Rect refers to the bounding rect in Vector's vision where the object was seen
         pass
 
     def _dispatch_disappeared_event(self):

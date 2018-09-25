@@ -1,3 +1,17 @@
+// Copyright (c) 2018 Anki, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License in the file LICENSE.txt or at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // External interface for robot <-> app and robot <-> sdk communication
 
 syntax = "proto3";
@@ -58,9 +72,6 @@ message EventRequest {
     FilterList black_list = 2;
   }
   string connection_id = 3;
-  // Plan to possibly add version here, but it is not needed in the
-  // first version because the default version is 0
-  // int64 version = 4;
 }
 
 message EventResponse {
@@ -175,8 +186,8 @@ message GatewayWrapper {
     ImageChunk                    image_chunk                        = 141;
 
     // ------------ Message and response for cloud connectivity check ------------
-    CheckCloudRequest             check_cloud_request               = 160;
-    CheckCloudResponse            check_cloud_response              = 161;
+    CheckCloudRequest             check_cloud_request                = 160;
+    CheckCloudResponse            check_cloud_response               = 161;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

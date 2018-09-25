@@ -100,9 +100,6 @@ static int       kMinHardwareVersion   = 3;
 // Timeout to wait for MfgID message back from robot after requesting it
 static u32       kMfgIDTimeout_ms      = 500;
 
-// Minimum body color we are looking for
-static BodyColor kMinBodyColor         = BodyColor::WHITE_v15;
-
 // Minimum expected raw touch sensor value
 static u16       kMinExpectedTouchValue= 400;
 
