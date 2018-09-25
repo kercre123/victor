@@ -1,5 +1,14 @@
 FROM ubuntu:16.04
 
+ENV ENVIRONMENT dev
+ENV ENABLE_ACCOUNT_CREATION false
+
+ENV TEST_ID 1
+ENV TEST_USER_PASSWORD ankisecret
+
+ENV TEST_LOG_FILE /var/log/syslog
+ENV URL_CONFIG_FILE integrationtest/server_config.json
+
 RUN apt-get update
 RUN apt-get --yes install libopus0 ca-certificates
 

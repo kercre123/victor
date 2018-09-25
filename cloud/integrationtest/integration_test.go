@@ -12,23 +12,13 @@ import (
 	"testing"
 
 	"github.com/anki/sai-go-cli/config"
+	"github.com/anki/sai-go-util/envconfig"
 	"github.com/anki/sai-go-util/http/apiclient"
 	"github.com/anki/sai-go-util/log"
 	"github.com/anki/sai-token-service/model"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-)
-
-const (
-	envName               = "dev"
-	enableAccountCreation = true
-
-	testUserPassword = "ankisecret"
-
-	testLogFile   = "/var/log/syslog"
-	urlConfigFile = "integrationtest/server_config.json"
-	certDir       = "/device_certs"
 )
 
 func init() {
@@ -51,24 +41,24 @@ func parseToken(token string) (*model.Token, error) {
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	testID           string
-	testUserID       string
+	envName string
+
+	urlConfigFile         string
+	testLogFile           string
+	enableAccountCreation bool
+
+	testID           int
+	testUserName     string
 	testUserPassword string
 
 	robotInstance *testableRobot
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	// Enable client certs and set custom key pair dir
-	token.UseClientCert = true
-	robot.DefaultCloudDir = certDir
-
-	// Create credentials for test user
-	s.testID = "0000"
-	s.testUserID = fmt.Sprintf("test.%s@anki.com", s.testID)
+	s.configureFromEnvironment()
 
 	s.robotInstance = &testableRobot{}
-	go s.robotInstance.run(urlConfigFile)
+	go s.robotInstance.run(s.urlConfigFile)
 
 	s.robotInstance.waitUntilReady()
 
@@ -87,7 +77,7 @@ func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a 
 		alog.Error{
 			"test_name":      testName,
 			"action":         action,
-			"test_user_name": s.testUserID,
+			"test_user_name": s.testUserName,
 			"status":         "error",
 			"error":          err,
 		}.Log()
@@ -95,11 +85,39 @@ func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a 
 		alog.Info{
 			"test_name":      testName,
 			"action":         action,
-			"test_user_name": s.testUserID,
+			"test_user_name": s.testUserName,
 			"status":         "ok",
 			"message":        fmt.Sprintf(format, a...),
 		}.Log()
 	}
+}
+
+func (s *IntegrationTestSuite) configureFromEnvironment() {
+	// set some sensible configuration defaults
+	s.envName = "dev"
+
+	s.testUserPassword = "ankisecret"
+	s.testLogFile = "/var/log/syslog"
+	s.urlConfigFile = "integrationtest/server_config.json"
+	s.enableAccountCreation = false
+
+	s.testID = 0
+
+	// Enable client certs and set custom key pair dir (for this user)
+	token.UseClientCert = true
+	robot.DefaultCloudDir = fmt.Sprintf("/device_certs/%04d", s.testID)
+
+	// override settings from environment variables where needed
+	envconfig.DefaultConfig.String(&s.envName, "ENVIRONMENT", "", "Test environment")
+	envconfig.DefaultConfig.Int(&s.testID, "TEST_ID", "", "Test ID (used for identifying user)")
+	envconfig.DefaultConfig.String(&s.testUserPassword, "TEST_USER_PASSWORD", "", "Password for test accounts")
+	envconfig.DefaultConfig.String(&s.testLogFile, "TEST_LOG_FILE", "", "File used in logcollector upload")
+	envconfig.DefaultConfig.String(&s.urlConfigFile, "URL_CONFIG_FILE", "", "Config file for Service URLs")
+	envconfig.DefaultConfig.String(&robot.DefaultCloudDir, "CERT_DIR", "", "Key pair directory for client certs")
+	envconfig.DefaultConfig.Bool(&s.enableAccountCreation, "ENABLE_ACCOUNT_CREATION", "", "Enables account creation as part of test")
+
+	// Create credentials for test user
+	s.testUserName = fmt.Sprintf("test.%04d@anki.com", s.testID)
 }
 
 func (s *IntegrationTestSuite) getCredentials() (*model.Token, error) {
@@ -112,18 +130,18 @@ func (s *IntegrationTestSuite) getCredentials() (*model.Token, error) {
 }
 
 func (s *IntegrationTestSuite) createTestAccount() (apiclient.Json, error) {
-	if _, err := config.Load("", true, envName, "default"); err != nil {
+	if _, err := config.Load("", true, s.envName, "default"); err != nil {
 		return nil, err
 	}
 
-	if ok, err := accounts.CheckUsername(envName, s.testUserID); err != nil {
+	if ok, err := accounts.CheckUsername(s.envName, s.testUserName); err != nil {
 		return nil, err
 	} else if !ok {
-		fmt.Printf("Email %s already has an account\n", s.testUserID)
+		fmt.Printf("Email %s already has an account\n", s.testUserName)
 		return nil, nil
 	}
 
-	return accounts.DoCreate(envName, s.testUserID, testUserPassword)
+	return accounts.DoCreate(s.envName, s.testUserName, s.testUserPassword)
 }
 
 func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
@@ -136,7 +154,7 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 	// not part of the test setup.
 
 	// Step 0: Create a new user test account
-	if enableAccountCreation {
+	if s.enableAccountCreation {
 		json, err := s.createTestAccount()
 		s.logIfNoError(err, "create_account", "Created account %v\n", json)
 		require.NoError(err)
@@ -144,7 +162,7 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 
 	// Step 1 & 2: User Authentication request to Accounts (user logs into Chewie)
 	// Note: this is currently hardwired to the dev environment
-	session, _, err := accounts.DoLogin(envName, s.testUserID, testUserPassword)
+	session, _, err := accounts.DoLogin(s.envName, s.testUserName, s.testUserPassword)
 	if session != nil {
 		s.logIfNoError(err, "account_login", "Logged in user %q obtained session %q\n", session.UserID, session.Token)
 	} else {
@@ -183,7 +201,7 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 }
 
 func (s *IntegrationTestSuite) TestLogCollector() {
-	s3Url, err := s.robotInstance.logcollectorClient.upload(testLogFile)
+	s3Url, err := s.robotInstance.logcollectorClient.upload(s.testLogFile)
 	s.NoError(err)
 
 	s.logIfNoError(err, "log_upload", "File uploaded, url=%q (err=%v)\n", s3Url, err)
