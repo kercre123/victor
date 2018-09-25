@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-ENV ENVIRONMENT dev
+ENV ENVIRONMENT loadtest
 ENV ENABLE_ACCOUNT_CREATION false
 
 ENV TEST_ID 1
@@ -13,7 +13,8 @@ RUN apt-get update
 RUN apt-get --yes install libopus0 ca-certificates
 
 # provision endpoint service URLs
-ADD ./server_config.json /integrationtest/
+ADD ./server_load_config.json /integrationtest/server_config.json
+ADD ./saiconfig /root/.saiconfig
 
 # install keys & certificates
 ADD ./certs/device_certs.tgz /
