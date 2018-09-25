@@ -52,6 +52,7 @@ using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
 class FoldableRegion {
 public:
   FoldableRegion(const BoundedConvexSet2f& set) 
+  : _aabb(set.GetAxisAlignedBoundingBox())
   {
     using std::placeholders::_1;
 
@@ -65,13 +66,12 @@ public:
                 // ~ [&set](const AxisAlignedQuad& q) { return set.ContainsAll(q.GetVertices()); };
     IntersectsQuad = std::bind( &BoundedConvexSet2f::Intersects, &set, _1 );
                 // ~ [&set](const AxisAlignedQuad& q) { return set.Intersects(q); };
-    GetBoundingBox = std::bind( &BoundedConvexSet2f::GetAxisAlignedBoundingBox, &set );
-                // ~ [&set]() { return set.GetAxisAlignedBoundingBox(); };
   }
 
   // allow Union types
   template <typename T, typename U>
   FoldableRegion(const PointSetUnion2f<T,U>& set) 
+  : _aabb(set.GetAxisAlignedBoundingBox())
   {
     using std::placeholders::_1;
 
@@ -81,14 +81,17 @@ public:
                 // ~ [&set](const AxisAlignedQuad& q) { return set.ContainsHyperCube(q); };
     IntersectsQuad = std::bind( &PointSetUnion2f<T,U>::Intersects, &set, _1 );
                 // ~ [&set](const AxisAlignedQuad& q) { return set.Intersects(q); };
-    GetBoundingBox = std::bind( &PointSetUnion2f<T,U>::GetAxisAlignedBoundingBox, &set );
-                // ~ [&set]() { return set.GetAxisAlignedBoundingBox(); };
   }
 
   std::function<bool(const Point2f&)>         Contains;
   std::function<bool(const AxisAlignedQuad&)> ContainsQuad;
   std::function<bool(const AxisAlignedQuad&)> IntersectsQuad;
-  std::function<AxisAlignedQuad()>            GetBoundingBox;
+
+  // cache AABB since the set is const at this point
+  const AxisAlignedQuad& GetBoundingBox() const { return _aabb; };
+
+private:
+  const AxisAlignedQuad _aabb;
 };
 
 enum class FoldDirection { DepthFirst, BreadthFirst };
