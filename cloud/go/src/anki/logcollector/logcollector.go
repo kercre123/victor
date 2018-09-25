@@ -121,10 +121,17 @@ func (c *logCollector) Upload(ctx context.Context, logFilePath string) (string, 
 
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
+			dasFields := (&log.DasFields{}).SetStrings(awsErr.Code(), awsErr.Message(), c.bucketName)
+			log.Das("logcollector.upload.error", dasFields)
 			return "", fmt.Errorf("%s: %s (Bucket=%q, Key=%q)", awsErr.Code(), awsErr.Message(), c.bucketName, s3Key)
 		}
+		dasFields := (&log.DasFields{}).SetStrings(err.Error(), "", c.bucketName)
+		log.Das("logcollector.upload.error", dasFields)
 		return "", fmt.Errorf("%v (Bucket=%q, Key=%q)", err, c.bucketName, s3Key)
 	}
+
+	dasFields := (&log.DasFields{}).SetStrings(logFilePath, result.Location, c.bucketName)
+	log.Das("logcollector.upload.success", dasFields)
 
 	log.Printf("File %q uploaded to %q\n", logFilePath, result.Location)
 
