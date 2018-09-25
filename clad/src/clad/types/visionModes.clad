@@ -10,6 +10,7 @@ namespace Vector {
     Idle                   = 0x00,
     DetectingMarkers,
     DetectingFaces,
+    DetectingFacesCropped,
     DetectingMotion,
     DetectingOverheadEdges,
     ComputingCalibration,
