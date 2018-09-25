@@ -41,11 +41,11 @@
       "entity_behavior": "fist_bump"
     },
 
-    "keep_away": {
-      "type": "play_specific",
-      "entity_behavior": "keep_away"
-    },
-    
+    //"keep_away": {
+    //  "type": "play_specific",
+    //  "entity_behavior": "keep_away"
+    //},
+
     "imperative_come": {
       "type": "imperative_come"
     },
