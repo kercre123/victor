@@ -298,6 +298,7 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   
   
   
+  
   if (!(capabilitiesDelegate->registerCapability(m_audioActivityTracker))) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")

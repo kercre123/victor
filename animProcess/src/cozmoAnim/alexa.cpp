@@ -228,7 +228,7 @@ namespace {
   
   using namespace alexaClientSDK;
   
-void Alexa::Init()
+void Alexa::Init(const AnimContext* context)
 {
   if( Util::FileUtils::DirectoryDoesNotExist( "/data/data/com.anki.victor/persistent/alexa" ) ) {
     Util::FileUtils::CreateDirectory( "/data/data/com.anki.victor/persistent/alexa", false, true );
@@ -329,6 +329,9 @@ void Alexa::Init()
   
   // setup "speaker"
   m_TTSSpeaker = std::make_shared<AlexaSpeaker>();
+  m_TTSSpeaker->Init(context);
+  
+  //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
   
   m_client = AlexaClient::create(
     deviceInfo,
@@ -416,6 +419,12 @@ void Alexa::Init()
 
 }
   
+void Alexa::Update()
+{
+  if( m_TTSSpeaker != nullptr ) {
+    m_TTSSpeaker->Update();
+  }
+}
   
 void Alexa::ButtonPress()
 {

@@ -99,7 +99,6 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation, triggerDataDir));
   _alexa.reset(new Alexa);
-  _alexa->Init();
 
   if (!_writeLocationDir.empty())
   {
@@ -121,6 +120,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
+  _alexa->Init(_context);
   _micDataProcessor->Init(dataLoader, _locale);
 }
 
@@ -536,6 +536,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 #endif
+  
+  
+  if( _alexa != nullptr ) {
+    _alexa->Update();
+  }
 }
 
 void MicDataSystem::SetWillStream(bool willStream) const

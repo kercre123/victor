@@ -18,6 +18,8 @@ namespace Vector {
 
 class AlexaClient;
 class AlexaMicrophone;
+class AlexaSpeaker;
+class AnimContext;
   
   namespace RobotInterface {
     struct MicData;
@@ -26,11 +28,13 @@ class AlexaMicrophone;
 class Alexa : private Util::noncopyable
 {
 public:
-  void Init();
+  void Init(const AnimContext* context);
+  void Update();
   
   void ButtonPress();
   
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
+  
 private:
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> m_capabilitiesDelegate;
   
@@ -40,7 +44,7 @@ private:
   
   std::shared_ptr<AlexaMicrophone> m_microphone;
   
-  std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> m_TTSSpeaker;
+  std::shared_ptr<AlexaSpeaker> m_TTSSpeaker;
 };
 
 
