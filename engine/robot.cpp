@@ -102,6 +102,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
+#include "util/transport/reliableConnection.h"
+#include "util/messageProfiler/messageProfiler.h"
 
 #include "osState/osState.h"
 
@@ -2044,10 +2046,14 @@ Result Robot::SetPosePostRollOffCharger()
 
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
 {
+  static Util::MessageProfiler msgProfiler("Robot::SendMessage");
+  msgProfiler.Update((int)msg.GetTag(), msg.Size());
+
   Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(msg, reliable, hot);
   if (sendResult != RESULT_OK) {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
     Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
+    msgProfiler.ReportOnFailure();
   }
   return sendResult;
 }
