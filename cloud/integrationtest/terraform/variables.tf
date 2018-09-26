@@ -4,19 +4,20 @@ variable "region" {
 
 // Note: number of container instances per cluster: 1000
 variable "instance_count" {
-  description = "Number of Docker containers running per task"
+  description = "Number of load test Docker containers running per task"
   default = 2
 }
 
 // Note: number of tasks using the Fargate launch type, per region, per account: 20 (ECS=1000)
 variable "service_count" {
-  description = "Number of services running in cluster"
+  description = "Number of load test services running in cluster"
   default = 2
 }
 
 variable "app_image" {
   default = "649949066229.dkr.ecr.us-west-2.amazonaws.com/load_test:latest"
 }
+
 
 // Note: determines if a new account is created as part of the test action
 variable "enable_account_creation" {

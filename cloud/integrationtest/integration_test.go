@@ -17,6 +17,7 @@ import (
 	"github.com/anki/sai-go-util/log"
 	"github.com/anki/sai-token-service/model"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -46,8 +47,9 @@ type IntegrationTestSuite struct {
 	urlConfigFile         string
 	testLogFile           string
 	enableAccountCreation bool
+	numberOfCerts         int64
 
-	testID           int
+	testID           int64
 	testUserName     string
 	testUserPassword string
 
@@ -92,6 +94,16 @@ func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a 
 	}
 }
 
+func (s *IntegrationTestSuite) getUniqueTestID(address string) int64 {
+	client := redis.NewClient(&redis.Options{Addr: address})
+
+	testID, err := client.Incr("test_id").Result()
+	require.NoError(s.T(), err)
+
+	testID %= s.numberOfCerts
+	return testID
+}
+
 func (s *IntegrationTestSuite) configureFromEnvironment() {
 	// set some sensible configuration defaults
 	s.envName = "dev"
@@ -100,8 +112,11 @@ func (s *IntegrationTestSuite) configureFromEnvironment() {
 	s.testLogFile = "/var/log/syslog"
 	s.urlConfigFile = "integrationtest/server_config.json"
 	s.enableAccountCreation = false
+	s.numberOfCerts = 1000
 
-	s.testID = 0
+	var redisAddress = "localhost:6379"
+	envconfig.DefaultConfig.String(&redisAddress, "REDIS_ADDRESS", "", "Redis host and port")
+	s.testID = s.getUniqueTestID(redisAddress)
 
 	// Enable client certs and set custom key pair dir (for this user)
 	token.UseClientCert = true
@@ -109,12 +124,13 @@ func (s *IntegrationTestSuite) configureFromEnvironment() {
 
 	// override settings from environment variables where needed
 	envconfig.DefaultConfig.String(&s.envName, "ENVIRONMENT", "", "Test environment")
-	envconfig.DefaultConfig.Int(&s.testID, "TEST_ID", "", "Test ID (used for identifying user)")
+	envconfig.DefaultConfig.Int64(&s.testID, "TEST_ID", "", "Test ID (used for identifying user)")
 	envconfig.DefaultConfig.String(&s.testUserPassword, "TEST_USER_PASSWORD", "", "Password for test accounts")
 	envconfig.DefaultConfig.String(&s.testLogFile, "TEST_LOG_FILE", "", "File used in logcollector upload")
 	envconfig.DefaultConfig.String(&s.urlConfigFile, "URL_CONFIG_FILE", "", "Config file for Service URLs")
 	envconfig.DefaultConfig.String(&robot.DefaultCloudDir, "CERT_DIR", "", "Key pair directory for client certs")
 	envconfig.DefaultConfig.Bool(&s.enableAccountCreation, "ENABLE_ACCOUNT_CREATION", "", "Enables account creation as part of test")
+	envconfig.DefaultConfig.Int64(&s.numberOfCerts, "NUMBER_OF_CERTS", "", "The number of provisioned robot certs (0000..NNNN")
 
 	// Create credentials for test user
 	s.testUserName = fmt.Sprintf("test.%04d@anki.com", s.testID)
