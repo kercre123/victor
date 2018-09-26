@@ -12,6 +12,7 @@
     "ReactToRobotOnSide",
     "ReactToCliff",
     "ReactToUncalibratedHeadAndLift",
+    "ReactToMotorCalibration",
     "ReactToPlacedOnSlope",
     "ReactToUnexpectedMovement"
   ]
