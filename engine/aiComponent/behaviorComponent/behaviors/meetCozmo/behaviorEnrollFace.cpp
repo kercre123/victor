@@ -1015,7 +1015,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     DASMSG_SEND();
   }
 
-  PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.FinalState",
+  PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.StopInternal.FinalState",
                  "Stopping EnrollFace in state %s", GetDebugStateName().c_str());
 }
 
@@ -1832,7 +1832,7 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::UpdateFaceTime(const Face* newFace)
 {
-  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
+  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceTime.NullNewFace");
   _dVars->lastFaceSeenTime_ms = newFace->GetTimeStamp();
 }
 
@@ -1842,16 +1842,12 @@ void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
   DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
   _dVars->faceID = newFace->GetID();
 
-  // Since these are supposed to be the same face only update the face
-  // last seen if it's newer than the one we just saw
+  // These are supposed to be the same face (otherwise we should not have got here)
+  // only update the face last seen if it's newer than the one we just saw
   const auto newFaceTimeStamp = newFace->GetTimeStamp();
-  if (newFaceTimeStamp > _dVars->lastFaceSeenTime_ms) {
+  if(newFaceTimeStamp > _dVars->lastFaceSeenTime_ms)
+  {
     _dVars->lastFaceSeenTime_ms = newFaceTimeStamp;
-    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceIDandTime.UpdatingLastSeenFaceTime",
-                  "last face seen time %u", (TimeStamp_t)_dVars->lastFaceSeenTime_ms);
-  } else {
-    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceIDandTime.KeepingLastSeenFaceTime",
-                  "last face seen time %u", (TimeStamp_t)_dVars->lastFaceSeenTime_ms);
   }
 
   _dVars->observedUnusableName.clear();
@@ -1890,7 +1886,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotT
       // Disable enrollment while seeing too many faces
       faceWorld.Enroll(Vision::UnknownFaceID);
 
-      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StartedSeeingTooMany",
+      PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StartedSeeingTooMany",
                      "Disabling enrollment (if enabled) at t=%.1f", _dVars->startedSeeingMultipleFaces_sec);
     }
     return true;
@@ -1899,7 +1895,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotT
   {
     if(_dVars->startedSeeingMultipleFaces_sec > 0.f)
     {
-      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StoppedSeeingTooMany",
+      PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.StoppedSeeingTooMany",
                      "Stopped seeing too many at t=%.1f", _dVars->startedSeeingMultipleFaces_sec);
 
       // We are not seeing too many faces any more (and haven't recently), so reset this to zero
@@ -1910,7 +1906,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotT
         // Re-enable enrollment of whatever we were enrolling before we started seeing too many faces
         faceWorld.Enroll(_dVars->faceID);
 
-        PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.RestartEnrollment",
+        PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.IsSeeingTooManyFaces.RestartEnrollment",
                        "Re-enabling enrollment of FaceID:%d", _dVars->faceID);
 
       }
@@ -1953,7 +1949,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
   const bool tooManyFaces = IsSeeingTooManyFaces(GetBEI().GetFaceWorldMutable(), lastImgTime);
   if(tooManyFaces)
   {
-    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.TooManyFaces", "");
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.TooManyFaces", "");
     // Early return here will prevent "lastFaceSeenTime" from being updated, eventually causing us
     // to transition out of Enrolling state, back to LookingForFace, if necessary. If we are already LookingForFace,
     // we will time out.
@@ -1996,8 +1992,8 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       // (one with negative ID, which we never want to try to enroll)
       if(faceID <= 0)
       {
-        // Check if current face seems like it might be our face, if it is
-        // update the time before continueing
+        // Check if current face seems like it might be our face based on it's base, if it is
+        // update the last time we saw the face before continueing, but not the face ID.
         if(canUseObservedFace)
         {
           if(enrollmentIDisSet)
