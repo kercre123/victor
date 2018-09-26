@@ -456,14 +456,6 @@ void cozmo_transmit_game_to_engine(const uint8_t* buffer, const size_t size)
   engineAPI->ReceiveMessages(buffer, size);
 }
 
-//void cozmo_execute_background_transfers()
-//{
-//  if (engineAPI == nullptr) {
-//    return;
-//  }
-//  engineAPI->ExecuteBackgroundTransfers();
-//}
-
 #if defined(ANKI_PLATFORM_ANDROID)
 const char * cozmo_get_device_id_file_path(const char * persistentDataPath)
 {

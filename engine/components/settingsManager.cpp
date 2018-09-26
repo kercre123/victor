@@ -42,7 +42,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SettingsManager::SettingsManager()
 : IDependencyManagedComponent(this, RobotComponentID::SettingsManager)
-, _hasPendingSettingsRequest( false )
+, _hasPendingSettingsRequest(false)
 {
 }
 
@@ -182,8 +182,8 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
                RobotSetting_Name(_settingsUpdateRequest.setting).c_str(),
                dt);
 
-      OnSettingsUpdateNotClaimed(_settingsUpdateRequest.setting);
-      ClearPendingSettingsUpdate();
+      ApplyRobotSetting(_settingsUpdateRequest.setting, true);
+      _hasPendingSettingsRequest = false;
     }
   }
 }
@@ -553,18 +553,6 @@ bool SettingsManager::IsSettingsUpdateRequestPending(const external_interface::R
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-external_interface::RobotSetting SettingsManager::GetPendingSettingsUpdate() const
-{
-  return _settingsUpdateRequest.setting;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsManager::ClearPendingSettingsUpdate()
-{
-  _hasPendingSettingsRequest = false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ClaimPendingSettingsUpdate(const external_interface::RobotSetting setting)
 {
   bool success = false;
@@ -604,23 +592,17 @@ bool SettingsManager::ApplyPendingSettingsUpdate(const external_interface::Robot
     // if we were told to clear the request, or it has never been claimed, go ahead and clear it
     if (clearRequest || !_settingsUpdateRequest.isClaimed)
     {
-      ClearPendingSettingsUpdate();
+      _hasPendingSettingsRequest = false;
     }
   }
   else
   {
-    LOG_DEBUG("SettingsManager.ApplyPendingSettingsUpdate",
+    LOG_ERROR("SettingsManager.ApplyPendingSettingsUpdate",
               "Attempted to apply latent setting '%s', but setting was not pending",
               RobotSetting_Name(setting).c_str());
   }
 
   return success;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SettingsManager::OnSettingsUpdateNotClaimed(const external_interface::RobotSetting setting)
-{
-  ApplyRobotSetting(setting, true);
 }
 
 

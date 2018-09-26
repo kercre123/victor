@@ -262,7 +262,7 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   _currentConnectionData->Clear();
 
   // This robot is gone.
-  Robot* robot =  _robotManager->GetRobot();
+  Robot* robot = _robotManager->GetRobot();
   if (nullptr != robot)
   {
     // If the connection is waiting when we handle this disconnect message, report it as a robot rejection

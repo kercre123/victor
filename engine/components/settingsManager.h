@@ -77,7 +77,6 @@ public:
   // test whether or not we have a pending request for a latent settings update
   bool IsSettingsUpdateRequestPending() const;
   bool IsSettingsUpdateRequestPending(const external_interface::RobotSetting setting) const;
-  external_interface::RobotSetting GetPendingSettingsUpdate() const;
 
   // claiming the pending update request tells the system that "somebody" is going to take care of this update so
   // there's no need to force the update if it's not set in time
@@ -86,9 +85,6 @@ public:
   // applying the update actually applies the settings change that was requested
   // note: does nothing if the requested setting was not formerly pending
   bool ApplyPendingSettingsUpdate(const external_interface::RobotSetting setting, const bool clearRequest = true);
-  // this will clear out the pending request to allow new requests to be made
-  // ** note: if you claim a pending event, it is up to you to clear it when you're done!
-  void ClearPendingSettingsUpdate();
   //////
 
 private:
@@ -107,7 +103,6 @@ private:
 
   // request that the specified RobotSetting is not immediately applied, but some other source will apply it
   bool RequestLatentSettingsUpdate(const external_interface::RobotSetting setting);
-  void OnSettingsUpdateNotClaimed(const external_interface::RobotSetting setting);
 
   void DoJdocFormatMigration();
 

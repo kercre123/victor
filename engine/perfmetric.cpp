@@ -45,10 +45,10 @@
   #endif
 #endif
 
+#define LOG_CHANNEL "PerfMetric"
+
 namespace Anki {
 namespace Vector {
-
-const char* PerfMetric::kLogChannelName = "PerfMetric";
 
 
 using namespace std::chrono;
@@ -62,8 +62,7 @@ const std::string PerfMetric::_logBaseFileName = "perfMetric_";
 static int PerfMetricWebServerImpl(WebService::WebService::Request* request)
 {
   auto* perfMetric = static_cast<PerfMetric*>(request->_cbdata);
-  PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.PerfMetricWebServerImpl",
-                "Query string: %s", request->_param1.c_str());
+  LOG_INFO("PerfMetric.PerfMetricWebServerImpl", "Query string: %s", request->_param1.c_str());
   
   int returnCode = perfMetric->ParseCommands(request->_param1);
   if (returnCode != 0)
@@ -114,19 +113,23 @@ PerfMetric::PerfMetric(const CozmoContext* context)
 #else
 , _autoRecord(false)
 #endif
-, _startNextFrame(false)
 , _context(context)
 , _baseLogDir()
 , _lineBuffer(nullptr)
-, _signalHandles()
 , _queuedCommands()
 {
 }
 
 PerfMetric::~PerfMetric()
 {
-  _signalHandles.clear();
+#if ANKI_PERF_METRIC_ENABLED
+  if (_isRecording)
+  {
+    Stop();
+  }
+
   delete _frameBuffer;
+#endif
 }
 
 
@@ -135,22 +138,12 @@ void PerfMetric::Init()
 #if ANKI_PERF_METRIC_ENABLED
   _frameBuffer = new FrameMetric[kNumFramesInBuffer];
   int sizeKb = (sizeof(FrameMetric) * kNumFramesInBuffer) / 1024;
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.Init",
-                "Frame buffer size is %u KB", sizeKb);
+  LOG_INFO("PerfMetric.Init", "Frame buffer size is %u KB", sizeKb);
 
   _lineBuffer = new char[kNumCharsInLineBuffer];
 
   _baseLogDir = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "");
 
-  if (_context->GetExternalInterface() != nullptr)
-  {
-    auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::PerfMetricCommand>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::PerfMetricGetStatus>();
-    // helper.SubscribeGameToEngine<MessageGameToEngineTag::ConnectToRobot>();
-  }
-  
   const auto& webService = _context->GetWebService();
   webService->RegisterRequestHandler("/perfmetric", PerfMetricWebServerHandler, this);
 #endif
@@ -222,7 +215,6 @@ void PerfMetric::Update(const float tickDuration_ms,
       {
         _waitMode = false;
         _waitTimeToExpire = 0.0f;
-        // todo call into 'execute queued commands' (but for now this is fine because we'll do that at top of this function)
       }
     }
     else
@@ -231,15 +223,8 @@ void PerfMetric::Update(const float tickDuration_ms,
       {
         _waitMode = false;
         _waitTicksRemaining = 0;
-        // todo call into 'execute queued commands' (but for now this is fine because we'll do that at top of this function)
       }
     }
-  }
-
-  if (_startNextFrame)
-  {
-    _startNextFrame = false;
-    Start();
   }
 #endif
 }
@@ -248,8 +233,7 @@ void PerfMetric::Start()
 {
   if (_isRecording)
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.Start",
-                  "Interrupting recording already in progress; re-starting");
+    LOG_INFO("PerfMetric.Start", "Interrupting recording already in progress; re-starting");
   }
   _isRecording = true;
 
@@ -257,24 +241,20 @@ void PerfMetric::Start()
   _nextFrameIndex = 0;
   _bufferFilled = false;
 
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.Start", "Recording started");
-
-  SendStatusToGame();
+  LOG_INFO("PerfMetric.Start", "Recording started");
 }
 
 void PerfMetric::Stop()
 {
   if (!_isRecording)
   {
-    PRINT_CH_INFO(kLogChannelName, "Perfmetric.Stop", "Recording was already stopped");
+    LOG_INFO("Perfmetric.Stop", "Recording was already stopped");
   }
   else
   {
     _isRecording = false;
-    PRINT_CH_INFO(kLogChannelName, "Perfmetric.Stop", "Recording stopped");
+    LOG_INFO("Perfmetric.Stop", "Recording stopped");
   }
-
-  SendStatusToGame();
 }
 
 void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
@@ -282,7 +262,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
 {
   if (FrameBufferEmpty())
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "Nothing to dump; buffer is empty");
+    LOG_INFO("PerfMetric.Dump", "Nothing to dump; buffer is empty");
     return;
   }
 
@@ -349,8 +329,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
       {
         case DT_LOG:
           {
-            PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump",
-                          kFormatLineText.c_str(), LINE_DATA_VARS);
+            LOG_INFO("PerfMetric.Dump", kFormatLineText.c_str(), LINE_DATA_VARS);
           }
           break;
         case DT_RESPONSE_STRING:  // Intentional fall-through
@@ -413,7 +392,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   switch (dumpType)
   {
     case DT_LOG:
-      PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "%s", _lineBuffer);
+      LOG_INFO("PerfMetric.Dump", "%s", _lineBuffer);
       break;
     case DT_RESPONSE_STRING:  // Intentional fall-through
     case DT_FILE_TEXT:  // Intentional fall-through
@@ -451,13 +430,13 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   {
     case DT_LOG:
       {
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(),
+        LOG_INFO("PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(),
                       SUMMARY_LINE_VARS(GetMin));
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(),
+        LOG_INFO("PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(),
                       SUMMARY_LINE_VARS(GetMax));
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(),
+        LOG_INFO("PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(),
                       SUMMARY_LINE_VARS(GetMean));
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(),
+        LOG_INFO("PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(),
                       SUMMARY_LINE_VARS(GetStd));
       }
       break;
@@ -560,9 +539,8 @@ void PerfMetric::DumpHeading(const DumpType dumpType, const bool showBehaviorHea
   {
     case DT_LOG:
       {
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "%s", kHeading1);
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "%s%s", kHeading2,
-                      showBehaviorHeading ? kHeading3 : "");
+        LOG_INFO("PerfMetric.Dump", "%s", kHeading1);
+        LOG_INFO("PerfMetric.Dump", "%s%s", kHeading2, showBehaviorHeading ? kHeading3 : "");
       }
       break;
     case DT_RESPONSE_STRING:  // Intentional fall-through
@@ -596,11 +574,11 @@ void PerfMetric::DumpFiles() const
 {
   if (FrameBufferEmpty())
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "Nothing to dump; buffer is empty");
+    LOG_INFO("PerfMetric.DumpFiles", "Nothing to dump; buffer is empty");
     return;
   }
 
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "Dumping to files");
+  LOG_INFO("PerfMetric.DumpFiles", "Dumping to files");
 
   const auto now = std::chrono::system_clock::now();
   const auto now_time = std::chrono::system_clock::to_time_t(now);
@@ -622,48 +600,36 @@ void PerfMetric::DumpFiles() const
 
   // Write to text file
   Dump(DT_FILE_TEXT, kDumpAll, &logFileNameText);
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "File written to %s",
+  LOG_INFO("PerfMetric.DumpFiles", "File written to %s",
                 logFileNameText.c_str());
 
   // Write to CSV file
   Dump(DT_FILE_CSV, kDumpAll, &logFileNameCSV);
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "File written to %s",
-                logFileNameCSV.c_str());
+  LOG_INFO("PerfMetric.DumpFiles", "File written to %s", logFileNameCSV.c_str());
 }
 
 void PerfMetric::WaitSeconds(const float seconds)
 {
   if (_waitMode)
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitSeconds", "Wait for seconds requested but already in wait mode");
+    LOG_INFO("PerfMetric.WaitSeconds", "Wait for seconds requested but already in wait mode");
   }
   _waitMode = true;
   _waitTicksRemaining = 0;
   _waitTimeToExpire = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + seconds;
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitSeconds", "Waiting for %f seconds", seconds);
+  LOG_INFO("PerfMetric.WaitSeconds", "Waiting for %f seconds", seconds);
 }
 
 void PerfMetric::WaitTicks(const int ticks)
 {
   if (_waitMode)
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitTicks", "Wait for ticks requested but already in wait mode");
+    LOG_INFO("PerfMetric.WaitTicks", "Wait for ticks requested but already in wait mode");
   }
   _waitMode = true;
   _waitTicksRemaining = ticks;
   _waitTimeToExpire = 0.0f;
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitSeconds", "Wait for %i ticks", ticks);
-}
-
-
-void PerfMetric::OnRobotDisconnected()
-{
-  if (_autoRecord)
-  {
-    Stop();
-  }
-
-  DumpFiles();
+  LOG_INFO("PerfMetric.WaitSeconds", "Wait for %i ticks", ticks);
 }
 
 
@@ -740,7 +706,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
           cmd._waitSeconds = std::stof(argumentValue);
         } catch (std::exception)
         {
-          PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.ParseCommands", "Error parsing float argument in perfmetric command: %s", current.c_str());
+          LOG_INFO("PerfMetric.ParseCommands", "Error parsing float argument in perfmetric command: %s", current.c_str());
           return 0;
         }
         cmds.push_back(cmd);
@@ -754,14 +720,14 @@ int PerfMetric::ParseCommands(std::string& queryString)
           cmd._waitTicks = std::stoi(argumentValue);
         } catch (std::exception)
         {
-          PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.ParseCommands", "Error parsing int argument in perfmetric command: %s", current.c_str());
+          LOG_INFO("PerfMetric.ParseCommands", "Error parsing int argument in perfmetric command: %s", current.c_str());
           return 0;
         }
         cmds.push_back(cmd);
       }
       else
       {
-        PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.ParseCommands", "Error parsing perfmetric command: %s", current.c_str());
+        LOG_INFO("PerfMetric.ParseCommands", "Error parsing perfmetric command: %s", current.c_str());
         return 0;
       }
     }
@@ -808,50 +774,6 @@ void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
         break;
     }
   }
-}
-
-
-template<>
-void PerfMetric::HandleMessage(const ExternalInterface::PerfMetricCommand& msg)
-{
-  switch (msg.command)
-  {
-    case ExternalInterface::PerfMetricCommandType::Start:     Start();             break;
-    case ExternalInterface::PerfMetricCommandType::Stop:      Stop();              break;
-    case ExternalInterface::PerfMetricCommandType::Dump:      Dump(DT_LOG, false); break;
-    case ExternalInterface::PerfMetricCommandType::DumpAll:   Dump(DT_LOG, true);  break;
-    case ExternalInterface::PerfMetricCommandType::DumpFiles: DumpFiles();         break;
-  }
-}
-
-template<>
-void PerfMetric::HandleMessage(const ExternalInterface::PerfMetricGetStatus& msg)
-{
-  SendStatusToGame();
-}
-
-// template<>
-// void PerfMetric::HandleMessage(const ExternalInterface::ConnectToRobot& msg)
-// {
-//   if (_autoRecord)
-//   {
-//     // Since we've just connected, and that frame typically takes a long time,
-//     // let's not actually include it in this recording.  Instead, start the
-//     // recording on the next frame.
-//     _startNextFrame = true;
-//   }
-// }
-
-void PerfMetric::SendStatusToGame() const
-{
-  const int numTicksRecorded = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
-  const std::string statusStr = _isRecording ?
-                                "RECORDING" :
-                                "Number of ticks in buffer: " + std::to_string(numTicksRecorded);
-
-  ExternalInterface::PerfMetricStatus msg(_isRecording, statusStr.c_str());
-  const auto& extInt = _context->GetExternalInterface();
-  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
 

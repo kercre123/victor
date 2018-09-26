@@ -152,18 +152,10 @@ void RobotManager::RemoveRobot(bool robotRejectedConnection)
   if(_robot != nullptr) {
     LOG_INFO("RobotManager.RemoveRobot.Removing", "Removing robot with ID=%d", _robot->GetID());
 
-    // ask initial connection tracker if it's handling this
-    bool handledDisconnect = false;
     if (_initialConnection) {
       const auto result = robotRejectedConnection ? RobotConnectionResult::ConnectionRejected : RobotConnectionResult::ConnectionFailure;
-      handledDisconnect = _initialConnection->HandleDisconnect(result);
+      _initialConnection->HandleDisconnect(result);
     }
-    if (!handledDisconnect) {
-      _context->GetExternalInterface()->OnRobotDisconnected(_robot->GetID());
-      _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
-    }
-
-    _context->GetPerfMetric()->OnRobotDisconnected();
 
     _robot.reset();
     _initialConnection.reset();
@@ -195,19 +187,12 @@ Result RobotManager::UpdateRobot()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateRobot");
 
-  if (_robot) {
-    // Call update
-    Result result = _robot->Update();
+  if (_robot)
+  {
+    const Result result = _robot->Update();
 
     switch (result)
     {
-      case RESULT_FAIL_IO_TIMEOUT:
-      {
-        LOG_WARNING("RobotManager.UpdateRobot.FailIOTimeout", "Signaling robot disconnect");
-        RemoveRobot(false);
-        break;
-      }
-
       // TODO: Handle other return results here
 
       default:

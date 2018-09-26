@@ -78,8 +78,6 @@ namespace Anki {
       
       bool HasDesiredNumUiDevices() const;
       
-      virtual void OnRobotDisconnected(uint32_t robotID) override;
-      
       virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) override
       {
         _sdkStatus.SetStatus(statusType, std::move(statusText));

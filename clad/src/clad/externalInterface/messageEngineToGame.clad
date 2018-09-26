@@ -65,10 +65,6 @@ message RobotConnectionResponse {
     RobotConnectionResult result
 }
 
-message RobotDisconnected {
-    float_32 timeSinceLastMsg_sec
-}
-
 
 // DO NOT CHANGE THIS MESSAGE - it must be compatible across all versions so we can reliably handshake with SDK
 message UiDeviceConnected {
@@ -176,19 +172,6 @@ message UnexpectedMovement {
 message RobotFallingEvent {
   uint_32 duration_ms,
   float_32 impactIntensity
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////  DEBUG/PERFORMANCE  ///////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-message DebugPerformanceTick {
-    string    systemName,
-    float_32  lastTickTime
-}
-message PerfMetricStatus {
-  bool   isRecording,
-  string statusString,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

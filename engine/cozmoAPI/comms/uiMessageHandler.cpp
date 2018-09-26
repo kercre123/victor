@@ -767,11 +767,6 @@ namespace Anki {
     }
 
 
-    void UiMessageHandler::OnRobotDisconnected(uint32_t robotID)
-    {
-    }
-
-
     const Util::Stats::StatsAccumulator& UiMessageHandler::GetLatencyStats(UiConnectionType type) const
     {
       const ISocketComms* socketComms = GetSocketComms(type);
