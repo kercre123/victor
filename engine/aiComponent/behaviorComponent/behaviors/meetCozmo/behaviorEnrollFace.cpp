@@ -2000,7 +2000,6 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
           {
             // Face ID is already set but we didn't see it and instead we're seeing a face
             // with a different ID. See if it matches the pose of the one we were already enrolling.
-
             auto currentFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
 
             if(nullptr != currentFace && nullptr != newFace &&
