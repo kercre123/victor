@@ -224,4 +224,5 @@ include(aubio)
 include(sensory)
 include(signalessence)
 
+write_license_html()
 check_licenses()

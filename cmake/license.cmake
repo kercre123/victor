@@ -14,12 +14,6 @@ else()
   set(MESSAGE_STATUS STATUS)
 endif()
 
-# TODO: VIC-5668 Add version numbers to licenses report and uploads
-
-file(WRITE ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html
-      "<!DOCTYPE html><html><body>\n"
-      "<h1>License Data for Vector 1.0.0</h1><p>\n")
-
 file(STRINGS ${CMAKE_SOURCE_DIR}/docs/development/licenses.md license_file ENCODING UTF-8)
 list(REMOVE_AT license_file 0)
 foreach(line ${license_file})
@@ -137,37 +131,52 @@ function(anki_build_target_license target)
     if(file)
       # output to binary directory
       if(IS_ABSOLUTE ${file})
-        get_filename_component(filename ${file} NAME)
+        if (file MATCHES "/licenses/")
+          # licenses are of the form: /licences/<name of library>.license
 
-        if (file MATCHES "/go/")
-          # Go targets have all licenses in a single target, separate using the last
-          # directory path
+          get_filename_component(dir ${file} NAME_WE)
 
-          # last directory path
+        elseif (file MATCHES "/3rd/")
+          # third party targets are of the form: /lib/util/source/3rd/<name of library/<arbitrary path>/<aribtrary license>
+
+          get_filename_component(dirs ${file} DIRECTORY)
+          string(REPLACE "/" ";" dirs "${dirs}")
+          list(GET dirs 0 dir)
+          list(REMOVE_AT dirs 0)
+          while(NOT dir STREQUAL "3rd")
+            list(GET dirs 0 dir)
+            list(REMOVE_AT dirs 0)
+          endwhile()
+          list(GET dirs 0 dir)
+          list(REMOVE_AT dirs 0)
+
+        elseif (file MATCHES "/go/")
+          # Go targets are of the form /cloud/go/src/github.com/<arbitrary path>/<name of library>/LICENSE
 
           get_filename_component(dir ${file} DIRECTORY)
           string(REPLACE "/" ";" dir "${dir}")
           list(REVERSE dir)
           list(GET dir 0 dir)
-          set(dir "/${dir}")
         else()
-          set(dir)
+          get_filename_component(dir ${file} NAME)
+
         endif()
 
-        # copy license to folder
-        file(COPY ${file}
-             DESTINATION ${CMAKE_BINARY_DIR}/licences/${target}-${license}${dir})
+        get_filename_component(filename ${file} NAME)
+        if(NOT EXISTS "${CMAKE_BINARY_DIR}/licences/${dir}-${license}/${filename}.txt")
+          # copy license to folder
+          file(COPY ${file}
+               DESTINATION ${CMAKE_BINARY_DIR}/licences/${dir}-${license})
 
-        if (NOT ${filename} MATCHES ".txt")
-          # add .txt if it's missing
-          file(RENAME
-               ${CMAKE_BINARY_DIR}/licences/${target}-${license}${dir}/${filename}
-               ${CMAKE_BINARY_DIR}/licences/${target}-${license}${dir}/${filename}.txt)
-          set(filename "${filename}.txt")
+          if (NOT ${filename} MATCHES ".txt")
+            # add .txt if it's missing
+            file(RENAME
+                 ${CMAKE_BINARY_DIR}/licences/${dir}-${license}/${filename}
+                 ${CMAKE_BINARY_DIR}/licences/${dir}-${license}/${filename}.txt)
+            set(filename "${filename}.txt")
+          endif()
         endif()
 
-        # create html link to folder/file
-        file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "<a href=\"${target}-${license}${dir}/${filename}\"\>${target}${dir} ${license}</a><br/>\n")
       else()
         message(FATAL_ERROR "${target} target is using a relative path, ${file}, for it's ${license} license")
         return()
@@ -179,6 +188,36 @@ function(anki_build_target_license target)
   endforeach()
 
   set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 1)
+endfunction()
+
+function(write_license_html)
+
+  file(GLOB_RECURSE files "${CMAKE_BINARY_DIR}/licences/*.*")
+
+  # TODO: VIC-5668 Add version numbers to licenses report and uploads
+
+  # header
+
+  file(WRITE ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.html
+      "<!DOCTYPE html><html><body>\n"
+      "<h1>License Data for Vector Engine 1.0.0</h1><p>\n")
+
+  # create html link to folder/file
+
+  foreach(file ${files})
+    if (NOT file MATCHES "vectorLicenseReport.html")
+      get_filename_component(filename ${file} NAME)
+      get_filename_component(dir ${file} DIRECTORY)
+      string(REPLACE "/" ";" dir "${dir}")
+      list(REVERSE dir)
+      list(GET dir 0 dir)
+      file(APPEND ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.html "<a href=\"${dir}/${filename}\"\>${dir}</a><br/>\n")
+    endif()
+  endforeach()
+  
+  # footer
+
+  file(APPEND ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.html "</p></body></html>")
 endfunction()
 
 function(check_licenses)
@@ -289,8 +328,6 @@ function(check_licenses)
 
     endif()
   endforeach()
-
-  file(APPEND ${CMAKE_BINARY_DIR}/licences/victorLicenseReport.html "</p></body></html>")
 endfunction()
 
 # end-of-license checking code
