@@ -313,12 +313,13 @@ void ProxSensorComponent::UpdateNavMap()
     // NOTE: making an intersection of a quad and a triangle here results in a 50%-100% speedup over using a
     //       five sided polygon, so use that if we can't insert a triangle FP.
     FastPolygon sensorCone({sensorCorner1, sensorCorner2, robotPose.GetTranslation()});
-    auto intersection = MakeIntersection2f( sensorCone, FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) );
 
     if (sensorBeamHalfWidth_mm < ROBOT_BOUNDING_Y *.25) {
       _robot->GetMapComponent().ClearRegion( sensorCone,  lastTimestamp);
     } else {
-    _robot->GetMapComponent().ClearRegion( intersection,  lastTimestamp);
+      _robot->GetMapComponent().ClearRegion( 
+        MakeIntersection2f( sensorCone, FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) ),  
+        lastTimestamp);
     }
 
     // Add proxObstacle if detected and close to robot, and lift is not interfering
