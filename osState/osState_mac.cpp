@@ -323,12 +323,13 @@ const std::string& OSState::GetOSBuildVersion()
   return _osBuildVersion;
 }
 
-void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental) const
+void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental, int& build) const
 {
   // always the latest for the purposes of testing
   major = std::numeric_limits<int>::max();
   minor = std::numeric_limits<int>::max();
   incremental = std::numeric_limits<int>::max();
+  build = std::numeric_limits<int>::max();
 }
 
 const std::string& OSState::GetRobotVersion()

@@ -13,6 +13,7 @@
 #include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/cozmoDiagnosticDefines.h"
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/audio/microphoneAudioClient.h"
@@ -48,14 +49,6 @@
 #include <sstream>
 
 #define LOG_CHANNEL    "AnimEngine"
-
-#if ANKI_PROFILING_ENABLED && !defined(SIMULATOR)
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
-#else
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
-#endif
 #define NUM_ANIM_OPENCV_THREADS 0
 
 namespace Anki {
