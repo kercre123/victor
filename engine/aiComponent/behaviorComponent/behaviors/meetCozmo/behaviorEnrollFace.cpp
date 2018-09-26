@@ -1667,7 +1667,6 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  // This order matters if DetectingFacesCropped isn't inserted before DetectingFaces the mode isn't enabled
   modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFacesCropped, EVisionUpdateFrequency::High } );
   modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFaces, EVisionUpdateFrequency::High } );
 }

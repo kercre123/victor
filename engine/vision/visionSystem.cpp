@@ -99,7 +99,8 @@ CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
 
 CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
 
-CONSOLE_VAR(f32, kFaceTrackingCropRatioX, "Vision.FaceDetection", 1.f / 6.f);
+// The percentage each the image will be horizontally cropped
+CONSOLE_VAR_RANGED(f32, kFaceTrackingHorizontalCropRatio, "Vision.FaceDetection", 1.f / 6.f, 0.f, 1.f);
 
 #if REMOTE_CONSOLE_ENABLED
 // If non-zero, toggles the corresponding VisionMode and sets back to 0
@@ -872,12 +873,12 @@ Result VisionSystem::DetectFacesCropped(Vision::ImageCache& imageCache,
   // Crop the original frame
   const u32 origWidth = grayImage.GetNumCols();
   const u32 origHeight = grayImage.GetNumRows();
-  const u32 horizontalOffset = origWidth * kFaceTrackingCropRatioX;
+  const u32 horizontalOffset = origWidth * kFaceTrackingHorizontalCropRatio;
   Vision::Image croppedGrayImage;
-  Rectangle<s32> roiRect(horizontalOffset, 0.f, origWidth * (1.f - kFaceTrackingCropRatioX), origHeight);
+  Rectangle<s32> roiRect(horizontalOffset, 0.f, origWidth - horizontalOffset, origHeight);
   grayImage.GetROI(roiRect).CopyTo(croppedGrayImage);
 
-  if (RESULT_OK != DetectFacesCore(croppedGrayImage, detectionRects)) {
+  if (RESULT_OK != DetectFacesCommon(croppedGrayImage, detectionRects)) {
     return RESULT_FAIL;
   }
   if (RESULT_OK != PopulateCroppedFaceDetections(croppedGrayImage, detectionRects, horizontalOffset)) {
@@ -893,7 +894,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
   const Vision::Image& grayImage = imageCache.GetGray();
 
-  if (RESULT_OK != DetectFacesCore(grayImage, detectionRects)) {
+  if (RESULT_OK != DetectFacesCommon(grayImage, detectionRects)) {
     return RESULT_FAIL;
   }
   if (RESULT_OK != PopulateFaceDetections(grayImage, detectionRects)) {
@@ -903,7 +904,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectFacesCore(const Vision::Image& image,
+Result VisionSystem::DetectFacesCommon(const Vision::Image& grayImage,
                                      std::vector<Anki::Rectangle<s32>>& detectionRects)
 {
   /*
@@ -939,7 +940,7 @@ Result VisionSystem::DetectFacesCore(const Vision::Image& image,
   if(!detectionRects.empty())
   {
     // Black out previous detections so we don't find faces in them
-    Vision::Image maskedImage = BlackOutRects(image, detectionRects);
+    Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
     
 #     if DEBUG_FACE_DETECTION
     //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
@@ -948,12 +949,12 @@ Result VisionSystem::DetectFacesCore(const Vision::Image& image,
     _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
   } else {
     // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(image, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
   }
   return RESULT_OK;
 }
 
-Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& image,
+Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& grayImage,
                                                    std::vector<Anki::Rectangle<s32>>& detectionRects,
                                                    const u32 horizontalOffset)
 {
@@ -961,7 +962,7 @@ Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& image,
   {
     auto & currentFace = *faceIter;
      
-    DEV_ASSERT(currentFace.GetTimeStamp() == image.GetTimestamp(), "VisionSystem.PopulateCroppedFaceDetections.BadFaceTimestamp");
+    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.PopulateCroppedFaceDetections.BadFaceTimestamp");
 
     // Correct detection rectangle for cropped image
     const auto croppedRect = faceIter->GetRect();
@@ -974,19 +975,20 @@ Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& image,
       Vision::TrackedFace::LeftEye, Vision::TrackedFace::RightEye, Vision::TrackedFace::Nose,
       Vision::TrackedFace::UpperLip
     }};
-    for (const auto& featureName: featureNames) {
+    for (const auto& featureName: featureNames)
+    {
       const auto feature = faceIter->GetFeature(featureName);
       Vision::TrackedFace::Feature correctedFeatures;
       correctedFeatures = feature;
-      unsigned int index = 0;
-      for (const auto & point: correctedFeatures) 
+      u32 featureIndex = 0;
+      for (const auto& point: correctedFeatures) 
       {
-        correctedFeatures[index] = Point2f(point.x() + horizontalOffset, point.y());
-        ++index;
+        correctedFeatures[featureIndex] = Point2f(point.x() + horizontalOffset, point.y());
+        ++featureIndex;
       }
       faceIter->SetFeature(featureName, std::move(correctedFeatures));
     }
-    
+
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
                                 (s32)std::round(faceIter->GetRect().GetY()),
                                 (s32)std::round(faceIter->GetRect().GetWidth()),
@@ -1009,14 +1011,14 @@ Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& image,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::PopulateFaceDetections(const Vision::Image& image,
+Result VisionSystem::PopulateFaceDetections(const Vision::Image& grayImage,
                                             std::vector<Anki::Rectangle<s32>>& detectionRects)
 {
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
   {
     auto & currentFace = *faceIter;
      
-    DEV_ASSERT(currentFace.GetTimeStamp() == image.GetTimestamp(), "VisionSystem.PopulateFaceDetections.BadFaceTimestamp");
+    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.PopulateFaceDetections.BadFaceTimestamp");
 
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
                                 (s32)std::round(faceIter->GetRect().GetY()),
