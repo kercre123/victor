@@ -17,6 +17,7 @@
 #include "engine/cozmoAPI/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageShared.h"
+#include "platform/common/diagnosticDefines.h"
 #include "platform/robotLogUploader/robotLogUploader.h"
 #include "util/ankiLab/ankiLabDef.h"
 #include "util/console/consoleInterface.h"
@@ -296,13 +297,14 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 //    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
 //                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
 
+#if ENABLE_RUN_TIME_DIAGNOSTICS
     // Only complain if we're more than 10ms behind
     if (remaining_us < microseconds(-10000))
     {
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
                           BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -328,9 +330,11 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
+#if ENABLE_RUN_TIME_DIAGNOSTICS
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
                           "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                           (float)(forwardJumpDuration * 0.001f));
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
     }
 
     tickStart = TimeClock::now();

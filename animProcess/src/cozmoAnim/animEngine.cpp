@@ -13,7 +13,6 @@
 #include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/cozmoDiagnosticDefines.h"
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/audio/microphoneAudioClient.h"
@@ -37,6 +36,8 @@
 #include "webServerProcess/src/webService.h"
 
 #include "osState/osState.h"
+
+#include "platform/common/diagnosticDefines.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -166,10 +167,10 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
   DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
 
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_SLEEP_TIME_DIAGNOSTICS || ENABLE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 #endif
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+#if ENABLE_SLEEP_TIME_DIAGNOSTICS
   {
     static bool firstUpdate = true;
     static double lastUpdateTimeMs = 0.0;
@@ -190,7 +191,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     lastUpdateTimeMs = startUpdateTimeMs;
     firstUpdate = false;
   }
-#endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+#endif // ENABLE_SLEEP_TIME_DIAGNOSTICS
 
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
@@ -230,7 +231,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     _backpackLightComponent->Update();
   }
 
-#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
@@ -242,7 +243,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
                          "%.2f", updateLengthMs);
     }
   }
-#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }

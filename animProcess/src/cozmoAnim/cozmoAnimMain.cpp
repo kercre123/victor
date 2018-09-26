@@ -11,7 +11,6 @@
 */
 
 #include "cozmoAnim/animEngine.h"
-#include "cozmoAnim/cozmoDiagnosticDefines.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -25,6 +24,7 @@
 #include "util/logging/victorLogger.h"
 #include "util/string/stringUtils.h"
 
+#include "platform/common/diagnosticDefines.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
 #include <stdio.h>
@@ -174,7 +174,7 @@ int main(void)
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 
-#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_RUN_TIME_DIAGNOSTICS
     // Complain if we're going overtime
     if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
     {
@@ -185,7 +185,7 @@ int main(void)
       PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
                           ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
 
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
@@ -207,11 +207,11 @@ int main(void)
       const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
-#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_RUN_TIME_DIAGNOSTICS
       PRINT_NAMED_WARNING("CozmoAnimMain.catchup",
                           "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                           (float)(forwardJumpDuration * 0.001f));
-#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
     }
   }
 

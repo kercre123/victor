@@ -47,6 +47,8 @@
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "platform/common/diagnosticDefines.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
@@ -73,14 +75,6 @@
 #include "engine/animations/animationTransfer.h"
 
 #define LOG_CHANNEL "CozmoEngine"
-
-#if ANKI_PROFILING_ENABLED
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
-#else
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
-#endif
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 #define NUM_OPENCV_THREADS 0
@@ -409,10 +403,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
   DEV_ASSERT(_context->IsEngineThread(), "CozmoEngine.UpdateOnWrongThread" );
 
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_SLEEP_TIME_DIAGNOSTICS || ENABLE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 #endif
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+#if ENABLE_SLEEP_TIME_DIAGNOSTICS
   {
     static bool firstUpdate = true;
     static double lastUpdateTimeMs = 0.0;
@@ -429,7 +423,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     lastUpdateTimeMs = startUpdateTimeMs;
     firstUpdate = false;
   }
-#endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+#endif // ENABLE_SLEEP_TIME_DIAGNOSTICS
 
   _uiMsgHandler->ResetMessageCounts();
   _protoMsgHandler->ResetMessageCounts();
@@ -556,7 +550,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
   }
 
-#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
@@ -569,7 +563,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
                          "%.2f", updateLengthMs);
     }
   }
-#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }
