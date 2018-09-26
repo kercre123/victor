@@ -78,7 +78,7 @@ class MotorComponent(util.Component):
                              speed: float):
         '''Tell Vector's lift motor to move with a certain speed.
 
-        Positive speed for up, negative speed for down.  Measured in radians per second.
+        Positive speed for up, negative speed for down. Measured in radians per second.
 
         To unlock the lift track, call `set_lift_motor(0)`.
 

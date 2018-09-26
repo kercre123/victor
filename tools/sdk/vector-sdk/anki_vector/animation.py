@@ -13,7 +13,16 @@
 # limitations under the License.
 
 """
-Animation related classes, functions, events and values.
+Animations represent a sequence of highly coordinated movements, faces, lights, and sounds used to demonstrate an emotion or reaction.
+
+Animations can control the following tracks: head, lift, treads, face, audio and backpack lights.
+
+There are two ways to play an animation on Vector: play_animation and play_animation_trigger (not yet implemented). When calling play_animation,
+you select the specific animation you want the robot to run. For play_animation_trigger, you select a group of animations, and the robot
+will choose which animation from the group to run when you execute the method.
+
+By default, when an SDK program starts, the SDK will request a list of known animations from the robot, which will be loaded into anim_list
+in the AnimationComponent.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.

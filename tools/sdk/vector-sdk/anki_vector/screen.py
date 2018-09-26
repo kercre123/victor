@@ -13,7 +13,9 @@
 # limitations under the License.
 
 """
-Vector's Screen that displays his face
+Vector's LCD Screen that displays his face.
+
+The screen is 184 x 96 color (RGB565) pixels. The active area is 23.2mm x 12.1mm.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.

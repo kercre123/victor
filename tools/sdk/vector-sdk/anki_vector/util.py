@@ -95,7 +95,7 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 
     :param custom_handler: provide an external logger for custom logging locations
     :param general_log_level: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
-            constant from the :mod:`logging` module.  If None then a
+            constant from the :mod:`logging` module. If None then a
             value will be read from the VECTOR_LOG_LEVEL environment variable.
     :param target: The stream to send the log data to; defaults to stderr
     """
@@ -648,11 +648,8 @@ class Pose:
     initial position and orientation.
 
     The coordinate space is relative to Vector, where Vector's origin is the
-    point on the ground between Vector's two front wheels:
-
-    The X axis is Vector's forward direction
-    The Y axis is to Vector's left
-    The Z axis is up
+    point on the ground between Vector's two front wheels. The X axis is Vector's forward direction,
+    the Y axis is to Vector's left, and the Z axis is up.
 
     Only poses of the same origin_id can safely be compared or operated on.
 

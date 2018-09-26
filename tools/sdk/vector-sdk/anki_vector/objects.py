@@ -12,29 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Object and Power Cube recognition.
+"""Object and Light Cube recognition.
 
 Vector can recognize and track a number of different types of objects.
 
 These objects may be visible (currently observed by the robot's camera)
-and tappable (in the case of the Power Cube that ships with the robot).
+and tappable (in the case of the Light Cube that ships with the robot).
 
-The Power Cube is known as a :class:`LightCube` by the SDK.  The cube has
-controllable lights, and sensors that can determine when its being moved
-or tapped.
+The Light Cube is known as a :class:`LightCube` by the SDK. The cube
+has controllable lights, and sensors that can determine when it's being
+moved or tapped.
 
-Objects can emit several events such as :class:`EvtObjectObserved` when
-the robot sees (or continues to see) the object with its camera, or
-:class:`EvtObjectTapped` if a power cube is tapped by a player.  You
-can either observe the object's instance directly, or capture all such events
-for all objects by observing them on :class:`anki_vector.world.World` instead.
+All observable objects have a marker of a known size attached to them,
+which allows Vector to recognize the object and its position and rotation("pose").
 
-All observable objects have a marker attached to them, which allows Vector
-to recognize the object and its position and rotation("pose").
+Vector connects to his Light Cubes with BLE.
 """
-
-
-# TODO EvtObjectObserved, EvtObjectTapped, and others in Cozmo's object.py are not implemented. Should they be? If not, remove from docs above?
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['LightCube1Type',
@@ -62,13 +55,13 @@ class LightCube(util.Component):
     """Represents Vector's Cube"""
 
     #: Length of time in seconds to go without receiving an observed event before
-    #: assuming that Vector can no longer see an element. Can be overridden in sub
+    #: assuming that Vector can no longer see an object. Can be overridden in sub
     #: classes.
     visibility_timeout = OBJECT_VISIBILITY_TIMEOUT
 
     def __init__(self, robot, world, **kw):
         super().__init__(robot, **kw)
-        #: :class:`anki_vector.world.World`: The robot's world in which this element is located.
+        #: :class:`anki_vector.world.World`: The robot's world in which this object is located.
         self._world = world
 
         self._pose = None
@@ -112,12 +105,12 @@ class LightCube(util.Component):
         #: ``None`` if no events have yet been received.
         self.last_event_time = None
 
-        #: float: The time the element was last observed by the robot.
-        #: ``None`` if the element has not yet been observed.
+        #: float: The time the object was last observed by the robot.
+        #: ``None`` if the object has not yet been observed.
         self.last_observed_time = None
 
         #: int: The robot's timestamp of the last observed event.
-        #: ``None`` if the element has not yet been observed.
+        #: ``None`` if the object has not yet been observed.
         #: In milliseconds relative to robot epoch.
         self.last_observed_robot_timestamp = None
 
@@ -132,11 +125,11 @@ class LightCube(util.Component):
 
         #: :class:`~anki_vector.util.ImageRect`: The ImageRect defining where the
         #: object was last visible within Vector's camera view.
-        #: ``None`` if the element has not yet been observed.
+        #: ``None`` if the object has not yet been observed.
         self._last_observed_image_rect = None
 
         #: float: angular distance from the current reported up axis
-        #: ``None`` if the element has not yet been observed.
+        #: ``None`` if the object has not yet been observed.
         self._top_face_orientation_rad = None
 
         self._is_visible = False
@@ -250,6 +243,8 @@ class LightCube(util.Component):
 
     #### Private Methods ####
 
+    # TODO For the events in this file, shouldn't they be dispatched for all objects and not just LightCubes? They are currently in the LightCube class. Cozmo did this differently. Revisit the docstrings to refer to objects v LightCube as appropriate.
+
     def _repr_values(self):
         return 'object_id=%s' % self.object_id
 
@@ -260,7 +255,7 @@ class LightCube(util.Component):
             self.visibility_timeout, self._observed_timeout)
 
     def _observed_timeout(self):
-        # triggered when the element is no longer considered "visible"
+        # triggered when the object is no longer considered "visible"
         # ie. visibility_timeout seconds after the last observed event
         self._is_visible = False
         self._dispatch_disappeared_event()
@@ -272,11 +267,13 @@ class LightCube(util.Component):
 
     def _dispatch_appeared_event(self, image_rect):
         # @TODO: feed this into a proper event system
+        # TODO Add a way for Python to subscribe to this event. Use docstring from Cozmo EvtObjectAppeared
         # Image Rect refers to the bounding rect in Vector's vision where the object was seen
         pass
 
     def _dispatch_disappeared_event(self):
         # @TODO: feed this into a proper event system
+        # TODO Add a way for Python to subscribe to this event. Use docstring from Cozmo EvtObjectDisappeared
         pass
 
     def _on_observed(self, image_rect, timestamp):
@@ -315,22 +312,22 @@ class LightCube(util.Component):
 
     @property
     def pose(self) -> util.Pose:
-        """The pose of the element in the world.
+        """The pose of the object in the world.
 
-        Is ``None`` for elements that don't have pose information.
+        Is ``None`` for objects that don't have pose information.
         """
         return self._pose
 
     @property
     def time_since_last_seen(self) -> float:
-        """The time since this element was last seen. math.inf if never seen."""
+        """The time since this object was last seen. math.inf if never seen."""
         if self.last_observed_time is None:
             return math.inf
         return time.time() - self.last_observed_time
 
     @property
     def is_visible(self) -> bool:
-        """True if the element has been observed recently, False otherwise.
+        """True if the object has been observed recently, False otherwise.
 
         "recently" is defined as :attr:`visibility_timeout` seconds.
         """
@@ -365,20 +362,22 @@ class LightCube(util.Component):
         self.logger.debug('Object Appeared (object_id: {0} at: {1})'.format(self.object_id, image_rect))
 
     def _dispatch_disappeared_event(self):
-        # @TODO: Figure out events
+        # TODO: Figure out events. Add way for Python to subscribe to this.
         self.logger.debug('Object Disappeared (object_id: {0})'.format(self.object_id))
 
     #### Public Event Handlers ####
-    # TODO Should this be private? If not, need docstring
+    # TODO Need sample code
     def on_tapped(self, msg):
+        """Event dispatched when object is tapped."""
         now = time.time()
         self.last_event_time = now
         self.last_tapped_time = now
         self.last_tapped_robot_timestamp = msg.timestamp
         self.logger.debug('Object Tapped (object_id: {0} at {1})'.format(self.object_id, msg.timestamp))
 
-    # TODO Should this be private? If not, need docstring
+    # TODO Need sample code. Also test that docstring is accurate.
     def on_moved(self, msg):  # pylint: disable=unused-argument
+        """Triggered when an object starts moving."""
         now = time.time()
         started_moving = not self.is_moving
         self.is_moving = True
@@ -391,8 +390,9 @@ class LightCube(util.Component):
             self.last_moved_start_robot_timestamp = msg.timestamp
             self.logger.debug('Object Moved (object_id: {0})'.format(self.object_id))
 
-    # TODO Should this be private? If not, need docstring
+    # TODO Need sample code
     def on_stopped_moving(self, msg):  # pylint: disable=unused-argument
+        """Triggered when an object stops moving."""
         now = time.time()
         self.last_event_time = now
         if self.is_moving:
@@ -405,8 +405,9 @@ class LightCube(util.Component):
         # @TODO: Figure out events
         self.logger.debug('Object Stopped Moving (object_id: {0} after a duration of {1})'.format(self.object_id, move_duration))
 
-    # TODO Should this be private? If not, need docstring
+    # TODO Need sample code
     def on_up_axis_changed(self, msg):
+        """Triggered when an object's up axis changes."""
         now = time.time()
         self.up_axis = msg.up_axis
         self.last_event_time = now
@@ -415,8 +416,13 @@ class LightCube(util.Component):
         # @TODO: Figure out events
         self.logger.debug('Object Up Axis Changed (object_id: {0} now has up axis {1})'.format(self.object_id, msg.up_axis))
 
-    # TODO Should this be private? If not, need docstring
+    # TODO Needs sample code
     def on_observed(self, msg):
+        """Triggered whenever an object is visually identified by the robot.
+
+        A stream of these events are produced while an object is visible to the robot.
+        Each event has an updated image_rect field.
+        """
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3,
@@ -428,8 +434,14 @@ class LightCube(util.Component):
         self._on_observed(image_rect, msg.timestamp)
         self._top_face_orientation_rad = msg.top_face_orientation_rad
 
-    # TODO Should this be private? If not, need docstring
+    # TODO Needs sample code. Also test that the docstring is accurate that we get this at the start of a program.
     def on_connection_state_changed(self, connected, factory_id):
+        """Triggered when the robot reports that an object is connected (i.e. exists) or disconnected.
+
+        A connection event will usually occur at the start of the program in response to the SDK
+        requesting a list of connected objects to the robot.
+        """
+
         if self._factory_id != factory_id:
             self.logger.debug('Factory id changed from {0} to {1}'.format(self._factory_id, factory_id))
         if self.is_connected != connected:

@@ -43,6 +43,7 @@ MAX_HEAD_ANGLE = util.degrees(45)
 # MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
 
 # TODO Consider adding Cozmo's LiftPosition class
+# TODO Cozmo SDK has Robot properties including is_moving, is_falling, is_picked_up, is_animated, is_pathing, and more (see Cozmo's robot.py). Why not Vector?
 
 
 class Robot:
@@ -387,7 +388,7 @@ class Robot:
         """
         return self._carrying_object_id
 
-    # TODO Is this really a thing in Vector?
+    # TODO Is this really a thing in Vector? Ask Al C.
     @property
     def carrying_object_on_top_id(self) -> int:
         """The ID of the object on top of the object currently being carried (-1 if none)
@@ -566,6 +567,7 @@ class Robot:
         self._faces.enable_vision_mode(enable=self.enable_vision_mode)
 
         # Subscribe to a callback that updates the robot's local properties
+        # See Robot properties including robot.pose, robot.accel and robot.gyro to access data from robot_state.
         self.events.subscribe("robot_state", self._unpack_robot_state)
 
     def disconnect(self) -> None:
