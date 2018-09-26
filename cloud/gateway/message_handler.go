@@ -860,6 +860,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 	whiteList := in.GetWhiteList()
 	blackList := in.GetBlackList()
 
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
 		// TODO: remove entire tempEventStreamDone case when the app connection properly closes
@@ -888,7 +890,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 					return err
 				}
 			}
-		case <-time.After(time.Second): // ping to check connection liveness after one second.
+		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := stream.Send(&ping); err != nil {
 				log.Println("Closing Event stream (on send):", err)
 				return err
@@ -954,6 +956,8 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 		},
 	}
 
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
 		case <-done:
@@ -972,7 +976,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 				log.Println("Closing BehaviorControl stream:", err)
 				return err
 			}
-		case <-time.After(time.Second): // ping to check connection liveness after one second.
+		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
 				log.Println("Closing BehaviorControl stream (on send):", err)
 				return err
