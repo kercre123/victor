@@ -84,7 +84,7 @@ namespace Util {
 
 #else // ANKI_MESSAGE_PROFILER_ENABLED
 
-  MessageProfilerMessage::Profiler(const std::string& /*prefix*/, float /*duration*/) {
+  MessageProfiler::MessageProfiler(const std::string& /*prefix*/) {
   }
 
   void MessageProfiler::Update(int /*msg*/, size_t /*size*/) {
