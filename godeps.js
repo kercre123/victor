@@ -269,33 +269,9 @@ function runRoutine(args) {
     .join(' ');
 
   // step 2: run 'go get' on all godir-specified folders - will pick up any new dependencies
-  const execGoGet = flags => {
-    let retryCount = 0;
-    while (true) {
-      let success = false;
-      try {
-        execSync('go get ' + flags, { stdio: 'inherit' });
-        success = true;
-      }
-      catch (e) {
-        console.log('go get failed: ' + e);
-        if (retryCount >= 2) {
-          console.log('too many retries, aborting');
-          throw e;
-        }
-        else {
-          retryCount++;
-          console.log('trying again...');
-        }
-      }
-      if (success) {
-        break;
-      }
-    }
-  };
-  execGoGet('-d -v ' + allGoDirs);
+  execWithRetry('go get -d -v ' + allGoDirs, { stdio: 'inherit' });
   if (allGoTestPackages) {
-    execGoGet('-d -v -t ' + allGoTestPackages);
+    execWithRetry('go get -d -v -t ' + allGoTestPackages, { stdio: 'inherit' });
   }
 
   const extraIncludes = ["github.com/golang/protobuf/protoc-gen-go", "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway", "github.com/golang/glog"];
@@ -407,7 +383,7 @@ function getCloneCommand(name) {
   }
 
   // otherwise, get meta tags
-  const curlOut = execSyncTrim('curl -s ' + name + '?go-get=1 | grep go-import');
+  const curlOut = execWithRetry('curl -s ' + name + '?go-get=1 | grep go-import');
   const startIdx = curlOut.indexOf(name);
   if (startIdx < 0) {
     throw 'Could not find dependency go-import tag in: ' + curlOut
@@ -440,4 +416,36 @@ function getDirAllPaths(name) {
 
 function save() {
   fs.writeFileSync(filename, JSON.stringify(deps, null, 2) + '\n');
+}
+
+function execWithRetry(cmd, execOpts, retries) {
+  retries = retries || 2;
+
+  let count = 0;
+  let output;
+  while (true) {
+    let success = false;
+    try {
+      output = execSync(cmd, execOpts);
+      if (output) {
+        output = output.toString().trim();
+      }
+      success = true;
+    }
+    catch (e) {
+      console.log('command "' + cmd + '" failed: ' + e);
+      if (count >= retries) {
+        console.log('too many retries, aborting');
+        throw e;
+      }
+      else {
+        count++;
+        console.log('trying again...');
+      }
+    }
+    if (success) {
+      break;
+    }
+  }
+  return output;
 }
