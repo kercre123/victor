@@ -269,9 +269,33 @@ function runRoutine(args) {
     .join(' ');
 
   // step 2: run 'go get' on all godir-specified folders - will pick up any new dependencies
-  execSync('go get -d -v ' + allGoDirs, { stdio: 'inherit' });
+  const execGoGet = flags => {
+    let retryCount = 0;
+    while (true) {
+      let success = false;
+      try {
+        execSync('go get ' + flags, { stdio: 'inherit' });
+        success = true;
+      }
+      catch (e) {
+        console.log('go get failed: ' + e);
+        if (retryCount >= 2) {
+          console.log('too many retries, aborting');
+          throw e;
+        }
+        else {
+          retryCount++;
+          console.log('trying again...');
+        }
+      }
+      if (success) {
+        break;
+      }
+    }
+  };
+  execGoGet('-d -v ' + allGoDirs);
   if (allGoTestPackages) {
-    execSync('go get -d -v -t ' + allGoTestPackages, { stdio: 'inherit' });
+    execGoGet('-d -v -t ' + allGoTestPackages);
   }
 
   const extraIncludes = ["github.com/golang/protobuf/protoc-gen-go", "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway", "github.com/golang/glog"];
