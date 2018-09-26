@@ -30,7 +30,7 @@ public:
   SpeechRecognizer(SpeechRecognizer&& other) = default;
   SpeechRecognizer& operator=(SpeechRecognizer&& other) = default;
   
-  using SpeechCallback = std::function<void(const char*,float)>;
+  using SpeechCallback = std::function<void(const char*,float,int,int)>;
   void SetCallback(SpeechCallback callback = SpeechCallback{} ) { _speechCallback = callback; }
   void Start();
   void Stop();
@@ -48,7 +48,7 @@ protected:
   virtual void StartInternal() { }
   virtual void StopInternal() { }
   
-  void DoCallback(const char* callbackArg, float score);
+  void DoCallback(const char* callbackArg, float score, int from_ms, int to_ms);
   
 private:
   SpeechCallback _speechCallback;

@@ -20,6 +20,7 @@ class AlexaClient;
 class AlexaMicrophone;
 class AlexaSpeaker;
 class AnimContext;
+  class KeywordObserver;
   
   namespace RobotInterface {
     struct MicData;
@@ -32,13 +33,17 @@ public:
   void Update();
   
   void ButtonPress();
+  void TriggerWord(int from_ms, int to_ms);
   
-  void ProcessMicDataPayload(const RobotInterface::MicData& payload);
+  void ProcessAudio( int16_t* data, size_t size);
   
 private:
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> m_capabilitiesDelegate;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> m_tapToTalkAudioProvider;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> m_wakeWordAudioProvider;
+  
+  std::shared_ptr<KeywordObserver> m_keywordObserver;
   
   std::shared_ptr<AlexaClient> m_client;
   

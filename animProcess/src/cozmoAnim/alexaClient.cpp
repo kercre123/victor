@@ -259,6 +259,28 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   }
   m_speechSynthesizer->addObserver(m_dialogUXStateAggregator);
   
+  
+//  /*
+//   * Creating the Alerts Capability Agent - This component is the Capability Agent that implements the Alerts
+//   * interface of AVS.
+//   */
+//  m_alertsCapabilityAgent = capabilityAgents::alerts::AlertsCapabilityAgent::create(
+//                                                                                    m_connectionManager,
+//                                                                                    m_connectionManager,
+//                                                                                    m_certifiedSender,
+//                                                                                    m_audioFocusManager,
+//                                                                                    m_speakerManager,
+//                                                                                    contextManager,
+//                                                                                    m_exceptionSender,
+//                                                                                    alertStorage,
+//                                                                                    audioFactory->alerts(),
+//                                                                                    capabilityAgents::alerts::renderer::Renderer::create(alertsMediaPlayer),
+//                                                                                    customerDataManager);
+//  if (!m_alertsCapabilityAgent) {
+//    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAlertsCapabilityAgent"));
+//    return false;
+//  }
+  
   addConnectionObserver(m_dialogUXStateAggregator);
 
   
@@ -338,6 +360,46 @@ std::future<bool> AlexaClient::notifyOfTapToTalk(
   return m_audioInputProcessor->recognize(tapToTalkAudioProvider, capabilityAgents::aip::Initiator::TAP, beginIndex);
 }
   
+  
+std::future<bool> AlexaClient::notifyOfWakeWord(
+    capabilityAgents::aip::AudioProvider wakeWordAudioProvider,
+    avsCommon::avs::AudioInputStream::Index beginIndex,
+    avsCommon::avs::AudioInputStream::Index endIndex,
+    std::string keyword,
+    const capabilityAgents::aip::ESPData espData,
+    std::shared_ptr<const std::vector<char>> KWDMetadata) {
+    if (!m_connectionManager->isConnected()) {
+        std::promise<bool> ret;
+        static const std::string ALEXA_STOP_KEYWORD = "STOP";
+        if (ALEXA_STOP_KEYWORD == keyword) {
+            // Alexa Stop uttered while offline
+            ACSDK_INFO(LX("notifyOfWakeWord").d("action", "localStop").d("reason", "stopUtteredWhileNotConnected"));
+            stopForegroundActivity();
+
+            // Returning as interaction handled
+            ret.set_value(true);
+            return ret.get_future();
+        } else {
+            // Ignore Alexa wake word while disconnected
+            ACSDK_INFO(LX("notifyOfWakeWord").d("action", "ignoreAlexaWakeWord").d("reason", "networkDisconnected"));
+
+            // Returning as interaction not handled
+            ret.set_value(false);
+            return ret.get_future();
+        }
+    }
+
+    PRINT_NAMED_WARNING("WHATNOW", "calling wake word recognizer!");
+    return m_audioInputProcessor->recognize(
+        wakeWordAudioProvider,
+        capabilityAgents::aip::Initiator::WAKEWORD,
+        beginIndex,
+        endIndex,
+        keyword,
+        espData,
+        KWDMetadata);
+}
+  
 void AlexaClient::addConnectionObserver(
                                           std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer) {
   m_connectionManager->addConnectionStatusObserver(observer);
@@ -350,6 +412,10 @@ void AlexaClient::onCapabilitiesStateChange( CapabilitiesObserverInterface::Stat
       m_connectionManager->enable();
   }
 }
+  
+  void AlexaClient::stopForegroundActivity() {
+    m_audioFocusManager->stopForegroundActivity();
+  }
   
 } // namespace Vector
 } // namespace Anki

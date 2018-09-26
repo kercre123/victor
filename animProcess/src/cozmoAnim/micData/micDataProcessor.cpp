@@ -39,6 +39,7 @@
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include <sched.h>
 
+#include "cozmoAnim/alexa.h"
 
 namespace Anki {
 namespace Vector {
@@ -59,7 +60,7 @@ namespace {
 
 #if ANKI_DEV_CHEATS
 
-  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kMicData_ForceEnableMicDataProc, CONSOLE_GROUP, true); // to make sensory time indices match mic samples
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, 0,
                    "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
@@ -139,13 +140,15 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
 
   // Set up the callback that creates the recording job when the trigger is detected
   auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
-                                   this, std::placeholders::_1, std::placeholders::_2);
+                                   this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   _recognizer->SetCallback(triggerCallback);
   _recognizer->Start();
 
   // Init the various SE processing
   MMIfInit(0, nullptr);
   InitVAD();
+  
+  _alexa.reset(new Alexa);
 
   // Cache off the indices of the SE processing variables we will be accessing
   _bestSearchBeamIndex = SEDiagGetIndex("fdsearch_best_beam_index");
@@ -162,9 +165,11 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
   _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
 }
 
-void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Locale& locale)
+void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Locale& locale, const AnimContext* context)
 {
   _micTriggerConfig->Init(dataLoader.GetMicTriggerConfig());
+  
+  _alexa->Init(context);
 
   // On Debug builds, check that all the files listed in the trigger config actually exist
 #if ANKI_DEVELOPER_CODE
@@ -199,8 +204,13 @@ void MicDataProcessor::InitVAD()
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
   
-void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, float score)
+void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, float score, int from_ms, int to_ms)
 {
+  PRINT_NAMED_WARNING("WHATNOW", "HEY VECTOR from=%d, to=%d", from_ms, to_ms);
+  if( _alexa   ) {
+    // todo: also pass what it is (vector or alexa)
+    _alexa->TriggerWord(from_ms, to_ms);
+  }
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
   if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
@@ -802,6 +812,7 @@ void MicDataProcessor::ProcessTriggerLoop()
     {
       job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
     }
+    _alexa->ProcessAudio((int16_t*)processedAudio.data(), processedAudio.size());
 
 #if ANKI_DEV_CHEATS
     // if things are different reload some stuff
@@ -907,6 +918,13 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
   _rawAudioBufferFullness[inUseIndex] = updatedFullness;
   return MAX(_rawAudioBufferFullness[0], _rawAudioBufferFullness[1]);
 }
+  
+void MicDataProcessor::Update()
+{
+  if( _alexa != nullptr ) {
+    _alexa->Update();
+  }
+}
 
 void MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
                                               MicTriggerConfig::ModelType modelType,
@@ -964,6 +982,11 @@ const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::Processin
   }
   return "";
 }
+  
+  void MicDataProcessor::FakeTriggerWordDetection() {
+    _alexa->ButtonPress();
+    //TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f);
+  }
 
 } // namespace MicData
 } // namespace Vector

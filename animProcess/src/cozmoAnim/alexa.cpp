@@ -13,6 +13,7 @@
 #include "cozmoAnim/alexa.h"
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
+#include "cozmoAnim/alexaKeywordObserver.h"
 #include "cozmoAnim/alexaMicrophone.h"
 #include "cozmoAnim/alexaSpeaker.h"
 //#include "cozmoAnim/alexaSpeechSynthesizer.h"
@@ -28,6 +29,7 @@
 #include <AVSCommon/Utils/Logger/Logger.h>
 #include <AVSCommon/Utils/Logger/LoggerSinkManager.h>
 #include <AVSCommon/Utils/Network/InternetConnectionMonitor.h>
+#include <AVSCommon/AVS/AudioInputStream.h>
 #include <Alerts/Storage/SQLiteAlertStorage.h>
 #include <Audio/AudioFactory.h>
 #include <Bluetooth/SQLiteBluetoothStorage.h>
@@ -38,11 +40,13 @@
 #include <Notifications/SQLiteNotificationsStorage.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
+#include <ESP/DummyESPDataProvider.h>
 //#include <DefaultClient/DefaultClient.h>
 
 #include <memory>
 #include <vector>
 #include <iostream>
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Vector {
@@ -75,6 +79,8 @@ namespace {
   
   /// Key for the @c endpoint value under the @c SAMPLE_APP_CONFIG_KEY configuration node.
   static const std::string ENDPOINT_KEY("endpoint");
+  
+  CONSOLE_VAR(bool, kUseWakeWord, "AAA", true);
     
   
   const std::string kConfig = R"4Nk1({
@@ -87,7 +93,7 @@ namespace {
     },
     "deviceInfo":{
       // Unique device serial number. e.g. 123456
-      "deviceSerialNumber":"123457",
+      "deviceSerialNumber":"124457",
       // The Client ID of the Product from developer.amazon.com
       "clientId": "amzn1.application-oa2-client.35a58ee8f3444563aed328cb189da216",
       // Product ID from developer.amazon.com
@@ -354,6 +360,7 @@ void Alexa::Init(const AnimContext* context)
    */
   size_t bufferSize = alexaClientSDK::avsCommon::avs::AudioInputStream::calculateBufferSize(
                                                                                             BUFFER_SIZE_IN_SAMPLES, WORD_SIZE, MAX_READERS);
+  PRINT_NAMED_WARNING("WHATNOW", "bufferSize=%d", bufferSize);
   auto buffer = std::make_shared<alexaClientSDK::avsCommon::avs::AudioInputStream::Buffer>(bufferSize);
   std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> sharedDataStream =
   alexaClientSDK::avsCommon::avs::AudioInputStream::create(buffer, WORD_SIZE, MAX_READERS);
@@ -389,6 +396,50 @@ void Alexa::Init(const AnimContext* context)
                                                                               tapCanOverride,
                                                                               tapCanBeOverridden);
   
+  if( kUseWakeWord ) {
+    bool wakeAlwaysReadable = true;
+    bool wakeCanOverride = false;
+    bool wakeCanBeOverridden = true;
+    
+    m_wakeWordAudioProvider = std::make_shared<capabilityAgents::aip::AudioProvider>(
+                                                                               sharedDataStream,
+                                                                               compatibleAudioFormat,
+                                                                               alexaClientSDK::capabilityAgents::aip::ASRProfile::NEAR_FIELD,
+                                                                               wakeAlwaysReadable,
+                                                                               wakeCanOverride,
+                                                                               wakeCanBeOverridden);
+    
+    auto dummyEspProvider = std::make_shared<esp::DummyESPDataProvider>();
+    std::shared_ptr<esp::ESPDataProviderInterface> espProvider = dummyEspProvider;
+    std::shared_ptr<esp::ESPDataModifierInterface> espModifier = dummyEspProvider;
+//
+//    // This observer is notified any time a keyword is detected and notifies the DefaultClient to start recognizing.
+    m_keywordObserver = std::make_shared<KeywordObserver>(m_client, *m_wakeWordAudioProvider, espProvider);
+//
+//    m_keywordDetector = alexaClientSDK::kwd::KeywordDetectorProvider::create(
+//                                                                             sharedDataStream,
+//                                                                             compatibleAudioFormat,
+//                                                                             {keywordObserver},
+//                                                                             std::unordered_set<
+//                                                                             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::KeyWordDetectorStateObserverInterface>>(),
+//                                                                             pathToInputFolder);
+//    if (!m_keywordDetector) {
+//      ACSDK_CRITICAL(LX("Failed to create keyword detector!"));
+//    }
+    
+//    // If wake word is enabled, then creating the interaction manager with a wake word audio provider.
+//    m_interactionManager = std::make_shared<alexaClientSDK::sampleApp::InteractionManager>(
+//                                                                                           client,
+//                                                                                           micWrapper,
+//                                                                                           userInterfaceManager,
+//                                                                                           holdToTalkAudioProvider,
+//                                                                                           tapToTalkAudioProvider,
+//                                                                                           m_guiRenderer,
+//                                                                                           wakeWordAudioProvider,
+//                                                                                           espProvider,
+//                                                                                           espModifier);
+  }
+  
 
   
 //  m_interactionManager = std::make_shared<alexaClientSDK::sampleApp::InteractionManager>(
@@ -414,7 +465,8 @@ void Alexa::Init(const AnimContext* context)
   // try connecting
   m_client->Connect( m_capabilitiesDelegate );
   
-  PRINT_NAMED_WARNING("WHATNOW", "worked");
+  PRINT_NAMED_WARNING("WHATNOW", "INIT FINISHED. (m_keywordObserver=%d, m_wakeWordAudioProvider=%d, stream=%d)",
+                      m_keywordObserver!=nullptr, m_wakeWordAudioProvider!=nullptr, (m_wakeWordAudioProvider==nullptr) ? -1 : (m_wakeWordAudioProvider->stream != nullptr));
   return;
 
 }
@@ -432,11 +484,54 @@ void Alexa::ButtonPress()
     PRINT_NAMED_WARNING("WHATNOW", "Failed to notify tap to talk");
   }
 }
+  
+void Alexa::TriggerWord(int from_ms, int to_ms)
+{
+  // int holds ~50 days
+  if( !kUseWakeWord ) {
+    return;
+  }
+  
+  avsCommon::avs::AudioInputStream::Index fromIndex;
+  avsCommon::avs::AudioInputStream::Index toIndex;
+  if ( from_ms < 0 ) {
+    fromIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
+  } else {
+    fromIndex = from_ms; // first move into larger type
+    fromIndex = 16*fromIndex;
+    if( fromIndex > 100 ) {
+      fromIndex -= 100;
+    }
+  }
+  if ( to_ms < 0 ) {
+    toIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
+  } else {
+    toIndex = to_ms;
+    toIndex = 16*toIndex + 100;
+    if( toIndex > m_microphone->GetTotalSamples() ) {
+      toIndex = m_microphone->GetTotalSamples();
+    }
+  }
+  
+  // fake it
+  if ( from_ms >= 0 && to_ms >= 0 ) {
+    PRINT_NAMED_WARNING("WHATNOW", "initial fromIndex=%llu, toIndex=%llu", fromIndex, toIndex);
+    avsCommon::avs::AudioInputStream::Index dIndex = toIndex - fromIndex;
+    toIndex = m_microphone->GetTotalSamples();
+    fromIndex = toIndex - dIndex;
+  }
+  
+  // this only works if our extra VAD is off, since otherwise the mic samples wont match the sample indices provided by sensory
+  
+  PRINT_NAMED_WARNING("WHATNOW", "alexa trigger %d-%d (%llu-%llu) micData=%d, (m_keywordObserver=%d, m_wakeWordAudioProvider=%d, stream=%d)", from_ms, to_ms, fromIndex, toIndex, m_microphone->GetTotalSamples(), m_keywordObserver!=nullptr, m_wakeWordAudioProvider!=nullptr, (m_wakeWordAudioProvider==nullptr) ? -1 : (m_wakeWordAudioProvider->stream != nullptr));
+  // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
+  m_keywordObserver->onKeyWordDetected( m_wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
+}
 
-void Alexa::ProcessMicDataPayload(const RobotInterface::MicData& payload)
+void Alexa::ProcessAudio( int16_t* data, size_t size)
 {
   if( m_microphone ) {
-    m_microphone->ProcessMicDataPayload(payload);
+    m_microphone->ProcessAudio(data, size);
   }
 }
   

@@ -37,6 +37,7 @@
 // Declarations
 namespace Anki {
   namespace Vector {
+    class Alexa;
     class BeatDetector;
     namespace MicData {
       class MicDataSystem;
@@ -65,7 +66,7 @@ public:
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
 
-  void Init(const RobotDataLoader& dataLoader, const Util::Locale& locale);
+  void Init(const RobotDataLoader& dataLoader, const Util::Locale& locale, const AnimContext* context);
 
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
@@ -95,7 +96,9 @@ public:
   RobotTimeStamp_t CreateSteamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
                                   uint32_t overlapLength_ms = 0);
   
-  void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
+  void FakeTriggerWordDetection();
+  
+  void Update();
   
 private:
   const AnimContext* _context = nullptr;
@@ -175,6 +178,8 @@ private:
   MicTriggerConfig::TriggerDataPaths _nextTriggerPaths;
   std::mutex _triggerModelMutex;
   
+  std::unique_ptr<Alexa> _alexa;
+  
   enum class TriggerWordDetectSource : uint8_t {
     Invalid=0,
     Voice,
@@ -183,9 +188,9 @@ private:
   
   void InitVAD();
   
-  void TriggerWordVoiceCallback(const char* resultFound, float score) { TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score ); }
+  void TriggerWordVoiceCallback(const char* resultFound, float score, int from_ms, int to_ms) { TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score, from_ms, to_ms ); }
   
-  void TriggerWordDetectCallback(TriggerWordDetectSource source, float score);
+  void TriggerWordDetectCallback(TriggerWordDetectSource source, float score, int from_ms, int to_ms);
   
   // Return 0 if the stream job can not be created
   RobotTimeStamp_t CreateTriggerWordDetectedJobs();

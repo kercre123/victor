@@ -22,7 +22,6 @@ namespace Vector {
     struct MicData;
   }
 
-/// This acts as a wrapper around PortAudio, a cross-platform open-source audio I/O library.
 class AlexaMicrophone : public alexaClientSDK::applicationUtilities::resources::audio::MicrophoneInterface {
 public:
   
@@ -34,7 +33,7 @@ public:
    */
   static std::unique_ptr<AlexaMicrophone> create(std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> stream);
   
-  void ProcessMicDataPayload(const RobotInterface::MicData& payload);
+  void ProcessAudio(int16_t* data, size_t size);
   
   /**
    * Stops streaming from the microphone.
@@ -55,8 +54,11 @@ public:
    */
   //~PortAudioMicrophoneWrapper();
   
+  size_t GetTotalSamples() const { return _totalSamples; }
+  
 private:
   bool _streaming = false;
+  size_t _totalSamples = 0;
   /**
    * Constructor.
    *

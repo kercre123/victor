@@ -26,6 +26,7 @@ set(AVS_LIBS
   CBLAuthDelegate
   CertifiedSender
   ContextManager
+  ESP
   RegistrationManager
   SpeechSynthesizer
   SQLiteStorage

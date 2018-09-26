@@ -14,7 +14,6 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
-#include "cozmoAnim/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
@@ -98,7 +97,6 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation, triggerDataDir));
-  _alexa.reset(new Alexa);
 
   if (!_writeLocationDir.empty())
   {
@@ -120,8 +118,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
-  _alexa->Init(_context);
-  _micDataProcessor->Init(dataLoader, _locale);
+  _micDataProcessor->Init(dataLoader, _locale, _context);
 }
 
 MicDataSystem::~MicDataSystem()
@@ -135,7 +132,6 @@ MicDataSystem::~MicDataSystem()
 void MicDataSystem::ProcessMicDataPayload(const RobotInterface::MicData& payload)
 {
   _micDataProcessor->ProcessMicDataPayload(payload);
-  _alexa->ProcessMicDataPayload(payload);
 }
 
 void MicDataSystem::RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT)
@@ -197,8 +193,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
-  _alexa->ButtonPress();
-  //_micDataProcessor->FakeTriggerWordDetection();
+  _micDataProcessor->FakeTriggerWordDetection();
 }
 
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
@@ -536,11 +531,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 #endif
-  
-  
-  if( _alexa != nullptr ) {
-    _alexa->Update();
-  }
+
+  _micDataProcessor->Update();
 }
 
 void MicDataSystem::SetWillStream(bool willStream) const

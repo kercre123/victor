@@ -22,6 +22,8 @@
 
 #include "util/console/consoleInterface.h"
 
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
+
 #include <set>
 
 namespace Anki {
@@ -109,6 +111,21 @@ void BehaviorDispatchAfterShake::GetBehaviorJsonKeys(std::set<const char*>& expe
 void BehaviorDispatchAfterShake::OnBehaviorActivated()
 {
   _dVars.countShaken = 0;
+  
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  const auto earConBegin = AudioMetaData::GameEvent::GenericEventFromString("Play__Robot_Vic_Sfx__Wake_Word_On");
+  auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
+  bool kPlayGetInAfterDevWakeWord = true;
+  bool kStreamAfterDevWakeWord = false;
+  SmartPushResponseToTriggerWord(
+                            kPlayGetInAfterDevWakeWord
+                            ? AnimationTrigger::VC_ListeningGetIn
+                            : AnimationTrigger::Count,
+                            postAudioEvent, // required if there is to be any effect at all
+                            kStreamAfterDevWakeWord
+                            ? StreamAndLightEffect::StreamingEnabled
+                            : StreamAndLightEffect::StreamingDisabled
+                            );
 }
 
 

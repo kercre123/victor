@@ -143,7 +143,6 @@ private:
 
   std::unique_ptr<MicDataProcessor> _micDataProcessor;
   std::unique_ptr<LocalUdpServer> _udpServer;
-  std::unique_ptr<Alexa> _alexa;
 
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;

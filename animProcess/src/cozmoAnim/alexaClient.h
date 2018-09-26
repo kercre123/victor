@@ -82,6 +82,25 @@ public:
   
   void Connect(const std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface>& capabilitiesDelegate);
   
+  /**
+   * Begins a wake word initiated Alexa interaction.
+   *
+   * @param wakeWordAudioProvider The audio provider containing the audio data stream along with its metadata.
+   * @param beginIndex The begin index of the keyword found within the stream.
+   * @param endIndex The end index of the keyword found within the stream.
+   * @param keyword The keyword that was detected.
+   * @param espData The ESP measurement data.
+   * @param KWDMetadata Wake word engine metadata.
+   * @return A future indicating whether the interaction was successfully started.
+   */
+  std::future<bool> notifyOfWakeWord(
+                                     alexaClientSDK::capabilityAgents::aip::AudioProvider wakeWordAudioProvider,
+                                     alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex,
+                                     alexaClientSDK::avsCommon::avs::AudioInputStream::Index endIndex,
+                                     std::string keyword,
+                                     const alexaClientSDK::capabilityAgents::aip::ESPData espData = alexaClientSDK::capabilityAgents::aip::ESPData::getEmptyESPData(),
+                                     std::shared_ptr<const std::vector<char>> KWDMetadata = nullptr);
+  
   std::future<bool> notifyOfTapToTalk(
                                       alexaClientSDK::capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
                                       alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex = alexaClientSDK::capabilityAgents::aip::AudioInputProcessor::INVALID_INDEX);
@@ -89,6 +108,8 @@ public:
   void onCapabilitiesStateChange(
                                  alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::State newState,
                                  alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::Error newError) override;
+  
+  void stopForegroundActivity();
 private:
   AlexaClient(){}
   bool Init(

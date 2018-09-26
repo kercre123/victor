@@ -136,43 +136,47 @@ bool AlexaMicrophone::stopStreamingMicrophoneData() {
 //  return latencyInConfig;
 //}
 
-void AlexaMicrophone::ProcessMicDataPayload(const RobotInterface::MicData& payload)
+void AlexaMicrophone::ProcessAudio(int16_t* data, size_t size)
 {
   if( !_streaming || (m_writer == nullptr) ) {
     return;
   }
   
-  static constexpr uint32_t kNumInputChannels               = 4;
-  static constexpr uint32_t kSamplesPerChunkIncoming        = 80;
-  //static constexpr uint32_t kSampleRateIncoming_hz          = 16000;
-  //static constexpr uint32_t kTimePerChunk_ms                = 5;
-  static constexpr uint32_t kChunksPerSEBlock               = 2;
-  static constexpr uint32_t kSamplesPerBlock                = kSamplesPerChunkIncoming * kChunksPerSEBlock;
-  static std::array<int16_t, kSamplesPerBlock * kNumInputChannels> inProcessAudioBlock;
-  
-  {
-    // Uninterleave the chunks when copying out of the payload, since that's what SE wants
-    for (uint32_t sampleIdx = 0; sampleIdx < kSamplesPerChunkIncoming; ++sampleIdx)
-    {
-      const uint32_t interleaveBase = (sampleIdx * kNumInputChannels);
-      uint32_t channelIdx = 0;
-      //for (uint32_t channelIdx = 0; channelIdx < kNumInputChannels; ++channelIdx)
-      //{
-        //uint32_t dataOffset = _inProcessAudioBlockFirstHalf ? 0 : kSamplesPerChunkIncoming;
-        //const uint32_t uninterleaveBase = (channelIdx * kSamplesPerBlock);// + dataOffset;
-        //int16_t data[320];
-        inProcessAudioBlock[sampleIdx /*+ uninterleaveBase*/] = payload.data[channelIdx + interleaveBase];
-      //}
-    }
-  }
-  
-  int numSamples = kSamplesPerChunkIncoming; //kSamplesPerBlock;
-  //PRINT_NAMED_WARNING("WHATNOW", "wrote %d samples", (int)numSamples);
-  m_writer->write( inProcessAudioBlock.data(), numSamples );
+//  static constexpr uint32_t kNumInputChannels               = 4;
+//  static constexpr uint32_t kSamplesPerChunkIncoming        = 80;
+//  //static constexpr uint32_t kSampleRateIncoming_hz          = 16000;
+//  //static constexpr uint32_t kTimePerChunk_ms                = 5;
+//  static constexpr uint32_t kChunksPerSEBlock               = 2;
+//  static constexpr uint32_t kSamplesPerBlock                = kSamplesPerChunkIncoming * kChunksPerSEBlock;
+//  static std::array<int16_t, kSamplesPerBlock * kNumInputChannels> inProcessAudioBlock;
+//
+//  {
+//    // Uninterleave the chunks when copying out of the payload, since that's what SE wants
+//    for (uint32_t sampleIdx = 0; sampleIdx < kSamplesPerChunkIncoming; ++sampleIdx)
+//    {
+//      const uint32_t interleaveBase = (sampleIdx * kNumInputChannels);
+//      uint32_t channelIdx = 0;
+//      //for (uint32_t channelIdx = 0; channelIdx < kNumInputChannels; ++channelIdx)
+//      //{
+//        //uint32_t dataOffset = _inProcessAudioBlockFirstHalf ? 0 : kSamplesPerChunkIncoming;
+//        //const uint32_t uninterleaveBase = (channelIdx * kSamplesPerBlock);// + dataOffset;
+//        //int16_t data[320];
+//        inProcessAudioBlock[sampleIdx /*+ uninterleaveBase*/] = payload.data[channelIdx + interleaveBase];
+//      //}
+//    }
+//  }
+//
+//  int numSamples = kSamplesPerChunkIncoming; //kSamplesPerBlock;
+//  //PRINT_NAMED_WARNING("WHATNOW", "wrote %d samples", (int)numSamples);
+//
+//  m_writer->write( inProcessAudioBlock.data(), numSamples );
+  int numSamples = size;
+  _totalSamples += size;
+  m_writer->write( data, size );
   
   static int _fd = -1;
   if (kWriteMicDataFile) {
-    const auto samples = inProcessAudioBlock.data();
+    const auto samples = data;//inProcessAudioBlock.data();
     
     if (_fd < 0) {
       const auto path = "/data/data/com.anki.victor/cache/tts.pcm";
