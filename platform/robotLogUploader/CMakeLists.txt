@@ -20,7 +20,7 @@ target_compile_options(robotLogUploader
 )
 
 target_include_directories(robotLogUploader
-  PRIVATE
+  PUBLIC
   ${CMAKE_SOURCE_DIR}
 )
 

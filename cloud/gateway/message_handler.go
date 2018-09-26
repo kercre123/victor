@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"anki/log"
+	"anki/robot/loguploader"
 	cloud_clad "clad/cloud"
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
@@ -2097,7 +2098,18 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
 // TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "Not implemented yet")
+	url, err := loguploader.UploadDebugLogs()
+	if err != nil {
+		log.Println("MessageHandler.UploadDebugLogs.Error: " + err.Error())
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	response := &extint.UploadDebugLogsResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_OK,
+		},
+		Url: url,
+	}
+	return response, nil
 }
 
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
