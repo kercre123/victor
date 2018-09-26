@@ -10,13 +10,13 @@
                 "value": "${enable_account_creation}"
             },
             {
-                "name": "TEST_ID",
-                "value": "${test_id}"
+                "name": "REDIS_ADDRESS",
+                "value": "redis.loadtest:6379"
             }
         ],
-        "name": "container_name",
-        "cpu": ${cpu},
+        "name": "load_test",
         "image": "${image}",
+        "cpu": ${cpu},
         "memory": ${memory},
         "logConfiguration": {
             "logDriver": "awslogs",

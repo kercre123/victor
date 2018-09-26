@@ -1,5 +1,8 @@
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
+
+  enable_dns_support = "true"
+  enable_dns_hostnames = "true"
 }
 
 // Public subnet hosts the NAT gateway
@@ -17,6 +20,15 @@ resource "aws_subnet" "private" {
 resource "aws_security_group" "ecs_tasks" {
   name        = "ecs-tasks"
   vpc_id      = "${aws_vpc.main.id}"
+
+  // Allow access to Redis
+  ingress {
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 
   egress {
     protocol    = "-1"
