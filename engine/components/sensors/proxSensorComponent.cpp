@@ -310,11 +310,16 @@ void ProxSensorComponent::UpdateNavMap()
     const Point2f obstacleP4 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1 + obstacleOffset3)).GetTranslation();
 
     // clear sensor beam
-    ConvexIntersection2f intersection;
-    intersection.AddSet( FastPolygon({sensorCorner1, sensorCorner2, robotPose.GetTranslation()}) );   // sensor beam
-    intersection.AddSet( FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) );         // clamp
+    // NOTE: making an intersection of a quad and a triangle here results in a 50%-100% speedup over using a
+    //       five sided polygon, so use that if we can't insert a triangle FP.
+    FastPolygon sensorCone({sensorCorner1, sensorCorner2, robotPose.GetTranslation()});
+    auto intersection = MakeIntersection2f( sensorCone, FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) );
 
+    if (sensorBeamHalfWidth_mm < ROBOT_BOUNDING_Y *.25) {
+      _robot->GetMapComponent().ClearRegion( sensorCone,  lastTimestamp);
+    } else {
     _robot->GetMapComponent().ClearRegion( intersection,  lastTimestamp);
+    }
 
     // Add proxObstacle if detected and close to robot, and lift is not interfering
     if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject && !IsLiftInFOV()) {
