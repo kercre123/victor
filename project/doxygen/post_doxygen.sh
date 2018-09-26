@@ -1,5 +1,29 @@
 #!/bin/bash
 
+DEPENDENCY_LIBS=(requests beautifulsoup4 lxml)
+
+check_and_install_lib()
+{
+  lib=$1
+  python_path=`which python3`
+  if [ -n $python_path ]; then
+  pips=`$python_path -m pip list`
+  if ! [[ $pips = *"$lib"* ]]; then
+    $python_path -m pip install $lib
+  fi
+else
+  echo "Please install python3"
+fi
+}
+
+install_dependency_libs()
+{
+  dependency_libs=${DEPENDENCY_LIBS[*]}
+  for lib in $dependency_libs
+  do
+    check_and_install_lib $lib
+  done
+}
 DOXYGEN=`which doxygen`
 if [ -z $DOXYGEN ];then
 
@@ -17,15 +41,8 @@ DOXYGEN=`which doxygen`
 
 fi
 
-PYTHON3_PATH=`which python3`
-if [ -n $PYTHON3_PATH ];then
-  pips=`$PYTHON3_PATH -m pip list`
-  if ! [[ $pips = *"requests"* ]]; then
-    $PYTHON3_PATH -m pip install requests
-  fi
-else
-  echo "Please install python3"
-fi
+echo "Check and install dependency libs for running DAS doxygen"
+install_dependency_libs
 
 $DOXYGEN Doxyfile
 
