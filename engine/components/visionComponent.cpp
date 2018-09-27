@@ -93,8 +93,6 @@ namespace Vector {
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
 
-  CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
-
   // Quality of images sent to game/viz
   // Set to -1 to display "locally" with img.Display()
   // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
@@ -117,9 +115,7 @@ namespace Vector {
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
   // and in mirror mode (at specified scale)
   CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,"Vision.General", 0.f, 0.f, 1.f);
-  CONSOLE_VAR(bool, kDisplayUndistortedImages,      "Vision.General", false);
 
-  CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", true); // objects, faces, markers
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
   CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
@@ -130,8 +126,8 @@ namespace Vector {
   CONSOLE_VAR(u32, kKeepDrawingSalientPointsFor_ms, "Vision.General", 0);
 
   // Prints warning if haven't captured valid frame in this amount of time.
-  // Frame rate is expected to be 8fps at minimum, so check 125ms plus some buffer.
-  CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 150);
+  // This is dependent on how fast we can process an image
+  CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 500);
   
   void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
   {
@@ -272,10 +268,6 @@ namespace Vector {
       }
     }
 
-    const f32 kCameraFrameRate_fps = 15.f;
-    _dropStats.SetChannelName("VisionComponent");
-    _dropStats.SetRecentWindowLength(kDropStatsWindowLength_sec * kCameraFrameRate_fps);
-
     _isInitialized = true;
   } //ReadVisionConfig()
 
@@ -369,8 +361,6 @@ namespace Vector {
     if(_processingThread.joinable()) {
       _processingThread.join();
     }
-
-    _currentImg.Clear();
   }
 
 
@@ -474,12 +464,16 @@ namespace Vector {
       return;
     }
 
+    // Check and update any results from VisionSystem
+    UpdateAllResults();
+    
     UpdateCaptureFormatChange();
 
-    if(_bufferedImg.IsEmpty())
+    // If we don't yet have an image to process, we need to capture one
+    if(!_visionSystemInput.locked)
     {
-      // We don't yet have a next image. Get one from camera.
-      const bool gotImage = CaptureImage(_bufferedImg);
+      Vision::ImageBuffer& buffer = _visionSystemInput.imageBuffer;
+      const bool gotImage = CaptureImage(buffer);
       _hasStartedCapturingImages = true;
 
       // Display a fault code in case we have not received an image from the camera for some amount of time
@@ -508,59 +502,47 @@ namespace Vector {
         sTimeSinceValidImg_ms = 0;
       }
 
-      if(gotImage)
-      {
-        DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");
-
-        UpdateCaptureFormatChange(_bufferedImg.GetNumRows());
-        if(CaptureFormatState::WaitingForFrame == _captureFormatState)
-        {
-          return;
-        }
-        
-        // Compress to jpeg and send to game and viz
-        // Do this before setting next image since it swaps the image and invalidates it
-        Result lastResult = CompressAndSendImage(_bufferedImg, kImageCompressQuality, "camera");
-        DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
-
-        // Track how fast we are receiving frames
-        if(_lastReceivedImageTimeStamp_ms > 0) {
-          // Time should not move backwards!
-          const bool timeWentBackwards = _bufferedImg.GetTimestamp() < _lastReceivedImageTimeStamp_ms;
-          if (timeWentBackwards)
-          {
-            PRINT_NAMED_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
-                                "Current:%u Last:%u",
-                                _bufferedImg.GetTimestamp(), (TimeStamp_t)_lastReceivedImageTimeStamp_ms);
-
-            // This should be recoverable (it could happen if we receive a bunch of garbage image data)
-            // so reset the lastReceived and lastProcessed timestamps so we can set them fresh next time
-            // we get an image
-            _lastReceivedImageTimeStamp_ms = 0;
-            _lastProcessedImageTimeStamp_ms = 0;
-            ReleaseImage(_bufferedImg);
-            return;
-          }
-          _framePeriod_ms = (TimeStamp_t)(_bufferedImg.GetTimestamp() - _lastReceivedImageTimeStamp_ms);
-        }
-        _lastReceivedImageTimeStamp_ms = _bufferedImg.GetTimestamp();
-      }
-    }
-
-    if(_bufferedImg.IsEmpty()) // Recheck, b/c we may have just captured one
-    {
-      // If we still don't have a buffered image, log a DEBUG message
-      if(!FACTORY_TEST)
+      if(!gotImage)
       {
         PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
                        BaseStationTimer::getInstance()->GetTickCount());
+        return;
       }
-    }
-    else // !_bufferedImg.IsEmpty()
-    {
-      // Have an image buffered, so now try to get the corresponding historical state
 
-      const bool imageOlderThanOldestState = (_bufferedImg.GetTimestamp() < _robot->GetStateHistory()->GetOldestTimeStamp());
+      // After this point we know we have captured an image
+
+      UpdateCaptureFormatChange(buffer.GetNumRows());
+
+      if(CaptureFormatState::WaitingForFrame == _captureFormatState)
+      {
+        return;
+      }
+        
+      // Track how fast we are receiving frames
+      if(_lastReceivedImageTimeStamp_ms > 0)
+      {
+        // Time should not move backwards!
+        const bool timeWentBackwards = buffer.GetTimestamp() < _lastReceivedImageTimeStamp_ms;
+        if (timeWentBackwards)
+        {
+          PRINT_NAMED_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
+                              "Current:%u Last:%u",
+                              buffer.GetTimestamp(), (TimeStamp_t)_lastReceivedImageTimeStamp_ms);
+
+          // This should be recoverable (it could happen if we receive a bunch of garbage image data)
+          // so reset the lastReceived and lastProcessed timestamps so we can set them fresh next time
+          // we get an image
+          _lastReceivedImageTimeStamp_ms = 0;
+          _lastProcessedImageTimeStamp_ms = 0;
+          ReleaseImage(buffer);
+          return;
+        }
+        _framePeriod_ms = (TimeStamp_t)(buffer.GetTimestamp() - _lastReceivedImageTimeStamp_ms);
+      }
+      _lastReceivedImageTimeStamp_ms = buffer.GetTimestamp();
+      
+      // Try to get the corresponding historical state
+      const bool imageOlderThanOldestState = (buffer.GetTimestamp() < _robot->GetStateHistory()->GetOldestTimeStamp());
       if(imageOlderThanOldestState)
       {
         // Special case: we're trying to process an image with a timestamp older than the oldest thing in
@@ -568,113 +550,66 @@ namespace Vector {
         // history. Just drop this image.
         PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.DroppingImageOlderThanStateHistory",
                        "ImageTime=%d OldestState=%d",
-                       _bufferedImg.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp());
+                       buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp());
 
-        ReleaseImage(_bufferedImg);
-
+        ReleaseImage(buffer);
         return;
       }
 
       // Do we have anything in state history at least as new as this image yet?
-      // If so, go ahead and use the buffered image to set the "next" image to be processed.
-      // If not, wait until next Update(), when we'll still have this _bufferedImg
-      //  and will recheck to see if we've got the correspondind robot state info in history yet.
-      const bool haveHistStateAtLeastAsNewAsImage = (_robot->GetStateHistory()->GetNewestTimeStamp() >= _bufferedImg.GetTimestamp());
+      const bool haveHistStateAtLeastAsNewAsImage = (_robot->GetStateHistory()->GetNewestTimeStamp() >= buffer.GetTimestamp());
       if(!haveHistStateAtLeastAsNewAsImage)
       {
-        // These messages are too spammy for factory test
-        if(!FACTORY_TEST)
-        {
-          PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-                         "CapturedImageTime:%u NewestStateInHistory:%u",
-                         _bufferedImg.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
-        }
+        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
+                       "CapturedImageTime:%u NewestStateInHistory:%u",
+                       buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
+        
+        ReleaseImage(buffer);
+        return;
       }
-      else
+      
+      const Result res = SetNextImage(buffer);
+      if(res != RESULT_OK)
       {
-        // At this point, we have an image + robot state, continue processing
-
-        // "Mirror mode": draw images we process to the robot's screen
-        if(_drawImagesToScreen || kEnableMirrorMode)
-        {
-          // TODO: Add this as a lambda you can register with VisionComponent for things you want to
-          //       do with image when captured?
-
-          // Send as face display animation
-          auto & animComponent = _robot->GetAnimationComponent();
-          if (animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
-          {
-            static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-            _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
-
-            // Flip image around the y axis (before we draw anything on it)
-            cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
-
-            for(auto & modFcn : _screenImageModFuncs)
-            {
-              modFcn(screenImg);
-            }
-            _screenImageModFuncs.clear();
-
-            static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-
-            // Use gamma to make it easier to see
-            static std::array<u8,256> gammaLUT{};
-            static f32 currentGamma = 0.f;
-            if(!Util::IsFltNear(currentGamma, kMirrorModeGamma)) {
-              currentGamma = kMirrorModeGamma;
-              const f32 invGamma = 1.f / currentGamma;
-              const f32 divisor = 1.f / 255.f;
-              for(s32 value=0; value<256; ++value)
-              {
-                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
-              }
-            }
-
-            img565.SetFromImageRGB(screenImg, gammaLUT);
-
-            animComponent.DisplayFaceImage(img565, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, false);
-          }
-        }
-
-        SetNextImage(_bufferedImg);
-        ReleaseImage(_bufferedImg);
-      } // if(!haveHistStateAtLeastAsNewAsImage)
-    } // if(_bufferedImg.IsEmpty())
-
-
-    UpdateAllResults();
-    return;
+        ReleaseImage(buffer);
+      }
+    }
   }
 
-  Result VisionComponent::SetNextImage(Vision::ImageRGB& image)
+  Result VisionComponent::SetNextImage(Vision::ImageBuffer& buffer)
   {
-
+    // Can't set a new image while we are still processing one
+    DEV_ASSERT(!_visionSystemInput.locked, "VisionComponent.SetNextImage.AlreadyProcessingImage");
+    
     // Fill in the pose data for the given image, by querying robot history
     HistRobotState imageHistState;
     RobotTimeStamp_t imageHistTimeStamp;
 
-    Result lastResult = GetImageHistState(*_robot, image.GetTimestamp(), imageHistState, imageHistTimeStamp);
+    Result lastResult = GetImageHistState(*_robot, buffer.GetTimestamp(), imageHistState, imageHistTimeStamp);
 
     if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
     {
       // Don't print a warning for this case: we expect not to get pose history
       // data successfully
       PRINT_CH_INFO("VisionComponent", "VisionComponent.SetNextImage.OriginMismatch",
-                    "Could not get pose data for t=%u due to origin mismatch. Returning OK", image.GetTimestamp());
+                    "Could not get pose data for t=%u due to origin mismatch. Returning OK",
+                    buffer.GetTimestamp());
+      ReleaseImage(buffer);
       return RESULT_OK;
     }
     else if(lastResult != RESULT_OK)
     {
       PRINT_NAMED_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
-                          "Unable to get computed pose at image timestamp of %u. (rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
-                          image.GetTimestamp(),
+                          "Unable to get computed pose at image timestamp of %u."
+                          "(rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
+                          buffer.GetTimestamp(),
                           _robot->GetStateHistory()->GetNumRawStates(),
                           (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
                           (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp(),
                           _robot->GetStateHistory()->GetNumVisionStates(),
                           (TimeStamp_t)_robot->GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
                           (TimeStamp_t)_robot->GetStateHistory()->GetNewestVisionOnlyTimeStamp());
+      ReleaseImage(buffer);
       return lastResult;
     }
 
@@ -682,112 +617,50 @@ namespace Vector {
     Anki::Vector::HistRobotState lastHistState;
     _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
 
-    {
-      const Pose3d& cameraPose = _robot->GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
-      Matrix_3x3f groundPlaneHomography;
-      const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
-                                                                  groundPlaneHomography);
-      Lock();
-      _nextPoseData.Set(imageHistTimeStamp,
-                        imageHistState,
-                        cameraPose,
-                        groundPlaneVisible,
-                        groundPlaneHomography,
-                        _robot->GetImuComponent().GetImuHistory());
-      Unlock();
-    }
+    const Pose3d& cameraPose = _robot->GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
+    Matrix_3x3f groundPlaneHomography;
+    const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
+                                                                groundPlaneHomography);
+
+    _visionSystemInput.poseData.Set(imageHistTimeStamp,
+                                    imageHistState,
+                                    cameraPose,
+                                    groundPlaneVisible,
+                                    groundPlaneHomography,
+                                    _robot->GetImuComponent().GetImuHistory());
+
 
     // Experimental:
-    //UpdateOverheadMap(image, _nextPoseData);
+    //UpdateOverheadMap(image, _visionSystemInput.poseData);
 
-    // Store image for calibration or factory test (*before* we swap image with _nextImg below!)
-    // NOTE: This means we do decoding on main thread, but this is just for the factory
-    //       test, so I'm not going to the trouble to store encoded images for calibration
-    if (_storeNextImageForCalibration || _doFactoryDotTest)
-    {
-      // If we were moving too fast at the timestamp the image was taken then don't use it for
-      // calibration or dot test purposes
-      if(!WasRotatingTooFast(image.GetTimestamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
-      {
-        Vision::Image imageGray = image.ToGray();
-
-        if(_storeNextImageForCalibration)
-        {
-          _storeNextImageForCalibration = false;
-          if (IsModeEnabled(VisionMode::ComputingCalibration)) {
-            PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
-          } else {
-            Lock();
-            Result result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
-            Unlock();
-
-            if(RESULT_OK != result) {
-              PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
-            }
-          }
-        } // if(_storeNextImageForCalibration)
-
-        if(_doFactoryDotTest)
-        {
-          _doFactoryDotTest = false;
-
-          ExternalInterface::RobotCompletedFactoryDotTest msg;
-          Result dotResult = FindFactoryTestDotCentroids(imageGray, msg);
-          if(RESULT_OK != dotResult) {
-            PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
-          }
-          _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-
-        } // if(_doFactoryDotTest)
-
-      }
-      else {
-        PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
-      }
-    } // if (_storeNextImageForCalibration || _doFactoryDotTest)
+    UpdateForCalibration();
 
     if(_paused)
     {
       _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                            "Vision: <PAUSED>");
+      // Won't be processing the image because we are paused
+      // so we need to release it
+      ReleaseImage(buffer);
+      return RESULT_OK;
     }
-    else
+
+    // We are all set to process this image so lock input
+    // so VisionSystem can use it
+    _visionSystemInput.locked = true;
+      
+    if(_isSynchronous)
     {
-      if(_isSynchronous)
-      {
-        UpdateVisionSystem(_nextPoseData, image);
-      }
-      else
-      {
-        ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
-        Lock();
-        
-        const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
-                                                             _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
-        if(isDroppingFrame)
-        {
-          PRINT_CH_DEBUG("VisionComponent",
-                         "VisionComponent.SetNextImage.DroppedFrame",
-                         "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
-                         image.GetTimestamp(),
-                         _nextImg.GetTimestamp(),
-                         _currentImg.GetTimestamp());
-        }
-        _dropStats.Update(isDroppingFrame);
-        
-        // Make given image the new "next" image, to be processed once the vision thread is done with "current"
-        std::swap(_nextImg, image);
-        
-        DEV_ASSERT(!_nextImg.IsEmpty(), "VisionComponent.SetNextImage.NextImageEmpty");
-        
-        Unlock();
-      }
+      // Process image now
+      UpdateVisionSystem(_visionSystemInput);
+      ReleaseImage(buffer);
     }
     
     return RESULT_OK;
 
   } // SetNextImage()
 
+  
   void VisionComponent::PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad)
   {
     const Pose3d& robotPose = _robot->GetPose();
@@ -876,27 +749,11 @@ namespace Vector {
 
   } // LookupGroundPlaneHomography()
 
-  bool VisionComponent::IsDisplayingProcessedImagesOnly() const
-  {
-    return kDisplayProcessedImagesOnly;
-  }
-
-  void VisionComponent::UpdateVisionSystem(const VisionPoseData&   poseData,
-                                           const Vision::ImageRGB& image)
+  void VisionComponent::UpdateVisionSystem(const VisionSystemInput& input)
   {
     ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
-    
-    DEV_ASSERT((ImageEncoding::RawRGB == _currentImageFormat) ||
-               (ImageEncoding::YUV420sp == _currentImageFormat) ||
-               (ImageEncoding::BAYER == _currentImageFormat),
-               "VisionComponent.UpdateVisionSystem.UnsupportedFormat");
-    
-    const f32 sensorToFullDownsampleFactor = (image.GetNumRows() == DEFAULT_CAMERA_RESOLUTION_HEIGHT ?
-                                              1.f : // Sensor and Full are the same
-                                              (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT / (f32)CAMERA_SENSOR_RESOLUTION_HEIGHT);
-    
-    const Vision::ResizeMethod resizeMethod = Vision::ResizeMethod::Linear;
-    Result result = _visionSystem->Update(poseData, image, sensorToFullDownsampleFactor, resizeMethod);
+        
+    Result result = _visionSystem->Update(input);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
@@ -904,7 +761,7 @@ namespace Vector {
     _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                          "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
   }
-
+  
 
   void VisionComponent::Processor()
   {
@@ -923,47 +780,36 @@ namespace Vector {
       return;
     }
 
-    while (_running) {
-
+    while (_running)
+    {
       ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuProfiler::CpuProfilerLoggingTime(kVisionComponent_Logging));
-      
-      if (!_currentImg.IsEmpty())
+
+      // If we have something to process
+      if(_visionSystemInput.locked)
       {
-        ANKI_CPU_PROFILE("ProcessImage");
-        // There is an image to be processed; do so now
-        UpdateVisionSystem(_currentPoseData, _currentImg);
+        // Sanity check that imageBuffer data is valid
+        if(_visionSystemInput.imageBuffer.HasValidData())
+        {
+          ANKI_CPU_PROFILE("ProcessImage");
 
-        Lock();
-        // Clear it when done.
-        ReleaseImage(_currentImg);
-        Unlock();
-      }
+          // There is an image to be processed; do so now
+          UpdateVisionSystem(_visionSystemInput);
 
-      // Checking this after !_currentImg.IsEmpty() to make sure we always process the
-      // current image after being paused so that it will eventually be empty
-      if(_paused) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
-        continue;
-      }
+          // Clear it when done.
+          ReleaseImage(_visionSystemInput.imageBuffer);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("VisionComponent.Processor.ImageReadyButDataInvalid","");
+        }
 
-      if(!_nextImg.IsEmpty())
-      {
-        ANKI_CPU_PROFILE("SwapInNewImage");
-        // We have an image waiting to be processed: swap it in (avoid copy)
-        Lock();
-        std::swap(_currentImg, _nextImg);
-        std::swap(_currentPoseData, _nextPoseData);
-        ReleaseImage(_nextImg);
-        // Need to unlock "_nextImg"
-        Unlock();
+        // Done processing, allow input to be modified by VisionComponent
+        _visionSystemInput.locked = false;
       }
-      else
-      {
-        ANKI_CPU_PROFILE("SleepForNextImage");
-        // Waiting on next image
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
-      }
-
+            
+      ANKI_CPU_PROFILE("SleepForNextImage");
+      // Waiting on next image
+      std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
     } // while(_running)
 
     ANKI_CPU_REMOVE_THIS_THREAD();
@@ -1033,13 +879,8 @@ namespace Vector {
 
       while(true == _visionSystem->CheckMailbox(result))
       {
-        if(IsDisplayingProcessedImagesOnly() && (kImageCompressQuality > 0))
-        {
-          // The assumption is that all the chunks of this encoded image have already been sent to
-          // the viz manager (e.g. forwarded by the robot message handler)
-          _vizManager->DisplayCameraImage(result.timestamp);
-        }
-
+        SendImages(result);
+        
 #       define ToVisionModeMask(__mode__) result.modesProcessed.GetBitMask(Util::EnumToUnderlying(VisionMode::__mode__))
         
         using LocalHandlerType = Result(VisionComponent::*)(const VisionProcessingResult&);
@@ -1095,66 +936,11 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdateVisualObstacles,      ToVisionModeMask(DetectingVisualObstacles));
         tryAndReport(&VisionComponent::UpdatePhotoManager,         ToVisionModeMask(SavingImages));
         tryAndReport(&VisionComponent::UpdateDetectedIllumination, ToVisionModeMask(DetectingIllumination));
+
+        tryAndReport(&VisionComponent::SendDebugMirrorImage,       ToVisionModeMask(ImageViz));
         
 #       undef ToVisionModeMask
-        
-        // Display any debug images left by the vision system
-        if(ANKI_DEV_CHEATS)
-        {
-          if(kImageCompressQuality > 0)
-          {
-            // Send any images in the debug image lists to Viz for display
-            // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
-            const bool kOnlyResizeIfSmaller = true;
-            const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
-            const s32  kDisplayNumCols = 640; //   "
-            for(auto & debugGray : result.debugImages) {
-              debugGray.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
-              debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
-                                                     Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
-              CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
-            }
-            for(auto & debugRGB : result.debugImageRGBs) {
-              debugRGB.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
-              debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
-                                                    Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
-              CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
-            }
-          }
-          else if(kImageCompressQuality == -1)
-          {
-            // Display debug images locally
-            for(auto & debugGray : result.debugImages) {
-              debugGray.second.Display(debugGray.first.c_str());
-            }
-            for(auto & debugRGB : result.debugImageRGBs) {
-              debugRGB.second.Display(debugRGB.first.c_str());
-            }
-          }
-        }
-        else if(!result.debugImages.empty() || !result.debugImageRGBs.empty())
-        {
-          // We do not expect to have debug images to draw without dev cheats enabled
-          std::string grayStr;
-          for(auto & debugGray : result.debugImages)
-          {
-            grayStr += debugGray.first;
-            grayStr += " ";
-          }
-
-          std::string rgbStr;
-          for(auto & debugRGB : result.debugImageRGBs)
-          {
-            rgbStr += debugRGB.first;
-            rgbStr += " ";
-          }
-
-          PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.DebugImagesPresent",
-                            "Gray:%s RGB:%s",
-                            grayStr.empty() ? "<none>" : grayStr.c_str(),
-                            rgbStr.empty() ? "<none>" : rgbStr.c_str());
-        }
-
+                
         // Store frame rate and last image processed time. Time should only move forward.
         // NOTE: Neural nets run asynchronously, so we ignore those results for this purpose.
         if(!result.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
@@ -1934,6 +1720,7 @@ namespace Vector {
       img.ConvertToShowableFormat(sMat);
     }
 
+    // TODO: VIC-7268 Move compression to VisionSystem and off main thread
     std::vector<u8> compressedBuffer;
     cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);
 
@@ -1971,9 +1758,9 @@ namespace Vector {
       m.frameTimeStamp = img.GetTimestamp();
       m.imageChunkCount = imageChunkCount;
       if(img.GetNumChannels() == 1) {
-        m.imageEncoding = ImageEncoding::JPEGGray;
+        m.imageEncoding = Vision::ImageEncoding::JPEGGray;
       } else {
-        m.imageEncoding = ImageEncoding::JPEGColor;
+        m.imageEncoding = Vision::ImageEncoding::JPEGColor;
       }
     }
     
@@ -2620,54 +2407,32 @@ namespace Vector {
     return _visionSystem->GetMaxCameraGain();
   }
 
-  bool VisionComponent::ReleaseImage(Vision::ImageRGB& image)
+  bool VisionComponent::ReleaseImage(Vision::ImageBuffer& buffer)
   {
     bool r = true;
-    if (!image.IsEmpty()) {
+    if (buffer.HasValidData()) {
       auto cameraService = CameraService::getInstance();
-      r = cameraService->CameraReleaseFrame(image.GetImageId());
+      r = cameraService->CameraReleaseFrame(buffer.GetImageId());
       if (r) {
-        image.Clear();
-        image.SetImageId(0);
+        buffer.Invalidate();
       }
     }
     return r;
+  
   }
 
-  bool VisionComponent::TryReleaseInternalImages()
+  bool VisionComponent::IsProcessingImages()
   {
-    if(_cvtFuture.valid())
-    {
-      return false;
-    }
-    
-    if( _lock.try_lock() ) {
-      ReleaseImage(_currentImg);
-      ReleaseImage(_nextImg);
-      ReleaseImage(_bufferedImg);
-      Unlock();
-      return true;
-    }
-    return false;
+    // We will be processing images as long as we are not paused
+    // or if we are paused then we are only processing images as long
+    // we have an image to process
+    return !_paused || _visionSystemInput.locked;
   }
 
-  bool VisionComponent::CaptureImage(Vision::ImageRGB& image_out)
+  bool VisionComponent::CaptureImage(Vision::ImageBuffer& buffer)
   {
     if(!_enableImageCapture)
     {
-      return false;
-    }
-    
-    // Wait until the current async conversion is finished before getting another
-    // frame
-    if(_cvtFuture.valid())
-    {
-      if(_cvtFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-      {
-        image_out = _cvtFuture.get();
-        return true;
-      }
-
       return false;
     }
 
@@ -2694,141 +2459,18 @@ namespace Vector {
     }
 
     // Get image buffer
-    u8* buffer = nullptr;
-    u32 imageId = 0;
-    TimeStamp_t imageCaptureSystemTimestamp_ms = 0;
-    ImageEncoding format;
-
     const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    const bool gotImage = cameraService->CameraGetFrame(buffer, imageId, imageCaptureSystemTimestamp_ms, format);
+    const bool gotImage = cameraService->CameraGetFrame(buffer);
     if(gotImage)
     {
-      if(_currentImageFormat == ImageEncoding::NoneImageEncoding)
-      {
-        PRINT_CH_INFO("VisionComponent",
-                      "VisionComponent.CaptureImage.InitialFormat",
-                      "%s",
-                      EnumToString(format));
-        _currentImageFormat = format;
-      }
+      buffer.SetDownsampleIfBayer(_shouldDownsampleBayer);
+      buffer.SetSensorResolution(cameraService->CameraGetSensorHeight(),
+                                 cameraService->CameraGetSensorWidth());
       
-      if(format == ImageEncoding::YUV420sp)
-      {
-        // Create async future to do the YUV to RGB conversion since it is slow
-        _cvtFuture = std::async(std::launch::async,
-          [image_out, buffer, imageCaptureSystemTimestamp_ms, imageId]() mutable -> Vision::ImageRGB
-          {
-            image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
-            Vision::ConvertYUV420spToRGB(buffer,
-                                         CAMERA_SENSOR_RESOLUTION_HEIGHT,
-                                         CAMERA_SENSOR_RESOLUTION_WIDTH,
-                                         image_out);
-            
-            // Create image with proper imageID and timestamp
-            image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
-            image_out.SetImageId(imageId);
-
-            return image_out;
-          });
-
-        return false;
-      }
-      else if(format == ImageEncoding::RawRGB)
-      {
-        // Create ImageRGB object from image buffer
-        image_out = Vision::ImageRGB(numRows, numCols, buffer);
-      }
-      else if(format == ImageEncoding::BAYER)
-      {
-        // Create async future to do the Bayer to RGB conversion since it is slow-ish
-        _cvtFuture = std::async(std::launch::async,
-          [image_out, buffer, imageCaptureSystemTimestamp_ms,
-           imageId, shouldDownsample = _shouldDownsampleBayer]() mutable -> Vision::ImageRGB
-          {
-            if(shouldDownsample)
-            {
-              image_out.Allocate(DEFAULT_CAMERA_RESOLUTION_HEIGHT, DEFAULT_CAMERA_RESOLUTION_WIDTH);
-
-              Vision::DownsampleBGGR10ToRGB(buffer,
-                                            CAMERA_SENSOR_RESOLUTION_WIDTH,
-                                            CAMERA_SENSOR_RESOLUTION_HEIGHT,
-                                            image_out);
-            }
-            else
-            {
-              image_out.Allocate(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
-#ifdef __ARM_NEON__
-              // Create a mat to hold the bayer image
-              cv::Mat bayer(CAMERA_SENSOR_RESOLUTION_HEIGHT,
-                            CAMERA_SENSOR_RESOLUTION_WIDTH,
-                            CV_8UC1);
-
-              // Raw Bayer format from camera is 4 10 bit pixels packed into 5 bytes
-              // The fifth byte is the 2 lsb from each of the 4 pixels
-              // This loop strips the fifth byte and does a saturating shift on
-              // the other 4 bytes as if the fifth byte was all 0
-              // Adopted from code in DownsampleBGGR10ToRGB
-              u8* bayerPtr = static_cast<u8*>(bayer.ptr());
-              for(int i = 0; i < (CAMERA_SENSOR_RESOLUTION_WIDTH*CAMERA_SENSOR_RESOLUTION_HEIGHT); i+=8)
-              {
-                uint8x8_t data = vld1_u8(buffer);
-                buffer += 5;
-                uint8x8_t data2 = vld1_u8(buffer);
-                buffer += 5;
-                data = vreinterpret_u8_u64(vshl_n_u64(vreinterpret_u64_u8(data), 32));
-                data = vext_u8(data, data2, 4);
-                data = vqshl_n_u8(data, 2);
-                vst1_u8(bayerPtr, data);
-                bayerPtr += 8;
-              }
-
-              // Use opencv to convert bayer BGGR to RGB
-              // The RG in BayerRG come from the second row, second and third columns
-              // of the bayer image
-              // B  G   B  G
-              // G [R] [G] R
-              // And as usual opencv has bugs in their image conversions which
-              // result in swapped R and B channels in the output image compared to
-              // what the conversion enum says
-              cv::cvtColor(bayer, image_out.get_CvMat_(), cv::COLOR_BayerRG2BGR);
-#else
-              PRINT_NAMED_ERROR("VisionComponent.DemosaicBayer2RGB.NotSupported",
-                                "Not supported on mac");
-#endif
-            }
-            
-            // Create image with proper imageID and timestamp
-            image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
-            image_out.SetImageId(imageId);
-
-            return image_out;
-          });
-
-        return false;
-
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("VisionComponent.CaptureImage.UnexpectedFormat",
-                          "Camera returned unexpected image format %s",
-                          EnumToString(format));
-        return false;
-      }
-
-      if(kDisplayUndistortedImages)
-      {
-        Vision::ImageRGB imgUndistorted(numRows,numCols);
-        DEV_ASSERT(_camera->IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
-        image_out.Undistort(*_camera->GetCalibration(), imgUndistorted);
-        imgUndistorted.Display("UndistortedImage");
-      }
-
-      // Create image with proper imageID and timestamp
-      image_out.SetTimestamp(imageCaptureSystemTimestamp_ms);
-      image_out.SetImageId(imageId);
-
       _lastImageCaptureTime_ms = currTime_ms;
-    } else {
+    }
+    else
+    {
       // No image captured, and we're not currently waiting for a format change, nor are we in power save mode
       auto const& powerStateMgr = _robot->GetComponent<PowerStateManager>();
       if (!IsWaitingForCaptureFormatChange() &&
@@ -2874,7 +2516,7 @@ namespace Vector {
     _liftCrossBarSource = std::move(liftCrossBar);
   }
 
-  bool VisionComponent::SetCameraCaptureFormat(ImageEncoding format)
+  bool VisionComponent::SetCameraCaptureFormat(Vision::ImageEncoding format)
   {
     // If the future is already valid then we are currently waiting for
     // a previous format change to take effect
@@ -2886,8 +2528,9 @@ namespace Vector {
       return false;
     }
 
+    Vision::ImageEncoding currentFormat = GetCurrentImageFormat();
     // Don't do anything if already in requested format
-    if(format == _currentImageFormat)
+    if(format == currentFormat)
     {
       return true;
     }
@@ -2896,18 +2539,13 @@ namespace Vector {
     // before changing formats since that will release all shared camera memory
     Pause(true);
  
-    // Clear the next image so that it doesn't get swapped in to current immediately
-    Lock();
-    ReleaseImage(_nextImg);
-    Unlock();
-
     _desiredImageFormat = format;
 
     _captureFormatState = CaptureFormatState::WaitingForProcessingToStop;
 
     PRINT_CH_INFO("VisionComponent", "VisionComponent.SetCameraCaptureFormat.RequestingSwitch",
                   "From %s to %s",
-                  ImageEncodingToString(_currentImageFormat), ImageEncodingToString(_desiredImageFormat));
+                  ImageEncodingToString(currentFormat), ImageEncodingToString(_desiredImageFormat));
     
     return true;
   }
@@ -2924,19 +2562,10 @@ namespace Vector {
       case CaptureFormatState::WaitingForProcessingToStop:
       {
         Lock();
-        const bool curImgEmpty = _currentImg.IsEmpty();
-        const bool cvtingImg = _cvtFuture.valid();
         
-        PRINT_CH_INFO("VisionComponent",
-                      "VisionComponent.UpdateCaptureFormatChange.WaitingForProcessingToStop",
-                      "ImgEmpty: %d CvtingYUV: %d",
-                      curImgEmpty,
-                      cvtingImg);
-        
-        // If the current image is empty so
-        // VisionSystem has finished processing it
-        // and we are not actively converting an image
-        if(curImgEmpty && !cvtingImg)
+        // If we don't have an image to process
+        // meaning the VisionSystem has finished processing
+        if(!_visionSystemInput.locked)
         {
           // Make sure to also clear image cache
           _visionSystem->ClearImageCache();
@@ -2947,7 +2576,7 @@ namespace Vector {
           cameraService->CameraSetCaptureFormat(_desiredImageFormat);
 
           PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.SwitchToWaitForFrame",
-                        "Now in %s", ImageEncodingToString(_currentImageFormat));
+                        "Now in %s", ImageEncodingToString(_desiredImageFormat));
           
           _captureFormatState = CaptureFormatState::WaitingForFrame;
         }
@@ -2964,15 +2593,15 @@ namespace Vector {
         s32 expectedNumRows = 0;
         switch(_desiredImageFormat)
         {
-          case ImageEncoding::RawRGB:
+          case Vision::ImageEncoding::RawRGB:
             expectedNumRows = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
             break;
             
-          case ImageEncoding::YUV420sp:
+          case Vision::ImageEncoding::YUV420sp:
             expectedNumRows = CAMERA_SENSOR_RESOLUTION_HEIGHT;
             break;
 
-          case ImageEncoding::BAYER:
+          case Vision::ImageEncoding::BAYER:
             expectedNumRows = (_shouldDownsampleBayer ? DEFAULT_CAMERA_RESOLUTION_HEIGHT : CAMERA_SENSOR_RESOLUTION_HEIGHT);
             break;
             
@@ -2985,13 +2614,14 @@ namespace Vector {
         if(gotNumRows == expectedNumRows)
         {
           DEV_ASSERT(_paused, "VisionComponent.UpdateCaptureFormatChange.ExpectingVisionComponentToBePaused");
+
+          PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
+                        "New format: %s, NumRows=%d", ImageEncodingToString(_desiredImageFormat), gotNumRows);
+          
           _captureFormatState = CaptureFormatState::None;
-          _currentImageFormat = _desiredImageFormat;
-          _desiredImageFormat = ImageEncoding::NoneImageEncoding;
+          _desiredImageFormat = Vision::ImageEncoding::NoneImageEncoding;
           Pause(false); // now that state/format are updated, un-pause the vision system
           
-          PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
-                        "New format: %s, NumRows=%d", ImageEncodingToString(_currentImageFormat), gotNumRows);
         }
 
         return;
@@ -3009,9 +2639,10 @@ namespace Vector {
     PRINT_CH_INFO("VisionComponent", "VisionComponent.EnableSensorRes", "%d", sensorRes);
     _shouldDownsampleBayer = !sensorRes;
 
-    if(_currentImageFormat != ImageEncoding::BAYER)
+    Vision::ImageEncoding currentFormat = GetCurrentImageFormat();
+    if(currentFormat != Vision::ImageEncoding::BAYER)
     {
-      SetCameraCaptureFormat(ImageEncoding::BAYER);
+      SetCameraCaptureFormat(Vision::ImageEncoding::BAYER);
     }
   }
   
@@ -3168,7 +2799,7 @@ namespace Vector {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraCaptureFormat& msg)
   {
-    if(msg.format == ImageEncoding::BAYER)
+    if(msg.format == Vision::ImageEncoding::BAYER)
     {
       EnableSensorRes(msg.enableSensorRes);
     }
@@ -3298,6 +2929,184 @@ namespace Vector {
   void VisionComponent::ClearAllowedTrackedFaces()
   {
     _visionSystem->ClearAllowedTrackedFaces();
+  }
+
+  void VisionComponent::SendImages(VisionProcessingResult& result)
+  {
+    if(ANKI_DEV_CHEATS)
+    {
+      // Display any debug images left by the vision system
+      if(kImageCompressQuality > 0)
+      {
+        // Send any images in the debug image lists to Viz for display
+        // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
+        const bool kOnlyResizeIfSmaller = true;
+        const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
+        const s32  kDisplayNumCols = 640; //   "
+
+        for(auto & debugGray : result.debugImages) {
+          debugGray.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
+          debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                 Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
+          CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
+        }
+            
+        for(auto & debugRGB : result.debugImageRGBs) {
+          debugRGB.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
+          debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
+          CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
+        }
+      }
+      else if(kImageCompressQuality == -1)
+      {
+        // Display debug images locally
+        for(auto & debugGray : result.debugImages) {
+          debugGray.second.Display(debugGray.first.c_str());
+        }
+        for(auto & debugRGB : result.debugImageRGBs) {
+          debugRGB.second.Display(debugRGB.first.c_str());
+        }
+      }
+    }
+    else if(!result.debugImages.empty() || !result.debugImageRGBs.empty())
+    {
+      // We do not expect to have debug images to draw without dev cheats enabled
+      std::string grayStr;
+      for(auto & debugGray : result.debugImages)
+      {
+        grayStr += debugGray.first;
+        grayStr += " ";
+      }
+
+      std::string rgbStr;
+      for(auto & debugRGB : result.debugImageRGBs)
+      {
+        rgbStr += debugRGB.first;
+        rgbStr += " ";
+      }
+
+      PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.DebugImagesPresent",
+                        "Gray:%s RGB:%s",
+                        grayStr.empty() ? "<none>" : grayStr.c_str(),
+                        rgbStr.empty() ? "<none>" : rgbStr.c_str());
+    }
+
+    if(kImageCompressQuality > 0 &&
+       result.modesProcessed.IsBitFlagSet(VisionMode::ImageViz))
+    {
+      CompressAndSendImage(result.displayImg, kImageCompressQuality, "camera");
+
+      // TODO: VIC-7244 Remove as no longer needed
+      // The assumption is that all the chunks of this encoded image have already been sent to
+      // the viz manager (e.g. forwarded by the robot message handler)
+      _vizManager->DisplayCameraImage(result.timestamp);
+    }
+
+  }
+
+  Result VisionComponent::SendDebugMirrorImage(const VisionProcessingResult& result)
+  {
+    // TODO: VIC-7380 Move mirror mode image creation to VisionSystem
+    // "Mirror mode": draw images we process to the robot's screen
+    if(_drawImagesToScreen)
+    {
+      // TODO: Add this as a lambda you can register with VisionComponent for things you want to
+      //       do with image when captured?
+
+      // Send as face display animation
+      auto & animComponent = _robot->GetAnimationComponent();
+      if(animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
+      {
+        static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+        result.displayImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
+
+        // Flip image around the y axis (before we draw anything on it)
+        cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
+
+        for(auto & modFcn : _screenImageModFuncs)
+        {
+          modFcn(screenImg);
+        }
+        _screenImageModFuncs.clear();
+
+        static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
+        // Use gamma to make it easier to see
+        static std::array<u8,256> gammaLUT{};
+        static f32 currentGamma = 0.f;
+        if(!Util::IsFltNear(currentGamma, kMirrorModeGamma)) {
+          currentGamma = kMirrorModeGamma;
+          const f32 invGamma = 1.f / currentGamma;
+          const f32 divisor = 1.f / 255.f;
+          for(s32 value=0; value<256; ++value)
+          {
+            gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
+          }
+        }
+
+        img565.SetFromImageRGB(screenImg, gammaLUT);
+
+        animComponent.DisplayFaceImage(img565, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, false);
+      }
+    }
+    
+    return RESULT_OK;
+  }
+  
+  void VisionComponent::UpdateForCalibration()
+  {
+    // VIC-7177 Fix storing images for camera calibration
+    // Store image for calibration or factory test (*before* we swap image with _nextImg below!)
+    // NOTE: This means we do decoding on main thread, but this is just for the factory
+    //       test, so I'm not going to the trouble to store encoded images for calibration
+    // if (_storeNextImageForCalibration || _doFactoryDotTest)
+    // {
+    //   // If we were moving too fast at the timestamp the image was taken then don't use it for
+    //   // calibration or dot test purposes
+    //   if(!WasRotatingTooFast(buffer.timestamp, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+    //   {
+    //     Vision::Image imageGray = image.ToGray();
+
+    //     if(_storeNextImageForCalibration)
+    //     {
+    //       _storeNextImageForCalibration = false;
+    //       if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+    //         PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+    //       } else {
+    //         Lock();
+    //         Result result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
+    //         Unlock();
+
+    //         if(RESULT_OK != result) {
+    //           PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+    //         }
+    //       }
+    //     } // if(_storeNextImageForCalibration)
+
+    //     if(_doFactoryDotTest)
+    //     {
+    //       _doFactoryDotTest = false;
+
+    //       ExternalInterface::RobotCompletedFactoryDotTest msg;
+    //       Result dotResult = FindFactoryTestDotCentroids(imageGray, msg);
+    //       if(RESULT_OK != dotResult) {
+    //         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
+    //       }
+    //       _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+
+    //     } // if(_doFactoryDotTest)
+
+    //   }
+    //   else {
+    //     PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+    //   }
+    // } // if (_storeNextImageForCalibration || _doFactoryDotTest)
+  }
+
+  Vision::ImageEncoding VisionComponent::GetCurrentImageFormat() const
+  {
+    return _visionSystemInput.imageBuffer.GetFormat();
   }
 } // namespace Vector
 } // namespace Anki

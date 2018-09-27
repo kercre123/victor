@@ -32,6 +32,7 @@ namespace Vector {
     DetectingIllumination,
     MeteringFromChargerOnly,     // For auto-exposure metering, only use charger marker, if detected
     MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
+    ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
     Count
   }
       

@@ -507,18 +507,7 @@ namespace Vision {
     roi.SetTimestamp(GetTimestamp());
     return roi;
   }
-
-  // Converts YUV420sp formatted data of an image of size rows x cols
-  // to RGB
-  // NEON optimized
-  void ConvertYUV420spToRGB(const u8* yuv, u32 rows, u32 cols,
-                            ImageRGB& rgb);
-
-  // Converts a Bayer BGGR 10bit image to RGB
-  // Downsamples so output is half the resolution of the bayer image
-  void DownsampleBGGR10ToRGB(const u8* bayer, u32 rows, u32 cols,
-                             ImageRGB& rgb);
-
+  
 } // namespace Vision
 } // namespace Anki
 

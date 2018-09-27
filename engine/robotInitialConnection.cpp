@@ -11,6 +11,7 @@
  **/
 
 #include "engine/cozmoContext.h"
+#include "engine/perfMetric.h"
 #include "engine/robotInitialConnection.h"
 #include "engine/robotManager.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -108,6 +109,13 @@ void RobotInitialConnection::HandleRobotAvailable(const AnkiEvent<RobotInterface
   }
 
   OnNotified(RobotConnectionResult::Success);
+
+  // In general, with PerfMetric's 'auto record', we are not interested in frames until we are fully running
+  const auto pm = _context->GetPerfMetric();
+  if (pm->GetAutoRecord())
+  {
+    pm->Start();
+  }
 }
 
 void RobotInitialConnection::OnNotified(RobotConnectionResult result)

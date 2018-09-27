@@ -115,7 +115,9 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     auto& visionComponent = dependentComps.GetComponent<VisionComponent>();
     Result res = RESULT_OK;
-    if( visionComponent.TryReleaseInternalImages() )
+    // It is only safe to delete the camera once we are done
+    // processing images
+    if( !visionComponent.IsProcessingImages() )
     {
       if(kPowerSave_CameraStopCameraStream)
       {

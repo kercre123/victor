@@ -41,13 +41,23 @@ message SetWhiteDetectThresholds
   uint_16 whiteThresholds[4]
 }
 
+enum uint_8 RangeStatus {
+  RANGE_VALID    = 0,  // Ranging measurement is valid
+  SIGMA_FAIL     = 1,  // Ambient light is adding too much noise to the ranging measurement
+  SIGNAL_FAIL    = 2,  // Return signal is too low to give enough confidence on the range measured
+  MIN_RANGE_FAIL = 3,  // Not enabled as default
+  PHASE_FAIL     = 4,  // Wraparound conditions detected, or noise on signal is too high
+  HARDWARE_FAIL  = 5,  // VCSEL failure, or VHV fail is detected
+  NO_UPDATE      = 255 // No update, this error should NOT trigger
+}
+
 structure ProxSensorDataRaw {
-  float_32 signalIntensity,  // the intensity of the light (expressed in millions of counts per second) return to the sensor
-  float_32 ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)
-  float_32 spadCount,        // effective number of SPADs (Single-photon Avalanche Diodes) used for the measurement
-  uint_16  distance_mm,      // reported distance in mm (includes corrective offset)
-  uint_8   rangeStatus,      // the ranging status reported by the device (see documentation for values)
-  uint_8   padding,
+  float_32    signalIntensity,  // the intensity of the light (expressed in millions of counts per second) return to the sensor
+  float_32    ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)
+  float_32    spadCount,        // effective number of SPADs (Single-photon Avalanche Diodes) used for the measurement
+  uint_16     distance_mm,      // reported distance in mm (includes corrective offset)
+  RangeStatus rangeStatus,      // the ranging status reported by the device (see documentation for values)
+  uint_8      padding,
 }
 
 } // namespace Vector

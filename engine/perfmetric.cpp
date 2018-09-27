@@ -20,10 +20,12 @@
 #include "engine/cozmoContext.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
+#include "osState/osState.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/stats/statsAccumulator.h"
@@ -45,10 +47,10 @@
   #endif
 #endif
 
+#define LOG_CHANNEL "PerfMetric"
+
 namespace Anki {
 namespace Vector {
-
-const char* PerfMetric::kLogChannelName = "PerfMetric";
 
 
 using namespace std::chrono;
@@ -62,8 +64,7 @@ const std::string PerfMetric::_logBaseFileName = "perfMetric_";
 static int PerfMetricWebServerImpl(WebService::WebService::Request* request)
 {
   auto* perfMetric = static_cast<PerfMetric*>(request->_cbdata);
-  PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.PerfMetricWebServerImpl",
-                "Query string: %s", request->_param1.c_str());
+  LOG_INFO("PerfMetric.PerfMetricWebServerImpl", "Query string: %s", request->_param1.c_str());
   
   int returnCode = perfMetric->ParseCommands(request->_param1);
   if (returnCode != 0)
@@ -114,19 +115,23 @@ PerfMetric::PerfMetric(const CozmoContext* context)
 #else
 , _autoRecord(false)
 #endif
-, _startNextFrame(false)
 , _context(context)
 , _baseLogDir()
 , _lineBuffer(nullptr)
-, _signalHandles()
 , _queuedCommands()
 {
 }
 
 PerfMetric::~PerfMetric()
 {
-  _signalHandles.clear();
+#if ANKI_PERF_METRIC_ENABLED
+  if (_isRecording)
+  {
+    Stop();
+  }
+
   delete _frameBuffer;
+#endif
 }
 
 
@@ -135,22 +140,12 @@ void PerfMetric::Init()
 #if ANKI_PERF_METRIC_ENABLED
   _frameBuffer = new FrameMetric[kNumFramesInBuffer];
   int sizeKb = (sizeof(FrameMetric) * kNumFramesInBuffer) / 1024;
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.Init",
-                "Frame buffer size is %u KB", sizeKb);
+  LOG_INFO("PerfMetric.Init", "Frame buffer size is %u KB", sizeKb);
 
   _lineBuffer = new char[kNumCharsInLineBuffer];
 
   _baseLogDir = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "");
 
-  if (_context->GetExternalInterface() != nullptr)
-  {
-    auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::PerfMetricCommand>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::PerfMetricGetStatus>();
-    // helper.SubscribeGameToEngine<MessageGameToEngineTag::ConnectToRobot>();
-  }
-  
   const auto& webService = _context->GetWebService();
   webService->RegisterRequestHandler("/perfmetric", PerfMetricWebServerHandler, this);
 #endif
@@ -177,21 +172,28 @@ void PerfMetric::Update(const float tickDuration_ms,
     frame._tickSleepIntended_ms = sleepDurationIntended_ms;
     frame._tickSleepActual_ms   = sleepDurationActual_ms;
 
-    const auto MsgHandler = _context->GetRobotManager()->GetMsgHandler();
-    frame._messageCountRtE = MsgHandler->GetMessageCountRtE();
-    frame._messageCountEtR = MsgHandler->GetMessageCountEtR();
+    const auto msgHandler = _context->GetRobotManager()->GetMsgHandler();
+    frame._messageCountRtE = msgHandler->GetMessageCountRtE();
+    frame._messageCountEtR = msgHandler->GetMessageCountEtR();
 
     const auto UIMsgHandler = _context->GetExternalInterface();
     frame._messageCountGtE = UIMsgHandler->GetMessageCountGtE();
     frame._messageCountEtG = UIMsgHandler->GetMessageCountEtG();
 
-    const auto VizManager = _context->GetVizManager();
-    frame._messageCountViz = VizManager->GetMessageCountViz();
+    const auto vizManager = _context->GetVizManager();
+    frame._messageCountViz = vizManager->GetMessageCountViz();
+
+    const auto gateway = _context->GetGatewayInterface();
+    frame._messageCountGatewayToE = gateway->GetMessageCountIncoming();
+    frame._messageCountEToGateway = gateway->GetMessageCountOutgoing();
 
     Robot* robot = _context->GetRobotManager()->GetRobot();
 
     frame._batteryVoltage = robot == nullptr ? 0.0f : robot->GetBatteryComponent().GetBatteryVolts();
-    
+
+    const auto& osState = OSState::getInstance();
+    frame._cpuFreq_kHz = osState->GetCPUFreq_kHz();
+
     if (robot != nullptr)
     {
       const auto& bc = robot->GetAIComponent().GetComponent<BehaviorComponent>();
@@ -222,7 +224,6 @@ void PerfMetric::Update(const float tickDuration_ms,
       {
         _waitMode = false;
         _waitTimeToExpire = 0.0f;
-        // todo call into 'execute queued commands' (but for now this is fine because we'll do that at top of this function)
       }
     }
     else
@@ -231,15 +232,8 @@ void PerfMetric::Update(const float tickDuration_ms,
       {
         _waitMode = false;
         _waitTicksRemaining = 0;
-        // todo call into 'execute queued commands' (but for now this is fine because we'll do that at top of this function)
       }
     }
-  }
-
-  if (_startNextFrame)
-  {
-    _startNextFrame = false;
-    Start();
   }
 #endif
 }
@@ -248,8 +242,7 @@ void PerfMetric::Start()
 {
   if (_isRecording)
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.Start",
-                  "Interrupting recording already in progress; re-starting");
+    LOG_INFO("PerfMetric.Start", "Interrupting recording already in progress; re-starting");
   }
   _isRecording = true;
 
@@ -257,24 +250,20 @@ void PerfMetric::Start()
   _nextFrameIndex = 0;
   _bufferFilled = false;
 
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.Start", "Recording started");
-
-  SendStatusToGame();
+  LOG_INFO("PerfMetric.Start", "Recording started");
 }
 
 void PerfMetric::Stop()
 {
   if (!_isRecording)
   {
-    PRINT_CH_INFO(kLogChannelName, "Perfmetric.Stop", "Recording was already stopped");
+    LOG_INFO("Perfmetric.Stop", "Recording was already stopped");
   }
   else
   {
     _isRecording = false;
-    PRINT_CH_INFO(kLogChannelName, "Perfmetric.Stop", "Recording stopped");
+    LOG_INFO("Perfmetric.Stop", "Recording stopped");
   }
-
-  SendStatusToGame();
 }
 
 void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
@@ -282,7 +271,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
 {
   if (FrameBufferEmpty())
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "Nothing to dump; buffer is empty");
+    LOG_INFO("PerfMetric.Dump", "Nothing to dump; buffer is empty");
     return;
   }
 
@@ -303,8 +292,11 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   Util::Stats::StatsAccumulator accMessageCountEtR;
   Util::Stats::StatsAccumulator accMessageCountGtE;
   Util::Stats::StatsAccumulator accMessageCountEtG;
+  Util::Stats::StatsAccumulator accMessageCountGatewayToE;
+  Util::Stats::StatsAccumulator accMessageCountEToGateway;
   Util::Stats::StatsAccumulator accMessageCountViz;
   Util::Stats::StatsAccumulator accBatteryVoltage;
+  Util::Stats::StatsAccumulator accCPUFreq;
 
   if (dumpAll)
   {
@@ -327,11 +319,14 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
     accMessageCountEtR += frame._messageCountEtR;
     accMessageCountGtE += frame._messageCountGtE;
     accMessageCountEtG += frame._messageCountEtG;
+    accMessageCountGatewayToE += frame._messageCountGatewayToE;
+    accMessageCountEToGateway += frame._messageCountEToGateway;
     accMessageCountViz += frame._messageCountViz;
     accBatteryVoltage  += frame._batteryVoltage;
+    accCPUFreq         += frame._cpuFreq_kHz;
 
-    static const std::string kFormatLineText = "%5i %8.3f %8.3f %8.3f %8.3f %8.3f    %5i %5i %5i %5i %5i %8.3f  %s  %s";
-    static const std::string kFormatLineCSVText = "%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5i,%5i,%5i,%5i,%5i,%8.3f,%s,%s";
+    static const std::string kFormatLineText = "%5i %8.3f %8.3f %8.3f %8.3f %8.3f    %5i %5i %5i %5i %5i %5i %5i %8.3f %6i  %s  %s";
+    static const std::string kFormatLineCSVText = "%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5i,%5i,%5i,%5i,%5i,%5i,%5i,%8.3f,%6i,%s,%s";
 
 #define LINE_DATA_VARS \
     frameIndex, frame._tickExecution_ms, frame._tickTotal_ms,\
@@ -339,8 +334,9 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
     tickSleepOver_ms,\
     frame._messageCountRtE, frame._messageCountEtR,\
     frame._messageCountGtE, frame._messageCountEtG,\
+    frame._messageCountGatewayToE, frame._messageCountEToGateway,\
     frame._messageCountViz,\
-    frame._batteryVoltage, EnumToString(frame._activeFeature),\
+    frame._batteryVoltage, frame._cpuFreq_kHz, EnumToString(frame._activeFeature),\
     frame._behavior
 
     if (dumpAll)
@@ -349,8 +345,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
       {
         case DT_LOG:
           {
-            PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump",
-                          kFormatLineText.c_str(), LINE_DATA_VARS);
+            LOG_INFO("PerfMetric.Dump", kFormatLineText.c_str(), LINE_DATA_VARS);
           }
           break;
         case DT_RESPONSE_STRING:  // Intentional fall-through
@@ -413,7 +408,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   switch (dumpType)
   {
     case DT_LOG:
-      PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "%s", _lineBuffer);
+      LOG_INFO("PerfMetric.Dump", "%s", _lineBuffer);
       break;
     case DT_RESPONSE_STRING:  // Intentional fall-through
     case DT_FILE_TEXT:  // Intentional fall-through
@@ -437,28 +432,26 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   static const bool kShowBehaviorHeading = false;
   DumpHeading(dumpType, kShowBehaviorHeading, fd, resultStr);
 
-  static const std::string kSummaryLineFormat = " %8.3f %8.3f %8.3f %8.3f %8.3f    %5.1f %5.1f %5.1f %5.1f %5.1f %8.3f\n";
-  static const std::string kSummaryLineCSVFormat = ",%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%8.3f\n";
+  static const std::string kSummaryLineFormat = " %8.3f %8.3f %8.3f %8.3f %8.3f    %5.1f %5.1f %5.1f %5.1f %5.1f %5.1f %5.1f %8.3f %6.0f\n";
+  static const std::string kSummaryLineCSVFormat = ",%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%8.3f,%6.0f\n";
 
 #define SUMMARY_LINE_VARS(StatCall)\
   accTickDuration.StatCall(), accTickTotal.StatCall(),\
   accSleepIntended.StatCall(), accSleepActual.StatCall(), accSleepOver.StatCall(),\
   accMessageCountRtE.StatCall(), accMessageCountEtR.StatCall(),\
-  accMessageCountGtE.StatCall(), accMessageCountEtG.StatCall(), accMessageCountViz.StatCall(),\
-  accBatteryVoltage.StatCall()
+  accMessageCountGtE.StatCall(), accMessageCountEtG.StatCall(),\
+  accMessageCountGatewayToE.StatCall(), accMessageCountEToGateway.StatCall(),\
+  accMessageCountViz.StatCall(),\
+  accBatteryVoltage.StatCall(), accCPUFreq.StatCall()
 
   switch (dumpType)
   {
     case DT_LOG:
       {
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetMin));
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetMax));
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetMean));
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetStd));
+        LOG_INFO("PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMin));
+        LOG_INFO("PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMax));
+        LOG_INFO("PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMean));
+        LOG_INFO("PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetStd));
       }
       break;
     case DT_RESPONSE_STRING:  // Intentional fall-through
@@ -549,20 +542,19 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
 void PerfMetric::DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
                              FILE* fd, std::string* resultStr) const
 {
-  static const char* kHeading1 = "        Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery";
-  static const char* kHeading2 = "      Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count  Voltage";
+  static const char* kHeading1 = "        Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG  GWtE  EtGW   Viz  Battery    CPU";
+  static const char* kHeading2 = "      Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count Count Count  Voltage   Freq";
   static const char* kHeading3 = "  Active Feature/Behavior";
-  static const char* kHeadingCSV1 = ",Engine,Engine,Sleep,Sleep,Over,RtE,EtR,GtE,EtG,Viz,Battery";
-  static const char* kHeadingCSV2 = ",Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Voltage";
+  static const char* kHeadingCSV1 = ",Engine,Engine,Sleep,Sleep,Over,RtE,EtR,GtE,EtG,GWtE,EtGW,Viz,Battery,CPU";
+  static const char* kHeadingCSV2 = ",Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Count,Count,Voltage,Freq";
   static const char* kHeadingCSV3 = ",Active Feature,Behavior";
 
   switch (dumpType)
   {
     case DT_LOG:
       {
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "%s", kHeading1);
-        PRINT_CH_INFO(kLogChannelName, "PerfMetric.Dump", "%s%s", kHeading2,
-                      showBehaviorHeading ? kHeading3 : "");
+        LOG_INFO("PerfMetric.Dump", "%s", kHeading1);
+        LOG_INFO("PerfMetric.Dump", "%s%s", kHeading2, showBehaviorHeading ? kHeading3 : "");
       }
       break;
     case DT_RESPONSE_STRING:  // Intentional fall-through
@@ -596,11 +588,11 @@ void PerfMetric::DumpFiles() const
 {
   if (FrameBufferEmpty())
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "Nothing to dump; buffer is empty");
+    LOG_INFO("PerfMetric.DumpFiles", "Nothing to dump; buffer is empty");
     return;
   }
 
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "Dumping to files");
+  LOG_INFO("PerfMetric.DumpFiles", "Dumping to files");
 
   const auto now = std::chrono::system_clock::now();
   const auto now_time = std::chrono::system_clock::to_time_t(now);
@@ -622,48 +614,36 @@ void PerfMetric::DumpFiles() const
 
   // Write to text file
   Dump(DT_FILE_TEXT, kDumpAll, &logFileNameText);
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "File written to %s",
+  LOG_INFO("PerfMetric.DumpFiles", "File written to %s",
                 logFileNameText.c_str());
 
   // Write to CSV file
   Dump(DT_FILE_CSV, kDumpAll, &logFileNameCSV);
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.DumpFiles", "File written to %s",
-                logFileNameCSV.c_str());
+  LOG_INFO("PerfMetric.DumpFiles", "File written to %s", logFileNameCSV.c_str());
 }
 
 void PerfMetric::WaitSeconds(const float seconds)
 {
   if (_waitMode)
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitSeconds", "Wait for seconds requested but already in wait mode");
+    LOG_INFO("PerfMetric.WaitSeconds", "Wait for seconds requested but already in wait mode");
   }
   _waitMode = true;
   _waitTicksRemaining = 0;
   _waitTimeToExpire = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + seconds;
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitSeconds", "Waiting for %f seconds", seconds);
+  LOG_INFO("PerfMetric.WaitSeconds", "Waiting for %f seconds", seconds);
 }
 
 void PerfMetric::WaitTicks(const int ticks)
 {
   if (_waitMode)
   {
-    PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitTicks", "Wait for ticks requested but already in wait mode");
+    LOG_INFO("PerfMetric.WaitTicks", "Wait for ticks requested but already in wait mode");
   }
   _waitMode = true;
   _waitTicksRemaining = ticks;
   _waitTimeToExpire = 0.0f;
-  PRINT_CH_INFO(kLogChannelName, "PerfMetric.WaitSeconds", "Wait for %i ticks", ticks);
-}
-
-
-void PerfMetric::OnRobotDisconnected()
-{
-  if (_autoRecord)
-  {
-    Stop();
-  }
-
-  DumpFiles();
+  LOG_INFO("PerfMetric.WaitSeconds", "Wait for %i ticks", ticks);
 }
 
 
@@ -740,7 +720,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
           cmd._waitSeconds = std::stof(argumentValue);
         } catch (std::exception)
         {
-          PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.ParseCommands", "Error parsing float argument in perfmetric command: %s", current.c_str());
+          LOG_INFO("PerfMetric.ParseCommands", "Error parsing float argument in perfmetric command: %s", current.c_str());
           return 0;
         }
         cmds.push_back(cmd);
@@ -754,14 +734,14 @@ int PerfMetric::ParseCommands(std::string& queryString)
           cmd._waitTicks = std::stoi(argumentValue);
         } catch (std::exception)
         {
-          PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.ParseCommands", "Error parsing int argument in perfmetric command: %s", current.c_str());
+          LOG_INFO("PerfMetric.ParseCommands", "Error parsing int argument in perfmetric command: %s", current.c_str());
           return 0;
         }
         cmds.push_back(cmd);
       }
       else
       {
-        PRINT_CH_INFO(PerfMetric::kLogChannelName, "PerfMetric.ParseCommands", "Error parsing perfmetric command: %s", current.c_str());
+        LOG_INFO("PerfMetric.ParseCommands", "Error parsing perfmetric command: %s", current.c_str());
         return 0;
       }
     }
@@ -808,50 +788,6 @@ void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
         break;
     }
   }
-}
-
-
-template<>
-void PerfMetric::HandleMessage(const ExternalInterface::PerfMetricCommand& msg)
-{
-  switch (msg.command)
-  {
-    case ExternalInterface::PerfMetricCommandType::Start:     Start();             break;
-    case ExternalInterface::PerfMetricCommandType::Stop:      Stop();              break;
-    case ExternalInterface::PerfMetricCommandType::Dump:      Dump(DT_LOG, false); break;
-    case ExternalInterface::PerfMetricCommandType::DumpAll:   Dump(DT_LOG, true);  break;
-    case ExternalInterface::PerfMetricCommandType::DumpFiles: DumpFiles();         break;
-  }
-}
-
-template<>
-void PerfMetric::HandleMessage(const ExternalInterface::PerfMetricGetStatus& msg)
-{
-  SendStatusToGame();
-}
-
-// template<>
-// void PerfMetric::HandleMessage(const ExternalInterface::ConnectToRobot& msg)
-// {
-//   if (_autoRecord)
-//   {
-//     // Since we've just connected, and that frame typically takes a long time,
-//     // let's not actually include it in this recording.  Instead, start the
-//     // recording on the next frame.
-//     _startNextFrame = true;
-//   }
-// }
-
-void PerfMetric::SendStatusToGame() const
-{
-  const int numTicksRecorded = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
-  const std::string statusStr = _isRecording ?
-                                "RECORDING" :
-                                "Number of ticks in buffer: " + std::to_string(numTicksRecorded);
-
-  ExternalInterface::PerfMetricStatus msg(_isRecording, statusStr.c_str());
-  const auto& extInt = _context->GetExternalInterface();
-  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
 

@@ -5,9 +5,5 @@
 # Perform any cleanup & init tasks not handled by the OS.
 #
 
-#
-# FACTORY_TEST
-#
-# VIC-1796: Removed obsolete checks for factory branch.
-# This script is left as a no-op in case it is needed for development.
-#
+# Don't let logd prune messages from these UIDs
+/usr/bin/logcat -P '0 2901 2902 2903 2904 2905'

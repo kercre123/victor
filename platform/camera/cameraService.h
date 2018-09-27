@@ -19,6 +19,7 @@
 #define __platform_camera_camera_service_h__
 
 #include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/imageBuffer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/imageTypes.h"
 
@@ -77,7 +78,7 @@ namespace Anki
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
       void CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain);
-      void CameraSetCaptureFormat(ImageEncoding format);
+      void CameraSetCaptureFormat(Vision::ImageEncoding format);
 
       void CameraSetCaptureSnapshot(bool start);
         
@@ -86,14 +87,17 @@ namespace Anki
       // If this method results in acquiring a frame, the frame is locked, ensuring
       // that the camera system will not update the buffer.
       // The caller is responsible for releasing the lock by calling CameraFrameRelease.
-      bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms,
-                          ImageEncoding& format);
+      bool CameraGetFrame(Vision::ImageBuffer& buffer);
 
       // Releases lock on buffer for specified frameID acquired by calling CameraGetFrame.
       bool CameraReleaseFrame(u32 imageID);
 
       u16 CameraGetHeight() const {return _imageCaptureHeight;}
       u16 CameraGetWidth()  const {return _imageCaptureWidth; }
+
+      // Width and height of camera sensor
+      u16 CameraGetSensorHeight() const {return _imageSensorCaptureHeight;}
+      u16 CameraGetSensorWidth()  const {return _imageSensorCaptureWidth; }
 
       bool HaveGottenFrame() const { return _imageFrameID > 1; }
 
@@ -113,6 +117,8 @@ namespace Anki
       // Camera
       u16             _imageCaptureHeight = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
       u16             _imageCaptureWidth  = DEFAULT_CAMERA_RESOLUTION_WIDTH;
+      u16             _imageSensorCaptureHeight = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      u16             _imageSensorCaptureWidth  = DEFAULT_CAMERA_RESOLUTION_WIDTH;
       u32             _imageFrameID = 0;
 
 

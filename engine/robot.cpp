@@ -102,6 +102,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
+#include "util/transport/reliableConnection.h"
+#include "util/messageProfiler/messageProfiler.h"
 
 #include "osState/osState.h"
 
@@ -2044,10 +2046,14 @@ Result Robot::SetPosePostRollOffCharger()
 
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
 {
+  static Util::MessageProfiler msgProfiler("Robot::SendMessage");
+  msgProfiler.Update((int)msg.GetTag(), msg.Size());
+
   Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(msg, reliable, hot);
   if (sendResult != RESULT_OK) {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
     Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
+    msgProfiler.ReportOnFailure();
   }
   return sendResult;
 }
@@ -2815,13 +2821,10 @@ Result Robot::UpdateCameraStartupChecks()
     if(!GetVisionComponent().HasStartedCapturingImages())
     {
       // Try to get a frame
-      u8* buf = nullptr;
-      u32 id = 0;
-      TimeStamp_t t = 0;
-      ImageEncoding format;
-      if(CameraService::getInstance()->CameraGetFrame(buf, id, t, format))
+      Vision::ImageBuffer buffer;
+      if(CameraService::getInstance()->CameraGetFrame(buffer))
       {
-        CameraService::getInstance()->CameraReleaseFrame(id);
+        CameraService::getInstance()->CameraReleaseFrame(buffer.GetImageId());
       }
     }
 
@@ -2930,6 +2933,13 @@ void Robot::Shutdown(ShutdownReason reason)
   }
   _toldToShutdown = true;
   _shutdownReason = reason;
+}
+
+void Robot::SetImageSendMode(ImageSendMode newMode)
+{
+  _imageSendMode = newMode;
+  // TODO: VIC-5159 fix this to work with SingleShot
+  GetVisionComponent().EnableMode(VisionMode::ImageViz, (newMode != ImageSendMode::Off));
 }
 
 

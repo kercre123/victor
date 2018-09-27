@@ -64,7 +64,6 @@ class IGatewayInterface;
 class CozmoContext;
 class UiMessageHandler;
 class ProtoMessageHandler;
-class GameMessagePort;
 class AnimationTransfer;
 
 template <typename Type>
@@ -78,7 +77,7 @@ class CozmoEngine
 {
 public:
 
-  CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* gameMessagePort);
+  CozmoEngine(Util::Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngine();
 
 
@@ -91,8 +90,6 @@ public:
 
   Robot* GetRobot();
 
-  //void ExecuteBackgroundTransfers();
-
   Util::AnkiLab::AssignmentStatus ActivateExperiment(const Util::AnkiLab::ActivateExperimentRequest& request,
                                                      std::string& outVariationKey);
 
@@ -104,7 +101,7 @@ public:
   UiMessageHandler* GetUiMsgHandler() const { return _uiMsgHandler.get(); }
   ProtoMessageHandler* GetProtoMsgHandler() const { return _protoMsgHandler.get(); }
 
-  EngineState GetEngineState() { return _engineState; }
+  EngineState GetEngineState() const { return _engineState; }
 
   // Designate calling thread as owner of engine updates
   void SetEngineThread();
@@ -124,7 +121,6 @@ protected:
   std::unique_ptr<CozmoContext>                             _context;
   Anki::Vector::DebugConsoleManager                          _debugConsoleManager;
   Anki::Vector::DasToSdkHandler                              _dasToSdkHandler;
-  bool                                                      _isGamePaused = false;
   bool                                                      _hasRunFirstUpdate = false;
   bool                                                      _uiWasConnected = false;
   bool                                                      _updateMoveComponent = false;

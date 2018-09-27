@@ -151,6 +151,7 @@ namespace {
   int _majorVersion = -1;
   int _minorVersion = -1;
   int _incrementalVersion = -1;
+  int _buildVersion = -1;
 
 } // namespace
 
@@ -197,17 +198,19 @@ OSState::OSState()
   if(Util::FileUtils::FileExists("/etc/os-version")) {
     std::string osv = Util::FileUtils::ReadFile("/etc/os-version");
     std::vector<std::string> tokens = Util::StringSplit(osv, '.');
-    if(tokens.size()==3) {
+    if(tokens.size()==4) {
       try {
         size_t remSz;
         _majorVersion = std::stoi(tokens[0]);
         _minorVersion = std::stoi(tokens[1]);
-        _incrementalVersion = std::stoi(tokens[2], &remSz);
+        _incrementalVersion = std::stoi(tokens[2]);
+        _buildVersion = std::stoi(tokens[3], &remSz);
       } catch(const std::invalid_argument& ia) {
         PRINT_NAMED_WARNING("OSState.GetOSBuildVersion.UnableToParseVersionString","%s",osv.c_str());
         _majorVersion = -1;
         _minorVersion = -1;
         _incrementalVersion = -1;
+        _buildVersion = -1;
       }
     }
 
@@ -217,8 +220,12 @@ OSState::OSState()
   }
   const bool versionsValid = _majorVersion >= 0 &&
                              _minorVersion >= 0 &&
-                             _incrementalVersion >= 0;
-  DEV_ASSERT_MSG(versionsValid, "OSState.MajorMinorIncVersionInvalid", "");
+                             _incrementalVersion >= 0 &&
+                             _buildVersion >= 0;
+  DEV_ASSERT_MSG(versionsValid,
+                 "OSState.MajorMinorIncVersionInvalid",
+                 "maj %d, min %d, inc %d, build %d",
+                 _majorVersion, _minorVersion, _incrementalVersion, _buildVersion);
 }
 
 OSState::~OSState()
@@ -492,11 +499,12 @@ const std::string& OSState::GetOSBuildVersion()
   return _osBuildVersion;
 }
 
-void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental) const
+void OSState::GetOSBuildVersion(int& major, int& minor, int& incremental, int& build) const
 {
   major = _majorVersion;
   minor = _minorVersion;
   incremental = _incrementalVersion;
+  build = _buildVersion;
 }
 
 const std::string& OSState::GetRobotVersion()

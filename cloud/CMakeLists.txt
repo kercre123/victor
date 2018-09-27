@@ -257,6 +257,9 @@ add_custom_command(
 )
 
 _build_cloud_executable(vic-gateway)
+_add_chipper_flags(vic-gateway)
+anki_go_add_c_library(vic-gateway robotLogUploader)
+_add_crash_reporter_flags(vic-gateway)
 
 # see also VIC-6541 Solve keeping list of approved open-source licenses up-to-date with the license checks
 
@@ -282,8 +285,6 @@ anki_build_target_license(vic-gateway
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/satori/go.uuid/LICENSE"
 )
 
-_add_chipper_flags(vic-gateway)
-_add_crash_reporter_flags(vic-gateway)
 
 # Install certs for mac build of vic-gateway
 if (MACOSX)

@@ -302,9 +302,9 @@ class World(util.Component):
             self.logger.warning('Tapped an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
     def _on_robot_observed_object(self, _, msg):
+        # is_active refers to whether an object has a battery, such as for a Light Cube.
         self.logger.debug('Got Robot Observed Object Message ( timestamp: {0}, object_family: {1}, object_type: {2}, object_id: {3}, img_rect: {4}, pose: {5}, top_face_orientation_rad: {6}, is_active: {7} )'.format(msg.timestamp, msg.object_family, msg.object_type, msg.object_id, msg.img_rect, msg.pose, msg.top_face_orientation_rad, msg.is_active))
 
-        # is_active refers to whether an object has a battery, which is a given for the cube
         if msg.object_id in self._objects:
             self._objects[msg.object_id].on_observed(msg)
         else:

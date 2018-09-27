@@ -71,7 +71,7 @@ namespace Vector {
     s32                    _imgHeight;
     u32                    _imgID;
     
-    ImageEncoding          _encoding;
+    Vision::ImageEncoding  _encoding;
     u8                     _expectedChunkId;
     bool                   _isImgValid;
     u8                     _numChunksReceived;

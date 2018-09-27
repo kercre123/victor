@@ -44,6 +44,11 @@ namespace Vision {
     {
       return "Gray";
     }
+
+    inline static const char * GetColorStr(const ImageBuffer&)
+    {
+      return "Buffer";
+    }
   }
 #endif
   
@@ -57,10 +62,20 @@ inline Image& ImageCache::ResizedEntry::Get<Image>(bool computeFromOpposite)
 {
   if(computeFromOpposite && !_hasValidGray)
   {
-    DEV_ASSERT(_hasValidRGB, "ImageCache.ResizedEntry.GetGray.NoColorAvailable");
+    // Have no valid RGB or Gray but we do have a valid buffer
+    // then convert buffer to rgb and then to gray
+    // TODO: VIC-7267 Could be smarter and convert to gray directly from buffer
+    if(_hasValidBuffer && !_hasValidRGB)
+    {
+      _buffer.GetRGB(_rgb);
+      _hasValidRGB = true;
+    }
+
+    DEV_ASSERT(_hasValidRGB, "ImageCache.ResizedEntry.GetGray.NoColorOrBufferAvailable");
+    
     // Using the green channel by default
     _rgb.FillGray(_gray, ImageRGB::RGBToGrayMethod::GreenChannel);
-    _hasValidGray = true;
+    _hasValidGray = true;    
   }
   
   DEV_ASSERT(_hasValidGray, "ImageCache.ResizedEntry.GetGray.InvalidEntry");
@@ -73,8 +88,21 @@ inline ImageRGB& ImageCache::ResizedEntry::Get<ImageRGB>(bool computeFromOpposit
 {
   if(computeFromOpposite && !_hasValidRGB)
   {
-    DEV_ASSERT(!_gray.IsEmpty(), "ImageCache.ResizedEntry.GetRGB.NoGrayAvailable");
-    _rgb.SetFromGray(_gray);
+    // Get from buffer if we have it
+    if(_hasValidBuffer)
+    {
+      _buffer.GetRGB(_rgb);
+    }
+    // Otherwise get from gray
+    else if(_hasValidGray)
+    {
+      _rgb.SetFromGray(_gray);
+    }
+    else
+    {
+      DEV_ASSERT(false, "ImageCache.ResizedEntry.GetRGB.NoGrayOrBufferAvailable");
+    }
+    
     _hasValidRGB = true;
   }
   
@@ -91,6 +119,11 @@ template<> inline bool ImageCache::ResizedEntry::IsValid<Image>() const
 template<> inline bool ImageCache::ResizedEntry::IsValid<ImageRGB>() const
 {
   return _hasValidRGB;
+}
+
+template<> inline bool ImageCache::ResizedEntry::IsValid<ImageBuffer>() const
+{
+  return _hasValidBuffer;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,7 +233,14 @@ void ImageCache::ResizedEntry::Update(const ImageRGB& origImg, f32 scaleFactor, 
   }
   _hasValidRGB  = true;
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImageCache::ResizedEntry::Update(const ImageBuffer& origImg, f32 scaleFactor, ResizeMethod method)
+{
+  _buffer = origImg;
+  _hasValidBuffer = true;
+}
+
 
 // =====================================================================================================================
 //                                  IMAGE CACHE
@@ -385,7 +425,7 @@ void ImageCache::ResetHelper(const ImageType& img, const f32 fullScaleFactor, co
   _fullScaleFactor = fullScaleFactor;
   _fullScaleMethod = fullScaleMethod;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImageCache::Reset(const Image& imgGray, const f32 fullScaleFactor, const ResizeMethod fullScaleMethod)
 {
@@ -396,6 +436,12 @@ void ImageCache::Reset(const Image& imgGray, const f32 fullScaleFactor, const Re
 void ImageCache::Reset(const ImageRGB& imgColor, const f32 fullScaleFactor, const ResizeMethod fullScaleMethod)
 {
   ResetHelper(imgColor, fullScaleFactor, fullScaleMethod);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImageCache::Reset(const ImageBuffer& buffer, const ResizeMethod fullScaleMethod)
+{
+  ResetHelper(buffer, buffer.GetScaleFactorFromSensorRes(), fullScaleMethod);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

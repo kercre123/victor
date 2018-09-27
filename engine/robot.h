@@ -559,7 +559,7 @@ public:
 
   RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   RobotEventHandler& GetRobotEventHandler();
-  void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
+  void SetImageSendMode(ImageSendMode newMode);
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   void SetSDKRequestingImage(bool requestingImage) { _sdkRequestingImage = requestingImage; }
   const bool GetSDKRequestingImage() const { return _sdkRequestingImage; }

@@ -13,22 +13,14 @@
 #include "util/logging/logging.h"
 #include "util/global/globalDefinitions.h"
 
-#include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/debug/devLoggingSystem.h"
-#include "engine/robot.h"
-#include "engine/cozmoAPI/comms/directGameComms.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
-#include "engine/messaging/advertisementService.h"
-
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -42,7 +34,6 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/enums/enumOperators.h"
-#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
@@ -88,7 +79,7 @@ namespace Anki {
     }
 
 
-    ISocketComms* CreateSocketComms(UiConnectionType type, GameMessagePort* gameMessagePort,
+    ISocketComms* CreateSocketComms(UiConnectionType type,
                                     ISocketComms::DeviceId hostDeviceId)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
@@ -132,7 +123,7 @@ namespace Anki {
     }
 
 
-    UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
+    UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
       : _sdkStatus()
       , _hostUiDeviceID(hostUiDeviceID)
       , _messageCountGtE(0)
@@ -148,17 +139,17 @@ namespace Anki {
                             "RobotID: %d - Only DEFAULT_ROBOT_ID may accept UI connections",
                             robotID);
 
-        for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i) {
+        for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i) {
           _socketComms[(uint32_t)i] = 0;
         }
         return;
       }
       #endif
 
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         auto& socket = _socketComms[(uint32_t)i];
-        socket = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID());
+        socket = CreateSocketComms(i, GetHostUiDeviceID());
 
         // If UI disconnects due to timeout, disconnect Viz too
         if ((i == UiConnectionType::UI) && (socket != nullptr)) {
@@ -173,7 +164,7 @@ namespace Anki {
 
     UiMessageHandler::~UiMessageHandler()
     {
-      for (uint32_t i=0; i < (uint32_t)UiConnectionType::Count; ++i)
+      for (uint32_t i = 0; i < (uint32_t)UiConnectionType::Count; ++i)
       {
         delete _socketComms[i];
         _socketComms[i] = nullptr;
@@ -183,7 +174,7 @@ namespace Anki {
 
     Result UiMessageHandler::Init(CozmoContext* context, const Json::Value& config)
     {
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms)
@@ -220,7 +211,7 @@ namespace Anki {
         case UiConnectionType::SdkOverUdp:  return false;
         case UiConnectionType::SdkOverTcp:  return false;
         case UiConnectionType::Switchboard: return true;
-        case UiConnectionType::Gateway: return true;
+        case UiConnectionType::Gateway:     return true;
         default:
         {
           assert(0);
@@ -229,25 +220,26 @@ namespace Anki {
       }
     }
 
-    uint32_t UiMessageHandler::GetNumConnectedDevicesOnAnySocket() const
+    bool UiMessageHandler::AreAnyConnectedDevicesOnAnySocket() const
     {
-      uint32_t numCommsConnected = 0;
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         const ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms)
         {
-          numCommsConnected += socketComms->GetNumConnectedDevices();
+          if (socketComms->GetNumConnectedDevices() > 0)
+            return true;
         }
       }
-      return numCommsConnected;
+      return false;
     }
 
 
     void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId destinationId)
     {
       // There is almost always a connected device, so better to just always pack the message even if it won't be sent
-      //if (GetNumConnectedDevicesOnAnySocket() > 0)
+      // pterry 09/26/2018: Verified this is still true; I think because we use messages as engine-to-engine
+      //if (AreAnyConnectedDevicesOnAnySocket())
       {
         ANKI_CPU_PROFILE("UiMH::DeliverToGame");
 
@@ -515,7 +507,7 @@ namespace Anki {
       {
         retVal = RESULT_OK;
 
-        for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+        for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
         {
           _connectionSource = i;
           ISocketComms* socketComms = GetSocketComms(i);
@@ -558,7 +550,7 @@ namespace Anki {
       const double currTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
       const bool sendPingThisTick = (kPingSendFreq_ms > 0.0) && (currTime_ms - _lastPingTime_ms > kPingSendFreq_ms);
 
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms)
@@ -589,7 +581,7 @@ namespace Anki {
 
       // Send to all of the comms
 
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms)
@@ -748,7 +740,7 @@ namespace Anki {
 
     bool UiMessageHandler::HasDesiredNumUiDevices() const
     {
-      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      for (UiConnectionType i = UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         // Ignore switchboard's numDesiredDevices
         if(i == UiConnectionType::Switchboard || i == UiConnectionType::Gateway)
@@ -764,11 +756,6 @@ namespace Anki {
       }
 
       return false;
-    }
-
-
-    void UiMessageHandler::OnRobotDisconnected(uint32_t robotID)
-    {
     }
 
 

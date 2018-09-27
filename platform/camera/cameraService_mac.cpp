@@ -110,6 +110,8 @@ namespace Anki {
     }
 
     CameraService::CameraService()
+    : _imageSensorCaptureHeight(DEFAULT_CAMERA_RESOLUTION_HEIGHT)
+    , _imageSensorCaptureWidth(DEFAULT_CAMERA_RESOLUTION_WIDTH)
     {
       if (nullptr != _engineSupervisor) {
 
@@ -236,7 +238,7 @@ namespace Anki {
       return;
     }
 
-    void CameraService::CameraSetCaptureFormat(ImageEncoding format)
+    void CameraService::CameraSetCaptureFormat(Vision::ImageEncoding format)
     {
       return;
     }
@@ -257,7 +259,7 @@ namespace Anki {
     }
 
     // Starts camera frame synchronization
-    bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
+    bool CameraService::CameraGetFrame(Vision::ImageBuffer& buffer)
     {
       if (nullptr == headCam_) {
         return false;
@@ -280,7 +282,6 @@ namespace Anki {
       }
 
       imageBuffer_.resize(headCamInfo_.nrows * headCamInfo_.ncols * 3);
-      frame = imageBuffer_.data();
 
       const u8* image = headCam_->getImage();
 
@@ -289,6 +290,7 @@ namespace Anki {
                      "cameraService_mac.CameraGetFrame.MismatchedImageWidths",
                      "HeadCamInfo:%d HeadCamWidth:%d", headCamInfo_.ncols, headCam_->getWidth());
 
+      u8* frame = imageBuffer_.data();
       u8* pixel = frame;
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
@@ -353,16 +355,18 @@ namespace Anki {
         cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
       }
 
-      imageCaptureSystemTimestamp_ms = currentImageTime_ms;
-
-      imageID = _imageFrameID;
-      _imageFrameID++;
-
       // Mark that we've already sent the image for the current time
       lastImageCapturedTime_ms_ = currentImageTime_ms;
 
-      format = ImageEncoding::RawRGB;
-      
+      buffer = Vision::ImageBuffer(frame,
+                                   headCamInfo_.nrows,
+                                   headCamInfo_.ncols,
+                                   Vision::ImageEncoding::RawRGB,
+                                   currentImageTime_ms,
+                                   _imageFrameID);
+
+      _imageFrameID++;
+            
       return true;
 
     } // CameraGetFrame()

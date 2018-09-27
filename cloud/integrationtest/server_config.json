@@ -1,0 +1,8 @@
+{
+	"jdocs": "jdocs-dev.api.anki.com:443",
+	"tms": "token-dev.api.anki.com:443",
+	"chipper": "chipper-dev.api.anki.com:443",
+	"ota": "ota-cdn.anki.com:443",
+	"logfiles": "s3://anki-device-logs-dev/victor",
+	"appkey": "xiepae8Ach2eequiphee4U"
+}

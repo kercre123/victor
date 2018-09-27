@@ -56,15 +56,13 @@ public:
   void DumpFiles() const;
   void WaitSeconds(const float seconds);
   void WaitTicks(const int ticks);
-  
-  void OnRobotDisconnected();
 
   const CozmoContext* GetContext() { return _context; }
-  
+
+  bool GetAutoRecord() const { return _autoRecord; }
+
   int  ParseCommands(std::string& queryString);
   void ExecuteQueuedCommands(std::string* resultStr = nullptr);
-
-  static const char* kLogChannelName;
 
   // Handle various message types
   template<typename T>
@@ -74,7 +72,6 @@ private:
 
   void DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
                    FILE* fd, std::string* resultStr) const;
-  void SendStatusToGame() const;
   bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
 
   struct FrameMetric
@@ -89,21 +86,24 @@ private:
     uint32_t _messageCountGtE;
     uint32_t _messageCountEtG;
     uint32_t _messageCountViz;
+    uint32_t _messageCountGatewayToE;
+    uint32_t _messageCountEToGateway;
 
     float _batteryVoltage;
-    
+    uint32_t _cpuFreq_kHz;
+
     ActiveFeature    _activeFeature;
     static const int kBehaviorStringMaxSize = 32;
     char _behavior[kBehaviorStringMaxSize]; // Some description of what Victor is doing
   };
 
-  static const int    kNumFramesInBuffer = 5000;
+  static const int kNumFramesInBuffer = 4000;
+
   FrameMetric*        _frameBuffer = nullptr;
   int                 _nextFrameIndex = 0;
   bool                _bufferFilled = false;
   bool                _isRecording = false;
-  bool                _autoRecord; // Auto-records while connected to robot; see constructor for init
-  bool                _startNextFrame = false;
+  bool                _autoRecord;
   bool                _waitMode = false;
   int                 _waitTicksRemaining = 0;
   float               _waitTimeToExpire = 0.0f;
@@ -114,8 +114,6 @@ private:
   static const int    kNumCharsInLineBuffer = 256;
   char*               _lineBuffer;
 
-  std::vector<Signal::SmartHandle> _signalHandles;
-  
   typedef enum
   {
     START,

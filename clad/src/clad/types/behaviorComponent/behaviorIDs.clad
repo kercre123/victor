@@ -341,6 +341,7 @@ enum uint_16 BehaviorID {
   ReactToGoodMorning,
   ReactToGreeting,
   ReactToHello,
+  ReactToMotorCalibration,
   ReactToNegative,
   ReactToObstacle,
   ReactToPlacedOnSlope,

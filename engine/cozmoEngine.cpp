@@ -47,6 +47,8 @@
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "platform/common/diagnosticDefines.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
@@ -73,14 +75,6 @@
 #include "engine/animations/animationTransfer.h"
 
 #define LOG_CHANNEL "CozmoEngine"
-
-#if ANKI_PROFILING_ENABLED
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
-#else
-  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
-#endif
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 #define NUM_OPENCV_THREADS 0
@@ -161,8 +155,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << std::fixed << std::setprecision(3) << proxDataRaw.ambientIntensity << '\n';
   ss << std::fixed << std::setprecision(3) << proxDataRaw.spadCount << '\n';
   ss << proxDataRaw.distance_mm << '\n';
-  // rangeStatus must be converted to string to avoid being interpreted as character (uint8_t)
-  ss << std::to_string(proxDataRaw.rangeStatus) << '\n';
+  ss << RangeStatusToString(proxDataRaw.rangeStatus) << '\n';
 
   ss << robotState.carryingObjectID << '\n';
   ss << robotState.carryingObjectOnTopID << '\n';
@@ -200,11 +193,11 @@ static int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbda
 }
 
 
-CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
-  : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
-  , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
+CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
+  : _uiMsgHandler(new UiMessageHandler(1))
+  , _protoMsgHandler(new ProtoMessageHandler)
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get(), _protoMsgHandler.get()))
-  ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
+  , _animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(), dataPlatform))
 {
 #if ANKI_CPU_PROFILER_ENABLED
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
@@ -409,10 +402,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
   DEV_ASSERT(_context->IsEngineThread(), "CozmoEngine.UpdateOnWrongThread" );
 
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_SLEEP_TIME_DIAGNOSTICS || ENABLE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 #endif
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+#if ENABLE_SLEEP_TIME_DIAGNOSTICS
   {
     static bool firstUpdate = true;
     static double lastUpdateTimeMs = 0.0;
@@ -429,7 +422,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     lastUpdateTimeMs = startUpdateTimeMs;
     firstUpdate = false;
   }
-#endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+#endif // ENABLE_SLEEP_TIME_DIAGNOSTICS
 
   _uiMsgHandler->ResetMessageCounts();
   _protoMsgHandler->ResetMessageCounts();
@@ -549,7 +542,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
   }
 
-#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
@@ -562,7 +555,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
                          "%.2f", updateLengthMs);
     }
   }
-#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }
@@ -583,14 +576,9 @@ CONSOLE_VAR(bool, kLogMessageLatencyOnce, "Network.Stats", false);
 
 void CozmoEngine::UpdateLatencyInfo()
 {
+#if REMOTE_CONSOLE_ENABLED
   if (Util::kNetConnStatsUpdate)
   {
-    // If the game is paused, don't bother sending latency info
-    if (_isGamePaused)
-    {
-      return;
-    }
-
     // We only want to send latency info every N ticks
     constexpr int kTickSendFrequency = 10;
     static int currentTickCount = kTickSendFrequency;
@@ -600,27 +588,26 @@ void CozmoEngine::UpdateLatencyInfo()
       return;
     }
     currentTickCount = kTickSendFrequency;
-
-    ExternalInterface::TimingInfo wifiLatency(Util::gNetStat2LatencyAvg, Util::gNetStat4LatencyMin, Util::gNetStat5LatencyMax);
-    ExternalInterface::TimingInfo extSendQueueTime(Util::gNetStat7ExtQueuedAvg_ms, Util::gNetStat8ExtQueuedMin_ms, Util::gNetStat9ExtQueuedMax_ms);
-    ExternalInterface::TimingInfo sendQueueTime(Util::gNetStatAQueuedAvg_ms, Util::gNetStatBQueuedMin_ms, Util::gNetStatCQueuedMax_ms);
-    const Util::Stats::StatsAccumulator& queuedTimes_ms = _context->GetRobotManager()->GetMsgHandler()->GetQueuedTimes_ms();
-    ExternalInterface::TimingInfo recvQueueTime(queuedTimes_ms.GetMean(), queuedTimes_ms.GetMin(), queuedTimes_ms.GetMax());
-
-    // pull image stats from robot if available
-    static const Util::Stats::StatsAccumulator nullStats;
-    const Robot* robot = GetRobot();
-    const bool useRobotStats = robot != nullptr;
-    const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? robot->GetImageStats() : nullStats;
-    double currentImageDelay = useRobotStats ? robot->GetCurrentImageDelay() : 0.0;
-
-    const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
-    ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
-    ExternalInterface::CurrentTimingInfo imageLatency(imageStats.GetMean(), imageStats.GetMin(), imageStats.GetMax(), currentImageDelay * 1000.0);
-
-    #if REMOTE_CONSOLE_ENABLED
+    
     if (kLogMessageLatencyOnce)
     {
+      ExternalInterface::TimingInfo wifiLatency(Util::gNetStat2LatencyAvg, Util::gNetStat4LatencyMin, Util::gNetStat5LatencyMax);
+      ExternalInterface::TimingInfo extSendQueueTime(Util::gNetStat7ExtQueuedAvg_ms, Util::gNetStat8ExtQueuedMin_ms, Util::gNetStat9ExtQueuedMax_ms);
+      ExternalInterface::TimingInfo sendQueueTime(Util::gNetStatAQueuedAvg_ms, Util::gNetStatBQueuedMin_ms, Util::gNetStatCQueuedMax_ms);
+      const Util::Stats::StatsAccumulator& queuedTimes_ms = _context->GetRobotManager()->GetMsgHandler()->GetQueuedTimes_ms();
+      ExternalInterface::TimingInfo recvQueueTime(queuedTimes_ms.GetMean(), queuedTimes_ms.GetMin(), queuedTimes_ms.GetMax());
+
+      // pull image stats from robot if available
+      static const Util::Stats::StatsAccumulator nullStats;
+      const Robot* robot = GetRobot();
+      const bool useRobotStats = robot != nullptr;
+      const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? robot->GetImageStats() : nullStats;
+      double currentImageDelay = useRobotStats ? robot->GetCurrentImageDelay() : 0.0;
+
+      const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
+      ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
+      ExternalInterface::CurrentTimingInfo imageLatency(imageStats.GetMean(), imageStats.GetMin(), imageStats.GetMax(), currentImageDelay * 1000.0);
+
       PrintTimingInfoStats(wifiLatency,      "wifi");
       PrintTimingInfoStats(extSendQueueTime, "extSendQueue");
       PrintTimingInfoStats(sendQueueTime,    "sendQueue");
@@ -634,8 +621,8 @@ void CozmoEngine::UpdateLatencyInfo()
 
       kLogMessageLatencyOnce = false;
     }
-    #endif // REMOTE_CONSOLE_ENABLED
   }
+#endif // REMOTE_CONSOLE_ENABLED
 }
 
 void CozmoEngine::SetEngineState(EngineState newState)
@@ -758,10 +745,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
     PRINT_NAMED_INFO("CozmoEngine.RedirectViz.ipAddr", "%s", ipAddr.c_str());
 
     _context->GetVizManager()->Disconnect();
-    _context->GetVizManager()->Connect(ipAddr.c_str(),
-                                      (uint16_t)VizConstants::VIZ_SERVER_PORT,
-                                      ipAddr.c_str(),
-                                      (uint16_t)VizConstants::UNITY_VIZ_SERVER_PORT);
+    _context->GetVizManager()->Connect(ipAddr.c_str(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
     _context->GetVizManager()->EnableImageSend(true);
 
     // Erase anything that's still being visualized in case there were leftovers from
@@ -772,11 +756,6 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
   }
 }
 
-
-//void CozmoEngine::ExecuteBackgroundTransfers()
-//{
-//  _context->GetTransferQueue()->ExecuteTransfers();
-//}
 
 Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
   const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)
@@ -789,15 +768,6 @@ void CozmoEngine::RegisterEngineTickPerformance(const float tickDuration_ms,
                                                 const float sleepDurationIntended_ms,
                                                 const float sleepDurationActual_ms) const
 {
-  // Send two of these stats to the game for on-screen display
-  ExternalInterface::MessageEngineToGame perfEngMsg(ExternalInterface::DebugPerformanceTick(
-                                                    "Engine", tickDuration_ms));
-  _context->GetExternalInterface()->Broadcast(std::move(perfEngMsg));
-
-  ExternalInterface::MessageEngineToGame perfEngFreqMsg(ExternalInterface::DebugPerformanceTick(
-                                                    "EngineFreq", tickFrequency_ms));
-   _context->GetExternalInterface()->Broadcast(std::move(perfEngFreqMsg));
-
   // Update the PerfMetric system for end of tick
   _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
                                     sleepDurationIntended_ms, sleepDurationActual_ms);

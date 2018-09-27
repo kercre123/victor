@@ -22,9 +22,9 @@ type DeviceCertRecord struct {
 }
 
 // Filenames and default directory for certificate/keys data
-const (
-	DefaultCloudDir = "/factory/cloud"
+var DefaultCloudDir = "/factory/cloud"
 
+const (
 	CertFilename = "AnkiRobotDeviceCert.pem"
 	KeysFilename = "AnkiRobotDeviceKeys.pem"
 )

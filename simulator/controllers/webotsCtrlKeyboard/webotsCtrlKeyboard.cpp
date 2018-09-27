@@ -2495,7 +2495,7 @@ namespace Vector {
     LOG_INFO("ToggleCameraCaptureFormat",
              "Switching to %s",
              yuv ? "YUV" : "RGB");
-    msg.format = (yuv ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
+    msg.format = (yuv ? Vision::ImageEncoding::YUV420sp : Vision::ImageEncoding::RawRGB);
     yuv = !yuv;
     
     ExternalInterface::MessageGameToEngine msgWrapper;
@@ -2506,7 +2506,7 @@ namespace Vector {
   void WebotsKeyboardController::ToggleBayerImageResFormat()
   {
     ExternalInterface::SetCameraCaptureFormat msg;
-    msg.format = ImageEncoding::BAYER;
+    msg.format = Vision::ImageEncoding::BAYER;
 
     static bool enableSensorRes = true;
     msg.enableSensorRes = enableSensorRes;

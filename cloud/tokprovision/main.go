@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +12,11 @@ import (
 )
 
 func main() {
-	token, err := getToken()
+	var envName string
+	flag.StringVar(&envName, "env", "dev", "Target account environment")
+	flag.Parse()
+
+	token, err := getToken(envName)
 	if err != nil {
 		log.Fatalln("Error getting token:", err)
 	}

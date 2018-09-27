@@ -54,6 +54,7 @@
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/messageProfiler/messageProfiler.h"
 
 #include <unistd.h>
 
@@ -874,16 +875,32 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   return RESULT_OK;
 }
 
+
+
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
 {
+  static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");
+  msgProfiler.Update(msg.tag, msg.Size());
+
   LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
-  return AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
+  bool result = AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
+  if (!result) {
+    msgProfiler.ReportOnFailure();
+  }
+  return result;
 }
 
 bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
 {
+  static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");
+  msgProfiler.Update(msg.tag, msg.Size());
+
   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
-  return AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
+  bool result = AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
+  if (!result) {
+    msgProfiler.ReportOnFailure();
+  }
+  return result;
 }
 
 } // namespace Vector

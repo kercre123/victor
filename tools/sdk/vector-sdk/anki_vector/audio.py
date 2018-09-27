@@ -15,7 +15,7 @@
 """Support for Vector's audio.
 
 Vector has multiple built-in microphones which can detect sound and the direction
-it originated from.  The robot then processing this data into a single-channel
+it originated from. The robot then processing this data into a single-channel
 audio feed available to the SDK.
 
 The :class:`AudioComponent` class defined in this module is made available as
@@ -75,7 +75,7 @@ class AudioComponent(util.Component):
 
         Audio history as signed-16-bit-int waveform data
 
-        The sample rate from the microphones is 15625, which the robot processes at 16khz.  As a result the pitch is
+        The sample rate from the microphones is 15625, which the robot processes at 16khz. As a result the pitch is
         altered by 2.4%.  The last 16000 values of the array represent the last second of audio amplitude.
 
         .. code-block:: python

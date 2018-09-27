@@ -6,8 +6,8 @@ import (
 	"github.com/anki/sai-go-cli/config"
 )
 
-func newClient() (*accounts.AccountsClient, *config.Config, error) {
-	cfg, err := config.Load("", false, "dev", "default")
+func newClient(envName string) (*accounts.AccountsClient, *config.Config, error) {
+	cfg, err := config.Load("", false, envName, "default")
 	if err != nil {
 		return nil, nil, err
 	}

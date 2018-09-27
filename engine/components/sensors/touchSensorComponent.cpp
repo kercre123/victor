@@ -331,10 +331,10 @@ TouchSensorComponent::TouchSensorComponent()
   _enabled = isValidESN || isExceptionESN;
   
   // send up the OS version (useful to determine if corresponding required syscon changes are present)
-  int major, minor, incremental;
-  osstate->GetOSBuildVersion(major, minor, incremental);
+  int major, minor, incremental, build;
+  osstate->GetOSBuildVersion(major, minor, incremental, build);
   std::stringstream osv;
-  osv << major << "." << minor << "." << incremental;
+  osv << major << "." << minor << "." << incremental << "." << build;
   
   // set once
   _toSendJson["esn"]        = osstate->GetSerialNumberAsString();

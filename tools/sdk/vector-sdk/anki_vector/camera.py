@@ -19,6 +19,8 @@ Vector has a built-in camera which he uses to observe the world around him.
 The :class:`CameraComponent` class defined in this module is made available as
 :attr:`anki_vector.robot.Robot.camera` and can be used to enable/disable image
 sending and observe images being sent by the robot.
+
+The camera resolution is 1280 x 720 with a field of view of 90 deg (H) x 50 deg (V).
 """
 
 # __all__ should order by constants, event classes, other classes, functions.

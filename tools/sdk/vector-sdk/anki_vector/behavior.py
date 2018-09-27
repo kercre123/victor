@@ -19,6 +19,13 @@ may include combinations of animation, path planning or
 other functionality. Examples include drive_on_charger,
 set_lift_height, etc.
 
+For commands such as go_to_pose, drive_on_charger and dock_with_cube,
+Vector uses path planning, which refers to the problem of
+navigating the robot from point A to B without collisions. Vector
+loads known obstacles from his map, creates a path to navigate
+around those objects, then starts following the path. If a new obstacle
+is found while following the path, a new plan may be created.
+
 The :class:`BehaviorComponent` class in this module contains
 functions for all the behaviors.
 """
@@ -137,6 +144,9 @@ class BehaviorComponent(util.Component):
         Vector will attempt to find the charger and, if successful, he will
         back onto it and start charging.
 
+        Vector's charger has a visual marker so that the robot can locate it
+        for self-docking.
+
         .. code-block:: python
 
             robot.behavior.drive_on_charger()
@@ -150,6 +160,8 @@ class BehaviorComponent(util.Component):
                          relative_to_robot: bool = False,
                          num_retries: int = 0) -> protocol.GoToPoseResponse:
         """Tells Vector to drive to the specified pose and orientation.
+
+        In navigating to the requested pose, Vector will use path planning.
 
         If relative_to_robot is set to True, the given pose will assume the
         robot's pose as its origin.
@@ -196,7 +208,9 @@ class BehaviorComponent(util.Component):
                              alignment_type: protocol.AlignmentType = protocol.ALIGNMENT_TYPE_LIFT_PLATE,
                              distance_from_marker: util.Distance = None,
                              num_retries: int = 0) -> protocol.DockWithCubeResponse:
-        """Tells Vector to dock with a light cube with a given approach angle and distance.
+        """Tells Vector to dock with a light cube, optionally using a given approach angle and distance.
+
+        While docking with the cube, Vector will use path planning.
 
         :param target_object: The LightCube object to dock with.
         :param approach_angle: Angle to approach the dock with.

@@ -53,7 +53,7 @@ namespace {
 
   // for checking if the state has changed since the last measurement
   const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};
-  const float   kMeasurementTolerance_mm = 2.f;
+  const float   kMeasurementTolerance = .05f;  // percentage based tolerance
   const Radians kRobotRotationTolerance_rad = 0.01f;
   const u8      kNumMeasurementsAtPose = 32;
 } // end anonymous namespace
@@ -118,7 +118,7 @@ std::string ProxSensorComponent::GetLogRow()
   ss << d.signalIntensity  << ", ";
   ss << d.ambientIntensity << ", ";
   ss << d.spadCount        << ", ";
-  ss << (uint16_t) d.rangeStatus;
+  ss << RangeStatusToString(d.rangeStatus);
 
   return ss.str();
 }
@@ -214,6 +214,9 @@ void ProxSensorComponent::UpdateReadingValidity()
   // Check that the signal strength is high enough
   _latestData.signalQuality = GetSignalQuality(_latestDataRaw);
   _latestData.isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
+  
+  // Check that the RangeStatus is valid
+  _latestData.hasValidRangeStatus = _latestDataRaw.rangeStatus == RangeStatus::RANGE_VALID;
 }
 
 
@@ -249,8 +252,9 @@ void ProxSensorComponent::UpdateNavMap()
   {  
     // check if the robot has moved or the sensor reading has changed significantly
     const Pose3d  robotPose = _robot->GetPose(); 
-    if (!robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
-        !NEAR(_latestData.distance_mm, _previousMeasurement, kMeasurementTolerance_mm)) { 
+    const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
+    if ( !robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
+        (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 
       _measurementsAtPose = 0; 
       _previousRobotPose = robotPose; 
       _previousMeasurement = _latestData.distance_mm;

@@ -35,7 +35,7 @@ namespace Anki {
 namespace Vector {
 
 
-ProtoMessageHandler::ProtoMessageHandler(GameMessagePort* gameMessagePort)
+ProtoMessageHandler::ProtoMessageHandler()
   : _socketComms(new LocalUdpSocketComms(true, Anki::Victor::ENGINE_GATEWAY_PROTO_SERVER_PATH))
   , _messageCountOutgoing(0)
   , _messageCountIncoming(0)

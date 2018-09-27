@@ -14,9 +14,9 @@
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/cozmoEngine.h"
 #include "engine/viz/vizManager.h"
-#include "engine/cozmoAPI/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageShared.h"
+#include "platform/common/diagnosticDefines.h"
 #include "platform/robotLogUploader/robotLogUploader.h"
 #include "util/ankiLab/ankiLabDef.h"
 #include "util/console/consoleInterface.h"
@@ -143,35 +143,6 @@ bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
   return _cozmoRunner->Update(currentTime_nanosec);
 }
 
-size_t CozmoAPI::SendMessages(uint8_t* buffer, size_t bufferSize)
-{
-  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetGameMessagePort() : nullptr;
-  if (messagePipe == nullptr) {
-    return 0;
-  }
-
-  return messagePipe->PullToGameMessages(buffer, bufferSize);
-}
-
-void CozmoAPI::ReceiveMessages(const uint8_t* buffer, size_t size)
-{
-  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetGameMessagePort() : nullptr;
-  if (messagePipe == nullptr) {
-    return;
-  }
-
-  messagePipe->PushFromGameMessages(buffer, size);
-}
-
-//void CozmoAPI::ExecuteBackgroundTransfers()
-//{
-//  CozmoEngine* engine = (_cozmoRunner != nullptr) ? _cozmoRunner->GetEngine() : nullptr;
-//  if (engine == nullptr) {
-//    return;
-//  }
-//  engine->ExecuteBackgroundTransfers();
-//}
-
 uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
                                       uint8_t* responseBuffer, size_t responseLen)
 {
@@ -254,9 +225,7 @@ void CozmoAPI::Clear()
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _gameMessagePort(new GameMessagePort(ExternalInterface::kDirectCommsBufferSize,
-                                       !config.get("standalone", false).asBool()))
-, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get()))
+: _cozmoInstance(new CozmoEngine(dataPlatform))
 , _isRunning(true)
 {
   Result initResultReturn = _cozmoInstance->Init(config);
@@ -305,13 +274,14 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 //    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
 //                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
 
+#if ENABLE_RUN_TIME_DIAGNOSTICS
     // Only complain if we're more than 10ms behind
     if (remaining_us < microseconds(-10000))
     {
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
                           BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -337,9 +307,11 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
+#if ENABLE_RUN_TIME_DIAGNOSTICS
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
                           "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                           (float)(forwardJumpDuration * 0.001f));
+#endif // ENABLE_RUN_TIME_DIAGNOSTICS
     }
 
     tickStart = TimeClock::now();

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"anki/log"
+	"anki/robot/loguploader"
 	cloud_clad "clad/cloud"
 	gw_clad "clad/gateway"
 	extint "proto/external_interface"
@@ -859,6 +860,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 	whiteList := in.GetWhiteList()
 	blackList := in.GetBlackList()
 
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
 		// TODO: remove entire tempEventStreamDone case when the app connection properly closes
@@ -887,7 +890,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 					return err
 				}
 			}
-		case <-time.After(time.Second): // ping to check connection liveness after one second.
+		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := stream.Send(&ping); err != nil {
 				log.Println("Closing Event stream (on send):", err)
 				return err
@@ -953,6 +956,8 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 		},
 	}
 
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
 		case <-done:
@@ -971,7 +976,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 				log.Println("Closing BehaviorControl stream:", err)
 				return err
 			}
-		case <-time.After(time.Second): // ping to check connection liveness after one second.
+		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
 				log.Println("Closing BehaviorControl stream (on send):", err)
 				return err
@@ -2097,7 +2102,18 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
 // TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "Not implemented yet")
+	url, err := loguploader.UploadDebugLogs()
+	if err != nil {
+		log.Println("MessageHandler.UploadDebugLogs.Error: " + err.Error())
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	response := &extint.UploadDebugLogsResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_OK,
+		},
+		Url: url,
+	}
+	return response, nil
 }
 
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud

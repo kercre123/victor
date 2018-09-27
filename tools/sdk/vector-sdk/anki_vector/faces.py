@@ -62,7 +62,7 @@ class Face:
 
     Each Face instance has a :attr:`face_id` integer - This may change if
     Vector later gets an improved view and makes a different prediction about
-    which face it is looking at.
+    which face he is looking at.
     """
 
     def __init__(self, face_id=None):
@@ -126,7 +126,7 @@ class Face:
 
     @property
     def name(self):
-        """string: The name Vector has associated with the face in his memory.
+        """string: The name Vector has associated with the face.
 
         This string will be empty if the face is not recognized or enrolled.
         """
@@ -134,8 +134,8 @@ class Face:
 
     @property
     def last_observed_time(self) -> float:
-        """The time the element was last observed by the robot.
-        ``None`` if the element has not yet been observed.
+        """The time the face was last observed by the robot.
+        ``None`` if the face has not yet been observed.
 
         .. code-block:: python
 
@@ -145,7 +145,7 @@ class Face:
 
     @property
     def time_since_last_seen(self) -> float:
-        """The time since this element was last seen (math.inf if never)
+        """The time since this face was last seen (math.inf if never)
 
         .. code-block:: python
 
@@ -274,7 +274,13 @@ class FaceComponent(util.Component):
     # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component?
     @sync.Synchronizer.wrap
     async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
-        """Edit the vision mode
+        """Enable a vision mode
+
+        The vision system can be enabled for modes including the following:
+        Marker detection: `VISION_MODE_DETECTING_MARKERS`
+        Face detection and recognition: `VISION_MODE_DETECTING_FACES`
+        Motion detection: `VISION_MODE_DETECTING_MOTION`
+        Laser point detection: `VISION_MODE_DETECTING_LASER_POINTS`
 
         :param enable: Enable/Disable the mode specified.
         :param mode: Specifies the vision mode to edit.
