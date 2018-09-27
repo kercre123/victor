@@ -30,8 +30,6 @@ const (
 	SampleRate = 16000
 	// SampleBits defines how many bits each sample should contain
 	SampleBits = 16
-	// HotwordMessage is the sequence of bytes that defines a hotword signal over IPC
-	HotwordMessage = "hotword"
 	// DefaultTimeout is the length of time before the process will cancel a voice request
 	DefaultTimeout = 9 * time.Second
 )
@@ -188,14 +186,15 @@ procloop:
 					p.writeMic(cloud.NewMessageWithTestStarted(&cloud.Void{}))
 				}
 
-				mode := msg.msg.GetHotword().Mode
+				hw := msg.msg.GetHotword()
+				mode := hw.Mode
 				serverMode, ok := modeMap[mode]
 				if !ok && mode != cloud.StreamType_KnowledgeGraph {
 					p.writeError(cloud.ErrorType_InvalidConfig, fmt.Errorf("unknown mode %d", mode))
 					continue
 				}
 
-				locale := msg.msg.GetHotword().Locale
+				locale := hw.Locale
 				if locale == "" {
 					locale = "en-US"
 				}
@@ -208,6 +207,7 @@ procloop:
 				chipperOpts := p.defaultChipperOptions()
 				chipperOpts.SaveAudio = p.opts.saveAudio
 				chipperOpts.Language = language
+				chipperOpts.NoDas = hw.NoLogging
 
 				var option stream.Option
 				if mode == cloud.StreamType_KnowledgeGraph {
