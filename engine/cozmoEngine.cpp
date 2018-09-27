@@ -155,8 +155,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << std::fixed << std::setprecision(3) << proxDataRaw.ambientIntensity << '\n';
   ss << std::fixed << std::setprecision(3) << proxDataRaw.spadCount << '\n';
   ss << proxDataRaw.distance_mm << '\n';
-  // rangeStatus must be converted to string to avoid being interpreted as character (uint8_t)
-  ss << std::to_string(proxDataRaw.rangeStatus) << '\n';
+  ss << RangeStatusToString(proxDataRaw.rangeStatus) << '\n';
 
   ss << robotState.carryingObjectID << '\n';
   ss << robotState.carryingObjectOnTopID << '\n';

@@ -29,7 +29,7 @@ struct ProxSensorData
 {
   // Convenience function to see if all validity conditions are met
   bool IsValid() const { 
-    return isInValidRange && isValidSignalQuality && !isLiftInFOV && !isTooPitched;
+    return isInValidRange && isValidSignalQuality && !isLiftInFOV && !isTooPitched && hasValidRangeStatus;
   }
 
   u16  distance_mm;
@@ -39,6 +39,7 @@ struct ProxSensorData
   bool isValidSignalQuality;  // Signal quality is sufficiently strong to trust that something was detected
   bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
   bool isTooPitched;          // Robot is too far pitched up or down
+  bool hasValidRangeStatus;   // RangeStatus reported internally by sensor is valid
 };
 
 

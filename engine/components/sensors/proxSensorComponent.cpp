@@ -118,7 +118,7 @@ std::string ProxSensorComponent::GetLogRow()
   ss << d.signalIntensity  << ", ";
   ss << d.ambientIntensity << ", ";
   ss << d.spadCount        << ", ";
-  ss << (uint16_t) d.rangeStatus;
+  ss << RangeStatusToString(d.rangeStatus);
 
   return ss.str();
 }
@@ -214,6 +214,9 @@ void ProxSensorComponent::UpdateReadingValidity()
   // Check that the signal strength is high enough
   _latestData.signalQuality = GetSignalQuality(_latestDataRaw);
   _latestData.isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
+  
+  // Check that the RangeStatus is valid
+  _latestData.hasValidRangeStatus = _latestDataRaw.rangeStatus == RangeStatus::RANGE_VALID;
 }
 
 

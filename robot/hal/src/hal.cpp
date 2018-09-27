@@ -8,6 +8,7 @@
 
 // System Includes
 #include <chrono>
+#include <unordered_map>
 #include <assert.h>
 
 // Our Includes
@@ -54,6 +55,11 @@ namespace { // "Private members"
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_ = 0;
+  
+  // Counter for invalid prox sensor readings
+  std::unordered_map<RangeStatus, u32> invalidProxSensorStatusCounts;
+  TimeStamp_t nextInvalidProxDataReportSendTime_ms_ = 0;
+  const u32 INVALID_PROX_DATA_REPORT_PERIOD_MS = 86400000; // Every 24 hours
 
   HAL::PowerState desiredPowerMode_;
 
@@ -289,7 +295,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 Result HAL::Init(const int * shutdownSignal)
 {
   using Result = Anki::Result;
-
+  
   // Set ID
   robotID_ = Anki::Vector::DEFAULT_ROBOT_ID;
 
@@ -303,6 +309,16 @@ Result HAL::Init(const int * shutdownSignal)
 #ifndef HAL_DUMMY_BODY
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
+    
+    nextInvalidProxDataReportSendTime_ms_ = GetTimeStamp() + INVALID_PROX_DATA_REPORT_PERIOD_MS;
+    invalidProxSensorStatusCounts = {
+      {RangeStatus::SIGMA_FAIL, 0},
+      {RangeStatus::SIGNAL_FAIL, 0},
+      {RangeStatus::MIN_RANGE_FAIL, 0},
+      {RangeStatus::PHASE_FAIL, 0},
+      {RangeStatus::HARDWARE_FAIL, 0},
+      {RangeStatus::NO_UPDATE, 0}
+    };
 
     desiredPowerMode_ = POWER_MODE_ACTIVE;
 
@@ -416,6 +432,36 @@ Result spine_get_frame() {
   return result;
 }
 
+void ReportRecentInvalidProxDataReadings()
+{
+  const TimeStamp_t timeSinceBoot_ms = HAL::GetTimeStamp();
+  if ( (invalidProxSensorStatusCounts.at(RangeStatus::SIGMA_FAIL) +
+        invalidProxSensorStatusCounts.at(RangeStatus::SIGNAL_FAIL) +
+        invalidProxSensorStatusCounts.at(RangeStatus::PHASE_FAIL)) > 0) {
+    DASMSG(hal_invalid_prox_reading_report, "hal.invalid_prox_reading_report", "Report the recent number of minor status failures");
+    DASMSG_SET(i1, timeSinceBoot_ms, "Time (ms) since last boot")
+    DASMSG_SET(i2, invalidProxSensorStatusCounts.at(RangeStatus::SIGMA_FAIL), "Number of recent sigma failures");
+    DASMSG_SET(i3, invalidProxSensorStatusCounts.at(RangeStatus::SIGNAL_FAIL), "Number of recent signal failures");
+    DASMSG_SET(i4, invalidProxSensorStatusCounts.at(RangeStatus::PHASE_FAIL), "Number of recent phase failures");
+    DASMSG_SEND();
+  }
+  
+  if ( (invalidProxSensorStatusCounts.at(RangeStatus::MIN_RANGE_FAIL) +
+        invalidProxSensorStatusCounts.at(RangeStatus::HARDWARE_FAIL) +
+        invalidProxSensorStatusCounts.at(RangeStatus::NO_UPDATE)) > 0) {
+    DASMSG(hal_severe_invalid_prox_reading_report, "hal.invalid_prox_reading_report", "Report of recent number of severe status failures");
+    DASMSG_SET(i1, timeSinceBoot_ms, "Time (ms) since last boot")
+    DASMSG_SET(i2, invalidProxSensorStatusCounts.at(RangeStatus::MIN_RANGE_FAIL), "Number of recent min range failures");
+    DASMSG_SET(i3, invalidProxSensorStatusCounts.at(RangeStatus::HARDWARE_FAIL), "Number of recent hardware failures");
+    DASMSG_SET(i4, invalidProxSensorStatusCounts.at(RangeStatus::NO_UPDATE), "Number of recent missing updates");
+    DASMSG_SEND();
+  }
+
+  nextInvalidProxDataReportSendTime_ms_ += INVALID_PROX_DATA_REPORT_PERIOD_MS;
+  for (auto& it : invalidProxSensorStatusCounts) {
+    it.second = 0;
+  }
+}
 
 extern "C"  ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_payload);
 #define MIN_CCC_XMIT_SPACING_US 5000
@@ -477,7 +523,12 @@ Result HAL::Step(void)
     } else {
       reportUnexpectedPowerMode_ = true;
     }
-
+    
+    // Send DAS msg every 24 hours to report the number of invalid prox sensor readings
+    if (now_ms > nextInvalidProxDataReportSendTime_ms_) {
+      ReportRecentInvalidProxDataReadings();
+    }
+    
     struct ContactData* ccc_response = ccc_text_response();
     if (ccc_response) {
       spine_write_ccc_frame(&spine_, ccc_response);
@@ -558,6 +609,7 @@ void HAL::Stop()
   StopRadio();
   StopIMU();
   DisconnectRadio();
+  ReportRecentInvalidProxDataReadings();
 }
 
 void ProcessTouchLevel(void)
@@ -704,10 +756,48 @@ inline u16 FlipBytes(u16 v) {
   return ((((v) & 0x00FF)<<8) | ((v)>>8));
 }
 
+inline RangeStatus ConvertToApiRangeStatus(const u8 deviceRangeStatus)
+{
+  uint8_t internal_device_range_status = ((deviceRangeStatus & 0x78) >> 3);
+  
+  // For a more detailed explanation of the failure codes, refer to the VL53L0X API:
+  // https://www.st.com/content/ccc/resource/technical/document/user_manual/group0/6b/4e/24/90/d8/05/47/a5/DM00279088/files/DM00279088.pdf/jcr:content/translations/en.DM00279088.pdf
+  switch (internal_device_range_status)
+  {
+    // Mapping for internal values obtained from Adafruit VL53L0X library:
+    // https://github.com/adafruit/Adafruit_VL53L0X/blob/89de1c2db61668c74d79a7201389e3bc8519cdf9/src/core/src/vl53l0x_api_core.cpp#L2025.
+    // NOTE: This mapping assumes that all of the internal sensor checks (sigma limit, signal ref clip limit, etc.) are DISABLED.
+    // If this assumption is not valid at some point in the future due to a firmware configuration change,
+    // the results of these checks will need to be incorporated into this mapping.
+    case 1:
+    case 2:
+    case 3:
+      return RangeStatus::HARDWARE_FAIL;
+    case 6:
+    case 9:
+      return RangeStatus::PHASE_FAIL;
+    case 8:
+    case 10:
+      return RangeStatus::MIN_RANGE_FAIL;
+    case 4:
+      return RangeStatus::SIGNAL_FAIL;
+    case 11:
+      return RangeStatus::RANGE_VALID;
+    default:
+      // This error should NOT trigger
+      AnkiWarn("HAL.ConvertToApiRangeStatus.InvalidStatus", "0x%02x", deviceRangeStatus);
+      return RangeStatus::NO_UPDATE;
+  }
+}
+
 ProxSensorDataRaw HAL::GetRawProxData()
 {
   ProxSensorDataRaw proxData;
-  proxData.rangeStatus = bodyData_->proximity.rangeStatus;
+  proxData.rangeStatus = ConvertToApiRangeStatus(bodyData_->proximity.rangeStatus);
+  // Track the occurrences of invalid prox sensor readings, reported on a periodic basis
+  if (proxData.rangeStatus != RangeStatus::RANGE_VALID) {
+    ++invalidProxSensorStatusCounts.at(proxData.rangeStatus);
+  }
   if (HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
     proxData.distance_mm      = FlipBytes(bodyData_->proximity.rangeMM);
     // Signal/Ambient Rate are fixed point 9.7, so convert to float:

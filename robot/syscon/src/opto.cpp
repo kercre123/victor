@@ -559,4 +559,3 @@ void Opto::stop(void) {
 bool Opto::sensorsValid() {
   return optoActive;
 }
-
