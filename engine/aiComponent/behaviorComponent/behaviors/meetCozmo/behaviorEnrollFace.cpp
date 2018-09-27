@@ -1833,15 +1833,6 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 void BehaviorEnrollFace::UpdateFaceTime(const Face* newFace)
 {
   DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceTime.NullNewFace");
-  _dVars->lastFaceSeenTime_ms = newFace->GetTimeStamp();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
-{
-  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
-  _dVars->faceID = newFace->GetID();
-
   // These are supposed to be the same face (otherwise we should not have got here)
   // only update the face last seen if it's newer than the one we just saw
   const auto newFaceTimeStamp = newFace->GetTimeStamp();
@@ -1849,7 +1840,14 @@ void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
   {
     _dVars->lastFaceSeenTime_ms = newFaceTimeStamp;
   }
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
+{
+  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
+  _dVars->faceID = newFace->GetID();
+  UpdateFaceTime(newFace);
   _dVars->observedUnusableName.clear();
   _dVars->observedUnusableID = Vision::UnknownFaceID;
 }
@@ -1992,26 +1990,18 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       // (one with negative ID, which we never want to try to enroll)
       if(faceID <= 0)
       {
-        // Check if current face seems like it might be our face based on it's base, if it is
-        // update the last time we saw the face before continueing, but not the face ID.
-        if(canUseObservedFace)
+        // Check if current face seems like it might be our face based on it's pose. If it is
+        // update the last time we saw the face before continuing, but not the face ID.
+        // The face ID update based on pose occurs below, and specifically doesn't apply
+        // face ID's less than zero (not recognized).
+        if(canUseObservedFace && enrollmentIDisSet)
         {
-          if(enrollmentIDisSet)
+          if (MatchesBasedOnPose(_dVars->faceID, newFace))
           {
-            // Face ID is already set but we didn't see it and instead we're seeing a face
-            // with a different ID. See if it matches the pose of the one we were already enrolling.
-            auto currentFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
-
-            if(nullptr != currentFace && nullptr != newFace &&
-               newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
-                                               kEnrollFace_UpdateFacePositionThreshold_mm,
-                                               DEG_TO_RAD(kEnrollFace_UpdateFaceAngleThreshold_deg)))
-            {
-              PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.UpdatingFaceTimebyPose",
-                            "Was enrolling ID=%d, using face ID=%d to update time to %d",
-                            _dVars->faceID, newFace->GetID(), newFace->GetTimeStamp());
-              UpdateFaceTime(newFace);
-            }
+            PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.UpdatingFaceTimebyPose",
+                          "Was enrolling ID=%d, using face ID=%d to update time to %d",
+                          _dVars->faceID, newFace->GetID(), newFace->GetTimeStamp());
+            UpdateFaceTime(newFace);
           }
         }
         PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.SkipTrackedFace",
@@ -2038,15 +2028,8 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       {
         if(enrollmentIDisSet)
         {
-          // Face ID is already set but we didn't see it and instead we're seeing a face
-          // with a different ID. See if it matches the pose of the one we were already enrolling.
 
-          auto currentFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
-
-          if(nullptr != currentFace && nullptr != newFace &&
-             newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
-                                             kEnrollFace_UpdateFacePositionThreshold_mm,
-                                             DEG_TO_RAD(kEnrollFace_UpdateFaceAngleThreshold_deg)))
+          if (MatchesBasedOnPose(_dVars->faceID, newFace))
           {
             PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.UpdatingFaceIDbyPose",
                           "Was enrolling ID=%d, changing to unnamed ID=%d based on pose (saveID=%d)",
@@ -2238,6 +2221,19 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
                         "Received unexpected GameToEngine tag %s",
                         MessageGameToEngineTagToString(event.GetData().GetTag()));
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEnrollFace::MatchesBasedOnPose(const FaceID_t currentFaceID, const Face* newFace)
+{
+  // Face ID is already set but we didn't see it and instead we're seeing a face
+  // with a different ID. See if it matches the pose of the one we were already enrolling.
+  auto currentFace = GetBEI().GetFaceWorld().GetFace(currentFaceID);
+
+  return (nullptr != currentFace && nullptr != newFace &&
+          newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
+                                          kEnrollFace_UpdateFacePositionThreshold_mm,
+                                          DEG_TO_RAD(kEnrollFace_UpdateFaceAngleThreshold_deg)));
 }
 
 } // namespace Vector
