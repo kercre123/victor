@@ -79,7 +79,7 @@ namespace Vision {
     void  ClearFature(FeatureName whichFeature);
 
     // Shift both the detection rectangle and features
-    void Shift(const Point2f shift);
+    void Shift(const Point2f& shift);
     
     void AddPointToFeature(FeatureName whichFeature, Point2f&& point);
     void SetFeature(FeatureName whichFeature, Feature&& points);

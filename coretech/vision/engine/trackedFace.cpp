@@ -59,7 +59,7 @@ namespace Vision {
     _expression[expressionIndex] = newValue;
   }
 
-  void TrackedFace::Shift(const Point2f shift)
+  void TrackedFace::Shift(const Point2f& shift)
   {
     for (auto& feature: _features)
     {
