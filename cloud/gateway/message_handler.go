@@ -2057,7 +2057,9 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 		}
 	}
 
-	return nil
+	errMsg := "ImageChunk engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
 }
 
 // CheckUpdateStatus tells if the robot is ready to reboot and update.
