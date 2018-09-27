@@ -2397,8 +2397,8 @@ int main(int argc, char ** argv)
 
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcePath);
-  UiMessageHandler handler(0, nullptr);
-  ProtoMessageHandler protoHandler(nullptr);
+  UiMessageHandler handler(0);
+  ProtoMessageHandler protoHandler;
   cozmoContext = new Anki::Vector::CozmoContext(dataPlatform, &handler, &protoHandler);
 
   cozmoContext->GetDataLoader()->LoadRobotConfigs();

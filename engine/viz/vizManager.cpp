@@ -13,7 +13,6 @@
 #include "engine/viz/vizManager.h"
 #include "engine/viz/vizObjectBaseId.h"
 #include "engine/debug/devLoggingSystem.h"
-#include "engine/cozmoAPI/comms/gameMessagePort.h"
 #include "coretech/common/engine/exceptions.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
@@ -44,7 +43,7 @@ namespace Anki {
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = std::numeric_limits<u32>::max();
     
-    Result VizManager::Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port)
+    Result VizManager::Connect(const char *udp_host_address, const unsigned short port)
     {
       if (_isConnected) {
         Disconnect();
@@ -55,13 +54,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      #if VIZ_TO_UNITY
-      if (!_unityVizClient.Connect(unity_host_address, unity_port)) {
-        PRINT_NAMED_WARNING("VizManager.Connect.FailedUnity", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
-        return RESULT_FAIL;
-      }
-      #endif
-     
       PRINT_NAMED_INFO("VizManager.Connect.Success", "");
       _isConnected = true;
       
@@ -71,21 +63,12 @@ namespace Anki {
     Result VizManager::Disconnect()
     {
       if(_isConnected) {
-        bool vizDisconnected = _vizClient.Disconnect();
-        bool unityDisconnected = true;
-        #if VIZ_TO_UNITY
-        unityDisconnected = _unityVizClient.Disconnect();
-        #endif
-        
-        if (vizDisconnected || unityDisconnected) {
-          _isConnected = false;
-          PRINT_NAMED_INFO("VizManager.Disconnect.Success", "");
-          return RESULT_OK;
-        }
-        return RESULT_FAIL;
-      } else {
-        return RESULT_OK;
+        _vizClient.Disconnect();
+
+        _isConnected = false;
+        PRINT_NAMED_INFO("VizManager.Disconnect.Success", "");
       }
+      return RESULT_OK;
     }
     
     VizManager::VizManager()
@@ -123,17 +106,6 @@ namespace Anki {
         }
       }
 
-      #if VIZ_TO_UNITY
-      {
-        ANKI_CPU_PROFILE("UnityVizClient.SendToUnity")
-        if (_unityVizClient.Send((const char*)buffer, numPacked) <= 0) {
-          if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
-            PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zu to Unity failed", VizInterface::MessageVizTagToString(message.GetTag()), numPacked);
-          }
-        }
-      }
-      #endif
-        
       // Log viz messages from here.
       if (ANKI_DEV_CHEATS && nullptr != DevLoggingSystem::GetInstance())
       {

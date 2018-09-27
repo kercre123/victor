@@ -37,12 +37,11 @@ namespace Vector {
 class CozmoContext;
 class Robot;
 class RobotManager;
-class GameMessagePort;
 
 class ProtoMessageHandler : public IGatewayInterface
 {
 public:
-  ProtoMessageHandler(GameMessagePort* messagePipe); // Force construction with stuff in Init()?
+  ProtoMessageHandler(); // Force construction with stuff in Init()?
   virtual ~ProtoMessageHandler();
 
   Result Init(CozmoContext* context, const Json::Value& config);

@@ -193,11 +193,11 @@ static int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbda
 }
 
 
-CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
-  : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
-  , _protoMsgHandler(new ProtoMessageHandler(messagePipe))
+CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
+  : _uiMsgHandler(new UiMessageHandler(1))
+  , _protoMsgHandler(new ProtoMessageHandler)
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get(), _protoMsgHandler.get()))
-  ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
+  , _animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(), dataPlatform))
 {
 #if ANKI_CPU_PROFILER_ENABLED
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
@@ -745,10 +745,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
     PRINT_NAMED_INFO("CozmoEngine.RedirectViz.ipAddr", "%s", ipAddr.c_str());
 
     _context->GetVizManager()->Disconnect();
-    _context->GetVizManager()->Connect(ipAddr.c_str(),
-                                      (uint16_t)VizConstants::VIZ_SERVER_PORT,
-                                      ipAddr.c_str(),
-                                      (uint16_t)VizConstants::UNITY_VIZ_SERVER_PORT);
+    _context->GetVizManager()->Connect(ipAddr.c_str(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
     _context->GetVizManager()->EnableImageSend(true);
 
     // Erase anything that's still being visualized in case there were leftovers from
