@@ -149,6 +149,7 @@ void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* strea
       if(_ttsComponent != nullptr){
         _ttsComponent->HandleMessage(msg.textToSpeechPlay);
       }
+      break;
     }
     default:
     {

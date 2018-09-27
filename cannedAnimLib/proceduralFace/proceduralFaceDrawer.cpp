@@ -851,7 +851,7 @@ namespace Vector {
 
         s32 j = _faceColMin;
 #ifdef __ARM_NEON__
-        const u32 kNumElementsProcessed = 16;
+        const s32 kNumElementsProcessed = 16;
         for(; j <= _faceColMax-(kNumElementsProcessed-1); j += kNumElementsProcessed)
         {
           uint8x16_t eye = vld1q_u8(eyeShape_i);
