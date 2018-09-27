@@ -58,7 +58,19 @@ namespace Vision {
     DEV_ASSERT(expressionIndex < (u32)FacialExpression::Count, "TrackedFace.SetExpressionValue.BadExpression");
     _expression[expressionIndex] = newValue;
   }
-  
+
+  void TrackedFace::Shift(const Point2f& shift)
+  {
+    for (auto& feature: _features)
+    {
+      for (auto& point: feature) 
+      {
+        point += shift;
+      }
+    }
+    _rect = Rectangle<f32>(_rect.GetX() + shift.x(), _rect.GetY() + shift.y(),
+                           _rect.GetWidth(), _rect.GetHeight());
+  }
 } // namespace Vision
 } // namespace Anki
 
