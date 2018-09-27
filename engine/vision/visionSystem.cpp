@@ -74,6 +74,8 @@ CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
 CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
 CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
 CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
+CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   10.f);
+CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   30.f);
 
 // How long to disable auto exposure after using detections to meter
 CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
@@ -1505,19 +1507,28 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   if(ShouldProcessVisionMode(VisionMode::DetectingMarkers))
   {
-    // Marker detection uses rolling shutter compensation
-    UpdateRollingShutter(poseData, imageCache);
-
-    Tic("TotalDetectingMarkers");
-    lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE);
-    
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-      anyModeFailures = true;
-    } else {
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
+    const bool allowWhileRotatingFast = ShouldProcessVisionMode(VisionMode::MarkerDetectionWhileRotatingFast);
+    const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
+                                     poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
+                                                                                DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
+                                                                                DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
+    if(!wasRotatingTooFast)
+    {
+      // Marker detection uses rolling shutter compensation
+      UpdateRollingShutter(poseData, imageCache);
+      
+      Tic("TotalDetectingMarkers");
+      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE);
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
+        visionModesProcessed.SetBitFlag(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
+      }
+      Toc("TotalDetectingMarkers");
     }
-    Toc("TotalDetectingMarkers");
   }
   
   if(ShouldProcessVisionMode(VisionMode::DetectingFaces))
@@ -1961,6 +1972,11 @@ void VisionSystem::AddAllowedTrackedFace(const Vision::FaceID_t faceID)
 void VisionSystem::ClearAllowedTrackedFaces()
 {
   _faceTracker->ClearAllowedTrackedFaces();
+}
+
+f32 VisionSystem::GetBodyTurnSpeedThresh_degPerSec()
+{
+  return kBodyTurnSpeedThreshBlock_degs;
 }
 
 } // namespace Vector

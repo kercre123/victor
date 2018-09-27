@@ -209,6 +209,8 @@ namespace Vector {
     void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
+    static f32 GetBodyTurnSpeedThresh_degPerSec();
+    
     s32 GetMinCameraExposureTime_ms() const { return MIN_CAMERA_EXPOSURE_TIME_MS; }
     s32 GetMaxCameraExposureTime_ms() const { return MAX_CAMERA_EXPOSURE_TIME_MS; }
     

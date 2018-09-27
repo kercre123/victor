@@ -158,7 +158,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // Queue the marker in VisionComponent, which will in turn queue it for processing
   // by BlockWorld
@@ -467,7 +467,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
 
@@ -625,7 +625,7 @@ TEST(BlockWorld, PoseUpdates)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   /*
     + See unique    object1 (non-localizable) from close, seeing same object in *different pose from far
@@ -855,7 +855,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // For faking observations of blocks
   const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
@@ -1061,7 +1061,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // For faking observations of blocks
   const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
@@ -1255,7 +1255,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
 
@@ -1806,7 +1806,7 @@ TEST(Localization, LocalizationDistance)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
   RobotTimeStamp_t fakeTime = 10;
@@ -2276,7 +2276,7 @@ TEST(Localization, UnexpectedMovement)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
   RobotTimeStamp_t fakeTime = 10;

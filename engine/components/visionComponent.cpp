@@ -89,10 +89,6 @@ namespace Vector {
   CONSOLE_VAR_ENUM(u8, kVisionComponent_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
-  CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Head_deg/s",   10.f);
-  CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
-  CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
-
   // Quality of images sent to game/viz
   // Set to -1 to display "locally" with img.Display()
   // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
@@ -304,7 +300,7 @@ namespace Vector {
     else
     {
       _visionSystem->ShouldDoRollingShutterCorrection(false);
-      EnableVisionWhileMovingFast(false);
+      EnableVisionWhileRotatingFast(false);
     }
   } // SetCameraCalibration()
 
@@ -1078,14 +1074,6 @@ namespace Vector {
       // and this should be true
       assert(procResult.timestamp == t);
 
-      // If we were moving too fast at timestamp t then don't queue this marker
-      if(WasRotatingTooFast(t,
-                            DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
-                            DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
-      {
-        return RESULT_OK;
-      }
-
       Vision::Camera histCamera = _robot->GetHistoricalCamera(*histStatePtr, procResult.timestamp);
 
       // Note: we deliberately make a copy of the vision markers in observedMarkers
@@ -1547,80 +1535,6 @@ namespace Vector {
     ExternalInterface::RobotObservedIllumination msg( procResult.illumination );
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     return RESULT_OK;
-  }
-
-  bool VisionComponent::WasHeadRotatingTooFast(RobotTimeStamp_t t,
-                                               const f32 headTurnSpeedLimit_radPerSec,
-                                               const int numImuDataToLookBack) const
-  {
-    // Check to see if the robot's body or head are
-    // moving too fast to queue this marker
-    if(!_visionWhileMovingFastEnabled)
-    {
-      if(numImuDataToLookBack > 0)
-      {
-        return (_robot->GetImuComponent().IsImuDataBeforeTimeGreaterThan(t,
-                                                                         numImuDataToLookBack,
-                                                                         0, headTurnSpeedLimit_radPerSec, 0));
-      }
-
-      RobotInterface::IMUDataFrame prev, next;
-      if(!_robot->GetImuComponent().GetImuDataBeforeAndAfter(t, prev, next))
-      {
-        PRINT_CH_INFO("VisionComponent",
-                      "VisionComponent.VisionComponent.WasHeadRotatingTooFast.NoIMUData",
-                      "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
-        return true;
-      }
-
-      if(ABS(prev.rateY) > headTurnSpeedLimit_radPerSec ||
-         ABS(next.rateY) > headTurnSpeedLimit_radPerSec)
-      {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool VisionComponent::WasBodyRotatingTooFast(RobotTimeStamp_t t,
-                                               const f32 bodyTurnSpeedLimit_radPerSec,
-                                               const int numImuDataToLookBack) const
-  {
-    // Check to see if the robot's body or head are
-    // moving too fast to queue this marker
-    if(!_visionWhileMovingFastEnabled)
-    {
-      if(numImuDataToLookBack > 0)
-      {
-        return (_robot->GetImuComponent().IsImuDataBeforeTimeGreaterThan(t,
-                                                                         numImuDataToLookBack,
-                                                                         0, 0, bodyTurnSpeedLimit_radPerSec));
-      }
-
-      RobotInterface::IMUDataFrame prev, next;
-      if(!_robot->GetImuComponent().GetImuDataBeforeAndAfter(t, prev, next))
-      {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyRotatingTooFast",
-                      "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
-        return true;
-      }
-
-      if(ABS(prev.rateZ) > bodyTurnSpeedLimit_radPerSec ||
-         ABS(next.rateZ) > bodyTurnSpeedLimit_radPerSec)
-      {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool VisionComponent::WasRotatingTooFast(RobotTimeStamp_t t,
-                                           const f32 bodyTurnSpeedLimit_radPerSec,
-                                           const f32 headTurnSpeedLimit_radPerSec,
-                                           const int numImuDataToLookBack) const
-  {
-    return (WasHeadRotatingTooFast(t, headTurnSpeedLimit_radPerSec, numImuDataToLookBack) ||
-            WasBodyRotatingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
   }
 
   void VisionComponent::AddLiftOccluder(const RobotTimeStamp_t t_request)
@@ -2487,11 +2401,6 @@ namespace Vector {
     return gotImage;
   }
 
-  f32 VisionComponent::GetBodyTurnSpeedThresh_degPerSec() const
-  {
-    return kBodyTurnSpeedThreshBlock_degs;
-  }
-
   void VisionComponent::SetLiftCrossBar()
   {
     const f32 padding = LIFT_HARDWARE_FALL_SLACK_MM;
@@ -2658,7 +2567,7 @@ namespace Vector {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::VisionWhileMoving& msg)
   {
-    EnableVisionWhileMovingFast(msg.enable);
+    EnableVisionWhileRotatingFast(msg.enable);
   }
 
   template<>
@@ -3064,7 +2973,13 @@ namespace Vector {
     // {
     //   // If we were moving too fast at the timestamp the image was taken then don't use it for
     //   // calibration or dot test purposes
-    //   if(!WasRotatingTooFast(buffer.timestamp, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+    //   auto const& imuHistory = _robot->GetImuComponent().GetImuHistory();
+    //   const bool wasRotatingTooFast = (_visionWhileMovingFastEnabled ?
+    //                                    false :
+    //                                    imuHistory.WasRotatingTooFast(image.GetTimestamp(),
+    //                                                                  DEG_TO_RAD(0.1),
+    //                                                                  DEG_TO_RAD(0.1), 3));
+    //   if(!wasRotatingTooFast)
     //   {
     //     Vision::Image imageGray = image.ToGray();
 

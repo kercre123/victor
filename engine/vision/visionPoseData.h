@@ -27,7 +27,8 @@ namespace Vector {
 
 struct VisionPoseData
 {
-  using ImuDataHistory = ImuComponent::ImuHistory;
+  using ImuDataHistory = ImuHistory; // TODO: Remove
+  
   // TODO: Add getters for these and make them private, prefixed with underscore (COZMO-14998)
   RobotTimeStamp_t      timeStamp;
   HistRobotState        histState;  // contains historical head/lift/pose info

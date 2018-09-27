@@ -17,6 +17,9 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/logging.h"
+
+#define LOG_CHANNEL "ImuComponent"
 
 namespace Anki {
 namespace Vector {
@@ -28,28 +31,41 @@ namespace {
 
 } // end anonymous namespace
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImuComponent::ImuComponent() 
 : ISensorComponent(kLogDirName)
 , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::ImuSensor)
 {
 }
 
-void ImuComponent::AddData(RobotInterface::IMUDataFrame&& frame) {
-  if(_imuHistory.size() == kMaxSizeOfHistory) { _imuHistory.pop_front(); }
-  _imuHistory.emplace_back(frame);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImuComponent::AddData(RobotInterface::IMUDataFrame&& frame)
+{
+  _imuHistory.AddData(std::move(frame));
 }
 
-bool ImuComponent::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
-                                            RobotInterface::IMUDataFrame& before,
-                                            RobotInterface::IMUDataFrame& after) const
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImuHistory::AddData(RobotInterface::IMUDataFrame&& frame)
 {
-  if(_imuHistory.size() < 2)
+  if(_history.size() == kMaxSizeOfHistory)
+  {
+    _history.pop_front();
+  }
+  _history.emplace_back(frame);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ImuHistory::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
+                                          RobotInterface::IMUDataFrame& before,
+                                          RobotInterface::IMUDataFrame& after) const
+{
+  if(_history.size() < 2)
   {
     return false;
   }
 
   // Start at beginning + 1 because there is no data before the first element
-  for(auto iter = _imuHistory.begin() + 1; iter != _imuHistory.end(); ++iter)
+  for(auto iter = _history.begin() + 1; iter != _history.end(); ++iter)
   {
     // If we get to the imu data after the timestamp
     // or We have gotten to the imu data that has yet to be given a timestamp and
@@ -68,16 +84,17 @@ bool ImuComponent::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
   return false;
 }
 
-bool ImuComponent::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
-                                                    const int numToLookBack,
-                                                    const f32 rateX, const f32 rateY, const f32 rateZ) const
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ImuHistory::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
+                                                const int numToLookBack,
+                                                const f32 rateX, const f32 rateY, const f32 rateZ) const
 {
-  if(_imuHistory.empty())
+  if(_history.empty())
   {
     return false;
   }
   
-  auto iter = _imuHistory.begin();
+  auto iter = _history.begin();
   // Separate check for the first element due to there not being anything before it
   if(iter->timestamp > t)
   {
@@ -94,7 +111,7 @@ bool ImuComponent::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
     return false;
   }
   
-  for(iter = _imuHistory.begin() + 1; iter != _imuHistory.end(); ++iter)
+  for(iter = _history.begin() + 1; iter != _history.end(); ++iter)
   {
     // If we get to the imu data after the timestamp
     // or We have gotten to the imu data that has yet to be given a timestamp and
@@ -111,7 +128,7 @@ bool ImuComponent::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
         {
           return true;
         }
-        if(iter-- == _imuHistory.begin())
+        if(iter-- == _history.begin())
         {
           return false;
         }
@@ -122,12 +139,13 @@ bool ImuComponent::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
   return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ImuComponent::GetLogHeader()
 {
   return std::string("timestamp_ms, rateX, rateY, rateZ");
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ImuComponent::GetLogRow()
 {
   std::stringstream ss;
@@ -142,8 +160,63 @@ std::string ImuComponent::GetLogRow()
   return ss.str();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ImuHistory::WasHeadRotatingTooFast(RobotTimeStamp_t t,
+                                        const f32 headTurnSpeedLimit_radPerSec,
+                                        const int numImuDataToLookBack) const
+{
+  if(numImuDataToLookBack > 0)
+  {
+    return (IsImuDataBeforeTimeGreaterThan(t,
+                                           numImuDataToLookBack,
+                                           0, headTurnSpeedLimit_radPerSec, 0));
+  }
+  
+  RobotInterface::IMUDataFrame prev, next;
+  if(!GetImuDataBeforeAndAfter(t, prev, next))
+  {
+    LOG_INFO("ImuComponent.WasHeadRotatingTooFast.NoIMUData",
+             "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
+    return true;
+  }
+  
+  if(ABS(prev.rateY) > headTurnSpeedLimit_radPerSec ||
+     ABS(next.rateY) > headTurnSpeedLimit_radPerSec)
+  {
+    return true;
+  }
+  
+  return false;
+}
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ImuHistory::WasBodyRotatingTooFast(RobotTimeStamp_t t,
+                                        const f32 bodyTurnSpeedLimit_radPerSec,
+                                        const int numImuDataToLookBack) const
+{
+  if(numImuDataToLookBack > 0)
+  {
+    return (IsImuDataBeforeTimeGreaterThan(t,
+                                           numImuDataToLookBack,
+                                           0, 0, bodyTurnSpeedLimit_radPerSec));
+  }
+  
+  RobotInterface::IMUDataFrame prev, next;
+  if(!GetImuDataBeforeAndAfter(t, prev, next))
+  {
+    LOG_INFO("ImuComponent..WasBodyRotatingTooFast",
+             "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
+    return true;
+  }
+  
+  if(ABS(prev.rateZ) > bodyTurnSpeedLimit_radPerSec ||
+     ABS(next.rateZ) > bodyTurnSpeedLimit_radPerSec)
+  {
+    return true;
+  }
+  
+  return false;
+}
 
 } // Cozmo namespace
 } // Anki namespace

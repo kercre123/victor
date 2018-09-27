@@ -143,7 +143,8 @@ struct DockingErrorSignal;
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
-    void   EnableVisionWhileMovingFast(bool enable);
+    void   EnableVisionWhileRotatingFast(bool enable);
+    bool   IsVisionWhileRotatingFastEnabled() const;
 
     // Set the camera's capture format
     // Non blocking but will cause VisionComponent/System to
@@ -205,21 +206,6 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasHeadRotatingTooFast(RobotTimeStamp_t t,
-                                const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                                const int numImuDataToLookBack = 0) const;
-    bool WasBodyRotatingTooFast(RobotTimeStamp_t t,
-                                const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                                const int numImuDataToLookBack = 0) const;
-    
-    // Returns true if head or body were moving too fast at the timestamp
-    // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
-    // of just looking at the previous and next imu data
-    bool WasRotatingTooFast(RobotTimeStamp_t t,
-                            const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                            const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                            const int numImuDataToLookBack = 0) const;
-
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time
     void AddLiftOccluder(const RobotTimeStamp_t t_request);
@@ -324,8 +310,6 @@ struct DockingErrorSignal;
     // Releases captured image back to CameraService
     bool ReleaseImage(Vision::ImageBuffer& buffer);
     
-    f32 GetBodyTurnSpeedThresh_degPerSec() const;
-
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
@@ -404,7 +388,7 @@ struct DockingErrorSignal;
     RobotTimeStamp_t  _currentQualityBeginTime_ms = 0;
     RobotTimeStamp_t  _waitForNextAlert_ms = 0;
     
-    bool             _visionWhileMovingFastEnabled = false;
+    bool _visionWhileRotatingFastEnabled = false;
 
     Vision::ImageEncoding _desiredImageFormat = Vision::ImageEncoding::NoneImageEncoding;
 
@@ -505,8 +489,13 @@ struct DockingErrorSignal;
     return _camera->GetCalibration();
   }
   
-  inline void VisionComponent::EnableVisionWhileMovingFast(bool enable) {
-    _visionWhileMovingFastEnabled = enable;
+  inline void VisionComponent::EnableVisionWhileRotatingFast(bool enable) {
+    _visionWhileRotatingFastEnabled = enable;
+    EnableMode(VisionMode::MarkerDetectionWhileRotatingFast, _visionWhileRotatingFastEnabled);
+  }
+  
+  inline bool VisionComponent::IsVisionWhileRotatingFastEnabled() const {
+    return _visionWhileRotatingFastEnabled;
   }
   
   inline void VisionComponent::SetMarkerDetectionTurnSpeedThresholds(f32 bodyTurnSpeedThresh_degPerSec,
