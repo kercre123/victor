@@ -1,13 +1,26 @@
+Intentional build error so you read the below build instructions:
 /*
- * File:          cozmoAnim/animEngine.cpp
- * Date:          6/26/2017
- *
- * Description:   A platform-independent container for spinning up all the pieces
- *                required to run Cozmo Animation Process.
- *
- * Author: Kevin Yoon
- *
- * Modifications:
+ 1) either build the coretech branch ross/add-AVS and copy the libraries to EXTERNALS/build, or obtain the necessary libraries from ross or jordan and put them there
+ 2) Still in EXTERNALS, copy the "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b" directory into "hey_vector/alexa", then in "alexa",
+ replace anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18 and anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am
+ with the alexa versions (obtain from ross or jordan), keeping the same filename. In the _build directory and its subdirectories, delete any current .raw files
+ so that cmake definitely recopies them when you build -f.
+ 3) IMPORTANT: In the json in the top of this file, change the deviceSerialNumber to something else
+ 4) Build and deploy, then start the robot in DevDoNothing. I've been using the following filter:
+       victor_log | grep "WHATNOW\|ALEXA\|vic-anim: 2018\|starved"
+ 5) On the first run, there should be a log line containing a URL and a code. If you need to log into a developer account, mine is
+    username: ross+1@anki.com
+    password: anki_tests_amazon
+    Alternatively you can create your own account
+    https://github.com/alexa/avs-device-sdk/wiki/macOS-Quick-Start-Guide#register-a-product
+    and replace the relevant json below
+ 6) Once having activated the product, restart the robot. On the second run, it should authenticate.
+ 
+ IN THIS DEMO:
+   Both wake words work. If running in DevDoNothing, you can evaluate both wake words with getin animations.
+   If you shake the robot,
+   "Hey vector" works as usual
+   "Alexa" will activate a listening behavior, which has a fixed timeout. It unfortunately sometimes plays the no-wifi animation at the end of it
  */
 
 #include "cozmoAnim/alexa.h"
@@ -16,7 +29,6 @@
 #include "cozmoAnim/alexaKeywordObserver.h"
 #include "cozmoAnim/alexaMicrophone.h"
 #include "cozmoAnim/alexaSpeaker.h"
-//#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
