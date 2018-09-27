@@ -7,9 +7,6 @@
 namespace Anki {
 namespace Vector {
 
-// Because of a bug in unity editor custom drawers
-// they only properly draw our serialized enums as int32s or bytes.
-// ideally this would be a uint16.
 enum int_32 AnimationTrigger
 {
   // Animation triggers, sorted alphabetically
@@ -325,8 +322,12 @@ enum int_32 AnimationTrigger
   ReactToMotionRightGetout,
   ReactToMotionUpGetout,
   ReactToObstacle,
-  ReactToOnLeftSide,
-  ReactToOnRightSide,
+  ReactToOnLeftSideGetIn,
+  ReactToOnLeftSideLoop,
+  ReactToOnRightSideGetIn,
+  ReactToOnRightSideLoop,
+  ReactToOnSideEffort,
+  ReactToOnSideGetOut,
   ReactToPerchedOnBlock,
   ReactToPickupInitial,
   ReactToPickupLoop,
@@ -432,7 +433,6 @@ enum int_32 AnimationTrigger
   VC_SleepingToListeningLoop,
   VC_SleepingToListeningGetOut,
   VC_IntentNeutral,
-  WaitOnSideLoop,
   WakeupGetout,
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually

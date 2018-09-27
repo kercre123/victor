@@ -25,13 +25,13 @@
     {
       "behaviorName": "ReactToAirLeftInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["ReactToOnLeftSide"],
+      "animTriggers": ["ReactToOnLeftSideLoop"],
       "num_loops": 1
     },
     {
       "behaviorName": "ReactToAirRightInternal",
       "behaviorClass": "AnimSequence",
-      "animTriggers": ["ReactToOnRightSide"],
+      "animTriggers": ["ReactToOnRightSideLoop"],
       "num_loops": 1
     }
 

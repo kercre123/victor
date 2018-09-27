@@ -330,6 +330,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/reactions
   AskForHelp,
+  AskForHelpOnSide,
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,

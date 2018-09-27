@@ -5,12 +5,35 @@
   "associatedActiveFeature": "ReactToRobotOnSide",
 
   "wantsToBeActivatedCondition": {
-    "conditionType" : "BeingHeld",
-    "shouldBeHeld" : false
+    "conditionType" : "Compound",
+    "and" : [
+      {
+        "conditionType" : "Compound",
+        "or" :
+        [
+          {
+            "conditionType": "OffTreadsState",
+            "targetState": "OnLeftSide"
+          },
+          {
+            "conditionType": "OffTreadsState",
+            "targetState": "OnRightSide"
+          }
+        ]
+      },
+      {
+        "conditionType" : "BeingHeld",
+        "shouldBeHeld" : false
+      }
+    ]
   },
 
   "wantsToCancelSelfCondition": {
     "conditionType": "OffTreadsState",
     "targetState": "OnTreads"
-  }
+  },
+  
+  "askForHelpAfter_sec" : 60.0,
+  
+  "askForHelpBehavior" : "AskForHelpOnSide"
 }

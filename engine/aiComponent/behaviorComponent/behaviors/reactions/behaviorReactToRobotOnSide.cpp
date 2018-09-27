@@ -1,5 +1,5 @@
 /**
- * File: behaviorReactToRobotOnSide.h
+ * File: behaviorReactToRobotOnSide.cpp
  *
  * Author: Kevin M. Karol
  * Created: 2016-07-18
@@ -12,91 +12,115 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 
 namespace Anki {
 namespace Vector {
-  
+
+namespace {
+  const char* kAskForHelpAfter_key = "askForHelpAfter_sec";
+  const char* kAskForHelpBehavior_key = "askForHelpBehavior";
+}
+
 using namespace ExternalInterface;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config)
 : ICozmoBehavior(config)
+, _iConfig(config, "Behavior" + GetDebugLabel() + ".LoadConfig")
 {
-  _offTreadsConditions.emplace_back( std::make_shared<ConditionOffTreadsState>(OffTreadsState::OnLeftSide, GetDebugLabel()) );
-  _offTreadsConditions.emplace_back( std::make_shared<ConditionOffTreadsState>(OffTreadsState::OnRightSide,GetDebugLabel()) );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToRobotOnSide::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
+{
+  const bool hasAskForHelpTime = JsonTools::GetValueOptional(config, kAskForHelpAfter_key, askForHelpAfter_sec);
+  const bool hasAskForHelpBehavior = JsonTools::GetValueOptional(config, kAskForHelpBehavior_key, askForHelpBehaviorStr);
+ 
+  DEV_ASSERT(hasAskForHelpTime == hasAskForHelpBehavior, "BehaviorReactToRobotOnSide.InstanceConfig.InvalidConfig");
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior() const
 {
-  const bool wantsToBeActivated = std::any_of(_offTreadsConditions.begin(),
-                                              _offTreadsConditions.end(),
-                                              [this](const IBEIConditionPtr& condition) {
-                                                return condition->AreConditionsMet(GetBEI());
-                                              });
-  return wantsToBeActivated;
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::InitBehavior()
 {
-  for (auto& condition : _offTreadsConditions) {
-    condition->Init(GetBEI());
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::OnBehaviorEnteredActivatableScope() {
-  for (auto& condition : _offTreadsConditions) {
-    condition->SetActive(GetBEI(), true);
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  if (!_iConfig.askForHelpBehaviorStr.empty()) {
+    _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.askForHelpBehaviorStr));
+    DEV_ASSERT(_iConfig.askForHelpBehavior != nullptr,
+               "BehaviorReactToRobotOnSide.InitBehavior.NullBehavior");
   }
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::OnBehaviorLeftActivatableScope()
+void BehaviorReactToRobotOnSide::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  for (auto& condition : _offTreadsConditions) {
-    condition->SetActive(GetBEI(), false);
+  const char* list[] = {
+    kAskForHelpAfter_key,
+    kAskForHelpBehavior_key,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnSide::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  if (_iConfig.askForHelpBehavior != nullptr) {
+    delegates.insert(_iConfig.askForHelpBehavior.get());
   }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::OnBehaviorActivated()
 {
-  ICozmoBehavior::SmartRequestPowerSaveMode();
+  _dVars = DynamicVariables();
   
   ReactToBeingOnSide();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnSide::BehaviorUpdate()
+{
+  if (!IsActivated()) {
+    return;
+  }
+  
+  // If we are no longer on our side (but have not been cancelled externally yet), then play the get-out and exit
+  const bool onSide = (GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide) ||
+                      (GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide);
+  if (!onSide && !_dVars.getOutPlayed) {
+    DelegateNow(new TriggerAnimationAction(AnimationTrigger::ReactToOnSideGetOut));
+    _dVars.getOutPlayed = true;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
 {
-  AnimationTrigger anim = AnimationTrigger::Count;
-  
-  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
-    anim = AnimationTrigger::ReactToOnLeftSide;
-  }
-  
-  if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
-    anim = AnimationTrigger::ReactToOnRightSide;
-  }
-  
-  if(anim != AnimationTrigger::Count){
-    const u32 numLoops = 1;
-    const bool interruptRunning = true;
-    // lock the body to avoid weird motion
-    const u8 tracksToLock = (u8)AnimTrackFlag::BODY_TRACK;
-    DelegateIfInControl(new TriggerAnimationAction(anim,
-                                                   numLoops,
-                                                   interruptRunning,
-                                                   tracksToLock),
+  if (GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide) {
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToOnLeftSideGetIn),
+                        &BehaviorReactToRobotOnSide::HoldingLoop);
+  } else if (GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToOnRightSideGetIn),
                         &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
@@ -105,9 +129,36 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::HoldingLoop()
 {
-  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide
-     || GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide) {
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
+  // Check if we have been activated for longer than the timeout. If so, play the getout then transition to the
+  // "ask for help" behavior
+  if (_iConfig.askForHelpAfter_sec > 0.f &&
+      GetActivatedDuration() > _iConfig.askForHelpAfter_sec) {
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToOnSideGetOut),
+                        [this](){
+                          if (_iConfig.askForHelpBehavior.get()->WantsToBeActivated()) {
+                            DelegateIfInControl(_iConfig.askForHelpBehavior.get());
+                          }
+                        });
+    return;
+  }
+  
+  auto loopAnim = AnimationTrigger::Count;
+  
+  if (GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide) {
+    loopAnim = AnimationTrigger::ReactToOnLeftSideLoop;
+  } else if (GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
+    loopAnim = AnimationTrigger::ReactToOnRightSideLoop;
+  }
+  
+  if (loopAnim != AnimationTrigger::Count) {
+    const auto effortAnim = AnimationTrigger::ReactToOnSideEffort;
+    
+    // Alternate between 'loop' animation and 'effort' animation
+    auto* action = new CompoundActionSequential();
+    action->AddAction(new TriggerAnimationAction(loopAnim));
+    action->AddAction(new TriggerAnimationAction(effortAnim));
+    
+    DelegateIfInControl(action,
                         &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
