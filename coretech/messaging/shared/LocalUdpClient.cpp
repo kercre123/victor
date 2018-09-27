@@ -41,8 +41,14 @@
 #define LOG_DEBUG(name, format, ...)   {}
 #endif
 
-LocalUdpClient::LocalUdpClient()
-: _socketfd(-1)
+LocalUdpClient::LocalUdpClient(int sndbufsz, int rcvbufsz) :
+  _sndbufsz(sndbufsz),
+  _rcvbufsz(rcvbufsz),
+  _socket(-1)
+{
+}
+
+LocalUdpClient::LocalUdpClient() : LocalUdpClient(UDP_CLIENT_SNDBUFSZ, UDP_CLIENT_RCVBUFSZ)
 {
 }
 
@@ -55,7 +61,7 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
 {
   //LOG_DEBUG("LocalUdpClient.Connect", "Connect from %s to %s", sockname.c_str(), peername.c_str());
 
-  if (_socketfd >= 0) {
+  if (_socket >= 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Already connected");
     return false;
   }
@@ -64,37 +70,37 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   const int ai_socktype = SOCK_DGRAM;
   const int ai_protocol = 0;
 
-  _socketfd = socket(ai_family, ai_socktype, ai_protocol);
-  if (_socketfd < 0) {
+  _socket = socket(ai_family, ai_socktype, ai_protocol);
+  if (_socket < 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to create socket (%s)", strerror(errno));
     return false;
   }
 
-  if (!Anki::Messaging::SetReuseAddress(_socketfd, 1)) {
+  if (!Anki::Messaging::SetReuseAddress(_socket, 1)) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to set reuseaddress (%s)", strerror(errno));
-    close(_socketfd);
-    _socketfd = -1;
+    close(_socket);
+    _socket = -1;
     return false;
   }
 
-  if (!Anki::Messaging::SetNonBlocking(_socketfd, 1)) {
+  if (!Anki::Messaging::SetNonBlocking(_socket, 1)) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to set nonblocking (%s)", strerror(errno));
-    close(_socketfd);
-    _socketfd = -1;
+    close(_socket);
+    _socket = -1;
     return false;
   }
 
-  if (!Anki::Messaging::SetSendBufferSize(_socketfd, UDP_CLIENT_SNDBUFSZ)) {
-    LOG_ERROR("LocalUdpClient.Connect", "Unable to set send buffer size (%s)", strerror(errno));
-    close(_socketfd);
-    _socketfd = -1;
+  if (!Anki::Messaging::SetSendBufferSize(_socket, _sndbufsz)) {
+    LOG_ERROR("LocalUdpClient.Connect", "Unable to set send buffer size %d (%s)", _sndbufsz, strerror(errno));
+    close(_socket);
+    _socket = -1;
     return false;
   }
 
-  if (!Anki::Messaging::SetRecvBufferSize(_socketfd, UDP_CLIENT_RCVBUFSZ)) {
-    LOG_ERROR("LocalUdpClient.Connect", "Unable to set recv buffer size (%s)", strerror(errno));
-    close(_socketfd);
-    _socketfd = -1;
+  if (!Anki::Messaging::SetRecvBufferSize(_socket, _rcvbufsz)) {
+    LOG_ERROR("LocalUdpClient.Connect", "Unable to set recv buffer size %d (%s)", _rcvbufsz, strerror(errno));
+    close(_socket);
+    _socket = -1;
     return false;
   }
 
@@ -110,10 +116,10 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   strncpy(_sockaddr.sun_path, _sockname.c_str(), sizeof(_sockaddr.sun_path));
   _sockaddr_len = (socklen_t) SUN_LEN(&_sockaddr);
 
-  if (bind(_socketfd, (struct sockaddr *) &_sockaddr, _sockaddr_len) != 0) {
+  if (bind(_socket, (struct sockaddr *) &_sockaddr, _sockaddr_len) != 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to bind socket (%s)", strerror(errno));
-    close(_socketfd);
-    _socketfd = -1;
+    close(_socket);
+    _socket = -1;
     return false;
   }
 
@@ -123,14 +129,14 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   strncpy(_peeraddr.sun_path, _peername.c_str(), sizeof(_peeraddr.sun_path));
   _peeraddr_len = (socklen_t) SUN_LEN(&_peeraddr);
 
-  if (connect(_socketfd, (struct sockaddr *) &_peeraddr, _peeraddr_len) != 0) {
+  if (connect(_socket, (struct sockaddr *) &_peeraddr, _peeraddr_len) != 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to connect to %s (%s)", peername.c_str(),  strerror(errno));
-    close(_socketfd);
-    _socketfd = -1;
+    close(_socket);
+    _socket = -1;
     return false;
   }
 
-  LOG_DEBUG("LocalUdpClient.Connect", "Connect from %s to %s on %d", sockname.c_str(), peername.c_str(), _socketfd);
+  LOG_DEBUG("LocalUdpClient.Connect", "Connect from %s to %s on %d", sockname.c_str(), peername.c_str(), _socket);
 
   // Send connection packet (i.e. something so that the server adds us to the client list)
   Send(LocalUdpServer::kConnectionPacket, sizeof(LocalUdpServer::kConnectionPacket));
@@ -140,29 +146,29 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
 
 bool LocalUdpClient::Disconnect()
 {
-  if (_socketfd > -1) {
-    if (close(_socketfd) < 0) {
-      LOG_ERROR("LocalUdpClient.Disconnect", "Error closing socket %d (%s)", _socketfd, strerror(errno));
+  if (_socket > -1) {
+    if (close(_socket) < 0) {
+      LOG_ERROR("LocalUdpClient.Disconnect", "Error closing socket %d (%s)", _socket, strerror(errno));
     };
-    LOG_DEBUG("LocalUdpClient.Disconnect", "Disconnected %d", _socketfd);
-    _socketfd = -1;
+    LOG_DEBUG("LocalUdpClient.Disconnect", "Disconnected %d", _socket);
+    _socket = -1;
   }
   return true;
 }
 
 ssize_t LocalUdpClient::Send(const char* data, size_t size)
 {
-  if (_socketfd < 0) {
+  if (_socket < 0) {
     LOG_ERROR("LocalUdpClient.Send", "Socket undefined, skipping send");
     return 0;
   }
 
   //LOG_DEBUG("LocalUdpClient.Send", "Sending %zu bytes", size);
 
-  const ssize_t bytes_sent = send(_socketfd, data, size, 0);
+  const ssize_t bytes_sent = send(_socket, data, size, 0);
 
   if (bytes_sent != size) {
-    LOG_ERROR("LocalUdpClient.Send", "Send error on %d, disconnecting (%s)", _socketfd, strerror(errno));
+    LOG_ERROR("LocalUdpClient.Send", "Send error on %d, disconnecting (%s)", _socket, strerror(errno));
     Disconnect();
     return -1;
   }
@@ -174,19 +180,19 @@ ssize_t LocalUdpClient::Recv(char* data, size_t maxSize)
 {
   assert(data != NULL);
 
-  if (_socketfd < 0) {
+  if (_socket < 0) {
     LOG_ERROR("LocalUdpClient.Recv", "Socket undefined, skipping recv");
     return 0;
   }
 
-  const ssize_t bytes_received = recv(_socketfd, data, maxSize, 0);
+  const ssize_t bytes_received = recv(_socket, data, maxSize, 0);
 
   if (bytes_received <= 0) {
     if (errno == EWOULDBLOCK) {
       //LOG_DEBUG("LocalUdpClient.Recv", "No data available");
       return 0;
     } else {
-      LOG_ERROR("LocalUdpClient.Recv", "Receive error on %d, dropping connection (%s)", _socketfd, strerror(errno));
+      LOG_ERROR("LocalUdpClient.Recv", "Receive error on %d, dropping connection (%s)", _socket, strerror(errno));
       Disconnect();
       return -1;
     }
