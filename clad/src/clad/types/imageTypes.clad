@@ -1,24 +1,11 @@
 /** Clad message definitions for the messages sent from the WiFi to the engine.
  */
 
+#include "clad/types/imageFormats.clad"
 
 namespace Anki {
 namespace Vector {
 
-enum uint_8 ImageEncoding
-{
-  NoneImageEncoding,
-  RawGray, // no compression
-  RawRGB,  // no compression, just [RGBRGBRG...]
-  YUYV,
-  YUV420sp,
-  BAYER,
-  JPEGGray,
-  JPEGColor,
-  JPEGColorHalfWidth,
-  JPEGMinimizedGray, // Minimized grayscale JPEG - no header, no footer, no byte stuffing
-  JPEGMinimizedColor // Minimized grayscale JPEG - no header, no footer, no byte stuffing, with added color data
-}
 
 enum uint_8 ImageSendMode {
     Off,
@@ -37,7 +24,7 @@ message ImageChunk {
   uint_32         imageId,
   uint_16         width,
   uint_16         height,
-  ImageEncoding   imageEncoding,
+  Anki::Vision::ImageEncoding imageEncoding,
   uint_8          displayIndex,
   uint_8          imageChunkCount,
   uint_8          chunkId,

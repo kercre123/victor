@@ -16,6 +16,7 @@
 #include "clad/types/emotionTypes.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
+#include "clad/types/imageFormats.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/ledTypes.clad"
@@ -422,7 +423,7 @@ message LoadFaceAlbumFromFile {
 }
 
 message SetCameraCaptureFormat {
-  ImageEncoding format,
+  Anki::Vision::ImageEncoding format,
   bool enableSensorRes=0
 }
 

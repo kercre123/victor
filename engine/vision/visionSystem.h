@@ -34,6 +34,7 @@
 #include "engine/vision/cameraCalibrator.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
+#include "engine/vision/visionSystemInput.h"
 
 #include "coretech/common/engine/matlabInterface.h"
 #include "coretech/common/engine/robotTimeStamp.h"
@@ -98,17 +99,19 @@ namespace Vector {
     Vision::CameraParams cameraParams;
     u8 imageMean;
 
-    std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
-    std::list<Vision::ObservedMarker>                           observedMarkers;
-    std::list<Vision::TrackedFace>                              faces;
-    std::list<Vision::TrackedPet>                               pets;
-    std::list<OverheadEdgeFrame>                                overheadEdges;
-    std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
-    std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
-    std::list<Vision::CameraCalibration>                        cameraCalibration;
-    std::list<OverheadEdgeFrame>                                visualObstacles;
-    std::list<Vision::SalientPoint>                             salientPoints;
-    ExternalInterface::RobotObservedIllumination                illumination;
+    std::list<ExternalInterface::RobotObservedMotion>     observedMotions;
+    std::list<Vision::ObservedMarker>                     observedMarkers;
+    std::list<Vision::TrackedFace>                        faces;
+    std::list<Vision::TrackedPet>                         pets;
+    std::list<OverheadEdgeFrame>                          overheadEdges;
+    std::list<Vision::UpdatedFaceID>                      updatedFaceIDs;
+    std::list<ExternalInterface::RobotObservedLaserPoint> laserPoints;
+    std::list<Vision::CameraCalibration>                  cameraCalibration;
+    std::list<OverheadEdgeFrame>                          visualObstacles;
+    std::list<Vision::SalientPoint>                       salientPoints;
+    ExternalInterface::RobotObservedIllumination          illumination;
+
+    Vision::ImageRGB displayImg;
 
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
@@ -138,14 +141,10 @@ namespace Vector {
     Result PopModeSchedule();
     
     // This is main Update() call to be called in a loop from above.
-    Result Update(const VisionPoseData&      robotState,
-                  Vision::ImageCache&        imageCache);
+    Result Update(const VisionPoseData& robotState,
+                  Vision::ImageCache& imageCache);
     
-    // Reset an ImageCache with the new image, with specified scale factor from full sensor resolution
-    Result Update(const VisionPoseData&      robotState,
-                  const Vision::ImageRGB&    image,
-                  const f32                  fullScaleFactor,
-                  const Vision::ResizeMethod fullScaleMethod);
+    Result Update(const VisionSystemInput& input);
     
     // Wrappers for camera calibration
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI) { return _cameraCalibrator->AddCalibrationImage(calibImg, targetROI); }

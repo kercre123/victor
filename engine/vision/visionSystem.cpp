@@ -99,6 +99,8 @@ CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
 
 CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
 
+CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
+  
 #if REMOTE_CONSOLE_ENABLED
 // If non-zero, toggles the corresponding VisionMode and sets back to 0
 CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
@@ -1042,12 +1044,14 @@ std::string VisionSystem::GetModeName(Util::BitFlags32<VisionMode> mode) const
   {
     if (mode.IsBitFlagSet(modeIter))
     {
-      if(!retStr.empty()) {
+      if(!retStr.empty())
+      {
         retStr += "+";
       }
       retStr += EnumToString(modeIter);
     }
   }
+  
   return retStr;
   
 } // GetModeName()
@@ -1065,7 +1069,6 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
 {
   const Vision::ImageCache::Size whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
                                                                 Vision::ResizeMethod::Linear);
-  const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
   
   switch(useCLAHE)
   {
@@ -1084,6 +1087,8 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
       
     case MarkerDetectionCLAHE::WhenDark:
     {
+      const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
+        
       // Use CLAHE on the current image if it is dark enough
       static const s32 subSample = 3;
       const s32 numRows = inputImageGray.GetNumRows();
@@ -1138,7 +1143,9 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
     _clahe->setClipLimit(kClaheClipLimit);
     _lastClaheClipLimit = kClaheClipLimit;
   }
-  
+
+  const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
+    
   Tic("CLAHE");
   _clahe->apply(inputImageGray.get_CvMat_(), claheImage.get_CvMat_());
   
@@ -1364,15 +1371,14 @@ void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::Update(const VisionPoseData&      poseData,
-                            const Vision::ImageRGB&    image,
-                            const f32                  fullScaleFactor,
-                            const Vision::ResizeMethod fullScaleMethod)
+Result VisionSystem::Update(const VisionSystemInput& input)
 {
-  _imageCache->Reset(image, fullScaleFactor, fullScaleMethod);
+  _imageCache->Reset(input.imageBuffer,
+                     input.resizeMethod);
   
-  return Update(poseData, *_imageCache);
+  return Update(input.poseData, *_imageCache);
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This is the regular Update() call
@@ -1742,6 +1748,22 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
 
+  if(ShouldProcessVisionMode(VisionMode::ImageViz))
+  {
+    _currentResult.displayImg = imageCache.GetRGB();
+    visionModesProcessed.SetBitFlag(VisionMode::ImageViz, true);
+  }
+
+  if(kDisplayUndistortedImages)
+  {
+    Vision::ImageRGB img = imageCache.GetRGB();
+    Vision::ImageRGB imgUndistorted(img.GetNumRows(),img.GetNumCols());
+    DEV_ASSERT(_camera.IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
+    img.Undistort(*_camera.GetCalibration(), imgUndistorted);
+    _currentResult.debugImageRGBs.push_back({"undistorted", imgUndistorted});
+  }
+
+  
   // We've computed everything from this image that we're gonna compute.
   // Push it onto the queue of results all together.
   _mutex.lock();
