@@ -78,11 +78,8 @@ namespace Vision {
     const Feature& GetFeature(FeatureName whichFeature) const;
     void  ClearFature(FeatureName whichFeature);
 
-    // These methods will shift the detected features and rectangles.
-    // They are intended for use when we are cropping the image during
-    // face detection.
-    void HorizontallyShiftFeatures(const s32 horizontalShift);
-    void HorizontallyShiftRect(const s32 horizontalShift);
+    // Shift both the detection rectangle and features
+    void Shift(const Point2f shift);
     
     void AddPointToFeature(FeatureName whichFeature, Point2f&& point);
     void SetFeature(FeatureName whichFeature, Feature&& points);

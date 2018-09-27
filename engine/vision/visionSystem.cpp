@@ -99,8 +99,8 @@ CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
 
 CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
 
-// The percentage the width of the image will be cropped
-CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 1.f / 3.f, 0.f, 1.f);
+// The percentage of the width of the image that will remain after cropping
+CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 2.f / 3.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
   
@@ -871,7 +871,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
 {
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
  
-  const Vision::Image& grayImage = imageCache.GetGray();
+  Vision::Image grayImage;
 
   /*
   // Periodic printouts of face tracker timings
@@ -907,49 +907,35 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
   if (useCropping)
   {
     // Crop the original frame
-    const s32 origWidth = grayImage.GetNumCols();
-    const s32 origHeight = grayImage.GetNumRows();
+    const s32 origWidth = imageCache.GetGray().GetNumCols();
+    const s32 origHeight = imageCache.GetGray().GetNumRows();
     // Divide the crop fraction equally between both sides of the image
-    horizontalOffset = origWidth * (kFaceTrackingCropWidthFraction / 2.f);
-    Vision::Image croppedGrayImage;
+    horizontalOffset = origWidth * ((1.f - kFaceTrackingCropWidthFraction) / 2.f);
     Rectangle<s32> roiRect(horizontalOffset, 0, origWidth - horizontalOffset, origHeight);
-    grayImage.GetROI(roiRect).CopyTo(croppedGrayImage);
-
-    if(!detectionRects.empty())
-    {
-      // Black out previous detections so we don't find faces in them
-      Vision::Image maskedImage = BlackOutRects(croppedGrayImage, detectionRects);
-      
-  #     if DEBUG_FACE_DETECTION
-      //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
-  #     endif
-      
-      _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-    }
-    else
-    {
-      // Nothing already detected, so nothing to black out before looking for faces
-      _faceTracker->Update(croppedGrayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-    }
+    imageCache.GetGray().GetROI(roiRect).CopyTo(grayImage);
   }
   else
   {
-    if(!detectionRects.empty())
-    {
-      // Black out previous detections so we don't find faces in them
-      Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
-      
-  #     if DEBUG_FACE_DETECTION
-      //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
-  #     endif
-      
-      _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-    }
-    else
-    {
-      // Nothing already detected, so nothing to black out before looking for faces
-      _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-    }
+    // There is no copy here, grayImage just shared data pointer
+    // with the image in the cache
+     grayImage = imageCache.GetGray();
+  }
+
+  if(!detectionRects.empty())
+  {
+    // Black out previous detections so we don't find faces in them
+    Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
+    
+#     if DEBUG_FACE_DETECTION
+    //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
+#     endif
+    
+    _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+  }
+  else
+  {
+    // Nothing already detected, so nothing to black out before looking for faces
+    _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
   }
   
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
@@ -961,8 +947,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     if (useCropping)
     {
       // Apply horizontal shift to detection rectangle and features to correct for cropping
-      faceIter->HorizontallyShiftRect(horizontalOffset);
-      faceIter->HorizontallyShiftFeatures(horizontalOffset);
+      faceIter->Shift(Point2f(horizontalOffset, 0));
     }
 
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),

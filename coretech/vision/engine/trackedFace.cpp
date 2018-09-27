@@ -59,20 +59,16 @@ namespace Vision {
     _expression[expressionIndex] = newValue;
   }
 
-  void TrackedFace::HorizontallyShiftFeatures(const s32 horizontalShift)
+  void TrackedFace::Shift(const Point2f shift)
   {
     for (auto& feature: _features)
     {
       for (auto& point: feature) 
       {
-        point.x() += horizontalShift;
+        point += shift;
       }
     }
-  }
-
-  void TrackedFace::HorizontallyShiftRect(const s32 horizontalShift)
-  {
-    _rect = Rectangle<f32>(_rect.GetX() + horizontalShift, _rect.GetY(),
+    _rect = Rectangle<f32>(_rect.GetX() + shift.x(), _rect.GetY() + shift.y(),
                            _rect.GetWidth(), _rect.GetHeight());
   }
 } // namespace Vision
