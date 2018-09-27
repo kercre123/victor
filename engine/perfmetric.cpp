@@ -20,10 +20,12 @@
 #include "engine/cozmoContext.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
+#include "osState/osState.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/stats/statsAccumulator.h"
@@ -170,21 +172,28 @@ void PerfMetric::Update(const float tickDuration_ms,
     frame._tickSleepIntended_ms = sleepDurationIntended_ms;
     frame._tickSleepActual_ms   = sleepDurationActual_ms;
 
-    const auto MsgHandler = _context->GetRobotManager()->GetMsgHandler();
-    frame._messageCountRtE = MsgHandler->GetMessageCountRtE();
-    frame._messageCountEtR = MsgHandler->GetMessageCountEtR();
+    const auto msgHandler = _context->GetRobotManager()->GetMsgHandler();
+    frame._messageCountRtE = msgHandler->GetMessageCountRtE();
+    frame._messageCountEtR = msgHandler->GetMessageCountEtR();
 
     const auto UIMsgHandler = _context->GetExternalInterface();
     frame._messageCountGtE = UIMsgHandler->GetMessageCountGtE();
     frame._messageCountEtG = UIMsgHandler->GetMessageCountEtG();
 
-    const auto VizManager = _context->GetVizManager();
-    frame._messageCountViz = VizManager->GetMessageCountViz();
+    const auto vizManager = _context->GetVizManager();
+    frame._messageCountViz = vizManager->GetMessageCountViz();
+
+    const auto gateway = _context->GetGatewayInterface();
+    frame._messageCountGatewayToE = gateway->GetMessageCountIncoming();
+    frame._messageCountEToGateway = gateway->GetMessageCountOutgoing();
 
     Robot* robot = _context->GetRobotManager()->GetRobot();
 
     frame._batteryVoltage = robot == nullptr ? 0.0f : robot->GetBatteryComponent().GetBatteryVolts();
-    
+
+    const auto& osState = OSState::getInstance();
+    frame._cpuFreq_kHz = osState->GetCPUFreq_kHz();
+
     if (robot != nullptr)
     {
       const auto& bc = robot->GetAIComponent().GetComponent<BehaviorComponent>();
@@ -283,8 +292,11 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   Util::Stats::StatsAccumulator accMessageCountEtR;
   Util::Stats::StatsAccumulator accMessageCountGtE;
   Util::Stats::StatsAccumulator accMessageCountEtG;
+  Util::Stats::StatsAccumulator accMessageCountGatewayToE;
+  Util::Stats::StatsAccumulator accMessageCountEToGateway;
   Util::Stats::StatsAccumulator accMessageCountViz;
   Util::Stats::StatsAccumulator accBatteryVoltage;
+  Util::Stats::StatsAccumulator accCPUFreq;
 
   if (dumpAll)
   {
@@ -307,11 +319,14 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
     accMessageCountEtR += frame._messageCountEtR;
     accMessageCountGtE += frame._messageCountGtE;
     accMessageCountEtG += frame._messageCountEtG;
+    accMessageCountGatewayToE += frame._messageCountGatewayToE;
+    accMessageCountEToGateway += frame._messageCountEToGateway;
     accMessageCountViz += frame._messageCountViz;
     accBatteryVoltage  += frame._batteryVoltage;
+    accCPUFreq         += frame._cpuFreq_kHz;
 
-    static const std::string kFormatLineText = "%5i %8.3f %8.3f %8.3f %8.3f %8.3f    %5i %5i %5i %5i %5i %8.3f  %s  %s";
-    static const std::string kFormatLineCSVText = "%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5i,%5i,%5i,%5i,%5i,%8.3f,%s,%s";
+    static const std::string kFormatLineText = "%5i %8.3f %8.3f %8.3f %8.3f %8.3f    %5i %5i %5i %5i %5i %5i %5i %8.3f %6i  %s  %s";
+    static const std::string kFormatLineCSVText = "%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5i,%5i,%5i,%5i,%5i,%5i,%5i,%8.3f,%6i,%s,%s";
 
 #define LINE_DATA_VARS \
     frameIndex, frame._tickExecution_ms, frame._tickTotal_ms,\
@@ -319,8 +334,9 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
     tickSleepOver_ms,\
     frame._messageCountRtE, frame._messageCountEtR,\
     frame._messageCountGtE, frame._messageCountEtG,\
+    frame._messageCountGatewayToE, frame._messageCountEToGateway,\
     frame._messageCountViz,\
-    frame._batteryVoltage, EnumToString(frame._activeFeature),\
+    frame._batteryVoltage, frame._cpuFreq_kHz, EnumToString(frame._activeFeature),\
     frame._behavior
 
     if (dumpAll)
@@ -416,28 +432,26 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   static const bool kShowBehaviorHeading = false;
   DumpHeading(dumpType, kShowBehaviorHeading, fd, resultStr);
 
-  static const std::string kSummaryLineFormat = " %8.3f %8.3f %8.3f %8.3f %8.3f    %5.1f %5.1f %5.1f %5.1f %5.1f %8.3f\n";
-  static const std::string kSummaryLineCSVFormat = ",%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%8.3f\n";
+  static const std::string kSummaryLineFormat = " %8.3f %8.3f %8.3f %8.3f %8.3f    %5.1f %5.1f %5.1f %5.1f %5.1f %5.1f %5.1f %8.3f %6.0f\n";
+  static const std::string kSummaryLineCSVFormat = ",%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%8.3f,%6.0f\n";
 
 #define SUMMARY_LINE_VARS(StatCall)\
   accTickDuration.StatCall(), accTickTotal.StatCall(),\
   accSleepIntended.StatCall(), accSleepActual.StatCall(), accSleepOver.StatCall(),\
   accMessageCountRtE.StatCall(), accMessageCountEtR.StatCall(),\
-  accMessageCountGtE.StatCall(), accMessageCountEtG.StatCall(), accMessageCountViz.StatCall(),\
-  accBatteryVoltage.StatCall()
+  accMessageCountGtE.StatCall(), accMessageCountEtG.StatCall(),\
+  accMessageCountGatewayToE.StatCall(), accMessageCountEToGateway.StatCall(),\
+  accMessageCountViz.StatCall(),\
+  accBatteryVoltage.StatCall(), accCPUFreq.StatCall()
 
   switch (dumpType)
   {
     case DT_LOG:
       {
-        LOG_INFO("PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetMin));
-        LOG_INFO("PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetMax));
-        LOG_INFO("PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetMean));
-        LOG_INFO("PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(),
-                      SUMMARY_LINE_VARS(GetStd));
+        LOG_INFO("PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMin));
+        LOG_INFO("PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMax));
+        LOG_INFO("PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMean));
+        LOG_INFO("PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetStd));
       }
       break;
     case DT_RESPONSE_STRING:  // Intentional fall-through
@@ -528,11 +542,11 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
 void PerfMetric::DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
                              FILE* fd, std::string* resultStr) const
 {
-  static const char* kHeading1 = "        Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery";
-  static const char* kHeading2 = "      Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count  Voltage";
+  static const char* kHeading1 = "        Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG  GWtE  EtGW   Viz  Battery    CPU";
+  static const char* kHeading2 = "      Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count Count Count  Voltage   Freq";
   static const char* kHeading3 = "  Active Feature/Behavior";
-  static const char* kHeadingCSV1 = ",Engine,Engine,Sleep,Sleep,Over,RtE,EtR,GtE,EtG,Viz,Battery";
-  static const char* kHeadingCSV2 = ",Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Voltage";
+  static const char* kHeadingCSV1 = ",Engine,Engine,Sleep,Sleep,Over,RtE,EtR,GtE,EtG,GWtE,EtGW,Viz,Battery,CPU";
+  static const char* kHeadingCSV2 = ",Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Count,Count,Voltage,Freq";
   static const char* kHeadingCSV3 = ",Active Feature,Behavior";
 
   switch (dumpType)

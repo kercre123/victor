@@ -86,15 +86,18 @@ private:
     uint32_t _messageCountGtE;
     uint32_t _messageCountEtG;
     uint32_t _messageCountViz;
+    uint32_t _messageCountGatewayToE;
+    uint32_t _messageCountEToGateway;
 
     float _batteryVoltage;
+    uint32_t _cpuFreq_kHz;
 
     ActiveFeature    _activeFeature;
     static const int kBehaviorStringMaxSize = 32;
     char _behavior[kBehaviorStringMaxSize]; // Some description of what Victor is doing
   };
 
-  static const int kNumFramesInBuffer = 5000;
+  static const int kNumFramesInBuffer = 4000;
 
   FrameMetric*        _frameBuffer = nullptr;
   int                 _nextFrameIndex = 0;

@@ -510,13 +510,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       // Now connected
       LOG_INFO("CozmoEngine.Update.ConnectingToRobot", "Now connected to robot");
       SetEngineState(EngineState::Running);
-
-      // In general, with PerfMetric's 'auto record', we are not interested in frames until we are fully running
-      const auto pm = _context->GetPerfMetric();
-      if (pm->GetAutoRecord())
-      {
-        pm->Start();
-      }
       break;
     }
     case EngineState::Running:
