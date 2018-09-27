@@ -1831,12 +1831,24 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::UpdateFaceTime(const Face* newFace)
+{
+  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceTime.NullNewFace");
+  // These are supposed to be the same face (otherwise we should not have got here)
+  // only update the face last seen if it's newer than the one we just saw
+  const auto newFaceTimeStamp = newFace->GetTimeStamp();
+  if(newFaceTimeStamp > _dVars->lastFaceSeenTime_ms)
+  {
+    _dVars->lastFaceSeenTime_ms = newFaceTimeStamp;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 {
   DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
   _dVars->faceID = newFace->GetID();
-  _dVars->lastFaceSeenTime_ms = newFace->GetTimeStamp();
-
+  UpdateFaceTime(newFace);
   _dVars->observedUnusableName.clear();
   _dVars->observedUnusableID = Vision::UnknownFaceID;
 }
@@ -1965,16 +1977,39 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       // We just checked that _faceID *wasn't* seen!
       DEV_ASSERT(faceID != _dVars->faceID, "BehaviorEnrollFace.UpdateFaceToEnroll.UnexpectedFaceID");
 
+      const Face* newFace = GetBEI().GetFaceWorld().GetFace(faceID);
+
+      // We can only switch to this observed faceID if it is unnamed, _unless_
+      // it matches the saveID.
+      // - for new enrollments we can't enroll an already-named face (that's a re-enrollment, by definition)
+      // - for re-enrollment, a face with a name must be the one we are re-enrolling
+      // - if the name matches the face ID, then the faceID matches too and we wouldn't even
+      //   be considering this observation because there's no ID change
+      const bool canUseObservedFace = !newFace->HasName() || (faceID == _dVars->saveID);
+
       // We only care about this observed face if it is not for a "tracked" face
       // (one with negative ID, which we never want to try to enroll)
       if(faceID <= 0)
       {
+        // Check if current face seems like it might be our face based on it's pose. If it is
+        // update the last time we saw the face before continuing, but not the face ID.
+        // The face ID update based on pose occurs below, and specifically doesn't apply
+        // face ID's less than zero (not recognized).
+        if(canUseObservedFace && enrollmentIDisSet)
+        {
+          if (MatchesBasedOnPose(_dVars->faceID, newFace))
+          {
+            PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.UpdatingFaceTimebyPose",
+                          "Was enrolling ID=%d, using face ID=%d to update time to %d",
+                          _dVars->faceID, newFace->GetID(), newFace->GetTimeStamp());
+            UpdateFaceTime(newFace);
+          }
+        }
         PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.SkipTrackedFace",
                        "Skipping tracking-only ID:%d", faceID);
         continue;
       }
 
-      const Face* newFace = GetBEI().GetFaceWorld().GetFace(faceID);
       if(nullptr == newFace)
       {
         PRINT_NAMED_WARNING("BehaviorEnrollFace.UpdateFaceToEnroll.NullFace",
@@ -1989,27 +2024,13 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
       _dVars->observedUnusableID   = faceID;
       _dVars->observedUnusableName = newFace->GetName();
 
-      // We can only switch to this observed faceID if it is unnamed, _unless_
-      // it matches the saveID.
-      // - for new enrollments we can't enroll an already-named face (that's a re-enrollment, by definition)
-      // - for re-enrollment, a face with a name must be the one we are re-enrolling
-      // - if the name matches the face ID, then the faceID matches too and we wouldn't even
-      //   be considering this observation because there's no ID change
-      const bool canUseObservedFace = !newFace->HasName() || (faceID == _dVars->saveID);
 
       if(canUseObservedFace)
       {
         if(enrollmentIDisSet)
         {
-          // Face ID is already set but we didn't see it and instead we're seeing a face
-          // with a different ID. See if it matches the pose of the one we were already enrolling.
 
-          auto currentFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
-
-          if(nullptr != currentFace && nullptr != newFace &&
-             newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
-                                             kEnrollFace_UpdateFacePositionThreshold_mm,
-                                             DEG_TO_RAD(kEnrollFace_UpdateFaceAngleThreshold_deg)))
+          if (MatchesBasedOnPose(_dVars->faceID, newFace))
           {
             PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.UpdatingFaceIDbyPose",
                           "Was enrolling ID=%d, changing to unnamed ID=%d based on pose (saveID=%d)",
@@ -2201,6 +2222,19 @@ void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
                         "Received unexpected GameToEngine tag %s",
                         MessageGameToEngineTagToString(event.GetData().GetTag()));
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEnrollFace::MatchesBasedOnPose(const FaceID_t currentFaceID, const Face* newFace)
+{
+  // Face ID is already set but we didn't see it and instead we're seeing a face
+  // with a different ID. See if it matches the pose of the one we were already enrolling.
+  auto currentFace = GetBEI().GetFaceWorld().GetFace(currentFaceID);
+
+  return (nullptr != currentFace && nullptr != newFace &&
+          newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
+                                          kEnrollFace_UpdateFacePositionThreshold_mm,
+                                          DEG_TO_RAD(kEnrollFace_UpdateFaceAngleThreshold_deg)));
 }
 
 } // namespace Vector
