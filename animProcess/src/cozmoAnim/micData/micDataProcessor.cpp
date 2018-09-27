@@ -121,6 +121,8 @@ namespace {
 
 #endif // ANKI_DEV_CHEATS
 
+  CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, false);
+  
 # undef CONSOLE_GROUP
   using MicProcessingState = MicDataProcessor::ProcessingState;
   const MicProcessingState kLowPowerModeProcessingState = MicProcessingState::NoProcessingSingleMic;
@@ -290,7 +292,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                     (TimeStamp_t)mostRecentTimestamp);
 }
 
-RobotTimeStamp_t MicDataProcessor::CreateSteamJob(CloudMic::StreamType streamType,
+RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamType,
                                                   uint32_t overlapLength_ms)
 {
   // Setup Job
@@ -328,7 +330,7 @@ RobotTimeStamp_t MicDataProcessor::CreateSteamJob(CloudMic::StreamType streamTyp
   // only capture that in-between time, and push it into the streaming job for intent matching
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
-             "MicDataProcessor.CreateSteamJob.AudioProcIdx");
+             "MicDataProcessor.CreateStreamJob.AudioProcIdx");
   
   if (overlapLength_ms > 0) {
     const auto overlapCount = overlapLength_ms / kTimePerSEBlock_ms;
@@ -364,7 +366,7 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
   if (showStreamState->ShouldStreamAfterTriggerWordResponse())
   {
     // First we create the job responsible for streaming the intent after the trigger
-    mostRecentTimestamp = CreateSteamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
+    mostRecentTimestamp = CreateStreamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
   } else {
     PRINT_NAMED_INFO("MicDataProcessor.CreateTriggerWordDetectedJobs.NoStreaming", "Not adding streaming jobs because disabled");
   }
@@ -448,18 +450,6 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
   if (!_inProcessAudioBlockFirstHalf)
   {
-    {
-      ANKI_CPU_PROFILE("BeatDetectorAddSamples");
-      // For beat detection, we only need a single channel of audio. Use the
-      // first quarter of the un-interleaved audio block
-      const bool beatDetected = _beatDetector->AddSamples(_inProcessAudioBlock.data(), kSamplesPerBlock);
-      if (beatDetected) {
-        auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
-        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
-        _micDataSystem->SendMessageToEngine(std::move(engineMessage));
-      }
-    }
-    
     TimedMicData* nextSampleSpot = nullptr;
     {
       // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
@@ -496,6 +486,11 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
       robotStatus,
       robotAngle);
 
+    // Feed the samples to the beat detector. Optionally either use a raw single channel (the first quarter of the
+    // un-interleaved audio block) or the processed audio block
+    auto* audioSource = kBeatDetectorUseProcessedAudio ? nextSample.audioBlock.data() : _inProcessAudioBlock.data();
+    UpdateBeatDetector(audioSource, kSamplesPerBlock);
+    
     // Now we're done filling out this slot, update the count so it can be consumed
     {
       std::lock_guard<std::mutex> lock(_procAudioXferMutex);
@@ -870,6 +865,29 @@ void MicDataProcessor::ProcessTriggerLoop()
       --_procAudioXferCount;
     }
     _xferAvailableCondition.notify_all();
+  }
+}
+  
+void MicDataProcessor::UpdateBeatDetector(const AudioUtil::AudioSample* const samples, const uint32_t nSamples)
+{
+  ANKI_CPU_PROFILE("BeatDetectorUpdate");
+
+  // Only run the beat detector if we are not in low power mode
+  if (_isInLowPowerMode) {
+    if (_beatDetector->IsRunning()) {
+      _beatDetector->Stop();
+    }
+  } else {
+    if (!_beatDetector->IsRunning()) {
+      _beatDetector->Start();
+    }
+    
+    const bool beatDetected = _beatDetector->AddSamples(samples, nSamples);
+    if (beatDetected) {
+      auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
+      auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+      _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+    }
   }
 }
   

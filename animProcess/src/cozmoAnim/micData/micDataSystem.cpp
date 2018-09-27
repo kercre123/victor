@@ -161,7 +161,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
       // it would be highly unlikely that we started another streaming job while waiting for the earcon,
       // but doesn't hurt to check
       if (!HasStreamingJob()) {
-        _micDataProcessor->CreateSteamJob(type, kTriggerLessOverlapSize_ms);
+        _micDataProcessor->CreateStreamJob(type, kTriggerLessOverlapSize_ms);
         PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
                          "Starting Wake Wordless streaming");
       }
