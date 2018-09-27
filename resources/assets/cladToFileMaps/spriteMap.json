@@ -1,5 +1,9 @@
 [
   {
+    "CladEvent" : "Battery_Overheated",
+    "SpriteName" : "battery_overheated"
+  },
+  {
     "CladEvent" : "Blackjack_Player_Card_Back",
     "SpriteName" : "blackjack_player_card_back"
   },
@@ -478,6 +482,10 @@
   {
     "CladEvent" : "Empty_Sprite",
     "SpriteName" : "empty_sprite"
+  },
+  {
+    "CladEvent" : "Gyro_Not_Calibrated",
+    "SpriteName" : "gyro_not_calibrated"
   },
   {
     "CladEvent" : "Pairing_Icon_Key",

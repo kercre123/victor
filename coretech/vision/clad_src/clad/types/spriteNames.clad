@@ -6,6 +6,7 @@ namespace Vision {
 
 enum uint_8 SpriteName
 {
+  Battery_Overheated,
   Blackjack_Player_Card_Back,
   Blackjack_Player_Clubs10,
   Blackjack_Player_Clubs2,
@@ -126,6 +127,7 @@ enum uint_8 SpriteName
   Clock_Colon,
   Clock_Empty_Grid,
   Empty_Sprite,
+  Gyro_Not_Calibrated,
   Pairing_Icon_Key,
   Weather_Celsius_Indicator,
   Weather_Fahrenheit_Indicator,
@@ -202,6 +204,7 @@ enum uint_8 SpriteName
 }
 
 enum_concept bool IsSpriteSequence[SpriteName] {
+  Battery_Overheated = 0,
   Blackjack_Player_Card_Back = 0,
   Blackjack_Player_Clubs10 = 0,
   Blackjack_Player_Clubs2 = 0,
@@ -322,6 +325,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Clock_Colon = 0,
   Clock_Empty_Grid = 0,
   Empty_Sprite = 0,
+  Gyro_Not_Calibrated = 0,
   Pairing_Icon_Key = 0,
   Weather_Celsius_Indicator = 0,
   Weather_Fahrenheit_Indicator = 0,

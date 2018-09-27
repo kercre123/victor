@@ -82,10 +82,10 @@
           "maxBeats"    : 6,
           "multipleOf"  : 1,
           "anims" : [
-            "anim_dancebeat_headliftbody_left_med_01",
-            "anim_dancebeat_headliftbody_right_med_01",
-            "anim_dancebeat_headliftbody_fwd_01",
-            "anim_dancebeat_headliftbody_back_01"
+            "anim_dancebeat_pivot_left_01",
+            "anim_dancebeat_pivot_right_01",
+            "anim_dancebeat_scoot_left_01",
+            "anim_dancebeat_scoot_right_01"
           ]
         },
         {
@@ -123,8 +123,8 @@
       "playGetoutIfInterrupted": true,
       "dancePhrases" : [
         {
-          "minBeats"    : 10,
-          "maxBeats"    : 16,
+          "minBeats"    : 4,
+          "maxBeats"    : 6,
           "multipleOf"  : 1,
           "anims" : [
             "anim_dancebeat_headliftbody_left_med_01",
@@ -134,14 +134,34 @@
           ]
         },
         {
-          "minBeats"    : 10,
-          "maxBeats"    : 16,
+          "minBeats"    : 4,
+          "maxBeats"    : 8,
           "multipleOf"  : 1,
           "anims" : [
             "anim_dancebeat_headliftbody_left_large_01",
             "anim_dancebeat_headliftbody_right_large_01",
             "anim_dancebeat_headliftbody_fwd_01",
             "anim_dancebeat_headliftbody_back_01"
+          ]
+        },
+        {
+          "minBeats"    : 6,
+          "maxBeats"    : 8,
+          "multipleOf"  : 1,
+          "anims" : [
+            "anim_dancebeat_headliftbody_fwd_01",
+            "anim_dancebeat_headliftbody_back_01"
+          ]
+        },
+        {
+          "minBeats"    : 6,
+          "maxBeats"    : 8,
+          "multipleOf"  : 1,
+          "anims" : [
+            "anim_dancebeat_pivot_left_01",
+            "anim_dancebeat_pivot_right_01",
+            "anim_dancebeat_scoot_left_01",
+            "anim_dancebeat_scoot_right_01"
           ]
         }
       ]
