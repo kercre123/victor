@@ -513,9 +513,9 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
           PRINT_NAMED_INFO("UserIntentComponent.UpdatePendingIntent.GotError",
                            "Got cloud error message type %s",
                            CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ));
-          
+
           {
-            DASMSG( robot_cloud_response_failed, "robot.cloud_repsonse_failed", "Invalid response received from the cloud" );
+            DASMSG( robot_cloud_response_failed, "robot.cloud_response_failed", "Invalid response received from the cloud" );
             DASMSG_SET( s1, ErrorTypeToString( _pendingCloudIntent.Get_error().error ), "The error string" );
             DASMSG_SET( i1, (int)(_pendingCloudIntent.GetTag() == CloudMic::MessageTag::error), "Whether it was a timeout (0) or error (1) " );
             DASMSG_SEND();
