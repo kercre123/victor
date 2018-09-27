@@ -292,7 +292,7 @@ macro(anki_go_add_test_dir dir_name srclist_dir created_targets_var extra_deps)
 
   set(__gotest_added_targets "")
   foreach(i ${__gotest_packages})
-    anki_go_add_test(${i} ${srclist_dir} ${extra_deps})
+    anki_go_add_test(${i} ${srclist_dir} "${extra_deps}")
   endforeach(i)
   set(${created_targets_var} ${__gotest_added_targets})
 endmacro()
@@ -309,7 +309,7 @@ macro(anki_go_add_test package_name srclist_dir extra_deps)
 
   set(SRCS ${__gotest_deps})
   set(_ab_PLATFORM_SRCS "")
-  anki_build_go_test_exe(${package_name} "gotest_${__gotest_unslashed}" ${extra_deps})
+  anki_build_go_test_exe(${package_name} "gotest_${__gotest_unslashed}" "${extra_deps}")
   list(APPEND __gotest_added_targets "gotest_${__gotest_unslashed}")
 
 endmacro()
