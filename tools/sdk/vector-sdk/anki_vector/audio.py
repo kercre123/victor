@@ -63,7 +63,13 @@ class AudioComponent(util.Component):
         self._raw_audio_waveform_history = np.empty(0, dtype=np.int16)
         self._latest_sample_id = None
 
+        self._audio_processing_mode = None
+
         self._audio_feed_task: asyncio.Task = None
+
+        # Subscribe to callbacks related to objects
+        robot.events.subscribe("audio_send_mode_changed",
+                               self._on_audio_send_mode_changed_event)
 
     # @TODO: Implement audio history as ringbuffer, caching only recent audio
     # @TODO: Add function to return a recent chunk of the audio history in a standardized python audio package format
@@ -98,12 +104,22 @@ class AudioComponent(util.Component):
         """
         return self._latest_sample_id
 
+    @property
+    def audio_processing_mode(self) -> protocol.AudioProcessingMode:
+        """The current mode which the robot is processing audio.
+
+        .. code-block:: python
+            if robot.audio.audio_processing_mode != protocol.AUDIO_VOICE_DETECT_MODE:
+                raise Exception("Robot is no longer in voice detect mode")
+
+        :getter: Returns the most recently received audio processing mode on the robot
+        """
+        return self._audio_processing_mode
+
     def init_audio_feed(self) -> None:
         """Begin audio feed task"""
         if not self._audio_feed_task or self._audio_feed_task.done():
             self._audio_feed_task = self.robot.loop.create_task(self._request_and_handle_audio())
-
-    # @TODO: Add a way to query the current audio send mode, and a way to register as a listener for it changing.
 
     def close_audio_feed(self) -> None:
         """Cancel audio feed task"""
@@ -111,14 +127,22 @@ class AudioComponent(util.Component):
             self._audio_feed_task.cancel()
             self.robot.loop.run_until_complete(self._audio_feed_task)
 
+    def _on_audio_send_mode_changed_event(self, msg: protocol.AudioSendModeChanged) -> None:
+        """Callback for changes in the robot's audio processing mode"""
+        self._audio_processing_mode = msg.mode
+        self.logger.info('Audio processing mode changed to {0}'.format(self._audio_processing_mode))
+
     def _process_audio(self, msg: protocol.AudioFeedResponse) -> None:
         """Processes raw data from the robot into a more more useful image structure."""
-        audio_data = msg.data
+        audio_data = msg.signal_power
 
-        size = protocol.SAMPLE_COUNTS_PER_MESSAGE
+        expected_size = protocol.SAMPLE_COUNTS_PER_SDK_MESSAGE
+        received_size = int(len(audio_data) / 2)
+        if expected_size != received_size:
+            self.logger.warning('WARNING: audio stream received {0} bytes while {1} were expected'.format(received_size, expected_size))
 
         # Constuct numpy array out of source data
-        array = np.frombuffer(audio_data.signal_power, dtype=np.int16, count=size, offset=0)
+        array = np.frombuffer(audio_data, dtype=np.int16, count=received_size, offset=0)
 
         # Append to audio history
         self._raw_audio_waveform_history = np.append(self._raw_audio_waveform_history, array)

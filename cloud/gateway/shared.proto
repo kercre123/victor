@@ -189,6 +189,11 @@ message GatewayWrapper {
     CheckCloudRequest             check_cloud_request                = 160;
     CheckCloudResponse            check_cloud_response               = 161;
 
+    // ------------ Audio chunks sent from the animProcess ------------
+    AudioSendModeRequest          audio_send_mode_request            = 170;
+    AudioSendModeChanged          audio_send_mode_changed            = 171;
+    AudioChunk                    audio_chunk                        = 172;
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

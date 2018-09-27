@@ -67,6 +67,7 @@ private:
 
   std::vector<::Signal::SmartHandle> _signalHandles;
 
+  void OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void DispatchSDKActivationResult(bool enabled);
 };
 
