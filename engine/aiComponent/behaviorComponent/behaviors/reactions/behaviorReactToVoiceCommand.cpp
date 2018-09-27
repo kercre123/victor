@@ -343,6 +343,7 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
   {
     const auto& msg = event.GetData().Get_triggerWordDetected();
     _triggerDirection = msg.direction;
+    _isAlexa = msg.isAlexa;
     
     #if DEBUG_TRIGGER_WORD_VERBOSE
     {
@@ -487,7 +488,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 
       // we don't want to enter EState::Listening until we're in our loop or else
       // we could end up exiting too soon and looking like garbage
-      if( _iVars.exitAfterGetIn )
+      if( _iVars.exitAfterGetIn  )
       {
         OnVictorListeningEnd();
         CancelSelf();
@@ -827,7 +828,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     OnVictorListeningEnd();
 
     const bool streamingToCloud = _dVars.expectingStream;
-    if (!streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
+    if (!_isAlexa && !streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
       PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinkingCallback.NotStreaming",
                     "We are not streaming to the cloud currently, so no point in continuing with the behavior (since "
                     "we do not want to increment the error count, etc.). Playing the \"unheard\" anim then exiting");
@@ -1020,7 +1021,9 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
   }
   else {
     // not time to tell the user, just play the normal unheard animation
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
+    if( !_isAlexa ) {
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
+    }
   }
 }
 
@@ -1042,8 +1045,11 @@ double BehaviorReactToVoiceCommand::GetStreamingDuration() const
 double BehaviorReactToVoiceCommand::GetListeningTimeout() const
 {
   double timeout = 0.0;
+  if( _isAlexa ) {
+    return GetTimeActivated_s() + 15.0;
+  }
 
-  const bool errorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
+  const bool errorPending = !_isAlexa && GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
   const bool streamingHasBegun = ( _dVars.streamingBeginTime > 0.0 );
 
   if ( errorPending || !streamingHasBegun || !_dVars.expectingStream )

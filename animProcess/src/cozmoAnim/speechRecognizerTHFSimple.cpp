@@ -367,7 +367,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     {
       std::string foundString{foundStringRaw};
       std::replace(foundString.begin(), foundString.end(), '_', ' ');
-      PRINT_NAMED_WARNING("WHATNOW", "speechRecognizer HEY VECTOR from=%d, to=%d", from_ms, to_ms);
+      //PRINT_NAMED_WARNING("WHATNOW", "speechRecognizer HEY VECTOR from=%d, to=%d", from_ms, to_ms);
       DoCallback(foundString.c_str(), score, from_ms, to_ms);
       PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString.c_str());
     }

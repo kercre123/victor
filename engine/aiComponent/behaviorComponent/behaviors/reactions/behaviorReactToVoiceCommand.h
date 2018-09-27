@@ -51,6 +51,8 @@ public:
   void DisableTurnForTimestamp(EngineTimeStamp_t timestampToDisableFor){
     _dVars.timestampToDisableTurnFor = timestampToDisableFor;
   }
+  
+  bool _isAlexa = false;
 
 protected:
 

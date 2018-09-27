@@ -123,8 +123,11 @@ public:
   // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
   // sending any data to the cloud; this lasts for a set duration
   bool ShouldSimulateStreaming() const;
+  
+  void SetIsAlexa(bool isAlexa) { _isAlexa = isAlexa; }
 
 private:
+  bool _isAlexa;
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
   std::string _writeLocationDir = "";

@@ -130,6 +130,7 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
 , _writeLocationDir(writeLocation)
 , _triggerWordDataDir(triggerWordDataDir)
 , _recognizer(std::make_unique<SpeechRecognizerTHF>())
+, _recognizer_2(std::make_unique<SpeechRecognizerTHF>())
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
 , _micTriggerConfig(std::make_unique<MicTriggerConfig>())
 , _beatDetector(std::make_unique<BeatDetector>())
@@ -137,12 +138,17 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
   // Init Sensory processing. Note we don't add in a search trigger here, that happens later
   const std::string& pronunciationFileToUse = "";
   (void) _recognizer->Init(pronunciationFileToUse);
+  (void) _recognizer_2->Init(pronunciationFileToUse);
 
   // Set up the callback that creates the recording job when the trigger is detected
   auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
                                    this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+  auto triggerCallback2 = std::bind(&MicDataProcessor::TriggerWordVoiceCallback_2,
+                                   this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   _recognizer->SetCallback(triggerCallback);
+  _recognizer_2->SetCallback(triggerCallback2);
   _recognizer->Start();
+  _recognizer_2->Start();
 
   // Init the various SE processing
   MMIfInit(0, nullptr);
@@ -204,13 +210,16 @@ void MicDataProcessor::InitVAD()
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
   
-void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, float score, int from_ms, int to_ms)
+  void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
 {
-  PRINT_NAMED_WARNING("WHATNOW", "HEY VECTOR from=%d, to=%d", from_ms, to_ms);
-  if( _alexa   ) {
+  PRINT_NAMED_WARNING("WHATNOW", "TRIGGER WORD keyword=%s from=%d, to=%d", keyword.c_str(), from_ms, to_ms);
+  const bool isAlexa = keyword == "ALEXA";
+  if( _alexa && isAlexa ) {
     // todo: also pass what it is (vector or alexa)
     _alexa->TriggerWord(from_ms, to_ms);
   }
+  
+  
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
   if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
@@ -223,15 +232,18 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
 
+  _micDataSystem->SetIsAlexa(isAlexa);
   const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
                                !_micDataSystem->ShouldSimulateStreaming();
 
+  
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.direction = currentDirection;
   twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
   twDetectedMessage.triggerScore = (uint32_t) score;
   twDetectedMessage.willOpenStream = willStreamAudio;
+  twDetectedMessage.isAlexa = isAlexa;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
@@ -384,6 +396,7 @@ MicDataProcessor::~MicDataProcessor()
 
   MMIfDestroy();
   _recognizer->Stop();
+  _recognizer_2->Stop();
 }
 
 void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
@@ -833,11 +846,14 @@ void MicDataProcessor::ProcessTriggerLoop()
         ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
         _currentTriggerPaths = _nextTriggerPaths;
         _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+        _recognizer_2->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
         const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
         _recognizer->RemoveRecognitionData(singleSlotIndex);
+        _recognizer_2->RemoveRecognitionData(singleSlotIndex);
 
         if (_currentTriggerPaths.IsValid())
         {
+//          PRINT_NAMED_WARNING("WHATNOW", "trigger path _dataDir=%s _searchFile=%s _netFile=%s", _currentTriggerPaths._dataDir.c_str(), _currentTriggerPaths._searchFile.c_str(), _currentTriggerPaths._netFile.c_str()  )
           const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
                                                                           _currentTriggerPaths._dataDir,
                                                                           _currentTriggerPaths._netFile});
@@ -864,6 +880,35 @@ void MicDataProcessor::ProcessTriggerLoop()
                               "Failed to add speechRecognizer netFile: %s searchFile %s",
                               netFilePath.c_str(), searchFilePath.c_str());
           }
+          
+          // you must copy the "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b" directory into "hey_vector/alexa", then in alexa,
+          // replace anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18 and anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am
+          // with the alexa versions, keeping the same filename
+          const std::string& netFilePath2 = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+            "hey_vector/alexa", // it's under hey_vector bc that seems to get copied to robot
+            _currentTriggerPaths._netFile});
+          const std::string& searchFilePath2 = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+            "hey_vector/alexa",
+            _currentTriggerPaths._searchFile});
+          
+          const bool success2 = _recognizer_2->AddRecognitionDataFromFile(singleSlotIndex, netFilePath2, searchFilePath2,
+                                                                       isPhraseSpotted, allowsFollowUpRecog);
+          if (success2)
+          {
+            PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.SwitchTriggerSearch",
+                             "Switched speechRecognizer2 to netFile: %s searchFile %s",
+                             netFilePath2.c_str(), searchFilePath2.c_str());
+            
+            _recognizer_2->SetRecognizerIndex(singleSlotIndex);
+          }
+          else
+          {
+            _currentTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
+            _nextTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
+            PRINT_NAMED_ERROR("MicDataProcessor.ProcessTriggerLoop.FailedSwitchTriggerSearch",
+                              "Failed to add speechRecognizer2 netFile: %s searchFile %s",
+                              netFilePath2.c_str(), searchFilePath2.c_str());
+          }
         }
         else
         {
@@ -879,6 +924,7 @@ void MicDataProcessor::ProcessTriggerLoop()
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
       _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+      _recognizer_2->Update(processedAudio.data(), (unsigned int)processedAudio.size());
     }
 
     // Now we're done using this audio with the recognizer, so let it go

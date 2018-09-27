@@ -706,6 +706,9 @@ bool MicDataSystem::HasConnectionToCloud() const
   
 bool MicDataSystem::ShouldSimulateStreaming() const
 {
+  if( _isAlexa ) {
+    return true;
+  }
   if( _batteryLow ) {
     return true;
   } else {

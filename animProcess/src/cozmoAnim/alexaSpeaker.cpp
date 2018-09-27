@@ -255,6 +255,9 @@ bool   AlexaSpeaker::play (SourceId id)
  bool   AlexaSpeaker::stop (SourceId id)  {
   PRINT_NAMED_WARNING("WHATNOW", " speaker stop");
   
+   
+   // todo: actually stop audio
+   
   m_executor.submit([id, this]() {
     if( _state == State::Playing ) {
       _state = State::Stopping;

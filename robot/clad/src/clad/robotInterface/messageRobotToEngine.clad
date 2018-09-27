@@ -44,6 +44,7 @@ message TriggerWordDetected
   uint_16 direction,
   bool isButtonPress,
   bool willOpenStream,
+  bool isAlexa,
 }
 
 message MicDirection

@@ -117,6 +117,7 @@ private:
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
   std::unique_ptr<SpeechRecognizerTHF> _recognizer;
+  std::unique_ptr<SpeechRecognizerTHF> _recognizer_2;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
   uint32_t _vadCountdown = 0;
@@ -188,9 +189,14 @@ private:
   
   void InitVAD();
   
-  void TriggerWordVoiceCallback(const char* resultFound, float score, int from_ms, int to_ms) { TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score, from_ms, to_ms ); }
+  void TriggerWordVoiceCallback(const char* resultFound, float score, int from_ms, int to_ms) {
+    TriggerWordDetectCallback( TriggerWordDetectSource::Voice, "HEY_VECTOR", score, from_ms, to_ms );
+  }
+  void TriggerWordVoiceCallback_2(const char* resultFound, float score, int from_ms, int to_ms) {
+    TriggerWordDetectCallback( TriggerWordDetectSource::Voice, "ALEXA", score, from_ms, to_ms );
+  }
   
-  void TriggerWordDetectCallback(TriggerWordDetectSource source, float score, int from_ms, int to_ms);
+  void TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms);
   
   // Return 0 if the stream job can not be created
   RobotTimeStamp_t CreateTriggerWordDetectedJobs();
