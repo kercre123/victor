@@ -1667,7 +1667,7 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFacesCropped, EVisionUpdateFrequency::High } );
+  modifiers.visionModesForActiveScope->insert( { VisionMode::CroppedDetectingFaces, EVisionUpdateFrequency::High } );
   modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFaces, EVisionUpdateFrequency::High } );
 }
 

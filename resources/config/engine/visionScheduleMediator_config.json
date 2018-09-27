@@ -24,9 +24,7 @@
       "relativeCost" : 16
     },
     {
-      "mode"         : "DetectingFacesCropped",
-      // todo VIC-3774: Revert this back to (4,2,1,2) This is a temp solution to deal with the fact that when DetectingFaces is
-      // not High, weird stuff can happen with face timestamps and poses.
+      "mode"         : "CroppedDetectingFaces",
       "low"          : 1,
       "med"          : 1,
       "high"         : 1,

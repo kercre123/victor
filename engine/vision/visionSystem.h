@@ -328,16 +328,8 @@ namespace Vector {
 
     // Uses grayscale
     Result DetectFaces(Vision::ImageCache& imageCache,
-                       std::vector<Anki::Rectangle<s32>>& detectionRects);
-    Result DetectFacesCropped(Vision::ImageCache& imageCache,
-                              std::vector<Anki::Rectangle<s32>>& detectionRects);
-    Result DetectFacesCommon(const Vision::Image& grayImage,
-                             std::vector<Anki::Rectangle<s32>>& detectionRects);
-    Result PopulateCroppedFaceDetections(const Vision::Image& grayImage,
-                                         std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                         const u32 horizontalOffset);
-    Result PopulateFaceDetections(const Vision::Image& grayImage,
-                                  std::vector<Anki::Rectangle<s32>>& detectionRects);
+                       std::vector<Anki::Rectangle<s32>>& detectionRects,
+                       const bool useCropping);
     
     // Uses grayscale
     Result DetectPets(Vision::ImageCache& imageCache,

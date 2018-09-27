@@ -99,8 +99,8 @@ CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
 
 CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
 
-// The percentage each the image will be horizontally cropped
-CONSOLE_VAR_RANGED(f32, kFaceTrackingHorizontalCropRatio, "Vision.FaceDetection", 1.f / 6.f, 0.f, 1.f);
+// The percentage the width of the image will be cropped
+CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 1.f / 3.f, 0.f, 1.f);
 
 #if REMOTE_CONSOLE_ENABLED
 // If non-zero, toggles the corresponding VisionMode and sets back to 0
@@ -864,49 +864,13 @@ Vision::Image BlackOutRects(const Vision::Image& img, const std::vector<Anki::Re
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectFacesCropped(Vision::ImageCache& imageCache,
-                                        std::vector<Anki::Rectangle<s32>>& detectionRects)
-{
-  DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFacesCropped.NullFaceTracker");
-  const Vision::Image& grayImage = imageCache.GetGray();
-
-  // Crop the original frame
-  const u32 origWidth = grayImage.GetNumCols();
-  const u32 origHeight = grayImage.GetNumRows();
-  const u32 horizontalOffset = origWidth * kFaceTrackingHorizontalCropRatio;
-  Vision::Image croppedGrayImage;
-  Rectangle<s32> roiRect(horizontalOffset, 0.f, origWidth - horizontalOffset, origHeight);
-  grayImage.GetROI(roiRect).CopyTo(croppedGrayImage);
-
-  if (RESULT_OK != DetectFacesCommon(croppedGrayImage, detectionRects)) {
-    return RESULT_FAIL;
-  }
-  if (RESULT_OK != PopulateCroppedFaceDetections(croppedGrayImage, detectionRects, horizontalOffset)) {
-    return RESULT_FAIL;
-  }
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache,
-                                 std::vector<Anki::Rectangle<s32>>& detectionRects)
+Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Anki::Rectangle<s32>>& detectionRects,
+                                 const bool useCropping)
 {
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
+ 
   const Vision::Image& grayImage = imageCache.GetGray();
 
-  if (RESULT_OK != DetectFacesCommon(grayImage, detectionRects)) {
-    return RESULT_FAIL;
-  }
-  if (RESULT_OK != PopulateFaceDetections(grayImage, detectionRects)) {
-    return RESULT_FAIL;
-  }
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectFacesCommon(const Vision::Image& grayImage,
-                                     std::vector<Anki::Rectangle<s32>>& detectionRects)
-{
   /*
   // Periodic printouts of face tracker timings
   static TimeStamp_t lastProfilePrint = 0;
@@ -936,57 +900,67 @@ Result VisionSystem::DetectFacesCommon(const Vision::Image& grayImage,
                       "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
     _faceTracker->AccountForRobotMove();
   }
-  
-  if(!detectionRects.empty())
-  {
-    // Black out previous detections so we don't find faces in them
-    Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
-    
-#     if DEBUG_FACE_DETECTION
-    //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
-#     endif
-    
-    _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-  } else {
-    // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
-  }
-  return RESULT_OK;
-}
 
-Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& grayImage,
-                                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                                   const u32 horizontalOffset)
-{
+  s32 horizontalOffset = 0; 
+  if (useCropping)
+  {
+    // Crop the original frame
+    const s32 origWidth = grayImage.GetNumCols();
+    const s32 origHeight = grayImage.GetNumRows();
+    // Divide the crop fraction equally between both sides of the image
+    horizontalOffset = origWidth * (kFaceTrackingCropWidthFraction / 2.f);
+    Vision::Image croppedGrayImage;
+    Rectangle<s32> roiRect(horizontalOffset, 0, origWidth - horizontalOffset, origHeight);
+    grayImage.GetROI(roiRect).CopyTo(croppedGrayImage);
+
+    if(!detectionRects.empty())
+    {
+      // Black out previous detections so we don't find faces in them
+      Vision::Image maskedImage = BlackOutRects(croppedGrayImage, detectionRects);
+      
+  #     if DEBUG_FACE_DETECTION
+      //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
+  #     endif
+      
+      _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+    }
+    else
+    {
+      // Nothing already detected, so nothing to black out before looking for faces
+      _faceTracker->Update(croppedGrayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+    }
+  }
+  else
+  {
+    if(!detectionRects.empty())
+    {
+      // Black out previous detections so we don't find faces in them
+      Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
+      
+  #     if DEBUG_FACE_DETECTION
+      //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
+  #     endif
+      
+      _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+    }
+    else
+    {
+      // Nothing already detected, so nothing to black out before looking for faces
+      _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+    }
+  }
+  
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
   {
     auto & currentFace = *faceIter;
-     
-    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.PopulateCroppedFaceDetections.BadFaceTimestamp");
+    
+    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
 
-    // Correct detection rectangle for cropped image
-    const auto croppedRect = faceIter->GetRect();
-    Rectangle<f32> correctRect(croppedRect.GetX() + horizontalOffset, croppedRect.GetY(),
-                               croppedRect.GetWidth(), croppedRect.GetHeight());
-    faceIter->SetRect(std::move(correctRect));
-
-    // Correct features for cropped image
-    const std::array<Vision::TrackedFace::FeatureName, 4> featureNames = {{
-      Vision::TrackedFace::LeftEye, Vision::TrackedFace::RightEye, Vision::TrackedFace::Nose,
-      Vision::TrackedFace::UpperLip
-    }};
-    for (const auto& featureName: featureNames)
+    if (useCropping)
     {
-      const auto feature = faceIter->GetFeature(featureName);
-      Vision::TrackedFace::Feature correctedFeatures;
-      correctedFeatures = feature;
-      u32 featureIndex = 0;
-      for (const auto& point: correctedFeatures) 
-      {
-        correctedFeatures[featureIndex] = Point2f(point.x() + horizontalOffset, point.y());
-        ++featureIndex;
-      }
-      faceIter->SetFeature(featureName, std::move(correctedFeatures));
+      // Apply horizontal shift to detection rectangle and features to correct for cropping
+      faceIter->HorizontallyShiftRect(horizontalOffset);
+      faceIter->HorizontallyShiftFeatures(horizontalOffset);
     }
 
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
@@ -999,7 +973,7 @@ Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& grayImag
     headPose.SetParent(_poseData.cameraPose);
     headPose = headPose.GetWithRespectToRoot();
 
-    DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.PopulateCroppedFaceDetections.BadHeadPoseParent");
+    DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
     
     // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
     headPose.ClearParent();
@@ -1008,38 +982,7 @@ Result VisionSystem::PopulateCroppedFaceDetections(const Vision::Image& grayImag
   }
   
   return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::PopulateFaceDetections(const Vision::Image& grayImage,
-                                            std::vector<Anki::Rectangle<s32>>& detectionRects)
-{
-  for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
-  {
-    auto & currentFace = *faceIter;
-     
-    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.PopulateFaceDetections.BadFaceTimestamp");
-
-    detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
-                                (s32)std::round(faceIter->GetRect().GetY()),
-                                (s32)std::round(faceIter->GetRect().GetWidth()),
-                                (s32)std::round(faceIter->GetRect().GetHeight()));
-    
-    // Make head pose w.r.t. the historical world origin
-    Pose3d headPose = currentFace.GetHeadPose();
-    headPose.SetParent(_poseData.cameraPose);
-    headPose = headPose.GetWithRespectToRoot();
-
-    DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.PopulateFaceDetections.BadHeadPoseParent");
-    
-    // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
-    headPose.ClearParent();
-    
-    currentFace.SetHeadPose(headPose);
-  }
-  
-  return RESULT_OK;
-}
+} // DetectFaces()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::DetectPets(Vision::ImageCache& imageCache,
@@ -1621,21 +1564,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     // NOTE: To use rolling shutter in DetectFaces, call UpdateRollingShutterHere
     // See: VIC-1417 
     // UpdateRollingShutter(poseData, imageCache);
-    if(ShouldProcessVisionMode(VisionMode::DetectingFacesCropped)) {
-      if((lastResult = DetectFacesCropped(imageCache, detectionsByMode[VisionMode::DetectingFaces])) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesCroppedFailed", "");
-        anyModeFailures = true;
-      } else {
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingFacesCropped, true);
-      }
+    const bool useCropping = ShouldProcessVisionMode(VisionMode::CroppedDetectingFaces);
+    if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::DetectingFaces], useCropping)) != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
+      anyModeFailures = true;
     } else {
-      if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::DetectingFaces])) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
-        anyModeFailures = true;
-      } else {
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
-      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
+      visionModesProcessed.SetBitFlag(VisionMode::CroppedDetectingFaces, useCropping);
     }
     Toc("TotalDetectingFaces");
   }
