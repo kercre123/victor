@@ -57,9 +57,7 @@ protected:
   
   void FakeCloudIntent();
   void FakeUserIntent();
-  
-  void NVStorage_EraseTag();
-  void NVStorage_ReadTag();
+
   void SetEmotion();
   void TriggerEmotionEvent();
   
@@ -105,10 +103,6 @@ protected:
   
   void ExecutePlaypenTest();
   void ToggleSendAvailableObjects();
-  
-  void ReadCameraCalibration();
-  void ReadGameSkills();
-  void ReadMfgTestData();
   
   void SetFaceDisplayHue();
   void SendRandomProceduralFace();
@@ -179,7 +173,6 @@ protected:
   virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg) override;
   virtual void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg) override;
   virtual void HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg) override;
-  virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg) override;
   virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted& msg) override;
   virtual void HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg) override;
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) override;

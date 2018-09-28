@@ -514,14 +514,14 @@ namespace Anki {
               DASMSG_SET(i1, mainTooLateCnt_,          "Number of ticks that exceed MAIN_TOO_LATE_TIME_THRESH_USEC");
               DASMSG_SET(i2, avgMainTooLateTime_usec_, "Of the late ticks, average time since start of previous tick (usec)");
               DASMSG_SET(i3, maxMainTooLateTime_usec_, "Of the late ticks, maximum time since start of previous tick (usec)");
-              DASMSG_SEND();
+              DASMSG_SEND_WARNING();
             }
             if (reportTooLong) {
               DASMSG(vectorbot_main_cycle_too_long,    "vectorbot.main_cycle_too_long", "Report upto once/sec when robot tick is too long");
               DASMSG_SET(i1, mainTooLongCnt_,          "Number of ticks that exceed MAIN_TOO_LONG_TIME_THRESH_USEC");
               DASMSG_SET(i2, avgMainTooLongTime_usec_, "Average duration of too long ticks (usec)");
               DASMSG_SET(i3, maxMainTooLongTime_usec_, "Maximum duration of too long ticks (usec)");
-              DASMSG_SEND();
+              DASMSG_SEND_WARNING();
             }
 
           }

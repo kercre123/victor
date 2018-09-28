@@ -23,7 +23,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageFromAnimProcess.h"
 #include "clad/types/imageTypes.h"
-#include "clad/types/nvStorageTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/robotTestModes.h"
@@ -119,7 +118,6 @@ protected:
   virtual void HandleConnectedObjectStates(const ExternalInterface::ConnectedObjectStates& msg){};
   virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg){};
   virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg){};
-  virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg){};
   virtual void HandleFactoryTestResultEntry(const FactoryTestResultEntry& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
   virtual void HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg){};
@@ -289,10 +287,6 @@ protected:
   void SendClearCalibrationImages();
   void SendComputeCameraCalibration();
   void SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y);
-  void SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size, u8 blobIndex, u8 numTotalBlobs);
-  void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
-  void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
-  void SendNVClearPartialPendingWriteData();
   void SendConnectToCube();
   void SendDisconnectFromCube(const float gracePeriod_sec);
   void SendForgetPreferredCube();
@@ -379,11 +373,6 @@ protected:
   const Vision::FaceID_t GetLastObservedFaceID() const;
   
   BehaviorClass GetBehaviorClass(const std::string& behaviorName) const;
-  
-  // NVStorage
-  const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
-  void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
-  bool IsMultiBlobEntryTag(u32 tag) const;
 
   // Press or release the backpack button
   void PressBackpackButton(bool pressed);
@@ -432,7 +421,6 @@ protected:
   // Sets the "pluggedIn" field for the given charger.
   void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn);
   
-  static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName() const;
   const double GetSupervisorTime() const;
 
@@ -503,7 +491,6 @@ private:
   void HandleConnectedObjectStatesBase(const ExternalInterface::ConnectedObjectStates& msg);
   void HandleAnimationAvailableBase(const ExternalInterface::AnimationAvailable& msg);
   void HandleAnimationAbortedBase(const ExternalInterface::AnimationAborted& msg);
-  void HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg);
   void HandleBehaviorTransitionBase(const ExternalInterface::BehaviorTransition& msg);
   void HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg);
   void HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg);

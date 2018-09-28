@@ -9,111 +9,29 @@ namespace NVStorage {
 
   enum uint_32 NVConst
   {
-    NVConst_MIN_ADDRESS      = 0x180000,
-    NVConst_MAX_ADDRESS      = 0x1fc000,
-
     NVConst_FACTORY_DATA_BIT = 0x80000000,  // aka playpen tags
-    NVConst_FIXTURE_DATA_BIT = 0xC0000000,  // aka pre-playpen tags
-    NVConst_VERSION_MAGIC    = 0x00000015,  // Written by version 1.5 or greater
-    NVConst_FACTORY_BLOCK_SIZE = 0x1e000, // Size of factory block in bytes
-    NVConst_SIZE_OF_VERSION_AND_BC = 0x30,
   }
 
   enum uint_32 NVEntryTag
   {
-    NVEntry_Invalid = 0xFFFFffff,
-    // ===== Non-factory entries ======
-    // Valid addresses are NVConst_MIN_ADDRESS through NVConst_MAX_ADDRESS (507904)
-    // Destinct entries must occure on 4kb (0x1000) boundaries or else repacking and rewriting will have to be done
-    // NOTE: If you want a tag to be backed-up by engine make sure to add it to backup_config.json
-    NVEntry_GameSkillLevels = 0x180000,
-    NVEntry_OnboardingData  = 0x181000,
-
-    NVEntry_GameUnlocks     = 0x182000, /// 1 4k block is enough for 1024 unlocks stored as uint32s
-    NVEntry_FaceEnrollData  = 0x183000, /// 1 4k block should be enough for names etc.
-    NVEntry_FaceAlbumData   = 0x184000, /// 64k long
-                                        /// 1 4k block REMOVED (was the old nurture game data)
-    NVEntry_InventoryData   = 0x195000, /// 1 4k block is plenty for now
-    NVEntry_LabAssignments  = 0x196000, /// 1 4k block is plenty for now
-    NVEntry_NEXT_SLOT       = 0x197000, /// ADD NEW ENTRIES HERE
-                                        /// The value of NVEntry_NEXT_SLOT defines the size alloted to the previous tag.
-                                        /// Add new entries at its current value and then update NVEntry_NEXT_SLOT to be
-                                        /// X more where X is the number of bytes you want to allocate to the new tag.
-                                        ///
-                                        /// DON'T FORGET to also add the new tag to NVStorageComponent::_maxSizeTable!
-                                        
-    NVEntry_FACTORY_RESERVED1 = 0x1c0000,
-    NVEntry_FACTORY_RESERVED2 = 0x1de000,
+    // ===== Non-factory entries =====
+    NVEntry_LabAssignments     = 0x196000,
     
     // ====== Factory entries ========
-    // Same rules as regarding single and multi-blob entries
-    // except that the MSB is 1 for potential special treatment during
-    // garbage collection in the future.
-    // The exception is tags that start with 0xC000. See below.
-
-    // NEW ENTRIES: Must also be added to NVStorageComponent::_maxFactoryEntrySizeTable
-
-
-    // Single blob manufacturing entries start here
     NVEntry_BirthCertificate   = 0x80000000,
     NVEntry_CameraCalib        = 0x80000001,
-    NVEntry_CalibPose          = 0x80000003,
-    NVEntry_CalibMetaInfo      = 0x80000004,
     NVEntry_ObservedCubePose   = 0x80000005,
     NVEntry_IMUInfo            = 0x80000006,
-    NVEntry_CliffValOnDrop     = 0x80000007,
-    NVEntry_CliffValOnGround   = 0x80000008,
     NVEntry_PlaypenTestResults = 0x80000010,
-    NVEntry_FactoryLock        = 0x80000011, // If present, locks out most robot functions.
-    NVEntry_VersionMagic       = 0x80000012,
-
-    // Multi-blob manufacturing entires start here
-    NVEntry_CalibImage1 = 0x80010000,
-    NVEntry_CalibImage2 = 0x80020000,
-    NVEntry_CalibImage3 = 0x80030000,
-    NVEntry_CalibImage4 = 0x80040000,
-    NVEntry_CalibImage5 = 0x80050000,
-    NVEntry_CalibImage6 = 0x80060000,
-
-    // ==== Pre-playpen tags =====
-    // Tags that start with 0xC000 are special factory entires.
-    // They are uneraseable and they must be single blob entries.
-    NVEntry_PrePlaypenResults   = 0xC0000000,
-    NVEntry_PrePlaypenCentroids = 0xC0000001,
-    NVEntry_IMUAverages         = 0xC0000004,
-
-    // Don't read from these tags
-
-    // VersionMagic and birth certificate
-    NVEntry_FactoryBaseTag = 0xDE000,
-
-    // Factory base tag + word aligned size of packed version magic (20 bytes) +
-    // word aligned size of packed birth certificate (28 bytes)
-    NVEntry_FactoryBaseTagWithBCOffset = 0xDE030, // Rest of playpen data
+    NVEntry_CalibImage1        = 0x80010000,
   }
 
   // Nominally 0 is success > 0 is conditional success and < 0 is error
   enum int_8 NVResult {
     NV_OKAY = 0,
-    NV_SCHEDULED =  1, // Scheduled for opertation
-    NV_NO_DO     =  2, // Nothing to do
-    NV_MORE      =  3, // More to come after this
     NV_NOT_FOUND = -1,
     NV_NO_ROOM   = -2,
-    NV_ERROR     = -3,
-    NV_TIMEOUT   = -4,
-    NV_BUSY      = -5, // Operations pending. try again later
-    NV_BAD_ARGS  = -6, // Invalid arguments to call
-    NV_NO_MEM    = -7,
-    NV_LOOP      = -8, // Looped too long without exiting
-    NV_CORRUPT   = -9, // Found corrupted tag
-  }
-
-  enum uint_8 NVOperation {
-    NVOP_READ = 0,
-    NVOP_WRITE,
-    NVOP_ERASE,    // Erase a single entry (can be multi-blob tag)
-    NVOP_WIPEALL   // Erase entire non-volatile storage
+    NV_BAD_ARGS  = -3, // Invalid arguments to call
   }
 
 }
