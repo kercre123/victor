@@ -13,10 +13,10 @@
 # limitations under the License.
 
 """
-The "world" represents the robot's known view of its environment.
+Vector's known view of his world.
 
 This view includes objects and faces it knows about and can currently
-"see" with its camera.
+see with its camera.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -53,10 +53,10 @@ class World(util.Component):
 
         # Subscribe to a callback that updates the world view
         robot.events.subscribe("robot_observed_face",
-                               self.add_update_face_to_world_view)
+                               self._add_update_face_to_world_view)
         # Subscribe to a callback that updates a face's id
         robot.events.subscribe("robot_changed_observed_face_id",
-                               self.update_face_id)
+                               self._update_face_id)
 
         # Subscribe to callbacks related to objects
         robot.events.subscribe("object_event",
@@ -91,16 +91,17 @@ class World(util.Component):
             yield face
 
     def get_face(self, face_id: int) -> faces.Face:
-        """Fetches a Face instance with the given id"""
+        """Fetches a Face instance with the given id."""
         return self._faces.get(face_id)
 
-    def add_update_face_to_world_view(self, _, msg):
-        """Adds/Updates the world view when a face is observed"""
+    # TODO Nic to revisit. See how Cozmo has 1 subscription in world.py (to update the faces array) and 1 subscription in faces.py (to add all the face data to a Face instance). world should not be telling face to update the face data.
+    def _add_update_face_to_world_view(self, _, msg):
+        """Adds/Updates the world view when a face is observed."""
         face = self.face_factory()
         face.unpack_face_stream_data(msg)
         self._faces[face.face_id] = face
 
-    def update_face_id(self, _, msg):
+    def _update_face_id(self, _, msg):
         """Updates the face id when a tracked face (negative ID) is recognized and
         receives a positive ID or when face records get merged"""
         face = self.get_face(msg.old_id)
@@ -119,7 +120,7 @@ class World(util.Component):
         return cube
 
     def get_light_cube(self):
-        """Returns the connected light cube
+        """Returns the connected light cube.
 
         Returns:
             :class:`anki_vector.objects.LightCube`: The LightCube object with that cube_id
@@ -142,7 +143,7 @@ class World(util.Component):
 
     @property
     def connected_light_cube(self):
-        """A light cube attached to Vector, if any
+        """A light cube attached to Vector, if any.
 
         .. code-block:: python
 
@@ -206,7 +207,7 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def forget_preferred_cube(self):
-        """Forget preferred cube
+        """Forget preferred cube.
 
         'Forget' the robot's preferred cube. This will cause the robot to
         connect to the cube with the highest RSSI (signal strength) next
@@ -222,7 +223,7 @@ class World(util.Component):
     # TODO Needs return type
     @sync.Synchronizer.wrap
     async def set_preferred_cube(self, factory_id: str):
-        """Set preferred cube
+        """Set preferred cube.
 
         Set the robot's preferred cube and save it to disk. The robot
         will always attempt to connect to this cube if it is available.

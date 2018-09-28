@@ -45,18 +45,17 @@ from .messaging import protocol
 #: assuming that Vector can no longer see an object.
 OBJECT_VISIBILITY_TIMEOUT = 0.4
 
-#: LightCube1Type's markers look like 2 concentric circles with lines and gaps
+#: LightCube1Type's markers look like 2 concentric circles with lines and gaps.
 LightCube1Type = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
 
 
 # TODO Instead inherit from ObservableObject, like for Cozmo?
 # TODO In this class, how are we deciding whether a member has a leading underscore or not?
 class LightCube(util.Component):
-    """Represents Vector's Cube"""
+    """Represents Vector's Cube."""
 
     #: Length of time in seconds to go without receiving an observed event before
-    #: assuming that Vector can no longer see an object. Can be overridden in sub
-    #: classes.
+    #: assuming that Vector can no longer see an object. Can be overridden in subclasses.
     visibility_timeout = OBJECT_VISIBILITY_TIMEOUT
 
     def __init__(self, robot, world, **kw):
@@ -66,7 +65,7 @@ class LightCube(util.Component):
 
         self._pose = None
 
-        #: float: The time the object was last tapped
+        #: float: The time the object was last tapped.
         #: ``None`` if the cube wasn't tapped yet.
         self.last_tapped_time = None
 
@@ -75,11 +74,11 @@ class LightCube(util.Component):
         #: In milliseconds relative to robot epoch.
         self.last_tapped_robot_timestamp = None
 
-        #: float: The time the object was last moved
+        #: float: The time the object was last moved.
         #: ``None`` if the cube wasn't moved yet.
         self.last_moved_time = None
 
-        #: float: The time the object started moving when last moved
+        #: float: The time the object started moving when last moved.
         self.last_moved_start_time = None
 
         #: int: The robot's timestamp of the last move event.
@@ -87,7 +86,7 @@ class LightCube(util.Component):
         #: In milliseconds relative to robot epoch.
         self.last_moved_robot_timestamp = None
 
-        #: int: The robot's timestamp of when the object started moving when last moved
+        #: int: The robot's timestamp of when the object started moving when last moved.
         #: ``None`` if the cube wasn't moved yet.
         #: In milliseconds relative to robot epoch.
         self.last_moved_start_robot_timestamp = None
@@ -159,7 +158,7 @@ class LightCube(util.Component):
                                 light3: lights.Light,
                                 light4: lights.Light,
                                 color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
-        """Set the light for each corner
+        """Set the light for each corner.
 
         .. code-block:: python
 
@@ -169,12 +168,11 @@ class LightCube(util.Component):
             if robot.world.connected_light_cube:
                 cube = robot.world.connected_light_cube
 
-                # Set cube lights to red, green, blue, and white
                 cube.set_light_corners(anki_vector.lights.blue_light,
                                        anki_vector.lights.green_light,
                                        anki_vector.lights.red_light,
                                        anki_vector.lights.white_light)
-                time.sleep(2.5)
+                time.sleep(3)
 
         :param light1: The settings for the first light.
         :param light2: The settings for the second light.
@@ -212,6 +210,7 @@ class LightCube(util.Component):
 
                 # Set cube lights to yellow
                 cube.set_lights(anki_vector.lights.yellow_light)
+                time.sleep(3)
 
         :param light: The settings for the lights
         :param color_profile: The profile to be used for the cube lights
@@ -231,7 +230,7 @@ class LightCube(util.Component):
 
                 # Set cube lights to yellow
                 cube.set_lights(anki_vector.lights.yellow_light)
-                time.sleep(2.5)
+                time.sleep(3)
 
                 # Turn off cube lights
                 cube.set_lights_off()
@@ -314,7 +313,7 @@ class LightCube(util.Component):
     def pose(self) -> util.Pose:
         """The pose of the object in the world.
 
-        Is ``None`` for objects that don't have pose information.
+        ``None`` for objects that don't have pose information.
         """
         return self._pose
 
@@ -436,7 +435,7 @@ class LightCube(util.Component):
 
     # TODO Needs sample code. Also test that the docstring is accurate that we get this at the start of a program.
     def on_connection_state_changed(self, connected, factory_id):
-        """Triggered when the robot reports that an object is connected (i.e. exists) or disconnected.
+        """Triggered when the robot reports that an object is connected or disconnected.
 
         A connection event will usually occur at the start of the program in response to the SDK
         requesting a list of connected objects to the robot.

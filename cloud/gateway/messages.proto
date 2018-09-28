@@ -72,9 +72,9 @@ message MoveLiftResponse {
 message PlayAnimationRequest {
   Animation animation = 1;
   uint32 loops = 2;
-  bool ignore_body_track = 3; // not yet implemented
-  bool ignore_head_track = 4; // not yet implemented
-  bool ignore_lift_track = 5; // not yet implemented
+  bool ignore_body_track = 3;
+  bool ignore_head_track = 4;
+  bool ignore_lift_track = 5;
 }
 
 message PlayAnimationResponse {

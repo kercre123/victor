@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Utility functions and classes for the Vector SDK
+Utility functions and classes for the Vector SDK.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -56,7 +56,7 @@ except ImportError:
 
 def parse_command_args(parser: argparse.ArgumentParser = None):
     """
-    Parses command line arguments
+    Parses command line arguments.
 
     Attempts to read the robot serial number from the command line arguments. If no serial number
     is specified, we next attempt to read the robot serial number from environment variable ANKI_ROBOT_SERIAL.
@@ -87,7 +87,7 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
 def setup_basic_logging(custom_handler: logging.Handler = None,
                         general_log_level: str = None,
                         target: object = None):
-    """Helper to perform basic setup of the Python logging machinery.
+    """Helper to perform basic setup of the Python logger.
 
     .. code-block:: python
 
@@ -115,7 +115,7 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 
 
 def get_class_logger(module: str, obj: object) -> logging.Logger:
-    """Helper to create logger for a given class (and module)
+    """Helper to create logger for a given class (and module).
 
     .. code-block:: python
 
@@ -128,7 +128,7 @@ def get_class_logger(module: str, obj: object) -> logging.Logger:
 
 
 class Vector2:
-    """Represents a 2D Vector (type/units aren't specified)
+    """Represents a 2D Vector (type/units aren't specified).
 
     :param x: X component
     :param y: Y component
@@ -189,7 +189,7 @@ class Vector2:
 
 
 class Vector3:
-    """Represents a 3D Vector (type/units aren't specified)
+    """Represents a 3D Vector (type/units aren't specified).
 
     :param x: X component
     :param y: Y component
@@ -638,7 +638,7 @@ class Pose:
     position and rotation defined by a quaternion
 
     Use the :func:'pose_z_angle' to return pose in the form of
-    position and rotation defined by rotation about the z axis
+    position and rotation defined by rotation about the z axis.
 
     Whenever Vector is de-localized (i.e. whenever Vector no longer knows
     where he is - e.g. when he's picked up), Vector creates a new pose starting at
@@ -890,7 +890,7 @@ class Speed:
 
 
 def speed_mmps(speed_mmps: float):  # pylint: disable=redefined-outer-name
-    """:class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed"""
+    """:class:`anki_vector.util.Speed` instance set to the specified millimeters per second speed."""
     return Speed(speed_mmps=speed_mmps)
 
 

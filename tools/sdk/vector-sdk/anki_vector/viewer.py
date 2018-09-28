@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module to render camera feed received from Vector's camera.
+"""Displays camera feed from Vector's camera.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -44,7 +44,7 @@ from . import util
 
 class ViewerComponent(util.Component):
     """This component is used to render a video using the images
-    obtained from Vector's camera
+    obtained from Vector's camera.
 
     .. code-block:: python
 
@@ -120,7 +120,9 @@ class ViewerComponent(util.Component):
     def stop_video(self) -> None:
         """Stop rendering video of Vector's camera feed
 
-        with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
+        .. code-block:: python
+
+            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
                 robot.loop.run_until_complete(utilities.delay_close(5))
                 robot.viewer.stop_video()
                 robot.loop.run_until_complete(utilities.delay_close(5))

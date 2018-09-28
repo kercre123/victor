@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Management of the connection to and from Vector
+Management of the connection to and from Vector.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
@@ -31,7 +31,7 @@ from .messaging import client, protocol
 
 class CONTROL_PRIORITY_LEVEL(Enum):
     # TODO Review these levels to make sure they represent what we are shipping
-    """Enum used to specify the priority level that the program requests to run at"""
+    """Enum used to specify the priority level for the program."""
 
     #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
     #: Vector may safely react to events such as falling.
@@ -123,7 +123,6 @@ class _ControlEventManager:
         self._request_event.set()
 
 
-# TODO Add guid as last param to Connection() in sample code?
 class Connection:
     """Creates and maintains a aiogrpc connection.
 
@@ -132,15 +131,15 @@ class Connection:
     .. code-block:: python
 
         # Connect to your Vector
-        conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/tmp/cert.pem")
+        conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/to/file.cert", "<secret_key>")
         conn.connect()
-        # Run your commands (for example play animation)
+        # Run your commands
         anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
         await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
         # Close the connection
         conn.close()
 
-    :param name: Vector's name in the format of "Vector-A1B2"
+    :param name: Vector's name in the format of "Vector-XXXX"
     :param host: The ip and port of Vector in the format "XX.XX.XX.XX:443"
     :param cert_file: The location of the certificate file on disk
     :param loop: The asyncio loop for the control events to run inside
@@ -189,7 +188,7 @@ class Connection:
         return self._control_events.lost_event
 
     def request_control(self, timeout: float = 10.0):
-        """Explicitly request control. Usually for use when detecting a :func:`control_lost_event`.
+        """Explicitly request control. Typically used after detecting :func:`control_lost_event`.
 
         .. code-block:: python
             :emphasize-lines: 3
@@ -198,7 +197,7 @@ class Connection:
                 await conn.control_lost_event.wait()
                 conn.request_control(timeout=5.0)
 
-        :param timeout: The time allotted to attempt a connection. default=10.0
+        :param timeout: The time allotted to attempt a connection, in seconds.
         """
         self._control_events.request()
         try:
@@ -206,7 +205,6 @@ class Connection:
         except futures.TimeoutError as e:
             raise exceptions.VectorControlException(f"Surpassed timeout of {timeout}s") from e
 
-    # TODO Add guid as last param to Connection() in sample code?
     def connect(self, loop: asyncio.BaseEventLoop, timeout: float = 10.0):
         """Connect to Vector
 
@@ -214,16 +212,16 @@ class Connection:
             :emphasize-lines: 4
 
             # Connect to your Vector
-            conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/tmp/cert.pem")
+            conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/to/file.cert", "<secret_key>")
             # Add a 5 second timeout to reduce the amount of time allowed for a connection
             conn.connect(timeout=5.0)
-            # Run your commands (for example play animation)
+            # Run your commands
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
             await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection
             conn.close()
 
-        :param timeout: The time allotted to attempt a connection. default=10.0
+        :param timeout: The time allotted to attempt a connection, in seconds.
         """
         self._loop = loop
         self._control_events = _ControlEventManager(loop)
@@ -274,7 +272,6 @@ class Connection:
         except Exception as e:  # pylint: disable=broad-except
             self._logger.error(e)  # TODO: better handle errors due to auth failure (and remove pylint disable)
 
-    # TODO Add guid as last param to Connection() in sample code?
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.
 
@@ -284,9 +281,9 @@ class Connection:
             :emphasize-lines: 8
 
             # Connect to your Vector
-            conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/tmp/cert.pem")
+            conn = connection.Connection("Vector-XXXX", "XX.XX.XX.XX:443", "/path/to/file.cert", "<secret_key>")
             conn.connect()
-            # Run your commands (for example play animation)
+            # Run your commands
             anim = anki_vector.messaging.protocol.PlayAnimationRequest(name="anim_blackjack_victorwin_01")
             await conn.grpc_interface.PlayAnimation(anim) # This needs to be run in an asyncio loop
             # Close the connection

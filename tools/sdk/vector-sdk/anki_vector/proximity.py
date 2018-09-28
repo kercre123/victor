@@ -173,7 +173,7 @@ class ProximityComponent(util.Component):
         """
         return self._last_valid_sensor_reading
 
-    # TODO Needs docstring, sample code
+    # TODO Should this be private? Otherwise needs docstring, sample code
     def on_proximity_update(self, prox_data: ProximitySensorData):
         self._last_sensor_reading = ProximitySensorData(prox_data)
         if self._last_sensor_reading.is_valid:

@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """
+Animation related classes, functions, events and values.
+
 Animations represent a sequence of highly coordinated movements, faces, lights, and sounds used to demonstrate an emotion or reaction.
 
 Animations can control the following tracks: head, lift, treads, face, audio and backpack lights.
@@ -65,8 +67,7 @@ class AnimationComponent(util.Component):
                 result.wait_for_completed()
         return list(self._anim_dict.keys())
 
-    # TODO Provide example of how to connect without loading animations, then using ensure_loaded to load and use them.
-    async def ensure_loaded(self):
+    async def _ensure_loaded(self):
         """
         This is an optimization for the case where a user doesn't
         need the animation_list. This way, connections aren't delayed
@@ -112,7 +113,7 @@ class AnimationComponent(util.Component):
 
         Warning: Specific animations may be renamed or removed in future updates of the app.
             If you want your program to work more reliably across all versions
-            we recommend using :meth:`play_animation_trigger` instead. TODO: implement play_animation_trigger
+            we recommend using :meth:`play_animation_trigger` instead. (:meth:`play_animation_trigger` is still in development.)
 
         .. code-block:: python
 
@@ -126,7 +127,7 @@ class AnimationComponent(util.Component):
         """
         animation = anim
         if not isinstance(anim, protocol.Animation):
-            await self.ensure_loaded()
+            await self._ensure_loaded()
             if anim not in self.anim_list:
                 raise exceptions.VectorException(f"Unknown animation: {anim}")
             animation = self._anim_dict[anim]

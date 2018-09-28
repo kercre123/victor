@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Protobuf messages exposed to the Vector Python SDK
+Protobuf messages exposed to the Vector Python SDK.
 """
 import sys, inspect
 
