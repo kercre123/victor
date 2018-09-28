@@ -785,7 +785,7 @@ inline RangeStatus ConvertToApiRangeStatus(const u8 deviceRangeStatus)
       return RangeStatus::RANGE_VALID;
     default:
       // This error should NOT trigger
-      AnkiWarn("HAL.ConvertToApiRangeStatus.InvalidStatus", "0x%02x", deviceRangeStatus);
+      // AnkiWarn("HAL.ConvertToApiRangeStatus.InvalidStatus", "0x%02x", deviceRangeStatus);
       return RangeStatus::NO_UPDATE;
   }
 }
