@@ -34,7 +34,8 @@ protected:
   virtual void InitPassThrough() override;
   virtual void OnPassThroughActivated() override;
   virtual void PassThroughUpdate() override;
-
+  virtual void OnPassThroughDeactivated() override;
+  
 private:
   bool _areTreadsLocked = false;
   ICozmoBehaviorPtr _whileInAirDispatcher;

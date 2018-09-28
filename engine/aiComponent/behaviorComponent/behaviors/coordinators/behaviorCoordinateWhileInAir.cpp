@@ -96,6 +96,13 @@ void BehaviorCoordinateWhileInAir::OnPassThroughActivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateWhileInAir::OnPassThroughDeactivated()
+{
+  _areTreadsLocked = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileInAir::PassThroughUpdate() 
 {
   if( !IsActivated() ) {
@@ -108,8 +115,13 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
     _lastTimeWasOnTreads_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   }
 
-  if((offTreadsState == OffTreadsState::InAir) ||
-     (offTreadsState == OffTreadsState::Falling)){
+  const bool isInAirReactionPlaying = _whileInAirDispatcher->IsActivated();
+  
+  // Only lock tracks if the "picked up reaction" behavior is _not_ running (since the "react to picked up" animations
+  // make use of the treads)
+  if(((offTreadsState == OffTreadsState::InAir) ||
+      (offTreadsState == OffTreadsState::Falling)) &&
+     !isInAirReactionPlaying){
     SuppressInAirReactionIfAppropriate();
     LockTracksIfAppropriate();
     SuppressInitialPickupReactionIfAppropriate();
