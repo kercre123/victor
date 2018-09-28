@@ -449,7 +449,7 @@ void ReportRecentInvalidProxDataReadings()
   if ( (invalidProxSensorStatusCounts.at(RangeStatus::MIN_RANGE_FAIL) +
         invalidProxSensorStatusCounts.at(RangeStatus::HARDWARE_FAIL) +
         invalidProxSensorStatusCounts.at(RangeStatus::NO_UPDATE)) > 0) {
-    DASMSG(hal_severe_invalid_prox_reading_report, "hal.invalid_prox_reading_report", "Report of recent number of severe status failures");
+    DASMSG(hal_severe_invalid_prox_reading_report, "hal.severe_invalid_prox_reading_report", "Report of recent number of severe status failures");
     DASMSG_SET(i1, timeSinceBoot_ms, "Time (ms) since last boot")
     DASMSG_SET(i2, invalidProxSensorStatusCounts.at(RangeStatus::MIN_RANGE_FAIL), "Number of recent min range failures");
     DASMSG_SET(i3, invalidProxSensorStatusCounts.at(RangeStatus::HARDWARE_FAIL), "Number of recent hardware failures");

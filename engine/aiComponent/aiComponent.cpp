@@ -169,11 +169,8 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   const f32 angleRange_rad = distToMaxAngle_rad - distToMinAngle_rad;
 
   // Get latest distance reading and assess validity
-  const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
-  const u16 latestDistance_mm = proxData.distance_mm;
-  const bool readingIsValid = proxData.isValidSignalQuality &&
-                              !proxData.isLiftInFOV &&
-                              !proxData.isTooPitched;
+  u16 latestDistance_mm;
+  const bool readingIsValid = robot.GetProxSensorComponent().GetLatestDistance_mm(latestDistance_mm);
 
   // (Not-exactly) "average" speed at which object is approaching robot
   // If it was looking at nothing and then an obstacle appears in front of it,
