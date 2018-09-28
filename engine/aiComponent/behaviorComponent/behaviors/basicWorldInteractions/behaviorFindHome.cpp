@@ -133,6 +133,7 @@ BehaviorFindHome::~BehaviorFindHome()
 void BehaviorFindHome::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,        EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::FullWidthMarkerDetection,EVisionUpdateFrequency::High });
   if(_iConfig.useExposureCycling)
   {
     modifiers.visionModesForActiveScope->insert({ VisionMode::CyclingExposure,         EVisionUpdateFrequency::High });

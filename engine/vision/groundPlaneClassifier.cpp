@@ -17,8 +17,8 @@
 #include "coretech/common/engine/math/logisticRegression.h" // TODO this is temporary only for calculateError
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
-#include "engine/groundPlaneROI.h"
 #include "engine/overheadEdge.h"
+#include "engine/vision/groundPlaneROI.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <opencv2/core.hpp>

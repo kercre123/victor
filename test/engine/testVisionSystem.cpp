@@ -288,6 +288,9 @@ TEST(VisionSystem, MarkerDetectionTests)
 
   result = visionSystem.SetNextMode(Vector::VisionMode::DetectingMarkers, true);
   ASSERT_EQ(RESULT_OK, result);
+  
+  result = visionSystem.SetNextMode(Vector::VisionMode::FullFrameMarkerDetection, true);
+  ASSERT_EQ(RESULT_OK, result);
 
   // Enable marker detection while rotating fast (which also allows us to do marker detection
   // without IMU data, as is the case here)
@@ -295,7 +298,10 @@ TEST(VisionSystem, MarkerDetectionTests)
   ASSERT_EQ(RESULT_OK, result);
   
   // Make sure we run on every frame
-  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({{Vector::VisionMode::DetectingMarkers, Vector::VisionModeSchedule(1)}}));
+  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({
+    {Vector::VisionMode::DetectingMarkers, Vector::VisionModeSchedule(1)},
+    {Vector::VisionMode::FullFrameMarkerDetection, Vector::VisionModeSchedule(1)},
+  }));
   ASSERT_EQ(RESULT_OK, result);
 
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"

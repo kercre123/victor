@@ -51,8 +51,6 @@ namespace Anki {
       
       virtual const Point3f& GetSize() const override { return _size; }
       
-      f32     GetHeight() const { return kHeight; }
-      
       const Vision::KnownMarker* GetMarker() const { return _marker; }
       
       // Return pose of the robot when it's in the charger
@@ -95,7 +93,6 @@ namespace Anki {
       constexpr static f32 GetLength() { return kLength; }
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
-    protected:
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
@@ -113,6 +110,7 @@ namespace Anki {
       constexpr static const f32 kRobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
       constexpr static const f32 kRobotToChargerDistPostRollOff = 80.f;  // Distance from front of charger to robot origin after just having rolled off the charger
       
+      protected:
       
       virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
                                           std::vector<PreActionPose>& preActionPoses) const override;

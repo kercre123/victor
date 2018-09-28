@@ -414,7 +414,11 @@ struct DockingErrorSignal;
     
     std::vector<Signal::SmartHandle> _signalHandles;
     
-    std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
+    struct Homography {
+      Matrix_3x3f H;
+      bool        isGroundPlaneROIVisible;
+    };
+    std::map<f32,Homography> _groundPlaneHomographyLUT; // keyed on head angle in radians
 
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest

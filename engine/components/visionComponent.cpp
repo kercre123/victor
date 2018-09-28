@@ -670,7 +670,9 @@ namespace Vector {
 
     // Loop over all possible head angles at the specified resolution and store
     // the ground plane homography for each.
-    for(f32 headAngle_rad = MIN_HEAD_ANGLE; headAngle_rad <= MAX_HEAD_ANGLE;
+    const f32 headAngleSlop_rad = DEG_TO_RAD(2);
+    for(f32 headAngle_rad = MIN_HEAD_ANGLE-headAngleSlop_rad; // Start a little below min angle to account for slop
+        headAngle_rad <= MAX_HEAD_ANGLE+headAngleSlop_rad;    // End a little above max angle to account for slop
         headAngle_rad += angleResolution_rad)
     {
       // Get the robot origin w.r.t. the camera position with the camera at
@@ -692,17 +694,9 @@ namespace Vector {
       Quad2f imgQuad;
       groundPlaneROI.GetImageQuad(H, calibration->GetNcols(), calibration->GetNrows(), imgQuad);
 
-      if(_camera->IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
-         _camera->IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
-      {
-        // Only store this homography if the ROI still projects into the image
-        _groundPlaneHomographyLUT[headAngle_rad] = H;
-      } else {
-        PRINT_CH_INFO("VisionComponent",
-                      "VisionComponent.PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
-                      "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
-        break;
-      }
+      const bool isRoiVisible = (_camera->IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
+                                 _camera->IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]));
+      _groundPlaneHomographyLUT[headAngle_rad] = {H, isRoiVisible};
     }
 
   } // PopulateGroundPlaneHomographyLUT()
@@ -740,8 +734,8 @@ namespace Vector {
     //                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
     //                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
 
-    H = iter->second;
-    return true;
+    H = iter->second.H;
+    return iter->second.isGroundPlaneROIVisible;
 
   } // LookupGroundPlaneHomography()
 

@@ -80,7 +80,7 @@ namespace Anki {
         case PreActionPose::ActionType::DOCKING:
         case PreActionPose::ActionType::PLACE_RELATIVE:
         {
-          const float halfHeight = 0.5f * GetHeight();
+          const float halfHeight = 0.5f * kHeight;
           
           Pose3d poseWrtMarker(M_PI_2_F + kChargerPreDockPoseOffset.GetAngle().ToFloat(),
                                Z_AXIS_3D(),

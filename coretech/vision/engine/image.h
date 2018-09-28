@@ -206,8 +206,8 @@ namespace Vision {
     virtual void SetFromShowableFormat(const cv::Mat& showImg) = 0;
 
   private:
-    TimeStamp_t     _timeStamp;
-    u32             _imageId;
+    TimeStamp_t     _timeStamp = 0;
+    u32             _imageId = 0;
 
   }; // class ImageBase
 

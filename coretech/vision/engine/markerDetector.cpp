@@ -149,9 +149,15 @@ static Result GetImageHelper(const Vision::Image& srcImage, Embedded::Array<u8>&
     return RESULT_FAIL_INVALID_SIZE;
   }
   
-  memcpy(reinterpret_cast<u8*>(destArray.get_buffer()),
-         srcImage.GetDataPointer(),
-         captureHeight*captureWidth*sizeof(u8));
+  // Copy one row at a time (a) to support source ROIs, which have discontinuous memory and (b) to make
+  // sure memory is aligned as expected for the Embedded::Array data structure even for continuous data
+  for(s32 i=0; i<captureHeight; ++i)
+  {
+    const u8* srcRow = srcImage.GetRow(i);
+    u8* destRow = destArray.Pointer(i, 0);
+    
+    memcpy(destRow, srcRow, captureWidth*sizeof(u8));
+  }
   
   return RESULT_OK;
   
@@ -164,7 +170,12 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
   
   DEV_ASSERT(_params->isInitialized, "MarkerDetector.Detect.ParamsNotInitialized");
   
-  _memory->ResetBuffers(inputImageGray.GetNumRows(), inputImageGray.GetNumCols(), _params->maxMarkers);
+  const Result memResult = _memory->ResetBuffers(inputImageGray.GetNumRows(), inputImageGray.GetNumCols(), _params->maxMarkers);
+  
+  if(!ANKI_VERIFY(memResult == RESULT_OK, "MarkerDetector.Detect.MemoryResetFailed", ""))
+  {
+    return memResult;
+  }
   
   // Convert to an Embedded::Array<u8> so the old embedded methods can use the
   // image data.

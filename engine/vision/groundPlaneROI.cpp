@@ -11,7 +11,7 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "engine/groundPlaneROI.h"
+#include "engine/vision/groundPlaneROI.h"
 
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
@@ -153,7 +153,7 @@ bool GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H, s32 imgWidth, s32 imgHei
       iCorner != Quad::CornerName::NumCorners; ++iCorner)
   {
     Point3f temp = H * groundQuad[iCorner];
-    DEV_ASSERT(temp.z() > 0.f, "Projected ground quad points should have z > 0");
+    DEV_ASSERT(!Util::IsNearZero(temp.z()), "GroundPlaneROI.GetImageQuad.ProjectedGroundQuadPointAtZero");
     const f32 divisor = 1.f / temp.z();
     imgQuad[iCorner].x() = temp.x() * divisor;
     imgQuad[iCorner].y() = temp.y() * divisor;

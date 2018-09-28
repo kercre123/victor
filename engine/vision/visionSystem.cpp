@@ -22,6 +22,7 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/vision/cropScheduler.h"
 #include "engine/vision/groundPlaneClassifier.h"
 #include "engine/vision/illuminationDetector.h"
 #include "engine/vision/imageSaver.h"
@@ -77,6 +78,13 @@ CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
 CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   10.f);
 CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   30.f);
 
+  
+// This is fraction of full width we use with the CropScheduler to crop the image for marker detection.
+CONSOLE_VAR_RANGED(f32, kMarkerDetector_CropWidthFraction, "Vision.MarkerDetection", 0.65f, 0.5f, 1.f);
+  
+// Show the crops being used for MarkerDetection. Need to increase Viz debug windows if enabled.
+CONSOLE_VAR(bool, kMarkerDetector_VizCropScheduler, "Vision.MarkerDetection", false);
+  
 // How long to disable auto exposure after using detections to meter
 CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
   
@@ -627,11 +635,7 @@ bool VisionSystem::CheckMailbox(VisionProcessingResult& result)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool VisionSystem::IsInitialized() const
 {
-  bool retVal = _isInitialized;
-#   if ANKI_COZMO_USE_MATLAB_VISION
-  retVal &= _matlab.ep != NULL;
-#   endif
-  return retVal;
+  return _isInitialized;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -724,7 +728,8 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
   bool useCycling = false;
   if(!kMeterFromDetections || _meteringRegions.empty())
   {
-    if(imageCache.GetTimeStamp() <= (_lastMeteringTimestamp_ms + kMeteringHoldTime_ms))
+    if((_lastMeteringTimestamp_ms > 0) && // if we've ever metered
+       imageCache.GetTimeStamp() <= (_lastMeteringTimestamp_ms + kMeteringHoldTime_ms))
     {
       // Don't update auto exposure for a little while after we lose metered regions
       PRINT_CH_INFO("VisionSystem", "VisionSystem.UpdateCameraParams.HoldingExposureAfterRecentMeteredRegions", "");
@@ -1211,29 +1216,28 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
 Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                             const Vision::Image& claheImage,
                                             std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                            MarkerDetectionCLAHE useCLAHE)
+                                            MarkerDetectionCLAHE useCLAHE,
+                                            const VisionPoseData& poseData)
 {
-  Result lastResult = RESULT_OK;
-
   // Currently assuming we detect markers first, so we won't make use of anything already detected
   DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
   
   const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier, Vision::ResizeMethod::Linear);
   
+  std::vector<const Vision::Image*> imagePtrs;
+  
   switch(useCLAHE)
   {
     case MarkerDetectionCLAHE::Off:
     {
-      lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+      imagePtrs.push_back(&imageCache.GetGray(whichSize));
       break;
     }
       
     case MarkerDetectionCLAHE::On:
     {
       DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
-      
-      lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
-      
+      imagePtrs.push_back(&claheImage);
       break;
     }
       
@@ -1242,15 +1246,11 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useBoth.ImageIsEmpty");
       
       // First run will put quads into detectionRects
-      lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+      imagePtrs.push_back(&imageCache.GetGray(whichSize));
       
-      if(RESULT_OK == lastResult)
-      {
-        // Second run will white out existing markerQuads (so we don't
-        // re-detect) and also add new ones
-        lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
-      }
-      
+      // Second run will white out existing markerQuads (so we don't
+      // re-detect) and also add new ones
+      imagePtrs.push_back(&claheImage);
       break;
     }
       
@@ -1258,10 +1258,10 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
     {
       if(_currentUseCLAHE) {
         DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useAlternating.ImageIsEmpty");
-        lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
+        imagePtrs.push_back(&claheImage);
       }
       else {
-        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+        imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
       
       break;
@@ -1274,10 +1274,10 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       if(_currentUseCLAHE)
       {
         DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
-        lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
+        imagePtrs.push_back(&claheImage);
       }
       else {
-        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+        imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
       
       break;
@@ -1288,6 +1288,66 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       break;
   }
   
+  // Set up cropping rectangles to cycle through each time DetectMarkers is called
+  DEV_ASSERT(!imagePtrs.empty(), "VisionSystem.DetectMarkersWithCLAHE.NoImagePointers");
+  static CropScheduler cropScheduler(_camera);
+  if(!Util::IsNear(cropScheduler.GetCropWidthFraction(), kMarkerDetector_CropWidthFraction))
+  {
+    cropScheduler.Reset(kMarkerDetector_CropWidthFraction, CropScheduler::CyclingMode::Middle_Left_Middle_Right);
+  }
+  
+  Rectangle<s32> cropRect;
+  if(ShouldProcessVisionMode(VisionMode::FullFrameMarkerDetection))
+  {
+    cropRect = Rectangle<s32>(0,0,imagePtrs.front()->GetNumCols(), imagePtrs.front()->GetNumRows());
+  }
+  else
+  {
+    const bool useHorizontalCycling = !ShouldProcessVisionMode(VisionMode::FullWidthMarkerDetection);
+    const bool useVariableHeight = !ShouldProcessVisionMode(VisionMode::FullHeightMarkerDetection);
+    const bool cropInBounds = cropScheduler.GetCropRect(imagePtrs.front()->GetNumRows(),
+                                                        imagePtrs.front()->GetNumCols(),
+                                                        useHorizontalCycling,
+                                                        useVariableHeight,
+                                                        poseData, cropRect);
+
+    if(!cropInBounds)
+    {
+      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.DetectMarkersWithCLAHE.CropRectOOB", "");
+      return RESULT_OK;
+    }
+    
+    DEV_ASSERT(cropRect.Area() > 0, "VisionSystem.DetectMarkersWithCLAHE.EmptyCrop");
+  }
+  
+  Result lastResult = RESULT_OK;
+  for(auto imgPtr : imagePtrs)
+  {
+    DEV_ASSERT(imgPtr->GetNumRows() == imagePtrs.front()->GetNumRows() &&
+               imgPtr->GetNumCols() == imagePtrs.front()->GetNumCols(),
+               "VisionSystem.DetectMarkersWithCLAHE.DifferingImageSizes");
+    
+    const Vision::Image& imgROI = imgPtr->GetROI(cropRect);
+    
+    lastResult = _markerDetector->Detect(imgROI, _currentResult.observedMarkers);
+    if(RESULT_OK != lastResult) {
+      break;
+    }
+    
+    // Debug crop windows
+    if(kMarkerDetector_VizCropScheduler)
+    {
+      Vision::ImageRGB dispImg;
+      dispImg.SetFromGray(imgROI);
+      for(auto const& marker : _currentResult.observedMarkers)
+      {
+        dispImg.DrawQuad(marker.GetImageCorners(), NamedColors::RED);
+      }
+      dispImg.DrawRect(Rectangle<s32>{0,0,cropRect.GetWidth(),cropRect.GetHeight()}, NamedColors::RED);
+      _currentResult.debugImageRGBs.emplace_back("CroppedMarkers", dispImg);
+    }
+  }
+
   const bool meterFromChargerOnly = ShouldProcessVisionMode(VisionMode::MeteringFromChargerOnly);
   
   auto markerIter = _currentResult.observedMarkers.begin();
@@ -1301,18 +1361,21 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       continue;
     }
     
-    // Add the bounding rect of the (unwarped) marker to the detection rectangles
+    // Adjust the marker for the crop rectangle / processing resolution, to put it back in original image coordinates
     Quad2f scaledCorners(marker.GetImageCorners());
-    if(kMarkerDetector_ScaleMultiplier != 1)
+    if(cropRect.GetX() > 0 || cropRect.GetY() > 0 || kMarkerDetector_ScaleMultiplier != 1)
     {
       for(auto & corner : scaledCorners)
       {
+        corner.x() += cropRect.GetX();
+        corner.y() += cropRect.GetY();
         corner *= kMarkerDetector_ScaleMultiplier;
       }
       
       marker.SetImageCorners(scaledCorners);
     }
     
+    // Add the bounding rect of the (unwarped) marker to the detection rectangles
     // Note that the scaled corners might get changed slightly by rolling shutter warping
     // below, making the detection rect slightly inaccurate, but these rectangles don't need
     // to be super accurate. And we'd rather still report something being detected here
@@ -1547,7 +1610,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       UpdateRollingShutter(poseData, imageCache);
       
       Tic("TotalDetectingMarkers");
-      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE);
+      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, poseData);
       
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
@@ -1566,13 +1629,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     // NOTE: To use rolling shutter in DetectFaces, call UpdateRollingShutterHere
     // See: VIC-1417 
     // UpdateRollingShutter(poseData, imageCache);
-    const bool useCropping = ShouldProcessVisionMode(VisionMode::CroppedDetectingFaces);
+    const bool useCropping = ShouldProcessVisionMode(VisionMode::CroppedFaceDetection);
     if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::DetectingFaces], useCropping)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
       anyModeFailures = true;
     } else {
       visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
-      visionModesProcessed.SetBitFlag(VisionMode::CroppedDetectingFaces, useCropping);
+      visionModesProcessed.SetBitFlag(VisionMode::CroppedFaceDetection, useCropping);
     }
     Toc("TotalDetectingFaces");
   }

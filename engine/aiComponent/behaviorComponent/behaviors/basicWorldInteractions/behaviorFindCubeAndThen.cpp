@@ -85,6 +85,7 @@ bool BehaviorFindCubeAndThen::WantsToBeActivatedBehavior() const
 void BehaviorFindCubeAndThen::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::FullFrameMarkerDetection,EVisionUpdateFrequency::High });
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenCarryingObject = false; 
   modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;

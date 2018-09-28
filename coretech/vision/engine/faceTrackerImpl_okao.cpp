@@ -839,6 +839,7 @@ namespace Vision {
     }
 
     // Undistort the part locations
+    // TODO: consider using Vision::Undistorter for this (challenge: here relying on vectors of cv::Point2f)
     auto const& calib = _camera.GetCalibration()->GetScaled(nrows, ncols);
     std::vector<cv::Point2f> undistortedPoints(distortedPoints.size());
 

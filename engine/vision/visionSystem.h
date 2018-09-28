@@ -13,25 +13,17 @@
 #ifndef ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 #define ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 
-#if ANKICORETECH_USE_MATLAB
-   // You can manually adjust this one
-#  define ANKI_COZMO_USE_MATLAB_VISION 0
-#else
-   // Leave this one always set to 0
-#  define ANKI_COZMO_USE_MATLAB_VISION 0
-#endif
-
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "engine/debugImageList.h"
-#include "engine/groundPlaneROI.h"
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
 #include "engine/vision/cameraCalibrator.h"
+#include "engine/vision/groundPlaneROI.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
 #include "engine/vision/visionSystemInput.h"
@@ -227,12 +219,7 @@ namespace Vector {
     RollingShutterCorrector _rollingShutterCorrector;
     bool _doRollingShutterCorrection = false;
     RobotTimeStamp_t _lastRollingShutterCorrectionTime;
-    
-#   if ANKI_COZMO_USE_MATLAB_VISION
-    // For prototyping with Matlab
-    Matlab _matlab;
-#   endif
-    
+       
     std::unique_ptr<Vision::ImageCache> _imageCache;
     
     bool _isInitialized = false;
@@ -307,7 +294,8 @@ namespace Vector {
     Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                   const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                  MarkerDetectionCLAHE useCLAHE);
+                                  MarkerDetectionCLAHE useCLAHE,
+                                  const VisionPoseData& poseData);
     
     // Uses grayscale
     static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);

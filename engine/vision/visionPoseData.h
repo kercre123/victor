@@ -17,10 +17,10 @@
 #include "coretech/common/engine/math/matrix.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 
-#include "engine/groundPlaneROI.h"
+#include "engine/components/sensors/imuComponent.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
-#include "engine/components/sensors/imuComponent.h"
+#include "engine/vision/groundPlaneROI.h"
 
 namespace Anki {
 namespace Vector {
