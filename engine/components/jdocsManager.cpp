@@ -178,7 +178,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._cloudDirty = false;
       jdocInfo._cloudSavePeriod_s = jdocConfig[kCloudSavePeriodKey].asInt();
       jdocInfo._nextCloudSaveTime = currTime_s + jdocInfo._cloudSavePeriod_s;
-      jdocInfo._disabledDueToFmtVersion = false;
+      jdocInfo._cloudDisabled = JdocInfo::CloudDisabled::NotDisabled;
       jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
       jdocInfo._overwrittenCB = nullptr;
       jdocInfo._formatMigrationCB = nullptr;
@@ -689,12 +689,12 @@ void JdocsManager::UpdatePeriodicFileSaves(const bool isShuttingDown)
     // or (B) we are shutting down, and the jdoc is disk-dirty OR cloud-dirty OR has been disabled due to a format version issue
 
     if ((jdoc._diskFileDirty && (_currTime_s > jdoc._nextDiskSaveTime)) ||
-        (isShuttingDown && (jdoc._diskFileDirty || jdoc._cloudDirty || jdoc._disabledDueToFmtVersion)))
+        (isShuttingDown && (jdoc._diskFileDirty || jdoc._cloudDirty || jdoc._cloudDisabled != JdocInfo::CloudDisabled::NotDisabled)))
     {
       int cloudDirtyRemaining_s = 0;
       if (isShuttingDown)
       {
-        if (jdoc._cloudDirty || jdoc._disabledDueToFmtVersion)
+        if (jdoc._cloudDirty || jdoc._cloudDisabled != JdocInfo::CloudDisabled::NotDisabled)
         {
           cloudDirtyRemaining_s = static_cast<int>(jdoc._nextCloudSaveTime - _currTime_s);
           // Make sure this value is greater than zero because zero means 'not cloud dirty':
@@ -836,7 +836,7 @@ void JdocsManager::UpdateJdocsServerResponses()
 
       case JDocs::DocResponseTag::err:
       {
-        HandleErrResponse(response.Get_err());
+        HandleErrResponse(docRequest, response.Get_err());
       }
       break;
 
@@ -926,7 +926,7 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
     // After startup, we guarantee that all jdocs the jdocs manager owns are at the latest format version
     // that the code knows about.  So this scenario could occur if, AFTER startup, ANOTHER client were to
     // submit this jdoc type to the cloud with a newer format version.
-    jdoc._disabledDueToFmtVersion = true;
+    jdoc._cloudDisabled = JdocInfo::CloudDisabled::FormatVersion;
   }
   else  // writeResponse.status == JDocs::WriteStatus::Error
   {
@@ -1058,7 +1058,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
                   "Rejecting jdoc from cloud because its format version (%llu) is later than what robot can handle (%llu)",
                   responseItem.doc.fmtVersion, jdoc._curFormatVersion);
         // Mark this jdoc type as 'disabled' so we don't try to submit it again
-        jdoc._disabledDueToFmtVersion = true;
+        jdoc._cloudDisabled = JdocInfo::CloudDisabled::FormatVersion;
         // Note that above, we didn't call CopyJdocFromCloud in this case, so we still
         // have a jdoc in a format version that the code understands.
       }
@@ -1117,18 +1117,55 @@ void JdocsManager::HandleDeleteResponse(const JDocs::DeleteRequest& deleteReques
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::HandleErrResponse(const JDocs::ErrorResponse& errorResponse)
+void JdocsManager::HandleErrResponse(const JDocs::DocRequest& docRequest, const JDocs::ErrorResponse& errorResponse)
 {
-  LOG_ERROR("JdocsManager.HandleErrResponse", "Received error response from jdocs server, with error: %s",
-            EnumToString(errorResponse.err));
+  const auto tag = docRequest.GetTag();
+  LOG_ERROR("JdocsManager.HandleErrResponse", "Received '%s' error response from vic-cloud, for request tag %i",
+            EnumToString(errorResponse.err), static_cast<int>(tag));
 
-  if (errorResponse.err == JDocs::DocError::ErrorConnecting)
+  switch (tag)
   {
-    // If we sent the User request, and robot is not logged in, then instead
-    // of getting a UserResponse, we actually get ErrorResponse (here), so
-    // mark us as not logged in
-    _userID = kNotLoggedIn;
-    _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
+    case JDocs::DocRequestTag::write:
+    {
+      const auto& writeRequest = docRequest.Get_write();
+      const auto jdocType = JdocTypeFromDocName(writeRequest.docName);
+      auto& jdoc = _jdocs[jdocType];
+      jdoc._cloudDisabled = JdocInfo::CloudDisabled::CloudError;
+    }
+    break;
+
+    case JDocs::DocRequestTag::read:
+    {
+      const auto& readRequest = docRequest.Get_read();
+      for (const auto& item : readRequest.items)
+      {
+        const auto jdocType = JdocTypeFromDocName(item.docName);
+        auto& jdoc = _jdocs[jdocType];
+        jdoc._cloudDisabled = JdocInfo::CloudDisabled::CloudError;
+      }
+    }
+    break;
+
+    case JDocs::DocRequestTag::deleteReq:
+    {
+      // We only request jdoc deletion as part of debug console funcs
+    }
+    break;
+
+    case JDocs::DocRequestTag::user:  // Intentional fall-through
+    case JDocs::DocRequestTag::thing:
+    {
+      // This is generally not simply 'user not logged in', because if that's the case, we get a UserResponse
+      // (with an empty string for user ID), and we handle that in HandleUserResponse.  But in case we do get
+      // this error response message, just keep polling for user log-in.  We handle 'thing id' requests that
+      // get this error response in the same way
+      _userID = kNotLoggedIn;
+      _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
+    }
+    break;
+
+    default:
+      break;
   }
 }
 
@@ -1214,13 +1251,15 @@ void JdocsManager::HandleThingResponse(const JDocs::ThingResponse& thingResponse
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud)
 {
-  _jdocs[jdocTypeKey]._cloudDirty = false;
+  auto& jdocItem = _jdocs[jdocTypeKey];
+  jdocItem._cloudDirty = false;
 
-  if (_jdocs[jdocTypeKey]._disabledDueToFmtVersion)
+  if (jdocItem._cloudDisabled != JdocInfo::CloudDisabled::NotDisabled)
   {
-    LOG_WARNING("JdocsManager.SubmitJdocToCloud.DisabledDueToFmtVersion",
-                "NOT submitting jdoc %s to cloud, because cloud has a newer format version than this code can handle",
-                external_interface::JdocType_Name(jdocTypeKey).c_str());
+    LOG_WARNING("JdocsManager.SubmitJdocToCloud.Disabled",
+                "NOT submitting jdoc %s to cloud, with reason code %i",
+                external_interface::JdocType_Name(jdocTypeKey).c_str(),
+                static_cast<int>(jdocItem._cloudDisabled));
     return;
   }
 

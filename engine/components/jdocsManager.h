@@ -100,7 +100,7 @@ private:
   void HandleWriteResponse(const JDocs::WriteRequest& writeRequest, const JDocs::WriteResponse& writeResponse);
   void HandleReadResponse(const JDocs::ReadRequest& readRequest, const JDocs::ReadResponse& readResponse);
   void HandleDeleteResponse(const JDocs::DeleteRequest& deleteRequest, const Void& voidResponse);
-  void HandleErrResponse(const JDocs::ErrorResponse& errorResponse);
+  void HandleErrResponse(const JDocs::DocRequest& request, const JDocs::ErrorResponse& errorResponse);
   void HandleUserResponse(const JDocs::UserResponse& userResponse);
   void HandleThingResponse(const JDocs::ThingResponse& thingResponse);
   void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud);
@@ -145,9 +145,13 @@ private:
     bool                      _cloudDirty;        // True when cloud copy of the jdoc needs to be updated
     int                       _cloudSavePeriod_s; // Cloud save period, or 0 for always save immediately
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
-    // This flag indicates the cloud has a higher format version of the jdoc than
-    // the code can handle, so it is disabled for purposes of submitting to cloud
-    bool                      _disabledDueToFmtVersion;
+    enum class CloudDisabled
+    {
+      NotDisabled,
+      FormatVersion,      // Disabled because cloud has higher format version of this jdoc than code can handle
+      CloudError,         // Disabled because we received a cloud error on write or read of jdoc to/from cloud
+    };
+    CloudDisabled             _cloudDisabled = CloudDisabled::NotDisabled;
 
     OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
     FormatMigrationCallback   _formatMigrationCB; // Called when this jdoc needs a format migration
