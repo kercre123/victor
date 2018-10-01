@@ -14,6 +14,8 @@ else()
   set(MESSAGE_STATUS STATUS)
 endif()
 
+file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION license_version ENCODING UTF-8)
+
 file(STRINGS ${CMAKE_SOURCE_DIR}/docs/development/licenses.md license_file ENCODING UTF-8)
 list(REMOVE_AT license_file 0)
 foreach(line ${license_file})
@@ -200,7 +202,7 @@ function(write_license_html)
 
   file(WRITE ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.html
       "<!DOCTYPE html><html><body>\n"
-      "<h1>License Data for Vector Engine 1.0.0</h1><p>\n")
+      "<h1>License Data for Vector Engine ${license_version}</h1><p>\n")
 
   # create html link to folder/file
 
