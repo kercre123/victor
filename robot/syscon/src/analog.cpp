@@ -323,6 +323,7 @@ void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
+  static int discharge_counter = 0;
   static bool discharge_battery = false;
 
   debounceVEXT();
@@ -337,6 +338,7 @@ void Analog::tick(void) {
     if (!prevent_charge) {
       if (++on_charger_time == START_DISCHARGE) {
         discharge_battery = true;
+        discharge_counter = 200;
       } else if (on_charger_time >= TOP_OFF_TIME) {
         on_charger_time = 0;
       }
@@ -374,12 +376,14 @@ void Analog::tick(void) {
 
     NVIC_DisableIRQ(ADC1_IRQn);
 
-    if (adc_values[ADC_VMAIN] <= DISCHARGED_BATTERY) {
-      discharge_battery = false;
-    }
-
     delay_disable = true;
     is_charging = false;
+
+    if (discharge_counter > 0) {
+      discharge_counter--;
+    } else if (adc_values[ADC_VMAIN] <= DISCHARGED_BATTERY) {
+      discharge_battery = false;
+    }
   } else if (charge_cutoff) {
     // Battery disconnected, on charger (timeout)
     nCHG_PWR::reset();
@@ -396,6 +400,7 @@ void Analog::tick(void) {
 
     // Don't report that we are not charging if the charger is overheating
     is_charging = too_hot;
+    off_charger_time = 0;
   } else {
     // Battery connected, on charger (charging)  
     nCHG_PWR::reset();
