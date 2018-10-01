@@ -132,6 +132,8 @@ private:
   bool _isInLowPowerMode = false;
   uint32_t _speakerCooldownCnt = 0;
 
+  bool _usingFallbackPolicy = false; // True if we are using the 'fallback' beamforming policy
+
 
 #if ANKI_DEV_CHEATS
   static constexpr uint32_t kTriggerAudioLength_ms = kTriggerAudioLengthDebug_ms;
