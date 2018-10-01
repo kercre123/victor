@@ -330,7 +330,7 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
                                                           animationCallback);
   
   int temperature = 0;
-  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
+  auto success = _iConfig->intentParser->GetRawTemperature(weatherResponse, temperature);
   const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(weatherResponse);
   success &= GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
   if(!success){
@@ -611,7 +611,7 @@ void BehaviorDisplayWeather::StartTTSGeneration()
   const auto condition = _iConfig->intentParser->GetCondition(weatherResponse);
 
   int temperature = 0;
-  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
+  auto success = _iConfig->intentParser->GetRawTemperature(weatherResponse, temperature);
   const auto& ttsMap = GetBEI().GetDataAccessorComponent().GetWeatherConditionTTSMap();
   const auto& ttsIter = ttsMap->find(condition);
   if(success && ttsIter != ttsMap->end()){

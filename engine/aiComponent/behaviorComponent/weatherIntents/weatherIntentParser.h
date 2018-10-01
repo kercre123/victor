@@ -37,10 +37,19 @@ public:
   WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent,
                                     bool isForPRDemo = false) const;
   tm GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const;
-  bool GetTemperature(const UserIntent_WeatherResponse& weatherIntent,
-                      int& outTemp) const;
+
+  // return raw int temperature in whatever unit it is set
+  bool GetRawTemperature(const UserIntent_WeatherResponse& weatherIntent,
+                         int& outTempRaw) const;
+
+  // return temperature in Fahrenheit
+  bool GetTemperatureF(const UserIntent_WeatherResponse& weatherIntent,
+                       float& outTempF) const;
+
 
   void SendDASEventForRepsonse(const UserIntent_WeatherResponse& weatherIntent) const;
+
+  static float ConvertTempCToF(const float tempC);
 
 private:
   class ConditionRemaps{

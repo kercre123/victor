@@ -59,10 +59,10 @@ WeatherConditionRemaps::WeatherConditionRemaps(const Json::Value& conditionRemap
         }
       }else if(conditionSpec[kConditionTypeKey] == kTemperatureCondition){
         if(conditionSpec.isMember(kTempBelowFarKey)){
-          entry.temperatureBelow = JsonTools::ParseInt32(conditionSpec, kTempBelowFarKey, debugName);
+          entry.temperatureBelowF = JsonTools::ParseFloat(conditionSpec, kTempBelowFarKey, debugName);
         }
         if(conditionSpec.isMember(kTempAboveFarKey)){
-          entry.temperatureAbove = JsonTools::ParseInt32(conditionSpec, kTempAboveFarKey, debugName);
+          entry.temperatureAboveF = JsonTools::ParseFloat(conditionSpec, kTempAboveFarKey, debugName);
         }
       }
 
@@ -104,14 +104,17 @@ WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherI
   if(iter != _remaps.end()){
     const tm localDatetime = parser.GetLocalDateTime(weatherIntent);
 
-    int trueTemperature = 0;
-    parser.GetTemperature(weatherIntent, trueTemperature);
+    float trueTemperatureF = 0.0f;
+    parser.GetTemperatureF(weatherIntent, trueTemperatureF);
 
     for(const auto& entry : iter->second){
-      const bool shouldConsiderTemperature = (entry.temperatureBelow != kInvalidTemp) || (entry.temperatureAbove != kInvalidTemp);
+      const bool shouldConsiderTemperature = (entry.temperatureBelowF != kInvalidTemp) ||
+                                             (entry.temperatureAboveF != kInvalidTemp);
 
-      const bool isBelowConfigTemp = ((entry.temperatureBelow != kInvalidTemp) && (entry.temperatureBelow > trueTemperature));
-      const bool isAboveConfigTemp = ((entry.temperatureAbove != kInvalidTemp) && (entry.temperatureAbove < trueTemperature));
+      const bool isBelowConfigTemp = ((entry.temperatureBelowF != kInvalidTemp) &&
+                                      (entry.temperatureBelowF > trueTemperatureF));
+      const bool isAboveConfigTemp = ((entry.temperatureAboveF != kInvalidTemp) &&
+                                      (entry.temperatureAboveF < trueTemperatureF));
 
       const bool inTemperatureRange = entry.allSpecifiedConditionsMustBeMet ? 
                                         isBelowConfigTemp && isAboveConfigTemp : 
@@ -147,12 +150,12 @@ WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 WeatherConditionRemaps::RemapEntry::RemapEntry(const RemapEntry& other)
 {
-  initialType      = other.initialType;
-  remappedType     = other.remappedType;
-  temperatureBelow = other.temperatureBelow;
-  temperatureAbove = other.temperatureAbove;
-  localTimeBefore  = (other.localTimeBefore == nullptr) ? nullptr : std::make_unique<tm>(*other.localTimeBefore.get());
-  localTimeAfter   = (other.localTimeAfter == nullptr)  ? nullptr : std::make_unique<tm>(*other.localTimeAfter.get());
+  initialType       = other.initialType;
+  remappedType      = other.remappedType;
+  temperatureBelowF = other.temperatureBelowF;
+  temperatureAboveF = other.temperatureAboveF;
+  localTimeBefore   = (other.localTimeBefore == nullptr) ? nullptr : std::make_unique<tm>(*other.localTimeBefore.get());
+  localTimeAfter    = (other.localTimeAfter == nullptr)  ? nullptr : std::make_unique<tm>(*other.localTimeAfter.get());
 }
 
 

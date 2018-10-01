@@ -108,8 +108,8 @@ tm WeatherIntentParser::GetLocalDateTime(const UserIntent_WeatherResponse& weath
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::GetTemperature(const UserIntent_WeatherResponse& weatherIntent,
-                                         int& outTemp) const
+bool WeatherIntentParser::GetRawTemperature(const UserIntent_WeatherResponse& weatherIntent,
+                                            int& outTemp) const
 {
   if(weatherIntent.temperature.empty()){
     return false;
@@ -123,20 +123,48 @@ bool WeatherIntentParser::GetTemperature(const UserIntent_WeatherResponse& weath
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool WeatherIntentParser::GetTemperatureF(const UserIntent_WeatherResponse& weatherIntent,
+                                          float& outTempF) const
+{
+  int rawTemp;
+  if( !GetRawTemperature(weatherIntent, rawTemp) ) {
+    return false;
+  }
+
+  const bool isFahrenheit = IsFahrenheit(weatherIntent);
+
+  if( isFahrenheit ) {
+    outTempF = rawTemp;
+  }
+  else {
+    outTempF = ConvertTempCToF(rawTemp);
+  }
+
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float WeatherIntentParser::ConvertTempCToF(const float tempC)
+{
+  const float ret = tempC * 1.8f + 32.0f;
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void WeatherIntentParser::SendDASEventForRepsonse(const UserIntent_WeatherResponse& intent) const
 {
   const bool isForecast = IsForecast(intent);
   const bool isFahrenheit = IsFahrenheit(intent);
   auto condition = GetCondition(intent);
   int temp = 0;
-  const bool tempOK = GetTemperature(intent, temp);
+  const bool tempOK = GetRawTemperature(intent, temp);
 
   DASMSG(weather_response, "behavior.weather.response", "The robot is responding to a weather request");
   DASMSG_SET(s1, WeatherConditionTypeToString(condition), "displayed weather condition");
   DASMSG_SET(s2, intent.condition, "raw condition response from cloud");
   DASMSG_SET(i1, isForecast ? 1 : 0, "1 if request is for a forecast, 0 otherwise");
   if( tempOK ) {
-    DASMSG_SET(i2, temp, "Returned temperature");
+    DASMSG_SET(i2, temp, "Returned temperature (in units specified in s3)");
     DASMSG_SET(s3, isFahrenheit ? "F" : "C", "temperature units (F or C, null if no temperature)");
   }
   DASMSG_SEND();
