@@ -227,8 +227,7 @@ message SayText {
   string              text,
   AnimationTrigger    playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
   AudioMetaData::SwitchState::Robot_Vic_External_Processing  voiceStyle,
-  float_32            durationScalar = 1.0,
-  bool                fitToDuration   // Use Animation Trigger group to generate an animation to fit the duration of the text to speech audio
+  float_32            durationScalar = 1.0
 }
 
 enum int_32 SearchForNearbyObjectDefaults {

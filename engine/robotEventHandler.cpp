@@ -869,7 +869,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
                                                    sayText.voiceStyle,
                                                    sayText.durationScalar);
   sayTextAction->SetAnimationTrigger(sayText.playEvent);
-  sayTextAction->SetFitToDuration(sayText.fitToDuration);
+
   return sayTextAction;
 }
 
