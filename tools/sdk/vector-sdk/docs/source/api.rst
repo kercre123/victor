@@ -8,6 +8,7 @@ The API
 
     anki_vector
     anki_vector.animation
+    anki_vector.audio
     anki_vector.behavior
     anki_vector.camera
     anki_vector.color
@@ -19,9 +20,9 @@ The API
     anki_vector.motors
     anki_vector.objects
     anki_vector.photos
-    anki_vector.screen
     anki_vector.proximity
     anki_vector.robot
+    anki_vector.screen
     anki_vector.sync
     anki_vector.util
     anki_vector.viewer

@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 
-#TODO Update disclaimer text and anything else in file to be good for the public.
+#TODO Update file throughout to be good for the public.
 
 """
-This script must be run successfully in order to use the Anki Vector Python SDK.
+***Anki Vector Python SDK Setup***
 
-This script will set up your computer to be able to authenticate with the Vector
-robot when you run a Vector Python SDK program.
+Vector requires all requests be authorized by an authenticated Anki user.
 
-Vector must be on and connected to the same network as your computer.
+This script will enable this device to authenticate with your Vector
+robot for use with a Vector Python SDK program.
+
+Vector must be powered on and connected on the same network as your
+computer. By running this script, you will be asked to provide your
+Anki account credentials, and the script will download an authentication
+token and cert that will grant you access to the robot and his
+capabilities (such as camera and audio) as well as data stored on the
+robot (such as faces and photos).
+
+See the README for more information.
+
+
 """
 
 import configparser
@@ -146,6 +157,11 @@ def get_name_and_ip():
 
 def main():
     print(__doc__)
+
+    valid = ["y", "Y", "yes", "YES"]
+    environ = input("Do you wish to proceed? (y/n) ")
+    if environ not in valid:
+        sys.exit("Stopping...")
 
     name, ip = get_name_and_ip()
     cert, esn = get_esn()
