@@ -2,6 +2,12 @@ variable "region" {
   default = "us-west-2"
 }
 
+// Note: Oregon (us-west-2) has three availability zones
+variable "az_count" {
+  description = "Number of AZs to use for deployment (maximize AZs per region)"
+  default = 3
+}
+
 // Note: number of container instances per cluster: 1000
 variable "instance_count" {
   description = "Number of load test Docker containers running per task"

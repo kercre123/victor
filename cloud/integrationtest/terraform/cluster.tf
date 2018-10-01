@@ -40,7 +40,7 @@ resource "aws_ecs_service" "load_test" {
 
   network_configuration {
     security_groups  = ["${aws_security_group.ecs_tasks.id}"]
-    subnets          = ["${aws_subnet.private.id}"]
+    subnets          = ["${aws_subnet.private.*.id}"]
   }
 }
 
@@ -74,7 +74,7 @@ resource "aws_ecs_service" "redis" {
 
   network_configuration {
     security_groups  = ["${aws_security_group.ecs_tasks.id}"]
-    subnets          = ["${aws_subnet.private.id}"]
+    subnets          = ["${aws_subnet.private.*.id}"]
   }
 
   service_registries {
