@@ -15,7 +15,7 @@
 The Robot's vision system has two parts: 
 
  1. The `VisionComponent` which is a component of the Robot which provides an interface to vision capabilities to the rest of the system ([behaviors](behaviors.md), [actions](actions.md), etc.).
- 2. The `VisionSystem` which is a member of the `VisionComponent` and runs on its own thread. This is because vision processing is substantially slower than anything else (and depends heavily on which vision modes ar enabled) and thus we cannot have the processing of an image block the rest of an engine update tick.
+ 2. The `VisionSystem` which is a member of the `VisionComponent` and runs on its own thread. This is because vision processing is substantially slower than anything else (and depends heavily on which vision modes are enabled) and thus we cannot have the processing of an image block the rest of an engine update tick.
 
 Note that it is _possible_ to put the vision system in "synchronous" mode, making it run on the main thread. This is mainly useful for unit/webots tests. 
 
@@ -32,7 +32,8 @@ The `VisionSystem` has several modes that can be enabled, and corresponding sub-
 * Camera Calibration (used by the Playpen Factory Test)
 * Benchmarking
 * Overhead Mapping / Driving Surface Classification
-* [Object Detection](objectDetector.md) / Image Classification (via Convolutional Neural Nets)
+* [Neural Nets](neuralNets.md) (object detection, image classification, etc, via Convolutional Neural Nets)
+* Illumination Detection
 
 Note that both Face Recognition and anything using neural nets are themselves quite computationally intensive and slow, so they also have their own sub-threads in order to run asynchronously.
 
