@@ -122,7 +122,7 @@ struct DockingErrorSignal;
     void Pause(bool isPaused);
 
     // Whether or not to capture images from CameraService
-    void EnableImageCapture(bool enable) { _enableImageCapture = enable; }
+    void EnableImageCapture(bool enable);
 
     // Returns true as long as we are/will be processing images
     bool IsProcessingImages();
@@ -327,6 +327,11 @@ struct DockingErrorSignal;
     void AddAllowedTrackedFace(const Vision::FaceID_t faceID);
     void ClearAllowedTrackedFaces();
 
+    // Enables the capture of a single image
+    // will leave image capture disabled once the image is captured
+    // Normal image capture can be reenabled with EnableImageCapture(true)
+    void CaptureOneFrame();
+    
   protected:
     
     // Non-rotated points representing the lift cross bar
@@ -430,6 +435,8 @@ struct DockingErrorSignal;
     int _openCvNumThreads = 1;
 
     bool _enableImageCapture = true;
+
+    bool _captureOneImage = false;
     
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));

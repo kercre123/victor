@@ -2822,7 +2822,7 @@ Result Robot::UpdateCameraStartupChecks()
     {
       // Try to get a frame
       Vision::ImageBuffer buffer;
-      if(CameraService::getInstance()->CameraGetFrame(buffer))
+      if(CameraService::getInstance()->CameraGetFrame(0, buffer))
       {
         CameraService::getInstance()->CameraReleaseFrame(buffer.GetImageId());
       }

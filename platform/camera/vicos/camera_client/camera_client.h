@@ -119,8 +119,18 @@ int camera_init(struct anki_camera_handle** camera);
 int camera_start(struct anki_camera_handle* camera);
 
 // Stops capturing frames
+// Completely stops camera stream and tears down buffers
+// Note: Bugs in Qualcomm code mean this function does not always work
+// sometimes the camera service completely hangs...
 int camera_stop(struct anki_camera_handle* camera);
 
+// Pauses the camera stream leaving everything in a valid state
+// Note: The first image captured after unpausing will be invalid
+// This is because we don't know where in the image capture cycle the
+// camera is so we are likely stopping it half way through capturing an image.
+// When it unpauses it will finish capturing that image but the data will be invalid
+void camera_pause(struct anki_camera_handle* camera, int pause);
+  
 // De-initializes camera, makes it available to rest of system
 // This is asynchronous, check return value of camera_destroy
 // to know when the camera has actually been released
@@ -131,7 +141,9 @@ int camera_release(struct anki_camera_handle* camera);
 int camera_destroy(struct anki_camera_handle* camera);
   
 // Acquire (lock) the most recent available frame for reading
-int camera_frame_acquire(struct anki_camera_handle* camera, anki_camera_frame_t** out_frame);
+int camera_frame_acquire(struct anki_camera_handle* camera,
+                         uint64_t frame_timestamp,
+                         anki_camera_frame_t** out_frame);
 
 // Release (unlock) frame to camera system
 int camera_frame_release(struct anki_camera_handle* camera, uint32_t frame_id);

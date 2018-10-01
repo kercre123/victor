@@ -80,6 +80,8 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
+#include <iomanip>
+
 namespace Anki {
 namespace Vector {
 
@@ -131,6 +133,22 @@ namespace Vector {
     s_VisionComponent->EraseAllFaces();
   }
   CONSOLE_FUNC(DebugEraseAllEnrolledFaces, "Vision.General");
+
+  void DebugCaptureOneImage(ConsoleFunctionContextRef context)
+  {
+    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","Capture one image");
+    s_VisionComponent->CaptureOneFrame();
+  }
+  CONSOLE_FUNC(DebugCaptureOneImage, "Vision.General");
+
+  void DebugToggleCameraEnabled(ConsoleFunctionContextRef context)
+  {
+    static bool enable = false;
+    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","Camera %s", (enable ? "enabled" : "disabled"));
+    s_VisionComponent->EnableImageCapture(enable);
+    enable = !enable;
+  }
+  CONSOLE_FUNC(DebugToggleCameraEnabled, "Vision.General");
 
   namespace JsonKey
   {
@@ -474,13 +492,14 @@ namespace Vector {
 
       // Display a fault code in case we have not received an image from the camera for some amount of time
       // and we aren't in power save mode in which case we expect to not be receiving images
+      // and image capture is enabled
       // This is a catch-all for any issues with the camera server/daemon should something go wrong and we
       // stop receiving images
       static const EngineTimeStamp_t kNoImageFaultCodeTimeout_ms = 60000;
       static EngineTimeStamp_t sTimeSinceValidImg_ms = 0;
 
       const bool inPowerSave = _robot->GetComponent<PowerStateManager>().InPowerSaveMode();
-      if(!gotImage && !inPowerSave)
+      if(!gotImage && !inPowerSave && _enableImageCapture)
       {
         const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         if(sTimeSinceValidImg_ms == 0)
@@ -544,7 +563,7 @@ namespace Vector {
         // Special case: we're trying to process an image with a timestamp older than the oldest thing in
         // state history. This can happen at startup, or possibly when we delocalize and clear state
         // history. Just drop this image.
-        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.DroppingImageOlderThanStateHistory",
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.DroppingImageOlderThanStateHistory",
                        "ImageTime=%d OldestState=%d",
                        buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp());
 
@@ -556,7 +575,7 @@ namespace Vector {
       const bool haveHistStateAtLeastAsNewAsImage = (_robot->GetStateHistory()->GetNewestTimeStamp() >= buffer.GetTimestamp());
       if(!haveHistStateAtLeastAsNewAsImage)
       {
-        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.WaitingForState",
                        "CapturedImageTime:%u NewestStateInHistory:%u",
                        buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
         
@@ -640,6 +659,14 @@ namespace Vector {
       ReleaseImage(buffer);
       return RESULT_OK;
     }
+
+    // We just wanted to capture one image so disable image capture now that
+    // the one image has been captured and is going to be processed
+    if(_captureOneImage)
+    {
+      _captureOneImage = false;
+      EnableImageCapture(false);
+    }      
 
     // We are all set to process this image so lock input
     // so VisionSystem can use it
@@ -2368,13 +2395,14 @@ namespace Vector {
 
     // Get image buffer
     const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    const bool gotImage = cameraService->CameraGetFrame(buffer);
+    const bool gotImage = cameraService->CameraGetFrame((u32)_robot->GetStateHistory()->GetNewestTimeStamp(),
+                                                        buffer);
     if(gotImage)
     {
       buffer.SetDownsampleIfBayer(_shouldDownsampleBayer);
       buffer.SetSensorResolution(cameraService->CameraGetSensorHeight(),
                                  cameraService->CameraGetSensorWidth());
-      
+
       _lastImageCaptureTime_ms = currTime_ms;
     }
     else
@@ -2933,6 +2961,17 @@ namespace Vector {
         }
         _screenImageModFuncs.clear();
 
+        // Draw exposure and gain in the top left of the screen
+        const bool isAutoExposureEnabled = result.modesProcessed.IsBitFlagSet(VisionMode::AutoExposure);
+        static std::string exposure = "";
+        if(isAutoExposureEnabled)
+        {
+          std::stringstream ss;
+          ss << result.cameraParams.exposureTime_ms << " " << std::fixed << std::setprecision(2) << result.cameraParams.gain;
+          exposure = ss.str();
+        }
+        screenImg.DrawText({0,8}, exposure, NamedColors::RED, 0.25f);
+
         static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
         // Use gamma to make it easier to see
@@ -3016,6 +3055,24 @@ namespace Vector {
   Vision::ImageEncoding VisionComponent::GetCurrentImageFormat() const
   {
     return _visionSystemInput.imageBuffer.GetFormat();
+  }
+
+  void VisionComponent::EnableImageCapture(bool enable)
+  {
+    PRINT_NAMED_INFO("VisionComponent.EnableImageCapture",
+                     "%s image capture",
+                     (enable ? "Enabling" : "Disabling"));
+    _enableImageCapture = enable;
+    CameraService::getInstance()->PauseCamera(!enable);
+  }
+
+  void VisionComponent::CaptureOneFrame()
+  {
+    // If image capture is already enabled this will do nothing
+    // otherwise it will enable image capture so we can capture a single image
+    // Image capture will automatically be disabled once an image is captured
+    EnableImageCapture(true);
+    _captureOneImage = true;
   }
 } // namespace Vector
 } // namespace Anki

@@ -53,8 +53,11 @@ namespace Anki {
       };
 
       CameraPowerState _powerState = CameraPowerState::Off;
-    } // "private" namespace
 
+      bool _skipNextImage = false;
+      bool _cameraPaused = false;
+      bool _temporaryUnpause = false;
+    } // "private" namespace
 
 #pragma mark --- Hardware Method Implementations ---
 
@@ -191,6 +194,27 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    // If the camera is paused, we need to temporarily unpause it in order for
+    // exposure to take effect
+    void CameraService::UnpauseForCameraSetting()
+    {
+      if(_cameraPaused)
+      {
+        PauseCamera(false);
+        _temporaryUnpause = true;
+      }
+    }
+
+    void CameraService::PauseCamera(bool pause)
+    {
+      camera_pause(_camera, pause);
+      // Technically only need to skip the next image when unpausing but since
+      // you can't get images while paused it does not matter that this is being set
+      // when pausing
+      _skipNextImage = true;
+      _cameraPaused = pause;
+    }
+
     Result CameraService::Update()
     {
       //
@@ -210,6 +234,22 @@ namespace Anki {
         }
         
         return RESULT_OK;
+      }
+
+      // While temporarily unpaused, wait a couple
+      // of ticks before repausing for whatever requested
+      // the temporary unpause to take effect
+      // Such as autoexposure settings or white balance
+      if(_temporaryUnpause)
+      {
+        const uint8_t kNumTicksToWaitToRepause = 3;
+        static int count = 0;
+        if(count++ >= kNumTicksToWaitToRepause)
+        {
+          PauseCamera(true);
+          _temporaryUnpause = false;
+          count = 0;
+        }
       }
 
       int rc = 0;
@@ -285,6 +325,8 @@ namespace Anki {
         return;
       }
 
+      UnpauseForCameraSetting();
+      
       camera_set_exposure(_camera, exposure_ms, gain);
     }
 
@@ -301,6 +343,7 @@ namespace Anki {
         return;
       }
 
+      UnpauseForCameraSetting();
       
       camera_set_awb(_camera, r_gain, g_gain, b_gain);
     }
@@ -328,6 +371,9 @@ namespace Anki {
                               "%s", EnumToString(format));
           return;
       }
+      
+      UnpauseForCameraSetting();
+ 
       _waitingForFormatChange = true;
       PRINT_NAMED_INFO("CameraService.CameraSetCaptureFormat.SetFormat","%s", EnumToString(format));
       camera_set_capture_format(_camera, cameraFormat);
@@ -346,7 +392,7 @@ namespace Anki {
       camera_set_capture_snapshot(_camera, start);
     }
     
-    bool CameraService::CameraGetFrame(Vision::ImageBuffer& buffer)
+    bool CameraService::CameraGetFrame(u32 atTimestamp_ms, Vision::ImageBuffer& buffer)
     {
       if(!IsCameraReady()) {
         return false;
@@ -354,8 +400,30 @@ namespace Anki {
 
       std::lock_guard<std::mutex> lock(_lock);
       anki_camera_frame_t* capture_frame = NULL;
-      int rc = camera_frame_acquire(_camera, &capture_frame);
+
+      uint64_t desiredImageTimestamp_ns = 0;
+      if(atTimestamp_ms != 0)
+      {
+        // Frame timestamp is nanoseconds of uptime (based on CLOCK_MONOTONIC)
+        // Calculate an offset to convert TimeStamp_t(u32) to time base
+        struct timespec now_ts = {0,0};
+        clock_gettime(CLOCK_MONOTONIC, &now_ts);
+        const uint64_t now_ns = (now_ts.tv_nsec + now_ts.tv_sec*1000000000LL);
+        const uint64_t now_ms = GetTimeStamp();
+        desiredImageTimestamp_ns = ((((int64_t)atTimestamp_ms - (int64_t)now_ms))*1000000LL) + now_ns;
+      }
+
+      int rc = camera_frame_acquire(_camera, desiredImageTimestamp_ns, &capture_frame);
       if (rc != 0) {
+        return false;
+      }
+
+      // If we are skipping this image do so after capture
+      // This is so that this image will not be acquired again
+      if(_skipNextImage)
+      {
+        camera_frame_release(_camera, capture_frame->frame_id);
+        _skipNextImage = false;
         return false;
       }
 

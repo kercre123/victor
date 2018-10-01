@@ -33,6 +33,7 @@
 
 #include "camera_client.h"
 #include "log.h"
+#include "gpio.h"
 
 static char *cli_socket_path = "/var/run/vic-engine-cam_client0";
 static char *srv_socket_path = "/var/run/mm-anki-camera/camera-server";
@@ -118,6 +119,9 @@ struct anki_camera_handle_private {
 };
 
 static struct anki_camera_handle_private s_camera_handle;
+
+#define PWDN_PIN 94
+static GPIO s_pwdn_gpio; // gpio for camera power down pin
 
 static ssize_t read_fd(int fd, void *ptr, size_t nbytes, int *recvfd)
 {
@@ -368,15 +372,15 @@ static int add_locked_slot(struct client_ctx *ctx, uint8_t slot, uint32_t frame_
   assert(slot < ANKI_CAMERA_MAX_FRAME_COUNT);
   int rc = -1;
   if (slot < ANKI_CAMERA_MAX_FRAME_COUNT) {
-    uint64_t v = ctx->locked_slots[slot];
-    if (v == 0) {
-      ctx->locked_slots[slot] = (frame_id | LOCKED_FLAG);
-      rc = 0;
-    }
+    ctx->locked_slots[slot] = (frame_id | LOCKED_FLAG);
+    rc = 0;
   }
   return rc;
 }
 
+// Tries to lock all slots
+// locked_slots's LOCKED_FLAG mask will indicate if the lock
+// was acquired for a given slot
 static void lock_all_slots(struct client_ctx *ctx)
 {
   uint8_t *data = ctx->camera_buf.data;
@@ -398,6 +402,7 @@ static void lock_all_slots(struct client_ctx *ctx)
   }
 }
 
+// Forcefully unlock all slots
 static void unlock_all_slots(struct client_ctx *ctx)
 {
   uint8_t *data = ctx->camera_buf.data;
@@ -417,6 +422,38 @@ static void unlock_all_slots(struct client_ctx *ctx)
 
     ctx->locked_slots[slot] = 0;
   }
+}
+
+// Unlock all slots that we have locked except for "slot"
+static void unlock_slots_except(struct client_ctx *ctx, uint32_t slot)
+{
+  uint8_t *data = ctx->camera_buf.data;
+  if (data == NULL) {
+    return;
+  }
+  
+  anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
+
+  for(int i = 0; i < ANKI_CAMERA_MAX_FRAME_COUNT; i++)
+  {
+    if(i != slot && ctx->locked_slots[i] & LOCKED_FLAG)
+    {
+      _Atomic uint32_t *slot_lock = &(header->locks.frame_locks[i]);
+      // unlock slot
+      uint32_t lock_status = 1;
+      if (!atomic_compare_exchange_strong(slot_lock, &lock_status, 0)) {
+        loge("%s: could not unlock frame: %s", __func__, strerror(errno));
+        continue;
+      }
+
+      ctx->locked_slots[i] &= ~LOCKED_FLAG;
+    }
+  }
+}
+
+static void unlock_slots(struct client_ctx *ctx)
+{
+  unlock_slots_except(ctx, ANKI_CAMERA_MAX_FRAME_COUNT+1);
 }
 
 static int get_locked_frame(struct client_ctx *ctx, uint32_t slot, uint32_t *out_frame_id)
@@ -778,6 +815,8 @@ static void *camera_client_thread(void *camera_handle_ptr)
 // Initializes the camera
 int camera_init(struct anki_camera_handle **camera)
 {
+  s_pwdn_gpio = gpio_create(PWDN_PIN, gpio_DIR_OUTPUT, gpio_LOW);
+  
   // configure logging
   setAndroidLoggingTag("anki-cam-client");
 
@@ -829,6 +868,42 @@ int camera_stop(struct anki_camera_handle *camera)
   return 0;
 }
 
+void camera_pause(struct anki_camera_handle *camera, int pause)
+{
+  struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
+  
+  gpio_set_value(s_pwdn_gpio, (pause == 0 ? gpio_LOW : gpio_HIGH));
+  
+  if(pause)
+  {
+    // Camera is being paused so all existing images should be marked as invalid
+    // so lock all slots and set frame timestamp to 0
+    // Keep slots locked until camera is unpaused
+    lock_all_slots(client);
+
+    uint8_t *data = client->camera_buf.data;
+    if (data == NULL) {
+      return;
+    }
+    anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
+
+    for(uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; slot++)
+    {
+      const uint32_t frame_offset = header->frame_offsets[slot];
+      anki_camera_frame_t *frame = (anki_camera_frame_t *)&data[frame_offset];
+      if(frame != NULL)
+      {
+        frame->timestamp = 0;
+      }
+    }
+  }
+  else
+  {
+    // Camera is being unpaused so unlock all slots so images can be captured
+    unlock_all_slots(client);
+  }
+}
+
 // De-initializes camera, makes it available to rest of system
 int camera_release(struct anki_camera_handle *camera)
 {
@@ -867,7 +942,9 @@ int camera_destroy(struct anki_camera_handle* camera)
 }
 
 // Attempt (lock) the last available frame for reading
-int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t **out_frame)
+int camera_frame_acquire(struct anki_camera_handle *camera,
+                         uint64_t frame_timestamp,
+                         anki_camera_frame_t **out_frame)
 {
   //assert(camera != NULL);
   if(camera == NULL)
@@ -884,33 +961,62 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   }
   anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
 
-  // Get the most recent frame slot
-  uint32_t slot = atomic_load(&header->locks.write_idx);
-  if(slot >= ANKI_CAMERA_MAX_FRAME_COUNT)
-  {
-    loge("%s: invalid write_idx %u", __func__, slot);
-    return -1;
-  }
-  else if(slot == CAMERA_HANDLE_P(camera)->last_frame_slot)
-  {
-    return -1;
-  }
+  // Lock all slots so we can iterate over them and find the one
+  // that has a timestamp closest to or before frame_timestamp
+  lock_all_slots(client);
   
-  // lock slot for reading
-  uint32_t lock_status = 0;
-  _Atomic uint32_t *slot_lock = &(header->locks.frame_locks[slot]);
-  if (!atomic_compare_exchange_strong(slot_lock, &lock_status, 1)) {
-    // Is this our lock?
-    uint32_t fid = 0;
-    int is_locked = get_locked_frame(client, slot, &fid);
-    if (is_locked == 0) {
-      logd("%s: attempting lock while already locked: (slot: %u frame_id: %u)",
-           __func__, slot, fid);
-    } else {
-      loge("%s: could not lock frame (slot: %u): %s", __func__, slot, strerror(errno));
-    }
+  // Start with the most recently written frame slot
+  uint32_t wSlot = atomic_load(&header->locks.write_idx);
+  if(wSlot >= ANKI_CAMERA_MAX_FRAME_COUNT)
+  {
+    loge("%s: invalid write_idx %u", __func__, wSlot);
+    unlock_slots(client);
     return -1;
   }
+  else if(wSlot == CAMERA_HANDLE_P(camera)->last_frame_slot)
+  {
+    unlock_slots(client);
+    return -1;
+  }
+
+  // Keep track of which slot has the best timestamp
+  uint64_t bestTime = 0;
+  uint32_t bestSlot = wSlot;
+
+  uint32_t lock_status = 0;
+  
+  for(uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; slot++)
+  {
+    uint32_t fid = 0;
+    // Make sure this is a slot that we locked
+    // Don't want to be checking a slot the camera server is currently modifying
+    int is_locked = get_locked_frame(client, slot, &fid);
+    if (is_locked) {
+      continue;
+    }
+
+    const uint32_t frame_offset = header->frame_offsets[slot];
+    anki_camera_frame_t *frame = (anki_camera_frame_t *)&data[frame_offset];
+
+    // Skip any slots that have null frames or invalid timestamps
+    if(frame == NULL ||
+       frame->timestamp == 0)
+    {
+      continue;
+    }
+
+    // If this frame's timestamp is at or before frame_timestamp and
+    // it is newer than bestTime
+    if(frame->timestamp <= frame_timestamp &&
+       frame->timestamp > bestTime)
+    {
+      bestSlot = slot;
+      bestTime = frame->timestamp;
+    }
+  }  
+  
+  // lock best slot for reading
+  uint32_t slot = bestSlot;
 
   const uint32_t frame_offset = header->frame_offsets[slot];
   anki_camera_frame_t *frame = (anki_camera_frame_t *)&data[frame_offset];
@@ -921,7 +1027,7 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
     rc = -1;
     goto UNLOCK;
   }
-  
+
   if (frame->frame_id == CAMERA_HANDLE_P(camera)->current_frame_id) {
     //logw("%s: duplicate frame: %u\n", __func__, frame->frame_id);
     rc = -1;
@@ -930,15 +1036,20 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
 
   if(frame->timestamp == 0)
   {
-    logw("%s: invalid timestamp for frame\n", __func__);
+    logd("%s: %u has zero timestamp", __func__, slot);
     rc = -1;
     goto UNLOCK;
   }
 
   CAMERA_HANDLE_P(camera)->current_frame_id = frame->frame_id;
   CAMERA_HANDLE_P(camera)->last_frame_slot = slot;
-  
+
+  // Add this frame to the locked slot
   add_locked_slot(client, slot, frame->frame_id);
+
+  // Unlock the rest of the slots
+  unlock_slots_except(client, slot);
+  
   if (out_frame != NULL) {
     *out_frame = frame;
   }
@@ -947,13 +1058,7 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
 
 UNLOCK:
 
-  // unlock slot
-  lock_status = 1;
-  if (!atomic_compare_exchange_strong(slot_lock, &lock_status, 0)) {
-    loge("%s: could not unlock frame: %s", __func__, strerror(errno));
-    rc = -1;
-  }
-
+  unlock_slots(client);
   return rc;
 }
 
@@ -974,7 +1079,7 @@ int camera_frame_release(struct anki_camera_handle *camera, uint32_t frame_id)
   if (rc == -1) {
     // Not really an error, just means someone asked us to release a frame we
     // don't know about
-    logw("%s: failed to find slot for frame_id %u", __func__, frame_id);
+    logd("%s: failed to find slot for frame_id %u", __func__, frame_id);
     return 0;
   }
 
