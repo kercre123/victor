@@ -351,12 +351,15 @@ void Alexa::Init(const AnimContext* context)
   
   //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
   
+  // https://forum.libcinder.org/topic/solution-calling-shared-from-this-in-the-constructor
+  auto wptr = std::shared_ptr<Alexa>( this, [](Alexa*){} );
+  
   m_client = AlexaClient::create(
     deviceInfo,
     customerDataManager,
     authDelegate,
     std::move(messageStorage),
-    {userInterfaceManager},
+    {userInterfaceManager, shared_from_this() },
     {userInterfaceManager},
     m_capabilitiesDelegate,
     m_TTSSpeaker
@@ -547,6 +550,23 @@ void Alexa::ProcessAudio( int16_t* data, size_t size)
   }
 }
   
+void Alexa::onDialogUXStateChanged(avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState newState)
+{
+  switch( newState ) {
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED:
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
+      _uxState = UXState::Idle;
+      break;
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING:
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING:
+      _uxState = UXState::Listening;
+      break;
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING:
+      _uxState = UXState::Speaking;
+      break;
+  }
+  PRINT_NAMED_WARNING("WHATNOW", "new state=%d", (int) _uxState );
+}
   
 } // namespace Vector
 } // namespace Anki

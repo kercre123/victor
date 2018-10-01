@@ -34,6 +34,8 @@ namespace Vector{
     
     constexpr uint32_t kMinPlayableFrames = 8192;
     constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kAlexaPluginId = 5;
+    
+    const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
   }
 
 using namespace alexaClientSDK;
@@ -87,22 +89,32 @@ void AlexaSpeaker::Update()
       using namespace Anki::AudioMetaData;
       using namespace AudioEngine;
       
-      const auto gameObject = ToAudioGameObject( GameObjectType::Default );
       const auto eventID = ToAudioEventId( GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback );
       auto* callbackContext = new AudioCallbackContext();
       callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
-      callbackContext->SetExecuteAsync( false ); // callback should run on main thread
-      callbackContext->SetEventCallbackFunc( []( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
+      callbackContext->SetExecuteAsync( true );
+      callbackContext->SetEventCallbackFunc( [this]( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
         PRINT_NAMED_ERROR("WHATNOW", "Audio finished streaming (callback)");
+        CallOnPlaybackFinished( m_playingSource );
       });
 
-      const auto playingID = _audioController->PostAudioEvent(eventID, gameObject, callbackContext );
+      const auto playingID = _audioController->PostAudioEvent(eventID, kGameObject, callbackContext );
       if (AudioEngine::kInvalidAudioPlayingId == playingID) {
         PRINT_NAMED_ERROR("WHATNOW", "Could not play (post)");
       }
     }
   }
   
+}
+  
+void AlexaSpeaker::CallOnPlaybackFinished( SourceId id )
+{
+  m_executor.submit([this, id]() {
+    for( auto& observer : m_observers ) {
+      PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackFinished for source %d", (int)id);
+      observer->onPlaybackFinished( id );
+    }
+  });
 }
   
 SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::AttachmentReader > attachmentReader, const avsCommon::utils::AudioFormat *format)  {
@@ -134,6 +146,7 @@ SourceId   AlexaSpeaker::setSource (std::shared_ptr< std::istream > stream, bool
 bool   AlexaSpeaker::play (SourceId id)
 {
   PRINT_NAMED_WARNING("WHATNOW", " speaker play");
+  m_playingSource = id;
   
   // is the callback supposed to be on the caller thread? forgot what docs said
   //m_executor.submit([id, this]() {
@@ -150,13 +163,13 @@ bool   AlexaSpeaker::play (SourceId id)
     _offset_ms = 0;
     _first = true;
     
-    auto waveDataInst = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
+    _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
     {
       auto* pluginInterface = _audioController->GetPluginInterface();
       DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
       auto* plugin = pluginInterface->GetStreamingWavePortalPlugIn();
       plugin->ClearAudioData(kAlexaPluginId);
-      plugin->AddDataInstance(waveDataInst, kAlexaPluginId);
+      plugin->AddDataInstance(_waveData, kAlexaPluginId);
     }
     
     _mp3Buffer->Reset();
@@ -196,11 +209,11 @@ bool   AlexaSpeaker::play (SourceId id)
       const bool statusOK = (readStatus == AttachmentReader::ReadStatus::OK)
                             || (readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK)
                             || (readStatus == AttachmentReader::ReadStatus::OK_TIMEDOUT);
-      bool flush = (numRead == 0) || !statusOK;
+      bool flush = !statusOK;
       //if( (numRead > 0) && statusOK ) {
       PRINT_NAMED_WARNING("WHATNOW", "flush=%d", flush);
       // decode everything in the buffer thus far, leaving perhaps something that wasnt a full mp3 frame
-      const int timeDecoded_ms = Decode( waveDataInst, flush );
+      const int timeDecoded_ms = Decode( _waveData, flush );
       PRINT_NAMED_WARNING("WHATNOW", "decoded %d ms", timeDecoded_ms);
       
       if (_fd < 0) {
@@ -216,7 +229,7 @@ bool   AlexaSpeaker::play (SourceId id)
       }
     
       if( flush ) {
-        waveDataInst->DoneProducingData();
+        _waveData->DoneProducingData();
         std::stringstream ss;
         ss << readStatus;
         PRINT_NAMED_WARNING("WHATNOW", "ending because readStatus=%s", ss.str().c_str());
@@ -226,6 +239,11 @@ bool   AlexaSpeaker::play (SourceId id)
       }
       
       PRINT_NAMED_WARNING("WHATNOW", "state=%s", StateToString());
+    }
+    
+    if( _state != State::Playing ) {
+      // otherwise this is handled via audio callback
+      CallOnPlaybackFinished( id );
     }
     
     m_source->close();
@@ -243,10 +261,6 @@ bool   AlexaSpeaker::play (SourceId id)
       _fd = -1;
     }
   
-    for( auto& observer : m_observers ) {
-      PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackFinished for source %d", (int)id);
-      observer->onPlaybackFinished( id );
-    }
   });
   
   return true;
@@ -255,10 +269,10 @@ bool   AlexaSpeaker::play (SourceId id)
  bool   AlexaSpeaker::stop (SourceId id)  {
   PRINT_NAMED_WARNING("WHATNOW", " speaker stop");
   
-   
-   // todo: actually stop audio
+  _audioController->StopAllAudioEvents( kGameObject );
    
   m_executor.submit([id, this]() {
+    
     if( _state == State::Playing ) {
       _state = State::Stopping;
     }

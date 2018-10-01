@@ -76,6 +76,8 @@ private:
   // returns millisec decoded
   int Decode(const StreamingWaveDataPtr& data, bool flush = false);
   
+  void CallOnPlaybackFinished( SourceId id );
+  
   const char* const StateToString() const;
   
   void SavePCM( short* buff, size_t size=0 );
@@ -91,6 +93,7 @@ private:
   std::atomic<State> _state; // todo: thread locks
   
   SourceId m_sourceID=1; // 0 might be to be invalid?
+  SourceId m_playingSource = 0;
   
   std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader > m_source;
   
@@ -106,6 +109,8 @@ private:
   
   uint64_t _offset_ms = 0;
   bool _first = true;
+  
+  StreamingWaveDataPtr _waveData;
   
   // worker thread
   DispatchQueue* _dispatchQueue = nullptr;

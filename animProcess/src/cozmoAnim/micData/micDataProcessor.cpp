@@ -212,20 +212,20 @@ void MicDataProcessor::InitVAD()
   
   void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
 {
-  PRINT_NAMED_WARNING("WHATNOW", "TRIGGER WORD keyword=%s from=%d, to=%d", keyword.c_str(), from_ms, to_ms);
-  const bool isAlexa = keyword == "ALEXA";
-  if( _alexa && isAlexa ) {
-    // todo: also pass what it is (vector or alexa)
-    _alexa->TriggerWord(from_ms, to_ms);
-  }
-  
+  PRINT_NAMED_WARNING("WHATNOW", "TRIGGER WORD keyword=%s from=%d, to=%d. UXState=%d", keyword.c_str(), from_ms, to_ms, (int)_alexa->GetState());
   
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
-  if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
+  if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse() || (_alexa && !_alexa->IsIdle()) )
   {
     return;
   }
+  
+  const bool isAlexa = keyword == "ALEXA";
+  if( _alexa && isAlexa ) {
+    _alexa->TriggerWord(from_ms, to_ms);
+  }
+  
 
   showStreamState->SetPendingTriggerResponseWithGetIn();
 

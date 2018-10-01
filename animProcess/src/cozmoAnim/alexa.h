@@ -3,6 +3,8 @@
 
 #include "util/helpers/noncopyable.h"
 #include <memory>
+//#include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 
 
 namespace alexaClientSDK{
@@ -27,8 +29,18 @@ class AnimContext;
   }
   
 class Alexa : private Util::noncopyable
+            , public std::enable_shared_from_this<Alexa>
+            //, public alexaClientSDK::avsCommon::sdkInterfaces::MediaPlayerObserverInterface
+            , public alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface
 {
 public:
+  enum class UXState : uint8_t {
+    Idle,
+    Listening,
+    // Thinking: no thinking for now. it's just combined with Listening
+    Speaking,
+  };
+  
   void Init(const AnimContext* context);
   void Update();
   
@@ -37,7 +49,15 @@ public:
   
   void ProcessAudio( int16_t* data, size_t size);
   
+  UXState GetState() const { return _uxState; }
+  
+  bool IsIdle() const { return _uxState == UXState::Idle; }
+  
+protected:
+  virtual void onDialogUXStateChanged(DialogUXState newState) override;
+  
 private:
+  UXState _uxState = UXState::Idle;
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> m_capabilitiesDelegate;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> m_tapToTalkAudioProvider;

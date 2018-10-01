@@ -298,7 +298,7 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   // systemCapabilityProvider
   
   if (!m_directiveSequencer->addDirectiveHandler(m_speechSynthesizer)) {
-    ACSDK_ERROR(LX("initializeFailed")
+    ACSDK_ERROR(LX("initializeFailed") 
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "SpeechSynthesizer"));
     return false;
