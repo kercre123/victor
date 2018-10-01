@@ -28,6 +28,7 @@
 
     var allowConsoleVarsPage = true;
     var allowPerfPage = true;
+    var allowPerfMetricPage = true;
     var perfAutoUpdate = true;
     var perfAutoUpdatePeriod_ms = 1000;
     var perfAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
@@ -120,7 +121,25 @@
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic selected direction",    units:"" }
     ];
 
+    var pmAutoUpdate = true;
+    var pmAutoUpdatePeriod_ms = 1000;
+    var pmAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
+    var pmAutoUpdateTimerId = 0;
+    var pmRequestInProgress = false;
+    var pmRequestQueued = false;
+    var pmSavedTriggeredByTimer = false;
+
     var dialogOKFunction = undefined;
+
+    function newlineToBr(str) {
+      var breakTag = '<br>';
+      return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
+    }
+
+    function preserveSpaces(str) {
+      return str.replace(" ","&nbsp;");
+    }
+
 
     function ClearAllPages() {
         $('div[id^="page_"]').hide();
@@ -144,6 +163,10 @@
         } else if (curPageName == "page_engine") {
             if (engineAutoUpdate) {
                 clearTimeout(engineAutoUpdateTimerId);
+            }
+        } else if (curPageName == "page_perfmetric") {
+            if (pmAutoUpdate) {
+                clearTimeout(pmAutoUpdateTimerId);
             }
         }
 
@@ -245,6 +268,19 @@
                 $("#engine_main_section").hide();
                 $("#engine_page_disabled").show();
             }
+        } else if (pageName == "page_perfmetric") {
+          if (allowPerfMetricPage) {
+            UpdatePerfMetricHeader();
+            $("#perfmetric_page_disabled").hide();
+            if (pmAutoUpdate) {
+                // When entering perf metric page and auto-update is on, do the first update immediately
+                pmAutoUpdateTimerId = setTimeout(SendPerfMetricUpdateRequest, 0, true);
+            }
+          }
+          else {
+            $("#perfmetric_main_section").hide();
+            $("#perfmetric_page_disabled").show();
+          }
         }
     }
 
@@ -572,6 +608,81 @@
         });
     }
 
+    function UpdatePerfMetricHeader() {
+        $("#pm_auto_update").html("Auto update is " + (pmAutoUpdate ? "ON" : "off"));
+        $("#pm_cur_update_period").html("Update period: " + pmAutoUpdatePeriod_ms + "ms");
+        $('#pm_update_freq_value').val(pmAutoUpdatePeriod_ms);
+    }
+
+    function ButtonHandler_PerfMetricToggleAutoUpdate() {
+        pmAutoUpdate = !pmAutoUpdate;
+        UpdatePerfMetricHeader();
+        if (pmAutoUpdate) {
+            pmAutoUpdateTimerId = setTimeout(SendPerfMetricUpdateRequest, 0, true);
+        } else {
+            clearTimeout(pmAutoUpdateTimerId);
+        }
+    }
+    function ButtonHandler_PerfMetricSetUpdatePeriod() {
+        var v = $("#pm_update_freq_value").val();
+        pmAutoUpdatePeriod_ms = Math.max(v, pmAutoUpdatePeriodMin_ms);
+        UpdatePerfMetricHeader();
+    }
+    function ButtonHandler_PerfMetricUpdateNow() {
+        SendPerfMetricUpdateRequest(false);
+    }
+
+    function SendPerfMetricUpdateRequest(triggeredByTimer) {
+        if (pmRequestInProgress) {
+            pmRequestQueued = true;
+            pmSavedTriggeredByTimer = triggeredByTimer;
+            return;
+        }
+        //console.log('SendPerfMetricUpdateRequest');
+        pmRequestInProgress = true;
+        $.post("perfmetric?status", {}, function(result){
+            var payload = result.split(",");
+            $('#id_pm_status').html(payload[0]);
+            $('#id_pm_status_frames').html("Frames recorded: " + payload[1]);
+            pmRequestInProgress = false;
+            if (pmRequestQueued) {
+                pmRequestQueued = false;
+                SendPerfMetricUpdateRequest(pmSavedTriggeredByTimer);
+            }
+        });
+        if (pmAutoUpdate && triggeredByTimer) {
+            pmAutoUpdateTimerId = setTimeout(SendPerfMetricUpdateRequest, pmAutoUpdatePeriod_ms, true);
+        }
+    }
+
+    function ButtonHandler_PerfMetricStart() {
+        $.post("perfmetric?start", {}, function(result){});
+        SendPerfMetricUpdateRequest(false);
+    }
+    function ButtonHandler_PerfMetricStop() {
+        $.post("perfmetric?stop", {}, function(result){});
+        SendPerfMetricUpdateRequest(false);
+    }
+    function ButtonHandler_PerfMetricDump() {
+        $.post("perfmetric?dumpresponse", {}, function(result){
+            $("#id_pm_dump_result").html(preserveSpaces(result));
+        });
+    }
+    function ButtonHandler_PerfMetricDumpAll() {
+        $.post("perfmetric?dumpresponseall", {}, function(result){
+            $("#id_pm_dump_result").html(preserveSpaces(result));
+        });
+    }
+    function ButtonHandler_PerfMetricDumpLog() {
+        $.post("perfmetric?dumplog", {}, function(result){});
+    }
+    function ButtonHandler_PerfMetricDumpLogAll() {
+        $.post("perfmetric?dumplogall", {}, function(result){});
+    }
+    function ButtonHandler_PerfMetricFiles() {
+        $.post("perfmetric?dumpfiles", {}, function(result){});
+    }
+
     $(document).ready(function() {
         ClearAllPages();
         $("#btn_toggle_auto_update").click(ButtonHandler_ToggleAutoUpdate);
@@ -588,6 +699,16 @@
         $("#btn_console_vars_save").click(ButtonHandler_ConsoleVarsSave);
         $("#btn_console_vars_reset").click(ButtonHandler_ConsoleVarsReset);
         $("#btn_console_vars_delete").click(ButtonHandler_ConsoleVarsDelete);
+        $("#btn_pm_toggle_auto_update").click(ButtonHandler_PerfMetricToggleAutoUpdate);
+        $("#btn_pm_set_update_period").click(ButtonHandler_PerfMetricSetUpdatePeriod);
+        $("#btn_pm_update_now").click(ButtonHandler_PerfMetricUpdateNow);
+        $("#btn_pm_start").click(ButtonHandler_PerfMetricStart);
+        $("#btn_pm_stop").click(ButtonHandler_PerfMetricStop);
+        $("#btn_pm_dump").click(ButtonHandler_PerfMetricDump);
+        $("#btn_pm_dump_all").click(ButtonHandler_PerfMetricDumpAll);
+        $("#btn_pm_dump_log").click(ButtonHandler_PerfMetricDumpLog);
+        $("#btn_pm_dump_log_all").click(ButtonHandler_PerfMetricDumpLogAll);
+        $("#btn_pm_dump_files").click(ButtonHandler_PerfMetricFiles);
         InitConfirmDialog();
 
         $.post("getinitialconfig", function(data) {
@@ -600,6 +721,7 @@
             allowPerfPage = (payload[4] === "true");
             whichWebServer = payload[5];
             allowConsoleVarsPage = (payload[6] === "true");
+            allowPerfMetricPage = (payload[7] === "true");
             SetPage(startPage);
         });
         // Initialize the perf table
@@ -667,6 +789,7 @@
             <button type="button" name="page_perf">PERF</button>&nbsp&nbsp&nbsp
             <button type="button" name="page_processes">PROCESSES</button>&nbsp&nbsp&nbsp
             <button type="button" name="page_engine">ENGINE</button>&nbsp&nbsp&nbsp
+            <button type="button" name="page_perfmetric">PERF METRIC</button>&nbsp&nbsp&nbsp
         </div>
         <hr>
 
@@ -852,6 +975,32 @@
                 <input type="submit" value="cache">
                 <input type="submit" value="currentgamelog">
             </div>
+        </div>
+
+        <div id="page_perfmetric">
+          <br>
+          <div id='perfmetric_main_section'>
+            <button id='btn_pm_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+            <input  id='pm_update_freq_value' type='number' max='100000'></input>
+            <button id='btn_pm_set_update_period'>Set update period (ms)</button>
+            <span   id='pm_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+            <button id='btn_pm_toggle_auto_update'>Toggle Auto Update</button>
+            <span   id='pm_auto_update'></span>
+            <br><br>
+            <button class='perfmetricbutton' id='btn_pm_start'>Start</button>&nbsp&nbsp&nbsp&nbsp
+            <button class='perfmetricbutton' id='btn_pm_stop'>Stop</button>&nbsp&nbsp&nbsp&nbsp
+            <span id='id_pm_status' display: inline-block; vertical-align: middle;></span>&nbsp&nbsp&nbsp&nbsp
+            <span id='id_pm_status_frames'></span>
+            <br><br>
+            <button class='perfmetricbutton' id='btn_pm_dump'>Dump</button>&nbsp&nbsp&nbsp&nbsp
+            <button class='perfmetricbutton' id='btn_pm_dump_all'>Dump all</button>&nbsp&nbsp&nbsp&nbsp
+            <button class='perfmetricbutton' id='btn_pm_dump_log'>Dump summary to log</button>&nbsp&nbsp&nbsp&nbsp
+            <button class='perfmetricbutton' id='btn_pm_dump_log_all'>Dump all to log</button>&nbsp&nbsp&nbsp&nbsp
+            <button class='perfmetricbutton' id='btn_pm_dump_files'>Dump to files</button>&nbsp&nbsp&nbsp&nbsp
+            <br><br>
+            <div id='id_pm_dump_result' class='consoleoutput'></div>
+          </div>
+          <div id='perfmetric_page_disabled'>The PerfMetric page is disabled in the Anim and standalone webservers.  Use the Engine webserver instead.</div>
         </div>
 
         <div id="confirm_dialog" title="">

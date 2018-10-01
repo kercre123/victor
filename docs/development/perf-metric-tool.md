@@ -19,8 +19,11 @@ What is recorded for each tick:
 * EtR Count: How many engine-to-robot messages were sent
 * GtE Count: How many game-to-engine messages were received
 * EtG Count: How many engine-to-game messages were sent
+* GWtE Count: How many gateway-to-engine messages were received
+* EtGW Count: How many engine-to-gateway messages were sent
 * Viz Count: How many vizualization messages were sent
 * Battery Voltage: Current battery voltage (at one point we thought this might be helpful in debugging)
+* CPU Freq: CPU frequency (Note: not updated every tick, so a change typically appears several ticks later)
 * Active Feature: The current 'active feature'
 * Behavior: The current top-of-stack behavior
 
@@ -68,7 +71,7 @@ PerfMetric is compiled into the engine by default for Debug and Release builds, 
 (or 0 to disable)
 
 ### Use from command line
-Currently, the only interface to PerfMetric is through Victor's embedded web server.  From the command line, this will start a recording session, assuming ANKI_ROBOT_HOST is set to your robot IP:
+The interface to PerfMetric is through Victor's embedded web server.  From the command line, this will start a recording session, assuming ANKI_ROBOT_HOST is set to your robot IP:
 
 ```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?start'```
 
@@ -84,6 +87,7 @@ Note that multiple commands can be entered at the same time, separated by ampers
 ```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?start&waitseconds30&stop&dumplogall'```
 
 Here is the complete list of commands and what they do:
+* "status" returns status (recording or stopped, and number of frames in buffer)
 * "start" starts recording; if a recording was in progress, the buffer is reset before re-starting
 * "stop" stops recording
 * "dumplog" dumps the summary of results to the log
@@ -92,6 +96,8 @@ Here is the complete list of commands and what they do:
 * "dumpresponseall" returns all info as HTTP response
 * "dumpfiles" writes all info to two files on the robot:  One is a formatted txt file, and the other a csv file.  These go in cache/perfMetricLogs
 
+### Use from webserver page in a browser
+The engine (port 8888) webserver page has a "PERF METRIC" page button.  This brings you to a page with all of the PerfMetric controls, including the ability to dump the formatted output to the page itself.
 
 ### Helper script
 A script has been created for convenience and as an example:
@@ -104,7 +110,5 @@ When using with webots pure simulator, use 'localhost' as your IP.  Also note th
 ### Future features
 * Build into the Anim process (vic-anim)
 * Create a bucket-based histogram feature that can help us quickly find code issue culprits
-* Record other message counts (e.g. engine-to-cloud)
 * Record visual schedule mediator info
-* HTML interface (start/stop buttons, and an area to see output)
 * Automated performance testing
