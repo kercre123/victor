@@ -73,7 +73,7 @@ BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
 {
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Value& config ) :
   ICozmoBehavior( config ),
@@ -256,7 +256,7 @@ void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
   PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
 
   _dVars.state = EState::Listening;
-  
+
   GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
 }
 
@@ -350,7 +350,7 @@ void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
   }
   else if ( uic.IsUserIntentPending( USER_INTENT(unmatched_intent) ) )
   {
-    // this shoudln't really happen, but handle it safely regardless
+    // this shouldn't really happen, but handle it safely regardless
     uic.DropUserIntent( USER_INTENT(unmatched_intent) );
     PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "unmatched_intent returned as response from knowledge graph" );
   }
@@ -460,7 +460,7 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
 
   _dVars.state = EState::NoConnection;
 
-  // currently no distinction between "no reponse", but there will/may be at some point
+  // currently no distinction between "no response", but there will/may be at some point
   TransitionToNoResponse();
 }
 

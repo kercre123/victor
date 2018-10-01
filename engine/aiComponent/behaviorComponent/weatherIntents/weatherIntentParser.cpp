@@ -45,7 +45,7 @@ WeatherIntentParser::WeatherIntentParser(const RobotDataLoader::WeatherResponseM
 : _weatherResponseMap(weatherResponseMap)
 , _conditionRemaps(conditionRemaps)
 {
-  
+
 }
 
 
@@ -151,7 +151,7 @@ float WeatherIntentParser::ConvertTempCToF(const float tempC)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void WeatherIntentParser::SendDASEventForRepsonse(const UserIntent_WeatherResponse& intent) const
+void WeatherIntentParser::SendDASEventForResponse(const UserIntent_WeatherResponse& intent) const
 {
   const bool isForecast = IsForecast(intent);
   const bool isFahrenheit = IsFahrenheit(intent);

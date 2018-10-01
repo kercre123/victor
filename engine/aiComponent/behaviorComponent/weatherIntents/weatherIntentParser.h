@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Vector {
 
-  
+
 class WeatherIntentParser : private Util::noncopyable
 {
 public:
@@ -31,7 +31,7 @@ public:
                       const Json::Value& conditionRemaps);
 
   bool IsForecast(const UserIntent_WeatherResponse& weatherIntent) const;
-  bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent, 
+  bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
                      std::string& textToSay) const;
   bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) const;
   WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent,
@@ -47,7 +47,7 @@ public:
                        float& outTempF) const;
 
 
-  void SendDASEventForRepsonse(const UserIntent_WeatherResponse& weatherIntent) const;
+  void SendDASEventForResponse(const UserIntent_WeatherResponse& weatherIntent) const;
 
   static float ConvertTempCToF(const float tempC);
 
@@ -55,9 +55,9 @@ private:
   class ConditionRemaps{
   public:
     ConditionRemaps(const Json::Value& conditionRemaps);
-  
+
   private:
-    
+
   };
 
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap;
