@@ -280,10 +280,10 @@ void BehaviorComponentMessageHandler::SetupUserIntentEvents()
     if( (intent.find("{") != std::string::npos) // super awesome json detection
         && (intent.find("}") != std::string::npos) )
     {
-      uic.SetCloudIntentPendingFromJSON( intent );
+      uic.SetCloudIntentPendingFromString( intent );
     } else {
       std::string jsonIntent = "{\"intent\": \"" + intent + "\"}";
-      uic.SetCloudIntentPendingFromJSON( jsonIntent );
+      uic.SetCloudIntentPendingFromString( jsonIntent );
     }
   };
   _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeCloudIntent, fakeCloudIntentCallback ) );
@@ -445,10 +445,10 @@ void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterfac
           if( (request.find("{") != std::string::npos) // super awesome json detection
              && (request.find("}") != std::string::npos) )
           {
-            uic.SetCloudIntentPendingFromJSON( request );
+            uic.SetCloudIntentPendingFromString( request );
           } else {
             std::string jsonIntent = "{\"intent\": \"" + request + "\"}";
-            uic.SetCloudIntentPendingFromJSON( jsonIntent );
+            uic.SetCloudIntentPendingFromString( jsonIntent );
           }
         }
       };

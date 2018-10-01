@@ -354,14 +354,7 @@ void UserIntentComponent::SetUserIntentTimeoutEnabled(bool isEnabled)
   _pendingIntentTimeoutEnabled = isEnabled;
 }
 
-void UserIntentComponent::SetCloudIntentPending(const std::string& cloudIntent)
-{
-  _devLastReceivedCloudIntent = cloudIntent;
-  
-  SetUserIntentPending( _intentMap->GetUserIntentFromCloudIntent(cloudIntent), UserIntentSource::Voice );
-}
-
-bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr)
+bool UserIntentComponent::SetCloudIntentPendingFromExpandedJSON(const std::string& cloudJsonStr)
 {
   // use the most permissive reader possible
   Json::Reader reader(Json::Features::all());
@@ -369,19 +362,18 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloud
 
   const bool parsedOK = reader.parse(cloudJsonStr, json, false);
   if( !parsedOK ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.BadJson",
+    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromExpandedJSON.BadJson",
                         "Could not parse json from cloud string!");
     return false;
   }
 
-  return SetCloudIntentPendingFromJSONValue(std::move(json));
+  return SetIntentPendingFromCloudJSONValue(std::move(json));
 }
-
-bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
+bool UserIntentComponent::SetIntentPendingFromCloudJSONValue(Json::Value json)
 {
   std::string cloudIntent;
   if( !JsonTools::GetValueOptional(json, kCloudIntentJsonKey, cloudIntent) ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.MissingIntentKey",
+    PRINT_NAMED_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingIntentKey",
                         "Cloud json missing key '%s'",
                         kCloudIntentJsonKey);
     return false;
@@ -401,7 +393,7 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
   }
   
   ANKI_VERIFY( json["type"].isNull(),
-               "UserIntentComponent.SetCloudIntentPendingFromJson.Reserved",
+               "UserIntentComponent.SetIntentPendingFromCloudJSONValue.Reserved",
                "cloud intent '%s' contains reserved key 'type'",
                cloudIntent.c_str() );
 
@@ -427,12 +419,12 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
     return false;
   } else if( !expectedParams && hasParams ) {
     // simply ignore the extraneous data but continue
-    PRINT_NAMED_WARNING( "UserIntentComponent.SetCloudIntentPendingFromJson.ExtraData",
+    PRINT_NAMED_WARNING( "UserIntentComponent.SetIntentPendingFromCloudJSONValue.ExtraData",
                          "Intent '%s' has unexpected params",
                          cloudIntent.c_str() );
   } else if( expectedParams && !hasParams ) {
     // missing params, bail
-    PRINT_NAMED_WARNING( "UserIntentComponent.SetCloudIntentPendingFromJson.MissingParams",
+    PRINT_NAMED_WARNING( "UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingParams",
                          "Intent '%s' did not contain required params",
                          cloudIntent.c_str() );
     return false;
@@ -465,6 +457,80 @@ void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& 
   _tagForTriggerWordGetInCallbacks = _robot->GetAnimationComponent().SetTriggerWordGetInCallback(callback);
 }
 
+bool UserIntentComponent::SetCloudIntentPendingFromString(const std::string& cloudStr)
+{
+  std::lock_guard<std::mutex> lock{_mutex};
+  
+  if( _pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.AlreadyPending",
+                        "A cloud intent was already pending and will be overwritten");
+  }
+
+  Json::Reader reader(Json::Features::all());
+  Json::Value cloudJSON;
+  const bool stringOK = reader.parse( cloudStr, cloudJSON, true );
+
+  if( !stringOK ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidString",
+                        "Could not convert string to json '%s'",
+                        cloudStr.c_str());
+    return false;
+  }
+
+  if( cloudJSON["type"].isNull() ) {
+    PRINT_NAMED_INFO("UserIntentComponent.SetCloudIntentPendingFromString.SetResultType",
+                     "No specified type for the cloud message, assuming 'result'");
+    cloudJSON["type"] = CloudMic::MessageTagToString(CloudMic::MessageTag::result);
+  }
+  
+  const bool parseOK = _pendingCloudIntent.SetFromJSON( cloudJSON );
+
+  if( !parseOK ) {
+    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidJSON",
+                        "Could not convert (valid) JSON to clad object '%s'",
+                        cloudStr.c_str());
+    return false;
+  }
+
+  // unfortunately, CLAD SetFromJSON is way _too_ permissive, so let's make sure we actually got a reasonable
+  // value
+  switch( _pendingCloudIntent.GetTag() ) {
+    case CloudMic::MessageTag::INVALID: {
+      PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidMessage",
+                          "Converted, but didn't have valid tag type: '%s'",
+                          cloudStr.c_str());
+      _pendingCloudIntent = {};
+      return false;
+    }
+
+    case CloudMic::MessageTag::result: {
+      if( _pendingCloudIntent.Get_result().intent.empty() ) {
+        PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidResult",
+                            "Parsed cloud result message, but have no intent: '%s'",
+                            cloudStr.c_str());
+        _pendingCloudIntent = {};
+        return false;
+      }
+      else {
+        // intent OK (or at least is a valid string, which is all we check for now)
+        break;
+      }
+    }
+
+    default: break;  // TODO: add more detailed checks for other types of messages
+  }
+
+  // if we get here, message seems OK      
+
+  Json::FastWriter writer __attribute__((unused));
+    
+  // convert back to string and print so user can verify everything was set as expected
+  PRINT_NAMED_INFO( "UserIntentComponent.SetCloudIntentPendingFromString.Set",
+                    "Successfully set pending intent: '%s'",
+                    writer.write(_pendingCloudIntent.GetJSON()).c_str());
+  return true;
+}
+
 void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
 { 
   {
@@ -493,7 +559,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
             json.removeMember(kAltParamsKey);
           }
           if ( ok ) {
-            SetCloudIntentPendingFromJSONValue( std::move( json ) );
+            SetIntentPendingFromCloudJSONValue( std::move( json ) );
           }
           _isStreamOpen = false;
           _pendingTriggerWillStream = false;

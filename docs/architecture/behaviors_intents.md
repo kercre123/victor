@@ -3,7 +3,7 @@
 There are three types of intents. Each represents a user's intention for the robot to perform some action, such as a fist bump. 
 
 * **User intents** are a CLAD union of structs, where each struct represents a different user request and its data. User intents are not exposed outside of the behavior system, but can be requested either by voice or through the companion app. In other words, any cloud or app intent is translated into a user intent before being handled by the behavior system. 
-* **Cloud intents** are JSON blobs received from the cloud process containing the intent type along with any parameters. The behavior system is not aware of cloud intents beyond how to translate them into user intents.
+* **Cloud intents** are received from the cloud process containing the intent type along with any parameters. The behavior system is not aware of cloud intents beyond how to translate them into user intents.
 * **App Intents** are CLAD messages received from the Switchboard (which receives them from the companion app) containing the intent type along with any parameters. The behavior system is not aware of app intents beyond how to translate them into user intents. (Note: at the time of writing, app intents arrive via the AppToEngineHandler, but this should soon switch over to the Switchboard.)
 
 
@@ -48,5 +48,10 @@ If the intent is handled elsewhere, a unit test will force you to write a test i
 #### Trigger words
 We handle trigger words in a similar manner to user intents. When the trigger word is detected, the `UserIntentComponent` marks it as pending, and it must be cleared (handled) by some behavior within some number of ticks. Otherwise, a warning is printed and the trigger word is cleared automatically. However, the trigger word is _not_ a user intent (as it was previously under cozmo / early victor days).
 
+#### Cloud intent details
 
+In normal operation, `vic-cloud` sends cloud intents through the BehaviorComponentCloudServer as CLAD messages of type [`CloudMic::Message`](/clad/src/clad/cloud/mic.clad). These messages can be actual intents, where the type is `result`, or other information such as an error, a "stream open" message, or debug info.
 
+If the message is a result, it contains an intent, a string of "parameters" and a string of "metadata". The parameters contain all of the extended info from cloud, e.g. the weather details, or the name of the person meeting Vector. These are sent as stringified JSON, and may contain newlines, escaped quotes, etc.
+
+The UserIntentComponent then turns this into an "expanded" JSON value, where we unpack and parse the parameters string (into a json key called "params" instead of "parameters"). This expanded JSON is then matched against user intents in the user intent map as described above.

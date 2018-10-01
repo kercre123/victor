@@ -77,6 +77,12 @@ const std::string& testMapConfig = R"json(
   "is_test": true // ignore a data validation step that ensures the above contains ALL clad enum values
 })json";
 
+std::string GetSimpleCloudJson(const std::string& request)
+{
+  std::string jsonIntent = "{\"intent\": \"" + request + "\"}";
+  return jsonIntent;
+}
+
 }
 
 void CreateComponent(const std::string& json, std::unique_ptr<UserIntentComponent>& comp, const Robot& robot)
@@ -219,7 +225,7 @@ TEST(UserIntentMap, CloudIntent)
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetCloudIntentPending("cloud_intent_1");
+  comp->SetCloudIntentPendingFromExpandedJSON( GetSimpleCloudJson( "cloud_intent_1" ) );
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -231,19 +237,19 @@ TEST(UserIntentMap, CloudIntent)
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetCloudIntentPending("cloud_intent_2");
+  comp->SetCloudIntentPendingFromExpandedJSON( GetSimpleCloudJson( "cloud_intent_2" ) );
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetCloudIntentPending("cloud_intent_1");
+  comp->SetCloudIntentPendingFromExpandedJSON( GetSimpleCloudJson( "cloud_intent_1" ) );
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetCloudIntentPending("asdf");
+  comp->SetCloudIntentPendingFromExpandedJSON( GetSimpleCloudJson( "asdf" ) );
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -345,22 +351,22 @@ TEST(UserIntentMap, JsonIntent)
   std::unique_ptr<UserIntentComponent> comp;
   CreateComponent(testMapConfig, comp, robot);
 
-  EXPECT_FALSE(comp->SetCloudIntentPendingFromJSON(""));
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromExpandedJSON(""));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
 
-  EXPECT_FALSE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      'invalid", "format: no way }}}} this cant be valid
   )json"));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
 
-  EXPECT_FALSE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      "wrong_key": "cloud_intent_1"
   })json"));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
 
-  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      "intent": "cloud_intent_1"
   })json"));
@@ -368,7 +374,7 @@ TEST(UserIntentMap, JsonIntent)
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
 
   // this one is not expecting any data "data_tag"
-  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      "intent": "cloud_intent_2",
      "params": {
@@ -388,7 +394,7 @@ TEST(UserIntentMap, ExtraData)
 
   UserIntent data;
   
-  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      "intent": "cloud_time_intent",
      "params": {
@@ -419,7 +425,7 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(set_timer)));
 
 
-  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      "intent": "cloud_time_intent",
      "params": {
@@ -449,7 +455,7 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(set_timer)));
 
   
-  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
      "intent": "cloud_name_intent",
      "params": {
@@ -481,7 +487,7 @@ TEST(UserIntentMap, ExtraData)
 
   
   // extra data with params that aren't camelCase or snake_case, and passing an int as a string
-  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromExpandedJSON(R"json(
   {
     "intent": "cloud_time_intent_substitution",
     "params": {
@@ -497,4 +503,60 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_EQ(data.Get_test_timeWithUnits().units, UserIntent_Test_Time_Units::s);
 
   // TODO:(bn) add test of app intents
+}
+
+TEST(UserIntentMap, CloudMessageTest)
+{
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
+  std::unique_ptr<UserIntentComponent> comp;
+  BCCompMap emptyMap;
+  CreateComponent(testMapConfig, comp, robot);
+  
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromString("{}"));
+  comp->UpdateDependent(emptyMap);
+  EXPECT_FALSE(comp->IsAnyUserIntentPending());
+
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromString(R"json({
+    "type": "result"
+  })json"));
+  comp->UpdateDependent(emptyMap);
+  EXPECT_FALSE(comp->IsAnyUserIntentPending());
+
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromString(R"json({
+    "type": "type_that_doesnt_exist"
+  })json"));
+  comp->UpdateDependent(emptyMap);
+  EXPECT_FALSE(comp->IsAnyUserIntentPending());
+
+
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromString(R"json({
+    "intent": "cloud_intent_2"
+  })json"));
+  comp->UpdateDependent(emptyMap);
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromString(R"json({
+    "type": "result",
+    "intent": "cloud_intent_1"
+  })json"));
+  comp->UpdateDependent(emptyMap);
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+
+  UserIntent data;
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromString(R"json(
+  {
+    "intent": "cloud_time_intent_substitution",
+    "parameters": "{\"timer_duration.time\": \"60\",\"timer_duration.units\": \"s\"}\n"
+  })json"));
+  comp->UpdateDependent(emptyMap);
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  Reset(data);
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_timeWithUnits), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::test_timeWithUnits);
+  EXPECT_EQ(data.Get_test_timeWithUnits().time, 60);
+  EXPECT_EQ(data.Get_test_timeWithUnits().units, UserIntent_Test_Time_Units::s);
+
 }

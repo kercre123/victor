@@ -93,7 +93,7 @@ bool TestIntentsFramework::TryParseCloudIntent( TestBehaviorFramework& tbf,
 {
   auto& uic = tbf.GetBehaviorComponent().GetComponent<UserIntentComponent>();
   
-  const bool parsed = uic.SetCloudIntentPendingFromJSON( cloudIntent );
+  const bool parsed = uic.SetCloudIntentPendingFromExpandedJSON( cloudIntent );
   const bool pending = uic.IsAnyUserIntentPending();
   const bool unmatched = uic.IsUserIntentPending( USER_INTENT(unmatched_intent) );
   

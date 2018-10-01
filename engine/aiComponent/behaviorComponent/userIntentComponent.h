@@ -215,15 +215,32 @@ public:
   // note: this is re-enabled with each new intent
   void SetUserIntentTimeoutEnabled(bool isEnabled);
   
-  // convert the passed in cloud intent to a user intent and set it pending. This will assert in dev
-  // if the resulting user intent requires data, in which case you should call SetCloudIntentPendingFromJSON
-  void SetCloudIntentPending(const std::string& cloudIntent);
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Cloud Intents:
+  //
+  // A cloud intent is a user intent sent from cloud. In normal operation, these come from the vic-cloud
+  // process as a CloudMic::Message CLAD message. There are multiple types of messages, some which signify
+  // errors. All valid intents are of type "result". The CLAD message contains a key called "parameters"
+  // (since "params" is reserved in CLAD) which contains a stringified version of the JSON parameters. This is
+  // then converted into an "expanded" json value, which uses the key "params" instead of "parameters" and has
+  // full JSON for any parameters
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // convert the cloud JSON object into a user intent, mapping to the default intent if no cloud intent
   // matches. Returns true if successfully converted (including if it matched against the default), and false
   // if there was an error (e.g. malformed json, incorrect data fields, etc)
-  bool SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr);
-  bool SetCloudIntentPendingFromJSONValue(Json::Value cloudJson);
+  bool SetIntentPendingFromCloudJSONValue(Json::Value cloudJson);
+
+  // Set a cloud intent CLAD struct pending based on a CloudMic message in string json format (e.g. pasted
+  // from WebnViz or console output). Returns true if successfully set. Supports specifying a "type"
+  // (e.g. "result" or "error"), but assumes "result" if not specified. NOTE: this expects any parameters to
+  // be stringified in a "parameters" field
+  bool SetCloudIntentPendingFromString(const std::string& cloudStr);
+
+  // Set a cloud intent JSON value fully expanded from a string. Used primarily in unit tests, this expects
+  // any params to be fully expanded as json in "params".
+  bool SetCloudIntentPendingFromExpandedJSON(const std::string& expandedJson);
   
   // get list of cloud/app intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
