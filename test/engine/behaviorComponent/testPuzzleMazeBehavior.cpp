@@ -110,8 +110,8 @@ TEST(PuzzleMazeBehavior, DISABLED_BalanceTool)
   // This isn't really a unit test, we just needed a way to show time it took to solve puzzles.
   // Just run through the test N times and print the average of each puzzle.
   
-  UiMessageHandler handler(0, nullptr);
-  ProtoMessageHandler protoHandler(nullptr);
+  UiMessageHandler handler(0);
+  ProtoMessageHandler protoHandler;
   
   char cwdPath[1256];
   getcwd(cwdPath, 1255);

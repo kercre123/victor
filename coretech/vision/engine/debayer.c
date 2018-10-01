@@ -122,9 +122,9 @@ void bayer_mipi_bggr10_downsample(const uint8_t *bayer, uint8_t *rgb, int bayer_
   register int i, j;
   int tmp;
 
-  outB = &rgb[0];
+  outR = &rgb[0];
   outG = &rgb[1];
-  outR = &rgb[2];
+  outB = &rgb[2];
 
   // Raw image are reported as 1280x720, 10bpp BGGR MIPI Bayer format
   // Based on frame metadata, the raw image dimensions are actually 1600x720 10bpp pixels.

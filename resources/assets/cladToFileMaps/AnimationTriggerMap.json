@@ -944,12 +944,28 @@
     "AnimName": "ag_rtobstacle_react_01"
   },
   {
-    "CladEvent": "ReactToOnLeftSide",
+    "CladEvent": "ReactToOnLeftSideGetIn",
+    "AnimName": "ag_reacttocliff_stuckleftside_getin_01"
+  },
+  {
+    "CladEvent": "ReactToOnLeftSideLoop",
     "AnimName": "ag_reacttocliff_stuckleftside_01"
   },
   {
-    "CladEvent": "ReactToOnRightSide",
+    "CladEvent": "ReactToOnRightSideGetIn",
+    "AnimName": "ag_reacttocliff_stuckrightside_getin_01"
+  },
+  {
+    "CladEvent": "ReactToOnRightSideLoop",
     "AnimName": "ag_reacttocliff_stuckrightside_01"
+  },
+  {
+    "CladEvent": "ReactToOnSideEffort",
+    "AnimName": "ag_reacttocliff_sidestuck_effort_01"
+  },
+  {
+    "CladEvent": "ReactToOnSideGetOut",
+    "AnimName": "ag_reacttocliff_sidestuck_getout_01"
   },
   {
     "CladEvent": "ReactToPerchedOnBlock",
@@ -1151,10 +1167,6 @@
   {
     "CladEvent": "PokeObjectGetOut",
     "AnimName": "ag_slowpoke_getout"
-  },
-  {
-    "CladEvent": "WaitOnSideLoop",
-    "AnimName": "ag_reacttocliff_wait"
   },
   {
     "CladEvent": "WakeupGetout",

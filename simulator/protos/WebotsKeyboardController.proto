@@ -201,8 +201,6 @@ PROTO WebotsKeyboardController [
   field SFInt32 headTest_nodCycleTimeMS 2000  
   field SFInt32 headTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
 
-  field SFInt32 nvTag 100
-
   field SFString drivingStartAnim ""
   field SFString drivingLoopAnim ""
   field SFString drivingEndAnim ""

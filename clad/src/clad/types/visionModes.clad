@@ -8,7 +8,11 @@ namespace Vector {
   enum uint_32 VisionMode
   {
     Idle                   = 0x00,
-    DetectingMarkers,
+    
+    //
+    // Full-blown vision modes
+    //
+    DetectingMarkers,           // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
     DetectingFaces,
     DetectingMotion,
     DetectingOverheadEdges,
@@ -17,20 +21,38 @@ namespace Vector {
     WhiteBalance,
     ComputingStatistics,
     DetectingPets,
-    EstimatingFacialExpression,  // No effect if DetectingFaces not enabled
-    DetectingSmileAmount,        //  "
-    DetectingGaze,               //  "
-    DetectingBlinkAmount,        //  "
-    CyclingExposure,
     DetectingLaserPoints,
     BuildingOverheadMap,
     DetectingVisualObstacles,
     Benchmarking,
     SavingImages,
-    RunningNeuralNet, 
+    RunningNeuralNet,
     DetectingIllumination,
-    MeteringFromChargerOnly,     // For auto-exposure metering, only use charger marker, if detected
+    ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
+    
+    //
+    // Vision mode "modifiers" (require one of the above to be enabled to have an effect)
+    //   TODO: Make "modifiers" a separate type (hard now because vision shedules consist only of VisionModes)
+    //   TODO: Enforce that modifiers always have their "required" mode enabled via unit test
+    
+    // Require DetectingMarkers
+    MeteringFromChargerOnly,          // For auto-exposure metering, only use charger marker, if detected
+    FullFrameMarkerDetection,         // Slower, process entire frame, without crop scheduling. Subsumes FullHeight/Width options below.
+    FullHeightMarkerDetection,        // Still does horizontal crop scheduling, but does not consider head angle / height
+    FullWidthMarkerDetection,         // Considers head angle to search only near ground, but no horizontal crop scheduling
+    MarkerDetectionWhileRotatingFast, // Mostly for unit tests: allow markers to be detected when rotating fast (or without IMU data)
+
+    // Require DetectingFaces:
+    EstimatingFacialExpression,
+    DetectingSmileAmount,
+    DetectingGaze,
+    DetectingBlinkAmount,
+    CroppedFaceDetection,  
+    
+    // Require AutoExposure
+    CyclingExposure,             // Cycles through a list of AE target values to aid search in extreme lighting
     MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
+
     Count
   }
       

@@ -9,8 +9,8 @@ import (
 )
 
 // DoCreate attempts to create an account with the given email and password
-func DoCreate(email, password string) (apiclient.Json, error) {
-	c, _, err := newClient()
+func DoCreate(envName, email, password string) (apiclient.Json, error) {
+	c, _, err := newClient(envName)
 	if err != nil {
 		return nil, err
 	}

@@ -53,7 +53,7 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
-  
+
   virtual void HandleWhileActivated( const EngineToGameEvent& event ) override;
 
 
@@ -137,7 +137,7 @@ private:
     EState              state;
     double              streamingBeginTime; // the time we begun actually streaming the mic data
     std::string         responseString; // the text we got back from knowledge graph
-    EGenerationStatus   ttsGenerationStatus; // track the status of the reponse tts
+    EGenerationStatus   ttsGenerationStatus; // track the status of the response tts
     BackpackLightDataLocator  lightsHandle; // lights, camera, action!
     bool                wasPickedUp;
 

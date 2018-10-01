@@ -25,7 +25,7 @@ namespace Vector {
 ShowAudioStreamStateManager::ShowAudioStreamStateManager(const AnimContext* context)
 : _context(context)
 {
-  
+
 }
 
 
@@ -54,7 +54,7 @@ void ShowAudioStreamStateManager::Update()
     }
   }
 }
-  
+
 void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg)
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
@@ -70,21 +70,21 @@ void ShowAudioStreamStateManager::SetPendingTriggerResponseWithGetIn(OnTriggerAu
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   if(_havePendingTriggerResponse)
   {
-    PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithGetIn.ExisitingResponse",
-                        "Already have pending trigger reponse, overridding");
+    PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithGetIn.ExistingResponse",
+                        "Already have pending trigger response, overriding");
   }
   _havePendingTriggerResponse = true;
   _pendingTriggerResponseHasGetIn = true;
   _responseCallback = callback;
 }
-  
+
 void ShowAudioStreamStateManager::SetPendingTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback callback)
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   if(_havePendingTriggerResponse)
   {
-    PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithoutGetIn.ExisitingResponse",
-                        "Already have pending trigger reponse, overridding");
+    PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithoutGetIn.ExistingResponse",
+                        "Already have pending trigger response, overriding");
   }
   _havePendingTriggerResponse = true;
   _pendingTriggerResponseHasGetIn = false;

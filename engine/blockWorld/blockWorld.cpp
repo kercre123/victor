@@ -1543,7 +1543,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     // NOTE: Just using default speed thresholds, which should be conservative.
     if(_robot->GetOffTreadsState() != OffTreadsState::OnTreads ||
        _robot->GetMoveComponent().WasMoving(atTimestamp) ||
-       _robot->GetVisionComponent().WasRotatingTooFast(atTimestamp))
+       _robot->GetImuComponent().GetImuHistory().WasRotatingTooFast(atTimestamp))
     {
       return;
     }

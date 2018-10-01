@@ -26,7 +26,7 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 enum class AnimationTrigger : int32_t;
 
 class SayTextAction : public IAction
@@ -53,13 +53,6 @@ public:
   // Audio::GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Text
   void SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks = 0);
 
-  // Generate new animation by stitching the animation group animations together until they are equal or greater to the
-  // duration of generated text to speech content.
-  // Note: Animation Trigger must not have Play__Robot_Vic__External_Voice_Text audio event in the
-  // animation. The event will be added to the first frame when generating the animation to fit the duration.
-  void SetFitToDuration(bool fitToDuration) { _fitToDuration = fitToDuration; }
-
-
 protected:
 
   // IAction interface methods
@@ -85,7 +78,6 @@ private:
   std::string                     _text;
   AudioTtsProcessingStyle         _style              = AudioTtsProcessingStyle::Invalid;
   float                           _durationScalar     = 1.f;
-  bool                            _fitToDuration      = false;
 
   // Accompanying animation, if any
   AnimationTrigger                _animTrigger;  // Count == use built-in animation

@@ -161,7 +161,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
       // it would be highly unlikely that we started another streaming job while waiting for the earcon,
       // but doesn't hurt to check
       if (!HasStreamingJob()) {
-        _micDataProcessor->CreateSteamJob(type, kTriggerLessOverlapSize_ms);
+        _micDataProcessor->CreateStreamJob(type, kTriggerLessOverlapSize_ms);
         PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
                          "Starting Wake Wordless streaming");
       }
@@ -381,7 +381,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamBeginTime_ns = currTime_nanosec;
 
         // Send out the message announcing the trigger word has been detected
-        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString()};
+        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(), false};
         if (_currentStreamingJob != nullptr) {
           hw.mode = _currentStreamingJob->_type;
         }
@@ -701,7 +701,7 @@ bool MicDataSystem::HasConnectionToCloud() const
 {
   return _udpServer->HasClient();
 }
-  
+
 bool MicDataSystem::ShouldSimulateStreaming() const
 {
   if( _batteryLow ) {
@@ -714,10 +714,10 @@ bool MicDataSystem::ShouldSimulateStreaming() const
 }
 
 void MicDataSystem::RequestConnectionStatus()
-{   
+{
   if (_udpServer->HasClient())
   {
-    PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");    
+    PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
 }

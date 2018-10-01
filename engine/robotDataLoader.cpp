@@ -64,6 +64,7 @@ const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequenc
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   // Dance to the beat:
   "assets/animations/anim_dancebeat_01.bin",
+  "assets/animations/anim_dancebeat_02.bin",
   "assets/animations/anim_dancebeat_getin_01.bin",
   "assets/animations/anim_dancebeat_getout_01.bin",
   

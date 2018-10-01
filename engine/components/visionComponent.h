@@ -27,6 +27,7 @@
 #include "engine/rollingShutterCorrector.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
+#include "engine/vision/visionSystemInput.h"
 
 #include "clad/types/cameraParams.h"
 #include "clad/types/imageTypes.h"
@@ -110,23 +111,21 @@ struct DockingErrorSignal;
     // Calibration must be provided before Update() will run
     void SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
     
-    bool IsDisplayingProcessedImagesOnly() const;
-        
-    // Provide next image for processing, with corresponding robot state.
-    // In synchronous mode, the image is processed immediately. In asynchronous
-    // mode, it will be processed as soon as the current image is completed.
-    // Also, any debug images left by vision processing for display will be
-    // displayed.
-    // NOTE: The given image is swapped into place, so it will no longer
-    //       be valid in the caller after using this method.
-    Result SetNextImage(Vision::ImageRGB& image);
+    // Provide image for processing, with corresponding robot state.
+    // In synchronous mode, the image is processed immediately in this thread.
+    // In asynchronous mode, it will be processed as soon as VisionSystem thread is ticked.
+    // Will Release and Invalidate buffer should this fail
+    Result SetNextImage(Vision::ImageBuffer& buffer);
 
+    // Pause/Unpause processing of images
+    // Note: Will still capture images from CameraService but they will be discarded
     void Pause(bool isPaused);
+
+    // Whether or not to capture images from CameraService
     void EnableImageCapture(bool enable) { _enableImageCapture = enable; }
 
-    // If the vision thread isn't busy, grab the lock and release all internally held images and return
-    // true. Otherwise, return false
-    bool TryReleaseInternalImages();
+    // Returns true as long as we are/will be processing images
+    bool IsProcessingImages();
     
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
@@ -144,21 +143,22 @@ struct DockingErrorSignal;
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
-    void   EnableVisionWhileMovingFast(bool enable);
+    void   EnableVisionWhileRotatingFast(bool enable);
+    bool   IsVisionWhileRotatingFastEnabled() const;
 
     // Set the camera's capture format
     // Non blocking but will cause VisionComponent/System to
     // wait until no one is using the shared camera memory before
     // requesting the format change and will continue to
     // wait until we once again recieve frames from the camera
-    bool   SetCameraCaptureFormat(ImageEncoding format);
+    bool   SetCameraCaptureFormat(Vision::ImageEncoding format);
     
     // Returns true while camera format is in the process of changing
     bool   IsWaitingForCaptureFormatChange() const;
 
     // Set whether or not we draw each processed image to the robot's screen
     // (Not using the word "face" because of confusion with "faces" in vision)
-    void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; }
+    void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; EnableMode(VisionMode::ImageViz, enable); }
     void   AddDrawScreenModifier(const std::function<void(Vision::ImageRGB&)>& modFcn) { _screenImageModFuncs.push_back(modFcn); }
     
     // Looks through all results available from the VisionSystem and processes them.
@@ -206,21 +206,6 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasHeadRotatingTooFast(RobotTimeStamp_t t,
-                                const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                                const int numImuDataToLookBack = 0) const;
-    bool WasBodyRotatingTooFast(RobotTimeStamp_t t,
-                                const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                                const int numImuDataToLookBack = 0) const;
-    
-    // Returns true if head or body were moving too fast at the timestamp
-    // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
-    // of just looking at the previous and next imu data
-    bool WasRotatingTooFast(RobotTimeStamp_t t,
-                            const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                            const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                            const int numImuDataToLookBack = 0) const;
-
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time
     void AddLiftOccluder(const RobotTimeStamp_t t_request);
@@ -318,15 +303,13 @@ struct DockingErrorSignal;
     
     Vision::CameraParams GetCurrentCameraParams() const;
     
-    // Captures image data from HAL, if available, and puts it in image_out
+    // Captures image data from HAL, if available, and puts it in buffer
     // Returns true if image was captured, false if not
-    bool CaptureImage(Vision::ImageRGB& image_out);
+    bool CaptureImage(Vision::ImageBuffer& buffer);
 
-    // Releases captured image backing data to CameraService
-    bool ReleaseImage(Vision::ImageRGB& image);
-
-    f32 GetBodyTurnSpeedThresh_degPerSec() const;
-
+    // Releases captured image back to CameraService
+    bool ReleaseImage(Vision::ImageBuffer& buffer);
+    
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
 
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
@@ -367,29 +350,25 @@ struct DockingErrorSignal;
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
     std::unique_ptr<Vision::Camera> _camera;
-    bool                      _enabled = false;
+    bool _enabled = false;
     
-    bool    _isSynchronous = false;
+    bool _isSynchronous = false;
     
     // variables which are updated in the main (engine) thread but checked on the worker thread
     // must be volatile to avoid potential caching issues
     volatile bool _running = false;
     volatile bool _paused  = false;
 
-    bool   _drawImagesToScreen = false;
+    bool _drawImagesToScreen = false;
 
     std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
 
     std::mutex _lock;
     
-    // Current image is the one the vision system (thread) is actively working on.
-    // Next image is the one queued up for the visin system to start processing when it is done with current.
-    // Buffered image will become "next" once we've got a corresponding RobotState available in history.
-    Vision::ImageRGB _currentImg;
-    Vision::ImageRGB _nextImg;
-    Vision::ImageRGB _bufferedImg;
-    
-    Vision::DroppedFrameStats _dropStats;
+    // Input for VisionSystem
+    // While _visionSystemInput.locked is true this is being processed by VisionSystem
+    // and can not be modified by VisionComponent
+    VisionSystemInput _visionSystemInput = {};
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
@@ -409,12 +388,9 @@ struct DockingErrorSignal;
     RobotTimeStamp_t  _currentQualityBeginTime_ms = 0;
     RobotTimeStamp_t  _waitForNextAlert_ms = 0;
     
-    VisionPoseData   _currentPoseData;
-    VisionPoseData   _nextPoseData;
-    bool             _visionWhileMovingFastEnabled = false;
+    bool _visionWhileRotatingFastEnabled = false;
 
-    ImageEncoding _desiredImageFormat = ImageEncoding::NoneImageEncoding;
-    ImageEncoding _currentImageFormat = ImageEncoding::NoneImageEncoding;
+    Vision::ImageEncoding _desiredImageFormat = Vision::ImageEncoding::NoneImageEncoding;
 
     bool _shouldDownsampleBayer = true;
     
@@ -431,9 +407,6 @@ struct DockingErrorSignal;
     CaptureFormatState _captureFormatState = CaptureFormatState::None;
 
     EngineTimeStamp_t _lastImageCaptureTime_ms = 0;
-
-    // Future used for async image conversions
-    std::future<Vision::ImageRGB> _cvtFuture;
     
     std::string _faceAlbumName;
     
@@ -441,15 +414,29 @@ struct DockingErrorSignal;
     
     std::vector<Signal::SmartHandle> _signalHandles;
     
-    std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
+    struct Homography {
+      Matrix_3x3f H;
+      bool        isGroundPlaneROIVisible;
+    };
+    std::map<f32,Homography> _groundPlaneHomographyLUT; // keyed on head angle in radians
 
-    void SetLiftCrossBar();
+    // Factory centroid finder: returns the centroids of the 4 factory test dots,
+    // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest
+    // message. This runs on the main thread and should only be used for factory tests.
+    // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
+    bool _doFactoryDotTest = false;
+    
+    // Threading for OpenCV
+    int _openCvNumThreads = 1;
 
+    bool _enableImageCapture = true;
+    
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
     
     void Processor();
-    void UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& image);
+
+    void UpdateVisionSystem(const VisionSystemInput& input);
     
     void Lock();
     void Unlock();
@@ -465,17 +452,21 @@ struct DockingErrorSignal;
 
     // Updates the state of requesting for a camera capture format change
     void UpdateCaptureFormatChange(s32 gotNumRows=0);
-    
-    // Factory centroid finder: returns the centroids of the 4 factory test dots,
-    // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest
-    // message. This runs on the main thread and should only be used for factory tests.
-    // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
-    bool _doFactoryDotTest = false;
-    
-    // Threading for OpenCV
-    int _openCvNumThreads = 1;
 
-    bool _enableImageCapture = true;
+    // Do whatever we need to do for camera calbration
+    // such as saving images or running dot test
+    void UpdateForCalibration();
+
+    // Send images from result's displayImg and debug image lists to Viz/SDK
+    void SendImages(VisionProcessingResult& result);
+
+    // Send image from result's displayImg to
+    // anim process to be displayed on the face
+    Result SendDebugMirrorImage(const VisionProcessingResult& result);
+
+    void SetLiftCrossBar();
+
+    Vision::ImageEncoding GetCurrentImageFormat() const;
     
   }; // class VisionComponent
   
@@ -502,8 +493,13 @@ struct DockingErrorSignal;
     return _camera->GetCalibration();
   }
   
-  inline void VisionComponent::EnableVisionWhileMovingFast(bool enable) {
-    _visionWhileMovingFastEnabled = enable;
+  inline void VisionComponent::EnableVisionWhileRotatingFast(bool enable) {
+    _visionWhileRotatingFastEnabled = enable;
+    EnableMode(VisionMode::MarkerDetectionWhileRotatingFast, _visionWhileRotatingFastEnabled);
+  }
+  
+  inline bool VisionComponent::IsVisionWhileRotatingFastEnabled() const {
+    return _visionWhileRotatingFastEnabled;
   }
   
   inline void VisionComponent::SetMarkerDetectionTurnSpeedThresholds(f32 bodyTurnSpeedThresh_degPerSec,

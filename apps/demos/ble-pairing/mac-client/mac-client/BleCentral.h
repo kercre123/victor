@@ -98,6 +98,11 @@ enum WiFiAuth : uint8_t {
   bool _hasAuthed;
   bool _hasOwner;
   
+  NSString* _sessionName;
+  NSString* _sessionIp;
+  NSString* _sessionEsn;
+  NSString* _sessionClientAppToken;
+  
   Anki::Vector::ExternalComms::RtsConnRequest _currentConnRequest;
 }
 
@@ -161,6 +166,7 @@ enum WiFiAuth : uint8_t {
 - (bool) HasSavedPublicKey;
 - (bool) HasSavedSession: (NSString*)key;
 - (bool) HasSessionForName: (NSString*)key;
+- (NSDictionary*) GetSessionForName: (NSString*)key;
 - (void) SaveName: (NSString*)key;
 - (NSData*) GetPublicKey;
 - (NSData*) GetPrivateKey;

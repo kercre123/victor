@@ -330,6 +330,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/reactions
   AskForHelp,
+  AskForHelpOnSide,
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
@@ -341,6 +342,7 @@ enum uint_16 BehaviorID {
   ReactToGoodMorning,
   ReactToGreeting,
   ReactToHello,
+  ReactToMotorCalibration,
   ReactToNegative,
   ReactToObstacle,
   ReactToPlacedOnSlope,

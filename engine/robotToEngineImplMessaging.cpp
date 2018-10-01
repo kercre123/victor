@@ -161,6 +161,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::enterPairing,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        // Forward to switchboard
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage.EnterPairing","");
                                                        robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
                                                      }));
 

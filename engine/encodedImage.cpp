@@ -31,7 +31,7 @@ namespace Vector {
   , _imgWidth(0)
   , _imgHeight(0)
   , _imgID(std::numeric_limits<u32>::max())
-  , _encoding(ImageEncoding::NoneImageEncoding)
+  , _encoding(Vision::ImageEncoding::NoneImageEncoding)
   , _expectedChunkId(0)
   , _isImgValid(false)
   , _numChunksReceived(0)
@@ -44,7 +44,7 @@ namespace Vector {
   , _imgWidth(imgGray.GetNumCols())
   , _imgHeight(imgGray.GetNumRows())
   , _imgID(imageID)
-  , _encoding(ImageEncoding::RawGray)
+  , _encoding(Vision::ImageEncoding::RawGray)
   , _isImgValid(!imgGray.IsEmpty())
   {
     _buffer.reserve(imgGray.GetNumElements());
@@ -57,7 +57,7 @@ namespace Vector {
   , _imgWidth(imgRGB.GetNumCols())
   , _imgHeight(imgRGB.GetNumRows())
   , _imgID(imageID)
-  , _encoding(ImageEncoding::RawRGB)
+  , _encoding(Vision::ImageEncoding::RawRGB)
   , _isImgValid(!imgRGB.IsEmpty())
   {
     _buffer.reserve(imgRGB.GetNumElements() * 3);
@@ -105,14 +105,14 @@ namespace Vector {
       // (The encoding is hard coded deep within firmware code and can't easily be changed so this is a work
       // around)
       // If it is in color then update the encoding
-      if(chunk.data[0] != 0 && _encoding == ImageEncoding::JPEGMinimizedGray)
+      if(chunk.data[0] != 0 && _encoding == Vision::ImageEncoding::JPEGMinimizedGray)
       {
-        _encoding = ImageEncoding::JPEGMinimizedColor;
+        _encoding = Vision::ImageEncoding::JPEGMinimizedColor;
       }
 
       _buffer.clear();
       
-      if(chunk.imageEncoding == ImageEncoding::JPEGGray)
+      if(chunk.imageEncoding == Vision::ImageEncoding::JPEGGray)
       {
         _buffer.reserve(_imgWidth*_imgHeight);
       }
@@ -182,26 +182,26 @@ namespace Vector {
   {
     switch(_encoding)
     {
-      case ImageEncoding::NoneImageEncoding:
+      case Vision::ImageEncoding::NoneImageEncoding:
       {
         ANKI_VERIFY(false, "EncodedImage.IsColor.UnsupportedImageEncoding", "%s", EnumToString(_encoding));
         // Intentional fallthrough!
       }
         
-      case ImageEncoding::JPEGGray:
-      case ImageEncoding::JPEGMinimizedGray:
-      case ImageEncoding::RawGray:
+      case Vision::ImageEncoding::JPEGGray:
+      case Vision::ImageEncoding::JPEGMinimizedGray:
+      case Vision::ImageEncoding::RawGray:
       {
         return false;
       }
         
-      case ImageEncoding::JPEGColor:
-      case ImageEncoding::JPEGMinimizedColor:
-      case ImageEncoding::JPEGColorHalfWidth:
-      case ImageEncoding::RawRGB:
-      case ImageEncoding::YUYV:
-      case ImageEncoding::YUV420sp:
-      case ImageEncoding::BAYER:
+      case Vision::ImageEncoding::JPEGColor:
+      case Vision::ImageEncoding::JPEGMinimizedColor:
+      case Vision::ImageEncoding::JPEGColorHalfWidth:
+      case Vision::ImageEncoding::RawRGB:
+      case Vision::ImageEncoding::YUYV:
+      case Vision::ImageEncoding::YUV420sp:
+      case Vision::ImageEncoding::BAYER:
       {
         return true;
       }
@@ -250,8 +250,8 @@ namespace Vector {
   {
     switch(_encoding)
     {
-      case ImageEncoding::JPEGColor:
-      case ImageEncoding::JPEGGray:
+      case Vision::ImageEncoding::JPEGColor:
+      case Vision::ImageEncoding::JPEGGray:
       {
         // Simple case: just decode directly into the passed-in image's buffer.
         // Note that this will take a buffer with grayscale data in it and
@@ -260,7 +260,7 @@ namespace Vector {
         break;
       }
         
-      case ImageEncoding::JPEGMinimizedGray:
+      case Vision::ImageEncoding::JPEGMinimizedGray:
       {
         // Convert our special minimized JPEG format to regular JPEG buffer and
         // decode that
@@ -270,7 +270,7 @@ namespace Vector {
         break;
       }
       
-      case ImageEncoding::RawGray:
+      case Vision::ImageEncoding::RawGray:
       {
         // Already decompressed.
         Vision::Image grayImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
@@ -278,7 +278,7 @@ namespace Vector {
         break;
       }
         
-      case ImageEncoding::RawRGB:
+      case Vision::ImageEncoding::RawRGB:
       {
         // Already decompressed.
         Vision::ImageRGB rgbImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
@@ -286,7 +286,7 @@ namespace Vector {
         break;
       }
         
-      case ImageEncoding::JPEGColorHalfWidth:
+      case Vision::ImageEncoding::JPEGColorHalfWidth:
       {
         DecodeHelper(_buffer, decodedImg);
         cv::copyMakeBorder(decodedImg.get_CvMat_(), decodedImg.get_CvMat_(),
@@ -294,7 +294,7 @@ namespace Vector {
         break;
       }
       
-      case ImageEncoding::JPEGMinimizedColor:
+      case Vision::ImageEncoding::JPEGMinimizedColor:
       {
         // Convert our special minimized JPEG format to regular JPEG buffer and
         // decode that
@@ -346,7 +346,7 @@ namespace Vector {
     const std::vector<u8>* bufferPtr = &_buffer;
     std::vector<u8> tempBuffer;
     
-    if(_encoding == ImageEncoding::JPEGMinimizedGray)
+    if(_encoding == Vision::ImageEncoding::JPEGMinimizedGray)
     {
       // If this buffer is encoded as our homebrew "MinimizedGray" JPEG,
       // we need to convert it for storage so it can be read by normal
@@ -354,7 +354,7 @@ namespace Vector {
       MiniGrayToJpeg(_buffer, _imgHeight, _imgWidth, tempBuffer);
       bufferPtr = &tempBuffer;
     }
-    else if(_encoding == ImageEncoding::JPEGMinimizedColor)
+    else if(_encoding == Vision::ImageEncoding::JPEGMinimizedColor)
     {
       // Special case: our homebrew "MinimizedColor" images are half width,
       // so have to fully decode, which resizes to full size, and then save

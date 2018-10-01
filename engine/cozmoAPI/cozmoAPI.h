@@ -36,7 +36,6 @@ namespace Data {
 namespace Vector {
 
 class CozmoEngine;
-class GameMessagePort;
 
 class CozmoAPI : private Util::noncopyable
 {
@@ -48,10 +47,6 @@ public:
   // When manual control over updating the engine is desired:
   ANKI_VISIBLE bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   ANKI_VISIBLE bool Update(const BaseStationTime_t currentTime_nanosec);
-
-  // Send messages to game, receive messages from game
-  ANKI_VISIBLE size_t SendMessages(uint8_t* buffer, size_t bufferSize);
-  ANKI_VISIBLE void ReceiveMessages(const uint8_t* buffer, size_t size);
 
   // Activate A/B experiment
   ANKI_VISIBLE uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
@@ -82,7 +77,6 @@ private:
 
     // For manually ticking the game
     bool Update(const BaseStationTime_t currentTime_nanosec);
-    GameMessagePort* GetGameMessagePort() const { return _gameMessagePort.get(); }
     CozmoEngine* GetEngine() const { return _cozmoInstance.get(); }
     void SyncWithEngineUpdate(const std::function<void()>& func) const;
 
@@ -90,7 +84,6 @@ private:
     void SetEngineThread();
 
   private:
-    std::unique_ptr<GameMessagePort> _gameMessagePort;
     std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
     mutable std::mutex _updateMutex;

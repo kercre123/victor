@@ -2821,13 +2821,10 @@ Result Robot::UpdateCameraStartupChecks()
     if(!GetVisionComponent().HasStartedCapturingImages())
     {
       // Try to get a frame
-      u8* buf = nullptr;
-      u32 id = 0;
-      TimeStamp_t t = 0;
-      ImageEncoding format;
-      if(CameraService::getInstance()->CameraGetFrame(buf, id, t, format))
+      Vision::ImageBuffer buffer;
+      if(CameraService::getInstance()->CameraGetFrame(buffer))
       {
-        CameraService::getInstance()->CameraReleaseFrame(id);
+        CameraService::getInstance()->CameraReleaseFrame(buffer.GetImageId());
       }
     }
 
@@ -2936,6 +2933,13 @@ void Robot::Shutdown(ShutdownReason reason)
   }
   _toldToShutdown = true;
   _shutdownReason = reason;
+}
+
+void Robot::SetImageSendMode(ImageSendMode newMode)
+{
+  _imageSendMode = newMode;
+  // TODO: VIC-5159 fix this to work with SingleShot
+  GetVisionComponent().EnableMode(VisionMode::ImageViz, (newMode != ImageSendMode::Off));
 }
 
 

@@ -642,7 +642,7 @@ void DASManager::LoadGlobalState()
     auto * osState = Anki::Vector::OSState::getInstance();
     DEV_ASSERT(osState != nullptr, "DASManager.LoadGlobalState.InvalidOSState");
     if (osState->HasValidEMR()) {
-      _robot_id = osState->GetSerialNumberAsString();
+      _robot_id = Anki::Util::StringToLower(osState->GetSerialNumberAsString());
     } else {
       LOG_ERROR("DASManager.LoadGlobalState.InvalidEMR", "INVALID EMR - NO ESN");
     }

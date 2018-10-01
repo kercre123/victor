@@ -118,7 +118,7 @@ std::string ProxSensorComponent::GetLogRow()
   ss << d.signalIntensity  << ", ";
   ss << d.ambientIntensity << ", ";
   ss << d.spadCount        << ", ";
-  ss << (uint16_t) d.rangeStatus;
+  ss << RangeStatusToString(d.rangeStatus);
 
   return ss.str();
 }
@@ -206,14 +206,15 @@ void ProxSensorComponent::UpdateReadingValidity()
   _latestData.isTooPitched = pitchAngle < kMinPitch || pitchAngle > kMaxPitch;
 
   // Check if the reading is within the valid range  
-  _latestData.distance_mm = _latestDataRaw.distance_mm;
-  _latestData.isInValidRange = Util::InRange(_latestData.distance_mm,
-                                             kMinObsThreshold_mm,
-                                             kMaxObsThreshold_mm);
+  _latestData.distance_mm = std::max(_latestDataRaw.distance_mm, kMinObsThreshold_mm);
+  _latestData.isInValidRange = _latestData.distance_mm < kMaxObsThreshold_mm;
   
   // Check that the signal strength is high enough
   _latestData.signalQuality = GetSignalQuality(_latestDataRaw);
   _latestData.isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
+  
+  // Check that the RangeStatus is valid
+  _latestData.hasValidRangeStatus = _latestDataRaw.rangeStatus == RangeStatus::RANGE_VALID;
 }
 
 
@@ -242,13 +243,13 @@ void ProxSensorComponent::UpdateNavMap()
   const float quality       = _latestData.signalQuality;
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
   const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
-                               _latestData.distance_mm >= kMinObsThreshold_mm);     // the sensor is not seeing the lift
+                               !_latestData.isLiftInFOV);                           // the sensor is not seeing the lift
   const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
 
   if ((objectDetected || noObject) && !tiltedForward)
   {  
     // check if the robot has moved or the sensor reading has changed significantly
-    const Pose3d  robotPose = _robot->GetPose(); 
+    const Pose3d  robotPose = _robot->GetPose();
     const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
     if ( !robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
         (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 
@@ -315,6 +316,7 @@ void ProxSensorComponent::UpdateNavMap()
     FastPolygon sensorCone({sensorCorner1, sensorCorner2, robotPose.GetTranslation()});
 
     if (sensorBeamHalfWidth_mm < ROBOT_BOUNDING_Y *.25) {
+      // if the sensorBeamHalfWidth_mm is less than the max obstacle size, we can just use the sensorCone
       _robot->GetMapComponent().ClearRegion( sensorCone,  lastTimestamp);
     } else {
       _robot->GetMapComponent().ClearRegion( 

@@ -37,7 +37,8 @@ structure StreamOpen {
 
 structure Hotword {
 	StreamType mode,
-	string locale
+	string locale,
+	bool noLogging,
 }
 
 structure Filename {

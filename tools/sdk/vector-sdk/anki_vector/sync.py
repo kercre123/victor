@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """
+Synchronizer related classes and functions.
+
 A synchronizer is used to make functions waitable outside
 of the scope of the event loop. This allows for more
 advanced use cases where multiple commands may be sent in
@@ -93,7 +95,7 @@ class Synchronizer:
             Either returns an Synchronizer or finishes processing the function depending on if the
             object "is_async"
             """
-            that = args[0]
+            that = args[0]  # TODO 'that' is not a good var name
             log_wrapped_func = log_result(func, that.logger)
 
             # When invoking inside of a running event loop, things could explode.

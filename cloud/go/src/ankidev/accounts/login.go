@@ -13,8 +13,8 @@ import (
 // persist it to disk and make sure it remains associated with the returned configuration in
 // the future. For temporary use, the values in the session (i.e. token) can be used independently
 // of the config without saving it.
-func DoLogin(user, pass string) (*config.Session, *config.Config, error) {
-	c, cfg, err := newClient()
+func DoLogin(envName, user, pass string) (*config.Session, *config.Config, error) {
+	c, cfg, err := newClient(envName)
 	resp, err := c.NewUserSession(user, pass)
 	if err != nil {
 		return nil, nil, err

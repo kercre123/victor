@@ -72,7 +72,7 @@ void CPUStats::Update()
 
 void CPUStats::LogToDas()
 {
-  DASMSG(battery_temperature_stats, "cpu.temperature_stats", "CPU temperature statistics");
+  DASMSG(cpu_temperature_stats, "cpu.temperature_stats", "CPU temperature statistics");
   DASMSG_SET(i1, _temperatureStats_degC->GetIntMin(), "Minimum CPU temperature experienced (degC)");
   DASMSG_SET(i2, _temperatureStats_degC->GetIntMax(), "Maximum CPU temperature experienced (degC)");
   DASMSG_SET(i3, _numSamplesAboveReportingThresh, "Time spent above 60C (min)"); //depends on kSamplePeriod_sec==60

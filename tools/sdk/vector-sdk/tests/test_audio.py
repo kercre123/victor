@@ -33,7 +33,7 @@ def main():
         print('samples: {0}'.format(len(robot.audio.raw_audio_waveform_history)))
 
         output_folder = os.path.join(gettempdir(), 'vector_sdk')
-        os.makedirs(output_folder)
+        os.makedirs(output_folder, exist_ok=True)
 
         path = os.path.join(output_folder, output_filename)
         wavfile.write(path, anki_vector.messaging.protocol.PROCESSED_SAMPLE_RATE, robot.audio.raw_audio_waveform_history)

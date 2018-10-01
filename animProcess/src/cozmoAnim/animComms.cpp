@@ -34,7 +34,6 @@ namespace AnimComms {
 
 namespace { // "Private members"
 
-  // For comms with engine
   LocalUdpServer _engineComms;
 
   // For comms with robot
@@ -147,7 +146,7 @@ u32 GetNextPacketFromEngine(u8* buffer, u32 max_length)
   return (u32) dataLen;
 }
 
-  
+
 bool SendPacketToRobot(const void *buffer, const u32 length)
 {
   if (!_robotComms.IsConnected()) {
@@ -175,7 +174,7 @@ u32 GetNextPacketFromRobot(u8* buffer, u32 max_length)
     DisconnectRobot();
     return 0;
   }
-    
+
   return (u32) dataLen;
 }
 

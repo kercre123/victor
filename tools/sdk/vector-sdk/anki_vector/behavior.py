@@ -13,13 +13,15 @@
 # limitations under the License.
 
 """
+Behavior related classes and functions.
+
 Behaviors represent a complex task which requires Vector's
 internal logic to determine how long it will take. This
 may include combinations of animation, path planning or
-other functionality. Examples include drive_on_charger,
-set_lift_height, etc.
+other functionality. Examples include :meth:`drive_on_charger`,
+:meth:`set_lift_height`, etc.
 
-For commands such as go_to_pose, drive_on_charger and dock_with_cube,
+For commands such as :meth:`go_to_pose`, :meth:`drive_on_charger` and :meth:`dock_with_cube`,
 Vector uses path planning, which refers to the problem of
 navigating the robot from point A to B without collisions. Vector
 loads known obstacles from his map, creates a path to navigate
@@ -102,16 +104,16 @@ class BehaviorComponent(util.Component):
 
         return protocol.PathMotionProfile(**default_motion_profile)
 
-    @property
-    def current_priority(self):
-        # TODO implement
-        return self._current_priority
+    # @property
+    # def current_priority(self):
+    #    # TODO implement
+    #    return self._current_priority
 
-    @property
-    def is_active(self) -> bool:
-        # TODO implement
-        """True if the behavior is currently active and may run on the robot."""
-        return self._is_active
+    # @property
+    # def is_active(self) -> bool:
+    #    # TODO implement
+    #    """True if the behavior is currently active and may run on the robot."""
+    #    return self._is_active
 
     @classmethod
     def _get_next_action_id(cls):
@@ -177,7 +179,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt action in case of a failure.
 
         Returns:
-            A response from the robot with status information sent when this action successfully completes or fails.
+            A response from the robot with status information sent when this request successfully completes or fails.
 
         .. code-block:: python
 
@@ -201,6 +203,8 @@ class BehaviorComponent(util.Component):
         return await self.grpc_interface.GoToPose(go_to_pose_request)
 
     # TODO Check that num_retries is actually working (and if not, same for other num_retries).
+    # TODO alignment_type coming out ugly in the docs without real values
+    # TODO DockWithCubeResponse not clear what it is in docs
     @sync.Synchronizer.wrap
     async def dock_with_cube(self,
                              target_object: objects.LightCube,
@@ -219,7 +223,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt action in case of a failure.
 
         Returns:
-            A response from the robot with status information sent when this action successfully completes or fails.
+            A response from the robot with status information sent when this request successfully completes or fails.
 
         .. code-block:: python
 
@@ -270,7 +274,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt action in case of a failure.
 
         Returns:
-            A response from the robot with status information sent when this action successfully completes or fails.
+            A response from the robot with status information sent when this request successfully completes or fails.
 
         .. code-block:: python
 
@@ -313,7 +317,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt the turn in case of a failure.
 
         Returns:
-            A response from the robot with status information sent when this action successfully completes or fails.
+            A response from the robot with status information sent when this request successfully completes or fails.
 
         .. code-block:: python
 
@@ -347,7 +351,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt the action in case of a failure.
 
         Returns:
-            A response from the robot with status information sent when this action successfully completes or fails.
+            A response from the robot with status information sent when this request successfully completes or fails.
 
         .. code-block:: python
 
@@ -381,7 +385,7 @@ class BehaviorComponent(util.Component):
         :param num_retries: Number of times to re-attempt the action in case of a failure.
 
         Returns:
-            A response from the robot with status information sent when this action successfully completes or fails.
+            A response from the robot with status information sent when this request successfully completes or fails.
 
         .. code-block:: python
 

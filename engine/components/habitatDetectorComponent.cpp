@@ -133,7 +133,6 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
   if(robot->HasExternalInterface()) {
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(*(robot->GetExternalInterface()), *this, _signalHandles);
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotStopped>();
     
     // webviz subscription to externally control the robot's belief state
@@ -155,34 +154,6 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
 
   _toSendJson["reason"] = "~";
   _toSendJson["whiteThresholds"] = "~";
-}
-
-template<>
-void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
-{
-  if(msg.treadsState==OffTreadsState::OnTreads || msg.treadsState==OffTreadsState::InAir) {
-    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
-    const bool inPRDemo = featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo);
-    if(!inPRDemo) {
-      _habitatBelief = HabitatBeliefState::Unknown;
-      _detectedWhiteFromCliffs = false;
-      _proxReadingBuffer.clear();
-      _numTicksWaitingForProx = 0;
-      
-      // reset the Cliff Grey measurement variables when the robot is moved and needs
-      // to re-determine whether it is inside the habitat or not
-      _numGreyCliffReadingsSincePutdown = 0;
-      _minGreyCliffFL = std::numeric_limits<u16>::max();
-      _minGreyCliffFR = std::numeric_limits<u16>::max();
-      
-      // initialized to zero to force a message to sent down with nominal thresholds
-      _lastSentWhiteThreshFL = 0;
-      _lastSentWhiteThreshFR = 0;
-      _timeForWhiteThresholdUpdate_s = 0.0;
-      
-      SendWhiteDetectThresholdsIfNeeded();
-    }
-  }
 }
 
 template<>
@@ -241,9 +212,35 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
   }
   
   auto& cliffSensor = dependentComps.GetComponent<CliffSensorComponent>();
+
+  const bool isPickedUp = _robot->GetOffTreadsState() == OffTreadsState::InAir;
+
+  if(cliffSensor.IsCliffDetected() && isPickedUp) {
+    _habitatBelief = HabitatBeliefState::Unknown;
+    _detectedWhiteFromCliffs = false;
+    _proxReadingBuffer.clear();
+    _numTicksWaitingForProx = 0;
+
+    // reset the Cliff-Grey measurement variables when the robot is moved and needs
+    // to re-determine whether it is inside the habitat or not
+    _numGreyCliffReadingsSincePutdown = 0;
+    _minGreyCliffFL = std::numeric_limits<u16>::max();
+    _minGreyCliffFR = std::numeric_limits<u16>::max();
+
+    // initialized to zero to force a message to sent down with nominal thresholds
+    // upon the next call to UpdateWhiteDetectThreshold() which subsequently calls
+    // SendWhiteDetectThresholdsIfNeeded() 
+    // which will only send if the last sent values differ by a minimum amount, and 
+    // if enough time has passed since the last message message
+    _lastSentWhiteThreshFL = 0;
+    _lastSentWhiteThreshFR = 0;
+    _timeForWhiteThresholdUpdate_s = 0.0;
+  }
   
   // habitat confirmation (or disconfirmation) can occur if we are in the unknown state
-  if(!_robot->GetBatteryComponent().IsOnChargerPlatform() && _habitatBelief == HabitatBeliefState::Unknown) {
+  if(!_robot->GetBatteryComponent().IsOnChargerPlatform() && 
+      _habitatBelief == HabitatBeliefState::Unknown && 
+      !isPickedUp) {
     // determine if we have driven too far without detecting white from cliffs
     f32 distance = ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin());
     if(!_detectedWhiteFromCliffs && distance > kMinTravelDistanceWithoutSeeingWhite_mm) {
@@ -251,6 +248,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     }
     
     // compute the minimum grey observed while the robot is moving
+    // additionally send updated white-thresholds based on observed grey so far
     const auto& cliffValues = cliffSensor.GetCliffDataRaw();
     UpdateWhiteDetectThreshold(cliffValues);
   

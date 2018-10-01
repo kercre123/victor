@@ -86,7 +86,13 @@ static void Recognize(Robot& robot, RobotTimeStamp_t timestamp, RobotState& stat
   img.SetTimestamp((TimeStamp_t)timestamp);
   
   Vision::ImageRGB imgRGB(img);
-  lastResult = robot.GetVisionComponent().SetNextImage(imgRGB);
+  Vision::ImageBuffer buffer(reinterpret_cast<u8*>(img.GetDataPointer()),
+                             img.GetNumRows(),
+                             img.GetNumCols(),
+                             Vision::ImageEncoding::RawRGB,
+                             (TimeStamp_t)timestamp,
+                             0);
+  lastResult = robot.GetVisionComponent().SetNextImage(buffer);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   lastResult = robot.GetVisionComponent().UpdateAllResults();

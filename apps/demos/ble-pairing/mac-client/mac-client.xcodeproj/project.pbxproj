@@ -13,6 +13,9 @@
 		79E261D120D18E6300AA9573 /* json.h in Headers */ = {isa = PBXBuildFile; fileRef = 79E261CE20D18E6300AA9573 /* json.h */; };
 		79E261D220D18E6300AA9573 /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 79E261CF20D18E6300AA9573 /* jsoncpp.cpp */; };
 		79E261D320D18E6300AA9573 /* json-forwards.h in Headers */ = {isa = PBXBuildFile; fileRef = 79E261D020D18E6300AA9573 /* json-forwards.h */; };
+		DA18568D2155A1DC00B6A6B2 /* SdkClient.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA18568C2155A1DC00B6A6B2 /* SdkClient.mm */; };
+		DA1856902155BC5C00B6A6B2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA18568F2155BC5C00B6A6B2 /* Security.framework */; };
+		DA1856922159B48B00B6A6B2 /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA1856912159B48B00B6A6B2 /* SecurityInterface.framework */; };
 		DA27D31A206C386E00D4416A /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27D315206C386D00D4416A /* messageExternalComms.cpp */; };
 		DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D318206C386D00D4416A /* messageExternalComms.h */; };
 		DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D319206C386D00D4416A /* messageExternalCommsTag.h */; };
@@ -64,6 +67,10 @@
 		79E261CF20D18E6300AA9573 /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jsoncpp.cpp; path = ../../../../../../../lib/util/source/3rd/jsoncpp/jsoncpp.cpp; sourceTree = "<group>"; };
 		79E261D020D18E6300AA9573 /* json-forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "json-forwards.h"; path = "../../../../../../../lib/util/source/3rd/jsoncpp/json/json-forwards.h"; sourceTree = "<group>"; };
 		79E261D420D18E6800AA9573 /* jsoncpp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = jsoncpp.cpp; path = source/jsoncpp.cpp; sourceTree = SOURCE_ROOT; };
+		DA18568C2155A1DC00B6A6B2 /* SdkClient.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SdkClient.mm; sourceTree = "<group>"; };
+		DA18568E2155A1F500B6A6B2 /* SdkClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SdkClient.h; sourceTree = "<group>"; };
+		DA18568F2155BC5C00B6A6B2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		DA1856912159B48B00B6A6B2 /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = System/Library/Frameworks/SecurityInterface.framework; sourceTree = SDKROOT; };
 		DA27D3082063191900D4416A /* argparse.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = argparse.hpp; sourceTree = "<group>"; };
 		DA27D315206C386D00D4416A /* messageExternalComms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = messageExternalComms.cpp; sourceTree = "<group>"; };
 		DA27D316206C386D00D4416A /* messageExternalComms_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_declarations.def; sourceTree = "<group>"; };
@@ -119,6 +126,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA1856922159B48B00B6A6B2 /* SecurityInterface.framework in Frameworks */,
+				DA1856902155BC5C00B6A6B2 /* Security.framework in Frameworks */,
 				DA87208D20AA07FC00343D43 /* CoreWLAN.framework in Frameworks */,
 				DA945AFD2080167B0017AD00 /* libreadline.tbd in Frameworks */,
 				700A7152205A649800B518CD /* libclad.a in Frameworks */,
@@ -229,6 +238,8 @@
 				DA87208820A4C31600343D43 /* RequestsDelegate.h */,
 				DA87208520A4B8C300343D43 /* Requests.h */,
 				DA87208620A4B8C300343D43 /* Requests.mm */,
+				DA18568C2155A1DC00B6A6B2 /* SdkClient.mm */,
+				DA18568E2155A1F500B6A6B2 /* SdkClient.h */,
 			);
 			path = "mac-client";
 			sourceTree = "<group>";
@@ -236,6 +247,8 @@
 		DA54707920479928004FDA9F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DA1856912159B48B00B6A6B2 /* SecurityInterface.framework */,
+				DA18568F2155BC5C00B6A6B2 /* Security.framework */,
 				DA87208C20AA07FC00343D43 /* CoreWLAN.framework */,
 				DA945AFC2080167B0017AD00 /* libreadline.tbd */,
 				DAE361CE2049D27B0053ED2F /* libclad.a */,
@@ -406,6 +419,7 @@
 				DA87208720A4B8C300343D43 /* Requests.mm in Sources */,
 				DA5470702047985E004FDA9F /* main.mm in Sources */,
 				DA54707720479890004FDA9F /* BleCentral.mm in Sources */,
+				DA18568D2155A1DC00B6A6B2 /* SdkClient.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -42,11 +42,16 @@ namespace {
 // unknown to known or dirty
 CONSOLE_VAR_RANGED(s32, kMinTimesToObserveObject, "PoseConfirmation", 2, 1,10);
 
+// If this is true, and an observation is made while the robot is not moving, it
+// is immediately "confirmed", regardless of MinTimesToObserveObject above. Otherwise
+// we need to see the object in the same pose the above number of times to confirm.
+CONSOLE_VAR(bool, kUseImmediateConfirmationIfRobotNotMoving, "PoseConfirmation", true);
+
 // Minimum number of times not to observe an object marked dirty before marking its
 // pose as unknkown.
 CONSOLE_VAR_RANGED(s32, kMinTimesToNotObserveDirtyObject, "PoseConfirmation", 2, 1,10);
 
-// TODO: (Al) Remove once bryon fixes the timestamps
+// TODO: (Al) Remove once bryon fixes the timestamps (VIC-7499)
 // Disable the object is still moving check for visual observation entries due to incorrect
 // timestamps in object moved messages
 CONSOLE_VAR(bool, kDisableStillMovingCheck, "PoseConfirmation", true);
@@ -474,8 +479,15 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
   
   DEV_ASSERT(objectID.IsSet(), "ObjectPoseConfirmer.AddVisualObservation.UnSetObjectID");
 
-  auto iter = _poseConfirmations.find(objectID);
-  if(iter == _poseConfirmations.end())
+  // Initialize new entry with this observation.
+  // Note that this will not create a new entry if one already exists!
+  const bool doImmediateConfirmation = (!robotWasMoving && kUseImmediateConfirmationIfRobotNotMoving);
+  const s32 initNumObservations = (doImmediateConfirmation ? kMinTimesToObserveObject : 1);
+  auto insertionResult = _poseConfirmations.insert({objectID, PoseConfirmation(observation, initNumObservations, 0)});
+  const bool newEntryInserted = insertionResult.second;
+  const auto iter = insertionResult.first;
+
+  if(newEntryInserted)
   {
     PRINT_CH_DEBUG("PoseConfirmer", "AddVisualObservation.NewEntry",
                    "ObjectID:%d at (%.1f,%.1f,%.1f), currently %s",
@@ -484,11 +496,12 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
                    newPose.GetTranslation().y(),
                    newPose.GetTranslation().z(),
                    EnumToString(observation->GetPoseState()));
-    
-    // Initialize new entry with one observation (this one)
-    _poseConfirmations[objectID] = PoseConfirmation(observation, 1, 0);
   }
-  else
+  
+  // Continue if we had an existing entry for this ObjectID, or if the new entry
+  // will immediately be confirmed because we only need a single observation or
+  // we weren't moving and and "immediate confirmation" is enabled.
+  if(!newEntryInserted || (kMinTimesToObserveObject == 1) || doImmediateConfirmation)
   {
     /*
       Note: Consider this scenario

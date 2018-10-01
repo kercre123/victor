@@ -36,8 +36,8 @@
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
-#include "engine/groundPlaneROI.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/vision/groundPlaneROI.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"

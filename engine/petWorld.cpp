@@ -72,8 +72,9 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
         // New pet ID, make sure we weren't rotating too fast while seeing it
         const bool rotatingTooFastCheckEnabled = (Util::IsFltGT(kBodyTurnSpeedThreshPet_degs, 0.f) ||
                                                   Util::IsFltGT(kHeadTurnSpeedThreshPet_degs, 0.f));
+        auto const& imuHistory = _robot->GetImuComponent().GetImuHistory();
         const bool wasRotatingTooFast = (rotatingTooFastCheckEnabled &&
-                                         _robot->GetVisionComponent().WasRotatingTooFast(petDetection.GetTimeStamp(),
+                                         imuHistory.WasRotatingTooFast(petDetection.GetTimeStamp(),
                                                                                         DEG_TO_RAD(kBodyTurnSpeedThreshPet_degs),
                                                                                         DEG_TO_RAD(kHeadTurnSpeedThreshPet_degs),
                                                                                         (petDetection.IsBeingTracked() ? kNumImuDataToLookBackPet : 0)));

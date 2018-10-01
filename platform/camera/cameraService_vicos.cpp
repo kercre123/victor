@@ -43,7 +43,7 @@ namespace Anki {
       std::function<void()> _onCameraRestart;
       
       bool _waitingForFormatChange = false;
-      ImageEncoding _curFormat = ImageEncoding::NoneImageEncoding;
+      Vision::ImageEncoding _curFormat = Vision::ImageEncoding::NoneImageEncoding;
 
       enum class CameraPowerState {
         Off,
@@ -83,6 +83,8 @@ namespace Anki {
 
     CameraService::CameraService()
     : _timeOffset(std::chrono::steady_clock::now())
+    , _imageSensorCaptureHeight(CAMERA_SENSOR_RESOLUTION_HEIGHT)
+    , _imageSensorCaptureWidth(CAMERA_SENSOR_RESOLUTION_WIDTH)
     , _imageFrameID(1)
     {
       InitCamera();
@@ -230,7 +232,7 @@ namespace Anki {
 
         _isRestartingCamera = false;
         _waitingForFormatChange = false;
-        _curFormat = ImageEncoding::NoneImageEncoding;
+        _curFormat = Vision::ImageEncoding::NoneImageEncoding;
 
         if(_onCameraRestart != nullptr)
         {
@@ -303,7 +305,7 @@ namespace Anki {
       camera_set_awb(_camera, r_gain, g_gain, b_gain);
     }
 
-    void CameraService::CameraSetCaptureFormat(ImageEncoding format)
+    void CameraService::CameraSetCaptureFormat(Vision::ImageEncoding format)
     {
       if(!IsCameraReady()) {
         return;
@@ -312,13 +314,13 @@ namespace Anki {
       anki_camera_pixel_format_t cameraFormat;
       switch(format)
       {
-        case ImageEncoding::YUV420sp:
+        case Vision::ImageEncoding::YUV420sp:
           cameraFormat = ANKI_CAM_FORMAT_YUV;
           break;
-        case ImageEncoding::RawRGB:
+        case Vision::ImageEncoding::RawRGB:
           cameraFormat = ANKI_CAM_FORMAT_RGB888;
           break;
-        case ImageEncoding::BAYER:
+        case Vision::ImageEncoding::BAYER:
           cameraFormat = ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10;
           break;
         default:
@@ -344,7 +346,7 @@ namespace Anki {
       camera_set_capture_snapshot(_camera, start);
     }
     
-    bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms, ImageEncoding& format)
+    bool CameraService::CameraGetFrame(Vision::ImageBuffer& buffer)
     {
       if(!IsCameraReady()) {
         return false;
@@ -357,6 +359,7 @@ namespace Anki {
         return false;
       }
 
+      u32 timestamp = 0;
       if (capture_frame->timestamp != 0) {
         // Frame timestamp is nanoseconds of uptime (based on CLOCK_MONOTONIC)
         // Calculate an offset to convert to TimeStamp_t time base
@@ -369,25 +372,24 @@ namespace Anki {
         const TimeStamp_t now_ms = GetTimeStamp();
         const TimeStamp_t frame_time_ms = now_ms - static_cast<TimeStamp_t>(offset_ns / 1000000LL);
 
-        imageCaptureSystemTimestamp_ms = frame_time_ms;
+        timestamp = frame_time_ms;
       } else {
-        imageCaptureSystemTimestamp_ms = GetTimeStamp();
+        timestamp = GetTimeStamp();
       }
 
-      imageID = capture_frame->frame_id;
-      _imageFrameID = imageID;
-      frame = capture_frame->data;
+      _imageFrameID = capture_frame->frame_id;
 
+      Vision::ImageEncoding format = Vision::ImageEncoding::NoneImageEncoding;
       switch(capture_frame->format)
       {
         case ANKI_CAM_FORMAT_BAYER_MIPI_BGGR10:
-          format = ImageEncoding::BAYER;
+          format = Vision::ImageEncoding::BAYER;
           break;
         case ANKI_CAM_FORMAT_RGB888:
-          format = ImageEncoding::RawRGB;
+          format = Vision::ImageEncoding::RawRGB;
           break;
         case ANKI_CAM_FORMAT_YUV:
-          format = ImageEncoding::YUV420sp;
+          format = Vision::ImageEncoding::YUV420sp;
           break;
       }
 
@@ -396,6 +398,13 @@ namespace Anki {
         _waitingForFormatChange = false;
         _curFormat = format;
       }
+
+      buffer = Vision::ImageBuffer(capture_frame->data,
+                                   capture_frame->height,
+                                   capture_frame->width,
+                                   _curFormat,
+                                   timestamp,
+                                   _imageFrameID);
       
       return true;
     } // CameraGetFrame()

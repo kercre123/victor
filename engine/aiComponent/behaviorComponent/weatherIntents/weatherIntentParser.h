@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Vector {
 
-  
+
 class WeatherIntentParser : private Util::noncopyable
 {
 public:
@@ -31,24 +31,33 @@ public:
                       const Json::Value& conditionRemaps);
 
   bool IsForecast(const UserIntent_WeatherResponse& weatherIntent) const;
-  bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent, 
+  bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
                      std::string& textToSay) const;
   bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) const;
   WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent,
                                     bool isForPRDemo = false) const;
   tm GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const;
-  bool GetTemperature(const UserIntent_WeatherResponse& weatherIntent,
-                      int& outTemp) const;
 
-  void SendDASEventForRepsonse(const UserIntent_WeatherResponse& weatherIntent) const;
+  // return raw int temperature in whatever unit it is set
+  bool GetRawTemperature(const UserIntent_WeatherResponse& weatherIntent,
+                         int& outTempRaw) const;
+
+  // return temperature in Fahrenheit
+  bool GetTemperatureF(const UserIntent_WeatherResponse& weatherIntent,
+                       float& outTempF) const;
+
+
+  void SendDASEventForResponse(const UserIntent_WeatherResponse& weatherIntent) const;
+
+  static float ConvertTempCToF(const float tempC);
 
 private:
   class ConditionRemaps{
   public:
     ConditionRemaps(const Json::Value& conditionRemaps);
-  
+
   private:
-    
+
   };
 
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap;

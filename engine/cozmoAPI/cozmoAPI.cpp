@@ -14,7 +14,6 @@
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/cozmoEngine.h"
 #include "engine/viz/vizManager.h"
-#include "engine/cozmoAPI/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageShared.h"
 #include "platform/common/diagnosticDefines.h"
@@ -144,26 +143,6 @@ bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
   return _cozmoRunner->Update(currentTime_nanosec);
 }
 
-size_t CozmoAPI::SendMessages(uint8_t* buffer, size_t bufferSize)
-{
-  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetGameMessagePort() : nullptr;
-  if (messagePipe == nullptr) {
-    return 0;
-  }
-
-  return messagePipe->PullToGameMessages(buffer, bufferSize);
-}
-
-void CozmoAPI::ReceiveMessages(const uint8_t* buffer, size_t size)
-{
-  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetGameMessagePort() : nullptr;
-  if (messagePipe == nullptr) {
-    return;
-  }
-
-  messagePipe->PushFromGameMessages(buffer, size);
-}
-
 uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
                                       uint8_t* responseBuffer, size_t responseLen)
 {
@@ -246,9 +225,7 @@ void CozmoAPI::Clear()
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _gameMessagePort(new GameMessagePort(ExternalInterface::kDirectCommsBufferSize,
-                                       !config.get("standalone", false).asBool()))
-, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get()))
+: _cozmoInstance(new CozmoEngine(dataPlatform))
 , _isRunning(true)
 {
   Result initResultReturn = _cozmoInstance->Init(config);

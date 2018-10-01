@@ -13,27 +13,20 @@
 #ifndef ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 #define ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 
-#if ANKICORETECH_USE_MATLAB
-   // You can manually adjust this one
-#  define ANKI_COZMO_USE_MATLAB_VISION 0
-#else
-   // Leave this one always set to 0
-#  define ANKI_COZMO_USE_MATLAB_VISION 0
-#endif
-
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "engine/debugImageList.h"
-#include "engine/groundPlaneROI.h"
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
 #include "engine/vision/cameraCalibrator.h"
+#include "engine/vision/groundPlaneROI.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
+#include "engine/vision/visionSystemInput.h"
 
 #include "coretech/common/engine/matlabInterface.h"
 #include "coretech/common/engine/robotTimeStamp.h"
@@ -98,17 +91,19 @@ namespace Vector {
     Vision::CameraParams cameraParams;
     u8 imageMean;
 
-    std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
-    std::list<Vision::ObservedMarker>                           observedMarkers;
-    std::list<Vision::TrackedFace>                              faces;
-    std::list<Vision::TrackedPet>                               pets;
-    std::list<OverheadEdgeFrame>                                overheadEdges;
-    std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
-    std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
-    std::list<Vision::CameraCalibration>                        cameraCalibration;
-    std::list<OverheadEdgeFrame>                                visualObstacles;
-    std::list<Vision::SalientPoint>                             salientPoints;
-    ExternalInterface::RobotObservedIllumination                illumination;
+    std::list<ExternalInterface::RobotObservedMotion>     observedMotions;
+    std::list<Vision::ObservedMarker>                     observedMarkers;
+    std::list<Vision::TrackedFace>                        faces;
+    std::list<Vision::TrackedPet>                         pets;
+    std::list<OverheadEdgeFrame>                          overheadEdges;
+    std::list<Vision::UpdatedFaceID>                      updatedFaceIDs;
+    std::list<ExternalInterface::RobotObservedLaserPoint> laserPoints;
+    std::list<Vision::CameraCalibration>                  cameraCalibration;
+    std::list<OverheadEdgeFrame>                          visualObstacles;
+    std::list<Vision::SalientPoint>                       salientPoints;
+    ExternalInterface::RobotObservedIllumination          illumination;
+
+    Vision::ImageRGB displayImg;
 
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
@@ -138,14 +133,10 @@ namespace Vector {
     Result PopModeSchedule();
     
     // This is main Update() call to be called in a loop from above.
-    Result Update(const VisionPoseData&      robotState,
-                  Vision::ImageCache&        imageCache);
+    Result Update(const VisionPoseData& robotState,
+                  Vision::ImageCache& imageCache);
     
-    // Reset an ImageCache with the new image, with specified scale factor from full sensor resolution
-    Result Update(const VisionPoseData&      robotState,
-                  const Vision::ImageRGB&    image,
-                  const f32                  fullScaleFactor,
-                  const Vision::ResizeMethod fullScaleMethod);
+    Result Update(const VisionSystemInput& input);
     
     // Wrappers for camera calibration
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI) { return _cameraCalibrator->AddCalibrationImage(calibImg, targetROI); }
@@ -210,6 +201,8 @@ namespace Vector {
     void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
+    static f32 GetBodyTurnSpeedThresh_degPerSec();
+    
     s32 GetMinCameraExposureTime_ms() const { return MIN_CAMERA_EXPOSURE_TIME_MS; }
     s32 GetMaxCameraExposureTime_ms() const { return MAX_CAMERA_EXPOSURE_TIME_MS; }
     
@@ -226,12 +219,7 @@ namespace Vector {
     RollingShutterCorrector _rollingShutterCorrector;
     bool _doRollingShutterCorrection = false;
     RobotTimeStamp_t _lastRollingShutterCorrectionTime;
-    
-#   if ANKI_COZMO_USE_MATLAB_VISION
-    // For prototyping with Matlab
-    Matlab _matlab;
-#   endif
-    
+       
     std::unique_ptr<Vision::ImageCache> _imageCache;
     
     bool _isInitialized = false;
@@ -306,7 +294,8 @@ namespace Vector {
     Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                   const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                  MarkerDetectionCLAHE useCLAHE);
+                                  MarkerDetectionCLAHE useCLAHE,
+                                  const VisionPoseData& poseData);
     
     // Uses grayscale
     static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
@@ -328,7 +317,8 @@ namespace Vector {
 
     // Uses grayscale
     Result DetectFaces(Vision::ImageCache& imageCache,
-                       std::vector<Anki::Rectangle<s32>>& detectionRects);
+                       std::vector<Anki::Rectangle<s32>>& detectionRects,
+                       const bool useCropping);
     
     // Uses grayscale
     Result DetectPets(Vision::ImageCache& imageCache,

@@ -15,6 +15,8 @@
 #define __Anki_Cozmo_Basestation_ImageCache_H__
 
 #include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageBuffer.h"
+#include "clad/types/imageFormats.h"
 
 #include <map>
 
@@ -38,6 +40,11 @@ public:
   
   void Reset(const ImageRGB& imgColor, const f32 fullScaleFactor = 1.f,
              const ResizeMethod fullScaleMethod = ResizeMethod::Linear);
+
+  // Note: fullScaleFactor is calculated directly from buffer so it is not needed as an argument here
+  void Reset(const ImageBuffer& buffer,
+             const ResizeMethod fullScaleMethod = ResizeMethod::Linear);
+
   
   // Invalidate the cache and release all the memory associated with it.
   void ReleaseMemory();
@@ -123,10 +130,14 @@ private:
   
   class ResizedEntry
   {
-    Image    _gray;
-    ImageRGB _rgb;
-    bool     _hasValidGray = false;
-    bool     _hasValidRGB  = false;
+    Image       _gray;
+    bool        _hasValidGray   = false;
+
+    ImageRGB    _rgb;
+    bool        _hasValidRGB    = false;
+    
+    ImageBuffer _buffer;
+    bool        _hasValidBuffer = false;
     
   public:
     template<class ImageType>
@@ -135,16 +146,17 @@ private:
       Update(origImg, scaleFactor, method);
     }
     
-    void Invalidate() { _hasValidGray = false; _hasValidRGB = false; }
+    void Invalidate() { _hasValidGray = false; _hasValidRGB = false; _hasValidBuffer = false; }
     
     template<class ImageType>
     ImageType& Get(bool computeFromOpposite = false);
     
     template<class ImageType>
-    bool IsValid() const { return (_hasValidRGB || _hasValidGray); }
+    bool IsValid() const { return (_hasValidRGB || _hasValidGray || _hasValidBuffer); }
     
-    void Update(const Image&    origImg, f32 scaleFactor, ResizeMethod method);
-    void Update(const ImageRGB& origImg, f32 scaleFactor, ResizeMethod method);
+    void Update(const Image&       origImg, f32 scaleFactor, ResizeMethod method);
+    void Update(const ImageRGB&    origImg, f32 scaleFactor, ResizeMethod method);
+    void Update(const ImageBuffer& origImg, f32 scaleFactor, ResizeMethod method);
   };
   
   std::map<Size, ResizedEntry> _resizedVersions;

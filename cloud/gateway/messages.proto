@@ -72,9 +72,9 @@ message MoveLiftResponse {
 message PlayAnimationRequest {
   Animation animation = 1;
   uint32 loops = 2;
-  bool ignore_body_track = 3; // not yet implemented
-  bool ignore_head_track = 4; // not yet implemented
-  bool ignore_lift_track = 5; // not yet implemented
+  bool ignore_body_track = 3;
+  bool ignore_head_track = 4;
+  bool ignore_lift_track = 5;
 }
 
 message PlayAnimationResponse {
@@ -942,18 +942,21 @@ message StimulationInfo {
 
 // Constants associated with the audio feed
 enum AudioConstants {
-  AUDIO_CONSTANTS_NULL      = 0;
-  SAMPLE_COUNTS_PER_MESSAGE = 1600; // The number of audio samples delivered from the robot per chunk
-  MICROPHONE_SAMPLE_RATE    = 15625; // The sampling rate victor's microphones record at
-  PROCESSED_SAMPLE_RATE     = 16000; // The sampling rate the robot processes audio at
+  AUDIO_CONSTANTS_NULL             = 0; // error value
+  MIC_DETECTION_DIRECTIONS         = 12; // The number of audio directions the four microphones can isolate
+  SAMPLE_COUNTS_PER_ENGINE_MESSAGE = 160; // The number of audio samples in each internal audio chunk
+  SAMPLE_COUNTS_PER_SDK_MESSAGE    = 1600; // The number of audio samples delivered in each audio feed response
+  MICROPHONE_SAMPLE_RATE           = 15625; // The sampling rate victor's microphones record at
+  PROCESSED_SAMPLE_RATE            = 16000; // The sampling rate the robot processes audio at
 }
 
 // The robot can process audio in a variety of ways
 enum AudioProcessingMode {
-  OFF                          = 0; // deactivates audio SDK mode
-  FAST_MODE                    = 1; // unprocessed single microphone data - most performant on robot
-  DIRECTIONAL_MODE             = 2; // beamforming support for focusing on specific direction - sounds cleanest
-  VOICE_DETECT_MODE            = 3; // multi-microphone non-beamforming - best for voice detection programs
+  AUDIO_UNKNOWN           = 0; // error value
+  AUDIO_OFF               = 1; // deactivates audio SDK mode
+  AUDIO_FAST_MODE         = 2; // unprocessed single microphone data - most performant on robot
+  AUDIO_DIRECTIONAL_MODE  = 3; // beamforming support for focusing on specific direction - sounds cleanest
+  AUDIO_VOICE_DETECT_MODE = 4; // multi-microphone non-beamforming - best for voice detection programs
 }
 
 // Request how the robot should process and send audio
@@ -968,12 +971,15 @@ message AudioSendModeChanged {
 
 // One frame of audio data and associated metadata
 message AudioChunk {
-  uint32 robot_time_stamp    = 1;
-  bytes  signal_power        = 2; // mono audio amplitude samples
-  bytes  direction_strengths = 3; // histogram data of which directions this audio chunk came from
-  uint32 source_direction    = 4; // 0-11, with 12 representing "invalid"
-  uint32 source_confidence   = 5; // accuracy of the calculated source_direction
-  uint32 noise_floor_power   = 6; // power value, convert to db with log_10(value)
+  uint32 robot_time_stamp    = 1; // robot time at the final chunk of this audio sample group transmission
+  uint32 group_id            = 2; // the id of this sample transmission group
+  uint32 chunk_id            = 3; // the current batched chunk id within in this group id
+  uint32 audio_chunk_count   = 4; // number of chunks batched within this group id
+  bytes  signal_power        = 5; // mono audio amplitude samples
+  bytes  direction_strengths = 6; // histogram data of which directions this audio chunk came from
+  uint32 source_direction    = 7; // 0-11, with 12 representing "invalid"
+  uint32 source_confidence   = 8; // accuracy of the calculated source_direction
+  uint32 noise_floor_power   = 9; // power value, convert to db with log_10(value)
 }
 
 // Request the robot to send audio data
@@ -983,7 +989,13 @@ message AudioFeedRequest {}
 message AudioFeedResponse {
   option (streamed) = true;
 
-  AudioChunk   data = 1;
+  uint32 robot_time_stamp    = 1; // robot time at the transmission of this audio sample group
+  uint32 group_id            = 2; // the index of this audio feed response
+  bytes  signal_power        = 3; // mono audio amplitude samples
+  bytes  direction_strengths = 4; // histogram data of which directions this audio chunk came from
+  uint32 source_direction    = 5; // 0-11, with 12 representing "invalid"
+  uint32 source_confidence   = 6; // accuracy of the calculated source_direction
+  uint32 noise_floor_power   = 7; // power value, convert to db with log_10(value)
 }
 
 // Request how the robot should send image data

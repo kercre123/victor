@@ -24,7 +24,6 @@
 #include "engine/block.h"
 #include "engine/encodedImage.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
-#include "engine/factory/factoryTestLogger.h"
 #include "simulator/controllers/shared/webotsHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/printByteArray.h"
@@ -43,9 +42,6 @@
 #include <webots/Keyboard.hpp>
 
 #define LOG_CHANNEL "Keyboard"
-
-// CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
-#define ENABLE_NVSTORAGE_WRITE 0
 
 namespace Anki {
 namespace Vector {
@@ -102,9 +98,6 @@ namespace Vector {
     std::string _drivingStartAnim = "";
     std::string _drivingLoopAnim = "";
     std::string _drivingEndAnim = "";
-
-    // For exporting formatted log of mfg test data from robot
-    FactoryTestLogger _factoryTestLogger;
     
     struct ObservedImageCentroid {
       Point2f          point;
@@ -645,31 +638,7 @@ namespace Vector {
     printf("sending user intent '%s'\n", userIntent.c_str());
     
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeUserIntent(userIntent)));
-  }
-  
-  
-  void WebotsKeyboardController::NVStorage_EraseTag()
-  {
-    const uint32_t tag = (uint32_t) root_->getField("nvTag")->getSFInt32();
-    if(ENABLE_NVSTORAGE_WRITE)
-    {
-      SendNVStorageEraseEntry((NVStorage::NVEntryTag)tag);
-    }
-    else
-    {
-      LOG_INFO("SendNVStorageEraseEntry.Disabled",
-               "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
-    }
-  }
-  
-  void WebotsKeyboardController::NVStorage_ReadTag()
-  {
-    const uint32_t tag = (uint32_t) root_->getField("nvTag")->getSFInt32();
-    ClearReceivedNVStorageData((NVStorage::NVEntryTag)tag);
-    SendNVStorageReadEntry((NVStorage::NVEntryTag)tag);
-  }
-  
-  
+  }  
   
   void WebotsKeyboardController::SetEmotion()
   {
@@ -1281,48 +1250,6 @@ namespace Vector {
     SendMessage(msgWrapper);
     
     enable = !enable;
-  }
-
-  void WebotsKeyboardController::ReadCameraCalibration()
-  {
-    LOG_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalib");
-    ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalib);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
-  }
-  
-  void WebotsKeyboardController::ReadGameSkills()
-  {
-    NVStorage::NVEntryTag tag = NVStorage::NVEntryTag::NVEntry_GameSkillLevels;
-    
-    // NVStorage multiWrite / multiRead test
-    LOG_INFO("SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
-    ClearReceivedNVStorageData(tag);
-    SendNVStorageReadEntry(tag);
-  }
-
-  void WebotsKeyboardController::ReadMfgTestData()
-  {
-    LOG_INFO("RetrievingAllMfgTestData", "...");
-    
-    // Get all Mfg test images and results
-    if(_altKeyPressed) {
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage2);
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage3);
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage4);
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage5);
-      SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage6);
-    }
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_IMUInfo);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibMetaInfo);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
-    SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
-    
-    // Start log
-    _factoryTestLogger.StartLog("", true);
   }
   
   void WebotsKeyboardController::SetFaceDisplayHue()
@@ -1941,13 +1868,13 @@ namespace Vector {
     REGISTER_SHIFTED_KEY_FCN('^', MOD_NONE, PlayAnimation,                     "Plays animation specified in 'animationToSendName'");
 //      REGISTER_SHIFTED_KEY_FCN('^', MOD_ALT,  ,                 "");
 //      REGISTER_SHIFTED_KEY_FCN('&', MOD_NONE, , "");
-    REGISTER_SHIFTED_KEY_FCN('&', MOD_ALT,  ReadCameraCalibration,             "Read camera calibration from nvStorage");
+//      REGISTER_SHIFTED_KEY_FCN('&', MOD_ALT,  , "");
     REGISTER_SHIFTED_KEY_FCN('*', MOD_NONE, SendRandomProceduralFace,          "Draws random procedural face");
     REGISTER_SHIFTED_KEY_FCN('*', MOD_ALT,  SetFaceDisplayHue,                 "Sets face hue to 'faceHue'");
 //      REGISTER_SHIFTED_KEY_FCN('(', MOD_NONE, , "");
-    REGISTER_SHIFTED_KEY_FCN('(', MOD_ALT,  ReadGameSkills,                    "Read game skills");
-    REGISTER_SHIFTED_KEY_FCN(')', MOD_NONE, ReadMfgTestData,                   "Read manufacturing test data (minus calibration images)");
-    REGISTER_SHIFTED_KEY_FCN(')', MOD_ALT,  ReadMfgTestData,                   "Read manufacturing test data");
+//      REGISTER_SHIFTED_KEY_FCN('(', MOD_ALT,  , "");
+//      REGISTER_SHIFTED_KEY_FCN(')', MOD_NONE, , "");
+//      REGISTER_SHIFTED_KEY_FCN(')', MOD_ALT,  , "");
     REGISTER_SHIFTED_KEY_FCN('_', MOD_NONE, SetCameraSettings,                 "Set camera settings");
 //      REGISTER_SHIFTED_KEY_FCN('_', MOD_ALT, , "");
 //      REGISTER_SHIFTED_KEY_FCN('+', MOD_NONE,  , "");
@@ -2031,8 +1958,8 @@ namespace Vector {
 
     REGISTER_KEY_FCN('M', MOD_NONE,      SetEmotion,          "Set 'emotionName' to 'emotionVal'");
     REGISTER_KEY_FCN('M', MOD_SHIFT,     TriggerEmotionEvent, "Trigger 'emotionEvent'");
-    REGISTER_KEY_FCN('M', MOD_ALT,       NVStorage_ReadTag,   "Read NVStorage data at 'nvTag'");
-    REGISTER_KEY_FCN('M', MOD_ALT_SHIFT, NVStorage_EraseTag,  "Erase NVStorage data at 'nvTag'");
+//    REGISTER_KEY_FCN('M', MOD_ALT,     ,   "");
+//    REGISTER_KEY_FCN('M', MOD_ALT_SHIFT, ,  "");
     
 //    REGISTER_KEY_FCN('N', MOD_NONE,      ,  );
 //    REGISTER_KEY_FCN('N', MOD_SHIFT,     ,  );
@@ -2495,7 +2422,7 @@ namespace Vector {
     LOG_INFO("ToggleCameraCaptureFormat",
              "Switching to %s",
              yuv ? "YUV" : "RGB");
-    msg.format = (yuv ? ImageEncoding::YUV420sp : ImageEncoding::RawRGB);
+    msg.format = (yuv ? Vision::ImageEncoding::YUV420sp : Vision::ImageEncoding::RawRGB);
     yuv = !yuv;
     
     ExternalInterface::MessageGameToEngine msgWrapper;
@@ -2506,7 +2433,7 @@ namespace Vector {
   void WebotsKeyboardController::ToggleBayerImageResFormat()
   {
     ExternalInterface::SetCameraCaptureFormat msg;
-    msg.format = ImageEncoding::BAYER;
+    msg.format = Vision::ImageEncoding::BAYER;
 
     static bool enableSensorRes = true;
     msg.enableSensorRes = enableSensorRes;
@@ -2561,166 +2488,6 @@ namespace Vector {
     
     SendSetRobotVolume(0);
   }
-
-
-  void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult& msg)
-  {
-    if (msg.op != NVStorage::NVOperation::NVOP_READ ||
-        msg.result == NVStorage::NVResult::NV_MORE) {
-      // Do nothing for write/erase acks or in-progress reads
-      return;
-    }
-
-    // Check result flag
-    if (msg.result != NVStorage::NVResult::NV_OKAY) {
-      PRINT_NAMED_WARNING("HandleNVStorageOpResult.Read.Failed",
-                          "tag: %s, res: %s",
-                          EnumToString(msg.tag),
-                          EnumToString(msg.result));
-      return;
-    }
-    
-    const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
-    if (recvdData == nullptr) {
-      LOG_INFO("HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
-      return;
-    }
-    
-    switch(msg.tag) {
-      case NVStorage::NVEntryTag::NVEntry_IMUInfo:
-      {
-        IMUInfo info;
-        if (recvdData->size() != MakeWordAligned(info.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-          break;
-        }
-        info.Unpack(recvdData->data(), info.Size());
-        
-        _factoryTestLogger.Append(info);
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_CameraCalib:
-      {
-        CameraCalibration calib;
-        if (recvdData->size() != MakeWordAligned(calib.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
-          break;
-        }
-        calib.Unpack(recvdData->data(), calib.Size());
-        
-        _factoryTestLogger.Append(calib);
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_CalibMetaInfo:
-      {
-        CalibMetaInfo info;
-        if (recvdData->size() != MakeWordAligned(info.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-          break;
-        }
-        info.Unpack(recvdData->data(), info.Size());
-        
-        _factoryTestLogger.Append(info);
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_CalibPose:
-      {
-        PoseData info;
-        if (recvdData->size() != MakeWordAligned(info.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.CalibPose.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-          break;
-        }
-        info.Unpack(recvdData->data(), info.Size());
-
-        _factoryTestLogger.AppendCalibPose(info);
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_ObservedCubePose:
-      {
-        PoseData info;
-        if (recvdData->size() != MakeWordAligned(info.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-          break;
-        }
-        info.Unpack(recvdData->data(), info.Size());
-        
-        _factoryTestLogger.AppendObservedCubePose(info);
-        
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
-      {
-        FactoryTestResultEntry result;
-        if (recvdData->size() != MakeWordAligned(result.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
-          break;
-        }
-        result.Unpack(recvdData->data(), result.Size());
-        
-        _factoryTestLogger.Append(result);
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_BirthCertificate:
-      {
-        BirthCertificate result;
-        if (recvdData->size() != MakeWordAligned(result.Size())) {
-          LOG_INFO("HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
-                   "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
-          break;
-        }
-        result.Unpack(recvdData->data(), result.Size());
-        
-        _factoryTestLogger.Append(result);
-        
-        if (_factoryTestLogger.IsOpen()) {
-          _factoryTestLogger.CloseLog();
-        }
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_CalibImage1:
-      case NVStorage::NVEntryTag::NVEntry_CalibImage2:
-      case NVStorage::NVEntryTag::NVEntry_CalibImage3:
-      case NVStorage::NVEntryTag::NVEntry_CalibImage4:
-      case NVStorage::NVEntryTag::NVEntry_CalibImage5:
-      case NVStorage::NVEntryTag::NVEntry_CalibImage6:
-      {
-        char outFile[128];
-        sprintf(outFile,  "nvstorage_output_%s.jpg", EnumToString(msg.tag));
-        _factoryTestLogger.AddFile(outFile, *recvdData);
-        
-        break;
-      }
-      case NVStorage::NVEntryTag::NVEntry_IMUAverages:
-      {
-        LOG_INFO("IMUAveragesData", "size: %lu", recvdData->size());
-        PrintBytesHex((char*)(recvdData->data()), (int)recvdData->size());
-        
-        break;
-      }
-      default:
-        PRINT_NAMED_DEBUG("HandleNVStorageOpResult.UnhandledTag", "%s (size: %zu)", EnumToString(msg.tag), recvdData->size());
-        for(auto data : *recvdData)
-        {
-          printf("%d ", data);
-        }
-        printf("\n");
-        break;
-    }
-  }
-
 
 } // namespace Vector
 } // namespace Anki

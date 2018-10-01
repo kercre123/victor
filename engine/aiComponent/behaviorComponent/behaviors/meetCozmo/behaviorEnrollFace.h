@@ -134,6 +134,7 @@ private:
   void TransitionToFailedState( State state, const std::string& stateName);
   
   void UpdateFaceToEnroll();
+  void UpdateFaceTime(const Face* newFace);
   void UpdateFaceIDandTime(const Face* newFace);
   
   IActionRunner* CreateTurnTowardsFaceAction(FaceID_t faceID, FaceID_t saveID, bool playScanningGetOut);
@@ -152,6 +153,9 @@ private:
   
   // helper to see if a user intent was left in the user intent component for us by a parent behavior
   void CheckForIntentData() const;
+
+  // helper to see if a new face matches the pose of the current face
+  inline bool MatchesBasedOnPose(const FaceID_t currentFaceID, const Face* newFace);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Members

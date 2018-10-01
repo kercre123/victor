@@ -93,7 +93,7 @@ public:
 
   // Create and start stream audio data job
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
-  RobotTimeStamp_t CreateSteamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
+  RobotTimeStamp_t CreateStreamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
                                   uint32_t overlapLength_ms = 0);
   
   void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
@@ -203,6 +203,8 @@ private:
 
   void ProcessRawLoop();
   void ProcessTriggerLoop();
+  
+  void UpdateBeatDetector(const AudioUtil::AudioSample* const samples, const uint32_t nSamples);
   
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;

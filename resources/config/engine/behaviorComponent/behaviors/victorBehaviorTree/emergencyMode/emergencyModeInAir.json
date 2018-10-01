@@ -26,11 +26,6 @@
     ]
   },
 
-  "tracksToLockWhileActivated" : [
-    "BODY_TRACK"
-  ],
-
-
   "behaviors": [
     "EmergencyModePickupAnim",
     "Wait"

@@ -149,5 +149,64 @@ Result Undistorter::UndistortImage(const Image&    img, Image&    undistortedIma
   return UndistortImageHelper(img, undistortedImage);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result Undistorter::UndistortPoints(const std::shared_ptr<CameraCalibration>& calib,
+                                    const s32 nrows, const s32 ncols,
+                                    const std::vector<Point2f>& distortedPointsIn,
+                                    std::vector<Point2f>& undistortedPointsOut)
+{
+  std::vector<cv::Point2f> distortedPoints;
+  distortedPoints.reserve(distortedPointsIn.size());
+  for(auto const& point : distortedPointsIn)
+  {
+    distortedPoints.emplace_back(point.x(), point.y());
+  }
+  std::vector<cv::Point2f> undistortedPoints(distortedPoints.size());
+  
+  auto const& scaledCalib = calib->GetScaled(nrows, ncols);
+  cv::Matx<f32,3,3> K = scaledCalib.GetCalibrationMatrix().get_CvMatx_();
+  const std::vector<f32>& distCoeffs = scaledCalib.GetDistortionCoeffs();
+  
+  try
+  {
+    cv::undistortPoints(distortedPoints, undistortedPoints, K, distCoeffs, cv::noArray(), K);
+  }
+  catch(const cv::Exception& e)
+  {
+    PRINT_NAMED_ERROR("Undistorter.UndistortPoints.OpenCvUndistortFailed",
+                      "OpenCV Error: %s", e.what());
+    return RESULT_FAIL;
+  }
+  
+  undistortedPointsOut.reserve(undistortedPoints.size());
+  for(auto const& cvPoint : undistortedPoints)
+  {
+    undistortedPointsOut.emplace_back(cvPoint.x, cvPoint.y);
+  }
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result Undistorter::UndistortPoint(const std::shared_ptr<CameraCalibration>& calib,
+                                   const s32 nrows, const s32 ncols,
+                                   const Point2f& distortedPointIn,
+                                   Point2f& undistortedPointOut)
+{
+  std::vector<Point2f> undistortedPoints; // dummy vector to hold the single point
+  const Result result = UndistortPoints(calib, nrows, ncols, {distortedPointIn}, undistortedPoints);
+  if(RESULT_OK == result)
+  {
+    if(!ANKI_VERIFY(undistortedPoints.size() == 1, "Undistorter.UndistortPoint.ExpectingSinglePoint",
+                    "Got %zu", undistortedPoints.size()))
+    {
+      return RESULT_FAIL;
+    }
+    undistortedPointOut = undistortedPoints.front();
+  }
+  
+  return result;
+}
+  
 } // namespace Vision
 } // namespace Anki

@@ -16,13 +16,13 @@
 #include "clad/types/emotionTypes.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
+#include "clad/types/imageFormats.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/onboardingStages.clad"
-#include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralFaceTypes.clad"
@@ -422,7 +422,7 @@ message LoadFaceAlbumFromFile {
 }
 
 message SetCameraCaptureFormat {
-  ImageEncoding format,
+  Anki::Vision::ImageEncoding format,
   bool enableSensorRes=0
 }
 
@@ -873,59 +873,8 @@ message TransferFile {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Robot flash (non-volatile storage)
+// Robot settings
 ///////////////////////////////////////////////////////////////////////////////
-
-// All non-volatile storage operations result in a NVStorageOpResult message
-// being sent back from engine upon completion except for single-blob reads.
-// Whether or not an entry is single blob or multi-blob entry is determined by
-// the NVEntryTag value.
-// NOTE: Do not follow one operation with another before acking the previous
-//       operation as the flash can only handle one at a time.
-//       The only exception is you can send multiple NVStorageWriteEntry messages
-//       for a multi-blob message since these don't actually get sent to robot
-//       until all blobs have been received by engine.
-
-// Erase an entry from non-volatile storage
-message NVStorageEraseEntry {
-  NVStorage::NVEntryTag tag
-}
-
-// Erase all entries from non-volatile storage
-// (not including factory partition)
-// NOTE: THIS MESSAGE FORCES A ROBOT REBOOT CAUSING DISCONNECT.
-message NVStorageWipeAll {
-  string key            // This must be "Yes I really want to do this!" otherwise the operation will fail.
-}
-
-// Multi-blob messages (numTotalBlobs > 1) are queued on engine
-// and sent out all at once only when all blobs have been received.
-// (This also means that writes won't be ackd with NVStorageOpResult until all
-// blobs have been sent to engine, unless there's a problem found before all the blobs
-// have been received in which case engine will send an NVStorageOpResult failure for
-// each problematic NVStorageWriteEntry received.)
-// This is to help make it harder to write junk to the robot.
-// Single-blob messages (numTotalBlobs == 1) are sent to robot immediately.
-message NVStorageWriteEntry {
-  NVStorage::NVEntryTag tag,
-  uint_8  data[uint_16],
-  uint_8  index,         // Starts at 0
-  uint_8  numTotalBlobs  // Total number of blobs expected
-}
-
-// Clears any queued data received by engine for a multi-blob entry via NVStorageWriteEntry.
-// Does not directly affect robot flash.
-// This should be called once before sending a sequence of NVStorageWriteEntry messages
-// for a mult-blob entry. It should only be necessary if something went wrong
-// with a previous write attempt, but doesn't hurt to call it every time.
-message NVStorageClearPartialPendingWriteEntry {
-}
-
-// Data is returned in NVStorageData messages.
-// If multi-blob entry, game will have to dechunk.
-message NVStorageReadEntry {
-  NVStorage::NVEntryTag tag
-}
 
 // Enable/disable auto exposure
 // If enableAutoExposure == false then exposure and gain are set to the specified values

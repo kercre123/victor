@@ -129,8 +129,8 @@ namespace Anki {
         return false;
       }
       
-      ImuComponent::ImuHistory::const_iterator ImuBeforeT;
-      ImuComponent::ImuHistory::const_iterator ImuAfterT;
+      ImuHistory::const_iterator ImuBeforeT;
+      ImuHistory::const_iterator ImuAfterT;
 
       float rateY = 0;
       float rateZ = 0;

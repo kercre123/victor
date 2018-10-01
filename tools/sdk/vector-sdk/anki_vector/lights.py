@@ -86,7 +86,7 @@ WHITE_BALANCED_CUBE_PROFILE = ColorProfile(red_multiplier=1.0,
 
 
 class Light:
-    """Lights are used with Vector's Cube
+    """Lights are used with Vector's Cube.
 
     Lights may either be "on" or "off", though in practice any colors may be
     assigned to either state (including no color/light).
@@ -173,7 +173,7 @@ class Light:
         self._transition_off_period_ms = ms
 
 
-# TODO needs docs, param types. Should this be private?
+# TODO needs docs, param types. Should this be private? Maybe a more descriptive name?
 def package_request_params(lights, color_profile):
     merged_params = {}
     for light in lights:
@@ -184,8 +184,6 @@ def package_request_params(lights, color_profile):
                 attr_val = color_profile.augment_color(attr_val).int_color
             merged_params.setdefault(attr_name, []).append(attr_val)
     return merged_params
-
-# TODO Add sample code for the following light instances?
 
 
 #: :class:`Light`: A steady green colored LED light.

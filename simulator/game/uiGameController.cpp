@@ -32,9 +32,6 @@ namespace Anki {
       // Private members:
       namespace {
         
-        // Stores data received for requested reads from robot flash
-        std::map<NVStorage::NVEntryTag, std::vector<u8> >_recvdNVStorageData;
-        
       } // private namespace
 
     
@@ -388,28 +385,7 @@ namespace Anki {
       PRINT_NAMED_INFO("HandleAnimationAborted", "Tag: %u", msg.tag);
 
       HandleAnimationAborted(msg);
-    }
-    
-    void UiGameController::HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg)
-    {
-      PRINT_NAMED_INFO("HandleNVStorageOpResult",
-                       "%s - res: %s,  operation: %s, index: %d, size %zu",
-                       EnumToString(msg.tag), EnumToString(msg.result), EnumToString(msg.op), msg.index, msg.data.size());
-
-      // Compute new max size of the data we expect to receive and resize if necessary
-      const u32 BLOB_SIZE = 1024;
-      size_t currSize = _recvdNVStorageData[msg.tag].size();
-      size_t potentialNewSize = msg.index * BLOB_SIZE + msg.data.size();
-      if (potentialNewSize > currSize) {
-        _recvdNVStorageData[msg.tag].resize(potentialNewSize);
-      }
-      
-      // Copy into appropriate place in receive data vector
-      std::copy(msg.data.begin(), msg.data.end(), _recvdNVStorageData[msg.tag].begin() + msg.index * BLOB_SIZE);
-      
-      HandleNVStorageOpResult(msg);
-    }
-    
+    }    
 
     void UiGameController::HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg)
     {
@@ -442,20 +418,6 @@ namespace Anki {
       PRINT_NAMED_INFO("HandleRobotOfftreadsStateChanged", "Received RobotPickedUp message.");
       HandleRobotOffTreadsStateChanged(msg);
       UpdateVizOriginToRobot();
-    }
-
-    
-    const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
-    {
-      if (_recvdNVStorageData.find(tag) != _recvdNVStorageData.end()) {
-        return &_recvdNVStorageData[tag];
-      }
-      return nullptr;
-    }
-    
-    void UiGameController::ClearReceivedNVStorageData(NVStorage::NVEntryTag tag)
-    {
-      _recvdNVStorageData.erase(tag);
     }
 
     void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
@@ -638,9 +600,6 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
-            break;
-          case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
-            HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAborted:
             HandleAnimationAbortedBase(message.Get_AnimationAborted());
@@ -1650,55 +1609,6 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size, u8 blobIndex, u8 numTotalBlobs)
-    {
-      if (size > 1024) {
-        PRINT_NAMED_WARNING("UiGameController.SendNVStorageWriteEntry.SizeTooBig",
-                            "Tag: %s, size: %zu (limit 1024)",
-                            EnumToString(tag), size);
-        return;
-      }
-      
-      ExternalInterface::NVStorageWriteEntry msg;
-      msg.tag = tag;
-      msg.index = blobIndex;
-      msg.numTotalBlobs = numTotalBlobs;
-      msg.data.assign(data, data+size);
-      
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_NVStorageWriteEntry(msg);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendNVStorageReadEntry(NVStorage::NVEntryTag tag)
-    {
-      // Clear the receive vector for this tag
-      _recvdNVStorageData[tag].clear();
-      
-      ExternalInterface::NVStorageReadEntry msg;
-      msg.tag = tag;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_NVStorageReadEntry(msg);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendNVStorageEraseEntry(NVStorage::NVEntryTag tag)
-    {
-      ExternalInterface::NVStorageEraseEntry msg;
-      msg.tag = tag;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_NVStorageEraseEntry(msg);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendNVClearPartialPendingWriteData()
-    {
-      ExternalInterface::NVStorageClearPartialPendingWriteEntry msg;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_NVStorageClearPartialPendingWriteEntry(msg);
-      SendMessage(message);
-    }
-    
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
       ExternalInterface::EnableVisionMode m;
@@ -2057,14 +1967,6 @@ namespace Anki {
     {
       webots::Node* lightCube = GetLightCubeByType(lightCubeType);
       return GetPose3dOfNode(lightCube);
-    }
-
-    size_t UiGameController::MakeWordAligned(size_t size) {
-      u8 numBytesToMakeAligned = 4 - (size % 4);
-      if (numBytesToMakeAligned < 4) {
-        return size + numBytesToMakeAligned;
-      }
-      return size;
     }
 
     const std::string UiGameController::GetAnimationTestName() const

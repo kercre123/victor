@@ -26,21 +26,21 @@ namespace Vector {
 class ExternalMessageRouter
 {
 public:
-  
+
   // helper that provides type Ret if B is true
   template <bool B, class Ret>
   using ReturnIf = typename std::enable_if<B, Ret>::type;
-  
+
   template <typename T, typename From>
-  using CanContruct = Anki::Util::is_explicitly_constructible<T, From*>;
-  
+  using CanConstruct = Anki::Util::is_explicitly_constructible<T, From*>;
+
   // -------------------------------------------------------------------------------------------------
   // Outbound Proto Messages:
   // If your message is a response to a request, call WrapResponse() on your allocated message pointer.
   // If your message is NOT a response to a request, call Wrap() on your allocated message pointer
   // Eventually, gateway changes should render this distinction obsolete
   // -------------------------------------------------------------------------------------------------
-  
+
   using GatewayWrapper = external_interface::GatewayWrapper;
   // which contains
   using Event = external_interface::Event;
@@ -49,16 +49,16 @@ public:
   using Onboarding = external_interface::Onboarding;
   using WakeWord = external_interface::WakeWord;
   using AttentionTransfer = external_interface::AttentionTransfer;
-  
+
   template<typename T>
   inline static external_interface::GatewayWrapper WrapResponse( T* message )
   {
     GatewayWrapper wrapper{ message };
     return wrapper;
   }
-  
+
   template <typename T>
-  inline static ReturnIf<CanContruct<Event,T>::value, GatewayWrapper>
+  inline static ReturnIf<CanConstruct<Event,T>::value, GatewayWrapper>
   /* GatewayWrapper */ Wrap( T* message )
   {
     Event* event = new Event{ message };
@@ -67,7 +67,7 @@ public:
 
   // custom Wrap() function for timestamped status
   template <typename T>
-  inline static ReturnIf<CanContruct<Status,T>::value, GatewayWrapper>
+  inline static ReturnIf<CanConstruct<Status,T>::value, GatewayWrapper>
   Wrap( T* message )
   {
     auto* statusMsg = new Status{ message };
@@ -76,11 +76,11 @@ public:
     timeStampedStatusMsg->set_timestamp_utc( GetTimestampUTC() );
     return Wrap( timeStampedStatusMsg );
   }
-  
+
   // macro to generate Wrap() methods based on Event types listed in the proto file
   #define MAKE_MESSAGE_WRAPPER(Type) \
     template <typename T> \
-    inline static ReturnIf<CanContruct<Type,T>::value, GatewayWrapper> \
+    inline static ReturnIf<CanConstruct<Type,T>::value, GatewayWrapper> \
     /* GatewayWrapper */ Wrap( T* message ) \
     { \
       auto* msgPtr = new Type{ message }; \
@@ -89,30 +89,30 @@ public:
   MAKE_MESSAGE_WRAPPER(Onboarding)
   MAKE_MESSAGE_WRAPPER(WakeWord)
   MAKE_MESSAGE_WRAPPER(AttentionTransfer)
-  
+
   // -------------------------------------------------------------------------------------------------
   // Outbound CLAD Messages
   // -------------------------------------------------------------------------------------------------
-  
+
   // the hierarchy, based on messageEngineToGame.clad:
   using MessageEngineToGame = ExternalInterface::MessageEngineToGame;
   // which contains
   using CLADEvent = ExternalInterface::Event;
-  
+
   // Is an Event (not part of a request/response pair)
   template <typename T>
   using CanBeCLADEvent = Anki::Util::is_explicitly_constructible<CLADEvent, T>;
-  
+
   template <typename T>
   using CanBeEngineToGame = Anki::Util::is_explicitly_constructible<MessageEngineToGame, T>;
-  
-  
+
+
   // in case this is used with a MessageEngineToGame
   inline static MessageEngineToGame Wrap(MessageEngineToGame&& message)
   {
     return message;
   }
-  
+
   template <typename T>
   inline static ReturnIf<!CanBeCLADEvent<T>::value && CanBeEngineToGame<T>::value, MessageEngineToGame>
   /* MessageEngineToGame */ Wrap(T&& message)
@@ -120,7 +120,7 @@ public:
     MessageEngineToGame engineToGame{ std::forward<T>(message) };
     return engineToGame;
   }
-  
+
   template <typename T>
   inline static ReturnIf<CanBeCLADEvent<T>::value, MessageEngineToGame>
   /* MessageEngineToGame */ Wrap(T&& message)

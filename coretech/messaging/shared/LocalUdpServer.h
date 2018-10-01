@@ -25,7 +25,9 @@ class LocalUdpServer {
 public:
   static constexpr const char kConnectionPacket[] = {'A', 'N', 'K', 'I', 'C', 'O', 'N', 'N'};
 
+  LocalUdpServer(int sndbufsz, int rcvbufsz);
   LocalUdpServer();
+
   ~LocalUdpServer();
 
   // Socket lifetime
@@ -41,10 +43,15 @@ public:
   ssize_t Send(const char* data, size_t size);
   ssize_t Recv(char* data, size_t maxSize);
 
+  int GetSocket() const { return _socket; }
+
 private:
+  // Socket parameters
+  int _sndbufsz;
+  int _rcvbufsz;
 
   // Listening socket descriptor
-  int _socketfd;
+  int _socket;
 
   // Socket names
   std::string _sockname;

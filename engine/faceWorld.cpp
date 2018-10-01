@@ -380,13 +380,16 @@ namespace Vector {
       if(isNewFace)
       {
         // Make sure we aren't rotating too fast to add a new face (this helps safeguard against false positives)
-        const bool rotatingTooFastCheckEnabled = (Util::IsFltGT(kBodyTurnSpeedThreshFace_degs, 0.f) ||
-                                                  Util::IsFltGT(kHeadTurnSpeedThreshFace_degs, 0.f));
-        const bool wasRotatingTooFast = (rotatingTooFastCheckEnabled &&
-                                         _robot->GetVisionComponent().WasRotatingTooFast(face.GetTimeStamp(),
-                                                                                        DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
-                                                                                        DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
-                                                                                        (face.IsBeingTracked() ? kNumImuDataToLookBackFace : 0)));
+        const bool fastRotationAllowed = (_robot->GetVisionComponent().IsVisionWhileRotatingFastEnabled() &&
+                                          (Util::IsFltGT(kBodyTurnSpeedThreshFace_degs, 0.f) ||
+                                           Util::IsFltGT(kHeadTurnSpeedThreshFace_degs, 0.f)));
+        
+        auto const& imuHistory = _robot->GetImuComponent().GetImuHistory();
+        const bool wasRotatingTooFast = (!fastRotationAllowed &&
+                                         imuHistory.WasRotatingTooFast(face.GetTimeStamp(),
+                                                                       DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
+                                                                       DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
+                                                                       (face.IsBeingTracked() ? kNumImuDataToLookBackFace : 0)));
 
         if(wasRotatingTooFast)
         {

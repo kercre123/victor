@@ -53,7 +53,7 @@ class CameraComponent(util.Component):
     """Represents Vector's camera.
 
     The CameraComponent object receives images from Vector's camera, unpacks the data,
-     composes it and makes it available as latest_image.
+    composes it and makes it available as latest_image.
 
     The :class:`anki_vector.robot.Robot` or :class:`anki_vector.robot.AsyncRobot` instance observes the camera.
 
@@ -76,7 +76,7 @@ class CameraComponent(util.Component):
 
     @property
     def latest_image(self) -> Image.Image:
-        """:class:`Image.Image`: The most recent processed image received from the robot.
+        """:class:`Image.Image`: The most recently processed image received from the robot.
 
         :getter: Returns the Pillow Image representing the latest image
 
@@ -91,7 +91,7 @@ class CameraComponent(util.Component):
 
     @property
     def latest_image_id(self) -> int:
-        """The most recent processed image's id received from the robot.
+        """The most recently processed image's id received from the robot.
 
         Used only to track chunks of the same image.
 
@@ -100,12 +100,12 @@ class CameraComponent(util.Component):
         return self._latest_image_id
 
     def init_camera_feed(self) -> None:
-        """Begin camera feed task"""
+        """Begin camera feed task."""
         if not self._camera_feed_task or self._camera_feed_task.done():
             self._camera_feed_task = self.robot.loop.create_task(self._request_and_handle_images())
 
     def close_camera_feed(self) -> None:
-        """Cancel camera feed task"""
+        """Cancel camera feed task."""
         if self._camera_feed_task:
             self._camera_feed_task.cancel()
             self.robot.loop.run_until_complete(self._camera_feed_task)
@@ -121,7 +121,7 @@ class CameraComponent(util.Component):
         # Decode compressed source data into uncompressed image data
         imageArray = cv2.imdecode(array, -1)
 
-        # Convert to pillow image
+        # Convert to Pillow Image
         self._latest_image = Image.fromarray(imageArray)
         self._latest_image_id = msg.image_id
 

@@ -1,0 +1,21 @@
+
+namespace Anki {
+namespace Vision {
+
+enum uint_8 ImageEncoding
+{
+  NoneImageEncoding,
+  RawGray, // no compression
+  RawRGB,  // no compression, just [RGBRGBRG...]
+  YUYV,
+  YUV420sp,
+  BAYER,
+  JPEGGray,
+  JPEGColor,
+  JPEGColorHalfWidth,
+  JPEGMinimizedGray, // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+  JPEGMinimizedColor // Minimized grayscale JPEG - no header, no footer, no byte stuffing, with added color data
+}
+
+}
+}

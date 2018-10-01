@@ -14,9 +14,45 @@
       "relativeCost" : 16
     },
     {
+      "mode"         : "FullFrameMarkerDetection",
+      // Only a schedule of "1" makes sense because this mode modifier piggybacks on DetectingMarkers's schedule
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    {
+      "mode"         : "FullHeightMarkerDetection",
+      // Only a schedule of "1" makes sense because this mode modifier piggybacks on DetectingMarkers's schedule
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    {
+      "mode"         : "FullWidthMarkerDetection",
+      // Only a schedule of "1" makes sense because this mode modifier piggybacks on DetectingMarkers's schedule
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    {
       "mode"         : "DetectingFaces",
       // todo VIC-3774: Revert this back to (4,2,1,2) This is a temp solution to deal with the fact that when DetectingFaces is
       // not High, weird stuff can happen with face timestamps and poses.
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 16
+    },
+    {
+      "mode"         : "CroppedFaceDetection",
+      // Only a schedule of "1" makes sense because this mode modifier piggybacks on DetectingFaces' schedule
       "low"          : 1,
       "med"          : 1,
       "high"         : 1,

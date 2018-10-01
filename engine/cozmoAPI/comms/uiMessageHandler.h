@@ -42,13 +42,12 @@ namespace Anki {
     class CozmoContext;
     class Robot;
     class RobotManager;
-    class GameMessagePort;
     
     class UiMessageHandler : public IExternalInterface
     {
     public:
       
-      UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* messagePipe); // Force construction with stuff in Init()?
+      UiMessageHandler(u32 hostUiDeviceID); // Force construction with stuff in Init()?
       virtual ~UiMessageHandler();
       
       Result Init(CozmoContext* context, const Json::Value& config);
@@ -104,7 +103,7 @@ namespace Anki {
         return const_cast<ISocketComms*>( const_cast<const UiMessageHandler*>(this)->GetSocketComms(type) );
       }
       
-      uint32_t GetNumConnectedDevicesOnAnySocket() const;
+      bool AreAnyConnectedDevicesOnAnySocket() const;
       
       bool ShouldHandleMessagesFromConnection(UiConnectionType type) const;
       

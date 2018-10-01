@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"io/ioutil"
-	"math"
 	"os"
 	"os/exec"
 	"reflect"
@@ -1879,6 +1877,78 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 	return sayTextResponse, nil
 }
 
+func AudioSendModeRequest(mode extint.AudioProcessingMode) error {
+	log.Println("SDK Requesting Audio with mode(", mode, ")")
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AudioSendModeRequest{
+			AudioSendModeRequest: &extint.AudioSendModeRequest{
+				Mode: mode,
+			},
+		},
+	})
+
+	return err
+}
+
+type AudioFeedCache struct {
+	Data        []byte
+	GroupId     int32
+	Invalid     bool
+	Size        int32
+	LastChunkId int32
+}
+
+func ResetAudioCache(cache *AudioFeedCache) error {
+	cache.Data = nil
+	cache.GroupId = -1
+	cache.Invalid = false
+	cache.Size = 0
+	cache.LastChunkId = -1
+	return nil
+}
+
+func UnpackAudioChunk(audioChunk *extint.AudioChunk, cache *AudioFeedCache) bool {
+	groupId := int32(audioChunk.GetGroupId())
+	chunkId := int32(audioChunk.GetChunkId())
+
+	if cache.GroupId != -1 && chunkId == 0 {
+		if !cache.Invalid {
+			log.Errorln("Lost final chunk of audio group; discarding")
+		}
+		cache.GroupId = -1
+	}
+
+	if cache.GroupId == -1 {
+		if chunkId != 0 {
+			if !cache.Invalid {
+				log.Errorln("Received chunk of broken audio stream")
+			}
+			cache.Invalid = true
+			return false
+		}
+		// discard any previous in-progress image
+		ResetAudioCache(cache)
+
+		cache.Data = make([]byte, extint.AudioConstants_SAMPLE_COUNTS_PER_SDK_MESSAGE*2)
+		cache.GroupId = int32(groupId)
+	}
+
+	if chunkId != cache.LastChunkId+1 || groupId != cache.GroupId {
+		log.Errorf("Audio missing chunks; discarding (last_chunk_id=%i partial_audio_group_id=%i)\n", cache.LastChunkId, cache.GroupId)
+		ResetAudioCache(cache)
+		cache.Invalid = true
+		return false
+	}
+
+	dataSize := int32(len(audioChunk.GetSignalPower()))
+	copy(cache.Data[cache.Size:cache.Size+dataSize], audioChunk.GetSignalPower()[:])
+	cache.Size += dataSize
+	cache.LastChunkId = chunkId
+
+	return chunkId == int32(audioChunk.GetAudioChunkCount()-1)
+}
+
 // Long running message for sending audio feed to listening sdk users
 func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.ExternalInterface_AudioFeedServer) error {
 	if disableStreams {
@@ -1886,50 +1956,68 @@ func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.
 		return grpc.Errorf(codes.Unimplemented, "AudioFeed disabled in message_handler.go")
 	}
 
-	// temporary 1 kHz sine wave generator to test over the wire transfer
-	// @TODO: delete this when the engine is modified to send audio (VIC-3024)
-	for i := 0; i < 1000; i++ {
-		power_array := make([]byte, 3200)
-		direction_array := make([]byte, 12)
-		var buffer bytes.Buffer
-		for i := 0; i < 1600; i++ {
-			// sin(pi*i/8) will cycle every 16 samples, the robot's sample rate is 16,000
-			// using '12000' rather than max_int so its not so painful to listen to.
-			//
-			// the robot's audio data is in the form of 16 bit signed integers, but the proto
-			// stores it as a byte array
-			theta := (math.Pi * float64(i)) / float64(8)
-			entry := int16(math.Sin(theta) * 12000)
-			binary.Write(&buffer, binary.LittleEndian, entry)
-			buffer.Read(power_array[i*2 : i*2+1])
-		}
+	// @TODO: Expose other audio processing modes
+	//
+	// The composite multi-microphone non-beamforming (AUDIO_VOICE_DETECT_MODE) mode has been identified as the best for voice detection,
+	// as well as incidentally calculating directional and noise_floor data.  As such it's most reasonable as the SDK's default mode.
+	//
+	// While this mode will send directional source data, it is different from DIRECTIONAL_MODE in that it does not isolate and clean
+	// up the sound stream with respect to the loudest direction (which makes the result more human-ear pleasing but more ml difficult).
+	//
+	// It should however be noted that the robot will automatically shift into FAST_MODE (cleaned up single microphone) when
+	// entering low power mode, so its important to leave this exposed.
+	//
 
-		audioFeedResponse := &extint.AudioFeedResponse{
-			Data: &extint.AudioChunk{
-				RobotTimeStamp:     0,
-				SignalPower:        power_array,
-				DirectionStrengths: direction_array,
-				SourceDirection:    12, // '12' represents invalid under the hood, while '0' is a valid direction
-				SourceConfidence:   0,
-				NoiseFloorPower:    0,
-			},
-		}
-
-		if err := stream.Send(audioFeedResponse); err != nil {
-			return err
-		} else if err = stream.Context().Err(); err != nil {
-			// This is the case where the user disconnects the stream
-			// We should still return the err in case the user doesn't think they disconnected
-			return err
-		}
-
-		// The robot will send audio data in chunks of 1600 samples, and the animProcess operates
-		// at a sampling rate of 16000.  The rate at which the robot generates these chunks (and the
-		// minimum latency of the audiostream) is 100ms on the golden path.
-		time.Sleep(100 * time.Millisecond)
+	// Enable audio stream
+	err := AudioSendModeRequest(extint.AudioProcessingMode_AUDIO_VOICE_DETECT_MODE)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	// Disable audio stream
+	defer AudioSendModeRequest(extint.AudioProcessingMode_AUDIO_OFF)
+
+	// Forward audio data from engine
+	f, audioFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AudioChunk{}, 10)
+	defer f()
+
+	cache := AudioFeedCache{
+		Data:    nil,
+		GroupId: -1,
+		Invalid: false,
+		Size:    0,
+	}
+
+	for result := range audioFeedChannel {
+
+		audioChunk := result.GetAudioChunk()
+
+		readyToSend := UnpackAudioChunk(audioChunk, &cache)
+		if readyToSend {
+			audioFeedResponse := &extint.AudioFeedResponse{
+				RobotTimeStamp:     audioChunk.GetRobotTimeStamp(),
+				GroupId:            uint32(audioChunk.GetGroupId()),
+				SignalPower:        cache.Data[0:cache.Size],
+				DirectionStrengths: audioChunk.GetDirectionStrengths(),
+				SourceDirection:    audioChunk.GetSourceDirection(),
+				SourceConfidence:   audioChunk.GetSourceConfidence(),
+				NoiseFloorPower:    audioChunk.GetNoiseFloorPower(),
+			}
+			ResetAudioCache(&cache)
+
+			if err := stream.Send(audioFeedResponse); err != nil {
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
+		}
+	}
+
+	errMsg := "AudioChunk engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
 }
 
 // TODO: Add option to request a single image from the robot(SingleShot) once VIC-5159 is resolved.
@@ -1964,13 +2052,13 @@ func ResetCameraCache(cache *CameraFeedCache) error {
 	return nil
 }
 
-func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCache) (bool, error) {
+func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCache) bool {
 	imageId := int32(imageChunk.GetImageId())
 	chunkId := int32(imageChunk.GetChunkId())
 
 	if cache.ImageId != -1 && chunkId == 0 {
 		if !cache.Invalid {
-			log.Println("Lost final chunk of image; discarding")
+			log.Errorln("Lost final chunk of image; discarding")
 		}
 		cache.ImageId = -1
 	}
@@ -1978,10 +2066,10 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 	if cache.ImageId == -1 {
 		if chunkId != 0 {
 			if !cache.Invalid {
-				log.Println("Received chunk of broken image")
+				log.Errorln("Received chunk of broken image")
 			}
 			cache.Invalid = true
-			return false, nil
+			return false
 		}
 		// discard any previous in-progress image
 		ResetCameraCache(cache)
@@ -1991,10 +2079,10 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 	}
 
 	if chunkId != cache.LastChunkId+1 || imageId != cache.ImageId {
-		log.Println("Image missing chunks; discarding (last_chunk_id=", cache.LastChunkId, " partial_image_id=", cache.ImageId, ")")
+		log.Errorf("Image missing chunks; discarding (last_chunk_id=%i partial_image_id=%i)\n", cache.LastChunkId, cache.ImageId)
 		ResetCameraCache(cache)
 		cache.Invalid = true
-		return false, nil
+		return false
 	}
 
 	dataSize := int32(len(imageChunk.GetData()))
@@ -2002,7 +2090,7 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 	cache.Size += dataSize
 	cache.LastChunkId = chunkId
 
-	return chunkId == int32(imageChunk.GetImageChunkCount()-1), nil
+	return chunkId == int32(imageChunk.GetImageChunkCount()-1)
 }
 
 // Long running message for sending camera feed to listening sdk users
@@ -2034,10 +2122,7 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	for result := range cameraFeedChannel {
 
 		imageChunk := result.GetImageChunk()
-		readyToSend, err := UnpackCameraImageChunk(imageChunk, &cache)
-		if err != nil {
-			return err
-		}
+		readyToSend := UnpackCameraImageChunk(imageChunk, &cache)
 		if readyToSend {
 			cameraFeedResponse := &extint.CameraFeedResponse{
 				FrameTimeStamp: imageChunk.GetFrameTimeStamp(),
@@ -2057,7 +2142,9 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 		}
 	}
 
-	return nil
+	errMsg := "ImageChunk engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
 }
 
 // CheckUpdateStatus tells if the robot is ready to reboot and update.

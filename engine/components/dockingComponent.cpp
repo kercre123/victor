@@ -17,6 +17,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/vision/visionSystem.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -129,7 +130,7 @@ void DockingComponent::UpdateDockingErrorSignal(const RobotTimeStamp_t t) const
 {
   // The WasRotatingTooFast threshold for sending the docking error signal should be
   // tighter than the general WasRotatingTooFast threshold for marker detection
-  DEV_ASSERT((kDockingRotatingTooFastThresh_degPerSec <= _robot->GetVisionComponent().GetBodyTurnSpeedThresh_degPerSec()),
+  DEV_ASSERT((kDockingRotatingTooFastThresh_degPerSec <= VisionSystem::GetBodyTurnSpeedThresh_degPerSec()),
              "VisionComponent.UpdateDockingErrorSignal.BodyTurnSpeedThreshTooRestrictive");
   
   const ObjectID& dockObjectID = GetDockObject();
@@ -139,7 +140,7 @@ void DockingComponent::UpdateDockingErrorSignal(const RobotTimeStamp_t t) const
     return;
   }
   
-  if(_robot->GetVisionComponent().WasBodyRotatingTooFast(t, kDockingRotatingTooFastThresh_degPerSec))
+  if(_robot->GetImuComponent().GetImuHistory().WasBodyRotatingTooFast(t, kDockingRotatingTooFastThresh_degPerSec))
   {
     PRINT_CH_INFO("VisionComponent",
                   "VisionComponent.UpdateDockingErrorSignal.RotatingTooFast",

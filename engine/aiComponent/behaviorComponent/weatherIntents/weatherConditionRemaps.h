@@ -42,8 +42,8 @@ private:
     WeatherConditionType remappedType;
 
     // Temperature related remaps
-    int temperatureBelow = kInvalidTemp;
-    int temperatureAbove = kInvalidTemp;
+    float temperatureBelowF = kInvalidTemp;
+    float temperatureAboveF = kInvalidTemp;
 
     // Time related remaps
     std::unique_ptr<tm> localTimeBefore;

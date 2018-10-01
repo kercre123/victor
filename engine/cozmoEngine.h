@@ -64,7 +64,6 @@ class IGatewayInterface;
 class CozmoContext;
 class UiMessageHandler;
 class ProtoMessageHandler;
-class GameMessagePort;
 class AnimationTransfer;
 
 template <typename Type>
@@ -78,7 +77,7 @@ class CozmoEngine
 {
 public:
 
-  CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* gameMessagePort);
+  CozmoEngine(Util::Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngine();
 
 

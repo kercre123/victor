@@ -19,6 +19,7 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include "SdkClient.h"
 
 #include "signal.h"
 
@@ -168,6 +169,11 @@ BleCentral* centralContext;
     _otaProgress = 0;
     _otaStatusCode = 0;
     _otaExpected = 0;
+    
+    _sessionIp = @"";
+    _sessionEsn = @"";
+    _sessionClientAppToken = @"";
+    _sessionName = @"";
     
     _isPairing = false;
     
@@ -1203,11 +1209,25 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsWifiIpResponse: {
         Anki::Vector::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+        if(msg.hasIpV4) {
+          char ipv4String[INET_ADDRSTRLEN] = {0};
+          inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+          _sessionIp = [NSString stringWithUTF8String:ipv4String];
+        }
+        
+        ///*
+        if(!_hasStartedPrompt) {
+          if(_hasOwner && _hasAuthed && ![_sessionIp isEqualToString:@""]){
+            SdkClient* sdkClient = [[SdkClient alloc] initWithEsn:_sessionEsn ipAddr:_sessionIp clientAppToken:_sessionClientAppToken];
+          }
+          [self startPrompt];
+        }
         
         if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
           if(msg.hasIpV4) {
             char ipv4String[INET_ADDRSTRLEN] = {0};
             inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+            _sessionIp = [NSString stringWithUTF8String:ipv4String];
             printf("IPv4: %s\n", ipv4String);
           }
           
@@ -1237,8 +1257,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           Anki::Vector::ExternalComms::RtsStatusResponse_4 msg = rtsMsg.Get_RtsStatusResponse_4();
           _hasOwner = msg.hasOwner;
           if(msg.hasOwner) {
-            // do auth check
-            Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, false, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            if(_reconnection) {
+              _hasAuthed = true;
+            }
+            // get wifi-ip
+            _sessionEsn = [NSString stringWithUTF8String:msg.esn.c_str()];
+            [self async_WifiIpRequest];
           } else {
             [self startPrompt];
           }
@@ -1306,6 +1330,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         Anki::Vector::ExternalComms::RtsCloudSessionResponse msg = rtsMsg.Get_RtsCloudSessionResponse();
         
         if(msg.success) {
+          _sessionClientAppToken = [NSString stringWithUTF8String:msg.clientTokenGuid.c_str()];
+          [self SaveName:_peripheral.name];
           _hasAuthed = true;
           _hasOwner = true;
         }
@@ -1604,11 +1630,41 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
   return hasSession;
 }
+- (NSDictionary*) GetSessionForName: (NSString*)key {
+  NSDictionary* session = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"victorNamesDict"];
+  
+  if(session == nil) {
+    return nil;
+  }
+  
+  bool hasSession = [session valueForKey:key] != nil;
+  
+  if(hasSession) {
+    if(![[session valueForKey:key] isKindOfClass:[NSDictionary class]]) {
+      return nil;
+    }
+    NSDictionary* vicSession = [session valueForKey:key];
+    return vicSession;
+  }
+  
+  return nil;
+}
 - (void) SaveName: (NSString*)key {
   NSDictionary* sessionFixed = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"victorNamesDict"];
   
   NSMutableDictionary* session = [NSMutableDictionary dictionaryWithDictionary:sessionFixed];
-  [session setValue:[NSNumber numberWithInt:1] forKey:key];
+  NSMutableDictionary* fields = [NSMutableDictionary dictionary];
+  if([session valueForKey:key]) {
+    fields = [NSMutableDictionary dictionaryWithDictionary:[session valueForKey:key]];
+  } else {
+    fields = [NSMutableDictionary dictionary];
+  }
+  
+  [fields setValue:[NSNumber numberWithInt:1] forKey:@"dummy"];
+  if(![_sessionClientAppToken isEqualToString:@""]) {
+    [fields setValue:_sessionClientAppToken forKey:@"clientAppToken"];
+  }
+  [session setValue:fields forKey:key];
   [[NSUserDefaults standardUserDefaults] setValue:session forKey:@"victorNamesDict"];
   
   return;
@@ -2018,6 +2074,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) HandleChallengeSuccessMessage:(const Anki::Vector::ExternalComms::RtsChallengeSuccessMessage&)msg {
+
   if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
   
   if(_syncdelegate != nullptr) {
@@ -2330,6 +2387,14 @@ didFailToConnectPeripheral:(CBPeripheral *)peripheral
   didConnectPeripheral:(CBPeripheral *)peripheral {
   if(_verbose) NSLog(@"Connected to peripheral");
   [self StopScanning];
+  _sessionName = peripheral.name;
+  NSDictionary* session = [self GetSessionForName:_sessionName];
+  if(session) {
+    NSString* token = [session valueForKey:@"clientAppToken"];
+    if(token) {
+      _sessionClientAppToken = token;
+    }
+  }
   [peripheral discoverServices:@[_victorService]];
 }
 

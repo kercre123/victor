@@ -36,6 +36,7 @@
 #include "gtest/gtest.h"
 #include "json/json.h"
 #include "test/engine/helpers/cubePlacementHelper.h"
+#include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -157,7 +158,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // Queue the marker in VisionComponent, which will in turn queue it for processing
   // by BlockWorld
@@ -466,7 +467,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
 
@@ -624,7 +625,7 @@ TEST(BlockWorld, PoseUpdates)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   /*
     + See unique    object1 (non-localizable) from close, seeing same object in *different pose from far
@@ -803,6 +804,15 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   using namespace Anki;
   using namespace Vector;
 
+  // This test is explicitly testing for pose confirmation while rejiggering and
+  // assumes that we do not immediately confirm objects (i.e. it should take two
+  // observations for the purposes of this test). This is controlled by console var,
+  // so make sure we set them to expected values for the test and restore when done.
+  const auto origImmediateConfirmationValue = NativeAnkiUtilConsoleGetVarValueAsInt64("UseImmediateConfirmationIfRobotNotMoving");
+  const auto origMinObservationsToConfirm   = NativeAnkiUtilConsoleGetVarValueAsInt64("MinTimesToObserveObject");
+  NativeAnkiUtilConsoleSetValueWithString("UseImmediateConfirmationIfRobotNotMoving", "0");
+  NativeAnkiUtilConsoleSetValueWithString("MinTimesToObserveObject", "2");
+                                          
   Result lastResult;
 
   Robot robot(1, cozmoContext);
@@ -845,7 +855,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // For faking observations of blocks
   const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
@@ -985,6 +995,12 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_NE(obj2Ptr, nullptr);
   obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
   ASSERT_NE(obj3Ptr, nullptr);
+  
+  // Restore original values for console vars controlling the pose confirmer
+  NativeAnkiUtilConsoleSetValueWithString("UseImmediateConfirmationIfRobotNotMoving",
+                                          std::to_string(origImmediateConfirmationValue).c_str());
+  NativeAnkiUtilConsoleSetValueWithString("MinTimesToObserveObject",
+                                          std::to_string(origMinObservationsToConfirm).c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1045,7 +1061,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // For faking observations of blocks
   const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
@@ -1239,7 +1255,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
 
@@ -1631,18 +1647,27 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
     ObservableObject* observation1 = object2->CloneType();
     observation1->InitPose(fakePose, PoseState::Known);
     observation1->CopyID(object2);
-    bool isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation1), nullptr, false, 10);
+    const bool wasRobotMoving = true; // prevents "immediate confirmation if robot not moving", if enabled by console var
+    bool isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation1), nullptr, wasRobotMoving, 10);
 
-    // should not be confirmed yet in this origin
-    ASSERT_FALSE(isConfirmed);
     ObservableObject* confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
-    ASSERT_EQ(nullptr, confirmedObject);
-
-    ObservableObject* observation2 = object2->CloneType();
-    observation2->InitPose(fakePose, PoseState::Known);
-    observation2->CopyID(object2);
-    isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation2), confirmedObject, false, 10);
-
+    
+    const auto minObservationsToConfirm = NativeAnkiUtilConsoleGetVarValueAsInt64("MinTimesToObserveObject");
+    if(minObservationsToConfirm > 1)
+    {
+      // Test assumes it takes exactly two confirmations, so assert that
+      ASSERT_EQ(2, minObservationsToConfirm);
+      
+      // should not be confirmed yet in this origin
+      ASSERT_FALSE(isConfirmed);
+      ASSERT_EQ(nullptr, confirmedObject);
+      
+      ObservableObject* observation2 = object2->CloneType();
+      observation2->InitPose(fakePose, PoseState::Known);
+      observation2->CopyID(object2);
+      isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation2), confirmedObject, false, 10);
+    }
+    
     // now it should have been confirmed
     ASSERT_TRUE(isConfirmed);
     confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
@@ -1781,7 +1806,7 @@ TEST(Localization, LocalizationDistance)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
   RobotTimeStamp_t fakeTime = 10;
@@ -2251,7 +2276,7 @@ TEST(Localization, UnexpectedMovement)
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   VisionProcessingResult procResult;
   RobotTimeStamp_t fakeTime = 10;
@@ -2372,8 +2397,8 @@ int main(int argc, char ** argv)
 
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcePath);
-  UiMessageHandler handler(0, nullptr);
-  ProtoMessageHandler protoHandler(nullptr);
+  UiMessageHandler handler(0);
+  ProtoMessageHandler protoHandler;
   cozmoContext = new Anki::Vector::CozmoContext(dataPlatform, &handler, &protoHandler);
 
   cozmoContext->GetDataLoader()->LoadRobotConfigs();

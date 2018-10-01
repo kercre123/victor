@@ -74,7 +74,6 @@ class PhotographComponent(util.Component):
         .. code-block:: python
 
             robot.photos.load_photo_info()
-            robot.photos.photo_info # This property is now up-to-date with the robot
 
         :return: The response from the PhotosInfo rpc call
         """
@@ -114,8 +113,8 @@ class PhotographComponent(util.Component):
     async def get_thumbnail(self, photo_id: int) -> protocol.ThumbnailResponse:
         """Download a thumbnail of a given photo from the robot's storage.
 
-        This function is good for grabbing all of the images off the robot, and
-        selecting which one to download the full-resolution version of.
+        You may use this function to pull all of the images off the robot in a smaller format, and
+        then determine which one to download as full resolution.
 
         .. code-block:: python
             :emphasize-lines: 5

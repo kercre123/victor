@@ -17,17 +17,18 @@
 #include "coretech/common/engine/math/matrix.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 
-#include "engine/groundPlaneROI.h"
+#include "engine/components/sensors/imuComponent.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
-#include "engine/components/sensors/imuComponent.h"
+#include "engine/vision/groundPlaneROI.h"
 
 namespace Anki {
 namespace Vector {
 
 struct VisionPoseData
 {
-  using ImuDataHistory = ImuComponent::ImuHistory;
+  using ImuDataHistory = ImuHistory; // TODO: Remove
+  
   // TODO: Add getters for these and make them private, prefixed with underscore (COZMO-14998)
   RobotTimeStamp_t      timeStamp;
   HistRobotState        histState;  // contains historical head/lift/pose info
