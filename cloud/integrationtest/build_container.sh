@@ -7,15 +7,15 @@ IMAGE_NAME=load_test
 REPO_DNS_NAME=649949066229.dkr.ecr.us-west-2.amazonaws.com
 
 # Delete any previous docker builds
-rm -f ${SCRIPT_PATH}/integrationtest.test
+rm -f ${SCRIPT_PATH}/robot_simulator
 
 # Build test executable
 cd ${BUILD_PATH}
-./build-cloud-linux.sh -c test -d integrationtest
+./build-cloud-linux.sh -d integrationtest
 
 # Move executable into Docker build context
 cd ${SCRIPT_PATH}
-cp ../../_build/cloud/integrationtest.test .
+cp ../../_build/cloud/integrationtest robot_simulator
 
 docker build -t ${IMAGE_NAME} .
 
