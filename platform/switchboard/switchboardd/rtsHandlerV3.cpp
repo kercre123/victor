@@ -956,11 +956,7 @@ void RtsHandlerV3::UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStat
     return;
   }
 
-  if(!_isOtaUpdating) {
-    _engineClient->ShowPairingStatus(state);
-  } else {
-    _engineClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
-  }
+  _engineClient->ShowPairingStatus(state);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
