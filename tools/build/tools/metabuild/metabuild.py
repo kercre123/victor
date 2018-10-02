@@ -4,10 +4,10 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-import imp
 import re
 import os
 import sys
+import types
 
 import subprocess
 check_output = lambda x : subprocess.check_output(x).decode('cp437').strip()
@@ -556,7 +556,7 @@ class BuildProcessor(object):
             contents = f.read()
 
         self.build_env.dirname = os.path.dirname(path)
-        module = imp.new_module(path)
+        module = types.ModuleType(path)
         module.__file__ = path
         module.__dict__.update(default_globals)
 
