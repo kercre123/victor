@@ -18,6 +18,7 @@ enum uint_16 BehaviorID {
   // devBehaviors
   DevBaseBehavior,
   DevBatteryLogging,
+  DevCubeSpinner,
   DevCubeSpinnerConsole,
   DevDesignCubeLights,
   DevDisplayReadingsOnFace,
