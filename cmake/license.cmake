@@ -224,7 +224,57 @@ endfunction()
 
 function(check_licenses)
 
+  ## Compare list of published licenses against list of used packages in the Go package directory
+  ## anything new in is reported as a warning unless it's an exception
+
+  # published licenses
+
+  file(GLOB dirs "${CMAKE_BINARY_DIR}/licences/*")
+  set(published_licenses)
+  foreach(dir ${dirs})
+    get_filename_component(dir ${dir} NAME)
+    list(APPEND published_licenses ${dir})
+  endforeach()
+
+  # iterate over github directory
+
+  file(GLOB_RECURSE packages "${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/**/LICENSE")
+  foreach(package ${packages})
+
+    # library name is the folder that holds the LICENSE file
+
+    string(REPLACE "/" ";" package "${package}")
+    list(REVERSE package)
+    list(GET package 1 package)
+
+    # in published list
+
+    set(found -1)
+    foreach(license ${published_licenses})
+      string(FIND "${license}" "${package}" found)
+      if(NOT ${found} EQUAL -1)
+        break()
+      endif()
+    endforeach()
+
+    # in exception list, used for development
+
+    if (${found} EQUAL -1)
+      foreach(dev_package tools googleapis testify go-spew go-difflib objx go-riff go-wav)
+        if (${package} MATCHES ${dev_package})
+          set(found 0)
+          break()
+        endif()
+      endforeach()
+
+      if (${found} EQUAL -1)
+        message("${package} present in cloud/go/src/github.com but is not included in licenses, either add anki_build_target_license() or update exceptions in license.cmake:${CMAKE_CURRENT_LIST_LINE}-ish")
+      endif()
+    endif()
+  endforeach()
+
   # iterate through all targets looking for executables and shared libraries
+
   get_all_targets(all_targets)
 
   set(all_executables)
