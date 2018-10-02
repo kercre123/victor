@@ -160,7 +160,6 @@ class Robot:
         self._accel: util.Vector3 = None
         self._gyro: util.Vector3 = None
         self._carrying_object_id: float = None
-        self._carrying_object_on_top_id: float = None
         self._head_tracking_object_id: float = None
         self._localized_to_object_id: float = None
         self._last_image_time_stamp: float = None
@@ -395,17 +394,6 @@ class Robot:
         """
         return self._carrying_object_id
 
-    # TODO Is this really a thing in Vector? Ask Al C.
-    @property
-    def carrying_object_on_top_id(self) -> int:
-        """The ID of the object on top of the object currently being carried (-1 if none)
-
-        .. code-block:: python
-
-            current_carrying_object_on_top_id = robot.carrying_object_on_top_id
-        """
-        return self._carrying_object_on_top_id
-
     @property
     def head_tracking_object_id(self) -> int:
         """The ID of the object the head is tracking to (-1 if none)
@@ -437,7 +425,7 @@ class Robot:
         """
         return self._last_image_time_stamp
 
-    # TODO Cozmo SDK has Robot properties including is_moving, is_falling, is_picked_up, is_animated, is_pathing, and more (see Cozmo's robot.py). Instead we are currently burying this in status, it seems? Make this more palatable to Python. Needs improved sample code.
+    # TODO Cozmo SDK has Robot properties including is_cliff_detected, is_moving, is_falling, is_picked_up, is_animated, is_pathing, and more (see Cozmo's robot.py). Instead we are currently burying this in status, it seems? Make this more palatable to Python. Needs improved sample code.
     @property
     def status(self) -> float:
         """Describes Vector's status.
@@ -530,7 +518,6 @@ class Robot:
         self._accel = util.Vector3(msg.accel.x, msg.accel.y, msg.accel.z)
         self._gyro = util.Vector3(msg.gyro.x, msg.gyro.y, msg.gyro.z)
         self._carrying_object_id = msg.carrying_object_id
-        self._carrying_object_on_top_id = msg.carrying_object_on_top_id
         self._head_tracking_object_id = msg.head_tracking_object_id
         self._localized_to_object_id = msg.localized_to_object_id
         self._last_image_time_stamp = msg.last_image_time_stamp

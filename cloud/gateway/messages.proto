@@ -202,7 +202,7 @@ message RobotState {
   AccelData accel = 8;
   GyroData gyro = 9;
   int32 carrying_object_id = 10;
-  int32 carrying_object_on_top_id = 11;
+  int32 carrying_object_on_top_id = 11; // Not supported by engine
   int32 head_tracking_object_id = 12;
   int32 localized_to_object_id = 13;
   uint32 last_image_time_stamp = 14;
