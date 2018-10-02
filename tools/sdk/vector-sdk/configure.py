@@ -79,7 +79,7 @@ class Api:
 def get_esn():
     esn = os.environ.get('ANKI_ROBOT_SERIAL')
     if esn is None or len(esn) == 0:
-        print("Please find your robot serial number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.\n")
+        print("\n\nPlease find your robot serial number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.")
         esn = input('Enter robot serial number: ')
     else:
         print("Found robot serial number in environment variable '{}'".format(colored("ANKI_ROBOT_SERIAL", "green")))
@@ -140,14 +140,14 @@ def get_session_token():
 def get_name_and_ip():
     robot_name = os.environ.get('VECTOR_ROBOT_NAME')
     if robot_name is None or len(robot_name) == 0:
-        print("Find your robot name (ex. Vector-A1B2) by placing Vector on the charger and double clicking Vector's backpack button.")
+        print("\n\nFind your robot name (ex. Vector-A1B2) by placing Vector on the charger and double clicking Vector's backpack button.")
         robot_name = input("Enter robot name: ")
     else:
         print("Found robot name in environment variable '{}'".format(colored("VECTOR_ROBOT_NAME", "green")))
     print("Using robot name: {}".format(colored(robot_name, "cyan")))
     ip = os.environ.get('ANKI_ROBOT_HOST')
     if ip is None or len(ip) == 0:
-        print("Find your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, and double clicking Vector's backpack button.\n"
+        print("\n\nFind your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, double clicking Vector's backpack button, then raising and lowering his arms.\n"
               "If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
         ip = input("Enter robot ip: ")
     else:
