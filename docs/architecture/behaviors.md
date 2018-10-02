@@ -76,3 +76,7 @@ known behavior classes.
 ## See also
 
 [User/cloud/app intents in the behavior system](/docs/architecture/behaviors_intents.md)
+
+You can run the [plotBehaviorTree.sh](/tools/ai/plotBehaviorTree.sh) function with no arguments to see the
+entire tree, or give it a filename as the single argument to output a pdf of the tree. Look at that script to
+see more about underling arguments and how to plot other things
