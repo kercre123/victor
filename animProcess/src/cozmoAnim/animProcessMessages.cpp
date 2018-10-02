@@ -553,6 +553,11 @@ void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
 }
+  
+void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen& msg)
+{
+  FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
+}
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {

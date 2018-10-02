@@ -192,7 +192,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
   ADD_SCREEN(MotorInfo, MicInfo);
-
+  ADD_SCREEN(MirrorMode, MirrorMode);
+  
   if (hideSpecialDebugScreens) {
     ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
   } else {
@@ -315,7 +316,13 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   };
   SET_ENTER_ACTION(Camera, cameraEnterAction);
   SET_EXIT_ACTION(Camera, cameraExitAction);
-
+  
+  // === Mirror Mode ===
+  // NOTE: Re-using lambdas from Camera, since this is largely the same mode
+  SET_ENTER_ACTION(MirrorMode, cameraEnterAction);
+  SET_EXIT_ACTION(MirrorMode, cameraExitAction);
+  DISABLE_TIMEOUT(MirrorMode); // Let toggling the associated VisionMode handle turning this on/off
+  
   // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
   // and camera images are streamed to the face
@@ -489,7 +496,8 @@ void FaceInfoScreenManager::UpdateFAC()
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
 {
   if (GetCurrScreenName() != ScreenName::Camera &&
-      GetCurrScreenName() != ScreenName::CameraMotorTest) {
+      GetCurrScreenName() != ScreenName::CameraMotorTest &&
+      GetCurrScreenName() != ScreenName::MirrorMode) {
     return;
   }
 
@@ -1422,6 +1430,17 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
+    SetScreen(ScreenName::None);
+  }
+}
+  
+void FaceInfoScreenManager::EnableMirrorModeScreen(bool enable)
+{
+  if (enable && GetCurrScreenName() != ScreenName::MirrorMode) {
+    LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Enable", "");
+    SetScreen(ScreenName::MirrorMode);
+  } else if (!enable && GetCurrScreenName() == ScreenName::MirrorMode) {
+    LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Disable", "");
     SetScreen(ScreenName::None);
   }
 }

@@ -175,6 +175,7 @@ void BehaviorDevImageCapture::GetBehaviorOperationModifiers(BehaviorOperationMod
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
+  modifiers.visionModesForActiveScope->insert({VisionMode::MirrorMode,   EVisionUpdateFrequency::High});
   modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
   for(auto const& mode : _iConfig.visionModesBesidesSaving)
   {
@@ -206,9 +207,6 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   _dVars.isStreaming = false;
   _dVars.timeToBlink = -1.0f;
   _dVars.blinkOn = false;
-
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.EnableDrawImagesToScreen(true);
   
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
@@ -222,9 +220,6 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
-
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.EnableDrawImagesToScreen(false);
 }
 
 
@@ -286,12 +281,9 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   {
     using namespace Util;
     const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath()).size();
-    
-    std::function<void(Vision::ImageRGB&)> drawClassName = [this,numFiles](Vision::ImageRGB& img)
-    {
-      img.DrawText({1,14}, *_dVars.currentClassIter + ":" + std::to_string(numFiles), NamedColors::YELLOW, 0.6f, true);
-    };
-    visionComponent.AddDrawScreenModifier(drawClassName);
+
+    const std::string str(*_dVars.currentClassIter + ":" + std::to_string(numFiles));
+    visionComponent.SetMirrorModeDisplayString(str, NamedColors::YELLOW);
   }
 
   const bool wasTouched = (_dVars.touchStartedTime_s >= 0.0f);

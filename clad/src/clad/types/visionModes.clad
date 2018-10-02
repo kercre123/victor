@@ -29,6 +29,7 @@ namespace Vector {
     RunningNeuralNet,
     DetectingIllumination,
     ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
+    MirrorMode,                  // Draw images/detections on the robot's face, mirrored
     
     //
     // Vision mode "modifiers" (require one of the above to be enabled to have an effect)

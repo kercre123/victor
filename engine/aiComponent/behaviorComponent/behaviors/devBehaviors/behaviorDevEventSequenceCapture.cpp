@@ -212,9 +212,6 @@ void BehaviorDevEventSequenceCapture::OnBehaviorActivated()
   _dVars.waitStartTime_s = -1.0f;
   _dVars.wasTouched = false;
 
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.EnableDrawImagesToScreen(true);
-  
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
@@ -229,9 +226,6 @@ void BehaviorDevEventSequenceCapture::OnBehaviorDeactivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
-
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.EnableDrawImagesToScreen(false);
 }
 
 
@@ -326,11 +320,8 @@ void BehaviorDevEventSequenceCapture::BehaviorUpdate()
 
   // Display the class name and sequence number
   // TODO Continue sequences from before so we don't overwrite upon restart?
-  std::function<void(Vision::ImageRGB&)> drawClassName = [this, numCurrentSeqs](Vision::ImageRGB& img)
-  {
-    img.DrawText({1,14}, *_dVars.currentClassIter + ":" + std::to_string(numCurrentSeqs), NamedColors::RED, 0.6f, true);
-  };
-  visionComponent.AddDrawScreenModifier(drawClassName);
+  const std::string str(*_dVars.currentClassIter + ":" + std::to_string(numCurrentSeqs));
+  visionComponent.SetMirrorModeDisplayString(str, NamedColors::RED);
 
   // For audio files
   using GE = AudioMetaData::GameEvent::GenericEvent;

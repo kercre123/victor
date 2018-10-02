@@ -80,8 +80,6 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
-#include <iomanip>
-
 namespace Anki {
 namespace Vector {
 
@@ -111,12 +109,10 @@ namespace Vector {
 
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D,  "Vision.General", false);
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
-  // and in mirror mode (at specified scale)
-  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,"Vision.General", 0.f, 0.f, 1.f);
+  CONSOLE_VAR(bool,  kDisplayMarkerNames,           "Vision.General", false);
 
-  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", true); // objects, faces, markers
+  // TODO: Is there any way to move this into VisionSystem? (Unlikely, since it needs FaceWorld)
   CONSOLE_VAR(bool, kDisplayEyeContactInMirrorMode, "Vision.General", false);
-  CONSOLE_VAR(f32,  kMirrorModeGamma,               "Vision.General", 1.f);
 
   // Hack to continue drawing salient points for a bit after they are detected
   // since neural nets run slowly. If zero, just draw until the next salient point
@@ -954,18 +950,18 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdatePhotoManager,         ToVisionModeMask(SavingImages));
         tryAndReport(&VisionComponent::UpdateDetectedIllumination, ToVisionModeMask(DetectingIllumination));
 
-        tryAndReport(&VisionComponent::SendDebugMirrorImage,       ToVisionModeMask(ImageViz));
+        if(ANKI_DEV_CHEATS) {
+          // Note: we always run this because it handles switching to the mirror mode debug screen
+          // It internally checks whether the MirrorMode flag is set in modesProcessed
+          tryAndReport(&VisionComponent::UpdateMirrorMode,           ToVisionModeMask(Count)); // Always run
+        }
         
 #       undef ToVisionModeMask
                 
         // Store frame rate and last image processed time. Time should only move forward.
-        // NOTE: Neural nets run asynchronously, so we ignore those results for this purpose.
-        if(!result.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
-        {
-          DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
-          _processingPeriod_ms = (TimeStamp_t)(result.timestamp - _lastProcessedImageTimeStamp_ms);
-          _lastProcessedImageTimeStamp_ms = result.timestamp;
-        }
+        DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
+        _processingPeriod_ms = (TimeStamp_t)(result.timestamp - _lastProcessedImageTimeStamp_ms);
+        _lastProcessedImageTimeStamp_ms = result.timestamp;
 
         auto visionModesList = std::vector<VisionMode>();
         for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode)
@@ -999,56 +995,6 @@ namespace Vector {
       return RESULT_OK;
     }
   } // UpdateAllResults()
-
-  static Rectangle<f32> DisplayMirroredRectHelper(f32 x_topLeft, f32 y_topLeft, f32 width, f32 height)
-  {
-    // TODO: Figure out the original image resolution?
-    const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-    const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-
-    const f32 x_topRight = x_topLeft + width; // will become upper left after mirroring
-    const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - widthScale*x_topRight, // mirror rectangle for display
-                              y_topLeft * heightScale,
-                              width * widthScale,
-                              height * heightScale);
-
-    return rect;
-  }
-
-  template<typename T>
-  static Point<2,T> MirrorPointHelper(const Point<2,T>& pt)
-  {
-    // TODO: figure out original image resolution?
-    constexpr f32 xmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-    constexpr f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-    constexpr f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-
-    const Point<2,T> pt_mirror(widthScale*(xmax - pt.x()), pt.y()*heightScale);
-    return pt_mirror;
-  }
-
-  static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
-  {
-    // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
-    const Quad2f quad_mirrored(MirrorPointHelper(quad.GetTopRight()),
-                               MirrorPointHelper(quad.GetBottomRight()),
-                               MirrorPointHelper(quad.GetTopLeft()),
-                               MirrorPointHelper(quad.GetBottomLeft()));
-
-    return quad_mirrored;
-  }
-
-  template<typename T>
-  static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly)
-  {
-    Polygon<2,T> poly_mirrored;
-    for(auto & pt : poly)
-    {
-      poly_mirrored.emplace_back(MirrorPointHelper(pt));
-    }
-
-    return poly_mirrored;
-  }
 
   Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
   {
@@ -1129,7 +1075,7 @@ namespace Vector {
                                       NamedColors::BLUE : NamedColors::RED);
         _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
 
-        if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
+        if(kDisplayMarkerNames)
         {
           Rectangle<f32> boundingRect(corners);
           std::string markerName(visionMarker.GetCodeName());
@@ -1141,25 +1087,6 @@ namespace Vector {
         if(kVisualizeObservedMarkersIn3D)
         {
           VisualizeObservedMarkerIn3D(visionMarker);
-        }
-
-        if(kDisplayDetectionsInMirrorMode)
-        {
-          const auto& quad = visionMarker.GetImageCorners();
-          const auto& name = std::string(visionMarker.GetCodeName());
-          std::function<void (Vision::ImageRGB&)> modFcn = [quad,drawColor,name](Vision::ImageRGB& img)
-          {
-            //const Rectangle<f32> rect(quad);
-            //img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()), drawColor, 3);
-            img.DrawQuad(DisplayMirroredQuadHelper(quad), drawColor, 3);
-            if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
-            {
-              img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos),
-                           drawColor, kDisplayMarkerNamesScale);
-            }
-          };
-
-          AddDrawScreenModifier(modFcn);
         }
 
         observedMarkers.push_back(std::move(visionMarker));
@@ -1214,45 +1141,6 @@ namespace Vector {
                           "Count=%d", faceDetection.GetNumEnrollments());
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
-      }
-
-      if(kDisplayDetectionsInMirrorMode)
-      {
-        const auto& faceID = faceDetection.GetID();
-        const auto& rect = faceDetection.GetRect();
-        const auto& name = faceDetection.GetName();
-
-        std::function<void (Vision::ImageRGB&)> modFcn = [faceID, rect, name](Vision::ImageRGB& img)
-        {
-          img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
-                       NamedColors::YELLOW, 3);
-          
-          std::string dispName(name.empty() ? "<unknown>" : name);
-          dispName += "[" + std::to_string(faceID) + "]";
-          img.DrawText({1.f, img.GetNumRows()-1}, dispName, NamedColors::YELLOW, 0.6f, true);
-        };
-
-        AddDrawScreenModifier(modFcn);
-      }
-    }
-
-    if(kDisplayEyeContactInMirrorMode)
-    {
-      const u32 maxTimeSinceSeenFaceToLook_ms = ConditionEyeContact::GetMaxTimeSinceTrackedFaceUpdated_ms();
-      const bool making_eye_contact = _robot->GetFaceWorld().IsMakingEyeContact(maxTimeSinceSeenFaceToLook_ms);
-      if(making_eye_contact)
-      {
-        std::function<void (Vision::ImageRGB&)> modFcn = [](Vision::ImageRGB& img)
-        {
-          // Put eye contact indicator right in the middle
-          const f32 x = .5f * (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-          const f32 y = .5f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-          const f32 width = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
-          const f32 height = .2f * (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
-          img.DrawFilledRect(DisplayMirroredRectHelper(x, y, width, height), NamedColors::YELLOW);
-        };
-
-        AddDrawScreenModifier(modFcn);
       }
     }
 
@@ -1352,30 +1240,6 @@ namespace Vector {
       const std::string caption(object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
-
-      if(kDisplayDetectionsInMirrorMode)
-      {
-        const Point2f centroid(object.x_img, object.y_img);
-        std::string str(object.description);
-        if(!str.empty())
-        {
-          str += ":" + std::to_string((s32)std::round(object.score*100.f));
-        }
-        std::function<void (Vision::ImageRGB&)> modFcn = [str,centroid,poly,color](Vision::ImageRGB& img)
-        {
-          const Point2f mirroredCentroid = MirrorPointHelper(centroid);
-          if(!str.empty())
-          {
-            const bool kDropShadow = true;
-            const bool kCentered = true;
-            img.DrawText(mirroredCentroid, str, NamedColors::YELLOW, 0.6f, kDropShadow, 1, kCentered);
-          }
-          img.DrawFilledCircle(mirroredCentroid, color, 3);
-          img.DrawPoly(DisplayMirroredPolyHelper(poly), color, 2);
-        };
-
-        AddDrawScreenModifier(modFcn);
-      }
     }
 
     return RESULT_OK;
@@ -1555,6 +1419,59 @@ namespace Vector {
   {
     ExternalInterface::RobotObservedIllumination msg( procResult.illumination );
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    return RESULT_OK;
+  }
+  
+  Result VisionComponent::UpdateMirrorMode(const VisionProcessingResult& procResult)
+  {
+    // Handle switching the debug screen on/off when mirror mode changes
+    static bool wasMirrorModeEnabled = false;
+    const bool isMirrorModeEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::MirrorMode);
+    if(wasMirrorModeEnabled != isMirrorModeEnabled)
+    {
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateMirrorMode.TogglingMirrorMode",
+                    "Turning MirrorMode %s", isMirrorModeEnabled ? "ON" : "OFF");
+      _robot->SendRobotMessage<RobotInterface::EnableMirrorModeScreen>(isMirrorModeEnabled);
+      wasMirrorModeEnabled = isMirrorModeEnabled;
+    }
+    
+    // Send as face display animation
+    auto & animComponent = _robot->GetAnimationComponent();
+    if(isMirrorModeEnabled && animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
+    {
+      // NOTE: This creates a non-const image "header" around the same data as is in procResult.mirrorModeImg.
+      // Due to a bug / design flaw in OpenCV, this actually allows us to draw on that image, even though
+      // it's technically const. Since this is a debug mode, we're using this to avoid a copy in the case
+      // that we have eye contact or a display string, since performance is the higher priority here.
+      Vision::ImageRGB565 mirrorModeImg = procResult.mirrorModeImg;
+      
+      if(!_mirrorModeDisplayString.empty())
+      {
+        mirrorModeImg.DrawText({1,14}, _mirrorModeDisplayString, _mirrorModeStringColor, 0.6f, true);
+      }
+      
+      if(kDisplayEyeContactInMirrorMode)
+      {
+        const u32 maxTimeSinceSeenFaceToLook_ms = ConditionEyeContact::GetMaxTimeSinceTrackedFaceUpdated_ms();
+        const bool making_eye_contact = _robot->GetFaceWorld().IsMakingEyeContact(maxTimeSinceSeenFaceToLook_ms);
+        if(making_eye_contact)
+        {
+          // Put eye contact indicator right in the middle
+          const f32 x = .5f * (f32)procResult.mirrorModeImg.GetNumCols();
+          const f32 y = .5f * (f32)procResult.mirrorModeImg.GetNumRows();;
+          const f32 width = .2f * (f32)procResult.mirrorModeImg.GetNumCols();
+          const f32 height = .2f * (f32)procResult.mirrorModeImg.GetNumRows();;
+          
+          mirrorModeImg.DrawFilledRect(Rectangle<f32>(x, y, width, height), NamedColors::YELLOW);
+        }
+      }
+      
+      // Just display the mirror mode image as is, from the processing result
+      const bool kInterruptRunning = false;
+      animComponent.DisplayFaceImage(mirrorModeImg, 
+				     AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, 
+				     kInterruptRunning);
+    }
     return RESULT_OK;
   }
 
@@ -2934,66 +2851,6 @@ namespace Vector {
       _vizManager->DisplayCameraImage(result.timestamp);
     }
 
-  }
-
-  Result VisionComponent::SendDebugMirrorImage(const VisionProcessingResult& result)
-  {
-    // TODO: VIC-7380 Move mirror mode image creation to VisionSystem
-    // "Mirror mode": draw images we process to the robot's screen
-    if(_drawImagesToScreen)
-    {
-      // TODO: Add this as a lambda you can register with VisionComponent for things you want to
-      //       do with image when captured?
-
-      // Send as face display animation
-      auto & animComponent = _robot->GetAnimationComponent();
-      if(animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
-      {
-        static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-        result.displayImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
-
-        // Flip image around the y axis (before we draw anything on it)
-        cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
-
-        for(auto & modFcn : _screenImageModFuncs)
-        {
-          modFcn(screenImg);
-        }
-        _screenImageModFuncs.clear();
-
-        // Draw exposure and gain in the top left of the screen
-        const bool isAutoExposureEnabled = result.modesProcessed.IsBitFlagSet(VisionMode::AutoExposure);
-        static std::string exposure = "";
-        if(isAutoExposureEnabled)
-        {
-          std::stringstream ss;
-          ss << result.cameraParams.exposureTime_ms << " " << std::fixed << std::setprecision(2) << result.cameraParams.gain;
-          exposure = ss.str();
-        }
-        screenImg.DrawText({0,8}, exposure, NamedColors::RED, 0.25f);
-
-        static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-
-        // Use gamma to make it easier to see
-        static std::array<u8,256> gammaLUT{};
-        static f32 currentGamma = 0.f;
-        if(!Util::IsFltNear(currentGamma, kMirrorModeGamma)) {
-          currentGamma = kMirrorModeGamma;
-          const f32 invGamma = 1.f / currentGamma;
-          const f32 divisor = 1.f / 255.f;
-          for(s32 value=0; value<256; ++value)
-          {
-            gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
-          }
-        }
-
-        img565.SetFromImageRGB(screenImg, gammaLUT);
-
-        animComponent.DisplayFaceImage(img565, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, false);
-      }
-    }
-    
-    return RESULT_OK;
   }
   
   void VisionComponent::UpdateForCalibration()
