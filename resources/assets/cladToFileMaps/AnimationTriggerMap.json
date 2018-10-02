@@ -13,9 +13,8 @@
   },
   {
     "CladEvent": "AlreadyAtFace",
-    "AnimName": "ag_vc_reaction_alreadyhere"
-  },
- 
+    "AnimName": "ag_movement_comehere_alreadyhere"
+  },  
  {
    "CladEvent": "AlexaListenGetIn",
    "AnimName": "ag_alexaint_l_getin_01"
@@ -62,7 +61,7 @@
   },
   {
     "CladEvent": "BeQuiet",
-    "AnimName": "ag_vc_bequiet_01"
+    "AnimName": "ag_feedback_bequiet"
   },
   {
     "CladEvent": "BlackJack_Deal",
@@ -170,7 +169,7 @@
   },
   {
     "CladEvent": "ChargerDockingAlreadyHere",
-    "AnimName": "ag_generic_cantdothat"
+    "AnimName": "ag_communication_cantdothat"
   },
   {
     "CladEvent": "ChargerDockingDrivingEnd",
@@ -374,7 +373,7 @@
   },
   {
     "CladEvent" : "DanceBeatNoBeatDetected",
-    "AnimName": "ag_generic_cantdothat"
+    "AnimName": "ag_communication_cantdothat"
   },
   {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
@@ -598,7 +597,7 @@
   },  
   {
     "CladEvent": "FoundFace",
-    "AnimName": "ag_lookatme_reacttoface"
+    "AnimName": "ag_movement_reacttoface"
   },
   {
     "CladEvent": "FrustratedByFailureMajor",
@@ -642,7 +641,7 @@
   },
   {
     "CladEvent": "ICantDoThat",
-    "AnimName": "ag_generic_cantdothat"
+    "AnimName": "ag_communication_cantdothat"
   },
   {
     "CladEvent": "InitialWakeUp",
@@ -706,7 +705,7 @@
   },
   {
     "CladEvent": "LookInPlaceForFacesBodyPause_Active",
-    "AnimName": "ag_lookatme_lookinplaceforfaces"
+    "AnimName": "ag_movement_lookinplaceforfaces"
   },
   {
     "CladEvent": "LookInPlaceForFacesBodyPause",
@@ -1467,11 +1466,11 @@
   },
   {
     "CladEvent": "ReactToAffirmative",
-    "AnimName": "ag_vc_greeting"
+    "AnimName": "ag_feedback_goodrobot"
   },
   {
     "CladEvent": "ReactToNegative",
-    "AnimName": "ag_vc_abuse"
+    "AnimName": "ag_feedback_badrobot"
   },
   {
     "CladEvent": "ReactToGoodBye",
@@ -1651,7 +1650,7 @@
   },
   {
     "CladEvent": "ShutUp",
-    "AnimName": "ag_vc_shutup"
+    "AnimName": "ag_feedback_shutup"
   },
   {
     "CladEvent": "NoCloudGetIn",
@@ -1679,7 +1678,7 @@
   },
   {
     "CladEvent": "ComeHereStart",
-    "AnimName": "ag_vc_comehere_first_reaction"
+    "AnimName": "ag_movement_comehere_first_reaction"
   },
   {
     "CladEvent": "ComeHereSuccess",
