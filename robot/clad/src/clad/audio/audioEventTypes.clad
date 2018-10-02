@@ -42,7 +42,9 @@ enum uint_32 Dev_Robot_Factory
 
 enum uint_32 Dev_Robot_Vic
 {
-  External_Alexa_Playback = 2321277873,
+  External_Alexa_Playback_01 = 1057143549,
+  External_Alexa_Playback_02 = 1057143550,
+  External_Alexa_Playback_03 = 1057143551,
   Invalid = 0,  // Use this to check for Invalid events
 }
 
@@ -68,7 +70,9 @@ enum uint_32 GenericEvent
   Play__Dev_Robot_Factory__Scan_Loop_Stop_Bell = 1550510811,
   Play__Dev_Robot_Factory__Tone_1K_1Sec = 392476676,
   Play__Dev_Robot_Factory__Tone_1K_5Sec = 3379703224,
-  Play__Dev_Robot_Vic__External_Alexa_Playback = 2321277873,
+  Play__Dev_Robot_Vic__External_Alexa_Playback_01 = 1057143549,
+  Play__Dev_Robot_Vic__External_Alexa_Playback_02 = 1057143550,
+  Play__Dev_Robot_Vic__External_Alexa_Playback_03 = 1057143551,
   Play__Dev_Robot__Angry_Muttering = 2839960576,
   Play__Dev_Robot__Curious_Muttering = 2942381837,
   Play__Dev_Robot__External_Source = 2539447680,
