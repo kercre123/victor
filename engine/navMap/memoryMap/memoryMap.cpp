@@ -190,28 +190,6 @@ float MemoryMap::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::HasBorders(EContentType innerType, const FullContentArray& outerTypes) const
-{
-  const EContentTypePackedType outerNodeTypes = ConvertContentArrayToFlags(outerTypes);
-  
-  // ask processor
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  const bool hasBorders = _quadTree.GetProcessor().HasBorders(innerType, outerNodeTypes);
-  return hasBorders;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders)
-{
-  using namespace MemoryMapTypes;
-  const EContentTypePackedType outerNodeTypes = ConvertContentArrayToFlags(outerTypes);
-  
-  // delegate on processor
-  std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  MONITOR_PERFORMANCE( _quadTree.GetProcessor().GetBorders(innerType, outerNodeTypes, outBorders) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const
 {
   // convert type to quadtree node content and to flag (since processor takes in flags)

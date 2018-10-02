@@ -2544,9 +2544,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.UpdateObservedMarkers.SanityCheckBookkeepingFailed");
     }
 
-    // rsam: Test for Brad. Enable this to render convex hulls from memory map
-    // TestNavMemoryMapToPlanner(*_robot);
-
     return lastResult;
 
   } // UpdateObservedMarkers()
