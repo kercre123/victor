@@ -59,22 +59,32 @@ std::shared_ptr<AlexaClient> AlexaClient::create(
                                                    std::shared_ptr<registrationManager::CustomerDataManager> customerDataManager,
                                                    std::shared_ptr<avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
                                                    std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage,
+                                                   std::shared_ptr<capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+                                                   std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                                                    std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>>
                                                    alexaDialogStateObservers,
                                                    std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
                                                    connectionObservers,
                                                    std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
-                                                 std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker)
+                                                   std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
+                                                   std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
+                                                   std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
+                                                   std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker)
 {
   std::unique_ptr<AlexaClient> client(new AlexaClient());
   if (!client->Init(deviceInfo,
                     customerDataManager,
                     authDelegate,
                     messageStorage,
+                    alertStorage,
+                    audioFactory,
                     alexaDialogStateObservers,
                     connectionObservers,
                     capabilitiesDelegate,
-                    speaker))
+                    ttsMediaPlayer,
+                    alertsMediaPlayer,
+                    ttsSpeaker,
+                    alertsSpeaker))
   {
     return nullptr;
   }
@@ -86,12 +96,17 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
                          std::shared_ptr<registrationManager::CustomerDataManager> customerDataManager,
                          std::shared_ptr<avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
                          std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage,
+                         std::shared_ptr<capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+                         std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                          std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>>
                          alexaDialogStateObservers,
                          std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
                          connectionObservers,
                          std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
-                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker)
+                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
+                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
+                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
+                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker)
 {
   
   m_dialogUXStateAggregator = std::make_shared<avsCommon::avs::DialogUXStateAggregator>();
@@ -247,7 +262,7 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
      */
 //  m_speechSynthesizer = capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer::create(m_exceptionSender);
     m_speechSynthesizer = capabilityAgents::speechSynthesizer::SpeechSynthesizer::create(
-                                                                                         speaker,
+                                                                                         ttsMediaPlayer,
                                                                                          m_connectionManager,
                                                                                          m_audioFocusManager,
                                                                                          contextManager,
@@ -260,28 +275,52 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   m_speechSynthesizer->addObserver(m_dialogUXStateAggregator);
   
   
-//  /*
-//   * Creating the Alerts Capability Agent - This component is the Capability Agent that implements the Alerts
-//   * interface of AVS.
-//   */
-//  m_alertsCapabilityAgent = capabilityAgents::alerts::AlertsCapabilityAgent::create(
-//                                                                                    m_connectionManager,
-//                                                                                    m_connectionManager,
-//                                                                                    m_certifiedSender,
-//                                                                                    m_audioFocusManager,
-//                                                                                    m_speakerManager,
-//                                                                                    contextManager,
-//                                                                                    m_exceptionSender,
-//                                                                                    alertStorage,
-//                                                                                    audioFactory->alerts(),
-//                                                                                    capabilityAgents::alerts::renderer::Renderer::create(alertsMediaPlayer),
-//                                                                                    customerDataManager);
-//  if (!m_alertsCapabilityAgent) {
-//    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAlertsCapabilityAgent"));
-//    return false;
-//  }
+  
+  std::vector<std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface>> allSpeakers = {
+    ttsSpeaker,
+    alertsSpeaker,
+    // notificationsSpeaker, bluetoothSpeaker, ringtoneSpeaker
+  };
+  //allSpeakers.insert(allSpeakers.end(), additionalSpeakers.begin(), additionalSpeakers.end());
+  
+  /*
+   * Creating the SpeakerManager Capability Agent - This component is the Capability Agent that implements the
+   * Speaker interface of AVS.
+   */
+  m_speakerManager = capabilityAgents::speakerManager::SpeakerManager::create(
+                                                                              allSpeakers, contextManager, m_connectionManager, m_exceptionSender);
+  if (!m_speakerManager) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSpeakerManager"));
+    return false;
+  }
+  
+  
+  /*
+   * Creating the Alerts Capability Agent - This component is the Capability Agent that implements the Alerts
+   * interface of AVS.
+   */
+  m_alertsCapabilityAgent = capabilityAgents::alerts::AlertsCapabilityAgent::create(
+                                                                                    m_connectionManager,
+                                                                                    m_connectionManager,
+                                                                                    m_certifiedSender,
+                                                                                    m_audioFocusManager,
+                                                                                    m_speakerManager,
+                                                                                    contextManager,
+                                                                                    m_exceptionSender,
+                                                                                    alertStorage,
+                                                                                    audioFactory->alerts(),
+                                                                                    capabilityAgents::alerts::renderer::Renderer::create(alertsMediaPlayer),
+                                                                                    customerDataManager);
+  if (!m_alertsCapabilityAgent) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAlertsCapabilityAgent"));
+    return false;
+  }
   
   addConnectionObserver(m_dialogUXStateAggregator);
+  
+  // m_playbackRouter
+  // m_audioPlayer
+  // audio focus manager
 
   
   // m_playbackController
@@ -318,8 +357,20 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
     return false;
   }
   
+  if (!m_directiveSequencer->addDirectiveHandler(m_alertsCapabilityAgent)) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "AlertsCapabilityAgent"));
+    return false;
+  }
   
   
+  
+  if (!(capabilitiesDelegate->registerCapability(m_alertsCapabilityAgent))) {
+    ACSDK_ERROR(
+                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "Alerts"));
+    return false;
+  }
   
   if (!(capabilitiesDelegate->registerCapability(m_audioActivityTracker))) {
     ACSDK_ERROR(LX("initializeFailed")
@@ -412,9 +463,19 @@ void AlexaClient::onCapabilitiesStateChange( CapabilitiesObserverInterface::Stat
       m_connectionManager->enable();
   }
 }
+
+void AlexaClient::stopForegroundActivity() {
+  m_audioFocusManager->stopForegroundActivity();
+}
   
-  void AlexaClient::stopForegroundActivity() {
-    m_audioFocusManager->stopForegroundActivity();
+void AlexaClient::addSpeakerManagerObserver( std::shared_ptr<avsCommon::sdkInterfaces::SpeakerManagerObserverInterface> observer)
+{
+  m_speakerManager->addSpeakerManagerObserver(observer);
+}
+  
+  void AlexaClient::addAlexaDialogStateObserver( std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface> observer)
+  {
+    m_dialogUXStateAggregator->addObserver(observer);
   }
   
 } // namespace Vector

@@ -6,10 +6,18 @@
 #include <sstream>
 #include <unordered_set>
 #include <atomic>
+#include <map>
 
+
+#include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerInterface.h>
+
+// could be fwd declared:
+
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
 #include <AVSCommon/Utils/Threading/Executor.h>
+#include <PlaylistParser/UrlContentToAttachmentConverter.h>
+#include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterfaceFactoryInterface.h>
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
@@ -35,12 +43,18 @@ namespace Vector {
 
 class AudioDataBuffer;
 
-class AlexaSpeaker : public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
+class AlexaSpeaker
+  : public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
+  , public alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface
+  , public std::enable_shared_from_this<AlexaSpeaker>
+  , public alexaClientSDK::playlistParser::UrlContentToAttachmentConverter::ErrorObserverInterface
 {
   
 public:
   
-  AlexaSpeaker();
+  AlexaSpeaker( alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type type,
+                const std::string& name,
+                std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory );
   ~AlexaSpeaker();
   
   void Init(const AnimContext* context);
@@ -68,7 +82,32 @@ public:
   
   virtual void   setObserver (std::shared_ptr< alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface > playerObserver) override;
   
+  
+  // Speaker interface (currently a no-op since that would require wwise events)
+  virtual bool   setVolume (int8_t volume) override;
+  
+  virtual bool   adjustVolume (int8_t delta) override;
+  
+  virtual bool   setMute (bool mute) override;
+  
+  virtual bool   getSpeakerSettings (SpeakerSettings *settings) override;
+  
+  virtual Type   getSpeakerType ()  override { return _type; }
+  
+  // ErrorObserverInterface
+  virtual void onError () override;
+  
 private:
+  Type _type;
+  alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::SpeakerSettings _settings;
+  
+  enum class SourceType : uint8_t {
+    AttachmentReader,
+    Url,
+    Stream,
+  };
+  std::map<SourceId, SourceType> _sourceTypes;
+  
   using StreamingWaveDataPtr = std::shared_ptr<AudioEngine::StreamingWaveDataInstance>;
   using AudioController = Audio::CozmoAudioController;
   using DispatchQueue = Util::Dispatch::Queue;
@@ -87,7 +126,7 @@ private:
     Preparing,
     Playable,
     Playing,
-    Stopping,
+//    Stopping,
     // todo: pausing etc
   };
   std::atomic<State> _state; // todo: thread locks
@@ -95,7 +134,11 @@ private:
   SourceId m_sourceID=1; // 0 might be to be invalid?
   SourceId m_playingSource = 0;
   
-  std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader > m_source;
+  std::map<SourceId, std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader >> m_sourceReaders;
+  std::map<SourceId, std::shared_ptr< std::istream >> m_sourceStreams;
+  
+  
+  
   
   /**
    * An internal executor that performs execution of callable objects passed to it sequentially but asynchronously.
@@ -112,11 +155,22 @@ private:
   
   StreamingWaveDataPtr _waveData;
   
+  std::mutex _mutex;
+  
+  const std::string _name;
+  
   // worker thread
   DispatchQueue* _dispatchQueue = nullptr;
   
   // audio controller provided by context
   AudioController* _audioController = nullptr;
+  
+  
+  /// Used to create objects that can fetch remote HTTP content.
+  std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> m_contentFetcherFactory;
+  
+  /// Used to stream urls into attachments
+  std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> m_urlConverter;
   
 };
 

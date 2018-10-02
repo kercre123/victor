@@ -72,12 +72,17 @@ public:
                                              std::shared_ptr<alexaClientSDK::registrationManager::CustomerDataManager> customerDataManager,
     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
     std::shared_ptr<alexaClientSDK::certifiedSender::MessageStorageInterface> messageStorage,
+    std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
     std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>>
     alexaDialogStateObservers,
     std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
     connectionObservers,
     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
-    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker
+    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
+    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker
   );
   
   void Connect(const std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface>& capabilitiesDelegate);
@@ -110,6 +115,16 @@ public:
                                  alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::Error newError) override;
   
   void stopForegroundActivity();
+  
+  void addSpeakerManagerObserver(std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerManagerObserverInterface> observer);
+  
+  /**
+   * Adds an observer to be notified of Alexa dialog related UX state.
+   *
+   * @param observer The observer to add.
+   */
+  void addAlexaDialogStateObserver(
+                                   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface> observer);
 private:
   AlexaClient(){}
   bool Init(
@@ -117,12 +132,17 @@ private:
     std::shared_ptr<alexaClientSDK::registrationManager::CustomerDataManager> customerDataManager,
     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
     std::shared_ptr<alexaClientSDK::certifiedSender::MessageStorageInterface> messageStorage,
+    std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
     std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>>
     alexaDialogStateObservers,
     std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>>
     connectionObservers,
     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
-    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> speaker
+    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
+    std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
+    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker
   );
   
   void addConnectionObserver(
@@ -149,6 +169,9 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::SpeechSynthesizer> m_speechSynthesizer;
   //std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer> m_speechSynthesizer;
   
+  /// The alerts capability agent.
+  std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::AlertsCapabilityAgent> m_alertsCapabilityAgent;
+  
   /// The directive sequencer.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DirectiveSequencerInterface> m_directiveSequencer;
   
@@ -162,6 +185,8 @@ private:
   
   /// The audio input processor.
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioInputProcessor> m_audioInputProcessor;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::speakerManager::SpeakerManager> m_speakerManager;
 };
 
 

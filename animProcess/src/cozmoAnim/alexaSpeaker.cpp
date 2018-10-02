@@ -24,6 +24,9 @@
 #include "audioEngine/plugins/ankiPluginInterface.h"
 #include "audioEngine/plugins/streamingWavePortalPlugIn.h"
 
+#include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
+#include <AVSCommon/Utils/SDS/ReaderPolicy.h>
+
 namespace Anki {
 namespace Vector{
   
@@ -32,19 +35,32 @@ namespace Vector{
     constexpr int kMaxReadSize = 4096;
     mp3dec_t mp3d;
     
-    constexpr uint32_t kMinPlayableFrames = 8192;
+    constexpr uint32_t kMinPlayableFrames = 10*8192;
     constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kAlexaPluginId = 5;
     
     const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
+    #define LOG(x, ...) PRINT_NAMED_WARNING("WHATNOW", "Speaker_%s: " x, _name.c_str(), ##__VA_ARGS__)
+    
+    #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
   }
 
 using namespace alexaClientSDK;
 using SourceId = AlexaSpeaker::SourceId;
 
-AlexaSpeaker::AlexaSpeaker()
-  : _dispatchQueue(Util::Dispatch::Create("AlexaSpeaker"))
+AlexaSpeaker::AlexaSpeaker( avsCommon::sdkInterfaces::SpeakerInterface::Type type,
+                           const std::string& name,
+                           std::shared_ptr<avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory )
+  : _type( type )
+  , _name( name )
+  , _dispatchQueue(Util::Dispatch::Create("AlexaSpeaker"))
+  
 {
   _mp3Buffer.reset( new AudioDataBuffer{kAudioBufferSize,kMaxReadSize} );
+  
+  _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
+  _settings.mute = false;
+  
+  m_contentFetcherFactory = contentFetcherFactory;
 }
 
 AlexaSpeaker::~AlexaSpeaker()
@@ -70,15 +86,20 @@ void AlexaSpeaker::Update()
   }
   
   
+  
   bool needsToPlay = false;
   {
-    //std::lock_guard<std::mutex> lock{ _mutex };
+    std::lock_guard<std::mutex> lock{ _mutex };
+    if( _state != State::Idle ) {
+      LOG("Update: %s", StateToString());
+    }
+    
     if( _state == State::Playable ) {
-      PRINT_NAMED_WARNING("WHATNOW","Update: needsToPlay");
+      LOG("Update: needsToPlay");
       needsToPlay = true;
       _state = State::Playing;
     } else if ( _state == State::Preparing ) {
-      PRINT_NAMED_WARNING("WHATNOW","Update: still preparing");
+      LOG("Update: still preparing");
     }
   }
   
@@ -110,22 +131,29 @@ void AlexaSpeaker::Update()
 void AlexaSpeaker::CallOnPlaybackFinished( SourceId id )
 {
   m_executor.submit([this, id]() {
+    LOG("CallOnPlaybackFinished. Setting state=Idle");
+    _state = State::Idle;
     for( auto& observer : m_observers ) {
-      PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackFinished for source %d", (int)id);
+      LOG( "calling onPlaybackFinished for source %d", (int)id);
       observer->onPlaybackFinished( id );
     }
   });
 }
   
-SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::AttachmentReader > attachmentReader, const avsCommon::utils::AudioFormat *format)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker set source1");
-  m_source = std::move(attachmentReader);
+SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::AttachmentReader > attachmentReader,
+                                   const avsCommon::utils::AudioFormat *format)
+{
+  // todo:
+  /* Implementations must make a call to onPlaybackStopped() with the previous SourceId when a new source is set if the previous source was in a non-stopped state. Any calls to a MediaPlayerInterface after an onPlaybackStopped() call will fail, as the MediaPlayer has "reset" its state.*/
+  LOG( " speaker %d set source1", (int)_type);
+  m_sourceReaders[m_sourceID] = std::move(attachmentReader);
+  _sourceTypes[m_sourceID] = SourceType::AttachmentReader;
   
   using AudioFormat = avsCommon::utils::AudioFormat;
   if( format !=  nullptr) {
     std::stringstream ss;
     ss << "encoding=" << format->encoding << ", endianness=" << format->endianness;
-    PRINT_NAMED_WARNING("WHATNOW", "format: %s, sampleRateHz=%u, sampleSize=%u, numChannels=%u, dataSigned=%d, interleaved=%d",
+    LOG( "format: %s, sampleRateHz=%u, sampleSize=%u, numChannels=%u, dataSigned=%d, interleaved=%d",
                         ss.str().c_str(), format->sampleRateHz, format->sampleSizeInBits, format->numChannels, format->dataSigned, format->layout == AudioFormat::Layout::INTERLEAVED);
   }
   
@@ -134,23 +162,50 @@ SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::
 
 SourceId   AlexaSpeaker::setSource (const std::string &url, std::chrono::milliseconds offset)
 {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker set source2");
-  return m_sourceID++;
+  LOG( " speaker %d set source2 = %s", (int)_type, url.c_str());
+  if( url.empty() ) {
+    return 0;
+  }
+  
+  
+  if( m_urlConverter != nullptr ) {
+    m_urlConverter->shutdown();
+  }
+  m_urlConverter = playlistParser::UrlContentToAttachmentConverter::create(m_contentFetcherFactory, url, shared_from_this(), offset);
+  if (!m_urlConverter) {
+    ACSDK_ERROR(LX("setSourceUrlFailed").d("reason", "badUrlConverter"));
+    return 0;
+  }
+  auto attachment = m_urlConverter->getAttachment();
+  if (!attachment) {
+    ACSDK_ERROR(LX("setSourceUrlFailed").d("reason", "badAttachmentReceived"));
+    return 0;
+  }
+  std::shared_ptr<avsCommon::avs::attachment::AttachmentReader> reader = attachment->createReader(avsCommon::utils::sds::ReaderPolicy::NONBLOCKING);
+  if (!reader) {
+    ACSDK_ERROR(LX("setSourceUrlFailed").d("reason", "failedToCreateAttachmentReader"));
+    return 0;
+  }
+  
+  return setSource(reader, nullptr);
 }
 
 SourceId   AlexaSpeaker::setSource (std::shared_ptr< std::istream > stream, bool repeat)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker set source3");
+  LOG( " speaker %d set source3", (int)_type);
+  _sourceTypes[m_sourceID] = SourceType::Stream;
+  m_sourceStreams[m_sourceID] = stream;
   return m_sourceID++;
 }
 
 bool   AlexaSpeaker::play (SourceId id)
 {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker play");
+  LOG( " speaker play");
   m_playingSource = id;
   
   // is the callback supposed to be on the caller thread? forgot what docs said
   //m_executor.submit([id, this]() {
   Util::Dispatch::Async(_dispatchQueue, [id, this](){
+    LOG("Setting state=Preparing");
     _state = State::Preparing;
     
     // this is buggy af. don't look
@@ -175,46 +230,75 @@ bool   AlexaSpeaker::play (SourceId id)
     _mp3Buffer->Reset();
     
     std::array<uint8_t,kMaxReadSize> input;
+    
+    int numBlocks = 0;
+    const int kMaxBlocks = 500;
     while( (_state == State::Preparing) || (_state == State::Playing) ) {
       
       if( !sent ) {
         for( auto& observer : m_observers ) {
-          PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackStarted for source %d", (int)id);
+          LOG( "calling onPlaybackStarted for source %d", (int)id);
           observer->onPlaybackStarted( id );
         }
         sent = true;
       }
       
-      const size_t size = (size_t)m_source->getNumUnreadBytes();
-      if( size == 0 ) {
-        // this can either happen when the download hasnt started, or when it finished. use the readStatus to figure out which
-        PRINT_NAMED_WARNING("WHATNOW", "nothing to read yet!");
+      bool statusOK = false;
+      size_t numRead = 0;
+      AttachmentReader::ReadStatus readStatus;
+      if( _sourceTypes[id] == SourceType::AttachmentReader ) {
+        const size_t size = (size_t)m_sourceReaders[id]->getNumUnreadBytes();
+        if( size == 0 ) {
+          // this can either happen when the download hasnt started, or when it finished. use the readStatus to figure out which
+          LOG( "nothing to read yet!");
+        }
+        
+        // keep going if size to read is 0, since it's the readStatus that matters
+        const size_t toRead = (size == 0) ? input.size() : std::min(size, input.size());
+        
+        readStatus = AttachmentReader::ReadStatus::OK;
+        numRead = m_sourceReaders[id]->read( input.data(), toRead, &readStatus );
+        if( numRead > 0 ) {
+          _mp3Buffer->AddData( input.data(), toRead );
+        }
+        
+        {
+          std::stringstream ss;
+          ss << readStatus;
+          LOG( "expected %d read %d, status %s", size, numRead, ss.str().c_str());
+        }
+        statusOK = (readStatus == AttachmentReader::ReadStatus::OK)
+                              || (readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK)
+                              || (readStatus == AttachmentReader::ReadStatus::OK_TIMEDOUT);
+        if( readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK && ++numBlocks > kMaxBlocks ) {
+          PRINT_NAMED_WARNING("WHATNOW", "Too many OK_WOULDBLOCK. Canceling");
+          statusOK = false;
+        }
+      } else if( _sourceTypes[id] == SourceType::Stream ) {
+        static std::vector<uint8_t> buffer;
+        
+        
+        char firstChar = 0;
+        m_sourceStreams[id]->get(firstChar);
+        size_t available = m_sourceStreams[id]->rdbuf()->in_avail();
+        size_t size = std::min((size_t)kMaxReadSize - 2, available); // -2 for newline and null term
+        if( size > 0 ) {
+          input[0] = firstChar;
+          m_sourceStreams[id]->read((char*)input.data() + 1, size);
+          _mp3Buffer->AddData( input.data(), size );
+        }
+        numRead = size;
+        statusOK = !m_sourceStreams[id]->eof();
+        LOG( "istream read %d bytes, eof=%d", size, !statusOK);
       }
       
-      // keep going if size to read is 0, since it's the readStatus that matters
-      const size_t toRead = (size == 0) ? input.size() : std::min(size, input.size());
       
-      auto readStatus = AttachmentReader::ReadStatus::OK;
-      auto numRead = m_source->read( input.data(), toRead, &readStatus );
-      if( numRead > 0 ) {
-        _mp3Buffer->AddData( input.data(), toRead );
-      }
-      
-      {
-        std::stringstream ss;
-        ss << readStatus;
-        PRINT_NAMED_WARNING("WHATNOW", "expected %d read %d, status %s", size, numRead, ss.str().c_str());
-      }
-      
-      const bool statusOK = (readStatus == AttachmentReader::ReadStatus::OK)
-                            || (readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK)
-                            || (readStatus == AttachmentReader::ReadStatus::OK_TIMEDOUT);
       bool flush = !statusOK;
       //if( (numRead > 0) && statusOK ) {
-      PRINT_NAMED_WARNING("WHATNOW", "flush=%d", flush);
+      LOG( "flush=%d", flush);
       // decode everything in the buffer thus far, leaving perhaps something that wasnt a full mp3 frame
       const int timeDecoded_ms = Decode( _waveData, flush );
-      PRINT_NAMED_WARNING("WHATNOW", "decoded %d ms", timeDecoded_ms);
+      LOG( "decoded %d ms", timeDecoded_ms);
       
       if (_fd < 0) {
         const auto path = "/data/data/com.anki.victor/cache/speaker.mp3";
@@ -230,31 +314,42 @@ bool   AlexaSpeaker::play (SourceId id)
     
       if( flush ) {
         _waveData->DoneProducingData();
-        std::stringstream ss;
-        ss << readStatus;
-        PRINT_NAMED_WARNING("WHATNOW", "ending because readStatus=%s", ss.str().c_str());
-//        // idk why this is needed
-//        std::this_thread::sleep_for( std::chrono::milliseconds(3500) );
+        if( _sourceTypes[id] == SourceType::AttachmentReader ) {
+          std::stringstream ss;
+          ss << readStatus;
+          LOG( "ending because readStatus=%s", ss.str().c_str());
+        } else {
+          LOG( "ending (flush)");
+        }
         break;
       }
       
-      PRINT_NAMED_WARNING("WHATNOW", "state=%s", StateToString());
+      LOG( "state=%s", StateToString());
     }
     
-    if( _state != State::Playing ) {
-      // otherwise this is handled via audio callback
-      CallOnPlaybackFinished( id );
-    }
-    
-    m_source->close();
-    m_source.reset();
-    _state = State::Idle;
-    //if( _offset_ms > 0 ) {
-    
-    //}
     SavePCM( nullptr );
     _offset_ms = 0;
     //_mp3Buffer->Reset();
+    
+    {
+      std::lock_guard<std::mutex> lock{ _mutex };
+    
+      if( _state == State::Preparing ) {
+        LOG( "done with loop, setting to Playable because was still preparing");
+        _state = State::Playable;
+      } else if( _state != State::Playable ) {
+        LOG( "done with loop, setting to Idle");
+        _state = State::Idle;
+      }
+    }
+    
+    if( _sourceTypes[id] == SourceType::AttachmentReader ) {
+      m_sourceReaders[id]->close();
+      m_sourceReaders[id].reset();
+    } else if( _sourceTypes[id] == SourceType::Stream ) {
+      m_sourceStreams[id].reset();
+    }
+    
     
     if( _fd >= 0 ) {
       close(_fd);
@@ -267,18 +362,19 @@ bool   AlexaSpeaker::play (SourceId id)
 }
 
  bool   AlexaSpeaker::stop (SourceId id)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker stop");
+  LOG( " speaker stop");
   
   _audioController->StopAllAudioEvents( kGameObject );
    
   m_executor.submit([id, this]() {
     
-    if( _state == State::Playing ) {
-      _state = State::Stopping;
-    }
+    //if( _state == State::Playing ) {
+      LOG("Setting _state=Idle");
+    _state = State::Idle;
+    //}
     _offset_ms = 0;
     for( auto& observer : m_observers ) {
-      PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackStopped for source %d", (int)id);
+      LOG( "calling onPlaybackStopped for source %d", (int)id);
       observer->onPlaybackStopped( id );
     }
   });
@@ -286,11 +382,11 @@ bool   AlexaSpeaker::play (SourceId id)
 }
 
  bool   AlexaSpeaker::pause (SourceId id)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker pause");
+  LOG( " speaker pause");
   
   m_executor.submit([id, this]() {
     for( auto& observer : m_observers ) {
-      PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackPaused for source %d", (int)id);
+      LOG( "calling onPlaybackPaused for source %d", (int)id);
       observer->onPlaybackPaused( id );
     }
   });
@@ -298,11 +394,11 @@ bool   AlexaSpeaker::play (SourceId id)
 }
 
  bool   AlexaSpeaker::resume (SourceId id)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker resume");
+  LOG( " speaker resume");
   
   m_executor.submit([id, this]() {
     for( auto& observer : m_observers ) {
-      PRINT_NAMED_WARNING("WHATNOW", "calling onPlaybackResumed for source %d", (int)id);
+      LOG( "calling onPlaybackResumed for source %d", (int)id);
       observer->onPlaybackResumed( id );
     }
   });
@@ -310,18 +406,18 @@ bool   AlexaSpeaker::play (SourceId id)
 }
 
 std::chrono::milliseconds   AlexaSpeaker::getOffset (SourceId id)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker getOffset");
+  LOG( " speaker getOffset");
     
   return std::chrono::milliseconds{_offset_ms};
 }
 
  uint64_t   AlexaSpeaker::getNumBytesBuffered ()  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker getNumBytesBuffered");
+  LOG( " speaker getNumBytesBuffered");
   return 0;
 }
 
  void   AlexaSpeaker::setObserver (std::shared_ptr< avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface > playerObserver)  {
-  PRINT_NAMED_WARNING("WHATNOW", " speaker setObserver");
+  LOG( " speaker setObserver");
   m_observers.insert( playerObserver );
 }
   
@@ -341,7 +437,7 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
     
     if( buffSize == 0 || inputBuff == nullptr ) {
       // need to wait for more data
-      PRINT_NAMED_WARNING("WHATNOW", "Needs more data (%s)", StateToString() );
+      LOG( "Needs more data (%s)", StateToString() );
       break;
     }
     
@@ -356,7 +452,7 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
         // valid wav data!
         if( _first ) {
           _first = false;
-          PRINT_NAMED_WARNING("WHATNOW", "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps);
+          LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps);
         }
         
         millis_decoded += 1000 * float(samples) / info.hz;
@@ -391,21 +487,22 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
         data->AppendStandardWaveData( std::move(waveContainer) );
         
         {
-          //std::lock_guard<std::mutex> lock{ _mutex };
+          std::lock_guard<std::mutex> lock{ _mutex };
           const auto numFrames = data->GetNumberOfFramesReceived();
-          //PRINT_NAMED_WARNING("WHATNOW", "LOOP: decoded. available frames=%d. decoded %d ms, state=%s", numFrames, (int)millis_decoded, StateToString());
+          //LOG( "LOOP: decoded. available frames=%d. decoded %d ms, state=%s", numFrames, (int)millis_decoded, StateToString());
           if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
+            LOG("Setting state=Playable");
             _state = State::Playable;
           }
         }
 
         //outData.insert( outData.end(), std::begin(pcm), std::begin(pcm) + samples );
       } else {
-        PRINT_NAMED_WARNING("WHATNOW", "LOOP: skipped (frame_bytes=%d), state=%s", info.frame_bytes, StateToString() );
+        LOG( "LOOP: skipped (frame_bytes=%d), state=%s", info.frame_bytes, StateToString() );
         //std::cout << "skipped" << std::endl;
       }
     } else {
-      PRINT_NAMED_WARNING("WHATNOW", "LOOP: no bytes (%s)", StateToString() );
+      LOG( "LOOP: no bytes (%s)", StateToString() );
       // need to wait for more data
       //std::cout << "done!" << std::endl;
       //PrintInfo(info);
@@ -424,14 +521,14 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
       case State::Preparing: return "Preparing";
       case State::Playable: return "Playable";
       case State::Playing: return "Playing";
-      case State::Stopping: return "Stopping";
+      //case State::Stopping: return "Stopping";
     };
   }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaSpeaker::SavePCM( short* buff, size_t size )
 {
-  PRINT_NAMED_WARNING("WHATNOW", "saving pcm size=%zu", size);
+  //LOG( "saving pcm size=%zu", size);
   static int pcmfd = -1;
   if (pcmfd < 0) {
     const auto path = "/data/data/com.anki.victor/cache/speaker.pcm";
@@ -444,6 +541,54 @@ void AlexaSpeaker::SavePCM( short* buff, size_t size )
     close(pcmfd);
     pcmfd = -1;
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaSpeaker::getSpeakerSettings (SpeakerSettings *settings)
+{
+  if( settings != nullptr ) {
+    *settings = _settings;
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaSpeaker::setVolume (int8_t volume)
+{
+  _settings.volume = volume;
+  LOG( "AlexaSpeaker %d settings volume to %d", (int)_type, _settings.volume );
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaSpeaker::adjustVolume (int8_t delta)
+{
+  _settings.volume += delta;
+  if( _settings.volume < avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MIN ) {
+    _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MIN;
+  }
+  if( _settings.volume > avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX ) {
+    _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
+  }
+  LOG( "AlexaSpeaker %d adjusting volume by %d to %d", (int)_type, delta, _settings.volume );
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaSpeaker::setMute (bool mute)
+{
+  _settings.mute = mute;
+  LOG( "AlexaSpeaker %d setting mute=%d", (int)_type, mute );
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaSpeaker::onError ()
+{
+  LOG("An error occurred in the streaming of content");
 }
   
 } // namespace Vector

@@ -1,4 +1,4 @@
-Intentional build error so you read the below build instructions:
+//Intentional build error so you read the below build instructions:
 /*
  1) either build the coretech branch ross/add-AVS and copy the libraries to EXTERNALS/build, or obtain the necessary libraries from ross or jordan and put them there
  2) Still in EXTERNALS, copy the "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b" directory into "hey_vector/alexa", then in "alexa",
@@ -345,9 +345,18 @@ void Alexa::Init(const AnimContext* context)
   
   auto messageStorage = alexaClientSDK::certifiedSender::SQLiteMessageStorage::create(config);
   
-  // setup "speaker"
-  m_TTSSpeaker = std::make_shared<AlexaSpeaker>();
+  // Creating the alert storage object to be used for rendering and storing alerts.
+  auto audioFactory = std::make_shared<alexaClientSDK::applicationUtilities::resources::audio::AudioFactory>();
+  auto alertStorage =
+    alexaClientSDK::capabilityAgents::alerts::storage::SQLiteAlertStorage::create(config, audioFactory->alerts());
+  
+  
+  // setup "speakers"
+  auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
+  m_TTSSpeaker = std::make_shared<AlexaSpeaker>(avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME, "TTS", httpContentFetcherFactory);
   m_TTSSpeaker->Init(context);
+  m_alertsSpeaker = std::make_shared<AlexaSpeaker>(avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_ALERTS_VOLUME, "Alerts", httpContentFetcherFactory);
+  m_alertsSpeaker->Init(context);
   
   //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
   
@@ -359,16 +368,23 @@ void Alexa::Init(const AnimContext* context)
     customerDataManager,
     authDelegate,
     std::move(messageStorage),
+    std::move(alertStorage),
+    audioFactory,
     {userInterfaceManager, shared_from_this() },
     {userInterfaceManager},
     m_capabilitiesDelegate,
-    m_TTSSpeaker
+    m_TTSSpeaker,
+    m_alertsSpeaker,
+    std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(m_TTSSpeaker),
+    std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(m_alertsSpeaker)
   );
   
   if (!m_client) {
     ACSDK_CRITICAL(LX("Failed to create default SDK client!"));
     return;
   }
+  
+  m_client->addSpeakerManagerObserver(userInterfaceManager);
   
   /*
    * Creating the buffer (Shared Data Stream) that will hold user audio data. This is the main input into the SDK.
@@ -490,6 +506,9 @@ void Alexa::Update()
 {
   if( m_TTSSpeaker != nullptr ) {
     m_TTSSpeaker->Update();
+  }
+  if( m_alertsSpeaker != nullptr ) {
+    m_alertsSpeaker->Update();
   }
 }
   

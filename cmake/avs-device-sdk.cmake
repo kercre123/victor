@@ -20,6 +20,8 @@ set(AVS_LIBS
   ADSL
   AFML
   AIP
+  Alerts
+  AudioResources
   AVSCommon
   AVSSystem
   CapabilitiesDelegate
@@ -27,7 +29,9 @@ set(AVS_LIBS
   CertifiedSender
   ContextManager
   ESP
+  PlaylistParser
   RegistrationManager
+  SpeakerManager
   SpeechSynthesizer
   SQLiteStorage
 )

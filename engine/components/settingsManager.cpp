@@ -470,7 +470,7 @@ bool SettingsManager::ApplySettingTimeZone()
   std::vector<std::string> command;
   command.push_back("/usr/bin/timedatectl");
   command.push_back("set-timezone");
-  command.push_back(value);
+  command.push_back("UTC");
   const bool success = ExecCommand(command);
   if (!success)
   {
