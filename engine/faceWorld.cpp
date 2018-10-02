@@ -421,13 +421,6 @@ namespace Vector {
                               face.GetTimeStamp(), faceEntry->face.GetTimeStamp());
         }
 
-        if(!face.HasEyes()) {
-          // If no eyes were detected, the translation we have at this point was
-          // computed using "fake" eye locations, so just use the last translation
-          // estimate since we matched this to an existing face:
-          headPoseWrtWorldOrigin.SetTranslation(faceEntry->face.GetHeadPose().GetTranslation());
-        }
-
         faceEntry->face = face;
       }
 
