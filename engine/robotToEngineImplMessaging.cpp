@@ -316,21 +316,11 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
   const auto& msg = message.GetData().Get_fallingEvent();
 
   LOG_INFO("Robot.HandleFallingEvent.FallingEvent",
-           "timestamp: %u, duration (ms): %u, intensity %.1f",
+           "timestamp: %u, duration (ms): %u",
            msg.timestamp,
-           msg.duration_ms,
-           msg.impactIntensity);
+           msg.duration_ms);
 
-  // DAS Event: "robot.falling_event"
-  // s_val: Impact intensity
-  // data: Freefall duration in milliseconds
-  const int impactIntensity_int = std::round(msg.impactIntensity);
-  Util::sInfo("robot.falling_event",                              // 'event'
-              {{DDATA, std::to_string(msg.duration_ms).c_str()}}, // 'data'
-              std::to_string(impactIntensity_int).c_str());       // 's_val'
-
-  // TODO: Beam this up to game?
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotFallingEvent(msg.duration_ms, msg.impactIntensity)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotFallingEvent(msg.duration_ms)));
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

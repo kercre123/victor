@@ -168,7 +168,6 @@ namespace Anki {
         bool fallStarted_ = false;               // Indicates that falling is detected by accelerometer, but not necessarily for long enough to trigger falling_ flag
         TimeStamp_t fallStartedTime_ = 0;        // timestamp of when freefall started
         TimeStamp_t freefallDuration_ = 0;       // approximate duration of freefall
-        float fallDetectMaxHighPassAccel_ = 0.f; // The maximum experienced high-pass filtered accelerometer magnitude during a falling event
         TimeStamp_t braceStartedTime_ = 0;
         // === End of Falling detection ===
 
@@ -315,7 +314,6 @@ namespace Anki {
         fallStarted_ = false;
         fallStartedTime_ = 0;
         freefallDuration_ = 0;
-        fallDetectMaxHighPassAccel_ = 0.f;
         braceStartedTime_ = 0;
       }
 
@@ -471,16 +469,13 @@ namespace Anki {
         const TimeStamp_t bracingTime_ms = 250; // this much time (minimum) is allowed for the bracing maneuver to complete.
 
         if (falling_) {
-          // Update the maximum experienced HP-filtered accelerometer value (take max of all three axes)
-          for (int i=0 ; i<3 ; i++) {
-            fallDetectMaxHighPassAccel_ = MAX(fallDetectMaxHighPassAccel_, fabsf(accel_robot_frame_high_pass[i]));
-          }
           if (accelMagnitudeSqrd_ > FALLING_THRESH_HIGH_MMPS2_SQRD) {
             // Estimating time in freefall: Consider the freefall finished
             // once the accelMagnitude rises above the upper threshold
             if (freefallDuration_ == 0) {
               freefallDuration_ = now - fallStartedTime_;
             }
+
             // Wait for robot to stop moving and bracing to complete, then unbrace.
             // Check for high-freq activity on x-axis (this could easily be any other axis since the threshold is so small)
             // to determine when the robot is definitely no longer moving.
@@ -490,8 +485,11 @@ namespace Anki {
               RobotInterface::FallingEvent msg;
               msg.timestamp = fallStartedTime_;
               msg.duration_ms = freefallDuration_;
-              msg.impactIntensity = fallDetectMaxHighPassAccel_;
               RobotInterface::SendMessage(msg);
+
+              DASMSG(imu_filter_falling_event,  "imu_filter.falling_event", "Robot experienced a fall");
+              DASMSG_SET(i1, freefallDuration_, "Duration of fall (ms)");
+              DASMSG_SEND();
 
               ResetFallingVars();
               UnbraceAfterImpact();
