@@ -49,6 +49,7 @@ public:
               const float sleepDurationIntended_ms,
               const float sleepDurationActual_ms);
 
+  void Status(std::string* resultStr) const;
   void Start();
   void Stop();
   void Dump(const DumpType dumpType, const bool dumpAll,
@@ -116,6 +117,7 @@ private:
 
   typedef enum
   {
+    STATUS,
     START,
     STOP,
     DUMP_LOG,

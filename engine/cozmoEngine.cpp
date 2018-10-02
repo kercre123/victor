@@ -597,16 +597,8 @@ void CozmoEngine::UpdateLatencyInfo()
       const Util::Stats::StatsAccumulator& queuedTimes_ms = _context->GetRobotManager()->GetMsgHandler()->GetQueuedTimes_ms();
       ExternalInterface::TimingInfo recvQueueTime(queuedTimes_ms.GetMean(), queuedTimes_ms.GetMin(), queuedTimes_ms.GetMax());
 
-      // pull image stats from robot if available
-      static const Util::Stats::StatsAccumulator nullStats;
-      const Robot* robot = GetRobot();
-      const bool useRobotStats = robot != nullptr;
-      const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? robot->GetImageStats() : nullStats;
-      double currentImageDelay = useRobotStats ? robot->GetCurrentImageDelay() : 0.0;
-
       const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
       ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
-      ExternalInterface::CurrentTimingInfo imageLatency(imageStats.GetMean(), imageStats.GetMin(), imageStats.GetMax(), currentImageDelay * 1000.0);
 
       PrintTimingInfoStats(wifiLatency,      "wifi");
       PrintTimingInfoStats(extSendQueueTime, "extSendQueue");
@@ -616,8 +608,6 @@ void CozmoEngine::UpdateLatencyInfo()
       {
         PrintTimingInfoStats(unityEngineLatency, "unity");
       }
-
-      PrintTimingInfoStats(imageLatency, "image");
 
       kLogMessageLatencyOnce = false;
     }

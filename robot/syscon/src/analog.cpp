@@ -348,7 +348,8 @@ void Analog::tick(void) {
   }
 
   // 30 minute charge cut-off
-  charge_cutoff = prevent_charge || on_charger_time >= MAX_CHARGE_TIME;
+  bool max_charge_time_expired = on_charger_time >= MAX_CHARGE_TIME;
+  charge_cutoff = prevent_charge || max_charge_time_expired;
 
   // Charger / Battery logic
   if (!shouldPowerRobot()) {
@@ -398,8 +399,9 @@ void Analog::tick(void) {
       delay_disable = false;
     }
 
-    // Don't report that we are not charging if the charger is overheating
-    is_charging = too_hot;
+    // As long as the 30 min timer hasn't expired (and we're not manually disabling charging)
+    // continue to report that we are charging.
+    is_charging = !max_charge_time_expired && !disable_charger;
     off_charger_time = 0;
   } else {
     // Battery connected, on charger (charging)  

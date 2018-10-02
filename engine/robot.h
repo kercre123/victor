@@ -169,9 +169,9 @@ public:
   bool IsPhysical() const {
 #ifdef SIMULATOR
     return false;
-#else        
+#else
     return true;
-#endif    
+#endif
   }
 
   // Whether or not to ignore all incoming external messages that create/queue actions
@@ -273,7 +273,7 @@ public:
 
   #undef INLINE_GETTERS
 
-  const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
+  const PoseOriginList& GetPoseOriginList() const { return *_poseOrigins.get(); }
 
   inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>();}
   inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>();}
@@ -437,8 +437,6 @@ public:
   // Computes robot origin pose for the given drive center pose
   void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
 
-  EncodedImage& GetEncodedImage() { return _encodedImage; }
-
   // Returns true if robot is not in the OnTreads position
   bool IsPickedUp() const { return _isPickedUp; }
 
@@ -545,9 +543,6 @@ public:
                      bool reliable = true, bool hot = false) const;
 
 
-  // Sends debug string out to game and viz
-  Result SendDebugString(const char *format, ...);
-
   // =========  Events  ============
   using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
@@ -564,15 +559,6 @@ public:
   void SetSDKRequestingImage(bool requestingImage) { _sdkRequestingImage = requestingImage; }
   const bool GetSDKRequestingImage() const { return _sdkRequestingImage; }
 
-  void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
-  const u32 GetLastSentImageID() const { return _lastSentImageID; }
-
-  void SetCurrentImageDelay(double lastImageLatencyTime) { _lastImageLatencyTime_s = lastImageLatencyTime; }
-  const Util::Stats::StatsAccumulator& GetImageStats() const { return _imageStats.GetPrimaryAccumulator(); }
-  Util::Stats::RecentStatsAccumulator& GetRecentImageStats() { return _imageStats; }
-  void SetTimeSinceLastImage(double timeSinceLastImage) { _timeSinceLastImage_s = 0.0; }
-  double GetCurrentImageDelay() const { return std::max(_lastImageLatencyTime_s, _timeSinceLastImage_s); }
-
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
@@ -583,8 +569,6 @@ public:
   bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
 
   bool Broadcast(VizInterface::MessageViz&& event);
-
-  void BroadcastEngineErrorCode(EngineErrorCode error);
 
   Util::Data::DataPlatform* GetContextDataPlatform();
 
@@ -598,8 +582,6 @@ public:
   static RobotState GetDefaultRobotState();
 
   const u32 GetHeadSerialNumber() const { return _serialNumberHead; }
-
-  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
   void Shutdown(ShutdownReason reason);
   bool ToldToShutdown(ShutdownReason& reason) const { reason = _shutdownReason; return _toldToShutdown; }
@@ -668,7 +650,6 @@ protected:
 
   // State
   ImageSendMode      _imageSendMode             = ImageSendMode::Off;
-  u32                _lastSentImageID           = 0;
   bool               _powerButtonPressed        = false;
   EngineTimeStamp_t  _timePowerButtonPressed_ms = 0;
   bool               _isPickedUp                = false;
@@ -703,11 +684,6 @@ protected:
   // Takes startPose and moves it forward as if it were a robot pose by distance mm and
   // puts result in movedPose.
   static void MoveRobotPoseForward(const Pose3d &startPose, const f32 distance, Pose3d &movedPose);
-
-  EncodedImage _encodedImage; // TODO:(bn) store pointer?
-  double       _timeSinceLastImage_s = 0.0;
-  double       _lastImageLatencyTime_s = 0.0;
-  Util::Stats::RecentStatsAccumulator _imageStats{50};
 
   CPUStats     _cpuStats;
 

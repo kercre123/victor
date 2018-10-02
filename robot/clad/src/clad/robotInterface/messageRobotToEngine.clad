@@ -68,8 +68,6 @@ message MicDataState
 message FallingEvent {
   uint_32 timestamp,       // When the fall started (as a robot timestamp)
   uint_32 duration_ms,     // The approximate freefall duration
-  float_32 impactIntensity // A measure of how 'hard' the impact was (this is computed as the
-                           // maximum experienced high-pass filtered accelerometer value)
 }
 
 message RobotStopped

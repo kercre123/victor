@@ -5,5 +5,6 @@
   "whichWebServer": 2,
   "startPage": "page_consolevars",
   "allowPerfPage": false,
+  "allowPerfMetricPage": false,
   "allowConsoleVarsPage": true
 }

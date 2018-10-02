@@ -1006,7 +1006,7 @@ namespace Vision {
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
 
     INT32 okaoResult = OKAO_NORMAL;
-    //TIC;
+    
     Tic("FaceDetect");
     const INT32 nWidth  = frameOrig.GetNumCols();
     const INT32 nHeight = frameOrig.GetNumRows();
@@ -1034,44 +1034,38 @@ namespace Vision {
     // effectively prioritizing those we don't already recognize
     std::vector<INT32> detectionIndices(numDetections);
     std::set<INT32> skipRecognition;
-    if(numDetections == 1)
+
+    for(INT32 detectionIndex=0; detectionIndex<numDetections; ++detectionIndex)
     {
-      detectionIndices[0] = 0;
+      detectionIndices[detectionIndex] = detectionIndex;
+
+      DETECTION_INFO detectionInfo;
+      okaoResult = OKAO_DT_GetRawResultInfo(_okaoDetectionResultHandle, detectionIndex,
+                                            &detectionInfo);
+
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetResultInfoFail1",
+                            "Detection index %d of %d. FaceLib Result Code=%d",
+                            detectionIndex, numDetections, okaoResult);
+        return RESULT_FAIL;
+      }
+
+      // Don't re-recognize faces we're tracking whose IDs we already know.
+      // Note that we don't consider the face currently being enrolled to be
+      // "known" because we're in the process of updating it and want to run
+      // recognition on it.
+      const bool isKnown = _recognizer.HasRecognitionData(detectionInfo.nID);
+      const bool isEnrollmentTrackID = (_recognizer.GetEnrollmentTrackID() == detectionInfo.nID);
+      if(isKnown && !isEnrollmentTrackID)
+      {
+        skipRecognition.insert(detectionInfo.nID);
+      }
     }
-    else if(numDetections > 1)
+
+    // Shuffle the set of unrecognized faces so we don't always try the same one.
+    // If we know everyone, no need to random shuffle (skip all)
+    if(skipRecognition.size() != numDetections)
     {
-      for(INT32 detectionIndex=0; detectionIndex<numDetections; ++detectionIndex)
-      {
-        detectionIndices[detectionIndex] = detectionIndex;
-
-        DETECTION_INFO detectionInfo;
-        okaoResult = OKAO_DT_GetRawResultInfo(_okaoDetectionResultHandle, detectionIndex,
-                                              &detectionInfo);
-
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibGetResultInfoFail1",
-                              "Detection index %d of %d. FaceLib Result Code=%d",
-                              detectionIndex, numDetections, okaoResult);
-          return RESULT_FAIL;
-        }
-
-        // Note that we don't consider the face currently being enrolled to be
-        // "known" because we're in the process of updating it and want to run
-        // recognition on it
-        const bool isKnown = _recognizer.HasRecognitionData(detectionInfo.nID);
-        if(isKnown && _recognizer.GetEnrollmentTrackID() != detectionInfo.nID)
-        {
-          skipRecognition.insert(detectionInfo.nID);
-        }
-      }
-
-      // If we know everyone, no need to prioritize anyone, so don't skip anyone
-      // and instead just re-recognize all, but in random order
-      if(skipRecognition.size() == numDetections)
-      {
-        skipRecognition.clear();
-      }
-
       std::random_shuffle(detectionIndices.begin(), detectionIndices.end(),
                           [this](int i) { return _rng->RandInt(i); });
     }
@@ -1126,10 +1120,22 @@ namespace Vision {
 
       face.SetTimeStamp(frameOrig.GetTimestamp());
 
+      // Do we need to find parts?
+      const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
+      const bool doPartDetection = (_detectEmotion ||
+                                    _detectSmiling ||
+                                    _detectGaze ||
+                                    _detectBlinks ||
+                                    doRecognition);
+      
       // Try finding face parts
-      Tic("FacePartDetection");
-      const bool facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
-      Toc("FacePartDetection");
+      bool facePartsFound = false;
+      if(doPartDetection)
+      {
+        Tic("FacePartDetection");
+        facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
+        Toc("FacePartDetection");
+      }
 
       // Will be computed from detected eyes if face parts are found, or "faked" using
       // face detection rectangle otherwise;
@@ -1193,33 +1199,33 @@ namespace Vision {
         //
         // Face Recognition:
         //
-        const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
-        bool enableEnrollment = enrollable;
-
-        // If we have allowed tracked faces we should only enable enrollment
-        // in two cases. First if the current face matches the face id returned
-        // by GetEnrollmentID. This should only happen in MeetVictor currently.
-        // Second if we don't have the tracking id in the recognizer yet, indicating
-        // we haven't recognized the face yet. If we don't have any allowed tracked
-        // faces we don't need to worry about this and can just use the result from
-        // IsEnrollable.
-        if(enableEnrollment && HaveAllowedTrackedFaces())
-        {
-          FaceID_t faceID;
-          if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
-          {
-            enableEnrollment &= (faceID == _recognizer.GetEnrollmentID());
-          }
-        }
+        
 
         // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
         //                          "TrackerID:%d EnableEnrollment:%d",
         //                          -detectionInfo.nID, enableEnrollment);
-
-        const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
         if(doRecognition)
         {
+          const bool enrollable = IsEnrollable(detectionInfo, face, intraEyeDist);
+          bool enableEnrollment = enrollable;
+          
+          // If we have allowed tracked faces we should only enable enrollment
+          // in two cases. First if the current face matches the face id returned
+          // by GetEnrollmentID. This should only happen in MeetVictor currently.
+          // Second if we don't have the tracking id in the recognizer yet, indicating
+          // we haven't recognized the face yet. If we don't have any allowed tracked
+          // faces we don't need to worry about this and can just use the result from
+          // IsEnrollable.
+          if(enableEnrollment && HaveAllowedTrackedFaces())
+          {
+            FaceID_t faceID;
+            if (_recognizer.GetFaceIDFromTrackingID(detectionInfo.nID, faceID))
+            {
+              enableEnrollment &= (faceID == _recognizer.GetEnrollmentID());
+            }
+          }
+          
           const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                                       detectionInfo,
                                                                       _okaoPartDetectionResultHandle,

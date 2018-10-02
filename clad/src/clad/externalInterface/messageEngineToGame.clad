@@ -169,8 +169,7 @@ message UnexpectedMovement {
 }
 
 message RobotFallingEvent {
-  uint_32 duration_ms,
-  float_32 impactIntensity
+  uint_32 duration_ms
 }
 
 ///////////////////////////////////////////////////////////////////////////////

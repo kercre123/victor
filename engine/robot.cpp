@@ -10,25 +10,13 @@
 #include "engine/robot.h"
 #include "camera/cameraService.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "coretech/common/engine/utils/timer.h"
 
-#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 
-#include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
-#include "engine/activeCube.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/accountSettingsManager.h"
@@ -69,9 +57,7 @@
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
-#include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/fullRobotPose.h"
 #include "engine/moodSystem/moodManager.h"
@@ -81,43 +67,20 @@
 #include "engine/petWorld.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
-#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "coretech/vision/engine/visionMarker.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/robotStatusAndActions.h"
-#include "proto/external_interface/messages.pb.h"
-#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/environment/locale.h"
-#include "util/fileUtils/fileUtils.h"
-#include "util/helpers/ankiDefines.h"
-#include "util/helpers/templateHelpers.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
-#include "util/transport/reliableConnection.h"
 #include "util/messageProfiler/messageProfiler.h"
 
 #include "osState/osState.h"
 
-#include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
-
-#include "opencv2/calib3d/calib3d.hpp"
-#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
-
-#include <algorithm>
-#include <fstream>
-#include <regex>
-#include <dirent.h>
-#include <sys/stat.h>
 
 #define LOG_CHANNEL "RobotState"
 
@@ -1272,8 +1235,6 @@ Result Robot::Update()
 {
   ANKI_CPU_PROFILE("Robot::Update");
 
-  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
   _cpuStats.Update();
 
   //////////// CameraService Update ////////////
@@ -1354,9 +1315,6 @@ Result Robot::Update()
   */
 
   GetContext()->GetVizManager()->SendEndRobotUpdate();
-
-  // update time since last image received
-  _timeSinceLastImage_s = std::max(0.0, currentTime - GetRobotToEngineImplMessaging().GetLastImageReceivedTime());
 
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
@@ -2488,15 +2446,6 @@ bool Robot::Broadcast(VizInterface::MessageViz&& event)
     return true;
   }
   return false;
-}
-
-void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
-{
-  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineErrorCodeMessage(error)));
-  LOG_ERROR("Robot.BroadcastEngineErrorCode",
-            "Engine failing with error code %s[%hhu]",
-            EnumToString(error),
-            error);
 }
 
 // @TODO: Refactor internal components to use proto state, and remove clad state utilities/messages VIC-4998
