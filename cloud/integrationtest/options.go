@@ -24,10 +24,23 @@ type options struct {
 	testUserName     *string
 	testUserPassword *string
 
-	heartBeatInterval    *int
-	jdocsInterval        *int
-	logCollectorInterval *int
-	tokenRefreshInterval *int
+	heartBeatInterval    time.Duration
+	jdocsInterval        time.Duration
+	logCollectorInterval time.Duration
+	tokenRefreshInterval time.Duration
+}
+
+func parseIntervalString(intervalStr *string) time.Duration {
+	if intervalStr == nil {
+		return 0
+	}
+
+	duration, err := time.ParseDuration(*intervalStr)
+	if err != nil {
+		return 0
+	}
+
+	return duration
 }
 
 func newFromEnvironment(app *cli.Cli) *options {
@@ -101,33 +114,38 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  false,
 	})
 
-	options.heartBeatInterval = app.Int(cli.IntOpt{
+	heartBeatInterval := app.String(cli.StringOpt{
 		Name:   "h heart-beat-interval",
 		Desc:   "Periodic heart beat interval",
 		EnvVar: "HEART_BEAT_INTERVAL",
-		Value:  int(30 * time.Second),
+		Value:  "30s",
 	})
 
-	options.jdocsInterval = app.Int(cli.IntOpt{
+	jdocsInterval := app.String(cli.StringOpt{
 		Name:   "j jdocs-interval",
 		Desc:   "Periodic interval for JDOCS read / write",
 		EnvVar: "JDOCS_INTERVAL",
-		Value:  int(5 * time.Minute),
+		Value:  "5m",
 	})
 
-	options.logCollectorInterval = app.Int(cli.IntOpt{
+	logCollectorInterval := app.String(cli.StringOpt{
 		Name:   "l log-collector-interval",
 		Desc:   "Periodic interval for log collector upload",
 		EnvVar: "LOG_COLLECTOR_INTERVAL",
-		Value:  int(30 * time.Minute),
+		Value:  "30m",
 	})
 
-	options.tokenRefreshInterval = app.Int(cli.IntOpt{
+	tokenRefreshInterval := app.String(cli.StringOpt{
 		Name:   "t token-refresh-interval",
 		Desc:   "Periodic interval for token refresh",
 		EnvVar: "TOKEN_REFRESH_INTERVAL",
-		Value:  0,
+		Value:  "0",
 	})
+
+	options.heartBeatInterval = parseIntervalString(heartBeatInterval)
+	options.jdocsInterval = parseIntervalString(jdocsInterval)
+	options.logCollectorInterval = parseIntervalString(logCollectorInterval)
+	options.tokenRefreshInterval = parseIntervalString(tokenRefreshInterval)
 
 	return options
 }

@@ -9,10 +9,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
+	scli "github.com/anki/sai-go-util/cli"
 	stoken "github.com/anki/sai-token-service/client/token"
-	cli "github.com/jawher/mow.cli"
+	mcli "github.com/jawher/mow.cli"
 )
 
 type robotSimulator struct {
@@ -23,17 +23,19 @@ type robotSimulator struct {
 	robotInstance *testableRobot
 }
 
-func newRobotSimulator(options *options) (*robotSimulator, error) {
-	simulator := new(robotSimulator)
+func init() {
+	scli.InitLogFlags("")
+}
 
-	simulator.options = options
+func newRobotSimulator(options *options) (*robotSimulator, error) {
+	simulator := &robotSimulator{options: options}
 
 	// Enable client certs and set custom key pair dir (for this user)
 	token.UseClientCert = true
-	robot.DefaultCloudDir = *options.defaultCloudDir
+	robot.DefaultCloudDir = *simulator.options.defaultCloudDir
 
 	simulator.robotInstance = &testableRobot{}
-	go simulator.robotInstance.run(*options.urlConfigFile)
+	go simulator.robotInstance.run(*simulator.options.urlConfigFile)
 
 	simulator.robotInstance.waitUntilReady()
 
@@ -182,10 +184,10 @@ func simulate(options *options) {
 	simulator.addSetupAction(simulator.testPrimaryPairingSequence)
 
 	// After that we periodically run the following actions
-	simulator.addPeriodicAction(time.Duration(*options.heartBeatInterval), simulator.heartBeat)
-	simulator.addPeriodicAction(time.Duration(*options.jdocsInterval), simulator.testJdocsReadAndWriteSettings)
-	simulator.addPeriodicAction(time.Duration(*options.logCollectorInterval), simulator.testLogCollector)
-	simulator.addPeriodicAction(time.Duration(*options.tokenRefreshInterval), simulator.testTokenRefresh)
+	simulator.addPeriodicAction(options.heartBeatInterval, simulator.heartBeat)
+	simulator.addPeriodicAction(options.jdocsInterval, simulator.testJdocsReadAndWriteSettings)
+	simulator.addPeriodicAction(options.logCollectorInterval, simulator.testLogCollector)
+	simulator.addPeriodicAction(options.tokenRefreshInterval, simulator.testTokenRefresh)
 
 	simulator.start()
 
@@ -197,7 +199,11 @@ func simulate(options *options) {
 }
 
 func main() {
-	app := cli.App("robot_simulator", "Robot cloud simulation tool")
+	// init logging and make sure it gets cleaned up
+	scli.SetupLogging()
+	defer scli.CleanupAndExit()
+
+	app := mcli.App("robot_simulator", "Robot cloud simulation tool")
 
 	options := newFromEnvironment(app)
 

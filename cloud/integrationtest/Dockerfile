@@ -8,6 +8,9 @@ ENV TEST_USER_PASSWORD ankisecret
 ENV TEST_LOG_FILE /var/log/dmesg
 ENV URL_CONFIG_FILE /integrationtest/server_config.json
 
+# default to stdout logging (for local testing)
+ENV LOG_TYPE stdout
+
 ENV HEART_BEAT_INTERVAL 60s
 ENV JDOCS_INTERVAL 600s
 ENV LOG_COLLECTOR_INTERVAL 1800s
