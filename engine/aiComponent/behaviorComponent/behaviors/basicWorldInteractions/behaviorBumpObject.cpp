@@ -39,7 +39,7 @@ namespace {
   const bool kExploringPushObject = true;
   
   const float kSecondBumpBuffer_mm = 60.0f; // let the treads spin a bit longer. No worries, unexpected movement is disabled
-  const float kSecondBumpEvilBuffer_mm = 200.0f;
+  const float kSecondBumpEvilBuffer_mm = 150.0f;
   
   const float kPauseDuration_s = 0.6f;
   
