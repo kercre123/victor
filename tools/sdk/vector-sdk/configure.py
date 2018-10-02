@@ -168,7 +168,6 @@ def main():
     token = get_session_token()
     if token.get("session") is None:
         sys.exit("Session error: {}".format(token))
-    guid = user_authentication(token["session"]["session_token"], cert, ip, name)
 
     # Write cert to a file located in user's home direction: sdk_config.ini
     home = Path.home()
@@ -179,19 +178,37 @@ def main():
     with os.fdopen(os.open(cert_file, os.O_WRONLY | os.O_CREAT, 0o600), 'wb') as f:
         f.write(cert)
 
+    guid = user_authentication(token["session"]["session_token"], cert, ip, name)
+
     # Store details in a config file
     config_file = str(anki_dir / "sdk_config.ini")
     print("Writing config file to '{}'...".format(colored(config_file, "cyan")))
-    config = configparser.ConfigParser()
 
-    config.read(config_file)
+    config = configparser.ConfigParser(strict=False)
+
+    try:
+        config.read(config_file)
+    except configparser.ParsingError:
+        if os.path.exists(config_file):
+            os.rename(config_file, config_file + "-error")
     config[esn] = {}
     config[esn]["cert"] = cert_file
     config[esn]["ip"] = ip
     config[esn]["name"] = name
     config[esn]["guid"] = guid.decode("utf-8")
-    with os.fdopen(os.open(config_file, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as f:
-        config.write(f)
+    temp_file = config_file + "-temp"
+    if os.path.exists(config_file):
+        os.rename(config_file, temp_file)
+    try:
+        with os.fdopen(os.open(config_file, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as f:
+            config.write(f)
+    except Exception as e:
+        if os.path.exists(temp_file):
+            os.rename(temp_file, config_file)
+        raise e
+    else:
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
     print(colored("SUCCESS!", "green"))
 
 if __name__ == "__main__":

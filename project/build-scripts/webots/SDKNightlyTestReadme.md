@@ -47,11 +47,9 @@ The tests then run the SDK script on this simulated robot and logs the results f
 
 3. Do a debug build for mac by running `./project/victor/build-victor.sh -p mac -f -c Debug`
 
-4. Make GRPC tools by running the following commands:
+4. Make GRPC tools by running the following command:
   ```
-  pushd ./tools/sdk/grpc_tools
-  make
-  popd
+  ./tools/sdk/scripts/update_proto.sh
   ```
 
 5. Install Vector-SDK by running the following commands:
@@ -66,7 +64,7 @@ The tests then run the SDK script on this simulated robot and logs the results f
   export VECTOR_ROOT=$(pwd)
   export VECTOR_ROBOT_NAME_MAC=Vector-Local
   export VECTOR_ROBOT_IP_MAC=localhost
-  export VECTOR_ROBOT_CERT_MAC=$VECTOR_ROOT/victor/tools/sdk/grpc_tools/trust_mac.cert
+  export VECTOR_ROBOT_CERT_MAC=/tmp/anki/gateway/trust.cert
   ```
 
 7. Run `sdkTest.py` by running `./project/build-scripts/webots/sdkTest.py --password your_password`

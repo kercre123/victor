@@ -179,7 +179,7 @@ class Robot:
         """
         home = Path.home() / ".anki_vector"
         conf_file = str(home / "sdk_config.ini")
-        parser = configparser.ConfigParser()
+        parser = configparser.ConfigParser(strict=False)
         parser.read(conf_file)
         return parser[serial]
 

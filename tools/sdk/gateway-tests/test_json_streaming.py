@@ -48,8 +48,13 @@ def test_event_repeated(vector_connection):
     for id in random_id_generator(10, 50):
         vector_connection.send("v1/event_stream", p.EventRequest(connection_id=id), p.EventResponse(), stream=1, callback=callback)
 
-def test_event(vector_connection):
-    vector_connection.send("v1/event_stream", p.EventRequest(), p.EventResponse(), stream=100)
+@pytest.mark.parametrize("request_params", [
+    {},
+    {"white_list": p.FilterList(list=["wake_word"])},
+    {"black_list": p.FilterList(list=["robot_state", "robot_observed_face"])},
+])
+def test_event(vector_connection, request_params):
+    vector_connection.send("v1/event_stream", p.EventRequest(**request_params), p.EventResponse(), stream=25)
 
 @pytest.mark.parametrize("request_params", [
     {"control_request": p.ControlRequest(priority=p.ControlRequest.UNKNOWN)},

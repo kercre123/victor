@@ -13,7 +13,7 @@ try:
 except ImportError:
     sys.exit("Error: This script requires you to install the Vector SDK")
 
-from util import vector_connection
+from util import vector_connection, json_from_file
 
 # NOTE: Crashes when too long. Being temporarily removed by Ross until it works.
 # def test_status_history(vector_connection):
@@ -25,11 +25,18 @@ def test_protocol_version(vector_connection):
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
 
-# def test_display_face_image_rgb(vector_connection):
-#     vector_connection.send("v1/display_face_image_rgb", p.DisplayFaceImageRGBRequest(), p.DisplayFaceImageRGBResponse())
+# TODO: providing default data crashes this rpc, and the oled_color.json file doesn't render (nor did it in the grpc_tools Makefile)
+# @pytest.mark.parametrize("data", [
+#     json_from_file(os.path.join('assets', 'oled_color.json'))
+# ])
+# def test_display_face_image_rgb(vector_connection, data):
+#     vector_connection.send_raw("v1/display_face_image_rgb", data, p.DisplayFaceImageRGBResponse())
 
-def test_app_intent(vector_connection):
-    vector_connection.send("v1/app_intent", p.AppIntentRequest(), p.AppIntentResponse())
+@pytest.mark.parametrize("data", [
+    '{"intent":"intent_meet_victor","param":"Bobert"}'
+])
+def test_app_intent(vector_connection, data):
+    vector_connection.send_raw("v1/app_intent", data, p.AppIntentResponse())
 
 def test_cancel_face_enrollment(vector_connection):
     vector_connection.send("v1/cancel_face_enrollment", p.CancelFaceEnrollmentRequest(), p.CancelFaceEnrollmentResponse())
@@ -37,26 +44,43 @@ def test_cancel_face_enrollment(vector_connection):
 def test_request_enrolled_names(vector_connection):
     vector_connection.send("v1/request_enrolled_names", p.RequestEnrolledNamesRequest(), p.RequestEnrolledNamesResponse())
 
-def test_update_enrolled_face_by_id(vector_connection):
-    vector_connection.send("v1/update_enrolled_face_by_id", p.UpdateEnrolledFaceByIDRequest(), p.UpdateEnrolledFaceByIDResponse())
+@pytest.mark.parametrize("data", [
+    '{"face_id":1,"old_name":"Bobert","new_name":"Boberta"}'
+])
+def test_update_enrolled_face_by_id(vector_connection, data):
+    vector_connection.send_raw("v1/update_enrolled_face_by_id", data, p.UpdateEnrolledFaceByIDResponse())
 
-def test_erase_enrolled_face_by_id(vector_connection):
-    vector_connection.send("v1/erase_enrolled_face_by_id", p.EraseEnrolledFaceByIDRequest(), p.EraseEnrolledFaceByIDResponse())
+@pytest.mark.parametrize("data", [
+    '{"face_id":1}'
+])
+def test_erase_enrolled_face_by_id(vector_connection, data):
+    vector_connection.send_raw("v1/erase_enrolled_face_by_id", data, p.EraseEnrolledFaceByIDResponse())
 
 def test_erase_all_enrolled_faces(vector_connection):
     vector_connection.send("v1/erase_all_enrolled_faces", p.EraseAllEnrolledFacesRequest(), p.EraseAllEnrolledFacesResponse())
 
-def test_set_face_to_enroll(vector_connection):
-    vector_connection.send("v1/set_face_to_enroll", p.SetFaceToEnrollRequest(), p.SetFaceToEnrollResponse())
+@pytest.mark.parametrize("data", [
+    '{"name":"Boberta","observed_id":1,"save_id":0,"save_to_robot":true,"say_name":true,"use_music":true}'
+])
+def test_set_face_to_enroll(vector_connection, data):
+    vector_connection.send_raw("v1/set_face_to_enroll", data, p.SetFaceToEnrollResponse())
 
 def test_enable_vision_mode(vector_connection):
     vector_connection.send("v1/enable_vision_mode", p.EnableVisionModeRequest(), p.EnableVisionModeResponse())
 
-def test_go_to_pose(vector_connection):
-    vector_connection.send("v1/go_to_pose", p.GoToPoseRequest(), p.GoToPoseResponse())
+# TODO: add behavior control or else this does nothing
+# @pytest.mark.parametrize("data", [
+#     '{"id_tag": 2000001, "x_mm":100.0, "y_mm":100.0, "rad":0.0, "motion_prof":{"speed_mmps":110.0, "accel_mmps2":200.0, "decel_mmps2": 500.0, "point_turn_speed_rad_per_sec": 2.0, "point_turn_accel_rad_per_sec2": 10.0, "point_turn_decel_rad_per_sec2": 10.0, "dock_speed_mmps": 60.0, "dock_accel_mmps2": 200.0, "dock_decel_mmps2": 500.0, "reverse_speed_mmps": 80.0, "is_custom": false}}'
+# ])
+# def test_go_to_pose(vector_connection, data):
+#     vector_connection.send_raw("v1/go_to_pose", data, p.GoToPoseResponse())
 
-def test_dock_with_cube(vector_connection):
-    vector_connection.send("v1/dock_with_cube", p.DockWithCubeRequest(), p.DockWithCubeResponse())
+# TODO: add behavior control or else this does nothing
+# @pytest.mark.parametrize("data", [
+#     '{"id_tag": 2000001}'
+# ])
+# def test_dock_with_cube(vector_connection, data):
+#     vector_connection.send_raw("v1/dock_with_cube", data, p.DockWithCubeResponse())
 
 # NOTE: hangs forever (needs behavior control maybe)
 # def test_drive_off_charger(vector_connection):
@@ -76,20 +100,35 @@ def test_get_onboarding_state(vector_connection):
 def test_photos_info(vector_connection):
     vector_connection.send("v1/photos_info", p.PhotosInfoRequest(), p.PhotosInfoResponse())
 
-def test_photo(vector_connection):
-    vector_connection.send("v1/photo", p.PhotoRequest(), p.PhotoResponse())
+@pytest.mark.parametrize("data", [
+    '{"photo_id":0}',
+    '{"photo_id":15}',
+])
+def test_photo(vector_connection, data):
+    vector_connection.send_raw("v1/photo", data, p.PhotoResponse())
 
-def test_thumbnail(vector_connection):
-    vector_connection.send("v1/thumbnail", p.ThumbnailRequest(), p.ThumbnailResponse())
+@pytest.mark.parametrize("data", [
+    '{"thumbnail_id":0}',
+    '{"thumbnail_id":15}',
+])
+def test_thumbnail(vector_connection, data):
+    vector_connection.send_raw("v1/thumbnail", data, p.ThumbnailResponse())
 
-def test_delete_photo(vector_connection):
-    vector_connection.send("v1/delete_photo", p.DeletePhotoRequest(), p.DeletePhotoResponse())
+@pytest.mark.parametrize("data", [
+    '{"photo_id":0}',
+    '{"photo_id":15}',
+])
+def test_delete_photo(vector_connection, data):
+    vector_connection.send_raw("v1/delete_photo", data, p.DeletePhotoResponse())
 
 def test_get_latest_attention_transfer(vector_connection):
     vector_connection.send("v1/get_latest_attention_transfer", p.LatestAttentionTransferRequest(), p.LatestAttentionTransferResponse())
 
-def test_pull_jdocs(vector_connection):
-    vector_connection.send("v1/pull_jdocs", p.PullJdocsRequest(), p.PullJdocsResponse())
+@pytest.mark.parametrize("data", [
+    '{"jdoc_types":["ROBOT_SETTINGS", "ROBOT_LIFETIME_STATS"]}',
+])
+def test_pull_jdocs(vector_connection, data):
+    vector_connection.send_raw("v1/pull_jdocs", data, p.PullJdocsResponse())
 
 @pytest.mark.parametrize("data", [
     '{"settings": {"default_location":"San Francisco, California"}}',
@@ -116,11 +155,19 @@ def test_update_settings_raw(vector_connection, data):
 def test_update_settings(vector_connection):
     vector_connection.send("v1/update_settings", p.UpdateSettingsRequest(), p.UpdateSettingsResponse())
 
-def test_update_account_settings(vector_connection):
-    vector_connection.send("v1/update_account_settings", p.UpdateAccountSettingsRequest(), p.UpdateAccountSettingsResponse())
+@pytest.mark.parametrize("data", [
+    '{"account_settings": {"app_locale":"en-IN","data_collection":false}}',
+    '{"account_settings": {"app_locale":"en-US","data_collection":true}}',
+])
+def test_update_account_settings(vector_connection, data):
+    vector_connection.send_raw("v1/update_account_settings", data, p.UpdateAccountSettingsResponse())
 
-def test_update_user_entitlements(vector_connection):
-    vector_connection.send("v1/update_user_entitlements", p.UpdateUserEntitlementsRequest(), p.UpdateUserEntitlementsResponse())
+@pytest.mark.parametrize("data", [
+    '{"user_entitlements": {"kickstarter_eyes":false}}',
+    '{"user_entitlements": {"kickstarter_eyes":true}}',
+])
+def test_update_user_entitlements(vector_connection, data):
+    vector_connection.send_raw("v1/update_user_entitlements", data, p.UpdateUserEntitlementsResponse())
 
 def test_user_authentication(vector_connection):
     vector_connection.send("v1/user_authentication", p.UserAuthenticationRequest(), p.UserAuthenticationResponse())
@@ -153,8 +200,11 @@ def test_flash_cube_lights(vector_connection):
 def test_forget_preferred_cube(vector_connection):
     vector_connection.send("v1/forget_preferred_cube", p.ForgetPreferredCubeRequest(), p.ForgetPreferredCubeResponse())
 
-def test_set_preferred_cube(vector_connection):
-    vector_connection.send("v1/set_preferred_cube", p.SetPreferredCubeRequest(), p.SetPreferredCubeResponse())
+@pytest.mark.parametrize("data", [
+    '{"factory_id":"11:11:11:11:11:11"}'
+])
+def test_set_preferred_cube(vector_connection, data):
+    vector_connection.send_raw("v1/set_preferred_cube", data, p.SetPreferredCubeResponse())
 
 def test_check_update_status(vector_connection):
     vector_connection.send("v1/check_update_status", p.CheckUpdateStatusRequest(), p.CheckUpdateStatusResponse())
