@@ -109,8 +109,13 @@ void AlexaSpeaker::Update()
     {
       using namespace Anki::AudioMetaData;
       using namespace AudioEngine;
-      
-      const auto eventID = ToAudioEventId( GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback );
+      GameEvent::GenericEvent event = GameEvent::GenericEvent::Invalid;
+      if( _name == "TTS" ) {
+        event = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_01;
+      } else if( _name == "Alerts" ) {
+        event = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_02;
+      }
+      const auto eventID = ToAudioEventId( event );
       auto* callbackContext = new AudioCallbackContext();
       callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
       callbackContext->SetExecuteAsync( true );
@@ -223,7 +228,11 @@ bool   AlexaSpeaker::play (SourceId id)
       auto* pluginInterface = _audioController->GetPluginInterface();
       DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
       auto* plugin = pluginInterface->GetStreamingWavePortalPlugIn();
-      plugin->ClearAudioData(kAlexaPluginId);
+      int pluginID = kAlexaPluginId;
+      if( _name == "Alerts" ) {
+        ++pluginID;
+      }
+      plugin->ClearAudioData( pluginID );
       plugin->AddDataInstance(_waveData, kAlexaPluginId);
     }
     
