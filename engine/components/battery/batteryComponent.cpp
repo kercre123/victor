@@ -61,8 +61,8 @@ namespace {
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
   const float kLowBatteryThresholdVolts = 3.6f;
   
-  // When we are off charger, we apply a small hysteresis band when transitioning between Nominal and Low battery
-  const float kLowBatteryOffChargerHysteresisVolts = 0.05f;
+  // We apply a small hysteresis band when transitioning between Nominal and Low battery
+  const float kLowBatteryHysteresisVolts = 0.05f;
   
   // Voltage below which battery is considered in a low charge state _when on charger_. When the robot is placed on the
   // charger, the voltage immediately increases by a step amount, so a different threshold is required. The value of
@@ -138,7 +138,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
-  if (!_battDisconnected) {
+
+  // If processes start while the battery is disconnected (because it's been on the charger for > 30min), 
+  // we make sure to set the battery voltage to a less wrong _batteryVoltsRaw. 
+  // Otherwise, the filtered value is only updated when the battery is connected.
+  if (!_battDisconnected || NEAR_ZERO(_batteryVoltsFilt)) {
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   }
   
@@ -262,10 +266,10 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
   auto lowBattThreshold = _isCharging ? kOnChargerLowBatteryThresholdVolts : kLowBatteryThresholdVolts;
-  // Add a small hysteresis band if we are currently low battery (and not charging), so that we do not flicker between
+  // Add a small hysteresis band if we are currently low battery, so that we do not flicker between
   // Low and Nominal if the voltage estimate is noisy
-  if ((oldBatteryLevel == BatteryLevel::Low) && !_isCharging) {
-    lowBattThreshold += kLowBatteryOffChargerHysteresisVolts;
+  if (oldBatteryLevel == BatteryLevel::Low) {
+    lowBattThreshold += kLowBatteryHysteresisVolts;
   }
   if (isFullyCharged) {
     // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state
@@ -288,6 +292,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG_SET(i1, IsCharging(), "Is the battery currently charging? 1 if charging, 0 if not");
     DASMSG_SET(i2, now_sec - _lastBatteryLevelChange_sec, "Time spent at previous battery level (sec)");
     DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SET(i4, _battDisconnected, "Battery is (1) disconnected or (0) connected");
     DASMSG_SEND();
 
     _lastBatteryLevelChange_sec = now_sec;
@@ -338,6 +343,8 @@ float BatteryComponent::GetLowBatteryTimeSec() const
 
 void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 {
+  static bool delayBatteryFilterReset = false;
+
   // If we are being set on a charger, we can update the instance of the charger in the current world to
   // match the robot. If we don't have an instance, we can add an instance now
   if (onChargeContacts)
@@ -366,6 +373,19 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
   // Log events and send message if state changed
   if (onChargeContacts != _isOnChargerContacts) {
     _isOnChargerContacts = onChargeContacts;
+
+    // The voltage usually steps up or down by a few hundred millivolts when we start/stop charging, so reset the low
+    // pass filter here to more closely track the actual battery voltage, but only if the battery isn't disconnected
+    // otherwise the measured voltage doesn't reflect the actual battery voltage. We also delay the update by one
+    // RobotState message delay to allow the voltage value to settle.
+    delayBatteryFilterReset = true;
+  } else if (delayBatteryFilterReset) {
+    if (!_battDisconnected) {
+      _batteryVoltsFilter->Reset();
+      _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
+    }
+    delayBatteryFilterReset = false;
+
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     PRINT_NAMED_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
     // Broadcast to game
@@ -376,9 +396,11 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     DASMSG_SET(i1, onChargeContacts, "On or off charge contacts (1 if on contacts, 0 if not)");
     DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since previous change (sec)");
     DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SET(i4, _battDisconnected, "Battery is (1) disconnected or (0) connected");
     DASMSG_SEND();
     _lastOnChargerContactsChange_sec = now_sec;
   }
+
   OSState::getInstance()->SetOnChargeContacts(onChargeContacts);
 }
 
@@ -387,11 +409,14 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
 {
   if (isCharging != _isCharging) {
     _isCharging = isCharging;
-    // The voltage usually steps up or down by a few hundred millivolts when we start/stop charging, so reset the low
-    // pass filter here to more closely track the actual battery voltage.
-    _batteryVoltsFilter->Reset();
-    _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
-  }
+  
+    DASMSG(battery_is_charging_changed, "battery.is_charging_changed", "The robot isCharging state has changed");   
+    DASMSG_SET(i1, IsCharging(), "Is charging (1) or not (0)");
+    DASMSG_SET(i2, _battTemperature_C,  "Battery temperature (C)");
+    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery volage (mV)");
+    DASMSG_SET(i4, _battDisconnected, "Battery is (1) disconnected or (0) connected");        
+    DASMSG_SEND();
+  } 
 }
 
 
