@@ -35,13 +35,13 @@
 
   "gameConfig" : {
     "getInLength_ms" : 3000,
-    "timePerLED_ms" : 250,
+    "timePerLED_ms" : 750,
     // A float representing the relative speed per round
     "speedMultipliers" : [
       1.0,
+      1.25,
       1.5,
-      2.0,
-      3.0
+      1.75
     ],
     // minimum number of wrong colors before the right color shows up
     "minWrongColorsBeetweenTargetPerRound" : [
