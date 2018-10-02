@@ -69,8 +69,6 @@ public:
   void HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);  
   void HandleDisplayedFaceImage(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
 
-  double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
-  
 private:
 
   ///////// Messaging ////////
@@ -79,10 +77,6 @@ private:
 
   uint32_t _imuSeqID = 0;
   std::ofstream _imuLogFileStream;
-  
-  // For handling multiple images coming in on the same tick
-  u32          _repeatedImageCount = 0;
-  double       _lastImageRecvTime  = -1.0;
   
   // For tracking time since last power level report (per accessory)
   std::map<uint32_t, uint32_t> _lastPowerLevelSentTime;
@@ -93,9 +87,6 @@ private:
   u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
   u32                 _faceImageRGBChunksReceivedBitMask = 0;
   const u32           kAllFaceImageRGBChunksReceivedMask = 0x3fffffff; // 30 bits for 30 expected chunks 
-
-  // Internal helpers
-  bool ShouldIgnoreMultipleImages() const;
 
 };
 

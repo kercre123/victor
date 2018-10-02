@@ -428,11 +428,6 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));
 }
 
-bool RobotToEngineImplMessaging::ShouldIgnoreMultipleImages() const
-{
-  return _repeatedImageCount >= 3;
-}
-
 // For processing imu data chunks arriving from robot.
 // Writes the entire log of 3-axis accelerometer and 3-axis
 // gyro readings to a .m file in kP_IMU_LOGS_DIR so they

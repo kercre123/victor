@@ -7,30 +7,22 @@
 //
 
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
-#include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInitialConnection.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/robot/config.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "json/json.h"
-#include "proto/external_interface/messages.pb.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/stepTimers.h"
-#include <sys/stat.h>
 
 #include "osState/osState.h"
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
-#include "coretech/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/DAS.h"
 
@@ -189,15 +181,7 @@ Result RobotManager::UpdateRobot()
 
   if (_robot)
   {
-    const Result result = _robot->Update();
-
-    switch (result)
-    {
-      // TODO: Handle other return results here
-
-      default:
-        break;
-    }
+    _robot->Update();
 
     if (_robot->HasReceivedRobotState()) {
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(_robot->GetRobotState()));
