@@ -1073,10 +1073,9 @@ bool BehaviorEnrollFace::HasTimedOut() const
 
   if(hasTimedOut)
   {
-    // TODO add more data
     DASMSG(behavior_meet_victor_has_timed_out, "behavior.meet_victor.has_timed_out",
-           "We reached the global time out for meet victor");
-    DASMSG_SET(i1, _dVars->timeout_sec, "Time out value (sec)");
+           "We reached the global timeout for meet victor");
+    DASMSG_SET(i1, _dVars->timeout_sec, "Timeout value (sec)");
     DASMSG_SEND();
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.BehaviorTimedOut",
                   "TimedOut after %.1fsec in State:%s",
