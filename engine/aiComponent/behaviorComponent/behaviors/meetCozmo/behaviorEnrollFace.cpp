@@ -724,6 +724,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
         // or reoriented, go back to looking for them
         if(lostEnrollee)
         {
+          DASMSG(behavior_meet_victor_lost_enrollee, "behavior.meet_victor.lost_enrollee",
+                 "It has been too long since we saw the face we were trying to enroll, resetting enrollment");
+          DASMSG_SEND();
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.LostEnrollee",
                         "LastSeen:%ums LastImage:%ums",
                         (TimeStamp_t)_dVars->lastFaceSeenTime_ms, (TimeStamp_t)lastImgTime_ms);
@@ -1070,6 +1073,11 @@ bool BehaviorEnrollFace::HasTimedOut() const
 
   if(hasTimedOut)
   {
+    // TODO add more data
+    DASMSG(behavior_meet_victor_has_timed_out, "behavior.meet_victor.has_timed_out",
+           "We reached the global time out for meet victor");
+    DASMSG_SET(i1, _dVars->timeout_sec, "Time out value (sec)");
+    DASMSG_SEND();
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.BehaviorTimedOut",
                   "TimedOut after %.1fsec in State:%s",
                   _dVars->timeout_sec, GetDebugStateName().c_str());
