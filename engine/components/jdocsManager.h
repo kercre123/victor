@@ -53,7 +53,9 @@ public:
   //////
   // end IDependencyManagedComponent functions
   //////
-  
+
+  using JsonTransformFunc = Json::Value (*)(const Json::Value&);
+
   bool            JdocNeedsCreation(const external_interface::JdocType jdocTypeKey) const;
   bool           JdocNeedsMigration(const external_interface::JdocType jdocTypeKey) const;
   const std::string&    GetJdocName(const external_interface::JdocType jdocTypeKey) const;
@@ -64,7 +66,8 @@ public:
   const Json::Value&    GetJdocBody(const external_interface::JdocType jdocTypeKey) const;
   Json::Value*   GetJdocBodyPointer(const external_interface::JdocType jdocTypeKey);
   bool                      GetJdoc(const external_interface::JdocType jdocTypeKey,
-                                    external_interface::Jdoc& jdocOut) const;
+                                    external_interface::Jdoc& jdocOut,
+                                    const JsonTransformFunc transformFunc = nullptr) const;
   bool                   UpdateJdoc(const external_interface::JdocType jdocTypeKey,
                                     const Json::Value* jdocBody,
                                     const bool saveToDiskImmediately,
