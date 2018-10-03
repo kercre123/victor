@@ -106,7 +106,9 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert( _iConfig.driveRandomlyBehavior.get() );
+  if( _iConfig.driveRandomlyBehavior ) {
+    delegates.insert( _iConfig.driveRandomlyBehavior.get() );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -125,7 +127,12 @@ void BehaviorDriveOffCharger::GetBehaviorJsonKeys(std::set<const char*>& expecte
 void BehaviorDriveOffCharger::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.driveRandomlyBehavior = BC.FindBehaviorByID( kRandomDriveBehavior );
+  const bool mayDriveRandomly = std::find(_iConfig.driveDirections.begin(), _iConfig.driveDirections.end(), DriveDirection::Randomly) !=
+                                _iConfig.driveDirections.end();
+  if( mayDriveRandomly ) {
+    _iConfig.driveRandomlyBehavior = BC.FindBehaviorByID( kRandomDriveBehavior );
+  }
+  // else, don't set the behavior because it's not a delegate
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
