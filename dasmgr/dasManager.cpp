@@ -772,6 +772,16 @@ Result DASManager::Run(const bool & shutdown)
   // Make sure we have room to write logs
   EnforceStorageQuota();
 
+  // If we have unsent log files, attempt to send them now
+  if (_allow_upload && !_exiting) {
+    auto uploadTask = [this]() {
+      _uploading = true;
+      PostLogsToServer();
+      _uploading = false;
+    };
+    _worker.Wake(uploadTask, "uploadTask");
+  }
+
   //
   // Android log API is documented here:
   // https://android.googlesource.com/platform/system/core/+/master/liblog/README
@@ -794,11 +804,11 @@ Result DASManager::Run(const bool & shutdown)
   const auto fileThresholdSize = _dasConfig.GetFileThresholdSize();
 
   Result result = RESULT_OK;
+
   _last_flush_time = std::chrono::steady_clock::now();
 
-  // Run forever until error or termination event ("@@")
-  // is read
-  while (true) {    
+  // Run forever until error or termination event ("@@") is read
+  while (true) {
     struct log_msg logmsg;
     int rc = android_logger_list_read(log, &logmsg);
     if (rc <= 0 ) {
@@ -837,7 +847,7 @@ Result DASManager::Run(const bool & shutdown)
                  "Got terminate event but we aren't shutting down");
       }
     }
-    
+
     // If we have exceeded the threshold size, roll the log file now.
     // If we are allowed to upload and have gone over the flush interval, roll the log file now.
     // If we are NOT allowed to upload, let the file keep growing to avoid fragmentation.
