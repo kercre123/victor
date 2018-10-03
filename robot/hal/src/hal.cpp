@@ -694,7 +694,7 @@ void ProcessMicError()
     DASMSG_SET(i1,
                whichChannelsStuck,
                "Bit mask indicating which of the 4 mic channels have stuck bits");
-    DASMSG_SEND();
+    DASMSG_SEND_ERROR();
 
   }
   
