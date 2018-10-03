@@ -8,66 +8,25 @@ Installation - Linux
 Prerequisites
 ^^^^^^^^^^^^^
 
-* Your Vector has been set up with the Vector companion app.
+* Vector is powered on.
 * You have successfully created an Anki account.
+* Vector has been set up with the Vector companion app.
+* Vector is connected to the same network as your computer.
+* You can see Vector's eyes on his screen.
 
 
 This guide provides instructions on installing the Vector SDK for computers running with an Ubuntu Linux operating system.
 
-.. warning:: The Vector SDK is tested and and supported on Ubuntu 14.04 and 16.04. Anki makes no guarantee the Vector SDK will work on other versions of Linux.  If you wish to try the Vector SDK on versions of Linux *other than* Ubuntu 14.04 or 16.04, please ensure the following dependencies are installed:
+.. warning:: The Vector SDK is tested and and supported on Ubuntu 16.04 and 18.04. Anki makes no guarantee the Vector SDK will work on other versions of Linux.  If you wish to try the Vector SDK on versions of Linux *other than* Ubuntu 14.04 or 16.04, please ensure the following dependencies are installed:
 
   * Python 3.5.1 or later
   * pip for Python 3 (Python package installer)
 
 
 
-^^^^^^^^^^^^
-Ubuntu 14.04
-^^^^^^^^^^^^
-
-"""""""""""""""""""
-Python Installation
-"""""""""""""""""""
-
-1. Type the following into your Terminal window to install Python 3.5::
-
-    sudo add-apt-repository ppa:deadsnakes
-    sudo apt-get update
-    sudo apt-get install python3.5 python3.5-tk
-
-2. Then, install and set up virtualenv::
-
-    sudo apt-get install python-pip
-    pip install virtualenv
-    virtualenv -p python3.5 ~/cozmo-env
-
-3. Last, make sure to activate the virtualenv any time you use cozmo::
-
-    source ~/cozmo-env/bin/activate
-
-.. note:: You'll need to activate the virtualenv before running any python or pip commands.  Learn more about virtualenv `here <https://virtualenv.pypa.io/en/stable/userguide/>`_.
-
-""""""""""""""""
-SDK Installation
-""""""""""""""""
-
-To install the SDK, type the following into the Terminal window::
-
-    pip install 'cozmo[camera]'
-
-Note that the [camera] option adds support for processing images from Vector's camera.
-
-"""""""""""
-SDK Upgrade
-"""""""""""
-
-To upgrade the SDK from a previous install, enter this command::
-
-    pip install --upgrade cozmo
-
-^^^^^^^^^^^^
-Ubuntu 16.04
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+Ubuntu 16.04 and 18.04
+^^^^^^^^^^^^^^^^^^^^^^
 
 """""""""""""""""""
 Python Installation
@@ -92,17 +51,24 @@ SDK Installation
 
 To install the SDK, type the following into the Terminal window::
 
-    pip3 install --user 'cozmo[camera]'
+    pip3 install --user vector-0.4-py3-none-any.whl
 
 Note that the [camera] option adds support for processing images from Vector's camera.
 
-"""""""""""
-SDK Upgrade
-"""""""""""
+^^^^^^^^^^^^^^^^^^^^^
+Vector Authentication
+^^^^^^^^^^^^^^^^^^^^^
 
-To upgrade the SDK from a previous install, enter this command::
+To authenticate with the robot, type the following into the Terminal window::
 
-    pip3 install --user --upgrade cozmo
+    cd vector-sdk
+    ./configure.py
+
+You will be prompted for your robot's name, ip address and serial number. You will also be asked for your Anki login and password.
+
+.. note:: Running `configure.py` will automatically download the Vector robot certificate to your computer and store credentials to allow you to connect to Vector. These credentials will be stored under your home directory in folder `.anki_vector`.
+
+.. warning:: These credentials give full access to your robot, including camera stream, audio stream and data. Do not share these credentials.
 
 ^^^^^^^^^^^^^^^
 Troubleshooting

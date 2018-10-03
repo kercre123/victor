@@ -64,6 +64,9 @@ namespace Anki {
       // Sets whether or not to delete actions from the compound action when they complete
       // By default actions will be destroyed on completion
       void SetDeleteActionOnCompletion(bool deleteOnCompletion);
+      
+      // Return the number of constituent actions in this compound action
+      size_t GetNumActions() const { return _actions.size(); }
 
     protected:
       

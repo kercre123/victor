@@ -39,6 +39,7 @@ enum class ScreenName {
   MicInfo,
   MicDirectionClock,
   CustomText,
+  MirrorMode, // Like Camera but without links to other screens
   
   Count
 };

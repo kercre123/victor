@@ -25,7 +25,7 @@ Please visit our `Anki SDK Forums <https://forums.anki.com/>`_ where you can:
 Starting Up the SDK
 -------------------
 
-1. On the computer, open Terminal (macOS/Linux) or Command Prompt (Windows) and type ``cd vector_sdk``, and press **Enter**.
+1. On the computer, open Terminal (macOS/Linux) or Command Prompt (Windows) and type ``cd vector-sdk``, and press **Enter**.
 
 ----------------
 Example Program
@@ -41,7 +41,9 @@ Let's test your new setup by running a very simple program. This program instruc
 The Program
 """""""""""
 
-1. To run the program, using the same Terminal (macOS/Linux) / Command Prompt (Windows) window mentioned above: 
+1. Please find your robot serial number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.
+
+2. To run the program, using the same Terminal (macOS/Linux) / Command Prompt (Windows) window mentioned above: 
 
 First, change to the ``tutorials`` sub-directory of the ``examples`` directory.
 
@@ -57,17 +59,17 @@ Then, run the program.
 
     a. For macOS and Linux systems, type the following and press **Enter**::
 
-        ./01_hello_world.py
+        ./01_hello_world.py --serial {robot_serial_number}
 
     The same can also be achieved on macOS/Linux with:
 	
-        python3 01_hello_world.py
+        python3 01_hello_world.py --serial {robot_serial_number}
 
     b. For Windows systems, type the following and press **Enter**::
 
-        py 01_hello_world.py
+        py 01_hello_world.py --serial {robot_serial_number}
 
-2. If done correctly, Vector will say "Hello, World!"
+3. If done correctly, Vector will say "Hello, World!"
 
 .. warning:: If Vector does not perform as expected, look at the first Terminal window and make sure no error messages appeared. If you continue to have issues, please seek help in the Forums.
 

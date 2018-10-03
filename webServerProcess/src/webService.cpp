@@ -527,10 +527,11 @@ static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
   const std::string& allowPerfPage        = that->GetConfig()["allowPerfPage"].asString();
   const std::string& whichWebServer       = std::to_string(that->GetConfig()["whichWebServer"].asInt());
   const std::string& allowConsoleVarsPage = that->GetConfig()["allowConsoleVarsPage"].asString();
+  const std::string& allowPerfMetricPage  = that->GetConfig()["allowPerfMetricPage"].asString();
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
             startPage.c_str(), webotsSim.c_str(), allowPerfPage.c_str(),
-            whichWebServer.c_str(), allowConsoleVarsPage.c_str());
+            whichWebServer.c_str(), allowConsoleVarsPage.c_str(), allowPerfMetricPage.c_str());
   return 1;
 }
 

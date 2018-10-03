@@ -32,8 +32,8 @@ except ImportError:
                 "To do so, please navigate to '{tools_path}' and run '{make}'\n"
                 "Next navigate to '{sdk_path}', run '{pip_install}', and run '{configure}'\n"
                 "Then try again".format(
-                    tools_path=str(base_dir / "grpc_tools"),
-                    make="make",
+                    tools_path=str(base_dir / "scripts"),
+                    make="./update_proto.sh",
                     sdk_path=str(base_dir / "vector-sdk"),
                     pip_install="pip install -e .",
                     configure="python3 configure.py",
@@ -96,3 +96,7 @@ def vector_connection():
     if serial is None:
         sys.exit("Please set 'ANKI_ROBOT_SERIAL' environment variable with 'export ANKI_ROBOT_SERIAL=<your robot's serial number>'. To run with webots set your serial number to 'Local'")
     return Connection(serial)
+
+def json_from_file(name):
+    with open(name, 'rb') as f:
+        return f.read()

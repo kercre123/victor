@@ -72,6 +72,7 @@ namespace Anki
 
       Result InitCamera();
       Result DeleteCamera();
+      void PauseCamera(bool pause);
 
       void RegisterOnCameraRestartCallback(std::function<void()> callback);
 
@@ -84,10 +85,11 @@ namespace Anki
         
       // Points provided frame to a buffer of image data if available.
       // Returns true if image available.
+      // Will return image data captured closest to or before atTimestamp_ms
       // If this method results in acquiring a frame, the frame is locked, ensuring
       // that the camera system will not update the buffer.
       // The caller is responsible for releasing the lock by calling CameraFrameRelease.
-      bool CameraGetFrame(Vision::ImageBuffer& buffer);
+      bool CameraGetFrame(u32 atTimestamp_ms, Vision::ImageBuffer& buffer);
 
       // Releases lock on buffer for specified frameID acquired by calling CameraGetFrame.
       bool CameraReleaseFrame(u32 imageID);
@@ -102,8 +104,13 @@ namespace Anki
       bool HaveGottenFrame() const { return _imageFrameID > 1; }
 
     private:
-
+      
       CameraService();
+
+      // If needed, will temporarily unpause the camera in order to
+      // for camera settings to be applied
+      void UnpauseForCameraSetting();
+      
       static CameraService* _instance;
 
 #ifdef SIMULATOR

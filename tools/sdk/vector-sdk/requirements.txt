@@ -3,3 +3,4 @@ googleapis-common-protos
 opencv-python
 numpy
 Pillow
+requests

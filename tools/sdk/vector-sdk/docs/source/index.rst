@@ -1,4 +1,4 @@
-.. image:: images/vector-sdk-img.jpg
+.. image:: images/vector-sdk-img.png
 
 |
 

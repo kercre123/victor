@@ -1,7 +1,7 @@
 {
   "dasConfig" : {
     "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasBeta-dasbetaSqs-1UXG3IR38L4LR",
-    "file_threshold_size": 40000,
+    "file_threshold_size": 100000,
     "flush_interval": 600,
     "storage_path": "/run/dasLogs",
     "storage_quota": 5000000,

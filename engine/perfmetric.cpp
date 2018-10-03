@@ -64,8 +64,8 @@ const std::string PerfMetric::_logBaseFileName = "perfMetric_";
 static int PerfMetricWebServerImpl(WebService::WebService::Request* request)
 {
   auto* perfMetric = static_cast<PerfMetric*>(request->_cbdata);
-  LOG_INFO("PerfMetric.PerfMetricWebServerImpl", "Query string: %s", request->_param1.c_str());
-  
+  //LOG_INFO("PerfMetric.PerfMetricWebServerImpl", "Query string: %s", request->_param1.c_str());
+
   int returnCode = perfMetric->ParseCommands(request->_param1);
   if (returnCode != 0)
   {
@@ -236,6 +236,15 @@ void PerfMetric::Update(const float tickDuration_ms,
     }
   }
 #endif
+}
+
+void PerfMetric::Status(std::string* resultStr) const
+{
+  *resultStr += _isRecording ? "Recording" : "Stopped";
+  const int numFrames  = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
+  *resultStr += ",";
+  *resultStr += std::to_string(numFrames);
+  *resultStr += "\n";
 }
 
 void PerfMetric::Start()
@@ -670,7 +679,12 @@ int PerfMetric::ParseCommands(std::string& queryString)
       queryString = queryString.substr(amp + 1);
     }
   
-    if (current == "start")
+    if (current == "status")
+    {
+      PerfMetricCommand cmd(STATUS);
+      cmds.push_back(cmd);
+    }
+    else if (current == "start")
     {
       PerfMetricCommand cmd(START);
       cmds.push_back(cmd);
@@ -765,6 +779,9 @@ void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
     _queuedCommands.pop();
     switch (cmd._command)
     {
+      case STATUS:
+        Status(resultStr);
+        break;
       case START:
         Start();
         break;

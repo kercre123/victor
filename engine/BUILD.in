@@ -11,7 +11,8 @@ cxx_project(
                   '**/CMakeLists.txt',
                   '../cmake/*.cmake',
                   # '**/BUILD.in', NOTE: dangerous!! Xcode likes to silently rename BUILD.in to Build.in on save!
-                  '../clad/**/*.clad', 
+                  '../clad/**/*.clad',
+                  '../docs/**/*.md', 
                   '../simulator/**/*.proto',
                   '../simulator/**/*.wbt'
                 ]),

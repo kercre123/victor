@@ -20,6 +20,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -29,6 +31,8 @@
 #include "engine/vision/imageSaver.h"
 
 #include "util/fileUtils/fileUtils.h"
+
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -63,21 +67,32 @@ const char* const kImageSaveQualityKey = "quality";
 const char* const kImageScaleKey = "image_scale";
 const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
+const char* const kUseShutterSoundKey = "use_shutter_sound";
 const char* const kSaveSensorDataKey = "save_sensor_data";
 const char* const kClassNamesKey = "class_names";
 const char* const kVisionModesKey = "vision_modes";
-
+  
+const char* const kMultiImageModeKey = "multi_image_mode";
+const char* const kNumImagesPerCaptureKey = "num_images_per_capture";
+const char* const kDistanceRangeKey = "distance_range_mm";
+const char* const kHeadAngleRangeKey = "head_angle_range_deg";
+const char* const kBodyAngleRangeKey = "body_angle_range_deg";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
+  : imageSaveQuality(-1)
+  , imageSaveSize(Vision::ImageCache::Size::Full)
+  , useCapTouch(false)
+  , saveSensorData(false)
+  , useShutterSound(true)
+  , numImagesPerCapture(1)
+  , distanceRange_mm{0,0}
+  , headAngleRange_rad{0,0}
+  , bodyAngleRange_rad{0,0}
 {
-  useCapTouch = false;
-  saveSensorData = false;
-  imageSaveSize = Vision::ImageCache::Size::Full;
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::DynamicVariables::DynamicVariables()
@@ -91,6 +106,28 @@ BehaviorDevImageCapture::DynamicVariables::DynamicVariables()
   wasLiftUp = false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline void SetRangeHelper(const Json::Value& config, const char* const key,
+                                  std::pair<f32,f32>& range, bool isAngle)
+{
+  if(config.isMember(key))
+  {
+    const Json::Value& rangeMember = config[key];
+    if(rangeMember.isArray() && rangeMember.size()==2)
+    {
+      range.first  = rangeMember[0].asFloat();
+      range.second = rangeMember[1].asFloat();
+      if(isAngle)
+      {
+        range.first  = DEG_TO_RAD(range.first);
+        range.second = DEG_TO_RAD(range.second);
+      }
+      return;
+    }
+  }
+  
+  LOG_ERROR("BehaviorDevImageCapture.SetRangeHelper.Failure", "Failed to set %s range", key);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
@@ -99,15 +136,25 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   _iConfig.imageSavePath = JsonTools::ParseString(config, kSavePathKey, "BehaviorDevImageCapture");
   _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, kImageSaveQualityKey, "BehaviorDevImageCapture");
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
-
+  _iConfig.useShutterSound = JsonTools::ParseBool(config, kUseShutterSoundKey, "BehaviorDevImageCapture");
   std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevImageCapture");
   std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevImageCapture");
   _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
-
-  if (config.isMember(kSaveSensorDataKey)) {
+  
+  if(config.isMember(kMultiImageModeKey))
+  {
+    const Json::Value& multiImageConfig = config[kMultiImageModeKey];
+    _iConfig.numImagesPerCapture = JsonTools::ParseInt32(multiImageConfig, kNumImagesPerCaptureKey,
+                                                         "BehaviorDevImageCapture");
+    SetRangeHelper(multiImageConfig, kDistanceRangeKey,  _iConfig.distanceRange_mm,   false);
+    SetRangeHelper(multiImageConfig, kHeadAngleRangeKey, _iConfig.headAngleRange_rad, true);
+    SetRangeHelper(multiImageConfig, kBodyAngleRangeKey, _iConfig.bodyAngleRange_rad, true);
+  }
+  
+  if(config.isMember(kSaveSensorDataKey)) {
     _iConfig.saveSensorData = config[kSaveSensorDataKey].asBool();
   }
-
+  
   if(config.isMember(kClassNamesKey))
   {
     auto const& classNames = config[kClassNamesKey];
@@ -124,7 +171,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
     }
     else 
     {
-      PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidClassNames", "");
+      LOG_WARNING("BehaviorDevImageCapture.Constructor.InvalidClassNames", "");
     }
   }
   _dVars.currentClassIter = _iConfig.classNames.begin();
@@ -144,7 +191,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
       }
       else
       {
-        PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionMode", "%s", visionModeStr.c_str());
+        LOG_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionMode", "%s", visionModeStr.c_str());
       }
     };
     
@@ -158,7 +205,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
     }
     else
     {
-      PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionModeEntry", "");
+      LOG_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionModeEntry", "");
     }
   }
 }
@@ -175,6 +222,7 @@ void BehaviorDevImageCapture::GetBehaviorOperationModifiers(BehaviorOperationMod
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
+  modifiers.visionModesForActiveScope->insert({VisionMode::MirrorMode,   EVisionUpdateFrequency::High});
   modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
   for(auto const& mode : _iConfig.visionModesBesidesSaving)
   {
@@ -193,8 +241,10 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kImageResizeMethodKey,
     kUseCapacitiveTouchKey,
     kSaveSensorDataKey,
+    kUseShutterSoundKey,
     kClassNamesKey,
     kVisionModesKey,
+    kMultiImageModeKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -206,9 +256,7 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   _dVars.isStreaming = false;
   _dVars.timeToBlink = -1.0f;
   _dVars.blinkOn = false;
-
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.EnableDrawImagesToScreen(true);
+  _dVars.imagesSaved = 0; // NOTE: Only increments in SingleShot* modes
   
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
@@ -222,9 +270,6 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
-
-  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
-  visionComponent.EnableDrawImagesToScreen(false);
 }
 
 
@@ -264,6 +309,16 @@ void BehaviorDevImageCapture::BehaviorUpdate()
     return;
   }
   
+  const bool doingMultiImageCapture = (_iConfig.numImagesPerCapture > 1);
+  const bool haveStartedCapture     = (_dVars.imagesSaved >= 1);
+  const bool haveCompletedCapture   = (_dVars.imagesSaved >= _iConfig.numImagesPerCapture);
+  if(!_dVars.isStreaming && doingMultiImageCapture && haveStartedCapture && !haveCompletedCapture)
+  {
+    // Ignore additional button presses / touches while we're in the process of taking
+    // multiple images at different poses
+    return;
+  }
+  
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
 
@@ -286,12 +341,9 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   {
     using namespace Util;
     const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath()).size();
-    
-    std::function<void(Vision::ImageRGB&)> drawClassName = [this,numFiles](Vision::ImageRGB& img)
-    {
-      img.DrawText({1,14}, *_dVars.currentClassIter + ":" + std::to_string(numFiles), NamedColors::YELLOW, 0.6f, true);
-    };
-    visionComponent.AddDrawScreenModifier(drawClassName);
+
+    const std::string str(*_dVars.currentClassIter + ":" + std::to_string(numFiles));
+    visionComponent.SetMirrorModeDisplayString(str, NamedColors::YELLOW);
   }
 
   const bool wasTouched = (_dVars.touchStartedTime_s >= 0.0f);
@@ -304,7 +356,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
     // just "released", see if it's been long enough to count as a "hold"
     ImageSendMode sendMode = ImageSendMode::Off;
     if( currTime_s >= _dVars.touchStartedTime_s + kHoldTimeForStreaming_s ) {
-      PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.longPress", "long press release");
+      LOG_DEBUG("BehaviorDevImageCapture.touch.longPress", "long press release");
         
       // toggle streaming
       _dVars.isStreaming = !_dVars.isStreaming;
@@ -316,31 +368,17 @@ void BehaviorDevImageCapture::BehaviorUpdate()
       }
     }
     else {
-      PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.shortPress", "short press release");
+      LOG_DEBUG("BehaviorDevImageCapture.touch.shortPress", "short press release");
       // take single photo
-
-      // shutter sound
-      {
-        using GE = AudioMetaData::GameEvent::GenericEvent;
-        using GO = AudioMetaData::GameObjectType;
-        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Camera_Flash,
-                                                 GO::Behavior);
-      }
-
+      _dVars.imagesSaved = 0;
       sendMode = (_iConfig.saveSensorData ? ImageSendMode::SingleShotWithSensorData : ImageSendMode::SingleShot);
-     
       BlinkLight();
     }
-    
-    ImageSaverParams params(GetSavePath(),
-                            sendMode,
-                            _iConfig.imageSaveQuality,
-                            "",
-                            _iConfig.imageSaveSize);
-    visionComponent.SetSaveImageParameters(params);
+  
+    SaveImages(sendMode);
   }
   else if( !wasTouched && isTouched ) {
-    PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.newTouch", "new press");
+    LOG_DEBUG("BehaviorDevImageCapture.touch.newTouch", "new press");
     _dVars.touchStartedTime_s = currTime_s;
 
     if( _dVars.isStreaming ) {
@@ -380,6 +418,96 @@ void BehaviorDevImageCapture::BlinkLight()
     _dVars.timeToBlink = -1.0f;
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::MoveToNewPose()
+{
+  LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose", "Moving to pose %d of %d",
+            _dVars.imagesSaved+1, _iConfig.numImagesPerCapture);
+  
+  // For each valid range (where the max > min), compute a random angle/distance and create
+  // a compound action to perform the movements. Note that head and body turns can be done
+  // in parallel. We then do the body movement _afterward_. This could be streamlined a bit
+  // to handle special cases that we have, for example just a head and drive action (but no
+  // body turn action), since we could also run those in parallel. But I'm not gonna
+  // overoptimize this... In general, we'll probably use all three movements.
+  CompoundActionParallel* turnAction = new CompoundActionParallel();
+  
+  if(Util::IsFltLT(_iConfig.headAngleRange_rad.first, _iConfig.headAngleRange_rad.second))
+  {
+    const f32 headAngle_rad = GetRNG().RandDblInRange(_iConfig.headAngleRange_rad.first,
+                                                      _iConfig.headAngleRange_rad.second);
+    turnAction->AddAction(new MoveHeadToAngleAction(headAngle_rad));
+    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.HeadAngle", "%.1fdeg", RAD_TO_DEG(headAngle_rad));
+  }
+  
+  if(Util::IsFltLT(_iConfig.bodyAngleRange_rad.first, _iConfig.bodyAngleRange_rad.second))
+  {
+    const f32 bodyAngle_rad = GetRNG().RandDblInRange(_iConfig.bodyAngleRange_rad.first,
+                                                      _iConfig.bodyAngleRange_rad.second);
+    turnAction->AddAction(new TurnInPlaceAction(bodyAngle_rad, false));
+    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.BodyAngle", "%.1fdeg", RAD_TO_DEG(bodyAngle_rad));
+  }
+  
+  CompoundActionSequential* action = new CompoundActionSequential();
+    
+  if(turnAction->GetNumActions() > 0)
+  {
+    action->AddAction(turnAction);
+  }
+  
+  if(Util::IsFltLT(_iConfig.distanceRange_mm.first, _iConfig.distanceRange_mm.second))
+  {
+    const f32 dist_mm = GetRNG().RandDblInRange(_iConfig.distanceRange_mm.first, _iConfig.distanceRange_mm.second);
+    const bool kPlayAnim = false;
+    action->AddAction(new DriveStraightAction(dist_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps, kPlayAnim));
+    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.Distance", "%.1fmm", dist_mm);
+  }
+  
+  DelegateIfInControl(action, [this]() {
+    const ImageSendMode sendMode = (_iConfig.saveSensorData ?
+                                    ImageSendMode::SingleShotWithSensorData :
+                                    ImageSendMode::SingleShot);
+    SaveImages(sendMode);
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
+{
+  // Tell VisionComponent to save an image
+  const ImageSaverParams params(GetSavePath(),
+                                sendMode,
+                                _iConfig.imageSaveQuality,
+                                "",
+                                _iConfig.imageSaveSize);
+  
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
+  visionComponent.SetSaveImageParameters(params);
+  
+  if(!_dVars.isStreaming)
+  {
+    if(_iConfig.useShutterSound)
+    {
+      // Shutter sound
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      using GO = AudioMetaData::GameObjectType;
+      GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Camera_Flash,
+                                               GO::Behavior);
+    }
+    
+    WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::SavingImages);
+    
+    DelegateIfInControl(waitAction, [this]() {
+      _dVars.imagesSaved++;
+      if(_dVars.imagesSaved < _iConfig.numImagesPerCapture)
+      {
+        MoveToNewPose();
+      }
+    });
+  }
+}
+
 
 } // namespace Vector
 } // namespace Anki

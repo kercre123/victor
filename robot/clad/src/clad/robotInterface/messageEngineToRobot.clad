@@ -451,6 +451,12 @@ message DrawTextOnScreen
   string   text
 }
 
+// Switch to the debug screen used for the vision system's "MirrorMode"
+message EnableMirrorModeScreen
+{
+  bool enable
+}
+
 // DisplayProceduralFace
 message DisplayProceduralFace
 {
@@ -735,6 +741,7 @@ union EngineToRobot
   DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
   UpdateCompositeImage             updateCompositeImage                = 0x64,
   PlayCompositeAnimation           playCompositeAnimation              = 0x65,
+  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

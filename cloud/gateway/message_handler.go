@@ -1978,7 +1978,7 @@ func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.
 	defer AudioSendModeRequest(extint.AudioProcessingMode_AUDIO_OFF)
 
 	// Forward audio data from engine
-	f, audioFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AudioChunk{}, 10)
+	f, audioFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AudioChunk{}, 1024)
 	defer f()
 
 	cache := AudioFeedCache{
@@ -2109,7 +2109,7 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	// Disable video stream
 	defer ImageSendModeRequest(extint.ImageRequest_OFF)
 
-	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 10)
+	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
 	defer f()
 
 	cache := CameraFeedCache{

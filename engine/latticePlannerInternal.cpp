@@ -13,7 +13,6 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/navMap/mapComponent.h"
-#include "engine/navMap/memoryMap/memoryMapToPlanner.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ObservableObject.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -446,18 +445,10 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
     auto memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCliff, MemoryMapTypes::EContentType::Cliff, convexHulls);
     
-    // VIC-3804 In order to use DriveToPose actions inside the habitat, we need to turn off
-    //          prox obstacles so that we may reach positions where the robot can see the
-    //          white line inside the habitat. Planning gets stalled when the robot observes
-    //          the habitat wall, and often times out otherwise.
-    if(_robot->GetMapComponent().GetUseProxObstaclesInPlanning()) {
-      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
-    }
+    // If we ever reuse this planner, we would need a new way to get convex
+    // polygons for collision regions that are not observable object types
+    // and insert those objects here.
     
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred =

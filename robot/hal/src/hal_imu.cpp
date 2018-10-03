@@ -106,7 +106,7 @@ void ProcessIMUEvents()
       DASMSG(imu_failure,
              "robot.imu_failure",
              "Indicates that we failed to read/write to the IMU and it may not be working correctly");
-      DASMSG_SEND();
+      DASMSG_SEND_ERROR();
     }
   }
   

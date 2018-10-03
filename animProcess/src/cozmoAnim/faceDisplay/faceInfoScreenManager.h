@@ -83,6 +83,11 @@ public:
   // screen is handled by ConnectionFlow when in pairing mode.
   void EnablePairingScreen(bool enable);
 
+  // When enabled, switches to a special camera screen used to show
+  // the vision system's "mirror mode", which displays the camera feed
+  // and detections live on the robot's face. 
+  void EnableMirrorModeScreen(bool enable);
+  
   // Begin drawing functionality
   // These functions update the screen only if they are relevant to the current screen
   void DrawConfidenceClock(const RobotInterface::MicDirection& micData,

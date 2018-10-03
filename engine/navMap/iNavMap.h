@@ -40,7 +40,6 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		
 		
   // import types from MemoryMapTypes		
-  using BorderRegionVector    = MemoryMapTypes::BorderRegionVector;
   using EContentType          = MemoryMapTypes::EContentType;
   using FullContentArray      = MemoryMapTypes::FullContentArray;
   using NodeTransformFunction = MemoryMapTypes::NodeTransformFunction;
@@ -66,16 +65,6 @@ public:
   // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
   // the region that the point generated to store the point could have an error of up to this length.
   virtual float GetContentPrecisionMM() const = 0;
-
-  // check whether the given content types would have any borders at the moment. This method is expected to
-  // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
-  // whether a border exists, without requiring calculating all of them
-  virtual bool HasBorders(EContentType innerType, const FullContentArray& outerTypes) const = 0;
-  
-  // retrieve the borders currently found in the map between the given types. This query is not const
-  // so that the memory map can calculate and cache values upon being requested, rather than when
-  // the map is modified. Function is expected to clear the vector before returning the new borders
-  virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders) = 0;
   
   // TODO: remove entirely once behaviors no-longer grab INavMap pointers directly - map component can do wrapping to `AnyOf`
   // checks if the given region intersects with a node of the given types

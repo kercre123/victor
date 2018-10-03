@@ -74,6 +74,7 @@ namespace Vector {
   class ImageSaver;
   struct ImageSaverParams;
   class LaserPointDetector;
+  class MirrorModeManager;
   class MotionDetector;
   class OverheadEdgesDetector;
   class OverheadMap;
@@ -104,7 +105,8 @@ namespace Vector {
     ExternalInterface::RobotObservedIllumination          illumination;
 
     Vision::ImageRGB displayImg;
-
+    Vision::ImageRGB565 mirrorModeImg;
+    
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
     DebugImageList<Vision::ImageRGB> debugImageRGBs;
@@ -264,7 +266,7 @@ namespace Vector {
     std::unique_ptr<GroundPlaneClassifier>          _groundPlaneClassifier;
     std::unique_ptr<IlluminationDetector>           _illuminationDetector;
     std::unique_ptr<ImageSaver>                     _imageSaver;
-
+    std::unique_ptr<MirrorModeManager>              _mirrorModeManager;
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
     

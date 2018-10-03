@@ -26,7 +26,7 @@ from .messaging import protocol
 
 
 class PhotographComponent(util.Component):
-    """Manage the state of all the photos on the robot.
+    """Access the photos on Vector.
 
     .. code-block:: python
 

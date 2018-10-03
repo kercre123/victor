@@ -27,6 +27,7 @@
 #include "engine/vision/illuminationDetector.h"
 #include "engine/vision/imageSaver.h"
 #include "engine/vision/laserPointDetector.h"
+#include "engine/vision/mirrorModeManager.h"
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
 #include "engine/vision/overheadMap.h"
@@ -154,6 +155,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _cameraCalibrator(new CameraCalibrator(*this))
 , _illuminationDetector(new IlluminationDetector())
 , _imageSaver(new ImageSaver())
+, _mirrorModeManager(new MirrorModeManager())
 , _benchmark(new Vision::Benchmark())
 , _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
@@ -1432,23 +1434,17 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   
 } // DetectMarkersWithCLAHE()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
-  std::list<Vision::SalientPoint> salientPoints;
-  const bool resultReady = _neuralNetRunner->GetDetections(salientPoints);
+  const bool resultReady = _neuralNetRunner->GetDetections(_currentResult.salientPoints);
   if(resultReady)
   {
-    VisionProcessingResult detectionResult;
-    detectionResult.timestamp = _neuralNetRunnerTimestamp;
-    detectionResult.modesProcessed.SetBitFlag(VisionMode::RunningNeuralNet, true);
-    std::swap(detectionResult.salientPoints, salientPoints);
-    
-    _mutex.lock();
-    _results.emplace(std::move(detectionResult));
-    _mutex.unlock();
+    _currentResult.modesProcessed.SetBitFlag(VisionMode::RunningNeuralNet, true);
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vision::ImageCache& imageCache)
 {
   // If we've already updated the corrector at this timestamp, don't have to do it again
@@ -1868,6 +1864,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     _currentResult.debugImageRGBs.push_back({"undistorted", imgUndistorted});
   }
 
+  // NOTE: This should come at the end because it relies on elements of the current VisionProcessingResult
+  //       (i.e. _currentResult) to be populated for the purposes of drawing them.
+  if(ShouldProcessVisionMode(VisionMode::MirrorMode))
+  {
+    // TODO: Add an ImageCache::Size for MirrorMode directly
+    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(), _currentResult);
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
+    } else {
+      visionModesProcessed.SetBitFlag(VisionMode::MirrorMode, true);
+    }
+  }
   
   // We've computed everything from this image that we're gonna compute.
   // Push it onto the queue of results all together.

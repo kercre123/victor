@@ -169,11 +169,12 @@ void RtsComms::UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus s
     return;
   }
 
-  if(!_isOtaUpdating) {
-    _engineClient->ShowPairingStatus(state);
-  } else {
-    _engineClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
+  if((state == Anki::Vector::SwitchboardInterface::ConnectionStatus::UPDATING_OS) ||
+    (state == Anki::Vector::SwitchboardInterface::ConnectionStatus::SETTING_WIFI)) {
+    return;
   }
+
+  _engineClient->ShowPairingStatus(state);
 }
 
 void RtsComms::HandleReset(bool forced) {

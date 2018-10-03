@@ -18,11 +18,13 @@ enum uint_16 BehaviorID {
   // devBehaviors
   DevBaseBehavior,
   DevBatteryLogging,
+  DevCubeSpinner,
   DevCubeSpinnerConsole,
   DevDesignCubeLights,
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,
   DevImageCapture,
+  DevImageCapture_PetsAndHands,
   DevPlannerTest,
   DevTestBlackjackViz,
   DevTestConnectToCube,

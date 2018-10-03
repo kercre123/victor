@@ -49,11 +49,6 @@
         $.post("consolevarset", {key: element.id, value: element.checked}, function(result){});
     }
 
-    function newlineToBr(str) {
-      var breakTag = '<br>';
-      return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
-    }
-    
     $(function() {
         $(".slider").each(function() {
             var scale = $(this).data("scale"),

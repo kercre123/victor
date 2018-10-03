@@ -29,7 +29,6 @@ def main():
         print(robot.accel)
         print(robot.gyro)
         print(robot.carrying_object_id)
-        print(robot.carrying_object_on_top_id)
         print(robot.head_tracking_object_id)
         print(robot.localized_to_object_id)
         print(robot.last_image_time_stamp)

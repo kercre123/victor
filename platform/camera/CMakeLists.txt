@@ -9,6 +9,8 @@ add_library(camera_client STATIC
     vicos/camera_client/camera_client.c
     vicos/camera_client/log.h
     vicos/camera_client/log.c
+    vicos/camera_client/gpio.h
+    vicos/camera_client/gpio.c
 )
 
 target_include_directories(camera_client

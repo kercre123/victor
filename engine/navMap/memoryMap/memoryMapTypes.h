@@ -66,23 +66,6 @@ struct BorderSegment
   inline Point3f GetCenter() const { return (from + to) * 0.5f; }
 };
 
-// each region detected between content types
-struct BorderRegion {
-  using BorderSegmentList = std::vector<BorderSegment>;
-  BorderRegion() : area_m2(-1.0f) {}
-
-  // when a region is finished (no more segments) we need to specify the area
-  void Finish(float area) { area_m2 = area; };
-  // deduct if the region is finished by checking the area
-  bool IsFinished() const { return area_m2 >= 0.0f; }
-  
-  // -- attributes
-  // area of the region in square meters
-  float area_m2;
-  // all the segments that define the given region (do not necessarily define a closed region)
-  BorderSegmentList segments;
-};
-
 struct MapBroadcastData {
   MapBroadcastData() : mapInfo(), quadInfo() {}
   ExternalInterface::MemoryMapInfo                  mapInfo;
@@ -110,7 +93,6 @@ using MemoryMapDataConstPtr  = MemoryMapDataWrapper<const MemoryMapData>;
 using MemoryMapDataList      = std::unordered_set<MemoryMapDataPtr, MemoryMapDataHasher<MemoryMapData>>;
 using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr, MemoryMapDataHasher<const MemoryMapData>>;
 
-using BorderRegionVector     = std::vector<BorderRegion>;
 using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
 using NodePredicate          = std::function<bool (MemoryMapDataConstPtr)>;
 

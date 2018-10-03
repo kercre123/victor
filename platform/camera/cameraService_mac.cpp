@@ -65,6 +65,7 @@ namespace Anki {
       TimeStamp_t cameraStartTime_ms_;
       TimeStamp_t lastImageCapturedTime_ms_;
 
+      bool _skipNextImage = false;
     } // "private" namespace
 
 
@@ -258,8 +259,34 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    void CameraService::UnpauseForCameraSetting()
+    {
+      return;
+    }
+    
+    void CameraService::PauseCamera(bool pause)
+    {
+      if(pause)
+      {
+        headCam_->disable();
+      }
+      else
+      {
+        headCam_->enable(VISION_TIME_STEP);
+      }
+      
+      // Technically only need to skip the next image when unpausing but since
+      // you can't get images while paused it does not matter that this is being set
+      // when pausing
+      _skipNextImage = true;
+    }
+
     // Starts camera frame synchronization
-    bool CameraService::CameraGetFrame(Vision::ImageBuffer& buffer)
+    // As opposed to the vicos implementation of CameraService, this version does
+    // not have a buffer of multiple valid frames to pick from to get the one closest
+    // to or before atTimestamp_ms. Therefore atTimestamp_ms will be ignored and the most
+    // recent image always returned
+    bool CameraService::CameraGetFrame(u32 atTimestamp_ms, Vision::ImageBuffer& buffer)
     {
       if (nullptr == headCam_) {
         return false;
@@ -285,6 +312,14 @@ namespace Anki {
 
       const u8* image = headCam_->getImage();
 
+      // If we are skipping this image, do so after calling getImage
+      // so the webots camera will capture another image
+      if(_skipNextImage)
+      {
+        _skipNextImage = false;
+        return false;
+      }
+      
       DEV_ASSERT(image != NULL, "cameraService_mac.CameraGetFrame.NullImagePointer");
       DEV_ASSERT_MSG(headCam_->getWidth() == headCamInfo_.ncols,
                      "cameraService_mac.CameraGetFrame.MismatchedImageWidths",

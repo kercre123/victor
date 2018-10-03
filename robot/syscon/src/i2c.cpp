@@ -136,7 +136,7 @@ bool I2C::multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int 
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
-      Opto::failure = (channel << 8) || slave;
+      Opto::failure = (channel << 8) | slave;
       return true;
     }
 

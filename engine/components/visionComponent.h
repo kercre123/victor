@@ -122,7 +122,7 @@ struct DockingErrorSignal;
     void Pause(bool isPaused);
 
     // Whether or not to capture images from CameraService
-    void EnableImageCapture(bool enable) { _enableImageCapture = enable; }
+    void EnableImageCapture(bool enable);
 
     // Returns true as long as we are/will be processing images
     bool IsProcessingImages();
@@ -155,11 +155,6 @@ struct DockingErrorSignal;
     
     // Returns true while camera format is in the process of changing
     bool   IsWaitingForCaptureFormatChange() const;
-
-    // Set whether or not we draw each processed image to the robot's screen
-    // (Not using the word "face" because of confusion with "faces" in vision)
-    void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; EnableMode(VisionMode::ImageViz, enable); }
-    void   AddDrawScreenModifier(const std::function<void(Vision::ImageRGB&)>& modFcn) { _screenImageModFuncs.push_back(modFcn); }
     
     // Looks through all results available from the VisionSystem and processes them.
     // This updates the Robot's BlockWorld and FaceWorld using those results.
@@ -179,6 +174,7 @@ struct DockingErrorSignal;
     Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
     Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
+    Result UpdateMirrorMode(const VisionProcessingResult& procResult);
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -326,7 +322,16 @@ struct DockingErrorSignal;
     // how this is exposed.
     void AddAllowedTrackedFace(const Vision::FaceID_t faceID);
     void ClearAllowedTrackedFaces();
+    
+    // Text to display at the top of the screen when MirrorMode is enabled.
+    // Whomever calls this last "wins".
+    void SetMirrorModeDisplayString(const std::string& str, const ColorRGBA& color);
 
+    // Enables the capture of a single image
+    // will leave image capture disabled once the image is captured
+    // Normal image capture can be reenabled with EnableImageCapture(true)
+    void CaptureOneFrame();
+    
   protected:
     
     // Non-rotated points representing the lift cross bar
@@ -345,6 +350,8 @@ struct DockingErrorSignal;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
     std::list<std::pair<EngineTimeStamp_t, Vision::SalientPoint>> _salientPointsToDraw;
+    std::string _mirrorModeDisplayString;
+    ColorRGBA _mirrorModeStringColor;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
@@ -358,10 +365,6 @@ struct DockingErrorSignal;
     // must be volatile to avoid potential caching issues
     volatile bool _running = false;
     volatile bool _paused  = false;
-
-    bool _drawImagesToScreen = false;
-
-    std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
 
     std::mutex _lock;
     
@@ -430,6 +433,8 @@ struct DockingErrorSignal;
     int _openCvNumThreads = 1;
 
     bool _enableImageCapture = true;
+
+    bool _captureOneImage = false;
     
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
@@ -459,10 +464,6 @@ struct DockingErrorSignal;
 
     // Send images from result's displayImg and debug image lists to Viz/SDK
     void SendImages(VisionProcessingResult& result);
-
-    // Send image from result's displayImg to
-    // anim process to be displayed on the face
-    Result SendDebugMirrorImage(const VisionProcessingResult& result);
 
     void SetLiftCrossBar();
 
@@ -542,6 +543,12 @@ struct DockingErrorSignal;
   inline TimeStamp_t VisionComponent::GetProcessingPeriod_ms() const
   {
     return _processingPeriod_ms;
+  }
+  
+  inline void VisionComponent::SetMirrorModeDisplayString(const std::string& str, const ColorRGBA& color)
+  {
+    _mirrorModeDisplayString = str;
+    _mirrorModeStringColor = color;
   }
 
 } // namespace Vector

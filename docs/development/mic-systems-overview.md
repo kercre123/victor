@@ -19,7 +19,7 @@ The python module only builds for mac (using the thf binary for osx), for both p
 1. Merge the new data to the victor branch (https://svn.ankicore.com/svn/anki-thirdparty/branches/victor/sensory/)
 1. Update the DEPS file in the victor repo to use the new version of the svn repo that contains the new data in the victor branch
 1. Update the resources/config/micData/micTriggerConfig.json file with the new data files
-1. (optional) Update the SupportedLocales and `kTriggerModelDataList` and `kMicData_NextTriggerIndex` variables in micDataProcessor.cpp to easily access the new data with a console var
+1. (optional) Update the SupportedLocales and `kTriggerModelDataList` and `kMicData_NextTriggerIndex` variables in [micDataProcessor.cpp](/animProcess/src/cozmoAnim/micData/micDataProcessor.cpp) to easily access the new data with a console var
 
 The THF models we've been getting from Sensory have generally been delivered in the most accurate model size of 1mb. Sensory also can provide 500kb and 250kb models, with significant dropoffs in accuracy. We requested all 3 sizes for HeyVector in en-US, and the accuracy stats provided by Sensory can be found in the notes accompanying the file delivery, in EXTERNALS/anki-thirdparty/sensory. I did a quick measurement of CPU performance differences between the model sizes in the sample Alexa model Sensory gave us, and got these results on average(with a vector robot running at 533 megahertz):
 * 1mb trigger: 3.965ms per 10ms aka 40% of a core 
