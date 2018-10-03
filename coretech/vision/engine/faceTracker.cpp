@@ -28,14 +28,18 @@ FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
   static const cv::Size opencvDetectMinFaceSize(48,48);
 #endif
 
+
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
 #  include "faceTrackerImpl_faciometric.h"
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
 #  include "faceTrackerImpl_facesdk.h"
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OKAO
-#  include "faceTrackerImpl_okao.h"
+//#  include "faceTrackerImpl_okao.h"
+#  include "faceTrackerImpl_test.h"
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
 #  include "faceTrackerImpl_opencv.h"
+#elif FACE_TRACKER_PROVIDER == FACE_TRACKER_TEST
+#  include "faceTrackerImpl_test.h"
 #else 
 #  error Unknown FACE_TRACKER_PROVIDER set!
 #endif

@@ -11,7 +11,7 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#if FACE_TRACKER_PROVIDER == FACE_TRACKER_OKAO
+#if 0
 
 #include "faceTrackerImpl_okao.h"
 
@@ -33,8 +33,7 @@ namespace Vision {
     // Faces are not enrollable unless the tracker is above this confidence
     // NOTE: It appears the returned track confidence is set to the fixed value of whatever
     //   the OKAO detection threshold is set to when in default tracking accuracy mode,
-    //   so this parameter will have no effect unless the high-accuracy tracker is used
-    CONSOLE_VAR(s32, kMinDetectionConfidence,       "Vision.FaceTracker",  500);
+    //   so this parameter will have no effect unless the high-accuracy tracker is used CONSOLE_VAR(s32, kMinDetectionConfidence,       "Vision.FaceTracker",  500);
 
     CONSOLE_VAR(f32, kCloseDistanceBetweenEyesMin,  "Vision.FaceTracker",  64.f);
     CONSOLE_VAR(f32, kCloseDistanceBetweenEyesMax,  "Vision.FaceTracker",  128.f);
