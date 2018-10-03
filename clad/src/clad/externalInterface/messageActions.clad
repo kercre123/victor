@@ -102,7 +102,7 @@ message PickupObject {
     float_32           approachAngle_rad,
     bool               useApproachAngle,
     bool               usePreDockPose,
-    bool               checkForObjectOnTop = 1, // Fail if object on top
+    bool               checkForObjectOnTop = 0,
 }
 
 // PlaceObjectOnGround
@@ -138,7 +138,7 @@ message PlaceOnObject {
     float_32 approachAngle_rad,
     bool   useApproachAngle,
     bool usePreDockPose,
-    bool checkForObjectOnTop = 1
+    bool checkForObjectOnTop = 0
 }
 
 // PlaceRelObject
@@ -218,7 +218,7 @@ message RollObject {
   bool doDeepRoll,
   bool useApproachAngle,
   bool usePreDockPose,
-  bool checkForObjectOnTop = 1, // fail if object on top
+  bool checkForObjectOnTop = 0,
   bool rollWithoutDocking = 0
 }
 

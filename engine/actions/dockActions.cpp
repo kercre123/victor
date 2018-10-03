@@ -2350,9 +2350,6 @@ namespace Anki {
       // Don't check if we are near a predock pose because we won't actually be docking
       SetDoNearPredockPoseCheck(!enable);
 
-      // Don't care if there is an object on top of at this point
-      SetShouldCheckForObjectOnTopOf(!enable);
-
       // We are likely right next to the object to roll so don't bother turning towards it/trying to verify
       // it is in front of us
       SetShouldFirstTurnTowardsObject(!enable);
