@@ -68,6 +68,8 @@ public:
   using UnreliableComponent<BCComponentID>::InitDependent;
   using UnreliableComponent<BCComponentID>::GetInitDependencies;
   using UnreliableComponent<BCComponentID>::UpdateDependent;
+  
+  static Json::Value FilterStatsForApp(const Json::Value& json);
 
 private:
 

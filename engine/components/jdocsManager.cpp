@@ -495,7 +495,8 @@ Json::Value* JdocsManager::GetJdocBodyPointer(const external_interface::JdocType
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::GetJdoc(const external_interface::JdocType jdocTypeKey,
-                           external_interface::Jdoc& jdocOut) const
+                           external_interface::Jdoc& jdocOut,
+                           const JsonTransformFunc transformFunc) const
 {
   const auto& it = _jdocs.find(jdocTypeKey);
   if (it == _jdocs.end())
@@ -509,8 +510,18 @@ bool JdocsManager::GetJdoc(const external_interface::JdocType jdocTypeKey,
   jdocOut.set_doc_version(jdocItem._jdocVersion);
   jdocOut.set_fmt_version(jdocItem._jdocFormatVersion);
   jdocOut.set_client_metadata(jdocItem._jdocClientMetadata);
+
   Json::StyledWriter writer;
-  const std::string jdocBodyString = writer.write(jdocItem._jdocBody);
+  std::string jdocBodyString;
+  if (transformFunc != nullptr)
+  {
+    const auto& json = transformFunc(jdocItem._jdocBody);
+    jdocBodyString = writer.write(json);
+  }
+  else
+  {
+    jdocBodyString = writer.write(jdocItem._jdocBody);
+  }
   jdocOut.set_json_doc(jdocBodyString);
 
   return true;
