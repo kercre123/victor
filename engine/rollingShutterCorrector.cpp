@@ -158,8 +158,8 @@ namespace Anki {
           const TimeStamp_t afterMinusBeforeTime = (TimeStamp_t)(ImuAfterT->timestamp - ImuBeforeT->timestamp);
           
           // Linearly interpolate the imu data using the timestamps before and after imu data was captured
-          rateY = (((tMinusBeforeTime)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (afterMinusBeforeTime)) + ImuBeforeT->rateY;
-          rateZ = (((tMinusBeforeTime)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (afterMinusBeforeTime)) + ImuBeforeT->rateZ;
+          rateY = (((tMinusBeforeTime)*(ImuAfterT->gyroRobotFrame.y - ImuBeforeT->gyroRobotFrame.y)) / (afterMinusBeforeTime)) + ImuBeforeT->gyroRobotFrame.y;
+          rateZ = (((tMinusBeforeTime)*(ImuAfterT->gyroRobotFrame.z - ImuBeforeT->gyroRobotFrame.z)) / (afterMinusBeforeTime)) + ImuBeforeT->gyroRobotFrame.z;
           
           break;
         } 
@@ -171,8 +171,8 @@ namespace Anki {
       {
         // if the IMU data is recent enough, just assume gyro data hasn't changed too much
         if ( t - poseData.imuDataHistory.back().timestamp <= kMaxAllowedDelay_ms ) {
-          rateY = poseData.imuDataHistory.back().rateY;
-          rateZ = poseData.imuDataHistory.back().rateZ;
+          rateY = poseData.imuDataHistory.back().gyroRobotFrame.y;
+          rateZ = poseData.imuDataHistory.back().gyroRobotFrame.z;
         } else {          
           shift = Vec2f(0, 0);
           return false;

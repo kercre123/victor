@@ -90,6 +90,17 @@ namespace Anki {
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
+        
+        auto& imuDataBuffer = IMUFilter::GetImuDataBuffer();
+        for (int i=0 ; i < IMUConstants::IMU_FRAMES_PER_ROBOT_STATE ; i++) {
+          if (!imuDataBuffer.empty()) {
+            robotState_.imuData[i] = imuDataBuffer.front();
+            imuDataBuffer.pop_front();
+          } else {
+            static IMUDataFrame invalidDataFrame{0, {0, 0, 0}};
+            robotState_.imuData[i] = invalidDataFrame;
+          }
+        }
 
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);

@@ -112,7 +112,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::potentialCliff,                 &RobotToEngineImplMessaging::HandlePotentialCliffEvent);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuData,                        &RobotToEngineImplMessaging::HandleImageImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncRobotAck,                   &RobotToEngineImplMessaging::HandleSyncRobotAck);
@@ -514,16 +513,6 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
   if (payload.order == 2) {
     LOG_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
     _imuLogFileStream.close();
-  }
-}
-
-void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleImuData");
-
-  RobotInterface::ImuData payload = message.GetData().Get_imuData();
-  for (int i = 0; i < IMUConstants::IMU_BATCH_SIZE; ++i ) {
-    robot->GetImuComponent().AddData( std::move(payload.frames[i]) );
   }
 }
 

@@ -59,7 +59,6 @@ public:
   // can be read in from Matlab. (See robot/util/imuLogsTool.m)
   void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleSyncRobotAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);

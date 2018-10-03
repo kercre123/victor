@@ -72,6 +72,14 @@ TEST(Cozmo, SimpleCozmoTest)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(RobotState, ImuDataSize)
+{
+  using namespace Anki::Vector;
+  RobotState state;
+  ASSERT_EQ(state.imuData.size(), IMUConstants::IMU_FRAMES_PER_ROBOT_STATE);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 {
   using namespace Anki;

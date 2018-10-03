@@ -90,6 +90,7 @@ structure RobotState
   float_32 liftAngle,
   AccelData accel,  // in head-frame (mm/s^2)
   GyroData gyro,    // in head-frame (rad/s)
+  IMUDataFrame imuData[6], // gyro data for image processing (every 5 ms) (size IMUConstants::IMU_FRAMES_PER_ROBOT_STATE)
   float_32 batteryVoltage,
   float_32 chargerVoltage,
   uint_32 status, // RobotStatusFlag packs as a uint_32

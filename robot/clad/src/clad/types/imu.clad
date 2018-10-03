@@ -8,8 +8,8 @@ namespace Vector {
   
 enum no_cpp_class uint_8 IMUConstants
 {
-    IMU_CHUNK_SIZE = 8,
-    IMU_BATCH_SIZE = 16,
+  IMU_FRAMES_PER_ROBOT_STATE = 6,
+  IMU_CHUNK_SIZE = 8,
 }
 
 message IMURequest
@@ -27,6 +27,11 @@ structure GyroData {
   float_32 x,  // rad/s
   float_32 y,
   float_32 z
+}
+
+structure IMUDataFrame {
+  uint_32  timestamp = 0, // HAL timestamp (ms)
+  GyroData gyroRobotFrame // rad/s
 }
 
 namespace RobotInterface {
@@ -55,17 +60,6 @@ structure IMURawDataChunk {
 
 message IMUTemperature {
   float_32 temperature_degC
-}
-
-structure IMUDataFrame {
-  uint_32  timestamp,
-  float_32 rateX,
-  float_32 rateY,
-  float_32 rateZ
-}
-
-message ImuData {
-  IMUDataFrame frames[16] // must match IMU_BATCH_SIZE
 }
 
 } // RobotInterface

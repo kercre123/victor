@@ -50,6 +50,7 @@
 #include "engine/components/settingsCommManager.h"
 #include "engine/components/settingsManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/imuComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
@@ -954,6 +955,12 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update IMU data
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
+  
+  for (auto imuDataFrame : msg.imuData) {
+    if (imuDataFrame.timestamp > 0) {
+      GetImuComponent().AddData(std::move(imuDataFrame));
+    }
+  }
 
   _robotAccelMagnitude = sqrtf(_robotAccel.x * _robotAccel.x
                              + _robotAccel.y * _robotAccel.y
@@ -2576,6 +2583,9 @@ RobotState Robot::GetDefaultRobotState()
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
+  
+  std::array<IMUDataFrame, IMUConstants::IMU_FRAMES_PER_ROBOT_STATE> defaultImuDataFrames;
+  defaultImuDataFrames.fill(IMUDataFrame{0, GyroData{0, 0, 0}});
 
   const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
                          0, //uint32_t pose_frame_id,
@@ -2587,6 +2597,7 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float liftAngle,
                          AccelData(), //const Anki::Vector::AccelData &accel,
                          GyroData(), //const Anki::Vector::GyroData &gyro,
+                         std::move(defaultImuDataFrames), // std::array<Anki::Vector::IMUDataFrame, 6> imuData,
                          0.f, // float batteryVoltage
                          0.f, // float chargerVoltage
                          kDefaultStatus, //uint32_t status,

@@ -15,9 +15,11 @@
 #ifndef IMU_FILTER_H_
 #define IMU_FILTER_H_
 
+#include "clad/types/imu.h"
 #include "coretech/common/shared/radians.h"
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/robot/hal.h"
+#include "util/container/fixedCircularBuffer.h"
 
 namespace Anki {
 
@@ -36,6 +38,10 @@ namespace Anki {
       
       const f32* GetBiasCorrectedGyroData();
 
+      // Retrieve circular-buffered ImuDataFrames
+      using ImuDataBufferType = Util::FixedCircularBuffer<IMUDataFrame, IMUConstants::IMU_FRAMES_PER_ROBOT_STATE>;
+      ImuDataBufferType& GetImuDataBuffer();
+      
       // Rotation (or "yaw") in radians. Turning left is positive.
       f32 GetRotation();
 

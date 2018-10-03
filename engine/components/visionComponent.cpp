@@ -2310,10 +2310,15 @@ namespace Vector {
                      numCols,numRows);
     }
 
-    // Get image buffer
+    // Get image buffer. Only request an image from a timestamp for which we have both robot state history _and_ IMU
+    // history.
+    u32 newestStateHistoryTimeStamp = (u32)_robot->GetStateHistory()->GetNewestTimeStamp();
+    const auto& imuHistory = _robot->GetImuComponent().GetImuHistory();
+    if (!imuHistory.empty()) {
+      newestStateHistoryTimeStamp = std::min(newestStateHistoryTimeStamp, (u32) imuHistory.back().timestamp);
+    }
+    const bool gotImage = cameraService->CameraGetFrame(newestStateHistoryTimeStamp, buffer);
     const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    const bool gotImage = cameraService->CameraGetFrame((u32)_robot->GetStateHistory()->GetNewestTimeStamp(),
-                                                        buffer);
     if(gotImage)
     {
       buffer.SetDownsampleIfBayer(_shouldDownsampleBayer);
