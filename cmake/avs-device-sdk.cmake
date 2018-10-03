@@ -21,6 +21,7 @@ set(AVS_LIBS
   AFML
   AIP
   Alerts
+  AudioPlayer
   AudioResources
   AVSCommon
   AVSSystem
@@ -29,6 +30,7 @@ set(AVS_LIBS
   CertifiedSender
   ContextManager
   ESP
+  PlaybackController
   PlaylistParser
   RegistrationManager
   SpeakerManager

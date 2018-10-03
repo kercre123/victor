@@ -119,6 +119,8 @@ private:
   
   const char* const StateToString() const;
   
+  
+  
   void SavePCM( short* buff, size_t size=0 );
   
   enum class State {
@@ -129,7 +131,9 @@ private:
 //    Stopping,
     // todo: pausing etc
   };
-  std::atomic<State> _state; // todo: thread locks
+  std::atomic<State> _state;
+  
+  void SetState( State state );
   
   SourceId m_sourceID=1; // 0 might be to be invalid?
   SourceId m_playingSource = 0;

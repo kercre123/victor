@@ -12,6 +12,8 @@
 
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
+//#include "cozmoAnim/alexaDevDirectiveHandler.h"
+#include "cozmoAnim/alexaCapabilityWrapper.h"
 //#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -68,8 +70,10 @@ std::shared_ptr<AlexaClient> AlexaClient::create(
                                                    std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
                                                    std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                                                    std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
+                                                   std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
                                                    std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
-                                                   std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker)
+                                                   std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
+                                                   std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker)
 {
   std::unique_ptr<AlexaClient> client(new AlexaClient());
   if (!client->Init(deviceInfo,
@@ -83,8 +87,10 @@ std::shared_ptr<AlexaClient> AlexaClient::create(
                     capabilitiesDelegate,
                     ttsMediaPlayer,
                     alertsMediaPlayer,
+                    audioMediaPlayer,
                     ttsSpeaker,
-                    alertsSpeaker))
+                    alertsSpeaker,
+                    audioSpeaker))
   {
     return nullptr;
   }
@@ -105,8 +111,10 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
                          std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
                          std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                          std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
+                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
                          std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
-                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker)
+                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
+                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker)
 {
   
   m_dialogUXStateAggregator = std::make_shared<avsCommon::avs::DialogUXStateAggregator>();
@@ -276,9 +284,48 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   
   
   
+  /*
+   * Creating the PlaybackController Capability Agent - This component is the Capability Agent that implements the
+   * PlaybackController interface of AVS.
+   */
+  m_playbackController = capabilityAgents::playbackController::PlaybackController::create(contextManager, m_connectionManager);
+  if (!m_playbackController) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreatePlaybackController"));
+    return false;
+  }
+  
+  /*
+   * Creating the PlaybackRouter - This component routes a playback button press to the active handler.
+   * The default handler is @c PlaybackController.
+   */
+  m_playbackRouter = capabilityAgents::playbackController::PlaybackRouter::create(m_playbackController);
+  if (!m_playbackRouter) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreatePlaybackRouter"));
+    return false;
+  }
+  
+  /*
+   * Creating the Audio Player - This component is the Capability Agent that implements the AudioPlayer
+   * interface of AVS.
+   */
+  m_audioPlayer = capabilityAgents::audioPlayer::AudioPlayer::create(
+                                                                     audioMediaPlayer,
+                                                                     m_connectionManager,
+                                                                     m_audioFocusManager,
+                                                                     contextManager,
+                                                                     m_exceptionSender,
+                                                                     m_playbackRouter);
+  if (!m_audioPlayer) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAudioPlayer"));
+    return false;
+  }
+  
+  
+  
   std::vector<std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface>> allSpeakers = {
     ttsSpeaker,
     alertsSpeaker,
+    audioSpeaker,
     // notificationsSpeaker, bluetoothSpeaker, ringtoneSpeaker
   };
   //allSpeakers.insert(allSpeakers.end(), additionalSpeakers.begin(), additionalSpeakers.end());
@@ -318,6 +365,10 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   
   addConnectionObserver(m_dialogUXStateAggregator);
   
+//  auto xx = std::make_shared<AlexaDevDirectiveHandler>("AlexaDevDirectiveHandler", m_exceptionSender);
+//  m_devDirectiveHandler = xx;
+  
+  
   // m_playbackRouter
   // m_audioPlayer
   // audio focus manager
@@ -336,35 +387,71 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   // endpointHandler
   // systemCapabilityProvider
   
-  if (!m_directiveSequencer->addDirectiveHandler(m_speechSynthesizer)) {
+  
+  #define MAKE_WRAPPER(nameSpace, handler) std::make_shared<AlexaCapabilityWrapper>(nameSpace, handler, m_exceptionSender)
+  
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechSynthesizer", m_speechSynthesizer) )) {
     ACSDK_ERROR(LX("initializeFailed") 
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "SpeechSynthesizer"));
     return false;
   }
   
-  if (!m_directiveSequencer->addDirectiveHandler(m_audioInputProcessor)) {
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechRecognizer", m_audioInputProcessor) )) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "AudioInputProcessor"));
     return false;
   }
   
-  if (!m_directiveSequencer->addDirectiveHandler(m_userInactivityMonitor)) {
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("System", m_userInactivityMonitor) )) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "UserInactivityMonitor"));
     return false;
   }
   
-  if (!m_directiveSequencer->addDirectiveHandler(m_alertsCapabilityAgent)) {
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("Alerts", m_alertsCapabilityAgent) )) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "AlertsCapabilityAgent"));
     return false;
   }
   
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("AudioPlayer", m_audioPlayer) )) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "AudioPlayer"));
+    return false;
+  }
   
+      // todo: use constant in SpeakerManagerConstants.h
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("Speaker", m_speakerManager) )) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "SpeakerManager"));
+    return false;
+  }
+  
+//  if (!m_directiveSequencer->addDirectiveHandler(m_devDirectiveHandler)) {
+//    ACSDK_ERROR(LX("initializeFailed")
+//                .d("reason", "unableToRegisterDirectiveHandler")
+//                .d("directiveHandler", "AlexaDevDirectiveHandler"));
+//    return false;
+//  }
+  
+  
+  
+//  X synth
+//  X m_audioInputProcessor
+//  m_userInactivityMonitor
+//  X aleerts
+//  X  audioPLayer
+//  X sperakerMaabger
+//  X m_playbackController
+//
+//extra:
+//  m_audioActivityTracker
   
   if (!(capabilitiesDelegate->registerCapability(m_alertsCapabilityAgent))) {
     ACSDK_ERROR(
@@ -390,6 +477,25 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")
                 .d("capabilitiesDelegate", "SpeechSynthesizer"));
+    return false;
+  }
+  
+  if (!(capabilitiesDelegate->registerCapability(m_audioPlayer))) {
+    ACSDK_ERROR(
+                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "AudioPlayer"));
+    return false;
+  }
+  
+  if (!(capabilitiesDelegate->registerCapability(m_playbackController))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "PlaybackController"));
+    return false;
+  }
+  
+  if (!(capabilitiesDelegate->registerCapability(m_speakerManager))) {
+    ACSDK_ERROR(
+                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "Speaker"));
     return false;
   }
   

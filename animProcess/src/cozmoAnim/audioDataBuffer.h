@@ -24,7 +24,7 @@ namespace Vector {
 class AudioDataBuffer //: public Anki::Util::noncopyable
 {
 public:
-  AudioDataBuffer(int size, int maxReadSize)
+  AudioDataBuffer(size_t size, size_t maxReadSize)
     : _size(size)
     , _maxReadSize(maxReadSize)
     , _actualSize( _size + _maxReadSize )
@@ -50,17 +50,17 @@ public:
   
   // returns bytes added. does not add if not enough space!
   // (we could add whatever is available, but this helps with ffwding audio if playback is slow)
-  int AddData(const unsigned char* data, const unsigned int len) {
+  size_t AddData(const unsigned char* data, const unsigned int len) {
     std::lock_guard<std::mutex> lock{ _mutex };
     
-    const int available = GetNumAvailable();
-    std::cout << "ADDING " << len << " into avail=" << available << std::endl;
+    const size_t available = GetNumAvailable();
+    //PRINT_NAMED_WARNING("WHATNOW", "ADDING %d into avail %zu", len, available);
     if( len > available ) {
       return 0;
     }
     
-    for( int i=0; i<len; ++i ) {
-      int idx = i + _head;
+    for( size_t i=0; i<len; ++i ) {
+      size_t idx = i + _head;
       if( idx < _actualSize ) {
         _buffer[ idx ] = data[i];
       }
@@ -84,9 +84,9 @@ public:
   unsigned char* ReadData(const unsigned int len, bool debug=false) {
     std::lock_guard<std::mutex> lock{ _mutex };
     
-    // there's some article about "doing it all wrong" for ring buffers, and I'm doing it here. todo: check that (+1 issue)
+    // there's some article somewhere about "doing it all wrong" for ring buffers, and I'm doing it here. todo: check that (+1 issue)
     if( debug ) {
-      PRINT_NAMED_WARNING("WHATNOW", "head=%d tail=%d, len=%d, isEmpty=%d, size=%d", _head, _tail, len, IsEmpty(), Size());
+      PRINT_NAMED_WARNING("WHATNOW", "head=%d tail=%d, len=%d, isEmpty=%d, isFull=%d, size=%d", _head, _tail, len, IsEmpty(), IsFull(), Size());
     }
     
     if( IsEmpty() ) {
@@ -100,7 +100,7 @@ public:
       }
     } else {
       // tail >= head (tail in front, possibly full)
-      if( len <= GetNumAvailable() ) {
+      if( len <= GetNumUsed() ) {//GetNumAvailable() ) {
         assert( len < _actualSize - _tail );
         return _buffer + _tail;
       } else {
@@ -115,22 +115,22 @@ public:
       return false;
     } else if( _head > _tail ) {
       if( len <= _head - _tail ) {
+        _full = false;//(len == (_head - _tail));
         _tail += len;
-        _full = (len == (_head - _tail));
         return true;
       } else {
         return false;
       }
     } else {
       // tail >= head (tail in front, possibly full)
-      int available = GetNumAvailable();
+      size_t available = GetNumAvailable();
       if( len <= available ) {
+        _full = false;
         assert( len < _actualSize - _tail );
         _tail += len;
         if( _tail >= _size ) {
           _tail = _tail % _size;
         }
-        _full = (len == available);
         return true;
       } else {
         return false;
@@ -138,7 +138,7 @@ public:
     }
   }
   
-  inline int Size() const { return GetNumUsed(); }
+  inline size_t Size() const { return GetNumUsed(); }
   
 private:
   
@@ -146,13 +146,16 @@ private:
   bool IsFull() const { return _full; }
   bool IsEmpty() const { return !_full && (_head == _tail); }
   
-  inline int GetNumAvailable() const {
+  inline size_t GetNumAvailable() const {
     return _size - GetNumUsed();
   }
   
-  int GetNumUsed() const {
+  size_t GetNumUsed() const {
     // mutex?
-    int used = _size;
+    if( IsEmpty() ) {
+      return 0;
+    }
+    size_t used = _size;
     if( !_full ) {
       if( _head >= _tail) {
         used = _head - _tail;
@@ -168,13 +171,13 @@ private:
   
   uint8_t* _buffer = nullptr;
   
-  int _head = 0;
-  int _tail = 0;
+  size_t _head = 0;
+  size_t _tail = 0;
   bool _full = false;
   
-  const int _size;
-  const int _maxReadSize;
-  const int _actualSize;
+  const size_t _size;
+  const size_t _maxReadSize;
+  const size_t _actualSize;
   
 };
 

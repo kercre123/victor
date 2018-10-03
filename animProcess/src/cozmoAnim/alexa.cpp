@@ -357,6 +357,11 @@ void Alexa::Init(const AnimContext* context)
   m_TTSSpeaker->Init(context);
   m_alertsSpeaker = std::make_shared<AlexaSpeaker>(avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_ALERTS_VOLUME, "Alerts", httpContentFetcherFactory);
   m_alertsSpeaker->Init(context);
+  m_audioSpeaker = std::make_shared<AlexaSpeaker>(avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
+                                                  "Audio",
+                                                  httpContentFetcherFactory);
+  m_audioSpeaker->Init(context);
+  
   
   //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
   
@@ -375,8 +380,10 @@ void Alexa::Init(const AnimContext* context)
     m_capabilitiesDelegate,
     m_TTSSpeaker,
     m_alertsSpeaker,
+    m_audioSpeaker,
     std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(m_TTSSpeaker),
-    std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(m_alertsSpeaker)
+    std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(m_alertsSpeaker),
+    std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(m_audioSpeaker)
   );
   
   if (!m_client) {
@@ -510,6 +517,9 @@ void Alexa::Update()
   if( m_alertsSpeaker != nullptr ) {
     m_alertsSpeaker->Update();
   }
+  if( m_audioSpeaker != nullptr ) {
+    m_audioSpeaker->Update();
+  }
 }
   
 void Alexa::ButtonPress()
@@ -584,7 +594,7 @@ void Alexa::onDialogUXStateChanged(avsCommon::sdkInterfaces::DialogUXStateObserv
       _uxState = UXState::Speaking;
       break;
   }
-  PRINT_NAMED_WARNING("WHATNOW", "new state=%d", (int) _uxState );
+  PRINT_NAMED_WARNING("WHATNOW", "new UXState=%d", (int) _uxState );
 }
   
 } // namespace Vector

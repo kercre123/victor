@@ -12,6 +12,9 @@
 #include "cozmoAnim/minimp3.h"
 #include "cozmoAnim/audioDataBuffer.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "util/fileUtils/fileUtils.h"
+
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
@@ -31,8 +34,8 @@ namespace Anki {
 namespace Vector{
   
   namespace {
-    constexpr int kAudioBufferSize = 1 << 16;
-    constexpr int kMaxReadSize = 4096;
+    constexpr int kAudioBufferSize = 1 << 18;
+    constexpr size_t kMaxReadSize = 8192;
     mp3dec_t mp3d;
     
     constexpr uint32_t kMinPlayableFrames = 10*8192;
@@ -77,6 +80,18 @@ void AlexaSpeaker::Init(const AnimContext* context)
   _audioController  = context->GetAudioController();
   
   mp3dec_init(&mp3d);
+  
+  const Util::Data::DataPlatform* platform = context->GetDataPlatform();
+  std::string saveFolder = platform->pathToResource( Util::Data::Scope::Cache, "" );
+  saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
+  for( int i=1; i<100; ++i ) {
+    std::string ss = saveFolder + "speaker_" + _name + std::to_string(i) + ".mp3";
+    PRINT_NAMED_WARNING("WHATNOW", "looking for file %s", ss.c_str());
+    if( Util::FileUtils::FileExists(ss) ) {
+      Util::FileUtils::DeleteFile( ss );
+      Util::FileUtils::DeleteFile( saveFolder + "speaker_" + _name + std::to_string(i) + ".pcm" );
+    }
+  }
 }
 
 void AlexaSpeaker::Update()
@@ -90,17 +105,12 @@ void AlexaSpeaker::Update()
   bool needsToPlay = false;
   {
     std::lock_guard<std::mutex> lock{ _mutex };
-    if( _state != State::Idle ) {
-      LOG("Update: %s", StateToString());
-    }
     
     if( _state == State::Playable ) {
       LOG("Update: needsToPlay");
       needsToPlay = true;
-      _state = State::Playing;
-    } else if ( _state == State::Preparing ) {
-      LOG("Update: still preparing");
-    }
+      SetState( State::Playing );
+    } 
   }
   
   if( needsToPlay ) {
@@ -114,13 +124,15 @@ void AlexaSpeaker::Update()
         event = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_01;
       } else if( _name == "Alerts" ) {
         event = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_02;
+      } else if( _name == "Audio" ) {
+        event = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_03;
       }
       const auto eventID = ToAudioEventId( event );
       auto* callbackContext = new AudioCallbackContext();
       callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
       callbackContext->SetExecuteAsync( true );
       callbackContext->SetEventCallbackFunc( [this]( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
-        PRINT_NAMED_ERROR("WHATNOW", "Audio finished streaming (callback)");
+        PRINT_NAMED_ERROR("WHATNOW", "Audio finished streaming (callback) %llu %hhu", callbackInfo.gameObjectId, callbackInfo.callbackType);
         CallOnPlaybackFinished( m_playingSource );
       });
 
@@ -137,7 +149,7 @@ void AlexaSpeaker::CallOnPlaybackFinished( SourceId id )
 {
   m_executor.submit([this, id]() {
     LOG("CallOnPlaybackFinished. Setting state=Idle");
-    _state = State::Idle;
+    SetState(State::Idle);
     for( auto& observer : m_observers ) {
       LOG( "calling onPlaybackFinished for source %d", (int)id);
       observer->onPlaybackFinished( id );
@@ -211,7 +223,7 @@ bool   AlexaSpeaker::play (SourceId id)
   //m_executor.submit([id, this]() {
   Util::Dispatch::Async(_dispatchQueue, [id, this](){
     LOG("Setting state=Preparing");
-    _state = State::Preparing;
+    SetState(State::Preparing);
     
     // this is buggy af. don't look
     
@@ -231,9 +243,11 @@ bool   AlexaSpeaker::play (SourceId id)
       int pluginID = kAlexaPluginId;
       if( _name == "Alerts" ) {
         ++pluginID;
+      } else if( _name == "Audio" ) {
+        pluginID += 2;
       }
       plugin->ClearAudioData( pluginID );
-      plugin->AddDataInstance(_waveData, kAlexaPluginId);
+      plugin->AddDataInstance(_waveData, pluginID);
     }
     
     _mp3Buffer->Reset();
@@ -241,7 +255,7 @@ bool   AlexaSpeaker::play (SourceId id)
     std::array<uint8_t,kMaxReadSize> input;
     
     int numBlocks = 0;
-    const int kMaxBlocks = 500;
+    const int kMaxBlocks = 10000;
     while( (_state == State::Preparing) || (_state == State::Playing) ) {
       
       if( !sent ) {
@@ -282,7 +296,11 @@ bool   AlexaSpeaker::play (SourceId id)
         if( readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK && ++numBlocks > kMaxBlocks ) {
           PRINT_NAMED_WARNING("WHATNOW", "Too many OK_WOULDBLOCK. Canceling");
           statusOK = false;
+        } else if( readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK ) {
+          // whatever
+          std::this_thread::sleep_for( std::chrono::milliseconds(50) );
         }
+        
       } else if( _sourceTypes[id] == SourceType::Stream ) {
         static std::vector<uint8_t> buffer;
         
@@ -290,10 +308,11 @@ bool   AlexaSpeaker::play (SourceId id)
         char firstChar = 0;
         m_sourceStreams[id]->get(firstChar);
         size_t available = m_sourceStreams[id]->rdbuf()->in_avail();
-        size_t size = std::min((size_t)kMaxReadSize - 2, available); // -2 for newline and null term
+        size_t size = std::min(kMaxReadSize - 2, available); // -2 for newline and null term
         if( size > 0 ) {
           input[0] = firstChar;
           m_sourceStreams[id]->read((char*)input.data() + 1, size);
+          // todo: dont add if full! curently we sleep instead
           _mp3Buffer->AddData( input.data(), size );
         }
         numRead = size;
@@ -307,16 +326,17 @@ bool   AlexaSpeaker::play (SourceId id)
       LOG( "flush=%d", flush);
       // decode everything in the buffer thus far, leaving perhaps something that wasnt a full mp3 frame
       const int timeDecoded_ms = Decode( _waveData, flush );
-      LOG( "decoded %d ms", timeDecoded_ms);
+      _offset_ms += timeDecoded_ms;
+      LOG( "decoded %d ms for a total offset %llu", timeDecoded_ms, _offset_ms);
       
       if (_fd < 0) {
-        const auto path = "/data/data/com.anki.victor/cache/speaker.mp3";
-        _fd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
+        const auto path = "/data/data/com.anki.victor/cache/speaker_" + _name + std::to_string(m_playingSource) + ".mp3";
+        _fd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644);
       }
       (void) write(_fd, input.data(), numRead * sizeof(uint8_t));
       
       const int sleepFor_ms = 0.3f * timeDecoded_ms;
-      _offset_ms += timeDecoded_ms;
+      
       if( !flush && sleepFor_ms > 0 ) {
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
@@ -337,7 +357,7 @@ bool   AlexaSpeaker::play (SourceId id)
     }
     
     SavePCM( nullptr );
-    _offset_ms = 0;
+    //_offset_ms = 0;
     //_mp3Buffer->Reset();
     
     {
@@ -345,10 +365,10 @@ bool   AlexaSpeaker::play (SourceId id)
     
       if( _state == State::Preparing ) {
         LOG( "done with loop, setting to Playable because was still preparing");
-        _state = State::Playable;
-      } else if( _state != State::Playable ) {
-        LOG( "done with loop, setting to Idle");
-        _state = State::Idle;
+        SetState(State::Playable);
+//      } else if( _state != State::Playable ) {
+//        LOG( "done with loop, setting to Idle");
+//        _state = State::Idle;
       }
     }
     
@@ -379,7 +399,7 @@ bool   AlexaSpeaker::play (SourceId id)
     
     //if( _state == State::Playing ) {
       LOG("Setting _state=Idle");
-    _state = State::Idle;
+    SetState(State::Idle);
     //}
     _offset_ms = 0;
     for( auto& observer : m_observers ) {
@@ -390,8 +410,14 @@ bool   AlexaSpeaker::play (SourceId id)
   return true;
 }
 
- bool   AlexaSpeaker::pause (SourceId id)  {
+bool   AlexaSpeaker::pause (SourceId id)  {
   LOG( " speaker pause");
+  if( _sourceTypes.find( id ) == _sourceTypes.end() ) {
+    return false;
+  }
+  if( _state == State::Idle ) {
+    return false;
+  }
   
   m_executor.submit([id, this]() {
     for( auto& observer : m_observers ) {
@@ -402,8 +428,15 @@ bool   AlexaSpeaker::play (SourceId id)
   return true;
 }
 
- bool   AlexaSpeaker::resume (SourceId id)  {
+bool AlexaSpeaker::resume (SourceId id)  {
   LOG( " speaker resume");
+  
+  if( _sourceTypes.find( id ) == _sourceTypes.end() ) {
+    return false;
+  }
+  if( _state != State::Idle ) {
+    return false;
+  }
   
   m_executor.submit([id, this]() {
     for( auto& observer : m_observers ) {
@@ -441,12 +474,18 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
   
   while( true ) {
     
-    const int buffSize = flush ? _mp3Buffer->Size() : kMaxReadSize;
-    unsigned char* inputBuff = _mp3Buffer->ReadData(buffSize, flush);
+    int buffSize;
+    if( flush ) {
+      buffSize = _mp3Buffer->Size();
+    } else {
+      buffSize = kMaxReadSize; // doing a min causes clipping //std::min(_mp3Buffer->Size(), kMaxReadSize);
+    }
+    const bool debugRead = flush;
+    unsigned char* inputBuff = _mp3Buffer->ReadData(buffSize, debugRead);
     
     if( buffSize == 0 || inputBuff == nullptr ) {
       // need to wait for more data
-      LOG( "Needs more data (%s)", StateToString() );
+      LOG( "Needs more data (%s) for size %d (actual size=%d)", StateToString(), buffSize, _mp3Buffer->Size() );
       break;
     }
     
@@ -454,6 +493,7 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
     //std::cout << "samples=" << samples << ", frame_bytes=" << info.frame_bytes << std::endl;
     int consumed = info.frame_bytes;
     if( info.frame_bytes > 0  ) {
+      //LOG( "Advancing cursor by %d", consumed);
       bool success = _mp3Buffer->AdvanceCursor( consumed );
       ANKI_VERIFY(success, "WHATNOW", "Could not advance by %d", consumed);
       
@@ -501,7 +541,7 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
           //LOG( "LOOP: decoded. available frames=%d. decoded %d ms, state=%s", numFrames, (int)millis_decoded, StateToString());
           if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
             LOG("Setting state=Playable");
-            _state = State::Playable;
+            SetState(State::Playable);
           }
         }
 
@@ -540,8 +580,8 @@ void AlexaSpeaker::SavePCM( short* buff, size_t size )
   //LOG( "saving pcm size=%zu", size);
   static int pcmfd = -1;
   if (pcmfd < 0) {
-    const auto path = "/data/data/com.anki.victor/cache/speaker.pcm";
-    pcmfd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
+    const auto path = "/data/data/com.anki.victor/cache/speaker_" + _name + std::to_string(m_playingSource) + ".pcm";
+    pcmfd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644);
   }
   
   if( size > 0 && (buff != nullptr) ) {
@@ -598,6 +638,13 @@ bool AlexaSpeaker::setMute (bool mute)
 void AlexaSpeaker::onError ()
 {
   LOG("An error occurred in the streaming of content");
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaSpeaker::SetState( State state )
+{
+  _state = state;
+  LOG("Update: %s", StateToString());
 }
   
 } // namespace Vector

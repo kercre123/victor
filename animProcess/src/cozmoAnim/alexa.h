@@ -71,6 +71,7 @@ private:
   
   std::shared_ptr<AlexaSpeaker> m_TTSSpeaker;
   std::shared_ptr<AlexaSpeaker> m_alertsSpeaker;
+  std::shared_ptr<AlexaSpeaker> m_audioSpeaker;
 };
 
 
