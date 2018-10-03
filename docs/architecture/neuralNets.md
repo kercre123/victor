@@ -6,7 +6,7 @@
   - NeuralNetRunner is a sub-component of the VisionSystem which communicates with the underlying NeuralNetModel and abstracts away the additional level of asynchrony from the engine's point of view.
   - We have wrappers for OpenCV's DNN module (deprecated), TensorFlow, and TensorFlow Lite (TFLite). TFLite is the current default.
   - We have our own ["private fork" of TensorFlow](https://github.com/anki/tensorflow), which has an `anki` branch with an `anki` subdirectory containing our special build scripts (e.g. for building a `vicos`-compatible version of TensorFlow / TFLite).
-* Parameters of the underlying network model are configured in their own section of `vision_config.json`
+* Parameters of the underlying network model are configured in their own section of [`vision_config.json`](/resources/config/engine/vision_config.json)
 * NeuralNets return instances of SalientPoints, which are centroids of "interesting" things in an image, with some associated information (like confidence, shape/bounding box, and type). These are stored in the SalientPointComponent in the engine, for the behaviors to check and act upon.
 
 ---
@@ -25,7 +25,7 @@ See also the [Rock, Paper Scissors project from the 2018 R&D Sprint](https://ank
 
 ### Model Parameters
 
-In the "NeuralNets" field of `vision_config.json`, you can specify several parameters of the model you want to load. See NeuralNetParams for additional info beyond the following.
+In the "NeuralNets" field of [`vision_config.json`](/resources/config/engine/vision_config.json), you can specify several parameters of the model you want to load. See NeuralNetParams for additional info beyond the following.
 
 * `graphFile` - The graph representing the model you want to load, assumed to be in `resources/config/engine/vision/dnn_models` (see also the next section about model storage).
   - `<filename.{pb|tflite}>` will load a TensorFlow (Lite) model stored in a Google protobuf file

@@ -187,6 +187,6 @@ to get:
 
 ### Why did I get a 915 error?
 
-  - There is a client/server connection between `vic-engine` and `vic-anim` through `LocalUdpServer.cpp` and `LocalUdpClient.cpp` and sockets `/dev/socket/_engine_anim_server_0` and `/dev/socket/_engine_anim_client_0`
+  - There is a client/server connection between `vic-engine` and `vic-anim` through [`LocalUdpServer.cpp`](/coretech/messaging/shared/LocalUdpServer.cpp) and [`LocalUdpClient.cpp`](/coretech/messaging/shared/LocalUdpClient.cpp) and sockets `/dev/socket/_engine_anim_server_0` and `/dev/socket/_engine_anim_client_0`
   - `vic-engine` sends enough data to `vic-anim` that it fills the queue (256KB) which causes function `LocalUdpClient.Send` to get a `Resource temporarily unavailable` error from the socket which in turn disconnects. All future attempts to send from `vic-engine` fail.
   - `vic-anim` tries to send to `vic-engine` but the function `LocalUdpServer.Send` gets a `Connection refused` because it was disconnected, `vic-anim` also disconnects and issues a 915 error.

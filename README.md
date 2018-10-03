@@ -158,7 +158,7 @@ If your robot is >= 0.9.1 then it has a built-in ssh key. To interact with the r
 
     If you still get an `ssh` error that says "Too many authentication failures", try adding `IdentitiesOnly=yes` to the above entry.
 
-1. Build, deploy, and run commands as normal (See []()). You can specify the target robot with `-s` on most of the deploy and run commands or you can set the `ANKI_ROBOT_HOST` environment variable in your shell to a default host.
+1. Build, deploy, and run commands as normal. You can specify the target robot with `-s` on most of the deploy and run commands or you can set the `ANKI_ROBOT_HOST` environment variable in your shell to a default host.
 
     ```
     export ANKI_ROBOT_HOST="<ip address>"
