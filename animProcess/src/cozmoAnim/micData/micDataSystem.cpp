@@ -338,6 +338,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     newJob->EnableDataCollect(MicDataType::Processed, true);
     newJob->EnableDataCollect(MicDataType::Raw, true);
     newJob->SetTimeToRecord(kMicData_ClipRecordTime_ms);
+    newJob->SetAudioFadeInTime(MicDataInfo::kDefaultAudioFadeIn_ms);
 
     {
       std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
