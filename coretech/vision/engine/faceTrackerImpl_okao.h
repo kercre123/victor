@@ -52,7 +52,6 @@ namespace Vision {
          const Json::Value&   config);
     ~Impl();
 
-    /*    
     void SetRecognitionIsSynchronous(bool isSynchronous);
     
     Result Update(const Vision::Image&        frameOrig,
@@ -107,7 +106,6 @@ namespace Vision {
     Result SetSerializedData(const std::vector<u8>& albumData,
                              const std::vector<u8>& enrollData,
                              std::list<LoadedKnownFace>& loadedFaces);
-  */
   private:
     
     // Creates new face detectors using current parameters

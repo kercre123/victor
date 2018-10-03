@@ -11,7 +11,7 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#if 1
+#if FACE_TRACKER_PROVIDER == FACE_TRACKER_OKAO
 
 #include <unistd.h>
 

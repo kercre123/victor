@@ -34,8 +34,7 @@ FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
 #  include "faceTrackerImpl_facesdk.h"
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OKAO
-//#  include "faceTrackerImpl_okao.h"
-#  include "faceTrackerImpl_test.h"
+#  include "faceTrackerImpl_okao.h"
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
 #  include "faceTrackerImpl_opencv.h"
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_TEST
