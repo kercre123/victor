@@ -26,6 +26,7 @@ enum uint_16 BehaviorID {
   DevImageCapture,
   DevImageCapture_PetsAndHands,
   DevPlannerTest,
+  DevSquawkBoxTest,
   DevTestBlackjackViz,
   DevTestConnectToCube,
   DevTestPersonDetectorBehavior,
