@@ -43,7 +43,7 @@ The Program
 
 1. Please find your robot serial number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.
 
-2. To run the program, using the same Terminal (macOS/Linux) / Command Prompt (Windows) window mentioned above: 
+2. Run the program using the same Terminal (macOS/Linux) / Command Prompt (Windows) window mentioned above: 
 
 First, change to the ``tutorials`` sub-directory of the ``examples`` directory.
 

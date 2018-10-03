@@ -19,7 +19,7 @@ This guide provides instructions on installing the Vector SDK for computers runn
 
 .. warning:: The Vector SDK is tested and and supported on Ubuntu 16.04 and 18.04. Anki makes no guarantee the Vector SDK will work on other versions of Linux.  If you wish to try the Vector SDK on versions of Linux *other than* Ubuntu 14.04 or 16.04, please ensure the following dependencies are installed:
 
-  * Python 3.5.1 or later
+  * Python 3.6.1 or later
   * pip for Python 3 (Python package installer)
 
 
@@ -52,8 +52,6 @@ SDK Installation
 To install the SDK, type the following into the Terminal window::
 
     pip3 install --user vector-0.4-py3-none-any.whl
-
-Note that the [camera] option adds support for processing images from Vector's camera.
 
 ^^^^^^^^^^^^^^^^^^^^^
 Vector Authentication

@@ -38,8 +38,6 @@ To install the SDK, type the following into the Terminal window::
     cd vector-sdk
     pip3 install --user vector-0.4-py3-none-any.whl
 
-Note that the [camera] option adds support for processing images from Cozmo's camera.
-
 ^^^^^^^^^^^^^^^^^^^^^
 Vector Authentication
 ^^^^^^^^^^^^^^^^^^^^^

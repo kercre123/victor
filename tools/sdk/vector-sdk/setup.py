@@ -4,16 +4,15 @@
 Vector SDK, by Anki.
 
 Requirements:
-    * Python 3.5.1 or later
+    * Python 3.6.1 or later
 """
 
 import os.path
 import sys
 from setuptools import setup
 
-# TODO update the next two lines of Python min version info
-if sys.version_info < (3, 5, 1):
-    sys.exit('The Anki Vector SDK requires Python 3.5.1 or later')
+if sys.version_info < (3, 6, 1):
+    sys.exit('The Anki Vector SDK requires Python 3.6.1 or later')
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -50,7 +49,7 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries',
         'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3.5', # TODO update this version?
+        'Programming Language :: Python :: 3.6',
     ],
     zip_safe=True,
     keywords='anki vector robot robotics sdk'.split(),

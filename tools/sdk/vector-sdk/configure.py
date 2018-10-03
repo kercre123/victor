@@ -147,8 +147,8 @@ def get_name_and_ip():
     print("Using robot name: {}".format(colored(robot_name, "cyan")))
     ip = os.environ.get('ANKI_ROBOT_HOST')
     if ip is None or len(ip) == 0:
-        print("\n\nFind your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, double clicking Vector's backpack button, then raising and lowering his arms.\n"
-              "If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
+        print("\n\nFind your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, double clicking Vector's backpack button,\n"
+              "then raising and lowering his arms. If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
         ip = input("Enter robot ip: ")
     else:
         print("Found robot ip address in environment variable '{}'".format(colored("ANKI_ROBOT_HOST", "green")))

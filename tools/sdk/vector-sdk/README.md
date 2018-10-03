@@ -10,7 +10,7 @@ Before connecting, you will need:
 
 These will be needed to run the configure.py script and set up authentication with your Vector.
 
-Your device must have Python 3.6 installed. Please see the documentation pages mentioned below for instructions to install Python.
+Your device must have Python 3.6.1 installed. Please see the documentation pages mentioned below for instructions to install Python.
 
 
 ---
