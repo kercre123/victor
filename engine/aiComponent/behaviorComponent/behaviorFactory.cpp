@@ -123,6 +123,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPlacedOnSlope.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPutDown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnBack.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
@@ -856,6 +857,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToPlacedOnSlope:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPlacedOnSlope(config));
+      break;
+    }
+      
+    case BehaviorClass::ReactToPutDown:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPutDown(config));
       break;
     }
     
