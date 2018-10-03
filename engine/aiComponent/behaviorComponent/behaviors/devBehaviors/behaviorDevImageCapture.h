@@ -15,6 +15,7 @@
 
 #include "coretech/vision/engine/imageCache.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/imageTypes.h"
 
 #include <list>
 
@@ -52,7 +53,12 @@ private:
     Vision::ImageCache::Size  imageSaveSize;
     bool                      useCapTouch;
     bool                      saveSensorData;
-
+    bool                      useShutterSound;
+    s32                       numImagesPerCapture;
+    std::pair<f32,f32>        distanceRange_mm;
+    std::pair<f32,f32>        headAngleRange_rad;
+    std::pair<f32,f32>        bodyAngleRange_rad;
+    
     std::list<std::string> classNames;
     std::list<VisionMode>  visionModesBesidesSaving;
   };
@@ -67,6 +73,8 @@ private:
 
     bool  isStreaming;
     bool  wasLiftUp;
+    
+    s32   imagesSaved;
 
     std::list<std::string>::const_iterator currentClassIter;
   };
@@ -78,6 +86,8 @@ private:
   std::string GetSavePath() const;
   void SwitchToNextClass();
 
+  void SaveImages(const ImageSendMode sendMode);
+  void MoveToNewPose();
 };
 
 } // namespace Vector

@@ -24,6 +24,7 @@ enum uint_16 BehaviorID {
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,
   DevImageCapture,
+  DevImageCapture_PetsAndHands,
   DevPlannerTest,
   DevTestBlackjackViz,
   DevTestConnectToCube,
