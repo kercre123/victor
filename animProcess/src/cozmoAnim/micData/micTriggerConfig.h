@@ -38,9 +38,11 @@ public:
   bool Init(const Json::Value& initData);
 
   enum class ModelType {
-    size_1mb,
+    size_1mb=0,
     size_500kb,
     size_250kb,
+    ALEXAsize_1mb,
+    ALEXAsize_500kb,
     Count
   };
 

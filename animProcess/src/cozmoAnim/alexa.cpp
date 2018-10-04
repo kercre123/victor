@@ -1,10 +1,7 @@
 //Intentional build error so you read the below build instructions:
 /*
  1) either build the coretech branch ross/add-AVS and copy the libraries to EXTERNALS/build, or obtain the necessary libraries from ross or jordan and put them there
- 2) Still in EXTERNALS, copy the "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b" directory into "hey_vector/alexa", then in "alexa",
- replace anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18 and anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am
- with the alexa versions (obtain from ross or jordan), keeping the same filename. In the _build directory and its subdirectories, delete any current .raw files
- so that cmake definitely recopies them when you build -f.
+ 2) <removed>
  3) IMPORTANT: In the json in the top of this file, change the deviceSerialNumber to something else
  4) Build and deploy, then start the robot in DevDoNothing. I've been using the following filter:
        victor_log | grep "WHATNOW\|ALEXA\|vic-anim: 2018\|starved"

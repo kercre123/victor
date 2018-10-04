@@ -24,6 +24,8 @@ namespace {
     "size_1mb",
     "size_500kb",
     "size_250kb",
+    "ALEXAsize_1mb",
+    "ALEXAsize_500kb",
     "INVALID"
   };
   constexpr auto kNumModelTypeStrings = sizeof(kModelTypeStrings)/sizeof(kModelTypeStrings[0]);

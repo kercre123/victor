@@ -681,7 +681,9 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
 {
   _locale = newLocale;
-  _micDataProcessor->UpdateTriggerForLocale(newLocale);
+  // this would override whatever console var sets, so just comment out for now
+//  _micDataProcessor->UpdateTriggerForLocale(newLocale, true, MicTriggerConfig::ModelType::ALEXAsize_1mb);
+//  _micDataProcessor->UpdateTriggerForLocale(newLocale, false, MicTriggerConfig::ModelType::size_1mb);
 }
 
 bool MicDataSystem::IsSpeakerPlayingAudio() const
