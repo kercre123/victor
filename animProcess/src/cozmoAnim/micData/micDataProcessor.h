@@ -88,6 +88,7 @@ public:
 
   // Note 'Count' and '-1' values indicate to use default
   void UpdateTriggerForLocale(Util::Locale newLocale,
+                              bool isAlexa,
                               MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
                               int searchFileIndex = -1);
 
@@ -175,8 +176,10 @@ private:
   std::unique_ptr<BeatDetector> _beatDetector;
 
   // For tracking and altering the trigger model being used
-  MicTriggerConfig::TriggerDataPaths _currentTriggerPaths;
-  MicTriggerConfig::TriggerDataPaths _nextTriggerPaths;
+  MicTriggerConfig::TriggerDataPaths _currentTriggerPathsVector;
+  MicTriggerConfig::TriggerDataPaths _nextTriggerPathsVector;
+  MicTriggerConfig::TriggerDataPaths _currentTriggerPathsAlexa;
+  MicTriggerConfig::TriggerDataPaths _nextTriggerPathsAlexa;
   std::mutex _triggerModelMutex;
   
   std::unique_ptr<Alexa> _alexa;

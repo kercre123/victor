@@ -86,7 +86,7 @@ void AlexaSpeaker::Init(const AnimContext* context)
   saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
   for( int i=1; i<100; ++i ) {
     std::string ss = saveFolder + "speaker_" + _name + std::to_string(i) + ".mp3";
-    PRINT_NAMED_WARNING("WHATNOW", "looking for file %s", ss.c_str());
+    //PRINT_NAMED_WARNING("WHATNOW", "looking for file %s", ss.c_str());
     if( Util::FileUtils::FileExists(ss) ) {
       Util::FileUtils::DeleteFile( ss );
       Util::FileUtils::DeleteFile( saveFolder + "speaker_" + _name + std::to_string(i) + ".pcm" );

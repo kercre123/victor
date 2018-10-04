@@ -209,6 +209,13 @@ for feature in ${FEATURES} ; do
   esac
 done
 
+# copy dev wake words 
+unzip -o -q $TOPLEVEL/thfft_alexa_a_enus_v3_1mb.zip -d $TOPLEVEL/EXTERNALS/anki-thirdparty/sensory/hey_vector/
+unzip -o -q $TOPLEVEL/thfft_alexa_enus_v3_500kb.zip -d $TOPLEVEL/EXTERNALS/anki-thirdparty/sensory/hey_vector/
+# not sure if this is necessary, but this lib definitely works with both wake words. it's the one from svn 
+# under the linux directory, not no_expire
+cp $TOPLEVEL/libthf.a.library $TOPLEVEL/EXTERNALS/anki-thirdparty/sensory/TrulyHandsfreeSDK/4.4.23_noexpire/linux/arm-linux-gnueabi/lib/libthf.a
+
 #
 # Get short commit sha
 #
