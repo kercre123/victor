@@ -1436,12 +1436,19 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
   
 void FaceInfoScreenManager::EnableMirrorModeScreen(bool enable)
 {
-  if (enable && GetCurrScreenName() != ScreenName::MirrorMode) {
-    LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Enable", "");
-    SetScreen(ScreenName::MirrorMode);
-  } else if (!enable && GetCurrScreenName() == ScreenName::MirrorMode) {
-    LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Disable", "");
-    SetScreen(ScreenName::None);
+  // As long as we're not in a screen that's already doing mirror mode
+  // don't jump to the mirror mode screen
+  if (GetCurrScreenName() != ScreenName::Camera && 
+      GetCurrScreenName() != ScreenName::CameraMotorTest) {  
+
+    if (enable && GetCurrScreenName() != ScreenName::MirrorMode) {
+      LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Enable", "");
+      SetScreen(ScreenName::MirrorMode);
+    } else if (!enable && GetCurrScreenName() == ScreenName::MirrorMode) {
+      LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Disable", "");
+      SetScreen(ScreenName::None);
+    }
+    
   }
 }
 
