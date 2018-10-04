@@ -34,10 +34,10 @@ static const f32 MinDistBetweenEyes_pixels = 6;
 CONSOLE_VAR(s32, kNumberOfFramesBeforeUpdatedFace,         "Vision.FaceTracker",  200);
 
 // This is the delay for the detection of faces, when not enrolling
-CONSOLE_VAR(s32, kFaceDetectionDelay_us,                   "Vision.FaceTracker",  100*1000);
+CONSOLE_VAR(s32, kFaceDetectionDelay_ms,                   "Vision.FaceTracker",  100);
 
 // This is the delay for the detection of faces, when enrolling 
-CONSOLE_VAR(s32, kFaceDetectionDelayDuringEnrollment_us,    "Vision.FaceTracker",  1000*1000);
+CONSOLE_VAR(s32, kFaceDetectionDelayDuringEnrollment_ms,    "Vision.FaceTracker",  1000);
 
 // The minimum number of recognition frames needed before an enrollment completes
 CONSOLE_VAR(s32, kFramesToCompleteEnrollment,               "Vision.FaceTracker",  50);
@@ -49,7 +49,7 @@ CONSOLE_VAR(s32, kFramesToLoseFaceAfterEnrollment,          "Vision.FaceTracker"
 // it assumes that the OKAO implementation is running in synchronous mode. For the
 // situations we are trying to test here we probably don't care about the synchorous
 // use case.
-CONSOLE_VAR(s32, kFaceRecognitionDelay_us,                  "Vision.FaceTracker",  0);
+CONSOLE_VAR(s32, kFaceRecognitionDelay_ms,                  "Vision.FaceTracker",  0);
 
 FaceTracker::Impl::Impl(const Camera&        camera,
                          const std::string&   modelPath,
@@ -71,11 +71,11 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
   // depending on whether we are enrolling or not.
   if (_startedEnrolling)
   {
-    usleep(kFaceDetectionDelayDuringEnrollment_us);
+    usleep(kFaceDetectionDelayDuringEnrollment_ms*1000);
   }
   else
   {
-    usleep(kFaceDetectionDelay_us);
+    usleep(kFaceDetectionDelay_ms*1000);
   }
 
   // Check if we should just quit to simulate "losing" the face.
@@ -92,11 +92,17 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
   const s32 nWidth  = frameOrig.GetNumCols();
   const s32 nHeight = frameOrig.GetNumRows();
 
+  const s32 detectRectWidth = 100;
+  const s32 detectRectHeight = 100;
+
   TrackedFace& face = faces.back();
   face.SetIsBeingTracked(true);
 
   // Center the face so the robot doesn't keep trying to turn towards it.
-  face.SetRect(Rectangle<f32>(.45, .45, .1, .1));
+  face.SetRect(Rectangle<f32>(nWidth / 2 - (detectRectWidth / 2),
+                              nHeight / 2 - (detectRectHeight / 2),
+                              detectRectWidth,
+                              detectRectHeight));
 
   face.SetTimeStamp(frameOrig.GetTimestamp());
 
@@ -124,7 +130,7 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
   {
     // This is the delay specific to recognition. This wasn't the most useful
     // knob to turn for turn for testing with behavior enroll face.
-    usleep(kFaceRecognitionDelay_us);
+    usleep(kFaceRecognitionDelay_ms*1000);
 
     // The more useful bit with testing enrollment was to vary when the
     // enrollment is completed, this happens below.
@@ -168,7 +174,7 @@ void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
   }
 }
 
-// TODO this is duplicated code but isn't compiled in from the OKAO implemnetation,
+// TODO this is duplicated code but isn't compiled in from the OKAO implementation,
 // eventually we should move this some place where it isn't duplicated.
 static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,
                             const CameraCalibration& scaledCalib)
@@ -187,7 +193,7 @@ static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, con
   return ray;
 }
 
-// TODO same as above this is duplicated code but isn't compiled in from the OKAO implemnetation,
+// TODO same as above this is duplicated code but isn't compiled in from the OKAO implementation,
 // eventually we should move to some place where it isn't duplicated.
 Result FaceTracker::Impl::SetFacePoseWithoutParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist)
 {
