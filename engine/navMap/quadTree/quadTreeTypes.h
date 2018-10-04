@@ -31,6 +31,10 @@ namespace QuadTreeTypes {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
+  
+using NodeCPtr       = std::shared_ptr<const QuadTreeNode>;
+using NodeCPtrVector = std::vector<NodeCPtr>;  
+
 
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
@@ -107,23 +111,11 @@ enum class EQuadrant : uint8_t {
 };
 
 // movement direction
-enum class EDirection { North, East, South, West, Invalid };
-
-// rotation direction
-enum EClockDirection { CW, CCW };
+enum class EDirection { North, East, South, West };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-// return the opposite direction to the one given (eg: North vs South, West vs East)
-inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);
-
-// return the opposite clock direction to the one given (eg: CW vs CCW)
-inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir);
-
-// iterate directions in the specified rotation/clock direction
-inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir );
 
 // EDirection to String
 const char* EDirectionToString(EDirection dir);
@@ -131,30 +123,24 @@ const char* EDirectionToString(EDirection dir);
 // EDirection to Vec3f
 Vec3f EDirectionToNormalVec3f(EDirection dir);
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
+constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
 {
-  const EDirection ret = (EDirection)(((std::underlying_type<EDirection>::type)dir + 2) % 4);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir)
-{
-  const EClockDirection ret = (dir == EClockDirection::CW) ? EClockDirection::CCW : EClockDirection::CW;
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir )
-{
-  EDirection next;
-  if ( iterationDir == EClockDirection::CW ) {
-    next = (EDirection)(((std::underlying_type<EClockDirection>::type)dir + 1) % 4);
-  } else {
-    next = dir == EDirection::North ? EDirection::South : (EDirection)((std::underlying_type<EClockDirection>::type)dir-1);
+  switch (dir) {
+    case EDirection::North:
+    case EDirection::South: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 2); };
+    case EDirection::East:    
+    case EDirection::West:  { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 1); };
   }
-  return next;
+}
+
+constexpr bool IsSibling(EQuadrant from, EDirection dir)
+{
+  switch (dir) {
+    case EDirection::North: { return  ((std::underlying_type<EQuadrant>::type)from & 0b10); }
+    case EDirection::South: { return !((std::underlying_type<EQuadrant>::type)from & 0b10); }
+    case EDirection::East:  { return !((std::underlying_type<EQuadrant>::type)from & 0b01); }
+    case EDirection::West:  { return  ((std::underlying_type<EQuadrant>::type)from & 0b01); }
+  }
 }
 
 } // namespace

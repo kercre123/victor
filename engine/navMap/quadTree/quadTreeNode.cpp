@@ -32,7 +32,7 @@ static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was 
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent)
+QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent)
 : _center(center)
 , _sideLen(sideLength)
 , _boundingBox(center - Point3f(sideLength/2, sideLength/2, 0), center + Point3f(sideLength/2, sideLength/2, 0))
@@ -134,7 +134,7 @@ void QuadTreeNode::ForceSetDetectedContentType(const MemoryMapDataPtr newData, Q
   if ( typeChanged ) {
     // we no longer check if if the type changes from Invalid or Subdivided in the processor, 
     // so we should move the check here.
-    processor.OnNodeContentTypeChanged(this, oldContentType, wasEmptyType);
+    processor.OnNodeContentTypeChanged( shared_from_this(), oldContentType, wasEmptyType);
   }
 }
 
@@ -170,162 +170,59 @@ void QuadTreeNode::DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& proces
     // destroying its children
     DestroyNodes( node->_childrenPtr, processor );
     // and then itself
-    processor.OnNodeDestroyed( node.get() );
+    processor.OnNodeDestroyed( std::const_pointer_cast<const QuadTreeNode>(node) );
     node.reset();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const QuadTreeNode::MoveInfo* QuadTreeNode::GetDestination(EQuadrant from, EDirection direction)
+Util::Maybe<QuadTreeNode::NodeCPtr> QuadTreeNode::GetChild(EQuadrant quadrant) const
 {
-  static MoveInfo quadrantAndDirection[4][4] =
-  {
-    {
-    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::North]  =*/ {EQuadrant::MinusXPlusY , false},
-    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::East ]  =*/ {EQuadrant::PlusXMinusY, true },
-    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::South]  =*/ {EQuadrant::MinusXPlusY , true },
-    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::West ]  =*/ {EQuadrant::PlusXMinusY, false}
-    },
-
-    {
-    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::North] =*/ {EQuadrant::MinusXMinusY, false},
-    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::East ] =*/ {EQuadrant::PlusXPlusY , false},
-    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::South] =*/ {EQuadrant::MinusXMinusY, true},
-    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::West ] =*/ {EQuadrant::PlusXPlusY , true}
-    },
-
-    {
-    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::North]  =*/ {EQuadrant::PlusXPlusY , true},
-    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::East ]  =*/ {EQuadrant::MinusXMinusY, true},
-    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::South]  =*/ {EQuadrant::PlusXPlusY , false},
-    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::West ]  =*/ {EQuadrant::MinusXMinusY, false}
-    },
-
-    {
-    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::North] =*/ {EQuadrant::PlusXMinusY, true},
-    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::East ] =*/ {EQuadrant::MinusXPlusY , false},
-    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::South] =*/ {EQuadrant::PlusXMinusY, false},
-    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::West ] =*/ {EQuadrant::MinusXPlusY , true}
-    }
-  };
-  
-  DEV_ASSERT(from <= EQuadrant::Root, "QuadTreeNode.GetDestination.InvalidQuadrant");
-  DEV_ASSERT(direction <= EDirection::West, "QuadTreeNode.GetDestination.InvalidDirection");
-  
-  // root can't move, for any other, apply the table
-  const size_t fromIdx = std::underlying_type<EQuadrant>::type( from );
-  const size_t dirIdx  = std::underlying_type<EDirection>::type( direction );
-  const MoveInfo* ret = ( from == EQuadrant::Root ) ? nullptr : &quadrantAndDirection[fromIdx][dirIdx];
-  return ret;
+  if ( IsSubdivided() ) {
+    return std::const_pointer_cast<const QuadTreeNode>( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant] );
+  }
+  return {};
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const QuadTreeNode* QuadTreeNode::GetChild(EQuadrant quadrant) const
-{
-  const QuadTreeNode* ret =
-    ( _childrenPtr.empty() ) ?
-    ( nullptr ) :
-    ( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant].get() );
-  return ret;
-}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& descendants) const
+void QuadTreeNode::AddSmallestDescendants(EDirection direction, NodeCPtrVector& descendants) const
 {
   if ( !IsSubdivided() ) {
-    descendants.push_back( this );
+    descendants.emplace_back( this );
   } else {
-  
-    // depending on CW vs CCW, we iterate children in opposite orders
-    const bool isCW = iterationDirection == EClockDirection::CW;
-    EQuadrant firstChild = EQuadrant::Invalid;
-    EQuadrant secondChild = EQuadrant::Invalid;
-  
-    switch (direction) {
-      case EDirection::North:
-      {
-        firstChild  = isCW ? EQuadrant::PlusXPlusY  : EQuadrant::PlusXMinusY;
-        secondChild = isCW ? EQuadrant::PlusXMinusY : EQuadrant::PlusXPlusY;
-      }
-      break;
-      case EDirection::East:
-      {
-        firstChild  = isCW ? EQuadrant::PlusXMinusY : EQuadrant::MinusXMinusY;
-        secondChild = isCW ? EQuadrant::MinusXMinusY : EQuadrant::PlusXMinusY;
-      }
-      break;
-      case EDirection::South:
-      {
-        firstChild  = isCW ? EQuadrant::MinusXMinusY : EQuadrant::MinusXPlusY;
-        secondChild = isCW ? EQuadrant::MinusXPlusY  : EQuadrant::MinusXMinusY;
-      }
-      break;
-      case EDirection::West:
-      {
-        firstChild  = isCW ? EQuadrant::MinusXPlusY : EQuadrant::PlusXPlusY;
-        secondChild = isCW ? EQuadrant::PlusXPlusY : EQuadrant::MinusXPlusY;
-      }
-      break;
-      case EDirection::Invalid:
-      {
-        DEV_ASSERT(false, "QuadTreeNode.AddSmallDescendants.InvalidDirection");
-      }
+    for (const auto& child : _childrenPtr) {
+      if(!IsSibling(child->_quadrant, direction)) { child->AddSmallestDescendants(direction, descendants); };
     }
-    
-    DEV_ASSERT(firstChild != EQuadrant::Invalid, "QuadTreeNode.AddSmallDescendants.InvalidFirstChild");
-    DEV_ASSERT(secondChild != EQuadrant::Invalid, "QuadTreeNode.AddSmallDescendants.InvalidSecondChild");
-    
-    _childrenPtr[(std::underlying_type<EQuadrant>::type)firstChild ]->AddSmallestDescendants(direction, iterationDirection, descendants);
-    _childrenPtr[(std::underlying_type<EQuadrant>::type)secondChild]->AddSmallestDescendants(direction, iterationDirection, descendants);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const QuadTreeNode* QuadTreeNode::FindSingleNeighbor(EDirection direction) const
+Util::Maybe<QuadTreeNode::NodeCPtr> QuadTreeNode::FindSingleNeighbor(EDirection direction) const
 {
-  const QuadTreeNode* neighbor = nullptr;
+  EQuadrant destination = GetQuadrantInDirection(_quadrant, direction);
+  // if stepping in the current direction keeps us under the same parent node
+  if ( IsSibling(_quadrant, direction) ) {
+    return _parent.bind([&](auto node) { return node->GetChild( destination ); } );
+  } 
 
-  // find where we land by moving in that direction
-  const MoveInfo* moveInfo = GetDestination(_quadrant, direction);
-  if ( moveInfo != nullptr )
-  {
-    // check if it's the same parent
-    if ( moveInfo->sharesParent )
-    {
-      // if so, it's a sibling
-      DEV_ASSERT(_parent, "QuadTreeNode.FindSingleNeighbor.InvalidParent");
-      neighbor = _parent->GetChild( moveInfo->neighborQuadrant );
-      DEV_ASSERT(neighbor, "QuadTreeNode.FindSingleNeighbor.InvalidNeighbor");
-    }
-    else
-    {
-      // otherwise, find our parent's neighbor and get the proper child that would be next to us
-      // note our parent can return null if we are on the border
-      const QuadTreeNode* parentNeighbor = _parent->FindSingleNeighbor(direction);
-      neighbor = parentNeighbor ? parentNeighbor->GetChild( moveInfo->neighborQuadrant ) : nullptr;
-      // if the parentNeighbor was not subdivided, then he is our neighbor
-      neighbor = neighbor ? neighbor : parentNeighbor;
-    }
-  }
-  
-  return neighbor;
+  Util::Maybe<NodeCPtr> parentNeighbor = _parent.bind([&](auto node) { return node->FindSingleNeighbor( direction ); } );
+  Util::Maybe<NodeCPtr> directNeighbor = parentNeighbor.bind( [&](auto node) { return node->GetChild( destination ); });
+  return directNeighbor.Or(parentNeighbor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::AddSmallestNeighbors(EDirection direction,
-  EClockDirection iterationDirection, NodeCPtrVector& neighbors) const
+QuadTreeNode::NodeCPtrVector QuadTreeNode::GetNeighbors() const
 {
-  const QuadTreeNode* firstNeighbor = FindSingleNeighbor(direction);
-  if ( nullptr != firstNeighbor )
-  {
-    // direction and iterationDirection are with respect to the node, but the descendants with respect
-    // to the neighbor are opposite.
-    // For example, if we want my smallest neighbors to the North in CW direction, I ask my northern
-    // same level neighbor to give me its Southern descendants in CCW direction.
-    EDirection descendantDir = GetOppositeDirection(direction);
-    EClockDirection descendantClockDir = GetOppositeClockDirection(iterationDirection);
-    firstNeighbor->AddSmallestDescendants( descendantDir, descendantClockDir, neighbors);
-  }
+  NodeCPtrVector neighbors;
+  
+  FindSingleNeighbor(EDirection::North).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::South, neighbors); });
+  FindSingleNeighbor(EDirection::South).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::North, neighbors); });
+  FindSingleNeighbor(EDirection::East ).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::West,  neighbors); });
+  FindSingleNeighbor(EDirection::West ).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::East,  neighbors); });
+ 
+  return neighbors;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

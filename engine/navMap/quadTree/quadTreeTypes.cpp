@@ -48,7 +48,6 @@ const char* EDirectionToString(EDirection dir)
     case QuadTreeTypes::EDirection::East:    { return "E"; };
     case QuadTreeTypes::EDirection::South:   { return "S"; };
     case QuadTreeTypes::EDirection::West:    { return "W"; };
-    case QuadTreeTypes::EDirection::Invalid: { return "Invalid"; };
   }
   return "Error";
 }
@@ -61,7 +60,6 @@ Vec3f EDirectionToNormalVec3f(EDirection dir)
     case QuadTreeTypes::EDirection::East:    { return Vec3f{ 0.0f, -1.0f, 0.0f}; };
     case QuadTreeTypes::EDirection::South:   { return Vec3f{-1.0f,  0.0f, 0.0f}; };
     case QuadTreeTypes::EDirection::West:    { return Vec3f{ 0.0f,  1.0f, 0.0f}; };
-    case QuadTreeTypes::EDirection::Invalid: {};
   }
   
   DEV_ASSERT(!"Invalid direction", "EDirectionToNormalVec3f.InvalidDirection");

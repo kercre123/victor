@@ -42,7 +42,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTree::QuadTree()
-: QuadTreeNode({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr)  // Note the root is created at z=1
+: QuadTreeNode({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, ParentPtr())  // Note the root is created at z=1
 {
   _processor.SetRoot( this );
 }
@@ -163,7 +163,7 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   NodeCPtrVector leafNodes;
   other.Fold(
     [&leafNodes](const QuadTreeNode& node) {
-      if (!node.IsSubdivided()) { leafNodes.push_back(&node); }
+      if (!node.IsSubdivided()) { leafNodes.emplace_back(&node); }
     });
   
   // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root

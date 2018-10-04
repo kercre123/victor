@@ -52,7 +52,7 @@ QuadTreeProcessor::QuadTreeProcessor()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldType, const bool wasEmpty)
+void QuadTreeProcessor::OnNodeContentTypeChanged(QuadTreeTypes::NodeCPtr node, const EContentType& oldType, const bool wasEmpty)
 {
   
   using namespace MemoryMapTypes;
@@ -117,7 +117,7 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
+void QuadTreeProcessor::OnNodeDestroyed(QuadTreeTypes::NodeCPtr node)
 {
   // if old content type is cached
   const EContentType oldContent = node->GetData()->type;
@@ -157,28 +157,17 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred, NodeSet& output)
 {
-  // search direction constants
-  static const EClockDirection clockDir = EClockDirection::CW;
-  static const std::array<EDirection, 4> cwDirs{{ EDirection::North, EDirection::East, EDirection::South, EDirection::West }};
-
   // find any node of typeToFill that satisfies pred(node, neighbor)
-  std::deque<const QuadTreeNode*> unexpandedNodes;
+  std::deque<QuadTreeNode::NodeCPtr> unexpandedNodes;
   FoldFunctorConst fillTypeFilter = [&] (const QuadTreeNode& node) {
     // first check if node is typeToFill
     if ( innerPred( node.GetData() ) ) {
-      QuadTreeNode::NodeCPtrVector neighbors;
-      neighbors.reserve( 1 << node.GetLevel() );
-
       // check if this nodes has a neighbor of any typesToFillFrom
-      for(const EDirection candidateDir : cwDirs) {
-        neighbors.clear(); // AddSmallestNeighbors does not clear the output list itself
-        node.AddSmallestNeighbors(candidateDir, clockDir, neighbors);
-
-        for(const auto neighbor : neighbors) {
-          if( outerPred( neighbor->GetData() ) ) {
-            unexpandedNodes.push_back( &node );
-            return;
-          }
+      QuadTreeNode::NodeCPtrVector neighbors = node.GetNeighbors();
+      for(const auto& neighbor : neighbors) {
+        if( outerPred( neighbor->GetData() ) ) {
+          unexpandedNodes.emplace_back( node.shared_from_this() );
+          return;
         }
       }
     }
@@ -188,26 +177,18 @@ void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const Nod
   // expand all nodes for fill
   while(!unexpandedNodes.empty()) {
     // get the next node and add it to the output list
-    const QuadTreeNode* node = unexpandedNodes.front();
+    QuadTreeNode::NodeCPtr& node = unexpandedNodes.front();
     unexpandedNodes.pop_front();
     output.insert(node);
 
     // get all of this nodes neighbors of the same type
-    QuadTreeNode::NodeCPtrVector neighbors;
-    neighbors.reserve( 1 << node->GetLevel() );
-
-    for(const EDirection candidateDir : cwDirs) {
-      neighbors.clear();
-      node->AddSmallestNeighbors(candidateDir, clockDir, neighbors);
-
-      // for any neighbor of the same type, if it has not already been expanded, add it the unexpanded list
-      for(const auto neighbor : neighbors) {
-        MemoryMapDataConstPtr neighborData = neighbor->GetData();
-        if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
-          unexpandedNodes.push_back( neighbor );
-        }
-      } // done adding neighbors for this side
-    } // finished all sides
+    QuadTreeNode::NodeCPtrVector neighbors = node->GetNeighbors();
+    for(const auto& neighbor : neighbors) {
+      MemoryMapDataConstPtr neighborData = neighbor->GetData();
+      if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
+        unexpandedNodes.push_back( neighbor );
+      }
+    }
   } // all nodes expanded
 }
   
