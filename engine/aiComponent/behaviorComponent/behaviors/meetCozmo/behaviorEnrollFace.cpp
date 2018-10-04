@@ -77,10 +77,6 @@ CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        
 CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 25.f);
 CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 45.f);
 
-// Amount of "extra" time to add each time we re-start actually enrolling, in case we lose the face
-// mid way or take a while to initially find the face, up to the max timeout
-CONSOLE_VAR(f32,               kEnrollFace_TimeoutExtraTime_sec,                CONSOLE_GROUP, 8.f);
-
 // Amount to drive forward once face is found to signify intent
 CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentDist_mm,           CONSOLE_GROUP, 14.f);
 CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentSpeed_mmps,        CONSOLE_GROUP, 75.f);
@@ -1335,7 +1331,10 @@ void BehaviorEnrollFace::TransitionToStartEnrollment()
   
   // Give ourselves a little more time to finish now that we've seen a face, but
   // don't go over the max timeout
-  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec, _dVars->timeout_sec + kEnrollFace_TimeoutExtraTime_sec);
+  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec,
+                                 _dVars->timeout_sec +
+                                 kEnrollFace_TimeoutForReLookForFace_ms *
+                                 (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
   
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
                 "Found face %d to enroll. Timeout set to %.1fsec",
