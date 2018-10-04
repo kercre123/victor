@@ -52,6 +52,7 @@ target_compile_definitions(cti_vision
   FACE_TRACKER_FACESDK=1
   FACE_TRACKER_OPENCV=2
   FACE_TRACKER_OKAO=3
+  FACE_TRACKER_TEST=4
   FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO
   ${additional_defines}
 )

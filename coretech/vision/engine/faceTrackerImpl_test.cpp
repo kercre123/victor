@@ -1,46 +1,59 @@
 /**
- * File: faceTrackerImpl_okao.cpp
+ * File: faceTrackerImpl_test.cpp
  *
- * Author: Andrew Stein
- * Date:   11/30/2015
+ * Author: Robert Cosgriff
+ * Date:   9/3/2018
  *
- * Description: Wrapper for OKAO Vision face detection library.
+ * Description: see header
  *
- * NOTE: This file should only be included by faceTracker.cpp
  *
- * Copyright: Anki, Inc. 2015
+ * Copyright: Anki, Inc. 2018
  **/
 
-#if FACE_TRACKER_PROVIDER == FACE_TRACKER_OKAO
+#if FACE_TRACKER_PROVIDER == FACE_TRACKER_TEST
 
 #include <unistd.h>
 
 #include "faceTrackerImpl_test.h"
 
-#include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/camera.h"
-#include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
-#include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Vision {
 
+// TODO these are duplicated from the OKAO implementation
+// and eventually they should be moved to a shared location
 static const f32 DistanceBetweenEyes_mm = 62.f;
 static const f32 MinDistBetweenEyes_pixels = 6;
 
+// This controls how many frames are needed before we populate an updated face, and
+// recognize someone
 CONSOLE_VAR(s32, kNumberOfTimesCalledBeforeRecog,         "Vision.FaceTracker",  200);
+
+// This is the delay for the detection of faces, when not enrolling
 CONSOLE_VAR(s32, kFaceDetectionDelay_us,                  "Vision.FaceTracker",  100*1000);
+
+// This is the delay for the detection of faces, when enrolling 
 CONSOLE_VAR(s32, kFaceDetectionDelayDuringEnrollment_us,  "Vision.FaceTracker",  1000*1000);
+
+// Some logging controls to reduce spammy messages
 CONSOLE_VAR(s32, kFrequencyOfRecognitionPrints,           "Vision.FaceTracker",  10);
+
+// The minimum number of recognition frames needed before an enrollment completes
 CONSOLE_VAR(s32, kMinimumRecognitionFrames,               "Vision.FaceTracker",  50);
-CONSOLE_VAR(s32, kLoseFaceAfterEnrollmentFrames,          "Vision.FaceTracker",  20);
-//CONSOLE_VAR(s32, kFaceRecognitionDelay_us,         "Vision.FaceTracker",  1000*1000);
+
+// This is how many frames are needed before we artifically lose a face
+CONSOLE_VAR(s32, kLoseFaceAfterEnrollmentFrames,          "Vision.FaceTracker",  2000);
+
+// This is the delay for recognition, this isn't all that useful in testing because
+// it assumes that the OKAO implementation is running in synchronous mode. For the
+// situations we are trying to test here we probably don't care about the synchorous
+// use case.
+CONSOLE_VAR(s32, kFaceRecognitionDelay_us,                "Vision.FaceTracker",  0);
 
 FaceTracker::Impl::Impl(const Camera&        camera,
                          const std::string&   modelPath,
@@ -57,8 +70,9 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                  std::list<TrackedFace>& faces,
                                  std::list<UpdatedFaceID>& updatedIDs)
 {
-  // Need a time delay
-  PRINT_NAMED_INFO("FaceTrackerImpl.Update.FakeUpdate", "");
+  // This is the detection time delay, to simulate the face detector
+  // portion of face tracker running slow. Vary the time delay depending
+  // on whether we are enrolling or not
   if (_startedEnrolling)
   {
     usleep(kFaceDetectionDelayDuringEnrollment_us);
@@ -68,10 +82,8 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
     usleep(kFaceDetectionDelay_us);
   }
 
-
   // Check if we should just quit, because we're trying to simulate 
-  // "losing" the face. Not sure if this is going to work though. I might
-  // need to delete something but ... I don't think so.
+  // "losing" the face.
   if (_startedEnrolling)
   {
     if (_numberOfEnrollmentFrames >= kLoseFaceAfterEnrollmentFrames)
@@ -85,29 +97,20 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
   const s32 nWidth  = frameOrig.GetNumCols();
   const s32 nHeight = frameOrig.GetNumRows();
 
-  // Add a new face to the list
-  faces.emplace_back();
   TrackedFace& face = faces.back();
-
   face.SetIsBeingTracked(true);
-  // TODO need better fake rectangle
-  // we want this to be centered so we don't keep moving ... I think
+
+  // Center the face so we don't keep moving 
   face.SetRect(Rectangle<f32>(.45, .45, .1, .1));
 
   face.SetTimeStamp(frameOrig.GetTimestamp());
 
-  // Not sure what to do with recognizer, do we even need it?
-
-  // Not sure if I need this
   f32 intraEyeDist = -1.f;
   SetFacePoseWithoutParts(nHeight, nWidth, face, intraEyeDist);
-  // Not entirely sure what or who this id should be
-  // hopefully it just works
   face.SetID(1);
 
   if (_totalNumberOfCalls > kNumberOfTimesCalledBeforeRecog)
   {
-    // Not sure if these id's are what they should be
     UpdatedFaceID update{
       .oldID   = 1,
       .newID   = 3,
@@ -121,6 +124,7 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
     }
   }
 
+  // Only do recognition once we start enrolling.
   if (_startedEnrolling)
   {
     if (_numberOfEnrollmentFrames % kFrequencyOfRecognitionPrints == 0)
@@ -129,13 +133,21 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                        "numer of enrollment frames is now %d", _numberOfEnrollmentFrames);
     }
 
-    // usleep(faceRecognitionDelay_us);
+    // This is the delay specific to recognition. This wasn't the most useful
+    // knob to turn for turn for testing with behavior enroll face.
+    usleep(kFaceRecognitionDelay_us);
+
+    // The more useful bit with testing enrollment was to vary when the
+    // enrollment is completed, this happens below.
     if (_numberOfEnrollmentFrames > kMinimumRecognitionFrames)
     {
       _enrollmentComplete = 1;
       face.SetNumEnrollments(_enrollmentComplete);
       PRINT_NAMED_INFO("FaceTrackerImpl.Update.NumFakeEnrollments",
                        "numer of enrollments is now %d", _numberOfEnrollments);
+
+      // Reset some book keeping so we can do multiple enrollments with needing to
+      // redeploy/restart the robot.
       _enrollmentComplete = 0;
       _startedEnrolling = false;
       _numberOfEnrollmentFrames = 0;
@@ -150,6 +162,24 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
   return RESULT_OK;
 }
 
+void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+                                              Vision::FaceID_t forFaceID,
+                                              s32 numEnrollments)
+{
+  PRINT_NAMED_INFO("FaceTrackerImpl.SetFaceEnrollmentMode.NumFakeEnrollments",
+                   "numer of enrollments %d for face %d", forFaceID, numEnrollments);
+  if (numEnrollments > 0)
+  {
+    _startedEnrolling = true;
+  }
+  else
+  {
+    _startedEnrolling = false;
+  }
+}
+
+// TODO this is duplicated code but isn't compiled from the OKAO implemnetation,
+// eventually we should move this some place where it isn't duplicated.
 static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,
                             const CameraCalibration& scaledCalib)
 {
@@ -167,6 +197,8 @@ static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, con
   return ray;
 }
 
+// TODO same as above this is duplicated code but isn't compiled from the OKAO implemnetation,
+// eventually we should move to some place where it isn't duplicated.
 Result FaceTracker::Impl::SetFacePoseWithoutParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist)
 {
   // Without face parts detected (which includes eyes), use fake eye centers for finding pose
@@ -195,6 +227,9 @@ Result FaceTracker::Impl::SetFacePoseWithoutParts(const s32 nrows, const s32 nco
   return RESULT_OK;
 }
 
+// The rest of these methods are just to be consistent with the api
+// defined in face tracker, but don't do anything significant for this
+// testing implementation.
 void FaceTracker::Impl::SetRecognitionIsSynchronous(bool isSynchronous)
 {
 }
@@ -265,22 +300,6 @@ Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<Load
 
 void FaceTracker::Impl::PrintTiming()
 {
-}
-
-void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                                              Vision::FaceID_t forFaceID,
-                                              s32 numEnrollments)
-{
-  PRINT_NAMED_INFO("FaceTrackerImpl.SetFaceEnrollmentMode.NumFakeEnrollments",
-                   "numer of enrollments %d for face %d", forFaceID, numEnrollments);
-  if (numEnrollments > 0)
-  {
-    _startedEnrolling = true;
-  }
-  else
-  {
-    _startedEnrolling = false;
-  }
 }
 
 Result FaceTracker::Impl::GetSerializedData(std::vector<u8>& albumData,

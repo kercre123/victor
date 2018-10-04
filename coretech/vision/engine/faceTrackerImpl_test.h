@@ -1,31 +1,23 @@
 /**
- * File: faceTrackerImpl_okao.h
+ * File: faceTrackerImpl_test.h
  *
- * Author: Andrew Stein
- * Date:   11/30/2015
+ * Author: Robert Cosgriff
+ * Date:   9/3/2018
  *
- * Description: Wrapper for OKAO Vision face detection library.
+ * Description: Test harness for face detection and recognition. Specifically
+ *              for performance testing with behavior enroll face.
  *
  * NOTE: This file should only be included by faceTracker.cpp
  *
- * Copyright: Anki, Inc. 2015
+ * Copyright: Anki, Inc. 2018
  **/
 
-#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/faceTracker.h"
-#include "coretech/vision/engine/eyeContact.h"
-#include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/profiler.h"
 
-#include "clad/types/loadedKnownFace.h"
-
 #include "CommonDef.h"
-#include "DetectorComDef.h"
 
 #include "json/json.h"
-
-#include <list>
-#include <ctime>
 
 namespace Anki {
   
