@@ -12,7 +12,7 @@ resource "aws_vpc" "main" {
 }
 // Public subnets host the NAT gateways
 resource "aws_subnet" "public" {
-  cidr_block        = "${cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)}"
+  cidr_block        = "${cidrsubnet(aws_vpc.main.cidr_block, 4, count.index)}"
   vpc_id            = "${aws_vpc.main.id}"
   count             = "${var.az_count}"
   availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
@@ -24,7 +24,7 @@ resource "aws_subnet" "public" {
 
 // Private subnets host the docker containers (Fargate cluster)
 resource "aws_subnet" "private" {
-  cidr_block        = "${cidrsubnet(aws_vpc.main.cidr_block, 8, var.az_count + count.index)}"
+  cidr_block        = "${cidrsubnet(aws_vpc.main.cidr_block, 4, var.az_count + count.index)}"
   vpc_id            = "${aws_vpc.main.id}"
   count             = "${var.az_count}"
   availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
