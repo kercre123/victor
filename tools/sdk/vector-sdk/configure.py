@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#TODO Update file throughout to be good for the public.
-
 """
 ***Anki Vector Python SDK Setup***
 
@@ -61,23 +59,15 @@ class ApiHandler:
         return self._url
 
 class Api:
-    def __init__(self, environment):
-        if environment == "prod":
-            self._handler = ApiHandler(
-                headers={'Anki-App-Key': 'aung2ieCho3aiph7Een3Ei'},
-                url='https://accounts.api.anki.com/1/sessions'
-            )
-        # TODO: remove beta and dev from released version
-        elif environment == "beta":
-            self._handler = ApiHandler(
-                headers={'Anki-App-Key': 'va3guoqueiN7aedashailo'},
-                url='https://accounts-beta.api.anki.com/1/sessions'
-            )
-        else:
-            self._handler = ApiHandler(
-                headers={'Anki-App-Key': 'eiqu8ae6aesae4vi7ooYi7'},
-                url='https://accounts-dev2.api.anki.com/1/sessions'
-            )
+    def __init__(self):
+        self._handler = ApiHandler(
+            headers={'Anki-App-Key': 'aung2ieCho3aiph7Een3Ei'},
+            url='https://accounts.api.anki.com/1/sessions'
+        )
+
+    @property
+    def name(self):
+        return "Anki Cloud"
 
     @property
     def handler(self):
@@ -120,23 +110,14 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
     print(colored(" DONE\n", "green"))
     return response.client_token_guid
 
-# TODO Remove everything that is not prod
-def get_session_token():
-    valid = ["prod", "beta", "dev"]
-    environ = input("Select an environment [(dev)/beta/prod]? ")
-    if environ == "":
-        environ = "dev"
-    if environ not in valid:
-        sys.exit("{}: That is not a valid environment".format(colored("ERROR", "red")))
-
+def get_session_token(api):
     print("Enter your email and password. Make sure to use the same account that was used to set up your Vector.")
     username = input("Enter Email: ")
     password = getpass("Enter Password: ")
     payload = {'username': username, 'password': password}
 
-    print("\nAuthenticating with Anki...", end="")
+    print("\nAuthenticating with {}...".format(api.name()), end="")
     sys.stdout.flush()
-    api = Api(environ)
     r = requests.post(api.handler.url, data=payload, headers=api.handler.headers)
     if r.status_code != 200:
         print(colored(" ERROR", "red"))
@@ -202,7 +183,7 @@ def validate_cert_name(cert_file, robot_name):
                 else:
                     return
 
-def main():
+def main(api):
     print(__doc__)
 
     valid = ["y", "Y", "yes", "YES"]
@@ -219,7 +200,7 @@ def main():
     cert_file = save_cert(cert, name, esn, anki_dir)
     validate_cert_name(cert_file, name)
 
-    token = get_session_token()
+    token = get_session_token(api)
     if token.get("session") is None:
         sys.exit("Session error: {}".format(token))
 
@@ -257,4 +238,4 @@ def main():
     print(colored("SUCCESS!", "green"))
 
 if __name__ == "__main__":
-    main()
+    main(Api())
