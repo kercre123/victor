@@ -51,19 +51,22 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool    IsRootNode() const              { return _parent.IsNothing(); }
-  bool    IsSubdivided() const            { return !_childrenPtr.empty(); }
-  uint8_t GetLevel() const                { return _level; }
-  float   GetSideLen() const              { return _sideLen; }
-  const   Point3f& GetCenter() const      { return _center; }
-  MemoryMapDataPtr GetData() const        { return _content.data; }
-  const NodeContent& GetContent() const   { return _content; }
+  bool               IsRootNode()   const { return _parent.IsNothing(); }
+  bool               IsSubdivided() const { return !_childrenPtr.empty(); }
+  uint8_t            GetLevel()     const { return _level; }
+  float              GetSideLen()   const { return _sideLen; }
+  const Point3f&     GetCenter()    const { return _center; }
+  MemoryMapDataPtr   GetData()      const { return _content.data; }
+  const NodeContent& GetContent()   const { return _content; }
+  const NodeAddress& GetAddress()   const { return _address; }
 
   // Builds a quad from our coordinates
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
   
   // return if the node contains any useful data
   bool IsEmptyType() const { return (IsSubdivided() || (_content.data->type == EContentType::Unknown));  }
+
+  void ReplaceData(MemoryMapDataPtr d) const { }
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,6 +87,7 @@ public:
 
 protected:
   using ParentPtr = Util::Maybe<const QuadTreeNode*>;
+  using NodePtr   = std::shared_ptr<QuadTreeNode>;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -97,22 +101,21 @@ protected:
   // which is annoying
   QuadTreeNode(const QuadTreeNode&&) = delete;
   QuadTreeNode& operator=(const QuadTreeNode&&) = delete;
-   
+
+  // updates the address incase tree structure changes (expands and shifts)
+  void ResetAddress();
+
+  // find a node at a particular address
+  Util::Maybe<NodePtr> GetNodeAtAddress(const NodeAddress& addr);
   
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // info about moving towards a neighbor
-  struct MoveInfo {
-    EQuadrant neighborQuadrant;  // destination quadrant
-    bool sharesParent;           // whether destination quadrant is in the same parent
-  };
     
   // container for each node's children
-  using ChildrenVector = std::vector< std::shared_ptr<QuadTreeNode> >;
+  using ChildrenVector = std::vector< NodePtr >;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -155,6 +158,7 @@ private:
    
   // get the child in the given quadrant, or null if this node is not subdivided
   Util::Maybe<NodeCPtr> GetChild(EQuadrant quadrant) const;
+  Util::Maybe<NodePtr>  GetChild(EQuadrant quadrant);
 
   // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
   // NOTE: this method is expected to NOT clear the vector before adding descendants
@@ -185,7 +189,8 @@ private:
   uint8_t _level;
 
   // quadrant within the parent
-  EQuadrant _quadrant;
+  EQuadrant   _quadrant;
+  NodeAddress _address;
   
   // information about what's in this quad
   NodeContent _content;

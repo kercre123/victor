@@ -129,6 +129,24 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction transform)
+{
+  // run the transform
+  bool contentChanged = false;
+  auto trfm = [&] (NodePtr node) {
+    MemoryMapDataPtr newData = transform(node->GetData());
+    if ((node->GetData() != newData) && !node->IsSubdivided()) 
+    {
+      node->ForceSetDetectedContentType(newData, _processor);
+      contentChanged = true;
+    }
+  };
+
+  GetNodeAtAddress(address).fmap(trfm);
+  return contentChanged;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTree::Transform(NodeTransformFunction transform)
 {
   // run the transform
@@ -393,6 +411,9 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
     // destroy the nodes that are going away because we shifted away from them
     DestroyNodes(oldChildren, processor);
   }
+
+  // update address of all children
+  Fold([] (QuadTreeNode& node) { node.ResetAddress(); });
   
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _level, MM_TO_M(_sideLen));
@@ -449,6 +470,9 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   // set the content type I had in the child that takes my place, then reset my content
   childTakingMyPlace.ForceSetDetectedContentType( _content.data, processor );
   ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
+
+  // update address of all children
+  Fold([] (QuadTreeNode& node) { node.ResetAddress(); });
   
   // upgrade my remaining stats
   _sideLen = _sideLen * 2.0f;

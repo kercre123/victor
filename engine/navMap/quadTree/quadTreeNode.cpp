@@ -39,9 +39,20 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
+, _address(level)
 , _content(MemoryMapDataPtr())
 {
+  ResetAddress();
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::ResetAddress()
+{
+  _parent.fmap( [&](const QuadTreeNode* p) { _address = p->GetAddress(); });
+
+  // _address = _parent->*(_address)GetAddress();
+  _address.SetQuadrant(_level, _quadrant);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,13 +189,37 @@ void QuadTreeNode::DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& proces
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::Maybe<QuadTreeNode::NodeCPtr> QuadTreeNode::GetChild(EQuadrant quadrant) const
 {
-  if ( IsSubdivided() ) {
+  if ( IsSubdivided() && (quadrant != EQuadrant::Invalid) && (quadrant != EQuadrant::Root)) {
     return std::const_pointer_cast<const QuadTreeNode>( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant] );
   }
   return {};
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Util::Maybe<QuadTreeNode::NodePtr> QuadTreeNode::GetChild(EQuadrant quadrant)
+{
+  if ( IsSubdivided() && (quadrant != EQuadrant::Invalid) && (quadrant != EQuadrant::Root)) {
+    return _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant];
+  }
+  return {};
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Util::Maybe<QuadTreeNode::NodePtr> QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr)
+{
+  // make sure we are in the right place
+  if (addr.GetQuadrant(_level) == _quadrant) {
+    // check if we should recurse down a level
+    if ((_level > 0) && (addr.GetQuadrant(_level - 1) != EQuadrant::Invalid)) {
+      auto nextNode = GetChild(addr.GetQuadrant(_level - 1));
+      return nextNode.bind( [&addr] (auto& node) { return node->GetNodeAtAddress(addr); } );
+    } else {
+      // this is the node at that address
+      return shared_from_this();
+    }
+  }
+  return {};
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::AddSmallestDescendants(EDirection direction, NodeCPtrVector& descendants) const
