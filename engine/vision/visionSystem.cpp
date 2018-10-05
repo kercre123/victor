@@ -102,8 +102,6 @@ CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::
 // The percentage of the width of the image that will remain after cropping
 CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 2.f / 3.f, 0.f, 1.f);
 
-CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
-  
 #if REMOTE_CONSOLE_ENABLED
 // If non-zero, toggles the corresponding VisionMode and sets back to 0
 CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
