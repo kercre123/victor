@@ -216,6 +216,9 @@ unzip -o -q $TOPLEVEL/thfft_alexa_enus_v3_500kb.zip -d $TOPLEVEL/EXTERNALS/anki-
 # under the linux directory, not no_expire
 cp $TOPLEVEL/libthf.a.library $TOPLEVEL/EXTERNALS/anki-thirdparty/sensory/TrulyHandsfreeSDK/4.4.23_noexpire/linux/arm-linux-gnueabi/lib/libthf.a
 
+# copy precompiled libs for now
+tar xf avs-device-sdk.tar.gz -C EXTERNALS/coretech_external/build/
+
 #
 # Get short commit sha
 #

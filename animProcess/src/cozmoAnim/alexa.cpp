@@ -56,6 +56,8 @@
 #include <vector>
 #include <iostream>
 #include "util/console/consoleInterface.h"
+#include "osState/osState.h"
+#include "util/string/stringUtils.h"
 
 namespace Anki {
 namespace Vector {
@@ -102,7 +104,7 @@ namespace {
     },
     "deviceInfo":{
       // Unique device serial number. e.g. 123456
-      "deviceSerialNumber":"124457",
+      "deviceSerialNumber":"<SERIAL_NUMBER>", // this gets replaced
       // The Client ID of the Product from developer.amazon.com
       "clientId": "amzn1.application-oa2-client.35a58ee8f3444563aed328cb189da216",
       // Product ID from developer.amazon.com
@@ -253,6 +255,12 @@ void Alexa::Init(const AnimContext* context)
   std::vector<std::shared_ptr<std::istream>> configJsonStreams;
   
   // todo: load from data loader
+  std::string configWithSerial = kConfig;
+  const std::string toReplace = "<SERIAL_NUMBER>";
+  auto* osState = OSState::getInstance();
+  const uint32_t esn = osState->GetSerialNumber();
+  PRINT_NAMED_WARNING("WHATNOW", "Registering serial %s", std::to_string(esn).c_str());
+  Util::StringReplace( configWithSerial, toReplace, std::to_string(esn) );
   configJsonStreams.push_back( std::shared_ptr<std::istringstream>(new std::istringstream(kConfig)) );
   
   // for (auto configFile : configFiles) {
