@@ -1,5 +1,6 @@
 aiogrpc>=1.4
 cryptography
+flask
 googleapis-common-protos
 numpy
 opencv-python

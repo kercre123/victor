@@ -53,6 +53,15 @@ You will be prompted for your robot's name, ip address and serial number. You wi
 
 .. warning:: These credentials give full access to your robot, including camera stream, audio stream and data. Do not share these credentials.
 
+^^^^^^^^^^^^^^^^^^
+Extra Dependencies
+^^^^^^^^^^^^^^^^^^
+
+There are a few extra packages that must be installed to run the experimental examples. To install these dependencies, enter this command::
+
+    cd vector-sdk
+    pip3 install .[experimental]
+
 ^^^^^^^^^^^^^^^
 Troubleshooting
 ^^^^^^^^^^^^^^^
