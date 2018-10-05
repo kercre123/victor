@@ -50,10 +50,14 @@ protected:
   virtual void OverrideResumeState( StateID& resumeState ) override;
   
   virtual void OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const override;
+  
+  bool ShouldTransitionIntoExploring() const;
 
 private:
   
   bool IsBehaviorActive( BehaviorID behaviorID ) const;
+
+  void UpdateExploringTransitionCooldown();
   
   struct {
     float socializeKnownFaceCooldown_s;
@@ -63,6 +67,8 @@ private:
     
     std::unordered_map< PostBehaviorSuggestions, StateID > pbsResumeOverrides;
   } _params;
+
+  float _specialExploringTransitionCooldownBase_s;
 
   CustomBEIConditionHandleList CreateCustomConditions();
   
