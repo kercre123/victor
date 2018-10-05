@@ -38,6 +38,7 @@
 #include "util/threading/threadPriority.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include <sched.h>
+#include "webServerProcess/src/webService.h"
 
 #include "cozmoAnim/alexa.h"
 
@@ -242,6 +243,17 @@ void MicDataProcessor::InitVAD()
   if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse() || (_alexa && !_alexa->IsIdle()) )
   {
     return;
+  }
+  
+  // send extra webviz
+  {
+    static const std::string kWebVizModuleName = "micdata";
+    if (_context->GetWebService() && _context->GetWebService()->IsWebVizClientSubscribed(kWebVizModuleName))
+    {
+      Json::Value data;
+      data["wakeWordRecognized"] = keyword;
+      _context->GetWebService()->SendToWebViz( kWebVizModuleName, data );
+    }
   }
   
   const bool isAlexa = keyword == "ALEXA";
