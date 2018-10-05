@@ -23,7 +23,7 @@ RESULTS_FILE="report.txt"
 
 # clean up any existing files, except the archive file, since that is a dependency from the last build.
 # if they don't exist (common case), continue without error
-rm -rf $ANIM_LIST_FILE $ANIM_TRIGGER_FILE $ANIM_GROUP_FILE $UNUSED_TRIGGERS_FILE $UNUSED_GROUPS_FILE $OLD_DIR $RESULTS_FILE || true
+rm -rf $ANIM_LIST_FILE $ANIM_TRIGGER_FILE $ANIM_GROUP_FILE $UNUSED_TRIGGERS_FILE $UNUSED_GROUPS_FILE $OLD_DIR $RESULTS_FILE
 
 mkdir $OLD_DIR
 
