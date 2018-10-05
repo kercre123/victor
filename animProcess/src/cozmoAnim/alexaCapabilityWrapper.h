@@ -22,9 +22,11 @@ public:
   // todo: figure out how to get namespace from capability agent. the confguration can contain multiple namespaces
   AlexaCapabilityWrapper(const std::string& nameSpace,
                          std::shared_ptr<alexaClientSDK::avsCommon::avs::CapabilityAgent> capabilityAgent,
-                         std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender )
+                         std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender,
+                         const std::function<void(const std::string&)>& onDirective)
    : CapabilityAgent( nameSpace, exceptionEncounteredSender)
    , m_capabilityAgent( capabilityAgent )
+   , _onDirective( onDirective )
   {
   }
   
@@ -44,6 +46,9 @@ public:
   virtual void handleDirective (std::shared_ptr< DirectiveInfo > info) override
   {
     LogDirective(info);
+    if( _onDirective != nullptr && info != nullptr && info->directive != nullptr ) {
+      _onDirective( info->directive->getName() );
+    }
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
     m_capabilityAgent->handleDirective(info);
   }
@@ -51,18 +56,22 @@ public:
   virtual void cancelDirective (std::shared_ptr< DirectiveInfo > info) override
   {
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
+    PRINT_NAMED_WARNING("WHATNOW", "Cancel directive %s", (info && info->directive) ? info->directive->getName().c_str() : "<NULL>");
     m_capabilityAgent->cancelDirective(info);
   }
   
   virtual void handleDirectiveImmediately(std::shared_ptr<alexaClientSDK::avsCommon::avs::AVSDirective> directive) override {
     LogDirective(std::make_shared<DirectiveInfo>(directive, nullptr));
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
+    if( _onDirective != nullptr && directive != nullptr ) {
+      _onDirective( directive->getName() );
+    }
+    
     m_capabilityAgent->handleDirectiveImmediately(directive);
   }
   
   virtual alexaClientSDK::avsCommon::avs::DirectiveHandlerConfiguration getConfiguration() const override
   {
-    PRINT_NAMED_WARNING("WHATNOW", "retrieving configuration!");
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
     return m_capabilityAgent->getConfiguration();
   }
@@ -97,6 +106,9 @@ private:
   
   std::shared_ptr<alexaClientSDK::avsCommon::avs::CapabilityAgent> m_capabilityAgent;
   
+  
+  // todo: check destruction order
+  const std::function<void(const std::string&)>& _onDirective;
 };
 
 

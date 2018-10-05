@@ -135,7 +135,7 @@ private:
   
   void SetState( State state );
   
-  SourceId m_sourceID=1; // 0 might be to be invalid?
+  static SourceId m_sourceID;
   SourceId m_playingSource = 0;
   
   std::map<SourceId, std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader >> m_sourceReaders;

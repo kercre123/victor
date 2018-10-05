@@ -58,6 +58,7 @@
 #include "util/console/consoleInterface.h"
 #include "osState/osState.h"
 #include "util/string/stringUtils.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 namespace Anki {
@@ -370,14 +371,18 @@ void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onSta
                                                   httpContentFetcherFactory);
   m_audioSpeaker->Init(context);
   
+  // this isnt the constructor, but i seem to still need this
+  // https://forum.libcinder.org/topic/solution-calling-shared-from-this-in-the-constructor
+  auto wptr = std::shared_ptr<Alexa>( this, [](Alexa*){} );
+  
   // the alerts speaker doesnt change UX! we might need to observe it
-  //m_alertsSpeaker->setObserver( shared_from_this() );
+  m_alertsSpeaker->setObserver( shared_from_this() );
+  m_audioSpeaker->setObserver( shared_from_this() );
   
   
   //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
   
-  // https://forum.libcinder.org/topic/solution-calling-shared-from-this-in-the-constructor
-  auto wptr = std::shared_ptr<Alexa>( this, [](Alexa*){} );
+  
   
   m_client = AlexaClient::create(
     deviceInfo,
@@ -403,6 +408,7 @@ void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onSta
   }
   
   m_client->addSpeakerManagerObserver(userInterfaceManager);
+  m_client->SetDirectiveCallback( std::bind(&Alexa::OnDirective, this, std::placeholders::_1) );
   
   /*
    * Creating the buffer (Shared Data Stream) that will hold user audio data. This is the main input into the SDK.
@@ -531,6 +537,14 @@ void Alexa::Update()
   if( m_audioSpeaker != nullptr ) {
     m_audioSpeaker->Update();
   }
+  
+  
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( _timeToSetIdle >= 0.0f && currTime_s >= _timeToSetIdle && _playingSources.empty() ) {
+    _dialogState = DialogUXState::IDLE;
+    CheckForStateChange();
+  }
+    
 }
   
 void Alexa::ButtonPress()
@@ -592,23 +606,79 @@ void Alexa::ProcessAudio( int16_t* data, size_t size)
   
 void Alexa::onDialogUXStateChanged(avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState newState)
 {
+  _dialogState = newState;
+  CheckForStateChange();
+}
+  
+void Alexa::CheckForStateChange()
+{
   const auto oldState = _uxState;
-  switch( newState ) {
+  const bool anyPlaying = !_playingSources.empty();
+  
+  _timeToSetIdle = -1.0f;
+  
+  switch( _dialogState ) {
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
-      _uxState = AlexaUXState::Idle;
+    {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      // if nothing is playing, it could be because somehting is about to play. We only know because
+      // a directive for "Play" has arrived. If one has arrived recently, don't switch to idle yet,
+      // and instead set a timer so that it will switch to idle only if no other state change occurs
+      if( anyPlaying ) {
+        _uxState = AlexaUXState::Speaking;
+      } else if( _lastPlayDirective < 0.0f || (currTime_s > _lastPlayDirective + 2.0f) ) {
+        _uxState = AlexaUXState::Idle;
+      } else {
+        _timeToSetIdle = _lastPlayDirective + 1.0f;
+      }
+    }
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING:
+    {
       _uxState = AlexaUXState::Listening;
+    }
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING:
+    {
       _uxState = AlexaUXState::Speaking;
+    }
       break;
   }
   PRINT_NAMED_WARNING("WHATNOW", "new AlexaUXState=%d", (int) _uxState );
   if( oldState != _uxState && _onStateChanged != nullptr) {
     _onStateChanged( _uxState );
+  }
+}
+  
+void Alexa::onPlaybackStarted (SourceId id)
+{
+  PRINT_NAMED_WARNING("WHATNOW", "CALLBACK PLAY %d", (int)id);
+  _playingSources.insert(id);
+  CheckForStateChange();
+}
+void Alexa::onPlaybackFinished (SourceId id)
+{
+  PRINT_NAMED_WARNING("WHATNOW", "CALLBACK FINISH %d", (int)id);
+  _playingSources.erase(id);
+  CheckForStateChange();
+}
+  
+void Alexa::onPlaybackError( SourceId id,
+                            const avsCommon::utils::mediaPlayer::ErrorType& type,
+                            std::string error)
+{
+  PRINT_NAMED_WARNING("WHATNOW", "CALLBACK ERROR %d", (int)id);
+  // does an error mean a stop? probably
+  _playingSources.erase(id);
+  CheckForStateChange();
+}
+  
+void Alexa::OnDirective(const std::string& directive)
+{
+  if( directive == "Play" ) {
+    _lastPlayDirective = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
   

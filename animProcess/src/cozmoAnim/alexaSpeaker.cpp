@@ -32,6 +32,10 @@
 
 namespace Anki {
 namespace Vector{
+  using namespace alexaClientSDK;
+  using SourceId = AlexaSpeaker::SourceId;
+  
+SourceId AlexaSpeaker::m_sourceID=1; // 0 is invalid
   
   namespace {
     constexpr int kAudioBufferSize = 1 << 18;
@@ -47,8 +51,7 @@ namespace Vector{
     #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
   }
 
-using namespace alexaClientSDK;
-using SourceId = AlexaSpeaker::SourceId;
+
 
 AlexaSpeaker::AlexaSpeaker( avsCommon::sdkInterfaces::SpeakerInterface::Type type,
                            const std::string& name,

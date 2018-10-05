@@ -80,7 +80,9 @@ void BehaviorAlexa::OnBehaviorActivated()
   _dVars = DynamicVariables();
   _dVars.uxState = uxState;
   
-  // don't do anything for now
+  if( _dVars.uxState == AlexaUXState::Speaking ) {
+    TransitionToSpeakingGetIn();
+  }
 }
   
 void BehaviorAlexa::OnBehaviorEnteredActivatableScope()
@@ -92,7 +94,7 @@ void BehaviorAlexa::OnBehaviorEnteredActivatableScope()
                                   0 );
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   uic.SetResponseToAlexa( GetDebugLabel(),
-                          AnimationTrigger::VC_ListeningGetIn,
+                          AnimationTrigger::AlexaListenGetIn,
                           postAudioEvent );
 }
 
@@ -104,19 +106,45 @@ void BehaviorAlexa::BehaviorUpdate()
     return;
   }
   
-  if( _dVars.state == State::ListeningGetIn ) {
-    if( !GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish() ){
-      if( _dVars.uxState != AlexaUXState::Listening ) {
-        TransitionToListeningGetOut();
-      } else {
-        TransitionToListeningLoop();
+  switch( _dVars.state ) {
+    case State::ListeningGetIn:
+    {
+      if( !GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish() ){
+        if( _dVars.uxState != AlexaUXState::Listening ) {
+          TransitionToListeningGetOut();
+        } else {
+          TransitionToListeningLoop();
+        }
       }
     }
-  } else if( _dVars.state == State::ListeningLoop ) {
-    if( _dVars.uxState != AlexaUXState::Listening ) {
-      TransitionToListeningGetOut();
+      break;
+    case State::ListeningLoop:
+    {
+      if( _dVars.uxState == AlexaUXState::Idle ) {
+        TransitionToListeningGetOut();
+      } else if( _dVars.uxState == AlexaUXState::Speaking ) {
+        TransitionFromListeningToSpeaking();
+      }
     }
+      break;
+    case State::SpeakingLoop:
+    {
+      if( _dVars.uxState == AlexaUXState::Idle ) {
+        TransitionToSpeakingGetOut();
+      } else if( _dVars.uxState == AlexaUXState::Listening ) {
+        TransitionFromSpeakingToListening();
+      }
+    }
+      break;
+    case State::ListeningGetOut:
+    case State::SpeakingGetIn:
+    case State::SpeakingGetOut:
+    case State::ListeningToSpeaking:
+    case State::SpeakingToListening:
+      // each of these has a callback to transition to one of the states handled above, or CancelSelf()
+      break;
   }
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,7 +159,7 @@ void BehaviorAlexa::TransitionToListeningLoop()
 {
   CancelDelegates(false);
   _dVars.state = State::ListeningLoop;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::VC_ListeningLoop, 0 };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenLoop, 0 };
   DelegateIfInControl( action );
 }
   
@@ -139,9 +167,62 @@ void BehaviorAlexa::TransitionToListeningLoop()
 void BehaviorAlexa::TransitionToListeningGetOut()
 {
   CancelDelegates(false);
-  _dVars.state = State::ListeningGetOut_ToNothing;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::VC_ListeningGetOut };
+  _dVars.state = State::ListeningGetOut;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenTimeout };
   DelegateIfInControl( action, [this](ActionResult res){ CancelSelf(); } );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAlexa::TransitionFromListeningToSpeaking()
+{
+  CancelDelegates(false);
+  _dVars.state = State::ListeningToSpeaking;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListen2Speak };
+  DelegateIfInControl( action, [this](ActionResult res){
+    TransitionToSpeakingLoop();
+  });
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAlexa::TransitionFromSpeakingToListening()
+{
+  CancelDelegates(false);
+  _dVars.state = State::SpeakingToListening;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeak2Listen };
+  DelegateIfInControl( action, [this](ActionResult res){
+    TransitionToListeningLoop();
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAlexa::TransitionToSpeakingGetIn()
+{
+  CancelDelegates(false);
+  _dVars.state = State::SpeakingGetIn;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSuddenSpeak };
+  DelegateIfInControl( action, [this](ActionResult res){
+    TransitionToSpeakingLoop();
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAlexa::TransitionToSpeakingLoop()
+{
+  CancelDelegates(false);
+  _dVars.state = State::SpeakingLoop;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakLoop, 0 };
+  DelegateIfInControl( action );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAlexa::TransitionToSpeakingGetOut()
+{
+  CancelDelegates(false);
+  _dVars.state = State::SpeakingGetOut;
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakGetOut };
+  DelegateIfInControl( action, [this](ActionResult res){
+    CancelSelf();
+  });
 }
 
 }

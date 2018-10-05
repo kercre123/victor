@@ -14,7 +14,48 @@
   {
     "CladEvent": "AlreadyAtFace",
     "AnimName": "ag_vc_reaction_alreadyhere"
-  },  
+  },
+ 
+ {
+   "CladEvent": "AlexaListenGetIn",
+   "AnimName": "ag_alexaint_l_getin_01"
+ },
+ {
+   "CladEvent": "AlexaListenLoop",
+   "AnimName": "ag_alexaint_l_loop_01"
+ },
+ {
+   "CladEvent": "AlexaSuddenSpeak",
+   "AnimName": "ag_alexaint_suddenspeak_01"
+ },
+ {
+   "CladEvent": "AlexaListen2Speak",
+   "AnimName": "ag_alexaint_listen2speak_01"
+ },
+ {
+   "CladEvent": "AlexaListen2Neutral",
+   "AnimName": "ag_alexaint_listen2neutral_01"
+ },
+ {
+   "CladEvent": "AlexaListenTimeout",
+   "AnimName": "ag_alexaint_listen_timeout_01"
+ },
+ {
+   "CladEvent": "AlexaListenFail",
+   "AnimName": "ag_alexaint_fail_01"
+ },
+ {
+   "CladEvent": "AlexaSpeakLoop",
+   "AnimName": "ag_alexaint_speak_loop_01"
+ },
+ {
+   "CladEvent": "AlexaSpeakGetOut",
+   "AnimName": "ag_alexaint_speak_getout_01"
+ },
+ {
+   "CladEvent": "AlexaSpeak2Listen",
+   "AnimName": "ag_alexaint_back2listen_01"
+ },
   {
     "CladEvent": "AudioOnlyHuh",
     "AnimName": "ag_explorer_huh"

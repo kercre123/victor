@@ -4,7 +4,8 @@
 #include "util/helpers/noncopyable.h"
 #include <memory>
 #include <functional>
-//#include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
+#include <unordered_set>
+#include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include "clad/types/alexaUXState.h"
 
@@ -31,7 +32,7 @@ class AnimContext;
   
 class Alexa : private Util::noncopyable
             , public std::enable_shared_from_this<Alexa>
-            //, public alexaClientSDK::avsCommon::sdkInterfaces::MediaPlayerObserverInterface
+            , public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface
             , public alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface
 {
 public:
@@ -50,13 +51,27 @@ public:
   bool IsIdle() const { return _uxState == AlexaUXState::Idle; }
   
 protected:
+  // callbacks that affect ux state
+  
   virtual void onDialogUXStateChanged(DialogUXState newState) override;
+  virtual void   onPlaybackStarted (SourceId id) override;
+  virtual void   onPlaybackFinished (SourceId id) override;
+  virtual void   onPlaybackError (SourceId id, const alexaClientSDK::avsCommon::utils::mediaPlayer::ErrorType
+ &type, std::string error) override;
+  // todo: more methods, like pausing
   
 private:
+  void CheckForStateChange();
+  
+  void OnDirective(const std::string& directive);
   
   OnStateChangedCallback _onStateChanged;
-  
+  // anki state
   AlexaUXState _uxState = AlexaUXState::Idle;
+  
+  // alexa component states
+  DialogUXState _dialogState = DialogUXState::IDLE;
+  std::unordered_set<SourceId> _playingSources;
   
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> m_capabilitiesDelegate;
   
@@ -74,6 +89,8 @@ private:
   std::shared_ptr<AlexaSpeaker> m_audioSpeaker;
   
   const AnimContext* _context = nullptr;
+  float _lastPlayDirective = -1.0f;
+  float _timeToSetIdle = -1.0f;
 };
 
 

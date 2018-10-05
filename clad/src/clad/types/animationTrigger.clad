@@ -16,6 +16,17 @@ enum int_32 AnimationTrigger
   AlreadyAtFace,
   AudioOnlyHuh,
   BeQuiet,
+  
+  AlexaListenGetIn,
+  AlexaListenLoop,
+  AlexaSuddenSpeak,
+  AlexaListen2Speak,
+  AlexaListen2Neutral,
+  AlexaListenTimeout,
+  AlexaListenFail,
+  AlexaSpeakLoop,
+  AlexaSpeakGetOut,
+  AlexaSpeak2Listen,
 
   BlackJack_Deal,
   BlackJack_GoodLuck,

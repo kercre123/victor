@@ -388,7 +388,7 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   // systemCapabilityProvider
   
   
-  #define MAKE_WRAPPER(nameSpace, handler) std::make_shared<AlexaCapabilityWrapper>(nameSpace, handler, m_exceptionSender)
+  #define MAKE_WRAPPER(nameSpace, handler) std::make_shared<AlexaCapabilityWrapper>(nameSpace, handler, m_exceptionSender, _onDirectiveFunc)
   
   if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechSynthesizer", m_speechSynthesizer) )) {
     ACSDK_ERROR(LX("initializeFailed") 

@@ -45,13 +45,30 @@ protected:
 
 private:
   
+  // listening get-in is handled by anim process
   void TransitionToListeningLoop();
   void TransitionToListeningGetOut();
+  
+  void TransitionToSpeakingGetIn();
+  void TransitionToSpeakingLoop();
+  void TransitionToSpeakingGetOut();
+  
+  void TransitionFromListeningToSpeaking();
+  void TransitionFromSpeakingToListening();
+  
   
   enum class State : uint8_t {
     ListeningGetIn,
     ListeningLoop,
-    ListeningGetOut_ToNothing,
+    ListeningGetOut,
+    
+    // speaking or audio playing
+    SpeakingGetIn, // from nothing, e.g., when an alert/notification goes off
+    SpeakingLoop,
+    SpeakingGetOut,
+    
+    ListeningToSpeaking,
+    SpeakingToListening,
   };
 
   struct InstanceConfig {
@@ -61,7 +78,8 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    // TODO: put member variables here
+    // note: if the robot starts and there's an alarm pending, it will sometimes start with it "speaking"
+    // instead of idle. that will mess everything up
     AlexaUXState uxState = AlexaUXState::Idle;
     State state = State::ListeningGetIn;
   };
