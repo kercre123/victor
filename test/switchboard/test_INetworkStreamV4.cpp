@@ -1,22 +1,22 @@
 #include "test.h"
 #include "ev++.h"
-#include "test_INetworkStreamV3.h"
+#include "test_INetworkStreamV4.h"
 
 namespace Anki {
 namespace Switchboard {
 
-Test_INetworkStreamV3::Test_INetworkStreamV3() :
+Test_INetworkStreamV4::Test_INetworkStreamV4() :
 _state(MessageState::TestRaw),
 _handShake(false),
 _connected(false),
 _securePairing(nullptr),
 _keyExchange(nullptr),
 _reconnect(false) {
-  _cladHandler = new CladHandlerV3();
-  _cladHandler->OnReceiveRtsMessage().SubscribeForever(std::bind(&Test_INetworkStreamV3::ReceiveMessage, this, std::placeholders::_1));
+  _cladHandler = new CladHandlerV4();
+  _cladHandler->OnReceiveRtsMessage().SubscribeForever(std::bind(&Test_INetworkStreamV4::ReceiveMessage, this, std::placeholders::_1));
 }
 
-Test_INetworkStreamV3::~Test_INetworkStreamV3() {
+Test_INetworkStreamV4::~Test_INetworkStreamV4() {
   delete _cladHandler;
 
   if(_keyExchange != nullptr) {
@@ -24,11 +24,11 @@ Test_INetworkStreamV3::~Test_INetworkStreamV3() {
   }
 }
 
-void Test_INetworkStreamV3::ReceiveMessage(const Anki::Vector::ExternalComms::RtsConnection_3& msg) {
+void Test_INetworkStreamV4::ReceiveMessage(const Anki::Vector::ExternalComms::RtsConnection_4& msg) {
   _queue.push(msg);
 }
 
-int Test_INetworkStreamV3::SendPlainText(uint8_t* bytes, int length) {
+int Test_INetworkStreamV4::SendPlainText(uint8_t* bytes, int length) {
   // Received a message
   if(_state == MessageState::TestRaw) {
     if((SetupMessage)bytes[0] == SetupMessage::MSG_HANDSHAKE) {
@@ -46,7 +46,7 @@ int Test_INetworkStreamV3::SendPlainText(uint8_t* bytes, int length) {
   return 0;
 }
 
-int Test_INetworkStreamV3::SendEncrypted(uint8_t* bytes, int length) {
+int Test_INetworkStreamV4::SendEncrypted(uint8_t* bytes, int length) {
   uint8_t outBytes[length + 16];
   uint64_t outLength = 0;
   Encrypt(bytes, length, outBytes, &outLength);
@@ -64,7 +64,7 @@ int Test_INetworkStreamV3::SendEncrypted(uint8_t* bytes, int length) {
   return 0;
 }
 
-void Test_INetworkStreamV3::Update() {
+void Test_INetworkStreamV4::Update() {
   // instance tick
 
   if(_handShake) {
@@ -74,7 +74,7 @@ void Test_INetworkStreamV3::Update() {
     // send handshake
     uint8_t bytes[5] = {0};
     bytes[0] = SetupMessage::MSG_HANDSHAKE;
-    *(uint32_t*)(bytes + 1) = V3;
+    *(uint32_t*)(bytes + 1) = V4;
 
     // Receive Handshake Message
     ReceivePlainText(bytes, sizeof(bytes));
@@ -82,11 +82,11 @@ void Test_INetworkStreamV3::Update() {
   }
 
   while(_queue.size() > 0) {
-    Anki::Vector::ExternalComms::RtsConnection_3 msg = _queue.front();
+    Anki::Vector::ExternalComms::RtsConnection_4 msg = _queue.front();
     _queue.pop();
 
     switch(msg.GetTag()) {
-      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsConnRequest: {
+      case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsConnRequest: {
         Anki::Vector::ExternalComms::RtsConnRequest m = msg.Get_RtsConnRequest();
         const uint8_t pinDigits = 6;
         if(!_reconnect) {
@@ -115,7 +115,7 @@ void Test_INetworkStreamV3::Update() {
         }
         break;
       }
-      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsNonceMessage: {
+      case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsNonceMessage: {
         Anki::Vector::ExternalComms::RtsNonceMessage m = msg.Get_RtsNonceMessage();
 
         _keyExchange->CalculateSharedKeysClient((const uint8_t*)_securePairing->GetPin().c_str());
@@ -139,19 +139,19 @@ void Test_INetworkStreamV3::Update() {
         }
 
         SendRtsMessage<Vector::ExternalComms::RtsAck>
-          ((uint8_t)Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsNonceMessage);
+          ((uint8_t)Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsNonceMessage);
 
           _state = MessageState::TestSecure;
         break;
       }
-      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsChallengeMessage: {
+      case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsChallengeMessage: {
         Anki::Vector::ExternalComms::RtsChallengeMessage m = msg.Get_RtsChallengeMessage();
 
         uint32_t challenge = m.number + 1;
         SendRtsMessage<Vector::ExternalComms::RtsChallengeMessage>(challenge);
         break;
       }
-      case Anki::Vector::ExternalComms::RtsConnection_3Tag::RtsChallengeSuccessMessage: {
+      case Anki::Vector::ExternalComms::RtsConnection_4Tag::RtsChallengeSuccessMessage: {
         if(_reconnect) {
           Log::Write("Reconnection worked!");
         }
@@ -191,7 +191,7 @@ void Test_INetworkStreamV3::Update() {
 //
 //
 //
-int Test_INetworkStreamV3::ClientEncrypt(uint8_t* buffer, int length, uint8_t* output, uint64_t* outputLength) {  
+int Test_INetworkStreamV4::ClientEncrypt(uint8_t* buffer, int length, uint8_t* output, uint64_t* outputLength) {  
   // encrypt message
   int result = crypto_aead_xchacha20poly1305_ietf_encrypt(output, outputLength, buffer, length, nullptr, 0, nullptr, _EncryptNonce, _EncryptKey);
   
@@ -203,7 +203,7 @@ int Test_INetworkStreamV3::ClientEncrypt(uint8_t* buffer, int length, uint8_t* o
   return result;
 }
 
-int Test_INetworkStreamV3::ClientDecrypt(uint8_t* buffer, int length, uint8_t* output, uint64_t* outputLength) {
+int Test_INetworkStreamV4::ClientDecrypt(uint8_t* buffer, int length, uint8_t* output, uint64_t* outputLength) {
   // decrypt message
   int result = crypto_aead_xchacha20poly1305_ietf_decrypt(output, outputLength, nullptr, buffer, length, nullptr, 0, _DecryptNonce, _DecryptKey);
   
@@ -219,8 +219,8 @@ int Test_INetworkStreamV3::ClientDecrypt(uint8_t* buffer, int length, uint8_t* o
 //
 //
 
-void TickV3(struct ev_loop* loop, struct ev_timer* w, int revents) {  
-  Test_INetworkStreamV3* stream = (Test_INetworkStreamV3*)w->data;
+void TickV4(struct ev_loop* loop, struct ev_timer* w, int revents) {  
+  Test_INetworkStreamV4* stream = (Test_INetworkStreamV4*)w->data;
 
   if(stream) {
     stream->Update();   
@@ -230,8 +230,8 @@ void TickV3(struct ev_loop* loop, struct ev_timer* w, int revents) {
   if(false) ev_break(ev_default_loop(0), EVBREAK_ONE);
 }
 
-void TimeoutV3(struct ev_loop* loop, struct ev_timer* w, int revents) {  
-  Test_INetworkStreamV3* stream = (Test_INetworkStreamV3*)w->data;
+void TimeoutV4(struct ev_loop* loop, struct ev_timer* w, int revents) {  
+  Test_INetworkStreamV4* stream = (Test_INetworkStreamV4*)w->data;
   
   // break out condition
   if(!stream->Connected()) {
@@ -241,10 +241,10 @@ void TimeoutV3(struct ev_loop* loop, struct ev_timer* w, int revents) {
   ev_break(ev_default_loop(0), EVBREAK_ONE);
 }
 
-void Test_INetworkStreamV3::Test(RtsComms* securePairing) {
+void Test_INetworkStreamV4::Test(RtsComms* securePairing) {
   ev_timer t;
   t.data = this;
-  ev_timer_init(&t, TickV3, 0.1f, 0.1f);
+  ev_timer_init(&t, TickV4, 0.1f, 0.1f);
   ev_timer_start(ev_default_loop(0), &t);
 
   _securePairing = securePairing;
@@ -253,7 +253,7 @@ void Test_INetworkStreamV3::Test(RtsComms* securePairing) {
 
   ev_timer timeout;
   timeout.data = this;
-  ev_timer_init(&timeout, TimeoutV3, 3, 0);
+  ev_timer_init(&timeout, TimeoutV4, 3, 0);
   ev_timer_start(ev_default_loop(0), &timeout);
 
   // start loop
@@ -261,9 +261,9 @@ void Test_INetworkStreamV3::Test(RtsComms* securePairing) {
 }
 
 template<typename T, typename... Args>
-void Test_INetworkStreamV3::SendRtsMessage(Args&&... args) {
+void Test_INetworkStreamV4::SendRtsMessage(Args&&... args) {
   Anki::Vector::ExternalComms::ExternalComms msg = Anki::Vector::ExternalComms::ExternalComms(
-    Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_3(T(std::forward<Args>(args)...))));
+    Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_4(T(std::forward<Args>(args)...))));
   std::vector<uint8_t> messageData(msg.Size());
   const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 
