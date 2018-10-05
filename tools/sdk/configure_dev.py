@@ -28,7 +28,7 @@ class InternalApi(conf.Api):
         else:
             sys.exit("Invalid env '{}', please choose 'dev' or 'beta'".format(env))
 
-
+    @property
     def name(self):
         return "Anki Cloud ({})".format(self._env)
 
