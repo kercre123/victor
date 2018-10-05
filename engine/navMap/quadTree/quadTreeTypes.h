@@ -33,7 +33,7 @@ namespace QuadTreeTypes {
 using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
   
 using NodeCPtr       = std::shared_ptr<const QuadTreeNode>;
-using NodeCPtrVector = std::vector<NodeCPtr>;  
+using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
 
 
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type

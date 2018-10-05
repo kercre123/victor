@@ -52,7 +52,7 @@ QuadTreeProcessor::QuadTreeProcessor()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeContentTypeChanged(QuadTreeTypes::NodeCPtr node, const EContentType& oldType, const bool wasEmpty)
+void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldType, const bool wasEmpty)
 {
   
   using namespace MemoryMapTypes;
@@ -117,7 +117,7 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(QuadTreeTypes::NodeCPtr node, c
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeDestroyed(QuadTreeTypes::NodeCPtr node)
+void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 {
   // if old content type is cached
   const EContentType oldContent = node->GetData()->type;
@@ -158,7 +158,7 @@ void QuadTreeProcessor::OnNodeDestroyed(QuadTreeTypes::NodeCPtr node)
 void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred, NodeSet& output)
 {
   // find any node of typeToFill that satisfies pred(node, neighbor)
-  std::deque<QuadTreeNode::NodeCPtr> unexpandedNodes;
+  std::deque<const QuadTreeNode*> unexpandedNodes;
   FoldFunctorConst fillTypeFilter = [&] (const QuadTreeNode& node) {
     // first check if node is typeToFill
     if ( innerPred( node.GetData() ) ) {
@@ -166,7 +166,7 @@ void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const Nod
       QuadTreeNode::NodeCPtrVector neighbors = node.GetNeighbors();
       for(const auto& neighbor : neighbors) {
         if( outerPred( neighbor->GetData() ) ) {
-          unexpandedNodes.emplace_back( node.shared_from_this() );
+          unexpandedNodes.emplace_back( &node );
           return;
         }
       }
@@ -177,7 +177,7 @@ void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const Nod
   // expand all nodes for fill
   while(!unexpandedNodes.empty()) {
     // get the next node and add it to the output list
-    QuadTreeNode::NodeCPtr& node = unexpandedNodes.front();
+    const QuadTreeNode* node = unexpandedNodes.front();
     unexpandedNodes.pop_front();
     output.insert(node);
 

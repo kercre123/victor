@@ -134,7 +134,7 @@ void QuadTreeNode::ForceSetDetectedContentType(const MemoryMapDataPtr newData, Q
   if ( typeChanged ) {
     // we no longer check if if the type changes from Invalid or Subdivided in the processor, 
     // so we should move the check here.
-    processor.OnNodeContentTypeChanged( shared_from_this(), oldContentType, wasEmptyType);
+    processor.OnNodeContentTypeChanged( this, oldContentType, wasEmptyType);
   }
 }
 
@@ -170,7 +170,7 @@ void QuadTreeNode::DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& proces
     // destroying its children
     DestroyNodes( node->_childrenPtr, processor );
     // and then itself
-    processor.OnNodeDestroyed( std::const_pointer_cast<const QuadTreeNode>(node) );
+    processor.OnNodeDestroyed( node.get() );
     node.reset();
   }
 }

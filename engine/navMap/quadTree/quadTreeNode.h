@@ -21,7 +21,7 @@
 #include "coretech/common/engine/math/axisAlignedHyperCube.h"
 
 #include "util/helpers/noncopyable.h"
-#include "util/helpers/monads.h"
+#include "util/helpers/maybe.h"
 
 #include <memory>
 #include <vector>
@@ -42,8 +42,8 @@ public:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  using NodeCPtr       = QuadTreeTypes::NodeCPtr;
-  using NodeCPtrVector = QuadTreeTypes::NodeCPtrVector;  
+  using NodeCPtr       = QuadTreeTypes::NodeCPtr;  
+  using NodeCPtrVector = QuadTreeTypes::NodeCPtrVector;
   using NodeContent    = QuadTreeTypes::NodeContent;
   using FoldFunctor    = QuadTreeTypes::FoldFunctor;
   using FoldDirection  = QuadTreeTypes::FoldDirection;
@@ -58,7 +58,6 @@ public:
   const   Point3f& GetCenter() const      { return _center; }
   MemoryMapDataPtr GetData() const        { return _content.data; }
   const NodeContent& GetContent() const   { return _content; }
-
 
   // Builds a quad from our coordinates
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }

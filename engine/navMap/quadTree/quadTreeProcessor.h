@@ -55,10 +55,10 @@ public:
   void SetRoot(QuadTree* tree) { _quadTree = tree; };
 
   // notification when the content type changes for the given node
-  void OnNodeContentTypeChanged(QuadTreeTypes::NodeCPtr node, const EContentType& oldContent, const bool wasEmpty);
+  void OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldContent, const bool wasEmpty);
 
   // notification when a node is going to be removed entirely
-  void OnNodeDestroyed(QuadTreeTypes::NodeCPtr node);
+  void OnNodeDestroyed(const QuadTreeNode* node);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Processing
@@ -86,7 +86,7 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  using NodeSet = std::unordered_set<QuadTreeTypes::NodeCPtr>;
+  using NodeSet = std::unordered_set<const QuadTreeNode*>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
