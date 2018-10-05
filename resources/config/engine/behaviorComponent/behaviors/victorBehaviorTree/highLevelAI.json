@@ -385,10 +385,6 @@
                 "to": "MedStim"
               },
               {
-                "conditionType": "ObjectKnown",
-                "objectTypes": ["Charger_Basic"]
-              },
-              {
                 "conditionType": "Compound",
                 "not": { "conditionType": "RobotInHabitat" }
               }
