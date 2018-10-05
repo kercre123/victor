@@ -65,9 +65,14 @@ namespace Anki {
         // never actually stop moving
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
 
+#if (ANKI_WHISKEY==0)
         // For disengaging gripper once the lift has reached its final position
         bool disengageGripperAtDest_ = false;
         f32  disengageAtAngle_ = 0.f;
+
+        // The height of the "fingers"
+        const f32 LIFT_FINGER_HEIGHT = 3.8f;
+#endif
 
         f32 Kp_ = 3.f; // proportional control constant
         f32 Kd_ = 0.f;  // derivative gain
@@ -77,19 +82,25 @@ namespace Anki {
 
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
+#else // ifdef SIMULATOR
 
-        // The height of the "fingers"
-        const f32 LIFT_FINGER_HEIGHT = 3.8f;
+#if (ANKI_WHISKEY==0)
+        f32 Kp_ = 3.f;     // proportional control constant
+        f32 Kd_ = 3000.f;  // derivative gain
+        f32 Ki_ = 0.1f;    // integral control constant
+        f32 angleErrorSum_ = 0.f;
+        f32 MAX_ERROR_SUM = 5.f;
 #else
         f32 Kp_ = 3.f;     // proportional control constant
         f32 Kd_ = 3000.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 5.f;
+#endif        
 
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
-#endif
+#endif // ifdef SIMULATOR
 
         // Amount by which angleErrorSum decays to MAX_ANGLE_ERROR_SUM_IN_POSITION
         const f32 ANGLE_ERROR_SUM_DECAY_STEP = 0.02f;
@@ -107,10 +118,10 @@ namespace Anki {
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
         // and the lower lift joint on the forklift assembly.
-        Radians currentAngle_ = 0.f;
-        Radians desiredAngle_ = 0.f;
+        f32 currentAngle_rad_ = 0.f;
+        f32 desiredAngle_rad_ = 0.f;
         f32 desiredHeight_ = 0.f;
-        f32 currDesiredAngle_ = 0.f;
+        f32 currDesiredAngle_rad_ = 0.f;
         f32 prevAngleError_ = 0.f;
         f32 prevHalPos_ = 0.f;
         bool inPosition_  = true;
@@ -200,9 +211,9 @@ namespace Anki {
 
       void ResetAnglePosition(f32 currAngle)
       {
-        currentAngle_ = currAngle;
-        desiredAngle_ = currentAngle_;
-        currDesiredAngle_ = currentAngle_.ToFloat();
+        currentAngle_rad_ = currAngle;
+        desiredAngle_rad_ = currentAngle_rad_;
+        currDesiredAngle_rad_ = currentAngle_rad_;
         desiredHeight_ = GetHeightMM();
       }
 
@@ -212,10 +223,12 @@ namespace Anki {
           enable_ = true;
           enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
-          ResetAnglePosition(currentAngle_.ToFloat());
+          ResetAnglePosition(currentAngle_rad_);
 #ifdef SIMULATOR
+#if (ANKI_WHISKEY==0)
           // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
           HAL::DisengageGripper();
+#endif          
 #endif
         }
       }
@@ -313,7 +326,7 @@ namespace Anki {
               power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_LIFT);
               HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
-              lowLiftAngleDuringCalib_rad_ = currentAngle_.ToFloat();
+              lowLiftAngleDuringCalib_rad_ = currentAngle_rad_;
               liftAngleHigherThanCalibAbortAngleCount_ = 0;
               calState_ = LCS_WAIT_FOR_STOP;
               break;
@@ -371,12 +384,11 @@ namespace Anki {
           // Check if lift is actually moving up when it should be moving down.
           // This means someone's messing with it so just abort calibration.
           if (IsCalibrating()) {
-            const float currAngle = currentAngle_.ToFloat();
-            if (lowLiftAngleDuringCalib_rad_ > currAngle) {
-              lowLiftAngleDuringCalib_rad_ = currAngle;
+            if (lowLiftAngleDuringCalib_rad_ > currentAngle_rad_) {
+              lowLiftAngleDuringCalib_rad_ = currentAngle_rad_;
             }
 
-            if (currAngle - lowLiftAngleDuringCalib_rad_ > UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_RAD) {
+            if (currentAngle_rad_ - lowLiftAngleDuringCalib_rad_ > UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_RAD) {
               // Must be beyond threshold for some count to ignore
               // lift bouncing against lower limit
               ++liftAngleHigherThanCalibAbortAngleCount_;
@@ -384,15 +396,15 @@ namespace Anki {
                 if (firstCalibration_) {
                   AnkiWarn("LiftController.CalibrationUpdate.RestartingCalib",
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
-                           RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+                           RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currentAngle_rad_));
                   calState_ = LCS_LOWER_LIFT;
                 } else {
                   AnkiInfo("LiftController.CalibrationUpdate.Abort",
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
-                           RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+                           RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currentAngle_rad_));
 
                   // Maintain current calibration
-                  ResetAnglePosition(currAngle);
+                  ResetAnglePosition(currentAngle_rad_);
                   calState_ = LCS_COMPLETE;
                 }
               }
@@ -412,12 +424,12 @@ namespace Anki {
 
       f32 GetHeightMM()
       {
-        return ConvertLiftAngleToLiftHeightMM(currentAngle_.ToFloat());
+        return ConvertLiftAngleToLiftHeightMM(currentAngle_rad_);
       }
 
       f32 GetAngleRad()
       {
-        return currentAngle_.ToFloat();
+        return currentAngle_rad_;
       }
 
       void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
@@ -440,18 +452,18 @@ namespace Anki {
       {
         // Command a target height based on the sign of the desired speed
         bool useVPG = true;
-        f32 targetHeight = 0.f;
+        f32 targetAngle = 0.f;
         if (speed_rad_per_sec > 0.f) {
-          targetHeight = LIFT_HEIGHT_CARRY;
+          targetAngle = MAX_LIFT_ANGLE;
         } else if (speed_rad_per_sec < 0.f) {
-          targetHeight = LIFT_HEIGHT_LOWDOCK;
+          targetAngle = MIN_LIFT_ANGLE;
         } else {
           // Stop immediately!
-          targetHeight = GetHeightMM();
+          targetAngle = currentAngle_rad_;
           useVPG = false;
         }
 
-        SetDesiredHeight(targetHeight, speed_rad_per_sec, accel_rad_per_sec2, useVPG);
+        SetDesiredAngle(targetAngle, speed_rad_per_sec, accel_rad_per_sec2, useVPG);
       }
 
       f32 GetAngularVelocity()
@@ -463,7 +475,7 @@ namespace Anki {
       {
         // Update position
         const f32 currHalPos = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
-        currentAngle_ += (currHalPos - prevHalPos_);
+        currentAngle_rad_ += (currHalPos - prevHalPos_);
 
         // Get encoder speed measurements
         f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
@@ -474,15 +486,19 @@ namespace Anki {
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebug( "LiftController", "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
-              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MotorID::MOTOR_LIFT), prevHalPos_, power_);
+              measuredSpeed, radSpeed_, currentAngle_rad_, HAL::MotorGetPosition(MotorID::MOTOR_LIFT), prevHalPos_, power_);
 #endif      
         prevHalPos_ = currHalPos;
       }
 
-      void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
-                                     const f32 speed_rad_per_sec,
-                                     const f32 accel_rad_per_sec2,
-                                     bool useVPG)
+
+      void SetDesiredAngle_internal(const f32 angle_rad, 
+                                    const f32 acc_start_frac, 
+                                    const f32 acc_end_frac, 
+                                    const f32 duration_seconds,
+                                    const f32 speed_rad_per_sec,
+                                    const f32 accel_rad_per_sec2,
+                                    bool useVPG)
       {
 #if DISABLE_MOTORS_ON_CHARGER
         // If a lift motion is commanded while the robot is on charger,
@@ -499,49 +515,48 @@ namespace Anki {
 
         SetMaxSpeedAndAccel(speed_rad_per_sec, accel_rad_per_sec2);
 
-        // Do range check on height
-        const f32 newDesiredHeight = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        // Do range check on angle
+        const f32 newDesiredAngle = CLIP(angle_rad, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
 
 #ifdef SIMULATOR
+#if (ANKI_WHISKEY==0)
         if(!HAL::IsGripperEngaged()) {
           // If the new desired height will make the lift move upward, turn on
           // the gripper's locking mechanism so that we might pick up a block as
           // it goes up
-          if(newDesiredHeight > desiredHeight_) {
+          if(newDesiredAngle > desiredAngle_rad_) {
             HAL::EngageGripper();
           }
         }
         else {
           // If we're moving the lift down and the end goal is at low-place or
           // high-place height, disengage the gripper when we get there
-          if(newDesiredHeight < desiredHeight_ &&
-             (newDesiredHeight == LIFT_HEIGHT_LOWDOCK ||
-              newDesiredHeight == LIFT_HEIGHT_HIGHDOCK))
+          if(newDesiredAngle < desiredAngle_rad_ &&
+             (newDesiredAngle == MIN_LIFT_ANGLE ||
+              newDesiredAngle == ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_HIGHDOCK)))
           {
             disengageGripperAtDest_ = true;
-            disengageAtAngle_ = ConvertLiftHeightToLiftAngleRad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
+            disengageAtAngle_ = ConvertLiftHeightToLiftAngleRad(ConvertLiftAngleToLiftHeightMM(newDesiredAngle) + 3.f*LIFT_FINGER_HEIGHT);
           }
           else {
             disengageGripperAtDest_ = false;
           }
         }
+#endif        
 #endif
-        // Check if already at desired height
+        // Check if already at desired angle
         if (inPosition_ &&
-            (ConvertLiftHeightToLiftAngleRad(newDesiredHeight) == desiredAngle_) &&
-            (fabsf((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
+            (newDesiredAngle == desiredAngle_rad_) &&
+            (fabsf(desiredAngle_rad_ - currentAngle_rad_) < LIFT_ANGLE_TOL) ) {
           #if(DEBUG_LIFT_CONTROLLER)
-          AnkiDebug( "LiftController", "Already at desired height %f", newDesiredHeight);
+          AnkiDebug( "LiftController", "Already at desired angle %f", newDesiredAngle);
           #endif
           return;
         }
-
-        // Convert desired height into the necessary angle:
-        desiredHeight_ = newDesiredHeight;
-        desiredAngle_ = ConvertLiftHeightToLiftAngleRad(desiredHeight_);
+        desiredAngle_rad_ = newDesiredAngle;
 
         f32 startRadSpeed = radSpeed_;
-        f32 startRad = currDesiredAngle_;
+        f32 startRad = currDesiredAngle_rad_;
         if (inPosition_) {
           // If already in position, reset angleErrorSum_.
           // Small and short lift motions can be overpowered by the unwinding of
@@ -556,19 +571,20 @@ namespace Anki {
         bool res = false;
         if (duration_seconds > 0) {
           res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
-                                                   desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
+                                                   desiredAngle_rad_, acc_end_frac*duration_seconds,
                                                    MAX_LIFT_SPEED_RAD_PER_S,
                                                    MAX_LIFT_ACCEL_RAD_PER_S2,
                                                    duration_seconds,
                                                    CONTROL_DT);
 
           if (!res) {
-            AnkiInfo("LiftController.SetDesiredHeight.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
+            AnkiInfo("LiftController.SetDesiredAngle.VPGFixedDurationFailed", 
+                     "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
                      startRadSpeed,
                      startRad,
                      acc_start_frac,
                      acc_end_frac,
-                     desiredAngle_.ToFloat(),
+                     desiredAngle_rad_,
                      duration_seconds);
           }
         }
@@ -583,16 +599,48 @@ namespace Anki {
 
           vpg_.StartProfile(startRadSpeed, startRad,
                             vpgSpeed, vpgAccel,
-                            0, desiredAngle_.ToFloat(),
+                            0, desiredAngle_rad_,
                             CONTROL_DT);
         }
 
 #if DEBUG_LIFT_CONTROLLER
         AnkiDebug( "LiftController", "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
-              startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+              startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_rad_, duration_seconds);
 #endif
+      } // SetDesiredAngle_internal
+
+
+      void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
+                                     const f32 speed_rad_per_sec,
+                                     const f32 accel_rad_per_sec2,
+                                     bool useVPG) 
+      {
+
+        f32 angle_rad = ConvertLiftHeightToLiftAngleRad(height_mm);
+        SetDesiredAngle_internal(angle_rad, 
+                                 acc_start_frac, 
+                                 acc_end_frac, 
+                                 duration_seconds,
+                                 speed_rad_per_sec,
+                                 accel_rad_per_sec2,
+                                 useVPG);
       } // SetDesiredHeight_internal
 
+
+      void SetDesiredAngleByDuration(f32 angle_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      {
+        SetDesiredAngle_internal(angle_rad, acc_start_frac, acc_end_frac, duration_seconds,
+                                  MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, true);
+      }
+
+      void SetDesiredAngle(f32 angle_rad,
+                           f32 speed_rad_per_sec,
+                           f32 accel_rad_per_sec2,
+                           bool useVPG)
+      {
+        SetDesiredAngle_internal(angle_rad, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0,
+                                  speed_rad_per_sec, accel_rad_per_sec2, useVPG);
+      }
 
       void SetDesiredHeightByDuration(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
@@ -658,7 +706,7 @@ namespace Anki {
       void Unbrace() {
         AnkiInfo("LiftController.Unbrace", "");
         HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0.f);
-        ResetAnglePosition(currentAngle_.ToFloat());
+        ResetAnglePosition(currentAngle_rad_);
         bracing_ = false;
       }
 
@@ -716,10 +764,12 @@ namespace Anki {
         }
 
 #ifdef SIMULATOR
-        if (disengageGripperAtDest_ && currentAngle_.ToFloat() < disengageAtAngle_) {
+#if (ANKI_WHISKEY==0)
+        if (disengageGripperAtDest_ && currentAngle_rad_ < disengageAtAngle_) {
           HAL::DisengageGripper();
           disengageGripperAtDest_ = false;
         }
+#endif
 #endif
 
         if (checkingForLoadStartTime_ > 0) {
@@ -730,7 +780,7 @@ namespace Anki {
             if (checkForLoadCallback_) {
               checkForLoadCallback_(false);
             }
-          } else if (currentAngle_ < checkingForLoadStartAngle_ - CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH) {
+          } else if (currentAngle_rad_ < checkingForLoadStartAngle_ - CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH) {
             AnkiInfo( "LiftController.Update.LoadDetected", "in %d ms", currTime - checkingForLoadStartTime_);
             checkForLoadWhenInPosition_ = false;
             checkingForLoadStartTime_ = 0;
@@ -746,13 +796,13 @@ namespace Anki {
         }
 
         // Get the current desired lift angle
-        if (currDesiredAngle_ != desiredAngle_) {
+        if (currDesiredAngle_rad_ != desiredAngle_rad_) {
           f32 currDesiredRadVel;
-          vpg_.Step(currDesiredRadVel, currDesiredAngle_);
+          vpg_.Step(currDesiredRadVel, currDesiredAngle_rad_);
         }
 
         // Compute position error
-        f32 angleError = currDesiredAngle_ - currentAngle_.ToFloat();
+        f32 angleError = currDesiredAngle_rad_ - currentAngle_rad_;
 
 #ifdef SIMULATOR
         // Ignore if it's less than encoder resolution
@@ -768,16 +818,16 @@ namespace Anki {
         power_ = ANTI_GRAVITY_POWER_BIAS + powerP + powerD + powerI;
 
         // Remove D term if lift is near limits
-        if ((currentAngle_.ToFloat() < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD &&
-             currDesiredAngle_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD) ||
-            (currentAngle_.ToFloat() > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD &&
-             currDesiredAngle_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD)) {
+        if ((currentAngle_rad_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD &&
+             currDesiredAngle_rad_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD) ||
+            (currentAngle_rad_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD &&
+             currDesiredAngle_rad_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD)) {
           power_ -= powerD;
         }
 
 
         // If accurately tracking final desired angle...
-        if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_ == currDesiredAngle_)) {
+        if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_rad_ == currDesiredAngle_rad_)) {
 
           // Decay angleErrorSum as long as power exceeds MAX_POWER_IN_POSITION
           if (ABS(power_) > MAX_POWER_IN_POSITION) {
@@ -785,7 +835,7 @@ namespace Anki {
             angleErrorSum_ -= decay;
           } else if (checkForLoadWhenInPosition_ && !IsMoving()) {
             checkingForLoadStartTime_ = currTime;
-            checkingForLoadStartAngle_ = currentAngle_.ToFloat();
+            checkingForLoadStartAngle_ = currentAngle_rad_;
             AnkiInfo( "LiftController.Update.CheckingForLoad", "%d", checkingForLoadStartTime_);
             power_ = 0;
           }
@@ -814,10 +864,10 @@ namespace Anki {
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebugPeriodic(50, "LiftController.Update.Values", "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d",
-                          currentAngle_.ToFloat(),
-                          currDesiredAngle_,
+                          currentAngle_rad_,
+                          currDesiredAngle_rad_,
                           radSpeed_,
-                          desiredAngle_.ToFloat(),
+                          desiredAngle_rad_,
                           angleError,
                           angleErrorSum_,
                           inPosition_ ? 1 : 0);

@@ -11,6 +11,10 @@
 
 #include <math.h>
 
+#ifndef ANKI_WHISKEY
+#define ANKI_WHISKEY 0
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -132,8 +136,11 @@ namespace Vector {
                                                     + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END)
   
   const f32 MIN_LIFT_ANGLE = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_LOWDOCK);
-  
+  #if ANKI_WHISKEY
+  const f32 MAX_LIFT_ANGLE = MIN_LIFT_ANGLE + DEG_TO_RAD(190);
+  #else
   const f32 MAX_LIFT_ANGLE = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_CARRY);
+  #endif  
   
   // deadband around the min and max lift-angles beyond which we are considered not calibrated
   const f32 LIFT_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(5.f);

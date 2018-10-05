@@ -1598,6 +1598,12 @@ namespace Vector {
   {
     SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
   }
+
+  void WebotsKeyboardController::MoveLiftToAngle()
+  {
+    f32 targetAngle_rad = DEG_TO_RAD(root_->getField("liftTargetAngleDeg")->getSFFloat());
+    SendMoveLiftToAngle(targetAngle_rad, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
+  }
   
   void WebotsKeyboardController::MoveHeadToLowLimit()
   {
@@ -1823,7 +1829,7 @@ namespace Vector {
     REGISTER_KEY_FCN('5', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 5");
     REGISTER_KEY_FCN('6', MOD_NONE,      MoveHeadToHighLimit,    "Move head all the way up");
     REGISTER_KEY_FCN('6', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 6");
-//      REGISTER_KEY_FCN('7', MOD_NONE,      , "");
+    REGISTER_KEY_FCN('7', MOD_NONE,      MoveLiftToAngle,        "Move lift to targetAngle_deg");
     REGISTER_KEY_FCN('7', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 7");
 //      REGISTER_KEY_FCN('8', MOD_NONE,      , "");
     REGISTER_KEY_FCN('8', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 8");
@@ -1899,7 +1905,7 @@ namespace Vector {
     
     REGISTER_KEY_FCN('A', MOD_NONE,      MoveLiftUp,            "Move lift up");
     REGISTER_KEY_FCN('A', MOD_SHIFT,     MoveLiftUp,            "Move lift up (half speed)");
-    REGISTER_KEY_FCN('A', MOD_ALT,       SendReadAnimationFile, "Re-load animations (Not working)");
+//    REGISTER_KEY_FCN('A', MOD_ALT,       SendReadAnimationFile, "Re-load animations (Not working)");
 //      REGISTER_KEY_FCN('A', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('B', MOD_NONE,      SetActiveObjectLights, "Cube lights");

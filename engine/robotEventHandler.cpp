@@ -874,6 +874,28 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftAngle& msg)
+{
+  // Special case if commanding low dock height while carrying a block...
+  if (msg.angle_rad == MIN_LIFT_ANGLE && robot.GetCarryingComponent().IsCarryingObject())
+  {
+    // ...put the block down right here.
+    IActionRunner* newAction = new PlaceObjectOnGroundAction();
+    return newAction;
+  }
+  else
+  {
+    // In the normal case directly set the lift angle
+    MoveLiftToAngleAction* action = new MoveLiftToAngleAction(msg.angle_rad);
+    action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
+    action->SetLiftAccel(msg.accel_rad_per_sec2);
+    action->SetDuration(msg.duration_sec);
+
+    return action;
+  }
+}
+
 // THIS FUNCTION IS A CLAD EQUIVALENT FOR THE FOLLOWING: SetLiftHeightRequest
 //  if any changes are made here, they should be reflected in the associated function.
 template<>
@@ -1116,6 +1138,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(searchForNearbyObject,    SearchForNearbyObject,    0),
       DEFINE_HANDLER(setHeadAngle,             SetHeadAngle,             0),
       DEFINE_HANDLER(setLiftHeight,            SetLiftHeight,            0),
+      DEFINE_HANDLER(setLiftAngle,             SetLiftAngle,             0),
       DEFINE_HANDLER(trackFace,                TrackToFace,              0),
       DEFINE_HANDLER(trackObject,              TrackToObject,            0),
       DEFINE_HANDLER(trackLaserPoint,          TrackToLaserPoint,        0),

@@ -391,6 +391,18 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
+      void Process_setLiftAngle(const RobotInterface::SetLiftAngle& msg) {
+        // AnkiInfo( "Messages.Process_liftAngle.Recvd", 
+        //           "height %f, maxSpeed %f, duration %f", 
+        //           msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
+        if (msg.duration_sec > 0) {
+          LiftController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
+        } else {
+          LiftController::SetDesiredAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        }
+        AckMotorCommand(msg.actionID);
+      }
+
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
         //AnkiInfo( "Messages.Process_headAngle.Recvd", "angle %f, maxSpeed %f, duration %f", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {

@@ -147,6 +147,15 @@ public:
   // Below are low-level actions to tell the robot to do something "now"
   // without using the ActionList system:
   
+  // Sends a message to the robot to move the lift to the specified angle.
+  // When the command is received by the robot, it returns a MotorActionAck
+  // message with the ID that can optionally be written to actionID_out.
+  Result MoveLiftToAngle(const f32 angle_rad,
+                          const f32 max_speed_rad_per_sec,
+                          const f32 accel_rad_per_sec2,
+                          const f32 duration_sec = 0.f,
+                          MotorActionID* actionID_out = nullptr);
+                          
   // Sends a message to the robot to move the lift to the specified height.
   // When the command is received by the robot, it returns a MotorActionAck
   // message with the ID that can optionally be written to actionID_out.

@@ -1075,6 +1075,132 @@ namespace Anki {
       return result;
     }
     
+#pragma mark ---- MoveLiftToAngleAction ----
+    
+    MoveLiftToAngleAction::MoveLiftToAngleAction(const f32 angle_rad, const f32 tolerance_rad, const f32 variability)
+    : IAction("MoveLiftTo" + std::to_string(RAD_TO_DEG(angle_rad)) + "deg",
+              RobotActionType::MOVE_LIFT_TO_ANGLE,
+              (u8)AnimTrackFlag::LIFT_TRACK)
+    , _angle_rad(angle_rad)
+    , _angleTolerance_rad(tolerance_rad)
+    , _variability(variability)
+    , _inPosition(false)
+    {
+      
+    }
+    
+    bool MoveLiftToAngleAction::IsLiftInPosition() const
+    {
+      const bool inPosition = (NEAR(_angleWithVariation, GetRobot().GetComponent<FullRobotPose>().GetLiftAngle(), _angleTolerance_rad) &&
+                               !GetRobot().GetMoveComponent().IsLiftMoving());
+      
+      return inPosition;
+    }
+    
+    ActionResult MoveLiftToAngleAction::Init()
+    {
+      ActionResult result = ActionResult::SUCCESS;
+      _motionCommanded = false;
+      _motionCommandAcked = false;
+      _motionStarted = false;
+      
+      if (_angle_rad < MIN_LIFT_ANGLE || _angle_rad > MAX_LIFT_ANGLE) {
+        PRINT_NAMED_WARNING("MoveLiftToAngleAction.Init.InvalidAngle",
+                            "%f deg. Clipping to be in range.", RAD_TO_DEG(_angle_rad));
+        _angle_rad = CLIP(_angle_rad, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
+      }
+      
+      _angleWithVariation = _angle_rad;
+      if(_variability > 0.f) {
+        _angleWithVariation += GetRNG().RandDblInRange(-_variability, _variability);
+      }
+      _angleWithVariation = CLIP(_angleWithVariation, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
+
+
+      if (_angleTolerance_rad < LIFT_ANGLE_TOL) {
+        
+        PRINT_NAMED_WARNING("MoveLiftToAngleAction.Init.TolTooSmall",
+                            "Angle tolerance (%f rad) must be >= LIFT_ANGLE_TOL. Clipping tolerance",
+                            RAD_TO_DEG(_angleTolerance_rad));
+        _angleTolerance_rad = LIFT_ANGLE_TOL;
+      }
+      
+      _inPosition = IsLiftInPosition();
+      
+      if (!_inPosition) {
+        if(GetRobot().GetMoveComponent().MoveLiftToAngle(_angleWithVariation,
+                                                         _maxLiftSpeedRadPerSec,
+                                                         _liftAccelRacPerSec2,
+                                                         _duration,
+                                                         &_actionID) != RESULT_OK) {
+          result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
+        } else {
+          _motionCommanded = true;
+        }
+        
+      }
+      
+      // Subscribe to motor command ack
+      auto actionStartedLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+      {
+        if(_motionCommanded && _actionID == event.GetData().Get_motorActionAck().actionID) {
+          PRINT_CH_INFO("Actions", "MoveLiftToAngleAction.MotorActionAcked",
+                        "[%d] ActionID: %d",
+                        GetTag(),
+                        _actionID);
+          _motionCommandAcked = true;
+        }
+      };
+      
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
+                                                                     actionStartedLambda);
+
+
+      return result;
+    }
+    
+    ActionResult MoveLiftToAngleAction::CheckIfDone()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if (_motionCommanded && !_motionCommandAcked) {
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToAngleAction.CheckIfDone.WaitingForAck",
+                                "[%d] ActionID: %d",
+                                GetTag(),
+                                _actionID);
+        return result;
+      }
+
+      if(!_inPosition) {
+        _inPosition = IsLiftInPosition();
+      }
+      
+      const bool isLiftMoving = GetRobot().GetMoveComponent().IsLiftMoving();
+      if( isLiftMoving ) {
+        _motionStarted = true;
+      }
+      
+      if(_inPosition) {
+        result = isLiftMoving ? ActionResult::RUNNING : ActionResult::SUCCESS;
+      } else {
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToAngleAction.CheckIfDone.NotInPosition",
+                                "[%d] Waiting for lift to get in position: %.1fdeg vs. %.1fdeg (tol: %f)",
+                                GetTag(),
+                                RAD_TO_DEG(GetRobot().GetComponent<FullRobotPose>().GetLiftAngle()), 
+                                RAD_TO_DEG(_angleWithVariation), 
+                                RAD_TO_DEG(_angleTolerance_rad));
+        
+        if( _motionStarted && !isLiftMoving ) {
+          PRINT_NAMED_WARNING("MoveLiftToAngleAction.CheckIfDone.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
+        }
+      }
+      
+      return result;
+    }
+    
 #pragma mark ---- MoveLiftToHeightAction ----
     
     MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
@@ -1277,7 +1403,7 @@ namespace Anki {
       
       return result;
     }
-    
+
 #pragma mark ---- PanAndTiltAction ----
     
     PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
