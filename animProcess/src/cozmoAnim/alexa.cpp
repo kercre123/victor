@@ -270,14 +270,14 @@ void Alexa::Init(const AnimContext* context)
   
   //   configJsonStreams.push_back(configInFile);
   // }
-  PRINT_NAMED_WARNING("WHATNOW", "calling");
+//, "calling");
   
   #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
   
   // todo: this should be called befpre any other threads start (acccording to docs)
   if (!avsCommon::avs::initialization::AlexaClientSDKInit::initialize(configJsonStreams)) {
     //ACSDK_CRITICAL(LX("Failed to initialize SDK!"));
-    PRINT_NAMED_WARNING("WHATNOW", "failed to init");
+//, "failed to init");
     return;
   }
   
@@ -295,7 +295,7 @@ void Alexa::Init(const AnimContext* context)
   std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo = avsCommon::utils::DeviceInfo::create(config);
   if (!deviceInfo) {
     ACSDK_CRITICAL(LX("Creation of DeviceInfo failed!"));
-    PRINT_NAMED_WARNING("WHATNOW", "deviceinfo failed");
+//, "deviceinfo failed");
     return;
   }
   
@@ -322,7 +322,7 @@ void Alexa::Init(const AnimContext* context)
 
   if (!authDelegate) {
     ACSDK_CRITICAL(LX("Creation of AuthDelegate failed!"));
-    PRINT_NAMED_WARNING("WHATNOW", "Creation of AuthDelegate failed!");
+//, "Creation of AuthDelegate failed!");
     return;
   }
   authDelegate->addAuthObserver(userInterfaceManager);
@@ -335,7 +335,7 @@ void Alexa::Init(const AnimContext* context)
     authDelegate, miscStorage, httpPut, customerDataManager, config, deviceInfo
   );
   if (!m_capabilitiesDelegate) {
-    PRINT_NAMED_WARNING("WHATNOW", "Creation of CapabilitiesDelegate failed!");
+//, "Creation of CapabilitiesDelegate failed!");
     return;
   }
   m_capabilitiesDelegate->addCapabilitiesObserver(userInterfaceManager);
@@ -395,7 +395,7 @@ void Alexa::Init(const AnimContext* context)
    */
   size_t bufferSize = alexaClientSDK::avsCommon::avs::AudioInputStream::calculateBufferSize(
                                                                                             BUFFER_SIZE_IN_SAMPLES, WORD_SIZE, MAX_READERS);
-  PRINT_NAMED_WARNING("WHATNOW", "bufferSize=%d", bufferSize);
+//, "bufferSize=%d", bufferSize);
   auto buffer = std::make_shared<alexaClientSDK::avsCommon::avs::AudioInputStream::Buffer>(bufferSize);
   std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> sharedDataStream =
   alexaClientSDK::avsCommon::avs::AudioInputStream::create(buffer, WORD_SIZE, MAX_READERS);
@@ -500,8 +500,8 @@ void Alexa::Init(const AnimContext* context)
   // try connecting
   m_client->Connect( m_capabilitiesDelegate );
   
-  PRINT_NAMED_WARNING("WHATNOW", "INIT FINISHED. (m_keywordObserver=%d, m_wakeWordAudioProvider=%d, stream=%d)",
-                      m_keywordObserver!=nullptr, m_wakeWordAudioProvider!=nullptr, (m_wakeWordAudioProvider==nullptr) ? -1 : (m_wakeWordAudioProvider->stream != nullptr));
+//, "INIT FINISHED. (m_keywordObserver=%d, m_wakeWordAudioProvider=%d, stream=%d)",
+//                      m_keywordObserver!=nullptr, m_wakeWordAudioProvider!=nullptr, (m_wakeWordAudioProvider==nullptr) ? -1 : (m_wakeWordAudioProvider->stream != nullptr));
   return;
 
 }
@@ -522,7 +522,7 @@ void Alexa::Update()
 void Alexa::ButtonPress()
 {
   if( !m_client->notifyOfTapToTalk(*m_tapToTalkAudioProvider).get() ) {
-    PRINT_NAMED_WARNING("WHATNOW", "Failed to notify tap to talk");
+//, "Failed to notify tap to talk");
   }
 }
   
@@ -556,7 +556,7 @@ void Alexa::TriggerWord(int from_ms, int to_ms)
   
   // fake it
   if ( from_ms >= 0 && to_ms >= 0 ) {
-    PRINT_NAMED_WARNING("WHATNOW", "initial fromIndex=%llu, toIndex=%llu", fromIndex, toIndex);
+//, "initial fromIndex=%llu, toIndex=%llu", fromIndex, toIndex);
     avsCommon::avs::AudioInputStream::Index dIndex = toIndex - fromIndex;
     toIndex = m_microphone->GetTotalSamples();
     fromIndex = toIndex - dIndex;
@@ -564,7 +564,7 @@ void Alexa::TriggerWord(int from_ms, int to_ms)
   
   // this only works if our extra VAD is off, since otherwise the mic samples wont match the sample indices provided by sensory
   
-  PRINT_NAMED_WARNING("WHATNOW", "alexa trigger %d-%d (%llu-%llu) micData=%d, (m_keywordObserver=%d, m_wakeWordAudioProvider=%d, stream=%d)", from_ms, to_ms, fromIndex, toIndex, m_microphone->GetTotalSamples(), m_keywordObserver!=nullptr, m_wakeWordAudioProvider!=nullptr, (m_wakeWordAudioProvider==nullptr) ? -1 : (m_wakeWordAudioProvider->stream != nullptr));
+//, "alexa trigger %d-%d (%llu-%llu) micData=%d, (m_keywordObserver=%d, m_wakeWordAudioProvider=%d, stream=%d)", from_ms, to_ms, fromIndex, toIndex, m_microphone->GetTotalSamples(), m_keywordObserver!=nullptr, m_wakeWordAudioProvider!=nullptr, (m_wakeWordAudioProvider==nullptr) ? -1 : (m_wakeWordAudioProvider->stream != nullptr));
   // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
   m_keywordObserver->onKeyWordDetected( m_wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
 }
@@ -591,7 +591,7 @@ void Alexa::onDialogUXStateChanged(avsCommon::sdkInterfaces::DialogUXStateObserv
       _uxState = UXState::Speaking;
       break;
   }
-  PRINT_NAMED_WARNING("WHATNOW", "new UXState=%d", (int) _uxState );
+//, "new UXState=%d", (int) _uxState );
 }
   
 } // namespace Vector

@@ -343,7 +343,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       if( wordTimes != nullptr ) {
         std::string wordTimesS{wordTimes};
         //static const std::string times = "times=";
-        //PRINT_NAMED_WARNING("WHATNOW", "wordTimesS=%s, %d$", wordTimesS.c_str(), (int)wordTimesS.find(times));
+//, "wordTimesS=%s, %d$", wordTimesS.c_str(), (int)wordTimesS.find(times));
         // example: "times=21795 22440 hey_vector 0.00"
         //if( wordTimesS.size() >= 6) {
         //if( wordTimesS.find(times) != std::string::npos ) {
@@ -353,7 +353,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
             to_ms = std::atoi(split[1].c_str()); // hope these are ints
           }
         //}
-        //PRINT_NAMED_WARNING("WHATNOW", "times=%s; from=%d to=%d", wordTimes, from_ms, to_ms);
+//, "times=%s; from=%d to=%d", wordTimes, from_ms, to_ms);
       }
     }
     else
@@ -367,7 +367,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     {
       std::string foundString{foundStringRaw};
       std::replace(foundString.begin(), foundString.end(), '_', ' ');
-      //PRINT_NAMED_WARNING("WHATNOW", "speechRecognizer HEY VECTOR from=%d, to=%d", from_ms, to_ms);
+//, "speechRecognizer HEY VECTOR from=%d, to=%d", from_ms, to_ms);
       DoCallback(foundString.c_str(), score, from_ms, to_ms);
       PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString.c_str());
     }

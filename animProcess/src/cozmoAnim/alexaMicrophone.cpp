@@ -167,7 +167,7 @@ void AlexaMicrophone::ProcessAudio(int16_t* data, size_t size)
 //  }
 //
 //  int numSamples = kSamplesPerChunkIncoming; //kSamplesPerBlock;
-//  //PRINT_NAMED_WARNING("WHATNOW", "wrote %d samples", (int)numSamples);
+//, "wrote %d samples", (int)numSamples);
 //
 //  m_writer->write( inProcessAudioBlock.data(), numSamples );
   int numSamples = size;

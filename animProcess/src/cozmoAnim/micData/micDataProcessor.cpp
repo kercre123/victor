@@ -51,8 +51,9 @@ namespace {
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
   
+  ` intentional build error: toggle these to select what is active
   const bool kRunAlexa = false;
-  const bool kRunSecondRecognizer = true;
+  const bool kRunSecondRecognizer = false;
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
@@ -107,6 +108,7 @@ namespace {
   constexpr size_t kTriggerDataListLen = sizeof(kTriggerModelDataList) / sizeof(kTriggerModelDataList[0]);
   static_assert(kTriggerDataListLen == (size_t) SupportedLocales::Count, "Need trigger data for each supported locale");
 
+  ` intentional build error: modify these to select which model is active. second model only active if kRunSecondRecognizer
   size_t _triggerModelTypeIndexVector = (size_t) SupportedLocales::enUS_500kb;
   size_t _triggerModelTypeIndexAlexa = (size_t) SupportedLocales::ALEXAsize_500kb;
   CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndexVector, CONSOLE_GROUP, _triggerModelTypeIndexVector, "enUS_1mb,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE,alexa1MB,alexa500kb");
@@ -235,7 +237,7 @@ void MicDataProcessor::InitVAD()
   
   void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
 {
-  PRINT_NAMED_WARNING("WHATNOW", "TRIGGER WORD keyword=%s from=%d, to=%d. UXState=%d", keyword.c_str(), from_ms, to_ms, kRunAlexa ? (int)_alexa->GetState() : -1);
+//, "TRIGGER WORD keyword=%s from=%d, to=%d. UXState=%d", keyword.c_str(), from_ms, to_ms, kRunAlexa ? (int)_alexa->GetState() : -1);
   
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
@@ -866,7 +868,7 @@ void MicDataProcessor::ProcessTriggerLoop()
     if (_triggerModelTypeIndexAlexa != kMicData_NextTriggerIndexAlexa)
     {
       _triggerModelTypeIndexAlexa = kMicData_NextTriggerIndexAlexa;
-      //PRINT_NAMED_WARNING("WHATNOW", "loading alexa index %d", (int)kMicData_NextTriggerIndexAlexa);
+//, "loading alexa index %d", (int)kMicData_NextTriggerIndexAlexa);
       const auto& newTypeData = kTriggerModelDataList[kMicData_NextTriggerIndexAlexa];
       //_micDataSystem->SetLocaleDevOnly(newTypeData.locale);
       UpdateTriggerForLocale(newTypeData.locale, true, newTypeData.modelType, newTypeData.searchFileIndex);
@@ -886,7 +888,7 @@ void MicDataProcessor::ProcessTriggerLoop()
 
         if (_currentTriggerPathsVector.IsValid())
         {
-          PRINT_NAMED_WARNING("WHATNOW", "trigger path _dataDir=%s _searchFile=%s _netFile=%s", _currentTriggerPathsVector._dataDir.c_str(), _currentTriggerPathsVector._searchFile.c_str(), _currentTriggerPathsVector._netFile.c_str()  );
+//, "trigger path _dataDir=%s _searchFile=%s _netFile=%s", _currentTriggerPathsVector._dataDir.c_str(), _currentTriggerPathsVector._searchFile.c_str(), _currentTriggerPathsVector._netFile.c_str()  );
           const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
                                                                           _currentTriggerPathsVector._dataDir,
                                                                           _currentTriggerPathsVector._netFile});
@@ -935,7 +937,7 @@ void MicDataProcessor::ProcessTriggerLoop()
         
         if (_currentTriggerPathsAlexa.IsValid())
         {
-          PRINT_NAMED_WARNING("WHATNOW", "ALEXA trigger path _dataDir=%s _searchFile=%s _netFile=%s SAME=%d", _currentTriggerPathsAlexa._dataDir.c_str(), _currentTriggerPathsAlexa._searchFile.c_str(), _currentTriggerPathsAlexa._netFile.c_str() , _currentTriggerPathsAlexa == _nextTriggerPathsAlexa );
+//, "ALEXA trigger path _dataDir=%s _searchFile=%s _netFile=%s SAME=%d", _currentTriggerPathsAlexa._dataDir.c_str(), _currentTriggerPathsAlexa._searchFile.c_str(), _currentTriggerPathsAlexa._netFile.c_str() , _currentTriggerPathsAlexa == _nextTriggerPathsAlexa );
           const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
             _currentTriggerPathsAlexa._dataDir,
             _currentTriggerPathsAlexa._netFile});
@@ -1036,7 +1038,7 @@ void MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
   {
     std::lock_guard<std::mutex> lock (_triggerModelMutex);
     if( isAlexa ) {
-      //PRINT_NAMED_WARNING("WHATNOW", "Adding model %d", (int) modelType);
+//, "Adding model %d", (int) modelType);
       _nextTriggerPathsAlexa = _micTriggerConfig->GetTriggerModelDataPaths(newLocale, modelType, searchFileIndex);
       if (!_nextTriggerPathsAlexa.IsValid())
       {

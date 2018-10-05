@@ -35,8 +35,8 @@ public:
   
   virtual void preHandleDirective( std::shared_ptr< DirectiveInfo > info ) override
   {
-    PRINT_NAMED_WARNING("WHATNOW", "preHandleDirective!");
-    PRINT_NAMED_WARNING("WHATNOW", "preHandleDirective %s", info->directive != nullptr ? info->directive->getName().c_str() : "<NULL>");
+//, "preHandleDirective!");
+//, "preHandleDirective %s", info->directive != nullptr ? info->directive->getName().c_str() : "<NULL>");
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
     m_capabilityAgent->preHandleDirective(info);
   }
@@ -62,7 +62,7 @@ public:
   
   virtual alexaClientSDK::avsCommon::avs::DirectiveHandlerConfiguration getConfiguration() const override
   {
-    PRINT_NAMED_WARNING("WHATNOW", "retrieving configuration!");
+//, "retrieving configuration!");
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
     return m_capabilityAgent->getConfiguration();
   }
@@ -72,26 +72,26 @@ private:
   void LogDirective(std::shared_ptr< DirectiveInfo > info) const
   {
     if( info == nullptr ) {
-      PRINT_NAMED_WARNING("WHATNOW", "Received null directive");
+//, "Received null directive");
       return;
     }
     
     if( info->directive != nullptr ) {
-      PRINT_NAMED_WARNING("WHATNOW", "Received directive %s", info->directive->getName().c_str());
+//, "Received directive %s", info->directive->getName().c_str());
       const auto& payload = info->directive->getPayload();
       Json::Value json;
       Json::Reader reader;
       bool success = reader.parse(payload, json);
       if( success ) {
-        PRINT_NAMED_WARNING("WHATNOW", "Received directive: %s", payload.c_str());
+//, "Received directive: %s", payload.c_str());
 //        std::stringstream ss;
 //        ss << json;
-//        PRINT_NAMED_WARNING("WHATNOW", "Received directive:\n%s", ss.str().c_str());
+//, "Received directive:\n%s", ss.str().c_str());
       } else {
-        PRINT_NAMED_WARNING("WHATNOW", "Could not parse into json!: %s", payload.c_str());
+//, "Could not parse into json!: %s", payload.c_str());
       }
     } else {
-      PRINT_NAMED_WARNING("WHATNOW", "Received directive <NULL>");
+//, "Received directive <NULL>");
     }
   }
   

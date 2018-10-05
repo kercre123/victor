@@ -54,7 +54,7 @@ public:
     std::lock_guard<std::mutex> lock{ _mutex };
     
     const size_t available = GetNumAvailable();
-    //PRINT_NAMED_WARNING("WHATNOW", "ADDING %d into avail %zu", len, available);
+//, "ADDING %d into avail %zu", len, available);
     if( len > available ) {
       return 0;
     }
@@ -86,7 +86,7 @@ public:
     
     // there's some article somewhere about "doing it all wrong" for ring buffers, and I'm doing it here. todo: check that (+1 issue)
     if( debug ) {
-      PRINT_NAMED_WARNING("WHATNOW", "head=%d tail=%d, len=%d, isEmpty=%d, isFull=%d, size=%d", _head, _tail, len, IsEmpty(), IsFull(), Size());
+//, "head=%d tail=%d, len=%d, isEmpty=%d, isFull=%d, size=%d", _head, _tail, len, IsEmpty(), IsFull(), Size());
     }
     
     if( IsEmpty() ) {

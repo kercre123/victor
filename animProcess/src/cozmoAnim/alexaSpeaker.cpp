@@ -42,7 +42,7 @@ namespace Vector{
     constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kAlexaPluginId = 5;
     
     const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
-    #define LOG(x, ...) PRINT_NAMED_WARNING("WHATNOW", "Speaker_%s: " x, _name.c_str(), ##__VA_ARGS__)
+#define LOG(...)
     
     #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
   }
@@ -86,7 +86,7 @@ void AlexaSpeaker::Init(const AnimContext* context)
   saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
   for( int i=1; i<100; ++i ) {
     std::string ss = saveFolder + "speaker_" + _name + std::to_string(i) + ".mp3";
-    //PRINT_NAMED_WARNING("WHATNOW", "looking for file %s", ss.c_str());
+//, "looking for file %s", ss.c_str());
     if( Util::FileUtils::FileExists(ss) ) {
       Util::FileUtils::DeleteFile( ss );
       Util::FileUtils::DeleteFile( saveFolder + "speaker_" + _name + std::to_string(i) + ".pcm" );
@@ -132,13 +132,13 @@ void AlexaSpeaker::Update()
       callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
       callbackContext->SetExecuteAsync( true );
       callbackContext->SetEventCallbackFunc( [this]( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
-        PRINT_NAMED_ERROR("WHATNOW", "Audio finished streaming (callback) %llu %hhu", callbackInfo.gameObjectId, callbackInfo.callbackType);
+//, "Audio finished streaming (callback) %llu %hhu", callbackInfo.gameObjectId, callbackInfo.callbackType);
         CallOnPlaybackFinished( m_playingSource );
       });
 
       const auto playingID = _audioController->PostAudioEvent(eventID, kGameObject, callbackContext );
       if (AudioEngine::kInvalidAudioPlayingId == playingID) {
-        PRINT_NAMED_ERROR("WHATNOW", "Could not play (post)");
+//, "Could not play (post)");
       }
     }
   }
@@ -166,13 +166,13 @@ SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::
   m_sourceReaders[m_sourceID] = std::move(attachmentReader);
   _sourceTypes[m_sourceID] = SourceType::AttachmentReader;
   
-  using AudioFormat = avsCommon::utils::AudioFormat;
-  if( format !=  nullptr) {
-    std::stringstream ss;
-    ss << "encoding=" << format->encoding << ", endianness=" << format->endianness;
-    LOG( "format: %s, sampleRateHz=%u, sampleSize=%u, numChannels=%u, dataSigned=%d, interleaved=%d",
-                        ss.str().c_str(), format->sampleRateHz, format->sampleSizeInBits, format->numChannels, format->dataSigned, format->layout == AudioFormat::Layout::INTERLEAVED);
-  }
+  //using AudioFormat = avsCommon::utils::AudioFormat;
+//  if( format !=  nullptr) {
+//    std::stringstream ss;
+//    ss << "encoding=" << format->encoding << ", endianness=" << format->endianness;
+//    LOG( "format: %s, sampleRateHz=%u, sampleSize=%u, numChannels=%u, dataSigned=%d, interleaved=%d",
+//                        ss.str().c_str(), format->sampleRateHz, format->sampleSizeInBits, format->numChannels, format->dataSigned, format->layout == AudioFormat::Layout::INTERLEAVED);
+//  }
   
   return m_sourceID++;
 }
@@ -294,7 +294,7 @@ bool   AlexaSpeaker::play (SourceId id)
                               || (readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK)
                               || (readStatus == AttachmentReader::ReadStatus::OK_TIMEDOUT);
         if( readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK && ++numBlocks > kMaxBlocks ) {
-          PRINT_NAMED_WARNING("WHATNOW", "Too many OK_WOULDBLOCK. Canceling");
+//, "Too many OK_WOULDBLOCK. Canceling");
           statusOK = false;
         } else if( readStatus == AttachmentReader::ReadStatus::OK_WOULDBLOCK ) {
           // whatever
@@ -494,14 +494,14 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
     int consumed = info.frame_bytes;
     if( info.frame_bytes > 0  ) {
       //LOG( "Advancing cursor by %d", consumed);
-      bool success = _mp3Buffer->AdvanceCursor( consumed );
-      ANKI_VERIFY(success, "WHATNOW", "Could not advance by %d", consumed);
+      bool success __attribute((unused))= _mp3Buffer->AdvanceCursor( consumed );
+//, "Could not advance by %d", consumed);
       
       if( samples > 0 ) {
         // valid wav data!
         if( _first ) {
           _first = false;
-          LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps);
+          PRINT_NAMED_WARNING("WHATNOW", "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps);
         }
         
         millis_decoded += 1000 * float(samples) / info.hz;

@@ -53,7 +53,7 @@ void KeywordObserver::onKeyWordDetected(
 
         if (m_client) {
             m_client->notifyOfWakeWord(m_audioProvider, beginIndex, endIndex, keyword, espData, KWDMetadata);
-          PRINT_NAMED_WARNING("WHATNOW", "done with notifyOfWakeWord");
+//, "done with notifyOfWakeWord");
         }
     }
 }

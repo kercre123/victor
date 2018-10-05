@@ -508,7 +508,7 @@ void AlexaClient::Connect(const std::shared_ptr<avsCommon::sdkInterfaces::Capabi
   // try connecting
   capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();
   
-  PRINT_NAMED_WARNING("WHATNOW", "worked");
+//, "worked");
 }
   
 std::future<bool> AlexaClient::notifyOfTapToTalk(
@@ -546,7 +546,7 @@ std::future<bool> AlexaClient::notifyOfWakeWord(
         }
     }
 
-    PRINT_NAMED_WARNING("WHATNOW", "calling wake word recognizer!");
+//, "calling wake word recognizer!");
     return m_audioInputProcessor->recognize(
         wakeWordAudioProvider,
         capabilityAgents::aip::Initiator::WAKEWORD,
