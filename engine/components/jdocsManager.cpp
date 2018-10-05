@@ -64,7 +64,7 @@ namespace
 
   static const char* kConsoleGroup = "JdocsManager";
 
-  // Keep this in sync with JdocType enum in settings.proto
+  // Keep this in sync with JdocType enum in settings.proto 
   constexpr const char* kJdocTypes = "RobotSettings,RobotLifetimeStats,AccountSettings,UserEntitlements";
   CONSOLE_VAR_ENUM(u8, kJdocType, kConsoleGroup, 0, kJdocTypes);
 

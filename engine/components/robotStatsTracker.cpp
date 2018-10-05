@@ -245,22 +245,18 @@ void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 
+#define FILTER_HELPER(key) if (json.isMember(key)) { jsonOut[key] = json[key]; }
+
 Json::Value RobotStatsTracker::FilterStatsForApp(const Json::Value& json)
 {
   Json::Value jsonOut;
 
-  for (Json::ValueConstIterator it = json.begin(); it != json.end(); ++it)
-  {
-    if (it.name() == "Stim.CumlPosDelta" ||
-        it.name() == "BStat.ReactedToTriggerWord" ||
-        it.name() == "Odom.Body" ||
-        it.name() == "FeatureType.Utility" ||
-        it.name() == "Pet.ms" ||
-        it.name() == "Alive.seconds")
-    {
-      jsonOut[it.memberName()] = (*it);
-    }
-  }
+  FILTER_HELPER("Stim.CumlPosDelta")
+  FILTER_HELPER("BStat.ReactedToTriggerWord")
+  FILTER_HELPER("Odom.Body")
+  FILTER_HELPER("FeatureType.Utility")
+  FILTER_HELPER("Pet.ms")
+  FILTER_HELPER("Alive.seconds")
 
   return jsonOut;
 }
