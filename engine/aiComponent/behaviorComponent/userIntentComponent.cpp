@@ -79,6 +79,15 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
 
   // setup trigger word handler
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
+    if( event.GetData().Get_triggerWordDetected().isAlexa ) {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      // assume get in animation is playing
+      _waitingForTriggerWordGetInToFinish = true;
+      _waitingForTriggerWordGetInToFinish_setTime_s = currTime_s;
+      
+      return;
+    }
     const bool willStream = event.GetData().Get_triggerWordDetected().willOpenStream;
     SetTriggerWordPending(willStream);
 
@@ -670,12 +679,49 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
   msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
   msg.postAudioEvent = postAudioEvent;
   msg.getInAnimationName = getInAnimationName;
+  msg.isAlexa = false;
 
   ApplyStreamAndLightEffect(streamAndLightEffect, msg);
 
   PushResponseToTriggerWordInternal(id, std::move(msg));
 }
-
+  
+void UserIntentComponent::SetResponseToAlexa(const std::string& id, const AnimationTrigger& getInAnimTrigger,
+                        const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent)
+{
+  std::string animName;
+  auto* data_ldr = _robot->GetContext()->GetDataLoader();
+  if( data_ldr->HasAnimationForTrigger(getInAnimTrigger) )
+  {
+    const auto groupName = data_ldr->GetAnimationForTrigger(getInAnimTrigger);
+    if( !groupName.empty() ) {
+      animName = _robot->GetAnimationComponent().GetAnimationNameFromGroup(groupName);
+      if(animName.empty()){
+        PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.AnimationNotFound",
+                            "No animation returned for group %s",
+                            groupName.c_str());
+      }
+    }else{
+      PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.GroupNotFound",
+                          "Group not found for trigger %s",
+                          AnimationTriggerToString(getInAnimTrigger));
+    }
+  }
+  
+  PRINT_NAMED_WARNING("WHATNOW", "Setting Alexa anim response to %s", animName.c_str());
+  
+  RobotInterface::SetTriggerWordResponse msg;
+  msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
+  msg.postAudioEvent = postAudioEvent;
+  msg.getInAnimationName = animName;
+  msg.isAlexa = true;
+  
+  StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabledButWithLight;
+  ApplyStreamAndLightEffect(streamAndLightEffect, msg);
+  
+  _robot->SendMessage(RobotInterface::EngineToRobot( std::move(msg)) );
+  
+}
 
 void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
 {

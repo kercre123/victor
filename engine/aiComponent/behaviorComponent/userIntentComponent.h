@@ -103,6 +103,9 @@ public:
                                  const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
                                  StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
   void PopResponseToTriggerWord(const std::string& id);
+  
+  void SetResponseToAlexa(const std::string& id, const AnimationTrigger& getInAnimTrigger,
+                          const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {});
 
   // Copies the current response to the trigger word but overrides the shouldStream and ShouldSimulateStream
   // to match the desired StreamAndLightEffect

@@ -74,6 +74,7 @@ enum uint_8 BehaviorClass {
   ListenForBeats,
 
   // devBehaviors
+  Alexa,
   DevBatteryLogging,
   DevCubeSpinnerConsole,
   DevDesignCubeLights,

@@ -486,9 +486,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     {
       RobotInterface::SendAnimToEngine(msg->beatDetectorState);
     }
+    else if (msg->tag == RobotInterface::RobotToEngine::Tag_alexaUXStateChanged)
+    {
+      RobotInterface::SendAnimToEngine(msg->alexaUXStateChanged);
+    }
     else
     {
-      DEV_ASSERT_MSG(false,
+      ANKI_VERIFY(false,
                      "MicDataSystem.Update.UnhandledOutgoingMessageType",
                      "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
     }

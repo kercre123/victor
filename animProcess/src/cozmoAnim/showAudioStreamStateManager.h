@@ -49,6 +49,7 @@ public:
   using OnTriggerAudioCompleteCallback = std::function<void(bool success)>;
   void SetPendingTriggerResponseWithGetIn(OnTriggerAudioCompleteCallback = {});
   void SetPendingTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback = {});
+  void SetAlexaTrigger();
 
   // Indicates whether or not the audio stream state manager will be able to indicate to the user
   // that streaming may be happening - if this returns false 
@@ -69,11 +70,20 @@ private:
   const AnimContext* _context = nullptr;
   AnimationStreamer* _streamer = nullptr;
 
+  // todo: these need initing in master!!!
   Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
   bool _shouldTriggerWordStartStream;
   bool _shouldTriggerWordSimulateStream;
   uint8_t _getInAnimationTag;
   std::string _getInAnimName;
+  
+  Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEventAlexa;
+  bool _shouldTriggerWordStartStreamAlexa;
+  bool _shouldTriggerWordSimulateStreamAlexa;
+  uint8_t _getInAnimationTagAlexa;
+  std::string _getInAnimNameAlexa;
+  
+  bool _isAlexa = false;
 
   // Trigger word responses are triggered via callbacks from the trigger word detector thread
   // so we need to be thread safe and have pending responses to be executed on the main thread in Update

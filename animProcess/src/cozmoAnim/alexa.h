@@ -3,9 +3,10 @@
 
 #include "util/helpers/noncopyable.h"
 #include <memory>
+#include <functional>
 //#include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
-
+#include "clad/types/alexaUXState.h"
 
 namespace alexaClientSDK{
   namespace capabilitiesDelegate {class CapabilitiesDelegate; }
@@ -34,14 +35,9 @@ class Alexa : private Util::noncopyable
             , public alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface
 {
 public:
-  enum class UXState : uint8_t {
-    Idle,
-    Listening,
-    // Thinking: no thinking for now. it's just combined with Listening
-    Speaking,
-  };
   
-  void Init(const AnimContext* context);
+  using OnStateChangedCallback = std::function<void(AlexaUXState)>;
+  void Init(const AnimContext* context, const OnStateChangedCallback& onStateChanged);
   void Update();
   
   void ButtonPress();
@@ -49,15 +45,19 @@ public:
   
   void ProcessAudio( int16_t* data, size_t size);
   
-  UXState GetState() const { return _uxState; }
+  AlexaUXState GetState() const { return _uxState; }
   
-  bool IsIdle() const { return _uxState == UXState::Idle; }
+  bool IsIdle() const { return _uxState == AlexaUXState::Idle; }
   
 protected:
   virtual void onDialogUXStateChanged(DialogUXState newState) override;
   
 private:
-  UXState _uxState = UXState::Idle;
+  
+  OnStateChangedCallback _onStateChanged;
+  
+  AlexaUXState _uxState = AlexaUXState::Idle;
+  
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> m_capabilitiesDelegate;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> m_tapToTalkAudioProvider;
@@ -72,6 +72,8 @@ private:
   std::shared_ptr<AlexaSpeaker> m_TTSSpeaker;
   std::shared_ptr<AlexaSpeaker> m_alertsSpeaker;
   std::shared_ptr<AlexaSpeaker> m_audioSpeaker;
+  
+  const AnimContext* _context = nullptr;
 };
 
 

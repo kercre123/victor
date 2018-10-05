@@ -59,6 +59,7 @@
 #include "osState/osState.h"
 #include "util/string/stringUtils.h"
 
+
 namespace Anki {
 namespace Vector {
   
@@ -245,8 +246,10 @@ namespace {
   
   using namespace alexaClientSDK;
   
-void Alexa::Init(const AnimContext* context)
+void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onStateChanged)
 {
+  _context = context;
+  _onStateChanged = onStateChanged;
   if( Util::FileUtils::DirectoryDoesNotExist( "/data/data/com.anki.victor/persistent/alexa" ) ) {
     Util::FileUtils::CreateDirectory( "/data/data/com.anki.victor/persistent/alexa", false, true );
   }
@@ -366,6 +369,9 @@ void Alexa::Init(const AnimContext* context)
                                                   "Audio",
                                                   httpContentFetcherFactory);
   m_audioSpeaker->Init(context);
+  
+  // the alerts speaker doesnt change UX! we might need to observe it
+  //m_alertsSpeaker->setObserver( shared_from_this() );
   
   
   //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
@@ -586,20 +592,24 @@ void Alexa::ProcessAudio( int16_t* data, size_t size)
   
 void Alexa::onDialogUXStateChanged(avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState newState)
 {
+  const auto oldState = _uxState;
   switch( newState ) {
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
-      _uxState = UXState::Idle;
+      _uxState = AlexaUXState::Idle;
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING:
-      _uxState = UXState::Listening;
+      _uxState = AlexaUXState::Listening;
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING:
-      _uxState = UXState::Speaking;
+      _uxState = AlexaUXState::Speaking;
       break;
   }
-  PRINT_NAMED_WARNING("WHATNOW", "new UXState=%d", (int) _uxState );
+  PRINT_NAMED_WARNING("WHATNOW", "new AlexaUXState=%d", (int) _uxState );
+  if( oldState != _uxState && _onStateChanged != nullptr) {
+    _onStateChanged( _uxState );
+  }
 }
   
 } // namespace Vector

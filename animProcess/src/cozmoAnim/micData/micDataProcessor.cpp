@@ -197,7 +197,7 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
   _micTriggerConfig->Init(dataLoader.GetMicTriggerConfig());
   
   if( _alexa ) {
-    _alexa->Init(context);
+    _alexa->Init(context, std::bind(&MicDataProcessor::OnAlexaStateChanged, this, std::placeholders::_1) );
   }
 
   // On Debug builds, check that all the files listed in the trigger config actually exist
@@ -259,6 +259,7 @@ void MicDataProcessor::InitVAD()
   const bool isAlexa = keyword == "ALEXA";
   if( _alexa && isAlexa ) {
     _alexa->TriggerWord(from_ms, to_ms);
+    return;
   }
   
 
@@ -278,7 +279,7 @@ void MicDataProcessor::InitVAD()
   twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
   twDetectedMessage.triggerScore = (uint32_t) score;
   twDetectedMessage.willOpenStream = willStreamAudio;
-  twDetectedMessage.isAlexa = isAlexa;
+  twDetectedMessage.isAlexa = false;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
@@ -298,6 +299,36 @@ void MicDataProcessor::InitVAD()
                     "Direction index %d at timestamp %d",
                     currentDirection,
                     (TimeStamp_t)mostRecentTimestamp);
+}
+  
+void MicDataProcessor::OnAlexaStateChanged( AlexaUXState state )
+{
+  if( state == AlexaUXState::Listening ) {
+    ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+    showStreamState->SetAlexaTrigger();
+  
+  
+    _micDataSystem->SetIsAlexa(true);
+    const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() && !_micDataSystem->ShouldSimulateStreaming();
+    
+    
+    // Set up a message to send out about the triggerword
+    RobotInterface::TriggerWordDetected twDetectedMessage;
+    twDetectedMessage.direction = 12; // unknown
+    twDetectedMessage.isButtonPress = false; // not used
+    twDetectedMessage.triggerScore = (uint32_t) 100;
+    twDetectedMessage.willOpenStream = willStreamAudio;
+    twDetectedMessage.isAlexa = true;
+    auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+    _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+  }
+  
+  PRINT_NAMED_WARNING("WHATNOW", "OnAlexaStateChanged. state=%d", (int)state);
+  RobotInterface::AlexaUXStateChanged msg;
+  msg.state = state;
+  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(msg));
+  _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+  
 }
 
 RobotTimeStamp_t MicDataProcessor::CreateSteamJob(CloudMic::StreamType streamType,

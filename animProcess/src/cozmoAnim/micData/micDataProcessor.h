@@ -101,6 +101,8 @@ public:
   
   void Update();
   
+  void OnAlexaStateChanged( AlexaUXState state );
+  
 private:
   const AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;

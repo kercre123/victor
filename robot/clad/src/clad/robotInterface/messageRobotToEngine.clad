@@ -15,6 +15,8 @@
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/robotToSwitchboard.clad"
 #include "clad/robotInterface/factoryMessages.clad"
+#include "clad/types/alexaUXState.clad"
+
 
 namespace Anki {
 namespace Vector {
@@ -141,6 +143,10 @@ message BeatDetectorState
   BeatInfo latestBeat
 }
 
+message AlexaUXStateChanged {
+  AlexaUXState state,
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -228,6 +234,8 @@ union RobotToEngine {
   AudioPlaybackEnd           audioPlaybackEnd       = 0xE7,
   MicRecordingComplete       micRecordingComplete   = 0xE8,
   MicDataState               micDataState           = 0xE9,
+
+  AlexaUXStateChanged           alexaUXStateChanged = 0xEA,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

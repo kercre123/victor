@@ -16,6 +16,7 @@ enum uint_16 BehaviorID {
   Wait_TestInjectable,
 
   // devBehaviors
+  Alexa,
   DevBaseBehavior,
   DevBatteryLogging,
   DevCubeSpinnerConsole,

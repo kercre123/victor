@@ -57,12 +57,20 @@ void ShowAudioStreamStateManager::Update()
   
 void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg)
 {
-  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
-  _postAudioEvent = msg.postAudioEvent;
-  _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
-  _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
-  _getInAnimationTag = msg.getInAnimationTag;
-  _getInAnimName = std::string(msg.getInAnimationName, msg.getInAnimationName_length);
+  if( msg.isAlexa ) {
+    std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
+    _postAudioEventAlexa = msg.postAudioEvent;
+    _shouldTriggerWordStartStreamAlexa = msg.shouldTriggerWordStartStream;
+    _shouldTriggerWordSimulateStreamAlexa = msg.shouldTriggerWordSimulateStream;
+    _getInAnimationTagAlexa = msg.getInAnimationTag;
+    _getInAnimNameAlexa = std::string(msg.getInAnimationName, msg.getInAnimationName_length);
+  } else {
+    _postAudioEvent = msg.postAudioEvent;
+    _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
+    _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
+    _getInAnimationTag = msg.getInAnimationTag;
+    _getInAnimName = std::string(msg.getInAnimationName, msg.getInAnimationName_length);
+  }
 }
 
 void ShowAudioStreamStateManager::SetPendingTriggerResponseWithGetIn(OnTriggerAudioCompleteCallback callback)
@@ -73,10 +81,25 @@ void ShowAudioStreamStateManager::SetPendingTriggerResponseWithGetIn(OnTriggerAu
     PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithGetIn.ExisitingResponse",
                         "Already have pending trigger reponse, overridding");
   }
+  _isAlexa = false;
   _havePendingTriggerResponse = true;
   _pendingTriggerResponseHasGetIn = true;
   _responseCallback = callback;
 }
+  
+  void ShowAudioStreamStateManager::SetAlexaTrigger()
+  {
+    std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
+    if(_havePendingTriggerResponse)
+    {
+      PRINT_NAMED_WARNING("ShowAudioStreamStateManager.SetPendingTriggerResponseWithGetIn.ExisitingResponse",
+                          "Already have pending trigger reponse, overridding");
+    }
+    _isAlexa = true;
+    _havePendingTriggerResponse = true;
+    _pendingTriggerResponseHasGetIn = true;
+    _responseCallback = nullptr;
+  }
   
 void ShowAudioStreamStateManager::SetPendingTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback callback)
 {
@@ -101,12 +124,22 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn(OnTriggerAudioCo
     return;
   }
 
-  auto* anim = _context->GetDataLoader()->GetCannedAnimation(_getInAnimName);
-  if((_streamer != nullptr) && (anim != nullptr)){
-    _streamer->SetStreamingAnimation(_getInAnimName, _getInAnimationTag);
-  }else{
-    PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
-                      "Animation not found for get in %s", _getInAnimName.c_str());
+  if( _isAlexa ) {
+    auto* anim = _context->GetDataLoader()->GetCannedAnimation(_getInAnimNameAlexa);
+    if((_streamer != nullptr) && (anim != nullptr)){
+      _streamer->SetStreamingAnimation(_getInAnimNameAlexa, _getInAnimationTagAlexa);
+    }else{
+      PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
+                        "ALEXA Animation not found for get in %s", _getInAnimNameAlexa.c_str());
+    }
+  } else {
+    auto* anim = _context->GetDataLoader()->GetCannedAnimation(_getInAnimName);
+    if((_streamer != nullptr) && (anim != nullptr)){
+      _streamer->SetStreamingAnimation(_getInAnimName, _getInAnimationTag);
+    }else{
+      PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
+                        "Animation not found for get in %s", _getInAnimName.c_str());
+    }
   }
   StartTriggerResponseWithoutGetIn(std::move(callback));
 }
@@ -137,9 +170,15 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
       });
     }
 
-    controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
-                               ToAudioGameObject(_postAudioEvent.gameObject),
-                               audioCallbackContext);
+    if( _isAlexa ) {
+      controller->PostAudioEvent(ToAudioEventId(_postAudioEventAlexa.audioEvent),
+                                 ToAudioGameObject(_postAudioEventAlexa.gameObject),
+                                 audioCallbackContext);
+    } else {
+      controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
+                                 ToAudioGameObject(_postAudioEvent.gameObject),
+                                 audioCallbackContext);
+    }
   }
   else
   {

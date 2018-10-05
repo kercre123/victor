@@ -1,0 +1,13 @@
+namespace Anki {
+namespace Vector {
+
+enum uint_8 AlexaUXState
+{
+  Idle,
+  Listening,
+  // Thinking: no thinking for now. it's just combined with Listening
+  Speaking,
+}
+
+} // end namespace Vector
+} // end namespace Anki
