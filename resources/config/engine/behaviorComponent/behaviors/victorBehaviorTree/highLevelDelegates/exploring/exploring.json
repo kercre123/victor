@@ -22,6 +22,8 @@
       "behaviorName" : "ExploringInternal",
       "behaviorClass": "Exploring",
 
+      "allowNoCharger": true,
+
       "minSearchRadius_m": 0.25,
       "maxSearchRadius_m": 1.0,
       "maxChargerDistance_m": 2.0,
