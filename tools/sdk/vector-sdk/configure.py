@@ -23,10 +23,13 @@ See the README for more information.
 """
 
 import configparser
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from getpass import getpass
 import json
 import os
 from pathlib import Path
+import re
 import requests
 import sys
 
@@ -91,7 +94,7 @@ def get_esn():
     if r.status_code != 200:
         print(colored(" ERROR", "red"))
         sys.exit(r.content)
-    print(colored(" DONE\n", "green"))
+    print(colored(" DONE", "green"))
     cert = r.content
     return cert, esn
 
@@ -137,6 +140,20 @@ def get_session_token():
     print(colored(" DONE\n", "green"))
     return json.loads(r.content)
 
+def standardize_name(robot_name):
+    # Extend the name if not enough is provided
+    if len(robot_name) == 4:
+        robot_name = "Vector-{}".format(robot_name.upper())
+    # Fix possible capitalization and space/dash/etc.
+    if re.match("[Vv]ector.[A-Za-z0-9]{4}", robot_name):
+        robot_name = "V{}-{}".format(robot_name[1:-5], robot_name[-4:].upper())
+    # Check that the end is valid
+    if re.match("Vector-[A-Z0-9]{4}", robot_name):
+        return robot_name
+    print(colored(" ERROR", "red"))
+    sys.exit("Invalid robot name. Please match the format exactly. Example: Vector-A1B2")
+    return
+
 def get_name_and_ip():
     robot_name = os.environ.get('VECTOR_ROBOT_NAME')
     if robot_name is None or len(robot_name) == 0:
@@ -144,6 +161,7 @@ def get_name_and_ip():
         robot_name = input("Enter robot name: ")
     else:
         print("Found robot name in environment variable '{}'".format(colored("VECTOR_ROBOT_NAME", "green")))
+    robot_name = standardize_name(robot_name)
     print("Using robot name: {}".format(colored(robot_name, "cyan")))
     ip = os.environ.get('ANKI_ROBOT_HOST')
     if ip is None or len(ip) == 0:
@@ -155,6 +173,31 @@ def get_name_and_ip():
     print("Using IP: {}".format(colored(ip, "cyan")))
     return robot_name, ip
 
+def save_cert(cert, name, esn, anki_dir):
+    """Write Vector's certificate to a file located in the user's home directory"""
+    os.makedirs(str(anki_dir), exist_ok=True)
+    cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
+    print("Writing certificate file to '{}'...\n".format(colored(cert_file, "cyan")))
+    with os.fdopen(os.open(cert_file, os.O_WRONLY | os.O_CREAT, 0o600), 'wb') as f:
+        f.write(cert)
+    return cert_file
+
+def validate_cert_name(cert_file, robot_name):
+    """Validate the name on Vector's certificate against the user-provided name"""
+    with open(cert_file, "rb") as f:
+        cert_file = f.read()
+        cert = x509.load_pem_x509_certificate(cert_file, default_backend())
+        for fields in cert.subject:
+            current = str(fields.oid)
+            if "commonName" in current:
+                common_name = fields.value
+                if common_name != robot_name:
+                    print(colored(" ERROR", "red"))
+                    sys.exit("The name of the certificate ({}) does not match the name provided ({}).\n"
+                             "Please verify the name, and try again.".format(common_name, robot_name))
+                else:
+                    return
+
 def main():
     print(__doc__)
 
@@ -165,22 +208,20 @@ def main():
 
     name, ip = get_name_and_ip()
     cert, esn = get_esn()
+
+    home = Path.home()
+    anki_dir = home / ".anki_vector"
+
+    cert_file = save_cert(cert, name, esn, anki_dir)
+    validate_cert_name(cert_file, name)
+
     token = get_session_token()
     if token.get("session") is None:
         sys.exit("Session error: {}".format(token))
 
-    # Write cert to a file located in user's home direction: sdk_config.ini
-    home = Path.home()
-    anki_dir = home / ".anki_vector"
-    os.makedirs(str(anki_dir), exist_ok=True)
-    cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
-    print("Writing certificate file to '{}'...".format(colored(cert_file, "cyan")))
-    with os.fdopen(os.open(cert_file, os.O_WRONLY | os.O_CREAT, 0o600), 'wb') as f:
-        f.write(cert)
-
     guid = user_authentication(token["session"]["session_token"], cert, ip, name)
 
-    # Store details in a config file
+    # Store credentials in the .anki_vector directory's sdk_config.ini file
     config_file = str(anki_dir / "sdk_config.ini")
     print("Writing config file to '{}'...".format(colored(config_file, "cyan")))
 

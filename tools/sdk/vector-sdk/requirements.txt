@@ -1,6 +1,7 @@
 aiogrpc>=1.4
+cryptography
 googleapis-common-protos
-opencv-python
 numpy
+opencv-python
 Pillow
 requests
