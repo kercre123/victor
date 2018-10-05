@@ -26,7 +26,7 @@ const (
 
 // Note: If there is a function that can be shared, use the engine manager.
 //       The only reason I duplicated the functions so far was interfaces
-//       were strangely causing the deleteFromMap to fail. - shawn 7/17/18
+//       were strangely causing the deleteListenerUnsafe to fail. - shawn 7/17/18
 type IpcManager struct {
 	connMutex sync.Mutex
 	conn      ipc.Conn
@@ -83,26 +83,31 @@ func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 	return manager.conn.Write(buf.Bytes())
 }
 
-// TODO: make this generic (via interfaces). Comparison failed when not specific.
-func (manager *EngineProtoIpcManager) deleteFromMap(listener chan extint.GatewayWrapper, tag string) func() {
+// This function is "unsafe" in that it requires the calling function to have already acquired the
+// appropriate lock. Otherwise, there is a chance of simultaneous map access.
+func (manager *EngineProtoIpcManager) deleteListenerUnsafe(listener chan extint.GatewayWrapper, tag string) {
+	chanSlice := manager.managedChannels[tag]
+	for idx, v := range chanSlice {
+		if v == listener {
+			chanSlice[idx] = chanSlice[len(chanSlice)-1]
+			manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
+			manager.SafeClose(listener)
+			break
+		}
+		if len(chanSlice)-1 == idx {
+			log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
+		}
+	}
+	if len(manager.managedChannels[tag]) == 0 {
+		delete(manager.managedChannels, tag)
+	}
+}
+
+func (manager *EngineProtoIpcManager) deleteListenerCallback(listener chan extint.GatewayWrapper, tag string) func() {
 	return func() {
 		manager.managerMutex.Lock()
 		defer manager.managerMutex.Unlock()
-		chanSlice := manager.managedChannels[tag]
-		for idx, v := range chanSlice {
-			if v == listener {
-				chanSlice[idx] = chanSlice[len(chanSlice)-1]
-				manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
-				manager.SafeClose(listener)
-				break
-			}
-			if len(chanSlice)-1 == idx {
-				log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
-			}
-		}
-		if len(manager.managedChannels[tag]) == 0 {
-			delete(manager.managedChannels, tag)
-		}
+		manager.deleteListenerUnsafe(listener, tag)
 	}
 }
 
@@ -117,7 +122,7 @@ func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels
 		slice = make([]chan extint.GatewayWrapper, 0)
 	}
 	manager.managedChannels[reflectedType] = append(slice, result)
-	return manager.deleteFromMap(result, reflectedType), result
+	return manager.deleteListenerCallback(result, reflectedType), result
 }
 
 func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper, bool) {
@@ -147,11 +152,12 @@ func (manager *EngineProtoIpcManager) SafeClose(listener chan extint.GatewayWrap
 func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.GatewayWrapper) {
 	markedForDelete := make(chan chan extint.GatewayWrapper, 5)
 	defer func() {
+		close(markedForDelete)
 		if len(markedForDelete) != 0 {
 			manager.managerMutex.Lock()
 			defer manager.managerMutex.Unlock()
 			for listener := range markedForDelete {
-				manager.SafeClose(listener) // will be deleted when the rpc closes
+				manager.deleteListenerUnsafe(listener, tag)
 			}
 		}
 	}()
@@ -175,13 +181,12 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Printf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				log.Errorf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
 	}
 	wg.Wait()
-
 }
 
 func (manager *EngineProtoIpcManager) ProcessMessages() {
@@ -280,26 +285,31 @@ func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (in
 	return manager.conn.Write(buf.Bytes())
 }
 
-// TODO: make this generic (via interfaces). Comparison failed when not specific.
-func (manager *SwitchboardIpcManager) deleteFromMap(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) func() {
+// This function is "unsafe" in that it requires the calling function to have already acquired the
+// appropriate lock. Otherwise, there is a chance of simultaneous map access.
+func (manager *SwitchboardIpcManager) deleteListenerUnsafe(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) {
+	chanSlice := manager.managedChannels[tag]
+	for idx, v := range chanSlice {
+		if v == listener {
+			chanSlice[idx] = chanSlice[len(chanSlice)-1]
+			manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
+			manager.SafeClose(listener)
+			break
+		}
+		if len(chanSlice)-1 == idx {
+			log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
+		}
+	}
+	if len(manager.managedChannels[tag]) == 0 {
+		delete(manager.managedChannels, tag)
+	}
+}
+
+func (manager *SwitchboardIpcManager) deleteListenerCallback(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) func() {
 	return func() {
 		manager.managerMutex.Lock()
 		defer manager.managerMutex.Unlock()
-		chanSlice := manager.managedChannels[tag]
-		for idx, v := range chanSlice {
-			if v == listener {
-				chanSlice[idx] = chanSlice[len(chanSlice)-1]
-				manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
-				manager.SafeClose(listener)
-				break
-			}
-			if len(chanSlice)-1 == idx {
-				log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
-			}
-		}
-		if len(manager.managedChannels[tag]) == 0 {
-			delete(manager.managedChannels, tag)
-		}
+		manager.deleteListenerUnsafe(listener, tag)
 	}
 }
 
@@ -313,7 +323,7 @@ func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardRespo
 		slice = make([]chan gw_clad.SwitchboardResponse, 0)
 	}
 	manager.managedChannels[tag] = append(slice, result)
-	return manager.deleteFromMap(result, tag), result
+	return manager.deleteListenerCallback(result, tag), result
 }
 
 func (manager *SwitchboardIpcManager) SafeClose(listener chan gw_clad.SwitchboardResponse) {
@@ -331,11 +341,12 @@ func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardRes
 	tag := msg.Tag()
 	markedForDelete := make(chan chan gw_clad.SwitchboardResponse, 5)
 	defer func() {
+		close(markedForDelete)
 		if len(markedForDelete) != 0 {
 			manager.managerMutex.Lock()
 			defer manager.managerMutex.Unlock()
 			for listener := range markedForDelete {
-				manager.SafeClose(listener) // will be deleted when the rpc closes
+				manager.deleteListenerUnsafe(listener, tag)
 			}
 		}
 	}()
@@ -359,7 +370,7 @@ func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardRes
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Printf("SwitchboardIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				log.Errorf("SwitchboardIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
@@ -399,25 +410,31 @@ func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) 
 	return manager.conn.Write(buf.Bytes())
 }
 
-func (manager *EngineCladIpcManager) deleteFromMap(listener chan gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) func() {
+// This function is "unsafe" in that it requires the calling function to have already acquired the
+// appropriate lock. Otherwise, there is a chance of simultaneous map access.
+func (manager *EngineCladIpcManager) deleteListenerUnsafe(listener chan gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) {
+	chanSlice := manager.managedChannels[tag]
+	for idx, v := range chanSlice {
+		if v == listener {
+			chanSlice[idx] = chanSlice[len(chanSlice)-1]
+			manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
+			manager.SafeClose(listener)
+			break
+		}
+		if len(chanSlice)-1 == idx {
+			log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
+		}
+	}
+	if len(manager.managedChannels[tag]) == 0 {
+		delete(manager.managedChannels, tag)
+	}
+}
+
+func (manager *EngineCladIpcManager) deleteListenerCallback(listener chan gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) func() {
 	return func() {
 		manager.managerMutex.Lock()
 		defer manager.managerMutex.Unlock()
-		chanSlice := manager.managedChannels[tag]
-		for idx, v := range chanSlice {
-			if v == listener {
-				chanSlice[idx] = chanSlice[len(chanSlice)-1]
-				manager.managedChannels[tag] = chanSlice[:len(chanSlice)-1]
-				manager.SafeClose(listener)
-				break
-			}
-			if len(chanSlice)-1 == idx {
-				log.Println("Warning: failed to remove listener:", listener, "from array:", chanSlice)
-			}
-		}
-		if len(manager.managedChannels[tag]) == 0 {
-			delete(manager.managedChannels, tag)
-		}
+		manager.deleteListenerUnsafe(listener, tag)
 	}
 }
 
@@ -431,7 +448,7 @@ func (manager *EngineCladIpcManager) CreateChannel(tag gw_clad.MessageRobotToExt
 		slice = make([]chan gw_clad.MessageRobotToExternal, 0)
 	}
 	manager.managedChannels[tag] = append(slice, result)
-	return manager.deleteFromMap(result, tag), result
+	return manager.deleteListenerCallback(result, tag), result
 }
 
 func (manager *EngineCladIpcManager) SafeClose(listener chan gw_clad.MessageRobotToExternal) {
@@ -449,11 +466,12 @@ func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToE
 	tag := msg.Tag()
 	markedForDelete := make(chan chan gw_clad.MessageRobotToExternal, 5)
 	defer func() {
+		close(markedForDelete)
 		if len(markedForDelete) != 0 {
 			manager.managerMutex.Lock()
 			defer manager.managerMutex.Unlock()
 			for listener := range markedForDelete {
-				manager.SafeClose(listener) // will be deleted when the rpc closes
+				manager.deleteListenerUnsafe(listener, tag)
 			}
 		}
 	}()
@@ -477,7 +495,7 @@ func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToE
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Printf("EngineCladIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
+				log.Errorf("EngineCladIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)

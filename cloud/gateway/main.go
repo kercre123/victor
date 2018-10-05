@@ -10,7 +10,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"strings"
+	"sync"
 	"syscall"
 
 	"anki/log"
@@ -20,6 +22,7 @@ import (
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -41,9 +44,21 @@ var (
 
 	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineCladManager EngineCladIpcManager
+	// TODO: Remove these when the closed stream from the app actually disconnects properly.
+	// Right now it's preventing us from being able to rely on the property of a stream closing on disconnect.
+	// So these three variables are used to force event streams into only running one at a time.
+	tempEventStreamDone   chan struct{}
+	tempEventStreamMutex1 sync.Mutex
+	tempEventStreamMutex2 sync.Mutex
 )
 
-func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, errOut error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from fatal error in %s \"%s\": %s\n", info.FullMethod, err, debug.Stack())
+			errOut = grpc.Errorf(codes.Internal, "%s", err)
+		}
+	}()
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
 	log.Printf("Received rpc request %s(%#v)\n", name, req)
@@ -52,7 +67,13 @@ func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Un
 	return resp, err
 }
 
-func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (errOut error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from fatal error in %s \"%s\": %s\n", info.FullMethod, err, debug.Stack())
+			errOut = grpc.Errorf(codes.Internal, "%s", err)
+		}
+	}()
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
 	log.Printf("Received stream request %s(%#v)\n", name, srv)

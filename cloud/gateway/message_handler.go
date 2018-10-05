@@ -779,7 +779,8 @@ func (service *rpcService) onDisconnect() {
 func (service *rpcService) checkConnectionID(id string) bool {
 	connectionIdLock.Lock()
 	defer connectionIdLock.Unlock()
-	if len(connectionId) != 0 {
+	if len(connectionId) != 0 && id != connectionId {
+		log.Println("Connection id already set: current='%s', incoming='%s'", connectionId, id)
 		return false
 	}
 	// Check whether we are in Webots.
@@ -800,7 +801,7 @@ func (service *rpcService) checkConnectionID(id string) bool {
 		if connectionResponse.IsConnected && connectionResponse.ConnectionId != id {
 			// Someone is connected over BLE and they are not the primary connection.
 			// We return false so the app can tell you not to connect.
-			log.Printf("Detected mismatched BLE connection id: %s\n", connectionResponse.ConnectionId)
+			log.Printf("Detected mismatched BLE connection id: BLE='%s', incoming='%s'\n", connectionResponse.ConnectionId, id)
 			return false
 		}
 	}
@@ -810,12 +811,23 @@ func (service *rpcService) checkConnectionID(id string) bool {
 
 // Long running message for sending events to listening sdk users
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
+	// TODO: v Remove the tempEventStream handling below when the app connection properly closes v
+	tempEventStreamMutex1.Lock()
+	if tempEventStreamDone != nil {
+		close(tempEventStreamDone)
+	}
+	tempEventStreamMutex2.Lock()
+	defer tempEventStreamMutex2.Unlock()
+	tempEventStreamDone = make(chan struct{})
+	tempEventStreamMutex1.Unlock()
+	// TODO: ^ Remove the tempEventStream handling above when the app connection properly closes ^
+
 	isPrimary := service.checkConnectionID(in.ConnectionId)
 	if isPrimary {
 		service.onConnect(connectionId)
 		defer service.onDisconnect()
 	}
-	err := stream.Send(&extint.EventResponse{
+	resp := &extint.EventResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 		},
@@ -826,7 +838,8 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 				},
 			},
 		},
-	})
+	}
+	err := stream.Send(resp)
 	if err != nil {
 		log.Println("Closing Event stream (on send):", err)
 		return err
@@ -835,6 +848,12 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 		// This is the case where the user disconnects the stream
 		// We should still return the err in case the user doesn't think they disconnected
 		return err
+	}
+
+	if isPrimary {
+		log.Printf("EventStream: Sent primary connection response '%s'\n", connectionId)
+	} else {
+		log.Printf("EventStream: Sent secondary connection response given='%s', current='%s'\n", in.ConnectionId, connectionId)
 	}
 
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 512)
@@ -851,8 +870,14 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 	whiteList := in.GetWhiteList()
 	blackList := in.GetBlackList()
 
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
+		// TODO: remove entire tempEventStreamDone case when the app connection properly closes
+		case <-tempEventStreamDone:
+			log.Println("EventStream closing because another stream has opened")
+			return grpc.Errorf(codes.Unavailable, "Connection closed because another event stream has opened")
 		case response, ok := <-eventsChannel:
 			if !ok {
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
@@ -875,7 +900,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 					return err
 				}
 			}
-		case <-time.After(time.Second): // ping to check connection liveness after one second.
+		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := stream.Send(&ping); err != nil {
 				log.Println("Closing Event stream (on send):", err)
 				return err
@@ -941,6 +966,8 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 		},
 	}
 
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
 		case <-done:
@@ -959,7 +986,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 				log.Println("Closing BehaviorControl stream:", err)
 				return err
 			}
-		case <-time.After(time.Second): // ping to check connection liveness after one second.
+		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
 				log.Println("Closing BehaviorControl stream (on send):", err)
 				return err
@@ -1921,7 +1948,9 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 		}
 	}
 
-	return nil
+	errMsg := "ImageChunk engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
 }
 
 // CheckUpdateStatus tells if the robot is ready to reboot and update.
