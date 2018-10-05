@@ -363,6 +363,12 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToTouchPetting::OnBehaviorDeactivated()
 {
+  if( _currBlissLevel >= 2 ) {
+    // some decent amount of petting happened, so after this behavior finishes the robot should chill for a
+    // bit (rather than, e.g. going back into exploring)
+    GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::Nothing );
+  }
+
   ResetTouchState();
 }
 
