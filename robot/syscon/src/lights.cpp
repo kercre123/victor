@@ -89,6 +89,7 @@ void Lights::disable(void) {
 
 static void kick_off(void) {
   TIM17->ARR = current_light->time;
+	LEDOE::reset();
   light_handler = (++current_light)->funct;
   TIM17->CR1 = TIM_CR1_CEN | TIM_CR1_OPM;
 }

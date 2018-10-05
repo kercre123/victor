@@ -78,7 +78,8 @@ namespace MIC1_SCK    GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAPI GPIO_DEFINE(B, 8);
-namespace CAPO GPIO_DEFINE(A, 14);
+//namespace CAPO GPIO_DEFINE(A, 14);
+namespace LEDOE GPIO_DEFINE(A, 14);
 
 // Communication
 namespace VEXT_TX GPIO_DEFINE(A, 2);
@@ -95,6 +96,8 @@ namespace LED_CLK GPIO_DEFINE(A, 12);
 
 static inline void leds_off(void) {
   // Shifing by 5 is enough to disable LEDs
+	LEDOE::set();
+	
   LED_DAT::set();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
@@ -105,6 +108,8 @@ static inline void leds_off(void) {
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+	
+	__nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
 }
 
 #define DFU_ENTRY_POINT (0xC0C35473)

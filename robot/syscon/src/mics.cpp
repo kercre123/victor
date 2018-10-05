@@ -5,7 +5,7 @@
 #include "timer.h"
 
 #include "mics.h"
-#include "mic_tables.h"
+//#include "mic_tables.h"
 
 #include "messages.h"
 
@@ -141,7 +141,7 @@ void Mics::transmit(int16_t* payload) {
 static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
   int32_t acc_1 = acc[0];
   int32_t acc_2 = acc[1];
-
+/*
   const int32_t *ptr;
   for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
     int32_t acc_0 = 0;
@@ -159,7 +159,7 @@ static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
     STAGE3 ( 6);
     STAGE3A( 7);
   }
-
+*/
   acc[0] = acc_1;
   acc[1] = acc_2;
 }
@@ -168,7 +168,7 @@ static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
 static void decimate(const uint8_t* input, int32_t* acc,  int16_t* output) {
   uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
   uint16_t* target = (uint16_t*)&deinter;
-
+/*
   // Deinterlace the channel data
   for (int i = 0; i < PDM_BYTES_PER_IRQ; i += 2) {
     *(target++) = DEINTERLACE_TABLE[0][input[0]] | DEINTERLACE_TABLE[1][input[1]];
@@ -177,6 +177,7 @@ static void decimate(const uint8_t* input, int32_t* acc,  int16_t* output) {
 
   dec_loop(&acc[0], &deinter[0], &output[0]);
   if (!reduced) dec_loop(&acc[2], &deinter[1], &output[1]);
+	*/
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
