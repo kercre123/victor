@@ -87,7 +87,6 @@ class EventHandler:
         :param event_type: The name of the event that will result in func being called.
         :param func: A method implemented in your code that will be called when the event is fired.
         """
-        # TODO The sample code above refers to robot_observed_face but that isn't implemented in the Python anywhere.
         if event_type not in self.subscribers.keys():
             self.subscribers[event_type] = set()
         self.subscribers[event_type].add(func)

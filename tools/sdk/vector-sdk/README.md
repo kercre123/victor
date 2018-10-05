@@ -56,6 +56,6 @@ If you encounter any issues, please reach out to the forums team and let us know
 ---
 
 Use of Vector and the Vector SDK is subject to Anki's Privacy Policy and Terms and Conditions.
-Learn more at the Vector FAQ.
 
-TODO Add links here
+https://www.anki.com/en-us/company/privacy
+https://www.anki.com/en-us/company/terms-and-conditions

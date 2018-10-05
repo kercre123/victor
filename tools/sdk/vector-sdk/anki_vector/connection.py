@@ -30,12 +30,7 @@ from .messaging import client, protocol
 
 
 class CONTROL_PRIORITY_LEVEL(Enum):
-    # TODO Review these levels to make sure they represent what we are shipping
     """Enum used to specify the priority level for the program."""
-
-    #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
-    #: Vector may safely react to events such as falling.
-    OVERRIDE_ALL = protocol.ControlRequest.OVERRIDE_ALL  # pylint: disable=no-member
 
     #: Runs below Mandatory Physical Reactions such as tucking Vector's head and lift during a fall,
     #: yet above Trigger-Word Detection.

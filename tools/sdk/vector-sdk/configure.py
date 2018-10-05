@@ -19,6 +19,10 @@ robot (such as faces and photos).
 
 See the README for more information.
 
+Use of Vector and the Vector SDK is subject to Anki's Privacy Policy and Terms and Conditions.
+
+https://www.anki.com/en-us/company/privacy
+https://www.anki.com/en-us/company/terms-and-conditions
 
 """
 

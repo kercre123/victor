@@ -223,7 +223,6 @@ class Face:
         """sequence of tuples of float (x,y): points representing the outline of the mouth."""
         return self._mouth
 
-    # TODO Nic to make private. See how Cozmo has 1 subscription in world.py (to update the faces array) and 1 subscription in faces.py (to add all the face data to a Face instance)
     def unpack_face_stream_data(self, msg):
         """Unpacks the face observed stream data from Vector into a Face instance."""
         self._face_id = msg.face_id
@@ -286,7 +285,7 @@ class FaceComponent(util.Component):
         return await self.grpc_interface.EraseAllEnrolledFaces(req)
 
     # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component? Needs sample code.
-    # TODO list of modes showing ugly in docs
+    # TODO improve list of modes as shown in docs
     @sync.Synchronizer.wrap
     async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
         """Enable a vision mode

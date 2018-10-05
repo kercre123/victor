@@ -53,11 +53,8 @@ setup(
     ],
     zip_safe=True,
     keywords='anki vector robot robotics sdk'.split(),
-    #package_dir={'': 'anki_vector'}, # TODO test this is correct
-    #packages=find_packages('anki_vector'), # TODO test this is correct
-    #package_data={ # What to put in here? Copied from Cozmo.
-    #    'anki_vector': ['LICENSE.txt', 'assets/*.obj', 'assets/*.mtl', 'assets/*.jpg',
-    #              'assets/LICENSE.txt']
-    #},
     install_requires=get_requirements(),
+    extras_require={
+        '3dviewer': ['PyOpenGL>=3.1'],
+    }    
 )

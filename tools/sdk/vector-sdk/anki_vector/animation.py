@@ -30,8 +30,6 @@ in the AnimationComponent.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ["AnimationComponent"]
 
-# TODO Cozmo had EvtAnimationsLoaded, EvtAnimationCompleted, Animation, AnimationNames is_loaded. Where is this now?
-
 import asyncio
 
 from . import exceptions, sync, util
