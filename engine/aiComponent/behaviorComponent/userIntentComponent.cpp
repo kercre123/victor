@@ -33,6 +33,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/logging/DAS.h"
+#include "util/math/math.h"
 #include "webServerProcess/src/webVizSender.h"
 
 
@@ -316,6 +317,51 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
   _pendingIntentTimeoutEnabled = true;
+
+  // JIRA VIC-7922 hacks  
+  switch( _pendingIntent->intent.GetTag() ) {
+    case UserIntentTag::imperative_quiet:
+    case UserIntentTag::imperative_shutup:
+      _exploringTransitionExtraCooldown_s += 10 * 60.0f;
+      break;
+
+    case UserIntentTag::system_sleep:
+    case UserIntentTag::greeting_goodnight:
+    case UserIntentTag::global_stop:
+    case UserIntentTag::system_charger:
+      _exploringTransitionExtraCooldown_s += 5 * 60.0f;
+      break;
+
+    case UserIntentTag::explore_start:
+      _exploringTransitionExtraCooldown_s = 0.0f;
+      break;
+
+    case UserIntentTag::greeting_goodmorning:
+    case UserIntentTag::imperative_come:
+    case UserIntentTag::play_anytrick:
+    case UserIntentTag::play_specific:
+      // these maybe indicate the user wants the robot doing more stuff, so reduce the cooldown
+      _exploringTransitionExtraCooldown_s -= 60.0f;
+      break;
+
+    case UserIntentTag::silence:
+    case UserIntentTag::unmatched_intent:
+      // nothing for these
+      break;
+
+    default:
+      _exploringTransitionExtraCooldown_s += 1 * 30.0f;
+      break;
+  }
+
+  const float maxExtraCooldown_s = 800.0f;
+  
+  _exploringTransitionExtraCooldown_s = Util::Clamp(_exploringTransitionExtraCooldown_s, 0.0f, maxExtraCooldown_s);
+
+  // // debugging
+  // PRINT_NAMED_WARNING("UserIntentComponent.TEMP",
+  //                     "extra cooldown %f",
+  //                     _exploringTransitionExtraCooldown_s);
 }
 
 void UserIntentComponent::DevSetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)

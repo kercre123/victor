@@ -145,6 +145,20 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
   _lastAliveWallTime = currWallTime;
 }
 
+// hack for jira VIC-7922
+float RobotStatsTracker::GetNumHoursAlive() const
+{
+  const char* key = "Alive.seconds";
+  auto& statsJson = *_jdocsManager->GetJdocBodyPointer(external_interface::ROBOT_LIFETIME_STATS);
+  if( statsJson.isMember(key) ) {
+    const float sec = statsJson[key].asFloat();
+    return sec / (3600.0f);
+  }
+
+  // not present, return 0
+  return 0.0f;
+}
+
 void RobotStatsTracker::IncreaseStimulationSeconds(float delta)
 {
   if( delta > 0.0f ) {

@@ -299,6 +299,10 @@ private:
   bool _waitingForTriggerWordGetInToFinish = false;
   float _waitingForTriggerWordGetInToFinish_setTime_s = 0.0f;
 
+public: // jira VIC-7922 hacks
+  
+  float _exploringTransitionExtraCooldown_s = 0.0f;
+
 };
 
 }

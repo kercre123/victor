@@ -25,6 +25,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
@@ -54,6 +55,7 @@ const int kMaxTicksForPostBehaviorSuggestions = 5;
 
 BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   : InternalStatesBehavior( config, CreateCustomConditions() )
+  , _specialExploringTransitionCooldownBase_s( -1.0f ) // negative means don't do it at all
 {
   _params.socializeKnownFaceCooldown_s = JsonTools::ParseFloat(config, kSocializeKnownFaceCooldownKey, kDebugName);
   _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, kPlayWithCubeCooldownKey, kDebugName);
@@ -91,7 +93,63 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   MakeMemberTunable( _params.playWithCubeCooldown_s, kPlayWithCubeCooldownKey, kDebugName );
   
   AddConsoleVarTransitions( "MoveToState", kDebugName );
+
+  _specialExploringTransitionCooldownBase_s = -1.0f;
 }
+
+void BehaviorHighLevelAI::UpdateExploringTransitionCooldown()
+{
+  const float alive_h = GetBehaviorComp<RobotStatsTracker>().GetNumHoursAlive();
+
+  if( alive_h < 2.0f ) {
+    _specialExploringTransitionCooldownBase_s = 10.0f;
+  }
+  else if( alive_h < 24.0f ) {
+    _specialExploringTransitionCooldownBase_s = 30.0f;
+  }
+  else if( alive_h < 48.0f ) {
+    _specialExploringTransitionCooldownBase_s = 60.0f;
+  }
+  else if( alive_h < 72.0f ) {
+    _specialExploringTransitionCooldownBase_s = 120.0f;
+  }
+  else if( alive_h < 168.0f ) {
+    _specialExploringTransitionCooldownBase_s = 500.0f;
+  }
+  else {
+    // disable this hack after a week (the normal Exploring transition based on stim will still happen)
+    _specialExploringTransitionCooldownBase_s = -1.0f;
+  }
+
+  // // debugging
+  // PRINT_NAMED_WARNING("BehaviorHighLevelAI.SetExploringCooldown.TEMP",
+  //                     "h = %f, cooldown base = %f",
+  //                     alive_h,
+  //                     _specialExploringTransitionCooldownBase_s);
+}
+
+bool BehaviorHighLevelAI::ShouldTransitionIntoExploring() const
+{
+  if( _specialExploringTransitionCooldownBase_s < 0.0f ) {
+    return false;
+  }
+  
+  const float cooldown = _specialExploringTransitionCooldownBase_s +
+    GetBehaviorComp<UserIntentComponent>()._exploringTransitionExtraCooldown_s;
+  
+  const bool valueIfNeverRun = false; // don't run immediately if never run
+  const bool transition = StateExitCooldownExpired(GetStateID("Exploring"), cooldown, valueIfNeverRun);
+
+  // // debugging:
+  // PRINT_NAMED_WARNING("BehaviorHighLevelAI.ExploringTransition.TEMP",
+  //                     "base = %f, extra = %f, explired? %d",
+  //                     _specialExploringTransitionCooldownBase_s,
+  //                     GetBehaviorComp<UserIntentComponent>()._exploringTransitionExtraCooldown_s,
+  //                     transition ? 1 : 0);
+
+  return transition;  
+}
+
   
 void BehaviorHighLevelAI::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
@@ -241,6 +299,14 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         },
         emptyOwnerLabel )));
 
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
+      "ObservingToExploringHack",
+      std::make_shared<ConditionLambda>( [this](BehaviorExternalInterface& bei) {
+          return ShouldTransitionIntoExploring();
+        },
+        emptyOwnerLabel)));
+
   return handles;
 }
   
@@ -269,6 +335,9 @@ void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
       GetAIComp<AIWhiteboard>().ClearPostBehaviorSuggestions();
     }
   }
+
+  // also update the cooldown timer now in case it's changes
+  UpdateExploringTransitionCooldown();
 }
 
 void BehaviorHighLevelAI::OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const

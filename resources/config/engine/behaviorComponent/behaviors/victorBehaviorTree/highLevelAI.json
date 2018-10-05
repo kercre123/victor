@@ -390,6 +390,12 @@
               }
             ]
           }
+        },
+        {
+          "to": "Exploring",          
+          "condition": {
+            "customCondition": "ObservingToExploringHack"
+          }
         }
       ]
     },
