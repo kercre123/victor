@@ -2,12 +2,18 @@ resource "aws_security_group" "admin" {
   name        = "loadtest_admin"
   vpc_id      = "${aws_vpc.main.id}"
 
-  // Allow SSH
+  description = "Allow SSH access from Anki Office IPs only"
+
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "64.71.21.198/32",
+      "173.46.64.74/32",
+      "173.46.64.90/32",
+      "4.15.74.6/32"
+    ]
   }
 
 

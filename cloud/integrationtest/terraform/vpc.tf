@@ -38,6 +38,8 @@ resource "aws_security_group" "ecs_tasks" {
   name        = "ecs-tasks"
   vpc_id      = "${aws_vpc.main.id}"
 
+  description = "Allow Redis access only (used for Fargate cluster)"
+
   // Allow access to Redis
   ingress {
     from_port   = 6379
