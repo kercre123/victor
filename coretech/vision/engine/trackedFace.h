@@ -138,6 +138,16 @@ namespace Vision {
     bool IsMakingEyeContact() const { return _isMakingEyeContact; }
     void SetEyeContact(const bool eyeContact);
 
+    // Face directed at robot
+    bool IsDirectedAtRobot() const { return _isDirectedAtRobot; }
+    void SetDirectedAtRobot(const bool directedAtRobot);
+
+    bool IsDirectedLeftOfRobot() const { return _isDirectedLeftOfRobot; }
+    void SetDirectedLeftOfRobot(const bool directedLeftOfRobot);
+
+    bool IsDirectedRightOfRobot() const { return _isDirectedRightOfRobot; }
+    void SetDirectedRightOfRobot(const bool directedRightOfRobot);
+
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
 
@@ -153,6 +163,9 @@ namespace Vision {
     bool           _isBeingTracked     = false;
     bool           _isFacingCamera     = false;
     bool           _isMakingEyeContact = false;
+    bool           _isDirectedAtRobot  = false;
+    bool           _isDirectedLeftOfRobot  = false;
+    bool           _isDirectedRightOfRobot  = false;
     bool           _isTranslationSet   = false;
 
     std::string    _name;
@@ -342,6 +355,18 @@ namespace Vision {
 
   inline void TrackedFace::SetEyeContact(const bool eyeContact) {
     _isMakingEyeContact = eyeContact;
+  }
+
+  inline void TrackedFace::SetDirectedAtRobot(const bool directedAtRobot) {
+    _isDirectedAtRobot = directedAtRobot;
+  }
+
+  inline void TrackedFace::SetDirectedLeftOfRobot(const bool directedLeftOfRobot) {
+    _isDirectedLeftOfRobot = directedLeftOfRobot;
+  }
+
+  inline void TrackedFace::SetDirectedRightOfRobot(const bool directedRightOfRobot) {
+    _isDirectedRightOfRobot = directedRightOfRobot;
   }
   
 } // namespace Vision

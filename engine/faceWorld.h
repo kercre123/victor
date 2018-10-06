@@ -158,6 +158,10 @@ namespace Vector {
     // eye contact and has a time stamp greater than seenSinceTime_ms
     bool IsMakingEyeContact(const u32 withinLast_ms) const;
 
+    // TOOD add documentation
+    bool IsFaceDirectedAtRobot(const u32 withinLast_ms) const;
+    int IsFaceDirectedAtLeftRight(const u32 withinLast_ms) const;
+
 
     // Get the wall times that the given face ID has been observed for named faces. This implementation
     // returns at most 2 entries with front() being the wall time that was recorded first. On loading time,

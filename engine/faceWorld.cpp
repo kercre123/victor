@@ -1075,6 +1075,64 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::IsFaceDirectedAtRobot(const u32 withinLast_ms) const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      {
+        if (entry.second.face.IsDirectedAtRobot())
+        {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  int FaceWorld::IsFaceDirectedAtLeftRight(const u32 withinLast_ms) const
+  {
+    // TODO add logic to check this but for right now
+    // let's just hook up the pipes
+
+    // Also need to return more than just binary at least Left, Right, Neither
+    // we might be able to get more percise in the future, but it's unclear
+
+    // Loop over all the faces and see if any of them are making eye contact
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+
+    // TODO not sure what to do here so we just return the first face that has
+    // something set in terms of left or right direction.
+
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      {
+        if (entry.second.face.IsDirectedLeftOfRobot())
+        {
+          return 1;
+        }
+        if (entry.second.face.IsDirectedRightOfRobot())
+        {
+          return 2;
+        }
+      }
+    }
+    return 0;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::InitLoadedKnownFaces(const std::list<Vision::LoadedKnownFace>& loadedFaces)
   {
     for( const auto& loadedFace : loadedFaces ) {

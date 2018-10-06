@@ -711,6 +711,32 @@ namespace Vision {
     return eyeContact;
   }
 
+  void FaceTracker::Impl::FaceDirection(TrackedFace& face,
+                                        const TimeStamp_t& timeStamp)
+  {
+    DEV_ASSERT(face.IsTranslationSet(), "FaceTrackerImpl.DirectedAtRobot.FaceTranslationNotSet");
+    auto& entry = _facesDirectedAtRobot[face.GetID()];
+    entry.Update(face, timeStamp);
+
+    // Check if the face is stale
+    bool directedAtRobot = false;
+    bool directedLeftOfRobot = false;
+    bool directedRightOfRobot = false;
+    if (entry.GetExpired(timeStamp))
+    {
+      _facesDirectedAtRobot.erase(face.GetID());
+    }
+    else
+    {
+      directedAtRobot = entry.IsFaceDirectedAtRobot();
+      directedLeftOfRobot = entry.IsFaceDirectedLeftOfRobot();
+      directedRightOfRobot = entry.IsFaceDirectedRightOfRobot();
+    }
+    face.SetDirectedAtRobot(directedAtRobot);
+    face.SetDirectedLeftOfRobot(directedLeftOfRobot);
+    face.SetDirectedRightOfRobot(directedRightOfRobot);
+  }
+
   static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,
                               const CameraCalibration& scaledCalib)
   {
@@ -1195,6 +1221,9 @@ namespace Vision {
           // won't catch on going cases of the dependence.
           face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
         }
+
+        // TODO this shoudl be wrapped in a conditional ... maybe? who knows
+        FaceDirection(face, frameOrig.GetTimestamp());
 
         //
         // Face Recognition:

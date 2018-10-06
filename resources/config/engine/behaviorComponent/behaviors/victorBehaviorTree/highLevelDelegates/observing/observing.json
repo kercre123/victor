@@ -23,6 +23,10 @@
     
       "behaviors": [    
         {
+          "behavior": "ReactToFaceNormal",
+          "cooldown_s": 15.0
+        },
+        {
           "behavior": "TrackingEyeContact",
           "cooldown_s": 15.0
         },

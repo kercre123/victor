@@ -58,6 +58,7 @@ enum uint_16 BehaviorID {
   PowerSaveTest,
   PuzzleMaze,
   ReactToBody,
+  ReactToFaceNormal,
   TestStackMonitors,
 
   // victorBehaviorTree/appBehaviors
