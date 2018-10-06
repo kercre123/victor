@@ -1141,13 +1141,21 @@ const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::Processin
   return "";
 }
   
-  void MicDataProcessor::FakeTriggerWordDetection() {
-    if( _alexa ) {
-      _alexa->ButtonPress();
-    } else {
-      TriggerWordDetectCallback(TriggerWordDetectSource::Button, "HEY_VECTOR", 0.f, 0,0);
-    }
+void MicDataProcessor::FakeTriggerWordDetection() {
+  if( _alexa ) {
+    _alexa->ButtonPress();
+  } else {
+    TriggerWordDetectCallback(TriggerWordDetectSource::Button, "HEY_VECTOR", 0.f, 0,0);
   }
+}
+  
+  
+void MicDataProcessor::OnRobotTouched( bool touched )
+{
+  if( touched && _alexa != nullptr ) {
+    _alexa->StopForegroundActivity();
+  }
+}
 
 } // namespace MicData
 } // namespace Vector

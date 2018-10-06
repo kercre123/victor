@@ -50,12 +50,15 @@ public:
   
   bool IsIdle() const { return _uxState == AlexaUXState::Idle; }
   
+  void StopForegroundActivity();
+  
 protected:
   // callbacks that affect ux state
   
   virtual void onDialogUXStateChanged(DialogUXState newState) override;
   virtual void   onPlaybackStarted (SourceId id) override;
   virtual void   onPlaybackFinished (SourceId id) override;
+  virtual void   onPlaybackStopped(SourceId id) override;
   virtual void   onPlaybackError (SourceId id, const alexaClientSDK::avsCommon::utils::mediaPlayer::ErrorType
  &type, std::string error) override;
   // todo: more methods, like pausing

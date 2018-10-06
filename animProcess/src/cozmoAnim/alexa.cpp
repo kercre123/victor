@@ -646,7 +646,7 @@ void Alexa::CheckForStateChange()
     }
       break;
   }
-  PRINT_NAMED_WARNING("WHATNOW", "new AlexaUXState=%d", (int) _uxState );
+  PRINT_NAMED_WARNING("WHATNOW", "new AlexaUXState=%d (dialogState=%d, sources=%d, timeToSetIdle=%1.1f", (int) _uxState, (int)_dialogState, (int)_playingSources.size(), _timeToSetIdle );
   if( oldState != _uxState && _onStateChanged != nullptr) {
     _onStateChanged( _uxState );
   }
@@ -661,6 +661,12 @@ void Alexa::onPlaybackStarted (SourceId id)
 void Alexa::onPlaybackFinished (SourceId id)
 {
   PRINT_NAMED_WARNING("WHATNOW", "CALLBACK FINISH %d", (int)id);
+  _playingSources.erase(id);
+  CheckForStateChange();
+}
+void Alexa::onPlaybackStopped(SourceId id)
+{
+  PRINT_NAMED_WARNING("WHATNOW", "CALLBACK STOPPED %d", (int)id);
   _playingSources.erase(id);
   CheckForStateChange();
 }
@@ -679,6 +685,14 @@ void Alexa::OnDirective(const std::string& directive)
 {
   if( directive == "Play" ) {
     _lastPlayDirective = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+}
+
+void Alexa::StopForegroundActivity()
+{
+  if( m_client ) {
+    PRINT_NAMED_WARNING("WHATNOW", "alexa.cpp Stopping foreground activity");
+    m_client->stopForegroundActivity();
   }
 }
   

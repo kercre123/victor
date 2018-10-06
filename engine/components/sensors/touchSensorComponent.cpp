@@ -391,6 +391,9 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
       _robot->Broadcast(
         ExternalInterface::MessageEngineToGame(
           ExternalInterface::TouchButtonEvent(_confirmedPressState)));
+      
+      _robot->SendRobotMessage<RobotInterface::RobotTouched>(_confirmedPressState);
+      
       if(_confirmedPressState) {
         _touchPressTime = now;
         _touchCountForWebviz++;

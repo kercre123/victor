@@ -732,6 +732,13 @@ void MicDataSystem::RequestConnectionStatus()
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
 }
+  
+void MicDataSystem::OnRobotTouched( bool touched )
+{
+  if( _micDataProcessor != nullptr ) {
+    _micDataProcessor->OnRobotTouched(touched);
+  }
+}
 
 } // namespace MicData
 } // namespace Vector

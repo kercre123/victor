@@ -442,6 +442,14 @@ void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDete
   }
 }
 
+void Process_robotTouched(const Anki::Vector::RobotInterface::RobotTouched& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->OnRobotTouched( msg.isTouched );
+  }
+}
+
 void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);

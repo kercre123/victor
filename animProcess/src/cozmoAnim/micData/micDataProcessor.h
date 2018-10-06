@@ -103,6 +103,9 @@ public:
   
   void OnAlexaStateChanged( AlexaUXState state );
   
+  
+  void OnRobotTouched( bool touched );
+  
 private:
   const AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;

@@ -634,6 +634,10 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_END    = 0xFE
 }
 
+message RobotTouched {
+  bool  isTouched,
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to animation process and robot (supervisor) process
@@ -761,6 +765,8 @@ union EngineToRobot
 
   StartWakeWordlessStreaming    startWakeWordlessStreaming = 0x99,
   SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
+
+  RobotTouched robotTouched = 0x9B,
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
