@@ -23,7 +23,7 @@ public:
   AlexaCapabilityWrapper(const std::string& nameSpace,
                          std::shared_ptr<alexaClientSDK::avsCommon::avs::CapabilityAgent> capabilityAgent,
                          std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender,
-                         const std::function<void(const std::string&)>& onDirective)
+                         const std::function<void(const std::string&,const std::string&)>& onDirective)
    : CapabilityAgent( nameSpace, exceptionEncounteredSender)
    , m_capabilityAgent( capabilityAgent )
    , _onDirective( onDirective )
@@ -46,8 +46,8 @@ public:
   virtual void handleDirective (std::shared_ptr< DirectiveInfo > info) override
   {
     LogDirective(info);
-    if( _onDirective != nullptr && info != nullptr && info->directive != nullptr ) {
-      _onDirective( info->directive->getName() );
+    if( info != nullptr ) {
+      RunDirectiveCallback(info->directive);
     }
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
     m_capabilityAgent->handleDirective(info);
@@ -63,9 +63,7 @@ public:
   virtual void handleDirectiveImmediately(std::shared_ptr<alexaClientSDK::avsCommon::avs::AVSDirective> directive) override {
     LogDirective(std::make_shared<DirectiveInfo>(directive, nullptr));
     // note: this AVS method was made public only for the purpose of this wrapper, so if you delete the wrapper, revert the libs
-    if( _onDirective != nullptr && directive != nullptr ) {
-      _onDirective( directive->getName() );
-    }
+    RunDirectiveCallback(directive);
     
     m_capabilityAgent->handleDirectiveImmediately(directive);
   }
@@ -104,11 +102,20 @@ private:
     }
   }
   
+  void RunDirectiveCallback(const std::shared_ptr<alexaClientSDK::avsCommon::avs::AVSDirective>& directive)
+  {
+    if( _onDirective != nullptr && directive != nullptr ) {
+      const auto& name = directive->getName();
+      const auto& payload = directive->getPayload();
+      _onDirective( name, payload );
+    }
+  }
+  
   std::shared_ptr<alexaClientSDK::avsCommon::avs::CapabilityAgent> m_capabilityAgent;
   
   
   // todo: check destruction order
-  const std::function<void(const std::string&)>& _onDirective;
+  const std::function<void(const std::string&,const std::string&)>& _onDirective;
 };
 
 

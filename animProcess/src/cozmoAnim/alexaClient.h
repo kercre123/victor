@@ -129,7 +129,7 @@ public:
   void addAlexaDialogStateObserver(
                                    std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface> observer);
   
-  using OnDirectiveFunc = std::function<void(const std::string&)>;
+  using OnDirectiveFunc = std::function<void(const std::string&,const std::string&)>;
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }
 private:
   AlexaClient(){}

@@ -73,6 +73,11 @@ BackpackLightComponent::BackpackLightComponent(const AnimContext* context)
       _isStreaming = streamStart;
       _willStreamOpen = false;
     });
+  _context->GetMicDataSystem()->SetAlexaStreamingCallback([this](bool streaming)
+                                                         {
+                                                           _isStreaming = streaming;
+                                                           _willStreamOpen = false;
+                                                         });
 }
 
 

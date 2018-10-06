@@ -116,6 +116,9 @@ public:
   // True if started, False if stopped
   void AddStreamUpdatedCallback(std::function<void(bool)> callback)
     { _streamUpdatedCallbacks.push_back(callback); }
+  
+  std::function<void(bool)> _alexaStreamingCallback;
+  void SetAlexaStreamingCallback(std::function<void(bool)> callback) { _alexaStreamingCallback = callback; }
 
   bool HasConnectionToCloud() const;
   void RequestConnectionStatus();

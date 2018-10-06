@@ -488,6 +488,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_alexaUXStateChanged)
     {
+      if( _alexaStreamingCallback != nullptr ) {
+        // this isn't totally true, since we call "Listening" when the actual state is either LISTENING or THINKING
+        const bool streaming = msg->alexaUXStateChanged.state == AlexaUXState::Listening;
+        _alexaStreamingCallback(streaming);
+      }
       RobotInterface::SendAnimToEngine(msg->alexaUXStateChanged);
     }
     else

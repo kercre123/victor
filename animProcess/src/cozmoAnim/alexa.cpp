@@ -408,7 +408,7 @@ void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onSta
   }
   
   m_client->addSpeakerManagerObserver(userInterfaceManager);
-  m_client->SetDirectiveCallback( std::bind(&Alexa::OnDirective, this, std::placeholders::_1) );
+  m_client->SetDirectiveCallback( std::bind(&Alexa::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
   
   /*
    * Creating the buffer (Shared Data Stream) that will hold user audio data. This is the main input into the SDK.
@@ -681,10 +681,16 @@ void Alexa::onPlaybackError( SourceId id,
   CheckForStateChange();
 }
   
-void Alexa::OnDirective(const std::string& directive)
+void Alexa::OnDirective(const std::string& directive, const std::string& payload)
 {
   if( directive == "Play" ) {
     _lastPlayDirective = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  else if( directive == "DeleteAlert" ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Deleting Alert");
+  }
+  else if( directive == "SetAlert" ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Setting Alert");
   }
 }
 

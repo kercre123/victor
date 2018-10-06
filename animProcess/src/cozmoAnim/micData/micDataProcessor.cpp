@@ -896,7 +896,7 @@ void MicDataProcessor::ProcessTriggerLoop()
     if( _alexa ) {
       _alexa->ProcessAudio((int16_t*)processedAudio.data(), processedAudio.size());
     }
-
+    
 #if ANKI_DEV_CHEATS
     // if things are different reload some stuff
     if (_triggerModelTypeIndexVector != kMicData_NextTriggerIndexVector)
