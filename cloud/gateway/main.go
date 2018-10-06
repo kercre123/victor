@@ -30,7 +30,7 @@ import (
 // Most useful for debugging the json output being sent to the app.
 const (
 	logVerbose = false
-	disableStreams = true
+	disableStreams = false
 )
 
 var (
