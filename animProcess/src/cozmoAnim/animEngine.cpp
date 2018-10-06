@@ -11,6 +11,7 @@
  */
 
 #include "cozmoAnim/animEngine.h"
+#include "cozmoAnim/animComms.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 
@@ -79,10 +80,20 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   }
 
   _microphoneAudioClient.reset(new Audio::MicrophoneAudioClient(_context->GetAudioController()));
+
+#if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
+  AnimComms::InitSocketBufferStats();
+#endif
+
 }
 
 AnimEngine::~AnimEngine()
 {
+
+#if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
+  AnimComms::ReportSocketBufferStats();
+#endif
+
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
   }
@@ -162,10 +173,21 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     return RESULT_FAIL;
   }
 
-  // Declare some invariants
+  //
+  // Declare some invariants. These components are always present after successful initialization.
+  //
   DEV_ASSERT(_context, "AnimEngine.Update.InvalidContext");
   DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
   DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
+  DEV_ASSERT(_streamingAnimationModifier, "AnimEngine.Update.InvalidStreamingAnimationModifier");
+  DEV_ASSERT(_backpackLightComponent, "AnimEngine.Update.InvalidBackpackLightComponent");
+
+#if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
+  {
+    // Update socket buffer counters
+    AnimComms::UpdateSocketBufferStats();
+  }
+#endif
 
 #if ENABLE_SLEEP_TIME_DIAGNOSTICS || ENABLE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -210,14 +232,14 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   // Clear out sprites that have passed their cache time
   _context->GetDataLoader()->GetSpriteCache()->Update(currTime_nanosec);
 
-  if(_streamingAnimationModifier != nullptr){
-    _streamingAnimationModifier->ApplyAlterationsBeforeUpdate(_animationStreamer.get());
-  }
-  _animationStreamer->Update();
-  if(_streamingAnimationModifier != nullptr){
-    _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
-  }
+  // Update animations
+  _streamingAnimationModifier->ApplyAlterationsBeforeUpdate(_animationStreamer.get());
 
+  _animationStreamer->Update();
+
+  _streamingAnimationModifier->ApplyAlterationsAfterUpdate(_animationStreamer.get());
+
+  // Update audio controller
   if (_audioControllerPtr != nullptr) {
     // Update mic info in Audio Engine
     const auto& micDirectionMsg = _context->GetMicDataSystem()->GetLatestMicDirectionMsg();
@@ -226,13 +248,12 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     _audioControllerPtr->Update();
   }
 
-  if(_backpackLightComponent != nullptr)
-  {
-    _backpackLightComponent->Update();
-  }
+  // Update backpack lights
+  _backpackLightComponent->Update();
 
 #if ENABLE_RUN_TIME_DIAGNOSTICS
   {
+    // Update runtime counters
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
     const double maxUpdateDuration = ANIM_TIME_STEP_MS;
@@ -244,6 +265,13 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 #endif // ENABLE_RUN_TIME_DIAGNOSTICS
+
+#if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
+  {
+    // Update socket buffer counters
+    AnimComms::UpdateSocketBufferStats();
+  }
+#endif
 
   return RESULT_OK;
 }
