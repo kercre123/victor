@@ -469,7 +469,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
   }
   
   // loop animation forever to keep the eyes moving
-  action->AddAction(new TriggerAnimationAction(AnimationTrigger::InteractWithFaceTrackingIdle, 0));
+  action->AddAction(new ReselectingLoopAnimationAction(AnimationTrigger::InteractWithFaceTrackingIdle));
   action->SetShouldEndWhenFirstActionCompletes(true);
   
   EngineTimeStamp_t eyeContactStart_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
