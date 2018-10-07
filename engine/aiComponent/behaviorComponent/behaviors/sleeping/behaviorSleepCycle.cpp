@@ -142,7 +142,7 @@ void BehaviorSleepCycle::CreateCustomWakeReasonConditions()
 
   _iConfig.wakeConditions.emplace( WakeReason::TimerShouldRing, new ConditionLambda( [](BehaviorExternalInterface& bei) {
       auto& utility = bei.GetAIComponent().GetComponent<TimerUtility>();
-      auto handle = utility.GetTimerHandle();
+      auto handle = utility.GetSoonestTimer();
       auto secRemain = (handle != nullptr) ? handle->GetTimeRemaining_s() : 0;
       const bool shouldRing = (handle != nullptr) && (secRemain == 0);
       return shouldRing;

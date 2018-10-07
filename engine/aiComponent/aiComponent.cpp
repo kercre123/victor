@@ -86,7 +86,7 @@ void AIComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depend
       _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache,        new ObjectInteractionInfoCache(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                            new PuzzleComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::SalientPointsDetectorComponent,    new SalientPointsComponent());
-      _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,                      new TimerUtility());
+      _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,                      new TimerUtility(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                        new AIWhiteboard(*robot));
     }
 

@@ -197,7 +197,9 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
   _micTriggerConfig->Init(dataLoader.GetMicTriggerConfig());
   
   if( _alexa ) {
-    _alexa->Init(context, std::bind(&MicDataProcessor::OnAlexaStateChanged, this, std::placeholders::_1) );
+    _alexa->Init(context,
+                 std::bind(&MicDataProcessor::OnAlexaStateChanged, this, std::placeholders::_1),
+                 std::bind(&MicDataProcessor::SendAlexaAlertsToEngine, this, std::placeholders::_1));
   }
 
   // On Debug builds, check that all the files listed in the trigger config actually exist
@@ -300,12 +302,23 @@ void MicDataProcessor::InitVAD()
                     currentDirection,
                     (TimeStamp_t)mostRecentTimestamp);
 }
+
+void MicDataProcessor::SendAlexaAlertsToEngine( RobotInterface::AlexaAlerts&& alertsMsg )
+{
+  PRINT_NAMED_WARNING("WHATNOW", "Got here B");
+  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(alertsMsg));
+  _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+}
   
 void MicDataProcessor::OnAlexaStateChanged( AlexaUXState state )
 {
+  static auto oldState = AlexaUXState::Idle;
   if( state == AlexaUXState::Listening ) {
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-    showStreamState->SetAlexaTrigger();
+    if( oldState == AlexaUXState::Idle ) {
+      // run trigger getin if this is coming from idle (if from speaking, just show the light)
+      showStreamState->SetAlexaTrigger();
+    }
   
   
     _micDataSystem->SetIsAlexa(true);
@@ -322,6 +335,7 @@ void MicDataProcessor::OnAlexaStateChanged( AlexaUXState state )
     auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
     _micDataSystem->SendMessageToEngine(std::move(engineMessage));
   }
+  oldState = state;
   
   PRINT_NAMED_WARNING("WHATNOW", "OnAlexaStateChanged. state=%d", (int)state);
   RobotInterface::AlexaUXStateChanged msg;
@@ -1154,6 +1168,13 @@ void MicDataProcessor::OnRobotTouched( bool touched )
 {
   if( touched && _alexa != nullptr ) {
     _alexa->StopForegroundActivity();
+  }
+}
+  
+void MicDataProcessor::AlexaAlertsCancelled(const std::vector<int> alertIDs)
+{
+  if( _alexa ) {
+    _alexa->CancelAlerts(alertIDs);
   }
 }
 

@@ -33,6 +33,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
@@ -453,6 +454,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   }
 
   // Send out any messages we have to the engine
+  // wtf is this design
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> stolenMessages;
   {
     std::lock_guard<std::mutex> lock(_msgsMutex);
@@ -464,7 +466,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
     bool updatedMicDirection = false;
   #endif
-  for (const auto& msg : stolenMessages)
+  for (auto& msg : stolenMessages)
   {
     if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
     {
@@ -494,6 +496,17 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _alexaStreamingCallback(streaming);
       }
       RobotInterface::SendAnimToEngine(msg->alexaUXStateChanged);
+    }
+    else if (msg->tag == RobotInterface::RobotToEngine::Tag_alexaAlerts)
+    {
+      PRINT_NAMED_WARNING("WHATNOW", "Got here A %f", BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+      if( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < 5.0f ) {
+        // hacky hack hack engine probably isnt running yet
+        std::lock_guard<std::mutex> lock(_msgsMutex);
+        _msgsToEngine.emplace_back( msg.release() );
+      } else {
+        RobotInterface::SendAnimToEngine(msg->alexaAlerts);
+      }
     }
     else
     {
@@ -742,6 +755,13 @@ void MicDataSystem::OnRobotTouched( bool touched )
 {
   if( _micDataProcessor != nullptr ) {
     _micDataProcessor->OnRobotTouched(touched);
+  }
+}
+  
+void MicDataSystem::AlexaAlertsCancelled(const std::vector<int> alertIDs)
+{
+  if( _micDataProcessor != nullptr ) {
+    _micDataProcessor->AlexaAlertsCancelled(alertIDs);
   }
 }
 

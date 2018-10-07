@@ -353,6 +353,17 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     }
   }
   
+  bool sendTrue = false;
+  {
+    static int wasOffTreads = -1;
+    const bool offTreads = (_robot->GetOffTreadsState() != OffTreadsState::OnTreads);
+    if( offTreads && wasOffTreads != (int)offTreads  ) {
+      _robot->SendRobotMessage<RobotInterface::RobotTouched>(true);
+      sendTrue = true;
+    }
+    wasOffTreads = (int)offTreads;
+  }
+  
   if( !_baselineCalibrator.IsCalibrated() ) {
     // note: treat isPressed as false, because we cannot detect touch while uncalibrated
     _baselineCalibrator.UpdateBaseline(boxFiltVal, isPickedUp, false);
@@ -392,7 +403,9 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
         ExternalInterface::MessageEngineToGame(
           ExternalInterface::TouchButtonEvent(_confirmedPressState)));
       
-      _robot->SendRobotMessage<RobotInterface::RobotTouched>(_confirmedPressState);
+      if( !sendTrue ) { // dont send twice
+        _robot->SendRobotMessage<RobotInterface::RobotTouched>(_confirmedPressState);
+      }
       
       if(_confirmedPressState) {
         _touchPressTime = now;

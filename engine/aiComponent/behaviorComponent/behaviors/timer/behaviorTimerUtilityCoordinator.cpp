@@ -176,7 +176,7 @@ AnticTracker::AnticTracker(const Json::Value& config)
 void AnticTracker::PlayingAntic(BehaviorExternalInterface& bei)
 {
   auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>();
-  _lastAnticPlayed_s = timerUtility.GetSystemTime_s();
+  _lastAnticPlayed_s = timerUtility.GetSteadyTime_s();
 }
 
 
@@ -188,7 +188,7 @@ bool AnticTracker::GetMinTimeTillNextAntic(BehaviorExternalInterface& bei,
   auto iter = GetApplicableRule(timer);
   if(iter != _recurranceRules.end()){
     auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>();
-    const int currentTime_s = timerUtility.GetSystemTime_s();
+    const int currentTime_s = timerUtility.GetSteadyTime_s();
     const int timeSinceLastAntic = currentTime_s - _lastAnticPlayed_s;
 
     // use time since last played and min interval to determine min time till antic
@@ -208,7 +208,7 @@ bool AnticTracker::GetMaxTimeTillNextAntic(BehaviorExternalInterface& bei,
   auto iter = GetApplicableRule(timer);
   if(iter != _recurranceRules.end()){
     auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>();
-    const int currentTime_s = timerUtility.GetSystemTime_s();
+    const int currentTime_s = timerUtility.GetSteadyTime_s();
     const int timeSinceLastAntic = currentTime_s - _lastAnticPlayed_s;
 
     // use time since last played and min interval to determine min time till antic
@@ -371,14 +371,19 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
                                   stopData.Get_global_delete().what_to_stop == kCancelTimerEntity;
   const bool checkTimePending = uic.IsUserIntentPending(USER_INTENT(check_timer));
   
+  const bool cancelAlexa = GetTimerUtility().HasPendingCancel();
+  const bool setAlexa = GetTimerUtility().HasPendingSet();
+  
   // Todo - need to have a distinction of polite interrupt on min time vs max time
   // for now, just use max as a hard cut criteria
+  // antic disabled
   bool timeToRunAntic = false;
-  if(auto handle = GetTimerUtility().GetTimerHandle()){
-    int maxTimeTillAntic_s = INT_MAX;
-    timeToRunAntic = _iParams.anticTracker->GetMaxTimeTillNextAntic(GetBEI(), handle, maxTimeTillAntic_s);
-    timeToRunAntic &= (maxTimeTillAntic_s == 0);
-  }
+//  if(auto handle = GetTimerUtility().GetSoonestTimer()){
+//    int maxTimeTillAntic_s = INT_MAX;
+//    timeToRunAntic = _iParams.anticTracker->GetMaxTimeTillNextAntic(GetBEI(), handle, maxTimeTillAntic_s);
+//    timeToRunAntic &= (maxTimeTillAntic_s == 0);
+//    timeToRunAntic = handle->GetTimeRemaining_s() != 0; // otherwise there's some bug where this behavior activates and doesnt delegate
+//  }
   
   // Override all antics if it's been suppressed
   const auto tickCount = BaseStationTimer::getInstance()->GetTickCount();
@@ -392,9 +397,17 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   }
 
 
-  return cancelTimerPending || deleteTimerPending || setTimerWantsToRun || 
+  const bool wtba = cancelTimerPending || deleteTimerPending || setTimerWantsToRun ||
          timeToRunAntic || timerShouldRing || 
-         _lParams.shouldForceAntic || checkTimePending;
+         _lParams.shouldForceAntic || checkTimePending || cancelAlexa || setAlexa;
+  if( wtba ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Timer WTBA: %d %d %d %d %d %d %d %d %d",
+                        cancelTimerPending , deleteTimerPending,
+                        setTimerWantsToRun , timeToRunAntic , timerShouldRing ,
+                        _lParams.shouldForceAntic , checkTimePending, cancelAlexa, setAlexa);
+  }
+  return wtba;
+  
 }
 
 
@@ -437,7 +450,7 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTimerUtilityCoordinator::TimerShouldRing() const
 {
-  auto handle = GetTimerUtility().GetTimerHandle();
+  auto handle = GetTimerUtility().GetSoonestTimer();
   auto secRemain = (handle != nullptr) ? handle->GetTimeRemaining_s() : 0;
   return (handle != nullptr) && (secRemain == 0);
 }
@@ -473,7 +486,7 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelRinging()
     DASMSG_SET(i1, ringTime_ms, "Amount of time the timer was ringing in milliseconds");
     DASMSG_SEND();
 
-    GetTimerUtility().ClearTimer();
+    GetTimerUtility().ClearRingingTimers();
     // Its emergency get out will still play
     CancelSelf();
     return;
@@ -484,6 +497,9 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelRinging()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
 {
+  int setTime_s=0;
+  bool alexaSet = GetTimerUtility().HasPendingSet(&setTime_s);
+  
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(set_timer))){
     UserIntentPtr intentData = SmartActivateUserIntent(USER_INTENT(set_timer));
@@ -492,7 +508,7 @@ void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
     const bool isTimerInRange = (_iParams.minValidTimer_s <= requestedTime_s) && 
                                 (requestedTime_s          <= _iParams.maxValidTimer_s);
 
-    if(GetTimerUtility().GetTimerHandle() != nullptr){
+    if(GetTimerUtility().GetVectorTimer() != nullptr){
       // Timer already set - can't set another
       TransitionToTimerAlreadySet();
     }else if(isTimerInRange){
@@ -500,6 +516,9 @@ void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
     }else{
       TransitionToInvalidTimerRequest();
     }
+  } else if( alexaSet ) {
+    
+    TransitionToSetTimer();
   }
 }
 
@@ -520,21 +539,29 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelTimer()
     SmartActivateUserIntent(USER_INTENT(global_delete));
     cancelIntentPending = true;
   }
-
+  
+  int alexaCancelTime = 0;
+  const bool cancelAlexa = GetTimerUtility().HasPendingCancel(&alexaCancelTime);
 
   if(cancelIntentPending){
     // Cancel a timer if it is set, otherwise play "I Cant Do That"
-    auto handle = GetTimerUtility().GetTimerHandle();
+    auto handle = GetTimerUtility().GetVectorTimer();
     if(handle != nullptr){
       const auto timeRemaining_s = handle->GetTimeRemaining_s();
       const auto displayTime = _iParams.cancelTimerBehavior->GetTimeDisplayClock_sec();
       _iParams.cancelTimerBehavior->SetAdvanceClockParams(timeRemaining_s, 0, displayTime);
       
-      GetTimerUtility().ClearTimer();
+      GetTimerUtility().ClearVectorTimer();
       TransitionToCancelTimer();
     }else{
       TransitionToNoTimerToCancel();
     }
+  } else if (cancelAlexa) {
+    const auto displayTime = _iParams.cancelTimerBehavior->GetTimeDisplayClock_sec();
+    _iParams.cancelTimerBehavior->SetAdvanceClockParams(alexaCancelTime, 0, displayTime);
+    
+    GetTimerUtility().ResetPendingCancel();
+    TransitionToCancelTimer();
   }
 }
 
@@ -545,7 +572,7 @@ void BehaviorTimerUtilityCoordinator::CheckShouldShowTimeRemaining()
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if(uic.IsUserIntentPending(USER_INTENT(check_timer))){
     SmartActivateUserIntent(USER_INTENT(check_timer));
-    if(auto handle = GetTimerUtility().GetTimerHandle()){
+    if(auto handle = GetTimerUtility().GetVectorTimer()){
       TransitionToPlayAntic();
     }else{
       TransitionToInvalidTimerRequest();
@@ -557,12 +584,14 @@ void BehaviorTimerUtilityCoordinator::CheckShouldShowTimeRemaining()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::CheckShouldPlayAntic()
 {
-  if(auto handle = GetTimerUtility().GetTimerHandle()){
+  if(auto handle = GetTimerUtility().GetSoonestTimer()){
     int minTimeTillAntic_s = INT_MAX;
     const bool validAnticTime = _iParams.anticTracker->GetMinTimeTillNextAntic(GetBEI(), handle, minTimeTillAntic_s);
+    const bool isTimer = !handle->GetIsAlarm();
+    const bool shortTimeRemaining = handle->GetTimeRemaining_s() < 60*60; // display only works for short timers
 
     // set clock digit quadrants
-    if((validAnticTime && (minTimeTillAntic_s == 0)) ||
+    if((isTimer && shortTimeRemaining && validAnticTime && (minTimeTillAntic_s == 0)) ||
        _lParams.shouldForceAntic){
       TransitionToPlayAntic();
     }
@@ -598,7 +627,7 @@ void BehaviorTimerUtilityCoordinator::TransitionToShowTimeRemaining()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToRinging()
 {
-  GetTimerUtility().ClearTimer();
+  GetTimerUtility().ClearRingingTimers();
   _iParams.timerRingingBehavior->WantsToBeActivated();
   DelegateNow(_iParams.timerRingingBehavior.get());
   _lParams.touchReleasedSinceStartedRinging = false;
@@ -666,32 +695,41 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
   auto startTimerCallback = [this](){
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(set_timer));
+    int alexaTime_s = 0;
+    const bool alexaSet = GetTimerUtility().HasPendingSet(&alexaTime_s);
 
-    if( ANKI_VERIFY(intentData != nullptr &&
-                    (intentData->intent.GetTag() == USER_INTENT(set_timer)),
-                    "BehaviorTimerUtilityCoordinator.SetShowClockCallback.IncorrectIntent",
-                    "Active user intent should have been set_timer but wasn't") ) {
+    if( intentData != nullptr &&
+       (intentData->intent.GetTag() == USER_INTENT(set_timer)) ) {
       
       auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
       timerUtility.StartTimer(intentData->intent.Get_set_timer().time_s);
+    } else if( alexaSet ) {
+      auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
+      timerUtility.StartTimer(alexaTime_s);
+      GetTimerUtility().ResetPendingSet(); // this should also be called if the timer is already ringing or something
+    } else {
+      PRINT_NAMED_WARNING("WHATNOW BehaviorTimerUtilityCoordinator.SetShowClockCallback.IncorrectIntent",
+                          "Active user intent should have been set_timer but wasn't");
     }
   };
 
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
 
-  _iParams.setTimerBehavior->SetGetDigitFunction(BuildTimerFunction());
-  _iParams.anticDisplayClock->SetGetDigitFunction(BuildTimerFunction());
-  _iParams.timerCheckTimeBehavior->SetGetDigitFunction(BuildTimerFunction());
+  _iParams.setTimerBehavior->SetGetDigitFunction(BuildTimerFunction(false));
+  _iParams.anticDisplayClock->SetGetDigitFunction(BuildTimerFunction(true));
+  _iParams.timerCheckTimeBehavior->SetGetDigitFunction(BuildTimerFunction(false));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::BuildTimerFunction() const
+BehaviorProceduralClock::GetDigitsFunction
+  BehaviorTimerUtilityCoordinator::BuildTimerFunction(bool soonest) const
 {
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-  return [&timerUtility](const int offset){
+  return [&timerUtility,soonest](const int offset){
     std::map<Vision::SpriteBoxName, int> outMap;
-    if(auto timerHandle = timerUtility.GetTimerHandle()){
+    auto timerHandle = soonest ? timerUtility.GetSoonestTimer() : timerUtility.GetVectorTimer();
+    if(timerHandle ){
       const int timeRemaining_s = timerHandle->GetTimeRemaining_s() - offset;
       const bool displayingHoursOnScreen = timerHandle->SecondsToDisplayHours(timeRemaining_s) > 0;
       

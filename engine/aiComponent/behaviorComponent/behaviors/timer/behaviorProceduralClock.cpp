@@ -134,7 +134,7 @@ void BehaviorProceduralClock::InitBehavior()
     
     GetDigitsFunction countUpFunction = [&timerUtility](const int offset){
       std::map<Vision::SpriteBoxName, int> outMap;
-      const int currentTime_s = timerUtility.GetSystemTime_s() + offset;
+      const int currentTime_s = timerUtility.GetSteadyTime_s() + offset;
       // Ten Mins Digit
       {          
         outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, 
@@ -205,7 +205,7 @@ void BehaviorProceduralClock::TransitionToShowClock()
 
   _lifetimeParams.currentState = BehaviorState::ShowClock;
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-  _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
+  _lifetimeParams.timeShowClockStarted = timerUtility.GetSteadyTime_s();
 
   TransitionToShowClockInternal();
 }
@@ -239,7 +239,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
 
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
     auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-    const int currentTime_s = timerUtility.GetSystemTime_s();
+    const int currentTime_s = timerUtility.GetSteadyTime_s();
 
     if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock_sec)){
       TransitionToGetOut();

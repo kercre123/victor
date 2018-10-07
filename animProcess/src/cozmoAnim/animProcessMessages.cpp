@@ -449,6 +449,22 @@ void Process_robotTouched(const Anki::Vector::RobotInterface::RobotTouched& msg)
     micDataSystem->OnRobotTouched( msg.isTouched );
   }
 }
+  
+void Process_alexaAlertsCancelled(const Anki::Vector::RobotInterface::AlexaAlertsCancelled& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    std::vector<int> alerts;
+    static_assert(sizeof(msg.alertIDs) / sizeof(msg.alertIDs[0]) == 8, "");
+    for( int i=0; i<8; ++i ) {
+      if( msg.alertIDs[i] == 0 ) {
+        break;
+      }
+      alerts.push_back(msg.alertIDs[i]);
+    }
+    micDataSystem->AlexaAlertsCancelled(alerts);
+  }
+}
 
 void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {

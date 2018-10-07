@@ -21,6 +21,7 @@
  */
 
 #include "cozmoAnim/alexa.h"
+#include "cozmoAnim/alexaAlertManager.h"
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
 #include "cozmoAnim/alexaKeywordObserver.h"
@@ -247,7 +248,9 @@ namespace {
   
   using namespace alexaClientSDK;
   
-void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onStateChanged)
+void Alexa::Init(const AnimContext* context,
+                 const OnStateChangedCallback& onStateChanged,
+                 const OnAlertChangedCallback& onAlertChanged)
 {
   _context = context;
   _onStateChanged = onStateChanged;
@@ -255,6 +258,7 @@ void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onSta
     Util::FileUtils::CreateDirectory( "/data/data/com.anki.victor/persistent/alexa", false, true );
   }
   
+  _alertsManager.reset( new AlexaAlertsManager(context, onAlertChanged) );
   
   std::vector<std::shared_ptr<std::istream>> configJsonStreams;
   
@@ -378,6 +382,8 @@ void Alexa::Init(const AnimContext* context, const OnStateChangedCallback& onSta
   // the alerts speaker doesnt change UX! we might need to observe it
   m_alertsSpeaker->setObserver( shared_from_this() );
   m_audioSpeaker->setObserver( shared_from_this() );
+  m_alertsSpeaker->DisableSource(2); // dont play source 2 since this is timer stuff
+  m_alertsSpeaker->DisableSource(3); // dont play source 3 since this is timer stuff
   
   
   //alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
@@ -623,8 +629,10 @@ void Alexa::CheckForStateChange()
     {
       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       // if nothing is playing, it could be because somehting is about to play. We only know because
-      // a directive for "Play" has arrived. If one has arrived recently, don't switch to idle yet,
-      // and instead set a timer so that it will switch to idle only if no other state change occurs
+      // a directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
+      // and instead set a timer so that it will switch to idle only if no other state change occurs.
+      // Sometimes this still doesnt happen, though, and it will momentarily break to normal behavior before
+      // returning to alexa. Maybe we need a base delay
       if( anyPlaying ) {
         _uxState = AlexaUXState::Speaking;
       } else if( _lastPlayDirective < 0.0f || (currTime_s > _lastPlayDirective + 2.0f) ) {
@@ -683,14 +691,20 @@ void Alexa::onPlaybackError( SourceId id,
   
 void Alexa::OnDirective(const std::string& directive, const std::string& payload)
 {
-  if( directive == "Play" ) {
+  if( directive == "Play" || directive == "Speak" ) {
     _lastPlayDirective = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   else if( directive == "DeleteAlert" ) {
     PRINT_NAMED_WARNING("WHATNOW", "Deleting Alert");
+    if( _alertsManager ) {
+      _alertsManager->ProcessAlert(directive, payload);
+    }
   }
   else if( directive == "SetAlert" ) {
     PRINT_NAMED_WARNING("WHATNOW", "Setting Alert");
+    if( _alertsManager ) {
+      _alertsManager->ProcessAlert(directive, payload);
+    }
   }
 }
 
@@ -701,6 +715,14 @@ void Alexa::StopForegroundActivity()
     m_client->stopForegroundActivity();
   }
 }
+  
+void Alexa::CancelAlerts(const std::vector<int>& alertIDs)
+{
+  if( _alertsManager ) {
+    _alertsManager->CancelAlerts(alertIDs);
+  }
+}
+  
   
 } // namespace Vector
 } // namespace Anki

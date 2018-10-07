@@ -68,6 +68,8 @@ public:
   
   virtual SourceId   setSource (std::shared_ptr< std::istream > stream, bool repeat) override;
   
+  void DisableSource( int source ) { if( source ==2 ) { _source2Enabled = false; } if( source == 3) { _source3Enabled = false; } }
+  
   virtual bool   play (SourceId id) override;
   
   virtual bool   stop (SourceId id) override;
@@ -98,6 +100,8 @@ public:
   virtual void onError () override;
   
 private:
+  bool _source3Enabled = true;
+  bool _source2Enabled = true;
   Type _type;
   alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::SpeakerSettings _settings;
   

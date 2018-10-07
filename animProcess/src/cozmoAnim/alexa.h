@@ -24,10 +24,12 @@ class AlexaClient;
 class AlexaMicrophone;
 class AlexaSpeaker;
 class AnimContext;
+class AlexaAlertsManager;
   class KeywordObserver;
   
   namespace RobotInterface {
     struct MicData;
+    struct AlexaAlerts;
   }
   
 class Alexa : private Util::noncopyable
@@ -38,7 +40,10 @@ class Alexa : private Util::noncopyable
 public:
   
   using OnStateChangedCallback = std::function<void(AlexaUXState)>;
-  void Init(const AnimContext* context, const OnStateChangedCallback& onStateChanged);
+  using OnAlertChangedCallback = std::function<void(RobotInterface::AlexaAlerts)>;
+  void Init(const AnimContext* context,
+            const OnStateChangedCallback& onStateChanged,
+            const OnAlertChangedCallback& onAlertsChanged);
   void Update();
   
   void ButtonPress();
@@ -51,6 +56,8 @@ public:
   bool IsIdle() const { return _uxState == AlexaUXState::Idle; }
   
   void StopForegroundActivity();
+  
+  void CancelAlerts(const std::vector<int>& alertIDs);
   
 protected:
   // callbacks that affect ux state
@@ -90,6 +97,8 @@ private:
   std::shared_ptr<AlexaSpeaker> m_TTSSpeaker;
   std::shared_ptr<AlexaSpeaker> m_alertsSpeaker;
   std::shared_ptr<AlexaSpeaker> m_audioSpeaker;
+  
+  std::shared_ptr<AlexaAlertsManager> _alertsManager;
   
   const AnimContext* _context = nullptr;
   float _lastPlayDirective = -1.0f;

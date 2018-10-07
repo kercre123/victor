@@ -19,21 +19,29 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"
+#include "engine/ankiEventUtil.h"
 
 #include <memory>
+#include <list>
 
 namespace Anki {
 namespace Vector {
 
+
 class Robot;
+namespace RobotInterface {
+  class RobotToEngine;
+}
   
 class TimerHandle{
   public:
     TimerHandle(int totalTime_s)
     : _timerLength(totalTime_s)
-    , _endTime_s(GetSystemTime_s() + totalTime_s){}
+    , _endTime_s(GetSteadyTime_s() + totalTime_s){}
 
     static const int kSecInHour = 3600;
+  
+  void SetTimeSinceEpoch(int time) { _endTime_s = time; }
 
     static int SecondsToDisplayHours(int seconds)   { return seconds /kSecInHour;}
     static int SecondsToDisplayMinutes(int seconds) { return (seconds % kSecInHour)/60;}
@@ -48,7 +56,7 @@ class TimerHandle{
     
     // Return the full time remaining in seconds
     int GetTimeRemaining_s() const {   
-      const int timeRemaining = _endTime_s - GetSystemTime_s();
+      const int timeRemaining = _endTime_s - GetSteadyTime_s();
       return  timeRemaining >= 0 ? timeRemaining : 0;
     }
     // access the "displayable" value for each time unit remaining
@@ -62,12 +70,23 @@ class TimerHandle{
     void AdvanceTimeBySeconds(u32 secondsToAdvance){_endTime_s -= secondsToAdvance;}
     #endif
 
+    void SetAlexaID(int alexaID){ _alexaID = alexaID; }
+    int GetAlexaID() const { return _alexaID; }
+  
+  void SetIsAlarm(bool isAlarm){ _isAlarm = isAlarm; }
+  bool GetIsAlarm() const { return _isAlarm; }
+  
+  
+  
   private:
     // helper for easy access to current time
-    static int GetSystemTime_s();
+    static int GetSteadyTime_s();
 
     const int _timerLength;
     int _endTime_s;
+  
+    int _alexaID=0;
+    bool _isAlarm = false;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,23 +99,48 @@ public:
   using SharedHandle = std::shared_ptr<TimerHandle>;
 
   // constructor
-  TimerUtility();
+  explicit TimerUtility(const Robot& robot);
   virtual ~TimerUtility();
 
-  SharedHandle GetTimerHandle() const { return _activeTimer; }
-  SharedHandle StartTimer(int timerLength_s);
-  void ClearTimer();
+  SharedHandle GetSoonestTimer() const;
+  //SharedHandle GetTimerHandle() const { return _activeTimer; }
+  SharedHandle StartTimer(int timerLength_s); // starts a vector timer
+  void ClearRingingTimers(); // clears those that elapsed
+  void ClearVectorTimer(); // clear vector's timer
+  void ClearAllTimers();
 
-  int GetSystemTime_s() const;
+  int GetSteadyTime_s() const;
+  int GetEpochTime_s() const;
 
-    #if ANKI_DEV_CHEATS
-    // "Advance" time by shortening the time remaining
-    void AdvanceTimeBySeconds(u32 secondsToAdvance){ if(_activeTimer != nullptr){_activeTimer->AdvanceTimeBySeconds(secondsToAdvance); }}
-    #endif
+#if ANKI_DEV_CHEATS
+  // "Advance" time by shortening the time remaining
+  void AdvanceTimeBySeconds(u32 secondsToAdvance){
+    auto vt = GetVectorTimer();
+    if( vt != nullptr){
+      vt->AdvanceTimeBySeconds(secondsToAdvance);
+      
+    }
+  }
+#endif
+  SharedHandle GetVectorTimer() const { return *_allTimers.begin(); };
+  
+  bool HasPendingCancel(int* remaining_s = nullptr) const;
+  void ResetPendingCancel() { _cancelTime = 0; }
+  
+  bool HasPendingSet(int* remaining_s = nullptr) const;
+  void ResetPendingSet() { _setTime = 0; }
 
 private:
-  SharedHandle _activeTimer;
+  void OnAlexaAlerts( const AnkiEvent<RobotInterface::RobotToEngine>& message );
+  void NotifyAlexaOfClearedTimers(const std::vector<int>& timers);
+  // first in list is always vector's one timer
+  std::list<SharedHandle> _allTimers;
+  
+  std::list<Signal::SmartHandle> _handles;
 
+  const Robot* _robot;
+  int _cancelTime = 0;
+  int _setTime = 0;
 };
 
 } // namespace Vector

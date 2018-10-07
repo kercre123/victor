@@ -102,9 +102,11 @@ public:
   void Update();
   
   void OnAlexaStateChanged( AlexaUXState state );
-  
+  void SendAlexaAlertsToEngine( RobotInterface::AlexaAlerts&& alertsMsg );
   
   void OnRobotTouched( bool touched );
+  
+  void AlexaAlertsCancelled(const std::vector<int> alertIDs);
   
 private:
   const AnimContext* _context = nullptr;

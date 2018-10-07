@@ -119,6 +119,8 @@ public:
   
   std::function<void(bool)> _alexaStreamingCallback;
   void SetAlexaStreamingCallback(std::function<void(bool)> callback) { _alexaStreamingCallback = callback; }
+  
+  void AlexaAlertsCancelled(const std::vector<int> alertIDs);
 
   bool HasConnectionToCloud() const;
   void RequestConnectionStatus();

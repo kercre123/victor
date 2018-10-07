@@ -637,6 +637,9 @@ enum uint_32 ToRobotAddressSpace
 message RobotTouched {
   bool  isTouched,
 }
+message AlexaAlertsCancelled {
+  uint_8 alertIDs[8], // null terminated
+}
 
 /// *************** Overall message pipe ******************************* ///
 
@@ -751,6 +754,8 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
+
+  AlexaAlertsCancelled alexaAlertsCancelled = 0x75,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,

@@ -105,7 +105,7 @@ private:
   void TransitionToCancelTimer();
   void TransitionToInvalidTimerRequest();
 
-  BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
+  BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction(bool soonest) const;
 
   // Functions called by Update to check for transitions
   void CheckShouldCancelRinging();

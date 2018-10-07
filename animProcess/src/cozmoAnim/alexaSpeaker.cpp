@@ -14,6 +14,7 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/console/consoleInterface.h"
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "clad/audio/audioEventTypes.h"
@@ -44,6 +45,8 @@ SourceId AlexaSpeaker::m_sourceID=1; // 0 is invalid
     
     constexpr uint32_t kMinPlayableFrames = 10*8192;
     constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kAlexaPluginId = 5;
+    
+    CONSOLE_VAR(bool, kLogDecoding, "AAA", false);
     
     const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
     #define LOG(x, ...) PRINT_NAMED_WARNING("WHATNOW", "Speaker_%s: " x, _name.c_str(), ##__VA_ARGS__)
@@ -183,6 +186,9 @@ SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::
 SourceId   AlexaSpeaker::setSource (const std::string &url, std::chrono::milliseconds offset)
 {
   LOG( " speaker %d set source2 = %s", (int)_type, url.c_str());
+  if( !_source2Enabled ) {
+    return 0;
+  }
   if( url.empty() ) {
     return 0;
   }
@@ -212,9 +218,13 @@ SourceId   AlexaSpeaker::setSource (const std::string &url, std::chrono::millise
 
 SourceId   AlexaSpeaker::setSource (std::shared_ptr< std::istream > stream, bool repeat)  {
   LOG( " speaker %d set source3", (int)_type);
-  _sourceTypes[m_sourceID] = SourceType::Stream;
-  m_sourceStreams[m_sourceID] = stream;
-  return m_sourceID++;
+  if( _source3Enabled ) {
+    _sourceTypes[m_sourceID] = SourceType::Stream;
+    m_sourceStreams[m_sourceID] = stream;
+    return m_sourceID++;
+  } else {
+    return 0; // error
+  }
 }
 
 bool   AlexaSpeaker::play (SourceId id)
@@ -276,7 +286,9 @@ bool   AlexaSpeaker::play (SourceId id)
         const size_t size = (size_t)m_sourceReaders[id]->getNumUnreadBytes();
         if( size == 0 ) {
           // this can either happen when the download hasnt started, or when it finished. use the readStatus to figure out which
-          LOG( "nothing to read yet!");
+          if( kLogDecoding ) {
+            LOG( "nothing to read yet!");
+          }
         }
         
         // keep going if size to read is 0, since it's the readStatus that matters
@@ -288,7 +300,7 @@ bool   AlexaSpeaker::play (SourceId id)
           _mp3Buffer->AddData( input.data(), toRead );
         }
         
-        {
+        if( kLogDecoding ) {
           std::stringstream ss;
           ss << readStatus;
           LOG( "expected %d read %d, status %s", size, numRead, ss.str().c_str());
@@ -320,17 +332,23 @@ bool   AlexaSpeaker::play (SourceId id)
         }
         numRead = size;
         statusOK = !m_sourceStreams[id]->eof();
-        LOG( "istream read %d bytes, eof=%d", size, !statusOK);
+        if( kLogDecoding ) {
+          LOG( "istream read %d bytes, eof=%d", size, !statusOK);
+        }
       }
       
       
       bool flush = !statusOK;
       //if( (numRead > 0) && statusOK ) {
-      LOG( "flush=%d", flush);
+      if( kLogDecoding ) {
+        LOG( "flush=%d", flush);
+      }
       // decode everything in the buffer thus far, leaving perhaps something that wasnt a full mp3 frame
       const int timeDecoded_ms = Decode( _waveData, flush );
       _offset_ms += timeDecoded_ms;
-      LOG( "decoded %d ms for a total offset %llu", timeDecoded_ms, _offset_ms);
+      if( kLogDecoding ) {
+        LOG( "decoded %d ms for a total offset %llu", timeDecoded_ms, _offset_ms);
+      }
       
       if (_fd < 0) {
         const auto path = "/data/data/com.anki.victor/cache/speaker_" + _name + std::to_string(m_playingSource) + ".mp3";
@@ -356,7 +374,9 @@ bool   AlexaSpeaker::play (SourceId id)
         break;
       }
       
-      LOG( "state=%s", StateToString());
+      if( kLogDecoding ) {
+        LOG( "state=%s", StateToString());
+      }
     }
     
     SavePCM( nullptr );
@@ -483,12 +503,14 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
     } else {
       buffSize = kMaxReadSize; // doing a min causes clipping //std::min(_mp3Buffer->Size(), kMaxReadSize);
     }
-    const bool debugRead = flush;
+    const bool debugRead = kLogDecoding && flush;
     unsigned char* inputBuff = _mp3Buffer->ReadData(buffSize, debugRead);
     
     if( buffSize == 0 || inputBuff == nullptr ) {
       // need to wait for more data
-      LOG( "Needs more data (%s) for size %d (actual size=%d)", StateToString(), buffSize, _mp3Buffer->Size() );
+      if( kLogDecoding ) {
+        LOG( "Needs more data (%s) for size %d (actual size=%d)", StateToString(), buffSize, _mp3Buffer->Size() );
+      }
       break;
     }
     
@@ -550,7 +572,9 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
 
         //outData.insert( outData.end(), std::begin(pcm), std::begin(pcm) + samples );
       } else {
-        LOG( "LOOP: skipped (frame_bytes=%d), state=%s", info.frame_bytes, StateToString() );
+        if( kLogDecoding ) {
+          LOG( "LOOP: skipped (frame_bytes=%d), state=%s", info.frame_bytes, StateToString() );
+        }
         //std::cout << "skipped" << std::endl;
       }
     } else {
