@@ -38,8 +38,11 @@
       "behaviorName": "PutDownWaitInternal",
       "behaviorClass": "AnimSequence",
 
-      "animTriggers": ["ObservingIdleWithHeadLookingUp"],
-      "num_loops": 100,
+      // see VIC-7961, this works around a bug where it wasn't re-selecting the clip by considering this a
+      // "sequence loop" and forcing a fresh action for each loop. Originally was num_loops 100, reduced to 50
+      // to maintain similar behavior with "sequence loop"
+      "animTriggers": ["ObservingIdleWithHeadLookingUp", "ObservingIdleWithHeadLookingUp"],
+      "num_loops": 50,
       "tracksToLock": ["BODY_TRACK"],
 
       "wantsToCancelSelfCondition": {

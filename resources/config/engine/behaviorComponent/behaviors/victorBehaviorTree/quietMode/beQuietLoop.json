@@ -23,7 +23,9 @@
 
       "behaviorName"     : "ObservingHeadDownInternal",
       "behaviorClass"    : "AnimSequence",
-      "animTriggers"     : ["ObservingIdleEyesOnly"],
+      // see VIC-7961, this works around a bug where it wasn't re-selecting the clip by considering this a
+      // "sequence loop" and forcing a fresh action for each loop
+      "animTriggers"     : ["ObservingIdleEyesOnly", "ObservingIdleEyesOnly"],
       "num_loops"        : 0,
       "tracksToLock"     : ["HEAD_TRACK", "LIFT_TRACK", "BODY_TRACK"],
       

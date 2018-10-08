@@ -8,6 +8,8 @@
     "expected": false
   },
 
-  "animTriggers": ["ReactToPickupLoop"],
+  // see VIC-7961, this works around a bug where it wasn't re-selecting the clip by considering this a
+  // "sequence loop" and forcing a fresh action for each loop
+  "animTriggers": ["ReactToPickupLoop", "ReactToPickupLoop"],
   "num_loops": 0 // loop forever
 }
