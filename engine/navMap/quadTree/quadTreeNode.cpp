@@ -50,8 +50,6 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 void QuadTreeNode::ResetAddress()
 {
   _parent.fmap( [&](const QuadTreeNode* p) { _address = p->GetAddress(); });
-
-  // _address = _parent->*(_address)GetAddress();
   _address.SetQuadrant(_level, _quadrant);
 }
 
@@ -64,10 +62,11 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
 
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXPlusY , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXMinusY, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXPlusY , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXMinusY, this) ); // lo E
+  ParentPtr backPtr = ParentPtr::Just(this);
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXPlusY , backPtr) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXMinusY, backPtr) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXPlusY , backPtr) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXMinusY, backPtr) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -157,12 +156,12 @@ void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProce
 
   // notify the children of the parent change
   for ( auto& childPtr : _childrenPtr ) {
-    childPtr->ChangeParent( this );
+    childPtr->ChangeParent( ParentPtr::Just(this) );
   }
 
   // notify the children of the parent change
   for ( auto& childPtr : otherNode->_childrenPtr ) {
-    childPtr->ChangeParent( otherNode );
+    childPtr->ChangeParent( ParentPtr::Just(otherNode) );
   }
 
   // swap contents by use of copy, since changes have to be notified to the processor
@@ -187,38 +186,38 @@ void QuadTreeNode::DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& proces
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Util::Maybe<QuadTreeNode::NodeCPtr> QuadTreeNode::GetChild(EQuadrant quadrant) const
+QuadTreeNode::MaybeCNode QuadTreeNode::GetChild(EQuadrant quadrant) const
 {
   if ( IsSubdivided() && (quadrant != EQuadrant::Invalid) && (quadrant != EQuadrant::Root)) {
-    return std::const_pointer_cast<const QuadTreeNode>( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant] );
+    return MaybeCNode::Just(_childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant]);
   }
-  return {};
+  return MaybeCNode::Nothing();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Util::Maybe<QuadTreeNode::NodePtr> QuadTreeNode::GetChild(EQuadrant quadrant)
+QuadTreeNode::MaybeNode QuadTreeNode::GetChild(EQuadrant quadrant)
 {
   if ( IsSubdivided() && (quadrant != EQuadrant::Invalid) && (quadrant != EQuadrant::Root)) {
-    return _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant];
+    return MaybeNode::Just(_childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant]);
   }
-  return {};
+  return MaybeNode::Nothing();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Util::Maybe<QuadTreeNode::NodePtr> QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr)
+QuadTreeNode::MaybeNode QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr)
 {
   // make sure we are in the right place
   if (addr.GetQuadrant(_level) == _quadrant) {
     // check if we should recurse down a level
     if ((_level > 0) && (addr.GetQuadrant(_level - 1) != EQuadrant::Invalid)) {
       auto nextNode = GetChild(addr.GetQuadrant(_level - 1));
-      return nextNode.bind( [&addr] (auto& node) { return node->GetNodeAtAddress(addr); } );
+      return nextNode.Bind( [&addr] (auto& node) { return node->GetNodeAtAddress(addr); } );
     } else {
       // this is the node at that address
-      return shared_from_this();
+      return MaybeNode::Just(shared_from_this());
     }
   }
-  return {};
+  return MaybeNode::Nothing();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -234,17 +233,17 @@ void QuadTreeNode::AddSmallestDescendants(EDirection direction, NodeCPtrVector& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Util::Maybe<QuadTreeNode::NodeCPtr> QuadTreeNode::FindSingleNeighbor(EDirection direction) const
+QuadTreeNode::MaybeCNode QuadTreeNode::FindSingleNeighbor(EDirection direction) const
 {
   EQuadrant destination = GetQuadrantInDirection(_quadrant, direction);
   // if stepping in the current direction keeps us under the same parent node
   if ( IsSibling(_quadrant, direction) ) {
-    return _parent.bind([&](auto node) { return node->GetChild( destination ); } );
+    return _parent.Bind([&](auto node) { return node->GetChild( destination ); } );
   } 
 
-  Util::Maybe<NodeCPtr> parentNeighbor = _parent.bind([&](auto node) { return node->FindSingleNeighbor( direction ); } );
-  Util::Maybe<NodeCPtr> directNeighbor = parentNeighbor.bind( [&](auto node) { return node->GetChild( destination ); });
-  return directNeighbor.Or(parentNeighbor);
+  MaybeCNode parentNeighbor = _parent.Bind([&](auto node) { return node->FindSingleNeighbor( direction ); } );
+  MaybeCNode directNeighbor = parentNeighbor.Bind( [&](auto node) { return node->GetChild( destination ); });
+  return directNeighbor.ThisOr(parentNeighbor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

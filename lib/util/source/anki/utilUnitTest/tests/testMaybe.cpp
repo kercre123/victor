@@ -57,7 +57,7 @@ TEST(TestMaybe, JustFmap)
   };
 
   auto result = intM.fmap(plus2);
-  int extractedVal = result.extract(0);
+  int extractedVal = result.ValueOr(0);
   
   EXPECT_TRUE(intM.IsJust());
   EXPECT_TRUE(result.IsJust());
@@ -70,7 +70,7 @@ TEST(TestMaybe, JustFmap)
                        .fmap(plus2);
 
 
-  extractedVal = result2.extract(0);
+  extractedVal = result2.ValueOr(0);
 
   EXPECT_TRUE(result.IsJust());
   EXPECT_TRUE(result2.IsJust());
@@ -83,27 +83,25 @@ TEST(TestMaybe, JustBind)
   using namespace Anki::Util;
 
   Maybe<int> intM = Just(4);
-  Maybe<int> intM2(4); // this returns Just 4
-  Maybe<int> intNot;   // this initializes to Nothing
 
   auto minus2  = [](int x)   { return x-2; };
   auto safeInv = [](float divisor) { return ( NEAR_ZERO(divisor) ) ? Nothing<float>() : Just(1/divisor); };
 
   // double inverse should change the type, but keep the value
-  auto result = intM.bind(safeInv)
-                    .bind(safeInv);
+  auto result = intM.Bind(safeInv)
+                    .Bind(safeInv);
 
-  float extractedVal = result.extract(0.);
+  float extractedVal = result.ValueOr(0.);
   
   EXPECT_TRUE(result.IsJust());
   EXPECT_TRUE( FLT_NEAR(4.f, extractedVal) ) << "calculated " << extractedVal << ", not 4.";
 
   auto result2 = result.fmap(minus2).fmap(minus2);
-  extractedVal = result2.extract(-5.f);
+  extractedVal = result2.ValueOr(-5.f);
   EXPECT_TRUE( NEAR_ZERO(extractedVal) ) << "calculated " << extractedVal << ", should be 0.f";
 
   // alternative syntax test
-  auto result3 = result2 >> safeInv >> safeInv;
+  auto result3 = result2.Bind(safeInv).Bind(safeInv);
   EXPECT_TRUE( result3.IsNothing() ) << "safeInverse should return Nothing if inverting 0";
 }
 
@@ -111,62 +109,64 @@ TEST(TestMaybe, ClassMemberAccess)
 {
   using namespace Anki::Util;
 
-  Maybe<int> intM = Just(4);
-  Maybe<int> intM2(4); // this returns Just 4
-  Maybe<int> intNot;   // this initializes to Nothing
+  auto intM = Just(4);
 
   auto minus2  = [](int x)   { return x-2; };
   auto safeInv = [](float divisor) { return ( NEAR_ZERO(divisor) ) ? Nothing<float>() : Just(1/divisor); };
 
   // double inverse should change the type, but keep the value
-  auto result = intM.bind(safeInv)
-                    .bind(safeInv);
+  auto result = intM.Bind(safeInv)
+                    .Bind(safeInv);
 
-  float extractedVal = result.extract(0.);
+  float extractedVal = result.ValueOr(0.);
   
   EXPECT_TRUE(result.IsJust());
   EXPECT_TRUE( FLT_NEAR(4.f, extractedVal) ) << "calculated " << extractedVal << ", not 4.";
 
   auto result2 = result.fmap(minus2).fmap(minus2);
-  extractedVal = result2.extract(-5.f);
+  extractedVal = result2.ValueOr(-5.f);
   EXPECT_TRUE( NEAR_ZERO(extractedVal) ) << "calculated " << extractedVal << ", should be 0.f";
 
   // alternative syntax test
-  auto result3 = result2 >> safeInv >> safeInv;
+  auto result3 = result2.Bind(safeInv).Bind(safeInv);
   EXPECT_TRUE( result3.IsNothing() ) << "safeInverse should return Nothing if inverting 0";
 }
 
-TEST(TestMaybe, DoNotation)
+
+template <typename Func>
+constexpr bool IsVoidRef() { return std::is_void<typename std::result_of<Func&()>::type>::value; }
+
+TEST(TestMaybe, MaybeMutableClass)
 {
   using namespace Anki::Util;
-
-  // this knows context
-  // Maybe<int> int4 = Just(4);
-
-  // // these do not
-  // auto minus2  = Just( [](int x)   { return x-2; } );   //
-  // auto safeInv = [](float divisor) { return ( NEAR_ZERO(divisor) ) ? Nothing<float>() : Just(1/divisor); };
-
-  
-  // auto result = function.Do( minus2,
-  //                        minus2,
-  //                        inverse,
-  //                        minus,
-  //                        invers);
 
   class IntWrapper {
   public:
     IntWrapper(int x) : _x(x) {}
-    Unit Inc()                { ++_x; return Unit(); }
+    void Inc()           { ++_x; }
     void Plus(int y)          { _x+=y; }
 
   private:
     int _x;
   };
-  
-  // Maybe<IntWrapper> just4(4);
-  // auto result = just4.bind(Inc());
+
+  // auto just4 = Just<IntWrapper>(4);
+  // auto result1 = just4.fmap( [&](auto& x) { x.Inc(); } );
+  // auto result2 = just4 & [&](auto& x) { return Just(x.Inc()); };
+
+  // auto result3 = just4.fmap( [&](auto& x) { x.Inc(); } );
+  // auto result4 = just4.fmapMember( &IntWrapper::Inc );
+  // auto result5 = just4.fmapMember( &IntWrapper::Plus );
+
+
+
+  // auto resultM = just4 _Bind( Inc() );
+
 }
   // TODO: make this 
   // (func1 >> func2 >> func3).apply(intM); 
   // func1.bind(func2).eval(intM);
+
+  // auto result = function.Do( minus2,
+  //                        minus,
+  //                        invers);

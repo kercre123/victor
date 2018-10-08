@@ -42,7 +42,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTree::QuadTree()
-: QuadTreeNode({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, ParentPtr())  // Note the root is created at z=1
+: QuadTreeNode({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, ParentPtr::Nothing())  // Note the root is created at z=1
 {
   _processor.SetRoot( this );
 }
@@ -319,10 +319,11 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
       
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXPlusY , this) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXMinusY, this) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXPlusY , this) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXMinusY, this) ); // lo R
+    ParentPtr backPtr = ParentPtr::Just(this);
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXPlusY ,  backPtr) ); // up L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXMinusY,  backPtr) ); // up R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXPlusY , backPtr) ); // lo L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXMinusY, backPtr) ); // lo R
 
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
@@ -446,10 +447,11 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXPlusY , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXMinusY, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXPlusY , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXMinusY, this) ); // lo R
+  ParentPtr backPtr = ParentPtr::Just(this);
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXPlusY ,  backPtr) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXMinusY,  backPtr) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXPlusY , backPtr) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXMinusY, backPtr) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -460,8 +462,9 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   
   
   // set the new parent in my old children
+  ParentPtr newParent = ParentPtr::Just(&childTakingMyPlace);
   for ( auto& childPtr : oldChildren ) {
-    childPtr->ChangeParent( &childTakingMyPlace );
+    childPtr->ChangeParent( newParent );
   }
   
   // swap children with the temp

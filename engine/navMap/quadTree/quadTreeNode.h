@@ -86,8 +86,11 @@ public:
   NodeCPtrVector GetNeighbors() const;
 
 protected:
-  using ParentPtr = Util::Maybe<const QuadTreeNode*>;
-  using NodePtr   = std::shared_ptr<QuadTreeNode>;
+  using NodePtr    = std::shared_ptr<QuadTreeNode>;
+  using ParentPtr  = Util::Maybe<const QuadTreeNode*>;
+  using MaybeNode  = Util::Maybe<NodePtr>;
+  using MaybeCNode = Util::Maybe<NodeCPtr>;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -106,7 +109,7 @@ protected:
   void ResetAddress();
 
   // find a node at a particular address
-  Util::Maybe<NodePtr> GetNodeAtAddress(const NodeAddress& addr);
+  MaybeNode GetNodeAtAddress(const NodeAddress& addr);
   
 private:
 
@@ -157,15 +160,15 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    
   // get the child in the given quadrant, or null if this node is not subdivided
-  Util::Maybe<NodeCPtr> GetChild(EQuadrant quadrant) const;
-  Util::Maybe<NodePtr>  GetChild(EQuadrant quadrant);
+  MaybeCNode GetChild(EQuadrant quadrant) const;
+  MaybeNode  GetChild(EQuadrant quadrant);
 
   // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
   // NOTE: this method is expected to NOT clear the vector before adding descendants
   void AddSmallestDescendants(EDirection direction, NodeCPtrVector& descendants) const;
    
   // find the neighbor of the same or higher level in the given direction
-  Util::Maybe<NodeCPtr> FindSingleNeighbor(EDirection direction) const;
+  MaybeCNode FindSingleNeighbor(EDirection direction) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
