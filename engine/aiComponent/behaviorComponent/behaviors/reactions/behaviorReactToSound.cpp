@@ -44,61 +44,16 @@ namespace Anki {
 namespace Vector {
 
 
-CONSOLE_VAR( float,                        kRTS_MaxReactionTime,                  "SoundReaction", 1.00f ); // we have this much time to respond to a sound
+CONSOLE_VAR( float,                        kRTS_MaxReactionTime_s,                  "SoundReaction", 1.00f ); // we have this much time to respond to a sound
+CONSOLE_VAR( float,                        kRTS_ReReactionCooldown_s,               "SoundReaction", 0.25f ); // we have this much time to respond to a sound
 
 
-namespace {
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // ... Static Animation Data ...
-
-  const MicDirectionConfidence kDefaultTriggerThreshold = 15000;
-  const BehaviorReactToSound::DirectionTrigger kTriggerThreshold_Asleep[] =
-  {
-    /*  0 */ { kDefaultTriggerThreshold },
-    /*  1 */ { kDefaultTriggerThreshold },
-    /*  2 */ { kDefaultTriggerThreshold },
-    /*  3 */ { kDefaultTriggerThreshold },
-    /*  4 */ { kDefaultTriggerThreshold },
-    /*  5 */ { kDefaultTriggerThreshold },
-    /*  6 */ { kDefaultTriggerThreshold },
-    /*  7 */ { kDefaultTriggerThreshold },
-    /*  8 */ { kDefaultTriggerThreshold },
-    /*  9 */ { kDefaultTriggerThreshold },
-    /* 10 */ { kDefaultTriggerThreshold },
-    /* 11 */ { kDefaultTriggerThreshold },
-    /* 12 */ { kDefaultTriggerThreshold }, // ambient direction
-  };
-
-  static_assert( sizeof(kTriggerThreshold_Asleep)/sizeof(BehaviorReactToSound::DirectionTrigger) == ( kNumMicDirections + 1 ),
-                "The array [kTriggerThreshold_Asleep] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
-
-  const BehaviorReactToSound::DirectionTrigger kTriggerThreshold_Awake[] =
-  {
-    /*  0 */ { 21000 }, // higher for now as a hack to work around hearing his own audio
-    /*  1 */ { kDefaultTriggerThreshold },
-    /*  2 */ { kDefaultTriggerThreshold },
-    /*  3 */ { kDefaultTriggerThreshold },
-    /*  4 */ { kDefaultTriggerThreshold },
-    /*  5 */ { kDefaultTriggerThreshold },
-    /*  6 */ { kDefaultTriggerThreshold },
-    /*  7 */ { kDefaultTriggerThreshold },
-    /*  8 */ { kDefaultTriggerThreshold },
-    /*  9 */ { kDefaultTriggerThreshold },
-    /* 10 */ { kDefaultTriggerThreshold },
-    /* 11 */ { kDefaultTriggerThreshold },
-    /* 12 */ { kDefaultTriggerThreshold }, // ambient direction
-  };
-
-  static_assert( sizeof(kTriggerThreshold_Awake)/sizeof(BehaviorReactToSound::DirectionTrigger) == ( kNumMicDirections + 1 ),
-                "The array [kTriggerThreshold_Awake] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
-
-
-  const char* const kFromSleepKey = "FromSleep";
-  const char* const kMicDirectionReactionBehavior = "micDirectionReactionBehavior";
-  const char* const kAbsolutePowerThresholdKey = "micAbsolutePowerThreshold";
-  const char* const kMinPowerThresholdKey = "micMinPowerThreshold";
-  const char* const kConfidenceThresholdAtMinPowerKey = "micConfidenceThresholdAtMinPower";
+namespace
+{
+  const char* const kMicDirectionReactionBehavior       = "micDirectionReactionBehavior";
+  const char* const kAbsolutePowerThresholdKey          = "micAbsolutePowerThreshold";
+  const char* const kMinPowerThresholdKey               = "micMinPowerThreshold";
+  const char* const kConfidenceThresholdAtMinPowerKey   = "micConfidenceThresholdAtMinPower";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -114,11 +69,6 @@ BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
 {
   const char* debugKey = "BehaviorReactToSound.Params.ObservationStatus";
   
-  // whether or not we're responding from the asleep or awake/observing state will be determined via json config.
-  // this allows us to have different state "tree/graphs" for when victor is in the sleep or awake behavior state.
-  const bool isSleeping = JsonTools::ParseBool( config, kFromSleepKey, debugKey );
-  _observationStatus = ( isSleeping ? EObservationStatus::EObservationStatus_Asleep : EObservationStatus::EObservationStatus_Awake );
-
   _iVars.absolutePowerThreshold = JsonTools::ParseFloat( config, kAbsolutePowerThresholdKey, debugKey);
   _iVars.minPowerThreshold = JsonTools::ParseFloat( config, kMinPowerThresholdKey, debugKey);
   _iVars.confidenceThresholdAtMinPower = JsonTools::ParseUInt32( config, kConfidenceThresholdAtMinPowerKey, debugKey);
@@ -156,7 +106,6 @@ void BehaviorReactToSound::GetBehaviorOperationModifiers( BehaviorOperationModif
 void BehaviorReactToSound::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kFromSleepKey,
     kMicDirectionReactionBehavior,
     kAbsolutePowerThresholdKey,
     kMinPowerThresholdKey,
@@ -228,7 +177,7 @@ void BehaviorReactToSound::BehaviorUpdate()
     if ( kInvalidMicDirectionIndex != _triggeredDirection )
     {
       const EngineTimeStamp_t currentTime = GetCurrentTimeMS();
-      const TimeStamp_t reactionTime = static_cast<TimeStamp_t>( kRTS_MaxReactionTime * 1000.0 );
+      const TimeStamp_t reactionTime = static_cast<TimeStamp_t>( kRTS_MaxReactionTime_s * 1000.f );
       if ( currentTime >= ( _triggerDetectedTime + reactionTime ) )
       {
         PRINT_DEBUG( "Did no respond to sound direction in time, clearing triggered direction" );
@@ -262,36 +211,6 @@ void BehaviorReactToSound::ClearTriggerDirection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToSound::DirectionTrigger BehaviorReactToSound::GetTriggerData( MicDirectionIndex index ) const
-{
-  using DirectionTriggerList = const DirectionTrigger*;
-
-  ASSERT_NAMED_EVENT( index >= 0, "BehaviorReactToSound.GetTriggerData", "Invalid index [%d]", index );
-  ASSERT_NAMED_EVENT( index <= kLastMicDirectionIndex, "BehaviorReactToSound.GetTriggerData", "Invalid index [%d]", index );
-
-  const bool isAwake = ( _observationStatus == EObservationStatus::EObservationStatus_Awake );
-  const DirectionTriggerList triggerList = ( isAwake ? kTriggerThreshold_Awake : kTriggerThreshold_Asleep );
-
-  return triggerList[index];
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToSound::CanReactToSound() const
-{
-  // VIC-5979: Should not react to sound if the lift is moving and it is near the bottom of its range, since the sound
-  // of the lift smacking the bottom stop can be loud enough to trigger this
-  const float liftLowTol_mm = 25.f;
-  const bool isLiftLow = GetBEI().GetRobotInfo().GetLiftHeight() < LIFT_HEIGHT_LOWDOCK + liftLowTol_mm;
-  const bool isLiftMoving = GetBEI().GetMovementComponent().IsLiftMoving();
-  
-  if (isLiftMoving && isLiftLow) {
-    return false;
-  }
-  
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::RespondToSound()
 {
   if ( kInvalidMicDirectionIndex != _triggeredDirection )
@@ -309,6 +228,7 @@ void BehaviorReactToSound::RespondToSound()
     if ( _iVars.reactionBehavior->WantsToBeActivated() )
     {
       DelegateIfInControl( _iVars.reactionBehavior.get() );
+      _triggeredDirection = kInvalidMicDirectionIndex; // reset this so we can detect new sounds
     }
   }
 }
@@ -320,10 +240,10 @@ void BehaviorReactToSound::OnResponseComplete()
   ClearTriggerDirection();
 }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionConfidence confidence, MicDirectionIndex direction )
 {
-  if ( !IsActivated() && CanReactToSound() )
+  if ( CanReactToSound() )
   {
     const bool powerThresholdReached = ( power >= _iVars.absolutePowerThreshold );
     const bool powerConfidenceThresholdReached = ( power >= _iVars.minPowerThreshold );
@@ -334,23 +254,84 @@ bool BehaviorReactToSound::OnMicPowerSampleRecorded( double power, MicDirectionC
     // + power is above a lower threshold (kRTS_MinPowerThreshold) AND our confidence is above a threshold (kRTS_ConfidenceThresholdAtMinPower)
     if ( powerThresholdReached || ( powerConfidenceThresholdReached && confidenceThresholdReached ) )
     {
-      const bool isDirectionSame = ( direction == _triggeredDirection );
-      const bool hasValidDirection = ( kInvalidMicDirectionIndex != direction );
-      if ( !isDirectionSame && hasValidDirection )
+      if ( CanReactToDirection( direction ) )
       {
-        // store these for das events
-        _triggeredMicPower = power;
-        _triggeredConfidence = confidence;
-
-        SetTriggerDirection( direction );
-        PRINT_DEBUG( "Heard valid sound from direction [%d] (power=%f, confidence=%u)", direction, power, confidence );
-
+        OnValidSoundDetected( direction, power, confidence );
         return true;
       }
     }
   }
 
   return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToSound::CanReactToSound() const
+{
+  const MovementComponent& moveComponent = GetBEI().GetMovementComponent();
+  // VIC-5979: Should not react to sound if the lift is moving and it is near the bottom of its range, since the sound
+  // of the lift smacking the bottom stop can be loud enough to trigger this
+  const float liftLowTol_mm = 25.f;
+  const bool isLiftLow = ( GetBEI().GetRobotInfo().GetLiftHeight() < ( LIFT_HEIGHT_LOWDOCK + liftLowTol_mm ) );
+  const bool isLiftMoving = moveComponent.IsLiftMoving();
+
+  // don't turn if we're currenatly already turning to a sound ... add in a small cooldown after a reaction
+  const bool areWheelsMoving = moveComponent.AreWheelsMoving();
+  const EngineTimeStamp_t cooldownTimeStamp = ( _triggerDetectedTime + static_cast<EngineTimeStamp_t>(kRTS_ReReactionCooldown_s * 1000.f ));
+  const bool tooSoonSincePrevious = ( GetCurrentTimeMS() < cooldownTimeStamp );
+
+  bool canReact = true;
+  canReact &= !( isLiftMoving && isLiftLow );
+  canReact &= !( IsActivated() && ( areWheelsMoving || tooSoonSincePrevious ) );
+
+  return canReact;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToSound::CanReactToDirection( MicDirectionIndex direction ) const
+{
+  const bool isDirectionSame = ( direction == _triggeredDirection );
+  const bool hasValidDirection = ( kInvalidMicDirectionIndex != direction );
+
+  // if we're already reacting to a sound, ignore new sounds that are coming from a cone directly in front of us
+  // we're treating these as most likely the same noise we're already responding to
+  bool alreadyReactingToDirection = false;
+  switch ( direction )
+  {
+    case 11:
+    case 0:
+    case 1:
+      alreadyReactingToDirection = IsActivated();
+      break;
+
+    default:
+      alreadyReactingToDirection = false;
+  }
+
+  return !isDirectionSame && hasValidDirection && !alreadyReactingToDirection;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::OnValidSoundDetected( MicDirectionIndex direction, double micPower, MicDirectionConfidence confidence )
+{
+  // if we were currently responding to a previous sound, stop reacting to it
+  if ( IsActivated() )
+  {
+    CancelDelegates( false );
+  }
+
+  // store these for das events
+  _triggeredMicPower = micPower;
+  _triggeredConfidence = confidence;
+
+  SetTriggerDirection( direction );
+  PRINT_DEBUG( "Heard valid sound from direction [%d] (power=%f, confidence=%u)", direction, micPower, confidence );
+
+  // if we were already responding to a previous sound, we need to kick off a new reaction to the new sound
+  if ( IsActivated() )
+  {
+    RespondToSound();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
