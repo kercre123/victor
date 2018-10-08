@@ -12,10 +12,6 @@ namespace Json { class Value; }
 
 namespace Anki {
 namespace Vector {
-
-  namespace RobotInterface {
-    struct AlexaAlerts;
-  }
   
   class AnimContext;
   namespace RobotInterface {

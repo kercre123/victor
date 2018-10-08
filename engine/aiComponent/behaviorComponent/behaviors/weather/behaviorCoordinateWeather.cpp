@@ -12,6 +12,7 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/featureGateTypes.h"
@@ -82,11 +83,15 @@ void BehaviorCoordinateWeather::GetLinkedActivatableScopeBehaviors(std::set<IBeh
   }
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorCoordinateWeather::WantsToBeActivatedBehavior() const
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  return uic.IsUserIntentPending(USER_INTENT(weather_response));
+  const bool intentPending = uic.IsUserIntentPending(USER_INTENT(weather_response));
+  
+  const bool hasAlexaWeather = _dVars.alexaWeather != nullptr;
+  return intentPending || hasAlexaWeather;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -135,19 +140,33 @@ void BehaviorCoordinateWeather::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWeather::OnBehaviorActivated() 
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables();
+  
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   UserIntent intent;
   const bool isPending = uic.IsUserIntentPending(USER_INTENT(weather_response), intent);
-  if(!ANKI_VERIFY(isPending, 
-                  "BehaviorCoordinateWeather.OnBehaviorActivated.NoIntentPending",
-                  "")){
+  const bool hasAlexa = _dVars.alexaWeather != nullptr;
+  UserIntent_WeatherResponse weatherResponse;
+  if( isPending ) {
+    weatherResponse = intent.Get_weather_response();
+  } else if(hasAlexa) {
+    // build intent from msg
+    weatherResponse.speakableLocationString = "something not empty";
+    weatherResponse.isForecast = false;
+    weatherResponse.condition = _dVars.alexaWeather->condition;
+    weatherResponse.temperature = std::to_string(_dVars.alexaWeather->temperature);
+    weatherResponse.temperatureUnit = "F";
+    // "%Y-%m-%dT%H:%M%S-"
+    weatherResponse.localDateTime = "2018-10-08T" + std::to_string(_dVars.alexaWeather->hour) + ":0000-";
+  } else {
     return;
   }
+  
+  _dVars.alexaWeather.reset();
 
-  const auto& weatherResponse = intent.Get_weather_response();
+  // reset dynamic variables
+  _dVars = DynamicVariables();
+  
 
   // Respond with appropriate weather response
   bool cantDoThat = false;
@@ -168,11 +187,24 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
     ///////
     /// END PR DEMO HACK
     ///////
-
+    PRINT_NAMED_WARNING("WHATNOW", "Looking for behavior for condition %s", WeatherConditionTypeToString(condition));
     const auto iter = _iConfig.weatherBehaviorMap.find(condition);
-    if((iter != _iConfig.weatherBehaviorMap.end()) &&
-       iter->second->WantsToBeActivated()){
-      DelegateIfInControl(iter->second.get());
+    
+    if(iter != _iConfig.weatherBehaviorMap.end()) {
+      auto castPtr = std::dynamic_pointer_cast<BehaviorDisplayWeather>(iter->second);
+      if( castPtr != nullptr ) {
+        castPtr->SetWeatherResponse(weatherResponse);
+        if( iter->second->WantsToBeActivated() ) {
+          DelegateIfInControl(iter->second.get());
+        } else {
+          PRINT_NAMED_WARNING("WHATNOW BehaviorCoordinateWeather.OnBehaviorActivated.DWTBA",
+                              "%s Doesnt want to activate", iter->second->GetDebugLabel().c_str());
+          cantDoThat = true;
+        }
+      } else {
+        PRINT_NAMED_WARNING("WHATNOW","Couldnt cast");
+        cantDoThat = true;
+      }
     }else{
       cantDoThat = true;
       PRINT_NAMED_WARNING("BehaviorCoordinateWeather.OnBehaviorActivated.NoResponseForCondition",
@@ -201,6 +233,11 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
     SmartActivateUserIntent(intent.GetTag());
   }
 
+}
+
+void BehaviorCoordinateWeather::SetAlexaWeather( const RobotInterface::AlexaWeather& weather )
+{
+  _dVars.alexaWeather = std::make_unique<RobotInterface::AlexaWeather>(weather);
 }
 
 } // namespace Vector

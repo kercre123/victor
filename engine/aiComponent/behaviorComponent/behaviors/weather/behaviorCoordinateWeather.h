@@ -19,6 +19,10 @@
 
 namespace Anki {
 namespace Vector {
+  
+  namespace RobotInterface {
+    struct AlexaWeather;
+  }
 
 // forward declaration
 enum class BehaviorID : uint16_t;
@@ -31,6 +35,8 @@ public:
 
   virtual void GetLinkedActivatableScopeBehaviors(std::set<IBehavior*>& delegates) const override;
 
+  void SetAlexaWeather( const RobotInterface::AlexaWeather& weather );
+  
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -61,6 +67,9 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
+    
+    std::unique_ptr<RobotInterface::AlexaWeather> alexaWeather;
+    
   };
 
   InstanceConfig _iConfig;

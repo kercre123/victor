@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
@@ -111,6 +112,10 @@ BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
 BehaviorCoordinateGlobalInterrupts::BehaviorCoordinateGlobalInterrupts(const Json::Value& config)
 : BehaviorDispatcherPassThrough(config)
 {
+  SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>{
+    RobotInterface::RobotToEngineTag::alexaWeather,
+    RobotInterface::RobotToEngineTag::alexaUXStateChanged,
+  });
 }
 
 
@@ -137,6 +142,10 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
     _iConfig.toSuppressWhenGoingHome.push_back( BC.FindBehaviorByID(id) );
   }
 
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(WeatherResponses),
+                                 BEHAVIOR_CLASS(CoordinateWeather),
+                                 _iConfig.weatherBehavior);
+  
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
                                  _iConfig.timerCoordBehavior);
@@ -149,6 +158,7 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
+  _iConfig.alexaBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(Alexa));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
   
   _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AddBehavior(BC, BEHAVIOR_CLASS(BumpObject));
@@ -238,6 +248,15 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       if( !behPair.second && (behPair.first != nullptr) ) {
         behPair.first->SetDontActivateThisTick( "CV:" + GetDebugLabel() );
       }
+    }
+  }
+  
+  if( _dVars.lastReceivedWeather != 0 && _dVars.lastReceivedSpeak != 0 ) {
+    const int kMaxDelay = 80;
+    //PRINT_NAMED_WARNING("WHATNOW", "PassThroughUpdate %d %d", _dVars.lastReceivedWeather, _dVars.lastReceivedSpeak);
+    if( _dVars.lastReceivedWeather < _dVars.lastReceivedSpeak + kMaxDelay ) {
+      // suppress alexa until weather completes
+      _iConfig.alexaBehavior->SetDontActivateThisTick(GetDebugLabel() + ": weather");
     }
   }
 
@@ -396,7 +415,27 @@ void BehaviorCoordinateGlobalInterrupts::CreateConsoleVars()
   }
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateGlobalInterrupts::AlwaysHandleInScope(const RobotToEngineEvent& event)
+{
+  if( event.GetData().GetTag() == RobotInterface::RobotToEngineTag::alexaUXStateChanged ) {
+    const auto state = event.GetData().Get_alexaUXStateChanged().state;
+    if( state == AlexaUXState::Speaking ) {
+      _dVars.lastReceivedSpeak = (int)BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    } else {
+      _dVars.lastReceivedSpeak = 0;
+    }
+    
+    PRINT_NAMED_WARNING("WHATNOW", "engine received ux state %d", (int)state);
+  } else if( event.GetData().GetTag() == RobotInterface::RobotToEngineTag::alexaWeather ) {
+    PRINT_NAMED_WARNING("WHATNOW", "engine received weather %s", event.GetData().Get_alexaWeather().condition.c_str());
+    _dVars.lastReceivedWeather = (int)BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    _iConfig.weatherBehavior->SetAlexaWeather( event.GetData().Get_alexaWeather() );
+    
+    PRINT_NAMED_WARNING("WHATNOW", "engine received weather %s", event.GetData().Get_alexaWeather().condition.c_str());
+  }
+}
 
 } // namespace Vector
 } // namespace Anki

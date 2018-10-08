@@ -26,13 +26,13 @@ class BehaviorDriveToFace;
 class BehaviorHighLevelAI;
 class BehaviorReactToVoiceCommand;
 class BehaviorTimerUtilityCoordinator;
+class BehaviorCoordinateWeather;
 
 
 class BehaviorCoordinateGlobalInterrupts : public BehaviorDispatcherPassThrough
 {
 public:
   virtual ~BehaviorCoordinateGlobalInterrupts();
-
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
@@ -42,6 +42,8 @@ protected:
   virtual void OnPassThroughActivated() override;
   virtual void PassThroughUpdate() override;
   virtual void OnPassThroughDeactivated() override;
+  
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
 
 private:
   
@@ -53,6 +55,9 @@ private:
     ICozmoBehaviorPtr wakeWordBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     AreBehaviorsActivatedHelper behaviorsThatShouldSuppressTimerAntics;
+    
+    std::shared_ptr<BehaviorCoordinateWeather> weatherBehavior;
+    ICozmoBehaviorPtr alexaBehavior;
 
     std::shared_ptr<BehaviorReactToVoiceCommand> reactToVoiceCommandBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
@@ -85,6 +90,9 @@ private:
     DynamicVariables();
 
     bool suppressProx;
+    
+    int lastReceivedWeather = 0;
+    int lastReceivedSpeak = 0;
   };
 
   InstanceConfig   _iConfig;

@@ -57,6 +57,8 @@ private:
   void TransitionFromSpeakingToListening();
   
   
+  void CheckForExit();
+  
   enum class State : uint8_t {
     ListeningGetIn,
     ListeningLoop,
@@ -82,6 +84,11 @@ private:
     // instead of idle. that will mess everything up
     AlexaUXState uxState = AlexaUXState::Idle;
     State state = State::ListeningGetIn;
+    
+    bool shouldExit = false;
+    
+    int lastReceivedSpeak = 0;
+    int lastReceivedWeather = 0;
   };
 
   InstanceConfig _iConfig;

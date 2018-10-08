@@ -114,7 +114,11 @@
     {
         "APIValue": "Partly Cloudy", 
         "CladType": "Cloudy"
-    }, 
+    },
+ {
+   "APIValue": "Partly Cloudy night",
+   "CladType": "Cloudy"
+ },
     {
         "APIValue": "Clear", 
         "CladType": "Sunny"
@@ -147,6 +151,10 @@
         "APIValue": "Thunderstorms", 
         "CladType": "Thunderstorms"
     },
+ {
+   "APIValue": "Rainy",
+   "CladType": "Rain"
+ },
     {
         "APIValue": "Heavy Rain", 
         "CladType": "Rain"

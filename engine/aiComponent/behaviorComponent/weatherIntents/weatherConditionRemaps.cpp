@@ -100,6 +100,7 @@ WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherI
                                                                   const UserIntent_WeatherResponse& weatherIntent,
                                                                   const WeatherConditionType initialCondition) const
 {
+  PRINT_NAMED_WARNING("WHATNOW", "Remapping %s", WeatherConditionTypeToString(initialCondition));
   const auto iter = _remaps.find(initialCondition);
   if(iter != _remaps.end()){
     const tm localDatetime = parser.GetLocalDateTime(weatherIntent);
@@ -135,6 +136,7 @@ WeatherConditionType WeatherConditionRemaps::GetRemappedCondition(const WeatherI
 
       if((!shouldConsiderTemperature || inTemperatureRange) &&
          (!shouldConsiderTime || inTimeRange)){
+        PRINT_NAMED_WARNING("WHATNOW", "Remapping matched %s", WeatherConditionTypeToString(entry.remappedType));
         return entry.remappedType;
       }
     }

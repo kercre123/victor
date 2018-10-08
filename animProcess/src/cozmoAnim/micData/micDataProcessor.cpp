@@ -199,7 +199,8 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
   if( _alexa ) {
     _alexa->Init(context,
                  std::bind(&MicDataProcessor::OnAlexaStateChanged, this, std::placeholders::_1),
-                 std::bind(&MicDataProcessor::SendAlexaAlertsToEngine, this, std::placeholders::_1));
+                 std::bind(&MicDataProcessor::SendAlexaAlertsToEngine, this, std::placeholders::_1),
+                 std::bind(&MicDataProcessor::SendAlexaWeatherToEngine, this, std::placeholders::_1));
   }
 
   // On Debug builds, check that all the files listed in the trigger config actually exist
@@ -305,8 +306,13 @@ void MicDataProcessor::InitVAD()
 
 void MicDataProcessor::SendAlexaAlertsToEngine( RobotInterface::AlexaAlerts&& alertsMsg )
 {
-  PRINT_NAMED_WARNING("WHATNOW", "Got here B");
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(alertsMsg));
+  _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+}
+  
+void MicDataProcessor::SendAlexaWeatherToEngine( RobotInterface::AlexaWeather&& weatherMsg )
+{
+  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(weatherMsg));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 }
   

@@ -8,16 +8,19 @@
 #include <AVSCommon/AVS/CapabilityAgent.h>
 #include "util/logging/logging.h"
 #include <json/json.h>
+#include "util/fileUtils/fileUtils.h"
 #include <unordered_set>
 
 namespace Anki {
 namespace Vector {
 
+  
   // todo: this should probably be a directive wrapper since that's what it's used for. CapabilityAgent methods are faster to override
 class AlexaCapabilityWrapper
   : public alexaClientSDK::avsCommon::avs::CapabilityAgent
   //, public alexaClientSDK::avsCommon::sdkInterfaces::CapabilityConfigurationInterface
 {
+  const std::string kDirectiveSaveFile = "/data/data/com.anki.victor/cache/alexaDirectives.txt";
 public:
   // todo: figure out how to get namespace from capability agent. the confguration can contain multiple namespaces
   AlexaCapabilityWrapper(const std::string& nameSpace,
@@ -28,6 +31,7 @@ public:
    , m_capabilityAgent( capabilityAgent )
    , _onDirective( onDirective )
   {
+    Anki::Util::FileUtils::DeleteFile(kDirectiveSaveFile);
   }
   
 //  virtual std::unordered_set< std::shared_ptr< alexaClientSDK::avsCommon::avs::CapabilityConfiguration > > getCapabilityConfigurations () override
@@ -90,10 +94,8 @@ private:
       Json::Reader reader;
       bool success = reader.parse(payload, json);
       if( success ) {
+        Util::FileUtils::WriteFile( kDirectiveSaveFile, json.toStyledString(), true );
         PRINT_NAMED_WARNING("WHATNOW", "Received directive: %s", payload.c_str());
-//        std::stringstream ss;
-//        ss << json;
-//        PRINT_NAMED_WARNING("WHATNOW", "Received directive:\n%s", ss.str().c_str());
       } else {
         PRINT_NAMED_WARNING("WHATNOW", "Could not parse into json!: %s", payload.c_str());
       }

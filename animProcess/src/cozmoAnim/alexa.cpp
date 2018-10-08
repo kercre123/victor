@@ -27,6 +27,7 @@
 #include "cozmoAnim/alexaKeywordObserver.h"
 #include "cozmoAnim/alexaMicrophone.h"
 #include "cozmoAnim/alexaSpeaker.h"
+#include "cozmoAnim/alexaWeatherParser.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -250,7 +251,8 @@ namespace {
   
 void Alexa::Init(const AnimContext* context,
                  const OnStateChangedCallback& onStateChanged,
-                 const OnAlertChangedCallback& onAlertChanged)
+                 const OnAlertChangedCallback& onAlertChanged,
+                 const OnWeatherCallback& onWeather)
 {
   _context = context;
   _onStateChanged = onStateChanged;
@@ -259,6 +261,7 @@ void Alexa::Init(const AnimContext* context,
   }
   
   _alertsManager.reset( new AlexaAlertsManager(context, onAlertChanged) );
+  _weatherParser.reset( new AlexaWeatherParser(context, onWeather) );
   
   std::vector<std::shared_ptr<std::istream>> configJsonStreams;
   
@@ -704,6 +707,11 @@ void Alexa::OnDirective(const std::string& directive, const std::string& payload
     PRINT_NAMED_WARNING("WHATNOW", "Setting Alert");
     if( _alertsManager ) {
       _alertsManager->ProcessAlert(directive, payload);
+    }
+  } else if( directive == "RenderTemplate" ) {
+    // this contains weather, and maybe more
+    if( _weatherParser && payload.find("WeatherTemplate") != std::string::npos ) {
+      _weatherParser->Parse(payload);
     }
   }
 }

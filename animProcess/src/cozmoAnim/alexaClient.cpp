@@ -12,7 +12,7 @@
 
 #include "cozmoAnim/alexaClient.h"
 #include "cozmoAnim/alexaLogger.h"
-//#include "cozmoAnim/alexaDevDirectiveHandler.h"
+#include "cozmoAnim/alexaTemplateRuntimeStub.h"
 #include "cozmoAnim/alexaCapabilityWrapper.h"
 //#include "cozmoAnim/alexaSpeechSynthesizer.h"
 #include "util/fileUtils/fileUtils.h"
@@ -368,6 +368,7 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
 //  auto xx = std::make_shared<AlexaDevDirectiveHandler>("AlexaDevDirectiveHandler", m_exceptionSender);
 //  m_devDirectiveHandler = xx;
   
+  m_templateRuntime = std::make_shared<AlexaTemplateRuntimeStub>( m_exceptionSender );
   
   // m_playbackRouter
   // m_audioPlayer
@@ -430,6 +431,13 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "SpeakerManager"));
+    return false;
+  }
+  
+  if (!m_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("TemplateRuntime", m_templateRuntime) )) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "TemplateRuntime"));
     return false;
   }
   
@@ -496,6 +504,13 @@ bool AlexaClient::Init(std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo,
   if (!(capabilitiesDelegate->registerCapability(m_speakerManager))) {
     ACSDK_ERROR(
                 LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "Speaker"));
+    return false;
+  }
+  
+  if (!(capabilitiesDelegate->registerCapability(m_templateRuntime))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "TemplateRuntime"));
     return false;
   }
   

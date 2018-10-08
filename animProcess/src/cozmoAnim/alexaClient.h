@@ -62,6 +62,7 @@
 namespace Anki {
 namespace Vector {
   
+  class AlexaTemplateRuntimeStub;
   
   class AlexaClient : public alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface,
   private Util::noncopyable, public std::enable_shared_from_this<AlexaClient>
@@ -208,7 +209,7 @@ private:
   /// The audio player.
   std::shared_ptr<alexaClientSDK::capabilityAgents::audioPlayer::AudioPlayer> m_audioPlayer;
   
-  //std::shared_ptr<AlexaDevDirectiveHandler> m_devDirectiveHandler;
+  std::shared_ptr<AlexaTemplateRuntimeStub> m_templateRuntime;
 };
 
 

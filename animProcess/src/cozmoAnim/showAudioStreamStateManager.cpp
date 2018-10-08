@@ -127,7 +127,14 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn(OnTriggerAudioCo
   if( _isAlexa ) {
     auto* anim = _context->GetDataLoader()->GetCannedAnimation(_getInAnimNameAlexa);
     if((_streamer != nullptr) && (anim != nullptr)){
-      _streamer->SetStreamingAnimation(_getInAnimNameAlexa, _getInAnimationTagAlexa);
+//      const std::string& name,
+//      Tag tag,
+//      u32 numLoops = 1,
+//      u32 startAt_ms = 0,
+//      bool interruptRunning = true,
+//      bool shouldOverrideEyeHue = false,
+//      bool shouldRenderInEyeHue = true
+      _streamer->SetStreamingAnimation(_getInAnimNameAlexa, _getInAnimationTagAlexa, 1, 0, true, true, false);
     }else{
       PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
                         "ALEXA Animation not found for get in %s", _getInAnimNameAlexa.c_str());

@@ -264,11 +264,11 @@ std::vector<uint8_t> FileUtils::ReadFileAsBinary(const std::string& fileName)
   }
 }
 
-bool FileUtils::WriteFile(const std::string &fileName, const std::string &body)
+bool FileUtils::WriteFile(const std::string &fileName, const std::string &body, bool append)
 {
   std::vector<uint8_t> bytes;
   copy(body.begin(), body.end(), back_inserter(bytes));
-  return WriteFile(fileName, bytes);
+  return WriteFile(fileName, bytes, append);
 }
   
 bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t> &body, bool append)

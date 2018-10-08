@@ -29,12 +29,14 @@ namespace Vector {
 class BehaviorTextToSpeechLoop;
 class WeatherIntentParser;
 enum class UtteranceState;
+struct UserIntent_WeatherResponse;
 
 class BehaviorDisplayWeather : public ICozmoBehavior
 {
 public: 
   virtual ~BehaviorDisplayWeather();
 
+  void SetWeatherResponse( const UserIntent_WeatherResponse& response);
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -78,11 +80,13 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     Vision::CompositeImage* temperatureImg;
-    UserIntentPtr           currentIntent;
+    //UserIntentPtr           currentIntent;
     uint8_t utteranceID;
     UtteranceState  utteranceState;
     bool shouldSayTemperature;
     bool playingWeatherResponse;
+    std::unique_ptr<UserIntent_WeatherResponse> weatherResponse;
+    bool isAlexa = false;
   };
 
   std::unique_ptr<InstanceConfig> _iConfig;

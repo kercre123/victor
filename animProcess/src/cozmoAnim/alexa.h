@@ -25,11 +25,13 @@ class AlexaMicrophone;
 class AlexaSpeaker;
 class AnimContext;
 class AlexaAlertsManager;
-  class KeywordObserver;
+class AlexaWeatherParser;
+class KeywordObserver;
   
   namespace RobotInterface {
     struct MicData;
     struct AlexaAlerts;
+    struct AlexaWeather;
   }
   
 class Alexa : private Util::noncopyable
@@ -41,9 +43,11 @@ public:
   
   using OnStateChangedCallback = std::function<void(AlexaUXState)>;
   using OnAlertChangedCallback = std::function<void(RobotInterface::AlexaAlerts)>;
+  using OnWeatherCallback = std::function<void(RobotInterface::AlexaWeather&&)>;
   void Init(const AnimContext* context,
             const OnStateChangedCallback& onStateChanged,
-            const OnAlertChangedCallback& onAlertsChanged);
+            const OnAlertChangedCallback& onAlertsChanged,
+            const OnWeatherCallback& onWeather);
   void Update();
   
   void ButtonPress();
@@ -99,6 +103,8 @@ private:
   std::shared_ptr<AlexaSpeaker> m_audioSpeaker;
   
   std::shared_ptr<AlexaAlertsManager> _alertsManager;
+  
+  std::shared_ptr<AlexaWeatherParser> _weatherParser;
   
   const AnimContext* _context = nullptr;
   float _lastPlayDirective = -1.0f;

@@ -16,6 +16,7 @@
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "clad/types/animationTrigger.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Vector {
@@ -35,7 +36,10 @@ BehaviorAlexa::DynamicVariables::DynamicVariables()
 BehaviorAlexa::BehaviorAlexa(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  SubscribeToTags({ RobotInterface::RobotToEngineTag::alexaUXStateChanged });
+  SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>{
+    RobotInterface::RobotToEngineTag::alexaUXStateChanged,
+    RobotInterface::RobotToEngineTag::alexaWeather,
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -106,6 +110,11 @@ void BehaviorAlexa::BehaviorUpdate()
     return;
   }
   
+  if( _dVars.shouldExit ) {
+    CancelSelf();
+    return;
+  }
+  
   switch( _dVars.state ) {
     case State::ListeningGetIn:
     {
@@ -146,12 +155,36 @@ void BehaviorAlexa::BehaviorUpdate()
   }
   
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAlexa::CheckForExit()
+{
+  if( _dVars.lastReceivedWeather == 0 || _dVars.lastReceivedSpeak == 0 ) {
+    return;
+  }
+  const int kMaxDelay = 80;
+  PRINT_NAMED_WARNING("WHATNOW", "CheckForExit %d %d", _dVars.lastReceivedWeather, _dVars.lastReceivedSpeak);
+  if( _dVars.lastReceivedWeather < _dVars.lastReceivedSpeak + kMaxDelay ) {
+    _dVars.shouldExit = true;
+  }
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAlexa::AlwaysHandleInScope(const RobotToEngineEvent& event)
 {
-  _dVars.uxState = event.GetData().Get_alexaUXStateChanged().state;
-  PRINT_NAMED_WARNING("WHATNOW", "engine received ux state %d", (int)_dVars.uxState);
+  if( event.GetData().GetTag() == RobotInterface::RobotToEngineTag::alexaUXStateChanged ) {
+    
+    _dVars.lastReceivedSpeak = (int)BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    _dVars.uxState = event.GetData().Get_alexaUXStateChanged().state;
+    CheckForExit();
+    
+    //PRINT_NAMED_WARNING("WHATNOW", "engine received ux state %d", (int)_dVars.uxState);
+  } else if( event.GetData().GetTag() == RobotInterface::RobotToEngineTag::alexaWeather ) {
+    //PRINT_NAMED_WARNING("WHATNOW", "engine received weather %s in state %d", event.GetData().Get_alexaWeather().condition.c_str(), (int)_dVars.uxState);
+    _dVars.lastReceivedWeather = (int)BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    CheckForExit();
+    
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,6 +193,7 @@ void BehaviorAlexa::TransitionToListeningLoop()
   CancelDelegates(false);
   _dVars.state = State::ListeningLoop;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenLoop, 0 };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action );
 }
   
@@ -169,6 +203,7 @@ void BehaviorAlexa::TransitionToListeningGetOut()
   CancelDelegates(false);
   _dVars.state = State::ListeningGetOut;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenTimeout };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){ CancelSelf(); } );
 }
   
@@ -178,6 +213,7 @@ void BehaviorAlexa::TransitionFromListeningToSpeaking()
   CancelDelegates(false);
   _dVars.state = State::ListeningToSpeaking;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListen2Speak };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     TransitionToSpeakingLoop();
   });
@@ -189,6 +225,7 @@ void BehaviorAlexa::TransitionFromSpeakingToListening()
   CancelDelegates(false);
   _dVars.state = State::SpeakingToListening;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeak2Listen };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     TransitionToListeningLoop();
   });
@@ -200,6 +237,7 @@ void BehaviorAlexa::TransitionToSpeakingGetIn()
   CancelDelegates(false);
   _dVars.state = State::SpeakingGetIn;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSuddenSpeak };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     TransitionToSpeakingLoop();
   });
@@ -211,6 +249,7 @@ void BehaviorAlexa::TransitionToSpeakingLoop()
   CancelDelegates(false);
   _dVars.state = State::SpeakingLoop;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakLoop, 0 };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action );
 }
   
@@ -220,6 +259,7 @@ void BehaviorAlexa::TransitionToSpeakingGetOut()
   CancelDelegates(false);
   _dVars.state = State::SpeakingGetOut;
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakGetOut };
+  action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     CancelSelf();
   });

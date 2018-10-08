@@ -503,10 +503,15 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       if( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < 5.0f ) {
         // hacky hack hack engine probably isnt running yet
         std::lock_guard<std::mutex> lock(_msgsMutex);
-        _msgsToEngine.emplace_back( msg.release() );
+        _msgsToEngine.emplace_back( msg.release() ); // put it back
       } else {
         RobotInterface::SendAnimToEngine(msg->alexaAlerts);
       }
+    }
+    else if (msg->tag == RobotInterface::RobotToEngine::Tag_alexaWeather)
+    {
+      PRINT_NAMED_WARNING("WHATNOW", "Got stolen" );
+      RobotInterface::SendAnimToEngine(msg->alexaWeather);
     }
     else
     {

@@ -32,6 +32,15 @@ namespace Vector {
   
 namespace{
 Anki::Vector::TimerUtility* sTimerUtility = nullptr;
+  
+  int GetUTCOffset() {
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    
+    localtime_r(&t, &lt);
+    
+    return lt.tm_gmtoff;
+  }
 }
 
 #if ANKI_DEV_CHEATS
@@ -233,7 +242,7 @@ void TimerUtility::OnAlexaAlerts( const AnkiEvent<RobotInterface::RobotToEngine>
       break;
     }
     const int alertID = alerts.alertIDs[i];
-    const int time_s = alerts.alertTimes[i] - 7*60*60; // hack for time zone
+    const int time_s = alerts.alertTimes[i] + GetUTCOffset();
     const bool isAlarm = alerts.isAlarm[i];
     newTimes[alertID] = time_s;
     PRINT_NAMED_WARNING("WHATNOW", "engine received alert id=%d, t=%d, isAlarm=%d (std=%d, sys=%d)", alertID, time_s, isAlarm, GetSteadyTime_s(), GetEpochTime_s());

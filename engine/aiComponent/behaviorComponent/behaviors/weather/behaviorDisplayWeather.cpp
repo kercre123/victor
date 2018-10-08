@@ -86,7 +86,7 @@ BehaviorDisplayWeather::InstanceConfig::InstanceConfig(const Json::Value& layout
 BehaviorDisplayWeather::DynamicVariables::DynamicVariables()
 {
   temperatureImg = nullptr;
-  currentIntent = nullptr;
+  //currentIntent = nullptr;
   utteranceID = 0;
   utteranceState = UtteranceState::Invalid;
   shouldSayTemperature = false;
@@ -97,7 +97,7 @@ BehaviorDisplayWeather::DynamicVariables::DynamicVariables()
 BehaviorDisplayWeather::BehaviorDisplayWeather(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  AddWaitForUserIntent(USER_INTENT(weather_response));
+ // AddWaitForUserIntent(USER_INTENT(weather_response));
   
   if(config.isMember(kImageLayoutListKey) && config.isMember(kImageMapListKey)){
     _iConfig =  std::make_unique<InstanceConfig>(config[kImageLayoutListKey], config[kImageMapListKey]);
@@ -118,7 +118,10 @@ BehaviorDisplayWeather::~BehaviorDisplayWeather()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWeather::WantsToBeActivatedBehavior() const
 {
-  return true;
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  const bool hasIntent = uic.IsUserIntentPending(USER_INTENT(weather_response)) || uic.IsUserIntentActive(USER_INTENT(weather_response));
+  const bool hasAlexa = _dVars.weatherResponse != nullptr && !_dVars.weatherResponse->speakableLocationString.empty();
+  return hasIntent || hasAlexa;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -257,18 +260,30 @@ void BehaviorDisplayWeather::InitBehavior()
 void BehaviorDisplayWeather::OnBehaviorActivated() 
 {
   // reset dynamic variables
+  auto ptr = std::move(_dVars.weatherResponse);
+  bool b = _dVars.isAlexa;
   _dVars = DynamicVariables();
+  _dVars.weatherResponse = std::move(ptr);
+  _dVars.isAlexa = b;
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
-  _dVars.currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
-  DEV_ASSERT(_dVars.currentIntent != nullptr, "BehaviorDisplayWeather.InvalidTriggeringIntent");
+  if( uic.IsUserIntentPending(USER_INTENT(weather_response)) ) {
+    SmartActivateUserIntent( USER_INTENT(weather_response) );
+  }
+  
+  auto currentIntent = uic.GetUserIntentIfActive(USER_INTENT(weather_response));
+  if(currentIntent != nullptr) {
+    _dVars.weatherResponse = std::make_unique<UserIntent_WeatherResponse>( currentIntent->intent.Get_weather_response() );
+  }
+  _iConfig->intentParser->SendDASEventForRepsonse(*_dVars.weatherResponse.get());
 
-  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
-  _iConfig->intentParser->SendDASEventForRepsonse(weatherResponse);
-
-  StartTTSGeneration();
-  TransitionToFindFaceInFront();
+  if( _dVars.isAlexa ) {
+    _dVars.shouldSayTemperature = false;
+  } else {
+    StartTTSGeneration();
+    TransitionToFindFaceInFront();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -291,6 +306,7 @@ void BehaviorDisplayWeather::BehaviorUpdate()
 void BehaviorDisplayWeather::OnBehaviorDeactivated()
 {
   GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  _dVars.weatherResponse.reset();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -312,8 +328,7 @@ void BehaviorDisplayWeather::TransitionToFindFaceInFront()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
 {
-  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
-
+  
   auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
     CancelSelf();
   };
@@ -330,8 +345,8 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
                                                           animationCallback);
   
   int temperature = 0;
-  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
-  const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(weatherResponse);
+  auto success = _iConfig->intentParser->GetTemperature(*_dVars.weatherResponse.get(), temperature);
+  const bool isFahrenheit = _iConfig->intentParser->IsFahrenheit(*_dVars.weatherResponse.get());
   success &= GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
   if(!success){
     return;
@@ -607,11 +622,10 @@ void BehaviorDisplayWeather::StartTTSGeneration()
     _dVars.utteranceState = utteranceState;
   };
 
-  const auto& weatherResponse = _dVars.currentIntent->intent.Get_weather_response();
-  const auto condition = _iConfig->intentParser->GetCondition(weatherResponse);
+  const auto condition = _iConfig->intentParser->GetCondition(*_dVars.weatherResponse.get());
 
   int temperature = 0;
-  auto success = _iConfig->intentParser->GetTemperature(weatherResponse, temperature);
+  auto success = _iConfig->intentParser->GetTemperature(*_dVars.weatherResponse.get(), temperature);
   const auto& ttsMap = GetBEI().GetDataAccessorComponent().GetWeatherConditionTTSMap();
   const auto& ttsIter = ttsMap->find(condition);
   if(success && ttsIter != ttsMap->end()){
@@ -625,6 +639,12 @@ void BehaviorDisplayWeather::StartTTSGeneration()
 
 
 }
+  
+  void BehaviorDisplayWeather::SetWeatherResponse( const UserIntent_WeatherResponse& response)
+  {
+    _dVars.weatherResponse = std::make_unique<UserIntent_WeatherResponse>( response );
+    _dVars.isAlexa = true;
+  }
 
 
 }

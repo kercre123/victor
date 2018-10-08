@@ -86,6 +86,7 @@ WeatherConditionType WeatherIntentParser::GetCondition(const UserIntent_WeatherR
   std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(),
                  std::back_inserter(str), [](const char c) { return std::tolower(c); });
 
+  PRINT_NAMED_WARNING("WHATNOW", "condition=%s", weatherIntent.condition.c_str());
   auto iter = _weatherResponseMap->find(str);
   if(iter != _weatherResponseMap->end()){
     return _conditionRemaps.GetRemappedCondition(*this, weatherIntent, iter->second);

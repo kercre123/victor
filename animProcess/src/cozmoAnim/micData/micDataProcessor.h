@@ -103,6 +103,7 @@ public:
   
   void OnAlexaStateChanged( AlexaUXState state );
   void SendAlexaAlertsToEngine( RobotInterface::AlexaAlerts&& alertsMsg );
+  void SendAlexaWeatherToEngine( RobotInterface::AlexaWeather&& weatherMsg );
   
   void OnRobotTouched( bool touched );
   
