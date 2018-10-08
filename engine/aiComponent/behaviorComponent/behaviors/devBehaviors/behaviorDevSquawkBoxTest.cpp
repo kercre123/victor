@@ -29,36 +29,72 @@ namespace Vector {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
-#define CONSOLE_NAME "DevSquawkBoxBehavior"
+  #define CONSOLE_NAME "DevSquawkBoxBehavior"
   CONSOLE_VAR_RANGED(float, kLiftMovementDuration_s, CONSOLE_NAME, 0.5f, 0.1f, 2.5f);
   CONSOLE_VAR_RANGED(float, kHeadMovementDuration_s, CONSOLE_NAME, 0.5f, 0.1f, 2.5f);
   CONSOLE_VAR_RANGED(float, kTreadMovementSpeed_mmps, CONSOLE_NAME, 200.0f, 20.0f, MAX_WHEEL_SPEED_MMPS);
+  
+  #define MOTOR_ACTION_ASSERT ASSERT_NAMED(_robot != nullptr, "BehaviorDevSquawkBoxTest._robot.IsNull")
+  const char* kNotActiveErrorMsg = "Error: DevSquawkBoxBehavior is NOT Active!";
 }
+
 
 void BehaviorDevSquawkBoxTest::SetupConsoleFuncs()
 {
   if( ANKI_DEV_CHEATS ) {
     auto toggleLiftOnOff = [this](ConsoleFunctionContextRef context) {
+      if (!IsActivated()) {
+        context->channel->WriteLog("%s", kNotActiveErrorMsg);
+        return;
+      }
       _dVars._isLiftMoving = !_dVars._isLiftMoving;
       MoveLift();
       const auto* msg = _dVars._isLiftMoving ? "Start Lift Movement" : "Stop Lift Movment";
       context->channel->WriteLog(" %s", msg);
     };
     auto toggleHeadOnOff = [this](ConsoleFunctionContextRef context) {
+      if (!IsActivated()) {
+        context->channel->WriteLog("%s", kNotActiveErrorMsg);
+        return;
+      }
       _dVars._isHeadMoving = !_dVars._isHeadMoving;
       MoveHead();
       const auto* msg = _dVars._isHeadMoving ? "Start Head Movement" : "Stop Head Movment";
       context->channel->WriteLog(" %s", msg);
     };
     auto toggleTreadOnOff = [this](ConsoleFunctionContextRef context) {
+      if (!IsActivated()) {
+        context->channel->WriteLog("%s", kNotActiveErrorMsg);
+        return;
+      }
       _dVars._isMovingTreads = !_dVars._isMovingTreads;
       MoveTreads();
       const auto* msg = _dVars._isMovingTreads ? "Start Tread Movement" : "Stop Tread Movment";
       context->channel->WriteLog(" %s", msg);
     };
+    auto setHeadAngle = [this](ConsoleFunctionContextRef context) {
+      if (!IsActivated()) {
+        context->channel->WriteLog("%s", kNotActiveErrorMsg);
+        return;
+      }
+      // Check if angle is within head angle range
+      const float angleDeg = ConsoleArg_Get_Float(context, "angleDeg");
+      const float angleRad = Util::Clamp(DEG_TO_RAD(angleDeg), MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+      SetHeadAngle(angleRad);
+      
+      const char* msg = "";
+      if (Util::IsNear(angleRad, DEG_TO_RAD(angleDeg))) {
+        msg = "Set head angle to %f";
+      }
+      else {
+        msg = "Invalid Angle, setting head angle to %f";
+      }
+      context->channel->WriteLog(msg, RAD_TO_DEG(angleRad));
+    };
     _consoleFuncs.emplace_front( "ToggleLiftOnOff", std::move(toggleLiftOnOff), CONSOLE_NAME, "" );
     _consoleFuncs.emplace_front( "ToggleHeadOnOff", std::move(toggleHeadOnOff), CONSOLE_NAME, "" );
     _consoleFuncs.emplace_front( "ToggleTreadsOnOff", std::move(toggleTreadOnOff), CONSOLE_NAME, "" );
+    _consoleFuncs.emplace_front( "SetHeadAngle", std::move(setHeadAngle), CONSOLE_NAME, "float angleDeg" );
   }
 }
 
@@ -155,6 +191,7 @@ void BehaviorDevSquawkBoxTest::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
   
+  // Push trigger word detection
   namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
   const auto earConBegin = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On;
   auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
@@ -185,8 +222,11 @@ void BehaviorDevSquawkBoxTest::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevSquawkBoxTest::MoveLift()
 {
-  if (_robot == nullptr) {
-    LOG_WARNING("BehaviorDevSquawkBoxTest.MoveLift", "Behavior had not been instatiated");
+  MOTOR_ACTION_ASSERT;
+  
+  if (!_dVars._isLiftMoving) {
+    // Disable repeating action
+    _dVars._liftActionTag = 0;
     return;
   }
   
@@ -198,14 +238,17 @@ void BehaviorDevSquawkBoxTest::MoveLift()
   
   auto* compoundSeq = new CompoundActionSequential( {liftUpAction, liftDownAction} );
   _dVars._liftActionTag = compoundSeq->GetTag();
-  _robot->GetActionList().AddConcurrentAction( compoundSeq );
+  _robot->GetActionList().AddConcurrentAction(compoundSeq);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevSquawkBoxTest::MoveHead()
 {
-  if (_robot == nullptr) {
-    LOG_WARNING("BehaviorDevSquawkBoxTest.MoveHead", "Behavior had not been instatiated");
+  MOTOR_ACTION_ASSERT;
+  
+  if (!_dVars._isHeadMoving) {
+    // Disable repeating action
+    _dVars._headActionTag = 0;
     return;
   }
   
@@ -217,22 +260,37 @@ void BehaviorDevSquawkBoxTest::MoveHead()
   
   auto* compoundSeq = new CompoundActionSequential( {headUpAction, headDownAction} );
   _dVars._headActionTag = compoundSeq->GetTag();
-  _robot->GetActionList().AddConcurrentAction( compoundSeq );
+  _robot->GetActionList().AddConcurrentAction(compoundSeq);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevSquawkBoxTest::MoveTreads()
 {
-  if (_robot == nullptr) {
-    LOG_WARNING("BehaviorDevSquawkBoxTest.MoveTreads", "Behavior had not been instatiated");
-    return;
-  }
+  MOTOR_ACTION_ASSERT;
   
   _dVars._currentTreadSpeed = _dVars._isMovingTreads ? kTreadMovementSpeed_mmps : 0;
   auto& moveComp = _robot->GetMoveComponent();
   moveComp.DriveWheels(_dVars._currentTreadSpeed, _dVars._currentTreadSpeed, 0.f, 0.f);
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevSquawkBoxTest::SetHeadAngle(float angleRadians)
+{
+  MOTOR_ACTION_ASSERT;
+  
+  // If head is moving cancel action
+  if (_dVars._headActionTag != 0) {
+    _robot->GetActionList().Cancel(_dVars._headActionTag);
+    _dVars._isHeadMoving = false;
+    _dVars._headActionTag = 0;
+  }
+  
+  // Set Move to angle action
+  auto* moveHeadAction = new MoveHeadToAngleAction(Radians(angleRadians));
+  auto* compoundSeq = new CompoundActionSequential( {moveHeadAction} );
+  _robot->GetActionList().AddConcurrentAction(compoundSeq);
+}
+
 
 }
 }

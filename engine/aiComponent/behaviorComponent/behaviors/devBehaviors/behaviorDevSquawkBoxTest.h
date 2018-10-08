@@ -61,7 +61,7 @@ private:
   void MoveLift();
   void MoveHead();
   void MoveTreads();
-  
+  void SetHeadAngle(float angleRadians);
   
   struct InstanceConfig {
     InstanceConfig();
