@@ -13,18 +13,23 @@
  * 
  *    In general, this class can be used to encapsulate type safe calls to an object that
  *    may or may not exist. Common C++ patterns often use pointers that must be checked
- *    for null explicitly before derefernce, or otherwise require that the result to be
+ *    for null explicitly before dereference, or otherwise require that the result to be
  *    passed by mutable reference through the argument list, and the function returns bool.
  *    Often times these patterns can degrade overtime as code is refactored, where the user
  *    forgets to check the return type of a function, and falsely assume the resulting type
  *    is valid. 
  * 
  *    While `std::optional` introduced in C++17 aims to provide a type signature
- *    to help the developer with the 
+ *    to help the developer with this problem, but does not check if the wrapped data
+ *    is valid before dereferencing. As a result, the developer is again obligated to
+ *    check std::optional::has_value prior to explicit dereference. 
+ *    (functions `value`, `operator*`, `operator->` in std:: optional can throw exceptions
+ *    if called improperly. Worse still, can be made to execute operations on initialize
+ *    memory without throwing an error)
  *    
  *    The Maybe typeclass encapsulates this behavior entirely within its own internal state
- *    releiving the developer of the responsibility of checking the success of each step
- *    until explicit derefernce performed by `ValueOr`.
+ *    relieving the developer of the responsibility of checking the success of each step
+ *    until explicit dereference performed by `ValueOr`.
  * 
  *    Operations on the Maybe type can be performed by the FMap and Bind operations.
  *    FMap should be used in general applications of functions of the wrapped types, and 
@@ -33,17 +38,17 @@
  *    IMPLEMENTATION NOTES:
  *      -- input functions to FMap and Bind are not defined as std::function types for two
  *         reasons. First, C++ lambda statements do not implicitly convert to std::function,
- *         expression type, and limit the useability of `auto` specifier in this context.
+ *         expression type, and limit the usability of `auto` specifier in this context.
  *         Second, std::function adds additional runtime overhead when wrapping certain types.
  * 
  *    TODO:
  *      -- Current implementation stores wrapped data inside std::shared_ptr, though it should
- *         be possible to store this as a std::unique_ptr through more intiligent copy 
- *         construtors
+ *         be possible to store this as a std::unique_ptr through more intelligent copy 
+ *         constructors
  * 
  *      -- currently only supports FMap and Bind operations with a single input argument T.
  *         `std::forward<Func>(f)(*_data)` calls can be replaced with a deferred bind_first
- *         operation once a working implementation of argument currying can be mind to work
+ *         operation once a working implementation of argument currying can be made to work
  *         with arbitrary function types, allowing for lazy evaluation upon dereference. 
  * 
  *      -- Could statically speedup `if(_valid)` checks by making distinct Just<T> and Nothing<T>
@@ -79,8 +84,8 @@ template <typename Func, typename U, typename RT = typename std::result_of_t<Fun
 RT Bind(Func&& f, Maybe<U> u) { return u.Bind(f); }
 
 // convenience infix operation forwards. 
-// NOTE: requires explicit `using namespace Anki::Util::MaybeOperators` for devleoper to use
-//       to prevent accidential operator overloading
+// NOTE: requires explicit `using namespace Anki::Util::MaybeOperators` for developer to use
+//       to prevent accidental operator overloading
 namespace MaybeOperators {
   template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
   Maybe<T> operator *=(Func&& f, Maybe<U> u) { return u.FMap(f); }
@@ -163,11 +168,11 @@ protected:
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// specialization for handling encaspulation of void type
+// specialization for handling encapsulation of void type
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 class Maybe<void> {
-  template <typename U> friend class Maybe;           // allow defering binding of function parameter to result type
+  template <typename U> friend class Maybe;           // allow deferring binding of function parameter to result type
 
 public:
   using Type = void;
