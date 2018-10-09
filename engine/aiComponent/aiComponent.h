@@ -105,13 +105,14 @@ public:
 
   void OnRobotDelocalized();
   void OnRobotRelocalized();
+  void OnRobotWakeUp();
 
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
 
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
-
+  
 private:
   Robot* _robot = nullptr;
   using EntityType = DependencyManagedEntity<AIComponentID>;

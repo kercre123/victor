@@ -30,6 +30,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/sayNameProbabilityTable.h"
 #include "osState/osState.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
@@ -767,6 +768,8 @@ void BehaviorSleepCycle::WakeUp(const WakeReason& reason, bool playWakeUp)
   _dVars.lastWakeReason = reason;
 #endif
 
+  GetAIComp<AIWhiteboard>().OnRobotWakeUp();
+  
   auto awakeCallback = [this]() {
     if( _iConfig.awakeDelegate->WantsToBeActivated() ) {
       DelegateNow( _iConfig.awakeDelegate.get() );

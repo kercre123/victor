@@ -1673,8 +1673,12 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( { VisionMode::CroppedDetectingFaces, EVisionUpdateFrequency::High } );
   modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFaces, EVisionUpdateFrequency::High } );
+  modifiers.visionModesForActiveScope->insert( { VisionMode::CroppedDetectingFaces, EVisionUpdateFrequency::High } );
+  
+  // Avoid marker detection to improve performance
+  // TODO: Remove with VIC-6838
+  modifiers.visionModesForActiveScope->insert( { VisionMode::DisableMarkerDetection, EVisionUpdateFrequency::High } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

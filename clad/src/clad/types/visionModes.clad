@@ -32,8 +32,14 @@ namespace Vector {
     DetectingIllumination,
     MeteringFromChargerOnly,     // For auto-exposure metering, only use charger marker, if detected
     MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
+
+    // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
+    // If this is "enabled", then it takes precedence over DetectingMarkers mode above and will force that
+    // mode to be skipped.
+    DisableMarkerDetection,
+
     Count
   }
-      
+
 } // namespace Vector
 } // namespace Anki

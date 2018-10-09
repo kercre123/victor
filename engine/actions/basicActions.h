@@ -46,6 +46,7 @@ namespace Vector {
     // Forward declaration
     struct ImageSaverParams;
     class ObservableObject;
+    class SayNameProbabilityTable;
   
     // Turn in place by a given angle, wherever the robot is when the action is executed.
     //
@@ -609,6 +610,11 @@ namespace Vector {
     {
     public:
       TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
+      
+      // Use SayNameProbabilityTable to decide if the name, if any, should be said
+      TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle,
+                            std::shared_ptr<SayNameProbabilityTable>& sayNameProbTable);
+      
       virtual ~TurnTowardsFaceAction();
       
       // Set the maximum number of frames we are will to wait to see a face after
@@ -670,6 +676,7 @@ namespace Vector {
         Turning,
         WaitingForFace,
         FineTuning,
+        WaitingForRecognition,
         PlayingAnimation, // playing an recognition animation, possibly including TTS for the name
       };
       
@@ -691,8 +698,15 @@ namespace Vector {
       
       std::vector<Signal::SmartHandle> _signalHandles;
 
+      std::shared_ptr<SayNameProbabilityTable> _sayNameProbTable;
+      f32 _startedWaitingForRecognition = 0.f;
+      
+      bool MightSayName() const;
+      bool ShouldSayName(const std::string& name);
+      
       void CreateFineTuneAction();
       void SetAction(IActionRunner* action, bool suppressTrackLocking = true);
+      bool CreateNameAnimationAction(const Vision::TrackedFace* face);
       
     }; // TurnTowardsFaceAction
 
